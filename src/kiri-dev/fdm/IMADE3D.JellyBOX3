@@ -56,7 +56,7 @@
         ";================ ;PRINT:PURGE start",
         "G90               ;absolute positioning",
         "M400             ;make sure all is finished",
-        "G1 E28 F200        ;extrude __mm of feed stock",
+        "G1 E45 F200        ;extrude __mm of feed stock",
         "G92 E0            ;reset the extruder position",
         ";---------------------------------------------",
         "; ; ; Jellybox Printer Start Script End ; ; ;",
