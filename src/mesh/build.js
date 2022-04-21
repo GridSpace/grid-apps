@@ -355,51 +355,65 @@ function ui_build() {
         h.div([
             // create and bind file loading elements
             h.div({ _: "file", class: "head" }),
-            h.button({ _: 'import', onclick: file.import }, [
-                h.input({
-                    id: "import", type: "file", class: ["hide"], multiple: true,
-                    onchange(evt) { broker.send.load_files(evt.target.files) }
-                })
-            ]),
-            h.button({ _: 'export', onclick: file.export }),
-        ]),
-        h.div([
-            h.div({ _: "view", class: "head" }),
-            h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
-            h.button({ _: 'normals', onclick() { api.normals() } }),
-            h.button({ _: 'gridlines', onclick() { api.grid() } }),
-            h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
-        ]),
-        h.div([
-            h.div({ _: "model", class: "head" }),
-            h.button({ _: 'duplicate', onclick: tool.duplicate }),
-            h.button({ _: 'regroup', onclick: tool.regroup }),
-            h.button({ _: 'merge', onclick: tool.merge }),
-            h.button({ _: 'mirror', onclick: tool.mirror }),
-            h.button({ _: 'split', onclick: call.edit_split }),
-        ]),
-        h.div([
-            h.div({ _: "bool", class: "head" }),
-            h.button({ _: 'union', onclick: tool.union }),
-            h.button({ _: 'subtract', onclick: tool.subtract }),
-            h.button({ _: 'intersect', onclick: tool.intersect }),
-        ]),
-        h.div([
-            h.div({ _: "normal", class: "head" }),
-            h.button({ _: 'invert', onclick: tool.invert }),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'import', onclick: file.import }, [
+                    h.input({
+                        id: "import", type: "file", class: ["hide"], multiple: true,
+                        onchange(evt) { broker.send.load_files(evt.target.files) }
+                    })
+                ]),
+                h.button({ _: 'export', onclick: file.export }),
+            ])
         ]),
         h.div([
             h.div({ _: "add", class: "head" }),
-            h.button({ _: 'cylinder', onclick: add.cylinder }),
-            h.button({ _: 'cube', onclick: add.cube }),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'cylinder', onclick: add.cylinder }),
+                h.button({ _: 'cube', onclick: add.cube }),
+            ])
+        ]),
+        h.div([
+            h.div({ _: "view", class: "head" }),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
+                h.button({ _: 'normals', onclick() { api.normals() } }),
+                h.button({ _: 'gridlines', onclick() { api.grid() } }),
+                h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
+            ])
+        ]),
+        h.div([
+            h.div({ _: "model", class: "head" }),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'duplicate', onclick: tool.duplicate }),
+                h.button({ _: 'regroup', onclick: tool.regroup }),
+                h.button({ _: 'merge', onclick: tool.merge }),
+                h.button({ _: 'mirror', onclick: tool.mirror }),
+                h.button({ _: 'split', onclick: call.edit_split }),
+            ])
+        ]),
+        h.div([
+            h.div({ _: "boolean", class: "head" }),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'union', onclick: tool.union }),
+                h.button({ _: 'subtract', onclick: tool.subtract }),
+                h.button({ _: 'intersect', onclick: tool.intersect }),
+            ])
+        ]),
+        h.div([
+            h.div({ _: "normal", class: "head" }),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'invert', onclick: tool.invert }),
+            ])
         ]),
         h.div([
             h.div({ _: "repair", class: "head" }),
-            h.button({ _: 'analyze', onclick: tool.analyze }),
-            h.button({ _: 'isolate', onclick: tool.isolate }),
-            h.button({ _: 'patch', onclick: tool.repair }),
-            // h.button({ _: 'rebuild', onclick: tool.rebuild }),
-            h.button({ _: 'clean', onclick: tool.clean }),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'analyze', onclick: tool.analyze }),
+                h.button({ _: 'isolate', onclick: tool.isolate }),
+                h.button({ _: 'patch', onclick: tool.repair }),
+                // h.button({ _: 'rebuild', onclick: tool.rebuild }),
+                h.button({ _: 'clean', onclick: tool.clean }),
+            ])
         ]),
     ]);
 

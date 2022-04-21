@@ -376,6 +376,10 @@ button:hover {
 
 /** common look & feel */
 
+.dark #logger, .dark #modal_frame, .dark #actions > div, .dark #grouplist > div, .dark #actions .pop {
+    border: 1px solid #bbb;
+}
+
 #logger, #modal_frame, #actions > div, #grouplist > div {
     border: 1px solid gray;
     border-radius: 3px;
@@ -469,6 +473,39 @@ button.selected:hover {
     gap: 1px;
 }
 
+#actions .pop {
+    display: none;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    transform: translateX(100%);
+    right: -1px;
+    top: -1px;
+    gap: 3px;
+    margin: 0;
+    padding: 3px;
+    border-radius: 3px;
+    border: 1px solid gray;
+    background-color: rgba(255,255,255,0.5);
+}
+
+.pop button {
+    width: 100%;
+}
+
+.dark #actions > div:hover {
+    background-color: #999;
+}
+
+#actions > div:hover {
+    background-color: #eee;
+}
+
+#actions > div:hover .pop {
+    display: flex;
+}
+
 #actions > div {
     flex-direction: column;
     gap: 2px;
@@ -482,7 +519,6 @@ button.selected:hover {
     font-weight: lighter;
     font-size: smaller;
     border-radius: 3px;
-    background-color: rgba(150,150,150,0.05);
 }
 
 #actions .head:hover {
