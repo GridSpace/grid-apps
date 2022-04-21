@@ -27,6 +27,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * `-` parameterize svg and image import
 * `-` undo / redo for some operations
 * `-` show camera focal point
+* `-` better Z split snapping and split at defined Z index
 
 
 # Release 3.3 (2022-04-01)

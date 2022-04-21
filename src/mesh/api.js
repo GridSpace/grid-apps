@@ -59,43 +59,48 @@ const selection = {
 
     // @param group {MeshObject[]}
     set(objects, toolist) {
-        selected = objects;
+        // flatten groups into model lists when present
+        selected = objects.map(o => o.models ? o.models : o).flat();
         tools = toolist || [];
         util.defer(selection.update);
     },
 
     // @param group {MeshObject}
-    add(object, tool) {
-        // pendantic code necessary to minimize re-entrant api calls
+    add(object, tool = mode.is([ modes.tool ])) {
+        // when group added, add group models instead
         if (object.models) {
-            // if group, remove discrete selected members
             for (let m of object.models) {
-                if (selected.contains(m)) {
-                    selection.remove(m);
-                    tools.remove(m);
+                selected.addOnce(m);
+                if (tool) {
+                    tools.addOnce(m);
                 }
             }
         } else {
-            // if model, remove selcted group
-            if (selected.contains(object.group)) {
-                selection.remove(object.group);
-                tools.remove(object.group);
+            selected.addOnce(object);
+            if (tool) {
+                tools.addOnce(object);
             }
         }
-        selected.addOnce(object);
-        if (tool) tools.addOnce(object);
         util.defer(selection.update);
     },
 
     // @param group {MeshObject}
     remove(object) {
-        selected.remove(object);
+        if (object.models) {
+            for (let m of object.models) {
+                selected.remove(m);
+                tools.remove(m);
+            }
+        } else {
+            selected.remove(object);
+            tools.remove(object);
+        }
         util.defer(selection.update);
     },
 
     // remove all
     delete() {
-        for (let s of selection.list()) {
+        for (let s of selection.list(true)) {
             selection.remove(s);
             tools.remove(s);
             s.showBounds(false);
@@ -104,13 +109,19 @@ const selection = {
     },
 
     // @param group {MeshObject}
-    toggle(object, tool) {
+    toggle(object, tool = mode.is([ modes.tool ])) {
+        if (object.models) {
+            for (let m of object.models) {
+                if (selected.contains(m)) {
+                    return selection.remove(object);
+                }
+            }
+            return selection.add(object, tool);
+        }
         if (selected.contains(object)) {
             selection.remove(object);
-            tools.remove(object);
         } else {
-            selection.add(object);
-            if (tool) tools.addOnce(object);
+            selection.add(object, tool);
         }
     },
 

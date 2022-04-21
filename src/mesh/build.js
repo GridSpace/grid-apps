@@ -437,9 +437,7 @@ function ui_build() {
             .map(g => h.div([
                 h.button({ _: g.name || `group`, title: g.id,
                     class: [ "group", selHas(g) ? 'selected' : undefined ],
-                    onclick(e) {
-                        e.shiftKey ? selection.toggle(g) : selection.set([g])
-                    }
+                    onclick(e) { selection.toggle(g) }
                 }),
                 h.div({ class: "vsep" }),
                 h.div({ class: "models"},
@@ -447,12 +445,7 @@ function ui_build() {
                     g.models.map(m => [
                         h.button({ _: m.file || m.id,
                             class: [ selHas(m) ? 'selected' : undefined ],
-                            onclick(e) {
-                                let sel = selection.list();
-                                e.shiftKey || (sel.length === 1 && m === sel[0]) ?
-                                    selection.toggle(m) :
-                                    selection.set([m])
-                            }
+                            onclick(e) { selection.toggle(m) }
                         }),
                         h.button({
                             class: [ 'square' ],
@@ -532,7 +525,7 @@ function ui_build() {
         let g_pos = util.average(s_grp.map(g => g.object.position));
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
         let g_id = s_grp.map(g => g.id).join(' ');
-        let h_grp = sblock('group', g_id, grid(
+        let h_grp = sblock('orient', g_id, grid(
             util.extract(g_pos, map),
             util.extract(g_rot).map(r => (r * rad).round(2).toFixed(map.fixed)),
             und, und, 'group'
@@ -541,17 +534,17 @@ function ui_build() {
         let m_pos = util.average(s_mdl.map(m => m.object.position));
         let m_rot = util.average(s_mdl.map(m => m.object.rotation));
         let m_id = s_mdl.map(m => m.id).join(' ');
-        let h_mdl = sblock('model', m_id, grid(
-            util.extract(m_pos, map),
-            util.extract(m_rot, map)
-        ));
+        // let h_mdl = sblock('model', m_id, grid(
+        //     util.extract(m_pos, map),
+        //     util.extract(m_rot, map)
+        // ));
 
         let bounds = util.bounds(s_mdl);
-        let h_bnd = sblock('box', m_id, grid(
-            util.extract(bounds.min, map),
-            util.extract(bounds.max, map),
-            [ "min", "max" ]
-        ));
+        // let h_bnd = sblock('bounds', m_id, grid(
+        //     util.extract(bounds.min, map),
+        //     util.extract(bounds.max, map),
+        //     [ "min", "max" ]
+        // ));
         let h_ara = sblock('span', m_id, grid(
             util.extract(bounds.center, map),
             util.extract(bounds.size, map),
@@ -591,8 +584,8 @@ function ui_build() {
         // bind elements to selectlist div
         let bound = h.bind(selectlist, [
             ...h_grp,
-            ...h_mdl,
-            ...h_bnd,
+            // ...h_mdl,
+            // ...h_bnd,
             ...h_ara,
             ...h_msh,
             ...h_ops
