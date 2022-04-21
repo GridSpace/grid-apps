@@ -11,10 +11,6 @@ const { broker } = gapp;
 const { mesh } = root;
 const { api, util } = mesh;
 
-const trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
-const eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
-const eye_closed = FontAwesome.icon({ prefix: "fas", iconName: "eye-slash" }).html[0];
-
 let call = broker.send;
 let rad = 180 / Math.PI;
 let und = undefined;
@@ -290,6 +286,10 @@ api.settings = function() {
 
 // create html elements
 function ui_build() {
+    const trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
+    const eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
+    const eye_closed = FontAwesome.icon({ prefix: "fas", iconName: "eye-slash" }).html[0];
+
     // set app version
     $h('app-name', "Mesh:Tool");
     $h('app-vers', 'beta' /* gapp.version */);
