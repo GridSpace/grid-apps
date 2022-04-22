@@ -506,6 +506,13 @@ button.selected:hover {
     width: 100%;
 }
 
+.pop span {
+    margin: 1px;
+    height: 1px;
+    width: 80%;
+    background-color: rgba(0,0,0,0.5);
+}
+
 .dark #actions > div:hover {
     background-color: #bbb;
 }

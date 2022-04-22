@@ -385,17 +385,6 @@ function ui_build() {
             ])
         ]),
         h.div([
-            h.div({ _: "model", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'duplicate', onclick: tool.duplicate }),
-                h.button({ _: 'regroup', onclick: tool.regroup }),
-                h.button({ _: 'merge', onclick: tool.merge }),
-                h.button({ _: 'mirror', onclick: tool.mirror }),
-                h.button({ _: 'split', onclick: call.edit_split }),
-            ])
-        ]),
-        h.div([
             h.div({ _: "boolean", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
@@ -405,10 +394,26 @@ function ui_build() {
             ])
         ]),
         h.div([
-            h.div({ _: "normal", class: "head" }),
+            h.div({ _: "models", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
-                h.button({ _: 'invert', onclick: tool.invert }),
+                h.button({ _: 'regroup', onclick: tool.regroup }),
+                h.span(),
+                h.button({ _: 'duplicate', onclick: tool.duplicate }),
+                h.button({ _: 'mirror', onclick: tool.mirror }),
+                h.button({ _: 'merge', onclick: tool.merge }),
+                h.button({ _: 'split', onclick: call.edit_split }),
+                h.span(),
+                h.button({ _: 'delete', onclick: api.selection.delete }),
+            ])
+        ]),
+        h.div([
+            h.div({ _: "faces", class: "head" }),
+            h.div({ class: "back"}),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'invert\nnormals', onclick: tool.invert }),
+                h.span(),
+                h.button({ _: 'delete', onclick: api.selection.delete }),
             ])
         ]),
         h.div([
