@@ -520,6 +520,7 @@ button.selected:hover {
 
 #actions > div {
     flex-direction: column;
+    padding: 5px;
     gap: 2px;
 }
 
