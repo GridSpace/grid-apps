@@ -472,7 +472,6 @@ function ui_build() {
                             class: [ selHas(m) ? 'selected' : undefined ],
                             onclick(e) {
                                 if (e.shiftKey) {
-                                    console.log({m, selection});
                                     tool.rename([ m ]);
                                 } else {
                                     selection.toggle(m);
