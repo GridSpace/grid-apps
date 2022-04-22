@@ -480,7 +480,7 @@ button.selected:hover {
     justify-content: center;
     flex-direction: column;
     transform: translateX(100%);
-    right: -1px;
+    right: -3px;
     top: -1px;
     gap: 3px;
     margin: 0;
@@ -488,6 +488,14 @@ button.selected:hover {
     border-radius: 3px;
     border: 1px solid gray;
     background-color: rgba(255,255,255,0.5);
+}
+
+#actions .back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: -4px;
+    bottom: 0;
 }
 
 .pop button {
