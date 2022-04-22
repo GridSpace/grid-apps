@@ -377,7 +377,7 @@ button:hover {
 /** common look & feel */
 
 .dark #logger, .dark #modal_frame, .dark #actions > div, .dark #grouplist > div, .dark #actions .pop {
-    border: 1px solid #aaa;
+    border: 1px solid #999;
 }
 
 .dark #actions > div {
@@ -587,7 +587,6 @@ button.selected:hover {
 
 #grouplist .models button {
     text-align: left;
-    margin-right: 2px;
 }
 
 /** selection info bottom/right of workspace **/
