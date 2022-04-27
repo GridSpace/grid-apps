@@ -14,6 +14,7 @@
 * `P` do not move (average) endpoints connected to long lines in decimate
 * `P` explore widget vertex reloading / replacing (Onshape) (issue #48)
 * `P` faster ray intersect https://github.com/gkjohnson/three-mesh-bvh/
+* `P` try material clipping planes for slice range selection
 
 * `F` edit in Mesh:Tool
 * `F` custom device vars for profiles / ranges / gcode

@@ -1231,6 +1231,7 @@ gapp.register("moto.space", [], (root, exports) => {
                 preserveDrawingBuffer: true,
                 logarithmicDepthBuffer: true
             });
+            renderer.localClippingEnabled = true;
             camera = ortho ?
                 new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
                 new THREE.PerspectiveCamera(perspective, aspect(), 0.1, 100000);

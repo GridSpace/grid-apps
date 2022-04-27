@@ -301,13 +301,16 @@ class Widget {
         const mesh = new THREE.Mesh(
             geometry, [
             new THREE.MeshPhongMaterial({
+                side: THREE.DoubleSide,
                 color: 0xffff00,
                 specular: 0x202020,
                 shininess: 125,
                 transparent: true,
-                opacity: solid_opacity
+                opacity: solid_opacity,
+                clipIntersection: false
             }),
             new THREE.MeshPhongMaterial({
+                side: THREE.DoubleSide,
                 color: 0x0088ee,
                 specular: 0x202020,
                 shininess: 100,
@@ -318,7 +321,7 @@ class Widget {
         mesh.renderOrder = 1;
         geometry.computeVertexNormals();
         geometry.addGroup(0, Infinity, 0);
-        mesh.material[0].side = THREE.DoubleSide;
+        // mesh.material[0].side = THREE.DoubleSide;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         mesh.widget = this;
@@ -378,6 +381,15 @@ class Widget {
 
     getMaterial() {
         return this.mesh.material[0];
+    }
+
+    setZClip(from, to) {
+        let mat = this.getMaterial();
+        mat.clippingPlanes = (from >= 0 && to >= 0) ? [
+            new THREE.Plane(new THREE.Vector3(0, 1, 0), -from),
+            new THREE.Plane(new THREE.Vector3(0, -1, 0), to),
+        ] : null;
+        moto.space.refresh();
     }
 
     isVisible() {
