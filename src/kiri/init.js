@@ -1953,7 +1953,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             arcTolerance:        uc.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:uc.bound(0,1.0), convert:uc.toFloat, modes:FDM, show:() => { return isDanger() && isNotBelt() }}),
             antiBacklash:        uc.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:uc.bound(0,3), convert:uc.toInt, modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
-            outputLoops:         uc.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, convert:uc.toInt, bound:uc.bound(0,1000), modes:FDM, show:isBelt}),
+            outputLoops:         uc.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, convert:uc.toInt, bound:uc.bound(-1,1000), modes:FDM, show:isBelt}),
             outputPurgeTower:    uc.newInput(LANG.ad_purg_s, {title:LANG.ad_purg_l, convert:uc.toInt, bound:uc.bound(0,1000), modes:FDM}),
 
             // SLA

@@ -169,6 +169,13 @@ FDM.export = function(print, online, ondone, ondebug) {
             end: Infinity,
             iter: oloops - 1
         });
+    } else if (oloops < 0) {
+        // if oloops negative, loop entire part to infinity
+        rloops.push({
+            start: layers[0].slice.index,
+            end: Infinity,
+            iter: 0
+        });
     }
     if (process.ranges) {
         // collect loops from ranges and synth range array
