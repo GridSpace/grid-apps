@@ -291,7 +291,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             const bigXY = (deltaXY > moveLen);
             const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
             const midZ = (absDeltaZ >= tolerance);
-            if ((bigXY || bigZ) && midZ) {
+            if (bigXY || bigZ || midZ) {
                 let maxz = getZClearPath(
                         terrain,
                         lastPoint.x - wmx,
