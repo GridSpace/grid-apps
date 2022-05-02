@@ -90,6 +90,7 @@ CAM.init = function(kiri, api) {
         isAnimate = false;
         CAM.animate_clear(api);
         func.clearPops();
+        $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
     });
 
     api.event.on("settings.saved", (settings) => {
@@ -271,7 +272,7 @@ CAM.init = function(kiri, api) {
     });
 
     api.event.on("cam.op.render", func.opRender = () => {
-        $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
+        // $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         let oplist = current.process.ops;
         if (!(isCamMode && oplist)) return;
         let mark = Date.now();

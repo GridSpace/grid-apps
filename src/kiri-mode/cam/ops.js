@@ -110,7 +110,7 @@ class OpRough extends CamOp {
         let { op, state } = this;
         let { settings, widget, slicer, sliceAll, unsafe, color } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
-        let { tshadow, shadowTop, ztOff, zBottom, zMax } = state;
+        let { tshadow, shadowTop, ztOff, zBottom, zMax, shadowAt } = state;
         let { process, stock } = settings;
 
         if (op.down <= 0) {
@@ -204,7 +204,8 @@ class OpRough extends CamOp {
                 // exclude flats injected to complete shadow
                 return;
             }
-            data.shadow = trueShadow ? CAM.shadowAt(widget, data.z) : shadow.clone(true);
+            // data.shadow = trueShadow ? CAM.shadowAt(widget, data.z) : shadow.clone(true);
+            data.shadow = trueShadow ? shadowAt(data.z) : shadow.clone(true);
             data.slice.shadow = data.shadow;
             // data.slice.tops[0].inner = data.shadow;
             // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
@@ -926,7 +927,7 @@ class OpPocket extends CamOp {
         let { op, state } = this;
         let { tool, rate, down, plunge, expand } = op;
         let { settings, widget, sliceAll, zMax, zTop, zThru, tabs } = state;
-        let { updateToolDiams, cutTabs, cutPolys, healPolys } = state;
+        let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt } = state;
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
         let sliceOut = this.sliceOut = [];
@@ -945,35 +946,13 @@ class OpPocket extends CamOp {
             sliceOut.push(slice);
             return slice;
         }
-        let shadows = {};
-        function genShadows(zs) {
-            for (let z of zs) {
-                if (shadows[z]) continue;
-                // find closest shadow above and use
-                let minzkey;
-                let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
-                for (let zkey of zover) {
-                    if (minzkey && zkey < minzkey) {
-                        minzkey = zkey;
-                    } else {
-                        minzkey = zkey;
-                    }
-                }
-                let shadow = CAM.shadowAt(widget, z + 0.001, minzkey);
-                if (minzkey) {
-                    shadow = POLY.union([...shadow, ...shadows[minzkey]], undefined, true);
-                }
-                shadows[z] = POLY.setZ(shadow, z);
-            }
-        }
         function clearZ(polys, z, down) {
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
             if (expand) polys = POLY.offset(polys, expand);
             let zpro = 0, zinc = pinc / (polys.length *  zs.length);
             for (let poly of polys) {
-                genShadows(zs);
                 for (let z of zs) {
-                    let shadow = shadows[z];
+                    let shadow = shadowAt(z);
                     let clip = [];
                     POLY.subtract([ poly ], shadow, clip);
                     let slice = newSliceOut(z);
@@ -1016,6 +995,9 @@ class OpPocket extends CamOp {
             outline = POLY.union(outline, 0.0001, true);
             outline = POLY.setWinding(outline, cutdir, false);
             outline = healPolys(outline);
+            if (outline.length === 0) {
+                continue;
+            }
             if (false) newSliceOut(zmin).output()
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)
@@ -1315,7 +1297,7 @@ class OpShadow extends CamOp {
 
     slice(progress) {
         let state = this.state;
-        let { ops, slicer, widget, unsafe, sliceAll } = state;
+        let { ops, slicer, widget, unsafe, sliceAll, shadowAt } = state;
 
         let real = ops.map(rec => rec.op).filter(op => op);
         let drill = real.filter(op => op.type === 'drill').length > 0;
@@ -1341,8 +1323,9 @@ class OpShadow extends CamOp {
 
         let lsz; // only shadow up to bottom of last shadow for progressive union
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
-            let shadowAt = trueShadow ? CAM.shadowAt(widget, data.z, lsz) : [];
-            tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadowAt), 0.01, true);
+            // let shadow = trueShadow ? CAM.shadowAt(widget, data.z, lsz) : [];
+            let shadow = trueShadow ? shadowAt(data.z, lsz) : [];
+            tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadow), 0.01, true);
             tslices.push(data.slice);
             data.slice.shadow = tshadow;
             if (false) {
@@ -1373,8 +1356,8 @@ class OpShadow extends CamOp {
 
         state.shadowTop = terrain[terrain.length - 1];
         state.center = tshadow[0].bounds.center();
-        state.tshadow = tshadow;
-        state.terrain = terrain;
+        state.tshadow = tshadow; // true shadow (bottom of part)
+        state.terrain = terrain; // stack of shadow slices with tops
         state.tslices = tslices;
         state.skipTerrain = skipTerrain;
 
@@ -1383,27 +1366,34 @@ class OpShadow extends CamOp {
     }
 }
 
+// union triangles > z (opt cap < ztop) into polygon(s)
 CAM.shadowAt = function(widget, z, ztop) {
-    let geo = widget.cache.geo || new THREE.BufferGeometry()
+    const geo = widget.cache.geo || new THREE.BufferGeometry()
         .setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
     widget.cache.geo = geo;
-    let rad = (Math.PI / 180);
-    let deg = (180 / Math.PI);
-    let angle = rad * 1;
-    let thresh = -Math.sin(angle);
-    let found = [];
-    let { position } = geo.attributes;
-    let { itemSize, count, array } = position;
-    if (widget._shadow_array) {
-        array = widget._shadow_array;
-    } else {
-        array = widget._shadow_array = [...array].map(v => v.round(3));
+    const { position } = geo.attributes;
+    const { itemSize, count, array } = position;
+    // cache faces with normals up
+    if (!widget._shadow_faces) {
+        const faces = [];
+        for (let i=0, ip=0; i<count; i += itemSize) {
+            const a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            const b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            const c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+            const n = THREE.computeFaceNormal(a,b,c);
+            if (n.z > 0.001) {
+                faces.push(a,b,c);
+            }
+        }
+        widget._shadow_faces = faces;
     }
-    for (let i = 0; i<count; i += 3) {
-        let ip = i * itemSize;
-        let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-        let b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-        let c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+    const found = [];
+    const faces = widget._shadow_faces;
+    const { checkOverUnderOn, intersectPoints } = self.kiri.cam_slicer;
+    for (let i=0; i<faces.length; ) {
+        const a = faces[i++];
+        const b = faces[i++];
+        const c = faces[i++];
         let where = undefined;
         if (ztop && a.z > ztop && b.z > ztop && c.z > ztop) {
             // skip faces over top threshold
@@ -1413,19 +1403,10 @@ CAM.shadowAt = function(widget, z, ztop) {
             // skip faces under threshold
             continue;
         } else if (a.z > z && b.z > z && c.z > z) {
-            // limit to selected faces over threshold
-            let norm = THREE.computeFaceNormal(a,b,c);
-            if (norm.z < thresh) {
-                continue;
-            }
             found.push([a,b,c]);
-            continue;
         } else {
             // check faces straddling threshold
-            where = {under: [], over: [], on: []};
-        }
-        if (where) {
-            let { checkOverUnderOn, intersectPoints } = self.kiri.cam_slicer;
+            const where = { under: [], over: [], on: [] };
             checkOverUnderOn(newPoint(a.x, a.y, a.z), z, where);
             checkOverUnderOn(newPoint(b.x, b.y, b.z), z, where);
             checkOverUnderOn(newPoint(c.x, c.y, c.z), z, where);
@@ -1445,11 +1426,7 @@ CAM.shadowAt = function(widget, z, ztop) {
                     console.log({msg: "invalid ips", line: line, where: where});
                 }
             }
-            continue;
-        } else {
-            continue;
         }
-        found.push([a,b,c]);
     }
     let polys = found.map(a => {
         return newPolygon()

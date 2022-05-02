@@ -13,6 +13,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * `C` fix CAM output order for tool changes an spindle speed updates
 * `C` add CAM pocket operation using surface selection
 * `C` fix dogbones on outlines cut by tabs
+* `C` skip pockets that resolve to null
+* `C` 10x speedup for true shadow generation
 * `-` refactor cnc to use new core slicer engine
 * `-` improve vertex replacement and widget update matrix tracking
 

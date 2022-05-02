@@ -107,6 +107,34 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         maxToolDiam = Math.max(maxToolDiam, toolDiam);
     }
 
+    let shadows = {};
+
+    function shadowAt(z) {
+        let cached = shadows[z];
+        if (cached) {
+            return cached;
+        }
+        // find closest shadow above and use to speed up delta shadow gen
+        let minZabove;
+        let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
+        for (let zkey of zover) {
+            if (minZabove && zkey < minZabove) {
+                minZabove = zkey;
+            } else {
+                minZabove = zkey;
+            }
+        }
+        let shadow = CAM.shadowAt(widget, z, minZabove);
+        if (minZabove) {
+            // const merge = shadow.length;
+            // const plus = shadows[minZabove].length;
+            // const mark = Date.now();
+            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.0011, true);
+            // console.log({merge, plus, equals: shadow.length, time: Date.now() - mark});
+        }
+        return shadows[z] = POLY.setZ(shadow, z);
+    }
+
     let state = {
         settings,
         widget,
@@ -115,6 +143,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         cutTabs,
         cutPolys,
         healPolys,
+        shadowAt,
         slicer,
         sliceAll,
         updateToolDiams,
@@ -138,7 +167,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
     }
 
     let opSum = 0;
-    let opTot = opList.map(op => op.weight()).reduce((a,v) => a + v);
+    let opTot = opList.length ? opList.map(op => op.weight()).reduce((a,v) => a + v) : 0;
 
     for (let op of proc.ops.filter(op => !op.disabled)) {
         let opfn = OPS[op.type];
