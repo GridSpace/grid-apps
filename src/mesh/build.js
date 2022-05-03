@@ -10,6 +10,7 @@ gapp.register("mesh.build", [], (root, exports) => {
 const { broker } = gapp;
 const { mesh } = root;
 const { api, util } = mesh;
+const devel = api.isDebug;
 
 let call = broker.send;
 let rad = 180 / Math.PI;
@@ -372,6 +373,7 @@ function ui_build() {
             h.div({ class: "pop"}, [
                 h.button({ _: 'cylinder', onclick: add.cylinder }),
                 h.button({ _: 'cube', onclick: add.cube }),
+                devel ? h.button({ _: 'input', onclick: add.input }) : undefined
             ])
         ]),
         h.div([

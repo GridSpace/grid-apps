@@ -129,7 +129,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
             // const merge = shadow.length;
             // const plus = shadows[minZabove].length;
             // const mark = Date.now();
-            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.0011, true);
+            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true);
             // console.log({merge, plus, equals: shadow.length, time: Date.now() - mark});
         }
         return shadows[z] = POLY.setZ(shadow, z);

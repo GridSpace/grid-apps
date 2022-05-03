@@ -9,6 +9,9 @@ gapp.register("moto.webui", [], (root, exports) => {
 let nextid = 1;
 
 function build(data, context) {
+    if (!data) {
+        return [];
+    }
     if (Array.isArray(data)) {
         let html = [];
         for (let d of data) {
@@ -126,7 +129,7 @@ gapp.overlay(root, {
 });
 
 // add common element types
-["a", "i", "hr", "div", "span", "label", "input", "button", "svg"].forEach(type => {
+["a", "i", "hr", "div", "span", "label", "input", "button", "svg", "textarea"].forEach(type => {
     h[type] = (attr, innr) => {
         return h.el(type, attr, innr);
     }

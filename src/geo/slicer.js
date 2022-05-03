@@ -828,7 +828,8 @@ function removeDuplicateLines(lines) {
 gapp.overlay(base, {
     slice,
     sliceZ,
-    slicePost: {}
+    slicePost: {},
+    sliceConnect
 });
 
 });

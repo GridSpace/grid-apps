@@ -264,6 +264,23 @@ let model = {
 };
 
 let add = {
+    input() {
+        api.modal.dialog({
+            title: "vertices",
+            body: [ h.div({ class: "addact" }, [
+                h.textarea({ value: '', size: 5, id: "genvrt" }),
+                h.button({ _: "create", onclick() {
+                    const vert = (api.modal.bound.genvrt.value)
+                        .split(',').map(v => parseFloat(v)).toFloat32();
+                    const nmdl = new mesh.model({ file: "input", mesh: vert });
+                    const ngrp = group.new([ nmdl ]);
+                    api.modal.hide();
+                } })
+            ]) ]
+        });
+        api.modal.bound.genvrt.focus();
+    },
+
     cube() {
         const box = new THREE.BoxGeometry(1,1,1).toNonIndexed();
         const vert = box.attributes.position.array;
@@ -290,7 +307,7 @@ let add = {
         } else {
             api.modal.dialog({
                 title: "cylinder",
-                body: [ h.div({ class: "cylinder" }, [
+                body: [ h.div({ class: "addact" }, [
                     h.label('facets'),
                     h.input({ value: opt.facets || 30, size: 5, id: "gencyl" }),
                     h.button({ _: "create", onclick() {

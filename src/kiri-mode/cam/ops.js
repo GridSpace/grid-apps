@@ -6,12 +6,13 @@
 // dep: geo.paths
 // dep: geo.point
 // dep: geo.polygons
+// dep: geo.slicer
 // dep: kiri.slice
 // use: kiri-mode.cam.topo
 gapp.register("kiri-mode.cam.ops", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { paths, polygons, newPoint, newPolygon } = base;
+const { paths, polygons, newPoint, newPolygon, sliceConnect } = base;
 const { poly2polyEmit, tip2tipEmit } = paths;
 const { driver, newSlice } = kiri;
 const { CAM } = driver;
@@ -1383,6 +1384,7 @@ CAM.shadowAt = function(widget, z, ztop) {
             const n = THREE.computeFaceNormal(a,b,c);
             if (n.z > 0.001) {
                 faces.push(a,b,c);
+                // faces.push(newPoint(...a), newPoint(...b), newPoint(...c));
             }
         }
         widget._shadow_faces = faces;
@@ -1415,9 +1417,7 @@ CAM.shadowAt = function(widget, z, ztop) {
                 let line = intersectPoints(where.over, where.under, z);
                 if (line.length === 2) {
                     if (where.over.length === 2) {
-                        found.push([where.over[0], line[0], line[1]]);
                         found.push([where.over[1], line[0], line[1]]);
-                        found.push([where.over[0], where.over[1], line[1]]);
                         found.push([where.over[0], where.over[1], line[0]]);
                     } else {
                         found.push([where.over[0], line[0], line[1]]);
@@ -1428,13 +1428,35 @@ CAM.shadowAt = function(widget, z, ztop) {
             }
         }
     }
+
+    // const lines = {};
+    // function addline(p1, p2) {
+    //     let key = p1.key < p2.key ? p1.key + ',' + p2.key : p2.key + ',' + p1.key;
+    //     let rec = lines[key];
+    //     if (rec) {
+    //         rec.count++;
+    //     } else {
+    //         lines[key] = { p1, p2, count: 1 };
+    //     }
+    // }
+    // for (let face of found) {
+    //     addline(face[0], face[1]);
+    //     addline(face[1], face[2]);
+    //     addline(face[2], face[0]);
+    // }
+    // const singles = Object.entries(lines).filter(a => a[1].count === 1).map(a => a[1]);
+    // const loops = POLY.nest(sliceConnect(singles, z));
+
     let polys = found.map(a => {
         return newPolygon()
             .add(a[0].x,a[0].y,a[0].z)
             .add(a[1].x,a[1].y,a[1].z)
             .add(a[2].x,a[2].y,a[2].z);
     });
-    return POLY.union(polys, 0.0001, true);
+    polys = POLY.union(polys, 0.001, true);
+    // console.log({z, loops, polys});
+    // return loops;
+    return polys;
 };
 
 CAM.OPS = CamOp.MAP = {
