@@ -749,6 +749,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.event.emit('device.set', devicename);
 
             let mode = api.mode.get(),
+                lmode = mode.toLowerCase(),
                 current = settings(),
                 local = isLocalDevice(devicename),
                 dev = current.device = conf.device_from_code(code,mode),
@@ -756,6 +757,9 @@ gapp.register("kiri.init", [], (root, exports) => {
                 newdev = dproc === undefined,   // first time device is selected
                 predev = current.filter[mode],  // previous device selection
                 chgdev = predev !== devicename; // device is changing
+
+            // fill missing device fields
+            conf.fill_cull_once(dev, conf.defaults[lmode].d);
 
             // first time device use, add any print profiles and set to default if present
             if (code.profiles) {
@@ -829,6 +833,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 ui.filamentSource,
                 ui.deviceZMax,
                 ui.gcodeFan,
+                ui.gcodeFeature,
                 ui.gcodeTrack,
                 ui.gcodeLayer,
                 ui.extFilament,
@@ -1720,6 +1725,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 (ui.gcodeLayer = uc.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
                 (ui.gcodeTrack = uc.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button,
                 (ui.gcodeFan = uc.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
+                (ui.gcodeFeature = uc.newGCode(LANG.dv_feat_s, {title:LANG.dv_feat_l, modes:FDM, area:gcode})).button,
                 (ui.gcodeLaserOn = uc.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
                 (ui.gcodeLaserOff = uc.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, area:gcode})).button,
                 (ui.gcodeChange = uc.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button,

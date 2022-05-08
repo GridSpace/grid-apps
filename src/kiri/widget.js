@@ -321,7 +321,6 @@ class Widget {
         mesh.renderOrder = 1;
         geometry.computeVertexNormals();
         geometry.addGroup(0, Infinity, 0);
-        // mesh.material[0].side = THREE.DoubleSide;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         mesh.widget = this;

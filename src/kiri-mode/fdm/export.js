@@ -19,7 +19,7 @@ FDM.export = function(print, online, ondone, ondebug) {
     const { danger, exportThumb } = device;
     const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
     const { extruders, fwRetract } = device;
-    const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause } = device;
+    const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature } = device;
 
     let layers = print.output,
         extras = device.extras || {},
@@ -622,8 +622,12 @@ FDM.export = function(print, online, ondone, ondebug) {
 
             // emit comment on output type chage
             if (last && out.type !== last.type) {
-                append(`; feature ${out.type}`);
-                lastType = out.type;
+                lastType = subst.feature = out.type;
+                if (gcodeFeature && gcodeFeature.length) {
+                    appendAllSub(gcodeFeature);
+                } else {
+                    append(`; feature ${out.type}`);
+                }
             }
 
             // look for extruder change, run scripts, recalc emit factor

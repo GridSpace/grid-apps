@@ -2,34 +2,40 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
-# Release 3.4 (in progress)
 
-## `C` complete, `I` in progress, `-` todo
+# Release 3.5 (future)
 
 ## Kiri:moto
 
-* `C` added batch processing to object adds/removes to speedup complex workspace restore
-* `C` substitute some prusa slicer [variables] with KM {variables} on import
-* `C` fix CAM output order for tool changes an spindle speed updates
-* `C` add CAM pocket operation using surface selection
-* `C` fix dogbones on outlines cut by tabs
-* `C` skip pockets that resolve to null
-* `C` 10x speedup for true shadow generation
-* `-` refactor cnc to use new core slicer engine
-* `-` improve vertex replacement and widget update matrix tracking
+* ~ refactor vertex replacement and widget update matrix tracking
+* ~ refactor cnc to use core slicer engine
+
+
+# Release 3.4 (2022-05-14 est)
+
+## Kiri:moto
+
+* added batch processing to object adds/removes to speedup complex workspace restore
+* substitute some prusa slicer [variables] with KM {variables} on import
+* fix CAM output order for tool changes an spindle speed updates
+* add CAM pocket operation using surface selection
+* fix dog-bones on outlines cut by tabs
+* skip pockets that resolve to null
+* fix cnc contour path collision
+* 10x speedup for true shadow generation
 
 ## Mesh:Tool (1.2.0)
 
-* `C` auto-fog in wireframe view to aid close mesh inspections
-* `C` significant speed-up for large surface selections
-* `C` add boolean operations for subtract and intersect
-* `C` multi-body identification and isolation
-* `C` quick add primitives: cube, cylinder
-* `C` control wireframe transparency
-* `-` parameterize svg and image import
-* `-` undo / redo for some operations
-* `-` show camera focal point
-* `-` better Z split snapping and split at defined Z index
+* auto-fog in wireframe view to aid close mesh inspections
+* significant speed-up for large surface selections
+* add boolean operations for subtract and intersect
+* multi-body identification and isolation
+* quick add primitives: cube, cylinder
+* control wireframe transparency
+* ~ parameterize png/jpg image import
+* ~ undo / redo for some operations
+* ~ show camera focal point
+* ~ better Z split snapping and split at defined Z index
 
 
 # Release 3.3 (2022-04-01)
