@@ -23,6 +23,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * skip pockets that resolve to null
 * fix cnc contour path collision
 * 10x speedup for true shadow generation
+* add gcode feature macros for fdm transitions
 
 ## Mesh:Tool (1.2.0)
 
