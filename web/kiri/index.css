@@ -950,6 +950,7 @@ th, tr, td, label {
     transform: translateX(50%) translateY(-50%);
     right: 50%;
     top: 50%;
+    max-height: 80%;
 }
 .mdialog {
     display: none;
@@ -964,6 +965,9 @@ th, tr, td, label {
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     background-color: var(--main-color);
+}
+#tool-cols {
+    max-height: 350px;
 }
 #mod-x {
     position: absolute;
