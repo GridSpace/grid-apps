@@ -948,6 +948,12 @@ class OpPocket extends CamOp {
             return slice;
         }
         function clearZ(polys, z, down) {
+            if (down) {
+                // adjust step down to a value <= down that
+                // ends on the lowest z specified
+                let diff = zTop - z;
+                down = diff / Math.ceil(diff / down);
+            }
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
             if (expand) polys = POLY.offset(polys, expand);
             let zpro = 0, zinc = pinc / (polys.length *  zs.length);
@@ -958,7 +964,7 @@ class OpPocket extends CamOp {
                     POLY.subtract([ poly ], shadow, clip);
                     let slice = newSliceOut(z);
                     slice.camTrace = { tool, rate, plunge };
-                    POLY.offset(clip, -toolOver, {
+                    POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
                         count:999, outs: slice.camLines = [], flat:true, z
                     });
                     if (tabs) {
