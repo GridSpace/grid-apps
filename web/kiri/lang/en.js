@@ -656,7 +656,7 @@ self.kiri.lang['en-us'] = {
     ad_lbir_s:      "belt first",
     ad_lbir_l:      ["always print shells touching the","belt before any other shells"],
     ad_altr_s:      "alternating",
-    ad_altr_l:      ["alternate shell winding order","clockwise / counter-clockwise"],
+    ad_altr_l:      ["alternate shell winding order","clockwise / counter-clockwise","may reduce warping in thin areas","and help with belt edge adhesion"],
     ad_lret_s:      "layer retract",
     ad_lret_l:      ["force filament retraction","between layers"],
     ad_agap_s:      "avoid gaps",
