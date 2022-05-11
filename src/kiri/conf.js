@@ -364,6 +364,7 @@ const conf = exports({
                 outputPurgeTower: 0,
                 outputBeltFirst: false,
                 outputAvoidGaps: true,
+                outputAlternating: false,
                 outputLayerRetract: false,
                 outputOriginCenter: true,
                 outputLoops: 0,

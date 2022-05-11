@@ -1906,7 +1906,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             knifeSep:            uc.newBlank({class:"pop-sep", modes:LASER}),
             knifeOn:             uc.newBoolean(LANG.enable, onBooleanClick, {title:LANG.ou_drkn_l, modes:LASER}),
 
-            output:              uc.newGroup(LANG.ou_menu, null, {modes:GCODE}),
+            output:              uc.newGroup(LANG.ou_menu, null, {class: "fdmout", modes:GCODE}),
             outputLaserPower:    uc.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:uc.toInt, bound:uc.bound(1,100), modes:LASER}),
             outputLaserSpeed:    uc.newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:uc.toInt, modes:LASER}),
             laserSep:            uc.newBlank({class:"pop-sep", modes:LASER}),
@@ -1932,6 +1932,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
             outputLayerRetract:  uc.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM}),
             outputAvoidGaps:     uc.newBoolean(LANG.ad_agap_s, onBooleanClick, {title:LANG.ad_agap_l, modes:FDM}),
+            outputAlternating:   uc.newBoolean(LANG.ad_altr_s, onBooleanClick, {title:LANG.ad_altr_l, modes:FDM}),
             outputBeltFirst:     uc.newBoolean(LANG.ad_lbir_s, onBooleanClick, {title:LANG.ad_lbir_l, show: isBelt, modes:FDM}),
             camConventional:     uc.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
             camEaseDown:         uc.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),

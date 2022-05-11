@@ -655,6 +655,8 @@ self.kiri.lang['en-us'] = {
     ad_abkl_l:      ["for better flat surface finish","use micro-movements to cancel","backlash in solid layer output","in millimeters","0 to disable","if your firmware has M425","put that in the gcode header","and leave this as 0"],
     ad_lbir_s:      "belt first",
     ad_lbir_l:      ["always print shells touching the","belt before any other shells"],
+    ad_altr_s:      "alternating",
+    ad_altr_l:      ["alternate shell winding order","clockwise / counter-clockwise"],
     ad_lret_s:      "layer retract",
     ad_lret_l:      ["force filament retraction","between layers"],
     ad_agap_s:      "avoid gaps",

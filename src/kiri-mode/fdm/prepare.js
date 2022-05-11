@@ -1041,6 +1041,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         } else {
             let finishShell = poly.depth === 0 && !firstLayer;
             startPoint = print.polyPrintPath(poly, startPoint, preout, {
+                ccw: opt.shell && process.outputAlternating && slice.index % 2,
                 tool: extruder,
                 rate: finishShell ? finishSpeed : printSpeed,
                 accel: finishShell,
@@ -1387,14 +1388,22 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
             // innermost shells
             let inner = next.innerShells() || [];
+            let shells = next.shells || [];
+
+            // alternating winding option
+            // if (process.outputAlternating || slice.index % 2) {
+            //     console.log({alternating: slice, shells, inner});
+            //     POLY.setWinding(inner, false);
+            //     POLY.setWinding(shells, false);
+            // }
 
             // output inner polygons
-            if (shellOrder === 1) outputTraces(inner, { sort: shellOrder });
+            if (shellOrder === 1) outputTraces(inner, { sort: shellOrder, shell: true });
 
-            outputTraces(next.shells, { sort: shellOrder });
+            outputTraces(shells, { sort: shellOrder, shell: true });
 
             // output outer polygons
-            if (shellOrder === -1) outputTraces(inner, { sort: shellOrder });
+            if (shellOrder === -1) outputTraces(inner, { sort: shellOrder, shell: true });
 
             // output thin fill
             print.setType('thin fill');

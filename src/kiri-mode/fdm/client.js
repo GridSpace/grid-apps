@@ -54,6 +54,7 @@ FDM.init = function(kiri, api) {
         "outputFillMult": LANG.ou_flml_s,
         "outputSparseMult": LANG.ou_spml_s,
         "outputRetractWipe": LANG.ad_wpln_s,
+        "outputAlternating": LANG.ad_altr_s,
         "outputShortPoly": LANG.ad_spol_s,
         "outputMinSpeed": LANG.ad_mins_s,
         "outputCoastDist": LANG.ad_scst_s,

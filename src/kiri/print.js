@@ -67,7 +67,11 @@ class Print {
 
     // fdm & laser
     polyPrintPath(poly, startPoint, output, options = {}) {
-        poly.setClockwise();
+        if (options.ccw) {
+            poly.setCounterClockwise();
+        } else {
+            poly.setClockwise();
+        }
 
         const scope = this;
         const { settings } = scope;

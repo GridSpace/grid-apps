@@ -17,13 +17,14 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 * added batch processing to object adds/removes to speedup complex workspace restore
 * substitute some prusa slicer [variables] with KM {variables} on import
-* fix CAM output order for tool changes an spindle speed updates
-* add CAM pocket operation using surface selection
+* fix CNC output order for tool changes an spindle speed updates
+* add CNC pocket operation using surface selection
 * fix dog-bones on outlines cut by tabs
 * skip pockets that resolve to null
-* fix cnc contour path collision
+* fix CNC contour path collision
 * 10x speedup for true shadow generation
-* add gcode feature macros for fdm transitions
+* add FDM gcode feature macros for transitions
+* add FDM option to alternate shell winding direction
 
 ## Mesh:Tool (1.2.0)
 
