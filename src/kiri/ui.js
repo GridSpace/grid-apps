@@ -63,8 +63,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
         newBlank,
         newGCode,
         newGroup,
-        newInput,
         newLabel,
+        newInput,
+        newInput2,
         newRange,
         newRow,
         newSelect,
@@ -633,7 +634,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
 
         row.appendChild(newLabel(label));
         row.appendChild(ip);
-        row.setAttribute("class", "var-row");
+        row.setAttribute("class", opt.class || "var-row");
         if (height > 1) {
             ip.setAttribute("cols", size);
             ip.setAttribute("rows", height);
@@ -700,6 +701,78 @@ gapp.register("kiri.ui", [], (root, exports) => {
         }
         if (!ip.convert) ip.convert = raw.bind(ip);
         ip.setVisible = row.setVisible;
+
+        return ip;
+    }
+
+    function newInput2(options) {
+        let opt = options || {},
+            hide = opt && opt.hide,
+            size = opt ? opt.size || 5 : 5,
+            height = opt ? opt.height : 0,
+            ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
+            action = opt.action || bindTo || inputAction;
+
+        ip.setAttribute("class", "var-input");
+        if (Number.isInteger(size)) {
+            ip.setAttribute("size", size);
+        } else {
+            ip.setAttribute("style", `width:${size}`);
+        }
+        ip.setAttribute("type", "text");
+        ip.setAttribute("spellcheck", "false");
+        if (opt) {
+            if (opt.disabled) ip.setAttribute("disabled", "true");
+            if (opt.title) ip.setAttribute("title", opt.title);
+            if (opt.convert) ip.convert = opt.convert.bind(ip);
+            if (opt.bound) ip.bound = opt.bound;
+            if (opt.action) action = opt.action;
+        }
+        ip.addEventListener('focus', function(event) {
+            hidePop();
+            setSticky(true);
+        });
+        if (action) {
+            ip.addEventListener('keydown', function(event) {
+                let key = event.key;
+                if (
+                    opt.text ||
+                    (key >= '0' && key <= '9') ||
+                    key === '.' ||
+                    key === '-' ||
+                    key === 'Backspace' ||
+                    key === 'Delete' ||
+                    key === 'ArrowLeft' ||
+                    key === 'ArrowRight' ||
+                    key === 'Tab' ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    (key === ',' && options.comma)
+                ) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+            });
+            ip.addEventListener('keyup', function(event) {
+                if (event.keyCode === 13) {
+                    ip.blur();
+                }
+            });
+            ip.addEventListener('blur', function(event) {
+                setSticky(false);
+                lastChange = ip;
+                action(event);
+                if (opt.trigger) {
+                    refresh();
+                }
+            });
+            if (opt.units) {
+                addUnits(ip, opt.round || 3);
+            }
+        }
+        if (!ip.convert) ip.convert = raw.bind(ip);
+        // addModeControls(ip);
 
         return ip;
     }

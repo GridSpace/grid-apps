@@ -25,6 +25,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * 10x speedup for true shadow generation
 * add FDM gcode feature macros for transitions
 * add FDM option to alternate shell winding direction
+* add FDM print time estimate fudge factor for devices
 
 ## Mesh:Tool (1.2.0)
 

@@ -25,6 +25,7 @@ FDM.export = function(print, online, ondone, ondebug) {
         extras = device.extras || {},
         { extrudeAbs } = device,
         extused = Object.keys(print.extruders).map(v => parseInt(v)),
+        timeFactor = (device.gcodeTime || 1) * 1.5,
         decimals = config.gcode_decimals || 4,
         zMoveMax = device.deviceZMax || 0,
         isBelt = bedBelt,
@@ -788,7 +789,7 @@ FDM.export = function(print, online, ondone, ondebug) {
             }
 
             // update time and distance (should calc in moveTo() instead)
-            time += (dist / speedMMM) * 60 * 1.5;
+            time += (dist / speedMMM) * 60 * timeFactor;
             distance += dist;
             subst.progress = progress = Math.round((distance / totaldistance) * 100);
 

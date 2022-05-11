@@ -46,6 +46,7 @@ self.kiri.lang['en-us'] = {
     version:        "version",
     view:           "view",         // left view pop menu
     wire:           "wire",         // left render pop menu
+    volume:         "volume",       // device build area
 
     acct_xpo:       ["make a backup of your device","and device profiles with the","option to include workspace","objects and positions"],
 
@@ -106,6 +107,8 @@ self.kiri.lang['en-us'] = {
     dv_rezy_l:      ["y resolution"],
     dv_zmax_s:      "Z axis speed limit",
     dv_zmax_l:      ["maximum Z axis speed","in millimeters / second","0 to disable"],
+    dv_time_s:      "output time factor",
+    dv_time_l:      ["modifier to print time estimates","in the gcode export dialog.","raise or lower value based on your","predicted vs observed print times"],
     dv_spmx_s:      "max spindle",
     dv_spmx_l:      ["max spindle rpm speed","0 to disable"],
     dv_xtab_s:      "absolute positioning",

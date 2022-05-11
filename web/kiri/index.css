@@ -1739,7 +1739,14 @@ th, tr, td, label {
     flex-grow: 1;
     font-size: smaller;
 }
-.var-row input {
+.var-area {
+    gap: 3px;
+}
+.var-area label {
+    padding: 2px 0 2px 0;
+    font-size: smaller;
+}
+.var-row input, .var-area input {
     margin-right: 0;
     margin-bottom: 1px;
     padding-bottom: 1px;
