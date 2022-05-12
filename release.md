@@ -35,7 +35,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * multi-body identification and isolation
 * quick add primitives: cube, cylinder
 * control wireframe transparency
-* ~ parameterize png/jpg image import
+* parameterize png image import
 * ~ undo / redo for some operations
 * ~ show camera focal point
 * ~ better Z split snapping and split at defined Z index

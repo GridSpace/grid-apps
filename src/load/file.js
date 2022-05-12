@@ -68,9 +68,9 @@ function load_data(data, file, ext, opt = {}) {
     });
 }
 
-function load_file(file) {
+function load_file(file, opt) {
     if (Array.isArray(file)) {
-        return Promise.all(file.map(file => load_file(file)));
+        return Promise.all(file.map(file => load_file(file, opt)));
     }
     return new Promise((resolve, reject) => {
         if (!file) {
@@ -81,7 +81,7 @@ function load_file(file) {
         let ext = name.toLowerCase().split('.').pop();
         reader.file = file;
         reader.onloadend = function (event) {
-            load_data(event.target.result, name, ext)
+            load_data(event.target.result, name, ext, opt)
                 .then(data => resolve(data))
                 .catch(e => reject(e));
         };

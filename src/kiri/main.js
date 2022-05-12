@@ -511,6 +511,7 @@ gapp.register("kiri.main", [], (root, exports) => {
      * Settings Functions
      ******************************************************************* */
 
+    // convert any image type to png
     function loadImageConvert(res, name) {
         let url = URL.createObjectURL(new Blob([res]));
 

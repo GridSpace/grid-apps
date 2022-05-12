@@ -458,7 +458,57 @@ function space_init(data) {
 
 function load_files(files) {
     mesh.api.log.emit(`loading file...`);
-    load.File.load([...files])
+    let api = mesh.api;
+    let has_image = false;
+    for (let file of files) {
+        has_image = has_image || file.type === 'image/png';
+    }
+    if (has_image) {
+        api.modal.dialog({
+            title: `image options`,
+            body: [ h.div({ class: "image-import" }, [
+                h.div([
+                    h.label("invert pixels"),
+                    h.input({ id: "inv_image", type: "checkbox" })
+                ]),
+                h.div([
+                    h.label("invert alpha"),
+                    h.input({ id: "inv_alpha", type: "checkbox" })
+                ]),
+                h.div([
+                    h.label("border size"),
+                    h.input({ id: "img_border", value: 5, size: 4 })
+                ]),
+                h.div([
+                    h.label("blur pixels"),
+                    h.input({ id: "img_blur", value: 5, size: 4 })
+                ]),
+                h.div([
+                    h.label("base pixels"),
+                    h.input({ id: "img_base", value: 5, size: 4 })
+                ]),
+                h.div([
+                    h.button({ _: "next", onclick() {
+                        let { inv_image, inv_alpha, img_border, img_blur, img_base } = api.modal.bound;
+                        load_files_opt(files, {
+                            inv_image: inv_image.checked,
+                            inv_alpha: inv_alpha.checked,
+                            border: parseInt(img_border.value || 0),
+                            blur: parseInt(img_blur.value || 0),
+                            base: parseInt(img_base.value || 0),
+                        });
+                        api.modal.hide();
+                    } }),
+                ])
+            ]) ]
+        });
+    } else {
+        load_files(files);
+    }
+}
+
+function load_files_opt(files, opt) {
+    load.File.load([...files], opt)
         .then(data => {
             call.space_load(data);
         })

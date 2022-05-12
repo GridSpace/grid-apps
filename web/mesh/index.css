@@ -229,6 +229,25 @@ button:hover {
     text-align: center;
 }
 
+.image-import {
+    flex-direction: column;
+    gap: 3px;
+}
+
+.image-import label {
+    padding-right: 5px;
+    flex-grow: 1;
+}
+
+.image-import input {
+    text-align: center;
+}
+
+.image-import button {
+    margin: 10px 20px 1px 20px;
+    flex-grow: 1;
+}
+
 /** generic modal dialogs **/
 
 #modal_page {
