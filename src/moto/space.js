@@ -36,11 +36,12 @@ gapp.register("moto.space", [], (root, exports) => {
         alignedTracking = false,
         skyAmbient,
         skyGridColor = 0xcccccc,
-        skyMaterial = undefined,
         skyGridMaterial = undefined,
         showSkyGrid = false,
         showPlatform = true,
         hidePlatformBelow = true,
+        showFocus = 0,
+        focalPoint = undefined,
         origin = {x:0, y:0, z: 0},
         trackcam = addLight(0, 0, 0, lightIntensity),
         trackDelta = {x:0, y:0, z:0},
@@ -947,6 +948,25 @@ gapp.register("moto.space", [], (root, exports) => {
      * Space Object
      ******************************************************************* */
 
+    function updateFocus() {
+        if (focalPoint) {
+            Space.scene.remove(focalPoint);
+        }
+        if (showFocus) {
+            let mesh = focalPoint = new THREE.Mesh(
+                new THREE.SphereGeometry(1, 16, 16),
+                new THREE.MeshPhongMaterial({
+                    side: THREE.DoubleSide,
+                    specular: 0x202020,
+                    color: 0xff0000,
+                    shininess: 125
+                })
+            );
+            Space.scene.add(mesh);
+            mesh.position.copy(viewControl.target);
+        }
+    }
+
     function setSky(opt = {}) {
         let { grid, color, gridColor } = opt;
         if (grid) Space.sky.showGrid(grid);
@@ -1147,7 +1167,15 @@ gapp.register("moto.space", [], (root, exports) => {
             getFPS () { return fps },
             getRMS() { return renderTime },
             getFocus() { return viewControl.getTarget() },
-            setFocus(v) { viewControl.setTarget(v); refresh() },
+            setFocus(v) {
+                viewControl.setTarget(v);
+                updateFocus();
+                refresh()
+            },
+            showFocus(ms) {
+                showFocus = ms;
+                updateFocus();
+            },
             setHome(r,u) {
                 home = r || 0;
                 up = u || PI4;
@@ -1256,6 +1284,7 @@ gapp.register("moto.space", [], (root, exports) => {
                     Space.scene.updateFog();
                 }
                 updateLastAction();
+                updateFocus();
             }, (val) => {
                 updateLastAction();
                 if (slider) slider(val);
