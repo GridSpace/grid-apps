@@ -477,15 +477,15 @@ function load_files(files) {
                 ]),
                 h.div([
                     h.label("border size"),
-                    h.input({ id: "img_border", value: 5, size: 4 })
+                    h.input({ id: "img_border", value: 0, size: 4 })
                 ]),
                 h.div([
                     h.label("blur pixels"),
-                    h.input({ id: "img_blur", value: 5, size: 4 })
+                    h.input({ id: "img_blur", value: 0, size: 4 })
                 ]),
                 h.div([
                     h.label("base pixels"),
-                    h.input({ id: "img_base", value: 5, size: 4 })
+                    h.input({ id: "img_base", value: 0, size: 4 })
                 ]),
                 h.div([
                     h.button({ _: "next", onclick() {
