@@ -80,6 +80,7 @@ CAM.init = function(kiri, api) {
         } else {
             UI.label.slice.innerText = LANG.start;
         }
+        $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         // do not persist traces across page reloads
         func.traceClear();
         func.opRender();
