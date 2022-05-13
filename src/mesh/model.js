@@ -115,6 +115,10 @@ mesh.model = class MeshModel extends mesh.object {
         return this.mesh.matrixWorld.elements;
     }
 
+    get matrixWorld() {
+        return this.mesh.matrixWorld;
+    }
+
     // override and translate mesh
     move(x = 0, y = 0, z = 0) {
         let arr = this.attributes.position.array;

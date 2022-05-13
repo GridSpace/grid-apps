@@ -14,7 +14,7 @@
 // dep: load.file
 gapp.main("main.mesh", [], (root) => {
 
-const { Quaternion, Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide } = THREE;
+const { Quaternion, Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide, Vector3 } = THREE;
 const { broker } = gapp;
 const { moto } = root;
 const { space } = moto;
@@ -179,15 +179,9 @@ let split = {
         // hide until first hover
         obj.visible = false;
         // enable temp mode
-        let state = split.state = { button, obj, zlist:[] };
+        let state = split.state = { button, obj };
         let models = state.models = api.selection.models();
         let meshes = models.map(m => m.mesh);
-        // get z list for snapping
-        Promise.all(models.map(m => m.zlist(3))).then(zs => {
-            for (let z of zs.flat()) {
-                state.zlist.addOnce(z);
-            }
-        });
         // for split and lay flat modes
         space.mouse.onHover((int, event, ints) => {
             if (!event) {
@@ -199,19 +193,13 @@ let split = {
                 return;
             }
             let { dim, mid } = util.bounds(meshes);
-            let { x, y, z } = int.point;
-            // snap to zlist when shift pressed
-            let { zlist } = state;
+            let { point, face, object } = int;
+            let { x, y, z } = point;
+
             mat.color.set(0x5555aa);
             obj.visible = true;
-            if (event.shiftKey && zlist.length) {
-                for (let v of zlist) {
-                    if (Math.abs(v - y) < 0.1) {
-                        mat.color.set(0xaa5555);
-                        y = v;
-                        break;
-                    }
-                }
+            if (event.shiftKey) {
+                y = split.closestZ(y, object, face).y;
             }
             // y is z in model space for the purposes of a split
             state.plane = { z: y };
@@ -223,7 +211,7 @@ let split = {
 
     select() {
         let { log } = mesh.api;
-        let { models, plane, zlist } = split.state;
+        let { models, plane } = split.state;
         log.emit(`splitting ${models.length} model(s) at ${plane.z.round(3)}`).pin();
         Promise.all(models.map(m => m.split(plane))).then(models => {
             mesh.api.selection.set(models);
@@ -240,6 +228,18 @@ let split = {
         space.mouse.onHover(undefined);
         temp_mode = split.state = undefined;
         mesh.api.selection.update();
+    },
+
+    closestZ(z, object, face) {
+        let { position } = object.geometry.attributes;
+        let matrix = object.matrixWorld;
+        let v0 = new Vector3(position.getX(face.a), position.getY(face.a), position.getZ(face.a)).applyMatrix4(matrix);
+        let v1 = new Vector3(position.getX(face.b), position.getY(face.b), position.getZ(face.b)).applyMatrix4(matrix);
+        let v2 = new Vector3(position.getX(face.c), position.getY(face.c), position.getZ(face.c)).applyMatrix4(matrix);
+        v0._d = Math.abs(v0.y - z);
+        v1._d = Math.abs(v1.y - z);
+        v2._d = Math.abs(v2.y - z);
+        return [ v0, v1, v2 ].sort((a,b) => a._d - b._d)[0];
     }
 }
 
@@ -503,7 +503,7 @@ function load_files(files) {
             ]) ]
         });
     } else {
-        load_files(files);
+        load_files_opt(files);
     }
 }
 

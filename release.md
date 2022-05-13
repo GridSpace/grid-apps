@@ -36,9 +36,9 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * quick add primitives: cube, cylinder
 * control wireframe transparency
 * parameterize png image import
+* code added to show camera focal point
 * ~ undo / redo for some operations
-* ~ show camera focal point
-* ~ better Z split snapping and split at defined Z index
+* better Z split snapping using vertex closest to mouse
 
 
 # Release 3.3 (2022-04-01)
