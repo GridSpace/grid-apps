@@ -479,7 +479,6 @@ class OpOutline extends CamOp {
         if (op.top) {
             let first = slices[0];
             for (let z of indices.filter(v => v >= zMax)) {
-                console.log({synth: z});
                 let add = first.clone(true);
                 add.tops.forEach(top => top.poly.setZ(add.z));
                 add.shadow = first.shadow.clone(true);
