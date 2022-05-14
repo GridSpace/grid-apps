@@ -26,6 +26,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add FDM gcode feature macros for transitions
 * add FDM option to alternate shell winding direction
 * add FDM print time estimate fudge factor for devices
+* add `clear top` option to CNC outline operation
 
 ## Mesh:Tool (1.2.0)
 

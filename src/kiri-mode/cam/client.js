@@ -962,7 +962,8 @@ CAM.init = function(kiri, api) {
         omitthru: 'camOutlineOmitThru',
         outside:  'camOutlineOut',
         inside:   'camOutlineIn',
-        wide:     'camOutlineWide'
+        wide:     'camOutlineWide',
+        top:      'camOutlineTop'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
@@ -976,7 +977,8 @@ CAM.init = function(kiri, api) {
         inside:   UC.newBoolean(LANG.co_olin_s, undefined, {title:LANG.co_olin_l, show:(op) => { return !op.inputs.outside.checked }}),
         outside:  UC.newBoolean(LANG.co_olot_s, undefined, {title:LANG.co_olot_l, show:(op) => { return !op.inputs.inside.checked }}),
         omitthru: UC.newBoolean(LANG.co_omit_s, undefined, {title:LANG.co_omit_l, xshow:(op) => { return op.inputs.outside.checked }}),
-        wide:     UC.newBoolean(LANG.co_wide_s, undefined, {title:LANG.co_wide_l, show:(op) => { return !op.inputs.inside.checked }})
+        wide:     UC.newBoolean(LANG.co_wide_s, undefined, {title:LANG.co_wide_l, show:(op) => { return !op.inputs.inside.checked }}),
+        top:      UC.newBoolean(LANG.co_clrt_s, undefined, {title:LANG.co_clrt_l}),
     };
 
     createPopOp('contour', {

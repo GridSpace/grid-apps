@@ -420,6 +420,7 @@ class OpOutline extends CamOp {
         let { op, state } = this;
         let { settings, widget, slicer, sliceAll, tshadow, thruHoles, unsafe, color } = state;
         let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs, cutPolys } = state;
+        let { zMax, ztOff } = state;
         let { process, stock } = settings;
 
         if (op.down <= 0) {
@@ -431,7 +432,11 @@ class OpOutline extends CamOp {
 
         let shadow = [];
         let slices = [];
-        let indices = slicer.interval(op.down, { down: true, min: zBottom, fit: true, off: 0.01 });
+        let intopt = {
+            down: true, min: zBottom, fit: true, off: 0.01,
+            max: op.top ? zMax + ztOff : undefined
+        };
+        let indices = slicer.interval(op.down, intopt);
         let trueShadow = process.camTrueShadow === true;
         // shift out first (top-most) slice
         indices.shift();
@@ -469,6 +474,19 @@ class OpOutline extends CamOp {
             progress((index / total) * 0.5);
         }, genso: true });
         shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
+
+        // start slices at top of stock when `clear top` enabled
+        if (op.top) {
+            let first = slices[0];
+            for (let z of indices.filter(v => v >= zMax)) {
+                console.log({synth: z});
+                let add = first.clone(true);
+                add.tops.forEach(top => top.poly.setZ(add.z));
+                add.shadow = first.shadow.clone(true);
+                add.z = z;
+                slices.splice(0,0,add);
+            }
+        }
 
         // extend cut thru (only when z bottom is 0)
         if (zThru) {
