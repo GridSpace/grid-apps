@@ -10,8 +10,12 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * ~ refactor vertex replacement and widget update matrix tracking
 * ~ refactor cnc to use core slicer engine
 
+## Mesh:Tool (1.3.0)
 
-# Release 3.4 (2022-05-14 est)
+* ~ undo / redo for some operations
+
+
+# Release 3.4 (2022-05-14)
 
 ## Kiri:moto
 
@@ -38,7 +42,6 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * quick add primitives: cube, cylinder
 * control wireframe transparency
 * parameterize png image import
-* ~ undo / redo for some operations
 * code added to show camera focal point
 * better Z split snapping using vertex closest to mouse
 
