@@ -27,6 +27,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add FDM option to alternate shell winding direction
 * add FDM print time estimate fudge factor for devices
 * add `clear top` option to CNC outline operation
+* add FDM layer retraction as a range option
 
 ## Mesh:Tool (1.2.0)
 
@@ -37,8 +38,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * quick add primitives: cube, cylinder
 * control wireframe transparency
 * parameterize png image import
-* code added to show camera focal point
 * ~ undo / redo for some operations
+* code added to show camera focal point
 * better Z split snapping using vertex closest to mouse
 
 

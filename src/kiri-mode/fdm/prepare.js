@@ -36,7 +36,7 @@ FDM.prepare = function(widgets, settings, update) {
 
     let { device, process, controller, bounds, mode } = settings,
         { sliceHeight, firstSliceHeight, firstLayerRate } = process,
-        { outputSeekrate, outputLayerRetract, outputDraftShield, outputPurgeTower } = process,
+        { outputSeekrate, outputDraftShield, outputPurgeTower } = process,
         { bedWidth, bedDepth, filamentSource } = device,
         { lineType, danger } = controller,
         printPoint = newPoint(0,0,0),
@@ -588,7 +588,7 @@ FDM.prepare = function(widgets, settings, update) {
             lastPoly = slice.lastPoly;
             lastLayer = layerout;
 
-            if (outputLayerRetract && layerout.length) {
+            if (params.outputLayerRetract && layerout.length) {
                 layerout.last().retract = true;
             }
         }

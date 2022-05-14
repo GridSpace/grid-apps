@@ -76,6 +76,7 @@ FDM.init = function(kiri, api) {
         "outputRetractDist": LANG.ad_rdst_s,
         "outputRetractSpeed": LANG.outputRetractSpeed,
         "outputRetractDwell": LANG.ad_rdwl_s,
+        "outputLayerRetract": LANG.ad_lret_s
     };
 
     for (let key of Object.keys(rangeVars)) {
