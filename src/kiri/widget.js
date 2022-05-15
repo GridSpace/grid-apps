@@ -127,7 +127,6 @@ class Widget {
         const widget = this;
         index().put('ws-save-'+this.id, {
             geo: widget.getGeoVertices(false),
-            ind: widget.getGeoIndices(),
             track: widget.track,
             group: this.group.id,
             meta: this.meta,
@@ -156,14 +155,19 @@ class Widget {
      */
     loadVertices(data, options = { index: false }) {
         let vertices,
-            indices,
             autoscale = false;
         if (ArrayBuffer.isView(data) || typeof(data) != 'object') {
             vertices = data;
         } else {
             vertices = data.vertices;
-            indices = data.indices;
+            throw "deprecated vertex data format";
         }
+        // will not serialize into indexeddb -- need a performance sensitive workaround
+        // if (window.SharedArrayBuffer) {
+        //     let newvert = new Float32Array(new SharedArrayBuffer(vertices.buffer.byteLength));
+        //     newvert.set(vertices);
+        //     vertices = newvert;
+        // }
         switch (typeof(autoscale)) {
             case 'boolean':
                 autoscale = options;
@@ -188,25 +192,17 @@ class Widget {
                 }
             }
         }
-        if (options.index && !indices) {
-            let mesh = new Mesh({vertices});
-            vertices = mesh.vertices.toFloat32();
-            indices = Uint32Array.from(mesh.faces.map(v => v/3));
-        }
         if (this.mesh) {
             let geo = this.mesh.geometry;
-            if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             geo.setAttribute('normal', undefined);
             geo.attributes.position.needsUpdate = true;
-            // geo.computeFaceNormals();
             geo.computeVertexNormals();
             this.meta.vertices = vertices.length / 3;
             this.points = null;
             return this;
         } else {
             let geo = new THREE.BufferGeometry();
-            if (indices) geo.setIndex(new THREE.BufferAttribute(indices, 1));
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
             geo.setAttribute('normal', undefined);
             this.meta.vertices = vertices.length / 3;
@@ -224,16 +220,6 @@ class Widget {
         if (this.mesh && this.mesh.geometry) {
             // this fixes ray intersections after the mesh is modified
             this.mesh.geometry.boundingSphere = null;
-        }
-    }
-
-    indexGeo() {
-        let indices = this.getGeoIndices();
-        if (!indices) {
-            let mesh = new Mesh({vertices: this.getGeoVertices()});
-            vertices = mesh.vertices.toFloat32();
-            indices = Uint32Array.from(mesh.faces.map(v => v/3));
-            this.loadData({vertices, indices});
         }
     }
 
@@ -633,7 +619,6 @@ class Widget {
             arr[i*3+8] = z;
         }
         pos.needsUpdate = true;
-        // geo.computeFaceNormals();
         geo.computeVertexNormals();
         ot.mirror = !ot.mirror;
         this.setModified();
@@ -659,11 +644,6 @@ class Widget {
         } else {
             return pos;
         }
-    }
-
-    getGeoIndices() {
-        let indices = this.mesh.geometry.index;
-        return indices ? indices.array : undefined;
     }
 
     iterPoints() {
@@ -979,13 +959,12 @@ Widget.loadFromState = function(id, ondone, move) {
     index().get('ws-save-'+id, function(data) {
         if (data) {
             let vertices = data.geo || data,
-                indices = data.ind || undefined,
                 track = data.track || undefined,
                 group = data.group || id,
                 anno = data.anno || undefined,
                 widget = newWidget(id, Group.forid(group)),
                 meta = data.meta || widget.meta,
-                ptr = widget.loadVertices({vertices, indices});
+                ptr = widget.loadVertices(vertices);
             widget.meta = meta;
             widget.anno = anno || widget.anno;
             // restore widget position if specified
