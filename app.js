@@ -722,7 +722,9 @@ function ifModifiedDate(req) {
 function addCorsHeaders(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Headers', 'X-Moto-Ajax, Content-Type');
-    res.setHeader("Access-Control-Allow-Origin", req.headers['origin'] || '*');
+    res.setHeader('Access-Control-Allow-Origin', req.headers['origin'] || '*');
+    res.setHeader("Cross-Origin-Opener-Policy", 'same-origin');
+    res.setHeader("Cross-Origin-Embedder-Policy", 'require-corp');
     res.setHeader("Allow", "GET,POST,OPTIONS");
 }
 
@@ -799,6 +801,7 @@ function cookieValue(cookie,key) {
 
 function rewriteHtmlVersion(req, res, next) {
     if (["/kiri/","/mesh/","/meta/"].indexOf(req.app.path) >= 0) {
+        addCorsHeaders(req, res);
         let real_write = res.write;
         let real_end = res.end;
         let mlen = '{{version}}'.length;
