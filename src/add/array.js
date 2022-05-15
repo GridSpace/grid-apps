@@ -218,7 +218,8 @@ String.prototype.reverse = function() {
 };
 
 Object.clone = function(o) {
-    return o ? JSON.parse(JSON.stringify(o)) : o;
+    return structuredClone(o);
+    // return o ? JSON.parse(JSON.stringify(o)) : o;
 };
 
 Object.toArray = function(o) {

@@ -172,19 +172,6 @@ let model = {
         return subs.toFloat32();
     },
 
-    // used to generate a list for split snapping
-    zlist(data) {
-        let { id, matrix, round } = data;
-        let zlist = {};
-        let pos = translate_encode(id, matrix);
-        for (let i=0, l=pos.length; i<l; ) {
-            let v1 = new Vector3(pos[i++], pos[i++], pos[i++]);
-            let z = v1.z.round(round || 2);
-            zlist[z] = '';
-        }
-        return Object.keys(zlist).map(v => parseFloat(v));
-    },
-
     // split a model along an axis at a given point
     // return two arrays of vertices for each resulting object
     split(data) {

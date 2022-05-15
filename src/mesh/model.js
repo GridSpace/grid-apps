@@ -449,15 +449,6 @@ mesh.model = class MeshModel extends mesh.object {
         });
     }
 
-    zlist(round = 2) {
-        return new Promise((resolve,reject) => {
-            let { id, matrix } = this;
-            worker.model_zlist({id, matrix, round}).then(data => {
-                resolve(data);
-            });
-        });
-    }
-
     // release from a group but remain in memory and storage
     // so it can be re-assigned to another group
     ungroup() {

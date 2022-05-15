@@ -2,6 +2,9 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
+* `F` experiment with structuredClone(), SharedArrayBuffer, createImageBitmap()
+* `F` test #private fields, array.at() for negative indices
+
 # Kiri:Moto
 
 * `B` origin (and bed size) bug (Onshape?) when switching device modes
