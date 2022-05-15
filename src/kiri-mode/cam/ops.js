@@ -478,7 +478,12 @@ class OpOutline extends CamOp {
         // start slices at top of stock when `clear top` enabled
         if (op.top) {
             let first = slices[0];
+            let zlist = slices.map(s => s.z);
+            console.log({zlist});
             for (let z of indices.filter(v => v >= zMax).reverse()) {
+                if (zlist.contains(z)) {
+                    continue;
+                }
                 let add = first.clone(true);
                 add.tops.forEach(top => top.poly.setZ(add.z));
                 add.shadow = first.shadow.clone(true);
