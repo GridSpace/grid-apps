@@ -307,11 +307,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     clearz = maxz;
                 // up if any point between higher than start/outline, go up first
                 if (mustGoUp) {
-                    layerPush(lastPoint.clone().setZ(clearz), 0, 0, tool.getNumber());
+                    layerPush(lastPoint.clone().setZ(clearz + ztOff), 0, 0, tool.getNumber());
                 }
                 // move to point above target point
                 if (mustGoUp || point.z < maxz) {
-                    layerPush(point.clone().setZ(clearz), 0, 0, tool.getNumber());
+                    layerPush(point.clone().setZ(clearz + ztOff), 0, 0, tool.getNumber());
                     // new pos for plunge calc
                     deltaXY = 0;
                 }

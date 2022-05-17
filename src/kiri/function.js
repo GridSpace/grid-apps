@@ -239,7 +239,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
     const { device, process, controller } = settings;
 
     if (complete.preview === feature.pmode) {
-        if (device.extruders.length > 1) {
+        if (device.extruders && device.extruders.length > 1) {
             if (++feature.pmode > 2) {
                 feature.pmode = 1;
             }
