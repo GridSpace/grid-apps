@@ -249,7 +249,7 @@ class OpRough extends CamOp {
 
             // inset offset array by 1/2 diameter then by tool overlap %
             offset = POLY.offset(nest, [-(toolDiam / 2 + roughLeave), -toolDiam * op.step], {
-                minArea: 0.1,
+                minArea: Math.min(0.01, toolDiam * op.step / 4),
                 z: slice.z,
                 count: 999,
                 flat: true,
