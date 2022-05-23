@@ -74,7 +74,7 @@ FDM.init = function(kiri, api) {
         "outputBedTemp": LANG.ou_bedd_s,
         "outputFanSpeed": LANG.ou_fans_s,
         "outputRetractDist": LANG.ad_rdst_s,
-        "outputRetractSpeed": LANG.outputRetractSpeed,
+        "outputRetractSpeed": LANG.ad_rrat_s,
         "outputRetractDwell": LANG.ad_rdwl_s,
         "outputLayerRetract": LANG.ad_lret_s
     };
