@@ -74,6 +74,7 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` animate only selected range (as an option)
 * `F` add `plunge max` to contouring that can override z feed limit
 * `F` roughing flats should be constrained to flat region, not create a layer
 * `F` limit cut depth to flute length of selected tool (or warn)

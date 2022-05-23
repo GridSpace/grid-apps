@@ -7,8 +7,10 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 ## Kiri:moto
 
+* fix potential crash into stock during moves when parts are z bottom anchored
 * ~ refactor vertex replacement and widget update matrix tracking
 * ~ refactor cnc to use core slicer engine
+* ~ add cnc pause operator with control of park position
 
 ## Mesh:Tool (1.3.0)
 
