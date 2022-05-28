@@ -93,9 +93,7 @@ function init(kiri, api) {
 }
 
 function saveFile(api, file, ext) {
-    saveAs(
-        new Blob([file], { type: "application/octet-stream" }),
-        $('print-filename').value + ext);
+    api.util.download(file, $('print-filename').value + ext);
     api.modal.hide();
 }
 
