@@ -1005,10 +1005,10 @@ class OpPocket extends CamOp {
                 }
             }
         }
-        let surfaces = op.surfaces[widget.id];
+        let surfaces = op.surfaces[widget.id] || [];
         let vert = widget.getVertices().array.map(v => v.round(4));
         let prog = 0, pinc= 1 / surfaces.length;
-        for (let surface of surfaces || []) {
+        for (let surface of surfaces) {
             let outline = [];
             let faces = CAM.surface_find(widget, [surface]);
             let zmin = Infinity;
@@ -1030,7 +1030,7 @@ class OpPocket extends CamOp {
             if (false) newSliceOut(zmin).output()
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)
-            clearZ(outline, zmin, down);
+            clearZ(outline, zmin + 0.0001, down);
             progress(prog += pinc, "pocket");
         }
     }
