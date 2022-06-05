@@ -15,7 +15,47 @@ if (load.File) return;
 // dep: load.png
 gapp.register('load.file', []);
 
+const types = {
+    stl(data, file, resolve, reject) {
+        resolve([{
+            mesh: new load.STL().parse(data), file
+        }]);
+    },
+
+    obj(data, file, resolve, reject) {
+        resolve(load.OBJ.parse(data).map(m => {
+            return { mesh: m.toFloat32(), file: nameOf(file, m.name, 1) }
+        }));
+    },
+
+    "3mf"(data, file, resolve, reject) {
+        let i = 1;
+        load.TMF.parseAsync(data).then((meshes) => {
+            resolve(meshes.map(m => {
+                return { mesh: m.faces.toFloat32(), file: nameOf(file, m.name, i++) }
+            }));
+        });
+    },
+
+    svg(data, file, resolve, reject) {
+        resolve(load.SVG.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
+    },
+
+    png(data, file, resolve, reject) {
+        load.PNG.parse(data, {
+            ...opt,
+            done(data) {
+                resolve({ mesh: data, file });
+            }
+        });
+    }
+};
+
+const as_buffer = [ "stl", "png", "3mf" ];
+
 load.File = {
+    types,
+    as_buffer,
     load_data,
     load: load_file
 };
@@ -31,39 +71,11 @@ function nameOf(file, part, i) {
 function load_data(data, file, ext, opt = {}) {
     ext = ext || name.toLowerCase().split('.').pop();
     return new Promise((resolve, reject) => {
-        let i = 1;
-        switch (ext) {
-            case "stl":
-                resolve([{
-                    mesh: new load.STL().parse(data), file
-                }]);
-                break;
-            case "obj":
-                resolve(load.OBJ.parse(data).map(m => {
-                    return { mesh: m.toFloat32(), file: nameOf(file, m.name, i++) }
-                }));
-                break;
-            case "3mf":
-                load.TMF.parseAsync(data).then((meshes) => {
-                    resolve(meshes.map(m => {
-                        return { mesh: m.faces.toFloat32(), file: nameOf(file, m.name, i++) }
-                    }));
-                });
-                break;
-            case "svg":
-                resolve(load.SVG.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
-                break;
-            case "png":
-                load.PNG.parse(data, {
-                    ...opt,
-                    done(data) {
-                        resolve({ mesh: data, file });
-                    }
-                });
-                break;
-            default:
-                reject(`unknown file type: "${ext}" from ${file}`);
-                break;
+        let fn = types[ext];
+        if (fn) {
+            fn(data, file, resolve, reject);
+        } else {
+            reject(`unknown file type: "${ext}" from ${file}`);
         }
     });
 }
@@ -85,7 +97,7 @@ function load_file(file, opt) {
                 .then(data => resolve(data))
                 .catch(e => reject(e));
         };
-        if (["stl","png","3mf"].indexOf(ext) >= 0) {
+        if (as_buffer.indexOf(ext) >= 0) {
             reader.readAsArrayBuffer(reader.file);
         } else {
             reader.readAsBinaryString(reader.file);

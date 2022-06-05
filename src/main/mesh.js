@@ -522,7 +522,8 @@ function load_files_opt(files, opt) {
 
 // add object loader
 function space_load(data) {
-    mesh.api.group.new(data.flat().map(el => new mesh.model(el)))
+    if (data && data.length && (data = data.flat()).length)
+    mesh.api.group.new(data.map(el => new mesh.model(el)))
         .promote()
         .focus();
 }

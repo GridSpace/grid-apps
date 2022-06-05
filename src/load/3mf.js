@@ -15,19 +15,54 @@ load.TMF = {
     parseAsync
 };
 
+load.XML = {
+    query
+};
+
 let { BufferAttribute, Matrix4 } = THREE;
 
-function query(node, path, fn) {
-    let collect = false;
-    let match = path[0];
-    if (match[0] === '+') {
-        match = match.slice(1);
-        collect = true;
+// simple query api for map structures
+function query_map(node, path, fn) {
+    let collect = {};
+    let match = path[0].split('|').map(key => {
+        if (key[0] === '+') {
+            key = key.slice(1);
+            collect[key] = true;
+        }
+        return key;
+    });
+    for (let [tag, value] of Object.entries(node)) {
+        if (!Array.isArray(value)) {
+            value = [ value ];
+        }
+        if (match.indexOf(tag) >= 0) {
+            for (let node of value) {
+                if (collect[tag]) {
+                    fn(tag, node);
+                }
+                if (path.length > 1) {
+                    query(node, path.slice(1), fn);
+                }
+            }
+        }
     }
+}
+
+// simple query api for xml structures
+function query(node, path, fn) {
+    let collect = {};
+    let match = path[0].split('|').map(key => {
+        if (key[0] === '+') {
+            key = key.slice(1);
+            collect[key] = true;
+        }
+        return key;
+    });
     for (let child of [...node.childNodes]) {
-        if (child.tagName === match) {
-            if (collect) {
-                fn(match, child);
+        let { tagName } = child;
+        if (match.indexOf(tagName) >= 0) {
+            if (collect[tagName]) {
+                fn(tagName, child);
             }
             if (path.length > 1) {
                 query(child, path.slice(1), fn);

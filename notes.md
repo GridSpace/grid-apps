@@ -74,6 +74,8 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` add pause operation with optional gcode
+* `F` add option for op-major ordering (instead of part major)
 * `F` animate only selected range (as an option)
 * `F` add `plunge max` to contouring that can override z feed limit
 * `F` roughing flats should be constrained to flat region, not create a layer
