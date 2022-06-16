@@ -625,7 +625,7 @@ FDM.prepare = function(widgets, settings, update) {
 
         // if a declared extruder isn't used in a layer, use selected
         // extruder to fill the relevant purge blocks for later support
-        track.slice().forEach(ext => {
+        if (lastOut) track.slice().forEach(ext => {
             printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt, lastOffset);
         });
 
