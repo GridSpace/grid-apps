@@ -12,6 +12,7 @@
 // dep: mesh.model
 // dep: mesh.build
 // dep: load.file
+// use: geo.polygons
 gapp.main("main.mesh", [], (root) => {
 
 const { Quaternion, Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide, Vector3 } = THREE;

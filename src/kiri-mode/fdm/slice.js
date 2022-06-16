@@ -283,6 +283,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             for (let i=0; i<zi.length; i++) {
                 zi[i] = (zi[i] - zh[i] / 2).round(3);
             }
+            console.log({zi});
             return zi;
         },
         // slicer function (worker local or minion distributed)
@@ -818,7 +819,7 @@ function doRender(slice, isSynth, params, devel) {
     });
 
     if (slice.xray) {
-        const color = [ 0xff0000, 0x00aa00, 0x0000ff, 0xaaaa00, 0xff00ff ];
+        const color = [ 0xff0000, 0x00aa00, 0x0000ff, 0xaaaa00, 0xff00ff, 0x0 ];
         if (slice.lines) {
             slice.lines.forEach((line, i) => {
                 const group = i % 5;

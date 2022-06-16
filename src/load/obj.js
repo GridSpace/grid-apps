@@ -59,7 +59,6 @@ function parse(text) {
                 break;
         }
     }
-
     return objs;
 }
 

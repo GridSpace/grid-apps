@@ -7,7 +7,7 @@
 // use: ext.clip2
 // use: geo.slope
 // use: geo.polygon
-gapp.register("base.polygons", [], (root, exports) => {
+gapp.register("geo.polygons", [], (root, exports) => {
 
 const { base } = root;
 const { util, config, newPoint } = base;
@@ -388,7 +388,7 @@ function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
          }
      }
 
-     let out = polys.slice(), i, j, union, uset = [];
+     let out = polys.slice(), i, j, union, uset = [], a, b;
 
      outer: for (i=0; i<out.length; i++) {
          if (!out[i]) continue;
@@ -396,12 +396,19 @@ function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
              if (!out[j]) continue;
              union = out[i].union(out[j], minarea, all);
              if (union && union.length) {
+                 if (opt.onmerge) {
+                     a = out[i];
+                     b = out[j];
+                 }
                  out[i] = null;
                  out[j] = null;
                  if (all) {
                      out.appendAll(union);
                  } else {
                      out.push(union);
+                 }
+                 if (opt.onmerge) {
+                     opt.onmerge(a, b, union);
                  }
                  continue outer;
              }

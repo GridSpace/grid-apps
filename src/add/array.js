@@ -35,6 +35,12 @@ AP.peek = function() {
     return this[this.length - 1];
 };
 
+AP.drop = function(pre = 0, post = 0) {
+    while (pre-- > 0) this.shift();
+    while (post-- > 0) this.pop();
+    return this;
+};
+
 /**
  * allow chaining of push() calls
  */

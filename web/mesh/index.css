@@ -432,6 +432,7 @@ button.selected:hover {
 
 #modes {
     position: absolute;
+    gap: 2px;
     top: 0;
     left: 50%;
     transform: translateX(-50%);

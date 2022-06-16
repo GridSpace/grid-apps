@@ -1597,18 +1597,17 @@ class Polygon {
      * @param {Polygon} poly clipping mask
      * @returns {?Polygon[]}
      */
-    mask(poly, nullOnEquiv) {
+    mask(poly, nullOnEquiv, minarea) {
         let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
             clip = new clib.Clipper(),
             ctre = new clib.PolyTree(),
             sp1 = this.toClipper(),
             sp2 = poly.toClipper();
-
         clip.AddPaths(sp1, ptyp.ptSubject, true);
         clip.AddPaths(sp2, ptyp.ptClip, true);
 
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            poly = POLY.fromClipperTree(ctre, poly.getZ());
+            poly = POLY.fromClipperTree(ctre, this.getZ(), undefined, undefined, minarea);
             poly.forEach(p => {
                 p.fillang = fillang;
             })
@@ -1778,6 +1777,29 @@ class Polygon {
         }
 
         return null;
+    }
+
+    annotate(obj = {}) {
+        Object.assign(this, obj);
+        return this;
+    }
+
+    extrude(z = 1) {
+        let poly = this.clone().setClockwise();
+        let faces = [];
+        let points = poly.points;
+        let length = points.length;
+        for (let i=0; i<length; i++) {
+            let p0 = points[i];
+            let p1 = points[(i + 1) % length];
+            faces.push(p0.x, p0.y, p0.z);
+            faces.push(p1.x, p1.y, p0.z);
+            faces.push(p1.x, p1.y, p1.z + z);
+            faces.push(p0.x, p0.y, p0.z);
+            faces.push(p1.x, p1.y, p1.z + z);
+            faces.push(p0.x, p0.y, p0.z + z);
+        }
+        return faces;
     }
 }
 
