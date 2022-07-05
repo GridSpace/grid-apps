@@ -50,6 +50,7 @@ const devel = {
         let base = (proc.firstSliceHeight || size);
         layers = Array.isArray(layers) ? layers : [ layers ];
         proc.xray = layers.map(l => raw ? l : base + l * size - size / 2);
+        proc.xrayi = layers.slice();
         api.function.slice();
     }
 };

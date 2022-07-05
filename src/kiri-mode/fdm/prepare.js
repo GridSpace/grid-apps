@@ -1120,6 +1120,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
         let first = points[0];
         let last = first;
+        if (startPoint && startPoint.distTo2D(first) > thinWall && intersectsTop(startPoint, first)) {
+            retract();
+        }
         print.addOutput(preout, first, 0, moveSpeed, extruder);
         for (let p of order) {
             let dist = last ? last.distTo2D(p) : 0;
@@ -1128,11 +1131,12 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 print.addOutput(preout, p, 0, moveSpeed, extruder);
             }
             print.addOutput(preout, p, 1, fillSpeed, extruder);
-            last = p;
+            startPoint = last = p;
         }
         // close a circle
         if (last && last.distTo2D(first) <= thinWall) {
             print.addOutput(preout, first, 1, fillSpeed, extruder);
+            startPoint = first;
         }
     }
 

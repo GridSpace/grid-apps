@@ -283,7 +283,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             for (let i=0; i<zi.length; i++) {
                 zi[i] = (zi[i] - zh[i] / 2).round(3);
             }
-            console.log({zi});
             return zi;
         },
         // slicer function (worker local or minion distributed)
@@ -304,6 +303,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             slice.height = heights[slice.index];
             slice.clips = clip;
             if (process.xray) {
+                slice.index = process.xrayi.shift();
                 slice.lines = lines;
                 slice.groups = groups;
                 slice.xray = process.xray;
@@ -441,7 +441,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             let range = slice.params;
             let spaceMult = slice.index === 0 ? process.firstLayerLineMult || 1 : 1;
             let isBottom = slice.index < process.sliceBottomLayers;
-            let isTop = slice.index > slices.length - process.sliceTopLayers - 1;
+            let isTop = process.sliceTopLayers && slice.index > slices.length - process.sliceTopLayers - 1;
             let isDense = range.sliceFillSparse > 0.995;
             let isSolid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
             let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
