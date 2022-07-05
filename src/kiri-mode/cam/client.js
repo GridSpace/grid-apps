@@ -95,6 +95,7 @@ CAM.init = function(kiri, api) {
     });
 
     api.event.on("settings.saved", (settings) => {
+        validateTools(settings.tools);
         current = settings;
         let proc = settings.process;
         let hasTabs = false;
@@ -117,6 +118,7 @@ CAM.init = function(kiri, api) {
     api.event.on("settings.load", (settings) => {
         func.opRender();
         if (!isCamMode) return;
+        validateTools(settings.tools);
         restoreTabs(api.widgets.all());
     });
 
@@ -1225,6 +1227,23 @@ function unselectTraces(widget, skip) {
                 func.traceToggle(mesh, skip);
             }
         });
+    }
+}
+
+function validateTools(tools) {
+    if (tools) {
+        let max = 0;
+        for (let t of tools) {
+            if (Number.isInteger(t.number)) {
+                max = Math.max(max, t.number);
+            }
+        }
+        for (let t of tools) {
+            if (!Number.isInteger(t.number)) {
+                t.number = ++max;
+                console.log('added tool #', t);
+            }
+        }
     }
 }
 
