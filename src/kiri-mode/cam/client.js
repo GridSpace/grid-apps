@@ -990,6 +990,7 @@ CAM.init = function(kiri, api) {
         rate:      'camContourSpeed',
         angle:     'camContourAngle',
         tolerance: 'camTolerance',
+        flatness:  'camFlatness',
         curves:    'camContourCurves',
         inside:    'camContourIn',
         axis:      'X'
@@ -1001,7 +1002,8 @@ CAM.init = function(kiri, api) {
         step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
         rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         angle:     UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90)}),
-        tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true}),
+        flatness:  UC.newInput(LANG.ou_flat_s, {title:LANG.ou_flat_l, convert:UC.toFloat, bound:UC.bound(0,1.0), units:true, round:4}),
+        tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
         sep:       UC.newBlank({class:"pop-sep"}),
         curves:    UC.newBoolean(LANG.cf_curv_s, undefined, {title:LANG.cf_curv_l}),
         inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l})

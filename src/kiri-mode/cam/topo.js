@@ -31,6 +31,7 @@ class Topo {
             contourY = axis === "y",
             bounds = widget.getBoundingBox().clone(),
             tolerance = contour.tolerance,
+            flatness = contour.flatness || 0.005,
             proc = settings.process,
             shadow = tshadow,
             minX = bounds.min.x,
@@ -145,7 +146,7 @@ class Topo {
         function push_point(x,y,z) {
             const newP = newPoint(x,y,z);
             // todo: merge co-linear, not just co-planar
-            if (lastP && Math.abs(lastP.z - z) < 0.005) {
+            if (lastP && Math.abs(lastP.z - z) < flatness) {
                 if (curvesOnly) {
                     end_poly();
                 } else {
