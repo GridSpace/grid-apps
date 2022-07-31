@@ -714,7 +714,7 @@ function platformLoadFiles(files, group) {
                     load_dec();
                 };
                 if (objs.length > 1 && !group) {
-                    UC.confirm('group objects?').then(ok => {
+                    api.uc.confirm('group objects?').then(ok => {
                         if (ok) {
                             group = [];
                         }
