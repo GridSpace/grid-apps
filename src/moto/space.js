@@ -9,6 +9,8 @@
 gapp.register("moto.space", [], (root, exports) => {
 
     const { moto } = root;
+    const { WebGLRenderer, WebGL1Renderer } = THREE;
+    const nav = navigator;
 
     let WIN = window,
         DOC = document,
@@ -1254,7 +1256,11 @@ gapp.register("moto.space", [], (root, exports) => {
             domelement.style.width = width();
             domelement.style.height = height();
 
-            renderer = new THREE.WebGLRenderer({
+            // workaround for https://bugs.chromium.org/p/chromium/issues/detail?id=1321452
+            let Renderer = nav.platform === 'MacIntel' &&
+                nav.vendor.indexOf('Google') >= 0 ? WebGL1Renderer : WebGLRenderer;
+
+            renderer = new Renderer({
                 antialias: antiAlias,
                 preserveDrawingBuffer: true,
                 logarithmicDepthBuffer: true
@@ -1370,7 +1376,7 @@ gapp.register("moto.space", [], (root, exports) => {
 
             const ctx = renderer.getContext();
             const ext = ctx.getExtension('WEBGL_debug_renderer_info');
-            const nav = navigator;
+
             Space.info = {
                 ver: ctx.getParameter(ctx.VERSION),
                 ven: ctx.getParameter(ctx.VENDOR),
