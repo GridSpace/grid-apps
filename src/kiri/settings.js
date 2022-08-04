@@ -592,8 +592,9 @@ function settingsImport(data, ask) {
 }
 
 function settingsImportUrl(url, ask) {
-    fetch(url).then(r => r.arrayBuffer()).then(a => {
-        settingsImportZip(a, ask);
+    const kmz = url.endsWith(".kmz");
+    fetch(url).then(r => kmz ? r.arrayBuffer() : r.text()).then(a => {
+        kmz ? settingsImportZip(a, ask) : settingsImport(a, ask);
     }).catch(error => {
         console.log({workspace_url: url, error: error.message || error});
         api.show.alert('workspace load failed');
