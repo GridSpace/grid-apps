@@ -593,7 +593,7 @@ function settingsImport(data, ask) {
 
 function settingsImportUrl(url, ask) {
     fetch(url).then(r => r.arrayBuffer()).then(a => {
-        settingsImport(a, ask);
+        settingsImportZip(a, ask);
     }).catch(error => {
         console.log({workspace_url: url, error: error.message || error});
         api.show.alert('workspace load failed');

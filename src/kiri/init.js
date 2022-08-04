@@ -2586,7 +2586,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // load workspace from url
         if (SETUP.wrk) {
-            api.settings.import_url(`${proto}//${SETUP.wrk[0]}`, true);
+            api.settings.import_url(`${proto}//${SETUP.wrk[0]}`, false);
         }
 
         // bind this to UI so main can call it on settings import
