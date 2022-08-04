@@ -74,6 +74,7 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` separate leveling op. add features like uni-directional cutting
 * `F` add pause operation with optional gcode
 * `F` add option for op-major ordering (instead of part major)
 * `F` animate only selected range (as an option)
