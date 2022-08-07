@@ -311,7 +311,7 @@ CAM.export = function(print, online) {
 
     // emit all points in layer/point order
     for (let layerout of print.output) {
-        if (mode !== layerout.mode) {
+        if (mode !== layerout.mode || consts.tool !== layerout[0].tool) {
             if (mode && !stripComments) {
                 append("; ending " + mode + " op after " + Math.round(time/60) + " seconds");
             }
