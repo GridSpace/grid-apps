@@ -291,6 +291,7 @@ const conf = exports({
                     extOffsetX: 0,
                     extOffsetY: 0
                 }],
+                profiles: [],
                 // other stored info like palette3 config
                 extras: {}
             },
