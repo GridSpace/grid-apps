@@ -376,7 +376,12 @@ gapp.register("moto.space", [], (root, exports) => {
         canvas.width = w * scale;
         canvas.height = h * scale;
 
-        context.scale(scale, scale);
+        try {
+            context.scale(scale, scale);
+        } catch (e) {
+            console.log('unable to create label canvas', e ? e.name : 'unknown');
+            return {};
+        }
         context.fillStyle = color || fontColor;
         context.font = `${size}px sans-serif`;
         context.textAlign = textAlign;
@@ -426,6 +431,7 @@ gapp.register("moto.space", [], (root, exports) => {
                 canvas = canvasInMesh(x + xPadding, labelSize * 3, 'center', 'top', rulerColor, labelSize),
                 context = canvas.context,
                 mesh = canvas.mesh;
+                if (!(context && mesh)) return;
 
             for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
                 context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
@@ -445,6 +451,7 @@ gapp.register("moto.space", [], (root, exports) => {
                 canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor, labelSize),
                 context = canvas.context,
                 mesh = canvas.mesh;
+            if (!(context && mesh)) return;
 
             for (let i = 0; i >= ruler.y1; i -= grid.unitMajor) {
                 context.fillText((i * factor).round(1), labelSize * 4, y - (ruler.yo + i) + yPadding / 2);
@@ -1375,15 +1382,13 @@ gapp.register("moto.space", [], (root, exports) => {
             animate();
 
             const ctx = renderer.getContext();
-            const ext = ctx.getExtension('WEBGL_debug_renderer_info');
 
             Space.info = {
                 ver: ctx.getParameter(ctx.VERSION),
                 ven: ctx.getParameter(ctx.VENDOR),
-                glr: ctx.getParameter(ext.UNMASKED_RENDERER_WEBGL),
-                // glv: ctx.getParameter(ext.UNMASKED_VENDOR_WEBGL),
+                glr: ctx.getParameter(ctx.RENDERER),
                 pla: nav.platform
-            },
+            };
 
             initialized = true;
         }
