@@ -417,6 +417,12 @@ const script = {
     ],
     mesh_pool : [
         "&mesh/pool"
+    ],
+    cache : [
+        "main/service",
+    ],
+    service : [
+        "moto/service"
     ]
 };
 
@@ -474,6 +480,7 @@ function handleOptions(req, res, next) {
     } catch (e) {
         logger.log("ua parse error on : "+req.headers['user-agent']);
     }
+    res.setHeader("Service-Worker-Allowed", "/");
     if (req.method === 'OPTIONS') {
         addCorsHeaders(req, res);
         res.end();
