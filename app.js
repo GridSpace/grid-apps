@@ -639,6 +639,9 @@ function concatCode(array) {
         let cached = getCachedFile(file, function(path) {
             return minify(`${dir}/${file}`);
         });
+        if (oversion) {
+            cached = `self.debug_version='${oversion}';` + cached;
+        }
         code.push(cached);
     });
 
