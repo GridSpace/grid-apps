@@ -1,7 +1,7 @@
 const service_worker = navigator.serviceWorker;
 
 async function start_service_worker() {
-    const version = 64;
+    const version = 65;
     function debug() {
         console.log(`[${version}]`, ...arguments);
     }
