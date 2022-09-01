@@ -1,9 +1,11 @@
 (function() {
 
+    const is_self = typeof(self) !== 'undefined';
+
     let terms = {
         COPYRIGHT: "Copyright (C) Stewart Allen <sa@grid.space> - All Rights Reserved",
         LICENSE: "See the license.md file included with the source distribution",
-        VERSION: this.debug_version || "3.5.D4"
+        VERSION: (is_self ? self : this).debug_version || "3.5.D4"
     };
 
     if (typeof(module) === 'object') {
@@ -11,7 +13,7 @@
     }
 
     // allow license to be required() by app without gapp
-    if (typeof(self) !== 'undefined' && self.gapp) {
+    if (is_self && self.gapp) {
         let app = self.gapp;
         app.license = terms.LICENSE;
         app.version = terms.VERSION;
