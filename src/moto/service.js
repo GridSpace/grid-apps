@@ -1,12 +1,31 @@
-const version = 53;
+const version = 62;
+const stats = {
+    hit: 0,
+    miss: 0,
+    fetch: 0,
+    cache: 0,
+    preload: 0,
+    timer: undefined
+};
+
 function debug() {
     console.log(`[${version}]`, ...arguments);
+}
+
+function update() {
+    clearTimeout(stats.timer);
+    stats.timer = setTimeout(report, 1000);
+}
+
+function report() {
+    console.log('sw cache', stats);
+    stats.hit = stats.miss = stats.fetch = stats.cache = stats.preload = 0;
 }
 
 debug('sw entry point', { gapp: self.gapp.version });
 
 const addResourcesToCache = async (resources) => {
-    debug('cache resources', resources);
+    // debug('cache resources', resources);
     const cache = await caches.open('v'+version);
     await cache.addAll(resources);
 };
@@ -14,6 +33,7 @@ const addResourcesToCache = async (resources) => {
 const putInCache = async (request, response) => {
     const cache = await caches.open('v'+version);
     // debug('cache', request.url);
+    update(stats.cache++);
     await cache.put(request, response);
 };
 
@@ -22,31 +42,37 @@ const cacheFirst = async ({
     preloadResponsePromise,
     fallbackUrl
 }) => {
-    // First try to get the resource from the cache
+    // must await this promise when present to avoid errors
+    const preloadResponse = preloadResponsePromise ? await preloadResponsePromise : undefined;
+
+    // try to get the resource from the cache
     const cache = await caches.open('v'+version);
     const responseFromCache = await cache.match(request);
+
     if (responseFromCache) {
         // debug('cached', request.url);
+        update(stats.hit++);
         return responseFromCache;
     } else {
         // debug('miss', request.url);
+        update(stats.miss++);
     }
 
-    // Next try to use the preloaded response, if it's there
-    const preloadResponse = await preloadResponsePromise;
+    // try to use the preloaded response, if it's there
     if (preloadResponse) {
+        update(stats.preload++);
         debug('using preload response', preloadResponse);
         putInCache(request, preloadResponse.clone());
         return preloadResponse;
     }
 
-    // Next try to get the resource from the network
+    // try to get the resource from the network
     try {
         // debug('fetch', request.url);
+        update(fetch.fetch++);
         const responseFromNetwork = await fetch(request);
         // response may be used only once
-        // we need to save clone to put one copy in cache
-        // and serve second one
+        // we need to save clone to put one copy in cache and serve second one
         putInCache(request, responseFromNetwork.clone());
         return responseFromNetwork;
     } catch (error) {
@@ -60,8 +86,8 @@ const cacheFirst = async ({
         // there is nothing we can do, but we must always
         // return a Response object
         return new Response('Network error happened', {
-            status: 408,
             headers: { 'Content-Type': 'text/plain' },
+            status: 408
         });
     }
 };
@@ -82,13 +108,13 @@ const enableNavigationPreload = async () => {
 self.addEventListener('activate', (event) => {
     const vkey = 'v'+version;
     // debug('sw activate');
-    event.waitUntil(enableNavigationPreload());
+    // event.waitUntil(enableNavigationPreload());
     // cleanup old caches
     event.waitUntil(
         caches.keys()
             .then( keylist => keylist
                 .filter(key => key != vkey)
-                .map(key => { debug({delete_cache: key}); return caches.delete(key); }) )
+                .map(key => { debug('sw delete cache', key); return caches.delete(key); }) )
             .then( deletes => Promise.all(deletes) )
     );
     event.waitUntil(new Promise((resolve, reject) => {

@@ -1,5 +1,5 @@
 async function start_service_worker() {
-    const version = 53;
+    const version = 62;
     function debug() {
         console.log(`[${version}]`, ...arguments);
     }
