@@ -1,5 +1,7 @@
+const service_worker = navigator.serviceWorker;
+
 async function start_service_worker() {
-    const version = 62;
+    const version = 64;
     function debug() {
         console.log(`[${version}]`, ...arguments);
     }
@@ -19,9 +21,13 @@ async function start_service_worker() {
         } else {
             debug({ service_worker: reg });
         }
-        navigator.serviceWorker.controller.postMessage('ctrl message');
+
+        if (service_worker.controller) {
+            service_worker.controller.postMessage('ctrl message');
+        }
     } catch (err) {
-        debug('service worker registration failed');
+        debug('service worker registration failed', err);
     }
 }
-if (navigator.serviceWorker) start_service_worker();
+
+if (service_worker) start_service_worker();

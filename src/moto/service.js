@@ -1,4 +1,4 @@
-const version = 62;
+const version = 64;
 const stats = {
     hit: 0,
     miss: 0,
