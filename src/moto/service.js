@@ -1,14 +1,19 @@
-console.log('service worker running 021');
+const version = 53;
+function debug() {
+    console.log(`[${version}]`, ...arguments);
+}
+
+debug('sw entry point', { gapp: self.gapp.version });
 
 const addResourcesToCache = async (resources) => {
-    console.log('cache resources', resources);
-    const cache = await caches.open('v4');
+    debug('cache resources', resources);
+    const cache = await caches.open('v'+version);
     await cache.addAll(resources);
 };
 
 const putInCache = async (request, response) => {
-    const cache = await caches.open('v4');
-    console.log('cache', request.request.url);
+    const cache = await caches.open('v'+version);
+    // debug('cache', request.url);
     await cache.put(request, response);
 };
 
@@ -18,23 +23,26 @@ const cacheFirst = async ({
     fallbackUrl
 }) => {
     // First try to get the resource from the cache
-    const responseFromCache = await caches.match(request);
+    const cache = await caches.open('v'+version);
+    const responseFromCache = await cache.match(request);
     if (responseFromCache) {
-        console.log('sw cached', request.url);
+        // debug('cached', request.url);
         return responseFromCache;
+    } else {
+        // debug('miss', request.url);
     }
 
     // Next try to use the preloaded response, if it's there
-    // const preloadResponse = await preloadResponsePromise;
-    // if (preloadResponse) {
-    //     console.info('using preload response', preloadResponse);
-    //     putInCache(request, preloadResponse.clone());
-    //     return preloadResponse;
-    // }
+    const preloadResponse = await preloadResponsePromise;
+    if (preloadResponse) {
+        debug('using preload response', preloadResponse);
+        putInCache(request, preloadResponse.clone());
+        return preloadResponse;
+    }
 
     // Next try to get the resource from the network
     try {
-        console.log('fetch', request.request.url);
+        // debug('fetch', request.url);
         const responseFromNetwork = await fetch(request);
         // response may be used only once
         // we need to save clone to put one copy in cache
@@ -42,7 +50,9 @@ const cacheFirst = async ({
         putInCache(request, responseFromNetwork.clone());
         return responseFromNetwork;
     } catch (error) {
-        const fallbackResponse = await caches.match(fallbackUrl);
+        debug({fallback_error: error});
+        const cache = await caches.open('v'+version);
+        const fallbackResponse = await cache.match(fallbackUrl);
         if (fallbackResponse) {
             return fallbackResponse;
         }
@@ -51,9 +61,7 @@ const cacheFirst = async ({
         // return a Response object
         return new Response('Network error happened', {
             status: 408,
-            headers: {
-                'Content-Type': 'text/plain'
-            },
+            headers: { 'Content-Type': 'text/plain' },
         });
     }
 };
@@ -61,34 +69,42 @@ const cacheFirst = async ({
 const enableNavigationPreload = async () => {
     if (self.registration.navigationPreload) {
         // Enable navigation preloads!
-        console.log('sw preload');
+        // debug('sw preload');
         try {
             await self.registration.navigationPreload.enable();
         } catch (e) {
-            console.log('sw preload fail', e);
+            debug('sw preload fail', e);
         }
 
     }
 };
 
 self.addEventListener('activate', (event) => {
-    console.log('sw activate preload');
-    // event.waitUntil(enableNavigationPreload());
-    // console.log('sw clients claim');
-    // event.waitUntil(clients.claim());
+    const vkey = 'v'+version;
+    // debug('sw activate');
+    event.waitUntil(enableNavigationPreload());
+    // cleanup old caches
+    event.waitUntil(
+        caches.keys()
+            .then( keylist => keylist
+                .filter(key => key != vkey)
+                .map(key => { debug({delete_cache: key}); return caches.delete(key); }) )
+            .then( deletes => Promise.all(deletes) )
+    );
+    event.waitUntil(new Promise((resolve, reject) => {
+        setTimeout(resolve, 5000);
+    }));
+    debug('sw activated');
 });
 
 self.addEventListener('install', (event) => {
-    console.log('sw install');
-    event.waitUntil(
-        addResourcesToCache([
-            // '/',
-        ])
-    );
+    // debug('sw install');
+    // event.waitUntil( addResourcesToCache([ ]) );
+    self.skipWaiting();
+    debug('sw installed');
 });
 
 self.addEventListener('fetch', (event) => {
-    // console.log('sw fetch', event.request.url);
     event.respondWith(
         cacheFirst({
             request: event.request,
@@ -96,4 +112,8 @@ self.addEventListener('fetch', (event) => {
             fallbackUrl: '//static.grid.space/img/logo_gs.png',
         })
     );
+});
+
+self.addEventListener('message', (event) => {
+    // debug({ onmessage: event, clients });
 });

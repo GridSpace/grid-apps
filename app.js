@@ -55,7 +55,8 @@ function init(mod) {
     dir = mod.dir;
     log = mod.log;
 
-    dversion = debug ? `_${version}` : version;
+    // dversion = debug ? `_${version}` : version;
+    dversion = debug ? Date.now().toString(36) : version;
     cacheDir = mod.util.datadir("cache");
 
     const approot = "main/gapp";
@@ -419,9 +420,11 @@ const script = {
         "&mesh/pool"
     ],
     cache : [
+        "moto/license",
         "main/service",
     ],
     service : [
+        "moto/license",
         "moto/service"
     ]
 };
