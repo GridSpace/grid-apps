@@ -1,13 +1,13 @@
 const service_worker = navigator.serviceWorker;
 
 async function start_service_worker() {
-    const version = 65;
+    const version = self.gapp.version;
     function debug() {
         console.log(`[${version}]`, ...arguments);
     }
 
     // install service worker
-    debug('service worker registration', { gapp: self.gapp.version });
+    debug('service worker registration');
 
     try {
         // const reg = await navigator.serviceWorker.register("/src/moto/service.js?013", { scope: "/" });

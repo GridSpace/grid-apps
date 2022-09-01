@@ -1,4 +1,4 @@
-const version = 65;
+const version = self.gapp.version;
 const stats = {
     hit: 0,
     miss: 0,
@@ -22,7 +22,7 @@ function report() {
     stats.hit = stats.miss = stats.fetch = stats.cache = stats.preload = 0;
 }
 
-debug('sw entry point', { gapp: self.gapp.version });
+debug('sw entry point');
 
 const addResourcesToCache = async (resources) => {
     // debug('cache resources', resources);

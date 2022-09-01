@@ -30,6 +30,7 @@ let dversion;
 let lastmod;
 let logger;
 let debug;
+let over;
 let http;
 let util;
 let dir;
@@ -50,13 +51,14 @@ function init(mod) {
     lastmod = mod.util.lastmod;
     logger = mod.log;
     debug = mod.env.debug || mod.meta.debug;
+    oversion = mod.env.over || mod.meta.over;
     http = mod.http;
     util = mod.util;
     dir = mod.dir;
     log = mod.log;
 
-    // dversion = debug ? `_${version}` : version;
-    dversion = debug ? Date.now().toString(36) : version;
+    dversion = debug ? `_${version}` : version;
+    // dversion = debug ? Date.now().toString(36) : version;
     cacheDir = mod.util.datadir("cache");
 
     const approot = "main/gapp";
@@ -306,7 +308,7 @@ function initModule(mod, file, dir) {
             script: script,
             moddir: dir,
             rootdir: mod.dir,
-            version: version
+            version: oversion || version
         },
         env: mod.env,
         pkg: {
@@ -608,11 +610,12 @@ function concatCode(array) {
     // scripts instead of serving a complete bundle
     if (debug) {
         const code = [
+            oversion ? `self.debug_version='${oversion}';` : '',
             'self.debug=true;',
             '(function() { let load = [ '
         ];
         direct.forEach(file => {
-            const vers = cachever[file] || dversion || version;
+            const vers = cachever[file] || oversion || dversion || version;
             code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
         });
         code.push([
@@ -815,7 +818,7 @@ function rewriteHtmlVersion(req, res, next) {
         let real_write = res.write;
         let real_end = res.end;
         let mlen = '{{version}}'.length;
-        let vstr = dversion || version;
+        let vstr = oversion || dversion || version;
         if (vstr.length < mlen) {
             vstr = vstr.padStart(mlen,0);
         } else if (vstr.length > mlen) {
