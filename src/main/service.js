@@ -30,4 +30,4 @@ async function start_service_worker() {
     }
 }
 
-if (service_worker) start_service_worker();
+if (service_worker && self.debug_version) start_service_worker();
