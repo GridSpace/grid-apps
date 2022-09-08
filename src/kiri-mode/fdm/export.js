@@ -41,6 +41,7 @@ FDM.export = function(print, online, ondone, ondebug) {
         distance = 0,
         emitted = 0,
         retracted = 0,
+        axis = { X:' X', Y:' Y', Z:' Z', E:' E'},
         pos = { x:0, y:0, z:0, f:0 },
         lout = { x:0, y:0, z:0 },
         last = null,
@@ -288,6 +289,11 @@ FDM.export = function(print, online, ondone, ondebug) {
         if (line.indexOf(";; PREAMBLE ") === 0) {
             if (line === ';; PREAMBLE OFF') pre = 1;
             if (line === ';; PREAMBLE END') pre = 2;
+        } if (line.indexOf(";; AXISMAP ") === 0) {
+            let axmap = JSON.parse(line.substring(11).trim());
+            for (let key in axmap) {
+                axis[key] = ` ${axmap[key]}`;
+            }
         } else {
             gcpre.push(line);
         }
@@ -448,9 +454,9 @@ FDM.export = function(print, online, ondone, ondebug) {
             epos.y = -pos.y + epos.z * bcos + belt_add_y;
             lout = epos;
         }
-        if (emit.x) o.append(" X").append(epos.x.toFixed(decimals));
-        if (emit.y) o.append(" Y").append(epos.y.toFixed(decimals));
-        if (emit.z) o.append(" Z").append(epos.z.toFixed(decimals));
+        if (emit.x) o.append(axis.X).append(epos.x.toFixed(decimals));
+        if (emit.y) o.append(axis.Y).append(epos.y.toFixed(decimals));
+        if (emit.z) o.append(axis.Z).append(epos.z.toFixed(decimals));
         if (debug) {
             if (emit.x) minz.x = Math.min(minz.x, epos.x);
             if (emit.y) minz.y = Math.min(minz.y, epos.y);
@@ -460,9 +466,9 @@ FDM.export = function(print, online, ondone, ondebug) {
             outputLength += newpos.e;
             if (extrudeAbs) {
                 // for cumulative (absolute) extruder positions
-                o.append(" E").append(outputLength.toFixed(decimals));
+                o.append(axis.E).append(outputLength.toFixed(decimals));
             } else {
-                o.append(" E").append(newpos.e.toFixed(decimals));
+                o.append(axis.E).append(newpos.e.toFixed(decimals));
             }
         }
         if (zMoveMax && emit.z) {
