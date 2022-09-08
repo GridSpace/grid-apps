@@ -79,6 +79,7 @@
 * `F` add option for op-major ordering (instead of part major)
 * `F` animate only selected range (as an option)
 * `F` add `plunge max` to contouring that can override z feed limit
+* `F` add ability to select regions for contouring op (like pocketing)
 * `F` roughing flats should be constrained to flat region, not create a layer
 * `F` limit cut depth to flute length of selected tool (or warn)
 * `F` change color of line selection in trace op when not a closed poly

@@ -733,6 +733,9 @@ class Widget {
 
             // executed from kiri.js
             kiri.client.slice(settings, this, function(reply) {
+                if (reply.alert) {
+                    onupdate(null, null, reply.alert);
+                }
                 if (reply.update) {
                     onupdate(reply.update, reply.updateStatus);
                 }
@@ -774,8 +777,8 @@ class Widget {
                 ondone();
             };
 
-            let catchupdate = function(progress, message) {
-                onupdate(progress, message);
+            let catchupdate = function(progress, message, alert) {
+                onupdate(progress, message, alert);
             };
 
             let drv = driver[settings.mode.toUpperCase()];

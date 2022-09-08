@@ -433,11 +433,13 @@ kiri.worker = {
                 send.data({send_end: time()});
             }
             send.done({done: true});
-        }, function(update, msg) {
+        }, function(update, msg, alert) {
             now = time();
-            if (now - last < 10 && update < 0.99) return;
+            // on alert
+            if (alert) send.data({ alert });
             // on update
-            send.data({update: (0.05 + update * 0.95), updateStatus: msg});
+            if (now - last < 10 && update < 0.99) return;
+            if (update || msg) send.data({update: (0.05 + update * 0.95), updateStatus: msg});
             last = now;
         });
     },

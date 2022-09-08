@@ -36,6 +36,7 @@ const POLYS = base.polygons = {
     expand,
     expand_lines,
     points,
+    length,
     route,
     union,
     inset,
@@ -51,6 +52,14 @@ const POLYS = base.polygons = {
     fingerprintCompare,
     fingerprint
 };
+
+function length(polys) {
+    let length = 0;
+    for (let p of polys) {
+        length += p.deepLength;
+    }
+    return length;
+}
 
 function setZ(polys, z) {
     for (let poly of polys) {
@@ -376,13 +385,16 @@ function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
  */
  function union(polys, minarea, all, opt = {}) {
      if (polys.length < 2) return polys;
+     let lpre = length(polys);
 
      if (opt.wasm && geo.wasm) {
          let min = minarea || 0.01;
          // let deepLength = polys.map(p => p.deepLength).reduce((a,v) => a+v);
          // if (deepLength < 15000)
          try {
-             return geo.wasm.js.union(polys, polys[0].getZ()).filter(p => p.area() > min);
+             let out = geo.wasm.js.union(polys, polys[0].getZ()).filter(p => p.area() > min);
+             opt.changes = length(out) - lpre;
+             return out;
          } catch (e) {
              console.log({union_fail: polys, minarea, all});
          }
@@ -419,6 +431,7 @@ function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
          if (out[i]) uset.push(out[i]);
      }
 
+     opt.changes = length(uset) - lpre;
      return uset;
  }
 

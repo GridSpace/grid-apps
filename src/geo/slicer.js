@@ -385,7 +385,11 @@ async function sliceZ(z, points, options = {}) {
         let groups = groupFn(lines, z, options);
         if (options.union) {
             // simplistic healing of non-manifold meshes
-            groups = POLY.flatten(POLY.union(POLY.nest(groups), 0.1, true), null, true);
+            let opt = { x: 1 };
+            let union = POLY.union(POLY.nest(groups), 0.1, true, opt);
+            // track total poly length changes to determine if healed
+            rval.changes = opt.changes;
+            groups = POLY.flatten(union, null, true);
         }
         rval.groups = groups;
     }

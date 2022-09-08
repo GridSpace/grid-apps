@@ -161,7 +161,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
                 // start next widget slice
                 sliceNext();
             }
-        }, (update, msg) => {
+        }, (update, msg, alert) => {
+            if (alert) {
+                api.show.alert(alert);
+            }
             if (msg && msg !== lastMsg) {
                 let mark = Date.now();
                 if (lastMsg) {
@@ -171,12 +174,14 @@ function prepareSlices(callback, scale = 1, offset = 0) {
                 startTime = mark;
             }
             // on update
-            track[widget.id] = (update || 0) * factor;
-            totalProgress = 0;
-            for (let w of slicing) {
-                totalProgress += (track[w.id] || 0);
+            if (update >= 0) {
+                track[widget.id] = (update || 0) * factor;
+                totalProgress = 0;
+                for (let w of slicing) {
+                    totalProgress += (track[w.id] || 0);
+                }
+                show.progress(offset + (totalProgress / widgets.length) * scale, msg);
             }
-            show.progress(offset + (totalProgress / widgets.length) * scale, msg);
         });
     }
 

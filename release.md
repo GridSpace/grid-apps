@@ -7,6 +7,16 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 ## Kiri:moto
 
+* add support to run as Progressive Web Apps for installation and offline use
+* add assembly import when KM used inside of Onshape
+* add configurable flatness for contour clipping
+* add axis label remapping in FDM
+* extend url loading of workspaces to all formats
+* alert when healing is enabled and non-manifold geometries are detected
+* fix thin output start and end point tracking which broke retraction
+* fix for importing with some obj formatting
+* fix profile seeding for newer device record formats
+* fix workspace import / restore for some file formats
 * fix potential crash into stock during moves when parts are z bottom anchored
 * ~ refactor vertex replacement and widget update matrix tracking
 * ~ refactor cnc to use core slicer engine

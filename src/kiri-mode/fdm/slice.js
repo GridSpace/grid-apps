@@ -159,6 +159,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
     let points = widget.getPoints();
     let indices = [];
     let heights = [];
+    let healed = false;
 
     // handle z cutting (floor method) and base flattening
     let zPress = isBelt ? process.firstLayerFlatten || 0 : 0;
@@ -296,12 +297,16 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
     }).then((output) => {
         // post process slices and re-incorporate missing meta-data
         return output.slices.map(data => {
-            let { z, clip, lines, groups } = data;
+            let { z, clip, lines, groups, changes } = data;
             if (!data.tops) return null;
             let slice = newSlice(z).addTops(data.tops);
             slice.index = indices.indexOf(z);
             slice.height = heights[slice.index];
             slice.clips = clip;
+            if (changes) {
+                healed = true;
+                slice.changes = changes;
+            }
             if (process.xray) {
                 slice.index = process.xrayi.shift();
                 slice.lines = lines;
@@ -342,6 +347,11 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
     }
 
     async function onSliceDone(slices) {
+        // alert non-manifold parts
+        if (healed) {
+            onupdate(null, null, "part may not be manifold");
+        }
+
         // remove all empty slices above part but leave below
         // for multi-part (multi-extruder) setups where the void is ok
         // also reverse because slicing occurs bottom-up
