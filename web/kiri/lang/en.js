@@ -286,13 +286,13 @@ self.kiri.lang['en-us'] = {
     pt_deci_s:      "decimate",
     pt_deci_l:      ["enable or disable point decimation","during port import. for faster slicing","and lower memory usage"],
     pt_qual_s:      "detail",
-    pt_qual_l:      ["level of detail to retain","during slicing operations","lower is faster"],
+    pt_qual_l:      ["level of detail to retain during slicing operations. lower is faster and uses less memory. large scale models often do no benefit from higher detail. instead it my only result in memory and processing problems. reduce this value if you are getting out of memory errors."],
     pt_heal_s:      "heal mesh",
-    pt_heal_l:      ["attempt to heal","non-manifold meshes","adds to slicing time"],
+    pt_heal_l:      ["attempt to heal non-manifold meshes during slicing. may increase slicing time. enables a warning when non-manifold geometries are detected."],
     pt_thrd_s:      "threaded",
-    pt_thrd_l:      ["use parallel processing","when browser permits"],
+    pt_thrd_l:      ["use parallel processing when browser supports nested workers. may increase memory pressure on larger models. disable if you are getting out of memory errors"],
     pt_assy_s:      "assembly",
-    pt_assy_l:      ["use web assembly","when browser permits"],
+    pt_assy_l:      ["use web assembly when supported by browser. if you experience artifacts or memory errors, try disabling this."],
 
     xp_menu:        "exports",
 
