@@ -679,6 +679,7 @@ const conf = exports({
         controller:{
             view: null,
             dark: false,
+            shiny: false,
             decals: true,
             danger: false,
             zoomSpeed: 1.0,

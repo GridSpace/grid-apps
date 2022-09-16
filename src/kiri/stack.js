@@ -7,12 +7,13 @@ gapp.register("kiri.stack", [], (root, exports) => {
 const { kiri } = root;
 
 class Stack {
-    constructor(view, freeMem) {
+    constructor(view, freeMem, shiny) {
         this._view = view;
         this.view = view.newGroup();
         this.slices = [];
         this.meshes = [];
         this.freeMem = freeMem;
+        newMat = shiny ? createPhongMaterial : createLambertMaterial;
     }
 
     size() {
@@ -254,6 +255,17 @@ function createPhongMaterial(color, flat) {
     return new THREE.MeshPhongMaterial({
         shininess,
         specular,
+        transparent: color.opacity != 1,
+        opacity: color.opacity || 1,
+        color: color.face,
+        side: flat ? THREE.DoubleSide : THREE.FrontSide
+    });
+}
+
+function createLambertMaterial(color, flat) {
+    return new THREE.MeshLambertMaterial({
+        // shininess,
+        // specular,
         transparent: color.opacity != 1,
         opacity: color.opacity || 1,
         color: color.face,
