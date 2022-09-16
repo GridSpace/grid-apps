@@ -80,7 +80,7 @@ function create(name, view) {
     }
     const stack = stacks[name] = {
         layers: [ ],
-        obj: new kiri.Stack(view, freeMem),
+        obj: new kiri.Stack(view, freeMem, kiri.api.conf.get().controller.shiny),
         add: function(layers) {
             let lmap = layers.layers;
             let map = stack.obj.addLayers(layers);

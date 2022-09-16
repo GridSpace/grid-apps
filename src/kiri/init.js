@@ -177,6 +177,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         if (control.antiAlias != ui.antiAlias.checked) {
             api.show.alert('Page Reload Required to Change Aliasing');
         }
+        control.shiny = ui.shiny.checked;
         control.decals = ui.decals.checked;
         control.danger = ui.danger.checked;
         control.showOrigin = ui.showOrigin.checked;
@@ -1756,6 +1757,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             showRulers:       uc.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
             showSpeeds:       uc.newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
             decals:           uc.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
+            shiny:            uc.newBoolean(LANG.op_shny_s, booleanSave, {title:LANG.op_shny_l, modes:FDM}),
             lineType:         uc.newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
             animesh:          uc.newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
             units:            uc.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM, trace:true}, "units"),
