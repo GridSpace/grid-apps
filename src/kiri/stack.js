@@ -262,8 +262,6 @@ function createPhongMaterial(color, flat) {
 
 function createLambertMaterial(color, flat) {
     return new THREE.MeshLambertMaterial({
-        // shininess,
-        // specular,
         transparent: color.opacity != 1,
         opacity: color.opacity || 1,
         color: color.face,

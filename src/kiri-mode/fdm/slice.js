@@ -572,6 +572,9 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         }
 
         // calculations only relevant when solid layers are used
+        // layer boolean diffs need to be computed to find flat areas to fill
+        // and overhangs that need to be supported. these are stored in flats
+        // and bridges, projected up/down, and merged into an array of solids
         if (solidLayers && !vaseMode && !isSynth) {
             profileStart("delta");
             forSlices(0.2, 0.34, slice => {
@@ -609,8 +612,9 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             profileEnd();
         }
 
+        // for "real" objects, fill the remaining voids with sparse fill
+        // sparse layers only present when non-vase mose and sparse % > 0
         if (!isSynth && !vaseMode) {
-            // sparse layers only present when non-vase mose and sparse % > 0
             let lastType;
             // disabled until memory issue tracked down
             let promises = false && isConcurrent ? [] : undefined;
