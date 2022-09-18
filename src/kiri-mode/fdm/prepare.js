@@ -57,6 +57,8 @@ FDM.prepare = function(widgets, settings, update) {
         output = [],
         layerout = [];
 
+    let lastLayerStart = null;
+
     // compute bounds if missing
     if (!bounds) {
         bounds = new THREE.Box3();
@@ -1370,6 +1372,8 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
             // control of layer start point
             switch (process.sliceLayerStart) {
+                case "last":
+                    break;
                 case "center":
                     startPoint = newPoint(0,0,startPoint.z);
                     break;
