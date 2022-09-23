@@ -20,7 +20,7 @@ function update() {
 }
 
 function report() {
-    console.log('sw cache', stats);
+    console.log('sw cache', Object.assign({}, stats));
     stats.hit = stats.miss = stats.fetch = stats.cache = stats.bypass = stats.preload = 0;
 }
 
@@ -135,9 +135,10 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request,preloadResponse } = event;
     if (request.url.indexOf(origin) !== 0) {
-        // console.log('off origin request', request.url);
+        debug('no-cache', request.url);
         stats.bypass++;
-        return event.respondWith(fetch(request));
+        event.respondWith(fetch(request));
+        return;
     }
 
     event.respondWith(
