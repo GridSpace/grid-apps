@@ -1,9 +1,11 @@
 const version = self.gapp.version;
+const origin = self.location.origin;
 const stats = {
     hit: 0,
     miss: 0,
     fetch: 0,
     cache: 0,
+    bypass: 0,
     preload: 0,
     timer: undefined
 };
@@ -19,7 +21,7 @@ function update() {
 
 function report() {
     console.log('sw cache', stats);
-    stats.hit = stats.miss = stats.fetch = stats.cache = stats.preload = 0;
+    stats.hit = stats.miss = stats.fetch = stats.cache = stats.bypass = stats.preload = 0;
 }
 
 debug('sw entry point');
@@ -131,10 +133,17 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    const { request,preloadResponse } = event;
+    if (request.url.indexOf(origin) !== 0) {
+        // console.log('off origin request', request.url);
+        stats.bypass++;
+        return event.respondWith(fetch(request));
+    }
+
     event.respondWith(
         cacheFirst({
-            request: event.request,
-            preloadResponsePromise: event.preloadResponse,
+            request: request,
+            preloadResponsePromise: preloadResponse,
             fallbackUrl: '//static.grid.space/img/logo_gs.png',
         })
     );
