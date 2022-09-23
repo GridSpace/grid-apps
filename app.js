@@ -22,6 +22,7 @@ const load = [];
 const synth = {};
 const api = {};
 
+let serviceWorker = true;
 let crossOrigin = false;
 let setupFn;
 let cacheDir;
@@ -54,6 +55,7 @@ function init(mod) {
     debug = mod.env.debug || mod.meta.debug;
     oversion = mod.env.over || mod.meta.over;
     crossOrigin = mod.env.xorigin || mod.meta.xorigin || false;
+    serviceWorker = (mod.env.service || mod.meta.service) !== false;
     http = mod.http;
     util = mod.util;
     dir = mod.dir;
@@ -612,7 +614,7 @@ function concatCode(array) {
     // scripts instead of serving a complete bundle
     if (debug) {
         const code = [
-            oversion ? `self.debug_version='${oversion}';` : '',
+            oversion ? `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` : '',
             'self.debug=true;',
             '(function() { let load = [ '
         ];
@@ -643,7 +645,7 @@ function concatCode(array) {
             return minify(`${dir}/${file}`);
         });
         if (oversion) {
-            cached = `self.debug_version='${oversion}';` + cached;
+            cached = `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` + cached;
         }
         code.push(cached);
     });
