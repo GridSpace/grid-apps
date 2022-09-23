@@ -134,7 +134,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('fetch', (event) => {
     const { request,preloadResponse } = event;
-    if (request.url.indexOf(origin) !== 0) {
+    if (request.url.indexOf(origin) !== 0 || request.method !== 'GET') {
         debug('no-cache', request.url);
         stats.bypass++;
         event.respondWith(fetch(request));
