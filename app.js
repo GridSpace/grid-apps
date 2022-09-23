@@ -22,6 +22,7 @@ const load = [];
 const synth = {};
 const api = {};
 
+let crossOrigin = false;
 let setupFn;
 let cacheDir;
 let startTime;
@@ -52,6 +53,7 @@ function init(mod) {
     logger = mod.log;
     debug = mod.env.debug || mod.meta.debug;
     oversion = mod.env.over || mod.meta.over;
+    crossOrigin = mod.env.xorigin || mod.meta.xorigin || false;
     http = mod.http;
     util = mod.util;
     dir = mod.dir;
@@ -297,7 +299,8 @@ function initModule(mod, file, dir) {
         api: api,
         adm: {
             reload: prepareScripts,
-            setver: (ver) => { oversion = ver }
+            setver: (ver) => { oversion = ver },
+            crossOrigin: (bool) => { crossOrigin = bool }
         },
         events,
         const: {
@@ -738,8 +741,10 @@ function addCorsHeaders(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Headers', 'X-Moto-Ajax, Content-Type');
     res.setHeader('Access-Control-Allow-Origin', req.headers['origin'] || '*');
-    res.setHeader("Cross-Origin-Opener-Policy", 'same-origin');
-    res.setHeader("Cross-Origin-Embedder-Policy", 'require-corp');
+    if (!crossOrigin) {
+        res.setHeader("Cross-Origin-Opener-Policy", 'same-origin');
+        res.setHeader("Cross-Origin-Embedder-Policy", 'require-corp');
+    }
     res.setHeader("Allow", "GET,POST,OPTIONS");
 }
 
