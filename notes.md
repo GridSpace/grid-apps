@@ -74,33 +74,34 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` all ops should allow limit and milling direction / ease down overrides
+* `F` drill op should allow selecting holes >= current tool
+* `F` intelligently turn circle hole pocket clear into spiral down
 * `F` separate leveling op. add features like uni-directional cutting
-* `F` add pause operation with optional gcode
+* `F` add custom gcode operation for things like injecting pauses
 * `F` add option for op-major ordering (instead of part major)
 * `F` animate only selected range (as an option)
 * `F` add `plunge max` to contouring that can override z feed limit
 * `F` add ability to select regions for contouring op (like pocketing)
-* `F` roughing flats should be constrained to flat region, not create a layer
+* `F` roughing flats should be constrained to flat region, not create a new layer
 * `F` limit cut depth to flute length of selected tool (or warn)
 * `F` change color of line selection in trace op when not a closed poly
+* `F` add lead-in milling (requires adding clamp / no go areas)
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
 * `F` add ease-down support to trace op
 * `F` user-defined origin (issue #28)
-* `F` intelligently turn circle hole pocket clear into spiral down
 * `F` add climb/conventional into each operation
-* `F` extend acute roughing on inside polys to clear small voids
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
 * `F` parameterize dropping close points in prep.js. ensure long segments remain straight
 * `F` flat and volumetric rendering of paths
-* `F` z planar settings visualizations
-* `F` lead-in milling
+* `F` z planar settings visualizations (edit using snappable dragging of planes)
 * `F` trapezoidal tabs in Z
 * `F` add support for tapered ball mills
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
 * `F` can animation clear the mesh in areas where the cuts go through the stock?
-* `F` support lathe mode / A-axis / rotary
+* `F` add lathe mode / A-axis / 4th axis / rotary milling ops
 * `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` maintain several part orientations + op chains in a single profile
 

@@ -7,9 +7,11 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 ## Kiri:moto
 
+* add optional service workers and manifest to support full PWA + install
 * add support to run as Progressive Web Apps for installation and offline use
 * add assembly import when KM used inside of Onshape
 * add configurable flatness for contour clipping
+* add faster render mode for FDM slices
 * add axis label remapping in FDM
 * extend url loading of workspaces to all formats
 * alert when healing is enabled and non-manifold geometries are detected
