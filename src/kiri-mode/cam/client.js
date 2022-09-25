@@ -301,6 +301,7 @@ CAM.init = function(kiri, api) {
             $(`${id}-x`).onmousedown = (ev) => {
                 ev.stopPropagation();
                 ev.preventDefault();
+                func.surfaceDone();
                 func.traceDone();
                 func.tabDone();
                 func.opDel(rec);
@@ -320,6 +321,10 @@ CAM.init = function(kiri, api) {
                 }
             };
             el.onmouseenter = (ev) => {
+                if (poppedRec && poppedRec != rec) {
+                    func.surfaceDone();
+                    func.traceDone();
+                }
                 if (unpop) unpop();
                 unpop = func.unpop = el.unpop;
                 inside = true;
@@ -345,6 +350,7 @@ CAM.init = function(kiri, api) {
             };
             el.rec = rec;
             el.onmousedown = (ev) => {
+                func.surfaceDone();
                 func.traceDone();
                 let target = ev.target, clist = target.classList;
                 if (!clist.contains("draggable")) {
