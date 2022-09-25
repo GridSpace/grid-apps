@@ -243,8 +243,8 @@ gapp.register("moto.space", [], (root, exports) => {
         }
     }
 
-    function addLight(x,y,z,i) {
-        let l = new THREE.DirectionalLight(0xffffff, i, 0);
+    function addLight(x, y, z, i, color = 0xffffff) {
+        let l = new THREE.DirectionalLight(color, i, 0);
         l.position.set(x,z,y);
         // let b; l.add(b = new THREE.Mesh(
         //     new THREE.BoxGeometry(1,1,1),
@@ -260,19 +260,20 @@ gapp.register("moto.space", [], (root, exports) => {
         for (let l of lights || []) {
             SCENE.remove(l);
         }
-        // override
-        x *= 4; y *= 4; z *= 4;
+        // override Z
+        z = Math.max(x,y,z);
         // add new
         let x0 = -x/2, y0 = -y/2, z0 = 0;
         let x1 =  x/2, y1 =  y/2, z1 = z / 2, z2 = z;
+
         lights = [
             // over
             addLight(  0,   0,  z2, lightIntensity * 1.2),
-            addLight( x0,  y0,  z1, lightIntensity * 2.5),
+            addLight( x0,  y0,  z1, lightIntensity * 2.5, 0xeeeeee),
             addLight( x1,  y1,  z1, lightIntensity * 2.5),
             // under
             addLight( x0,  y1, -z1, lightIntensity * 0.5),
-            addLight( x1,  y0, -z1, lightIntensity * 0.5),
+            addLight( x1,  y0, -z1, lightIntensity * 0.5, 0xeeeeee),
             addLight(  0,   0, -z2, lightIntensity * 0.8),
         ];
     }
