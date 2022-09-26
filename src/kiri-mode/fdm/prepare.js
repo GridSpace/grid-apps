@@ -770,6 +770,7 @@ FDM.prepare = function(widgets, settings, update) {
         print.render = render.path(output, (progress, layer) => {
             update(0.5 + progress * 0.5, "render", layer);
         }, {
+            lineWidth: settings.process.sliceLineWidth,
             toolMode: settings.pmode === 2,
             tools: device.extruders,
             thin: isThin,

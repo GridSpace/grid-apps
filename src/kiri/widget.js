@@ -290,7 +290,7 @@ class Widget {
                 side: THREE.DoubleSide,
                 color: 0xffff00,
                 specular: 0x202020,
-                shininess: 125,
+                shininess: 120,
                 transparent: true,
                 opacity: solid_opacity,
                 clipIntersection: false

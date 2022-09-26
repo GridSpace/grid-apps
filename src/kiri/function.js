@@ -265,6 +265,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
     hide.slider(true);
 
     const isCam = mode.is_cam(), pMode = settings.mode;
+    const isDark = api.space.is_dark();
     const isBelt = device.bedBelt || false;
 
     view.set_preview();
@@ -272,7 +273,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
     event.emit('preview.begin', pMode);
 
     if (isCam) {
-        api.widgets.opacity(COLOR.cam_preview_opacity);
+        api.widgets.opacity(isDark ? COLOR.cam_preview_opacity_dark : COLOR.cam_preview_opacity);
         api.widgets.each(widget => {
             widget.setColor(COLOR.cam_preview);
         });

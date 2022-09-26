@@ -280,24 +280,28 @@ gapp.register("moto.space", [], (root, exports) => {
         switch (mode) {
             case 0: array = [
                 addLight( x1,  y0,  z1, intensity * 1.5),
-                addLight( x0,  y1, -z1, intensity * 0.7)]; break;
+                addLight( x0,  y1, -z1, intensity * 0.7)];
+                break;
             case 1: array = [
                 addLight( x1,  y1,  z1, intensity * 2.5),
                 addLight( x0,  y1, -z1, intensity * 0.5),
                 addLight( x0,  y0,  z1, intensity * 2.5, 0xeeeeee),
-                addLight( x1,  y0, -z1, intensity * 0.5, 0xeeeeee)]; break;
+                addLight( x1,  y0, -z1, intensity * 0.5, 0xeeeeee)];
+                break;
             case 2: array = [
                 addLight( x1,  y1,  z1, intensity * 2.5),
                 addLight( x0,  y1, -z1, intensity * 0.5),
                 addLight( x0,  y0,  z1, intensity * 2.5, 0xeeeeee),
                 addLight( x1,  y0, -z1, intensity * 0.5, 0xeeeeee),
                 addLight(  0,   0,  z2, intensity * 1.2),
-                addLight(  0,   0, -z2, intensity * 0.8)]; break;
+                addLight(  0,   0, -z2, intensity * 0.8)];
+                break;
         }
 
-        // update tracking cam intensity
-        cameraLight.intensity = intensity;
         lightInfo.array = array;
+        lightInfo.camera = cameraLight;
+        lightInfo.ambient = skyAmbient;
+        requestRefresh();
     }
 
     function updatePlatformPosition() {
@@ -1120,10 +1124,8 @@ gapp.register("moto.space", [], (root, exports) => {
                 // camera.updateProjectionMatrix();
             },
 
-            lightMode: (mode, intensity) => {
-                lightInfo.mode = mode;
-                if (intensity) lightInfo.intensity = intensity;
-                updateLights();
+            lightInfo: () => {
+                setTimeout(updateLights, 0);
                 return lightInfo;
             }
         },

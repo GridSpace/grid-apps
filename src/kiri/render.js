@@ -56,6 +56,7 @@ function path(levels, update, opts = {}) {
     const arrowSize = arrowAll ? 0.2 : 0.4;
     const layers = [];
     const toolMode = opts.toolMode;
+    const lineWidth = opts.lineWidth;
 
     const moveOpt = {
         face: moveColor,
@@ -125,7 +126,7 @@ function path(levels, update, opts = {}) {
             toolid = toolid || 0;
             const array = prints[toolid] = prints[toolid] || [];
             const tool = tools[toolid] || {};
-            array.width = (tool.extNozzle || 1) / 2;
+            array.width = (lineWidth || tool.extNozzle || 1) / 2;
             array.push(poly);
             emits++;
         };
