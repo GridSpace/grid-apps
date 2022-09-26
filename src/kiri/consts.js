@@ -9,14 +9,14 @@ const COLOR = {
     wireframe_opacity: 0.25,
     selected: [ 0xbbff00, 0xbbee00, 0xbbdd00, 0xbb9900 ],
     deselected: [ 0xffff00, 0xffdd00, 0xffbb00, 0xff9900 ],
-    slicing: 0xffaaaa,
-    preview_opacity: 0.0,
     model_opacity: 1.0,
+    preview_opacity: 0.0,
+    slicing: 0xffaaaa,
     slicing_opacity: 0.5,
     sliced_opacity: 0.0,
-    cam_preview: 0x0055bb,
-    cam_preview_opacity: 0.25,
-    cam_sliced_opacity: 0.25
+    cam_preview: 0x888888,
+    cam_preview_opacity: 0.2,
+    cam_sliced_opacity: 0.2
 };
 
 const LISTS = {
