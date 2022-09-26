@@ -33,7 +33,6 @@ gapp.register("moto.space", [], (root, exports) => {
         refreshRequested = false,
         selectRecurse = false,
         defaultKeys = true,
-        lightIntensity = 0.09,
         initialized = false,
         alignedTracking = false,
         skyAmbient,
@@ -44,9 +43,15 @@ gapp.register("moto.space", [], (root, exports) => {
         hidePlatformBelow = true,
         showFocus = 0,
         focalPoint = undefined,
-        origin = {x:0, y:0, z: 0},
-        trackcam = addLight(0, 0, 0, lightIntensity),
+        lightInfo = {
+            mode: 2,
+            array: [],
+            intensity: 0.09,
+            debug: false
+        },
+        cameraLight = addLight(0, 0, 0, lightInfo.intensity),
         trackDelta = {x:0, y:0, z:0},
+        origin = {x:0, y:0, z: 0},
         mouse = {x: 0, y: 0},
         mouseStart = null,
         mouseDragPoint = null,
@@ -99,7 +104,6 @@ gapp.register("moto.space", [], (root, exports) => {
         platformOnMoveTime = 500,
         platformMoveTimer,
         volume,
-        lights,
         camera,
         renderer,
         container,
@@ -246,36 +250,54 @@ gapp.register("moto.space", [], (root, exports) => {
     function addLight(x, y, z, i, color = 0xffffff) {
         let l = new THREE.DirectionalLight(color, i, 0);
         l.position.set(x,z,y);
-        // let b; l.add(b = new THREE.Mesh(
-        //     new THREE.BoxGeometry(1,1,1),
-        //     new THREE.MeshBasicMaterial( {color: 0xff0000} )
-        // )); b.scale.set(5,5,5);
+        if (lightInfo.debug) {
+            let b; l.add(b = new THREE.Mesh(
+                new THREE.BoxGeometry(1,1,1),
+                new THREE.MeshBasicMaterial( {color: 0xff0000} )
+            )); b.scale.set(5,5,5);
+        }
         SCENE.add(l);
         return l;
     }
 
     // 4 corners bottom, 4 axis centers top
-    function updateLights(x, y, z) {
-        // remove old
-        for (let l of lights || []) {
+    function updateLights() {
+        let x = psize.width;
+        let y = psize.depth;
+        let z = Math.max(x,y);
+
+        let { mode, intensity, array } = lightInfo;
+
+        // remove old lights
+        for (let l of array) {
             SCENE.remove(l);
         }
-        // override Z
-        z = Math.max(x,y,z);
+
         // add new
         let x0 = -x/2, y0 = -y/2, z0 = 0;
         let x1 =  x/2, y1 =  y/2, z1 = z / 2, z2 = z;
 
-        lights = [
-            // over
-            addLight(  0,   0,  z2, lightIntensity * 1.2),
-            addLight( x0,  y0,  z1, lightIntensity * 2.5, 0xeeeeee),
-            addLight( x1,  y1,  z1, lightIntensity * 2.5),
-            // under
-            addLight( x0,  y1, -z1, lightIntensity * 0.5),
-            addLight( x1,  y0, -z1, lightIntensity * 0.5, 0xeeeeee),
-            addLight(  0,   0, -z2, lightIntensity * 0.8),
-        ];
+        switch (mode) {
+            case 0: array = [
+                addLight( x1,  y0,  z1, intensity * 1.5),
+                addLight( x0,  y1, -z1, intensity * 0.7)]; break;
+            case 1: array = [
+                addLight( x1,  y1,  z1, intensity * 2.5),
+                addLight( x0,  y1, -z1, intensity * 0.5),
+                addLight( x0,  y0,  z1, intensity * 2.5, 0xeeeeee),
+                addLight( x1,  y0, -z1, intensity * 0.5, 0xeeeeee)]; break;
+            case 2: array = [
+                addLight( x1,  y1,  z1, intensity * 2.5),
+                addLight( x0,  y1, -z1, intensity * 0.5),
+                addLight( x0,  y0,  z1, intensity * 2.5, 0xeeeeee),
+                addLight( x1,  y0, -z1, intensity * 0.5, 0xeeeeee),
+                addLight(  0,   0,  z2, intensity * 1.2),
+                addLight(  0,   0, -z2, intensity * 0.8)]; break;
+        }
+
+        // update tracking cam intensity
+        cameraLight.intensity = intensity;
+        lightInfo.array = array;
     }
 
     function updatePlatformPosition() {
@@ -301,7 +323,7 @@ gapp.register("moto.space", [], (root, exports) => {
         }
         viewControl.maxDistance = Math.max(width,depth) * 4;
         updatePlatformPosition();
-        updateLights(width, depth, maxz);
+        updateLights();
         if (volume) {
             SCENE.remove(volume);
             THREE.dispose(volume);
@@ -994,7 +1016,7 @@ gapp.register("moto.space", [], (root, exports) => {
         let { color, round, size, grid, opacity } = opt;
         let { visible, volume, zOffset, origin, light } = opt;
         if (light) {
-            lightIntensity = light;
+            lightInfo.intensity = light;
         }
         if (color) {
             platform.setColor(color);
@@ -1096,6 +1118,13 @@ gapp.register("moto.space", [], (root, exports) => {
                 // todo: option to clip for close views
                 // camera.near = dist / 2;
                 // camera.updateProjectionMatrix();
+            },
+
+            lightMode: (mode, intensity) => {
+                lightInfo.mode = mode;
+                if (intensity) lightInfo.intensity = intensity;
+                updateLights();
+                return lightInfo;
             }
         },
 
@@ -1289,8 +1318,8 @@ gapp.register("moto.space", [], (root, exports) => {
                     platform.visible = hidePlatformBelow ?
                         initialized && position.y >= 0 && showPlatform : showPlatform;
                 }
-                if (trackcam) {
-                    trackcam.position.copy(camera.position);
+                if (cameraLight) {
+                    cameraLight.position.copy(camera.position);
                 }
                 if (moved && platformOnMove) {
                     clearTimeout(platformMoveTimer);
@@ -1308,8 +1337,6 @@ gapp.register("moto.space", [], (root, exports) => {
             viewControl.maxDistance = 1000;
 
             SCENE.add(skyAmbient = new THREE.AmbientLight(0x707070));
-
-            updateLights(250, 250, 250);
 
             platform = new THREE.Mesh(
                 new THREE.BoxGeometry(1, 1, 1),
