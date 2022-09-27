@@ -35,7 +35,14 @@ SP.load = function(url, callback, formdata, scale, credentials) {
             response.arrayBuffer().then(buffer => {
                 stl.parse(buffer, scale);
 
-                const cdhVal = response.headers.get(CDH);
+                let cdhVal = response.headers.get(CDH);
+                if (typeof cdhVal === "string") {
+                    cdhVal = cdhVal.split(';').map(v => v.trim()).filter(v => {
+                        return v.indexOf('filename=') === 0;
+                    }).map(v => {
+                        return v.substring(10,v.length-1);
+                    })[0];
+                }
                 if (callback) callback(stl.vertices, cdhVal);
             });
         } else {
