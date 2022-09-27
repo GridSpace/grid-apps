@@ -23,39 +23,34 @@ function STL() {
     this.colors = null;
 }
 
-SP.load = function(url, callback, formdata, scale) {
-    let stl = this,
-        xhr = new XMLHttpRequest();
+SP.load = function(url, callback, formdata, scale, credentials) {
+    const stl = this;
 
-    function onloaded (event)  {
-        if (event.target.status === 200 || event.target.status === 0)  {
-            stl.parse(event.target.response || event.target.responseText, scale);
-            let cd = undefined;
-            if (xhr.getAllResponseHeaders().indexOf(CDH) > 0) {
-                cd = xhr.getResponseHeader(CDH)
-                    .split(';').map(v => v.trim()).filter(v => {
+    fetch(url, {
+        method: formdata ? 'POST' : 'GET',
+        credentials: credentials ? credentials : 'same-origin',
+        body: formdata
+    }).then(response => {
+        if (response.status === 200 || response.status === 0) {
+            response.arrayBuffer().then(buffer => {
+                stl.parse(buffer, scale);
+
+                let cdhVal = response.headers.get(CDH);
+                if (typeof cdhVal === "string") {
+                    cdhVal = cdhVal.split(';').map(v => v.trim()).filter(v => {
                         return v.indexOf('filename=') === 0;
                     }).map(v => {
                         return v.substring(10,v.length-1);
                     })[0];
-            }
-            if (callback) callback(stl.vertices, cd);
+                }
+                if (callback) callback(stl.vertices, cdhVal);
+            });
         } else {
-            if (callback) callback(null, event.target.statusText);
+            if (callback) callback(null, response.statusText);
         }
-    }
-
-    xhr.addEventListener('load', onloaded, false);
-    xhr.addEventListener('progress', function (event)  { }, false);
-    xhr.addEventListener('error', function () { }, false);
-
-    if (xhr.overrideMimeType) {
-        xhr.overrideMimeType('text/plain; charset=x-user-defined');
-    }
-
-    xhr.open(formdata ? 'POST' : 'GET', url, true);
-    xhr.responseType = 'arraybuffer';
-    xhr.send(formdata);
+    }).catch(err => {
+        if (callback) callback(null, err)
+    });
 };
 
 SP.encode = function(vertices, normals) {
