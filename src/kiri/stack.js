@@ -191,7 +191,7 @@ class Stack {
                 const { index, faces, z, colors } = path;
                 const geo = new THREE.BufferGeometry();
                 geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
-                geo.setIndex(index);
+                if (index.length) geo.setIndex(index);
                 geo.computeVertexNormals();
                 if (cpath) {
                     cpath.forEach((c, i) => geo.addGroup(c.start, c.count, i));

@@ -260,6 +260,7 @@ function path(levels, update, opts = {}) {
 
         update(index / levels.length, output);
     });
+
     // console.log({retractz});
     return layers;
 }

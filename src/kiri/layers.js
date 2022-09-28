@@ -219,12 +219,13 @@ class Layers {
             const one = cur.paths[0];
             if (one) {
                 // merge all contour geometry for massive speed gain
+                // todo: recode to concat all geometries at once, and not incrementally
                 const add = one.faces.length / 3;
                 for (let i=0; i<index.length; i++) {
                     index[i] += add;
                 }
                 const feces = new Float32Array(one.faces.length + faces.length);
-                const indln = one.index.length;
+                const indln = one.index.length || one.faces.length / 3;
                 feces.set(one.faces);
                 feces.set(faces, one.faces.length);
                 one.faces = feces;
@@ -351,6 +352,18 @@ function ProfiledContourGeometry(profileShape, contour, contourClosed) {
         index.push(p7, p6, p5);
         index.push(p8, p7, p5);
     }
+
+    // unrolled / non-indexed geometry provides a cleaner look because vertex
+    // shading of indexed geometries looks wrong. this takes longer to re-compute
+    // so it should be produced unrolled above.
+    //
+    // let nufaces = new Float32Array(index.length * 3), ii = 0;
+    // for (let i of index) {
+    //     nufaces[ii++] = faces[i*3];
+    //     nufaces[ii++] = faces[i*3+1];
+    //     nufaces[ii++] = faces[i*3+2];
+    // }
+    // return { index:[], faces: nufaces };
 
     return {index, faces};
 }
