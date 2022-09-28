@@ -500,7 +500,7 @@ function settingsImport(data, ask) {
     const { uc, ui } = api;
     if (typeof(data) === 'string') {
         try {
-            data = api.util.b64dec(data);
+            data = data.charAt(0) === '{' ? JSON.parse(data) : api.util.b64dec(data);
         } catch (e) {
             uc.alert('invalid import format');
             console.log('data',data,{type: typeof data},e);

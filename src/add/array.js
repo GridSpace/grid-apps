@@ -224,8 +224,9 @@ String.prototype.reverse = function() {
 };
 
 Object.clone = function(o) {
-    return structuredClone(o);
-    // return o ? JSON.parse(JSON.stringify(o)) : o;
+    // not using structuredClone because failes with some objects
+    // this method "cleans" out non clonables
+    return o ? JSON.parse(JSON.stringify(o)) : o;
 };
 
 Object.toArray = function(o) {
