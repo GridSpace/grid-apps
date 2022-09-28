@@ -1350,7 +1350,7 @@ gapp.register("moto.space", [], (root, exports) => {
             platform.visible = showPlatform;
 
             trackPlane = new THREE.Mesh(
-                new THREE.PlaneBufferGeometry(100000, 100000, 1, 1),
+                new THREE.PlaneGeometry(100000, 100000, 1, 1),
                 new THREE.MeshBasicMaterial( { color: 0x777777, opacity: 0, transparent: true } )
             );
             trackPlane.visible = false;

@@ -983,7 +983,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             case 7: pos = { x: 0,                     y: -(bedDepth - height)/2 }; break;
             case 8: pos = { x:  (bedWidth - width)/2, y: -(bedDepth - height)/2 }; break;
         }
-        let geometry = new THREE.PlaneBufferGeometry(width, height, 1),
+        let geometry = new THREE.PlaneGeometry(width, height, 1),
             material = new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
             mesh = new THREE.Mesh(geometry, material);
         mesh.position.z = -bedHeight;

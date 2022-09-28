@@ -266,7 +266,7 @@ function ProfiledContourGeometry(profileShape, contour, contourClosed) {
 
     contourClosed = contourClosed !== undefined ? contourClosed : true;
 
-    const profileGeometry = new THREE.ShapeBufferGeometry(profileShape);
+    const profileGeometry = new THREE.ShapeGeometry(profileShape);
     profileGeometry.rotateX(Math.PI * .5);
 
     const profile = profileGeometry.attributes.position;
