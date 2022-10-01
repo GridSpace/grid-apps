@@ -758,7 +758,7 @@ class OpTrace extends CamOp {
         let { op, state } = this;
         let { tool, rate, down, plunge, offset } = op;
         let { settings, widget, sliceAll, zMax, zTop, zThru, tabs } = state;
-        let { updateToolDiams, cutTabs, cutPolys, healPolys } = state;
+        let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
         let sliceOut = this.sliceOut = [];
@@ -799,7 +799,7 @@ class OpTrace extends CamOp {
                 slice.camLines = cutPolys([stockRect], slice.camLines, z, true);
             }
             slice.output()
-                .setLayer("follow", {line: 0xaa00aa}, false)
+                .setLayer("follow", {line: color}, false)
                 .addPolys(slice.camLines)
         }
         function clearZ(polys, z, down) {
@@ -819,7 +819,7 @@ class OpTrace extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     slice.output()
-                        .setLayer("clear", {line: 0xaa00aa}, false)
+                        .setLayer("clear", {line: color}, false)
                         .addPolys(slice.camLines)
                 }
             }
@@ -949,7 +949,7 @@ class OpPocket extends CamOp {
     slice(progress) {
         let { op, state } = this;
         let { tool, rate, down, plunge, expand } = op;
-        let { settings, widget, sliceAll, zMax, zTop, zThru, tabs } = state;
+        let { settings, widget, sliceAll, zMax, zTop, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt } = state;
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
@@ -996,7 +996,7 @@ class OpPocket extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     slice.output()
-                        .setLayer("pocket", {line: 0xaa00aa}, false)
+                        .setLayer("pocket", {line: color}, false)
                         .addPolys(slice.camLines)
                     if (false) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)
@@ -1249,7 +1249,7 @@ class OpRegister extends CamOp {
                     slice.camTrace = { tool: tool.getID(), rate: op.feed, plunge: op.rate };
                     slice.camLines = [ poly ];
                     slice.output()
-                        .setLayer("register", {line: 0xaa00aa}, false)
+                        .setLayer("register", {line: color}, false)
                         .addPolys(slice.camLines)
                 }
                 break;
