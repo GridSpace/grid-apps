@@ -71,6 +71,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         startCenter = process.outputOriginCenter,
         alignTop = settings.controller.alignTop,
         zclear = (process.camZClearance || 1),
+        zmax_force = process.camForceZMax || false,
         zmax_outer = hasStock ? stock.z + zclear : outerz + zclear,
         wztop = widget.track.top,
         ztOff = hasStock ? stock.z - wztop : 0,
@@ -305,6 +306,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     ),
                     mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
                     clearz = maxz;
+                if (zmax_force) {
+                    clearz = maxz = zmax + zadd;
+                }
                 // up if any point between higher than start/outline, go up first
                 if (mustGoUp) {
                     layerPush(lastPoint.clone().setZ(clearz + ztOff), 0, 0, tool.getNumber());

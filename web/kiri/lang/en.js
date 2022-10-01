@@ -614,6 +614,8 @@ self.kiri.lang['en-us'] = {
     ou_conv_l:      ["milling direction","uncheck for 'climb'"],
     ou_depf_s:      "depth first",
     ou_depf_l:      ["optimize pocket cuts","with depth priority"],
+    ou_forz_s:      "force z max",
+    ou_forz_l:      "all moves between pockets will go to z max (above stock). this is usually required if you are not performing a roughing operation before pocketing operations.",
 
     // CAM STOCK
     cs_menu:        "stock",

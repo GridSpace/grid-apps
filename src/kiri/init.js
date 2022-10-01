@@ -1952,6 +1952,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             outputOriginBounds:  uc.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
             outputOriginCenter:  uc.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LZR}),
             camOriginTop:        uc.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
+            camForceZMax:        uc.newBoolean(LANG.ou_forz_s, onBooleanClick, {title:LANG.ou_forz_l, modes:CAM}),
 
             camExpert:           uc.newGroup(LANG.op_xprt_s, null, {group: "cam_expert", modes:CAM, marker: false}),
             camExpertFast:       uc.newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, modes:CAM, show: () => !ui.camTrueShadow.checked }),
