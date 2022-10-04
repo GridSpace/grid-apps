@@ -2,6 +2,11 @@
 
 "use strict";
 
+/*
+ * uses `layers.js` to convert paths (usually preview) into primordial geometries.
+ * the input is based on an array (layers) of arrays containing `Output` objects
+ */
+
 // dep: geo.base
 // dep: geo.point
 // dep: geo.polygon

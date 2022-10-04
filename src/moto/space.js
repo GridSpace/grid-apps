@@ -403,6 +403,15 @@ gapp.register("moto.space", [], (root, exports) => {
         canvas.width = w * scale;
         canvas.height = h * scale;
 
+        canvas.addEventListener("webglcontextlost", event => {
+            console.log('WEB GL CONTEXT LOST');
+            event.preventDefault();
+        }, false);
+
+        canvas.addEventListener("webglcontextrestored", event => {
+            console.log('WEB GL CONTEXT RESTORED');
+        }, false);
+
         try {
             context.scale(scale, scale);
         } catch (e) {

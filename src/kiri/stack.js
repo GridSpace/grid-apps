@@ -6,6 +6,9 @@ gapp.register("kiri.stack", [], (root, exports) => {
 
 const { kiri } = root;
 
+/*
+ * converts `layers.js` output data structures into three.js meshes for display
+ */
 class Stack {
     constructor(view, freeMem, shiny) {
         this._view = view;

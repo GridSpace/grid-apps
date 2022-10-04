@@ -2,6 +2,12 @@
 
 "use strict";
 
+/*
+ * provides the `output` abstraction for turning poly lines (open and closed)
+ * into primordial geometries (faces, lines, color ranges). used inside of
+ * workers as part of slicing and preview output.
+ */
+
 // dep: geo.base
 // dep: geo.polygon
 // dep: geo.polygons
@@ -406,18 +412,6 @@ function ProfiledContourGeometry(profileShape, contour, contourClosed) {
         index.push(p7, p6, p5);
         index.push(p8, p7, p5);
     }
-
-    // unrolled / non-indexed geometry provides a cleaner look because vertex
-    // shading of indexed geometries looks wrong. this takes longer to re-compute
-    // so it should be produced unrolled above.
-    //
-    // let nufaces = new Float32Array(index.length * 3), ii = 0;
-    // for (let i of index) {
-    //     nufaces[ii++] = faces[i*3];
-    //     nufaces[ii++] = faces[i*3+1];
-    //     nufaces[ii++] = faces[i*3+2];
-    // }
-    // return { index:[], faces: nufaces };
 
     return {index, faces};
 }
