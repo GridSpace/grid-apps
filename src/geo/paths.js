@@ -166,19 +166,29 @@ function pointsToPath(points, offset, open, miter = 1.5) {
     // calculate segment normals which are used to calculate vertex normals
     // next segment info is associated with the current point
     const nupoints = [];
-    for (let i=0, l=points.length; i<l; i++) {
+    const length = points.length;
+    if (length === 2 && points[0].isEqual(points[1])) {
+        return { };
+    }
+    const dedup = (open && length > 2) || (!open && length > 3);
+    for (let i=0; i<length; i++) {
         let p1 = points[i];
-        let p2 = points[(i+1)%l];
+        let p2 = points[(i + 1) % length];
         p1.normal = calc_normal(p1, p2);
         // drop next duplicate point if segment length is 0
         // is possible there are 3 dups in a row and this is
         // not handled. could make if a while, but that could
-        // end up in a loop without additional checks
-        if (p1.normal.len === 0) {
-            p1.normal = calc_normal(p1, points[(i+2)%l]);
+        // end up in a loop without additional checks. ignore
+        // the case when the last and first point are the same
+        // which is valid when the line is an open path
+        if (dedup && p1.normal.len === 0 && i !== length - 1) {
+            p1.normal = calc_normal(p1, points[(i + 2) % length]);
             i++;
         }
         nupoints.push(p1);
+    }
+    if (nupoints.length === 1) {
+        console.log({points, nupoints});
     }
     // when points are dropped, we need the new array
     points = nupoints;
@@ -291,6 +301,9 @@ function pointsToPath(points, offset, open, miter = 1.5) {
 function pathTo3D(path, height, z) {
     const { faces, left, right, open } = path;
     const out = [];
+    if (!(faces && left && right)) {
+        return [];
+    }
     if (z !== undefined) {
         for (let p of faces) {
             p.z = z;
