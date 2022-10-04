@@ -239,7 +239,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 rms.innerText = nrms;
             }
             if (rnfo.offsetParent !== null) {
-                rnfo.innerHTML = Object.entries({ ...memory, ...render }).map(row => {
+                rnfo.innerHTML = Object.entries({ ...memory, ...render, render_ms: nrms, frames_sec: nfps }).map(row => {
                     return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`
                 }).join('');
             }
