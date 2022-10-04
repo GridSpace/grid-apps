@@ -31,8 +31,8 @@ AP.equals = function(arr) {
     return true;
 };
 
-AP.peek = function() {
-    return this[this.length - 1];
+AP.peek = function(val = 1) {
+    return this[this.length - val];
 };
 
 AP.drop = function(pre = 0, post = 0) {

@@ -3,6 +3,7 @@
 "use strict";
 
 // dep: geo.base
+// dep: geo.paths
 // dep: ext.clip2
 // dep: ext.earcut
 // dep: geo.point
@@ -57,6 +58,14 @@ class Polygon {
             bounds.update(point);
         }
         return bounds;
+    }
+
+    toPath2D(offset) {
+        return base.paths.pointsToPath(this.points, offset, this.open);
+    }
+
+    toPath3D(offset, height, z) {
+        return base.paths.pathTo3D(this.toPath2D(offset), height, z);
     }
 
     toString(verbose) {
