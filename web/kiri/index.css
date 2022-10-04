@@ -1812,17 +1812,24 @@ th, tr, td, label {
     color: #888;
 }
 #stats:hover #rnfo {
-    display: flex;
+    display: grid;
 }
 #rnfo {
     display: none;
+    grid-template-columns: min-content 1fr;
     position: absolute;
     bottom: 100%;
+    gap: 3px;
     right: 0;
+    color: #ddd;
+    background-color: rgba(255,255,255,0.05);
     border: 1px solid black;
     border-radius: 3px;
     padding: 5px;
-    white-space: pre;
+    x-white-space: pre;
+}
+#rnfo label {
+    text-align: right;
 }
 #tool-info {
     position: fixed;

@@ -228,8 +228,8 @@ gapp.register("kiri.init", [], (root, exports) => {
         let { div, fps, rms, rnfo } = ui.stats;
         div.style.display = 'flex';
         setInterval(() => {
-            const nfps = space.view.getFPS().toFixed(2);
-            const nrms = space.view.getRMS().toFixed(2);
+            const nrms = space.view.getRMS().toFixed(1);
+            const nfps = space.view.getFPS().toFixed(1);
             const rend = space.renderInfo();
             const { memory, render } = rend;
             if (nfps !== fps.innerText) {
@@ -239,7 +239,9 @@ gapp.register("kiri.init", [], (root, exports) => {
                 rms.innerText = nrms;
             }
             if (rnfo.offsetParent !== null) {
-                rnfo.innerText = JSON.stringify({ ...memory, ...render }, null, 4);
+                rnfo.innerHTML = Object.entries({ ...memory, ...render }).map(row => {
+                    return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`
+                }).join('');
             }
         }, 100);
     }
