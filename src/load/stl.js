@@ -23,13 +23,14 @@ function STL() {
     this.colors = null;
 }
 
-SP.load = function(url, callback, formdata, scale, credentials) {
+SP.load = function(url, callback, formdata, scale, credentials, headers) {
     const stl = this;
 
     fetch(url, {
         method: formdata ? 'POST' : 'GET',
         credentials: credentials ? credentials : 'same-origin',
-        body: formdata
+        body: formdata,
+        ...(headers ? {headers: headers} : {})
     }).then(response => {
         if (response.status === 200 || response.status === 0) {
             response.arrayBuffer().then(buffer => {
