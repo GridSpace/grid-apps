@@ -1027,6 +1027,12 @@ class OpPocket extends CamOp {
             if (outline.length === 0) {
                 continue;
             }
+            // option to skip interior features (holes, pillars)
+            if (op.outline) {
+                for (let p of outline) {
+                    p.inner = undefined;
+                }
+            }
             if (false) newSliceOut(zmin).output()
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)

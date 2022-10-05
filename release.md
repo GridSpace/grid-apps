@@ -17,6 +17,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add bridging option in CAM contouring
 * add option to force z max routing in CAM
 * add option to ignore z bottom in CAM contouring
+* add CAM pocket option to ignore interior features (outline only)
 * add CAM Z bottom visualization, make it relative to stock instead of part
 * extend url loading of workspaces to all formats
 * alert when healing is enabled and non-manifold geometries are detected

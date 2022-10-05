@@ -512,6 +512,8 @@ self.kiri.lang['en-us'] = {
     // CNC POCKET
     cp_xpnd_s:      "expand",
     cp_xpnd_l:      ["grow selected area to","encompass corners"],
+    cp_outl_s:      "outline only",
+    cp_outl_l:      ["ignore interior voids and features"],
 
     // CNC DRILLING
     cd_menu:        "drill",

@@ -1067,7 +1067,8 @@ CAM.init = function(kiri, api) {
         down:    'camPocketDown',
         rate:    'camPocketSpeed',
         plunge:  'camPocketPlunge',
-        expand:  'camPocketExpand'
+        expand:  'camPocketExpand',
+        outline: 'cmaPocketOutline'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
@@ -1076,7 +1077,9 @@ CAM.init = function(kiri, api) {
         down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
         rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
+        sep:      UC.newBlank({class:"pop-sep"}),
         expand:   UC.newInput(LANG.cp_xpnd_s, {title:LANG.cp_xpnd_l, convert:UC.toFloat, units:true}),
+        outline:  UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l}),
         sep:      UC.newBlank({class:"pop-sep"}),
         menu: UC.newRow([
             UC.newButton(undefined, func.surfaceAdd, {icon:'<i class="fas fa-plus"></i>'}),
