@@ -328,7 +328,7 @@ function platformLoad(url, onload) {
     }
 }
 
-function platformLoadSTL(url, onload, formdata, credentials) {
+function platformLoadSTL(url, onload, formdata, credentials, headers) {
     new load.STL().load(url, (vertices, filename) => {
         if (vertices) {
             let widget = newWidget().loadVertices(vertices);
@@ -338,7 +338,7 @@ function platformLoadSTL(url, onload, formdata, credentials) {
                 onload(vertices, widget);
             }
         }
-    }, formdata, 1 / api.view.unit_scale(), credentials);
+    }, formdata, 1 / api.view.unit_scale(), credentials, headers);
 }
 
 function platformLoadURL(url, options = {}) {
