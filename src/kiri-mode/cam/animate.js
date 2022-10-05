@@ -11,7 +11,7 @@ const { CAM } = driver;
 
 let meshes = {},
     unitScale = 1,
-    progress, toolPosX, toolPosY, toolPosZ,
+    progress,
     speedValues = [ 25, 12, 6, 3 ],
     speedNames = [ "1x", "2x", "4x", "8x" ],
     speedMax = speedValues.length - 1,
@@ -58,7 +58,8 @@ kiri.load(() => {
                 UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
                 UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
                 UC.newButton(null,skip,{icon:'<i class="fas fa-fast-forward"></i>',title:"skip forward without animation"}),
-                speedLabel = UC.newLabel("speed")
+                speedLabel = UC.newLabel("speed", {class:"speed"}),
+                progress = UC.newLabel('0%', {class:"progress"})
             ]);
             updateSpeed();
             setTimeout(() => {
@@ -67,10 +68,6 @@ kiri.load(() => {
             const toolpos = $('layer-toolpos');
             toolpos.innerHTML = '';
             UC.setGroup(toolpos);
-            progress = UC.newInput('%', {disabled: true, size: 5});
-            toolPosX = UC.newInput('x', {disabled: true, size: 7});
-            toolPosY = UC.newInput('y', {disabled: true, size: 7});
-            toolPosZ = UC.newInput('z', {disabled: true, size: 7});
             playButton.style.display = '';
             pauseButton.style.display = 'none';
             api.event.emit('animate', 'CAM');
@@ -173,7 +170,7 @@ kiri.load(() => {
     function handleGridUpdate(data) {
         checkMeshCommands(data);
         if (data && data.progress) {
-            progress.value = (data.progress * 100).toFixed(1)
+            progress.innerText = (data.progress * 100).toFixed(1) + '%'
         }
     }
 
@@ -216,11 +213,6 @@ kiri.load(() => {
                 mesh.position.y = pos.y;
                 mesh.position.z = pos.z;
                 space.update();
-                if (id !== 0) {
-                    toolPosX.value = ((pos.x + posOffset.x) * unitScale).toFixed(2);
-                    toolPosY.value = ((pos.y + posOffset.y) * unitScale).toFixed(2);
-                    toolPosZ.value = ((pos.z + posOffset.z) * unitScale).toFixed(2);
-                }
             }
         }
         if (data.mesh_update) {
