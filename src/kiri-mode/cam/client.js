@@ -1383,31 +1383,31 @@ function updateStock(args, event) {
     let csx = proc.camStockX;
     let csy = proc.camStockY;
     let csz = proc.camStockZ;
+    let min = { x: Infinity, y: Infinity, z: 0 };
+    let max = { x: -Infinity, y: -Infinity, z: -Infinity };
+    widgets.forEach(function(widget) {
+        let wbnd = widget.getBoundingBox(refresh);
+        let wpos = widget.track.pos;
+        min = {
+            x: Math.min(min.x, wpos.x + wbnd.min.x),
+            y: Math.min(min.y, wpos.y + wbnd.min.y),
+            z: 0
+        };
+        max = {
+            x: Math.max(max.x, wpos.x + wbnd.max.x),
+            y: Math.max(max.y, wpos.y + wbnd.max.y),
+            z: Math.max(max.z, wbnd.max.z)
+        };
+    });
+    if (offset) {
+        csx += max.x - min.x;
+        csy += max.y - min.y;
+        csz += max.z - min.z;
+        csox = min.x + ((max.x - min.x) / 2);
+        csoy = min.y + ((max.y - min.y) / 2);
+    }
     if (compute) {
         UI.func.animate.classList.remove('disabled');
-        if (offset) {
-            let min = { x: Infinity, y: Infinity, z: 0 };
-            let max = { x: -Infinity, y: -Infinity, z: -Infinity };
-            widgets.forEach(function(widget) {
-                let wbnd = widget.getBoundingBox(refresh);
-                let wpos = widget.track.pos;
-                min = {
-                    x: Math.min(min.x, wpos.x + wbnd.min.x),
-                    y: Math.min(min.y, wpos.y + wbnd.min.y),
-                    z: 0
-                };
-                max = {
-                    x: Math.max(max.x, wpos.x + wbnd.max.x),
-                    y: Math.max(max.y, wpos.y + wbnd.max.y),
-                    z: Math.max(max.z, wbnd.max.z)
-                };
-            });
-            csx += max.x - min.x;
-            csy += max.y - min.y;
-            csz += max.z - min.z;
-            csox = min.x + ((max.x - min.x) / 2);
-            csoy = min.y + ((max.y - min.y) / 2);
-        }
         if (!camStock) {
             let geo = new THREE.BoxGeometry(1, 1, 1);
             let mat = new THREE.MeshBasicMaterial({
@@ -1460,8 +1460,9 @@ function updateStock(args, event) {
         });
         camZBottom = new THREE.Mesh(geo, mat);
         camZBottom.renderOrder = 1;
+        camZBottom.position.x = csox;
+        camZBottom.position.y = csoy;
         camZBottom.position.z = proc.camZBottom;
-        camZBottom._max = max;
         SPACE.world.add(camZBottom);
     } else {
         camZBottom = undefined;
