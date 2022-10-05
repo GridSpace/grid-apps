@@ -473,14 +473,18 @@ CAM.init = function(kiri, api) {
         flipping = false;
         process.ops = op2;
         process.op2 = ops;
-        // special case, auto-adjust camZBottom
-        if (process.camZBottom && widgets.length === 1) {
-            process.camZBottom = widgets[0].bounds.max.z - process.camZBottom;
+        // flip camZBottom
+        if (poppedRec.invert && process.camZBottom && camZBottom) {
+            const maxZ = camZBottom._max.z
+            process.camZBottom = maxZ - process.camZBottom;
             API.util.rec2ui(process);
+            updateStock();
         }
+        // keep flip operations in sync
         for (let op of op2) {
             if (op.type === 'flip') {
                 op.axis = poppedRec.axis;
+                op.invert = poppedRec.invert;
             }
         }
         if (add2) {
@@ -1128,12 +1132,15 @@ CAM.init = function(kiri, api) {
     };
 
     createPopOp('flip', {
-        axis:     'camFlipAxis'
+        axis:     'camFlipAxis',
+        invert:   'camFlipInvert'
     }).inputs = {
         axis:     UC.newSelect(LANG.cd_axis, {}, "regaxis"),
+        sep:      UC.newBlank({class:"pop-sep", show:(op,conf) => conf.process.camZBottom}),
+        invert:   UC.newBoolean(LANG.cf_nvrt_s, undefined, {title:LANG.cf_nvrt_l, show:(op,conf) => conf.process.camZBottom}),
         sep:      UC.newBlank({class:"pop-sep"}),
         action:   UC.newRow([
-            UC.newButton(LANG.cc_flip, func.opFlip)
+            UC.newButton(LANG.cf_menu, func.opFlip)
         ], {class:"ext-buttons f-row"})
     };
 };
@@ -1408,10 +1415,11 @@ function updateStock(args, event) {
 
     SPACE.world.remove(camZBottom);
     if (proc.camZBottom) {
-        let max = { x: csx, y: csy };
+        let max = { x: csx, y: csy, z: csz };
         for (let w of widgets) {
             max.x = Math.max(max.x, w.track.box.w);
             max.y = Math.max(max.y, w.track.box.h);
+            max.z = Math.max(max.z, w.track.box.d);
         }
         let geo = new THREE.PlaneGeometry(max.x, max.y);
         let mat = new THREE.MeshBasicMaterial({
@@ -1423,6 +1431,7 @@ function updateStock(args, event) {
         camZBottom = new THREE.Mesh(geo, mat);
         camZBottom.renderOrder = 1;
         camZBottom.position.z = proc.camZBottom;
+        camZBottom._max = max;
         SPACE.world.add(camZBottom);
     } else {
         camZBottom = undefined;

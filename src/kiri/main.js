@@ -532,12 +532,12 @@ gapp.register("kiri.main", [], (root, exports) => {
     }
 
     function loadFile() {
-        $('load-file').onchange = function(event) {
+        const button = $('load-file');
+        button.onchange = function(event) {
             console.log(event);
             api.platform.load_files(event.target.files);
         };
-        $('load-file').click();
-        // api.show.alert("drag/drop STL files onto platform to import\nreload page to return to last saved state");
+        button.click();
     }
 
     function saveWorkspace(quiet) {

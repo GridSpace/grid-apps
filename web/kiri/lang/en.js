@@ -448,7 +448,6 @@ self.kiri.lang['en-us'] = {
 
     // CNC COMMON
     cc_menu:        "limits",
-    cc_flip:        "flip",
     cc_rapd_s:      "xy feed",
     cc_rapd_l:      ["max xy moves feedrate","in workspace units / minute"],
     cc_rzpd_s:      "z feed",
@@ -529,6 +528,11 @@ self.kiri.lang['en-us'] = {
     cd_regi_l:      ["drill registration holes","for double-sided parts","independent of enable","drilling but uses same","tool and settings"],
     cd_mark_s:      "marking",
     cd_mark_l:      ["only mark holes, do not drill out","the step down setting is used","to determine how deep to mark"],
+
+    // CNC FLIP
+    cf_menu:        "flip",
+    cf_nvrt_s:      "z bottom",
+    cf_nvrt_l:      "invert z bottom setting to follow stock",
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",
