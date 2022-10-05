@@ -356,9 +356,105 @@ function pathTo3D(path, height, z) {
     return out;
 }
 
+// produces indexed geometry which isn't ideal for rendering because
+// the default threejs generated vertex normals aren't accurate
+function shapeToPath(shape, points, closed) {
+    closed = closed !== undefined ? closed : true;
+
+    const profileGeometry = new THREE.ShapeGeometry(shape);
+    profileGeometry.rotateX(Math.PI * .5);
+
+    const profile = profileGeometry.attributes.position;
+    const faces = new Float32Array(profile.count * points.length * 3);
+
+    for (let i = 0; i < points.length; i++) {
+        const v1 = new THREE.Vector2().subVectors(points[i - 1 < 0 ? points.length - 1 : i - 1], points[i]);
+        const v2 = new THREE.Vector2().subVectors(points[i + 1 == points.length ? 0 : i + 1], points[i]);
+        const angle = v2.angle() - v1.angle();
+        const halfAngle = angle * .5;
+        let hA = halfAngle;
+        let tA = v2.angle() + Math.PI * .5;
+
+        if (!closed){
+            if (i == 0 || i == points.length - 1) {hA = Math.PI * .5;}
+            if (i == points.length - 1) {tA = v1.angle() - Math.PI * .5;}
+        }
+
+        const shift = Math.tan(hA - Math.PI * .5);
+        const shiftMatrix = new THREE.Matrix4().set(
+            1, 0, 0, 0,
+            -shift, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+        const tempAngle = tA;
+        const rotationMatrix = new THREE.Matrix4().set(
+            Math.cos(tempAngle), -Math.sin(tempAngle), 0, 0,
+            Math.sin(tempAngle), Math.cos(tempAngle), 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        );
+
+        const translationMatrix = new THREE.Matrix4().set(
+            1, 0, 0, points[i].x,
+            0, 1, 0, points[i].y,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        );
+
+        const cloneProfile = profile.clone();
+        cloneProfile.applyMatrix4(shiftMatrix);
+        cloneProfile.applyMatrix4(rotationMatrix);
+        cloneProfile.applyMatrix4(translationMatrix);
+
+        faces.set(cloneProfile.array, cloneProfile.count * i * 3);
+    }
+
+    const index = [];
+    const lastCorner = closed == false ? points.length - 1: points.length;
+
+    for (let i = 0; i < lastCorner; i++) {
+        for (let j = 0; j < profile.count; j++) {
+            const currCorner = i;
+            const nextCorner = i + 1 == points.length ? 0 : i + 1;
+            const currPoint = j;
+            const nextPoint = j + 1 == profile.count ? 0 : j + 1;
+
+            const a = nextPoint + profile.count * currCorner;
+            const b = currPoint + profile.count * currCorner;
+            const c = currPoint + profile.count * nextCorner;
+            const d = nextPoint + profile.count * nextCorner;
+
+            index.push(a, b, d);
+            index.push(b, c, d);
+        }
+    }
+
+    if (!closed) {
+        // cheating because we know the profile length is 4 (for now)
+        const p1 = 0 + profile.count * 0;
+        const p2 = 1 + profile.count * 0;
+        const p3 = 2 + profile.count * 0;
+        const p4 = 3 + profile.count * 0;
+        index.push(p1, p2, p3);
+        index.push(p1, p3, p4);
+        const lc = lastCorner;
+        const p5 = 0 + profile.count * lc;
+        const p6 = 1 + profile.count * lc;
+        const p7 = 2 + profile.count * lc;
+        const p8 = 3 + profile.count * lc;
+        index.push(p7, p6, p5);
+        index.push(p8, p7, p5);
+    }
+
+    return {index, faces};
+}
+
 base.paths = {
     poly2polyEmit,
     tip2tipEmit,
+    shapeToPath,
     pointsToPath,
     pathTo3D
 };
