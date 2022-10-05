@@ -275,9 +275,11 @@ CAM.export = function(print, online) {
 
     // collect tool info to add to header
     let toolz = {}, ctool;
-
     // remap points as necessary for origins, offsets, inversions
     print.output.forEach(function(layer) {
+        if (!Array.isArray(layer)) {
+            return;
+        }
         layer.forEach(function(out) {
             if (out.tool && out.tool !== ctool) {
                 ctool = toolByNumber(out.tool);
@@ -311,6 +313,10 @@ CAM.export = function(print, online) {
 
     // emit all points in layer/point order
     for (let layerout of print.output) {
+        if (!Array.isArray(layerout)) {
+            append(layerout.toString().trim());
+            continue;
+        }
         if (mode !== layerout.mode || consts.tool !== layerout[0].tool) {
             if (mode && !stripComments) {
                 append("; ending " + mode + " op after " + Math.round(time/60) + " seconds");

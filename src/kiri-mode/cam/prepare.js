@@ -41,7 +41,8 @@ CAM.prepare = function(widgets, settings, update) {
         });
     });
 
-    print.render = render.path(print.output, (progress, layer) => {
+    const output = print.output.filter(level => Array.isArray(level));
+    print.render = render.path(output, (progress, layer) => {
         update(0.75 + progress * 0.25, "render", layer);
     }, {
         thin: true,
@@ -125,6 +126,15 @@ function prepEach(widget, settings, print, firstPoint, update) {
         layerOut = [];
         layerOut.mode = lastMode;
         layerOut.spindle = spindle;
+    }
+
+    function addGCode(text) {
+        newOutput.push(text);
+        if (layerOut.length) {
+            layerOut = [];
+            layerOut.mode = lastMode;
+            layerOut.spindle = spindle;
+        }
     }
 
     // non-zero means contouring
@@ -372,6 +382,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         setPrintPoint,
         printPoint,
         newLayer,
+        addGCode,
         camOut,
         polyEmit,
         poly2polyEmit,
@@ -505,9 +516,13 @@ function prepEach(widget, settings, print, firstPoint, update) {
     }
 
     // last layer/move is to zmax
-    // injected into the last layer generated
-    if (lastPoint && newOutput.length)
-    print.addOutput(newOutput[newOutput.length-1], printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.getNumber());
+    // re-inject that point into the last layer generated
+    if (lastPoint && newOutput.length) {
+        let lastLayer = newOutput.filter(layer => Array.isArray(layer)).peek();
+        if (Array.isArray(lastLayer)) {
+            print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.getNumber());
+        }
+    }
 
     // replace output single flattened layer with all points
     print.output = newOutput;

@@ -38,6 +38,18 @@ class CamOp {
     prepare() { }
 }
 
+class OpGCode extends CamOp {
+    constructor(state, op) {
+        super(state, op);
+    }
+
+    prepare(ops, progress) {
+        if (this.op.gcode) {
+            ops.addGCode(this.op.gcode);
+        }
+    }
+}
+
 class OpLevel extends CamOp {
     constructor(state, op) {
         super(state, op);
@@ -1504,6 +1516,7 @@ CAM.OPS = CamOp.MAP = {
     "trace":    OpTrace,
     "drill":    OpDrill,
     "register": OpRegister,
+    "gcode":    OpGCode,
     "flip":     CamOp
 };
 

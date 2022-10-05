@@ -11,6 +11,7 @@ self.kiri.lang['en-us'] = {
     delete:         "delete",
     detail:         "detail",
     done:           "done",
+    edit:           "edit",
     enable:         "enable",
     export:         "export",
     files:          "files",

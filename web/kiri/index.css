@@ -788,6 +788,18 @@ th, tr, td, label {
     text-align: center;
     font-size: smaller;
 }
+#camop_dialog {
+    flex-direction: column;
+}
+#camop_dialog textarea {
+    border: 1px solid gray;
+    margin: 5px 1px 5px 1px;
+    background-color: #f4f4f4;
+}
+#camop_dialog button, #camop_dialog label {
+    text-align: center;
+    display: block;
+}
 #camops {
     display: none;
     padding: 0;

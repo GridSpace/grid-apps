@@ -1705,8 +1705,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             extNozzle:        uc.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:uc.toFloat, modes:FDM}),
             extOffsetX:       uc.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:uc.toFloat, modes:FDM}),
             extOffsetY:       uc.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:uc.toFloat, modes:FDM}),
-            extSelect:        uc.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
-            extDeselect:      uc.newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
+            extSelect:        uc.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, area:gcode}),
+            extDeselect:      uc.newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, modes:FDM, size:14, height:3, area:gcode}),
             extPad:           uc.newBlank({class:"grow", modes:FDM}),
             extActions:       uc.newRow([
                 ui.extPrev = uc.newButton(undefined, undefined, {icon:'<i class="fas fa-less-than"></i>'}),

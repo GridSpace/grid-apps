@@ -169,6 +169,7 @@ CAM.init = function(kiri, api) {
         let settings = API.conf.get();
         let { process, device } = settings;
         switch (ev.target.innerText) {
+            case "gcode": return func.opAddGCode();
             case "level": return func.opAddLevel();
             case "rough": return func.opAddRough();
             case "outline": return func.opAddOutline();
@@ -193,6 +194,10 @@ CAM.init = function(kiri, api) {
                 }
                 return func.opAddFlip();
         }
+    };
+
+    func.opAddGCode = () => {
+        func.opAdd(popOp.gcode.new());
     };
 
     func.opAddLevel = () => {
@@ -420,6 +425,25 @@ CAM.init = function(kiri, api) {
             };
         }
     });
+
+    func.opGCode = () => {
+        API.dialog.show('any');
+        const { c_gcode } = h.bind(
+            $('mod-any'), h.div({ id: "camop_dialog" }, [
+                h.label('custom gcode operation'),
+                h.textarea({ id: "c_gcode", rows: 15, cols: 50 }),
+                h.button({ _: 'done', onclick: () => {
+                    API.dialog.hide();
+                    API.conf.save();
+                } })
+            ])
+        );
+        c_gcode.value = poppedRec.gcode || '';
+        c_gcode.onkeyup = (el) => {
+            poppedRec.gcode = c_gcode.value;
+        };
+        c_gcode.focus();
+    };
 
     func.opFlip = () => {
         let widgets = API.widgets.all();
@@ -931,6 +955,12 @@ CAM.init = function(kiri, api) {
     function hasSpindle() {
         return current.device.spindleMax > 0;
     }
+
+    createPopOp('gcode', {
+        gcode:  'camCustomGcode',
+    }).inputs = {
+        action:   UC.newRow([ UC.newButton(LANG.edit, func.opGCode) ], {class:"ext-buttons f-row"})
+    };
 
     createPopOp('level', {
         tool:    'camLevelTool',
