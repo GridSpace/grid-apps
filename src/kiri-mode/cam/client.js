@@ -16,6 +16,7 @@ let isAnimate,
     isCamMode,
     isParsed,
     camStock,
+    camZBottom,
     current,
     poppedRec,
     hoveredOp,
@@ -1314,10 +1315,10 @@ function updateStock(args, event) {
     }
 
     if (!isCamMode) {
-        if (camStock) {
-            SPACE.world.remove(camStock);
-            camStock = null;
-        }
+        SPACE.world.remove(camZBottom);
+        SPACE.world.remove(camStock);
+        camStock = null;
+        camZBottom = null;
         return;
     }
 
@@ -1339,11 +1340,11 @@ function updateStock(args, event) {
     UI.func.animate.classList.add('disabled');
 
     // create/inject cam stock if stock size other than default
+    let csx = proc.camStockX;
+    let csy = proc.camStockY;
+    let csz = proc.camStockZ;
     if (compute) {
         UI.func.animate.classList.remove('disabled');
-        let csx = proc.camStockX;
-        let csy = proc.camStockY;
-        let csz = proc.camStockZ;
         if (offset) {
             let min = { x: Infinity, y: Infinity, z: 0 };
             let max = { x: -Infinity, y: -Infinity, z: -Infinity };
@@ -1400,6 +1401,28 @@ function updateStock(args, event) {
         SPACE.world.remove(camStock);
         camStock = null;
         delta = 0;
+    }
+
+    SPACE.world.remove(camZBottom);
+    if (proc.camZBottom) {
+        let max = { x: csx, y: csy };
+        for (let w of widgets) {
+            max.x = Math.max(max.x, w.track.box.w);
+            max.y = Math.max(max.y, w.track.box.h);
+        }
+        let geo = new THREE.PlaneGeometry(max.x, max.y);
+        let mat = new THREE.MeshBasicMaterial({
+            color: 0x777777,
+            opacity: 0.55,
+            transparent: true,
+            side:THREE.DoubleSide
+        });
+        camZBottom = new THREE.Mesh(geo, mat);
+        camZBottom.renderOrder = 1;
+        camZBottom.position.z = proc.camZBottom;
+        SPACE.world.add(camZBottom);
+    } else {
+        camZBottom = undefined;
     }
 
     const {x, y, z} = stock;
