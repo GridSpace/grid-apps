@@ -39,7 +39,7 @@ class Topo {
             maxX = bounds.max.x,
             minY = bounds.min.y,
             maxY = bounds.max.y,
-            zBottom = proc.camZBottom,
+            zBottom = contour.bottom ? proc.camZBottom : 0,
             zMin = Math.max(bounds.min.z, zBottom) + 0.0001,
             boundsX = maxX - minX,
             boundsY = maxY - minY,

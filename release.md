@@ -13,6 +13,10 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add configurable flatness for contour clipping
 * add faster render mode for FDM slices
 * add axis label remapping in FDM
+* add new path rendering engine
+* add bridging option in CAM contouring
+* add option to force z max routing in CAM
+* add option to ignore z bottom in CAM contouring
 * extend url loading of workspaces to all formats
 * alert when healing is enabled and non-manifold geometries are detected
 * fix thin output start and end point tracking which broke retraction

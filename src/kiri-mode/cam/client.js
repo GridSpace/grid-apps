@@ -1009,6 +1009,7 @@ CAM.init = function(kiri, api) {
         tolerance: 'camTolerance',
         flatness:  'camFlatness',
         bridging:  'camContourBridge',
+        bottom:    'camContourBottom',
         curves:    'camContourCurves',
         inside:    'camContourIn',
         axis:      'X'
@@ -1026,7 +1027,8 @@ CAM.init = function(kiri, api) {
         bridging:  UC.newInput(LANG.ou_brdg_s, {title:LANG.ou_brdg_l, convert:UC.toFloat, bound:UC.bound(0,1000.0), units:true, round:4, show:(op) => op.inputs.curves.checked}),
         sep:       UC.newBlank({class:"pop-sep"}),
         curves:    UC.newBoolean(LANG.cf_curv_s, undefined, {title:LANG.cf_curv_l}),
-        inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l})
+        inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l}),
+        bottom:    UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom})
     };
 
     createPopOp('trace', {
@@ -1173,7 +1175,7 @@ function createPopOp(type, map) {
             for (let inp of Object.values(op.inputs)) {
                 let parent = inp.parentElement;
                 if (parent.setVisible && parent.__opt.show) {
-                    parent.setVisible(parent.__opt.show(op));
+                    parent.setVisible(parent.__opt.show(op, API.conf.get()));
                 }
             }
         },
