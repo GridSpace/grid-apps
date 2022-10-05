@@ -139,6 +139,11 @@ CAM.init = function(kiri, api) {
         "selection.rotate"
     ], updateStock);
 
+    api.event.on([
+        // update tab color/opacity on dark/light change
+        "boolean.update"
+    ], updateTabs);
+
     api.event.on("preview.end", () => {
         isParsed = false;
         if (isCamMode && camStock) {
@@ -997,6 +1002,7 @@ CAM.init = function(kiri, api) {
         angle:     'camContourAngle',
         tolerance: 'camTolerance',
         flatness:  'camFlatness',
+        bridging:  'camContourBridge',
         curves:    'camContourCurves',
         inside:    'camContourIn',
         axis:      'X'
@@ -1008,8 +1014,10 @@ CAM.init = function(kiri, api) {
         step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
         rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         angle:     UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90)}),
+        sep:       UC.newBlank({class:"pop-sep"}),
         flatness:  UC.newInput(LANG.ou_flat_s, {title:LANG.ou_flat_l, convert:UC.toFloat, bound:UC.bound(0,1.0), units:true, round:4}),
         tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
+        bridging:  UC.newInput(LANG.ou_brdg_s, {title:LANG.ou_brdg_l, convert:UC.toFloat, bound:UC.bound(0,1000.0), units:true, round:4, show:(op) => op.inputs.curves.checked}),
         sep:       UC.newBlank({class:"pop-sep"}),
         curves:    UC.newBoolean(LANG.cf_curv_s, undefined, {title:LANG.cf_curv_l}),
         inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l})
@@ -1187,7 +1195,7 @@ function createTabBox(iw, ic, n) {
     const rot = new THREE.Quaternion().setFromAxisAngle(zaxis, Math.atan2(n.y, n.x));
     const pos = { x:ic.x, y:ic.y, z:ic.z };
     const dim = { x:camTabsDepth, y:camTabsWidth, z:camTabsHeight };
-    const tab = addbox(pos, 0x0000dd, 'tabb', dim, { rotate: rot });
+    const tab = addbox(pos, boxColor(), 'tabb', dim, { rotate: rot, opacity: boxOpacity() });
     return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight };
 }
 
@@ -1197,8 +1205,8 @@ function addWidgetTab(widget, rec) {
     // prevent duplicate restore from repeated settings load calls
     if (!tabs[id]) {
         pos.box = addbox(
-            pos, 0x0000dd, id,
-            dim, { group: widget.mesh, rotate: rot }
+            pos, boxColor(), id,
+            dim, { group: widget.mesh, rotate: rot, opacity: boxOpacity() }
         );
         pos.box.tab = Object.assign({widget, id}, pos);
         widget.adds.push(pos.box);
@@ -1226,6 +1234,18 @@ function clearTabs(widget, skiprec) {
     if (!skiprec) {
         delete API.widgets.annotate(widget.id).tab;
     }
+}
+
+function updateTabs() {
+    // update tab color and opacity
+    API.widgets.all().forEach(widget => {
+        Object.values(widget.tabs || {}).forEach(rec => {
+            for (let rec of widget.adds || []) {
+                rec.material.color = new THREE.Color(boxColor());
+                rec.material.opacity = boxOpacity();
+            }
+        });
+    });
 }
 
 function unselectTraces(widget, skip) {
@@ -1256,7 +1276,16 @@ function validateTools(tools) {
 }
 
 function addbox() { return FDM.addbox(...arguments)};
+
 function delbox() { return FDM.delbox(...arguments)};
+
+function boxColor() {
+    return API.space.is_dark() ? 0x00ddff : 0x0000dd;
+}
+
+function boxOpacity() {
+    return API.space.is_dark() ? 0.75 : 0.6;
+}
 
 function animate() {
     isAnimate = true;

@@ -534,6 +534,7 @@ const conf = exports({
                 camFastFeedZ: 300,
                 camTolerance: 0,
                 camFlatness: 0.001,
+                camContourBridge: 10,
                 camStockX: 5,
                 camStockY: 5,
                 camStockZ: 0,

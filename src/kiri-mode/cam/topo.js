@@ -32,6 +32,7 @@ class Topo {
             bounds = widget.getBoundingBox().clone(),
             tolerance = contour.tolerance,
             flatness = contour.flatness || 0.005,
+            bridge = contour.bridging || 10,
             proc = settings.process,
             shadow = tshadow,
             minX = bounds.min.x,
@@ -148,7 +149,9 @@ class Topo {
             // todo: merge co-linear, not just co-planar
             if (lastP && Math.abs(lastP.z - z) < flatness) {
                 if (curvesOnly) {
-                    end_poly();
+                    if ((newtrace.last() || lastP).distTo2D(newP) >= bridge) {
+                        end_poly();
+                    }
                 } else {
                     latent = newP;
                 }

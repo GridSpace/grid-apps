@@ -665,7 +665,7 @@ function addbox(point, color, name, dim = {x:1,y:1,z:1,rz:0}, opt = {}) {
         new BoxGeometry(dim.x, dim.y, dim.z),
         new MeshPhongMaterial({
             transparent: true,
-            opacity: 0.5,
+            opacity: opt.opacity || 0.5,
             color
         })
     );
