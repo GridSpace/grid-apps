@@ -262,6 +262,11 @@ CAM.init = function(kiri, api) {
         let oplist = current.process.ops;
         if (oplist.indexOf(rec) < 0) {
             oplist.push(rec);
+            let fpos = oplist.find(rec => rec.type === 'flip');
+            if (fpos >= 0 && oplist.length > 1) {
+                let oprec = oplist.splice(fpos,1);
+                oplist.push(oprec[0]);
+            }
             API.conf.save();
             func.opRender();
         }
@@ -283,6 +288,7 @@ CAM.init = function(kiri, api) {
         // $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         let oplist = current.process.ops;
         if (!(isCamMode && oplist)) return;
+        oplist = oplist.filter(rec => !Array.isArray(rec));
         let mark = Date.now();
         let html = [];
         $('ophint').style.display = oplist.length === 0 ? '' : 'none';

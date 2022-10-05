@@ -22,6 +22,15 @@ if (!AP.flat) {
     };
 }
 
+AP.find = function(fn) {
+    for (let i=0, l=this.length; i<l; i++) {
+        if (fn(this[i])) {
+            return i;
+        }
+    }
+    return -1;
+};
+
 AP.equals = function(arr) {
     if (!arr) return false;
     if (arr.length !== this.length) return false;
