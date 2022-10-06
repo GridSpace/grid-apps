@@ -990,7 +990,7 @@ class OpPocket extends CamOp {
             }
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
             if (expand) polys = POLY.offset(polys, expand);
-            let zpro = 0, zinc = pinc / (polys.length *  zs.length);
+            let zpro = 0, zinc = 1 / (polys.length *  zs.length);
             for (let poly of polys) {
                 for (let z of zs) {
                     let shadow = shadowAt(z);
@@ -1013,32 +1013,29 @@ class OpPocket extends CamOp {
                     if (false) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)
                         .addPolys(shadow)
-                    progress(prog + (zpro += zinc), "pocket");
+                    progress(zpro += zinc, "pocket");
                 }
             }
         }
         let surfaces = op.surfaces[widget.id] || [];
         let vert = widget.getVertices().array.map(v => v.round(4));
-        let prog = 0, pinc= 1 / surfaces.length;
-        for (let surface of surfaces) {
-            let outline = [];
-            let faces = CAM.surface_find(widget, [surface]);
-            let zmin = Infinity;
-            let j=0, k=faces.length;
-            for (let face of faces) {
-                let i = face * 9;
-                outline.push(newPolygon()
-                    .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
-                    .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
-                    .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
-                );
-            }
-            outline = POLY.union(outline, 0.0001, true);
-            outline = POLY.setWinding(outline, cutdir, false);
-            outline = healPolys(outline);
-            if (outline.length === 0) {
-                continue;
-            }
+        let outline = [];
+        let faces = CAM.surface_find(widget, surfaces);
+        let zmin = Infinity;
+        let j=0, k=faces.length;
+        for (let face of faces) {
+            let i = face * 9;
+            outline.push(newPolygon()
+                .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
+                .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
+                .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
+            );
+        }
+        outline = POLY.union(outline, 0.0001, true);
+        outline = POLY.setWinding(outline, cutdir, false);
+        outline = healPolys(outline);
+        let pinc = 1;
+        if (outline.length) {
             // option to skip interior features (holes, pillars)
             if (op.outline) {
                 for (let p of outline) {
@@ -1049,7 +1046,7 @@ class OpPocket extends CamOp {
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)
             clearZ(outline, zmin + 0.0001, down);
-            progress(prog += pinc, "pocket");
+            progress(1, "pocket");
         }
     }
 

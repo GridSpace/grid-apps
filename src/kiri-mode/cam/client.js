@@ -1487,6 +1487,7 @@ function updateStock(args, event) {
             side:THREE.DoubleSide
         });
         camZBottom = new THREE.Mesh(geo, mat);
+        camZBottom._max = max;
         camZBottom.renderOrder = 1;
         camZBottom.position.x = csox;
         camZBottom.position.y = csoy;

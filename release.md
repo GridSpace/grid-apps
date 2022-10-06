@@ -3,13 +3,13 @@
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
 
-# Release 3.5 (future)
+# Release 3.5 (2022-10-07)
 
 ## Kiri:moto
 
 * add optional service workers and manifest to support full PWA + install
 * add support to run as Progressive Web Apps for installation and offline use
-* add assembly import when KM used inside of Onshape
+* add assembly import when KM used inside of onshape
 * add configurable flatness for contour clipping
 * add faster render mode for FDM slices
 * add axis label remapping in FDM
@@ -20,8 +20,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add CAM pocket option to ignore interior features (outline only)
 * add CAM Z bottom visualization, make it relative to stock instead of part
 * add CAM z bottom inversion option to flip operator
-* add CAM custom gcode operator
-* add optional CAM operation notes
+* add CAM custom gcode operator (can be used for pausing, too)
+* add optional CAM operation notes (helps with many similar ops)
 * extend url loading of workspaces to all formats
 * alert when healing is enabled and non-manifold geometries are detected
 * fix thin output start and end point tracking which broke retraction
@@ -29,13 +29,6 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * fix profile seeding for newer device record formats
 * fix workspace import / restore for some file formats
 * fix potential crash into stock during moves when parts are z bottom anchored
-* ~ refactor vertex replacement and widget update matrix tracking
-* ~ refactor cnc to use core slicer engine
-* ~ add cnc pause operator with control of park position
-
-## Mesh:Tool (1.3.0)
-
-* ~ undo / redo for some operations
 
 
 # Release 3.4 (2022-05-14)

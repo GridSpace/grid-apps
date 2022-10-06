@@ -11,6 +11,7 @@
 * `B` can't drag slider bar on ipad / ios -- touch pad scrolling dodgy
 * `B` prevent or ask for really large models when scaling (crash ui)
 
+* `P` refactor vertex replacement and widget update matrix tracking
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to be decimated on demand (context menu?)
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
@@ -106,6 +107,7 @@
 * `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` maintain several part orientations + op chains in a single profile
 
+* `P` refactor slicing engine to use common core in geo
 * `P` port slicing to common core & refactor accordingly
 * `P` decrease cutting speed when entire tool is engaged (start of roughing)
 * `P` clear void should cut inside-to-out when a part would be freed from stock
@@ -129,6 +131,7 @@
 
 # Mesh:Tool
 
+* add undo/redo
 * send to Kiri:Moto workspace (or update model vertices in place)
 * better z snap using just vertexes from face intersected
 * add section view. local clip. raycast skip points above plane
