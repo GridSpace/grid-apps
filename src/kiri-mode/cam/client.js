@@ -376,13 +376,20 @@ CAM.init = function(kiri, api) {
                     return;
                 }
                 if (ev.ctrlKey || ev.metaKey) {
-                    rec.disabled = !rec.disabled;
                     ev.preventDefault();
                     ev.stopPropagation();
-                    if (rec.disabled) {
-                        clist.add("disabled");
-                    } else {
-                        clist.remove("disabled");
+                    rec.disabled = !rec.disabled;
+                    for (let op of ev.shiftKey ? oplist : [ rec ]) {
+                        if (op !== rec) {
+                            op.disabled = !rec.disabled;
+                        }
+                    }
+                    for (let el of bounds) {
+                        if (el.rec.disabled) {
+                            el.classList.add("disabled");
+                        } else {
+                            el.classList.remove("disabled");
+                        }
                     }
                     return true;
                 }
