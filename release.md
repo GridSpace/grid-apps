@@ -21,6 +21,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add CAM Z bottom visualization, make it relative to stock instead of part
 * add CAM Z bottom inversion option to flip operator
 * add CAM custom gcode operator (can be used for pausing, too)
+* add CAM z extend option on registration op independent of "Z Thru" global
 * add optional CAM operation notes (helps with many similar ops)
 * add option to limit CAM trace ops to Z bottom limit (when in use)
 * extend url loading of workspaces to all formats

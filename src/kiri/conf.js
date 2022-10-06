@@ -518,6 +518,7 @@ const conf = exports({
                 camDrillMark: false,
                 camDrillingOn: false,
                 camRegisterSpeed: 1000,
+                camRegisterThru: 5,
                 camFlipAxis: "X",
                 camFlipOther: "",
                 // camDrillReg: "none",

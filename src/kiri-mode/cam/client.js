@@ -1153,6 +1153,7 @@ CAM.init = function(kiri, api) {
         dwell:   'camDrillDwell',
         lift:    'camDrillLift',
         feed:    'camRegisterSpeed',
+        thru:    'camRegisterThru'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         axis:     UC.newSelect(LANG.cd_axis, {}, "regaxis"),
@@ -1163,7 +1164,9 @@ CAM.init = function(kiri, api) {
         down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
         rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
         dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, show:() => poppedRec.axis !== '-'}),
-        lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => poppedRec.axis !== '-'})
+        lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => poppedRec.axis !== '-'}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
     };
 
     createPopOp('flip', {

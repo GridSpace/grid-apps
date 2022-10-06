@@ -527,6 +527,8 @@ self.kiri.lang['en-us'] = {
     cd_lift_l:      ["lift between plunges","after dwell period","in workspace units","0 to disable"],
     cd_regi_s:      "register",
     cd_regi_l:      ["drill registration holes","for double-sided parts","independent of enable","drilling but uses same","tool and settings"],
+    cd_thru_s:      "z extend",
+    cd_thru_l:      ["extend downward cut through stock","in workspace units"],
     cd_mark_s:      "marking",
     cd_mark_l:      ["only mark holes, do not drill out","the step down setting is used","to determine how deep to mark"],
 

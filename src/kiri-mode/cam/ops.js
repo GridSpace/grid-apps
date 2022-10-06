@@ -1183,7 +1183,7 @@ class OpRegister extends CamOp {
             o3 = tool.fluteDiameter() * 2,
             mx = (lx + hx) / 2,
             my = (ly + hy) / 2,
-            mz = zThru || 0,
+            mz = op.thru || zThru || 0,
             dx = (stock.x - (hx - lx)) / 4,
             dy = (stock.y - (hy - ly)) / 4,
             dz = stock.z,

@@ -40,7 +40,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         zBottom = proc.camZBottom - zbOff,
         zMin = Math.max(bounds.min.z, zBottom),
         zMax = bounds.max.z,
-        zThru = zBottom === 0 ? (proc.camZThru || 0) : 0,
+        zThru = proc.camZBottom ? 0 : (proc.camZThru || 0),
         zTop = zMax + ztOff,
         minToolDiam = Infinity,
         maxToolDiam = -Infinity,
