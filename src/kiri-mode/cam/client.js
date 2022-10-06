@@ -1231,19 +1231,20 @@ function createPopOp(type, map) {
                 div.classList.add('pop-tics')
                 op.div.appendChild(div);
                 div.innerHTML = h.build(
-                    h.div([
-                        h.label({id: noteid, _: `${poppedRec.note || ''}`})
-                    ])
+                    h.div([ h.label({ id: noteid }) ])
                 );
                 op.note = { divid, noteid };
+            }
+            if (op.note) {
+                const { divid, noteid } = op.note;
                 $(divid).onclick = () => {
                     let note = op.x = prompt('Edit Note for Operation', poppedRec.note || '');
                     if (note !== undefined && note !== null) {
-                        poppedRec.note = note || poppedRec.note;
-                        $(noteid).innerText = note;
+                        $(noteid).innerText = poppedRec.note = note;
                         API.conf.save();
                     }
                 };
+                $(noteid).innerText = poppedRec.note || '';
             }
         },
         group: [],

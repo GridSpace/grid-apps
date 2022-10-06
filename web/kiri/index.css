@@ -848,6 +848,7 @@ th, tr, td, label {
     font-size: 11px;
     flex-direction: row;
     background-color: rgba(255,255,255,0.6);
+    border: 1px solid rgba(0,0,0,0.25);
     border-radius: 5px;
     word-break: break-word;
     white-space: normal;
