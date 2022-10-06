@@ -21,6 +21,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add CAM Z bottom visualization, make it relative to stock instead of part
 * add CAM z bottom inversion option to flip operator
 * add CAM custom gcode operator
+* add optional CAM operation notes
 * extend url loading of workspaces to all formats
 * alert when healing is enabled and non-manifold geometries are detected
 * fix thin output start and end point tracking which broke retraction

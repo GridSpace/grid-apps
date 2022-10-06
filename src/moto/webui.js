@@ -103,6 +103,10 @@ let h = exports({
 
     raw: ( text ) => {
         return { raw: text }
+    },
+
+    build: (data) => {
+        return build(data, []).join('');
     }
 });
 

@@ -24,6 +24,7 @@ let isAnimate,
 
 let zaxis = { x: 0, y: 0, z: 1 },
     popOp = {},
+    seed = Date.now(),
     func = {
         hover: noop,
         hoverUp: noop
@@ -304,7 +305,7 @@ CAM.init = function(kiri, api) {
             html.appendAll([
                 `<div id="${mark+i}" class="draggable">`,
                 `<label class="label">${rec.type}</label>`,
-                `<label id="${mark+i}-x" class="del"><i class="fas fa-times"></i></label>`,
+                `<label id="${mark+i}-x" class="del"><i class="fa-regular fa-circle-xmark"></i></label>`,
                 `</div>`
             ]);
             bind[mark+i] = rec;
@@ -350,6 +351,7 @@ CAM.init = function(kiri, api) {
                 poprec.use(rec);
                 hoveredOp = el;
                 el.appendChild(poprec.div);
+                poprec.addNote();
                 // option click event appears latent
                 // and overides the sticky settings
                 setTimeout(() => {
@@ -1212,7 +1214,7 @@ function createPopOp(type, map) {
             }
             return rec;
         },
-        hideshow: () => {
+        hideshow: (abc) => {
             for (let inp of Object.values(op.inputs)) {
                 let parent = inp.parentElement;
                 if (parent.setVisible && parent.__opt.show) {
@@ -1220,8 +1222,33 @@ function createPopOp(type, map) {
                 }
             }
         },
-        group: []
+        addNote: () => {
+            if (!op.note && type !== 'flip') {
+                const divid = `div-${++seed}`;
+                const noteid = `note-${++seed}`;
+                const div = document.createElement('div');
+                div.setAttribute('id', divid);
+                div.classList.add('pop-tics')
+                op.div.appendChild(div);
+                div.innerHTML = h.build(
+                    h.div([
+                        h.label({id: noteid, _: `${poppedRec.note || ''}`})
+                    ])
+                );
+                op.note = { divid, noteid };
+                $(divid).onclick = () => {
+                    let note = op.x = prompt('Edit Note for Operation', poppedRec.note || '');
+                    if (note !== undefined && note !== null) {
+                        poppedRec.note = note || poppedRec.note;
+                        $(noteid).innerText = note;
+                        API.conf.save();
+                    }
+                };
+            }
+        },
+        group: [],
     };
+
     UC.restore({
         addTo: op.div,
         bindTo: op.bind,
