@@ -1077,6 +1077,7 @@ CAM.init = function(kiri, api) {
         down:    'camTraceDown',
         rate:    'camTraceSpeed',
         plunge:  'camTracePlunge',
+        bottom:  'camTraceBottom',
         select:  'camTraceMode'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1090,6 +1091,8 @@ CAM.init = function(kiri, api) {
         plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
         select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
+        sep:      UC.newBlank({class:"pop-sep", show:(op,conf) => conf.process.camZBottom}),
+        bottom:   UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom}),
         menu: UC.newRow([
             UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
             UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),

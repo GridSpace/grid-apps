@@ -19,9 +19,10 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add option to ignore z bottom in CAM contouring
 * add CAM pocket option to ignore interior features (outline only)
 * add CAM Z bottom visualization, make it relative to stock instead of part
-* add CAM z bottom inversion option to flip operator
+* add CAM Z bottom inversion option to flip operator
 * add CAM custom gcode operator (can be used for pausing, too)
 * add optional CAM operation notes (helps with many similar ops)
+* add option to limit CAM trace ops to Z bottom limit (when in use)
 * extend url loading of workspaces to all formats
 * alert when healing is enabled and non-manifold geometries are detected
 * fix thin output start and end point tracking which broke retraction

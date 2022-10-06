@@ -772,6 +772,7 @@ class OpTrace extends CamOp {
         let { settings, widget, sliceAll, zMax, zTop, zThru, tabs } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
+        let { camStockClipTo, camZBottom } = process;
         // generate tracing offsets from chosen features
         let sliceOut = this.sliceOut = [];
         let areas = op.areas[widget.id] || [];
@@ -807,7 +808,7 @@ class OpTrace extends CamOp {
             } else {
                 slice.camLines = [ poly ];
             }
-            if (process.camStockClipTo && stockRect) {
+            if (camStockClipTo && stockRect) {
                 slice.camLines = cutPolys([stockRect], slice.camLines, z, true);
             }
             slice.output()
@@ -929,9 +930,13 @@ class OpTrace extends CamOp {
                 }
                 break;
             case "clear":
+                const zbo = widget.track.top - widget.track.box.d;
                 let zmap = {};
                 for (let poly of polys) {
                     let z = poly.getZ();
+                    if (op.bottom && camZBottom) {
+                        z = Math.max(z, camZBottom) - zbo;
+                    }
                     (zmap[z] = zmap[z] || []).push(poly);
                 }
                 for (let [zv, polys] of Object.entries(zmap)) {

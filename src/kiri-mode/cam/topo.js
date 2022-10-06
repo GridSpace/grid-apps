@@ -32,7 +32,7 @@ class Topo {
             bounds = widget.getBoundingBox().clone(),
             tolerance = contour.tolerance,
             flatness = contour.flatness || 0.005,
-            bridge = contour.bridging || 10,
+            bridge = contour.bridging || 0,
             proc = settings.process,
             shadow = tshadow,
             minX = bounds.min.x,
