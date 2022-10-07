@@ -20,7 +20,7 @@ let isAnimate,
     current,
     poppedRec,
     hoveredOp,
-    API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG;
+    API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG, MCAM;
 
 let zaxis = { x: 0, y: 0, z: 1 },
     popOp = {},
@@ -42,9 +42,14 @@ CAM.init = function(kiri, api) {
     VIEWS = kiri.consts.VIEWS;
     STACKS = api.const.STACKS;
     LANG = api.const.LANG;
+    MCAM = [ MODES.CAM ];
     UI = api.ui;
     UC = api.uc;
     API = api;
+
+    function zBottom() {
+        return API.conf.get().process.camZBottom > 0;
+    }
 
     // wire up animate button in ui
     api.event.on("function.animate", (mode) => {
@@ -1072,7 +1077,7 @@ CAM.init = function(kiri, api) {
         sep:       UC.newBlank({class:"pop-sep"}),
         curves:    UC.newBoolean(LANG.cf_curv_s, undefined, {title:LANG.cf_curv_l}),
         inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l}),
-        bottom:    UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom})
+        bottom:    UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf ? conf.process.camZBottom : 0})
     };
 
     createPopOp('trace', {
@@ -1088,18 +1093,18 @@ CAM.init = function(kiri, api) {
         select:  'camTraceMode'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
-        sep:      UC.newBlank({class:"pop-sep"}),
+        select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
         mode:     UC.newSelect(LANG.cu_type_s, {title:LANG.cu_type_l}, "trace"),
         offset:   UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l, show:() => (poppedRec.mode === 'follow')}, "traceoff"),
+        sep:      UC.newBlank({class:"pop-sep"}),
         spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
         step:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), show:(op) => popOp.trace.rec.mode === "clear"}),
         down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
         rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
-        sep:      UC.newBlank({class:"pop-sep", show:(op,conf) => conf.process.camZBottom}),
+        sep:      UC.newBlank({class:"pop-sep", modes:MCAM, show:zBottom, poop:true }),
         bottom:   UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom}),
+        sep:      UC.newBlank({class:"pop-sep"}),
         menu: UC.newRow([
             UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
             UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),
@@ -1181,8 +1186,8 @@ CAM.init = function(kiri, api) {
         invert:   'camFlipInvert'
     }).inputs = {
         axis:     UC.newSelect(LANG.cd_axis, {}, "regaxis"),
-        sep:      UC.newBlank({class:"pop-sep", show:(op,conf) => conf.process.camZBottom}),
-        invert:   UC.newBoolean(LANG.cf_nvrt_s, undefined, {title:LANG.cf_nvrt_l, show:(op,conf) => conf.process.camZBottom}),
+        sep:      UC.newBlank({class:"pop-sep", modes:MCAM, show:zBottom}),
+        invert:   UC.newBoolean(LANG.cf_nvrt_s, undefined, {title:LANG.cf_nvrt_l, show:zBottom}),
         sep:      UC.newBlank({class:"pop-sep"}),
         action:   UC.newRow([
             UC.newButton(LANG.cf_menu, func.opFlip)
@@ -1485,7 +1490,7 @@ function updateStock(args, event) {
     }
 
     SPACE.world.remove(camZBottom);
-    if (proc.camZBottom) {
+    if (proc.camZBottom && widgets.length) {
         let max = { x: csx, y: csy, z: csz };
         for (let w of widgets) {
             max.x = Math.max(max.x, w.track.box.w);

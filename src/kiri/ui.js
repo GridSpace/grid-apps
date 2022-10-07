@@ -172,12 +172,12 @@ gapp.register("kiri.ui", [], (root, exports) => {
             updateGroupShow(group);
         });
         letMode = mode;
-        if (nohide) {
-            return;
-        }
         hasModes.forEach(function(div) {
             div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
         });
+        if (nohide) {
+            return;
+        }
         hidePoppers();
     }
 
@@ -868,13 +868,17 @@ gapp.register("kiri.ui", [], (root, exports) => {
         ip.setAttribute("type", "checkbox");
         ip.checked = false;
         if (options) {
-            if (options.disabled) ip.setAttribute("disabled", "true");
+            if (options.disabled) {
+                ip.setAttribute("disabled", "true");
+            }
             if (options.title) {
                 ip.setAttribute("title", options.title);
                 row.setAttribute("title", options.title);
             }
         }
-        if (action) ip.onclick = function(ev) { action(ip) };
+        if (action) {
+            ip.onclick = function(ev) { action(ip) };
+        }
         ip.setVisible = row.setVisible;
 
         return ip;
