@@ -172,12 +172,15 @@ gapp.register("kiri.ui", [], (root, exports) => {
             updateGroupShow(group);
         });
         letMode = mode;
+        if (nohide) {
+            for (let div of hasModes.filter(d => d.isBlank)) {
+                div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
+            }
+            return;
+        }
         hasModes.forEach(function(div) {
             div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
         });
-        if (nohide) {
-            return;
-        }
         hidePoppers();
     }
 
@@ -897,6 +900,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 row.classList.add(ce);
             });
         }
+        row.isBlank = true;
 
         return row;
     }
