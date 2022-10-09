@@ -901,7 +901,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 row.classList.add(ce);
             });
         }
-        row.isBlank = true;
 
         return row;
     }

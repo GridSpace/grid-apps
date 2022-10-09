@@ -12,7 +12,7 @@ const { CAM } = driver;
 let meshes = {},
     unitScale = 1,
     progress,
-    speedValues = [ 25, 12, 6, 3 ],
+    speedValues = [ 1, 2, 3, 4 ],
     speedNames = [ "1x", "2x", "4x", "8x" ],
     speedMax = speedValues.length - 1,
     speedIndex = 0,
@@ -57,7 +57,6 @@ kiri.load(() => {
                 pauseButton = UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
                 UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
                 UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
-                UC.newButton(null,skip,{icon:'<i class="fas fa-fast-forward"></i>',title:"skip forward without animation"}),
                 speedLabel = UC.newLabel("speed", {class:"speed"}),
                 progress = UC.newLabel('0%', {class:"progress"})
             ]);
@@ -387,6 +386,7 @@ kiri.load(() => {
             updateTool(next.tool, send);
         }
         const id = toolID;
+        const rezstep = rez * renderSpeed;
         if (last) {
             const lp = last.point, np = next.point;
             // dwell ops have no point
@@ -396,13 +396,13 @@ kiri.load(() => {
             }
             const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
             // skip moves that are closer than resolution
-            if (Math.sqrt(dx*dx  +dy*dy + dz*dz) < rez) {
+            if (Math.sqrt(dx*dx  + dy*dy + dz*dz) < rezstep) {
                 setTimeout(() => { renderPath(send) }, 0);
                 return;
             }
 
             const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
-            const st = Math.ceil(md / rez);
+            const st = Math.ceil(md / rezstep);
             const mx = dx / st, my = dy / st, mz = dz / st;
             const moves = [];
             for (let i=0, x=lp.x, y=lp.y, z=lp.z; i<st; i++) {
@@ -439,11 +439,10 @@ kiri.load(() => {
                     send.data({ mesh_move: { id, pos } });
                 }
             }
-            let pauseTime = skipMode ? 0 : renderSpeed;
             if (index < moves.length) {
-                setTimeout(update, pauseTime);
+                setTimeout(update, 0);
             } else {
-                setTimeout(() => { renderPath(send) }, pauseTime);
+                setTimeout(() => { renderPath(send) }, 0);
             }
         }
         update(0);
