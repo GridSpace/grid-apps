@@ -3,6 +3,11 @@
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
 
+# Release 3.6
+
+* 
+
+
 # Release 3.5 (2022-10-07)
 
 ## Kiri:moto

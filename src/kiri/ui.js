@@ -892,6 +892,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
             row = newDiv(opt),
             hide = opt.hide;
 
+        row.isBlank = true;
         row.setAttribute("class", "var-row");
         row.style.display = hide ? 'none' : '';
 

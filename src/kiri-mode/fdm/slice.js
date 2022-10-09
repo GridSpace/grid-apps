@@ -307,6 +307,9 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             if (changes) {
                 healed = true;
                 slice.changes = changes;
+                if (self.debug) {
+                    console.log('slice healed', slice.index, slice.z);
+                }
             }
             if (process.xray) {
                 slice.index = process.xrayi.shift();
@@ -832,7 +835,6 @@ function doRender(slice, isSynth, params, devel) {
             .setLayer("support", COLOR.support)
             .addLines(poly.fill, vopt({ offset, height }));
     });
-
     if (slice.xray) {
         const color = [ 0xff0000, 0x00aa00, 0x0000ff, 0xaaaa00, 0xff00ff, 0x0 ];
         if (slice.lines) {
@@ -891,6 +893,10 @@ function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
  * @param {number} density
  */
  function doSolidLayerFill(slice, spacing, angle) {
+    if (slice.xray) {
+        return;
+    }
+
     if (slice.tops.length === 0 || typeof(angle) != 'number') {
         slice.isSolidLayer = false;
         return;
@@ -909,6 +915,10 @@ function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
  * the bounds of the top polygons and their inner solid areas.
  */
 function doSparseLayerFill(slice, options = {}) {
+    if (slice.xray) {
+        return;
+    }
+
     let process = options.process,
         spacing = options.spacing,  // spacing space between fill lines
         density = options.density,  // density of infill 0.0 - 1.0
@@ -1081,7 +1091,7 @@ function doSparseLayerFill(slice, options = {}) {
  */
 function doDiff(slice, options = {}) {
     const { sla, fakedown, grow, min } = options;
-    if (slice.index <= 0 && !fakedown) {
+    if ((slice.index <= 0 && !fakedown) || slice.xray) {
         return;
     }
     const top = slice,
@@ -1165,7 +1175,7 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
         return;
     }
 
-    if (slice.isSolidLayer) {
+    if (slice.isSolidLayer || slice.xray) {
         return;
     }
 
