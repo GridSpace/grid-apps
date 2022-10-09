@@ -146,6 +146,25 @@ CAM.init = function(kiri, api) {
         "selection.rotate"
     ], updateStock);
 
+    // invalidate trace ops on scale or rotate
+    api.event.on([
+        "selection.scale",
+        "selection.rotate"
+    ], () => {
+        for (let op of current.process.ops) {
+            if (op.type === 'trace') {
+                op.areas = {};
+            }
+        }
+    });
+
+    // invalidate tabs when scaleds
+    api.event.on([
+        "selection.scale",
+    ], () => {
+        func.tabClear();
+    });
+
     api.event.on([
         // update tab color/opacity on dark/light change
         "boolean.update"
