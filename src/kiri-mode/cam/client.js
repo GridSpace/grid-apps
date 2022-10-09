@@ -981,7 +981,8 @@ CAM.init = function(kiri, api) {
         spindle: 'camLevelSpindle',
         step:    'camLevelOver',
         rate:    'camLevelSpeed',
-        down:    'camLevelDown'
+        down:    'camLevelDown',
+        over:    'camLevelOver'
     }).inputs = {
         tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:     UC.newBlank({class:"pop-sep"}),
@@ -989,6 +990,7 @@ CAM.init = function(kiri, api) {
         step:    UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
         rate:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         down:    UC.newInput(LANG.cc_loff_s, {title:LANG.cc_loff_l, convert:UC.toFloat, units:true}),
+        over:    UC.newInput(LANG.cc_lxyo_s, {title:LANG.cc_lxyo_l, convert:UC.toFloat, units:true}),
     };
 
     createPopOp('rough', {

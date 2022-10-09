@@ -454,8 +454,11 @@ self.kiri.lang['en-us'] = {
     cc_rzpd_s:      "z feed",
     cc_rzpd_l:      ["max z moves feedrate","in workspace units / minute"],
 
-    cc_loff_s:      "offset",
-    cc_loff_l:      ["distance from stock face","for leveling pass","in workspace units"],
+    // CNC LEVELING
+    cc_loff_s:      "z offset",
+    cc_loff_l:      ["distance from stock face","in workspace units"],
+    cc_lxyo_s:      "xy offset",
+    cc_lxyo_l:      ["xy offset from part boundary as a fraction of the tool diameter (0 - 1.0)"],
 
     // CNC ROUGHING
     cr_menu:        "rough",

@@ -59,57 +59,50 @@ class OpLevel extends CamOp {
         let { op, state } = this;
         let { settings, widget, sliceAll } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs } = state;
-        let { bounds, zMax, ztOff, color } = state;
+        let { bounds, zMax, ztOff, color, tshadow } = state;
         let { stock } = settings;
 
         let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
-        let stepOver = toolDiam * op.step;
+        let stepOver = this.stepOver = toolDiam * op.step;
+        let z = zMax + ztOff - op.down;
+
         updateToolDiams(toolDiam);
 
-        let path = newPolygon().setOpen(),
-            center = {x:0, y:0, z:0},
-            x1 = bounds.min.x,
-            y1 = bounds.min.y,
-            x2 = bounds.max.x,
-            y2 = bounds.max.y,
-            z = bounds.max.z - (op.down || 0);
+        let points = [];
+        let clear = POLY.offset(tshadow, toolDiam * (op.over || 0));
+        // let tabsub = [];
+        // POLY.subtract(clear, POLY.offset(tabs.map(t => t.poly), toolDiam/2), tabsub, []);
+        POLY.fillArea(clear, 90, stepOver, points);
 
-        if (stock.x && stock.y && stock.z) {
-            x1 = -stock.x / 2;
-            y1 = -stock.y / 2;
-            x2 = -x1;
-            y2 = -y1;
-            z = zMax + ztOff - (op.down || 0);
+        let lines = this.lines = [];
+        for (let i=0; i<points.length; i += 2) {
+            let slice = newSlice(z);
+            lines.push( newPolygon().setOpen().addPoints([ points[i], points[i+1] ]).setZ(z) );
+            slice.output()
+                .setLayer("level", {face: color, line: color})
+                .addPolys(this.lines);
+            sliceAll.push(slice);
         }
-
-        let ei = 0,
-            xd = x2 - x1,
-            xi = xd / Math.floor(xd / stepOver);
-
-        for (let x = x1, lx = x, ei = 0; x <= x2; x += xi, ei++, lx = x) {
-            if (ei % 2 === 0) {
-                path.add(x,y1,z).add(x,y2,z);
-            } else {
-                path.add(x,y2,z).add(x,y1,z);
-            }
-        }
-
-        let slice = newSlice(z);
-        this.lines = slice.camLines = [ path ];
-        slice.output()
-            .setLayer("level", {face: color, line: color})
-            .addPolys(this.lines);
-        sliceAll.push(slice);
     }
 
     prepare(ops, progress) {
-        let { op, state, lines } = this;
-        let { setTool, setSpindle } = ops;
-        let { polyEmit, newLayer } = ops;
+        let { op, state, lines, stepOver } = this;
+        let { setTool, setSpindle, printPoint } = ops;
+        let { polyEmit, newLayer, tip2tipEmit, camOut } = ops;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
-        polyEmit(lines[0]);
+        lines = lines.map(p => { return { first: p.first(), last: p.last(), poly: p } });
+        tip2tipEmit(lines, printPoint, (el, point, count) => {
+            let poly = el.poly;
+            if (poly.last() === point) {
+                poly.reverse();
+            }
+            poly.forEachPoint((point, pidx) => {
+                camOut(point.clone(), pidx > 0, stepOver);
+            }, false);
+        });
+
         newLayer();
     }
 }
