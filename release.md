@@ -5,7 +5,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
-* 
+* improve CAM animation speeds
+* fix belt fan override for base extrusions touching belt
 
 
 # Release 3.5 (2022-10-07)

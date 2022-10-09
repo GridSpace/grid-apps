@@ -693,8 +693,9 @@ FDM.prepare = function(widgets, settings, update) {
                 }
                 if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
                     // apply base speed to segments touching belt
-                    rec.speed = Math.min(rec.speed, lowrate);
+                    rec.speed = params.firstLayerRate || Math.min(rec.speed, lowrate);
                     rec.emit *= bmult;
+                    rec.fan = params.firstLayerFanSpeed;
                     minx = Math.min(minx, point.x, lastout.point.x);
                     maxx = Math.max(maxx, point.x, lastout.point.x);
                     maxy = Math.max(maxy, point.y);

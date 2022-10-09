@@ -79,6 +79,8 @@ FDM.export = function(print, online, ondone, ondebug) {
         extrudeSet = false,
         nozzleTemp = process.firstLayerNozzleTemp || process.outputTemp,
         bedTemp = process.firstLayerBedTemp || process.outputBedTemp,
+        fanSpeedSave = undefined,
+        fanSpeedBase = undefined,
         fanSpeed = undefined,
         lastType = undefined,
         lastNozzleTemp = nozzleTemp,
@@ -95,6 +97,7 @@ FDM.export = function(print, online, ondone, ondebug) {
             temp: nozzleTemp,
             temp_bed: bedTemp,
             bed_temp: bedTemp,
+            fan_speed_base: fanSpeedBase,
             fan_speed: fanSpeed,
             speed: fanSpeed, // legacy
             top: offset.y ? bedDepth : bedDepth/2,
@@ -133,9 +136,23 @@ FDM.export = function(print, online, ondone, ondebug) {
     }
     subst.tool_count = tools_used.length;
 
+    function setTempFanSpeed(tempSpeed) {
+        if (tempSpeed > 0) {
+            fanSpeedSave = fanSpeedSave >= 0 ? fanSpeedSave : fanSpeed;
+            fanSpeed = tempSpeed;
+            subst.fan_speed = fanSpeed;
+            subst.fan_speed_base = tempSpeed;
+        } else {
+            fanSpeed = fanSpeedSave >= 0 ? fanSpeedSave : fanSpeed
+            fanSpeedSave = undefined;
+            subst.fan_speed = fanSpeed;
+            subst.fan_speed_base = fanSpeedBase;
+        }
+    }
+
     // smallish band-aid. refactor above to remove redundancy
     function updateParams(layer, params) {
-        // let params = getRangeParameters(process, layer);
+        // params = getRangeParameters(process, layer);
         zhop = params.zHopDistance || 0; // range
         retDist = params.outputRetractDist || 0; // range
         retSpeed = params.outputRetractSpeed * 60 || 1; // range
@@ -147,6 +164,7 @@ FDM.export = function(print, online, ondone, ondebug) {
         bedTemp = layer === 0 ?
             params.firstLayerBedTemp || params.outputBedTemp :
             params.outputBedTemp || params.firstLayerBedTemp;
+        fanSpeedBase = params.firstLayerFanSpeed || 0;
         fanSpeed = layer === 0 ?
             params.firstLayerFanSpeed || 0 :
             params.outputFanSpeed || 0;
@@ -154,6 +172,7 @@ FDM.export = function(print, online, ondone, ondebug) {
             temp_bed: bedTemp,
             bed_temp: bedTemp,
             fan_speed: fanSpeed,
+            fan_speed_base: fanSpeedBase,
             speed: fanSpeed, // legacy
             retract_speed: retSpeed,
             retract_distance: retDist,
@@ -680,6 +699,15 @@ FDM.export = function(print, online, ondone, ondebug) {
             // re-engage post-retraction before new extrusion
             if (out.emit && retracted) {
                 unretract();
+            }
+
+            // in belt mode, fan can change per segment (for base)
+            if (isBelt) {
+                setTempFanSpeed(out.fan);
+                if (fanSpeed !== lastFanSpeed) {
+                    appendAllSub(gcodeFan);
+                    lastFanSpeed = fanSpeed;
+                }
             }
 
             if (lastp && out.emit) {
