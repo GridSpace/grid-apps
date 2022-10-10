@@ -8,6 +8,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * improve CAM animation speeds
 * add CAM op level part offset parameters for xy and z
 * add CAM pocket smoothing and contouring which is closer to true 3 axis
+* add CAM 3D engraving and marking with the pocket contouring operation
 * fix CAM invalidation of tabs on scale and traces on scale or rotate
 * fix belt fan override for base extrusions touching belt
 

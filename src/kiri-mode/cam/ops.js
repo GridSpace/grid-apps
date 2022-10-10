@@ -970,6 +970,7 @@ class OpPocket extends CamOp {
         let toolDiam = camTool.fluteDiameter();
         let toolOver = toolDiam * op.step;
         let cutdir = process.camConventional;
+        let engrave = contour && op.engrave;
         if (contour) {
             down = 0;
             this.topo = new CAM.Topo({
@@ -1034,9 +1035,10 @@ class OpPocket extends CamOp {
                         continue;
                     }
                     let slice = newSliceOut(z);
+                    let count = engrave ? 1 : 999;
                     slice.camTrace = { tool, rate, plunge };
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
-                        count:999, outs: slice.camLines = [], flat:true, z
+                        count, outs: slice.camLines = [], flat:true, z
                     });
                     if (tabs) {
                         slice.camLines = cutTabs(tabs, POLY.flatten(slice.camLines, null, true), z);
@@ -1045,7 +1047,7 @@ class OpPocket extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     if (contour) {
-                        slice.camLines = pocket.conform(slice.camLines, op.refine);
+                        slice.camLines = pocket.conform(slice.camLines, op.refine, engrave);
                     }
                     slice.output()
                         .setLayer("pocket", {line: color}, false)
@@ -1093,14 +1095,14 @@ class OpPocket extends CamOp {
     }
 
     // mold cam output lines to the surface of the topo offset by tool geometry
-    conform(camLines, refine = 10) {
+    conform(camLines, refine = 10, engrave) {
         const topo = this.topo;
         // re-segment polygon to a higher resolution
         const hirez = camLines.map(p => p.segment(topo.tolerance * 2));
         // walk points and offset from surface taking into account tool geometry
         for (let poly of hirez) {
             for (let point of poly.points) {
-                point.z = topo.toolAtXY(point.x, point.y);
+                point.z = engrave ? topo.zAtXY(point.x, point.y) : topo.toolAtXY(point.x, point.y);
             }
         }
         // walk points noting z deltas and smoothing sawtooth patterns

@@ -155,6 +155,12 @@ class Topo {
             return toolAtZ(px, py);
         };
 
+        this.zAtXY = function(px, py) {
+            px = Math.round(rx * (px - minX));
+            py = Math.round(ry * (py - minY));
+            return topo.data[px * stepsy + py] || zMin;
+        };
+
         function push_point(x,y,z) {
             const newP = newPoint(x,y,z);
             // todo: merge co-linear, not just co-planar

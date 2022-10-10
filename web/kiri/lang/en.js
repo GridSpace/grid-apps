@@ -521,6 +521,8 @@ self.kiri.lang['en-us'] = {
     cp_refi_l:      ["number of refining passes to perform on contoured polylines. meant to address Z delta sawtoothing caused by faced geometries whereas smoothing handles XY. values > 10 work well for gently contoured geometries with significant Z movement."],
     cp_cont_s:      "contour",
     cp_cont_l:      ["ignore interior voids and features"],
+    cp_engr_s:      "engrave",
+    cp_engr_l:      ["sets up a single pass around the perimeter of the selected area. also useful for 3D laser marking"],
     cp_outl_s:      "outline only",
     cp_outl_l:      ["ignore interior voids and features"],
 

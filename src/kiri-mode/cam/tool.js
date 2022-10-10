@@ -69,11 +69,19 @@ class Tool {
         return this.unitScale() * this.tool.shaft_diam;
     }
 
+    isBallMill() {
+        return this.type === "ballmill";
+    }
+
+    isTaperMill() {
+        return this.type === "tapermill";
+    }
+
     generateProfile(resolution) {
         // generate tool profile
         let type = this.getType(),
-            ball = type === "ballmill",
-            taper = type === "tapermill",
+            ball = this.isBallMill(),
+            taper = this.isTaperMill(),
             tip_diameter = this.tipDiameter(),
             shaft_offset = this.fluteLength(),
             flute_diameter = this.fluteDiameter(),
