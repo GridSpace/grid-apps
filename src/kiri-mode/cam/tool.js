@@ -70,11 +70,11 @@ class Tool {
     }
 
     isBallMill() {
-        return this.type === "ballmill";
+        return this.tool.type === "ballmill";
     }
 
     isTaperMill() {
-        return this.type === "tapermill";
+        return this.tool.type === "tapermill";
     }
 
     generateProfile(resolution) {

@@ -155,10 +155,10 @@ class Topo {
             return toolAtZ(px, py);
         };
 
-        this.zAtXY = function(px, py) {
-            px = Math.round(rx * (px - minX));
-            py = Math.round(ry * (py - minY));
-            return topo.data[px * stepsy + py] || zMin;
+        const zAtXY = this.zAtXY = function(px, py) {
+            let ix = Math.round(rx * (px - minX));
+            let iy = Math.round(ry * (py - minY));
+            return topo.data[ix * stepsy + iy] || zMin;
         };
 
         function push_point(x,y,z) {

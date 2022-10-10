@@ -1008,8 +1008,11 @@ class OpPocket extends CamOp {
                 down = diff / Math.ceil(diff / down);
             }
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
+            if (engrave) {
+                toolDiam = toolOver;
+            }
             if (contour) {
-                expand = toolOver;
+                expand = engrave ? 0 : toolOver;
             }
             if (expand) {
                 polys = POLY.offset(polys, expand);
@@ -1037,9 +1040,14 @@ class OpPocket extends CamOp {
                     let slice = newSliceOut(z);
                     let count = engrave ? 1 : 999;
                     slice.camTrace = { tool, rate, plunge };
-                    POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
-                        count, outs: slice.camLines = [], flat:true, z
-                    });
+                    if (toolDiam) {
+                        POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
+                            count, outs: slice.camLines = [], flat:true, z
+                        });
+                    } else {
+                        // when engraving with a 0 width tip
+                        slice.camLines = clip;
+                    }
                     if (tabs) {
                         slice.camLines = cutTabs(tabs, POLY.flatten(slice.camLines, null, true), z);
                     } else {
