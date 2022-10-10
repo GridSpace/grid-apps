@@ -957,8 +957,9 @@ class OpPocket extends CamOp {
     }
 
     slice(progress) {
+        const debug = true;
         let { op, state } = this;
-        let { tool, rate, down, plunge, expand } = op;
+        let { tool, rate, down, plunge, expand, contour, smooth } = op;
         let { settings, widget, sliceAll, zMax, zTop, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt } = state;
         let { process, stock } = settings;
@@ -967,6 +968,9 @@ class OpPocket extends CamOp {
         let toolDiam = new CAM.Tool(settings, tool).fluteDiameter();
         let toolOver = toolDiam * op.step;
         let cutdir = process.camConventional;
+        if (contour) {
+            down = 0;
+        }
         updateToolDiams(toolDiam);
         if (tabs) {
             tabs.forEach(tab => {
@@ -987,13 +991,32 @@ class OpPocket extends CamOp {
                 down = diff / Math.ceil(diff / down);
             }
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
-            if (expand) polys = POLY.offset(polys, expand);
-            let zpro = 0, zinc = 1 / (polys.length *  zs.length);
+            if (contour) {
+                expand = toolOver;
+            }
+            if (expand) {
+                polys = POLY.offset(polys, expand);
+            }
+            let zpro = 0, zinc = 1 / (polys.length * zs.length);
             for (let poly of polys) {
                 for (let z of zs) {
-                    let shadow = shadowAt(z);
-                    let clip = [];
-                    POLY.subtract([ poly ], shadow, clip);
+                    let clip = [], shadow;
+                    if (contour) {
+                        if (smooth) {
+                            clip = POLY.offset(POLY.offset([ poly ], smooth), -smooth);
+                        } else {
+                            clip = [ poly ];
+                        }
+                    } else {
+                        shadow = shadowAt(z);
+                        if (smooth) {
+                            shadow = POLY.offset(POLY.offset(shadow, smooth), -smooth);
+                        }
+                        POLY.subtract([ poly ], shadow, clip);
+                    }
+                    if (clip.length === 0) {
+                        continue;
+                    }
                     let slice = newSliceOut(z);
                     slice.camTrace = { tool, rate, plunge };
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
@@ -1008,7 +1031,7 @@ class OpPocket extends CamOp {
                     slice.output()
                         .setLayer("pocket", {line: color}, false)
                         .addPolys(slice.camLines)
-                    if (false) slice.output()
+                    if (debug && shadow) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)
                         .addPolys(shadow)
                     progress(zpro += zinc, "pocket");
@@ -1032,15 +1055,17 @@ class OpPocket extends CamOp {
         outline = POLY.union(outline, 0.0001, true);
         outline = POLY.setWinding(outline, cutdir, false);
         outline = healPolys(outline);
-        let pinc = 1;
+        if (smooth) {
+            outline = POLY.offset(POLY.offset(outline, smooth), -smooth);
+        }
         if (outline.length) {
             // option to skip interior features (holes, pillars)
-            if (op.outline) {
+            if (!contour && op.outline) {
                 for (let p of outline) {
                     p.inner = undefined;
                 }
             }
-            if (false) newSliceOut(zmin).output()
+            if (debug) newSliceOut(zmin).output()
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)
             clearZ(outline, zmin + 0.0001, down);
@@ -1055,7 +1080,7 @@ class OpPocket extends CamOp {
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
         let i=0, l=sliceOut.length;
-        for (let slice of sliceOut) {
+        for (let slice of sliceOut.filter(s => s.camLines)) {
             ops.emitTrace(slice);
             progress(++i / l, "pocket");
         }

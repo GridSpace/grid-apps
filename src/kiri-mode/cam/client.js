@@ -151,6 +151,7 @@ CAM.init = function(kiri, api) {
         "selection.scale",
         "selection.rotate"
     ], () => {
+        if (!isCamMode) return;
         for (let op of current.process.ops) {
             if (op.type === 'trace') {
                 op.areas = {};
@@ -1140,6 +1141,8 @@ CAM.init = function(kiri, api) {
         rate:    'camPocketSpeed',
         plunge:  'camPocketPlunge',
         expand:  'camPocketExpand',
+        smooth:  'camPocketSmooth',
+        contour: 'camPocketContour',
         outline: 'cmaPocketOutline'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1150,8 +1153,11 @@ CAM.init = function(kiri, api) {
         rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        expand:   UC.newInput(LANG.cp_xpnd_s, {title:LANG.cp_xpnd_l, convert:UC.toFloat, units:true}),
-        outline:  UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l}),
+        expand:   UC.newInput(LANG.cp_xpnd_s, {title:LANG.cp_xpnd_l, convert:UC.toFloat, units:true, show:() => !poppedRec.contour}),
+        smooth:   UC.newInput(LANG.cp_smoo_s, {title:LANG.cp_smoo_l, convert:UC.toFloat, units:true}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        contour:  UC.newBoolean(LANG.cp_cont_s, undefined, {title:LANG.cp_cont_s}),
+        outline:  UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l, show:() => !poppedRec.contour}),
         sep:      UC.newBlank({class:"pop-sep"}),
         menu: UC.newRow([
             UC.newButton(undefined, func.surfaceAdd, {icon:'<i class="fas fa-plus"></i>'}),

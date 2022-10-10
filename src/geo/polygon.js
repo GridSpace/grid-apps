@@ -1629,6 +1629,8 @@ class Polygon {
         }
     }
 
+    // cut poly using array of closed polygons. used primarily in cnc
+    // to cut perimeters using tabs resulting in open poly lines.
     cut(polys, inter) {
         let target = this;
 
@@ -1670,7 +1672,7 @@ class Polygon {
         }
     }
 
-
+    // find the intersection of two polygons
     intersect(poly, min) {
         if (!this.overlaps(poly)) return null;
 
@@ -1793,6 +1795,7 @@ class Polygon {
         return this;
     }
 
+    // turn 2d polygon into closed 3d mesh faces
     extrude(z = 1) {
         let poly = this.clone().setClockwise();
         let faces = [];
@@ -1810,6 +1813,42 @@ class Polygon {
         }
         return faces;
     }
+
+    // split long straight lines into segments no longer than max
+    // and return a new polygon
+    segment(max = 1) {
+        const newp = [];
+        const points = this.points;
+        const length = points.length;
+        for (let i=0, p=points, l1=length, l2=l1+1; i<l1; i++) {
+            const p1 = p[i];
+            const p2 = p[(i + 1) % l1];
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const dl = Math.sqrt(dx * dx + dy * dy);
+            newp.push(p1);
+            if (dl < max) {
+                continue;
+            }
+            const div = dl / dist;
+            const fit = div | 0;
+            const add = fit - 1;
+            const ix = dx / fit;
+            const iy = dy / fit;
+            let ox = p1.x + ix;
+            let oy = p1.y + iy;
+            for (let i=0; i<add; i++) {
+                newp.push(new Point(undefined, ox, oy));
+                ox += ix;
+                oy += iy;
+            }
+        }
+        if (newp.length > length) {
+            return newPolygon().addPoints(newp.map(p => p.clone()));
+        }
+        return this;
+    }
+
 }
 
 // use Slope.angleDiff() then re-test path mitering / rendering
