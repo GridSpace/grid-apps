@@ -456,7 +456,9 @@ base.paths = {
     tip2tipEmit,
     shapeToPath,
     pointsToPath,
-    pathTo3D
+    pathTo3D,
+    vertexNormal: calc_vertex,
+    segmentNormal: calc_normal
 };
 
 });
