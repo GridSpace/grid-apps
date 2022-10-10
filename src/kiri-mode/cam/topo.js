@@ -146,6 +146,15 @@ class Topo {
             return Math.max(mz, 0);
         }
 
+        // export z probe function
+        const rx = stepsx / boundsX;
+        const ry = stepsx / boundsX;
+        this.toolAtXY = function(px, py) {
+            px = Math.round(rx * (px - minX));
+            py = Math.round(ry * (py - minY));
+            return toolAtZ(px, py);
+        };
+
         function push_point(x,y,z) {
             const newP = newPoint(x,y,z);
             // todo: merge co-linear, not just co-planar

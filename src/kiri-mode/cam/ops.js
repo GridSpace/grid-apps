@@ -957,32 +957,31 @@ class OpPocket extends CamOp {
     }
 
     slice(progress) {
-        const debug = false;
+        const pocket = this;
+        const debug = true;
         let { op, state } = this;
-        let { tool, rate, down, plunge, expand, contour, smooth } = op;
+        let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
         let { settings, widget, sliceAll, zMax, zTop, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt } = state;
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
         let sliceOut = this.sliceOut = [];
-        let toolDiam = new CAM.Tool(settings, tool).fluteDiameter();
+        let camTool = new CAM.Tool(settings, tool);
+        let toolDiam = camTool.fluteDiameter();
         let toolOver = toolDiam * op.step;
         let cutdir = process.camConventional;
         if (contour) {
             down = 0;
-            let topo = new CAM.Topo({
+            this.topo = new CAM.Topo({
                 // onupdate: (update, msg) => {
                 onupdate: (index, total, msg) => {
                     progress(index / total, msg);
                 },
-                ondone: (slices) => {
-                    this.sliceOut = slices;
-                    sliceAll.appendAll(slices);
-                },
+                ondone: (slices) => { },
                 contour: {
-                    tolerance: 0,
+                    tool,
+                    tolerance,
                     inside: true,
-                    tool: tool,
                     axis: "-"
                 },
                 state: state
@@ -1027,7 +1026,7 @@ class OpPocket extends CamOp {
                     } else {
                         shadow = shadowAt(z);
                         if (smooth) {
-                            shadow = POLY.offset(POLY.offset(shadow, smooth), -smooth);
+                            shadow = POLY.setZ(POLY.offset(POLY.offset(shadow, smooth), -smooth), z);
                         }
                         POLY.subtract([ poly ], shadow, clip);
                     }
@@ -1045,6 +1044,9 @@ class OpPocket extends CamOp {
                         slice.camLines = POLY.flatten(slice.camLines, null, true);
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
+                    if (contour) {
+                        pocket.conform(slice.camLines);
+                    }
                     slice.output()
                         .setLayer("pocket", {line: color}, false)
                         .addPolys(slice.camLines)
@@ -1090,12 +1092,24 @@ class OpPocket extends CamOp {
         }
     }
 
+    // mold cam output lines to the surface of the topo offset by tool geometry
+    conform(camLines) {
+        const topo = this.topo;
+        let repo = 10;
+        for (let poly of camLines) {
+            for (let point of poly.points) {
+                point.z = topo.toolAtXY(point.x, point.y);
+            }
+        }
+    }
+
     prepare(ops, progress) {
         let { op, state, sliceOut } = this;
         let { setTool, setSpindle } = ops;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
+
         let i=0, l=sliceOut.length;
         for (let slice of sliceOut.filter(s => s.camLines)) {
             ops.emitTrace(slice);
