@@ -55,7 +55,9 @@ class Topo {
             R2A = 180 / Math.PI,
             stepsx = Math.ceil(boundsX / resolution),
             stepsy = Math.ceil(boundsY / resolution),
-            topo = widget.topo = {
+            widtopo = widget.topo,
+            topoCache = widtopo && widtopo.resolution === resolution ? widtopo : undefined,
+            topo = widget.topo = topoCache || {
                 data: new Float32Array(stepsx * stepsy),
                 stepsx: stepsx,
                 stepsy: stepsy,
@@ -83,8 +85,8 @@ class Topo {
             debug_topo_shells = debug && true,
             time = Date.now;
 
-        if (tolerance == 0) {
-            console.log(`contour auto tolerance`,resolution.round(4));
+        if (tolerance === 0 && !topoCache) {
+            console.log(widget.id, 'topo auto tolerance', resolution.round(4));
         }
 
         this.tolerance = resolution;
@@ -193,7 +195,7 @@ class Topo {
 
         function raster(slices) {
             if (!topo.raster) {
-                // console.log({skipping_raster: widget.id});
+                console.log(widget.id, 'topo raster cached');
                 return;
             }
             topo.raster = false;

@@ -957,7 +957,7 @@ class OpPocket extends CamOp {
     }
 
     slice(progress) {
-        const debug = true;
+        const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth } = op;
         let { settings, widget, sliceAll, zMax, zTop, zThru, tabs, color } = state;
@@ -970,6 +970,23 @@ class OpPocket extends CamOp {
         let cutdir = process.camConventional;
         if (contour) {
             down = 0;
+            let topo = new CAM.Topo({
+                // onupdate: (update, msg) => {
+                onupdate: (index, total, msg) => {
+                    progress(index / total, msg);
+                },
+                ondone: (slices) => {
+                    this.sliceOut = slices;
+                    sliceAll.appendAll(slices);
+                },
+                contour: {
+                    tolerance: 0,
+                    inside: true,
+                    tool: tool,
+                    axis: "-"
+                },
+                state: state
+            });
         }
         updateToolDiams(toolDiam);
         if (tabs) {

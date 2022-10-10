@@ -516,7 +516,7 @@ self.kiri.lang['en-us'] = {
     cp_xpnd_s:      "expand",
     cp_xpnd_l:      ["grow selected area to","encompass corners"],
     cp_smoo_s:      "smooth",
-    cp_smoo_l:      ["clean up jagged edges caused by highly angled walls. can speedup pocketing for detailed geometries. recommend a value around 1"],
+    cp_smoo_l:      ["clean up jagged edges caused by angled walls. can speedup and improve pocketing for detailed geometries. recommend starting with values around 1"],
     cp_cont_s:      "contour",
     cp_cont_l:      ["ignore interior voids and features"],
     cp_outl_s:      "outline only",
