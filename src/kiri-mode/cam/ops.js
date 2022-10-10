@@ -958,7 +958,7 @@ class OpPocket extends CamOp {
 
     slice(progress) {
         const pocket = this;
-        const debug = true;
+        const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
         let { settings, widget, sliceAll, zMax, zTop, zThru, tabs, color } = state;
@@ -1045,7 +1045,7 @@ class OpPocket extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     if (contour) {
-                        pocket.conform(slice.camLines);
+                        slice.camLines = pocket.conform(slice.camLines);
                     }
                     slice.output()
                         .setLayer("pocket", {line: color}, false)
@@ -1095,12 +1095,13 @@ class OpPocket extends CamOp {
     // mold cam output lines to the surface of the topo offset by tool geometry
     conform(camLines) {
         const topo = this.topo;
-        let repo = 10;
-        for (let poly of camLines) {
+        const hirez = camLines.map(p => p.segment(topo.tolerance * 2));
+        for (let poly of hirez) {
             for (let point of poly.points) {
                 point.z = topo.toolAtXY(point.x, point.y);
             }
         }
+        return hirez;
     }
 
     prepare(ops, progress) {

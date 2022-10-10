@@ -1830,7 +1830,7 @@ class Polygon {
             if (dl < max) {
                 continue;
             }
-            const div = dl / dist;
+            const div = dl / max;
             const fit = div | 0;
             const add = fit - 1;
             const ix = dx / fit;
@@ -1838,7 +1838,7 @@ class Polygon {
             let ox = p1.x + ix;
             let oy = p1.y + iy;
             for (let i=0; i<add; i++) {
-                newp.push(new Point(undefined, ox, oy));
+                newp.push(newPoint(ox, oy, (p1.z + p2.z) / 2));
                 ox += ix;
                 oy += iy;
             }
