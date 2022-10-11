@@ -976,7 +976,7 @@ class OpPocket extends CamOp {
             this.topo = new CAM.Topo({
                 // onupdate: (update, msg) => {
                 onupdate: (index, total, msg) => {
-                    progress(index / total, msg);
+                    progress((index / total) * 0.9, msg);
                 },
                 ondone: (slices) => { },
                 contour: {
@@ -1055,7 +1055,9 @@ class OpPocket extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     if (contour) {
-                        slice.camLines = pocket.conform(slice.camLines, op.refine, engrave);
+                        slice.camLines = pocket.conform(slice.camLines, op.refine, engrave, pct => {
+                            progress(0.9 + (zpro + zinc * pct) * 0.1, "conform");
+                        });
                     }
                     slice.output()
                         .setLayer("pocket", {line: color}, false)
@@ -1063,7 +1065,10 @@ class OpPocket extends CamOp {
                     if (debug && shadow) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)
                         .addPolys(shadow)
-                    progress(zpro += zinc, "pocket");
+                    if (!contour) {
+                        progress(zpro, "pocket");
+                    }
+                    zpro += zinc;
                 }
             }
         }
@@ -1103,44 +1108,51 @@ class OpPocket extends CamOp {
     }
 
     // mold cam output lines to the surface of the topo offset by tool geometry
-    conform(camLines, refine, engrave) {
+    conform(camLines, refine, engrave, progress) {
         const topo = this.topo;
         // re-segment polygon to a higher resolution
         const hirez = refine > 0 ? camLines.map(p => p.segment(topo.tolerance * 2)) : camLines;
         // walk points and offset from surface taking into account tool geometry
+        let steps = hirez.length;
+        let iter = 0;
         for (let poly of hirez) {
             for (let point of poly.points) {
                 point.z = engrave ? topo.zAtXY(point.x, point.y) : topo.toolAtXY(point.x, point.y);
             }
+            progress((iter++ / steps) * 0.8);
         }
+        steps = steps * refine;
+        iter = 0;
         // walk points noting z deltas and smoothing sawtooth patterns
-        for (let j=0; j<refine; j++)
-        for (let poly of hirez) {
-            const points = poly.points, length = points.length;
-            let sn = []; // segment normals
-            let dz = []; // z deltas
-            for (let i=0; i<length; i++) {
-                let p1 = points[i];
-                let p2 = points[(i + 1) % length];
-                dz.push(p1.z - p2.z);
-                sn.push(segmentNormal(p1, p2));
-            }
-            let vn = []; // vertex normals
-            for (let i=0; i<length; i++) {
-                let n1 = sn[(i + length - 1) % length];
-                let n2 = sn[i];
-                let vi = vertexNormal(n1, n2, 1);
-                vn.push(vi);
-                let vl = Math.abs(1 - vi.vl).round(2);
-                // vl should be close to zero on smooth / continuous curves
-                // factoring out hard turns, we smooth the z using the weighted
-                // z values of the points before and after the current point
-                if (vl === 0) {
-                    let p0 = points[(i + length - 1) % length];
+        for (let j=0; j<refine; j++) {
+            for (let poly of hirez) {
+                const points = poly.points, length = points.length;
+                let sn = []; // segment normals
+                let dz = []; // z deltas
+                for (let i=0; i<length; i++) {
                     let p1 = points[i];
                     let p2 = points[(i + 1) % length];
-                    p1.z = (p0.z + p2.z + p1.z) / 3;
+                    dz.push(p1.z - p2.z);
+                    sn.push(segmentNormal(p1, p2));
                 }
+                let vn = []; // vertex normals
+                for (let i=0; i<length; i++) {
+                    let n1 = sn[(i + length - 1) % length];
+                    let n2 = sn[i];
+                    let vi = vertexNormal(n1, n2, 1);
+                    vn.push(vi);
+                    let vl = Math.abs(1 - vi.vl).round(2);
+                    // vl should be close to zero on smooth / continuous curves
+                    // factoring out hard turns, we smooth the z using the weighted
+                    // z values of the points before and after the current point
+                    if (vl === 0) {
+                        let p0 = points[(i + length - 1) % length];
+                        let p1 = points[i];
+                        let p2 = points[(i + 1) % length];
+                        p1.z = (p0.z + p2.z + p1.z) / 3;
+                    }
+                }
+                progress((iter++ / steps) * 0.2 + 0.8);
             }
         }
         return hirez;
