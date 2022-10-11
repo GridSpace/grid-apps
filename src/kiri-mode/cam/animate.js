@@ -8,6 +8,7 @@ gapp.register("kiri-mode.cam.animate", [], (root, exports) => {
 const { kiri } = root;
 const { driver } = kiri;
 const { CAM } = driver;
+const asLines = false;
 
 let meshes = {},
     unitScale = 1,
@@ -42,6 +43,7 @@ kiri.load(() => {
     }
 
     function animate(api, delay) {
+        let alert = kiri.api.alerts.show("building animation");
         kiri.client.animate_setup(api.conf.get(), data => {
             checkMeshCommands(data);
             if (!(data && data.mesh_add)) {
@@ -70,6 +72,7 @@ kiri.load(() => {
             playButton.style.display = '';
             pauseButton.style.display = 'none';
             api.event.emit('animate', 'CAM');
+            kiri.api.alerts.hide(alert);
         });
     }
 
@@ -98,12 +101,37 @@ kiri.load(() => {
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         geo.setIndex(new THREE.BufferAttribute(new Uint32Array(ind), 1));
-        const mat = new THREE.LineBasicMaterial({
-            transparent: true,
-            opacity: 0.75,
-            color
-        });
-        const mesh = new THREE.LineSegments(geo, mat);
+        let mesh;
+        if (asLines) {
+            const mat = new THREE.LineBasicMaterial({
+                transparent: true,
+                opacity: 0.75,
+                color
+            });
+            mesh = new THREE.LineSegments(geo, mat);
+        } else {
+            let shininess = 120,
+                specular = 0x202020,
+                emissive = 0x101010,
+                metalness = 0.2,
+                roughness = 0.8,
+                flatShading = true,
+                transparent = true,
+                opacity = 0.9,
+                color = 0x888888,
+                side = THREE.DoubleSide;
+            if (!flatShading) {
+                geo.computeVertexNormals();
+            }
+            const mat = new THREE.MeshMatcapMaterial({
+                flatShading,
+                transparent,
+                opacity,
+                color,
+                side
+            });
+            mesh = new THREE.Mesh(geo, mat);
+        }
         space.world.add(mesh);
         meshes[id] = mesh;
     }
@@ -197,6 +225,7 @@ kiri.load(() => {
         if (data.mesh_add) {
             const { id, ind, pos, offset } = data.mesh_add;
             meshAdd(id, ind, pos);
+            space.refresh();
             if (offset) {
                 posOffset = offset;
             }
@@ -303,26 +332,32 @@ kiri.load(() => {
         const ox = size.x / 2;
         const oy = size.y / 2;
 
-        const b = { mx: 0, my: 0, Mx: 0, My: 0};
-
         // initialize grid points
         for (let x=0, ai=0; x<stepsX; x++) {
             for (let y=0; y<stepsY; y++) {
                 let px = pos[ai++] = x * step - ox + step / 2;
                 let py = pos[ai++] = y * step - oy + step / 2;
                 pos[ai++] = size.z;
-                if (y > 0) ind.appendAll([
-                    (stepsY * x) + (y - 1),
-                    (stepsY * x) + (y    )
-                ]);
-                if (x > 0) ind.appendAll([
-                    (stepsY * (x - 1)) + y,
-                    (stepsY * (x    )) + y
-                ]);
-                b.mx = Math.min(b.mx, px);
-                b.my = Math.min(b.my, py);
-                b.Mx = Math.max(b.Mx, px);
-                b.My = Math.max(b.My, py);
+                if (asLines) {
+                    if (y > 0) ind.appendAll([
+                        (stepsY * x) + (y - 1),
+                        (stepsY * x) + (y    )
+                    ]);
+                    if (x > 0) ind.appendAll([
+                        (stepsY * (x - 1)) + y,
+                        (stepsY * (x    )) + y
+                    ]);
+                } else {
+                    if (x > 0 && y > 0) {
+                        let v0 = stepsY * (x - 1) + y - 1;
+                        let v1 = stepsY * (x - 0) + y - 1;
+                        let v2 = stepsY * (x - 0) + y;
+                        let v3 = stepsY * (x - 1) + y;
+                        ind.appendAll([
+                            v0, v1, v2, v0, v2, v3
+                        ]);
+                    }
+                }
             }
         }
 

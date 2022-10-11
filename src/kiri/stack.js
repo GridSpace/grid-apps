@@ -241,13 +241,11 @@ function createLineMaterial(color, array) {
 }
 
 function createStandardMaterial(color, flat) {
-    return new THREE.MeshStandardMaterial({
-        emissive,
-        roughness,
-        metalness,
+    return new THREE.MeshMatcapMaterial({
         transparent: color.opacity != 1,
         opacity: color.opacity || 1,
         color: color.face,
+        flatShading: true,
         side: flat ? THREE.DoubleSide : THREE.FrontSide
     });
 }

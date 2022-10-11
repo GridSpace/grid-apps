@@ -5,7 +5,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
-* improve CAM animation speeds
+* improve CAM animation speeds and render quality using solids instead of lines
 * add CAM op level part offset parameters for xy and z
 * add CAM pocket smoothing and contouring which is closer to true 3 axis
 * add CAM 3D engraving and marking with the pocket contouring operation

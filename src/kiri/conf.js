@@ -716,7 +716,7 @@ const conf = exports({
             exportPreview: false,
             decimate: true,
             detail: "50",
-            animesh: "300",
+            animesh: "800",
             healMesh: false,
             threaded: true,
             assembly: false,
