@@ -12,6 +12,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * fix CAM invalidation of tabs on scale and traces on scale or rotate
 * fix belt fan override for base extrusions touching belt
 
+
 # Release 3.5 (2022-10-07)
 
 ## Kiri:moto

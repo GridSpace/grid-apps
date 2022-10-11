@@ -9,6 +9,7 @@ const { kiri } = root;
 const { driver } = kiri;
 const { CAM } = driver;
 const asLines = false;
+const asPoints = false;
 
 let meshes = {},
     unitScale = 1,
@@ -100,9 +101,19 @@ kiri.load(() => {
     function meshAdd(id, ind, pos) {
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        geo.setIndex(new THREE.BufferAttribute(new Uint32Array(ind), 1));
+        if (ind.length) {
+            geo.setIndex(new THREE.BufferAttribute(new Uint32Array(ind), 1));
+        }
         let mesh;
-        if (asLines) {
+        if (asPoints) {
+            const mat = new THREE.PointsMaterial({
+                transparent: true,
+                opacity: 0.75,
+                color: 0x888888,
+                size: 0.3
+            });
+            mesh = new THREE.Points(geo, mat);
+        } else if (asLines) {
             const mat = new THREE.LineBasicMaterial({
                 transparent: true,
                 opacity: 0.75,
@@ -338,6 +349,9 @@ kiri.load(() => {
                 let px = pos[ai++] = x * step - ox + step / 2;
                 let py = pos[ai++] = y * step - oy + step / 2;
                 pos[ai++] = size.z;
+                if (asPoints) {
+                    continue;
+                }
                 if (asLines) {
                     if (y > 0) ind.appendAll([
                         (stepsY * x) + (y - 1),
