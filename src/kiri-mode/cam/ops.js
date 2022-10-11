@@ -1103,10 +1103,10 @@ class OpPocket extends CamOp {
     }
 
     // mold cam output lines to the surface of the topo offset by tool geometry
-    conform(camLines, refine = 10, engrave) {
+    conform(camLines, refine, engrave) {
         const topo = this.topo;
         // re-segment polygon to a higher resolution
-        const hirez = camLines.map(p => p.segment(topo.tolerance * 2));
+        const hirez = refine > 0 ? camLines.map(p => p.segment(topo.tolerance * 2)) : camLines;
         // walk points and offset from surface taking into account tool geometry
         for (let poly of hirez) {
             for (let point of poly.points) {

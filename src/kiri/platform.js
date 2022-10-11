@@ -14,10 +14,11 @@
 // use: kiri-mode.cam.tool
 gapp.register("kiri.platform", [], (root, exports) => {
 
-const { kiri, moto, load } = root;
+const { base, kiri, moto, load } = root;
 const { api, consts, driver, utils, newWidget, Widget } = kiri;
 const { ajax, js2o } = utils;
 const { space } = moto;
+const { util } = base;
 const { COLOR, MODES } = consts;
 
 let grouping = false;
@@ -203,8 +204,8 @@ function platformUpdateSelected() {
                 }
                 ui.mesh.name.innerText = name;
             }
-            ui.mesh.points.innerText = sel.meta.vertices;
-            ui.mesh.faces.innerText = sel.meta.vertices / 3;
+            ui.mesh.points.innerText = util.comma(sel.meta.vertices);
+            ui.mesh.faces.innerText = util.comma(sel.meta.vertices / 3);
         } else {
             ui.mesh.name.innerText = `[${selcount}]`;
             ui.mesh.points.innerText = '-';
