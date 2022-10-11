@@ -37,6 +37,7 @@ kiri.load(() => {
     const { api } = kiri;
 
     function animate_clear(api) {
+        moto.space.platform.showGridBelow(true);
         kiri.client.animate_cleanup();
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';
@@ -44,7 +45,7 @@ kiri.load(() => {
     }
 
     function animate(api, delay) {
-        let alert = kiri.api.alerts.show("building animation");
+        let alert = api.alerts.show("building animation");
         kiri.client.animate_setup(api.conf.get(), data => {
             checkMeshCommands(data);
             if (!(data && data.mesh_add)) {
@@ -73,7 +74,8 @@ kiri.load(() => {
             playButton.style.display = '';
             pauseButton.style.display = 'none';
             api.event.emit('animate', 'CAM');
-            kiri.api.alerts.hide(alert);
+            api.alerts.hide(alert);
+            moto.space.platform.showGridBelow(false);
         });
     }
 

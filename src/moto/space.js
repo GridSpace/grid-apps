@@ -41,6 +41,7 @@ gapp.register("moto.space", [], (root, exports) => {
         showSkyGrid = false,
         showPlatform = true,
         hidePlatformBelow = true,
+        hideGridBelow = false,
         showFocus = 0,
         focalPoint = undefined,
         lightInfo = {
@@ -549,6 +550,7 @@ gapp.register("moto.space", [], (root, exports) => {
         let { view, unitMinor, unitMajor, colorMajor, colorMinor, colorX, colorY } = grid;
         let oldView = view;
         view = grid.view = new THREE.Group();
+        view.visible = oldView ? oldView.visible : true;
 
         let majors = [],
             minors = [],
@@ -1167,6 +1169,7 @@ gapp.register("moto.space", [], (root, exports) => {
             setRound,
             showAxes,
             showVolume,
+            showGridBelow: (b) => { hideGridBelow = !b },
             showGrid:   (b) => { grid.view.visible = b },
             setMaxZ:    (z) => { panY = z / 2 },
             setCenter:  (x,y,z) => { panX = x; panY = z, panZ = y },
@@ -1328,6 +1331,10 @@ gapp.register("moto.space", [], (root, exports) => {
                 if (platform) {
                     platform.visible = hidePlatformBelow ?
                         initialized && position.y >= 0 && showPlatform : showPlatform;
+                    volume.visible = showVolume && platform.visible;
+                }
+                if (grid.view) {
+                    grid.view.visible = hideGridBelow ? platform.visible : true;
                 }
                 if (cameraLight) {
                     cameraLight.position.copy(camera.position);
