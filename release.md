@@ -5,12 +5,14 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
-* improve CAM animation speeds and render quality using solids instead of lines
-* add CAM op level part offset parameters for xy and z
+* improve CAM animation speeds using shared array buffers
+* improve CAM render quality using solids instead of lines
+* add CAM leveling part offset parameters for XY and Z
 * add CAM pocket smoothing and contouring which is closer to true 3 axis
 * add CAM 3D engraving and marking with the pocket contouring operation
 * fix CAM invalidation of tabs on scale and traces on scale or rotate
 * fix belt fan override for base extrusions touching belt
+* fix belt X axis label order
 
 
 # Release 3.5 (2022-10-07)

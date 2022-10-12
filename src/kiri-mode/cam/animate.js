@@ -14,7 +14,7 @@ const asPoints = false;
 let meshes = {},
     unitScale = 1,
     progress,
-    speedValues = [ 1, 2, 4, 8, 16 ],
+    speedValues = [ 1, 2, 4, 8, 32 ],
     speedPauses = [ 30, 20, 10, 5, 0 ],
     speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
     speedMax = speedValues.length - 1,

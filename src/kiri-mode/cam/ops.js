@@ -1012,7 +1012,7 @@ class OpPocket extends CamOp {
                 toolDiam = toolOver;
             }
             if (contour) {
-                expand = engrave ? 0 : toolOver;
+                expand = engrave ? 0 : toolOver * 2;
             }
             if (expand) {
                 polys = POLY.offset(polys, expand);

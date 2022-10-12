@@ -108,7 +108,6 @@
 * `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` maintain several part orientations + op chains in a single profile
 
-* `P` use SharedArrayBuffer for position array in animation
 * `P` routing should start with the smallest poly by area
 * `P` refactor slicing engine to use common core in geo
 * `P` port slicing to common core & refactor accordingly
