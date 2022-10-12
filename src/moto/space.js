@@ -104,6 +104,7 @@ gapp.register("moto.space", [], (root, exports) => {
         platformOnMove,
         platformOnMoveTime = 500,
         platformMoveTimer,
+        platformBelt = false,
         volume,
         camera,
         renderer,
@@ -470,11 +471,17 @@ gapp.register("moto.space", [], (root, exports) => {
                 mesh = canvas.mesh;
                 if (!(context && mesh)) return;
 
-            for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
-                context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
-            }
-            for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
-                context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
+            if (platformBelt) {
+                for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
+                    context.fillText((i * factor).round(1).toString(), ruler.x2 - i + xPadding / 2, 0);
+                }
+            } else {
+                for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
+                    context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
+                }
+                for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
+                    context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
+                }
             }
 
             context.font = (labelSize * 0.75) + 'px sans-serif';
@@ -1178,6 +1185,7 @@ gapp.register("moto.space", [], (root, exports) => {
             setHiding:  (b) => { hidePlatformBelow = b },
             setZOff:    (z) => { platformZOff = z; updatePlatformPosition() },
             setGridZOff:(z) => { gridZOff = z; updatePlatformPosition() },
+            setBelt:    (b) => { platformBelt = b },
             isHidden:   ()  => { return !showPlatform },
             isVisible:  ()  => { return platform.visible },
             isGridVisible()    { return grid.view.visible },

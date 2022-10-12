@@ -878,6 +878,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.deviceAdd.disabled = dev.noclone;
 
             api.conf.update_fields();
+            space.platform.setBelt(isBelt());
             platform.update_size();
             platform.update_origin();
             platform.update();
