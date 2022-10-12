@@ -91,8 +91,9 @@ function showSettings() {
 function updateSettings(opt = {}) {
     const { controller, device, process, mode, sproc, cproc } = settings;
     const { uc } = api;
+    const changes = {};
 
-    updateSettingsFromFields(controller);
+    updateSettingsFromFields(controller, undefined, changes);
 
     switch (controller.units) {
         case 'mm': uc.setUnits(1); break;
@@ -104,7 +105,7 @@ function updateSettings(opt = {}) {
         return;
     }
 
-    updateSettingsFromFields(device);
+    updateSettingsFromFields(device, undefined, changes);
 
     // range-specific values
     if (settings.mode === 'FDM' && api.view.is_slice()) {
@@ -123,11 +124,16 @@ function updateSettings(opt = {}) {
             updateRange(range.lo, range.hi, changes, add);
         }
     } else {
-        updateSettingsFromFields(process);
+        updateSettingsFromFields(process, undefined, changes);
     }
 
     if (device.extruders && device.extruders[device.internal]) {
         updateSettingsFromFields(device.extruders[device.internal]);
+    }
+
+    // invalidate slice, preview, export on settings changes
+    if (Object.keys(changes).length) {
+        api.function.clear_progress();
     }
 
     api.conf.save();
@@ -161,7 +167,6 @@ function updateSettingsFromFields(setrec, uirec = api.ui, changes) {
     if (!setrec) {
         return console.trace("missing scope");
     }
-
     let lastChange = api.uc.lastChange();
 
     // for each key in setrec object
