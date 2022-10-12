@@ -14,8 +14,9 @@ const asPoints = false;
 let meshes = {},
     unitScale = 1,
     progress,
-    speedValues = [ 1, 2, 3, 4 ],
-    speedNames = [ "1x", "2x", "4x", "8x" ],
+    speedValues = [ 1, 2, 4, 8, 16 ],
+    speedPauses = [ 30, 20, 10, 5, 0 ],
+    speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
     speedMax = speedValues.length - 1,
     speedIndex = 0,
     speedLabel,
@@ -65,9 +66,7 @@ kiri.load(() => {
                 progress = UC.newLabel('0%', {class:"progress"})
             ]);
             updateSpeed();
-            setTimeout(() => {
-                play({steps: 1});
-            }, delay || 0);
+            setTimeout(step, delay || 0);
             const toolpos = $('layer-toolpos');
             toolpos.innerHTML = '';
             UC.setGroup(toolpos);
@@ -100,8 +99,12 @@ kiri.load(() => {
         animate_clear
     });
 
-    function meshAdd(id, ind, pos) {
+    function meshAdd(id, ind, pos, sab) {
         const geo = new THREE.BufferGeometry();
+        if (sab) {
+            // use array buffer shared with worker
+            pos = new Float32Array(sab);
+        }
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         if (ind.length) {
             geo.setIndex(new THREE.BufferAttribute(new Uint32Array(ind), 1));
@@ -149,18 +152,12 @@ kiri.load(() => {
         meshes[id] = mesh;
     }
 
-    function meshUpdates(id, updates) {
+    function meshUpdates(id) {
         const mesh = meshes[id];
         if (!mesh) {
             return; // animate cancelled
         }
-        const mpos = mesh.geometry.attributes.position;
-        for (let i=0, il=updates.length; i<il; ) {
-            const pos = updates[i++];
-            const val = updates[i++];
-            mpos.array[pos] = val;
-        }
-        mpos.needsUpdate = true;
+        mesh.geometry.attributes.position.needsUpdate = true;
         space.update();
     }
 
@@ -169,8 +166,7 @@ kiri.load(() => {
         delete meshes[id];
     }
 
-    function step(opts) {
-        const { steps } = opts;
+    function step() {
         updateSpeed();
         kiri.client.animate({speed, steps: 1}, handleGridUpdate);
     }
@@ -182,7 +178,11 @@ kiri.load(() => {
             playButton.style.display = 'none';
             pauseButton.style.display = '';
         }
-        kiri.client.animate({speed, steps: steps || Infinity}, handleGridUpdate);
+        kiri.client.animate({
+            speed,
+            steps: steps || Infinity,
+            pause: speedPauses[speedIndex]
+        }, handleGridUpdate);
     }
 
     function fast(opts) {
@@ -190,21 +190,17 @@ kiri.load(() => {
         updateSpeed(1);
         playButton.style.display = 'none';
         pauseButton.style.display = '';
-        kiri.client.animate({speed, steps: steps || Infinity}, handleGridUpdate);
+        kiri.client.animate({
+            speed,
+            steps: steps || Infinity,
+            pause: speedPauses[speedIndex]
+        }, handleGridUpdate);
     }
 
     function pause() {
         playButton.style.display = '';
         pauseButton.style.display = 'none';
         kiri.client.animate({speed: 0}, handleGridUpdate);
-    }
-
-    function skip() {
-        api.show.alert('fast fowarding without animation');
-        playButton.style.display = 'none';
-        pauseButton.style.display = '';
-        updateSpeed(Infinity);
-        kiri.client.animate({speed, steps: Infinity, toend: true}, handleGridUpdate);
     }
 
     function handleGridUpdate(data) {
@@ -236,8 +232,8 @@ kiri.load(() => {
             return;
         }
         if (data.mesh_add) {
-            const { id, ind, pos, offset } = data.mesh_add;
-            meshAdd(id, ind, pos);
+            const { id, ind, pos, offset, sab } = data.mesh_add;
+            meshAdd(id, ind, pos, sab);
             space.refresh();
             if (offset) {
                 posOffset = offset;
@@ -257,7 +253,7 @@ kiri.load(() => {
             }
         }
         if (data.mesh_update) {
-            meshUpdates(data.id, data.mesh_update);
+            meshUpdates(data.id);
         }
     }
 
@@ -289,7 +285,7 @@ kiri.load(() => {
         const step = rez;
         const stepsX = Math.floor(stock.x / step);
         const stepsY = Math.floor(stock.y / step);
-        const { pos, ind } = createGrid(stepsX, stepsY, stock, step);
+        const { pos, ind, sab } = createGrid(stepsX, stepsY, stock, step);
         const offset = {
             x: process.outputOriginCenter ? 0 : stock.x / 2,
             y: process.outputOriginCenter ? 0 : stock.y / 2,
@@ -308,27 +304,20 @@ kiri.load(() => {
         center = Object.assign({}, stock.center);
         center.z -= stock.z / 2;
 
-        send.data({ mesh_add: { id: 0, pos, ind, offset } });
+        send.data({ mesh_add: { id: 0, ind, offset, sab } }, [ sab ]);
         send.data({ mesh_move: { id: 0, pos: center } });
         send.done();
     };
 
     kiri.worker.animate = function(data, send) {
-        if (data.speed >= 0) {
-            renderSpeed = data.speed;
-        }
-        if (data.steps > 0) {
-            stepsRemain = data.steps;
-        }
-        if (data.toend) {
-            skipMode = !skipMode;
-        } else {
-            skipMode = false;
-        }
-        checkStash(send);
+        renderPause = data.pause || renderPause;
+        renderSpeed = data.speed || 0;
         if (animating) {
             return send.done();
         }
+        renderSteps = data.steps || 1;
+        renderDone = false;
+        animating = renderSpeed > 0;
         renderPath(send);
     };
 
@@ -340,7 +329,8 @@ kiri.load(() => {
 
     function createGrid(stepsX, stepsY, size, step) {
         const gridPoints = stepsX * stepsY;
-        const pos = new Float32Array(gridPoints * 3);
+        const sab = new SharedArrayBuffer(gridPoints * 3 * 4)
+        const pos = new Float32Array(sab);
         const ind = [];
         const ox = size.x / 2;
         const oy = size.y / 2;
@@ -377,53 +367,55 @@ kiri.load(() => {
             }
         }
 
-        return { pos, ind };
+        return { pos, ind, sab };
     }
 
     let animateClear = false;
     let animating = false;
-    let renderSpeed = 25;
-    let stepsRemain = 0;
-    let skipMode = false;
+    let renderDist = 0;
+    let renderDone = false;
+    let renderPause = 10;
+    let renderSteps = 0;
+    let renderSpeed = 0;
     let skipMove = null;
-    let skipStash = [];
+    let toolUpdate;
 
-    function checkStash(send) {
-        if (!skipMode && skipStash.length) {
-            // merge & compress stash stack
-            skipStash.forEach(mesh_update => {
-                send.data({ id: 0, mesh_update }, [ mesh_update.buffer ]);
-            });
-            skipStash = [];
-            send.data({ mesh_move: skipMove });
+    // send latest tool position and progress bar
+    function renderUpdate(send) {
+        if (toolUpdate) {
+            send.data(toolUpdate);
         }
+        send.data({ progress: pathIndex / path.length, id: 0, mesh_update: 1 });
     }
 
     function renderPath(send) {
-        if (animateClear) {
+        if (renderDone) {
+            return;
+        }
+
+        if (renderSteps-- === 0) {
+            animating = false;
+            renderPath(send);
+            return;
+        }
+
+        if (animating === false || animateClear || renderSpeed === 0) {
+            renderUpdate(send);
+            renderDone = true;
+            animating = false;
             animateClear = false;
-            animating = false;
             send.done();
             return;
         }
-        if (stepsRemain <= 0 || renderSpeed === 0) {
-            skipMode = false;
-            checkStash(send);
-            animating = false;
-            send.done();
-            return;
-        }
-        const next = path[pathIndex++];
+
+        const next = path[pathIndex];
         if (!next) {
-            skipMode = false;
-            checkStash(send);
             animating = false;
-            stepsRemain = 0;
-            send.done();
+            renderPath(send);
             return;
         }
-        animating = true;
-        stepsRemain--;
+        pathIndex++;
+
         if (next.tool >= 0 && (!tool || tool.getNumber() !== next.tool)) {
             // on real tool change, go to safe Z first
             if (tool) {
@@ -436,19 +428,23 @@ kiri.load(() => {
             }
             updateTool(next.tool, send);
         }
+
         const id = toolID;
-        const rezstep = rez * renderSpeed;
+        const rezstep = rez;
         if (last) {
             const lp = last.point, np = next.point;
+            last = next;
             // dwell ops have no point
             if (!np) {
-                setTimeout(() => { renderPath(send) }, 0);
-                return;
+                return renderPath(send);
             }
             const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
-            // skip moves that are closer than resolution
-            if (Math.sqrt(dx*dx  + dy*dy + dz*dz) < rezstep) {
-                setTimeout(() => { renderPath(send) }, 0);
+            const dist = Math.sqrt(dx*dx  + dy*dy + dz*dz);
+            renderDist += dist;
+
+            // skip moves that are less than grid resolution
+            if (renderDist < rezstep) {
+                renderPath(send);
                 return;
             }
 
@@ -464,46 +460,41 @@ kiri.load(() => {
             }
             moves.push(next.point);
             renderMoves(id, moves, send);
-            send.data({ progress: pathIndex / path.length });
         } else {
+            last = next;
             tool.pos = next.point;
-            send.data({ mesh_move: { id, pos: next.point }});
-            setTimeout(() => { renderPath(send) }, 0);
+            toolUpdate = { mesh_move: { id, pos: next.point }};
+            renderPath(send);
         }
-        last = next;
     }
 
-    function renderMoves(id, moves, send) {
-        let index = 0;
-        function update() {
-            if (animateClear) {
-                return renderPath(send);
+    function renderMoves(id, moves, send, seed = 0) {
+        for (let index = seed; index<moves.length; index++) {
+            const pos = moves[index];
+            if (!pos) {
+                throw `no pos @ ${index} of ${moves.length}`;
             }
-            if (renderSpeed > 0 && index < moves.length) {
-                const pos = moves[index++];
-                if (!pos) throw `no pos @ ${index} of ${moves.length}`;
-                tool.pos = pos;
-                updateMesh(pos, send);
-                if (skipMode) {
-                    skipMove = { id, pos };
-                } else {
-                    send.data({ mesh_move: { id, pos } });
-                }
-            }
-            if (index < moves.length) {
-                setTimeout(update, 0);
-            } else {
-                setTimeout(() => { renderPath(send) }, 0);
+            tool.pos = pos;
+            deformMesh(pos, send);
+            toolUpdate = { mesh_move: { id, pos }};
+            // pause renderer at specified offsets
+            if (renderSpeed && renderDist >= renderSpeed) {
+                renderDist = 0;
+                renderUpdate(send);
+                setTimeout(() => {
+                    renderMoves(id, moves, send, index);
+                }, renderPause);
+                return;
             }
         }
-        update(0);
+        renderPath(send);
     }
 
-    function updateMesh(pos, send) {
+    // update stock mesh to reflect tool tip geometry at given XYZ position
+    function deformMesh(pos, send) {
         const prof = tool.profile;
         const { size, pix } = tool.profileDim;
         const mid = Math.floor(pix / 2);
-        const update = new Float32Array(Math.round(prof.length * 0.8));
         const rx = Math.floor((pos.x + stock.x / 2 - size / 2 - center.x) / rez);
         const ry = Math.floor((pos.y + stock.y / 2 - size / 2 - center.y) / rez);
         let upos = 0;
@@ -524,17 +515,8 @@ kiri.load(() => {
             const cz = grid[iz];
             const tz = tool.pos.z - dz;
             if (tz < cz) {
-                update[upos++] = iz;
-                update[upos++] = tz;
+                upos++;
                 grid[iz] = tz;
-            }
-        }
-        if (upos > 0) {
-            const mesh_update = update.slice(0,upos);
-            if (skipMode) {
-                skipStash.push(mesh_update);
-            } else {
-                send.data({ id: 0, mesh_update }, [ mesh_update.buffer ]);
             }
         }
     }
@@ -550,7 +532,7 @@ kiri.load(() => {
         // const frad = tool.fluteDiameter() / 2;
         const prof = tool.profile;
         const { size, pix } = tool.profileDim;
-        const { pos, ind } = createGrid(pix, pix, {x:size, y:size, z:flen+slen}, rez);
+        const { pos, ind, sab } = createGrid(pix, pix, {x:size, y:size, z:flen+slen}, rez);
         const mid = Math.floor(pix/2);
         // deform mesh to fit tool profile
         for (let i=0, il=prof.length; i < il; ) {
@@ -559,7 +541,7 @@ kiri.load(() => {
             const dz = prof[i++];
             pos[(dx * pix + dy) * 3 + 2] = -dz;
         }
-        send.data({ mesh_add: { id:++toolID, pos, ind }});
+        send.data({ mesh_add: { id:++toolID, ind, sab }});
     }
 
     // load renderer code in worker context only
