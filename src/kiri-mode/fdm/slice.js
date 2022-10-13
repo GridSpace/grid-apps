@@ -572,6 +572,54 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     }
                 }
             }
+            // look for text injection rectangle
+            const pooch = {
+                length: 40,
+                width: 15,
+                height: 1
+            };
+            if (false && pooch) {
+                const { length, width, height } = pooch;
+                let firstZ, firstI, lastZ, lastI, minX = 0, maxX = 0, maxY = 0;
+                for (let slice of slices) {
+                    let { belt } = slice;
+                    if (!belt.touch) {
+                        continue;
+                    }
+                    let index = slice.index;
+                    let z = slice.z;
+                    outer: for (let poly of slice.topPolys()) {
+                        for (let i=0, p=poly.points, l=p.length; i<l; i++) {
+                            let p0 = p[i];
+                            let p1 = p[(i + 1) % l];
+                            let p0y = z - p0.y;
+                            let p1y = z - p1.y;
+                            let i_ok = lastI ? index - lastI === 1 : true
+                            let y_ok = p0y > 0 && p0y < 3 && Math.abs(p0y - p1y) < 0.01;
+                            let x_ok = Math.abs(width - Math.abs(p1.x - p0.x)) < 1
+                            if (y_ok && x_ok) {
+                                if (i_ok) {
+                                    firstZ = firstZ || z;
+                                    firstI = firstI || index;
+                                    lastZ = z;
+                                    lastI = index;
+                                    minX = Math.min(p0.x, p1.x);
+                                    maxX = Math.max(p0.x, p1.x);
+                                    maxY = p0y;
+                                    break outer;
+                                } else {
+                                    firstZ = lastI = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+                let dy = Math.abs(height - maxY * (1 / Math.sqrt(2)));
+                let dz = Math.abs(length - ((lastZ - firstZ) * Math.sqrt(2)));
+                if (dy < 0.1 && dz < 1) {
+                    console.log('FOUND', { firstI, lastI, minX, maxX, maxY });
+                }
+            }
         }
 
         // calculations only relevant when solid layers are used
