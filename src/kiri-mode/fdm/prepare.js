@@ -1358,7 +1358,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             print.setType('support');
             // support polygon
             next.setZ(z);
-            if (sliceSupportOutline !== false) {
+            if (process.sliceSupportOutline !== false) {
                 outputTraces([next].appendAll(next.inner || []));
             }
             if (next.fill) {
