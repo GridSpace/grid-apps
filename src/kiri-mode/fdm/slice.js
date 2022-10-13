@@ -1565,7 +1565,7 @@ function fillSupportPolys(args) {
     let spacing = lineWidth * (1 / density);
     polys.forEach(function (poly) {
         // calculate angle based on width/height ratio
-        let auto = isBelt || (poly.bounds.width() / poly.bounds.height() > 1) ? 90 : 0;
+        let auto = isBelt || (poly.bounds.width() / poly.bounds.height() > 1) ? 1090 : 1000;
         // inset support poly for fill lines 33% of nozzle width
         let inset = POLY.offset([poly], -lineWidth/3, {flat: true, z, wasm: true});
         // do the fill
