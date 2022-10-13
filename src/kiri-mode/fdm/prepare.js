@@ -35,7 +35,7 @@ FDM.prepare = function(widgets, settings, update) {
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
     let { device, process, controller, bounds, mode } = settings,
-        { sliceHeight, firstSliceHeight, firstLayerRate } = process,
+        { sliceHeight, firstSliceHeight, firstLayerRate, sliceSupportOutline } = process,
         { outputSeekrate, outputDraftShield, outputPurgeTower } = process,
         { bedWidth, bedDepth, filamentSource } = device,
         { lineType, danger } = controller,
@@ -1358,7 +1358,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             print.setType('support');
             // support polygon
             next.setZ(z);
-            outputTraces([next].appendAll(next.inner || []));
+            if (sliceSupportOutline !== false) {
+                outputTraces([next].appendAll(next.inner || []));
+            }
             if (next.fill) {
                 next.fill.forEach(p => { p.z = z });
                 outputFills(next.fill, {fast: true});

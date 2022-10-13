@@ -130,23 +130,6 @@ FDM.init = function(kiri, api) {
           }
     }
 
-    api.event.on("boolean.click", func.updateSupportButtons = () => {
-        if (!isFdmMode) {
-            return;
-        }
-        for (let btn of [
-            ui.ssaGen,
-            ui.ssmAdd,
-            ui.ssmDun,
-            ui.ssmClr
-        ]) {
-            btn.disabled = ui.sliceSupportEnable.checked;
-        }
-        if (ui.sliceSupportEnable.checked) {
-            func.sclear();
-        }
-    });
-
     api.event.on("function.animate", (mode) => {
         if (!isFdmMode) {
             return;
@@ -205,7 +188,6 @@ FDM.init = function(kiri, api) {
     });
     api.event.on("settings.saved", (settings) => {
         updateRanges(settings.process.ranges);
-        func.updateSupportButtons();
         // let ranges = settings.process.ranges;
         // ui.rangeGroup.style.display = isFdmMode && ranges && ranges.length ? 'flex' : 'none';
     });

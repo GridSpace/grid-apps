@@ -5,6 +5,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
+* allow FDM mixing of automatic and manual / detected supports
 * improve CAM animation speeds using shared array buffers
 * improve CAM render quality using solids instead of lines
 * add CAM leveling part offset parameters for XY and Z

@@ -1862,10 +1862,10 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceSupportArea:    uc.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM}),
             sliceSupportExtra:   uc.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
-            sliceSupportAngle:   uc.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:uc.bound(0.0,90.0), convert:uc.toFloat, modes:FDM, show:() => !ui.sliceSupportEnable.checked}),
+            sliceSupportAngle:   uc.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:uc.bound(0.0,90.0), convert:uc.toFloat, modes:FDM}),
             sliceSupportSpan:    uc.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM, show:() => ui.sliceSupportEnable.checked}),
             sliceSupportEnable:  uc.newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, modes:FDM, show:isNotBelt}),
-            sliceSupportOutline: uc.newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, modes:FDM, show:() => !ui.sliceSupportEnable.checked}),
+            sliceSupportOutline: uc.newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, modes:FDM}),
 
             sliceSupportGen:     uc.newRow([
                 ui.ssaGen = uc.newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
