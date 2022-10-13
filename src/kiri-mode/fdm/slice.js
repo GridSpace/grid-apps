@@ -304,7 +304,8 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             slice.index = indices.indexOf(z);
             slice.height = heights[slice.index];
             slice.clips = clip;
-            if (changes) {
+            // do not warn on merging supports
+            if (changes && !isSynth) {
                 healed = true;
                 slice.changes = changes;
                 if (self.debug) {
