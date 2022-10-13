@@ -16,7 +16,6 @@
 * `P` duplicate objects should share same slice data unless rotated or scaled
 * `P` allow selection to be decimated on demand (context menu?)
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
-* `P` do not move (average) endpoints connected to long lines in decimate
 * `P` faster ray intersect https://github.com/gkjohnson/three-mesh-bvh/
 * `P` try material clipping planes for slice range selection
 
@@ -37,7 +36,6 @@
 
 * `F` convert ranges to z offsets while continuing to show layer #
 * `F` support pillar top/bottom should conform to part
-* `F` support pillar should have solid top/bottom
 * `F` more explicit line width control with ranges and min/max adaptive
 * `F` test outlining solid projected areas (internally)
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
@@ -45,10 +43,10 @@
 * `F` segment large flat areas on first layer to mitigate peeling
 * `F` option to support interior bridges when 0% infill
 * `F` calculate filament use per extruder per print
-* `F` expand internal supporting flats / solids before projection
+* `F` expand internal supporting flats / solids before projection (threshold)
 
 * `P` reduce fan speed and extrusion factor for bridges
-* `P` auto purge pullars when quick layers are detected for extra cooling
+* `P` auto purge pillars when quick layers are detected for extra cooling
 * `P` extruder + filament max flow rate cap in planner
 * `P` solid fill the tops of supports for down facing flats
 
@@ -76,16 +74,13 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` add user-defined origin (issue #28)
 * `F` add custom gcode operation for things like injecting pauses
-* `F` add optional hover notes or titles to help visually differentiate dup ops
 * `F` all ops should allow limit and milling direction / ease down overrides
 * `F` drill op should allow selecting holes >= current tool
 * `F` intelligently turn circle hole pocket clear into spiral down
-* `F` separate leveling op. add features like uni-directional cutting
 * `F` add option for op-major ordering (instead of part major)
-* `F` animate only selected range (as an option)
 * `F` add `plunge max` to contouring that can override z feed limit
-* `F` add ability to select regions for contouring op (like pocketing)
 * `F` add lead-in milling (requires adding clamp / no go areas)
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
@@ -93,28 +88,18 @@
 * `F` add climb/conventional into each operation
 * `F` add lathe mode / A-axis / 4th axis / rotary milling ops
 * `F` add support for tapered ball mills
-* `F` roughing flats should be constrained to flat region, not create a new layer
 * `F` change color of line selection in trace op when not a closed poly
 * `F` limit cut depth to flute length of selected tool (or warn)
-* `F` user-defined origin (issue #28)
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
 * `F` parameterize dropping close points in prep.js. ensure long segments remain straight
-* `F` flat and volumetric rendering of paths
-* `F` z planar settings visualizations (edit using snappable dragging of planes)
 * `F` trapezoidal tabs in Z
 * `F` ease-in and ease-out especially on tab cut-out start/stop
-* `F` add option to spiral in vs out (optimal tool life) vs mixed (optimal path)
-* `F` can animation clear the mesh in areas where the cuts go through the stock?
-* `F` gcode output option as zip for multiple or flip ops or tool change
 * `F` maintain several part orientations + op chains in a single profile
 
-* `P` routing should start with the smallest poly by area
+* `P` option to start with the smallest poly by area on layer change
 * `P` refactor slicing engine to use common core in geo
-* `P` port slicing to common core & refactor accordingly
-* `P` decrease cutting speed when entire tool is engaged (start of roughing)
-* `P` clear void should cut inside-to-out when a part would be freed from stock
+* `P` decrease cutting speed when entire tool is engaged (start of roughing, rest machining)
 * `P` port arc code from FDM export to CAM export
-* `P` common part pre-analyze to speed up 'slice' and improve shadow (overhangs)
 * `P` redo all path route / planning in prepare to account for terrain before camOut
 
 # SLA

@@ -1222,11 +1222,14 @@ function addSolidFills(slice, polys) {
 /**
  * project bottom flats down
  */
-function projectFlats(slice, count) {
+function projectFlats(slice, count, expand) {
     if (!slice.down || !slice.flats) return;
     // these flats are marked for finishing print speed
     if (slice.flats.length) slice.finishSolids = true;
-    projectSolid(slice, slice.flats, count, false, true);
+    if (slice && slice.flats && slice.flats.length) {
+        const flats = expand ? POLY.expand(slice.flats, expand) : slice.flats;
+        projectSolid(slice, flats, count, false, true);
+    }
 };
 
 /**
@@ -1301,6 +1304,7 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
             if (stop.length) {
                 let top_area = top.poly.areaDeep();
                 let stop_area = stop.map(p => p.areaDeep()).reduce((a,v) => a + v);
+                // if the solid area > 50% of the top area, make entire layer solid
                 if (stop_area / top_area > 0.5) {
                     make_solid_layer = true;
                 }
