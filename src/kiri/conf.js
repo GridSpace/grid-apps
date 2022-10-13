@@ -323,6 +323,7 @@ const conf = exports({
                 sliceSupportNozzle: 0,
                 sliceSupportEnable: false,
                 sliceSupportOutline: true,
+                sliceSupportFill: undefined,
                 sliceSolidMinArea: 1,
                 sliceSolidLayers: 3,
                 sliceBottomLayers: 3,

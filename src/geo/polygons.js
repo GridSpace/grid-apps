@@ -668,7 +668,14 @@ function fillArea(polys, angle, spacing, output, minLen, maxLen) {
         p0 = polys[0],
         zpos = p0.getZ(),
         bounds = p0.bounds.clone(),
+        align = false,
         raySlope;
+
+    // testing force to 90
+    if (angle >= 1000) {
+        align = true;
+        angle -= 1000;
+    }
 
     // ensure angle is in the -90:90 range
     angle = angle % 180;
@@ -684,6 +691,23 @@ function fillArea(polys, angle, spacing, output, minLen, maxLen) {
     // compute union of top boundaries
     while (i < polys.length) {
         bounds.merge(polys[i++].bounds);
+    }
+
+    // align start/end to multiples of spacing
+    // only works with 0 and 90 degree angles :/
+    if (align) {
+        let mxo = bounds.minx / spacing;
+        let myo = bounds.miny / spacing;
+        mxo = mxo - (mxo | 0) + (mxo < 0 ? 1 : 0);
+        myo = myo - (myo | 0) + (myo < 0 ? 1 : 0);
+        bounds.minx -= mxo * spacing;
+        bounds.miny -= myo * spacing;
+        let Mxo = bounds.maxx / spacing;
+        let Myo = bounds.maxy / spacing;
+        Mxo = Mxo - (Mxo | 0) + (Mxo < 0 ? 1 : 0);
+        Myo = Myo - (Myo | 0) + (Myo < 0 ? 1 : 0);
+        bounds.maxx = bounds.maxx - Mxo * spacing + spacing;
+        bounds.maxy = bounds.maxy - Myo * spacing + spacing;
     }
 
     // ray stepping is an axis from the line perpendicular to the ray
