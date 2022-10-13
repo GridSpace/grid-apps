@@ -376,6 +376,11 @@ function preparePreview(callback, scale = 1, offset = 0) {
 }
 
 function prepareAnimation() {
+    if (!window.SharedArrayBuffer) {
+        api.alerts.show("The security context of this");
+        api.alerts.show("window prevents animations");
+        return;
+    }
     const settings = api.conf.get();
     api.event.emit("function.animate", {mode: settings.mode});
 }
