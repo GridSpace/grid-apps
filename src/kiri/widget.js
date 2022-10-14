@@ -307,8 +307,8 @@ class Widget {
         mesh.renderOrder = 1;
         geometry.computeVertexNormals();
         geometry.addGroup(0, Infinity, 0);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        // mesh.castShadow = true;
+        // mesh.receiveShadow = true;
         mesh.widget = this;
         this.mesh = mesh;
         // invalidates points cache (like any scale/rotation)

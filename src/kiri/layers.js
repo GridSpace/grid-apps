@@ -55,6 +55,7 @@ class Layers {
             lines: [],
             polys: [], // colors are an attribute on polygons
             faces: [],
+            norms: undefined, // vertex normals
             cface: undefined, // face color indices
             paths: [],
             cpath: undefined, // path colors indices
@@ -148,18 +149,25 @@ class Layers {
         if (!polys.length) {
             return;
         }
-        const z = polys[0].getZ(), faces = this.current.faces;
+        const cur = this.current;
+        const z = polys[0].getZ(), faces = cur.faces;
         const off_opt = { z, flat: true };
         polys.forEach(poly => {
             const faceidx = faces.length / 3;
             if (newPath) {
                 const path = poly.toPath2D(offset * 0.95);
+                const { left, right, normals } = path;
                 for (let p of path.faces) {
                     faces.push(p.x, p.y, p.z);
                 }
                 if (opts.outline) {
-                    this.addPolys(newPolygon().addPoints(path.left).setOpen());
-                    this.addPolys(newPolygon().addPoints(path.right).setOpen());
+                    this.addPolys(newPolygon().addPoints(left).setOpenValue(poly.open));
+                    this.addPolys(newPolygon().addPoints(right).setOpenValue(poly.open));
+                }
+                if (cur.norms) {
+                    cur.norms.appendAll(normals);
+                } else {
+                    cur.norms = normals;
                 }
             } else {
                 let exp = off_opt.outs = [];
@@ -186,7 +194,6 @@ class Layers {
                     });
                 });
             }
-            const cur = this.current;
             const color = opts.color ?
                 (typeof(opts.color) === 'number' ? { line: opts.color, face: opts.color } : opts.color) :
                 cur.color;
@@ -220,7 +227,7 @@ class Layers {
                     continue;
                 }
                 const z = opts.z || poly.getZ();
-                const faces = poly.toPath3D(offset, height, 0);
+                const { faces, normals } = poly.toPath3D(offset, height, 0);
                 const cur = this.current;
                 const one = cur.paths[0];
                 if (one) {
@@ -244,8 +251,11 @@ class Layers {
                             cur.cpath.push(Object.assign({ start: indln, count: Infinity }, opts.color));
                         }
                     }
+                    if (normals) {
+                        one.norms.appendAll(normals);
+                    }
                 } else {
-                    cur.paths.push({ index: [], faces, z });
+                    cur.paths.push({ index: [], faces, z, norms: normals });
                     if (opts.color) {
                         cur.cpath = [ Object.assign({ start: 0, count: Infinity }, opts.color) ];
                     }

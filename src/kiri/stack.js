@@ -101,7 +101,7 @@ class Stack {
             }
         }
 
-        const { polys, lines, faces, cface, paths, cpath, color, off } = layer;
+        const { polys, lines, faces, cface, paths, cpath, color, off, norms } = layer;
         const meshes = [];
         const defstate = !off;
         const mats = [];
@@ -168,15 +168,20 @@ class Stack {
             } else {
                 geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
             }
-            geo.computeVertexNormals();
+            if (norms) {
+                geo.setAttribute('normal', new THREE.BufferAttribute(norms, 3));
+                // geo.normalizeNormals();
+            } else {
+                geo.computeVertexNormals();
+            }
             if (cface) {
                 cface.forEach((c, i) => geo.addGroup(c.start, c.count, i));
             } else {
                 geo.addGroup(0, Infinity, 0);
             }
             const mesh = new THREE.Mesh(geo, mat);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
+            // mesh.castShadow = true;
+            // mesh.receiveShadow = true;
             meshes.push(mesh);
             group.add(mesh);
             mats.appendAll(mat);
@@ -191,11 +196,18 @@ class Stack {
             mat.forEach(m => m.visible = defstate);
             // const mat = newMat(data);
             paths.forEach((path, i) => {
-                const { index, faces, z, colors } = path;
+                const { index, faces, norms, z, colors } = path;
                 const geo = new THREE.BufferGeometry();
                 geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
-                if (index.length) geo.setIndex(index);
-                geo.computeVertexNormals();
+                if (index.length) {
+                    geo.setIndex(index);
+                }
+                if (norms) {
+                    geo.setAttribute('normal', new THREE.BufferAttribute(norms, 3));
+                    // geo.normalizeNormals();
+                } else {
+                    geo.computeVertexNormals();
+                }
                 if (cpath) {
                     cpath.forEach((c, i) => geo.addGroup(c.start, c.count, i));
                 } else {
@@ -203,8 +215,8 @@ class Stack {
                 }
                 const mesh = new THREE.Mesh(geo, mat);
                 mesh.position.z = z;
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
+                // mesh.castShadow = true;
+                // mesh.receiveShadow = true;
                 meshes.push(mesh);
                 group.add(mesh);
             });

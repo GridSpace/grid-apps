@@ -195,13 +195,15 @@ kiri.Layers.prototype.encode = function(state) {
                 polys: encode(layer.polys, state),
                 lines: encodePointArray(layer.lines, state),
                 faces: codec.allocFloat32Array(layer.faces),
+                norms: layer.norms ? codec.allocFloat32Array(layer.norms) : undefined,
                 cface: layer.cface || codec.undef,
                 color: layer.color,
                 paths: layer.paths.map(lp => {
                     const pe = {
                         z: lp.z,
                         index: lp.index,
-                        faces: codec.allocFloat32Array(lp.faces)
+                        faces: codec.allocFloat32Array(lp.faces),
+                        norms: lp.norms ? codec.allocFloat32Array(lp.norms) : undefined
                     };
                     if (zeroOut && state.zeros && pe.faces.length) {
                         state.zeros.push(pe.faces.buffer);
@@ -226,22 +228,25 @@ kiri.Layers.prototype.encode = function(state) {
 registerDecoder('layers', function(v, state) {
     let render = new kiri.Layers();
     for (let i=0; i<v.layers.length; i++) {
+        const data = v.data[i];
         const d = render.layers[v.layers[i]] = {
-            polys: decode(v.data[i].polys, state),
-            cpoly: v.data[i].cpoly,
-            lines: decodePointArray(v.data[i].lines),
-            faces: codec.allocFloat32Array(v.data[i].faces),
-            cface: v.data[i].cface,
-            color: v.data[i].color,
-            paths: v.data[i].paths.map(lp => {
+            polys: decode(data.polys, state),
+            cpoly: data.cpoly,
+            lines: decodePointArray(data.lines),
+            faces: codec.allocFloat32Array(data.faces),
+            norms: data.norms ? codec.allocFloat32Array(data.norms) : undefined,
+            cface: data.cface,
+            color: data.color,
+            paths: data.paths.map(lp => {
                 return {
                     z: lp.z,
                     index: lp.index,
-                    faces: codec.allocFloat32Array(lp.faces)
+                    faces: codec.allocFloat32Array(lp.faces),
+                    norms: lp.norms ? codec.allocFloat32Array(lp.norms) : undefined
                 };
             }),
-            cpath: v.data[i].cpath,
-            off: v.data[i].off
+            cpath: data.cpath,
+            off: data.off
         };
         // fixup null -> Infinity in material counts (JSON stringify sucks)
         if (d.cface) {

@@ -481,7 +481,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 let fillSpace = fillSpacing * spaceMult * solidWidth;
                 doSolidLayerFill(slice, fillSpace, sliceFillAngle);
             }
-            sliceFillAngle += 90.0;
+            sliceFillAngle = (sliceFillAngle + 90.0) % 360;
         }, "solid layers");
 
         // add lead in anchor when specified in belt mode (but not for synths)
@@ -717,7 +717,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 let fillSpace = fillSpacing * spaceMult * solidWidth;
                 let solidMinArea = params.sliceSolidMinArea;
                 doSolidsFill(slice, fillSpace, sliceFillAngle, solidMinArea, promises);
-                sliceFillAngle += 90.0;
+                sliceFillAngle = (sliceFillAngle + 90.0) % 360;
             }, "fill solids");
             // very last layer (top) is set to finish solid rate
             slices.last().finishSolids = true

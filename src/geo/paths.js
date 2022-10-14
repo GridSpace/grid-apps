@@ -196,6 +196,8 @@ function pointsToPath(points, offset, open, miter = 1.5) {
     const left = [];
     const right = [];
     const faces = [];
+    const normals = [];
+    const zn = -1;
     // calculate vertex normals from segments normals
     // vertex info is associated with the origin point
     let fl, fr;
@@ -244,19 +246,33 @@ function pointsToPath(points, offset, open, miter = 1.5) {
                 let r1 = right.peek(1);
                 let l2 = left.peek(2);
                 let r2 = right.peek(2);
+                let ln = l1.vp.normal;
+                let rn = r1.vp.normal;
                 if (split_left && split_right) {
                     faces.push(l1, l2, r1);
                     faces.push(r2, r1, l2);
                     fl = fl || l2;
                     fr = fr || r2;
+                    normals.push(ln.dx, ln.dy, zn);
+                    normals.push(ln.dx, ln.dy, zn);
+                    normals.push(-rn.dx, -rn.dy, zn);
+                    normals.push(-rn.dx, -rn.dy, zn);
+                    normals.push(-rn.dx, -rn.dy, zn);
+                    normals.push(ln.dx, ln.dy, zn);
                 } else if (split_left) {
                     faces.push(l1, l2, r1);
                     fl = fl || l2;
                     fr = fr || r1;
+                    normals.push(ln.dx, ln.dy, zn);
+                    normals.push(ln.dx, ln.dy, zn);
+                    normals.push(-rn.dx, -rn.dy, zn);
                 } else { // split right
                     faces.push(r2, r1, l1);
                     fl = fl || l1;
                     fr = fr || r2;
+                    normals.push(-rn.dx, -rn.dy, zn);
+                    normals.push(-rn.dx, -rn.dy, zn);
+                    normals.push(ln.dx, ln.dy, zn);
                 }
             }
         } else {
@@ -270,6 +286,14 @@ function pointsToPath(points, offset, open, miter = 1.5) {
             let r1 = right.peek(split_right ? 2 : 1);
             faces.push(l1, l0, r1);
             faces.push(r0, r1, l0);
+            let ln = l0.vp.normal;
+            let rn = r0.vp.normal;
+            normals.push(ln.dx, ln.dy, zn);
+            normals.push(ln.dx, ln.dy, zn);
+            normals.push(-rn.dx, -rn.dy, zn);
+            normals.push(-rn.dx, -rn.dy, zn);
+            normals.push(-rn.dx, -rn.dy, zn);
+            normals.push(ln.dx, ln.dy, zn);
         }
     }
     if (open) {
@@ -292,15 +316,24 @@ function pointsToPath(points, offset, open, miter = 1.5) {
     if (!open && faces) {
         let l1 = left.peek(1);
         let r1 = right.peek(1);
+        let ln = l1.vp.normal;
+        let rn = r1.vp.normal;
         faces.push(fl, l1, fr);
         faces.push(r1, fr, l1);
+        normals.push(ln.dx, ln.dy, zn);
+        normals.push(ln.dx, ln.dy, zn);
+        normals.push(-rn.dx, -rn.dy, zn);
+        normals.push(-rn.dx, -rn.dy, zn);
+        normals.push(-rn.dx, -rn.dy, zn);
+        normals.push(ln.dx, ln.dy, zn);
     }
-    return { left, right, faces, open };
+    return { left, right, faces, normals, open };
 }
 
 function pathTo3D(path, height, z) {
-    const { faces, left, right, open } = path;
+    const { faces, normals, left, right, open } = path;
     const out = [];
+    const nrm = [];
     if (!(faces && left && right)) {
         return [];
     }
@@ -315,6 +348,13 @@ function pathTo3D(path, height, z) {
     for (let p of faces.slice().reverse()) {
         out.push(p.x, p.y, p.z + height);
     }
+    nrm.appendAll(normals);
+    // reverse normals to match faces, but underside so reverse Z as well
+    for (let i=normals.length-1; i>0; i-=3) {
+        nrm.push(normals[i-2]);
+        nrm.push(normals[i-1]);
+        nrm.push(-normals[i-0]);
+    }
     for (let i=0, l=left.length, tl = open ? l-1 : l; i<tl; i++) {
         let p0 = left[i];
         let p1 = left[(i+1)%l];
@@ -324,6 +364,13 @@ function pathTo3D(path, height, z) {
         out.push(p1.x, p1.y, p1.z - height);
         out.push(p1.x, p1.y, p1.z + height);
         out.push(p0.x, p0.y, p0.z + height);
+        let ln = p0.vp.normal;
+        nrm.push(ln.dx, ln.dy, -1);
+        nrm.push(ln.dx, ln.dy,  1);
+        nrm.push(ln.dx, ln.dy,  1);
+        nrm.push(ln.dx, ln.dy,  1);
+        nrm.push(ln.dx, ln.dy, -1);
+        nrm.push(ln.dx, ln.dy, -1);
     }
     for (let i=0, l=right.length, tl = open ? l-1 : l; i<tl; i++) {
         let p0 = right[i];
@@ -334,8 +381,16 @@ function pathTo3D(path, height, z) {
         out.push(p1.x, p1.y, p1.z - height);
         out.push(p0.x, p0.y, p0.z + height);
         out.push(p1.x, p1.y, p1.z + height);
+        let rn = p0.vp.normal;
+        nrm.push(-rn.dy, rn.dx,  1);
+        nrm.push(-rn.dy, rn.dx, -1);
+        nrm.push(-rn.dy, rn.dx, -1);
+        nrm.push(-rn.dy, rn.dx, -1);
+        nrm.push(-rn.dy, rn.dx,  1);
+        nrm.push(-rn.dy, rn.dx,  1);
     }
     if (open) {
+        // begin cap
         let l0 = left[0];
         let r0 = right[0];
         out.push(l0.x, l0.y, l0.z + height);
@@ -344,16 +399,31 @@ function pathTo3D(path, height, z) {
         out.push(r0.x, r0.y, r0.z + height);
         out.push(r0.x, r0.y, r0.z - height);
         out.push(l0.x, l0.y, l0.z + height);
-        let ln = left.peek();
-        let rn = right.peek();
-        out.push(ln.x, ln.y, ln.z + height);
-        out.push(ln.x, ln.y, ln.z - height);
-        out.push(rn.x, rn.y, rn.z - height);
-        out.push(rn.x, rn.y, rn.z + height);
-        out.push(ln.x, ln.y, ln.z + height);
-        out.push(rn.x, rn.y, rn.z - height);
+        let ln = l0.vp.normal;
+        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, -1);
+        nrm.push(-ln.dy, ln.dx, -1);
+        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, -1);
+        nrm.push(-ln.dy, ln.dx,  1);
+        // end cap
+        let le = left.peek();
+        let re = right.peek();
+        out.push(le.x, le.y, le.z + height);
+        out.push(le.x, le.y, le.z - height);
+        out.push(re.x, re.y, re.z - height);
+        out.push(re.x, re.y, re.z + height);
+        out.push(le.x, le.y, le.z + height);
+        out.push(re.x, re.y, re.z - height);
+        ln = re.vp.normal;
+        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, -1);
+        nrm.push(-ln.dy, ln.dx, -1);
+        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, -1);
     }
-    return out;
+    return { faces: out, normals: nrm };
 }
 
 // produces indexed geometry which isn't ideal for rendering because

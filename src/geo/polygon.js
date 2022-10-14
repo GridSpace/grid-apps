@@ -920,6 +920,11 @@ class Polygon {
         return this;
     }
 
+    setOpenValue(b) {
+        this.open = b;
+        return this;
+    }
+
     isOpen() {
         return this.open;
     }
