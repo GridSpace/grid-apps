@@ -629,22 +629,24 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 let dy = Math.abs(height - maxY * (1 / Math.sqrt(2)));
                 let dz = Math.abs(length - ((lastZ - firstZ) * Math.sqrt(2)));
                 if (dy < 0.1 && dz < 1) {
-                    console.log('FOUND', { firstI, lastI, minX, maxX, maxY });
+                    // console.log('FOUND', { firstI, lastI, minX, maxX, maxY });
                     let span = lastI - firstI - 2; // x = down the belt
                     let tall = width * 2;
                     let can = new self.OffscreenCanvas(span, tall);
                     let ctx = can.getContext("2d");
-                    ctx.scale(0.6, 1);
+                    ctx.scale(1.2, 1);
                     ctx.font = '24px sans-serif';
-                    ctx.fillStyle = 'black';
+                    // ctx.fillStyle = 'black';
                     ctx.textBaseline = "bottom";
                     ctx.fillText(text, 1, tall - 1);
                     let img = ctx.getImageData(0, 0, span, tall).data.buffer;
                     let rgb = new Uint32Array(img);
-                    console.log({ img, rgb, p: rgb.filter(v => v) });
+                    // console.log({ img, rgb, p: rgb.filter(v => v) });
                     for (let x=0; x<span; x++) {
                         let str = '';
                         let maxp = 0;
+                        let lines = [];
+                        let start, end;
                         for (let y=tall-1; y>=0; y--) {
                             let pix = rgb[y * span + x];
                             pix = (
@@ -654,8 +656,33 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                             ) / 3;
                             str += pix > 30 ? '*' : '-';
                             maxp = Math.max(maxp, pix);
+                            if (pix > 30) {
+                                if (start >= 0) {
+                                    end = tall - y;
+                                } else {
+                                    start = tall - y;
+                                }
+                            } else {
+                                if (start >= 0 && end > start) {
+                                    lines.push({ start, end });
+                                }
+                                start = end = undefined;
+                            }
                         }
-                        console.log((x).toString().padStart(2,0),str,maxp | 0);
+                        console.log((x).toString().padStart(2,0),str,maxp | 0,lines);
+                        if (lines.length) {
+                            let slice = slices[firstI + x + 1];
+                            let supps = slice.supports = slice.supports || [];
+                            let z = slice.z;
+                            let y = z - smin - (lineWidth / 2);
+                            for (let line of lines) {
+                                supps.push(base.newPolygon()
+                                    .add(minX + line.start / 2, y, z)
+                                    .add(minX + line.end / 2, y, z)
+                                    .setOpen()
+                                );
+                            }
+                        }
                     }
                 }
             }
