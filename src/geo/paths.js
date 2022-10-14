@@ -247,7 +247,7 @@ function pointsToPath(points, offset, open, miter = 1.5) {
                 if (split_left && split_right) {
                     faces.push(l1, l2, r1);
                     faces.push(r2, r1, l2);
-                    fl = fl || l1;
+                    fl = fl || l2;
                     fr = fr || r2;
                 } else if (split_left) {
                     faces.push(l1, l2, r1);
