@@ -287,6 +287,7 @@ FDM.init = function(kiri, api) {
             sw._move(fwp.x, fwp.y, fwp.z);
             api.widgets.add(sw);
             sw.track.synth = true;
+            sw.track.support = true;
             kiri.space.world.add(sw.mesh);
         }
     });

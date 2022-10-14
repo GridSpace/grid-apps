@@ -100,6 +100,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         { process, device, controller } = settings,
         isBelt = device.bedBelt,
         isSynth = widget.track.synth,
+        isSupport = widget.track.support,
         isDanger = controller.danger,
         useAssembly = controller.assembly,
         isConcurrent = controller.threaded && kiri.minions.concurrent,
@@ -722,28 +723,29 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     }
                 }
             }
-        } else if (isSynth) {
-            // fill manual supports differently
+        } else if (isSynth && isSupport) {
+            // convert synth support widgets into support structure
             let outline = process.sliceSupportOutline || false;
             let promises = isConcurrent ? [] : undefined;
             let resolve = [];
             forSlices(0.5, promises ? 0.6 : 0.7, slice => {
                 let params = slice.params || process;
                 let density = params.sliceSupportDensity;
-                if (density)
-                for (let top of slice.tops) {
-                    let offset = [];
+                let supports = slice.supports = slice.topShells();
+                slice.tops = undefined; // remove outline leave only supports
+                let polys = [];
+                if (density) {
                     if (!outline) {
-                        POLY.expand(top.shells || [], lineWidth, slice.z, offset);
+                        POLY.expand(supports, lineWidth, slice.z, polys);
                     } else {
-                        POLY.expand(top.shells || [], -lineWidth/4, slice.z, offset);
+                        POLY.expand(supports, -lineWidth/4, slice.z, polys);
                     }
-                    fillSupportPolys({
-                        promises, polys: offset, lineWidth, density, z: slice.z, isBelt,
-                        angle: process.sliceSupportFill
-                    });
-                    resolve.push({top, offset});
                 }
+                fillSupportPolys({
+                    promises, polys, lineWidth, density, z: slice.z, isBelt,
+                    angle: process.sliceSupportFill
+                });
+                resolve.push({ slice, polys });
             }, "infill");
             if (promises) {
                 await tracker(promises, (i, t) => {
@@ -751,14 +753,8 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 });
             }
             for (let rec of resolve) {
-                let spacing = lineWidth * (1 / supportDensity);
-                let lines = rec.top.fill_lines = rec.offset.map(o => o.fill).flat().filter(v => v);
-                // if copying simply's support type, eliminate shells and zig/zag fill lines
-                if (!outline) {
-                    let newlines = connect_lines(lines, spacing * 2);
-                    rec.top.fill_lines = newlines;
-                    rec.top.shells = [];
-                }
+                let { slice, polys } = rec;
+                rec.supports = polys;
             }
         }
 
@@ -774,8 +770,12 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 trackupdate(i / t, 0.75, 0.8);
             });
             profileEnd();
+        }
+
+        // fill all supports (auto and manual)
+        if (!isBelt && supportDensity) {
             profileStart("support-fill");
-            promises = false && isConcurrent ? [] : undefined;
+            let promises = false && isConcurrent ? [] : undefined;
             forSlices(0.8, promises ? 0.88 : 0.9, slice => {
                 doSupportFill({
                     promises, slice, lineWidth, density: supportDensity,
@@ -802,8 +802,15 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
 
         if (isBelt) {
             let bounds = base.newBounds();
-            for (let top of slices[0].tops) {
-                bounds.merge(top.poly.bounds);
+            let slice = slices[0];
+            if (slice.tops) {
+                for (let top of slice.tops) {
+                    bounds.merge(top.poly.bounds);
+                }
+            } else if (slice.supports) {
+                for (let poly of slice.supports) {
+                    bounds.merge(poly);
+                }
             }
             widget.belt.miny = -bounds.miny;
             widget.belt.midy = (bounds.miny + bounds.maxy) / 2;
@@ -816,27 +823,28 @@ function connect_lines(lines, maxd = Infinity) {
     const newlines = [];
     let op2;
     let eo = 0;
-    let idx = 1;
     for (let i=0; i<lines.length; i += 2) {
         let p1 = lines[i];
         let p2 = lines[i+1];
-        p1.index = idx;
-        p2.index = idx++;
+        // swap p1 / p2 dir every other line
         if (eo++ % 2 === 1) {
             let t = p1;
             p1 = p2;
             p2 = t;
         }
+        // connect short distances between ends
         if (op2 && p1.distTo2D(op2) <= maxd) {
             let op1 = p1.clone();
-            op1.index = op2.index;
             newlines.push(op2);
             newlines.push(op1);
         }
         newlines.push(p1);
         newlines.push(p2);
         op2 = p2.clone();
-        op2.index = idx++;
+    }
+    let idx = 0;
+    for (let p of newlines) {
+        p.index = (idx++ / 2) | 0;
     }
     return newlines;
 }
@@ -850,6 +858,7 @@ function doRender(slice, isSynth, params, devel) {
     const height = slice.height / 2;
     const solidWidth = params.sliceFillWidth || 1;
 
+    if (slice.tops) // missing for supports
     slice.tops.forEach(top => {
         if (isThin) output
             .setLayer('part', { line: 0x333333, check: 0x333333 })

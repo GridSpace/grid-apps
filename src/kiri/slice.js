@@ -155,7 +155,7 @@ class Slice {
     findClosestPointTo(target) {
         let min, find;
 
-        if (this.tops.length) {
+        if (this.tops && this.tops.length) {
             this.tops.forEach(function(top) {
                 find = top.poly.findClosestPointTo(target);
                 if (!min || find.distance < min.distance) {

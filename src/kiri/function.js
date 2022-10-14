@@ -180,7 +180,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
                 for (let w of slicing) {
                     totalProgress += (track[w.id] || 0);
                 }
-                show.progress(offset + (totalProgress / widgets.length) * scale, msg);
+                show.progress(offset + (totalProgress / slicing.length) * scale, msg);
             }
         });
     }
