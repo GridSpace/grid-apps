@@ -257,7 +257,6 @@ function createStandardMaterial(color, flat) {
         transparent: color.opacity != 1,
         opacity: color.opacity || 1,
         color: color.face,
-        flatShading: true,
         side: flat ? THREE.DoubleSide : THREE.FrontSide
     });
 }

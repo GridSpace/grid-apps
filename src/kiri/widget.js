@@ -195,16 +195,16 @@ class Widget {
         if (this.mesh) {
             let geo = this.mesh.geometry;
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            geo.setAttribute('normal', undefined);
+            // geo.setAttribute('normal', undefined);
             geo.attributes.position.needsUpdate = true;
-            geo.computeVertexNormals();
+            // geo.computeVertexNormals();
             this.meta.vertices = vertices.length / 3;
             this.points = null;
             return this;
         } else {
             let geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            geo.setAttribute('normal', undefined);
+            // geo.setAttribute('normal', undefined);
             this.meta.vertices = vertices.length / 3;
             this.points = null;
             return this.loadGeometry(geo);
@@ -293,7 +293,8 @@ class Widget {
                 shininess: 120,
                 transparent: true,
                 opacity: solid_opacity,
-                clipIntersection: false
+                clipIntersection: false,
+                flatShading: true
             }),
             new THREE.MeshPhongMaterial({
                 side: THREE.DoubleSide,
@@ -301,11 +302,12 @@ class Widget {
                 specular: 0x202020,
                 shininess: 100,
                 transparent: true,
-                opacity: solid_opacity
+                opacity: solid_opacity,
+                flatShading: true
             }),
         ]);
         mesh.renderOrder = 1;
-        geometry.computeVertexNormals();
+        // geometry.computeVertexNormals();
         geometry.addGroup(0, Infinity, 0);
         // mesh.castShadow = true;
         // mesh.receiveShadow = true;
@@ -619,7 +621,7 @@ class Widget {
             arr[i*3+8] = z;
         }
         pos.needsUpdate = true;
-        geo.computeVertexNormals();
+        // geo.computeVertexNormals();
         ot.mirror = !ot.mirror;
         this.setModified();
         this.points = null;
