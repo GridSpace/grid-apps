@@ -366,7 +366,7 @@ function prepare(widgets, settings, update) {
         });
     }
 
-    return print.render = kiri.render.path(output, (progress, layer) => {
+    return kiri.render.path(output, (progress, layer) => {
         update(0.5 + progress * 0.5, "render", layer);
     }, { thin: true, z: 0, action: "cut", moves: process.knifeOn });
 };

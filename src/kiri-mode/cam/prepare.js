@@ -42,7 +42,7 @@ CAM.prepare = function(widgets, settings, update) {
     });
 
     const output = print.output.filter(level => Array.isArray(level));
-    print.render = render.path(output, (progress, layer) => {
+    return render.path(output, (progress, layer) => {
         update(0.75 + progress * 0.25, "render", layer);
     }, {
         thin: true,
@@ -54,8 +54,6 @@ CAM.prepare = function(widgets, settings, update) {
         action: "milling",
         maxspeed: settings.process.camFastFeed || 6000
     });
-
-    return print.render;
 };
 
 function prepEach(widget, settings, print, firstPoint, update) {

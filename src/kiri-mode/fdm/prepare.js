@@ -768,7 +768,7 @@ FDM.prepare = function(widgets, settings, update) {
 
     // render if not explicitly disabled
     if (settings.render !== false) {
-        print.render = render.path(output, (progress, layer) => {
+        return render.path(output, (progress, layer) => {
             update(0.5 + progress * 0.5, "render", layer);
         }, {
             lineWidth: settings.process.sliceLineWidth,
@@ -779,8 +779,6 @@ FDM.prepare = function(widgets, settings, update) {
             fdm: true
         });
     }
-
-    return print.render;
 };
 
 function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
