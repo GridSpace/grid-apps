@@ -590,14 +590,8 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     }
                 }
             }
-            // look for text injection rectangle
-            const pooch = {
-                length: 40,
-                width: 15,
-                height: 1
-            };
-            if (false && pooch) {
-                const { length, width, height } = pooch;
+            if (process.pooch && self.OffscreenCanvas) {
+                const { length, width, height, text } = process.pooch;
                 let firstZ, firstI, lastZ, lastI, minX = 0, maxX = 0, maxY = 0;
                 for (let slice of slices) {
                     let { belt } = slice;
@@ -636,6 +630,33 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 let dz = Math.abs(length - ((lastZ - firstZ) * Math.sqrt(2)));
                 if (dy < 0.1 && dz < 1) {
                     console.log('FOUND', { firstI, lastI, minX, maxX, maxY });
+                    let span = lastI - firstI - 2; // x = down the belt
+                    let tall = width * 2;
+                    let can = new self.OffscreenCanvas(span, tall);
+                    let ctx = can.getContext("2d");
+                    ctx.scale(0.6, 1);
+                    ctx.font = '24px sans-serif';
+                    ctx.fillStyle = 'black';
+                    ctx.textBaseline = "bottom";
+                    ctx.fillText(text, 1, tall - 1);
+                    let img = ctx.getImageData(0, 0, span, tall).data.buffer;
+                    let rgb = new Uint32Array(img);
+                    console.log({ img, rgb, p: rgb.filter(v => v) });
+                    for (let x=0; x<span; x++) {
+                        let str = '';
+                        let maxp = 0;
+                        for (let y=tall-1; y>=0; y--) {
+                            let pix = rgb[y * span + x];
+                            pix = (
+                                ((pix >> 24) & 0xff) +
+                                ((pix >> 16) & 0xff) +
+                                ((pix >>  8) & 0xff)
+                            ) / 3;
+                            str += pix > 30 ? '*' : '-';
+                            maxp = Math.max(maxp, pix);
+                        }
+                        console.log((x).toString().padStart(2,0),str,maxp | 0);
+                    }
                 }
             }
         }
