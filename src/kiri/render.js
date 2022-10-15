@@ -140,7 +140,7 @@ function path(levels, update, opts = {}) {
         let width = 1;
         let emits = 0;
 
-        level.forEach((out,oi) => {
+        level.forEach(out => {
             if (retracted && out.emit) {
                 retracted = false;
                 engages.push(lastOut.point);
@@ -224,7 +224,7 @@ function path(levels, update, opts = {}) {
                     return newPolygon().centerCircle(point, 0.2, 7).setZ(point.z + 0.02);
                 }), { outline: true });
         }
-        if (heads.length) {
+        if (thin && heads.length) {
             let line = dark ? 0xffffff : 0x112233;
             output
                 .setLayer('arrows', { face: headColor, line, opacity: 0.75 }, true)
@@ -266,7 +266,6 @@ function path(levels, update, opts = {}) {
         update(index / levels.length, output);
     });
 
-    // console.log({retractz});
     return layers;
 }
 
