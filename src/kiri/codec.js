@@ -11,7 +11,7 @@
 gapp.register("kiri.codec", [], (root, exports) => {
 
 const { base, kiri } = root;
-const handlers = {};
+const decoders = {};
 const freeMem = true;
 
 const codec = exports({
@@ -24,6 +24,14 @@ const codec = exports({
     decodePointArray,
     toCodable
 });
+
+const TYPE = {
+    WIDGET: 100,
+    SLICE:  200,
+    TOP:    300,
+    POLY:   400,
+    LAYERS: 500,
+};
 
 function toCodable(object) {
     switch (typeof object) {
@@ -96,7 +104,7 @@ function encode(o, state) {
             return o;
         case 'object':
             if (o.encode) return o.encode(state);
-            return genOEncode(o, state);
+            return genericObjectEncode(o, state);
     }
     return null;
 }
@@ -114,17 +122,17 @@ function decode(o, state) {
         case 'number':
             return o;
         case 'object':
-            if (o.type && handlers[o.type]) return handlers[o.type](o,state);
+            if (o.type && decoders[o.type]) return decoders[o.type](o,state);
             return genODecode(o, state);
     }
     return null;
 }
 
 function registerDecoder(type, handler) {
-    handlers[type] = handler;
+    decoders[type] = handler;
 }
 
-function genOEncode(o, state) {
+function genericObjectEncode(o, state) {
     if (o instanceof Float32Array) return o;
     let out = {};
     for (let k in o) {
@@ -142,42 +150,80 @@ function genODecode(o, state) {
     return out;
 }
 
-/** ******************************************************************
- * Object Class CODEC Functions
- ******************************************************************* */
+function encodePointArray(points, state) {
+    if (!points) {
+        return null;
+    }
 
- kiri.Widget.prototype.encode = function(state) {
-     const json = state._json_;
-     const geo = this.getGeoVertices();
-     const coded = {
-         type: 'widget',
-         id: this.id,
-         ver: 1, // for better future encodings
-         json: json, // safe for JSON (float32array mess)
-         group: this.group.id,
-         track: this.track,
-         geo: json ? Array.from(geo) : geo
-     };
-     return coded;
- };
+    const length = points.length;
 
- registerDecoder('widget', function(v, state) {
-     const id = v.id,
-         group = v.group || id,
-         track = v.track || undefined,
-         widget = kiri.newWidget(id, kiri.Widget.Groups.forid(group));
-     widget.loadVertices(v.json ? v.geo.toFloat32() : v.geo);
-     widget.saved = Date.now();
-     if (track && track.pos) {
-         widget.track = track;
-         widget.move(track.pos.x, track.pos.y, track.pos.z, true);
-     }
-     return widget;
+    if (length === 0) {
+        return points;
+    }
+
+    const array = codec.allocFloat32Array(length * 3, state.zeros);
+
+    for (let i=0, pos=0, point; i<length; i++) {
+        point = points[i];
+        array[pos++] = point.x;
+        array[pos++] = point.y;
+        array[pos++] = point.z;
+    }
+
+    return array;
+}
+
+function decodePointArray(array) {
+    if (!array) return null;
+
+    const length = array.length;
+    const points = new Array(length / 3);
+
+    for (let vid=0, pid=0; vid < length; ) {
+        points[pid++] = base.newPoint(array[vid++], array[vid++], array[vid++]);
+    }
+
+    return points;
+}
+
+// ----- Widget Codec -----
+
+kiri.Widget.prototype.encode = function(state) {
+    const json = state._json_;
+    const geo = this.getGeoVertices();
+    const coded = {
+        type: TYPE.WIDGET,
+        id: this.id,
+        ver: 1, // for better future encodings
+        json: json, // safe for JSON (float32array mess)
+        group: this.group.id,
+        track: this.track,
+        geo: json ? Array.from(geo) : geo
+    };
+    return coded;
+};
+
+registerDecoder(TYPE.WIDGET, function(v, state) {
+    const id = v.id,
+        group = v.group || id,
+        track = v.track || undefined,
+        widget = kiri.newWidget(id, kiri.Widget.Groups.forid(group));
+
+    widget.loadVertices(v.json ? v.geo.toFloat32() : v.geo);
+    widget.saved = Date.now();
+    if (track && track.pos) {
+        widget.track = track;
+        widget.move(track.pos.x, track.pos.y, track.pos.z, true);
+    }
+
+    return widget;
 });
+
+// ----- Slice Codec -----
 
 kiri.Slice.prototype.encode = function(state) {
     const rv = {
-        type: 'slice',
+        type: TYPE.SLICE,
         z: this.z,
         index: this.index,
         layers: encode(this.layers, state)
@@ -187,7 +233,7 @@ kiri.Slice.prototype.encode = function(state) {
     return rv;
 };
 
-registerDecoder('slice', function(v, state) {
+registerDecoder(TYPE.SLICE, function(v, state) {
     let slice = kiri.newSlice(v.z, state.mesh ? state.mesh.newGroup() : null);
 
     slice.index = v.index;
@@ -196,13 +242,96 @@ registerDecoder('slice', function(v, state) {
     return slice;
 });
 
+// ----- Slice.Top Codec -----
+
+kiri.Top.prototype.encode = function(state) {
+    let obj = {
+        type: TYPE.TOP,
+        poly: encode(this.poly, state)
+    };
+
+    if (state.full) {
+        obj.last = encode(this.last, state);
+        obj.shells = encode(this.shells, state);
+        obj.fill_off = encode(this.fill_off, state);
+        obj.fill_lines = encode(this.fill_lines, state);
+    }
+
+    return obj;
+};
+
+registerDecoder(TYPE.TOP, function(v, state) {
+    let top = kiri.newTop(decode(v.poly, state));
+    if (state.full) {
+        top.last = decode(v.last, state);
+        top.shells = decode(v.shells, state);
+        top.fill_off = decode(v.fill_off, state);
+        top.fill_lines = decode(v.fill_lines, state);
+    }
+    return top;
+});
+
+// ----- Polygon Codec -----
+
+base.Polygon.prototype.encode = function(state) {
+    if (!state.poly) state.poly = {};
+
+    let cached = state.poly[this.id];
+    if (cached) {
+        return { type: TYPE.POLY, ref: this.id };
+    }
+
+    state.poly[this.id] = this;
+
+    return {
+        type: TYPE.POLY,
+        id: this.id,
+        array: encodePointArray(this.points, state),
+        inner: encode(this.inner, state),
+        parent: encode(this.parent, state),
+        depth: this.depth,
+        color: this.color,
+        open: this.open
+    };
+};
+
+registerDecoder(TYPE.POLY, function(v, state) {
+    if (!state.poly) state.poly = {};
+
+    // return polygon from cached reference
+    if (v.ref) {
+        return state.poly[v.ref];
+    }
+
+    const array = v.array;
+    const length = array.length;
+    const poly = base.newPolygon();
+
+    for (let vid = 0; vid < length; ) {
+        poly.push(base.newPoint(array[vid++], array[vid++], array[vid++]));
+    }
+
+    state.poly[v.id] = poly;
+
+    poly.id = v.id;
+    poly.open = v.open;
+    poly.inner = decode(v.inner, state);
+    poly.parent = decode(v.parent, state);
+    poly.depth = v.depth;
+    poly.color = v.color;
+
+    return poly;
+});
+
+// ----- Layers Codec -----
+
 kiri.Layers.prototype.encode = function(state) {
     let zeros = state.zeros;
     let enc = {
-        type: 'layers',
+        type: TYPE.LAYERS,
         layers: Object.keys(this.layers),
         data: Object.values(this.layers).map(layer => {
-            const e = {
+            return {
                 polys: encode(layer.polys, state),
                 lines: encodePointArray(layer.lines, state),
                 faces: codec.allocFloat32Array(layer.faces, zeros),
@@ -220,9 +349,7 @@ kiri.Layers.prototype.encode = function(state) {
                 }),
                 cpath: layer.cpath || codec.undef,
                 off: layer.off
-            };
-            // console.log('-->',layer,e,zeros.length);
-            return e;
+            }
         })
     };
     // aggressively free memory
@@ -230,16 +357,18 @@ kiri.Layers.prototype.encode = function(state) {
     return enc;
 };
 
-registerDecoder('layers', function(v, state) {
-    let render = new kiri.Layers();
-    for (let i=0; i<v.layers.length; i++) {
+registerDecoder(TYPE.LAYERS, function(v, state) {
+    const render = new kiri.Layers();
+    const { layers } = v;
+
+    for (let i=0; i<layers.length; i++) {
         const data = v.data[i];
-        const d = render.layers[v.layers[i]] = {
+        const d = render.layers[layers[i]] = {
             polys: decode(data.polys, state),
             cpoly: data.cpoly,
             lines: decodePointArray(data.lines),
             faces: codec.allocFloat32Array(data.faces),
-            norms: data.norms ? codec.allocFloat32Array(data.norms) : undefined,
+            norms: codec.allocFloat32Array(data.norms),
             cface: data.cface,
             color: data.color,
             paths: data.paths.map(lp => {
@@ -247,7 +376,7 @@ registerDecoder('layers', function(v, state) {
                     z: lp.z,
                     index: lp.index,
                     faces: codec.allocFloat32Array(lp.faces),
-                    norms: lp.norms ? codec.allocFloat32Array(lp.norms) : undefined
+                    norms: codec.allocFloat32Array(lp.norms)
                 };
             }),
             cpath: data.cpath,
@@ -275,134 +404,9 @@ registerDecoder('layers', function(v, state) {
                 }
             });
         }
-        // console.log('<--',d);
     }
+
     return render;
-});
-
-kiri.Top.prototype.encode = function(state) {
-    let obj = {
-        type: 'top',
-        poly: encode(this.poly, state)
-    };
-    if (state.full) {
-        obj.last = encode(this.last, state);
-        obj.shells = encode(this.shells, state);
-        obj.fill_off = encode(this.fill_off, state);
-        obj.fill_lines = encode(this.fill_lines, state);
-    }
-    return obj;
-};
-
-registerDecoder('top', function(v, state) {
-    let top = kiri.newTop(decode(v.poly, state));
-    if (state.full) {
-        top.last = decode(v.last, state);
-        top.shells = decode(v.shells, state);
-        top.fill_off = decode(v.fill_off, state);
-        top.fill_lines = decode(v.fill_lines, state);
-    }
-    return top;
-});
-
-function encodePointArray(points, state, z) {
-    if (!points) {
-        return null;
-    }
-    if (points.length === 0) {
-        return points;
-    }
-
-    let array = codec.allocFloat32Array(points.length * 3, state.zeros),
-        pos = 0;
-
-    points.forEach(function(point) {
-        if (state.rotate) {
-            if (state.centerz) {
-                point.z -= state.centerz;
-            }
-            let v = new THREE.Vector3(point.x, point.y, point.z);
-            v.applyMatrix4(state.rotate);
-            point = {x: v.x, y: v.y, z: v.z};
-            if (state.centerz) {
-                point.z += state.centerz;
-            }
-            if (state.movez) {
-                point.z -= state.movez;
-            }
-        }
-        array[pos++] = point.x;
-        array[pos++] = point.y;
-        array[pos++] = z !== undefined ? z : point.z;
-    });
-
-    return array;
-}
-
-function decodePointArray(array) {
-    if (!array) return null;
-
-    let vid = 0,
-        pid = 0,
-        points = new Array(array.length/3);
-
-    while (vid < array.length) {
-        points[pid++] = base.newPoint(array[vid++], array[vid++], array[vid++]);
-    }
-
-    return points;
-}
-
-base.Polygon.prototype.encode = function(state) {
-    if (!state.poly) state.poly = {};
-
-    let cached = state.poly[this.id];
-
-    if (cached) {
-        return { type: 'poly', ref: this.id };
-    }
-
-    state.poly[this.id] = this;
-    return {
-        type: 'poly',
-        id: this.id,
-        array: encodePointArray(this.points, state, this.z),
-        inner: encode(this.inner, state),
-        parent: encode(this.parent, state),
-        depth: this.depth,
-        color: this.color,
-        open: this.open
-    };
-};
-
-registerDecoder('poly', function(v, state) {
-    if (!state.poly) state.poly = {};
-
-    if (v.ref) return state.poly[v.ref];
-
-    let poly = base.newPolygon(),
-        vid = 0;
-
-    // if passed a normal array, convert to float32
-    if (v.array.toFloat32) {
-        v.array = v.array.toFloat32();
-    }
-
-    while (vid < v.array.length) {
-        poly.push(base.newPoint(v.array[vid++], v.array[vid++], v.array[vid++]));
-    }
-
-    poly.id = v.id;
-    poly.open = v.open;
-
-    state.poly[v.id] = poly;
-
-    poly.inner = decode(v.inner, state);
-    poly.parent = decode(v.parent, state);
-    poly.depth = v.depth;
-    poly.color = v.color;
-
-    return poly;
 });
 
 });
