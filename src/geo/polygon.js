@@ -1448,9 +1448,9 @@ class Polygon {
             out = inout || [];
         out.push(poly.points.map(p => p.toClipper()));
         if (poly.inner) {
-            poly.inner.forEach(p => {
-                p.toClipper(out);
-            });
+            for (let inner of poly.inner) {
+                inner.toClipper(out);
+            }
         }
         return out;
     }

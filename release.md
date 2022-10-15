@@ -5,6 +5,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
+* threaded task and message passing performance improvements
 * refactor FDM supports and synthetic widgets to use more common code
 * allow FDM mixing of automatic and manual / detected supports
 * improve CAM animation speeds using shared array buffers
