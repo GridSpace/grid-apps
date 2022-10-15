@@ -301,17 +301,19 @@ function pointsToPath(points, offset, open, miter = 1.5) {
         const p0 = points[0].normal;
         const l0 = left[0];
         const r0 = right[0];
-        l0.x += p0.dy * offset;
-        l0.y -= p0.dx * offset;
-        r0.x += p0.dy * offset;
-        r0.y -= p0.dx * offset;
+        // improve visuals of open but 90 degree overlapping ends
+        const move = offset * 0.99;
+        l0.x += p0.dy * move;
+        l0.y -= p0.dx * move;
+        r0.x += p0.dy * move;
+        r0.y -= p0.dx * move;
         const pn = points.peek(2).normal;
         const ln = left.peek();
         const rn = right.peek();
-        ln.x -= pn.dy * offset;
-        ln.y += pn.dx * offset;
-        rn.x -= pn.dy * offset;
-        rn.y += pn.dx * offset;
+        ln.x -= pn.dy * move;
+        ln.y += pn.dx * move;
+        rn.x -= pn.dy * move;
+        rn.y += pn.dx * move;
     }
     if (!open && faces) {
         let l1 = left.peek(1);
