@@ -91,7 +91,7 @@ AP.addOnce = function(val) {
  * shallow cloning with clone(arg) call on each new element
  */
 AP.clone = function(arg) {
-    var na = this.slice(),
+    let na = this.slice(),
         ln = na.length,
         i = 0;
     while (i < ln) na[i] = na[i++].clone(arg);
@@ -129,7 +129,7 @@ AP.xout = function(label, inset) {
  * remove and return element from array, if present
  */
 AP.remove = function(val) {
-    var idx = this.indexOf(val);
+    let idx = this.indexOf(val);
     if (idx >= 0) return this.splice(idx, 1);
     return null;
 };
@@ -153,16 +153,11 @@ AP.contains = function(val) {
 };
 
 AP.toFloat32 = function() {
-    var i = 0,
-        f32 = new Float32Array(this.length);
-    while (i < this.length) {
-        f32[i] = this[i++];
-    }
-    return f32;
+    return new Float32Array(this);
 };
 
 AP.forEachPair = function(fn, incr) {
-    var scope = this,
+    let scope = this,
         idx = 0,
         inc = incr || 2,
         len = scope.length;
