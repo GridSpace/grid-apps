@@ -332,23 +332,26 @@ kiri.Layers.prototype.encode = function(state) {
         layers: Object.keys(this.layers),
         data: Object.values(this.layers).map(layer => {
             return {
+                // defaults
+                off: layer.off,
+                color: layer.color,
+                // 1D lines and polylines
                 polys: encode(layer.polys, state),
                 lines: encodePointArray(layer.lines, state),
+                // 2D lines and flat areas
                 faces: codec.allocFloat32Array(layer.faces, zeros),
                 norms: codec.allocFloat32Array(layer.norms, zeros),
                 cface: layer.cface || codec.undef,
-                color: layer.color,
+                // 3D lines
                 paths: layer.paths.map(lp => {
-                    const pe = {
+                    return {
                         z: lp.z,
                         index: lp.index,
                         faces: codec.allocFloat32Array(lp.faces, zeros),
                         norms: codec.allocFloat32Array(lp.norms, zeros)
-                    };
-                    return pe;
+                    }
                 }),
-                cpath: layer.cpath || codec.undef,
-                off: layer.off
+                cpath: layer.cpath || codec.undef
             }
         })
     };
@@ -364,13 +367,13 @@ registerDecoder(TYPE.LAYERS, function(v, state) {
     for (let i=0; i<layers.length; i++) {
         const data = v.data[i];
         const d = render.layers[layers[i]] = {
+            off: data.off,
+            color: data.color,
             polys: decode(data.polys, state),
-            cpoly: data.cpoly,
             lines: decodePointArray(data.lines),
             faces: codec.allocFloat32Array(data.faces),
             norms: codec.allocFloat32Array(data.norms),
             cface: data.cface,
-            color: data.color,
             paths: data.paths.map(lp => {
                 return {
                     z: lp.z,
@@ -379,19 +382,11 @@ registerDecoder(TYPE.LAYERS, function(v, state) {
                     norms: codec.allocFloat32Array(lp.norms)
                 };
             }),
-            cpath: data.cpath,
-            off: data.off
+            cpath: data.cpath
         };
         // fixup null -> Infinity in material counts (JSON stringify sucks)
         if (d.cface) {
             d.cface.forEach(rec => {
-                if (rec.count === null) {
-                    rec.count = Infinity;
-                }
-            });
-        }
-        if (d.cpoly) {
-            d.cpoly.forEach(rec => {
                 if (rec.count === null) {
                     rec.count = Infinity;
                 }

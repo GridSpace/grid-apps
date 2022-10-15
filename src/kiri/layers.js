@@ -18,7 +18,6 @@ const { base, kiri } = root;
 const { polygons, newPolygon } = base;
 
 const POLY = base.polygons;
-const newPath = true;
 
 class Layers {
     constructor() {
@@ -162,53 +161,25 @@ class Layers {
         const off_opt = { z, flat: true };
         for (let poly of polys) {
             const faceidx = faces.length / 3;
-            if (newPath) {
-                const path = poly.toPath2D(offset * 0.95);
-                const { left, right, normals } = path;
-                for (let p of path.faces) {
-                    faces.push(p.x, p.y, poly.z || p.z);
+            const path = poly.toPath2D(offset * 0.95);
+            const { left, right, normals } = path;
+            for (let p of path.faces) {
+                faces.push(p.x, p.y, poly.z || p.z);
+            }
+            if (opts.outline) {
+                let p1 = newPolygon().addPoints(left).setOpenValue(poly.open);
+                let p2 = newPolygon().addPoints(right).setOpenValue(poly.open);
+                if (poly.z) {
+                    p1.setZ(poly.z);
+                    p2.setZ(poly.z);
                 }
-                if (opts.outline) {
-                    let p1 = newPolygon().addPoints(left).setOpenValue(poly.open);
-                    let p2 = newPolygon().addPoints(right).setOpenValue(poly.open);
-                    if (poly.z) {
-                        p1.setZ(poly.z);
-                        p2.setZ(poly.z);
-                    }
-                    this.addPolys(p1);
-                    this.addPolys(p2);
-                }
-                if (cur.norms) {
-                    cur.norms.appendAll(normals);
-                } else {
-                    cur.norms = normals;
-                }
+                this.addPolys(p1);
+                this.addPolys(p2);
+            }
+            if (cur.norms) {
+                cur.norms.appendAll(normals);
             } else {
-                let exp = off_opt.outs = [];
-                if (poly.isOpen()) {
-                    // shorten line by offset
-                    const pp = poly.points, pl = pp.length;
-                    pp[0] = pp[0].offsetPointTo(pp[1], offset);
-                    pp[pl-1] = pp[pl-1].offsetPointTo(pp[pl-2], offset);
-                    exp.appendAll(POLY.expand_lines(poly, offset * 0.9, z));
-                    // force re-nest if offsets cause ends to join
-                    exp = POLY.flatten(exp,[],true);
-                    this.stats.flat_line = 0;
-                } else if (offset) {
-                    POLY.offset([poly],  offset * 0.9, off_opt);
-                    POLY.offset([poly], -offset * 0.9, off_opt);
-                    this.stats.flat_poly = 0;
-                }
-                if (opts.outline) {
-                    this.addPolys(exp.clone());
-                }
-                for (let poly of POLY.nest(exp)) {
-                    for (let ep of poly.earcut()) {
-                        for (let p of ep.points) {
-                            faces.push(p.x, p.y, p.z);
-                        }
-                    }
-                }
+                cur.norms = normals;
             }
             const color = opts.color ?
                 (typeof(opts.color) === 'number' ? { line: opts.color, face: opts.color } : opts.color) :
@@ -238,104 +209,45 @@ class Layers {
             return;
         }
 
-        if (newPath) {
-            for (let poly of polys) {
-                if (poly.length < (poly.open ? 2 : 3)) {
-                    continue;
-                }
-                const z = opts.z || poly.getZ();
-                const { faces, normals } = poly.toPath3D(offset, height, 0);
-                const cur = this.current;
-                const one = cur.paths[0];
-                if (one) {
-                    // merge all contour geometry for massive speed gain
-                    // todo: recode to concat all geometries at once, and not incrementally
-                    const add = one.faces.length / 3;
-                    const feces = new Float32Array(one.faces.length + faces.length);
-                    const indln = one.faces.length / 3;
-                    feces.set(one.faces);
-                    feces.set(faces, one.faces.length);
-                    one.faces = feces;
-                    // allow changing colors
-                    if (opts.color) {
-                        if (!cur.cpath) {
-                            cur.cpath = [ Object.assign({ start: 0, count: indln - 1 }, cur.color) ];
-                        }
-                        // rewrite last color count if color or opacity have changed
-                        const pc = cur.cpath[cur.cpath.length - 1];
-                        if (pc.face !== opts.color.face || pc.opacity !== opts.color.opacity) {
-                            pc.count = indln;
-                            cur.cpath.push(Object.assign({ start: indln, count: Infinity }, opts.color));
-                        }
-                    }
-                    if (normals) {
-                        one.norms.appendAll(normals);
-                    }
-                } else {
-                    cur.paths.push({ index: [], faces, z, norms: normals });
-                    if (opts.color) {
-                        cur.cpath = [ Object.assign({ start: 0, count: Infinity }, opts.color) ];
-                    }
-                }
-                this.stats.contour++;
+        for (let poly of polys) {
+            if (poly.length < (poly.open ? 2 : 3)) {
+                continue;
             }
-        } else {
-            const profiles = this.profiles;
-            const prokey = `${offset}x${height}`;
-            if (!profiles[prokey]) {
-                const profile = new THREE.Shape();
-                profile.moveTo(-offset, -height);
-                profile.lineTo(-offset,  height);
-                profile.lineTo( offset,  height);
-                profile.lineTo( offset, -height);
-                profiles[prokey] = profile;
-            }
-            const profile = profiles[prokey].clone();
-
-            for (let poly of polys) {
-                const contour = [];
-                poly = poly.debur(0.05);
-                if (!poly) return;
-                poly = poly.miter();
-                for (let p of poly.points) {
-                    contour.push(new THREE.Vector2(p.x, p.y));
-                }
-                const {index, faces} = base.paths.shapeToPath(profile, contour, poly.isClosed());
-                const cur = this.current;
-                const one = cur.paths[0];
-                if (one) {
-                    // merge all contour geometry for massive speed gain
-                    // todo: recode to concat all geometries at once, and not incrementally
-                    const add = one.faces.length / 3;
-                    for (let i=0; i<index.length; i++) {
-                        index[i] += add;
+            const z = opts.z || poly.getZ();
+            const { faces, normals } = poly.toPath3D(offset, height, 0);
+            const cur = this.current;
+            const one = cur.paths[0];
+            if (one) {
+                // merge all contour geometry for massive speed gain
+                // todo: recode to concat all geometries at once, and not incrementally
+                const add = one.faces.length / 3;
+                const feces = new Float32Array(one.faces.length + faces.length);
+                const indln = one.faces.length / 3;
+                feces.set(one.faces);
+                feces.set(faces, one.faces.length);
+                one.faces = feces;
+                // allow changing colors
+                if (opts.color) {
+                    if (!cur.cpath) {
+                        cur.cpath = [ Object.assign({ start: 0, count: indln - 1 }, cur.color) ];
                     }
-                    const feces = new Float32Array(one.faces.length + faces.length);
-                    const indln = one.index.length || one.faces.length / 3;
-                    feces.set(one.faces);
-                    feces.set(faces, one.faces.length);
-                    one.faces = feces;
-                    one.index.appendAll(index);
-                    // allow changing colors
-                    if (opts.color) {
-                        if (!cur.cpath) {
-                            cur.cpath = [ Object.assign({ start: 0, count: indln - 1 }, cur.color) ];
-                        }
-                        // rewrite last color count if color or opacity have changed
-                        const pc = cur.cpath[cur.cpath.length - 1];
-                        if (pc.face !== opts.color.face || pc.opacity !== opts.color.opacity) {
-                            pc.count = indln;
-                            cur.cpath.push(Object.assign({ start: indln, count: Infinity }, opts.color));
-                        }
-                    }
-                } else {
-                    cur.paths.push({ index, faces, z: opts.z || poly.getZ() });
-                    if (opts.color) {
-                        cur.cpath = [ Object.assign({ start: 0, count: Infinity }, opts.color) ];
+                    // rewrite last color count if color or opacity have changed
+                    const pc = cur.cpath[cur.cpath.length - 1];
+                    if (pc.face !== opts.color.face || pc.opacity !== opts.color.opacity) {
+                        pc.count = indln;
+                        cur.cpath.push(Object.assign({ start: indln, count: Infinity }, opts.color));
                     }
                 }
-                this.stats.contour++;
+                if (normals) {
+                    one.norms.appendAll(normals);
+                }
+            } else {
+                cur.paths.push({ index: [], faces, z, norms: normals });
+                if (opts.color) {
+                    cur.cpath = [ Object.assign({ start: 0, count: Infinity }, opts.color) ];
+                }
             }
+            this.stats.contour++;
         }
 
         return this;
