@@ -475,9 +475,9 @@ kiri.worker = {
             const state = { zeros: [] };
             const emit = { progress, message };
             if (layer) {
-                emit.layer = codec.encode(layer, state)
+                emit.layer = codec.encode(layer, state);
             }
-            send.data(emit);
+            send.data(emit, state.zeros);
         });
 
         const unitScale = settings.controller.units === 'in' ? (1 / 25.4) : 1;
@@ -656,7 +656,7 @@ dispatch.onmessage = self.onmessage = function(e) {
                 // if (direct && direct.length) {
                 //     console.log({
                 //         zeros: direct.length,
-                //         sz:direct.map(z => z.byteLength).reduce((a,v) => a+v)
+                //         sz:direct.map(z => z.byteLength)
                 //     });
                 // }
                 dispatch.send({

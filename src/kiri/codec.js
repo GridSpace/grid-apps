@@ -58,17 +58,28 @@ function toCodable(object) {
     return o;
 }
 
-function allocFloat32Array(arg) {
+function allocFloat32Array(arg, zeros) {
+    if (arg === undefined) {
+        return undefined;
+    }
+    if (arg.length === 0) {
+        return [];
+    }
+    let f32;
     if (arg.byteLength) {
         // already a float array
-        return arg;
-    }
-    if (Array.isArray(arg)) {
+        f32 = arg;
+    } else if (Array.isArray(arg)) {
         // create float array from array
-        return new Float32Array(arg);
+        f32 = new Float32Array(arg);
+    } else {
+        // usually a number (size) for array
+        f32 = new Float32Array(arg);
     }
-    // usually a number (size) for array
-    return new Float32Array(arg);
+    if (zeroOut && zeros && f32.byteLength > 0) {
+        zeros.push(f32.buffer);
+    }
+    return f32;
 }
 
 function encode(o, state) {
@@ -187,6 +198,7 @@ registerDecoder('slice', function(v, state) {
 });
 
 kiri.Layers.prototype.encode = function(state) {
+    let zeros = state.zeros;
     let enc = {
         type: 'layers',
         layers: Object.keys(this.layers),
@@ -194,29 +206,23 @@ kiri.Layers.prototype.encode = function(state) {
             const e = {
                 polys: encode(layer.polys, state),
                 lines: encodePointArray(layer.lines, state),
-                faces: codec.allocFloat32Array(layer.faces),
-                norms: layer.norms ? codec.allocFloat32Array(layer.norms) : undefined,
+                faces: codec.allocFloat32Array(layer.faces, zeros),
+                norms: codec.allocFloat32Array(layer.norms, zeros),
                 cface: layer.cface || codec.undef,
                 color: layer.color,
                 paths: layer.paths.map(lp => {
                     const pe = {
                         z: lp.z,
                         index: lp.index,
-                        faces: codec.allocFloat32Array(lp.faces),
-                        norms: lp.norms ? codec.allocFloat32Array(lp.norms) : undefined
+                        faces: codec.allocFloat32Array(lp.faces, zeros),
+                        norms: codec.allocFloat32Array(lp.norms, zeros)
                     };
-                    if (zeroOut && state.zeros && pe.faces.length) {
-                        state.zeros.push(pe.faces.buffer);
-                    }
                     return pe;
                 }),
                 cpath: layer.cpath || codec.undef,
                 off: layer.off
             };
-            if (zeroOut && state.zeros && e.faces.length) {
-                state.zeros.push(e.faces.buffer);
-            }
-            // console.log('-->',layer,e);
+            // console.log('-->',layer,e,zeros.length);
             return e;
         })
     };
@@ -301,9 +307,14 @@ registerDecoder('top', function(v, state) {
 });
 
 function encodePointArray(points, state, z) {
-    if (!points) return null;
+    if (!points) {
+        return null;
+    }
+    if (points.length === 0) {
+        return points;
+    }
 
-    let array = codec.allocFloat32Array(points.length * 3),
+    let array = codec.allocFloat32Array(points.length * 3, state.zeros),
         pos = 0;
 
     points.forEach(function(point) {
@@ -325,10 +336,6 @@ function encodePointArray(points, state, z) {
         array[pos++] = point.y;
         array[pos++] = z !== undefined ? z : point.z;
     });
-
-    if (zeroOut && state.zeros) {
-        state.zeros.push(array.buffer);
-    }
 
     return array;
 }

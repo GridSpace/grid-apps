@@ -54,10 +54,10 @@ class Layers {
             off: off === true,
             lines: [],
             polys: [], // colors are an attribute on polygons
-            faces: [],
-            norms: undefined, // vertex normals
-            cface: undefined, // face color indices
-            paths: [],
+            faces: [], // triangles for areas and flats
+            norms: undefined, // flats vertex normals
+            cface: undefined, // flats face color indices
+            paths: [], // 3d extrusion / tube paths (used to be an array, now merged - FIX)
             cpath: undefined, // path colors indices
             color: colors || {
                 check: 0,
@@ -128,6 +128,7 @@ class Layers {
     }
 
     // z planar closed polygonal areas
+    // used for FDM solids, bridges, flats debug & SLA slice visualization
     addAreas(polys, options) {
         const faces = this.current.faces;
         polys = Array.isArray(polys) ? polys : [ polys ];
