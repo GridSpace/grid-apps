@@ -69,13 +69,16 @@ class Layers {
         return this;
     }
 
+    // add a line segment (two points)
     addLine(p1, p2) {
         this.current.lines.push(p1, p2);
         return this;
     }
 
+    // add an array of line segments
     addLines(lines, options) {
         if (options) {
+            // the open option encodes lines as open polygons
             options.open = true;
             const polys = [];
             for (let i=0; i<lines.length-1; i += 2) {
@@ -93,10 +96,12 @@ class Layers {
         return this;
     }
 
+    // an open or closed polygon
     addPoly(poly, options) {
         return this.addPolys([poly], options);
     }
 
+    // a polygon rendered as a webgl line
     addPolys(polys, options) {
         if (polys.length === 0) {
             return this;
@@ -112,7 +117,7 @@ class Layers {
         }
         polys = flat(polys);
         if (options) {
-            polys.forEach(p => {
+            for (let p of polys) {
                 if (options.z !== undefined) {
                     p.setZ(options.z);
                 }
@@ -120,29 +125,31 @@ class Layers {
                     case 'number': p.color = options.color; break;
                     case 'object': p.color = options.color.line; break;
                 }
-            });
+            }
         }
         this.current.polys.appendAll(polys);
         this.stats.line_poly += polys.length;
         return this;
     }
 
-    // z planar closed polygonal areas
+    // add an enclosed 3D polygon earcut into faces
     // used for FDM solids, bridges, flats debug & SLA slice visualization
     addAreas(polys, options) {
         const faces = this.current.faces;
         polys = Array.isArray(polys) ? polys : [ polys ];
-        polys.forEach(poly => {
-            poly.earcut().forEach(ep => {
-                ep.forEachPoint(p => { faces.push(p.x, p.y, p.z) });
-            });
-        });
+        for (let poly of polys) {
+            for (let ep of poly.earcut()) {
+                for (let p of ep.points) {
+                    faces.push(p.x, p.y, p.z);
+                }
+            }
+        }
         if (options && options.outline) {
             this.addPolys(polys.clone(true));
         }
     }
 
-    // misleading name. these are flat offset paths (old style rendering)
+    // add a 2D polyline path (usually FDM extrusion paths)
     addFlats(polys, options) {
         const opts = options || {};
         const offset = opts.offset || 1;
@@ -153,17 +160,23 @@ class Layers {
         const cur = this.current;
         const z = polys[0].getZ(), faces = cur.faces;
         const off_opt = { z, flat: true };
-        polys.forEach(poly => {
+        for (let poly of polys) {
             const faceidx = faces.length / 3;
             if (newPath) {
                 const path = poly.toPath2D(offset * 0.95);
                 const { left, right, normals } = path;
                 for (let p of path.faces) {
-                    faces.push(p.x, p.y, p.z);
+                    faces.push(p.x, p.y, poly.z || p.z);
                 }
                 if (opts.outline) {
-                    this.addPolys(newPolygon().addPoints(left).setOpenValue(poly.open));
-                    this.addPolys(newPolygon().addPoints(right).setOpenValue(poly.open));
+                    let p1 = newPolygon().addPoints(left).setOpenValue(poly.open);
+                    let p2 = newPolygon().addPoints(right).setOpenValue(poly.open);
+                    if (poly.z) {
+                        p1.setZ(poly.z);
+                        p2.setZ(poly.z);
+                    }
+                    this.addPolys(p1);
+                    this.addPolys(p2);
                 }
                 if (cur.norms) {
                     cur.norms.appendAll(normals);
@@ -189,11 +202,13 @@ class Layers {
                 if (opts.outline) {
                     this.addPolys(exp.clone());
                 }
-                POLY.nest(exp).forEach((poly,i) => {
-                    poly.earcut().forEach(ep => {
-                        ep.forEachPoint(p => { faces.push(p.x, p.y, p.z) });
-                    });
-                });
+                for (let poly of POLY.nest(exp)) {
+                    for (let ep of poly.earcut()) {
+                        for (let p of ep.points) {
+                            faces.push(p.x, p.y, p.z);
+                        }
+                    }
+                }
             }
             const color = opts.color ?
                 (typeof(opts.color) === 'number' ? { line: opts.color, face: opts.color } : opts.color) :
@@ -208,10 +223,11 @@ class Layers {
                     cur.cface.push(Object.assign({ start: faceidx, count: Infinity }, color));
                 }
             }
-        });
+        }
         return this;
     }
 
+    // add 3D polyline path (FDM extrusion paths)
     addPaths(polys, options) {
         const opts = options || {};
         const height = opts.height || 1;
@@ -276,14 +292,14 @@ class Layers {
             }
             const profile = profiles[prokey].clone();
 
-            polys.forEach(poly => {
+            for (let poly of polys) {
                 const contour = [];
                 poly = poly.debur(0.05);
                 if (!poly) return;
                 poly = poly.miter();
-                poly.points.forEach(p => {
+                for (let p of poly.points) {
                     contour.push(new THREE.Vector2(p.x, p.y));
-                });
+                }
                 const {index, faces} = base.paths.shapeToPath(profile, contour, poly.isClosed());
                 const cur = this.current;
                 const one = cur.paths[0];
@@ -319,7 +335,7 @@ class Layers {
                     }
                 }
                 this.stats.contour++;
-            });
+            }
         }
 
         return this;

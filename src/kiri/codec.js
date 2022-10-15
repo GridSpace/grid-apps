@@ -150,7 +150,7 @@ function genODecode(o, state) {
     return out;
 }
 
-function encodePointArray(points, state) {
+function encodePointArray(points, state, z) {
     if (!points) {
         return null;
     }
@@ -167,7 +167,7 @@ function encodePointArray(points, state) {
         point = points[i];
         array[pos++] = point.x;
         array[pos++] = point.y;
-        array[pos++] = point.z;
+        array[pos++] = z || point.z;
     }
 
     return array;
@@ -286,7 +286,7 @@ base.Polygon.prototype.encode = function(state) {
     return {
         type: TYPE.POLY,
         id: this.id,
-        array: encodePointArray(this.points, state),
+        array: encodePointArray(this.points, state, this.z),
         inner: encode(this.inner, state),
         parent: encode(this.parent, state),
         depth: this.depth,
