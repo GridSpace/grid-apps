@@ -89,15 +89,13 @@ class Stack {
     renderLayer(layer, group) {
         function addPoly(vertices, poly) {
             const points = poly.points, len = points.length;
-            for (let i=1; i<len; i++) {
-                const p1 = points[i-1], p2 = points[i];
-                vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
-                vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
+            for (let i=3; i<len; i += 3) {
+                vertices.push(new THREE.Vector3(points[i-3], points[i-2], points[i-1]));
+                vertices.push(new THREE.Vector3(points[i+0], points[i+1], points[i+2]));
             }
             if (!poly.open) {
-                const p1 = points[len - 1], p2 = points[0];
-                vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
-                vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
+                vertices.push(new THREE.Vector3(points[len-3], points[len-2], points[len-1]));
+                vertices.push(new THREE.Vector3(points[0], points[1], points[2]));
             }
         }
 
@@ -134,9 +132,8 @@ class Stack {
                 }
             }
             // for now, line segments inherit the last color
-            for (let i=0, il=lines.length; i<il; i++) {
-                const p = lines[i];
-                vert.push(new THREE.Vector3(p.x, p.y, p.z));
+            for (let i=0, il=lines.length; i<il; i += 3) {
+                vert.push(new THREE.Vector3(lines[i], lines[i+1], lines[i+1]));
             }
             // ensure at least one group using the default color settings
             if (grp.length === 0) {

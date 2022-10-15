@@ -365,6 +365,16 @@ registerDecoder(TYPE.POLY, function(v, state) {
 
 // ----- Layers Codec -----
 
+function encodeLayerPolys(polys, state) {
+    return polys.map(poly => {
+        return {
+            open: poly.open,
+            color: poly.color,
+            points: codec.encodePointArray(poly.points, state.zeros)
+        }
+    });
+}
+
 kiri.Layers.prototype.encode = function(state) {
     let zeros = state.zeros;
     let enc = {
@@ -377,7 +387,7 @@ kiri.Layers.prototype.encode = function(state) {
                 off: layer.off,
                 color: layer.color,
                 // 1D lines and polylines
-                polys: encode(layer.polys, state),
+                polys: encodeLayerPolys(layer.polys, state),
                 lines: encodePointArray(layer.lines, state),
                 // 2D lines and flat areas
                 faces: codec.allocFloat32Array(layer.faces, zeros),
@@ -409,8 +419,8 @@ registerDecoder(TYPE.LAYERS, function(v, state) {
         const d = render.layers[layers[i]] = {
             off: data.off,
             color: data.color,
-            polys: decode(data.polys, state),
-            lines: decodePointArray(data.lines),
+            polys: data.polys,
+            lines: data.lines,
             faces: codec.allocFloat32Array(data.faces),
             norms: codec.allocFloat32Array(data.norms),
             cface: data.cface,
