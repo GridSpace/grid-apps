@@ -56,7 +56,7 @@ class Layers {
             faces: [], // triangles for areas and flats
             norms: undefined, // flats vertex normals
             cface: undefined, // flats face color indices
-            paths: [], // 3d extrusion / tube paths (used to be an array, now merged - FIX)
+            paths: undefined, // 3d extrusion / tube paths (used to be an array, now merged - FIX)
             cpath: undefined, // path colors indices
             color: colors || {
                 check: 0,
@@ -216,7 +216,7 @@ class Layers {
             const z = opts.z || poly.getZ();
             const { faces, normals } = poly.toPath3D(offset, height, 0);
             const cur = this.current;
-            const one = cur.paths[0];
+            const one = cur.paths;
             if (one) {
                 // merge all contour geometry for massive speed gain
                 // todo: recode to concat all geometries at once, and not incrementally
@@ -242,7 +242,7 @@ class Layers {
                     one.norms.appendAll(normals);
                 }
             } else {
-                cur.paths.push({ index: [], faces, z, norms: normals });
+                cur.paths = { faces, z, norms: normals };
                 if (opts.color) {
                     cur.cpath = [ Object.assign({ start: 0, count: Infinity }, opts.color) ];
                 }

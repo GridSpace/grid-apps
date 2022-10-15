@@ -331,6 +331,7 @@ kiri.Layers.prototype.encode = function(state) {
         type: TYPE.LAYERS,
         layers: Object.keys(this.layers),
         data: Object.values(this.layers).map(layer => {
+            const paths = layer.paths;
             return {
                 // defaults
                 off: layer.off,
@@ -343,14 +344,12 @@ kiri.Layers.prototype.encode = function(state) {
                 norms: codec.allocFloat32Array(layer.norms, zeros),
                 cface: layer.cface || codec.undef,
                 // 3D lines
-                paths: layer.paths.map(lp => {
-                    return {
-                        z: lp.z,
-                        index: lp.index,
-                        faces: codec.allocFloat32Array(lp.faces, zeros),
-                        norms: codec.allocFloat32Array(lp.norms, zeros)
-                    }
-                }),
+                paths: paths ? {
+                    z: paths.z,
+                    index: paths.index,
+                    faces: codec.allocFloat32Array(paths.faces, zeros),
+                    norms: codec.allocFloat32Array(paths.norms, zeros)
+                } : undefined,
                 cpath: layer.cpath || codec.undef
             }
         })
@@ -366,6 +365,7 @@ registerDecoder(TYPE.LAYERS, function(v, state) {
 
     for (let i=0; i<layers.length; i++) {
         const data = v.data[i];
+        const paths = data.paths;
         const d = render.layers[layers[i]] = {
             off: data.off,
             color: data.color,
@@ -374,14 +374,12 @@ registerDecoder(TYPE.LAYERS, function(v, state) {
             faces: codec.allocFloat32Array(data.faces),
             norms: codec.allocFloat32Array(data.norms),
             cface: data.cface,
-            paths: data.paths.map(lp => {
-                return {
-                    z: lp.z,
-                    index: lp.index,
-                    faces: codec.allocFloat32Array(lp.faces),
-                    norms: codec.allocFloat32Array(lp.norms)
-                };
-            }),
+            paths: paths ? {
+                z: paths.z,
+                index: paths.index,
+                faces: codec.allocFloat32Array(paths.faces),
+                norms: codec.allocFloat32Array(paths.norms)
+            } : undefined,
             cpath: data.cpath
         };
         // fixup null -> Infinity in material counts (JSON stringify sucks)

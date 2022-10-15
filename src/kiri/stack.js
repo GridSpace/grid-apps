@@ -186,7 +186,7 @@ class Stack {
             group.add(mesh);
             mats.appendAll(mat);
         }
-        if (paths.length) {
+        if (paths) {
             const mat = [];
             if (cpath) {
                 cpath.forEach(c => { mat.push(newMat(c)) });
@@ -195,31 +195,29 @@ class Stack {
             }
             mat.forEach(m => m.visible = defstate);
             // const mat = newMat(data);
-            paths.forEach((path, i) => {
-                const { index, faces, norms, z, colors } = path;
-                const geo = new THREE.BufferGeometry();
-                geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
-                if (index.length) {
-                    geo.setIndex(index);
-                }
-                if (norms) {
-                    geo.setAttribute('normal', new THREE.BufferAttribute(norms, 3));
-                    // geo.normalizeNormals();
-                } else {
-                    geo.computeVertexNormals();
-                }
-                if (cpath) {
-                    cpath.forEach((c, i) => geo.addGroup(c.start, c.count, i));
-                } else {
-                    geo.addGroup(0, Infinity, 0);
-                }
-                const mesh = new THREE.Mesh(geo, mat);
-                mesh.position.z = z;
-                // mesh.castShadow = true;
-                // mesh.receiveShadow = true;
-                meshes.push(mesh);
-                group.add(mesh);
-            });
+            const { index, faces, norms, z, colors } = paths;
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
+            if (index && index.length) {
+                geo.setIndex(index);
+            }
+            if (norms) {
+                geo.setAttribute('normal', new THREE.BufferAttribute(norms, 3));
+                // geo.normalizeNormals();
+            } else {
+                geo.computeVertexNormals();
+            }
+            if (cpath) {
+                cpath.forEach((c, i) => geo.addGroup(c.start, c.count, i));
+            } else {
+                geo.addGroup(0, Infinity, 0);
+            }
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.z = z;
+            // mesh.castShadow = true;
+            // mesh.receiveShadow = true;
+            meshes.push(mesh);
+            group.add(mesh);
             mats.appendAll(mat);
         }
 
