@@ -13,7 +13,6 @@ gapp.register("kiri.codec", [], (root, exports) => {
 const { base, kiri } = root;
 const handlers = {};
 const freeMem = true;
-const zeroOut = true;
 
 const codec = exports({
     undef: undefined,
@@ -76,7 +75,7 @@ function allocFloat32Array(arg, zeros) {
         // usually a number (size) for array
         f32 = new Float32Array(arg);
     }
-    if (zeroOut && zeros && f32.byteLength > 0) {
+    if (zeros && f32.byteLength > 0) {
         zeros.push(f32.buffer);
     }
     return f32;

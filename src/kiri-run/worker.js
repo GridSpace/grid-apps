@@ -641,23 +641,18 @@ kiri.worker = {
     }
 };
 
-dispatch.send = (msg) => {
-    // console.log('worker send', msg);
-    self.postMessage(msg);
+dispatch.send = (msg, direct) => {
+    self.postMessage(msg, direct);
 };
 
 dispatch.onmessage = self.onmessage = function(e) {
-    // console.log('worker recv', e);
     let time_recv = time(),
         msg = e.data || {},
         run = dispatch[msg.task],
         send = {
             data : function(data,direct) {
                 // if (direct && direct.length) {
-                //     console.log({
-                //         zeros: direct.length,
-                //         sz:direct.map(z => z.byteLength)
-                //     });
+                //     console.log( direct.map(z => z.byteLength).reduce((a,v) => a+v) );
                 // }
                 dispatch.send({
                     seq: msg.seq,
@@ -665,14 +660,11 @@ dispatch.onmessage = self.onmessage = function(e) {
                     done: false,
                     data: data
                 }, direct);
+                // if (direct && direct.length) {
+                //     console.log( direct.map(z => z.byteLength).reduce((a,v) => a+v) );
+                // }
             },
             done : function(data,direct) {
-                // if (direct && direct.length) {
-                //     console.log({
-                //         zeros: direct.length,
-                //         sz:direct.map(z => z.byteLength).reduce((a,v) => a+v)
-                //     });
-                // }
                 dispatch.send({
                     seq: msg.seq,
                     task: msg.task,
@@ -699,7 +691,6 @@ dispatch.onmessage = self.onmessage = function(e) {
                 data: output
             });
         } catch (wrkerr) {
-            // console.log(wrkerr);
             console.trace(wrkerr.stack);
             send.done({error: wrkerr.toString()});
         }
