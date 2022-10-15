@@ -473,10 +473,7 @@ kiri.worker = {
 
         const layers = driver.prepare(widgets, settings, (progress, message, layer) => {
             const state = { zeros: [] };
-            const emit = { progress, message };
-            if (layer) {
-                emit.layer = codec.encode(layer, state);
-            }
+            const emit = { progress, message, layer: (layer ? layer.encode(state) : undefined) };
             send.data(emit, state.zeros);
         });
 
@@ -484,16 +481,9 @@ kiri.worker = {
         const print = current.print || {};
         const minSpeed = (print.minSpeed || 0) * unitScale;
         const maxSpeed = (print.maxSpeed || 0) * unitScale;
-        const state = { zeros: [] };
 
         send.data({ progress: 1, message: "transfer" });
-
-        send.done({
-            done: true,
-            // output: codec.encode(layers, state),
-            minSpeed,
-            maxSpeed
-        }, state.zeros);
+        send.done({ done: true, minSpeed, maxSpeed });
     },
 
     export(data, send) {
