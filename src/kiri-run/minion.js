@@ -91,20 +91,29 @@ const funcs = {
     },
 
     clip: (data, seq) => {
-        let clip = new clib.Clipper();
-        let ctre = new clib.PolyTree();
-        let clips = [];
+        const clip = new clib.Clipper();
+        const ctre = new clib.PolyTree();
+        const clips = [];
+        const M = base.config.clipper;
 
-        clip.AddPaths(data.lines, ptyp.ptSubject, false);
-        clip.AddPaths(data.polys, ptyp.ptClip, true);
+        let lines = data.lines.map(array => {
+            return codec.decodePointArray2D(array, data.z, (X, Y) => { return {X: X*M, Y: Y*M} })
+        });
+        let polys = data.polys.map(array => {
+            return codec.decodePointArray2D(array, data.z, (X, Y) => { return {X: X*M, Y: Y*M} })
+        });
 
+        clip.AddPaths(lines, ptyp.ptSubject, false);
+        clip.AddPaths(polys, ptyp.ptClip, true);
+
+        const state = { zeros: [] };
         if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
             for (let node of ctre.m_AllPolys) {
-                clips.push(codec.encode(POLY.fromClipperNode(node, data.z)));
+                clips.push(codec.encode(POLY.fromClipperNode(node, data.z), state.zeros));
             }
         }
 
-        reply({ seq, clips });
+        reply({ seq, clips }, state.zeros);
     },
 
     sliceZ: (data, seq) => {

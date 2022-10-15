@@ -113,7 +113,7 @@ kiri.minions = {
                 minwork.queue({
                     cmd: "union",
                     minarea,
-                    polys: codec.encode(polys.slice(i, i + polyper))
+                    polys: codec.encode(polys.slice(i, i + polyper), state)
                 }, receiver, state.zeros);
             }
         });
@@ -149,10 +149,12 @@ kiri.minions = {
             if (concurrent < 2) {
                 reject("concurrent clip unavailable");
             }
+            const state = { zeros: [] };
+
             minwork.queue({
                 cmd: "clip",
-                polys: POLY.toClipper(polys),
-                lines: lines.map(a => a.map(p => p.toClipper())),
+                polys: codec.encode(polys.map(poly => codec.encodePointArray2D(poly.points, state)), state),
+                lines: codec.encode(lines.map(array => codec.encodePointArray2D(array, state)), state),
                 z: slice.z
             }, data => {
                 let polys = codec.decode(data.clips);
@@ -164,7 +166,7 @@ kiri.minions = {
                     }
                 }
                 resolve(polys);
-            });
+            }, state.zeros);
         });
     },
 

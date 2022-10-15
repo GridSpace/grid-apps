@@ -22,6 +22,8 @@ const codec = exports({
     allocFloat32Array: allocFloat32Array,
     encodePointArray,
     decodePointArray,
+    encodePointArray2D,
+    decodePointArray2D,
     toCodable
 });
 
@@ -173,6 +175,29 @@ function encodePointArray(points, state, z) {
     return array;
 }
 
+function encodePointArray2D(points, state) {
+    if (!points) {
+        return null;
+    }
+
+    const length = points.length;
+
+    if (length === 0) {
+        return points;
+    }
+
+    const array = codec.allocFloat32Array(length * 2, state.zeros);
+
+    for (let i=0, pos=0, point; i<length; i++) {
+        point = points[i];
+        array[pos++] = point.x;
+        array[pos++] = point.y;
+    }
+
+    return array;
+}
+
+
 function decodePointArray(array) {
     if (!array) return null;
 
@@ -181,6 +206,21 @@ function decodePointArray(array) {
 
     for (let vid=0, pid=0; vid < length; ) {
         points[pid++] = base.newPoint(array[vid++], array[vid++], array[vid++]);
+    }
+
+    return points;
+}
+
+function decodePointArray2D(array, z, fn) {
+    if (!array) return null;
+
+    const length = array.length;
+    const points = new Array(length / 2);
+
+    for (let vid=0, pid=0; vid < length; ) {
+        points[pid++] = fn ?
+            fn(array[vid++], array[vid++]) :
+            base.newPoint(array[vid++], array[vid++], z);
     }
 
     return points;
