@@ -100,8 +100,9 @@ kiri.minions = {
             let polyper = Math.ceil(polys.length / concurrent);
             let running = 0;
             let union = [];
+            let state = { zeros: [] };
             let receiver = function(data) {
-                let polys = codec.decode(data.union);
+                let polys = codec.decode(data.union, state);
                 union.appendAll(polys);
                 if (--running === 0) {
                     resolve(POLY.union(union, minarea, true));
@@ -113,7 +114,7 @@ kiri.minions = {
                     cmd: "union",
                     minarea,
                     polys: codec.encode(polys.slice(i, i + polyper))
-                }, receiver);
+                }, receiver, state.zeros);
             }
         });
     },
@@ -124,9 +125,10 @@ kiri.minions = {
                 resolve(POLY.fillArea(polys, angle, spacing, [], minLen, maxLen));
                 return;
             }
+            const state = { zeros: [] };
             minwork.queue({
                 cmd: "fill",
-                polys: codec.encode(polys),
+                polys: codec.encode(polys, state),
                 angle, spacing, minLen, maxLen
             }, data => {
                 let arr = data.fill;
@@ -138,7 +140,7 @@ kiri.minions = {
                 }
                 output.appendAll(fill);
                 resolve(fill);
-            });
+            }, state.zeros);
         });
     },
 

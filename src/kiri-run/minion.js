@@ -61,16 +61,18 @@ const funcs = {
             reply({ seq, union: codec.encode([]) });
             return;
         }
+        let state = { zeros: [] };
         let polys = codec.decode(data.polys);
         let union = POLY.union(polys, data.minarea || 0, true);
-        reply({ seq, union: codec.encode(union) });
+        reply({ seq, union: codec.encode(union) }, state.zeros);
     },
 
     topShells: (data, seq) => {
         let top = codec.decode(data.top, {full: true});
         let {z, count, offset1, offsetN, fillOffset, opt} = data;
         kiri.driver.FDM.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
-        reply({ seq, top: codec.encode(top, {full: true}) });
+        let state = { zeros: [] };
+        reply({ seq, top: codec.encode(top, {full: true}) }, state.zeros);
     },
 
     fill: (data, seq) => {
@@ -111,6 +113,7 @@ const funcs = {
         while (i < points.length) {
             realp[p++] = base.newPoint(points[i++], points[i++], points[i++]).round(3);
         }
+        let state = { zero: [] };
         let output = [];
         base.sliceZ(z, realp, {
             ...options,
@@ -120,7 +123,7 @@ const funcs = {
                 // lines do not pass codec properly (for now)
                 delete rec.lines;
             }
-            reply({ seq, output: codec.encode(output) });
+            reply({ seq, output: codec.encode(output) }, state.zeros);
         });
     },
 
