@@ -217,6 +217,10 @@ class Layers {
             const { faces, normals } = poly.toPath3D(offset, height, 0);
             const cur = this.current;
             const one = cur.paths;
+            // happens with very short lines being omitted
+            if (!(faces && normals)) {
+                continue;
+            }
             if (one) {
                 // merge all contour geometry for massive speed gain
                 // todo: recode to concat all geometries at once, and not incrementally
