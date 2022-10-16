@@ -153,7 +153,7 @@ kiri.minions = {
 
             minwork.queue({
                 cmd: "clip",
-                polys: codec.encode(polys.map(poly => codec.encodePointArray2D(poly.points, state)), state),
+                polys: codec.encode(POLY.flatten(polys).map(poly => codec.encodePointArray2D(poly.points, state)), state),
                 lines: codec.encode(lines.map(array => codec.encodePointArray2D(array, state)), state),
                 z: slice.z
             }, data => {
