@@ -222,8 +222,7 @@ class Layers {
                 continue;
             }
             if (one) {
-                // merge all contour geometry for massive speed gain
-                // todo: recode to concat all geometries at once, and not incrementally
+                // for some reason, incremental merge is faster than all at the end
                 const add = one.faces.length / 3;
                 const feces = new Float32Array(one.faces.length + faces.length);
                 const indln = one.faces.length / 3;

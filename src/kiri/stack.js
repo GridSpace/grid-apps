@@ -192,7 +192,7 @@ class Stack {
             }
             mat.forEach(m => m.visible = defstate);
             // const mat = newMat(data);
-            const { index, faces, norms, z, colors } = paths;
+            const { index, faces, norms, z } = paths;
             const geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.BufferAttribute(faces, 3));
             if (index && index.length) {
