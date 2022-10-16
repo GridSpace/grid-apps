@@ -9,6 +9,7 @@ let opts = {
     controller: "src/cli/kiri-controller.json",
     process: "src/cli/kiri-fdm-process.json",
     device: "src/cli/kiri-fdm-device.json",
+    tools: "src/cli/kiri-cam-tools.json"
 };
 for (let i=0; i<args.length; i++) {
     let arg = args[i].split('=');
@@ -37,6 +38,7 @@ if (opts.help) {
         "   --verbose           | enable verbose logging",
         "   --dir=[dir]         | root directory for file paths (default: '.')",
         "   --model=[file]      | model file to load (or last parameter)",
+        "   --tools=[file]      | tools array for CAM mode",
         "   --source=[file]     | source file list (defaults to kiri engine)",
         "   --device=[file]     | device definition file (json)",
         "   --process=[file]    | process definition file (json)",
@@ -128,6 +130,7 @@ function btoa(b) {
 
 async function run() {
     let files = await fetch(opts.source, { format: "eval" } );
+    let tools = await fetch(opts.tools, { format: "eval" } );
     let device = await fetch(opts.device, { format: "eval" } );
     let process = await fetch(opts.process, { format: "eval" } );
 
@@ -202,8 +205,10 @@ async function run() {
                 engine.rotate(x,y,z);
             }
         })
-        .then(() => engine.setProcess(process))
         .then(() => engine.setDevice(device))
+        .then(() => engine.setProcess(process))
+        .then(() => { if (device.mode === 'CAM') engine.setTools(tools) })
+        .then(() => engine.setMode(device.mode))
         .then(eng => eng.slice())
         .then(eng => eng.prepare())
         .then(eng => engine.export())

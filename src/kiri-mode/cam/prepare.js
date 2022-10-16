@@ -42,6 +42,8 @@ CAM.prepare = async function(widgets, settings, update) {
     });
 
     const output = print.output.filter(level => Array.isArray(level));
+
+    if (render) // allows it to run from CLI
     return render.path(output, (progress, layer) => {
         update(0.75 + progress * 0.25, "render", layer);
     }, {

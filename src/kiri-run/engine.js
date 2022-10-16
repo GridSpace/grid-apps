@@ -162,8 +162,10 @@ class Engine {
         return new Promise((accept, reject) => {
             let output = [];
             kiri.client.export(this.settings, segment => {
-                this.listener({export:{segment}});
-                output.push(segment);
+                if (typeof segment === 'string') {
+                    this.listener({export:{segment}});
+                    output.push(segment);
+                }
             }, done => {
                 this.listener({export:{done}});
                 accept(output.join('\r\n'));

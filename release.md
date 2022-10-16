@@ -5,6 +5,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
+* update CLI to work in CAM mode and add working samples
 * improved FDM preview rendering speed and reduced memory usage
 * threaded task and message passing performance improvements
 * refactor FDM supports and synthetic widgets to use more common code
