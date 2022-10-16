@@ -172,7 +172,7 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
  * @param {Object} print state object
  * @param {Function} update incremental callback
  */
-function prepare(widgets, settings, update) {
+async function prepare(widgets, settings, update) {
     let device = settings.device,
         process = settings.process,
         print = self.worker.print = kiri.newPrint(settings, widgets),

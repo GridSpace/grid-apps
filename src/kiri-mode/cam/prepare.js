@@ -26,7 +26,7 @@ const POLY = polygons;
  * @param {Number} [index] into widget array
  * @param {Object} [firstPoint] starting point
  */
-CAM.prepare = function(widgets, settings, update) {
+CAM.prepare = async function(widgets, settings, update) {
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
     const count = widgets.length;

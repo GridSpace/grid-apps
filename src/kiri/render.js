@@ -42,7 +42,7 @@ function rate_to_color(rate, max) {
     }
 };
 
-function path(levels, update, opts = {}) {
+async function path(levels, update, opts = {}) {
     levels = levels.filter(level => level.length);
     if (levels.length === 0) {
         self.worker.print.maxSpeed = 0;

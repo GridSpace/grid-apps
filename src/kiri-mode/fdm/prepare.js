@@ -30,7 +30,7 @@ const POLY = polygons;
  * @param {Function} update progress callback
  * @returns {Object[]} returns array of render objects
  */
-FDM.prepare = function(widgets, settings, update) {
+FDM.prepare = async function(widgets, settings, update) {
     // filter ignored widgets
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
@@ -768,7 +768,7 @@ FDM.prepare = function(widgets, settings, update) {
 
     // render if not explicitly disabled
     if (settings.render !== false) {
-        return render.path(output, (progress, layer) => {
+        await render.path(output, (progress, layer) => {
             update(0.5 + progress * 0.5, "render", layer);
         }, {
             lineWidth: settings.process.sliceLineWidth,

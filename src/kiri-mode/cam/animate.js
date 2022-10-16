@@ -304,7 +304,7 @@ kiri.load(() => {
         center = Object.assign({}, stock.center);
         center.z -= stock.z / 2;
 
-        send.data({ mesh_add: { id: 0, ind, offset, sab } }, [ sab ]);
+        send.data({ mesh_add: { id: 0, ind, offset, sab } }, [ ]); // sab not transferrable
         send.data({ mesh_move: { id: 0, pos: center } });
         send.done();
     };

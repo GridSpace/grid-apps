@@ -475,19 +475,19 @@ kiri.worker = {
             return console.log({invalid_print_driver: mode, driver});
         }
 
-        const layers = driver.prepare(widgets, settings, (progress, message, layer) => {
+        driver.prepare(widgets, settings, (progress, message, layer) => {
             const state = { zeros: [] };
             const emit = { progress, message, layer: (layer ? layer.encode(state) : undefined) };
             send.data(emit, state.zeros);
+        }).then(() => {
+            const unitScale = settings.controller.units === 'in' ? (1 / 25.4) : 1;
+            const print = current.print || {};
+            const minSpeed = (print.minSpeed || 0) * unitScale;
+            const maxSpeed = (print.maxSpeed || 0) * unitScale;
+
+            send.data({ progress: 1, message: "transfer" });
+            send.done({ done: true, minSpeed, maxSpeed });
         });
-
-        const unitScale = settings.controller.units === 'in' ? (1 / 25.4) : 1;
-        const print = current.print || {};
-        const minSpeed = (print.minSpeed || 0) * unitScale;
-        const maxSpeed = (print.maxSpeed || 0) * unitScale;
-
-        send.data({ progress: 1, message: "transfer" });
-        send.done({ done: true, minSpeed, maxSpeed });
     },
 
     export(data, send) {
@@ -550,10 +550,12 @@ kiri.worker = {
         }, done => {
             const minSpeed = print.minSpeed;
             const maxSpeed = print.maxSpeed;
-            const layers = kiri.render.path(done.output, progress => {
+            kiri.render.path(done.output, progress => {
                 send.data({ progress: 0.25 + progress * 0.75 });
-            }, { thin: thin || print.belt, flat, tools });
-            send.done({parsed: codec.encode(layers), maxSpeed, minSpeed});
+            }, { thin: thin || print.belt, flat, tools })
+            .then(layers => {
+                send.done({parsed: codec.encode(layers), maxSpeed, minSpeed});
+            });
         }, {
             fdm: mode === 'FDM',
             belt: device.bedBelt
@@ -568,10 +570,12 @@ kiri.worker = {
             });
         });
         const print = current.print = kiri.newPrint(null, Object.values(wcache));
-        const layers = kiri.render.path(parsed, progress => {
+        kiri.render.path(parsed, progress => {
             send.data({ progress });
-        }, { thin:  true });
-        send.done({parsed: codec.encode(layers)});
+        }, { thin:  true })
+        .then(layers => {
+            send.done({parsed: codec.encode(layers)});
+        });
     },
 
     config(data, send) {

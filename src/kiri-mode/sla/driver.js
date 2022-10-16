@@ -19,7 +19,7 @@ if (SLA.legacy) {
 
 // runs in worker. would usually be in src/mode/sla/prepare.js
 // but the SLA driver skips the prepare step because there is no path routing
-function prepare(widgets, settings, update) {
+async function prepare(widgets, settings, update) {
     root.worker.print = kiri.newPrint(settings, widgets);
     if (!SLA.wasm) {
         fetch('/wasm/kiri-sla.wasm')
