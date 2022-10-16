@@ -198,11 +198,14 @@ function path(levels, update, opts = {}) {
             }
             lastOut = out;
         });
+
+        lastEnd = lastOut;
+
         // all moves with an emit at the very end (common in contouring)
         if (lastOut.emit && !emits) {
             pushPrint(lastOut.tool, current)
         }
-        lastEnd = lastOut;
+
         if (changes.length) {
             output
                 .setLayer('tool', { line: 0x000055, face: 0x0000ff, opacity: 0.5 }, true)
@@ -210,6 +213,7 @@ function path(levels, update, opts = {}) {
                     return newPolygon().centerCircle(point, 0.2, 4).setZ(point.z + 0.03);
                 }), { outline: true });
         }
+
         if (retracts.length) {
             output
                 .setLayer('retract', { line: 0x550000, face: 0xff0000, opacity: 0.5 }, true)
@@ -217,6 +221,7 @@ function path(levels, update, opts = {}) {
                     return newPolygon().centerCircle(point, 0.2, 5).setZ(point.z + 0.01);
                 }), { outline: true });
         }
+
         if (engages.length) {
             output
                 .setLayer('engage', { line: 0x005500, face: 0x00ff00, opacity: 0.5 }, true)
@@ -224,6 +229,7 @@ function path(levels, update, opts = {}) {
                     return newPolygon().centerCircle(point, 0.2, 7).setZ(point.z + 0.02);
                 }), { outline: true });
         }
+
         if (thin && heads.length) {
             let line = dark ? 0xffffff : 0x112233;
             output
@@ -238,30 +244,33 @@ function path(levels, update, opts = {}) {
                     return newPolygon().addPoints([p2,p3,p4]).setZ(p2.z + 0.01);
                 }), { thin: true, outline: true });
         }
+
+        // always add moves
         output
             .setLayer(opts.other || 'move', moveOpt, opts.moves !== true)
             .addPolys(moves, { thin: true, z: opts.z });
+
         // force level when present
         let pz = level.z ? level.z - height : opts.z;
-        Object.values(prints).forEach(array => {
-            array.forEach(poly => {
+        for (let array of Object.values(prints)) {
+            for (let poly of array) {
                 if (flat && poly.appearsClosed()) {
                     poly.setClosed();
                     poly.points.pop();
                 }
                 output
-                .setLayer(opts.action || 'print', printOpt)
-                .addPolys([ poly ],
-                    thin ? { thin, z: opts.z, color: poly.color } :
-                    flat ? {
-                        flat, z: pz, color: poly.color,
-                        outline: true, offset: array.width, open: poly.open  } :
-                    {
-                        offset: array.width, height, z: pz,
-                        color: { face: poly.color, line: poly.color }
-                    })
-            });
-        });
+                    .setLayer(opts.action || 'print', printOpt)
+                    .addPolys([ poly ],
+                        thin ? { thin, z: opts.z, color: poly.color } :
+                        flat ? {
+                            flat, z: pz, color: poly.color,
+                            outline: true, offset: array.width, open: poly.open  } :
+                        {
+                            offset: array.width, height, z: pz,
+                            color: { face: poly.color, line: poly.color }
+                        })
+            }
+        }
 
         update(index / levels.length, output);
     });

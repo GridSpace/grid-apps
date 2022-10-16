@@ -329,6 +329,7 @@ function pointsToPath(points, offset, open, miter = 1.5) {
         normals.push(-rn.dx, -rn.dy, zn);
         normals.push(ln.dx, ln.dy, zn);
     }
+
     return { left, right, faces, normals, open };
 }
 
