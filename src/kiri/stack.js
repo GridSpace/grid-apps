@@ -89,13 +89,17 @@ class Stack {
     renderLayer(layer, group) {
         function addPoly(vertices, poly) {
             const points = poly.points, len = points.length;
-            for (let i=3; i<len; i += 3) {
-                vertices.push(new THREE.Vector3(points[i-3], points[i-2], points[i-1]));
-                vertices.push(new THREE.Vector3(points[i+0], points[i+1], points[i+2]));
+            for (let i=1; i<len; i++) {
+                const p1 = points[i-1];
+                const p2 = points[i];
+                vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
+                vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
             }
             if (!poly.open) {
-                vertices.push(new THREE.Vector3(points[len-3], points[len-2], points[len-1]));
-                vertices.push(new THREE.Vector3(points[0], points[1], points[2]));
+                const p1 = points[points.length-1];
+                const p2 = points[0];
+                vertices.push(new THREE.Vector3(p1.x, p1.y, p1.z));
+                vertices.push(new THREE.Vector3(p2.x, p2.y, p2.z));
             }
         }
 
