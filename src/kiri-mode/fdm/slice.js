@@ -404,7 +404,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         // for synth support widgets, clip/offset to other widgets in group
         if (isSynth) {
             for (let slice of slices) {
-                let gap = sliceHeight * (isBelt ? 0 : process.sliceSupportGap);
+                let gap = sliceHeight * process.sliceSupportGap;
                 // clip tops to other widgets in group
                 let tops = slice.topPolys();
                 for (let peer of widget.group) {

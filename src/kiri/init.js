@@ -1857,7 +1857,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportSize:    uc.newInput(LANG.sp_size_s, {title:LANG.sp_size_l, bound:uc.bound(1.0,200.0), convert:uc.toFloat, modes:FDM}),
             sliceSupportOffset:  uc.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM}),
-            sliceSupportGap:     uc.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:uc.bound(0,5), convert:uc.toInt, modes:FDM, show:isNotBelt}),
+            sliceSupportGap:     uc.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:uc.bound(0,5), convert:uc.toInt, modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
             sliceSupportArea:    uc.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM}),
             sliceSupportExtra:   uc.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM}),
