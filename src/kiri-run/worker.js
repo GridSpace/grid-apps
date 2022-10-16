@@ -100,15 +100,15 @@ kiri.minions = {
             let polyper = Math.ceil(polys.length / concurrent);
             let running = 0;
             let union = [];
-            let state = { zeros: [] };
             let receiver = function(data) {
-                let polys = codec.decode(data.union, state);
+                let polys = codec.decode(data.union);
                 union.appendAll(polys);
                 if (--running === 0) {
                     resolve(POLY.union(union, minarea, true));
                 }
             };
             for (let i=0; i<polys.length; i += polyper) {
+                let state = { zeros: [] };
                 running++;
                 minwork.queue({
                     cmd: "union",
