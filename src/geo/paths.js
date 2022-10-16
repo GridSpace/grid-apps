@@ -196,7 +196,6 @@ function pointsToPath(points, offset, open, miter = 1.5) {
     const left = [];
     const right = [];
     const faces = [];
-    // const normals = new FloatPacker(points.length * 10, 1.25);
     const normals = [];
     const zn = -1;
     // calculate vertex normals from segments normals
@@ -331,7 +330,6 @@ function pointsToPath(points, offset, open, miter = 1.5) {
         normals.push(ln.dx, ln.dy, zn);
     }
 
-    // return { left, right, faces, normals: normals.finalize(), open };
     return { left, right, faces, normals, open };
 }
 
@@ -537,15 +535,16 @@ class FloatPacker {
     push() {
         const array = this.array;
         const size = this.size;
-        for (let i=0, l=arguments.length; i<l; i++) {
+        const args = arguments.length;
+        if (this.pos + args >= size) {
+            let nusize = ((size * this.factor) | 0) + args;
+            let nuarray = new Float32Array(nusize);
+            nuarray.set(array);
+            this.array = nuarray;
+            this.size = nusize;
+        }
+        for (let i=0; i<args; i++) {
             array[this.pos++] = arguments[i];
-            if (this.pos >= size) {
-                let nusize = ((size * this.factor) | 0) + 1;
-                let nuarray = new Float32Array(nusize);
-                nuarray.set(array);
-                this.array = nuarray;
-                this.size = nusize;
-            }
         }
     }
 

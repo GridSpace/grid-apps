@@ -156,16 +156,16 @@ class Layers {
         if (!polys.length) {
             return;
         }
-        const cur = this.current;
-        const z = polys[0].getZ(), faces = cur.faces;
-        const off_opt = { z, flat: true };
+        const cur = this.current, faces = cur.faces;
+        const norms = [];
         for (let poly of polys) {
             const faceidx = faces.length / 3;
             const path = poly.toPath2D(offset * 0.95);
             const { left, right, normals } = path;
             for (let p of path.faces) {
-                faces.push(p.x, p.y, poly.z || p.z);
+                faces.push(p.x, p.y, p.z);
             }
+            norms.push(normals);
             if (opts.outline) {
                 let p1 = newPolygon().addPoints(left).setOpenValue(poly.open);
                 let p2 = newPolygon().addPoints(right).setOpenValue(poly.open);
@@ -175,11 +175,6 @@ class Layers {
                 }
                 this.addPolys(p1);
                 this.addPolys(p2);
-            }
-            if (cur.norms) {
-                cur.norms.appendAll(normals);
-            } else {
-                cur.norms = normals;
             }
             const color = opts.color ?
                 (typeof(opts.color) === 'number' ? { line: opts.color, face: opts.color } : opts.color) :
@@ -194,6 +189,11 @@ class Layers {
                     cur.cface.push(Object.assign({ start: faceidx, count: Infinity }, color));
                 }
             }
+        }
+        if (cur.norms) {
+            cur.norms.appendAll(norms.flat());
+        } else {
+            cur.norms = norms.flat();
         }
         return this;
     }
