@@ -389,6 +389,7 @@ let deferTimeout;
 function platformAdd(widget, shift, nolayout, defer) {
     api.widgets.add(widget);
     space.world.add(widget.mesh);
+    widget.anno = widget.anno || {};
     widget.anno.extruder = widget.anno.extruder || 0;
     if (defer) {
         deferred.push({widget, shift, nolayout});
