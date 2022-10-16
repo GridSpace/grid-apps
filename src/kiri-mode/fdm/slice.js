@@ -909,7 +909,7 @@ function doRender(slice, isSynth, params, devel) {
     slice.tops.forEach(top => {
         if (isThin) output
             .setLayer('part', { line: 0x333333, check: 0x333333 })
-            .addPolys(top.poly);
+            .addPolys([top.poly]);
 
         output
             .setLayer(isSynth ? "support" : "shells", isSynth ? COLOR.support : COLOR.shell)
@@ -917,7 +917,7 @@ function doRender(slice, isSynth, params, devel) {
 
         output
             .setLayer("solid fill", isSynth ? COLOR.support : COLOR.fill)
-            .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height }));
+            .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height, z:slice.z }));
 
         if (!(slice.belt && slice.belt.anchor)) output
             .setLayer("sparse fill", COLOR.infill)
