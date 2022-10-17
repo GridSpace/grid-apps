@@ -694,7 +694,7 @@ const conf = exports({
             view: null,
             dark: false,
             shiny: false,
-            decals: true,
+            decals: false,
             danger: false,
             zoomSpeed: 1.0,
             lineType: "path",
