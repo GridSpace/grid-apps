@@ -81,11 +81,6 @@ CAM.init = function(kiri, api) {
         UI.func.animate.style.display = isCamMode ? '' : 'none';
         if (!isCamMode) {
             func.clearPops();
-            UI.label.slice.innerText = LANG.slice;
-            UI.label.preview.innerText = LANG.preview;
-            UI.label.export.innerText = LANG.export;
-        } else {
-            UI.label.slice.innerText = LANG.start;
         }
         $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         // do not persist traces across page reloads
