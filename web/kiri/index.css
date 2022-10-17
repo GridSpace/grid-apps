@@ -457,6 +457,10 @@ th, tr, td, label {
     text-transform: capitalize;
 }
 
+#mid-lcol label, #mid-lcol svg {
+    pointer-events: none;
+}
+
 #acct-pop {
     text-transform: capitalize;
 }
