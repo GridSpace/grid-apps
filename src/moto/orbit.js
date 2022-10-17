@@ -234,18 +234,14 @@ moto.Orbit = function (object, domElement, notify, slider) {
         return pos;
     };
 
-    this.dollyIn = function (dollyScale) {
-        if (dollyScale === undefined) {
-            dollyScale = getZoomScale();
-        }
-        scale *= dollyScale;
+    this.dollyIn = function (factor = 1) {
+        let dollyScale = getZoomScale(factor);
+        scale = scale * dollyScale;
     };
 
-    this.dollyOut = function (dollyScale) {
-        if (dollyScale === undefined) {
-            dollyScale = getZoomScale();
-        }
-        scale /= dollyScale;
+    this.dollyOut = function (factor = 1) {
+        let dollyScale = getZoomScale(factor);
+        scale = scale / dollyScale;
     };
 
     this.update = function () {
@@ -338,8 +334,8 @@ moto.Orbit = function (object, domElement, notify, slider) {
         return theta
     };
 
-    function getZoomScale() {
-        return Math.pow(0.95, scope.zoomSpeed);
+    function getZoomScale(factor = 1) {
+        return Math.pow(0.95, factor * scope.zoomSpeed);
     }
 
     function onMouseDown(event) {
@@ -561,6 +557,7 @@ moto.Orbit = function (object, domElement, notify, slider) {
             case 2: // two-fingered touch: dolly
                 if (scope.noZoom === true) return;
                 if (state !== STATE.TOUCH_DOLLY) return;
+
                 let dx = event.touches[ 0 ].pageX - event.touches[ 1 ].pageX;
                 let dy = event.touches[ 0 ].pageY - event.touches[ 1 ].pageY;
                 let distance = Math.sqrt(dx * dx + dy * dy);
@@ -574,15 +571,15 @@ moto.Orbit = function (object, domElement, notify, slider) {
                 dollyEnd.set(0, distance);
                 dollyDelta.subVectors(dollyEnd, dollyStart);
 
-                if (touchSlide || (Math.abs(ddy/ddx) > 10 && slider)) {
+                if (touchSlide || (Math.abs(dy/dx) < 1 && slider)) {
                     touchSlide = true;
-                    slider(lastDY ? lastDY - ddy : ddy);
+                    slider(lastDY ? (lastDY - ddy) : ddy);
                     lastDY = ddy;
                 } else {
                     if (dollyDelta.y > 0) {
-                        scope.dollyOut();
-                    } else {
-                        scope.dollyIn();
+                        scope.dollyOut(0.5);
+                    } else if (dollyDelta.y < 0) {
+                        scope.dollyIn(0.5);
                     }
                 }
 

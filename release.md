@@ -5,6 +5,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
+* mobile pinch zoom and layer slider improvements
 * update CLI to work in CAM mode and add working samples
 * improved FDM preview rendering speed and reduced memory usage
 * threaded task and message passing performance improvements
