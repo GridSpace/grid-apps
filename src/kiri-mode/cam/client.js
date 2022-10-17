@@ -352,13 +352,14 @@ CAM.init = function(kiri, api) {
             let timer = null;
             let inside = true;
             let poprec = popOp[rec.type];
+            el.rec = rec;
             el.unpop = () => {
                 let pos = [...el.childNodes].indexOf(poprec.div);
                 if (pos >= 0) {
                     el.removeChild(poprec.div);
                 }
             };
-            el.onmouseenter = (ev) => {
+            function onEnter(ev) {
                 if (poppedRec && poppedRec != rec) {
                     func.surfaceDone();
                     func.traceDone();
@@ -377,8 +378,8 @@ CAM.init = function(kiri, api) {
                 setTimeout(() => {
                     UC.setSticky(false);
                 }, 0);
-            };
-            el.onmouseleave = () => {
+            }
+            function onLeave(ev) {
                 inside = false;
                 clearTimeout(timer);
                 timer = setTimeout(() => {
@@ -386,9 +387,8 @@ CAM.init = function(kiri, api) {
                         el.unpop();
                     }
                 }, 250);
-            };
-            el.rec = rec;
-            el.onmousedown = (ev) => {
+            }
+            function onDown(ev) {
                 func.surfaceDone();
                 func.traceDone();
                 let target = ev.target, clist = target.classList;
@@ -451,7 +451,26 @@ CAM.init = function(kiri, api) {
                         }
                     }
                 };
-            };
+            }
+            if (moto.space.info.mob) {
+                el.ontouchstart = (ev) => {
+                    if (poppedRec === rec) {
+                        onLeave(ev);
+                    } else {
+                        onEnter(ev);
+                    }
+                };
+                // el.ontouchmove = (ev) => {
+                //     console.log('touch.move');
+                // };
+                // el.ontouchend = (ev) => {
+                //     console.log('touch.end');
+                // };
+            } else {
+                el.onmousedown = onDown;
+                el.onmouseenter = onEnter;
+                el.onmouseleave = onLeave;
+            }
         }
     });
 
