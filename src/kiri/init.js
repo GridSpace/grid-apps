@@ -2049,10 +2049,17 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
 
         // slider setup
-        const slbar = 30;
+        const mobile = moto.space.info.mob;
+        const slbar = mobile ? 80 : 30;
         const slbar2 = slbar * 2;
         const slider = ui.sliderRange;
         const drag = { };
+
+        if (mobile) {
+            ui.slider.classList.add('slider-mobile');
+            ui.sliderLo.classList.add('slider-mobile');
+            ui.sliderHi.classList.add('slider-mobile');
+        }
 
         function pxToInt(txt) {
             return txt ? parseInt(txt.substring(0,txt.length-2)) : 0;
@@ -2081,7 +2088,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 drag.hiat = pxToInt(ui.sliderHold.style.marginRight);
                 drag.mdmax = drag.width - slbar - drag.loat;
                 drag.himax = drag.width - slbar - drag.mdat;
-                let cancel_drag = tracker.onmouseup = (ev) => {
+                let cancel_drag = tracker.ontouchend = tracker.onmouseup = (ev) => {
                     if (ev) {
                         ev.stopPropagation();
                         ev.preventDefault();

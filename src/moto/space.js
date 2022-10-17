@@ -1444,7 +1444,8 @@ gapp.register("moto.space", [], (root, exports) => {
                 ver: ctx.getParameter(ctx.VERSION),
                 ven: ctx.getParameter(ctx.VENDOR),
                 glr: ctx.getParameter(ctx.RENDERER),
-                pla: nav.platform
+                pla: nav.platform,
+                mob: nav.maxTouchPoints > 1 || (/android/i.test(nav.userAgent))
             };
 
             initialized = true;
