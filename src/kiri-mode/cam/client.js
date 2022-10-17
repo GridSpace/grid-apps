@@ -392,6 +392,7 @@ CAM.init = function(kiri, api) {
                 }, 250);
             }
             function onDown(ev) {
+                let mobile = ev.touches;
                 func.surfaceDone();
                 func.traceDone();
                 let target = ev.target, clist = target.classList;
@@ -435,8 +436,12 @@ CAM.init = function(kiri, api) {
                     }
                     API.conf.save();
                     func.opRender();
+                    if (mobile) {
+                        el.ontouchmove = onDown;
+                        el.ontouchend = undefined;
+                    }
                 };
-                tracker.onmousemove = (ev) => {
+                function onMove(ev) {
                     ev.stopPropagation();
                     ev.preventDefault();
                     if (ev.buttons === 0) {
@@ -447,13 +452,19 @@ CAM.init = function(kiri, api) {
                         let rect = el.getBoundingClientRect();
                         let left = rect.left;
                         let right = rect.left + rect.width;
-                        if (ev.pageX >= left && ev.pageX <= right) {
+                        let tar = mobile ? ev.touches[0] : ev;
+                        if (tar.pageX >= left && tar.pageX <= right) {
                             let mid = (left + right) / 2;
                             try { listel.removeChild(target); } catch (e) { }
-                            el.insertAdjacentElement(ev.pageX < mid ? "beforebegin" : "afterend", target);
+                            el.insertAdjacentElement(tar.pageX < mid ? "beforebegin" : "afterend", target);
                         }
                     }
-                };
+                }
+                tracker.onmousemove = onMove;
+                if (mobile) {
+                    el.ontouchmove = onMove;
+                    el.ontouchend = cancel;
+                }
             }
             if (moto.space.info.mob) {
                 el.ontouchstart = (ev) => {
@@ -463,12 +474,7 @@ CAM.init = function(kiri, api) {
                         onEnter(ev);
                     }
                 };
-                // el.ontouchmove = (ev) => {
-                //     console.log('touch.move');
-                // };
-                // el.ontouchend = (ev) => {
-                //     console.log('touch.end');
-                // };
+                el.ontouchmove = onDown;
             } else {
                 el.onmousedown = onDown;
                 el.onmouseenter = onEnter;
