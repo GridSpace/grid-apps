@@ -978,6 +978,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
         let group = opt.group || [];
         let closes = opt.closes || group;
         let target = opt.target || el;
+        let mobile = false;
         let popped = false;
         group.push(target);
         if (closes !== group) {
@@ -998,6 +999,14 @@ gapp.register("kiri.ui", [], (root, exports) => {
         };
         if (opt.auto !== false) {
             el.addEventListener("mouseenter", openit);
+            el.addEventListener("touchstart", () => {
+                mobile = true;
+                if (popped) {
+                    closeit();
+                } else {
+                    openit();
+                }
+            });
         }
         el.addEventListener("mouseleave", (ev) => {
             closes.timer = setTimeout(() => {
@@ -1006,6 +1015,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
         });
         if (!opt.sticky) {
             el.addEventListener("mouseup", (ev) => {
+                if (mobile) {
+                    return;
+                }
                 if (popped) {
                     closeit();
                 } else {

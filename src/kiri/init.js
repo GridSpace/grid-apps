@@ -2363,9 +2363,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         uc.hoverPop(ui.ltfile,  { group: hpops, target: $('file-pop') });
         uc.hoverPop(ui.ltview,  { group: hpops, target: $('pop-view') });
         uc.hoverPop(ui.ltact,   { group: hpops, target: $('pop-slice') });
-        uc.hoverPop(ui.render,  { group: hpops, target: $('pop-render'), sticky: false });
-        uc.hoverPop(ui.edit,    { group: hpops, target: $('pop-tools'), sticky: false });
-        uc.hoverPop(ui.nozzle,  { group: hpops, target: $('pop-nozzle'), sticky: true });
+        uc.hoverPop(ui.render,  { group: hpops, target: $('pop-render'), xsticky: false });
+        uc.hoverPop(ui.edit,    { group: hpops, target: $('pop-tools'), xsticky: false });
+        uc.hoverPop(ui.nozzle,  { group: hpops, target: $('pop-nozzle'), xsticky: true });
         uc.hoverPop($('app-acct'), { group: hpops, target: $('acct-pop') } );
         // uc.hoverPop($('app-mode'), { group: hpops, target: $('mode-info') } );
         uc.hoverPop($('app-name'), { group: hpops, target: $('app-info') } );
