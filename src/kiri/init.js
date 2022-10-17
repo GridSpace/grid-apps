@@ -1599,7 +1599,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             ltsetup:            $('lt-setup'),
             ltfile:             $('lt-file'),
             ltview:             $('lt-view'),
-            ltact:              $('act-slice'),
+            ltact:              $('lt-start'),
             edit:               $('lt-tools'),
             nozzle:             $('lt-nozzle'),
             render:             $('lt-render'),
