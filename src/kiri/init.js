@@ -2069,12 +2069,13 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
 
         function dragit(el, delta) {
-            el.onmousedown = (ev) => {
+            el.ontouchstart = el.onmousedown = (ev) => {
                 tracker.style.display = 'block';
                 ev.stopPropagation();
+                let obj = (ev.touches ? ev.touches[0] : ev);
                 drag.width = slider.clientWidth;
                 drag.maxval = drag.width - slbar2;
-                drag.start = ev.screenX;
+                drag.start = obj.screenX;
                 drag.loat = drag.low = pxToInt(ui.sliderHold.style.marginLeft);
                 drag.mdat = drag.mid = ui.sliderMid.clientWidth;
                 drag.hiat = pxToInt(ui.sliderHold.style.marginRight);
@@ -2088,13 +2089,16 @@ gapp.register("kiri.init", [], (root, exports) => {
                     slider.onmousemove = undefined;
                     tracker.style.display = 'none';
                 };
-                tracker.onmousemove = (ev) => {
+                tracker.ontouchmove = tracker.onmousemove = (ev) => {
                     ev.stopPropagation();
                     ev.preventDefault();
                     if (ev.buttons === 0) {
                         return cancel_drag();
                     }
-                    if (delta) delta(ev.screenX - drag.start);
+                    if (delta) {
+                        let obj = (ev.touches ? ev.touches[0] : ev);
+                        delta(obj.screenX - drag.start);
+                    }
                 };
             };
         }
