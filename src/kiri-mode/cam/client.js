@@ -351,6 +351,7 @@ CAM.init = function(kiri, api) {
             bounds.push(el);
             let timer = null;
             let inside = true;
+            let popped = false;
             let poprec = popOp[rec.type];
             el.rec = rec;
             el.unpop = () => {
@@ -358,6 +359,7 @@ CAM.init = function(kiri, api) {
                 if (pos >= 0) {
                     el.removeChild(poprec.div);
                 }
+                popped = false;
             };
             function onEnter(ev) {
                 if (poppedRec && poppedRec != rec) {
@@ -369,6 +371,7 @@ CAM.init = function(kiri, api) {
                 inside = true;
                 // pointer to current rec for trace editing
                 poppedRec = rec;
+                popped = true;
                 poprec.use(rec);
                 hoveredOp = el;
                 el.appendChild(poprec.div);
@@ -454,7 +457,7 @@ CAM.init = function(kiri, api) {
             }
             if (moto.space.info.mob) {
                 el.ontouchstart = (ev) => {
-                    if (poppedRec === rec) {
+                    if (poppedRec === rec && popped) {
                         onLeave(ev);
                     } else {
                         onEnter(ev);
