@@ -312,7 +312,7 @@ const conf = exports({
                 sliceFillRate: 0,
                 sliceSolidRate: 0,
                 sliceFillType: "hex",
-                sliceSupportDensity: 0.25,
+                sliceSupportDensity: 0.1,
                 sliceSupportOffset: 1.0,
                 sliceSupportGap: 1,
                 sliceSupportSize: 5,
