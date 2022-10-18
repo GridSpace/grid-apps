@@ -15,6 +15,7 @@ self.kiri.lang['en-us'] = {
     enable:         "enable",
     export:         "export",
     files:          "files",
+    fullscreen:     "fullscreen",
     help:           "help",
     ghost:          "ghost",        // left render pop menu (wireframe)
     hide:           "hide",         // left render pop menu (invisible)
