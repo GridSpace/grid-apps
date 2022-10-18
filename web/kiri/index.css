@@ -809,7 +809,7 @@ th, tr, td, label {
     display: none;
     padding: 0;
     height: 38px;
-    margin: 0 0 4px 0;
+    margin: 0 0 max(4px, env(safe-area-inset-bottom)) 0;
 }
 #camops .left {
     width: 12px;
@@ -1550,7 +1550,7 @@ th, tr, td, label {
     font-size: smaller;
     left: 15px;
     right: 15px;
-    bottom: 3px;
+    bottom: max(3px, env(safe-area-inset-bottom));
     pointer-events: all;
 }
 #slider.slider-mobile {
