@@ -5,6 +5,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
+* add fullscreen option. button next to user profile
 * mobile pinch zoom and layer slider usability improvements
 * update CLI to work in CAM mode and add working samples
 * improved FDM preview rendering speed and reduced memory usage

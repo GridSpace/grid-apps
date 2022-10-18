@@ -2358,6 +2358,10 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.scaleX.was = ui.scaleY.was = ui.scaleZ.was = 1;
         };
 
+        $('app-xpnd').onclick = () => {
+            DOC.body.requestFullscreen();
+        };
+
         let hpops = [];
         uc.hoverPop(ui.ltsetup, { group: hpops, target: $('set-pop') });
         uc.hoverPop(ui.ltfile,  { group: hpops, target: $('file-pop') });
