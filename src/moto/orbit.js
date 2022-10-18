@@ -490,6 +490,8 @@ moto.Orbit = function (object, domElement, notify, slider) {
     function touchstart(event) {
         if (scope.enabled === false) return;
 
+        const touches = [...event.touches];
+
         switch (event.touches.length) {
             case 1:    // one-fingered touch: rotate
                 if (scope.noRotate === true) return;
@@ -516,11 +518,14 @@ moto.Orbit = function (object, domElement, notify, slider) {
                 break;
 
             case 3: // three-fingered touch: pan
+            case 4: // four-fingered touch: pan
                 if (scope.noPan === true) return;
 
                 state = STATE.TOUCH_PAN;
+                const px = touches.map(t => t.pageX).reduce((a,b) => a+b) / touches.length;
+                const py = touches.map(t => t.pageY).reduce((a,b) => a+b) / touches.length;
 
-                panStart.set(event.touches[ 0 ].pageX, event.touches[ 0 ].pageY);
+                panStart.set(px, py);
                 break;
 
             default:
@@ -535,7 +540,7 @@ moto.Orbit = function (object, domElement, notify, slider) {
         event.preventDefault();
         event.stopPropagation();
 
-        let element = scope.domElement === document ? scope.domElement.body : scope.domElement;
+        const element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
         switch (event.touches.length) {
             case 1: // one-fingered touch: rotate
@@ -571,7 +576,7 @@ moto.Orbit = function (object, domElement, notify, slider) {
                 dollyEnd.set(0, distance);
                 dollyDelta.subVectors(dollyEnd, dollyStart);
 
-                if (touchSlide || (Math.abs(dy/dx) < 1 && slider)) {
+                if (touchSlide || (Math.abs(dy/dx) < 1 && slider && dx < 200)) {
                     touchSlide = true;
                     slider(lastDY ? (lastDY - ddy) : ddy);
                     lastDY = ddy;
@@ -588,10 +593,15 @@ moto.Orbit = function (object, domElement, notify, slider) {
                 break;
 
             case 3: // three-fingered touch: pan
+            case 4: // four-fingered touch: pan
                 if (scope.noPan === true) return;
                 if (state !== STATE.TOUCH_PAN) return;
 
-                panEnd.set(event.touches[ 0 ].pageX, event.touches[ 0 ].pageY);
+                const tlist = [...event.touches];
+                const px = tlist.map(t => t.pageX).reduce((a,b) => a+b) / tlist.length;
+                const py = tlist.map(t => t.pageY).reduce((a,b) => a+b) / tlist.length;
+
+                panEnd.set(px, py);
                 panDelta.subVectors(panEnd, panStart);
                 scope.pan(panDelta.x, panDelta.y);
                 panStart.copy(panEnd);
