@@ -269,6 +269,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.conf.update();
         DOC.activeElement.blur();
         api.event.emit("boolean.click");
+        updateLaserState();
     }
 
     function onButtonClick(ev) {
@@ -744,6 +745,12 @@ gapp.register("kiri.init", [], (root, exports) => {
         setDeviceCode(code, name);
     }
 
+    function updateLaserState() {
+        const dev = settings().device;
+        $('laser-on').style.display = dev.useLaser ? 'flex' : 'none';
+        $('laser-off').style.display = dev.useLaser ? 'flex' : 'none';
+    }
+
     function setDeviceCode(code, devicename) {
         api.event.emit('device.select', {devicename, code});
         try {
@@ -883,6 +890,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             platform.update_size();
             platform.update_origin();
             platform.update();
+            updateLaserState();
 
             // store current device name for this mode
             current.filter[mode] = devicename;

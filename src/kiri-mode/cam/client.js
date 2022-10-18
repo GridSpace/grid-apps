@@ -190,6 +190,8 @@ CAM.init = function(kiri, api) {
         let settings = API.conf.get();
         let { process, device } = settings;
         switch (ev.target.innerText) {
+            case "laser on": return func.opAddLaserOn();
+            case "laser off": return func.opAddLaserOff();
             case "gcode": return func.opAddGCode();
             case "level": return func.opAddLevel();
             case "rough": return func.opAddRough();
@@ -215,6 +217,14 @@ CAM.init = function(kiri, api) {
                 }
                 return func.opAddFlip();
         }
+    };
+
+    func.opAddLaserOn = () => {
+        func.opAdd(popOp['laser on'].new());
+    };
+
+    func.opAddLaserOff = () => {
+        func.opAdd(popOp['laser off'].new());
     };
 
     func.opAddGCode = () => {
@@ -1248,6 +1258,14 @@ CAM.init = function(kiri, api) {
         action:   UC.newRow([
             UC.newButton(LANG.cf_menu, func.opFlip)
         ], {class:"ext-buttons f-row"})
+    };
+
+    createPopOp('laser on', {
+    }).inputs = {
+    };
+
+    createPopOp('laser off', {
+    }).inputs = {
     };
 };
 
