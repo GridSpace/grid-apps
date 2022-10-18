@@ -916,6 +916,12 @@ th, tr, td, label {
 #oplist div:hover .opop {
     display: flex;
 }
+.mobile #oplist {
+    font-size: larger;
+}
+.mobile #op-add-pop {
+    font-size: larger;
+}
 #op-add-pop {
     position: absolute;
     display: none;
@@ -925,16 +931,24 @@ th, tr, td, label {
 #op-add:hover #op-add-pop {
     display: flex;
 }
+.op-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 5px;
+}
 #op-add-list {
     padding: 4px;
     display: flex;
     align-items: stretch;
-    flex-direction: column-reverse;
+    flex-direction: column;
 }
 #op-add-list > div {
     padding: 3px 5px 3px 5px;
     display: flex;
     flex-direction: column;
+    border: 1px dashed gray;
     border-radius: 3px;
 }
 #op-add-list > div:hover {
@@ -1543,6 +1557,9 @@ th, tr, td, label {
     display: none;
     height: 30px;
     z-index: 100;
+}
+.mobile .sli-drag-el {
+    background-color: rgba(200,0,0,0.8) !important;
 }
 #slider-hi-val, #slider-lo-val {
     display: none;

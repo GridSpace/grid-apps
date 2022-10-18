@@ -2059,6 +2059,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.slider.classList.add('slider-mobile');
             ui.sliderLo.classList.add('slider-mobile');
             ui.sliderHi.classList.add('slider-mobile');
+            // add css style for mobile devices
+            DOC.body.classList.add('mobile');
         }
 
         function pxToInt(txt) {
@@ -2077,6 +2079,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         function dragit(el, delta) {
             el.ontouchstart = el.onmousedown = (ev) => {
+                // el.classList.add('sli-drag-el');
                 tracker.style.display = 'block';
                 ev.stopPropagation();
                 let obj = (ev.touches ? ev.touches[0] : ev);
@@ -2089,6 +2092,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 drag.mdmax = drag.width - slbar - drag.loat;
                 drag.himax = drag.width - slbar - drag.mdat;
                 let cancel_drag = tracker.ontouchend = tracker.onmouseup = (ev) => {
+                    // el.classList.remove('sli-drag-el');
                     if (ev) {
                         ev.stopPropagation();
                         ev.preventDefault();
@@ -2096,7 +2100,8 @@ gapp.register("kiri.init", [], (root, exports) => {
                     slider.onmousemove = undefined;
                     tracker.style.display = 'none';
                 };
-                tracker.ontouchmove = tracker.onmousemove = (ev) => {
+                el.ontouchend = cancel_drag;
+                el.ontouchmove = tracker.ontouchmove = tracker.onmousemove = (ev) => {
                     ev.stopPropagation();
                     ev.preventDefault();
                     if (ev.buttons === 0) {
