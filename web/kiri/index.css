@@ -1003,6 +1003,9 @@ th, tr, td, label {
     border-top: 1px solid black;
     overflow: hidden;
 }
+#modal button, #modal select {
+    color: black !important;
+}
 #modal > div {
     position: absolute;
     transform: translateX(50%) translateY(-50%);
