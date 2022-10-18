@@ -827,6 +827,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 ui.bedDepth,
                 ui.bedWidth,
                 ui.maxHeight,
+                ui.useLaser,
                 ui.resolutionX,
                 ui.resolutionY,
                 ui.deviceOrigin,
@@ -1691,7 +1692,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             resolutionX:      uc.newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:uc.toInt, size:5, modes:SLA}),
             resolutionY:      uc.newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:uc.toInt, size:5, modes:SLA}),
-            spindleMax:       uc.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:uc.toInt, size:5, modes:CAM}),
+            spindleMax:       uc.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:uc.toInt, size:5, modes:CAM, trigger:1}),
             deviceZMax:       uc.newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:uc.toInt, size:5, modes:FDM}),
             gcodeTime:        uc.newInput(LANG.dv_time_s, {title:LANG.dv_time_l, convert:uc.toFloat, size:5, modes:FDM}),
             fdmSep:           uc.newBlank({class:"pop-sep", modes:FDM}),
@@ -1728,8 +1729,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             palettePress:     uc.newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:uc.toInt}),
 
             gcode:            uc.newGroup(LANG.dv_gr_out, $('device2'), {group:"dgco", inline:true, modes:CAM_LZR}),
-            gcodeSpace:       uc.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LZR}),
             gcodeStrip:       uc.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
+            gcodeSpace:       uc.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LZR}),
+            useLaser:         uc.newBoolean(LANG.dv_lazr_s, onBooleanClick, {title:LANG.dv_lazr_l, modes:CAM}),
             gcodeFExt:        uc.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LZR, size:7, text:true}),
 
             gcodeEd:          uc.newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline:true, modes:GCODE}),
@@ -1744,7 +1746,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 (ui.gcodeLaserOff = uc.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, area:gcode})).button,
                 (ui.gcodeChange = uc.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button,
                 (ui.gcodeDwell = uc.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, area:gcode})).button,
-                (ui.gcodeSpindle = uc.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, area:gcode})).button
+                (ui.gcodeSpindle = uc.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, area:gcode, show:() => ui.spindleMax.value > 0})).button
             ], {class:"ext-buttons f-row gcode-macros"}),
 
             lprefs:           uc.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),

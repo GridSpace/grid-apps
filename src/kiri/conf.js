@@ -439,6 +439,7 @@ const conf = exports({
                 bedDepth: 175,
                 bedHeight: 2.5,
                 maxHeight: 300,
+                useLaser: false,
                 originCenter: false,
                 spindleMax: 0,
                 gcodePre: [],

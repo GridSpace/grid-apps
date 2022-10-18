@@ -141,6 +141,8 @@ self.kiri.lang['en-us'] = {
     dv_strc_l:      ["strip gcode comments","comments begin with ;"],
     dv_fext_s:      "file extension",
     dv_fext_l:      "file name extension",
+    dv_lazr_s:      "enable laser",
+    dv_lazr_l:      ["enable laser operations"],
 
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "gcode dwell script",

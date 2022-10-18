@@ -158,8 +158,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
         });
     }
 
-    function refresh() {
-        setMode(letMode, true);
+    function refresh(all) {
+        setMode(letMode, all ? false : true);
         setters.forEach(input => {
             if (input.setv) {
                 input.setv(input.real);
@@ -695,7 +695,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 lastChange = ip;
                 action(event);
                 if (opt.trigger) {
-                    refresh();
+                    refresh(opt.trigger === 1);
                 }
             });
             if (opt.units) {
