@@ -93,6 +93,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         drillDown = 0,
         drillLift = 0,
         drillDwell = 0,
+        lasering = false,
+        laserPower = 0,
         newOutput = print.output || [],
         layerOut = [],
         printPoint,
@@ -129,6 +131,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
     }
 
     function addGCode(text) {
+        if (!text || text.length === 0) {
+            return;
+        }
         newOutput.push(text);
         if (layerOut.length) {
             layerOut = [];
@@ -160,6 +165,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
         feedRate = feed || feedRate;
         plungeRate = plunge || plungeRate || feedRate;
+    }
+
+    function setLasering(bool, power = 0) {
+        lasering = bool;
+        laserPower = power;
     }
 
     function setDrill(down, lift, dwell) {
@@ -238,7 +248,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
      */
     function layerPush(point, emit, speed, tool) {
         layerOut.mode = lastMode;
-        print.addOutput(layerOut, point, emit, speed, tool);
+        if (lasering) {
+            print.addOutput(layerOut, point, emit ? laserPower : emit, speed, tool, 'laser');
+        } else {
+            print.addOutput(layerOut, point, emit, speed, tool);
+        }
         return point;
     }
 
@@ -284,7 +298,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // convert short planar moves to cuts in some cases
-        if (isMove && deltaXY <= moveLen && deltaZ <= 0) {
+        if (isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
             let iscontour = tolerance > 0;
             let isflat = absDeltaZ < 0.001;
             // restrict this to contouring
@@ -299,9 +313,10 @@ function prepEach(widget, settings, print, firstPoint, update) {
             }
         } else if (isMove) {
             // for longer moves, check the terrain to see if we need to go up and over
-            const bigXY = (deltaXY > moveLen);
+            const bigXY = (deltaXY > moveLen && !lasering);
             const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
-            const midZ = (absDeltaZ >= tolerance);
+            const midZ = (tolerance && absDeltaZ >= tolerance);
+
             if (bigXY || bigZ || midZ) {
                 let maxz = getZClearPath(
                         terrain,
@@ -380,6 +395,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         setSpindle,
         setTolerance,
         setPrintPoint,
+        setLasering,
         printPoint,
         newLayer,
         addGCode,
@@ -404,6 +420,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         nextIsMove = true;
         lastMode = op.op.type;
         let weight = op.weight();
+        layerOut.push({ op });
         op.prepare(ops, (progress, message) => {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);
         });

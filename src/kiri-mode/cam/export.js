@@ -47,12 +47,14 @@ CAM.export = function(print, online) {
         maxZd = spro.camFastFeedZ,
         maxXYd = spro.camFastFeed,
         decimals = base.config.gcode_decimals || 4,
-        pos = { x:null, y:null, z:null, f:null, t:null },
+        pos = { x:null, y:null, z:null, f:null, t:null, emit:null },
         line,
         cidx,
         mode,
         point,
         points = 0,
+        lasering = false,
+        currentOp,
         stock = settings.stock || { },
         hasStock = spro.camStockOn && stock.x && stock.y && stock.z,
         ztOff = hasStock ? stock.z - widget.track.top : 0,
@@ -141,6 +143,7 @@ CAM.export = function(print, online) {
     }
 
     function moveTo(out) {
+        let laser = out.type === 'laser';
         let newpos = out.point;
 
         // no point == dwell
@@ -245,6 +248,28 @@ CAM.export = function(print, online) {
             }
         }
 
+        if (!lasering && laser) {
+            // enable laser
+            filterEmit(currentOp.camLaserOn, consts);
+        }
+
+        // if (laser && pos.emit !== out.emit) {
+        if (laser) {
+            nl.append(space).append(`S${out.emit}`);
+        }
+
+        if (laser) {
+            pos.emit = out.emit;
+        }
+
+        if (lasering && !laser) {
+            // disable laser
+            filterEmit(currentOp.camLaserOff, consts);
+        }
+
+        // update lasering state
+        lasering = laser;
+
         // update time calculation
         time += (dist / (pos.f || 1000)) * 60;
 
@@ -277,6 +302,10 @@ CAM.export = function(print, online) {
     let toolz = {}, ctool;
     // remap points as necessary for origins, offsets, inversions
     print.output.forEach(function(layer) {
+        if (layer.op) {
+            console.log({ op: layer.op });
+            return;
+        }
         if (!Array.isArray(layer)) {
             return;
         }
@@ -331,6 +360,10 @@ CAM.export = function(print, online) {
         }
         newSpindle = layerout.spindle;
         for (let out of layerout) {
+            if (out.op) {
+                currentOp = out.op;
+                continue;
+            }
             moveTo(out);
         }
     }

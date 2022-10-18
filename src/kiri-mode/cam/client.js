@@ -493,11 +493,12 @@ CAM.init = function(kiri, api) {
         }
     });
 
-    func.opGCode = () => {
+    func.opGCode = (label, field = 'gcode') => {
+console.log({label});
         API.dialog.show('any');
         const { c_gcode } = h.bind(
             $('mod-any'), h.div({ id: "camop_dialog" }, [
-                h.label('custom gcode operation'),
+                h.label(label || 'custom gcode operation'),
                 h.textarea({ id: "c_gcode", rows: 15, cols: 50 }),
                 h.button({ _: 'done', onclick: () => {
                     API.dialog.hide();
@@ -505,12 +506,19 @@ CAM.init = function(kiri, api) {
                 } })
             ])
         );
-        c_gcode.value = poppedRec.gcode || '';
+        c_gcode.value = poppedRec[field] || '';
         c_gcode.onkeyup = (el) => {
-            poppedRec.gcode = c_gcode.value;
+            poppedRec[field] = c_gcode.value;
         };
         c_gcode.focus();
     };
+
+    // create custom gcode editor function
+    function gcodeEditor(label, field) {
+        return function() {
+            func.opGCode(label, field);
+        }
+    }
 
     func.opFlip = () => {
         let widgets = API.widgets.all();
@@ -1023,12 +1031,6 @@ CAM.init = function(kiri, api) {
         return current.device.spindleMax > 0;
     }
 
-    createPopOp('gcode', {
-        gcode:  'camCustomGcode',
-    }).inputs = {
-        action:   UC.newRow([ UC.newButton(LANG.edit, func.opGCode) ], {class:"ext-buttons f-row"})
-    };
-
     createPopOp('level', {
         tool:    'camLevelTool',
         spindle: 'camLevelSpindle',
@@ -1260,12 +1262,35 @@ CAM.init = function(kiri, api) {
         ], {class:"ext-buttons f-row"})
     };
 
-    createPopOp('laser on', {
+    createPopOp('gcode', {
+        gcode:  'camCustomGcode',
     }).inputs = {
+        action:   UC.newRow([ UC.newButton(LANG.edit, gcodeEditor()) ], {class:"ext-buttons f-row"})
     };
 
-    createPopOp('laser off', {
+    const editEnable = gcodeEditor('Laser Enable Script', 'enable');
+    const editOn = gcodeEditor('Laser On Script', 'on');
+    const editOff = gcodeEditor('Laser Off Script', 'off');
+
+    createPopOp('laser on', {
+        enable:  'camLaserEnable',
+        on:      'camLaserOn',
+        off:     'camLaserOff',
+        power:   'camLaserPower',
     }).inputs = {
+        enable:  UC.newRow([ UC.newButton(LANG.enable, editEnable) ], {class:"ext-buttons f-row"}),
+        on:      UC.newRow([ UC.newButton(LANG.on, editOn) ], {class:"ext-buttons f-row"}),
+        off:     UC.newRow([ UC.newButton(LANG.off, editOff) ], {class:"ext-buttons f-row"}),
+        sep:     UC.newBlank({class:"pop-sep"}),
+        power:   UC.newInput(LANG.cl_powr_s, {title:LANG.cl_powr_l, convert:UC.toFloat, bound:UC.bound(0,1.0)}),
+    };
+
+    const editDisable = gcodeEditor('Laser Disable Script', 'disable');
+
+    createPopOp('laser off', {
+        disable: 'camLaserDisable',
+    }).inputs = {
+        disable: UC.newRow([ UC.newButton(LANG.disable, editDisable) ], {class:"ext-buttons f-row"}),
     };
 };
 

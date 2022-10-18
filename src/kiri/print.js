@@ -34,7 +34,7 @@ class Print {
         this.nextType = type;
     }
 
-    addOutput(array, point, emit, speed, tool) {
+    addOutput(array, point, emit, speed, tool, type) {
         let { lastPoint, lastEmit, lastOut } = this;
         // drop duplicates (usually intruced by FDM bisections)
         if (lastPoint && point) {
@@ -47,7 +47,7 @@ class Print {
         // if (emit && emit < 1) console.log(emit);
         this.lastPoint = point;
         this.lastEmit = emit;
-        this.lastOut = lastOut = new Output(point, emit, speed, tool, this.nextType);
+        this.lastOut = lastOut = new Output(point, emit, speed, tool, type || this.nextType);
         if (tool !== undefined) {
             this.tools[tool] = true;
         }

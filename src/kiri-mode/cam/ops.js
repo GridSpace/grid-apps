@@ -44,9 +44,29 @@ class OpGCode extends CamOp {
     }
 
     prepare(ops, progress) {
-        if (this.op.gcode) {
-            ops.addGCode(this.op.gcode);
-        }
+        ops.addGCode(this.op.gcode);
+    }
+}
+
+class OpLaserOn extends CamOp {
+    constructor(state, op) {
+        super(state, op);
+    }
+
+    prepare(ops, progress) {
+        ops.addGCode(this.op.enable);
+        ops.setLasering(true, this.op.power);
+    }
+}
+
+class OpLaserOff extends CamOp {
+    constructor(state, op) {
+        super(state, op);
+    }
+
+    prepare(ops, progress) {
+        ops.addGCode(this.op.disable);
+        ops.setLasering(false);
     }
 }
 
@@ -1612,18 +1632,20 @@ CAM.shadowAt = function(widget, z, ztop) {
 };
 
 CAM.OPS = CamOp.MAP = {
-    "xray":     OpXRay,
-    "shadow":   OpShadow,
-    "level":    OpLevel,
-    "rough":    OpRough,
-    "outline":  OpOutline,
-    "contour":  OpContour,
-    "pocket":   OpPocket,
-    "trace":    OpTrace,
-    "drill":    OpDrill,
-    "register": OpRegister,
-    "gcode":    OpGCode,
-    "flip":     CamOp
+    "xray":      OpXRay,
+    "shadow":    OpShadow,
+    "level":     OpLevel,
+    "rough":     OpRough,
+    "outline":   OpOutline,
+    "contour":   OpContour,
+    "pocket":    OpPocket,
+    "trace":     OpTrace,
+    "drill":     OpDrill,
+    "register":  OpRegister,
+    "laser on":  OpLaserOn,
+    "laser off": OpLaserOff,
+    "gcode":     OpGCode,
+    "flip":      CamOp
 };
 
 });

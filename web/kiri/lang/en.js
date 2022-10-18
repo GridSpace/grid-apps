@@ -13,6 +13,7 @@ self.kiri.lang['en-us'] = {
     done:           "done",
     edit:           "edit",
     enable:         "enable",
+    disable:        "disable",
     export:         "export",
     files:          "files",
     fullscreen:     "fullscreen",
@@ -26,6 +27,8 @@ self.kiri.lang['en-us'] = {
     mesh:           "mesh",         // mesh editing
     metric:         "metric",
     name:           "name",
+    off:            "off",          // turn something off (like a lightbulb)
+    on:             "on",           // turn something on (like a lightbulb)
     prefs:          "prefs",        // left menu "preferences"
     preview:        "preview",
     recent:         "recent",
@@ -550,6 +553,10 @@ self.kiri.lang['en-us'] = {
     cf_menu:        "flip",
     cf_nvrt_s:      "z bottom",
     cf_nvrt_l:      "invert z bottom setting to follow stock",
+
+    // CNC LASER
+    cl_powr_s:      "power",
+    cl_powr_l:      "laser power from 0 to 1.0",
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",
