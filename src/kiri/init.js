@@ -917,7 +917,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 setTimeout(api.space.set_focus, 0);
             }
 
-            uc.refresh();
+            uc.refresh(1);
             filamentSourceEditUpdate();
 
             if (dev.imageURL) {

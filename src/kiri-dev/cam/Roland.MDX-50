@@ -16,6 +16,7 @@
     ],
     "settings": {
         "bed_width": 400,
-        "bed_depth": 305
+        "bed_depth": 305,
+        "spindle_max": 10000
     }
 }
