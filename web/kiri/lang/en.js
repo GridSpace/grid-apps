@@ -557,6 +557,22 @@ self.kiri.lang['en-us'] = {
     // CNC LASER
     cl_powr_s:      "power",
     cl_powr_l:      "laser power from 0 to 1.0",
+    cl_adap_s:      "adaptive",
+    cl_adap_l:      "use adaptive power based on Z height",
+    cl_adrp_s:      "repeating",
+    cl_adrp_l:      "apply a moduluse of Z height using the given band to make repeating patterns",
+    cl_flat_s:      "flatten",
+    cl_flat_l:      "flatten output to a given Z height",
+    cl_flaz_s:      "height",
+    cl_flaz_l:      ["flatten output to this Z height", "in workspace units"],
+    cl_minp_s:      "min power",
+    cl_minp_l:      ["lowest power for the Z band. when "],
+    cl_maxp_s:      "max power",
+    cl_maxp_l:      ["highest power for the Z band"],
+    cl_minz_s:      "min height",
+    cl_minz_l:      ["lowest Z band position"],
+    cl_maxz_s:      "max height",
+    cl_maxz_l:      ["highest Z band position. when set to 0, uses the highest Z point of the workspace"],
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",

@@ -106,8 +106,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         plungeRate = process.camFastFeedZ,
         feedRate,
         lastTool,
-        lastMode,
         lastPoint,
+        currentOp,
         nextIsMove = true,
         synthPlunge = false,
         spindle = 0,
@@ -125,7 +125,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             newOutput.push(layerOut);
         }
         layerOut = [];
-        layerOut.mode = op || lastMode;
+        layerOut.mode = op || currentOp;
         layerOut.spindle = spindle;
     }
 
@@ -139,7 +139,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         newOutput.push([{ gcode: text }]);
         if (layerOut.length) {
             layerOut = [];
-            layerOut.mode = lastMode;
+            layerOut.mode = currentOp;
             layerOut.spindle = spindle;
         }
     }
@@ -170,7 +170,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
     }
 
     function setLasering(bool, power = 0) {
-        lasering = bool;
+        lasering = bool ? currentOp : undefined;
         laserPower = power;
     }
 
@@ -249,9 +249,28 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} [tool] tool
      */
     function layerPush(point, emit, speed, tool) {
-        layerOut.mode = lastMode;
+        layerOut.mode = currentOp;
         if (lasering) {
-            print.addOutput(layerOut, point, emit ? laserPower : emit, speed, tool, 'laser');
+            let power = emit ? laserPower : 0;
+            if (emit && lasering.adapt) {
+                let { minz, maxz, minp, maxp, adaptrp } = lasering;
+                maxz = maxz || wztop;
+                let deltaz = maxz - minz;
+                let { z } = point;
+                if (adaptrp) {
+                    while (z > maxz) z -= deltaz;
+                    while (z < minz) z += deltaz;
+                } else if (z < minz || z > maxz) {
+                    // skip outside of band
+                    return point;
+                }
+                z -= minz;
+                power = minp + (z / deltaz) * (maxp - minp);
+            }
+            if (lasering.flat) {
+                point.z = lasering.flatz;
+            }
+            print.addOutput(layerOut, point, power, speed, tool, 'laser');
         } else {
             print.addOutput(layerOut, point, emit, speed, tool);
         }
@@ -362,7 +381,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // todo synthesize move speed from feed / plunge accordingly
-        layerOut.mode = lastMode;
+        layerOut.mode = currentOp;
         layerOut.spindle = spindle;
         lastPoint = layerPush(
             point,
@@ -420,7 +439,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
     for (let op of widget.camops) {
         setTolerance(0);
         nextIsMove = true;
-        lastMode = op.op;
+        currentOp = op.op;
         let weight = op.weight();
         newLayer(op.op);
         op.prepare(ops, (progress, message) => {
