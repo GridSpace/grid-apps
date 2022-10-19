@@ -5,6 +5,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.6
 
+* add new Carvera machine target in CAM mode with laser support
 * add laser output operators and device settings in CAM mode
 * add fullscreen option. button next to user profile
 * mobile pinch zoom and layer slider usability improvements
