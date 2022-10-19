@@ -120,26 +120,23 @@ function prepEach(widget, settings, print, firstPoint, update) {
             };
         }) : zmax;
 
-    newOutput.push(layerOut);
-
-    function newLayer() {
-        if (layerOut.length < 2) {
-            return;
+    function newLayer(op) {
+        if (layerOut.length || layerOut.mode) {
+            newOutput.push(layerOut);
         }
-        newOutput.push(layerOut);
         layerOut = [];
-        layerOut.mode = lastMode;
+        layerOut.mode = op || lastMode;
         layerOut.spindle = spindle;
     }
 
     function addGCode(text) {
-        if (!text || text.length === 0) {
+        if (!text && text.length) {
             return;
         }
-        if (Array.isArray(text)) {
-            text = text.join('\r\n');
+        if (!Array.isArray(text)) {
+            text = text.trim().split('\n');
         }
-        newOutput.push(text);
+        newOutput.push([{ gcode: text }]);
         if (layerOut.length) {
             layerOut = [];
             layerOut.mode = lastMode;
@@ -423,10 +420,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
     for (let op of widget.camops) {
         setTolerance(0);
         nextIsMove = true;
-        lastMode = op.op.type;
+        lastMode = op.op;
         let weight = op.weight();
-        newLayer();
-        layerOut.push({ op: op.op });
+        newLayer(op.op);
         op.prepare(ops, (progress, message) => {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);
         });

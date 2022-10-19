@@ -105,7 +105,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         process.beltAnchor = Math.max(
             process.firstLayerBeltLead,
             Math.sqrt(process.outputPurgeTower) * extruders.length * (1/Math.sqrt(2)));
-    } else {
+    } else if (isBelt) {
         process.beltAnchor = process.firstLayerBeltLead;
     }
 

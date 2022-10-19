@@ -141,8 +141,8 @@ async function path(levels, update, opts = {}) {
         let emits = 0;
 
         level.forEach(out => {
-            // skip cam op records
-            if (out.op) {
+            // skip cam gcode records
+            if (out.gcode) {
                 return;
             }
             if (retracted && out.emit) {

@@ -160,7 +160,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
 
     let opList = [
         // silently preface op list with OpShadow
-        new CAM.OPS.shadow(state, { type: "shadow" })
+        new CAM.OPS.shadow(state, { type: "shadow", silent: true })
     ];
 
     if (false) {
