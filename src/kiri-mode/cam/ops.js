@@ -56,6 +56,7 @@ class OpLaserOn extends CamOp {
     prepare(ops, progress) {
         ops.addGCode(this.op.enable);
         ops.setLasering(true, this.op.power);
+        ops.newLayer();
     }
 }
 
@@ -67,6 +68,7 @@ class OpLaserOff extends CamOp {
     prepare(ops, progress) {
         ops.addGCode(this.op.disable);
         ops.setLasering(false);
+        ops.newLayer();
     }
 }
 

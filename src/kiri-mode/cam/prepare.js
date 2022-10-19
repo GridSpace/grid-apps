@@ -120,6 +120,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
             };
         }) : zmax;
 
+    newOutput.push(layerOut);
+
     function newLayer() {
         if (layerOut.length < 2) {
             return;
@@ -133,6 +135,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
     function addGCode(text) {
         if (!text || text.length === 0) {
             return;
+        }
+        if (Array.isArray(text)) {
+            text = text.join('\r\n');
         }
         newOutput.push(text);
         if (layerOut.length) {
@@ -420,7 +425,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         nextIsMove = true;
         lastMode = op.op.type;
         let weight = op.weight();
-        layerOut.push({ op });
+        newLayer();
+        layerOut.push({ op: op.op });
         op.prepare(ops, (progress, message) => {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);
         });

@@ -2,8 +2,8 @@
     "mode": "CAM",
     "internal": 0,
     "bedHeight": 2.5,
-    "bedWidth": 300,
-    "bedDepth": 300,
+    "bedWidth": 360,
+    "bedDepth": 240,
     "originCenter": false,
     "spindleMax": 12000,
     "gcodePre": [

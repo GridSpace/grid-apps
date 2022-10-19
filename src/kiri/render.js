@@ -203,6 +203,11 @@ async function path(levels, update, opts = {}) {
             lastOut = out;
         });
 
+        if (!lastOut) {
+            // laser levels alone
+            return;
+        }
+
         lastEnd = lastOut;
 
         // all moves with an emit at the very end (common in contouring)

@@ -494,7 +494,6 @@ CAM.init = function(kiri, api) {
     });
 
     func.opGCode = (label, field = 'gcode') => {
-console.log({label});
         API.dialog.show('any');
         const { c_gcode } = h.bind(
             $('mod-any'), h.div({ id: "camop_dialog" }, [
@@ -506,9 +505,10 @@ console.log({label});
                 } })
             ])
         );
-        c_gcode.value = poppedRec[field] || '';
+        let av = poppedRec[field] || [];
+        c_gcode.value = typeof(av) === 'string' ? av : av.join('\n');
         c_gcode.onkeyup = (el) => {
-            poppedRec[field] = c_gcode.value;
+            poppedRec[field] = c_gcode.value.trim().split('\n');
         };
         c_gcode.focus();
     };

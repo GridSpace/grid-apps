@@ -54,6 +54,7 @@ CAM.export = function(print, online) {
         point,
         points = 0,
         lasering = false,
+        laserOp,
         currentOp,
         stock = settings.stock || { },
         hasStock = spro.camStockOn && stock.x && stock.y && stock.z,
@@ -167,17 +168,21 @@ CAM.export = function(print, online) {
             pos.t = out.tool;
             consts.tool = pos.t;
             consts.tool_name = toolNameByNumber(out.tool);
-            filterEmit(cmdToolChange, { ...consts, spindle: newSpindle } );
+            if (!lasering) {
+                filterEmit(cmdToolChange, { ...consts, spindle: newSpindle } );
+            }
         }
 
         // on spindle change (deferred from layer transition so it's post-toolchange)
         if ((changeTool && spindleMax) || (newSpindle && newSpindle !== spindle)) {
             spindle = newSpindle;
-            if (spindle > 0) {
-                let speed = Math.abs(spindle);
-                filterEmit(cmdSpindle, { speed, spindle: speed, rpm: speed });
-            } else {
-                append("M4");
+            if (!lasering) {
+                if (spindle > 0) {
+                    let speed = Math.abs(spindle);
+                    filterEmit(cmdSpindle, { speed, spindle: speed, rpm: speed });
+                } else {
+                    append("M4");
+                }
             }
         }
 
@@ -250,7 +255,7 @@ CAM.export = function(print, online) {
 
         if (!lasering && laser) {
             // enable laser
-            filterEmit(currentOp.camLaserOn, consts);
+            filterEmit(laserOp.on, consts);
         }
 
         // if (laser && pos.emit !== out.emit) {
@@ -264,7 +269,7 @@ CAM.export = function(print, online) {
 
         if (lasering && !laser) {
             // disable laser
-            filterEmit(currentOp.camLaserOff, consts);
+            filterEmit(laserOp.off, consts);
         }
 
         // update lasering state
@@ -302,14 +307,21 @@ CAM.export = function(print, online) {
     let toolz = {}, ctool;
     // remap points as necessary for origins, offsets, inversions
     print.output.forEach(function(layer) {
-        if (layer.op) {
-            console.log({ op: layer.op });
-            return;
-        }
         if (!Array.isArray(layer)) {
             return;
         }
         layer.forEach(function(out) {
+            if (out.op) {
+                if (out.op.type === 'laser on') {
+                    laserOp = out.op;
+                    // lasering = true;
+                    // console.log('laser on');
+                } else if (out.op.type === 'laser off') {
+                    // lasering = false;
+                    // console.log('laser off');
+                }
+                return;
+            }
             if (out.tool && out.tool !== ctool) {
                 ctool = toolByNumber(out.tool);
                 toolz[out.tool] = ctool;
@@ -354,7 +366,7 @@ CAM.export = function(print, online) {
             if (mode) {
                 section(`op-${opnum++}-${mode}`);
             }
-            if (!stripComments) {
+            if (!stripComments && mode) {
                 append("; starting " + mode + " op");
             }
         }
