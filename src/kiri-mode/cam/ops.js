@@ -54,7 +54,9 @@ class OpLaserOn extends CamOp {
     }
 
     prepare(ops, progress) {
+        const { printPoint, setPrintPoint, setTool, zmax, camOut } = ops;
         this.op.silent = true;
+        setTool(0);
         ops.addGCode(this.op.enable);
         ops.setLasering(true, this.op.power);
     }

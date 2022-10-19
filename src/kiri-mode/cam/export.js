@@ -147,7 +147,7 @@ CAM.export = function(print, online) {
         return "unknown";
     }
 
-    function moveTo(out) {
+    function moveTo(out, opt = {}) {
         let laser = out.type === 'laser';
         let newpos = out.point;
 
@@ -190,18 +190,24 @@ CAM.export = function(print, online) {
             }
         }
 
-        // first point out sets the current position (but not Z)
-        // hacky AF way to split initial x,y,z into z then x,y
+        // split first move to X,Y then Z for that new location
+        // safety to prevent tool crashing
         if (points === 0) {
             pos.x = pos.y = pos.z = 0;
             points++;
             moveTo({
+                // speed: Infinity,
                 tool: out.tool,
-                point: { x: 0, y: 0, z: newpos.z }
+                point: { x: newpos.x, y: newpos.y, z: pos.z }
+            }, {
+                dx: 1, dy: 1, dz: 0, time: 0
             });
             moveTo({
+                // speed: Infinity,
                 tool: out.tool,
                 point: { x: newpos.x, y: newpos.y, z: newpos.z }
+            }, {
+                dx: 0, dy: 0, dz: 1, time: 0
             });
             points--;
             return;
@@ -209,9 +215,9 @@ CAM.export = function(print, online) {
 
         let speed = out.speed,
             nl = [speed ? 'G1' : 'G0'],
-            dx = newpos.x - pos.x,
-            dy = newpos.y - pos.y,
-            dz = newpos.z - pos.z,
+            dx = opt.dx || newpos.x - pos.x,
+            dy = opt.dy || newpos.y - pos.y,
+            dz = opt.dz || newpos.z - pos.z,
             maxf = dz ? maxZd : maxXYd,
             feed = Math.min(speed || maxf, maxf),
             dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
@@ -222,19 +228,19 @@ CAM.export = function(print, online) {
             return;
         }
 
-        if (newpos.x !== pos.x) {
+        if (dx || newpos.x !== pos.x) {
             pos.x = newpos.x;
             runbox.min.x = Math.min(runbox.min.x, pos.x);
             runbox.max.x = Math.max(runbox.max.x, pos.x);
             nl.append(space).append("X").append(add0(pos.x * factor));
         }
-        if (newpos.y !== pos.y) {
+        if (dy || newpos.y !== pos.y) {
             pos.y = newpos.y;
             runbox.min.y = Math.min(runbox.min.y, pos.y);
             runbox.max.y = Math.max(runbox.max.y, pos.y);
             nl.append(space).append("Y").append(add0(pos.y * factor));
         }
-        if (newpos.z !== pos.z) {
+        if (dz || newpos.z !== pos.z) {
             pos.z = newpos.z;
             runbox.min.z = Math.min(runbox.min.z, pos.z);
             runbox.max.z = Math.max(runbox.max.z, pos.z);
@@ -280,7 +286,7 @@ CAM.export = function(print, online) {
         lasering = laser;
 
         // update time calculation
-        time += (dist / (pos.f || 1000)) * 60;
+        time += opt.time >= 0 ? opt.time : (dist / (pos.f || 1000)) * 60;
 
         // if (comment && !stripComments) {
         //     nl.append(" ; ").append(comment);
