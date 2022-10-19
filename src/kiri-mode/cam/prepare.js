@@ -150,7 +150,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
     }
 
     function setPrintPoint(point) {
-        printPoint = point;
+        ops.printPoint = printPoint = point;
     }
 
     function setSpindle(speed) {
@@ -272,7 +272,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 }
             }
             if (lasering.flat) {
-                point.z = lasering.flatz;
+                point.z = (stock && stock.z ? stock.z : wztop) + lasering.flatz;
             }
             print.addOutput(layerOut, point, power, speed, tool, 'laser');
         } else {

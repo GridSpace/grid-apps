@@ -66,9 +66,11 @@ class OpLaserOff extends CamOp {
     }
 
     prepare(ops, progress) {
+        const { printPoint, zmax, camOut } = ops;
         this.op.silent = true;
         ops.addGCode(this.op.disable);
         ops.setLasering(false);
+        camOut(printPoint.clone().setZ(zmax), 0);
     }
 }
 
