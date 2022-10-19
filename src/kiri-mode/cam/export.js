@@ -264,7 +264,7 @@ CAM.export = function(print, online) {
 
         // if (laser && pos.emit !== out.emit) {
         if (laser) {
-            nl.append(space).append(`S${out.emit}`);
+            nl.append(space).append(`S${add0(out.emit)}`);
         }
 
         if (laser) {
