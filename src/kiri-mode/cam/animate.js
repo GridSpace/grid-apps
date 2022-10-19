@@ -177,6 +177,7 @@ kiri.load(() => {
         if (steps !== 1) {
             playButton.style.display = 'none';
             pauseButton.style.display = '';
+            $('render-hide').onclick();
         }
         kiri.client.animate({
             speed,
@@ -190,6 +191,7 @@ kiri.load(() => {
         updateSpeed(1);
         playButton.style.display = 'none';
         pauseButton.style.display = '';
+        $('render-hide').onclick();
         kiri.client.animate({
             speed,
             steps: steps || Infinity,
@@ -408,7 +410,12 @@ kiri.load(() => {
             return;
         }
 
-        const next = path[pathIndex];
+        let next = path[pathIndex];
+        while (next && next.type === 'laser') {
+            last = next;
+            next = path[++pathIndex];
+        }
+
         if (!next) {
             animating = false;
             renderPath(send);
@@ -418,7 +425,7 @@ kiri.load(() => {
 
         if (next.tool >= 0 && (!tool || tool.getNumber() !== next.tool)) {
             // on real tool change, go to safe Z first
-            if (tool) {
+            if (tool && last.point) {
                 let pos = last.point = {
                     x: last.point.x,
                     y: last.point.y,
@@ -435,7 +442,7 @@ kiri.load(() => {
             const lp = last.point, np = next.point;
             last = next;
             // dwell ops have no point
-            if (!np) {
+            if (!np || !lp) {
                 return renderPath(send);
             }
             const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;

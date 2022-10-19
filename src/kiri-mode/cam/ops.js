@@ -460,7 +460,7 @@ class OpOutline extends CamOp {
         let shadow = [];
         let slices = [];
         let intopt = {
-            down: true, min: zBottom, fit: true, off: 0.01,
+            down: true, min: Math.max(0, zBottom), fit: true, off: 0.01,
             max: op.top ? zMax + ztOff : undefined
         };
         let indices = slicer.interval(op.down, intopt);
