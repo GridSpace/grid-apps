@@ -1291,15 +1291,15 @@ CAM.init = function(kiri, api) {
         off:     UC.newRow([ UC.newButton(LANG.off, editOff) ], {class:"ext-buttons f-row"}),
         sep:     UC.newBlank({class:"pop-sep"}),
         power:   UC.newInput(LANG.cl_powr_s, {title:LANG.cl_powr_l, convert:UC.toFloat, bound:UC.bound(0,1.0), show:() => !poppedRec.adapt}),
-        flatz:   UC.newInput(LANG.cl_flaz_s, {title:LANG.cl_flaz_l, convert:UC.toFloat, show:() => poppedRec.flat}),
-        minp:    UC.newInput(LANG.cl_minp_s, {title:LANG.cl_minp_l, convert:UC.toFloat, bound:UC.bound(0,1.0), show:() => poppedRec.adapt}),
         maxp:    UC.newInput(LANG.cl_maxp_s, {title:LANG.cl_maxp_l, convert:UC.toFloat, bound:UC.bound(0,1.0), show:() => poppedRec.adapt}),
-        minz:    UC.newInput(LANG.cl_minz_s, {title:LANG.cl_minz_l, convert:UC.toFloat, show:() => poppedRec.adapt}),
+        minp:    UC.newInput(LANG.cl_minp_s, {title:LANG.cl_minp_l, convert:UC.toFloat, bound:UC.bound(0,1.0), show:() => poppedRec.adapt}),
         maxz:    UC.newInput(LANG.cl_maxz_s, {title:LANG.cl_maxz_l, convert:UC.toFloat, show:() => poppedRec.adapt}),
+        minz:    UC.newInput(LANG.cl_minz_s, {title:LANG.cl_minz_l, convert:UC.toFloat, show:() => poppedRec.adapt}),
+        flatz:   UC.newInput(LANG.cl_flaz_s, {title:LANG.cl_flaz_l, convert:UC.toFloat, show:() => poppedRec.flat}),
         sep:     UC.newBlank({class:"pop-sep"}),
         adapt:   UC.newBoolean(LANG.cl_adap_s, undefined, {title:LANG.cl_adap_l}),
         adaptrp: UC.newBoolean(LANG.cl_adrp_s, undefined, {title:LANG.cl_adrp_l, show:() => poppedRec.adapt}),
-        flat:    UC.newBoolean(LANG.cl_flat_s, undefined, {title:LANG.cl_flat_l}),
+        flat:    UC.newBoolean(LANG.cl_flat_s, undefined, {title:LANG.cl_flat_l }),
     };
 
     const editDisable = gcodeEditor('Laser Disable Script', 'disable');

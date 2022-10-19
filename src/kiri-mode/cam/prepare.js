@@ -265,7 +265,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     return point;
                 }
                 z -= minz;
-                power = minp + (z / deltaz) * (maxp - minp);
+                if (minp < maxp) {
+                    power = minp + (z / deltaz) * (maxp - minp);
+                } else {
+                    power = minp - (z / deltaz) * (minp - maxp);
+                }
             }
             if (lasering.flat) {
                 point.z = lasering.flatz;
