@@ -2374,7 +2374,12 @@ gapp.register("kiri.init", [], (root, exports) => {
         };
 
         $('app-xpnd').onclick = () => {
-            DOC.body.requestFullscreen();
+            try {
+                DOC.body.requestFullscreen();
+            } catch (e) {
+                event.emit('resize');
+                moto.space.event.onResize();
+            }
         };
 
         let hpops = [];
