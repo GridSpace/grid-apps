@@ -373,7 +373,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // set new plunge rate
-        if (deltaZ < -tolerance) {
+        if (!lasering && deltaZ < -tolerance) {
             let threshold = Math.min(deltaXY / 2, absDeltaZ),
                 modifier = threshold / absDeltaZ;
             if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
