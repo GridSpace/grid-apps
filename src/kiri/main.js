@@ -532,6 +532,17 @@ gapp.register("kiri.main", [], (root, exports) => {
     }
 
     function loadFile() {
+        // use modern Filesystem api when available
+        if (window.showOpenFilePicker) {
+            window.showOpenFilePicker().then(files => {
+                return Promise.all(files.map(fh => fh.getFile()))
+            }).then(files => {
+                if (files.length) {
+                    api.platform.load_files(files);
+                }
+            }).catch(e => { /* ignore cancel */ });
+            return;
+        }
         const button = $('load-file');
         button.onchange = function(event) {
             console.log(event);
