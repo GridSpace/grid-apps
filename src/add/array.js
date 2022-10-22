@@ -156,6 +156,10 @@ AP.toFloat32 = function() {
     return new Float32Array(this);
 };
 
+AP.toUint32 = function() {
+    return Uint32Array.from(this);
+};
+
 AP.forEachPair = function(fn, incr) {
     let scope = this,
         idx = 0,

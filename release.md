@@ -3,7 +3,9 @@
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
 
-# Release 3.6
+# Release 3.6 (2022-10-22)
+
+## Kiri:Moto
 
 * add new Carvera machine target in CAM mode with laser support
 * add laser output operators and device settings in CAM mode
@@ -26,7 +28,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.5 (2022-10-07)
 
-## Kiri:moto
+## Kiri:Moto
 
 * add optional service workers and manifest to support full PWA + install
 * add support to run as Progressive Web Apps for installation and offline use
@@ -56,7 +58,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.4 (2022-05-14)
 
-## Kiri:moto
+## Kiri:Moto
 
 * added batch processing to object adds/removes to speedup complex workspace restore
 * substitute some prusa slicer [variables] with KM {variables} on import

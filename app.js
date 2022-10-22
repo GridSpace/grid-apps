@@ -228,6 +228,7 @@ function init(mod) {
 
     mod.add(handleSetup);
     mod.add(handleOptions);
+    mod.add(handleWasm);
     mod.add(fullpath({
         "/kiri"            : redir("/kiri/", 301),
         "/mesh"            : redir("/mesh/", 301),
@@ -239,7 +240,7 @@ function init(mod) {
     mod.add(handleVersion);
     mod.add(prepath([
         [ "/code/", handleCode ],
-        [ "/wasm/", handleWasm ]
+        // [ "/wasm/", handleWasm ]
     ]));
     mod.add(fixedmap("/api/", api));
     if (debug) {
@@ -499,12 +500,12 @@ function handleOptions(req, res, next) {
 }
 
 function handleWasm(req, res, next) {
-    let [root, file] = req.app.path.split('/').slice(1);
+    let file = req.app.path.split('/').pop();
     let ext = (file || '').split('.')[1];
     let path = `${dir}/src/wasm/${file}`;
     let mod = lastmod(path);
 
-    if (root === 'wasm' && ext === 'wasm' && mod) {
+    if (ext === 'wasm' && mod) {
         let imd = ifModifiedDate(req);
         if (imd && mod <= imd) {
             res.writeHead(304, "Not Modified");

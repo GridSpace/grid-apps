@@ -121,25 +121,27 @@ mesh.model = class MeshModel extends mesh.object {
 
     // override and translate mesh
     move(x = 0, y = 0, z = 0) {
-        let arr = this.attributes.position.array;
+        let attr = this.attributes;
+        let arr = attr.position.array;
         for (let i=0, l=arr.length; i<l; ) {
             arr[i] = arr[i++] + x;
             arr[i] = arr[i++] + y;
             arr[i] = arr[i++] + z;
         }
-        this.reload(arr);
+        this.reload(arr, attr.index ? attr.index.array : undefined);
         return this;
     }
 
     // override and translate mesh
     scale(x = 1, y = 1, z = 1) {
-        let arr = this.attributes.position.array;
+        let attr = this.attributes;
+        let arr = attr.position.array;
         for (let i=0, l=arr.length; i<l; ) {
             arr[i] = arr[i++] *= x;
             arr[i] = arr[i++] *= y;
             arr[i] = arr[i++] *= z;
         }
-        this.reload(arr);
+        this.reload(arr, attr.index ? attr.index.array : undefined);
         return this;
     }
 
@@ -198,7 +200,10 @@ mesh.model = class MeshModel extends mesh.object {
             geo.setIndex(new BufferAttribute(indices, 1));
             geo = geo.toNonIndexed();
         }
-        if (!normals) geo.computeVertexNormals();
+        if (!normals) {
+            geo.computeVertexNormals();
+        }
+
         let meh = this.mesh = new Mesh(geo, [
             this.mats.normal,
             this.mats.face
@@ -217,11 +222,14 @@ mesh.model = class MeshModel extends mesh.object {
         worker.model_load({id: this.id, name: this.file, vertices});
     }
 
-    reload(vertices) {
+    reload(vertices, indices) {
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
         geo.setAttribute('normal', undefined);
+        if (indices) {
+            geo.setIndex(new BufferAttribute(indices, 1));
+        }
         // signal util.box3expand that geometry changed
         geo._model_invalid = true;
         geo.computeVertexNormals();
