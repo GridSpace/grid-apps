@@ -739,6 +739,7 @@ const conf = exports({
         },
         // label state preferences
         labels: {
+            'CAM-3-arrows': false,
             'FDM-3-engage': false,
             'FDM-3-retract': false,
             'FDM-3-arrows': false,
