@@ -29,7 +29,6 @@
         "connect": "^3.7.0",
         "earcut": "^2.2.3",
         "express-useragent": "^1.0.13",
-        "@jscad/modeling": "^2.9.5",
         "jszip": "^3.7.1",
         "moment": "^2.24.0",
         "pixi.js": "^4.8.9",
@@ -38,5 +37,11 @@
         "uglify-js": "3.14.5",
         "validator": ">=13.7.0",
         "ws": "^7.5.5"
+    },
+    "devDependencies": {
+        "@gridspace/app-server": "^0.0.7"
+    },
+    "scripts": {
+        "postinstall": "bin/npm-post"
     }
 }
