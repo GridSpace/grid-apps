@@ -34,7 +34,7 @@ const CSG = {
             throw "missing one or more meshes";
         }
         const result = Module[op](...args);
-        const output = result.getMesh({ mode: 2 });
+        const output = result.getMesh({ normal: () => undefined });
         const errors = [ ...args, result ].map(m => m.status().value);
         for (let m of [ ...args, result ]) {
             m.delete();
@@ -47,26 +47,36 @@ const CSG = {
 
     toPositionArray(mesh) {
         const { vertPos, triVerts, vertex, index } = mesh;
-        if (vertex) {
-            return vertex;
+        if (vertex && index) {
+            const vertices = new Float32Array(index.length * 3);
+            for (let p=0, i=0, l=index.length; i<l; i++) {
+                let vi = index[i] * 3;
+                vertices[p++] = vertex[vi++];
+                vertices[p++] = vertex[vi++];
+                vertices[p++] = vertex[vi++];
+            }
+            return vertices;
         }
-        const vertices = new Float32Array(triVerts.length * 9);
-        for (let i = 0, t = 0, l = triVerts.length; t < l; t++) {
-            let tri = triVerts[t];
-            let vert = vertPos[tri[0]]; // X
-            vertices[i++] = vert[0];
-            vertices[i++] = vert[1];
-            vertices[i++] = vert[2];
-            vert = vertPos[tri[1]]; // Y
-            vertices[i++] = vert[0];
-            vertices[i++] = vert[1];
-            vertices[i++] = vert[2];
-            vert = vertPos[tri[2]]; // Z
-            vertices[i++] = vert[0];
-            vertices[i++] = vert[1];
-            vertices[i++] = vert[2];
+        if (vertPos && triVerts) {
+            const vertices = new Float32Array(triVerts.length * 9);
+            for (let i = 0, t = 0, l = triVerts.length; t < l; t++) {
+                let tri = triVerts[t];
+                let vert = vertPos[tri[0]]; // X
+                vertices[i++] = vert[0];
+                vertices[i++] = vert[1];
+                vertices[i++] = vert[2];
+                vert = vertPos[tri[1]]; // Y
+                vertices[i++] = vert[0];
+                vertices[i++] = vert[1];
+                vertices[i++] = vert[2];
+                vert = vertPos[tri[2]]; // Z
+                vertices[i++] = vert[0];
+                vertices[i++] = vert[1];
+                vertices[i++] = vert[2];
+            }
+            return vertices;
         }
-        return vertices;
+        throw "mesh missing required fields";
     },
 
     fromPositionArray(pos) {
@@ -132,23 +142,17 @@ Module.onRuntimeInitialized = () => {
         console.log({
             c,
             cm: c.getMesh(),
-            cm0: c.getMesh({ normal: false, mode: 0 }),
-            cm1: c.getMesh({ normal: false, mode: 1 }),
-            cm2: c.getMesh({ normal: false, mode: 2 }),
-            cmn0: c.getMesh({ normal: true, mode: 0 }),
-            cmn1: c.getMesh({ normal: true, mode: 1 }),
-            cmn2: c.getMesh({ normal: true, mode: 2 })
+            cmd: c.getMesh({ normal: () => undefined }),
+            cmdn: c.getMesh({})
         });
 
-        let l = 5000;
+        let l = 1000;
         let s = Module.sphere(10, 100);
         let sm = s.getMesh();
         console.log({
             s,
             sm,
-            md0: s.getMesh({ mode: 0 }),
-            md1: s.getMesh({ mode: 1 }),
-            md2: s.getMesh({ mode: 2 }),
+            smd: s.getMesh({}),
         });
 
         console.time('getMesh');
@@ -156,15 +160,11 @@ Module.onRuntimeInitialized = () => {
         console.timeEnd('getMesh');
 
         console.time(`getMeshDirect`);
-        for (let i=0; i<l; i++) s.getMesh({ mode: 0 });
+        for (let i=0; i<l; i++) s.getMesh({ normal: () => undefined });
         console.timeEnd(`getMeshDirect`);
 
         console.time(`getMeshDirect`);
-        for (let i=0; i<l; i++) s.getMesh({ mode: 1 });
-        console.timeEnd(`getMeshDirect`);
-
-        console.time(`getMeshDirect`);
-        for (let i=0; i<l; i++) s.getMesh({ mode: 2 });
+        for (let i=0; i<l; i++) s.getMesh({});
         console.timeEnd(`getMeshDirect`);
     }
 };
