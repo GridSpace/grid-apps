@@ -428,6 +428,11 @@ const tool = {
                 mesh: data
             })]).promote();
             api.selection.set([group]);
+        })
+        .catch(error => {
+            api.log.emit(`intersect error: ${error}`);
+        })
+        .finally(() => {
             api.log.emit('intersect complete').unpin();
         });
     },
@@ -447,6 +452,11 @@ const tool = {
                 mesh: data
             })]).promote();
             api.selection.set([group]);
+        })
+        .catch(error => {
+            api.log.emit(`subtract error: ${error}`);
+        })
+        .finally(() => {
             api.log.emit('subtract complete').unpin();
         });
     },

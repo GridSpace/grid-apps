@@ -13,9 +13,27 @@ const CSG = {
 
     // accepts 2 or more arguments with threejs vertex position arrays
     union() {
-        mesh.log(`manifold.union ${arguments.length} meshes`);
-        const args = [...arguments].map(a => new Module.Manifold(a));
-        const result = Module.union(...args);
+        return CSG.moduleOp('manifold.union', 'union', ...arguments);
+    },
+
+    // accepts 2 or more arguments with threejs vertex position arrays
+    // the fist argument is the target mesh. the rest are negatives
+    subtract() {
+        return CSG.moduleOp('manifold.subtract', 'difference', ...arguments);
+    },
+
+    // accepts 2 or more arguments with threejs vertex position arrays
+    intersect() {
+        return CSG.moduleOp('manifold.intersect', 'intersection', ...arguments);
+    },
+
+    moduleOp(name, op) {
+        mesh.log(`${name} ${arguments.length} meshes`);
+        const args = [...arguments].slice(2).map(a => new Module.Manifold(a));
+        if (args.length < 2) {
+            throw "missing one or more meshes";
+        }
+        const result = Module[op](...args);
         const output = result.getMesh({ mode: 2 });
         const errors = [ ...args, result ].map(m => m.status().value);
         for (let m of [ ...args, result ]) {
@@ -23,31 +41,6 @@ const CSG = {
         }
         if (errors.reduce((a,b) => a+b)) {
             throw `${errors}`;
-        }
-        return output;
-    },
-
-    // accepts 2 or more arguments with threejs vertex position arrays
-    // the fist argument is the target mesh. the rest are negatives
-    subtract() {
-        mesh.log(`manifold.subtract ${arguments.length} meshes`);
-        const args = [...arguments].map(a => new Module.Manifold(a));
-        const result = Module.difference(...args);
-        const output = result.getMesh({ mode: 2 });
-        for (let m of [ ...args, result ]) {
-            m.delete();
-        }
-        return output;
-    },
-
-    // accepts 2 or more arguments with threejs vertex position arrays
-    intersect() {
-        mesh.log(`manifold.intersect ${arguments.length} meshes`);
-        const args = [...arguments].map(a => new Module.Manifold(a));
-        const result = Module.intersection(...args);
-        const output = result.getMesh({ mode: 2 });
-        for (let m of [ ...args, result ]) {
-            m.delete();
         }
         return output;
     },
