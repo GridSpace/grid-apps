@@ -413,7 +413,7 @@ function space_init(data) {
                     const { x, y, z } = int.point;
                     const q = new Quaternion().setFromRotationMatrix(group.object.matrix);
                     // rotate normal using group's matrix
-                    const normal = int.face.normal.applyQuaternion(q);
+                    const normal = shiftKey ? int.face.normal.applyQuaternion(q) : undefined;
                     // y,z swap due to world rotation for orbit controls
                     api.focus({center: { x, y:-z, z:y }, normal});
                 } else if (ctrlKey) {
