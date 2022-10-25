@@ -485,6 +485,11 @@ CAM.init = function(kiri, api) {
                     }
                 };
                 el.ontouchmove = onDown;
+                el.onmouseenter = (ev) => {
+                    el.onmousedown = onDown;
+                    el.onmouseleave = onLeave;
+                    onEnter(ev);
+                };
             } else {
                 el.onmousedown = onDown;
                 el.onmouseenter = onEnter;
