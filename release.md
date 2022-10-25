@@ -2,6 +2,10 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
+# Release 3.7
+
+* replace jscad/modeling with Manifold project for faster mesh boolean
+
 
 # Release 3.6 (2022-10-22)
 

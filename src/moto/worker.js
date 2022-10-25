@@ -84,7 +84,9 @@ const dispatch = exports({
                     send.done(data);
                 }
             } catch (error) {
-                console.trace(error.stack);
+                if (error.stack) {
+                    console.trace(error.stack);
+                }
                 send.error(error.toString());
                 // dispatch.send({ data: {error: error.toString()}, done: true });
             }

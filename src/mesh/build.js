@@ -126,11 +126,11 @@ const log = api.log = {
 
     lines: 20,  // max log lines before forced-age out
 
-    emit(msg) {
+    emit() {
         let { age, data, lines, render } = log;
         let now = Date.now();
         data.push({
-            text: `${dbug.since()} | ${msg}`,
+            text: `${dbug.since()} | ${[...arguments].join(' ')}`,
             time: now
         });
         if (api.isDebug) {

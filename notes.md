@@ -119,10 +119,10 @@
 # Mesh:Tool
 
 * add undo/redo
+* click to repair normals based on a known good (selected) face
 * send to Kiri:Moto workspace (or update model vertices in place)
 * better z snap using just vertexes from face intersected
 * add section view. local clip. raycast skip points above plane
-* add isolate op = separate bodies
 * add decimate op = face reduction
 * add flatten/crush op: for z bottoms (or surfaces?)
 * allow setting model/group origin for scale/rotate

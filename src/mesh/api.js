@@ -404,6 +404,11 @@ const tool = {
                 mesh: data
             })]).promote();
             api.selection.set([group]);
+        })
+        .catch(error => {
+            api.log.emit(`union error: ${error}`);
+        })
+        .finally(() => {
             api.log.emit('union complete').unpin();
         });
     },
