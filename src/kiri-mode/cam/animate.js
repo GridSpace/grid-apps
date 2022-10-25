@@ -469,8 +469,10 @@ kiri.load(() => {
             renderMoves(id, moves, send);
         } else {
             last = next;
-            tool.pos = next.point;
-            toolUpdate = { mesh_move: { id, pos: next.point }};
+            if (tool) {
+                tool.pos = next.point;
+                toolUpdate = { mesh_move: { id, pos: next.point }};
+            }
             renderPath(send);
         }
     }
