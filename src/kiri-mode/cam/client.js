@@ -477,7 +477,9 @@ CAM.init = function(kiri, api) {
                 }
             }
             if (moto.space.info.mob) {
+                let touched = false;
                 el.ontouchstart = (ev) => {
+                    touched = true;
                     if (poppedRec === rec && popped) {
                         onLeave(ev);
                     } else {
@@ -486,6 +488,12 @@ CAM.init = function(kiri, api) {
                 };
                 el.ontouchmove = onDown;
                 el.onmouseenter = (ev) => {
+                    if (touched) {
+                        // touches block mouse events on touchscreen PCs
+                        // which are often sent along with touch events
+                        // but when not touched, allow the mouse to work
+                        return;
+                    }
                     el.onmousedown = onDown;
                     el.onmouseleave = onLeave;
                     onEnter(ev);
