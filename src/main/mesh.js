@@ -104,14 +104,21 @@ function restore_space() {
             }
         });
     mesh.db.space.iterate({ map: true }).then(cached => {
+        const keys = [];
+        const claimed = [];
         for (let [id, data] of Object.entries(cached)) {
+            keys.push(id);
             if (count++ === 0) {
                 mesh.api.log.emit(`restoring workspace`);
             }
             // restore group
             if (Array.isArray(data)) {
+                claimed.push(id);
                 let models = data
-                    .map(id => { return { id, md: cached[id] } })
+                    .map(id => {
+                        claimed.push(id);
+                        return { id, md: cached[id] }
+                    })
                     .filter(r => r.md) // filter cache misses
                     .map(r => new mesh.model(r.md, r.id).applyMatrix(mcache[r.id]));
                 if (models.length) {
@@ -122,6 +129,17 @@ function restore_space() {
                     mesh.db.space.remove(id);
                 }
             }
+        }
+        for (let id of claimed) {
+            keys.remove(id);
+        }
+        if (keys.length) {
+            mesh.api.log.emit(`removing ${keys.length} unclaimed meshes`);
+        }
+        // clear out meshes left in the space db along with their matrices
+        for (let id of keys) {
+            mesh.db.space.remove(id);
+            delete mcache[id];
         }
         // restore global cache only after objects are restored
         // otherwise their setup will corrupt the cache for other restores
