@@ -130,7 +130,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
     }
 
     function addGCode(text) {
-        if (!text && text.length) {
+        if (!(text && text.length)) {
             return;
         }
         if (!Array.isArray(text)) {
