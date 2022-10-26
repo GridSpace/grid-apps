@@ -417,6 +417,8 @@ self.kiri.lang['en-us'] = {
     sp_area_l:      ["minimum area for","a support column","in millimeters","smaller values will","slow detection"],
     sp_xpnd_s:      "expand",
     sp_xpnd_l:      ["expand support area","beyond part boundary","in millimeters"],
+    sp_grow_s:      "grow",
+    sp_grow_l:      ["grow support column to fill small gaps","in millimeters"],
     sp_nozl_s:      "extruder",
     sp_nozl_l:      ["in multi-extruder systems","the extruder to use for","support material"],
     sp_outl_s:      "outline",

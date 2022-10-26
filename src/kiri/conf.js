@@ -318,6 +318,7 @@ const conf = exports({
                 sliceSupportSize: 5,
                 sliceSupportArea: 0.1,
                 sliceSupportSpan: 5,
+                sliceSupportGrow: 0,
                 sliceSupportExtra: 0,
                 sliceSupportAngle: 50,
                 sliceSupportNozzle: 0,
