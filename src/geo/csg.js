@@ -142,6 +142,8 @@ Module.onRuntimeInitialized = () => {
     const ball_torture = false;
 
     if (tests) {
+        console.log('running Manifold tests');
+
         let c = Module.cube([1,1,1], true);
         console.log({
             c,
@@ -151,6 +153,8 @@ Module.onRuntimeInitialized = () => {
         });
 
         if (mesh_perf) {
+            console.log('running Manifold getMesh() benchmark');
+
             let l = 1000;
             let s = Module.sphere(10, 100);
             let sm = s.getMesh();
@@ -175,14 +179,19 @@ Module.onRuntimeInitialized = () => {
         }
 
         if (ball_torture) {
+            console.log('running Manifold ball torture test');
+
             console.time('ball test');
-            let ball = Module.sphere(25, 128);
+            let iter = 1; // increases final complexity (cpu + mem)
+            let maxBatch = 10; // increases memory pressure
+            let sphereDetail = 64; // higher # speeds up progression of complexity
+            let ball = Module.sphere(24, sphereDetail);
             let box = Module.cube([500, 500, 100], true);
             let deg2rad = Math.PI / 180;
             let z = 50;
             let rad = 250;
-            let iter = 4;
             let last = Date.now();
+            let batch = 0;
             for (let i=0; i<360*iter; i++) {
                 let x = Math.cos(deg2rad * i) * rad;
                 let y = Math.sin(deg2rad * i) * rad;
@@ -191,13 +200,20 @@ Module.onRuntimeInitialized = () => {
                 ball2.delete();
                 box.delete();
                 box = box2;
-                // box.getMesh();
-                // let { vertex } = box.getMesh({ normal: () => undefined });
-                let vertex = [];
-                let now = Date.now();
-                console.log((i/(iter*360)).toFixed(2), vertex.length, now - last); last = now;
-                rad -= 0.05;
-                z -= 0.1;
+                if (batch++ > maxBatch) {
+                    batch = 0;
+                    let nv = box.numVert();
+                    let now = Date.now();
+                    console.log(
+                        (i / (iter * 360)).toFixed(2), // % complete
+                        nv, // num vertices in target block
+                        now - last, // elapsed time for maxBatch boolean ops
+                        ((now - last) / maxBatch).toFixed(4) // time per boolean op
+                    );
+                    last = now;
+                }
+                rad -= 0.04;
+                z -= 0.08;
             }
             console.log(box.getMesh());
             ball.delete();
