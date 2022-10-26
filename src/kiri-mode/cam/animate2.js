@@ -2,16 +2,13 @@
 
 "use strict";
 
+// dep: geo.csg
 // dep: kiri-mode.cam.driver
-// dep: kiri-mode.cam.animate2
-gapp.register("kiri-mode.cam.animate", [], (root, exports) => {
+gapp.register("kiri-mode.cam.animate2", [], (root) => {
 
 const { kiri } = root;
 const { driver } = kiri;
 const { CAM } = driver;
-const asLines = false;
-const asPoints = false;
-const defer = true;
 
 let meshes = {},
     unitScale = 1,
@@ -25,13 +22,12 @@ let meshes = {},
     speed,
     color = 0,
     pauseButton,
-    playButton,
-    posOffset = { x:0, y:0, z:0 };
+    playButton;
 
 // ---( CLIENT FUNCTIONS )---
 
 kiri.load(() => {
-    if (!kiri.client || defer) {
+    if (!kiri.client) {
         return;
     }
 
@@ -77,6 +73,7 @@ kiri.load(() => {
             api.event.emit('animate', 'CAM');
             api.alerts.hide(alert);
             moto.space.platform.showGridBelow(false);
+            $('render-hide').onclick();
         });
     }
 
@@ -101,65 +98,36 @@ kiri.load(() => {
         animate_clear
     });
 
-    function meshAdd(id, ind, pos, sab) {
+    function meshAdd(id, ind, pos) {
         const geo = new THREE.BufferGeometry();
-        if (sab) {
-            // use array buffer shared with worker
-            pos = new Float32Array(sab);
-        }
+        // these arrive as shared array buffers
+        // pos = new Float32Array(pos);
+        // ind = new Uint32Array(ind);
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        if (ind.length) {
-            geo.setIndex(new THREE.BufferAttribute(new Uint32Array(ind), 1));
-        }
-        let mesh;
-        if (asPoints) {
-            const mat = new THREE.PointsMaterial({
-                transparent: true,
-                opacity: 0.75,
-                color: 0x888888,
-                size: 0.3
-            });
-            mesh = new THREE.Points(geo, mat);
-        } else if (asLines) {
-            const mat = new THREE.LineBasicMaterial({
-                transparent: true,
-                opacity: 0.75,
-                color
-            });
-            mesh = new THREE.LineSegments(geo, mat);
-        } else {
-            let shininess = 120,
-                specular = 0x202020,
-                emissive = 0x101010,
-                metalness = 0.2,
-                roughness = 0.8,
-                flatShading = true,
-                transparent = true,
-                opacity = 0.9,
-                color = 0x888888,
-                side = THREE.DoubleSide;
-            if (!flatShading) {
-                geo.computeVertexNormals();
-            }
-            const mat = new THREE.MeshMatcapMaterial({
-                flatShading,
-                transparent,
-                opacity,
-                color,
-                side
-            });
-            mesh = new THREE.Mesh(geo, mat);
-        }
+        geo.setIndex(new THREE.BufferAttribute(ind, 1));
+        const mat = new THREE.MeshMatcapMaterial({
+            flatShading: true,
+            transparent: true,
+            opacity: 0.9,
+            color: 0x888888,
+            side: THREE.DoubleSide
+        });
+        const mesh = new THREE.Mesh(geo, mat);
         space.world.add(mesh);
         meshes[id] = mesh;
     }
 
-    function meshUpdates(id) {
+    function meshUpdate(id, ind, pos) {
         const mesh = meshes[id];
         if (!mesh) {
             return; // animate cancelled
         }
-        mesh.geometry.attributes.position.needsUpdate = true;
+console.log({update: id, ind, pos});
+        const geo = mesh.geometry;
+        if (ind) geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        if (pos) geo.setIndex(new THREE.BufferAttribute(ind, 1));
+        geo.attributes.position.needsUpdate = true;
+        geo.index.needsUpdate = true;
         space.update();
     }
 
@@ -236,12 +204,9 @@ kiri.load(() => {
             return;
         }
         if (data.mesh_add) {
-            const { id, ind, pos, offset, sab } = data.mesh_add;
-            meshAdd(id, ind, pos, sab);
+            const { id, ind, pos } = data.mesh_add;
+            meshAdd(id, ind, pos);
             space.refresh();
-            if (offset) {
-                posOffset = offset;
-            }
         }
         if (data.mesh_del) {
             deleteMesh(data.mesh_del);
@@ -257,7 +222,7 @@ kiri.load(() => {
             }
         }
         if (data.mesh_update) {
-            meshUpdates(data.id);
+            meshUpdate(data.id, data.ind, data.pos);
         }
     }
 
@@ -266,12 +231,13 @@ kiri.load(() => {
 // ---( WORKER FUNCTIONS )---
 
 kiri.load(() => {
-    if (!kiri.worker || defer) {
+    if (!kiri.worker) {
         return;
     }
 
-    let stock, center, grid, gridX, gridY, rez;
+    let stock, center, rez;
     let path, pathIndex, tool, tools, last, toolID = 1;
+    let toolMesh, stockMesh;
 
     kiri.worker.animate_setup = function(data, send) {
         const { settings } = data;
@@ -279,26 +245,19 @@ kiri.load(() => {
         const print = worker.print;
         const density = parseInt(settings.controller.animesh) * 1000;
 
+        unitScale = settings.controller.units === 'in' ? 1/25.4 : 1;
         pathIndex = 0;
         path = print.output.flat();
         tools = settings.tools;
         stock = settings.stock;
-
         rez = 1/Math.sqrt(density/(stock.x * stock.y));
 
-        const step = rez;
-        const stepsX = Math.floor(stock.x / step);
-        const stepsY = Math.floor(stock.y / step);
-        const { pos, ind, sab } = createGrid(stepsX, stepsY, stock, step);
+        stockMesh = createStock(stock.x, stock.y, stock.z);
         const offset = {
             x: process.outputOriginCenter ? 0 : stock.x / 2,
             y: process.outputOriginCenter ? 0 : stock.y / 2,
             z: process.camOriginTop ? -stock.z : 0
         }
-
-        grid = pos;
-        gridX = stepsX;
-        gridY = stepsY;
 
         tool = null;
         last = null;
@@ -308,7 +267,8 @@ kiri.load(() => {
         center = Object.assign({}, stock.center);
         center.z -= stock.z / 2;
 
-        send.data({ mesh_add: { id: 0, ind, offset, sab } }, [ ]); // sab not transferrable
+        // shared array buffers are not transferrable
+        send.data({ mesh_add: { id: 0, ind: stockMesh.index, pos: stockMesh.vertex } }, [ ]);
         send.data({ mesh_move: { id: 0, pos: center } });
         send.done();
     };
@@ -331,47 +291,18 @@ kiri.load(() => {
         }
     };
 
-    function createGrid(stepsX, stepsY, size, step) {
-        const gridPoints = stepsX * stepsY;
-        const sab = new SharedArrayBuffer(gridPoints * 3 * 4)
-        const pos = new Float32Array(sab);
-        const ind = [];
-        const ox = size.x / 2;
-        const oy = size.y / 2;
+    function createStock(x, y, z) {
+        const mesh = Module.cube([x,y,z], true).translate(0, 0, z/2);
+        const { vertex, index } = mesh.getMesh({ normal: () => undefined });
+        return { mesh, vertex, index };
+    }
 
-        // initialize grid points
-        for (let x=0, ai=0; x<stepsX; x++) {
-            for (let y=0; y<stepsY; y++) {
-                let px = pos[ai++] = x * step - ox + step / 2;
-                let py = pos[ai++] = y * step - oy + step / 2;
-                pos[ai++] = size.z;
-                if (asPoints) {
-                    continue;
-                }
-                if (asLines) {
-                    if (y > 0) ind.appendAll([
-                        (stepsY * x) + (y - 1),
-                        (stepsY * x) + (y    )
-                    ]);
-                    if (x > 0) ind.appendAll([
-                        (stepsY * (x - 1)) + y,
-                        (stepsY * (x    )) + y
-                    ]);
-                } else {
-                    if (x > 0 && y > 0) {
-                        let v0 = stepsY * (x - 1) + y - 1;
-                        let v1 = stepsY * (x - 0) + y - 1;
-                        let v2 = stepsY * (x - 0) + y;
-                        let v3 = stepsY * (x - 1) + y;
-                        ind.appendAll([
-                            v0, v1, v2, v0, v2, v3
-                        ]);
-                    }
-                }
-            }
-        }
-
-        return { pos, ind, sab };
+    function updateStock(rec) {
+        const mesh = rec.mesh;
+        const { index, vertex } = mesh.getMesh({ normal: () => undefined });
+        rec.index = index;
+        rec.vertex = vertex;
+        return rec;
     }
 
     let animateClear = false;
@@ -381,7 +312,6 @@ kiri.load(() => {
     let renderPause = 10;
     let renderSteps = 0;
     let renderSpeed = 0;
-    let skipMove = null;
     let toolUpdate;
 
     // send latest tool position and progress bar
@@ -389,7 +319,14 @@ kiri.load(() => {
         if (toolUpdate) {
             send.data(toolUpdate);
         }
-        send.data({ progress: pathIndex / path.length, id: 0, mesh_update: 1 });
+        const { index, vertex } = updateStock(stockMesh);
+        send.data({
+            progress: pathIndex / path.length,
+            id: 0,
+            ind: index,
+            pos: vertex,
+            mesh_update: 1
+        });
     }
 
     function renderPath(send) {
@@ -433,13 +370,15 @@ kiri.load(() => {
                     y: last.point.y,
                     z: stock.z
                 };
-                send.data({ mesh_move: { toolID, pos }});
+                toolMove(pos);
+                send.data(toolUpdate);
+                // send.data({ mesh_move: { toolID, pos }});
             }
             updateTool(next.tool, send);
         }
 
         const id = toolID;
-        const rezstep = rez;
+        const rezstep = 1;//rez;
         if (last) {
             const lp = last.point, np = next.point;
             last = next;
@@ -472,11 +411,20 @@ kiri.load(() => {
         } else {
             last = next;
             if (tool) {
-                tool.pos = next.point;
-                toolUpdate = { mesh_move: { id, pos: next.point }};
+                toolMove(next.point);
             }
             renderPath(send);
         }
+    }
+
+    function toolMove(pos) {
+        const lpos = tool.pos || { x:0, y:0, z:0 };
+        tool.pos = pos;
+        toolUpdate = { mesh_move: { id: toolID, pos }};
+        const delta = [ pos.x - lpos.x, pos.y - lpos.y, pos.z - lpos.z ];
+        const oldmesh = toolMesh.mesh;
+        toolMesh.mesh = toolMesh.mesh.translate(pos.x - lpos.x, pos.y - lpos.y, pos.z - lpos.z);
+        oldmesh.delete();
     }
 
     function renderMoves(id, moves, send, seed = 0) {
@@ -485,9 +433,10 @@ kiri.load(() => {
             if (!pos) {
                 throw `no pos @ ${index} of ${moves.length}`;
             }
-            tool.pos = pos;
-            deformMesh(pos, send);
-            toolUpdate = { mesh_move: { id, pos }};
+            toolMove(pos);
+            const oldmesh = stockMesh.mesh;
+            stockMesh.mesh = stockMesh.mesh.subtract(toolMesh.mesh);
+            oldmesh.delete();
             // pause renderer at specified offsets
             if (renderSpeed && renderDist >= renderSpeed) {
                 renderDist = 0;
@@ -501,84 +450,20 @@ kiri.load(() => {
         renderPath(send);
     }
 
-    // update stock mesh to reflect tool tip geometry at given XYZ position
-    function deformMesh(pos, send) {
-        const prof = tool.profile;
-        const { size, pix } = tool.profileDim;
-        const mid = Math.floor(pix / 2);
-        const rx = Math.floor((pos.x + stock.x / 2 - size / 2 - center.x) / rez);
-        const ry = Math.floor((pos.y + stock.y / 2 - size / 2 - center.y) / rez);
-        let upos = 0;
-        // deform mesh to lowest point on tool profile
-        for (let i=0, il=prof.length; i < il; ) {
-            const dx = mid + prof[i++];
-            const dy = mid + prof[i++];
-            const dz = prof[i++];
-            const gx = rx + dx;
-            const gy = ry + dy;
-
-            if (gx < 0|| gy < 0 || gx > gridX-1 || gy > gridY-1) {
-                continue;
-            }
-
-            const gi = gx * gridY + gy;
-            const iz = gi * 3 + 2;
-            const cz = grid[iz];
-            const tz = tool.pos.z - dz;
-            if (tz < cz) {
-                upos++;
-                grid[iz] = tz;
-            }
-        }
-    }
-
+    // generate tool mesh and send to client
     function updateTool(toolnum, send) {
         if (tool) {
             send.data({ mesh_del: toolID });
         }
         tool = new CAM.Tool({ tools }, undefined, toolnum);
-        tool.generateProfile(rez);
         const flen = tool.fluteLength() || 15;
         const slen = tool.shaftLength() || 15;
-        // const frad = tool.fluteDiameter() / 2;
-        const prof = tool.profile;
-        const { size, pix } = tool.profileDim;
-        const { pos, ind, sab } = createGrid(pix, pix, {x:size, y:size, z:flen+slen}, rez);
-        const mid = Math.floor(pix/2);
-        // deform mesh to fit tool profile
-        for (let i=0, il=prof.length; i < il; ) {
-            const dx = mid + prof[i++];
-            const dy = mid + prof[i++];
-            const dz = prof[i++];
-            pos[(dx * pix + dy) * 3 + 2] = -dz;
-        }
-        send.data({ mesh_add: { id:++toolID, ind, sab }});
+        const frad = tool.fluteDiameter() / 2;
+        const mesh = Module.cylinder(flen + slen, frad, frad, 20, true).translate(0, 0, (flen + slen)/2);
+        const { vertex, index } = mesh.getMesh({ normal: () => undefined });
+        toolMesh = { mesh, index, vertex };
+        send.data({ mesh_add: { id:++toolID, ind: index, pos: vertex }});
     }
-
-    // load renderer code in worker context only
-    if (kiri.worker && false)
-    fetch('/wasm/kiri-ani.wasm')
-        .then(response => response.arrayBuffer())
-        .then(bytes => WebAssembly.instantiate(bytes, {
-            env: {
-                reportf: (a,b) => { console.log('[f]',a,b) },
-                reporti: (a,b) => { console.log('[i]',a,b) }
-            }
-        }))
-        .then(results => {
-            let {module, instance} = results;
-            let {exports} = instance;
-            let heap = new Uint8Array(exports.memory.buffer);
-            let wasm = self.wasm = {
-                heap,
-                memory: exports.memory,
-                updateMesh: exports.updateMesh
-            };
-            // heap[0] = 5;
-            // heap[100] = 6;
-            // heap[200] = 8;
-            // let rv = self.wasm.updateMesh(0, 0, 100, 200);
-        });
 
 });
 
