@@ -137,7 +137,11 @@ function pos2mesh(pos) {
 Module.onRuntimeInitialized = () => {
     Module.setup();
 
-    if (false) {
+    const tests = false;
+    const mesh_perf = false;
+    const ball_torture = false;
+
+    if (tests) {
         let c = Module.cube([1,1,1], true);
         console.log({
             c,
@@ -146,26 +150,60 @@ Module.onRuntimeInitialized = () => {
             cmdn: c.getMesh({})
         });
 
-        let l = 1000;
-        let s = Module.sphere(10, 100);
-        let sm = s.getMesh();
-        console.log({
-            s,
-            sm,
-            smd: s.getMesh({}),
-        });
+        if (mesh_perf) {
+            let l = 1000;
+            let s = Module.sphere(10, 100);
+            let sm = s.getMesh();
+            let smd = s.getMesh({});
+            console.log({
+                s,
+                sm,
+                smd,
+            });
 
-        console.time('getMesh');
-        for (let i=0; i<l; i++) s.getMesh();
-        console.timeEnd('getMesh');
+            console.time('getMesh');
+            for (let i=0; i<l; i++) s.getMesh();
+            console.timeEnd('getMesh');
 
-        console.time(`getMeshDirect`);
-        for (let i=0; i<l; i++) s.getMesh({ normal: () => undefined });
-        console.timeEnd(`getMeshDirect`);
+            console.time(`getMeshDirect`);
+            for (let i=0; i<l; i++) s.getMesh({ normal: () => undefined });
+            console.timeEnd(`getMeshDirect`);
 
-        console.time(`getMeshDirect`);
-        for (let i=0; i<l; i++) s.getMesh({});
-        console.timeEnd(`getMeshDirect`);
+            console.time(`getMeshDirect`);
+            for (let i=0; i<l; i++) s.getMesh({});
+            console.timeEnd(`getMeshDirect`);
+        }
+
+        if (ball_torture) {
+            console.time('ball test');
+            let ball = Module.sphere(25, 128);
+            let box = Module.cube([500, 500, 100], true);
+            let deg2rad = Math.PI / 180;
+            let z = 50;
+            let rad = 250;
+            let iter = 4;
+            let last = Date.now();
+            for (let i=0; i<360*iter; i++) {
+                let x = Math.cos(deg2rad * i) * rad;
+                let y = Math.sin(deg2rad * i) * rad;
+                let ball2 = ball.translate(x, y, z);
+                let box2 = box.subtract(ball2);
+                ball2.delete();
+                box.delete();
+                box = box2;
+                // box.getMesh();
+                // let { vertex } = box.getMesh({ normal: () => undefined });
+                let vertex = [];
+                let now = Date.now();
+                console.log((i/(iter*360)).toFixed(2), vertex.length, now - last); last = now;
+                rad -= 0.05;
+                z -= 0.1;
+            }
+            console.log(box.getMesh());
+            ball.delete();
+            box.delete();
+            console.timeEnd('ball test');
+        }
     }
 };
 
