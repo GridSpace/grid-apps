@@ -13,9 +13,10 @@ const { CAM } = driver;
 let meshes = {},
     unitScale = 1,
     progress,
+    // speedValues = [ 32, 32, 32, 32, 32 ],
+    speedPauses = [ 0, 0, 0, 0, 0 ],
     speedValues = [ 1, 2, 4, 8, 32 ],
     // speedPauses = [ 30, 20, 10, 5, 0 ],
-    speedPauses = [ 0, 0, 0, 0, 0 ],
     speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
     speedMax = speedValues.length - 1,
     speedIndex = 0,
@@ -287,7 +288,7 @@ class Stock {
             update: this.id,
             time: sub - start,
             subs,
-            subms: (subs / (sub - start)).round(3)
+            mssub: ((sub - start) / subs).round(3)
         });
     }
 
@@ -344,6 +345,7 @@ kiri.load(() => {
 
     let animateClear = false;
     let animating = false;
+    let moveDist = 0;
     let renderDist = 0;
     let renderDone = false;
     let renderPause = 10;
@@ -385,7 +387,7 @@ kiri.load(() => {
 
         stockSlices = [];
         const { x, y, z } = stock;
-        const sliceCount = 1;
+        const sliceCount = 10;
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
             let xmin = -(x/2) + (i * sliceWidth) + sliceWidth/2;
@@ -479,10 +481,10 @@ kiri.load(() => {
             }
             const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
             const dist = Math.sqrt(dx*dx  + dy*dy + dz*dz);
-            renderDist += dist;
+            moveDist += dist;
 
             // skip moves that are less than grid resolution
-            if (renderDist < rezstep) {
+            if (moveDist < rezstep) {
                 renderPath(send);
                 return;
             }
@@ -490,14 +492,16 @@ kiri.load(() => {
             const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
             const st = Math.ceil(md / rezstep);
             const mx = dx / st, my = dy / st, mz = dz / st;
+            const sd = Math.sqrt(mx*mx + my*my + mz*mz);
             const moves = [];
             for (let i=0, x=lp.x, y=lp.y, z=lp.z; i<st; i++) {
-                moves.push({x,y,z});
+                moves.push({x,y,z,md:sd});
                 x += mx;
                 y += my;
                 z += mz;
             }
-            moves.push(next.point);
+            moveDist = 0;
+            moves.push({...next.point, md:sd});
             renderMoves(id, moves, send);
         } else {
             last = next;
@@ -528,12 +532,13 @@ kiri.load(() => {
                     slice.subtractTool(toolMesh);
                 }
             }
+            renderDist += pos.md;
             // pause renderer at specified offsets
             if (renderSpeed && renderDist >= renderSpeed) {
                 renderDist = 0;
                 renderUpdate(send);
                 setTimeout(() => {
-                    renderMoves(id, moves, send, index);
+                    renderMoves(id, moves, send, index + 1);
                 }, renderPause);
                 return;
             }
