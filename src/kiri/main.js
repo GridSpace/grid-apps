@@ -531,9 +531,9 @@ gapp.register("kiri.main", [], (root, exports) => {
         };
     }
 
-    function loadFile() {
+    function loadFile(ev) {
         // use modern Filesystem api when available
-        if (window.showOpenFilePicker) {
+        if (false && window.showOpenFilePicker) {
             window.showOpenFilePicker().then(files => {
                 return Promise.all(files.map(fh => fh.getFile()))
             }).then(files => {
@@ -543,12 +543,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             }).catch(e => { /* ignore cancel */ });
             return;
         }
-        const button = $('load-file');
-        button.onchange = function(event) {
-            console.log(event);
-            api.platform.load_files(event.target.files);
-        };
-        button.click();
+        api.ui.load.click();
     }
 
     function saveWorkspace(quiet) {

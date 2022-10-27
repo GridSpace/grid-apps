@@ -2157,6 +2157,10 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliderUpdate();
         });
 
+        ui.load.onchange = function(event) {
+            api.platform.load_files(event.target.files);
+        };
+
         ui.sliderMin.onclick = () => {
             api.show.layer(0,0);
         }
@@ -2744,7 +2748,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         ui.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
         ui.acct.export.title = LANG.acct_xpo;
         $('file-recent').onclick = () => { api.modal.show('files') };
-        $('file-import').onclick = (ev) => { api.event.import(ev) };
+        $('file-import').onclick = (ev) => { api.event.import(ev); };
         ui.back.onclick = api.platform.layout;
         ui.options.trash.onclick = api.selection.delete;
         ui.options.enable.onclick = api.selection.enable;

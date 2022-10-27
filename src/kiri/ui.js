@@ -998,11 +998,15 @@ gapp.register("kiri.ui", [], (root, exports) => {
             popped = false;
         };
         if (opt.auto !== false) {
-            el.addEventListener("mouseenter", openit);
+            el.addEventListener("mouseenter", () => {
+                openit();
+            });
             el.addEventListener("touchstart", (ev) => {
                 if (ev.target.onclick) {
-                    // pass action clicks on children
-                    ev.target.onclick(ev);
+                    if (mobile && popped) {
+                        setTimeout(closeit, 500);
+                        return;
+                    }
                 }
                 mobile = true;
                 if (popped) {
