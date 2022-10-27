@@ -117,15 +117,16 @@ kiri.load(() => {
         meshes[id] = mesh;
     }
 
-    function meshUpdate(id, ind, pos) {
+    function meshUpdate(id, ind, pos, len) {
         const mesh = meshes[id];
         if (!mesh) {
             return; // animate cancelled
         }
-console.log({update: id, ind, pos});
+        // console.log({update: id, ind, pos, len});
         const geo = mesh.geometry;
         if (ind) geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         if (pos) geo.setIndex(new THREE.BufferAttribute(ind, 1));
+        if (len) geo.setDrawRange(0, len);
         geo.attributes.position.needsUpdate = true;
         geo.index.needsUpdate = true;
         space.update();
@@ -222,7 +223,7 @@ console.log({update: id, ind, pos});
             }
         }
         if (data.mesh_update) {
-            meshUpdate(data.id, data.ind, data.pos);
+            meshUpdate(data.id, data.ind, data.pos, data.len);
         }
     }
 
@@ -238,6 +239,7 @@ kiri.load(() => {
     let stock, center, rez;
     let path, pathIndex, tool, tools, last, toolID = 1;
     let toolMesh, stockMesh;
+    let startTime;
 
     kiri.worker.animate_setup = function(data, send) {
         const { settings } = data;
@@ -263,6 +265,9 @@ kiri.load(() => {
         last = null;
         animating = false;
         animateClear = false;
+        indexCount = 0;
+        startTime = 0;
+        updates = 0;
 
         center = Object.assign({}, stock.center);
         center.z -= stock.z / 2;
@@ -282,6 +287,7 @@ kiri.load(() => {
         renderSteps = data.steps || 1;
         renderDone = false;
         animating = renderSpeed > 0;
+        startTime = startTime || Date.now();
         renderPath(send);
     };
 
@@ -299,12 +305,20 @@ kiri.load(() => {
 
     function updateStock(rec) {
         const mesh = rec.mesh;
-        const { index, vertex } = mesh.getMesh({ normal: () => undefined });
+        const { index, vertex } = mesh.getMesh({
+            // vertex: (size) => maxV.subarray(0, size),
+            // index: (size) => maxI.subarray(0, size),
+            vertex: (size) => maxV,
+            index: (size) => { indexCount = size; return maxI },
+            normal: () => undefined
+        });
         rec.index = index;
         rec.vertex = vertex;
         return rec;
     }
 
+    let maxV = new Float32Array(new SharedArrayBuffer(20 * 1024 * 1024));
+    let maxI = new Uint32Array(new SharedArrayBuffer(20 * 1024 * 1024));
     let animateClear = false;
     let animating = false;
     let renderDist = 0;
@@ -313,6 +327,8 @@ kiri.load(() => {
     let renderSteps = 0;
     let renderSpeed = 0;
     let toolUpdate;
+    let indexCount = 0;
+    let updates = 0;
 
     // send latest tool position and progress bar
     function renderUpdate(send) {
@@ -320,13 +336,16 @@ kiri.load(() => {
             send.data(toolUpdate);
         }
         const { index, vertex } = updateStock(stockMesh);
+        let slim = indexCount && updates > 1;
         send.data({
             progress: pathIndex / path.length,
             id: 0,
-            ind: index,
-            pos: vertex,
+            ind: slim ? undefined : index,
+            pos: slim ? undefined : vertex,
+            len: slim ? indexCount : undefined,
             mesh_update: 1
         });
+        updates++;
     }
 
     function renderPath(send) {
@@ -356,6 +375,7 @@ kiri.load(() => {
         }
 
         if (!next) {
+            console.log('animation completed in ', ((Date.now() - startTime)/1000).round(2));
             animating = false;
             renderPath(send);
             return;
