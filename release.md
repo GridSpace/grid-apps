@@ -5,6 +5,9 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 # Release 3.7
 
 * replace jscad/modeling with Manifold project for faster mesh boolean
+* various CAM gcode, preview, animation fixes
+* various mobile touch, file load fixes
+* add FDM slice support growth option to help merging pillars
 
 
 # Release 3.6 (2022-10-22)
