@@ -5,7 +5,7 @@
     "start_url": "/kiri/",
     "id": "/kiri/",
     "display": "standalone",
-    "theme_color": "#db4938",
+    "theme_color": "#7e99b7",
     "background_color": "#ffffff",
     "orientation": "landscape-primary",
     "icons": [
