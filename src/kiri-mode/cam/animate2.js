@@ -269,7 +269,7 @@ class Stock {
         return this;
     }
 
-    updateMesh(send) {
+    updateMesh(updates) {
         if (this.sends > 0 && this.subtracts === 0) {
             return;
         }
@@ -282,12 +282,10 @@ class Stock {
             vertex: this.sharedVertexBuffer.bind(this)
         });
         let sub = Date.now();
-        this.send(send);
-        let snd = Date.now();
+        updates.push(this);
         console.log({
             update: this.id,
             time: sub - start,
-            send: snd - sub,
             subs,
             subms: (subs / (sub - start)).round(3)
         });
@@ -387,7 +385,7 @@ kiri.load(() => {
 
         stockSlices = [];
         const { x, y, z } = stock;
-        const sliceCount = 20;
+        const sliceCount = 1;
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
             let xmin = -(x/2) + (i * sliceWidth) + sliceWidth/2;
@@ -395,13 +393,11 @@ kiri.load(() => {
             let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, z/2);
             slice.dim = { xmin: xmin - sliceWidth / 2, xmax: xmin + sliceWidth / 2 };
             stockSlices.push(slice);
-            slice.updateMesh(send);
+            slice.updateMesh([]);
+            slice.send(send);
             send.data({ mesh_move: { id: slice.id, pos: center } });
         }
 
-        // shared array buffers are not transferrable
-        // send.data({ mesh_add: { id: 0, ind: stockMesh.index, pos: stockMesh.vertex } }, [ ]);
-        // send.data({ mesh_move: { id: 0, pos: center } });
         send.done();
     };
 
@@ -547,17 +543,17 @@ kiri.load(() => {
 
     // send latest tool position and progress bar
     function renderUpdate(send) {
-        // console.time('renderUpdate');
         if (toolUpdateMsg) {
             send.data(toolUpdateMsg);
         }
-        // console.time('updateMeshes');
+        const updated = []
         for (let slice of stockSlices) {
-            slice.updateMesh(send);
+            slice.updateMesh(updated);
         }
-        // console.timeEnd('updateMeshes');
+        for (let slice of updated) {
+            slice.send(send);
+        }
         updates++;
-        // console.timeEnd('renderUpdate');
     }
 
     // move tool mesh animation space, update client
