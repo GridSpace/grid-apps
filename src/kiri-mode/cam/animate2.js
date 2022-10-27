@@ -14,7 +14,8 @@ let meshes = {},
     unitScale = 1,
     progress,
     speedValues = [ 1, 2, 4, 8, 32 ],
-    speedPauses = [ 30, 20, 10, 5, 0 ],
+    // speedPauses = [ 30, 20, 10, 5, 0 ],
+    speedPauses = [ 0, 0, 0, 0, 0 ],
     speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
     speedMax = speedValues.length - 1,
     speedIndex = 0,
@@ -98,11 +99,9 @@ kiri.load(() => {
         animate_clear
     });
 
-    function meshAdd(id, ind, pos) {
+    function meshAdd(id, ind, pos, len) {
         const geo = new THREE.BufferGeometry();
-        // these arrive as shared array buffers
-        // pos = new Float32Array(pos);
-        // ind = new Uint32Array(ind);
+        if (len) geo.setDrawRange(0, len);
         geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         geo.setIndex(new THREE.BufferAttribute(ind, 1));
         const mat = new THREE.MeshMatcapMaterial({
@@ -124,9 +123,9 @@ kiri.load(() => {
         }
         // console.log({update: id, ind, pos, len});
         const geo = mesh.geometry;
+        if (len) geo.setDrawRange(0, len);
         if (ind) geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
         if (pos) geo.setIndex(new THREE.BufferAttribute(ind, 1));
-        if (len) geo.setDrawRange(0, len);
         geo.attributes.position.needsUpdate = true;
         geo.index.needsUpdate = true;
         space.update();
@@ -204,9 +203,10 @@ kiri.load(() => {
         if (!data) {
             return;
         }
+        // console.log({mesh_cmd: data});
         if (data.mesh_add) {
-            const { id, ind, pos } = data.mesh_add;
-            meshAdd(id, ind, pos);
+            const { id, ind, pos, len } = data.mesh_add;
+            meshAdd(id, ind, pos, len);
             space.refresh();
         }
         if (data.mesh_del) {
@@ -223,7 +223,8 @@ kiri.load(() => {
             }
         }
         if (data.mesh_update) {
-            meshUpdate(data.id, data.ind, data.pos, data.len);
+            const { id, ind, pos, len } = data.mesh_update;
+            meshUpdate(id, ind, pos, len);
         }
     }
 
@@ -231,15 +232,128 @@ kiri.load(() => {
 
 // ---( WORKER FUNCTIONS )---
 
+let nextMeshID = 1;
+
+class Stock {
+    constructor(x, y, z) {
+        this.id = nextMeshID++;
+        this.vbuf = undefined;
+        this.ibuf = undefined;
+        this.ilen = 0;
+        this.sends = 0;
+        this.newbuf = true;
+        this.subtracts = 0;
+        this.mesh = Module.cube([x, y, z], true);
+        // console.log({ new_stock: this.id, x, y, z });
+    }
+
+    send(send) {
+        const newbuf = this.newbuf;
+        const action = this.sends++ === 0 ? 'mesh_add' : 'mesh_update';
+        send.data({ [action]: {
+            id: this.id,
+            ind: newbuf ? this.ibuf : undefined,
+            pos: newbuf ? this.vbuf : undefined,
+            len: this.ilen
+        } });
+        this.newbuf = false;
+        this.sends++;
+        // console.log({ send: this.id, newbuf, action });
+    }
+
+    translate(x, y, z) {
+        // console.log({ translate: this.id, x, y, z });
+        const oldmesh = this.mesh;
+        this.mesh = this.mesh.translate(x, y, z);
+        oldmesh.delete();
+        return this;
+    }
+
+    updateMesh(send) {
+        if (this.sends > 0 && this.subtracts === 0) {
+            return;
+        }
+        const subs = this.subtracts;
+        this.subtracts = 0;
+        let start = Date.now();
+        this.mesh.getMesh({
+            normal: () => undefined,
+            index: this.sharedIndexBuffer.bind(this),
+            vertex: this.sharedVertexBuffer.bind(this)
+        });
+        let sub = Date.now();
+        this.send(send);
+        let snd = Date.now();
+        console.log({
+            update: this.id,
+            time: sub - start,
+            send: snd - sub,
+            subs,
+            subms: (subs / (sub - start)).round(3)
+        });
+    }
+
+    subtractTool(toolMesh) {
+        const oldmesh = this.mesh;
+        this.mesh = this.mesh.subtract(toolMesh.mesh);
+        oldmesh.delete();
+        this.subtracts++;
+    }
+
+    sharedVertexBuffer(size) {
+        const old = this.vbuf;
+        if (old && old.length >= size) {
+            // console.log({svb: this.id, reuse: size, old: old.length});
+            return old;
+        }
+        // let buf = new Float32Array(new SharedArrayBuffer(size * 4));
+        let buf = new Float32Array(new SharedArrayBuffer(size * 4 + 1024 * 1024));
+        // console.log({new_svb: this.id, size, buf});
+        this.newbuf = true;
+        return this.vbuf = buf;
+    }
+
+    sharedIndexBuffer(size) {
+        const old = this.ibuf;
+        this.ilen = size;
+        if (old && old.length >= size) {
+            // console.log({sib: this.id, reuse: size, old: old.length});
+            return old;
+        }
+        // let buf = new Uint32Array(new SharedArrayBuffer(size * 4));
+        let buf = new Uint32Array(new SharedArrayBuffer(size * 4 + 1024 * 1024));
+        // console.log({new_sib: this.id, size, buf});
+        this.newbuf = true;
+        return this.ibuf = buf;
+    }
+}
+
 kiri.load(() => {
     if (!kiri.worker) {
         return;
     }
 
     let stock, center, rez;
-    let path, pathIndex, tool, tools, last, toolID = 1;
-    let toolMesh, stockMesh;
+    let path, pathIndex, tool, tools, last;
+
+    let stockSlices;
     let startTime;
+
+    let toolID = -1;
+    let toolMesh;
+    let toolRadius;
+    let toolUpdateMsg;
+
+    let animateClear = false;
+    let animating = false;
+    let renderDist = 0;
+    let renderDone = false;
+    let renderPause = 10;
+    let renderSteps = 0;
+    let renderSpeed = 0;
+    let indexCount = 0;
+    let updates = 0;
+
 
     kiri.worker.animate_setup = function(data, send) {
         const { settings } = data;
@@ -254,7 +368,6 @@ kiri.load(() => {
         stock = settings.stock;
         rez = 1/Math.sqrt(density/(stock.x * stock.y));
 
-        stockMesh = createStock(stock.x, stock.y, stock.z);
         const offset = {
             x: process.outputOriginCenter ? 0 : stock.x / 2,
             y: process.outputOriginCenter ? 0 : stock.y / 2,
@@ -272,9 +385,23 @@ kiri.load(() => {
         center = Object.assign({}, stock.center);
         center.z -= stock.z / 2;
 
+        stockSlices = [];
+        const { x, y, z } = stock;
+        const sliceCount = 20;
+        const sliceWidth = stock.x / sliceCount;
+        for (let i=0; i<sliceCount; i++) {
+            let xmin = -(x/2) + (i * sliceWidth) + sliceWidth/2;
+            // let xmax = xmin + sliceWidth;
+            let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, z/2);
+            slice.dim = { xmin: xmin - sliceWidth / 2, xmax: xmin + sliceWidth / 2 };
+            stockSlices.push(slice);
+            slice.updateMesh(send);
+            send.data({ mesh_move: { id: slice.id, pos: center } });
+        }
+
         // shared array buffers are not transferrable
-        send.data({ mesh_add: { id: 0, ind: stockMesh.index, pos: stockMesh.vertex } }, [ ]);
-        send.data({ mesh_move: { id: 0, pos: center } });
+        // send.data({ mesh_add: { id: 0, ind: stockMesh.index, pos: stockMesh.vertex } }, [ ]);
+        // send.data({ mesh_move: { id: 0, pos: center } });
         send.done();
     };
 
@@ -296,57 +423,6 @@ kiri.load(() => {
             animateClear = true;
         }
     };
-
-    function createStock(x, y, z) {
-        const mesh = Module.cube([x,y,z], true).translate(0, 0, z/2);
-        const { vertex, index } = mesh.getMesh({ normal: () => undefined });
-        return { mesh, vertex, index };
-    }
-
-    function updateStock(rec) {
-        const mesh = rec.mesh;
-        const { index, vertex } = mesh.getMesh({
-            // vertex: (size) => maxV.subarray(0, size),
-            // index: (size) => maxI.subarray(0, size),
-            vertex: (size) => maxV,
-            index: (size) => { indexCount = size; return maxI },
-            normal: () => undefined
-        });
-        rec.index = index;
-        rec.vertex = vertex;
-        return rec;
-    }
-
-    let maxV = new Float32Array(new SharedArrayBuffer(20 * 1024 * 1024));
-    let maxI = new Uint32Array(new SharedArrayBuffer(20 * 1024 * 1024));
-    let animateClear = false;
-    let animating = false;
-    let renderDist = 0;
-    let renderDone = false;
-    let renderPause = 10;
-    let renderSteps = 0;
-    let renderSpeed = 0;
-    let toolUpdate;
-    let indexCount = 0;
-    let updates = 0;
-
-    // send latest tool position and progress bar
-    function renderUpdate(send) {
-        if (toolUpdate) {
-            send.data(toolUpdate);
-        }
-        const { index, vertex } = updateStock(stockMesh);
-        let slim = indexCount && updates > 1;
-        send.data({
-            progress: pathIndex / path.length,
-            id: 0,
-            ind: slim ? undefined : index,
-            pos: slim ? undefined : vertex,
-            len: slim ? indexCount : undefined,
-            mesh_update: 1
-        });
-        updates++;
-    }
 
     function renderPath(send) {
         if (renderDone) {
@@ -391,10 +467,9 @@ kiri.load(() => {
                     z: stock.z
                 };
                 toolMove(pos);
-                send.data(toolUpdate);
-                // send.data({ mesh_move: { toolID, pos }});
+                send.data(toolUpdateMsg);
             }
-            updateTool(next.tool, send);
+            toolUpdate(next.tool, send);
         }
 
         const id = toolID;
@@ -437,16 +512,6 @@ kiri.load(() => {
         }
     }
 
-    function toolMove(pos) {
-        const lpos = tool.pos || { x:0, y:0, z:0 };
-        tool.pos = pos;
-        toolUpdate = { mesh_move: { id: toolID, pos }};
-        const delta = [ pos.x - lpos.x, pos.y - lpos.y, pos.z - lpos.z ];
-        const oldmesh = toolMesh.mesh;
-        toolMesh.mesh = toolMesh.mesh.translate(pos.x - lpos.x, pos.y - lpos.y, pos.z - lpos.z);
-        oldmesh.delete();
-    }
-
     function renderMoves(id, moves, send, seed = 0) {
         for (let index = seed; index<moves.length; index++) {
             const pos = moves[index];
@@ -454,9 +519,19 @@ kiri.load(() => {
                 throw `no pos @ ${index} of ${moves.length}`;
             }
             toolMove(pos);
-            const oldmesh = stockMesh.mesh;
-            stockMesh.mesh = stockMesh.mesh.subtract(toolMesh.mesh);
-            oldmesh.delete();
+            // console.log('renderMoves', {id, moves, seed});
+            let tMinX = pos.x - toolRadius;
+            let tMaxX = pos.x + toolRadius;
+            for (let slice of stockSlices) {
+                let { xmin, xmax } = slice.dim;
+                if (
+                    (tMinX >= xmin && tMinX < xmax) ||
+                    (tMaxX >= xmin && tMaxX < xmax) ||
+                    (tMinX <  xmin && tMaxX > xmax)
+                ) {
+                    slice.subtractTool(toolMesh);
+                }
+            }
             // pause renderer at specified offsets
             if (renderSpeed && renderDist >= renderSpeed) {
                 renderDist = 0;
@@ -470,19 +545,46 @@ kiri.load(() => {
         renderPath(send);
     }
 
-    // generate tool mesh and send to client
-    function updateTool(toolnum, send) {
+    // send latest tool position and progress bar
+    function renderUpdate(send) {
+        // console.time('renderUpdate');
+        if (toolUpdateMsg) {
+            send.data(toolUpdateMsg);
+        }
+        // console.time('updateMeshes');
+        for (let slice of stockSlices) {
+            slice.updateMesh(send);
+        }
+        // console.timeEnd('updateMeshes');
+        updates++;
+        // console.timeEnd('renderUpdate');
+    }
+
+    // move tool mesh animation space, update client
+    function toolMove(pos) {
+        const lpos = tool.pos || { x:0, y:0, z:0 };
+        tool.pos = pos;
+        toolUpdateMsg = { mesh_move: { id: toolID, pos }};
+        const delta = [ pos.x - lpos.x, pos.y - lpos.y, pos.z - lpos.z ];
+        const oldmesh = toolMesh.mesh;
+        toolMesh.mesh = toolMesh.mesh.translate(pos.x - lpos.x, pos.y - lpos.y, pos.z - lpos.z);
+        oldmesh.delete();
+    }
+
+    // delete old tool mesh, generate tool mesh, send to client
+    function toolUpdate(toolnum, send) {
         if (tool) {
             send.data({ mesh_del: toolID });
         }
         tool = new CAM.Tool({ tools }, undefined, toolnum);
+        toolRadius = tool.fluteDiameter() / 2;
         const flen = tool.fluteLength() || 15;
         const slen = tool.shaftLength() || 15;
-        const frad = tool.fluteDiameter() / 2;
+        const frad = toolRadius;
         const mesh = Module.cylinder(flen + slen, frad, frad, 20, true).translate(0, 0, (flen + slen)/2);
         const { vertex, index } = mesh.getMesh({ normal: () => undefined });
         toolMesh = { mesh, index, vertex };
-        send.data({ mesh_add: { id:++toolID, ind: index, pos: vertex }});
+        send.data({ mesh_add: { id:--toolID, ind: index, pos: vertex }});
     }
 
 });
