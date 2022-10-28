@@ -15,6 +15,7 @@ const { CAM } = driver;
 let isAnimate,
     isArrange,
     isCamMode,
+    isIndexed,
     isParsed,
     camStock,
     camZBottom,
@@ -64,7 +65,9 @@ CAM.init = function(kiri, api) {
     }
 
     function setAnimationStyle(settings) {
-        animVer = settings.process.camStockIndexed ? 1 : 0;
+        isIndexed = settings.process.camStockIndexed;
+        animVer = isIndexed ? 1 : 0;
+        updateStock();
     }
 
     // wire up animate button in ui
@@ -1629,6 +1632,9 @@ function updateStock(args, event) {
         camStock.position.x = csox;
         camStock.position.y = csoy;
         camStock.position.z = csz / 2;
+        if (isIndexed) {
+            camStock.position.z = 0;
+        }
         delta = csz - topZ;
     } else if (camStock) {
         SPACE.world.remove(camStock);
@@ -1666,17 +1672,19 @@ function updateStock(args, event) {
     if (x && y && z && !STACKS.getStack('bounds')) {
         const render = new kiri.Layers().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
         const stack = STACKS.setFreeMem(false).create('bounds', SPACE.world);
-        stack.add(render.addPolys([
-            newPolygon().centerRectangle({x:csox, y:csoy, z:0}, x, y),
-            newPolygon().centerRectangle({x:csox, y:csoy, z}, x, y)
-        ], { thin: true } ));
         const hx = x/2, hy = y/2;
         const sz = stock.z || 0;
+        const zm = isIndexed ? -sz / 2 : 0;
+        const zM = isIndexed ? sz / 2 : sz;
+        stack.add(render.addPolys([
+            newPolygon().centerRectangle({x:csox, y:csoy, z:zm}, x, y),
+            newPolygon().centerRectangle({x:csox, y:csoy, z:zM}, x, y)
+        ], { thin: true } ));
         stack.add(render.addLines([
-            newPoint(csox + hx, csoy - hy, 0), newPoint(csox + hx, csoy - hy, sz),
-            newPoint(csox + hx, csoy + hy, 0), newPoint(csox + hx, csoy + hy, sz),
-            newPoint(csox - hx, csoy - hy, 0), newPoint(csox - hx, csoy - hy, sz),
-            newPoint(csox - hx, csoy + hy, 0), newPoint(csox - hx, csoy + hy, sz),
+            newPoint(csox + hx, csoy - hy, zm), newPoint(csox + hx, csoy - hy, zM),
+            newPoint(csox + hx, csoy + hy, zm), newPoint(csox + hx, csoy + hy, zM),
+            newPoint(csox - hx, csoy - hy, zm), newPoint(csox - hx, csoy - hy, zM),
+            newPoint(csox - hx, csoy + hy, zm), newPoint(csox - hx, csoy + hy, zM),
         ], { thin: true }));
         STACKS.setFreeMem(true);
     }
