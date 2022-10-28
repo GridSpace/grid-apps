@@ -372,12 +372,6 @@ kiri.load(() => {
         stock = settings.stock;
         rez = 1/Math.sqrt(density/(stock.x * stock.y));
 
-        const offset = {
-            x: process.outputOriginCenter ? 0 : stock.x / 2,
-            y: process.outputOriginCenter ? 0 : stock.y / 2,
-            z: process.camOriginTop ? -stock.z : 0
-        }
-
         tool = null;
         last = null;
         animating = false;
@@ -387,22 +381,17 @@ kiri.load(() => {
         startTime = 0;
         updates = 0;
 
-        center = Object.assign({}, stock.center);
-        center.z -= stock.z / 2;
-
         stockSlices = [];
         const { x, y, z } = stock;
         const sliceCount = 10;
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
-            let xmin = -(x/2) + (i * sliceWidth) + sliceWidth/2;
-            // let xmax = xmin + sliceWidth;
-            let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, z/2);
+            let xmin = -(x/2) + (i * sliceWidth) + sliceWidth / 2;
+            let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, z / 2);
             slice.dim = { xmin: xmin - sliceWidth / 2, xmax: xmin + sliceWidth / 2 };
             stockSlices.push(slice);
             slice.updateMesh([]);
             slice.send(send);
-            send.data({ mesh_move: { id: slice.id, pos: center } });
         }
 
         send.done();
@@ -575,9 +564,7 @@ kiri.load(() => {
 
     // move tool mesh animation space, update client
     function toolMove(pos) {
-        const lpos = tool.pos || { x:0, y:0, z:0 };
-        tool.pos = pos;
-        toolUpdateMsg = { mesh_move: { id: toolID, pos }};
+        toolUpdateMsg = { mesh_move: { id: toolID, pos: { x: pos.x, y: pos.y, z: pos.z } } };
         if (toolMesh.mesh) {
             toolMesh.mesh.delete();
         }
