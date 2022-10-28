@@ -578,11 +578,22 @@ kiri.load(() => {
             send.data({ mesh_del: toolID });
         }
         tool = new CAM.Tool({ tools }, undefined, toolnum);
-        toolRadius = tool.fluteDiameter() / 2;
-        const flen = tool.fluteLength() || 15;
         const slen = tool.shaftLength() || 15;
-        const frad = toolRadius;
-        const mesh = Module.cylinder(flen + slen, frad, frad, 20, true).translate(0, 0, (flen + slen)/2);
+        const srad = tool.shaftDiameter() / 2;
+        const flen = tool.fluteLength() || 15;
+        const frad = toolRadius = tool.fluteDiameter() / 2;
+        let mesh;
+        if (tool.isBallMill()) {
+            mesh = Module.cylinder(flen + slen - frad, frad, frad, 20, true)
+                .add(Module.sphere(frad, 20).translate(0, 0, -(flen + slen - frad)/2));
+        } else if (tool.isTaperMill()) {
+            const trad = Math.max(tool.tipDiameter() / 2, 0.001);
+            mesh = Module.cylinder(slen, srad, srad, 20, true).translate(0, 0, slen/2)
+                .add(Module.cylinder(flen, trad, frad, 20, true).translate(0, 0, -flen/2));
+        } else {
+            mesh = Module.cylinder(flen + slen, frad, frad, 20, true);
+        }
+        mesh = mesh.translate(0, 0, (flen + slen) / 2);
         const { vertex, index } = mesh.getMesh({ normal: () => undefined });
         toolMesh = { mesh, index, vertex };
         send.data({ mesh_add: { id:--toolID, ind: index, pos: vertex }});
