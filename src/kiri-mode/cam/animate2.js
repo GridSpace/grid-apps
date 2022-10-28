@@ -100,11 +100,12 @@ kiri.load(() => {
         animate_clear
     });
 
-    function meshAdd(id, ind, pos, len) {
+    function meshAdd(id, ind, pos, ilen, plen) {
         const geo = new THREE.BufferGeometry();
-        if (len) geo.setDrawRange(0, len);
-        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        geo.setIndex(new THREE.BufferAttribute(ind, 1));
+        const pa = plen ? pos.subarray(0, plen * 3) : pos;
+        const ia = ilen ? ind.subarray(0, ilen) : ind;
+        geo.setAttribute('position', new THREE.BufferAttribute(pa, 3));
+        geo.setIndex(new THREE.BufferAttribute(ia, 1));
         const mat = new THREE.MeshMatcapMaterial({
             flatShading: true,
             transparent: false,
@@ -113,20 +114,22 @@ kiri.load(() => {
             side: THREE.DoubleSide
         });
         const mesh = new THREE.Mesh(geo, mat);
+        mesh.pos = pos;
+        mesh.ind = ind;
         space.world.add(mesh);
         meshes[id] = mesh;
     }
 
-    function meshUpdate(id, ind, pos, len) {
+    function meshUpdate(id, ind, pos, ilen, plen) {
         const mesh = meshes[id];
         if (!mesh) {
             return; // animate cancelled
         }
-        // console.log({update: id, ind, pos, len});
         const geo = mesh.geometry;
-        if (len) geo.setDrawRange(0, len);
-        if (ind) geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        if (pos) geo.setIndex(new THREE.BufferAttribute(ind, 1));
+        mesh.pos = pos || mesh.pos;
+        mesh.ind = ind || mesh.ind;
+        geo.setAttribute('position', new THREE.BufferAttribute(mesh.pos.subarray(0, plen * 3), 3));
+        geo.setIndex(new THREE.BufferAttribute(mesh.ind.subarray(0, ilen), 1));
         geo.attributes.position.needsUpdate = true;
         geo.index.needsUpdate = true;
         space.update();
@@ -181,8 +184,8 @@ kiri.load(() => {
             return;
         }
         if (data.mesh_add) {
-            const { id, ind, pos, len } = data.mesh_add;
-            meshAdd(id, ind, pos, len);
+            const { id, ind, pos, ilen, plen } = data.mesh_add;
+            meshAdd(id, ind, pos, ilen, plen);
             space.refresh();
         }
         if (data.mesh_del) {
@@ -199,8 +202,8 @@ kiri.load(() => {
             }
         }
         if (data.mesh_update) {
-            const { id, ind, pos, len } = data.mesh_update;
-            meshUpdate(id, ind, pos, len);
+            const { id, ind, pos, ilen, plen } = data.mesh_update;
+            meshUpdate(id, ind, pos, ilen, plen);
         }
         if (data && data.progress) {
             progress.innerText = (data.progress * 100).toFixed(1) + '%'
@@ -249,7 +252,8 @@ class Stock {
             id: this.id,
             ind: newbuf ? this.ibuf : undefined,
             pos: newbuf ? this.vbuf : undefined,
-            len: this.ilen
+            ilen: this.ilen,
+            plen: this.plen
         } });
         this.newbuf = false;
         this.sends++;
@@ -295,6 +299,7 @@ class Stock {
 
     sharedVertexBuffer(size) {
         const old = this.vbuf;
+        this.plen = size;
         if (old && old.length >= size) {
             // console.log({svb: this.id, reuse: size, old: old.length});
             return old;
