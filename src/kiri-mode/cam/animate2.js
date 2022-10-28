@@ -107,8 +107,8 @@ kiri.load(() => {
         geo.setIndex(new THREE.BufferAttribute(ind, 1));
         const mat = new THREE.MeshMatcapMaterial({
             flatShading: true,
-            transparent: true,
-            opacity: 0.9,
+            transparent: false,
+            opacity: 1,
             color: 0x888888,
             side: THREE.DoubleSide
         });
@@ -284,7 +284,7 @@ class Stock {
         });
         let sub = Date.now();
         updates.push(this);
-        console.log({
+        if (false) console.log({
             update: this.id,
             time: sub - start,
             subs,
@@ -558,6 +558,7 @@ kiri.load(() => {
         for (let slice of updated) {
             slice.send(send);
         }
+        send.data({ progress: pathIndex / path.length });
         updates++;
     }
 
