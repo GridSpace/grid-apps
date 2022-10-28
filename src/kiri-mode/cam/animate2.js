@@ -48,8 +48,8 @@ kiri.load(() => {
     function animate(api, delay) {
         let alert = api.alerts.show("building animation");
         kiri.client.animate_setup(api.conf.get(), data => {
-            checkMeshCommands(data);
-            if (!(data && data.mesh_add)) {
+            handleUpdate(data);
+            if (data) {
                 return;
             }
             const UC = api.uc;
@@ -139,7 +139,7 @@ kiri.load(() => {
 
     function step() {
         updateSpeed();
-        kiri.client.animate({speed, steps: 1}, handleGridUpdate);
+        kiri.client.animate({speed, steps: 1}, handleUpdate);
     }
 
     function play(opts) {
@@ -154,7 +154,7 @@ kiri.load(() => {
             speed,
             steps: steps || Infinity,
             pause: speedPauses[speedIndex]
-        }, handleGridUpdate);
+        }, handleUpdate);
     }
 
     function fast(opts) {
@@ -167,44 +167,19 @@ kiri.load(() => {
             speed,
             steps: steps || Infinity,
             pause: speedPauses[speedIndex]
-        }, handleGridUpdate);
+        }, handleUpdate);
     }
 
     function pause() {
         playButton.style.display = '';
         pauseButton.style.display = 'none';
-        kiri.client.animate({speed: 0}, handleGridUpdate);
+        kiri.client.animate({speed: 0}, handleUpdate);
     }
 
-    function handleGridUpdate(data) {
-        checkMeshCommands(data);
-        if (data && data.progress) {
-            progress.innerText = (data.progress * 100).toFixed(1) + '%'
-        }
-    }
-
-    function updateSpeed(inc = 0) {
-        if (inc === Infinity) {
-            speedIndex = speedMax;
-        } else if (inc > 0) {
-            speedIndex = (speedIndex + inc) % speedValues.length;
-        }
-        speed = speedValues[speedIndex];
-        speedLabel.innerText = speedNames[speedIndex];
-    }
-
-    function replay() {
-        CAM.animate_clear(api);
-        setTimeout(() => {
-            CAM.animate(api, 50);
-        }, 250);
-    }
-
-    function checkMeshCommands(data) {
+    function handleUpdate(data) {
         if (!data) {
             return;
         }
-        // console.log({mesh_cmd: data});
         if (data.mesh_add) {
             const { id, ind, pos, len } = data.mesh_add;
             meshAdd(id, ind, pos, len);
@@ -227,8 +202,27 @@ kiri.load(() => {
             const { id, ind, pos, len } = data.mesh_update;
             meshUpdate(id, ind, pos, len);
         }
+        if (data && data.progress) {
+            progress.innerText = (data.progress * 100).toFixed(1) + '%'
+        }
     }
 
+    function updateSpeed(inc = 0) {
+        if (inc === Infinity) {
+            speedIndex = speedMax;
+        } else if (inc > 0) {
+            speedIndex = (speedIndex + inc) % speedValues.length;
+        }
+        speed = speedValues[speedIndex];
+        speedLabel.innerText = speedNames[speedIndex];
+    }
+
+    function replay() {
+        CAM.animate_clear(api);
+        setTimeout(() => {
+            CAM.animate(api, 50);
+        }, 250);
+    }
 });
 
 // ---( WORKER FUNCTIONS )---
