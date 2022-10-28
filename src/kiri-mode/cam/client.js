@@ -310,7 +310,7 @@ CAM.init = function(kiri, api) {
         let oplist = current.process.ops;
         if (oplist.indexOf(rec) < 0) {
             oplist.push(rec);
-            let fpos = oplist.find(rec => rec.type === 'flip');
+            let fpos = oplist.findWith(rec => rec.type === 'flip');
             if (fpos >= 0 && oplist.length > 1) {
                 let oprec = oplist.splice(fpos,1);
                 oplist.push(oprec[0]);

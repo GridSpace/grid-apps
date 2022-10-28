@@ -22,7 +22,7 @@ if (!AP.flat) {
     };
 }
 
-AP.find = function(fn) {
+AP.findWith = function(fn) {
     for (let i=0, l=this.length; i<l; i++) {
         if (fn(this[i])) {
             return i;
