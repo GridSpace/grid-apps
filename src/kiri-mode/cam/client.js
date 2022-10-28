@@ -26,7 +26,7 @@ let isAnimate,
 
 let zaxis = { x: 0, y: 0, z: 1 },
     popOp = {},
-    animVer = 1,
+    animVer = 0,
     seed = Date.now(),
     func = {
         hover: noop,
@@ -61,6 +61,10 @@ CAM.init = function(kiri, api) {
 
     function zBottom() {
         return API.conf.get().process.camZBottom > 0;
+    }
+
+    function setAnimationStyle(settings) {
+        animVer = settings.process.camStockIndexed ? 1 : 0;
     }
 
     // wire up animate button in ui
@@ -127,6 +131,7 @@ CAM.init = function(kiri, api) {
         api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
         api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
         updateStock(settings, 'settings.saved.internal');
+        setAnimationStyle(settings);
     });
 
     api.event.on("settings.load", (settings) => {
@@ -134,6 +139,7 @@ CAM.init = function(kiri, api) {
         if (!isCamMode) return;
         validateTools(settings.tools);
         restoreTabs(api.widgets.all());
+        setAnimationStyle(settings);
     });
 
     api.event.on([

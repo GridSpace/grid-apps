@@ -681,6 +681,8 @@ self.kiri.lang['en-us'] = {
     cs_offs_l:      ["use width, depth, height","as offsets from max","part size on platform"],
     cs_clip_s:      "clip to",
     cs_clip_l:      ["rough and outline","clip cutting paths","to defined stock"],
+    cs_indx_s:      "indexed",
+    cs_indx_l:      ["stock is mounted to a rotatary indexer"],
     cs_offe_s:      "enable",
     cs_offe_l:      "enable milling stock",
 

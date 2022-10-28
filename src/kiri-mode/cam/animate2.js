@@ -338,6 +338,7 @@ kiri.load(() => {
     let stock, center, rez;
     let path, pathIndex, tool, tools, last;
 
+    let stockZ;
     let stockIndexMsg = false;
     let stockSlices;
     let stockIndex;
@@ -380,6 +381,7 @@ kiri.load(() => {
         indexCount = 0;
         startTime = 0;
         updates = 0;
+        stockZ = stock.z;
 
         stockSlices = [];
         const { x, y, z } = stock;
@@ -387,11 +389,12 @@ kiri.load(() => {
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
             let xmin = -(x/2) + (i * sliceWidth) + sliceWidth / 2;
-            let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, z / 2);
+            let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, 0);
             slice.dim = { xmin: xmin - sliceWidth / 2, xmax: xmin + sliceWidth / 2 };
             stockSlices.push(slice);
             slice.updateMesh([]);
             slice.send(send);
+            // send({ mesh_move: { id: slice.id, pos: { x:0, y:0, z: stock.z/2} } });
         }
 
         send.done();
@@ -601,7 +604,7 @@ kiri.load(() => {
         } else {
             mesh = Module.cylinder(flen + slen, frad, frad, 20, true);
         }
-        mesh = mesh.translate(0, 0, (flen + slen) / 2);
+        mesh = mesh.translate(0, 0, (flen + slen - stockZ) / 2);
         const { vertex, index } = mesh.getMesh({ normal: () => undefined });
         toolMesh = { root: mesh, index, vertex };
         send.data({ mesh_add: { id:--toolID, ind: index, pos: vertex }});
