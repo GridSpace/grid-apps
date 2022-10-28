@@ -12,6 +12,7 @@
 // use: ext.jszip
 // use: kiri.render
 // use: kiri-mode.cam.animate
+// use: kiri-mode.cam.animate2
 // use: kiri-mode.cam.slice
 // use: kiri-mode.cam.prepare
 // use: kiri-mode.cam.export

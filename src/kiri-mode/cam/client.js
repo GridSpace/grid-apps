@@ -4,6 +4,7 @@
 
 // dep: kiri-mode.cam.driver
 // use: kiri-mode.cam.animate
+// use: kiri-mode.cam.animate2
 gapp.register("kiri-mode.cam.client", [], (root, exports) => {
 
 const { base, kiri } = root;
@@ -30,6 +31,16 @@ let zaxis = { x: 0, y: 0, z: 1 },
         hoverUp: noop
     },
     flipping;
+
+function animFn(v) {
+    return [{
+        animate: CAM.animate,
+        animate_clear: CAM.animate_clear
+    },{
+        animate: CAM.animate2,
+        animate_clear: CAM.animate_clear2
+    }][0];
+}
 
 CAM.restoreTabs = restoreTabs;
 
@@ -68,7 +79,7 @@ CAM.init = function(kiri, api) {
 
     api.event.on("function.export", (mode) => {
         if (isAnimate) {
-            CAM.animate_clear(api);
+            animFn(0).animate_clear(api);
             isAnimate = false;
         }
     });
@@ -91,7 +102,7 @@ CAM.init = function(kiri, api) {
     api.event.on("view.set", (mode) => {
         isArrange = (mode === VIEWS.ARRANGE);
         isAnimate = false;
-        CAM.animate_clear(api);
+        animFn(0).animate_clear(api);
         func.clearPops();
         $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
     });
@@ -1516,7 +1527,7 @@ function animate() {
     API.widgets.opacity(isParsed ? 0 : 0.75);
     API.hide.slider();
     STACKS.clear();
-    CAM.animate(API);
+    animFn(0).animate(API);
 }
 
 function updateStock(args, event) {

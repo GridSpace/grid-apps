@@ -11,29 +11,28 @@ const { driver } = kiri;
 const { CAM } = driver;
 const asLines = false;
 const asPoints = false;
-const defer = true;
-
-let meshes = {},
-    unitScale = 1,
-    progress,
-    speedValues = [ 1, 2, 4, 8, 32 ],
-    speedPauses = [ 30, 20, 10, 5, 0 ],
-    speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
-    speedMax = speedValues.length - 1,
-    speedIndex = 0,
-    speedLabel,
-    speed,
-    color = 0,
-    pauseButton,
-    playButton,
-    posOffset = { x:0, y:0, z:0 };
 
 // ---( CLIENT FUNCTIONS )---
 
 kiri.load(() => {
-    if (!kiri.client || defer) {
+    if (!kiri.client) {
         return;
     }
+
+    let meshes = {},
+        unitScale = 1,
+        progress,
+        speedValues = [ 1, 2, 4, 8, 32 ],
+        speedPauses = [ 30, 20, 10, 5, 0 ],
+        speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
+        speedMax = speedValues.length - 1,
+        speedIndex = 0,
+        speedLabel,
+        speed,
+        color = 0,
+        pauseButton,
+        playButton,
+        posOffset = { x:0, y:0, z:0 };
 
     const { moto } = root;
     const { space } = moto;
@@ -266,7 +265,7 @@ kiri.load(() => {
 // ---( WORKER FUNCTIONS )---
 
 kiri.load(() => {
-    if (!kiri.worker || defer) {
+    if (!kiri.worker) {
         return;
     }
 

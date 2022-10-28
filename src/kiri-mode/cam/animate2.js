@@ -10,22 +10,6 @@ const { kiri } = root;
 const { driver } = kiri;
 const { CAM } = driver;
 
-let meshes = {},
-    unitScale = 1,
-    progress,
-    // speedValues = [ 32, 32, 32, 32, 32 ],
-    speedPauses = [ 0, 0, 0, 0, 0 ],
-    speedValues = [ 1, 2, 4, 8, 32 ],
-    // speedPauses = [ 30, 20, 10, 5, 0 ],
-    speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
-    speedMax = speedValues.length - 1,
-    speedIndex = 0,
-    speedLabel,
-    speed,
-    color = 0,
-    pauseButton,
-    playButton;
-
 // ---( CLIENT FUNCTIONS )---
 
 kiri.load(() => {
@@ -33,21 +17,34 @@ kiri.load(() => {
         return;
     }
 
+    let meshes = {},
+        progress,
+        speedPauses = [ 0, 0, 0, 0, 0 ],
+        speedValues = [ 1, 2, 4, 8, 32 ],
+        speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
+        speedMax = speedValues.length - 1,
+        speedIndex = 0,
+        speedLabel,
+        speed,
+        color = 0,
+        pauseButton,
+        playButton;
+
     const { moto } = root;
     const { space } = moto;
     const { api } = kiri;
 
-    function animate_clear(api) {
+    function animate_clear2(api) {
         moto.space.platform.showGridBelow(true);
-        kiri.client.animate_cleanup();
+        kiri.client.animate_cleanup2();
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
     }
 
-    function animate(api, delay) {
+    function animate2(api, delay) {
         let alert = api.alerts.show("building animation");
-        kiri.client.animate_setup(api.conf.get(), data => {
+        kiri.client.animate_setup2(api.conf.get(), data => {
             handleUpdate(data);
             if (data) {
                 return;
@@ -80,24 +77,23 @@ kiri.load(() => {
     }
 
     gapp.overlay(kiri.client, {
-        animate(data, ondone) {
-            kiri.client.send("animate", data, ondone);
+        animate2(data, ondone) {
+            kiri.client.send("animate2", data, ondone);
         },
 
-        animate_setup(settings, ondone) {
+        animate_setup2(settings, ondone) {
             color = settings.controller.dark ? 0x888888 : 0;
-            unitScale = settings.controller.units === 'in' ? 1/25.4 : 1;
-            kiri.client.send("animate_setup", {settings}, ondone);
+            kiri.client.send("animate_setup2", {settings}, ondone);
         },
 
-        animate_cleanup(data, ondone) {
-            kiri.client.send("animate_cleanup", data, ondone);
+        animate_cleanup2(data, ondone) {
+            kiri.client.send("animate_cleanup2", data, ondone);
         }
     });
 
     gapp.overlay(CAM, {
-        animate,
-        animate_clear
+        animate2,
+        animate_clear2
     });
 
     function meshAdd(id, ind, pos, ilen, plen) {
@@ -142,7 +138,7 @@ kiri.load(() => {
 
     function step() {
         updateSpeed();
-        kiri.client.animate({speed, steps: 1}, handleUpdate);
+        kiri.client.animate2({speed, steps: 1}, handleUpdate);
     }
 
     function play(opts) {
@@ -153,7 +149,7 @@ kiri.load(() => {
             pauseButton.style.display = '';
             $('render-hide').onclick();
         }
-        kiri.client.animate({
+        kiri.client.animate2({
             speed,
             steps: steps || Infinity,
             pause: speedPauses[speedIndex]
@@ -166,7 +162,7 @@ kiri.load(() => {
         playButton.style.display = 'none';
         pauseButton.style.display = '';
         $('render-hide').onclick();
-        kiri.client.animate({
+        kiri.client.animate2({
             speed,
             steps: steps || Infinity,
             pause: speedPauses[speedIndex]
@@ -176,7 +172,7 @@ kiri.load(() => {
     function pause() {
         playButton.style.display = '';
         pauseButton.style.display = 'none';
-        kiri.client.animate({speed: 0}, handleUpdate);
+        kiri.client.animate2({speed: 0}, handleUpdate);
     }
 
     function handleUpdate(data) {
@@ -221,9 +217,9 @@ kiri.load(() => {
     }
 
     function replay() {
-        CAM.animate_clear(api);
+        CAM.animate_clear2(api);
         setTimeout(() => {
-            CAM.animate(api, 50);
+            CAM.animate2(api, 50);
         }, 250);
     }
 });
@@ -354,13 +350,12 @@ kiri.load(() => {
     let updates = 0;
 
 
-    kiri.worker.animate_setup = function(data, send) {
+    kiri.worker.animate_setup2 = function(data, send) {
         const { settings } = data;
         const { process } = settings;
         const print = worker.print;
         const density = parseInt(settings.controller.animesh) * 1000;
 
-        unitScale = settings.controller.units === 'in' ? 1/25.4 : 1;
         pathIndex = 0;
         path = print.output.flat();
         tools = settings.tools;
@@ -402,7 +397,7 @@ kiri.load(() => {
         send.done();
     };
 
-    kiri.worker.animate = function(data, send) {
+    kiri.worker.animate2 = function(data, send) {
         renderPause = data.pause || renderPause;
         renderSpeed = data.speed || 0;
         if (animating) {
@@ -415,7 +410,7 @@ kiri.load(() => {
         renderPath(send);
     };
 
-    kiri.worker.animate_cleanup = function(data, send) {
+    kiri.worker.animate_cleanup2 = function(data, send) {
         if (animating) {
             animateClear = true;
         }
