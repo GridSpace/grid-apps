@@ -19,27 +19,28 @@ let isAnimate,
     camStock,
     camZBottom,
     current,
+    flipping,
     poppedRec,
     hoveredOp,
     API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG, MCAM;
 
 let zaxis = { x: 0, y: 0, z: 1 },
     popOp = {},
+    animVer = 1,
     seed = Date.now(),
     func = {
         hover: noop,
         hoverUp: noop
-    },
-    flipping;
+    };
 
-function animFn(v) {
+function animFn() {
     return [{
         animate: CAM.animate,
         animate_clear: CAM.animate_clear
     },{
         animate: CAM.animate2,
         animate_clear: CAM.animate_clear2
-    }][0];
+    }][animVer];
 }
 
 CAM.restoreTabs = restoreTabs;
@@ -79,7 +80,7 @@ CAM.init = function(kiri, api) {
 
     api.event.on("function.export", (mode) => {
         if (isAnimate) {
-            animFn(0).animate_clear(api);
+            animFn().animate_clear(api);
             isAnimate = false;
         }
     });
@@ -102,7 +103,7 @@ CAM.init = function(kiri, api) {
     api.event.on("view.set", (mode) => {
         isArrange = (mode === VIEWS.ARRANGE);
         isAnimate = false;
-        animFn(0).animate_clear(api);
+        animFn().animate_clear(api);
         func.clearPops();
         $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
     });
@@ -1527,7 +1528,7 @@ function animate() {
     API.widgets.opacity(isParsed ? 0 : 0.75);
     API.hide.slider();
     STACKS.clear();
-    animFn(0).animate(API);
+    animFn().animate(API);
 }
 
 function updateStock(args, event) {

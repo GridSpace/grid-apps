@@ -194,7 +194,15 @@ kiri.load(() => {
                 mesh.position.x = pos.x;
                 mesh.position.y = pos.y;
                 mesh.position.z = pos.z;
-                space.update();
+                space.refresh();
+            }
+        }
+        if (data.mesh_index) {
+            const { id, index } = data.mesh_index;
+            const mesh = meshes[id];
+            if (mesh) {
+                mesh.rotation.x = (Math.PI / 180) * index;
+                space.refresh();
             }
         }
         if (data.mesh_update) {
@@ -217,9 +225,9 @@ kiri.load(() => {
     }
 
     function replay() {
-        CAM.animate_clear2(api);
+        animate_clear2(api);
         setTimeout(() => {
-            CAM.animate2(api, 50);
+            animate2(api, 50);
         }, 250);
     }
 });
@@ -330,7 +338,9 @@ kiri.load(() => {
     let stock, center, rez;
     let path, pathIndex, tool, tools, last;
 
+    let stockIndexMsg = false;
     let stockSlices;
+    let stockIndex;
     let startTime;
 
     let toolID = -1;
@@ -372,6 +382,7 @@ kiri.load(() => {
         last = null;
         animating = false;
         animateClear = false;
+        stockIndex = 0;
         indexCount = 0;
         startTime = 0;
         updates = 0;
@@ -542,15 +553,21 @@ kiri.load(() => {
 
     // send latest tool position and progress bar
     function renderUpdate(send) {
-        if (toolUpdateMsg) {
-            send.data(toolUpdateMsg);
-        }
         const updated = []
         for (let slice of stockSlices) {
             slice.updateMesh(updated);
         }
         for (let slice of updated) {
             slice.send(send);
+        }
+        if (toolUpdateMsg) {
+            send.data(toolUpdateMsg);
+        }
+        if (stockIndexMsg) {
+            for (let slice of stockSlices) {
+                send.data({ mesh_index: { id: slice.id, index: -stockIndex } });
+            }
+            stockIndexMsg = false;
         }
         send.data({ progress: pathIndex / path.length });
         updates++;
@@ -561,10 +578,19 @@ kiri.load(() => {
         const lpos = tool.pos || { x:0, y:0, z:0 };
         tool.pos = pos;
         toolUpdateMsg = { mesh_move: { id: toolID, pos }};
-        const delta = [ pos.x - lpos.x, pos.y - lpos.y, pos.z - lpos.z ];
-        const oldmesh = toolMesh.mesh;
-        toolMesh.mesh = toolMesh.mesh.translate(pos.x - lpos.x, pos.y - lpos.y, pos.z - lpos.z);
-        oldmesh.delete();
+        if (toolMesh.mesh) {
+            toolMesh.mesh.delete();
+        }
+        toolMesh.mesh = toolMesh.root.translate(pos.x, pos.y, pos.z);
+        if (pos.a !== undefined) {
+            let tmp = toolMesh.mesh.rotate([ pos.a, 0, 0 ]);
+            toolMesh.mesh.delete();
+            toolMesh.mesh = tmp;
+            if (pos.a !== stockIndex) {
+                stockIndexMsg = true;
+                stockIndex = pos.a;
+            }
+        }
     }
 
     // delete old tool mesh, generate tool mesh, send to client
@@ -590,7 +616,7 @@ kiri.load(() => {
         }
         mesh = mesh.translate(0, 0, (flen + slen) / 2);
         const { vertex, index } = mesh.getMesh({ normal: () => undefined });
-        toolMesh = { mesh, index, vertex };
+        toolMesh = { root: mesh, index, vertex };
         send.data({ mesh_add: { id:--toolID, ind: index, pos: vertex }});
     }
 

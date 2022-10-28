@@ -224,9 +224,9 @@ kiri.load(() => {
     }
 
     function replay() {
-        CAM.animate_clear(api);
+        animate_clear(api);
         setTimeout(() => {
-            CAM.animate(api, 50);
+            animate(api, 50);
         }, 250);
     }
 
@@ -553,31 +553,6 @@ kiri.load(() => {
         }
         send.data({ mesh_add: { id:++toolID, ind, sab }});
     }
-
-    // load renderer code in worker context only
-    if (kiri.worker && false)
-    fetch('/wasm/kiri-ani.wasm')
-        .then(response => response.arrayBuffer())
-        .then(bytes => WebAssembly.instantiate(bytes, {
-            env: {
-                reportf: (a,b) => { console.log('[f]',a,b) },
-                reporti: (a,b) => { console.log('[i]',a,b) }
-            }
-        }))
-        .then(results => {
-            let {module, instance} = results;
-            let {exports} = instance;
-            let heap = new Uint8Array(exports.memory.buffer);
-            let wasm = self.wasm = {
-                heap,
-                memory: exports.memory,
-                updateMesh: exports.updateMesh
-            };
-            // heap[0] = 5;
-            // heap[100] = 6;
-            // heap[200] = 8;
-            // let rv = self.wasm.updateMesh(0, 0, 100, 200);
-        });
 
 });
 
