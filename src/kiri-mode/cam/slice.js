@@ -49,7 +49,8 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         color = dark ? 0xbbbbbb : 0,
         tabs = widget.anno.tab,
         unsafe = proc.camExpertFast,
-        units = settings.controller.units === 'in' ? 25.4 : 1;
+        units = settings.controller.units === 'in' ? 25.4 : 1,
+        axisIndex = undefined;
 
     if (tabs) {
         // make tab polygons
@@ -136,6 +137,20 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         return shadows[z] = POLY.setZ(shadow, z);
     }
 
+    function setAxisIndex(degrees) {
+        axisIndex = degrees;
+    }
+
+    function addSlices(slices) {
+        if (!Array.isArray(slices)) {
+            slices = [ slices ];
+        }
+        sliceAll.appendAll(slices);
+        if (axisIndex !== undefined) {
+            console.log({post_axis_index: slices});
+        }
+    }
+
     let state = {
         settings,
         widget,
@@ -146,7 +161,8 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         healPolys,
         shadowAt,
         slicer,
-        sliceAll,
+        addSlices,
+        setAxisIndex,
         updateToolDiams,
         zBottom,
         zThru,

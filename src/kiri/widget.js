@@ -457,6 +457,10 @@ class Widget {
         this.setModified();
     }
 
+    setIndexed(z) {
+        this.track.indexed = z;
+    }
+
     /**
      * moves top of widget to given Z
      *
@@ -475,6 +479,9 @@ class Widget {
             pos.z = 0;
             mesh.position.z = -this.track.zcut || 0;
             this.track.top = mbz;
+        }
+        if (this.track.indexed) {
+            mesh.position.z -= this.track.indexed / 2;
         }
         let ntz = {
             pz: pos.z,

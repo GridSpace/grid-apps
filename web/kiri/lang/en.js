@@ -556,6 +556,10 @@ self.kiri.lang['en-us'] = {
     cf_nvrt_s:      "z bottom",
     cf_nvrt_l:      "invert z bottom setting to follow stock",
 
+    // CNC INDEX AXIS
+    ci_degr_s:      "degrees",
+    ci_degr_l:      "degrees to rotate the A (indexed) axis",
+
     // CNC LASER
     cl_powr_s:      "power",
     cl_powr_l:      "laser power from 0 to 1.0",

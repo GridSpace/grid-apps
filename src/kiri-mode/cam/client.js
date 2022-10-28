@@ -68,6 +68,12 @@ CAM.init = function(kiri, api) {
         isIndexed = settings.process.camStockIndexed;
         animVer = isIndexed ? 1 : 0;
         updateStock();
+        SPACE.platform.setVisible(!isIndexed);
+        for (let widget of api.widgets.all()) {
+            widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
+        }
+        api.platform.update_top_z();
+        $('cam-index').style.display = isIndexed ? '' : 'none';
     }
 
     // wire up animate button in ui
@@ -95,7 +101,7 @@ CAM.init = function(kiri, api) {
     api.event.on("mode.set", (mode) => {
         isCamMode = mode === 'CAM';
         $('set-tools').style.display = isCamMode ? '' : 'none';
-        kiri.space.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
+        SPACE.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
         updateStock(undefined, 'internal');
         UI.func.animate.style.display = isCamMode ? '' : 'none';
         if (!isCamMode) {
@@ -211,6 +217,7 @@ CAM.init = function(kiri, api) {
         let settings = API.conf.get();
         let { process, device } = settings;
         switch (ev.target.innerText) {
+            case "index": return func.opAddIndex();
             case "laser on": return func.opAddLaserOn();
             case "laser off": return func.opAddLaserOff();
             case "gcode": return func.opAddGCode();
@@ -250,6 +257,10 @@ CAM.init = function(kiri, api) {
 
     func.opAddGCode = () => {
         func.opAdd(popOp.gcode.new());
+    };
+
+    func.opAddIndex = () => {
+        func.opAdd(popOp.index.new());
     };
 
     func.opAddLevel = () => {
@@ -1300,6 +1311,12 @@ CAM.init = function(kiri, api) {
         gcode:  'camCustomGcode',
     }).inputs = {
         action:   UC.newRow([ UC.newButton(LANG.edit, gcodeEditor()) ], {class:"ext-buttons f-row"})
+    };
+
+    createPopOp('index', {
+        degrees: 'camIndexAxis',
+    }).inputs = {
+        degrees: UC.newInput(LANG.ci_degr_s, {title:LANG.ci_degr_l, convert:UC.toFloat, bound:UC.bound(-360,360.0) })
     };
 
     const editEnable = gcodeEditor('Laser Enable Script', 'enable');

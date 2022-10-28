@@ -38,6 +38,16 @@ class CamOp {
     prepare() { }
 }
 
+class OpIndex extends CamOp {
+    constructor(state, op) {
+        super(state, op);
+        state.setAxisIndex(op.degrees);
+    }
+
+    prepare(ops, progress) {
+    }
+}
+
 class OpGCode extends CamOp {
     constructor(state, op) {
         super(state, op);
@@ -83,7 +93,7 @@ class OpLevel extends CamOp {
 
     slice(progress) {
         let { op, state } = this;
-        let { settings, widget, sliceAll } = state;
+        let { settings, widget, addSlices } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs } = state;
         let { bounds, zMax, ztOff, color, tshadow } = state;
         let { stock } = settings;
@@ -107,7 +117,7 @@ class OpLevel extends CamOp {
             slice.output()
                 .setLayer("level", {face: color, line: color})
                 .addPolys(this.lines);
-            sliceAll.push(slice);
+            addSlices(slice);
         }
     }
 
@@ -140,7 +150,7 @@ class OpRough extends CamOp {
 
     slice(progress) {
         let { op, state } = this;
-        let { settings, widget, slicer, sliceAll, unsafe, color } = state;
+        let { settings, widget, slicer, addSlices, unsafe, color } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
         let { tshadow, shadowTop, ztOff, zBottom, zMax, shadowAt } = state;
         let { process, stock } = settings;
@@ -178,7 +188,7 @@ class OpRough extends CamOp {
                 slice.output()
                     .setLayer("face", {face: color, line: color})
                     .addPolys(slice.camLines);
-                sliceAll.push(slice);
+                addSlices(slice);
                 camFaces.push(slice);
                 z -= zstep;
             }
@@ -351,7 +361,7 @@ class OpRough extends CamOp {
         });
 
         this.sliceOut = slices.filter(slice => slice.camLines);
-        sliceAll.appendAll(this.sliceOut);
+        addSlices(this.sliceOut);
     }
 
     prepare(ops, progress) {
@@ -449,7 +459,7 @@ class OpOutline extends CamOp {
 
     slice(progress) {
         let { op, state } = this;
-        let { settings, widget, slicer, sliceAll, tshadow, thruHoles, unsafe, color } = state;
+        let { settings, widget, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
         let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs, cutPolys } = state;
         let { zMax, ztOff } = state;
         let { process, stock } = settings;
@@ -618,7 +628,7 @@ class OpOutline extends CamOp {
                 .addPolys(slice.camLines);
         }
 
-        sliceAll.appendAll(slices);
+        addSlices(slices);
         this.sliceOut = slices;
     }
 
@@ -698,7 +708,7 @@ class OpContour extends CamOp {
 
     slice(progress) {
         let { op, state } = this;
-        let { sliceAll } = state;
+        let { addSlices } = state;
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
@@ -709,7 +719,7 @@ class OpContour extends CamOp {
             },
             ondone: (slices) => {
                 this.sliceOut = slices;
-                sliceAll.appendAll(slices);
+                addSlices(slices);
             },
             contour: op,
             state: state
@@ -788,7 +798,7 @@ class OpTrace extends CamOp {
     slice(progress) {
         let { op, state } = this;
         let { tool, rate, down, plunge, offset } = op;
-        let { settings, widget, sliceAll, zMax, zTop, zThru, tabs } = state;
+        let { settings, widget, addSlices, zMax, zTop, zThru, tabs } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
         let { camStockClipTo, camZBottom } = process;
@@ -814,7 +824,7 @@ class OpTrace extends CamOp {
         }
         function newSliceOut(z) {
             let slice = newSlice(z);
-            sliceAll.push(slice);
+            addSlices(slice);
             sliceOut.push(slice);
             return slice;
         }
@@ -987,7 +997,7 @@ class OpPocket extends CamOp {
         const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
-        let { settings, widget, sliceAll, zMax, zTop, zThru, tabs, color } = state;
+        let { settings, widget, addSlices, zMax, zTop, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt } = state;
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
@@ -1022,7 +1032,7 @@ class OpPocket extends CamOp {
         }
         function newSliceOut(z) {
             let slice = newSlice(z);
-            sliceAll.push(slice);
+            addSlices(slice);
             sliceOut.push(slice);
             return slice;
         }
@@ -1206,7 +1216,7 @@ class OpDrill extends CamOp {
 
     slice(progress) {
         let { op, state } = this;
-        let { settings, sliceAll, tslices, updateToolDiams } = state;
+        let { settings, addSlices, tslices, updateToolDiams } = state;
         let { zBottom, zThru, thruHoles, color } = state;
 
         let drills = [],
@@ -1272,14 +1282,14 @@ class OpDrill extends CamOp {
             slice.output()
                 .setLayer("drill", {face: color, line: color})
                 .addPolys(drill);
-            sliceAll.push(slice);
+            addSlices(slice);
             sliceOut.push(slice);
         });
     }
 
     prepare(ops, progress) {
         let { op, state } = this;
-        let { settings, widget, sliceAll, updateToolDiams } = state;
+        let { settings, widget, addSlices, updateToolDiams } = state;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
         setTool(op.tool, undefined, op.rate);
@@ -1296,7 +1306,7 @@ class OpRegister extends CamOp {
 
     slice(progress) {
         let { op, state } = this;
-        let { settings, widget, bounds, sliceAll, zMax, zThru, color } = state;
+        let { settings, widget, bounds, addSlices, zMax, zThru, color } = state;
         let { updateToolDiams } = state;
 
         let tool = new CAM.Tool(settings, op.tool);
@@ -1376,7 +1386,7 @@ class OpRegister extends CamOp {
                 }
                 for (let z of base.util.lerp(z1, z2, op.down)) {
                     let slice = newSlice(z);
-                    sliceAll.push(slice);
+                    addSlices(slice);
                     sliceOut.push(slice);
                     start(z);
                     rept(4, o2, oy => {
@@ -1416,14 +1426,14 @@ class OpRegister extends CamOp {
             slice.output()
                 .setLayer("register", {face: color, line: color})
                 .addPolys(polys);
-            sliceAll.push(slice);
+            addSlices(slice);
             sliceOut.push(slice);
         }
     }
 
     prepare(ops, progress) {
         let { op, state } = this;
-        let { settings, widget, sliceAll, updateToolDiams } = state;
+        let { settings, widget, addSlices, updateToolDiams } = state;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
         if (op.axis === '-') {
@@ -1447,7 +1457,7 @@ class OpXRay extends CamOp {
     }
 
     slice(progress) {
-        let { widget, sliceAll } = this.state;
+        let { widget, addSlices } = this.state;
         let slicer = new kiri.cam_slicer(widget.getPoints(), {
             zlist: true,
             zline: true
@@ -1461,7 +1471,7 @@ class OpXRay extends CamOp {
             // data.tops.forEach(top => slice.addTop(top));
             slice.lines = data.lines;
             slice.xray();
-            sliceAll.push(slice);
+            addSlices(slice);
         }, over: false, flatoff: 0, edges: true, openok: true };
         slicer.slice(xrayind, xrayopt);
         // xrayopt.over = true;
@@ -1476,7 +1486,7 @@ class OpShadow extends CamOp {
 
     slice(progress) {
         let state = this.state;
-        let { ops, slicer, widget, unsafe, sliceAll, shadowAt } = state;
+        let { ops, slicer, widget, unsafe, addSlices, shadowAt } = state;
 
         let real = ops.map(rec => rec.op).filter(op => op);
         let drill = real.filter(op => op.type === 'drill').length > 0;
@@ -1509,7 +1519,7 @@ class OpShadow extends CamOp {
             data.slice.shadow = tshadow;
             if (false) {
                 const slice = data.slice;
-                sliceAll.push(slice);
+                addSlices(slice);
                 slice.output()
                     .setLayer("shadow", {line: 0x888800, thin: true })
                     .addPolys(POLY.setZ(tshadow.clone(true), data.z), { thin: true });
@@ -1651,6 +1661,7 @@ CAM.OPS = CamOp.MAP = {
     "laser on":  OpLaserOn,
     "laser off": OpLaserOff,
     "gcode":     OpGCode,
+    "index":     OpIndex,
     "flip":      CamOp
 };
 

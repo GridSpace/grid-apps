@@ -565,6 +565,7 @@ const conf = exports({
                 camStockOffset: true,
                 camStockClipTo: false,
                 camStockIndexed: false,
+                camIndexAxis: 0,
                 camStockOn: true,
                 camConventional: false, // outputClockwise
                 outputOriginCenter: false,

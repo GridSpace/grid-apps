@@ -35,7 +35,7 @@ kiri.load(() => {
     const { api } = kiri;
 
     function animate_clear2(api) {
-        moto.space.platform.showGridBelow(true);
+        // moto.space.platform.showGridBelow(true);
         kiri.client.animate_cleanup2();
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';
@@ -71,7 +71,7 @@ kiri.load(() => {
             pauseButton.style.display = 'none';
             api.event.emit('animate', 'CAM');
             api.alerts.hide(alert);
-            moto.space.platform.showGridBelow(false);
+            // moto.space.platform.showGridBelow(false);
             $('render-hide').onclick();
         });
     }
