@@ -29,6 +29,7 @@ const LISTS = {
         { name: "last" },
         { name: "center" },
         { name: "origin" },
+        { name: "random" },
     ],
     infill: [
         { name: "hex" },

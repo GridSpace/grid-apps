@@ -302,6 +302,8 @@ const conf = exports({
                 sliceShells: 3,
                 sliceShellOrder: "in-out",
                 sliceLayerStart: "last",
+                sliceLayerStartX: 0,
+                sliceLayerStartY: 0,
                 sliceLineWidth: 0,
                 sliceFillGrow: 0,
                 sliceFillAngle: 45,
