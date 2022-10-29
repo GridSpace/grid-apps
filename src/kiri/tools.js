@@ -39,15 +39,35 @@ let alert;
 let lastobj;
 let lastface;
 let enabled = false;
+let opName = 'lay flat';
+let onDone = onLayFlatSelect;
 
-function cleanup() {
-    if (lastobj) {
-        lastobj.remove(pmesh);
-        lastobj = undefined;
-    }
+function onLayFlatSelect() {
+    let q = new Quaternion().setFromUnitVectors(lastface.normal, new Vector3(0,0,-1));
+    api.selection.rotate(q);
+    endIt();
 }
 
-function endit() {
+function onFaceUpSelect() {
+    // todo
+}
+
+function startIt() {
+    if (enabled) {
+        endIt();
+        return;
+    }
+    if (api.feature.hover) {
+        console.log(`${opName} cannot pre-empt hover`);
+        return;
+    }
+    $('lay-flat').classList.add('selected');
+    api.feature.hover = true;
+    enabled = true;
+    alert = api.show.alert(`[ESC] to end ${opName}`, 600000);
+}
+
+function endIt() {
     if (enabled) {
         api.hide.alert(alert);
         $('lay-flat').classList.remove('selected');
@@ -58,21 +78,25 @@ function endit() {
     }
 }
 
-api.event.on('key.esc', endit);
+function cleanup() {
+    if (lastobj) {
+        lastobj.remove(pmesh);
+        lastobj = undefined;
+    }
+}
+
+api.event.on('key.esc', endIt);
+
+api.event.on('tool.mesh.face-up', () => {
+    opName = 'face select';
+    opDone = onLayFlatSelect;
+    startIt();
+});
 
 api.event.on('tool.mesh.lay-flat', () => {
-    if (enabled) {
-        endit();
-        return;
-    }
-    if (api.feature.hover) {
-        console.log('lay flat cannot pre-empt hover');
-        return;
-    }
-    $('lay-flat').classList.add('selected');
-    api.feature.hover = true;
-    enabled = true;
-    alert = api.show.alert('[ESC] to end lay-flat operation', 600000);
+    opName = 'lay flat';
+    opDone = onLayFlatSelect;
+    startIt();
 });
 
 api.event.on('mouse.hover', (ev) => {
@@ -85,11 +109,16 @@ api.event.on('mouse.hover', (ev) => {
         lastface = int.face;
         let obj = lastobj = int.object;
         let norm = int.face.normal;
-        let opos = obj.widget.track.pos;
+        let widget = obj.widget;
+        let opos = widget.track.pos;
         obj.add(pmesh);
         pmesh.position.x = point.x - opos.x + norm.x * 0.1;
         pmesh.position.y = -point.z - opos.y + norm.y * 0.1;
         pmesh.position.z = point.y + norm.z * 0.1;
+        // todo also need to account for z top offset in cam mode
+        if (widget.track.indexed) {
+            pmesh.position.z += widget.track.indexed / 2;
+        }
         let q = new Quaternion().setFromUnitVectors(
             new Vector3(0,0,1),
             new Vector3(norm.x,norm.y,norm.z)
@@ -102,13 +131,11 @@ api.event.on('mouse.hover.up', (ev) => {
     if (!enabled) {
         return;
     }
-    let { int, point, object } = ev;
+    let { object } = ev;
     if (!object) {
         return;
     }
-    let q = new Quaternion().setFromUnitVectors(lastface.normal, new Vector3(0,0,-1));
-    api.selection.rotate(q);
-    endit();
+    onDone();
 });
 
 });
