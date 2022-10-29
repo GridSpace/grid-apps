@@ -49,7 +49,8 @@ function onLayFlatSelect() {
 }
 
 function onFaceUpSelect() {
-    // todo
+    api.event.emit('tool.mesh.face-normal', lastface.normal);
+    endIt();
 }
 
 function startIt() {
@@ -89,13 +90,13 @@ api.event.on('key.esc', endIt);
 
 api.event.on('tool.mesh.face-up', () => {
     opName = 'face select';
-    opDone = onLayFlatSelect;
+    onDone = onFaceUpSelect;
     startIt();
 });
 
 api.event.on('tool.mesh.lay-flat', () => {
     opName = 'lay flat';
-    opDone = onLayFlatSelect;
+    onDone = onLayFlatSelect;
     startIt();
 });
 
@@ -110,14 +111,15 @@ api.event.on('mouse.hover', (ev) => {
         let obj = lastobj = int.object;
         let norm = int.face.normal;
         let widget = obj.widget;
-        let opos = widget.track.pos;
+        let track = widget.track;
+        let opos = track.pos;
         obj.add(pmesh);
         pmesh.position.x = point.x - opos.x + norm.x * 0.1;
         pmesh.position.y = -point.z - opos.y + norm.y * 0.1;
         pmesh.position.z = point.y + norm.z * 0.1;
         // todo also need to account for z top offset in cam mode
-        if (widget.track.indexed) {
-            pmesh.position.z += widget.track.indexed / 2;
+        if (track.indexed) {
+            pmesh.position.z += track.indexed / 2 + track.tzoff;
         }
         let q = new Quaternion().setFromUnitVectors(
             new Vector3(0,0,1),

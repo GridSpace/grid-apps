@@ -480,6 +480,7 @@ class Widget {
             mesh.position.z = -this.track.zcut || 0;
             this.track.top = mbz;
         }
+        this.track.tzoff = mbz - z;
         if (this.track.indexed) {
             mesh.position.z -= this.track.indexed / 2;
         }
