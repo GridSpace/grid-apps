@@ -34,6 +34,7 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` add 'random' and 'seam' start point options
 * `F` convert ranges to z offsets while continuing to show layer #
 * `F` support pillar top/bottom should conform to part
 * `F` more explicit line width control with ranges and min/max adaptive

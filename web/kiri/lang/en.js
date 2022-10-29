@@ -559,6 +559,10 @@ self.kiri.lang['en-us'] = {
     // CNC INDEX AXIS
     ci_degr_s:      "degrees",
     ci_degr_l:      "degrees to rotate the A (indexed) axis",
+    ci_abso_s:      "absolute",
+    ci_abso_l:      "degree rotation is absolute",
+    ci_face_s:      "face",
+    ci_face_l:      "select face to rotate facing up",
 
     // CNC LASER
     cl_powr_s:      "power",
