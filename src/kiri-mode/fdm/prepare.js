@@ -784,9 +784,11 @@ FDM.prepare = async function(widgets, settings, update) {
 function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     const { settings } = print;
     const { device } = settings;
+    const { bedWidth, bedDepth, bedRound } = device;
 
     let preout = [],
         process = opt.params || settings.process,
+        originCenter = process.outputOriginCenter || bedRound,
         extruder = slice.extruder || 0,
         nozzleSize = process.sliceLineWidth || device.extruders[extruder].extNozzle,
         firstLayer = opt.first || false,
@@ -810,6 +812,15 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         antiBacklash = process.antiBacklash,
         wipeDist = process.outputRetractWipe || 0,
         isBelt = device.bedBelt,
+        bedOffset = originCenter ? {
+            x: 0,
+            y: 0,
+            z: 0
+        } : {
+            x: bedWidth/2,
+            y: isBelt ? 0 : bedDepth/2,
+            z: 0
+        },
         beltFirst = process.outputBeltFirst || false,
         startClone = startPoint.clone(),
         seedPoint = opt.seedPoint || startPoint,
@@ -1376,11 +1387,24 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             switch (process.sliceLayerStart) {
                 case "last":
                     break;
+                case "random":
+                    let bounds = top.poly.bounds;
+                    let center = bounds.center();
+                    let radius = Math.max(bounds.width(), bounds.height());
+                    let angle = Math.random()*Math.PI*2;
+                    let x = center.x + Math.cos(angle)*radius;
+                    let y = center.y + Math.sin(angle)*radius;
+                    startPoint = newPoint(x,y,startPoint.z);
+                    break;
                 case "center":
                     startPoint = newPoint(0,0,startPoint.z);
                     break;
                 case "origin":
-                    startPoint = origin.clone();
+                    startPoint = newPoint(-bedOffset.x, -bedOffset.y, startPoint.z);
+                    break;
+                case "position":
+                    startPoint = newPoint(-bedOffset.x+process.sliceLayerStartX, -bedOffset.y+process.sliceLayerStartY, startPoint.z);
+                    console.log("startPoint", top);
                     break;
             }
 
