@@ -1404,7 +1404,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                     break;
                 case "position":
                     startPoint = newPoint(-bedOffset.x+process.sliceLayerStartX, -bedOffset.y+process.sliceLayerStartY, startPoint.z);
-                    console.log("startPoint", top);
                     break;
             }
 

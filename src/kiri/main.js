@@ -159,6 +159,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             slices: showSlices,
             layer: setVisibleLayer,
             local: showLocal,
+            tools: noop, // set during init
             import: function() { UI.import.style.display = '' }
         },
         space: {
@@ -234,8 +235,10 @@ gapp.register("kiri.main", [], (root, exports) => {
             pos.y /= sel.length;
             pos.z /= sel.length;
         }
-        SPACE.platform.setCenter(pos.x, -pos.y, platform.top_z() / 2);
-        SPACE.view.setFocus(new THREE.Vector3(pos.x, platform.top_z() / 2, -pos.y));
+        let cam_index = api.conf.get().process.camStockIndexed || false;
+        let focus_z = cam_index ? 0 : platform.top_z() / 2;
+        SPACE.platform.setCenter(pos.x, -pos.y, focus_z);
+        SPACE.view.setFocus(new THREE.Vector3(pos.x, focus_z, -pos.y));
     }
 
     function reload() {

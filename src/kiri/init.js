@@ -1286,7 +1286,6 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     function showTools() {
         if (api.mode.get_id() !== MODES.CAM) return;
-
         let selectedIndex = null;
 
         editTools = settings().tools.slice().sort((a,b) => {
@@ -1333,6 +1332,19 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.conf.update_fields();
             api.event.settings();
         };
+        ui.toolsExport.onclick = () => {
+            uc.prompt("Export Tools Filename", "tools").then(name => {
+                if (!name) {
+                    return;
+                }
+                const record = {
+                    version: kiri.version,
+                    tools: api.conf.get().tools,
+                    time: Date.now()
+                };
+                api.util.download(api.util.b64enc(record), `${name}.km`);
+            });
+        };
 
         renderTools();
         if (editTools.length > 0) {
@@ -1345,6 +1357,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.dialog.show('tools');
         ui.toolSelect.focus();
     }
+
+    // not the best way to do this, but main decl of api.show is broken
+    api.show.tools = showTools;
 
     function updateDeviceList() {
         renderDevices(Object.keys(devices[api.mode.get_lower()]).sort());
@@ -1638,6 +1653,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             toolsSave:          $('tools-save'),
             toolsClose:         $('tools-close'),
+            toolsExport:        $('tools-export'),
             toolSelect:         $('tool-select'),
             toolAdd:            $('tool-add'),
             toolDelete:         $('tool-del'),
@@ -1904,6 +1920,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             camStockX:           uc.newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
             camStockY:           uc.newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
             camStockZ:           uc.newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
+            camSep:              uc.newBlank({class:"pop-sep"}),
             camStockOffset:      uc.newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l, modes:CAM}),
             camStockClipTo:      uc.newBoolean(LANG.cs_clip_s, onBooleanClick, {title:LANG.cs_clip_l, modes:CAM}),
             camStockIndexed:     uc.newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l, modes:CAM}),
@@ -1912,6 +1929,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             camCommon:           uc.newGroup(LANG.cc_menu, null, {modes:CAM}),
             camZAnchor:          uc.newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, modes:CAM, trace:true}, "zanchor"),
+            camSep:              uc.newBlank({class:"pop-sep"}),
             camZOffset:          uc.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:uc.toFloat, modes:CAM, units:true}),
             camZBottom:          uc.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:uc.toFloat, modes:CAM, units:true, trigger: true}),
             camZThru:            uc.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:uc.toFloat, bound:uc.bound(0.0,100), modes:CAM, units:true, show:() => { return ui.camZBottom.value == 0 }}),

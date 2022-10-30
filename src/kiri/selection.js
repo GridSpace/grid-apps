@@ -186,6 +186,7 @@ function rotate(x, y, z) {
     selection.update_bounds();
     api.platform.update_bounds();
     api.platform.compute_max_z();
+    api.platform.update_top_z();
     api.event.emit('selection.rotate', {x, y, z});
     selection.update_info();
     api.space.auto_save();

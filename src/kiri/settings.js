@@ -516,8 +516,9 @@ function settingsImport(data, ask) {
     let isSettings = (data.settings && data.version && data.time);
     let isProcess = (data.process && data.version && data.time && data.mode && data.name);
     let isDevice = (data.device && data.version && data.time);
+    let isTools = (data.tools && data.version && data.time)
     let isWork = (data.work);
-    if (!isSettings && !isDevice && !isProcess) {
+    if (!isSettings && !isDevice && !isProcess && !isTools) {
         uc.alert('invalid settings or device format');
         console.log('data',data);
         return;
@@ -574,12 +575,17 @@ function settingsImport(data, ask) {
             restoreSettings();
             api.space.restore(() => { ui.sync() }, true);
         }
+        if (isTools && Array.isArray(data.tools)) {
+            settings.tools = data.tools;
+            api.show.tools();
+        }
     }
     if (ask) {
         let opt = {};
         let prompt = isDevice ?
             `Import device "${data.device}"?` : isProcess ?
-            `Import process "${data.name}"?` :
+            `Import process "${data.name}"?` : isTools ?
+            `Import tool definitions?`:
             `Import settings made in Kiri:Moto version ${data.version} on<br>${new Date(data.time)}?`;
         if (data.screen) {
             opt.pre = [
