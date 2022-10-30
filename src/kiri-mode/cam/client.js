@@ -65,6 +65,9 @@ CAM.init = function(kiri, api) {
     }
 
     function setAnimationStyle(settings) {
+        if (!isCamMode) {
+            return;
+        }
         isIndexed = settings.process.camStockIndexed;
         animVer = isIndexed ? 1 : 0;
         updateStock();
@@ -74,6 +77,17 @@ CAM.init = function(kiri, api) {
         }
         api.platform.update_top_z();
         $('cam-index').style.display = isIndexed ? '' : 'none';
+        // add or remove clock op depending on indexing
+        const cp = current.process;
+        if (!cp.ops) {
+            return;
+        }
+        const clockOp = cp.ops.filter(op => op.type === '|')[0];
+        if (isIndexed && !clockOp) {
+            func.opAdd(popOp['|'].new());
+        } else if (!isIndexed && clockOp) {
+            func.opDel(clockOp);
+        }
     }
 
     // wire up animate button in ui
@@ -356,7 +370,9 @@ CAM.init = function(kiri, api) {
     api.event.on("cam.op.render", func.opRender = () => {
         // $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         let oplist = current.process.ops;
-        if (!(isCamMode && oplist)) return;
+        if (!(isCamMode && oplist)) {
+            return;
+        }
         oplist = oplist.filter(rec => !Array.isArray(rec));
         let mark = Date.now();
         let html = [];
@@ -364,9 +380,12 @@ CAM.init = function(kiri, api) {
         let bind = {};
         let scale = API.view.unit_scale();
         oplist.forEach((rec,i) => {
+            let clock = rec.clock = rec.type === '|';
+            let label = clock ? '<i class="fa-regular fa-clock"></i>' : rec.type;
             html.appendAll([
                 `<div id="${mark+i}" class="draggable">`,
-                `<label class="label">${rec.type}</label>`,
+                `<label class="label">${label}</label>`,
+                clock ? '' :
                 `<label id="${mark+i}-x" class="del"><i class="fa-regular fa-circle-xmark"></i></label>`,
                 `</div>`
             ]);
@@ -378,6 +397,7 @@ CAM.init = function(kiri, api) {
         let unpop = null;
         // drag and drop re-ordering
         for (let [id, rec] of Object.entries(bind)) {
+            if (!rec.clock)
             $(`${id}-x`).onmousedown = (ev) => {
                 ev.stopPropagation();
                 ev.preventDefault();
@@ -416,8 +436,10 @@ CAM.init = function(kiri, api) {
                 popped = true;
                 poprec.use(rec);
                 hoveredOp = el;
-                el.appendChild(poprec.div);
-                poprec.addNote();
+                if (!rec.clock) {
+                    el.appendChild(poprec.div);
+                    poprec.addNote();
+                }
                 // option click event appears latent
                 // and overides the sticky settings
                 setTimeout(() => {
@@ -1372,6 +1394,8 @@ CAM.init = function(kiri, api) {
     }).inputs = {
         disable: UC.newRow([ UC.newButton(LANG.disable, editDisable) ], {class:"ext-buttons f-row"}),
     };
+
+    createPopOp('|', {}).inputs = {};
 };
 
 function createPopOp(type, map) {

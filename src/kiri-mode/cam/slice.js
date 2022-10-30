@@ -148,6 +148,9 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         sliceAll.appendAll(slices);
         if (axisIndex !== undefined) {
             console.log({post_axis_index: slices});
+            for (let slice of slices) {
+                slice.axisIndex = axisIndex;
+            }
         }
     }
 

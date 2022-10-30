@@ -256,20 +256,15 @@ gapp.register("kiri.init", [], (root, exports) => {
         return el;
     }
 
-    // function onLayerToggle() {
-    //     api.conf.update();
-    //     api.show.slices();
-    // }
-
-    function onBooleanClick() {
-        // prevent hiding elements in device editor on clicks
-        // if (!api.modal.visible()) {
-            uc.refresh();
-        // }
+    function onBooleanClick(el) {
+        uc.refresh();
         api.conf.update();
         DOC.activeElement.blur();
         api.event.emit("boolean.click");
         updateLaserState();
+        if (el === ui.camStockIndexed) {
+            api.space.set_focus();
+        }
     }
 
     function onButtonClick(ev) {
@@ -2780,10 +2775,10 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('view-top').onclick = space.view.top;
         $('view-home').onclick = space.view.home;
         $('view-clear').onclick = api.platform.clear;
-        $('mode-fdm').onclick = () => { api.mode.set('FDM') };
-        $('mode-sla').onclick = () => { api.mode.set('SLA') };
-        $('mode-cam').onclick = () => { api.mode.set('CAM') };
-        $('mode-laser').onclick = () => { api.mode.set('LASER') };
+        $('mode-fdm').onclick = () => { api.mode.set('FDM'); api.space.set_focus() };
+        $('mode-sla').onclick = () => { api.mode.set('SLA'); api.space.set_focus() };
+        $('mode-cam').onclick = () => { api.mode.set('CAM'); api.space.set_focus() };
+        $('mode-laser').onclick = () => { api.mode.set('LASER'); api.space.set_focus() };
         $('unrotate').onclick = () => {
             api.widgets.for(w => w.unrotate());
             api.selection.update_info();
