@@ -1543,6 +1543,10 @@ class OpShadow extends CamOp {
             progress(index / total);
         }, genso: true });
 
+        if (terrain.length === 0) {
+            throw `invalid widget shadow`;
+        }
+
         state.shadowTop = terrain[terrain.length - 1];
         state.center = tshadow[0].bounds.center();
         state.tshadow = tshadow; // true shadow (bottom of part)

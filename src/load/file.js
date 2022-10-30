@@ -43,7 +43,6 @@ const types = {
 
     png(data, file, resolve, reject) {
         load.PNG.parse(data, {
-            ...opt,
             done(data) {
                 resolve({ mesh: data, file });
             }
