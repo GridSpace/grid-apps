@@ -368,7 +368,6 @@ CAM.init = function(kiri, api) {
     });
 
     api.event.on("cam.op.render", func.opRender = () => {
-        // $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         let oplist = current.process.ops;
         if (!(isCamMode && oplist)) {
             return;
@@ -376,11 +375,11 @@ CAM.init = function(kiri, api) {
         oplist = oplist.filter(rec => !Array.isArray(rec));
         let mark = Date.now();
         let html = [];
-        $('ophint').style.display = oplist.length === 0 ? '' : 'none';
+        $('ophint').style.display = oplist.length > (isIndexed ? 1 : 0) ? 'none' : '';
         let bind = {};
         let scale = API.view.unit_scale();
         oplist.forEach((rec,i) => {
-            let clock = rec.clock = rec.type === '|';
+            let clock = rec.type === '|';
             let label = clock ? '<i class="fa-regular fa-clock"></i>' : rec.type;
             html.appendAll([
                 `<div id="${mark+i}" class="draggable">`,
@@ -397,7 +396,9 @@ CAM.init = function(kiri, api) {
         let unpop = null;
         // drag and drop re-ordering
         for (let [id, rec] of Object.entries(bind)) {
-            if (!rec.clock)
+            let type = rec.type;
+            let clock = type === '|';
+            if (!clock)
             $(`${id}-x`).onmousedown = (ev) => {
                 ev.stopPropagation();
                 ev.preventDefault();
@@ -436,7 +437,7 @@ CAM.init = function(kiri, api) {
                 popped = true;
                 poprec.use(rec);
                 hoveredOp = el;
-                if (!rec.clock) {
+                if (!clock) {
                     el.appendChild(poprec.div);
                     poprec.addNote();
                 }
@@ -463,7 +464,7 @@ CAM.init = function(kiri, api) {
                 if (!clist.contains("draggable")) {
                     return;
                 }
-                if (ev.ctrlKey || ev.metaKey) {
+                if (!clock && (ev.ctrlKey || ev.metaKey)) {
                     ev.preventDefault();
                     ev.stopPropagation();
                     rec.disabled = !rec.disabled;
