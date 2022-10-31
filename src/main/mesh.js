@@ -479,12 +479,38 @@ function load_files(files) {
     mesh.api.log.emit(`loading file...`);
     let api = mesh.api;
     let has_image = false;
+    let has_svg = false;
     for (let file of files) {
         has_image = has_image || file.type === 'image/png';
+        has_svg = has_svg || file.name.toLowerCase().indexOf(".svg") > 0;
     }
-    if (has_image) {
+    if (has_svg) {
         api.modal.dialog({
-            title: `image options`,
+            title: `svg import`,
+            body: [ h.div({ class: "image-import" }, [
+                h.div([
+                    h.label("extrude"),
+                    h.input({ id: "extrude_height", value: 5, size: 4 })
+                ]),
+                h.div([
+                    h.label("repair"),
+                    h.input({ id: "svg_repair", type: "checkbox", checked: true })
+                ]),
+                h.div([
+                    h.button({ _: "import", onclick() {
+                        let { svg_repair, extrude_height } = api.modal.bound;
+                        load_files_opt(files, {
+                            soup: svg_repair.checked,
+                            depth: extrude_height
+                        });
+                        api.modal.hide();
+                    } }),
+                ])
+            ]) ]
+        });
+    } else if (has_image) {
+        api.modal.dialog({
+            title: `image import`,
             body: [ h.div({ class: "image-import" }, [
                 h.div([
                     h.label("invert pixels"),
@@ -507,7 +533,7 @@ function load_files(files) {
                     h.input({ id: "img_base", value: 0, size: 4 })
                 ]),
                 h.div([
-                    h.button({ _: "next", onclick() {
+                    h.button({ _: "import", onclick() {
                         let { inv_image, inv_alpha, img_border, img_blur, img_base } = api.modal.bound;
                         load_files_opt(files, {
                             inv_image: inv_image.checked,

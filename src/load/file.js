@@ -16,19 +16,19 @@ if (load.File) return;
 gapp.register('load.file', []);
 
 const types = {
-    stl(data, file, resolve, reject) {
+    stl(data, file, resolve, reject, opt = {}) {
         resolve([{
             mesh: new load.STL().parse(data), file
         }]);
     },
 
-    obj(data, file, resolve, reject) {
+    obj(data, file, resolve, reject, opt = {}) {
         resolve(load.OBJ.parse(data).map(m => {
             return { mesh: m.toFloat32(), file: nameOf(file, m.name, 1) }
         }));
     },
 
-    "3mf"(data, file, resolve, reject) {
+    "3mf"(data, file, resolve, reject, opt = {}) {
         let i = 1;
         load.TMF.parseAsync(data).then((meshes) => {
             resolve(meshes.map(m => {
@@ -37,12 +37,13 @@ const types = {
         });
     },
 
-    svg(data, file, resolve, reject) {
-        resolve(load.SVG.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
+    svg(data, file, resolve, reject, opt = {}) {
+        resolve(load.SVG.parse(data, opt).map(m => { return {mesh: m.toFloat32(), file} }));
     },
 
-    png(data, file, resolve, reject) {
+    png(data, file, resolve, reject, opt = {}) {
         load.PNG.parse(data, {
+            ...opt,
             done(data) {
                 resolve({ mesh: data, file });
             }
@@ -72,7 +73,7 @@ function load_data(data, file, ext, opt = {}) {
     return new Promise((resolve, reject) => {
         let fn = types[ext];
         if (fn) {
-            fn(data, file, resolve, reject);
+            fn(data, file, resolve, reject, opt);
         } else {
             reject(`unknown file type: "${ext}" from ${file}`);
         }
