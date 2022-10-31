@@ -147,9 +147,13 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         }
         sliceAll.appendAll(slices);
         if (axisIndex !== undefined) {
-            console.log({post_axis_index: slices});
+            // update slice cam lines to add axis indexing
             for (let slice of slices) {
-                slice.axisIndex = axisIndex;
+                for (let poly of slice.camLines) {
+                    for (let point of poly.points) {
+                        point.a = axisIndex;
+                    }
+                }
             }
         }
     }
@@ -189,6 +193,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
     let opSum = 0;
     let opTot = opList.length ? opList.map(op => op.weight()).reduce((a,v) => a + v) : 0;
 
+    // determing # of steps and step weighting for progress bar
     for (let op of proc.ops.filter(op => !op.disabled)) {
         let opfn = OPS[op.type];
         if (opfn) {
@@ -201,6 +206,8 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
     // give ops access to entire sequence
     state.ops = opList;
 
+    // call slice() function on all ops in order
+    setAxisIndex(undefined);
     for (let op of opList) {
         let weight = op.weight();
         op.slice((progress, message) => {

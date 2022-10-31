@@ -552,6 +552,10 @@ class Widget {
         this.setModified();
     }
 
+    setAxisIndex(deg) {
+        this.mesh.rotation.x = deg * (Math.PI / 180);
+    }
+
     rotate(x, y, z, temp) {
         this.group.forEach(w => {
             w._rotate(x, y, z, temp);

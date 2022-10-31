@@ -9,7 +9,7 @@
 gapp.register("geo.paths", [], (root, exports) => {
 
 const { base } = root;
-const { util, config, newPoint } = base;
+const { util, config } = base;
 const { sqr, numOrDefault } = util;
 
 const DEG2RAD = Math.PI / 180;

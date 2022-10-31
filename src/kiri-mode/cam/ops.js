@@ -41,6 +41,10 @@ class CamOp {
 class OpIndex extends CamOp {
     constructor(state, op) {
         super(state, op);
+    }
+
+    slice() {
+        let { op, state } = this;
         state.setAxisIndex(op.degrees);
     }
 

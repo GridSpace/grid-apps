@@ -492,7 +492,7 @@ kiri.load(() => {
             const sd = Math.sqrt(mx*mx + my*my + mz*mz);
             const moves = [];
             for (let i=0, x=lp.x, y=lp.y, z=lp.z; i<st; i++) {
-                moves.push({x,y,z,md:sd});
+                moves.push({x,y,z,a:lp.a,md:sd});
                 x += mx;
                 y += my;
                 z += mz;

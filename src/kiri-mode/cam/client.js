@@ -65,10 +65,15 @@ CAM.init = function(kiri, api) {
     }
 
     function setAnimationStyle(settings) {
+        isIndexed = settings.process.camStockIndexed;
+        if (!isIndexed || !isCamMode) {
+            for (let widget of API.widgets.all()) {
+                widget.setAxisIndex(0);
+            }
+        }
         if (!isCamMode) {
             return;
         }
-        isIndexed = settings.process.camStockIndexed;
         animVer = isIndexed ? 1 : 0;
         updateStock();
         SPACE.platform.setVisible(!isIndexed);
@@ -400,19 +405,24 @@ CAM.init = function(kiri, api) {
         listel.innerHTML = html.join('');
         let bounds = [];
         let unpop = null;
+        let index = 0;
+        let indexing = true;
         // drag and drop re-ordering
         for (let [id, rec] of Object.entries(bind)) {
             let type = rec.type;
             let clock = type === '|';
-            if (!clock)
-            $(`${id}-x`).onmousedown = (ev) => {
-                ev.stopPropagation();
-                ev.preventDefault();
-                func.surfaceDone();
-                func.traceDone();
-                func.tabDone();
-                func.opDel(rec);
-            };
+            if (!clock) {
+                $(`${id}-x`).onmousedown = (ev) => {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    func.surfaceDone();
+                    func.traceDone();
+                    func.tabDone();
+                    func.opDel(rec);
+                };
+            } else {
+                indexing = false;
+            }
             let el = $(id);
             if (rec.disabled) {
                 el.classList.add("disabled");
@@ -422,6 +432,9 @@ CAM.init = function(kiri, api) {
             let inside = true;
             let popped = false;
             let poprec = popOp[rec.type];
+            if (type === 'index' && indexing) {
+                index = rec.absolute ? rec.degrees : index + rec.degrees;
+            }
             el.rec = rec;
             el.unpop = () => {
                 let pos = [...el.childNodes].indexOf(poprec.div);
@@ -564,6 +577,10 @@ CAM.init = function(kiri, api) {
                 el.onmouseenter = onEnter;
                 el.onmouseleave = onLeave;
             }
+        }
+        // update widget rotations from timeline marker
+        for (let widget of API.widgets.all()) {
+            widget.setAxisIndex(-index);
         }
     });
 

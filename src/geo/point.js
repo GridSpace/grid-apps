@@ -80,7 +80,11 @@ class Point {
     }
 
     clone() {
-        return newPoint(this.x, this.y, this.z, this._key);
+        let p = newPoint(this.x, this.y, this.z, this._key);
+        if (this.a) {
+            p.a = this.a;
+        }
+        return p;
     }
 
     slopeTo(p) {
