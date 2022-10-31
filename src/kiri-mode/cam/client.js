@@ -90,6 +90,12 @@ CAM.init = function(kiri, api) {
         }
     }
 
+    api.event.on("widget.add", widget => {
+        if (isCamMode) {
+            setAnimationStyle(api.conf.get());
+        }
+    });
+
     // wire up animate button in ui
     api.event.on("function.animate", (mode) => {
         if (isAnimate) {

@@ -89,7 +89,6 @@ function platformUpdateTopZ(zdelta) {
     const { process, stock } = current();
     const hasStock = stock.x && stock.y && stock.z;
     const MODE = get_mode();
-
     api.widgets.each(widget => {
         if (MODE === MODES.CAM) {
             const bounds = widget.getBoundingBox();
