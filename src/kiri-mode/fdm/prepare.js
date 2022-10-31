@@ -118,7 +118,7 @@ FDM.prepare = async function(widgets, settings, update) {
         brims = POLY.union(brims, undefined, true);
 
         // if brim is offset, over-expand then shrink to induce brims to merge
-        if (brims.length) {
+        if (brims.length > 1 && offset >= nozzle) {
             let extra = process.sliceSupportExtra + 2;
             let zheight = brims[0].getZ();
             brims = POLY.expand(brims, extra, zheight, null, 1);
