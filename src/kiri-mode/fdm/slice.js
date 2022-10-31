@@ -781,9 +781,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 let params = slice.params || process;
                 let density = params.sliceSupportDensity;
                 let supports = slice.topShells();
-                if (params.sliceSupportGrow > 0) {
-                    supports  = POLY.expand(supports, params.sliceSupportGrow, slice.z, []);
-                }
                 slice.supports = supports;
                 slice.tops = undefined; // remove outline leave only supports
                 let polys = [];

@@ -27,6 +27,11 @@ base.slicePost.FDM = function(data, options) {
     const { shellOffset, fillOffset, clipOffset } = post_args;
     data.tops = POLY.nest(groups);
     if (isSynth) {
+        const process = post_args.process;
+        if (process.sliceSupportGrow > 0) {
+            // expand synth supports here so they can be clipped later
+            data.tops  = POLY.expand(data.tops, process.sliceSupportGrow, data.z, []);
+        }
         // do not shell synth widgets because
         // they will be clipped against peers later
         // which requires shelling post-clip
