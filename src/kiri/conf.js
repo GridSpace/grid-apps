@@ -327,7 +327,6 @@ const conf = exports({
                 sliceSupportEnable: false,
                 sliceSupportOutline: true,
                 sliceSolidMinArea: 1,
-                sliceSolidLayers: 3,
                 sliceBottomLayers: 3,
                 sliceTopLayers: 3,
                 firstSliceHeight: 0.25,

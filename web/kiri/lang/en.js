@@ -315,11 +315,11 @@ self.kiri.lang['en-us'] = {
     ad_minl_s:      "height min",
     ad_minl_l:      ["adaptive min layer height","in millimeters","must be non-zero"],
     sl_ltop_s:      "top layers",
-    sl_ltop_l:      ["number of solid layers","to enforce at the","top of the print"],
+    sl_ltop_l:      ["number of solid layers at the top of the print or on flat areas facing up"],
     sl_lsld_s:      "solid layers",
     sl_lsld_l:      ["solid fill areas computed","from bridges and flat areas","detected betwen sliced layers"],
     sl_lbot_s:      "base layers",
-    sl_lbot_l:      ["number of solid layers","to enforce at the","bottom of the print"],
+    sl_lbot_l:      ["number of solid layers at bottom of the print or under bridge spans"],
     ad_adap_s:      "adaptive",
     ad_adap_l:      ["use adaptive layer heights","with 'layer height' as max","and 'layer min' as the min"],
 

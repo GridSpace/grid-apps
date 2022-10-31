@@ -21,7 +21,6 @@
     "sliceSupportAngle": 50,
     "sliceSupportNozzle": 0,
     "sliceSolidMinArea": 1,
-    "sliceSolidLayers": 3,
     "sliceBottomLayers": 3,
     "sliceTopLayers": 3,
     "firstLayerRate": 10,

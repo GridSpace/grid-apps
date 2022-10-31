@@ -104,7 +104,9 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         isDanger = controller.danger,
         useAssembly = controller.assembly,
         isConcurrent = controller.threaded && kiri.minions.concurrent,
+        topLayers = process.sliceTopLayers || 0,
         solidLayers = process.sliceSolidLayers || 0,
+        bottomLayers = process.sliceBottomLayers || 0,
         vaseMode = process.sliceFillType === 'vase' && !isSynth,
         metadata = widget.anno,
         maxtruder = Math.max(0, device.extruders.length - 1),
@@ -472,8 +474,8 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         forSlices(0.15, 0.2, slice => {
             let range = slice.params;
             let spaceMult = slice.index === 0 ? process.firstLayerLineMult || 1 : 1;
-            let isBottom = slice.index < process.sliceBottomLayers;
-            let isTop = process.sliceTopLayers && slice.index > slices.length - process.sliceTopLayers - 1;
+            let isBottom = slice.index < bottomLayers;
+            let isTop = topLayers && slice.index > slices.length - topLayers - 1;
             let isDense = range.sliceFillSparse > 0.995;
             let isSolid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
             let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
@@ -692,7 +694,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         // layer boolean diffs need to be computed to find flat areas to fill
         // and overhangs that need to be supported. these are stored in flats
         // and bridges, projected up/down, and merged into an array of solids
-        if (solidLayers && !vaseMode && !isSynth) {
+        if ((topLayers || bottomLayers || solidLayers) && !vaseMode && !isSynth) {
             profileStart("delta");
             forSlices(0.2, 0.34, slice => {
                 let params = slice.params || process;
@@ -703,8 +705,8 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             profileEnd();
             profileStart("delta-project");
             forSlices(0.34, 0.35, slice => {
-                projectFlats(slice, solidLayers);
-                projectBridges(slice, solidLayers);
+                if (solidLayers || topLayers) projectFlats(slice, solidLayers || topLayers);
+                if (solidLayers || bottomLayers) projectBridges(slice, solidLayers || bottomLayers);
             }, "layer deltas");
             profileEnd();
             profileStart("solid-fill")

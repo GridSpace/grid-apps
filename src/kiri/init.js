@@ -1817,7 +1817,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceLineWidth:      uc.newInput(LANG.sl_line_s, {title:LANG.sl_line_l, convert:uc.toFloat, bound:uc.bound(0,5), modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
             sliceTopLayers:      uc.newInput(LANG.sl_ltop_s, {title:LANG.sl_ltop_l, convert:uc.toInt, modes:FDM}),
-            sliceSolidLayers:    uc.newInput(LANG.sl_lsld_s, {title:LANG.sl_lsld_l, convert:uc.toInt, modes:FDM}),
             sliceBottomLayers:   uc.newInput(LANG.sl_lbot_s, {title:LANG.sl_lbot_l, convert:uc.toInt, modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
             sliceDetectThin:     uc.newSelect(LANG.ad_thin_s, {title: LANG.ad_thin_l, action: thinWallSave, modes:FDM}, "thin"),
