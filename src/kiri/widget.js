@@ -459,6 +459,14 @@ class Widget {
 
     setIndexed(z) {
         this.track.indexed = z;
+        this.setTopZ(this.track.top);
+    }
+
+    setAxisIndex(deg) {
+        let rad = deg * (Math.PI / 180);
+        this.track.indexRad = rad;
+        this.mesh.rotation.x = rad;
+        this.setTopZ(this.track.top);
     }
 
     /**
@@ -468,33 +476,32 @@ class Widget {
      */
     setTopZ(z) {
         let mesh = this.mesh,
-            pos = this.track.pos,
-            ltz = this.last_top_z || {},
+            track = this.track,
+            ltop = track.top || 0,
             mbz = mesh.getBoundingBox().max.z;
         if (z) {
-            pos.z = mbz - z;
-            mesh.position.z = -pos.z - 0.01;
-            this.track.top = z;
+            track.top = z;
         } else {
-            pos.z = 0;
-            mesh.position.z = -this.track.zcut || 0;
-            this.track.top = mbz;
+            track.top = mbz;
         }
-        this.track.tzoff = mbz - z;
-        if (this.track.indexed) {
-            mesh.position.z -= this.track.indexed / 2;
+        // difference between top of stock/bounds and top of widget (cam mode)
+        track.tzoff = mbz - z;
+        if (track.indexed) {
+            let rad = track.indexRad;
+            let mz = track.box.h / 2;
+            let dx = Math.cos(rad) * mz;
+            let dy = Math.sin(rad) * mz;
+            track.delta = {
+                x: 0,
+                y: Math.sin(rad) * mz,
+                z: -(track.indexed / 2) + (mz - dx)
+            };
+        } else {
+            track.delta = { x:0, y:0, z:0};
+            this.mesh.rotation.x = 0;
         }
-        let ntz = {
-            pz: pos.z,
-            mpz: mesh.position.z
-        };
-        this.modified |= (ltz.pz !== ntz.pz || ltz.mpz !== ntz.mpz);
-        this.last_top_z = ntz;
-    }
-
-    cutZ(dist) {
-        this.track.zcut = dist;
-        this.setTopZ();
+        this.modified |= (ltop !== z);
+        this._updateMeshPosition();
     }
 
     move(x, y, z, abs) {
@@ -506,30 +513,37 @@ class Widget {
     _move(x, y, z, abs) {
         let mesh = this.mesh,
             mat = this.getMaterial(),
-            pos = this.track.pos,
-            zcut = this.track.zcut || 0;
-            // do not allow moves in pure slice view
+            pos = this.track.pos;
+        // do not allow moves in pure slice view
         if (!mat.visible) return;
         if (abs) {
-            mesh.position.set(x, y, z - zcut);
             pos.x = (x || 0);
             pos.y = (y || 0);
             pos.z = (z || 0);
         } else {
-            mesh.position.x += ( x || 0);
-            mesh.position.y += ( y || 0);
-            mesh.position.z += (-z || 0);
             pos.x += (x || 0);
             pos.y += (y || 0);
             pos.z += (z || 0);
         }
         if (x || y || z) {
             this.setModified();
+            this._updateMeshPosition();
             // allow for use in engine / cli
             if (api && api.event) {
                 api.event.emit('widget.move', {widget: this, pos});
             }
         }
+    }
+
+    _updateMeshPosition() {
+        let mesh = this.mesh,
+            track = this.track,
+            delta = track.delta || { x:0, y:0, z:0 },
+            tzoff = track.tzoff,
+            top = track.top,
+            tz = tzoff !== top ? -tzoff : 0,
+            pos = track.pos;
+        mesh.position.set(pos.x + delta.x, pos.y + delta.y, pos.z + delta.z + tz);
     }
 
     scale(x, y, z) {
@@ -550,10 +564,6 @@ class Widget {
         scale.y *= (y || 1.0);
         scale.z *= (z || 1.0);
         this.setModified();
-    }
-
-    setAxisIndex(deg) {
-        this.mesh.rotation.x = deg * (Math.PI / 180);
     }
 
     rotate(x, y, z, temp) {

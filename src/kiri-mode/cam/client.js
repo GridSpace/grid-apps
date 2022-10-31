@@ -74,6 +74,9 @@ CAM.init = function(kiri, api) {
         if (!isCamMode) {
             return;
         }
+        if (isIndexed) {
+            settings.process.camZAnchor = "middle";
+        }
         animVer = isIndexed ? 1 : 0;
         updateStock();
         SPACE.platform.setVisible(!isIndexed);
@@ -166,6 +169,7 @@ CAM.init = function(kiri, api) {
         api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
         updateStock(settings, 'settings.saved.internal');
         setAnimationStyle(settings);
+        func.opRender();
     });
 
     api.event.on("settings.load", (settings) => {
@@ -432,7 +436,7 @@ CAM.init = function(kiri, api) {
             let inside = true;
             let popped = false;
             let poprec = popOp[rec.type];
-            if (type === 'index' && indexing) {
+            if (type === 'index' & indexing && !rec.disabled) {
                 index = rec.absolute ? rec.degrees : index + rec.degrees;
             }
             el.rec = rec;
