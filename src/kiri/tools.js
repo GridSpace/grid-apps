@@ -115,11 +115,18 @@ api.event.on('mouse.hover', (ev) => {
         let opos = track.pos;
         obj.add(pmesh);
         pmesh.position.x = point.x - opos.x + norm.x * 0.1;
-        pmesh.position.y = -point.z - opos.y + norm.y * 0.1;
-        pmesh.position.z = point.y + norm.z * 0.1;
-        // todo also need to account for z top offset in cam mode
         if (track.indexed) {
-            pmesh.position.z += track.indexed / 2 + track.tzoff;
+            let delta = track.delta;
+            let rad = track.indexRad;
+            let py = (point.y - delta.z + track.tzoff) * 1.001;
+            let pz = (point.z + delta.y) * 1.001;
+            let v = new THREE.Vector3(point.x, py, pz)
+                .applyAxisAngle(new THREE.Vector3(1,0,0), rad);
+            pmesh.position.y = -v.z;
+            pmesh.position.z = v.y;
+        } else {
+            pmesh.position.y = -point.z - opos.y + norm.y * 0.1;
+            pmesh.position.z = point.y + norm.z * 0.1;
         }
         let q = new Quaternion().setFromUnitVectors(
             new Vector3(0,0,1),
