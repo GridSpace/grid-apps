@@ -59,6 +59,7 @@ class Layers {
             paths: undefined, // 3d extrusion / tube paths (used to be an array, now merged - FIX)
             cpath: undefined, // path colors indices
             color: colors || {
+                index: 0,
                 check: 0,
                 line: 0,
                 face: 0,

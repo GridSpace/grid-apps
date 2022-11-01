@@ -20,6 +20,7 @@ let isAnimate,
     camStock,
     camZBottom,
     current,
+    currentIndex,
     flipping,
     poppedRec,
     hoveredOp,
@@ -78,7 +79,6 @@ CAM.init = function(kiri, api) {
             settings.process.camZAnchor = "middle";
         }
         animVer = isIndexed ? 1 : 0;
-        updateStock();
         SPACE.platform.setVisible(!isIndexed);
         for (let widget of api.widgets.all()) {
             widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
@@ -95,7 +95,10 @@ CAM.init = function(kiri, api) {
             func.opAdd(popOp['|'].new());
         } else if (!isIndexed && clockOp) {
             func.opDel(clockOp);
+        } else {
+            func.opRender();
         }
+        updateStock();
     }
 
     api.event.on("widget.add", widget => {
@@ -586,6 +589,7 @@ CAM.init = function(kiri, api) {
         for (let widget of API.widgets.all()) {
             widget.setAxisIndex(-index);
         }
+        currentIndex = isIndexed ? index * (Math.PI / 180) : 0;
     });
 
     func.opGCode = (label, field = 'gcode') => {
@@ -1714,6 +1718,7 @@ function updateStock(args, event) {
         camStock.position.x = csox;
         camStock.position.y = csoy;
         camStock.position.z = csz / 2;
+        camStock.rotation.x = currentIndex || 0;
         if (isIndexed) {
             camStock.position.z = 0;
         }
@@ -1752,7 +1757,7 @@ function updateStock(args, event) {
 
     const {x, y, z} = stock;
     if (x && y && z && !STACKS.getStack('bounds')) {
-        const render = new kiri.Layers().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
+        const render = new kiri.Layers().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa, index: currentIndex });
         const stack = STACKS.setFreeMem(false).create('bounds', SPACE.world);
         const hx = x/2, hy = y/2;
         const sz = stock.z || 0;

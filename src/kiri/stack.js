@@ -107,6 +107,7 @@ class Stack {
         }
 
         const { polys, lines, faces, cface, paths, cpath, color, off, norms } = layer;
+        const { index, opacity } = color;
         const meshes = [];
         const defstate = !off;
         const mats = [];
@@ -125,7 +126,7 @@ class Stack {
                 const vl = vert.length;
                 const poly = polys[i];
                 addPoly(vert, poly);
-                const pc = poly.color !== undefined ? { line: poly.color, opacity: color.opacity } : color;
+                const pc = poly.color !== undefined ? { line: poly.color, opacity } : color;
                 const pk = pc.line;
                 const cc = cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
                 if (last !== pk) {
@@ -154,6 +155,7 @@ class Stack {
             }
             geo.setFromPoints(vert);
             const segs = new THREE.LineSegments(geo, mat);
+            if (index) segs.rotation.x = index;
             meshes.push(segs);
             group.add(segs);
             mats.appendAll(mat);
@@ -184,6 +186,7 @@ class Stack {
                 geo.addGroup(0, Infinity, 0);
             }
             const mesh = new THREE.Mesh(geo, mat);
+            if (index) mesh.rotation.x = index;
             // mesh.castShadow = true;
             // mesh.receiveShadow = true;
             meshes.push(mesh);
@@ -218,6 +221,7 @@ class Stack {
             }
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.z = z;
+            if (index) mesh.rotation.x = index;
             // mesh.castShadow = true;
             // mesh.receiveShadow = true;
             meshes.push(mesh);
