@@ -1375,6 +1375,7 @@ CAM.init = function(kiri, api) {
         poppedRec.degrees = (Math.atan2(normal.y, normal.z) * (180 / Math.PI)).round(2);
         poppedRec.absolute = true;
         func.opRender();
+        updateStock();
     });
 
     createPopOp('index', {
