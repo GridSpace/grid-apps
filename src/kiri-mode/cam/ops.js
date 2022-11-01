@@ -1036,7 +1036,6 @@ class OpPocket extends CamOp {
         }
         function newSliceOut(z) {
             let slice = newSlice(z);
-            addSlices(slice);
             sliceOut.push(slice);
             return slice;
         }
@@ -1109,10 +1108,12 @@ class OpPocket extends CamOp {
                         progress(zpro, "pocket");
                     }
                     zpro += zinc;
+                    addSlices(slice);
                 }
             }
         }
         let surfaces = op.surfaces[widget.id] || [];
+        // let vert = widget.getGeoVertices(true,true).map(v => v.round(4));
         let vert = widget.getVertices().array.map(v => v.round(4));
         let outline = [];
         let faces = CAM.surface_find(widget, surfaces);

@@ -131,8 +131,7 @@ class Slicer {
         let bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
         let zScale = this.zScale = 1 / (zMax / bucketCount);
         let buckets = this.buckets = [];
-
-        if (bucketCount > 1) {
+        if (bucketCount > 1 && !this.options.nobucket) {
             // create empty buckets
             for (let i = 0; i <= bucketCount + 1; i++) {
                 buckets.push([]);

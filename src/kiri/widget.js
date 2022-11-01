@@ -649,40 +649,37 @@ class Widget {
         this.points = null;
     }
 
-    getGeoVertices(unroll) {
+    getGeoVertices(unroll, index) {
         let geo = this.mesh.geometry;
-        let pos = geo.getAttribute('position').array;
+        let pos = geo.getAttribute('position');
+        // if indexed, return points rotated about X and then offset
+        let track = this.track;
+        if (index && track.indexed) {
+            let delta = track.delta;
+            pos = pos.clone().applyMatrix4(
+                new THREE.Matrix4().makeRotationX(track.indexRad)
+            ).applyMatrix4(
+                new THREE.Matrix4().makeTranslation(0, -delta.y, -delta.z + track.tzoff)
+            );
+        }
+        pos = pos.array;
         if (geo.index && unroll !== false) {
             let idx = geo.index.array;
             let len = idx.length;
-            let p2 = new Float32Array(len * 3);
+            let pp2 = new Float32Array(len * 3);
             let inc = 0;
             for (let i=0; i<len; i++) {
                 let iv = idx[i];
                 let ip = iv * 3;
-                p2[inc++] = pos[ip++];
-                p2[inc++] = pos[ip++];
-                p2[inc++] = pos[ip];
+                pp2[inc++] = pos[ip++];
+                pp2[inc++] = pos[ip++];
+                pp2[inc++] = pos[ip];
             }
-            return p2;
-        } else {
-            return pos;
+            pos = pp2;
+        } else if (index) {
+            pos = pos.slice();
         }
-    }
-
-    iterPoints() {
-        let verts = this.getGeoVertices();
-        let index = 0;
-        let count = verts.length;
-        return new class ITER {
-            [Symbol.iterator]() { return {
-                next: () => {
-                    let done = index >= count;
-                    return done ? { done } :
-                        { value: newPoint(verts[index++], verts[index++], verts[index++]) };
-                }
-            } }
-        };
+        return pos;
     }
 
     getPoints() {

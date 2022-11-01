@@ -1761,7 +1761,9 @@ function updateStock(args, event) {
 
     const {x, y, z} = stock;
     if (x && y && z && !STACKS.getStack('bounds')) {
-        const render = new kiri.Layers().setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa, index: currentIndex });
+        const render = new kiri.Layers()
+            .setRotation(currentIndex)
+            .setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
         const stack = STACKS.setFreeMem(false).create('bounds', SPACE.world);
         const hx = x/2, hy = y/2;
         const sz = stock.z || 0;

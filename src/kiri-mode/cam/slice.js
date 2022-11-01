@@ -139,6 +139,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
 
     function setAxisIndex(degrees) {
         axisIndex = degrees;
+        // state.axisIndex = (Math.PI / 180) * axisIndex;
     }
 
     function addSlices(slices) {
@@ -213,6 +214,18 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
+        // setup new state when indexing the workspace
+        if (false && op.op.type === "index") {
+            let points = base.verticesToPoints(widget.getGeoVertices(true, true));
+            state.slicer = new kiri.cam_slicer(points, {
+                zlist: true,
+                zline: true,
+                nobucket: true // b/c negative Z when rotated
+            });
+            new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
+                console.log('reshadow', progress.round(3));
+            });
+        }
         camOps.push(op);
         opSum += weight;
     }
