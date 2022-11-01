@@ -151,7 +151,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
             for (let slice of slices) {
                 for (let poly of slice.camLines) {
                     for (let point of poly.points) {
-                        point.a = axisIndex;
+                        point.a = -axisIndex;
                     }
                 }
             }

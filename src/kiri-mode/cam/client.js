@@ -1629,6 +1629,9 @@ function animate() {
 
 function updateStock(args, event) {
     if (isAnimate) {
+        if (isIndexed) {
+            SPACE.world.remove(camStock);
+        }
         return;
     }
 
