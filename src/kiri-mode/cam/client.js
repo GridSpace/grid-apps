@@ -1370,6 +1370,7 @@ CAM.init = function(kiri, api) {
     api.event.on('tool.mesh.face-normal', normal => {
         poppedRec.degrees = (Math.atan2(normal.y, normal.z) * (180 / Math.PI)).round(2);
         poppedRec.absolute = true;
+        func.opRender();
     });
 
     createPopOp('index', {

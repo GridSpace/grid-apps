@@ -465,7 +465,7 @@ class Widget {
     setAxisIndex(deg) {
         let rad = deg * (Math.PI / 180);
         this.track.indexRad = rad;
-        this.mesh.rotation.x = rad;
+        this.mesh.rotation.x = -rad;
         this.setTopZ(this.track.top);
     }
 
@@ -488,16 +488,16 @@ class Widget {
         track.tzoff = mbz - z;
         if (track.indexed) {
             let rad = track.indexRad;
-            let mz = track.box.h / 2;
-            let dx = Math.cos(rad) * mz;
-            let dy = Math.sin(rad) * mz;
+            let mz = track.box.d  / 2;
+            let dx = Math.sin(rad) * mz;
+            let dy = mz - Math.cos(rad) * mz;
             track.delta = {
                 x: 0,
-                y: Math.sin(rad) * mz,
-                z: -(track.indexed / 2) + (mz - dx)
+                y: -dx,
+                z: -(track.indexed / 2) + dy
             };
         } else {
-            track.delta = { x:0, y:0, z:0};
+            track.delta = { x:0, y:0, z:0 };
             this.mesh.rotation.x = 0;
         }
         this.modified |= (ltop !== z);
