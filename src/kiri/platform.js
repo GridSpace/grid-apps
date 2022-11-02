@@ -90,7 +90,7 @@ function platformUpdateTopZ(zdelta) {
     const hasStock = stock.x && stock.y && stock.z;
     const MODE = get_mode();
     api.widgets.each(widget => {
-        if (MODE === MODES.CAM) {
+        if (MODE === MODES.CAM && hasStock) {
             const bounds = widget.getBoundingBox();
             const wzmax = bounds.max.z;
             const zdelta = process.camZOffset || 0;
