@@ -185,6 +185,7 @@ CAM.init = function(kiri, api) {
 
     api.event.on([
         "init-done",
+        "view.set",
         // update stock when modes change?
         "slice.end",
         "preview.end",
@@ -1655,13 +1656,13 @@ function updateStock(args, event) {
     let proc = settings.process;
     let enabled = UI.camStockOn.checked;
     let offset = UI.camStockOffset.checked;
-    let stockSet = offset || (proc.camStockX && proc.camStockY && proc.camStockZ > 0);
+    let stockSet = offset || (proc.camStockX && proc.camStockY && proc.camStockZ);
     let topZ = API.platform.top_z();
     let delta = 0;
     let csox = 0;
     let csoy = 0;
     let stock = settings.stock = { };
-    let compute = enabled && stockSet && (!offset || widgets.length);
+    let compute = enabled && stockSet && widgets.length;
 
     UI.func.animate.classList.add('disabled');
 
@@ -1671,7 +1672,7 @@ function updateStock(args, event) {
     let csz = proc.camStockZ;
     let min = { x: Infinity, y: Infinity, z: 0 };
     let max = { x: -Infinity, y: -Infinity, z: -Infinity };
-    widgets.forEach(function(widget) {
+    for (let widget of widgets) {
         let wbnd = widget.getBoundingBox(refresh);
         let wpos = widget.track.pos;
         min = {
@@ -1684,7 +1685,7 @@ function updateStock(args, event) {
             y: Math.max(max.y, wpos.y + wbnd.max.y),
             z: Math.max(max.z, wbnd.max.z)
         };
-    });
+    }
     if (offset) {
         csx += max.x - min.x;
         csy += max.y - min.y;
