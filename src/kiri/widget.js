@@ -645,17 +645,17 @@ class Widget {
         this.points = null;
     }
 
-    getGeoVertices(unroll, index) {
+    getGeoVertices(unroll, translate) {
         let geo = this.mesh.geometry;
         let pos = geo.getAttribute('position');
         // if indexed, return points rotated about X and then offset
         let track = this.track;
-        if (index && track.indexed) {
+        if (translate && track.indexed) {
             let delta = track.delta;
             pos = pos.clone().applyMatrix4(
-                new THREE.Matrix4().makeRotationX(track.indexRad)
-            ).applyMatrix4(
-                new THREE.Matrix4().makeTranslation(0, -delta.y, -delta.z + track.tzoff)
+                new THREE.Matrix4().makeRotationX(-track.indexRad)
+            // ).applyMatrix4(
+            //     new THREE.Matrix4().makeTranslation(0, -delta.y, -delta.z + track.tzoff)
             );
         }
         pos = pos.array;
@@ -672,7 +672,7 @@ class Widget {
                 pp2[inc++] = pos[ip];
             }
             pos = pp2;
-        } else if (index) {
+        } else if (translate) {
             pos = pos.slice();
         }
         return pos;

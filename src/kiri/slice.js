@@ -13,6 +13,12 @@ const { util } = base;
 const POLY = base.polygons;
 const NOKEY = key.NONE;
 
+let tracked;
+
+function trackWidget(widget) {
+    tracked = widget;
+}
+
 /**
  * Object encapsulates a z-slice from an object.  This code is shared by the
  * client and the worker thread.  As such, the view layers are ignored in the
@@ -38,7 +44,15 @@ class Slice {
      */
     output() {
         if (this.layers) return this.layers;
-        return this.layers = new kiri.Layers();
+        let layers = this.layers = new kiri.Layers();
+        if (tracked) {
+            let { track } = tracked;
+            let { indexed, indexRad, delta } = track;
+            if (indexed) {
+                layers.setRotation(indexRad);
+            }
+        }
+        return layers;
     };
 
     /**
@@ -239,7 +253,8 @@ gapp.overlay(kiri, {
     Top,
     Slice,
     newTop,
-    newSlice
+    newSlice,
+    trackWidget
 });
 
 });

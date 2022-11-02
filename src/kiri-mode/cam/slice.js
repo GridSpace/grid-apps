@@ -11,7 +11,7 @@
 gapp.register("kiri-mode.cam.slice", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { driver, newSlice } = kiri;
+const { driver, newSlice, trackWidget } = kiri;
 const { polygons, newPoint, newPolygon } = base;
 const { CAM } = driver;
 const { OPS } = CAM;
@@ -149,7 +149,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         sliceAll.appendAll(slices);
         if (axisIndex !== undefined) {
             // update slice cam lines to add axis indexing
-            for (let slice of slices) {
+            for (let slice of slices.filter(s => s.camLines)) {
                 for (let poly of slice.camLines) {
                     for (let point of poly.points) {
                         point.a = -axisIndex;
@@ -208,6 +208,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
     state.ops = opList;
 
     // call slice() function on all ops in order
+    trackWidget(widget);
     setAxisIndex(undefined);
     for (let op of opList) {
         let weight = op.weight();
@@ -215,7 +216,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
         // setup new state when indexing the workspace
-        if (false && op.op.type === "index") {
+        if (true && op.op.type === "index") {
             let points = base.verticesToPoints(widget.getGeoVertices(true, true));
             state.slicer = new kiri.cam_slicer(points, {
                 zlist: true,
@@ -223,12 +224,13 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
                 nobucket: true // b/c negative Z when rotated
             });
             new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
-                console.log('reshadow', progress.round(3));
+                // console.log('reshadow', progress.round(3));
             });
         }
         camOps.push(op);
         opSum += weight;
     }
+    trackWidget(undefined);
 
     // reindex
     sliceAll.forEach((slice, index) => slice.index = index);

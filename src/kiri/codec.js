@@ -404,7 +404,7 @@ kiri.Layers.prototype.encode = function(state) {
                 } : undefined,
                 cpath: layer.cpath || codec.undef,
                 rotation: layer.rotation,
-                posiiton: layer.position
+                position: layer.position
             }
         })
     };

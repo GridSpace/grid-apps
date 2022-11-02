@@ -471,7 +471,6 @@ class OpOutline extends CamOp {
         if (op.down <= 0) {
             throw `invalid step down "${op.down}"`;
         }
-
         let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         updateToolDiams(toolDiam);
 
@@ -621,6 +620,9 @@ class OpOutline extends CamOp {
             // offset.xout(`slice ${slice.z}`);
             slice.camLines = offset;
         });
+
+        // when top expand fails above, it creates an empty slice
+        slices = slices.filter(s => s.camLines);
 
         // project empty up and render
         for (let slice of slices) {
