@@ -566,17 +566,13 @@ class Widget {
         this.setModified();
     }
 
-    rotate(x, y, z, temp) {
+    rotate(x, y, z, temp, center = true) {
         this.group.forEach(w => {
             w._rotate(x, y, z, temp);
         });
-        this.center(false);
-    }
-
-    rotateRaw(x, y, z, temp) {
-        this.group.forEach(w => {
-            w._rotate(x, y, z, temp);
-        });
+        if (center) {
+            this.center(false);
+        }
     }
 
     _rotate(x, y, z, temp) {

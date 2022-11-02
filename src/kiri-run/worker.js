@@ -372,7 +372,7 @@ kiri.worker = {
             for (let w of group) {
                 w.moveMesh(0, miny, 0);
             }
-            widget.rotateRaw(rotation,0,0,true);
+            widget.rotate(rotation, 0, 0, true, false);
             let minr = gmin(group);
             widget.belt = {
                 angle: 45,
