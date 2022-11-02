@@ -363,13 +363,12 @@ kiri.worker = {
         for (let group of Object.values(wgroup)) {
             let { miny, maxy } = gmin(group);
             let widget = group[0];
+            let proc = settings.process;
             let track = widget.track;
             let xpos = track.pos.x;
-            let ypos = settings.device.bedDepth / 2 + track.pos.y + miny;
+            let yoff = proc.beltAnchor || proc.firstLayerBeltLead || 0;
+            let ypos = settings.device.bedDepth / 2 + track.pos.y + miny + yoff;
             let rotation = (Math.PI / 180) * 45;
-            let proc = settings.process;
-            // move to accomodate anchor
-            ypos += (proc.beltAnchor || proc.firstLayerBeltLead || 0);
             for (let w of group) {
                 w.moveMesh(0, miny, 0);
             }
@@ -380,13 +379,12 @@ kiri.worker = {
                 xpos,
                 ypos,
                 yadd: minr.maxy - minr.miny,
-                dy: -miny - (proc.beltAnchor || proc.firstLayerBeltLead || 0),
+                dy: - miny - yoff,
                 dz: 0
             };
             for (let others of group.slice(1)) {
                 others.belt = widget.belt;
             }
-
             send.data({group: group.id, belt: widget.belt});
         }
         send.done({});
