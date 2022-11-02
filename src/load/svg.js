@@ -16,7 +16,7 @@ function parseAsync(text, opt) {
     });
 }
 
-function parse(text, opt = {}) {
+function parse(text, opt = { soup: true }) {
     const fromSoup = opt.soup || false;
     const objs = [];
     const data = new THREE.SVGLoader().parse(text);
