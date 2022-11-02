@@ -651,12 +651,16 @@ class Widget {
         // if indexed, return points rotated about X and then offset
         let track = this.track;
         if (translate && track.indexed) {
+            // console.log(1, new THREE.Box3().setFromBufferAttribute(pos), track.box);
             let delta = track.delta;
             pos = pos.clone().applyMatrix4(
+                new THREE.Matrix4().makeTranslation(0, 0, -track.box.d/2)
+            ).applyMatrix4(
                 new THREE.Matrix4().makeRotationX(-track.indexRad)
-            // ).applyMatrix4(
-            //     new THREE.Matrix4().makeTranslation(0, -delta.y, -delta.z + track.tzoff)
+            ).applyMatrix4(
+                new THREE.Matrix4().makeTranslation(0, 0, track.box.d/2)
             );
+            // console.log(2, new THREE.Box3().setFromBufferAttribute(pos));
         }
         pos = pos.array;
         if (geo.index && unroll !== false) {
