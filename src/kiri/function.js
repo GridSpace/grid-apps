@@ -90,6 +90,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         lastMsg;
 
     for (let widget of toSlice) {
+        widget.belt = null;
         widget.stats.progress = 0;
         widget.setColor(COLOR.slicing);
         let { extruder } = widget.anno;
@@ -135,7 +136,6 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         widget.stack.obj.view.position.z = widget.track.zcut || 0;
 
         widget.slice(settings, (sliced, error) => {
-            widget.rotinfo = null;
             let mark = Date.now();
             // update UI info
             if (sliced) {
@@ -190,31 +190,29 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         if (scale === 1 && feature.work_alerts && slicing.length) {
             alert = show.alert("Rendering");
         };
-        client.unrotate(settings, () => {
-            for (let widget of slicing) {
-                // on done
-                segtimes[`${widget.id}_${segNumber++}_draw`] = widget.render(widget.stack);
-                // rotate stack for belt beds
-                if (widget.rotinfo) {
-                    widget.stack.obj.rotate(widget.rotinfo);
-                }
-                if (scale === 1) {
-                    // clear wireframe
-                    widget.setWireframe(false, COLOR.wireframe, COLOR.wireframe_opacity);
-                    widget.setOpacity(camOrLaser ? COLOR.cam_sliced_opacity : COLOR.sliced_opacity);
-                    widget.setColor(COLOR.deselected);
-                    api.hide.alert(alert);
-                }
+        for (let widget of slicing) {
+            // on done
+            segtimes[`${widget.id}_${segNumber++}_draw`] = widget.render(widget.stack);
+            // rotate stack for belt beds
+            if (widget.belt) {
+                widget.stack.obj.rotate(widget.belt);
             }
-            view.update_slider_max(true);
-            show.layer(-1, 0);
             if (scale === 1) {
-                view.update_stack_labels();
+                // clear wireframe
+                widget.setWireframe(false, COLOR.wireframe, COLOR.wireframe_opacity);
+                widget.setOpacity(camOrLaser ? COLOR.cam_sliced_opacity : COLOR.sliced_opacity);
+                widget.setColor(COLOR.deselected);
+                api.hide.alert(alert);
             }
-            if (!isBelt && controller.lineType === 'line' && !process.xray && !controller.devel) {
-                $('render-ghost').onclick();
-            }
-        });
+        }
+        view.update_slider_max(true);
+        show.layer(-1, 0);
+        if (scale === 1) {
+            view.update_stack_labels();
+        }
+        if (!isBelt && controller.lineType === 'line' && !process.xray && !controller.devel) {
+            $('render-ghost').onclick();
+        }
         if (scale === 1) {
             show.progress(0);
         }
@@ -334,11 +332,11 @@ function preparePreview(callback, scale = 1, offset = 0) {
                 stack.add(layer);
             });
             // rotate stack for belt beds
-            if (isBelt && widgets[0].rotinfo) {
-                let ri = widgets[0].rotinfo;
+            if (isBelt && widgets[0].belt) {
+                let ri = widgets[0].belt;
                 ri.dz = 0;
                 ri.dy = settings.device.bedDepth / 2;
-                stack.obj.rotate(widgets[0].rotinfo);
+                stack.obj.rotate(widgets[0].belt);
             }
             api.hide.alert(alert);
             segtimes[`${segNumber}_draw`] = Date.now() - startTime;

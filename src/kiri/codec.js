@@ -163,7 +163,8 @@ function encodePointArray(points, state, z) {
         return points;
     }
 
-    const array = codec.allocFloat32Array(length * 3, state.zeros);
+    const zeros = state ? state.zeros : undefined;
+    const array = codec.allocFloat32Array(length * 3, zeros);
 
     for (let i=0, pos=0, point; i<length; i++) {
         point = points[i];
@@ -186,7 +187,8 @@ function encodePointArray2D(points, state) {
         return points;
     }
 
-    const array = codec.allocFloat32Array(length * 2, state.zeros);
+    const zeros = state ? state.zeros : undefined;
+    const array = codec.allocFloat32Array(length * 2, zeros);
 
     for (let i=0, pos=0, point; i<length; i++) {
         point = points[i];

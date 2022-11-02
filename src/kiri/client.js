@@ -199,18 +199,6 @@ const client = exports({
         });
     },
 
-    unrotate(settings, callback) {
-        send("unrotate", { settings }, reply => {
-            if (reply.group) {
-                for (let widget of kiri.Widget.Groups.forid(reply.group)) {
-                    widget.rotinfo = reply.rotinfo;
-                }
-            } else if (callback) {
-                callback();
-            }
-        });
-    },
-
     slice(settings, widget, callback) {
         send("slice", {
             id: widget.id,

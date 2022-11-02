@@ -772,9 +772,6 @@ class Widget {
                 if (reply.slice) {
                     widget.slices.push(kiri.codec.decode(reply.slice, {mesh:widget.mesh}));
                 }
-                if (reply.rotinfo) {
-                    widget.rotinfo = reply.rotinfo;
-                }
                 if (reply.done) {
                     ondone(true);
                 }

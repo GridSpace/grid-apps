@@ -33,8 +33,8 @@ class Stack {
 
     rotate(set) {
         this.view.rotation.x = -set.angle * (Math.PI/180);
-        this.view.position.y += -set.dy;
-        this.view.position.z += -set.dz;
+        this.view.position.y = -set.dy;
+        this.view.position.z = -set.dz;
     }
 
     destroy() {

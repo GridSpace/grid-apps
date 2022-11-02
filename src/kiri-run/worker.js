@@ -346,10 +346,8 @@ kiri.worker = {
                 let x = vert[i++];
                 let y = vert[i++];
                 let z = vert[i++];
-                // if (z < 0.01) {
-                    miny = Math.min(miny, y);
-                    maxy = Math.max(maxy, y);
-                // }
+                miny = Math.min(miny, y);
+                maxy = Math.max(maxy, y);
             }
             return { miny, maxy };
         }
@@ -377,34 +375,19 @@ kiri.worker = {
             }
             widget.rotateRaw(rotation,0,0,true);
             let minr = gmin(group);
-            widget.belt = { xpos, ypos, yadd: minr.maxy - minr.miny, dy: -miny, dz: 0 };
+            widget.belt = {
+                angle: 45,
+                xpos,
+                ypos,
+                yadd: minr.maxy - minr.miny,
+                dy: -miny - (proc.beltAnchor || proc.firstLayerBeltLead || 0),
+                dz: 0
+            };
             for (let others of group.slice(1)) {
                 others.belt = widget.belt;
             }
 
             send.data({group: group.id, belt: widget.belt});
-        }
-        send.done({});
-    },
-
-    unrotate(data, send) {
-        let { settings } = data;
-        if (!settings.device.bedBelt) {
-            return send.done({});
-        }
-        let rotation = (Math.PI / 180) * 45;
-        for (let group of Object.values(wgroup)) {
-            let widget = group[0];
-            let { xpos, ypos } = widget.belt;
-            let { dy, dz } = widget.belt;
-            let proc = settings.process;
-            // move to accomodate anchor
-            dy -= (proc.beltAnchor || proc.firstLayerBeltLead || 0) ;
-            widget.rotinfo = { angle: 45, dy, dz, xpos, ypos };
-            for (let others of group.slice(1)) {
-                others.rotinfo = widget.rotinfo;
-            }
-            send.data({group: group.id, rotinfo: widget.rotinfo});
         }
         send.done({});
     },

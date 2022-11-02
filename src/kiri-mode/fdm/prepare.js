@@ -249,7 +249,6 @@ FDM.prepare = async function(widgets, settings, update) {
             let swidget = kiri.newWidget(null,widget.group);
             swidget.slices = sslices;
             swidget.support = true;
-            swidget.rotinfo = widget.rotinfo;
             swidget.belt = widget.belt;
             swidget.track = Object.clone(widget.track);
             swidget.mesh = { widget: swidget, position: swidget.track.pos };
@@ -440,12 +439,12 @@ FDM.prepare = async function(widgets, settings, update) {
 
     // establish offsets
     for (let widget of widgets) {
-        let { rotinfo, belt } = widget;
+        let { belt } = widget;
         let offset = Object.clone(widget.track.pos);
         if (isBelt) {
-            let o = rotinfo.ypos * beltfact;
+            let o = belt.ypos * beltfact;
             offset = {
-                x: rotinfo.xpos,
+                x: belt.xpos,
                 y: o,
                 z: o
             };
