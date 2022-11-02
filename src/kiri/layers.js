@@ -46,6 +46,11 @@ class Layers {
         return this;
     }
 
+    setPosition(x = 0, y = 0, z = 0) {
+        this.position = { x, y, z };
+        return this;
+    }
+
     setLayer(layer, colors, off) {
         let layers = this.layers;
         if (typeof(colors) === 'number') {
@@ -57,6 +62,7 @@ class Layers {
         }
         this.current = layers[layer] = layers[layer] || {
             rotation: this.rotation,
+            position: this.position,
             off: off === true,
             lines: [],
             polys: [], // colors are an attribute on polygons

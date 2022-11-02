@@ -403,7 +403,8 @@ kiri.Layers.prototype.encode = function(state) {
                     norms: codec.allocFloat32Array(paths.norms, zeros)
                 } : undefined,
                 cpath: layer.cpath || codec.undef,
-                rotation: layer.rotation
+                rotation: layer.rotation,
+                posiiton: layer.position
             }
         })
     };
@@ -434,7 +435,8 @@ registerDecoder(TYPE.LAYERS, function(v, state) {
                 norms: codec.allocFloat32Array(paths.norms)
             } : undefined,
             cpath: data.cpath,
-            rotation: data.rotation
+            rotation: data.rotation,
+            position: data.position
         };
         // fixup null -> Infinity in material counts (JSON stringify sucks)
         if (d.cface) {

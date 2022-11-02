@@ -1636,11 +1636,6 @@ function updateStock(args, event) {
         return;
     }
 
-    STACKS.remove('bounds');
-    if (isCamMode && isArrange) {
-        STACKS.clear();
-    }
-
     if (!isCamMode) {
         SPACE.world.remove(camZBottom);
         SPACE.world.remove(camStock);
@@ -1705,6 +1700,29 @@ function updateStock(args, event) {
             });
             camStock = new THREE.Mesh(geo, mat);
             camStock.renderOrder = 2;
+
+            let lo = 0.5;
+            let lidat = [
+                lo,lo,lo, lo,lo,-lo,
+                lo,lo,lo, lo,-lo,lo,
+                lo,lo,lo, -lo,lo,lo,
+                -lo,-lo,-lo, -lo,-lo,lo,
+                -lo,-lo,-lo, -lo,lo,-lo,
+                -lo,-lo,-lo, lo,-lo,-lo,
+                lo,lo,-lo, -lo,lo,-lo,
+                lo,lo,-lo, lo,-lo,-lo,
+                lo,-lo,-lo, lo,-lo,lo,
+                lo,-lo,lo, -lo,-lo,lo,
+                -lo,-lo,lo, -lo,lo,lo,
+                -lo,lo,lo, -lo,lo,-lo
+            ];
+            let ligeo = new THREE.BufferGeometry();
+            ligeo.setAttribute('position', new THREE.BufferAttribute(lidat.toFloat32(), 3));
+            let limat = new THREE.LineBasicMaterial({ color: 0xaaaaaa });
+            let lines = new THREE.LineSegments(ligeo, limat);
+            camStock.lines = lines;
+            camStock.add(lines);
+
             SPACE.world.add(camStock);
         }
         stock = settings.stock = {
@@ -1728,6 +1746,8 @@ function updateStock(args, event) {
             camStock.position.z = 0;
         }
         delta = csz - topZ;
+        camStock.lines.material.color =
+            new THREE.Color(API.space.is_dark() ? 0x555555 : 0xaaaaaa);
     } else if (camStock) {
         SPACE.world.remove(camStock);
         camStock = null;
@@ -1758,29 +1778,6 @@ function updateStock(args, event) {
         SPACE.world.add(camZBottom);
     } else {
         camZBottom = undefined;
-    }
-
-    const {x, y, z} = stock;
-    if (x && y && z && !STACKS.getStack('bounds')) {
-        const render = new kiri.Layers()
-            .setRotation(currentIndex)
-            .setLayer('bounds', { face: 0xaaaaaa, line: 0xaaaaaa });
-        const stack = STACKS.setFreeMem(false).create('bounds', SPACE.world);
-        const hx = x/2, hy = y/2;
-        const sz = stock.z || 0;
-        const zm = isIndexed ? -sz / 2 : 0;
-        const zM = isIndexed ? sz / 2 : sz;
-        stack.add(render.addPolys([
-            newPolygon().centerRectangle({x:csox, y:csoy, z:zm}, x, y),
-            newPolygon().centerRectangle({x:csox, y:csoy, z:zM}, x, y)
-        ], { thin: true } ));
-        stack.add(render.addLines([
-            newPoint(csox + hx, csoy - hy, zm), newPoint(csox + hx, csoy - hy, zM),
-            newPoint(csox + hx, csoy + hy, zm), newPoint(csox + hx, csoy + hy, zM),
-            newPoint(csox - hx, csoy - hy, zm), newPoint(csox - hx, csoy - hy, zM),
-            newPoint(csox - hx, csoy + hy, zm), newPoint(csox - hx, csoy + hy, zM),
-        ], { thin: true }));
-        STACKS.setFreeMem(true);
     }
 
     API.platform.update_top_z(delta);
