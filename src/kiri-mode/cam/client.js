@@ -124,8 +124,8 @@ CAM.init = function(kiri, api) {
 
     api.event.on("function.export", (mode) => {
         if (isAnimate) {
-            animFn().animate_clear(api);
             isAnimate = false;
+            animFn().animate_clear(api);
         }
     });
 
@@ -1632,10 +1632,10 @@ function updateStock(args, event) {
     if (isAnimate) {
         if (isIndexed) {
             SPACE.world.remove(camStock);
+            camStock = undefined;
         }
         return;
     }
-
     if (!isCamMode) {
         SPACE.world.remove(camZBottom);
         SPACE.world.remove(camStock);
