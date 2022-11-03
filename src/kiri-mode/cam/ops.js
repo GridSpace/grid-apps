@@ -98,7 +98,7 @@ class OpLevel extends CamOp {
     slice(progress) {
         let { op, state } = this;
         let { settings, widget, addSlices } = state;
-        let { updateToolDiams, thruHoles, tabs, cutTabs } = state;
+        let { updateToolDiams, tabs, cutTabs } = state;
         let { bounds, zMax, ztOff, color, tshadow } = state;
         let { stock } = settings;
 
@@ -266,22 +266,25 @@ class OpRough extends CamOp {
         }
 
         // inset or eliminate thru holes from shadow
-        shadow = POLY.flatten(shadow.clone(true), [], true);
-        thruHoles.forEach(hole => {
-            shadow = shadow.map(p => {
-                if (p.isEquivalent(hole)) {
-                    // eliminate thru holes when roughing voids enabled
-                    if (op.voids) {
-                        return undefined;
-                    }
-                    let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.01));
-                    return po ? po[0] : undefined;
-                } else {
-                    return p;
-                }
-            }).filter(p => p);
-        });
-        shadow = POLY.nest(shadow);
+        // shadow = POLY.flatten(shadow.clone(true), [], true);
+        // thruHoles.forEach(hole => {
+        //     shadow = shadow.map(p => {
+        //         if (p.isEquivalent(hole)) {
+        //             // eliminate thru holes when roughing voids enabled
+        //             if (op.voids) {
+        //                 return undefined;
+        //             }
+        //             let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.01));
+        //             return po ? po[0] : undefined;
+        //         } else {
+        //             return p;
+        //         }
+        //     }).filter(p => p);
+        // });
+        // shadow = POLY.nest(shadow);
+        if (op.voids) {
+            for (let s of shadow) s.inner = undefined;
+        }
 
         // shell = shadow expanded by half tool diameter + leave stock
         const sadd = roughIn ? toolDiam / 2 : toolDiam / 2;
