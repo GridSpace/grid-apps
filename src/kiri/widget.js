@@ -17,7 +17,7 @@ const { api, driver, utils } = kiri;
 const { util, polygons } = base;
 const { Mesh, newPoint, verticesToPoints } = base;
 const { inRange, time } = util;
-const { avgc } = utils;
+const { avgc, trackFn } = utils;
 
 const solid_opacity = 1.0;
 const groups = [];
@@ -467,7 +467,6 @@ class Widget {
         if (z !== this.track.indexed) {
             this.track.indexed = z;
             this.center(false);
-            // api.platform.update_top_z();
             this._updateMeshPosition();
         }
     }
@@ -488,7 +487,6 @@ class Widget {
     setTopZ(z) {
         let mesh = this.mesh,
             track = this.track,
-            ltop = track.top || 0,
             mbz = mesh.getBoundingBox().max.z;
         if (z) {
             track.top = z;
@@ -497,7 +495,6 @@ class Widget {
         }
         // difference between top of stock/bounds and top of widget (cam mode)
         track.tzoff = mbz - z;
-        this.modified |= (ltop !== z);
         this._updateMeshPosition();
     }
 
@@ -701,9 +698,10 @@ class Widget {
     }
 
     getBoundingBox(refresh) {
-        if (!this.bounds || refresh) {
+        if (!this.bounds || refresh || this.modified) {
             this.bounds = new THREE.Box3();
             this.bounds.setFromPoints(this.getPoints());
+            this.modified = false;
         }
         return this.bounds;
     }
@@ -716,10 +714,6 @@ class Widget {
         bounds.min.y += pos.y;
         bounds.max.y += pos.y;
         return bounds;
-    }
-
-    isModified() {
-        return this.modified;
     }
 
     getExtruder(settings) {

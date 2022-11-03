@@ -92,7 +92,15 @@ function areEqual(o1, o2) {
     return false;
 }
 
+function trackFn(fn, name) {
+    return function() {
+        console.log(name, ...arguments);
+        fn(...arguments);
+    }
+}
+
 exports({
+    trackFn,
     areEqual,
     parseOpt,
     encodeOpt,

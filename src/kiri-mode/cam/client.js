@@ -1782,8 +1782,8 @@ function updateStock(args, event) {
         camZBottom = undefined;
     }
 
-    API.platform.update_top_z(delta);
-    API.platform.update_origin();
+    // API.platform.update_top_z(delta);
+    // API.platform.update_origin();
     SPACE.update();
 }
 

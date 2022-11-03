@@ -8,6 +8,9 @@ const { Vector3, Quaternion } = THREE;
 const { kiri } = root;
 const { api } = kiri;
 
+const XAXIS = new THREE.Vector3(1,0,0);
+const ZAXIS = new THREE.Vector3(0,0,1);
+
 // circle
 let pgeo = new THREE.CircleGeometry(8, 30);
 let pmat = new THREE.MeshBasicMaterial({color: 0xff0000, opacity: 0.5, transparent: true});
@@ -116,20 +119,17 @@ api.event.on('mouse.hover', (ev) => {
         obj.add(pmesh);
         pmesh.position.x = point.x - opos.x + norm.x * 0.1;
         if (track.indexed) {
-            let delta = track.delta;
             let rad = track.indexRad;
-            let py = (point.y - delta.z + track.tzoff) * 1.001;
-            let pz = (point.z + delta.y) * 1.001;
-            let v = new THREE.Vector3(point.x, py, pz)
-                .applyAxisAngle(new THREE.Vector3(1,0,0), rad);
+            let py = point.y * 1.001;
+            let pz = point.z * 1.001;
+            let v = new THREE.Vector3(point.x, py, pz).applyAxisAngle(XAXIS, rad);
             pmesh.position.y = -v.z;
             pmesh.position.z = v.y;
         } else {
             pmesh.position.y = -point.z - opos.y + norm.y * 0.1;
-            pmesh.position.z = point.y + norm.z * 0.1;
+            pmesh.position.z = point.y + track.tzoff + norm.z * 0.1;
         }
-        let q = new Quaternion().setFromUnitVectors(
-            new Vector3(0,0,1),
+        let q = new Quaternion().setFromUnitVectors(ZAXIS,
             new Vector3(norm.x,norm.y,norm.z)
         );
         pmesh.setRotationFromQuaternion(q);

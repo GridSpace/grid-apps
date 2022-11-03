@@ -196,6 +196,9 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
 
     // determing # of steps and step weighting for progress bar
     for (let op of proc.ops.filter(op => !op.disabled)) {
+        if (op.type === '|') {
+            break;
+        }
         let opfn = OPS[op.type];
         if (opfn) {
             let opin = new opfn(state, op);
