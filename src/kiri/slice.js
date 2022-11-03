@@ -47,10 +47,9 @@ class Slice {
         let layers = this.layers = new kiri.Layers();
         if (tracked) {
             let { track } = tracked;
-            let { indexed, indexRad, delta, tzoff } = track;
+            let { indexed, indexRad } = track;
             if (indexed) {
                 layers.setRotation(indexRad);
-                // layers.setPosition(0, -delta.y, delta.z + tzoff);
             }
         }
         return layers;

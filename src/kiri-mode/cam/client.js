@@ -1656,6 +1656,7 @@ function updateStock(args, event) {
     let delta = 0;
     let csox = 0;
     let csoy = 0;
+    let csoz = 0;
     let stock = settings.stock = { };
     let compute = enabled && stockSet && widgets.length;
 
@@ -1665,7 +1666,7 @@ function updateStock(args, event) {
     let csx = proc.camStockX;
     let csy = proc.camStockY;
     let csz = proc.camStockZ;
-    let min = { x: Infinity, y: Infinity, z: 0 };
+    let min = { x: Infinity, y: Infinity, z: Infinity };
     let max = { x: -Infinity, y: -Infinity, z: -Infinity };
     for (let widget of widgets) {
         let wbnd = widget.getBoundingBox(refresh);
@@ -1673,12 +1674,12 @@ function updateStock(args, event) {
         min = {
             x: Math.min(min.x, wpos.x + wbnd.min.x),
             y: Math.min(min.y, wpos.y + wbnd.min.y),
-            z: 0
+            z: Math.min(min.z, wpos.z + wbnd.min.z)
         };
         max = {
             x: Math.max(max.x, wpos.x + wbnd.max.x),
             y: Math.max(max.y, wpos.y + wbnd.max.y),
-            z: Math.max(max.z, wbnd.max.z)
+            z: Math.max(max.z, wpos.z + wbnd.max.z)
         };
     }
     if (offset) {
@@ -1687,6 +1688,7 @@ function updateStock(args, event) {
         csz += max.z - min.z;
         csox = min.x + ((max.x - min.x) / 2);
         csoy = min.y + ((max.y - min.y) / 2);
+        csoz = csz / 2; // min.z + ((max.z - min.z) / 2);
     }
     if (compute) {
         UI.func.animate.classList.remove('disabled');
@@ -1732,7 +1734,7 @@ function updateStock(args, event) {
             center: {
                 x: csox,
                 y: csoy,
-                z: csz / 2
+                z: csoz
             }
         };
         camStock.scale.x = csx + 0.005;
@@ -1740,7 +1742,7 @@ function updateStock(args, event) {
         camStock.scale.z = csz + 0.005;
         camStock.position.x = csox;
         camStock.position.y = csoy;
-        camStock.position.z = csz / 2;
+        camStock.position.z = csoz;
         camStock.rotation.x = currentIndex || 0;
         if (isIndexed) {
             camStock.position.z = 0;

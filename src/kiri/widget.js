@@ -420,6 +420,9 @@ class Widget {
             dx = bm.x + bd.x,
             dy = bm.y + bd.y,
             dz = bm.z;
+        if (this.track.indexed) {
+            dz += bd.z;
+        }
         this.track.center = { dx, dy, dz };
         // move mesh for each widget in group
         if (!init) {
@@ -435,6 +438,9 @@ class Widget {
      * todo use new prototype.moveMesh()
      */
     moveMesh(x, y, z) {
+        if (!(x || y || z)) {
+            return;
+        }
         let gap = this.mesh.geometry.attributes.position,
             pa = gap.array;
         // center point array on 0,0,0
@@ -458,15 +464,20 @@ class Widget {
     }
 
     setIndexed(z) {
-        this.track.indexed = z;
-        this.setTopZ(this.track.top);
+        if (z !== this.track.indexed) {
+            this.track.indexed = z;
+            this.center(false);
+            // api.platform.update_top_z();
+            this._updateMeshPosition();
+        }
     }
 
     setAxisIndex(deg) {
         let rad = deg * (Math.PI / 180);
-        this.track.indexRad = rad;
-        this.mesh.rotation.x = -rad;
-        this.setTopZ(this.track.top);
+        if (rad !== this.track.indexRad) {
+            this.track.indexRad = rad;
+            this._updateMeshPosition();
+        }
     }
 
     /**
@@ -486,20 +497,6 @@ class Widget {
         }
         // difference between top of stock/bounds and top of widget (cam mode)
         track.tzoff = mbz - z;
-        if (track.indexed) {
-            let rad = track.indexRad;
-            let mz = track.box.d  / 2;
-            let dx = Math.sin(rad) * mz;
-            let dy = mz - Math.cos(rad) * mz;
-            track.delta = {
-                x: 0,
-                y: -dx,
-                z: -(track.indexed / 2) + dy
-            };
-        } else {
-            track.delta = { x:0, y:0, z:0 };
-            this.mesh.rotation.x = 0;
-        }
         this.modified |= (ltop !== z);
         this._updateMeshPosition();
     }
@@ -538,19 +535,29 @@ class Widget {
     _updateMeshPosition() {
         let mesh = this.mesh,
             track = this.track,
-            delta = track.delta || { x:0, y:0, z:0 },
             tzoff = track.tzoff,
             top = track.top,
             tz = tzoff !== top ? -tzoff : 0,
-            pos = track.pos;
-        mesh.position.set(pos.x + delta.x, pos.y + delta.y, pos.z + delta.z + tz);
+            { x, y, z } = track.pos;
+        if (track.indexed) {
+            let rad = track.indexRad;
+            let ln = track.box.d / 2;
+            let dx = Math.sin(rad) * ln;
+            let dy = ln - Math.cos(rad) * ln;
+            this.mesh.rotation.x = -rad;
+            z = 0;
+        } else {
+            this.mesh.rotation.x = 0;
+            z += tz;
+        }
+        mesh.position.set(x, y, z);
     }
 
     scale(x, y, z) {
         this.group.forEach(w => {
             w._scale(x, y, z);
         });
-        this.center();
+        this.center(false);
     }
 
     _scale(x, y, z) {
@@ -599,6 +606,7 @@ class Widget {
         this.setModified();
     }
 
+    // undo all accumulated rotations
     unrotate() {
         this.roto.reverse().forEach(m => {
             this.mesh.geometry.applyMatrix4(m.clone().invert());
