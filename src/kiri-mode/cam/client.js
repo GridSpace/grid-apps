@@ -66,10 +66,10 @@ CAM.init = function(kiri, api) {
         return API.conf.get().process.camZBottom > 0;
     }
 
-    function setAnimationStyle() {
+    function setAnimationStyle(refresh) {
         const { camStockIndexed, camStockOn } = current.process;
         let newIndexed = camStockIndexed && camStockOn;
-        let changed = isIndexed !== newIndexed;
+        let changed = refresh || isIndexed !== newIndexed;
         isIndexed = newIndexed;
         if (!isIndexed || !isCamMode) {
             for (let widget of API.widgets.all()) {
@@ -109,8 +109,10 @@ CAM.init = function(kiri, api) {
     }
 
     api.event.on("widget.add", widget => {
-        if (isCamMode) {
-            setAnimationStyle();
+        if (isCamMode && !Array.isArray(widget)) {
+            setAnimationStyle(true);
+            widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
+            api.platform.update_top_z();
         }
     });
 
