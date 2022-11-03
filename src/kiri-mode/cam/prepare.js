@@ -69,6 +69,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         outerz = outer.max.z,
         slices = widget.slices,
         hasStock = stock.x && stock.y && stock.z && process.camStockOn,
+        isIndexed = hasStock && process.camStockIndexed,
         startCenter = process.outputOriginCenter,
         alignTop = settings.controller.alignTop,
         zclear = (process.camZClearance || 1),
@@ -78,7 +79,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         ztOff = hasStock ? stock.z - wztop : 0,
         bounds = widget.getBoundingBox(),
         boundsz = bounds.max.z + ztOff,
-        zadd = hasStock ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
+        zadd = hasStock && !isIndexed ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
         zmax = outerz + zclear,
         wmpos = widget.track.pos,
         wmx = wmpos.x,
@@ -296,6 +297,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         point.y += wmy;
         point.z += zadd;
 
+        // console.log(point.z);
         if (nextIsMove) {
             cut = 0;
             nextIsMove = false;

@@ -14,6 +14,7 @@ const { CAM } = driver;
 
 let isAnimate,
     isArrange,
+    isPreview,
     isCamMode,
     isIndexed,
     isParsed,
@@ -153,10 +154,17 @@ CAM.init = function(kiri, api) {
 
     api.event.on("view.set", (mode) => {
         isArrange = (mode === VIEWS.ARRANGE);
+        isPreview = (mode === VIEWS.PREVIEW);
         isAnimate = false;
         animFn().animate_clear(api);
         func.clearPops();
         $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
+        if (isCamMode && isPreview) {
+            for (let widget of API.widgets.all()) {
+                widget.setAxisIndex(0);
+            }
+            updateStock();
+        }
     });
 
     api.event.on("settings.saved", (settings) => {
@@ -596,11 +604,10 @@ CAM.init = function(kiri, api) {
             }
         }
         // update widget rotations from timeline marker
-        if (isIndexed)
         for (let widget of API.widgets.all()) {
-            widget.setAxisIndex(-index);
+            widget.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
         }
-        currentIndex = isIndexed ? index * (Math.PI / 180) : 0;
+        currentIndex = isIndexed && !isPreview ? index * (Math.PI / 180) : 0;
         updateStock();
     });
 

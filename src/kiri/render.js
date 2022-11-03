@@ -15,6 +15,8 @@ gapp.register("kiri.render", [], (root, exports) => {
 const { base, kiri } = root;
 const { config, util, newPolygon } = base;
 const hsV = 0.9;
+const XAXIS = new THREE.Vector3(1,0,0);
+const DEG2RAD = Math.PI / 180;
 
 exports({
     path,
@@ -126,6 +128,7 @@ async function path(levels, update, opts = {}) {
         const retracts = [];
         const engages = [];
         const lasers = [];
+        const sparks = [];
         const output = new kiri.Layers();
         layers.push(output);
 
@@ -163,6 +166,19 @@ async function path(levels, update, opts = {}) {
             if (!out.point) {
                 // in cam mode, these are drilling or dwell ops
                 return;
+            }
+
+            // rotate 4th axis indexed points
+            // todo -- add spark lines
+            if (out.point.a) {
+                let { point } = out;
+                let p2 = new THREE.Vector3(point.x, point.y, point.z)
+                    .applyAxisAngle(XAXIS, point.a * DEG2RAD);
+                out.point.x = p2.x;
+                out.point.y = p2.y;
+                out.point.z = p2.z;
+                // let sp = base.newPoint(out.point.x * 1.1, out.point.y * 1.1, out.point.z * 1.1);
+                // sparks.push(out.point, sp);
             }
 
             if (lastOut) {
@@ -259,6 +275,13 @@ async function path(levels, update, opts = {}) {
                 .addAreas(engages.map(point => {
                     return newPolygon().centerCircle(point, 0.2, 7).setZ(point.z + 0.02);
                 }), { outline: true });
+        }
+
+        if (thin && sparks.length) {
+            let line = dark ? 0xffffff : 0x112233;
+            output
+                .setLayer('sparks', { face: headColor, line, opacity: 0.75 }, true)
+                .addLines(sparks, { thin: true });
         }
 
         if (thin && heads.length) {

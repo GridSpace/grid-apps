@@ -104,8 +104,8 @@ kiri.load(() => {
         geo.setIndex(new THREE.BufferAttribute(ia, 1));
         const mat = new THREE.MeshMatcapMaterial({
             flatShading: true,
-            transparent: true,
-            opacity: 0.1,
+            transparent: false,
+            opacity: 1,
             color: 0x888888,
             side: THREE.DoubleSide
         });
@@ -366,6 +366,7 @@ kiri.load(() => {
         const { process } = settings;
         const print = worker.print;
         const density = parseInt(settings.controller.animesh) * 1000;
+        const isIndexed = process.camStockOn && process.camStockIndexed;
 
         pathIndex = 0;
         path = print.output.flat();
@@ -381,11 +382,11 @@ kiri.load(() => {
         indexCount = 0;
         startTime = 0;
         updates = 0;
-        stockZ = stock.z;
+        stockZ = isIndexed ? 0 : stock.z;
 
         stockSlices = [];
         const { x, y, z } = stock;
-        const sliceCount = 1;
+        const sliceCount = 10;
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
             let xmin = -(x/2) + (i * sliceWidth) + sliceWidth / 2;
@@ -452,6 +453,7 @@ kiri.load(() => {
             return;
         }
         pathIndex++;
+        // console.log(next.point.z);
 
         if (next.tool >= 0 && (!tool || tool.getNumber() !== next.tool)) {
             // on real tool change, go to safe Z first
