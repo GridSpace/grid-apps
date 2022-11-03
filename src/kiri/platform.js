@@ -77,7 +77,7 @@ function platformUpdateOrigin() {
     space.platform.setRulers(ruler, ruler, 1 / api.view.unit_scale(), 'X', isBelt ? 'Z' : 'Y');
 
     let { x, y, z } = origin;
-    let oz = process.camStockIndexed ? z / 2 : z;
+    let oz = process.camStockIndexed && process.camStockOn ? z / 2 : z;
     if (controller.showOrigin && MODE !== MODES.SLA) {
         space.platform.setOrigin(x, y, oz, true);
     } else {

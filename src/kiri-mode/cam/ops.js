@@ -481,6 +481,7 @@ class OpOutline extends CamOp {
             max: op.top ? zMax + ztOff : undefined
         };
         let indices = slicer.interval(op.down, intopt);
+console.log({slicer, indices, zBottom});
         let trueShadow = process.camTrueShadow === true;
         // shift out first (top-most) slice
         indices.shift();

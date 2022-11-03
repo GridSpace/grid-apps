@@ -104,8 +104,8 @@ kiri.load(() => {
         geo.setIndex(new THREE.BufferAttribute(ia, 1));
         const mat = new THREE.MeshMatcapMaterial({
             flatShading: true,
-            transparent: false,
-            opacity: 1,
+            transparent: true,
+            opacity: 0.1,
             color: 0x888888,
             side: THREE.DoubleSide
         });
@@ -385,7 +385,7 @@ kiri.load(() => {
 
         stockSlices = [];
         const { x, y, z } = stock;
-        const sliceCount = 20;
+        const sliceCount = 1;
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
             let xmin = -(x/2) + (i * sliceWidth) + sliceWidth / 2;

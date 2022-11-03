@@ -31,14 +31,22 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         proc = settings.process,
         stock = settings.stock || {},
         hasStock = stock.x && stock.y && stock.z && proc.camStockOn,
+        isIndexed = hasStock && proc.camStockIndexed,
         camOps = widget.camops = [],
         sliceAll = widget.slices = [],
         bounds = widget.getBoundingBox(),
-        wztop = widget.track.top,
-        ztOff = hasStock ? stock.z - wztop : 0,
-        zbOff = hasStock ? wztop - widget.track.box.d : 0,
-        zBottom = proc.camZBottom - zbOff,
-        zMin = Math.max(bounds.min.z, zBottom),
+        track = widget.track,
+        // widget top z as defined by setTopz()
+        wztop = track.top,
+        // distance between top of part and top of stock
+        ztOff = isIndexed ? 0 : (hasStock ? stock.z - wztop : 0),
+        // distance between bottom of part and bottom of stock
+        zbOff = isIndexed ? 0 : (hasStock ? wztop - track.box.d : 0),
+        // defined z bottom offset by distance to stock bottom
+        // keeps the z bottom relative to the part when z align changes
+        zBottom = isIndexed ? bounds.min.z : proc.camZBottom - zbOff,
+        // greater of widget bottom and z bottom
+        zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom),
         zMax = bounds.max.z,
         zThru = proc.camZBottom ? 0 : (proc.camZThru || 0),
         zTop = zMax + ztOff,
@@ -141,7 +149,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
     function setAxisIndex(degrees = 0, absolute = true) {
         axisIndex = absolute ? degrees : axisIndex + degrees;
         axisRotation = (Math.PI / 180) * axisIndex;
-        widget.setAxisIndex(-axisIndex);
+        widget.setAxisIndex(isIndexed ? -axisIndex : 0);
     }
 
     function addSlices(slices) {
@@ -232,7 +240,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
                 // console.log('reshadow', progress.round(3));
             });
         }
-        tracker.rotation = axisRotation;
+        tracker.rotation = isIndexed ? axisRotation : 0;
         camOps.push(op);
         opSum += weight;
     }

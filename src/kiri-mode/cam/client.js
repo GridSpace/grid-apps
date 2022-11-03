@@ -65,27 +65,32 @@ CAM.init = function(kiri, api) {
         return API.conf.get().process.camZBottom > 0;
     }
 
-    function setAnimationStyle(settings) {
-        let changed = isIndexed !== settings.process.camStockIndexed;
-        isIndexed = settings.process.camStockIndexed;
+    function setAnimationStyle() {
+        const { camStockIndexed, camStockOn } = current.process;
+        let newIndexed = camStockIndexed && camStockOn;
+        let changed = isIndexed !== newIndexed;
+        isIndexed = newIndexed;
         if (!isIndexed || !isCamMode) {
             for (let widget of API.widgets.all()) {
                 widget.setAxisIndex(0);
             }
         }
-        if (!(isCamMode && changed)) {
+        if (!isCamMode) {
             return;
         }
         if (isIndexed) {
-            settings.process.camZAnchor = "middle";
+            current.process.camZAnchor = "middle";
         }
         animVer = isIndexed ? 1 : 0;
         SPACE.platform.setVisible(!isIndexed);
+        $('cam-index').style.display = isIndexed ? '' : 'none';
+        if (!changed) {
+            return;
+        }
         for (let widget of api.widgets.all()) {
             widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
         }
         api.platform.update_top_z();
-        $('cam-index').style.display = isIndexed ? '' : 'none';
         // add or remove clock op depending on indexing
         const cp = current.process;
         if (!cp.ops) {
@@ -104,7 +109,7 @@ CAM.init = function(kiri, api) {
 
     api.event.on("widget.add", widget => {
         if (isCamMode) {
-            setAnimationStyle(api.conf.get());
+            setAnimationStyle();
         }
     });
 
@@ -173,7 +178,7 @@ CAM.init = function(kiri, api) {
         api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
         api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
         updateStock(settings, 'settings.saved.internal');
-        setAnimationStyle(settings);
+        setAnimationStyle();
         func.opRender();
     });
 
@@ -182,8 +187,10 @@ CAM.init = function(kiri, api) {
         if (!isCamMode) return;
         validateTools(settings.tools);
         restoreTabs(api.widgets.all());
-        setAnimationStyle(settings);
+        setAnimationStyle();
     });
+
+    api.event.on("boolean.click", api.platform.update_top_z);
 
     api.event.on([
         "init-done",
