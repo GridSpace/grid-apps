@@ -394,7 +394,8 @@ class Slicer {
         }
         // filter duplicate values
         array = array.map(v => v.round(5)).filter((e,i,a) => i < 1 || a[i-1] !== a[i]);
-        return array.map(v => Math.abs(parseFloat(v.toFixed(5))));
+        // return array.map(v => Math.abs(parseFloat(v.toFixed(5))));
+        return array.map(v => parseFloat(v.toFixed(5)));
     }
 }
 

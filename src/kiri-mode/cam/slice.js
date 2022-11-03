@@ -229,6 +229,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
+        tracker.rotation = isIndexed ? axisRotation : 0;
         // setup new state when indexing the workspace
         if (true && op.op.type === "index") {
             let points = base.verticesToPoints(widget.getGeoVertices(true, true));
@@ -241,7 +242,6 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
                 // console.log('reshadow', progress.round(3));
             });
         }
-        tracker.rotation = isIndexed ? axisRotation : 0;
         camOps.push(op);
         opSum += weight;
     }
