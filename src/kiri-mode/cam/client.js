@@ -66,13 +66,14 @@ CAM.init = function(kiri, api) {
     }
 
     function setAnimationStyle(settings) {
+        let changed = isIndexed !== settings.process.camStockIndexed;
         isIndexed = settings.process.camStockIndexed;
         if (!isIndexed || !isCamMode) {
             for (let widget of API.widgets.all()) {
                 widget.setAxisIndex(0);
             }
         }
-        if (!isCamMode) {
+        if (!(isCamMode && changed)) {
             return;
         }
         if (isIndexed) {
@@ -130,6 +131,7 @@ CAM.init = function(kiri, api) {
     });
 
     api.event.on("mode.set", (mode) => {
+        isIndexed = undefined;
         isCamMode = mode === 'CAM';
         $('set-tools').style.display = isCamMode ? '' : 'none';
         SPACE.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
@@ -587,6 +589,7 @@ CAM.init = function(kiri, api) {
             }
         }
         // update widget rotations from timeline marker
+        if (isIndexed)
         for (let widget of API.widgets.all()) {
             widget.setAxisIndex(-index);
         }

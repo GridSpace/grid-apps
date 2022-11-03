@@ -56,7 +56,7 @@ class Widget {
         // wireframe
         this.wire = null;
         this.slices = null;
-        this.settings = null;
+        this.settings = null; // used??
         this.modified = true;
         this.track = {
             // box size for packer
@@ -83,6 +83,7 @@ class Widget {
             top: 0, // z top
             mirror: false
         },
+        // used to cache shadow geo
         this.cache = {};
         this.stats = {
             slice_time: 0,
@@ -536,6 +537,7 @@ class Widget {
             top = track.top,
             tz = tzoff !== top ? -tzoff : 0,
             { x, y, z } = track.pos;
+        console.trace('ump', {top, tz, tzoff});
         if (track.indexed) {
             let rad = track.indexRad;
             let ln = track.box.d / 2;
@@ -699,8 +701,8 @@ class Widget {
 
     getBoundingBox(refresh) {
         if (!this.bounds || refresh || this.modified) {
-            this.bounds = new THREE.Box3();
-            this.bounds.setFromPoints(this.getPoints());
+            // console.trace('gbb', refresh);
+            this.bounds = new THREE.Box3().setFromPoints(this.getPoints());
             this.modified = false;
         }
         return this.bounds;
