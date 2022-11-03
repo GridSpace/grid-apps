@@ -11,7 +11,7 @@
 gapp.register("kiri-mode.cam.slice", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { driver, newSlice, trackWidget } = kiri;
+const { driver, newSlice, setSliceTracker } = kiri;
 const { polygons, newPoint, newPolygon } = base;
 const { CAM } = driver;
 const { OPS } = CAM;
@@ -44,13 +44,14 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         zTop = zMax + ztOff,
         minToolDiam = Infinity,
         maxToolDiam = -Infinity,
-        thruHoles,
         dark = settings.controller.dark ? true : false,
         color = dark ? 0xbbbbbb : 0,
         tabs = widget.anno.tab,
         unsafe = proc.camExpertFast,
         units = settings.controller.units === 'in' ? 25.4 : 1,
-        axisIndex = undefined;
+        axisRotation,
+        axisIndex,
+        thruHoles;
 
     if (tabs) {
         // make tab polygons
@@ -137,9 +138,10 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         return shadows[z] = POLY.setZ(shadow, z);
     }
 
-    function setAxisIndex(degrees) {
-        axisIndex = degrees;
-        // state.axisIndex = (Math.PI / 180) * axisIndex;
+    function setAxisIndex(degrees = 0, absolute = true) {
+        axisIndex = absolute ? degrees : axisIndex + degrees;
+        axisRotation = (Math.PI / 180) * axisIndex;
+        widget.setAxisIndex(-axisIndex);
     }
 
     function addSlices(slices) {
@@ -211,8 +213,8 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
     state.ops = opList;
 
     // call slice() function on all ops in order
-    trackWidget(widget);
-    setAxisIndex(undefined);
+    let tracker = setSliceTracker({ rotation: 0 });
+    setAxisIndex();
     for (let op of opList) {
         let weight = op.weight();
         op.slice((progress, message) => {
@@ -230,10 +232,11 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
                 // console.log('reshadow', progress.round(3));
             });
         }
+        tracker.rotation = axisRotation;
         camOps.push(op);
         opSum += weight;
     }
-    trackWidget(undefined);
+    setSliceTracker();
 
     // reindex
     sliceAll.forEach((slice, index) => slice.index = index);

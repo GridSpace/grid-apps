@@ -13,10 +13,10 @@ const { util } = base;
 const POLY = base.polygons;
 const NOKEY = key.NONE;
 
-let tracked;
+let tracker;
 
-function trackWidget(widget) {
-    tracked = widget;
+function setSliceTracker(nv) {
+    return tracker = nv;
 }
 
 /**
@@ -45,12 +45,8 @@ class Slice {
     output() {
         if (this.layers) return this.layers;
         let layers = this.layers = new kiri.Layers();
-        if (tracked) {
-            let { track } = tracked;
-            let { indexed, indexRad } = track;
-            if (indexed) {
-                layers.setRotation(indexRad);
-            }
+        if (tracker) {
+            layers.setRotation(-tracker.rotation || 0);
         }
         return layers;
     };
@@ -254,7 +250,7 @@ gapp.overlay(kiri, {
     Slice,
     newTop,
     newSlice,
-    trackWidget
+    setSliceTracker
 });
 
 });

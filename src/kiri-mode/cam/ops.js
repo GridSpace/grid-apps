@@ -45,7 +45,7 @@ class OpIndex extends CamOp {
 
     slice() {
         let { op, state } = this;
-        state.setAxisIndex(op.degrees);
+        state.setAxisIndex(op.degrees, op.absolute);
     }
 
     prepare(ops, progress) {
@@ -626,7 +626,7 @@ class OpOutline extends CamOp {
 
         // project empty up and render
         for (let slice of slices) {
-            if (false) slice.output()
+            if (true) slice.output()
                 .setLayer("slice", {line: 0xaaaa00}, false)
                 .addPolys(slice.topPolys())
             slice.output()

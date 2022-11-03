@@ -594,6 +594,7 @@ CAM.init = function(kiri, api) {
             widget.setAxisIndex(-index);
         }
         currentIndex = isIndexed ? index * (Math.PI / 180) : 0;
+        updateStock();
     });
 
     func.opGCode = (label, field = 'gcode') => {
@@ -1383,7 +1384,7 @@ CAM.init = function(kiri, api) {
     });
 
     createPopOp('index', {
-        degrees: 'camIndexAxis',
+        degrees:  'camIndexAxis',
         absolute: 'camIndexAbs'
     }).inputs = {
         degrees:  UC.newInput(LANG.ci_degr_s, {title:LANG.ci_degr_l, convert:UC.toFloat, bound:UC.bound(-360,360.0) }),
@@ -1496,14 +1497,16 @@ function createPopOp(type, map) {
             }
             if (op.note) {
                 const { divid, noteid } = op.note;
-                $(divid).onclick = () => {
+                const div = $(divid);
+                if (div) div.onclick = () => {
                     let note = op.x = prompt('Edit Note for Operation', poppedRec.note || '');
                     if (note !== undefined && note !== null) {
                         $(noteid).innerText = poppedRec.note = note;
                         API.conf.save();
                     }
                 };
-                $(noteid).innerText = poppedRec.note || '';
+                const note = $(noteid);
+                if (note) note.innerText = poppedRec.note || '';
             }
         },
         group: [],
