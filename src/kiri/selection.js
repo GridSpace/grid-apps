@@ -150,7 +150,6 @@ function mirror() {
     }
     for_widgets(widget => {
         widget.mirror();
-        api.event.emit("widget.mirror", widget);
     });
     space.update();
     api.space.auto_save();
@@ -162,7 +161,6 @@ function scale() {
     }
     let args = [...arguments];
     for_groups(w => w.scale(...args));
-    api.platform.compute_max_z();
     selection.update_bounds();
     api.platform.update_bounds();
     api.event.emit('selection.scale', args);
@@ -170,26 +168,21 @@ function scale() {
     if (args.last() === false) {
         return;
     }
-    update_info();
-    space.update();
     api.space.auto_save();
+    selection.update_info();
+    space.update();
 }
 
 function rotate(x, y, z) {
     if (!api.view.is_arrange()) {
         return;
     }
-    for_groups(w => {
-        w.rotate(x, y, z);
-        api.event.emit('widget.rotate', {widget: w, x, y, z});
-    });
+    for_groups(w => w.rotate(x, y, z));
     selection.update_bounds();
     api.platform.update_bounds();
-    api.platform.compute_max_z();
-    api.platform.update_top_z();
     api.event.emit('selection.rotate', {x, y, z});
-    selection.update_info();
     api.space.auto_save();
+    selection.update_info();
     space.update();
 }
 

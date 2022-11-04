@@ -489,7 +489,8 @@ class Widget {
     setTopZ(z) {
         let mesh = this.mesh,
             track = this.track,
-            mbz = mesh.getBoundingBox().max.z;
+            mbb = mesh.getBoundingBox(),
+            mbz = mbb.max.z;
         if (z) {
             track.top = z;
         } else {
@@ -504,6 +505,10 @@ class Widget {
         this.group.forEach(w => {
             w._move(x, y, z, abs);
         });
+        // allow for use in engine / cli
+        if ((x || y || z) && api && api.event) {
+            api.event.emit('widget.move', {widget: this, pos});
+        }
     }
 
     _move(x, y, z, abs) {
@@ -524,10 +529,6 @@ class Widget {
         if (x || y || z) {
             this.setModified();
             this._updateMeshPosition();
-            // allow for use in engine / cli
-            if (api && api.event) {
-                api.event.emit('widget.move', {widget: this, pos});
-            }
         }
     }
 
@@ -538,7 +539,6 @@ class Widget {
             top = track.top,
             tz = tzoff !== top ? -tzoff : 0,
             { x, y, z } = track.pos;
-        // console.trace('ump', {top, tz, tzoff});
         if (track.indexed) {
             let rad = track.indexRad;
             let ln = track.box.d / 2;
@@ -558,6 +558,9 @@ class Widget {
             w._scale(x, y, z);
         });
         this.center(false);
+        if (api && api.event) {
+            api.event.emit('widget.scale', {widget: this, x, y, z});
+        }
     }
 
     _scale(x, y, z) {
@@ -579,6 +582,9 @@ class Widget {
         });
         if (center) {
             this.center(false);
+        }
+        if ((x || y || z) && api && api.event) {
+            api.event.emit('widget.rotate', {widget: this, x, y, z});
         }
     }
 
@@ -621,6 +627,9 @@ class Widget {
             w._mirror();
         });
         this.center();
+        if (api && api.event) {
+            api.event.emit('widget.mirror', {widget: this});
+        }
     }
 
     _mirror() {
@@ -647,7 +656,6 @@ class Widget {
             arr[i*3+8] = z;
         }
         pos.needsUpdate = true;
-        // geo.computeVertexNormals();
         ot.mirror = !ot.mirror;
         this.setModified();
         this.points = null;
@@ -695,8 +703,7 @@ class Widget {
 
     getBoundingBox(refresh) {
         if (!this.bounds || refresh || this.modified) {
-            // console.trace('gbb', refresh);
-            this.bounds = new THREE.Box3().setFromPoints(this.getPoints());
+            this.bounds = new THREE.Box3().setFromArray(this.getGeoVertices());
             this.modified = false;
         }
         return this.bounds;

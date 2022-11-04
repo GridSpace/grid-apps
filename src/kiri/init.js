@@ -69,7 +69,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 }
                 platform.load_stl("/obj/cube.stl", function(vert) {
                     catalog.putFile("sample cube.stl", vert);
-                    platform.compute_max_z();
+                    platform.update_bounds();
                     space.view.home();
                     setTimeout(() => { api.space.save(true) },500);
                     then();

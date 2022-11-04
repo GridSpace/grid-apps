@@ -85,32 +85,6 @@ function platformUpdateOrigin() {
     }
 }
 
-function platformUpdateTopZ(zdelta) {
-    const { process, stock } = current();
-    const hasStock = stock.x && stock.y && stock.z;
-    const MODE = get_mode();
-    api.widgets.each(widget => {
-        if (MODE === MODES.CAM && hasStock) {
-            const bounds = widget.getBoundingBox();
-            const wzmax = bounds.max.z;
-            const zdelta = process.camZOffset || 0;
-            switch (process.camZAnchor) {
-               case 'top':
-                   widget.setTopZ(stock.z - zdelta);
-                   break;
-               case 'middle':
-                   widget.setTopZ(stock.z - (stock.z - wzmax) / 2);
-                   break;
-               case 'bottom':
-                   widget.setTopZ(wzmax + zdelta);
-                   break;
-            }
-        } else {
-            widget.setTopZ(0);
-        }
-    });
-}
-
 function platformUpdateSize(updateDark = true) {
     const { process, device, controller } = current();
     const { showRulers, units } = controller;
@@ -151,18 +125,81 @@ function platformUpdateSize(updateDark = true) {
     platform.update_origin();
 }
 
+function platformUpdateMidZ() {
+    topZ = 0;
+    api.widgets.each(widget => {
+        topZ = Math.max(topZ, widget.mesh.getBoundingBox().max.z);
+    });
+    space.platform.setMaxZ(topZ);
+}
+
+function platformUpdateTopZ(zdelta) {
+    const { process, stock } = current();
+    const hasStock = stock.x && stock.y && stock.z;
+    const MODE = get_mode();
+    api.widgets.each(widget => {
+        if (MODE === MODES.CAM && hasStock) {
+            const bounds = widget.getBoundingBox();
+            const wzmax = bounds.max.z;
+            const zdelta = process.camZOffset || 0;
+            switch (process.camZAnchor) {
+               case 'top':
+                   widget.setTopZ(stock.z - zdelta);
+                   break;
+               case 'middle':
+                   widget.setTopZ(stock.z - (stock.z - wzmax) / 2);
+                   break;
+               case 'bottom':
+                   widget.setTopZ(wzmax + zdelta);
+                   break;
+            }
+        } else {
+            widget.setTopZ(0);
+        }
+    });
+}
+
+function platformUpdateStock() {
+    const settings = current();
+    const { bounds, process, mode } = settings;
+    const { camStockOn, camStockX, camStockY, camStockZ, camStockOffset, camStockIndexed } = process;
+    if (mode === 'CAM' && camStockOn) {
+        let stock = settings.stock = {
+            x: camStockX,
+            y: camStockY,
+            z: camStockZ
+        };
+        if (camStockOffset) {
+            stock.x += bounds.max.x - bounds.min.x;
+            stock.y += bounds.max.y - bounds.min.y;
+            stock.z += bounds.max.z - bounds.min.z;
+        }
+        stock.center = {
+            x: (bounds.max.x + bounds.min.x) / 2,
+            y: (bounds.max.y + bounds.min.y) / 2,
+            z: camStockIndexed ? 0 : stock.z / 2
+        };
+    } else {
+       settings.stock = {};
+    }
+}
+
 function platformUpdateBounds() {
-   const bounds = new THREE.Box3();
-   api.widgets.each(widget => {
-       let wp = widget.track.pos;
-       let wb = widget.mesh.getBoundingBox().clone();
-       wb.min.x += wp.x;
-       wb.max.x += wp.x;
-       wb.min.y += wp.y;
-       wb.max.y += wp.y;
-       bounds.union(wb);
-   });
-   return current().bounds = bounds;
+    const bounds = new THREE.Box3();
+    api.widgets.each(widget => {
+        let wp = widget.track.pos;
+        let wb = widget.getBoundingBox();
+        wb.min.x += wp.x;
+        wb.max.x += wp.x;
+        wb.min.y += wp.y;
+        wb.max.y += wp.y;
+        bounds.union(wb);
+    });
+    current().bounds = bounds;
+    platformUpdateStock();
+    platformUpdateTopZ();
+    platformUpdateMidZ();
+    return bounds;
 }
 
 function platformSelectedCount() {
@@ -363,14 +400,6 @@ function platformLoadURL(url, options = {}) {
     });
 }
 
-function platformComputeMaxZ() {
-    topZ = 0;
-    api.widgets.each(widget => {
-        topZ = Math.max(topZ, widget.mesh.getBoundingBox().max.z);
-    });
-    space.platform.setMaxZ(topZ);
-}
-
 function platformGroup() {
     grouping = true;
 }
@@ -398,7 +427,7 @@ function platformAdd(widget, shift, nolayout, defer) {
         deferTimeout = setTimeout(platformAddDeferred, 150);
     } else {
         platform.select(widget, shift);
-        platform.compute_max_z();
+        platform.update_bounds();
         api.space.auto_save();
         platformChanged();
         api.event.emit('widget.add', widget);
@@ -426,7 +455,7 @@ function platformAddDeferred() {
         platformGroupDone();
     }
     api.event.emit('widget.add', deferred.map(r => r.widget));
-    platform.compute_max_z();
+    platform.update_bounds();
     api.space.auto_save();
     platformChanged();
     deferred = [];
@@ -506,7 +535,7 @@ function platformDelete(widget, defer) {
 
 function platformDeletePost() {
     api.view.update_slider_max();
-    platform.compute_max_z();
+    platform.update_bounds();
     if (get_mode() !== MODES.FDM) {
         platform.layout();
     }
@@ -824,7 +853,6 @@ const platform = api.platform = {
     select: platformSelect,
     select_all: platformSelectAll,
     selected_count: platformSelectedCount,
-    compute_max_z: platformComputeMaxZ,
     update_origin: platformUpdateOrigin,
     update_bounds: platformUpdateBounds,
     update_size: platformUpdateSize,

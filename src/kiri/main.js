@@ -616,7 +616,7 @@ gapp.register("kiri.main", [], (root, exports) => {
                     if (ondone) {
                         ondone();
                         setTimeout(() => {
-                            platform.update_top_z();
+                            platform.update_bounds();
                             SPACE.update();
                         }, 1);
                     }

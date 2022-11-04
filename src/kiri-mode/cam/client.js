@@ -93,7 +93,7 @@ CAM.init = function(kiri, api) {
         for (let widget of api.widgets.all()) {
             widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
         }
-        api.platform.update_top_z();
+        api.platform.update_bounds();
         // add or remove clock op depending on indexing
         const cp = current.process;
         if (!cp.ops) {
@@ -114,7 +114,7 @@ CAM.init = function(kiri, api) {
         if (isCamMode && !Array.isArray(widget)) {
             setAnimationStyle(true);
             widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
-            api.platform.update_top_z();
+            api.platform.update_bounds();
         }
     });
 
@@ -189,6 +189,7 @@ CAM.init = function(kiri, api) {
         // show/hide dots in enabled process pop buttons
         api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
         api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
+        api.platform.update_bounds();
         updateStock(settings, 'settings.saved.internal');
         setAnimationStyle();
         func.opRender();
@@ -202,7 +203,7 @@ CAM.init = function(kiri, api) {
         setAnimationStyle();
     });
 
-    api.event.on("boolean.click", api.platform.update_top_z);
+    api.event.on("boolean.click", api.platform.update_bounds);
 
     api.event.on([
         "init-done",
@@ -1660,6 +1661,7 @@ function updateStock(args, event) {
         }
         return;
     }
+
     if (!isCamMode) {
         SPACE.world.remove(camZBottom);
         SPACE.world.remove(camStock);
@@ -1669,52 +1671,14 @@ function updateStock(args, event) {
     }
 
     const refresh = (event === "selection.scale" || event === 'selection.rotate');
+    const settings = API.conf.get();
 
-    let settings = API.conf.get();
-    let widgets = API.widgets.all();
-    let proc = settings.process;
-    let enabled = UI.camStockOn.checked;
-    let offset = UI.camStockOffset.checked;
-    let stockSet = offset || (proc.camStockX && proc.camStockY && proc.camStockZ);
-    let topZ = API.platform.top_z();
-    let delta = 0;
-    let csox = 0;
-    let csoy = 0;
-    let csoz = 0;
-    let stock = settings.stock = { };
-    let compute = enabled && stockSet && widgets.length;
+    const { stock, process } = settings;
+    const { x, y, z, center } = stock;
 
     UI.func.animate.classList.add('disabled');
 
-    // create/inject cam stock if stock size other than default
-    let csx = proc.camStockX;
-    let csy = proc.camStockY;
-    let csz = proc.camStockZ;
-    let min = { x: Infinity, y: Infinity, z: Infinity };
-    let max = { x: -Infinity, y: -Infinity, z: -Infinity };
-    for (let widget of widgets) {
-        let wbnd = widget.getBoundingBox(refresh);
-        let wpos = widget.track.pos;
-        min = {
-            x: Math.min(min.x, wpos.x + wbnd.min.x),
-            y: Math.min(min.y, wpos.y + wbnd.min.y),
-            z: Math.min(min.z, wpos.z + wbnd.min.z)
-        };
-        max = {
-            x: Math.max(max.x, wpos.x + wbnd.max.x),
-            y: Math.max(max.y, wpos.y + wbnd.max.y),
-            z: Math.max(max.z, wpos.z + wbnd.max.z)
-        };
-    }
-    if (offset) {
-        csx += max.x - min.x;
-        csy += max.y - min.y;
-        csz += max.z - min.z;
-        csox = min.x + ((max.x - min.x) / 2);
-        csoy = min.y + ((max.y - min.y) / 2);
-        csoz = csz / 2; // min.z + ((max.z - min.z) / 2);
-    }
-    if (compute) {
+    if (x && y && z) {
         UI.func.animate.classList.remove('disabled');
         if (!camStock) {
             let geo = new THREE.BoxGeometry(1, 1, 1);
@@ -1729,18 +1693,18 @@ function updateStock(args, event) {
 
             let lo = 0.5;
             let lidat = [
-                lo,lo,lo, lo,lo,-lo,
-                lo,lo,lo, lo,-lo,lo,
-                lo,lo,lo, -lo,lo,lo,
-                -lo,-lo,-lo, -lo,-lo,lo,
-                -lo,-lo,-lo, -lo,lo,-lo,
-                -lo,-lo,-lo, lo,-lo,-lo,
-                lo,lo,-lo, -lo,lo,-lo,
-                lo,lo,-lo, lo,-lo,-lo,
-                lo,-lo,-lo, lo,-lo,lo,
-                lo,-lo,lo, -lo,-lo,lo,
-                -lo,-lo,lo, -lo,lo,lo,
-                -lo,lo,lo, -lo,lo,-lo
+                 lo, lo, lo,  lo, lo,-lo,
+                 lo, lo, lo,  lo,-lo, lo,
+                 lo, lo, lo, -lo, lo, lo,
+                -lo,-lo,-lo, -lo,-lo, lo,
+                -lo,-lo,-lo, -lo, lo,-lo,
+                -lo,-lo,-lo,  lo,-lo,-lo,
+                 lo, lo,-lo, -lo, lo,-lo,
+                 lo, lo,-lo,  lo,-lo,-lo,
+                 lo,-lo,-lo,  lo,-lo, lo,
+                 lo,-lo, lo, -lo,-lo, lo,
+                -lo,-lo, lo, -lo, lo, lo,
+                -lo, lo, lo, -lo, lo,-lo
             ];
             let ligeo = new THREE.BufferGeometry();
             ligeo.setAttribute('position', new THREE.BufferAttribute(lidat.toFloat32(), 3));
@@ -1751,38 +1715,23 @@ function updateStock(args, event) {
 
             SPACE.world.add(camStock);
         }
-        stock = settings.stock = {
-            x: csx,
-            y: csy,
-            z: csz,
-            center: {
-                x: csox,
-                y: csoy,
-                z: csoz
-            }
-        };
-        camStock.scale.x = csx + 0.005;
-        camStock.scale.y = csy + 0.005;
-        camStock.scale.z = csz + 0.005;
-        camStock.position.x = csox;
-        camStock.position.y = csoy;
-        camStock.position.z = csoz;
+        camStock.scale.x = x + 0.005;
+        camStock.scale.y = y + 0.005;
+        camStock.scale.z = z + 0.005;
+        camStock.position.x = center.x;
+        camStock.position.y = center.y;
+        camStock.position.z = center.z;
         camStock.rotation.x = currentIndex || 0;
-        if (isIndexed) {
-            camStock.position.z = 0;
-        }
-        delta = csz - topZ;
         camStock.lines.material.color =
             new THREE.Color(API.space.is_dark() ? 0x555555 : 0xaaaaaa);
     } else if (camStock) {
         SPACE.world.remove(camStock);
         camStock = null;
-        delta = 0;
     }
 
     SPACE.world.remove(camZBottom);
-    if (proc.camZBottom && widgets.length) {
-        let max = { x: csx, y: csy, z: csz };
+    if (process.camZBottom && widgets.length) {
+        let max = { x, y, z };
         for (let w of widgets) {
             max.x = Math.max(max.x, w.track.box.w);
             max.y = Math.max(max.y, w.track.box.h);
@@ -1798,16 +1747,14 @@ function updateStock(args, event) {
         camZBottom = new THREE.Mesh(geo, mat);
         camZBottom._max = max;
         camZBottom.renderOrder = 1;
-        camZBottom.position.x = csox;
-        camZBottom.position.y = csoy;
-        camZBottom.position.z = proc.camZBottom;
+        camZBottom.position.x = center.x;
+        camZBottom.position.y = center.y;
+        camZBottom.position.z = process.camZBottom;
         SPACE.world.add(camZBottom);
     } else {
         camZBottom = undefined;
     }
 
-    // API.platform.update_top_z(delta);
-    // API.platform.update_origin();
     SPACE.update();
 }
 
