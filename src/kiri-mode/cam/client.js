@@ -145,7 +145,7 @@ CAM.init = function(kiri, api) {
         isCamMode = mode === 'CAM';
         $('set-tools').style.display = isCamMode ? '' : 'none';
         SPACE.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
-        updateStock(undefined, 'internal');
+        updateStock();
         UI.func.animate.style.display = isCamMode ? '' : 'none';
         if (!isCamMode) {
             func.clearPops();
@@ -167,8 +167,9 @@ CAM.init = function(kiri, api) {
             for (let widget of API.widgets.all()) {
                 widget.setAxisIndex(0);
             }
-            updateStock();
         }
+        updateStock();
+        func.opRender();
     });
 
     api.event.on("settings.saved", (settings) => {
@@ -190,8 +191,8 @@ CAM.init = function(kiri, api) {
         api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
         api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
         api.platform.update_bounds();
-        updateStock(settings, 'settings.saved.internal');
         setAnimationStyle();
+        updateStock();
         func.opRender();
     });
 
@@ -1653,7 +1654,7 @@ function animate() {
     animFn().animate(API);
 }
 
-function updateStock(args, event) {
+function updateStock() {
     if (isAnimate) {
         if (isIndexed) {
             SPACE.world.remove(camStock);
@@ -1670,8 +1671,8 @@ function updateStock(args, event) {
         return;
     }
 
-    const refresh = (event === "selection.scale" || event === 'selection.rotate');
     const settings = API.conf.get();
+    const widgets = API.widgets.all();
 
     const { stock, process } = settings;
     const { x, y, z, center } = stock;
