@@ -47,7 +47,7 @@ CAM.export = function(print, online) {
         maxZd = spro.camFastFeedZ,
         maxXYd = spro.camFastFeed,
         decimals = base.config.gcode_decimals || 4,
-        pos = { x:null, y:null, z:null, f:null, t:null, emit:null },
+        pos = { x:null, y:null, z:null, a:null, f:null, t:null, emit:null },
         line,
         cidx,
         mode,
@@ -165,6 +165,7 @@ CAM.export = function(print, online) {
         newpos.x = util.round(newpos.x, decimals);
         newpos.y = util.round(newpos.y, decimals);
         newpos.z = util.round(newpos.z, decimals);
+        newpos.a = util.round(newpos.a || 0, decimals);
 
         // on tool change
         let changeTool = out.tool != pos.t;
@@ -193,21 +194,21 @@ CAM.export = function(print, online) {
         // split first move to X,Y then Z for that new location
         // safety to prevent tool crashing
         if (points === 0) {
-            pos.x = pos.y = pos.z = 0;
+            pos.x = pos.y = pos.z = pos.a = 0;
             points++;
             moveTo({
                 // speed: Infinity,
                 tool: out.tool,
-                point: { x: newpos.x, y: newpos.y, z: pos.z }
+                point: { x: newpos.x, y: newpos.y, z: pos.z, a: pos.a }
             }, {
-                dx: 1, dy: 1, dz: 0, time: 0
+                dx: 1, dy: 1, dz: 0, da: 0, time: 0
             });
             moveTo({
                 // speed: Infinity,
                 tool: out.tool,
-                point: { x: newpos.x, y: newpos.y, z: newpos.z }
+                point: { x: newpos.x, y: newpos.y, z: newpos.z, a: newpos.a }
             }, {
-                dx: 0, dy: 0, dz: 1, time: 0
+                dx: 0, dy: 0, dz: 1, da: 0, time: 0
             });
             points--;
             return;
@@ -218,6 +219,7 @@ CAM.export = function(print, online) {
             dx = opt.dx || newpos.x - pos.x,
             dy = opt.dy || newpos.y - pos.y,
             dz = opt.dz || newpos.z - pos.z,
+            da = opt.da || newpos.a - pos.a,
             maxf = dz ? maxZd : maxXYd,
             feed = Math.min(speed || maxf, maxf),
             dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
@@ -245,6 +247,10 @@ CAM.export = function(print, online) {
             runbox.min.z = Math.min(runbox.min.z, pos.z);
             runbox.max.z = Math.max(runbox.max.z, pos.z);
             nl.append(space).append("Z").append(add0(pos.z * factor));
+        }
+        if (da || newpos.a !== pos.a) {
+            pos.a = newpos.a;
+            nl.append(space).append("A").append(add0(pos.a * factor));
         }
         if (newFeed) {
             pos.f = feed;
