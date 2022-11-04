@@ -14,6 +14,8 @@ const { paths, util, newPoint, Polygon } = base;
 const { tip2tipEmit } = paths;
 const { numOrDefault } = util;
 const { beltfact } = kiri.consts;
+const XAXIS = new THREE.Vector3(1,0,0);
+const DEG2RAD = Math.PI / 180;
 
 class Print {
     constructor(settings, widgets, id) {
@@ -221,6 +223,7 @@ class Print {
             .replace("X", " X")
             .replace("Y", " Y")
             .replace("Z", " Z")
+            .replace("A", " A")
             .replace("E", " E")
             .replace("F", " F")
             .replace("  ", " ")
@@ -237,6 +240,7 @@ class Print {
                 X: 0.0,
                 Y: 0.0,
                 Z: 0.0,
+                A: 0.0,
                 F: 0.0,
                 E: 0.0
             },
@@ -357,14 +361,22 @@ class Print {
             });
 
             const point = newPoint(
-                factor * pos.X + off.X + xoff.X,
-                factor * pos.Y + off.Y + xoff.Y,
-                factor * pos.Z + off.Z + xoff.Z + dz
+                factor * pos.X + xoff.X,
+                factor * pos.Y + xoff.Y,
+                factor * pos.Z + xoff.Z + dz
             );
 
             if (morph && belt) {
                 point.y -= point.z * beltfact;
                 point.z *= beltfact;
+            }
+
+            if (pos.A) {
+                let ip = new THREE.Vector3(pos.X, pos.Y, pos.Z)
+                    .applyAxisAngle(XAXIS, pos.A * DEG2RAD);
+                point.x = ip.x;
+                point.y = ip.y;
+                point.z = ip.z;
             }
 
             const retract = (fdm && pos.E < 0) || undefined;
@@ -512,16 +524,15 @@ class Print {
             }
         });
 
-        // recenter for visualization
-        // if (false && morph && belt) {
-        //     for (let layer of output) {
-        //         for (let rec of layer) {
-        //             let point = rec.point;
-        //             point.y -= bounds.min.z;
-        //             point.z += bounds.min.y;
-        //         }
-        //     }
-        // }
+        // apply origin offset
+        for (let layer of output) {
+            for (let rec of layer) {
+                let point = rec.point;
+                point.x += off.X;
+                point.y += off.Y;
+                point.z += off.Z;
+            }
+        }
 
         scope.imported = gcode;
         scope.lines = lines.length;
