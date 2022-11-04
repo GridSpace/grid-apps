@@ -276,6 +276,7 @@ class Widget {
         return new base.Mesh({precision, vertices: this.getVertices().array});
     }
 
+    // should go away and be replaced by getGeoVertices
     getVertices() {
         return this.mesh.geometry.attributes.position;
     }

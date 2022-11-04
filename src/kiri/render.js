@@ -107,6 +107,7 @@ async function path(levels, update, opts = {}) {
     let lastTool = null;
     let lastEnd = null;
     let lastOut = null;
+    let lastOutPoint = null;
     let current = null;
     let currentLaser = null;
     let retracted = false;
@@ -152,40 +153,38 @@ async function path(levels, update, opts = {}) {
             }
             if (retracted && out.emit) {
                 retracted = false;
-                engages.push(lastOut.point);
+                engages.push(lastOutPoint);
+            }
+            let outPoint = out.point;
+            // rotate 4th axis indexed points
+            // todo -- add spark lines
+            if (outPoint && outPoint.a) {
+                let { point } = out;
+                let p2 = new THREE.Vector3(point.x, point.y, point.z)
+                    .applyAxisAngle(XAXIS, point.a * DEG2RAD);
+                outPoint = base.newPoint(p2.x, p2.y, p2.z);
+                // let sp = base.newPoint(outPoint.x * 1.1, outPoint.y * 1.1, outPoint.z * 1.1);
+                // sparks.push(outPoint, sp);
             }
             if (out.tool !== lastTool) {
                 lastTool = out.tool;
-                changes.push(out.point);
+                changes.push(outPoint);
             }
             if (out.retract) {
-                retracts.push(out.point);
+                retracts.push(outPoint);
                 retracted = true;
                 retractz++;
             }
-            if (!out.point) {
+            if (!outPoint) {
                 // in cam mode, these are drilling or dwell ops
                 return;
             }
 
-            // rotate 4th axis indexed points
-            // todo -- add spark lines
-            if (out.point.a) {
-                let { point } = out;
-                let p2 = new THREE.Vector3(point.x, point.y, point.z)
-                    .applyAxisAngle(XAXIS, point.a * DEG2RAD);
-                out.point.x = p2.x;
-                out.point.y = p2.y;
-                out.point.z = p2.z;
-                // let sp = base.newPoint(out.point.x * 1.1, out.point.y * 1.1, out.point.z * 1.1);
-                // sparks.push(out.point, sp);
-            }
-
             if (lastOut) {
                 if (arrowAll || lastOut.emit !== out.emit) {
-                    heads.push({p1: lastOut.point, p2: out.point});
+                    heads.push({p1: lastOutPoint, p2: outPoint});
                 }
-                const op = out.point, lp = lastOut.point;
+                const op = outPoint, lp = lastOutPoint;
                 // const moved = Math.max(
                 //     Math.abs(op.x - lp.x),
                 //     Math.abs(op.y - lp.y),
@@ -194,18 +193,18 @@ async function path(levels, update, opts = {}) {
                 if (out.emit) {
                     if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
                         current = newPolygon().setOpen();
-                        current.push(lastOut.point);
+                        current.push(lastOutPoint);
                         current.color = color(out);
                         pushPrint(out.tool, current);
                     }
-                    current.push(out.point);
+                    current.push(outPoint);
                 } else {
                     if (lastOut.emit || lastEnd) {
                         current = newPolygon().setOpen();
-                        current.push(lastOut.point);
+                        current.push(lastOutPoint);
                         moves.push(current);
                     }
-                    current.push(out.point);
+                    current.push(outPoint);
                 }
                 if (out.type === 'laser') {
                     current.isLaser = true;
@@ -213,17 +212,17 @@ async function path(levels, update, opts = {}) {
                         if (!lastOut.emit || out.emit !== lastOut.emit) {
                             // off to on or different power
                             currentLaser = newPolygon().setOpen();
-                            currentLaser.push(lastOut.point);
+                            currentLaser.push(lastOutPoint);
                             currentLaser.color = rate_to_color(out.emit, 1);
                             lasers.push(currentLaser);
                         }
-                        currentLaser.push(out.point);
+                        currentLaser.push(outPoint);
                     }
                 }
                 lastEnd = null;
             } else {
                 current = newPolygon().setOpen();
-                current.push(out.point);
+                current.push(outPoint);
                 if (out.emit) {
                     current.color = color(out);
                     pushPrint(out.tool, current);
@@ -232,6 +231,7 @@ async function path(levels, update, opts = {}) {
                 }
             }
             lastOut = out;
+            lastOutPoint = outPoint;
         });
 
         if (!lastOut) {
