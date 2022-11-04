@@ -153,6 +153,22 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         widget.setAxisIndex(isIndexed ? -axisIndex : 0);
     }
 
+    function addPolyIndexing(poly, a) {
+        if (!poly) {
+            return;
+        }
+        if (Array.isArray(poly)) {
+            for (let p of poly) {
+                addPolyIndexing(p, a);
+            }
+            return;
+        }
+        for (let point of poly.points) {
+            point.a = a;
+        }
+        addPolyIndexing(poly.inner, a);
+    }
+
     function addSlices(slices) {
         if (!Array.isArray(slices)) {
             slices = [ slices ];
@@ -161,11 +177,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         if (isIndexed && axisIndex !== undefined) {
             // update slice cam lines to add axis indexing
             for (let slice of slices.filter(s => s.camLines)) {
-                for (let poly of slice.camLines) {
-                    for (let point of poly.points) {
-                        point.a = -axisIndex;
-                    }
-                }
+                addPolyIndexing(slice.camLines, -axisIndex);
             }
         }
     }
