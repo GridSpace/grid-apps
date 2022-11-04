@@ -21,6 +21,8 @@ const { space } = moto;
 const { util } = base;
 const { COLOR, MODES } = consts;
 
+const V0 = new THREE.Vector3(0,0,0);
+
 let grouping = false;
 let topZ = 0;
 
@@ -32,16 +34,19 @@ function get_mode() {
     return api.mode.get_id();
 }
 
-function platformUpdateOrigin() {
-    platform.update_bounds();
+function platformUpdateOrigin(update_bounds = true) {
+    if (update_bounds) {
+        platform.update_bounds();
+    }
 
     const settings = current();
     const { device, process, controller, stock, bounds } = settings;
     const MODE = get_mode();
 
     let ruler = controller.showRulers;
-    let stockCenter = stock.center || {};
+    let stockCenter = stock.center || { x: 0, y: 0, z: 0 };
     let hasStock = stock.x && stock.y && stock.z;
+    let isIndexed = process.camStockIndexed && process.camStockOn;
     let isBelt = device.bedBelt;
     let origin = settings.origin = { x: 0, y: 0, z: 0 };
     let center = MODE === MODES.FDM ? device.originCenter || device.bedRound :
@@ -72,6 +77,10 @@ function platformUpdateOrigin() {
         origin.y = -stockCenter.y;
     } else if (isBelt) {
         origin.y = device.bedDepth / 2;
+    }
+
+    if (isIndexed) {
+        origin.y = 0;
     }
 
     space.platform.setRulers(ruler, ruler, 1 / api.view.unit_scale(), 'X', isBelt ? 'Z' : 'Y');
@@ -195,10 +204,14 @@ function platformUpdateBounds() {
         wb.max.y += wp.y;
         bounds.union(wb);
     });
+    if (bounds.isEmpty()) {
+        bounds.set(V0, V0);
+    }
     current().bounds = bounds;
     platformUpdateStock();
     platformUpdateTopZ();
     platformUpdateMidZ();
+    platformUpdateOrigin(false);
     return bounds;
 }
 
