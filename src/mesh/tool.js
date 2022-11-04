@@ -238,7 +238,7 @@ mesh.tool = class MeshTool {
         while (check.length) {
             const face = check.shift();
             const froot = face * 6;
-            if (filterZ !== undefined && norms[froot +2] < filterZ) {
+            if (filterZ !== undefined && norms[froot + 2] < filterZ) {
                 continue;
             }
             const fadj = this.getAdjacentFaces(face);

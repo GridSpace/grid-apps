@@ -266,22 +266,22 @@ class OpRough extends CamOp {
         }
 
         // inset or eliminate thru holes from shadow
-        // shadow = POLY.flatten(shadow.clone(true), [], true);
-        // thruHoles.forEach(hole => {
-        //     shadow = shadow.map(p => {
-        //         if (p.isEquivalent(hole)) {
-        //             // eliminate thru holes when roughing voids enabled
-        //             if (op.voids) {
-        //                 return undefined;
-        //             }
-        //             let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.01));
-        //             return po ? po[0] : undefined;
-        //         } else {
-        //             return p;
-        //         }
-        //     }).filter(p => p);
-        // });
-        // shadow = POLY.nest(shadow);
+        shadow = POLY.flatten(shadow.clone(true), [], true);
+        thruHoles.forEach(hole => {
+            shadow = shadow.map(p => {
+                if (p.isEquivalent(hole)) {
+                    // eliminate thru holes when roughing voids enabled
+                    // if (op.voids) {
+                    //     return undefined;
+                    // }
+                    let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.01));
+                    return po ? po[0] : undefined;
+                } else {
+                    return p;
+                }
+            }).filter(p => p);
+        });
+        shadow = POLY.nest(shadow);
         if (op.voids) {
             for (let s of shadow) s.inner = undefined;
         }
@@ -1118,8 +1118,8 @@ class OpPocket extends CamOp {
             }
         }
         let surfaces = op.surfaces[widget.id] || [];
-        // let vert = widget.getGeoVertices(true,true).map(v => v.round(4));
-        let vert = widget.getVertices().array.map(v => v.round(4));
+        let vert = widget.getGeoVertices(true,true).map(v => v.round(4));
+        // let vert = widget.getVertices().array.map(v => v.round(4));
         let outline = [];
         let faces = CAM.surface_find(widget, surfaces);
         let zmin = Infinity;

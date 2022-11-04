@@ -25,10 +25,10 @@ CAM.process = {
 kiri.load(api => {
 
     if (kiri.client) {
-        CAM.surface_prep = function(ondone) {
+        CAM.surface_prep = function(index, ondone) {
             kiri.client.sync();
             const settings = api.conf.get();
-            kiri.client.send("cam_surfaces", { settings }, output => {
+            kiri.client.send("cam_surfaces", { settings, index }, output => {
                 ondone(output);
             });
         };
@@ -78,10 +78,11 @@ kiri.load(api => {
     }
 
     if (kiri.worker) {
-        CAM.surface_prep = function(widget) {
+        CAM.surface_prep = function(widget, index) {
             if (!widget.tool) {
                 let tool = widget.tool = new mesh.tool();
-                tool.index(widget.getVertices().array);
+                let translate = index ? true : false;
+                tool.index(widget.getGeoVertices(true, translate));
             }
         };
 
@@ -91,10 +92,17 @@ kiri.load(api => {
         };
 
         kiri.worker.cam_surfaces = function(data, send) {
-            const { settings } = data;
+            const { settings, index } = data;
             const widgets = Object.values(kiri.worker.cache);
             for (let widget of widgets) {
-                CAM.surface_prep(widget);
+                if (index) {
+                    widget.setIndexed(1);
+                    widget.setAxisIndex(-index);
+                } else {
+                    widget.setIndexed(0);
+                    widget.setAxisIndex(0);
+                }
+                CAM.surface_prep(widget, index);
             }
             send.done({});
         };

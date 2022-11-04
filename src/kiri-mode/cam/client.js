@@ -11,6 +11,8 @@ const { base, kiri } = root;
 const { newPoint, newPolygon } = base;
 const { driver } = kiri;
 const { CAM } = driver;
+const DEG2RAD = Math.PI / 180;
+const RAD2DEG = 180 / Math.PI;
 
 let isAnimate,
     isArrange,
@@ -609,7 +611,7 @@ CAM.init = function(kiri, api) {
         for (let widget of API.widgets.all()) {
             widget.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
         }
-        currentIndex = isIndexed && !isPreview ? index * (Math.PI / 180) : 0;
+        currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
         updateStock();
     });
 
@@ -809,7 +811,7 @@ CAM.init = function(kiri, api) {
         func.clearPops();
         alert = api.show.alert("analyzing surfaces...", 1000);
         let surfaces = poppedRec.surfaces;
-        CAM.surface_prep(() => {
+        CAM.surface_prep(currentIndex * RAD2DEG, () => {
             api.hide.alert(alert);
             alert = api.show.alert("[esc] cancels surface editing");
             for (let [wid, arr] of Object.entries(surfaces)) {
@@ -1393,7 +1395,7 @@ CAM.init = function(kiri, api) {
     }
 
     api.event.on('tool.mesh.face-normal', normal => {
-        poppedRec.degrees = (Math.atan2(normal.y, normal.z) * (180 / Math.PI)).round(2);
+        poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
         poppedRec.absolute = true;
         func.opRender();
         updateStock();
