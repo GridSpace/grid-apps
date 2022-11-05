@@ -68,6 +68,11 @@ CAM.export = function(print, online) {
             x: -origin.x,
             y:  origin.y
         },
+        scale = {
+            x: 1,
+            y: 1,
+            z: 1
+        },
         consts = {
             tool: 0,
             tool_name: "unknown",
@@ -319,6 +324,24 @@ CAM.export = function(print, online) {
         }
     }
 
+    // look for SCALE header directive
+    let gcodePre = [];
+    for (let line of device.gcodePre) {
+        if (line.indexOf(';; SCALE ') === 0) {
+            try {
+                let map = JSON.parse(line.substring(9));
+                if (map.X > 0) scale.x = map.X;
+                if (map.Y > 0) scale.y = map.Y;
+                if (map.Z > 0) scale.z = map.Z;
+                console.log('scaling axes', scale);
+            } catch (e) {
+                console.log('malformed scale directive', line);
+            }
+        } else {
+            gcodePre.push(line);
+        }
+    }
+
     // collect tool info to add to header
     let toolz = {}, ctool;
     // remap points as necessary for origins, offsets, inversions
@@ -342,6 +365,11 @@ CAM.export = function(print, online) {
                 point.x += offset.x;
                 point.y += offset.y;
             }
+            if (scale) {
+                point.x *= scale.x;
+                point.y *= scale.y;
+                point.z *= scale.z;
+            }
             if (spro.outputInvertX) point.x = -point.x;
             if (spro.outputInvertY) point.y = -point.y;
             if (spro.camOriginTop) point.z = point.z - zmax;
@@ -358,7 +386,7 @@ CAM.export = function(print, online) {
     }
 
     // emit gcode preamble
-    filterEmit(device.gcodePre, consts);
+    filterEmit(gcodePre, consts);
 
     // emit all points in layer/point order
     for (let layerout of print.output) {
