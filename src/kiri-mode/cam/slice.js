@@ -44,7 +44,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         zbOff = isIndexed ? 0 : (hasStock ? wztop - track.box.d : 0),
         // defined z bottom offset by distance to stock bottom
         // keeps the z bottom relative to the part when z align changes
-        zBottom = isIndexed ? proc.camZBottom || bounds.min.z : proc.camZBottom - zbOff,
+        zBottom = isIndexed ? proc.camZBottom : proc.camZBottom - zbOff,
         // greater of widget bottom and z bottom
         zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom),
         zMax = bounds.max.z,

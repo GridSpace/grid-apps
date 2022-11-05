@@ -357,7 +357,7 @@ class Slicer {
             bounds = this.bounds,
             boff = opt.boff || opt.off || 0, // bottom offset
             toff = opt.toff || opt.off || 0, // top offset
-            zmin = (opt.min || this.bounds.min.z) + boff,
+            zmin = opt.min !== undefined ? opt.min : this.bounds.min.z + boff,
             zmax = (opt.max || this.bounds.max.z) - toff,
             steps = (zmax - zmin) / step,
             rem = steps % 1 != 0 ? 0 : 1,
