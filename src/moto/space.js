@@ -42,6 +42,7 @@ gapp.register("moto.space", [], (root, exports) => {
         showPlatform = true,
         hidePlatformBelow = true,
         hideGridBelow = false,
+        showGridLines = true,
         showFocus = 0,
         focalPoint = undefined,
         lightInfo = {
@@ -73,7 +74,9 @@ gapp.register("moto.space", [], (root, exports) => {
             colorY: 0x6666ff,
             zoff: 0,
             opacity: 1,
-            view: undefined
+            view: undefined,
+            axes: undefined,
+            lines: undefined
         },
         ruler = {
             x1: 0,
@@ -556,8 +559,13 @@ gapp.register("moto.space", [], (root, exports) => {
     function updateGrid() {
         let { view, unitMinor, unitMajor, colorMajor, colorMinor, colorX, colorY } = grid;
         let oldView = view;
+        let axes = grid.axes = new THREE.Group();
+        let lines = grid.lines = new THREE.Group();
+
         view = grid.view = new THREE.Group();
         view.visible = oldView ? oldView.visible : true;
+        view.add(lines);
+        view.add(axes);
 
         let majors = [],
             minors = [],
@@ -601,19 +609,20 @@ gapp.register("moto.space", [], (root, exports) => {
             let arr = modMatch(y, unitMajor) ? majors : minors;
             arr.append({x:-ow, y:y-yo, z:zp}).append({x:ow, y:y-yo, z:zp});
         }
-        view.add(makeLinesFromPoints(majors, colorMajor));
-        view.add(makeLinesFromPoints(minors, colorMinor));
-        view.add(makeLinesFromPoints([
+        lines.add(makeLinesFromPoints(majors, colorMajor));
+        lines.add(makeLinesFromPoints(minors, colorMinor));
+        axes.add(makeLinesFromPoints([
             {x: -xo, y:y1-yo, z:zp},
             {x: -xo, y:y2-yo, z:zp},
         ], colorY));
-        view.add(makeLinesFromPoints([
+        axes.add(makeLinesFromPoints([
             {x: x1-xo, y:-yo, z:zp},
             {x: x2-xo, y:-yo, z:zp},
         ], colorX));
 
         Space.scene.remove(oldView);
         Space.scene.add(grid.view);
+        lines.visible = showGridLines;
         requestRefresh();
     }
 
@@ -1178,6 +1187,7 @@ gapp.register("moto.space", [], (root, exports) => {
             showVolume,
             showGridBelow: (b) => { hideGridBelow = !b },
             showGrid:   (b) => { grid.view.visible = b },
+            showGrid2:  (b) => { showGridLines = grid.lines.visible = b },
             setMaxZ:    (z) => { panY = z / 2 },
             setCenter:  (x,y,z) => { panX = x; panY = z, panZ = y },
             setHidden:  (b) => { showPlatform = !b; platform.visible = !b },

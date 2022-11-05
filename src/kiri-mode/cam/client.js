@@ -64,12 +64,8 @@ CAM.init = function(kiri, api) {
     UC = api.uc;
     API = api;
 
-    function zBottom() {
-        return API.conf.get().process.camZBottom > 0;
-    }
-
-    function setAnimationStyle(refresh) {
-        const { camStockIndexed, camStockOn } = current.process;
+    function updateAxisMode(refresh) {
+        const { camStockIndexGrid, camStockIndexed, camStockOn } = current.process;
         let newIndexed = camStockIndexed && camStockOn;
         let changed = refresh || isIndexed !== newIndexed;
         isIndexed = newIndexed;
@@ -86,6 +82,7 @@ CAM.init = function(kiri, api) {
         }
         animVer = isIndexed ? 1 : 0;
         SPACE.platform.setVisible(!isIndexed);
+        SPACE.platform.showGrid2(!isIndexed || camStockIndexGrid);
         $('cam-index').style.display = isIndexed ? '' : 'none';
         if (!changed) {
             return;
@@ -112,7 +109,7 @@ CAM.init = function(kiri, api) {
 
     api.event.on("widget.add", widget => {
         if (isCamMode && !Array.isArray(widget)) {
-            setAnimationStyle(true);
+            updateAxisMode(true);
             widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
             api.platform.update_bounds();
         }
@@ -191,7 +188,7 @@ CAM.init = function(kiri, api) {
         api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
         api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
         api.platform.update_bounds();
-        setAnimationStyle();
+        updateAxisMode();
         updateStock();
         func.opRender();
     });
@@ -201,7 +198,7 @@ CAM.init = function(kiri, api) {
         if (!isCamMode) return;
         validateTools(settings.tools);
         restoreTabs(api.widgets.all());
-        setAnimationStyle();
+        updateAxisMode();
     });
 
     api.event.on("boolean.click", api.platform.update_bounds);
@@ -1153,6 +1150,10 @@ CAM.init = function(kiri, api) {
 
     function hasSpindle() {
         return current.device.spindleMax > 0;
+    }
+
+    function zBottom() {
+        return API.conf.get().process.camZBottom > 0;
     }
 
     createPopOp('level', {

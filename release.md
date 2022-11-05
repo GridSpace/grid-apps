@@ -4,6 +4,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.7
 
+* add CAM 4th axis indexing support, timeline op, updated visuals
 * align FDM top/bottom layer options with convention
 * add Mesh:Tool SVG import options for extrusion depth and boolean repair
 * replace jscad/modeling with Manifold project for faster mesh boolean

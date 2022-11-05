@@ -88,7 +88,6 @@
 * `F` add adaptive clearing strategy
 * `F` add ease-down support to trace op
 * `F` add climb/conventional into each operation
-* `F` add lathe mode / A-axis / 4th axis / rotary milling ops
 * `F` add support for tapered ball mills
 * `F` change color of line selection in trace op when not a closed poly
 * `F` limit cut depth to flute length of selected tool (or warn)
