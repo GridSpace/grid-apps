@@ -409,7 +409,8 @@ class Topo {
             ondone(newslices);
         }
 
-        let slicer = new kiri.cam_slicer(widget.getPoints(), {
+        let points = base.verticesToPoints(widget.getGeoVertices(true, true));
+        let slicer = new kiri.cam_slicer(points, {
             swapX: true, emptyok: true, notopok: true
         });
         let sindex = slicer.interval(resolution);

@@ -253,6 +253,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
             new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
                 // console.log('reshadow', progress.round(3));
             });
+            widget.topo = undefined;
         }
         camOps.push(op);
         opSum += weight;
