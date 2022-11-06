@@ -190,7 +190,9 @@ CAM.init = function(kiri, api) {
         api.platform.update_bounds();
         updateAxisMode();
         updateStock();
-        func.opRender();
+        if (!poppedRec) {
+            func.opRender();
+        }
     });
 
     api.event.on("settings.load", (settings) => {
@@ -469,6 +471,7 @@ CAM.init = function(kiri, api) {
                 if (pos >= 0) {
                     el.removeChild(poprec.div);
                 }
+                poppedRec = undefined;
                 popped = false;
             };
             function onEnter(ev) {

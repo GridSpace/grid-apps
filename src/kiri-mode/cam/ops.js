@@ -629,7 +629,7 @@ class OpOutline extends CamOp {
 
         // project empty up and render
         for (let slice of slices) {
-            if (true) slice.output()
+            if (false) slice.output()
                 .setLayer("slice", {line: 0xaaaa00}, false)
                 .addPolys(slice.topPolys())
             slice.output()
