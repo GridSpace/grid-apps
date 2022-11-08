@@ -1,4 +1,4 @@
-/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+/** Copyright Stewart Allen -- All Rights Reserved */
 
 "use strict";
 

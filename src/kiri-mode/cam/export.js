@@ -330,9 +330,9 @@ CAM.export = function(print, online) {
         if (line.indexOf(';; SCALE ') === 0) {
             try {
                 let map = JSON.parse(line.substring(9));
-                if (map.X > 0) scale.x = map.X;
-                if (map.Y > 0) scale.y = map.Y;
-                if (map.Z > 0) scale.z = map.Z;
+                if (map.X) scale.x = map.X;
+                if (map.Y) scale.y = map.Y;
+                if (map.Z) scale.z = map.Z;
                 console.log('scaling axes', scale);
             } catch (e) {
                 console.log('malformed scale directive', line);
