@@ -360,7 +360,7 @@ class OpRough extends CamOp {
             });
 
             slice.camLines = offset;
-            if (true) slice.output()
+            if (false) slice.output()
                 .setLayer("slice", {line: 0xaaaa00}, true)
                 .addPolys(slice.topPolys())
                 // .setLayer("top shadow", {line: 0x0000aa})
