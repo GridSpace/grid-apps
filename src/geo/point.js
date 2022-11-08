@@ -81,7 +81,7 @@ class Point {
 
     clone() {
         let p = newPoint(this.x, this.y, this.z, this._key);
-        if (this.a) {
+        if (this.a !== undefined) {
             p.a = this.a;
         }
         return p;

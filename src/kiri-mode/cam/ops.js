@@ -51,8 +51,12 @@ class OpIndex extends CamOp {
     prepare(ops, progress) {
         const { lastPoint, zmax, camOut, stock } = ops;
         // max point of stock corner radius when rotating (safe z when indexing)
-        const rzmax = (Math.max(stock.y, stock.z) * Math.sqrt(2)) / 2;
-        camOut(lastPoint().clone().setZ(rzmax), 0);
+        const last = lastPoint();
+        if (last) {
+            const rzmax = (Math.max(stock.y, stock.z) * Math.sqrt(2)) / 2;
+            const zmove = Math.max(rzmax, zmax);
+            camOut(last.clone().setZ(zmove), 0);
+        }
     }
 }
 

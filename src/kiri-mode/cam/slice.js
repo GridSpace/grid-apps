@@ -110,8 +110,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
     let mark = Date.now();
     let slicer = new kiri.cam_slicer(widget.getPoints(), {
         zlist: true,
-        zline: true,
-        nobucket: isIndexed
+        zline: true
     });
 
     function updateToolDiams(toolDiam) {
