@@ -247,9 +247,9 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
             let points = base.verticesToPoints(widget.getGeoVertices(true, true));
             state.slicer = new kiri.cam_slicer(points, {
                 zlist: true,
-                zline: true,
-                nobucket: true // b/c negative Z when rotated
+                zline: true
             });
+            shadows = {};
             new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
                 // console.log('reshadow', progress.round(3));
             });

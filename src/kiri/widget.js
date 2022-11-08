@@ -667,7 +667,6 @@ class Widget {
         // if indexed, return points rotated about X and then offset
         let track = this.track;
         if (translate && track.indexed) {
-            let delta = track.delta;
             pos = pos.clone()
                 .applyMatrix4( new THREE.Matrix4().makeRotationX(-track.indexRad) );
         }
@@ -688,6 +687,9 @@ class Widget {
         } else if (translate) {
             pos = pos.slice();
         }
+        // used by CAM.shadowAt()
+        this.cache.geo = pos;
+        this.cache.shadow = undefined;
         return pos;
     }
 

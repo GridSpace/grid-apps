@@ -49,6 +49,10 @@ class OpIndex extends CamOp {
     }
 
     prepare(ops, progress) {
+        const { lastPoint, zmax, camOut, stock } = ops;
+        // max point of stock corner radius when rotating (safe z when indexing)
+        const rzmax = (Math.max(stock.y, stock.z) * Math.sqrt(2)) / 2;
+        camOut(lastPoint().clone().setZ(rzmax), 0);
     }
 }
 
@@ -352,7 +356,7 @@ class OpRough extends CamOp {
             });
 
             slice.camLines = offset;
-            if (false) slice.output()
+            if (true) slice.output()
                 .setLayer("slice", {line: 0xaaaa00}, true)
                 .addPolys(slice.topPolys())
                 // .setLayer("top shadow", {line: 0x0000aa})
@@ -1571,28 +1575,25 @@ class OpShadow extends CamOp {
 
 // union triangles > z (opt cap < ztop) into polygon(s)
 CAM.shadowAt = function(widget, z, ztop) {
-    const geo = widget.cache.geo || new THREE.BufferGeometry()
-        .setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
-    widget.cache.geo = geo;
-    const { position } = geo.attributes;
-    const { itemSize, count, array } = position;
+    const geo = widget.cache.geo;
+    const length = geo.length;
     // cache faces with normals up
-    if (!widget._shadow_faces) {
+    if (!widget.cache.shadow) {
         const faces = [];
-        for (let i=0, ip=0; i<count; i += itemSize) {
-            const a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-            const b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-            const c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
+        for (let i=0, ip=0; i<length; i += 3) {
+            const a = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
+            const b = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
+            const c = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const n = THREE.computeFaceNormal(a,b,c);
             if (n.z > 0.001) {
                 faces.push(a,b,c);
                 // faces.push(newPoint(...a), newPoint(...b), newPoint(...c));
             }
         }
-        widget._shadow_faces = faces;
+        widget.cache.shadow = faces;
     }
     const found = [];
-    const faces = widget._shadow_faces;
+    const faces = widget.cache.shadow;
     const { checkOverUnderOn, intersectPoints } = self.kiri.cam_slicer;
     for (let i=0; i<faces.length; ) {
         const a = faces[i++];

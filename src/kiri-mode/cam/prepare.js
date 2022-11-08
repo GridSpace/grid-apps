@@ -297,6 +297,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
         point.y += wmy;
         point.z += zadd;
 
+        // carry rotation forward when not overridden
+        if (point.a === undefined && lastPoint) {
+            point.a = lastPoint.a;
+        }
+
         // console.log(point.z);
         if (nextIsMove) {
             cut = 0;
@@ -417,6 +422,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
     };
 
     let ops = {
+        stock,
         setTool,
         setDrill,
         setSpindle,

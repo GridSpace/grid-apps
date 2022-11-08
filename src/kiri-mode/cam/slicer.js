@@ -132,17 +132,13 @@ class Slicer {
         let bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
         let zScale = this.zScale = 1 / (zMax / bucketCount);
         let buckets = this.buckets = {};
-        if (bucketCount > 1) {// && !this.options.nobucket) {
+        if (bucketCount > 1) {
             // create empty buckets
             let min = Math.floor(bounds.min.z * zScale);
             let max = Math.ceil(bounds.max.z * zScale);
             for (let i = min; i <= max; i++) {
                 buckets[i] = [];
             }
-            // for (let i = 0; i <= bucketCount + 1; i++) {
-            //     buckets.push([]);
-            // }
-
             // copy triples into all matching z-buckets
             for (let i = 0, il = points.length; i < il; ) {
                 let p1 = points[i++],
