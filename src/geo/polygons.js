@@ -40,6 +40,8 @@ const POLYS = base.polygons = {
     route,
     union,
     inset,
+    outer,
+    inner,
     nest,
     diff,
     setZ,
@@ -52,6 +54,23 @@ const POLYS = base.polygons = {
     fingerprintCompare,
     fingerprint
 };
+
+function outer(polys) {
+    for (let p of polys) {
+        p.inner = undefined;
+    }
+    return polys;
+}
+
+function inner(polys) {
+    const ret = [];
+    for (let p of polys) {
+        if (p.inner) {
+            ret.push(p.inner);
+        }
+    }
+    return ret;
+}
 
 function length(polys) {
     let length = 0;
