@@ -507,7 +507,7 @@ class Widget {
         });
         // allow for use in engine / cli
         if ((x || y || z) && api && api.event) {
-            api.event.emit('widget.move', {widget: this, pos});
+            api.event.emit('widget.move', {widget: this, pos: {x, y, z}, abs});
         }
     }
 
