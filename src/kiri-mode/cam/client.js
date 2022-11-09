@@ -25,6 +25,7 @@ let isAnimate,
     current,
     currentIndex,
     flipping,
+    poppedRecOld,
     poppedRec,
     hoveredOp,
     API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG, MCAM;
@@ -483,7 +484,7 @@ CAM.init = function(kiri, api) {
                 unpop = func.unpop = el.unpop;
                 inside = true;
                 // pointer to current rec for trace editing
-                poppedRec = rec;
+                poppedRec = poppedRecOld = rec;
                 popped = true;
                 poprec.use(rec);
                 hoveredOp = el;
@@ -812,7 +813,7 @@ CAM.init = function(kiri, api) {
     func.surfaceAdd = (ev) => {
         func.clearPops();
         alert = api.show.alert("analyzing surfaces...", 1000);
-        let surfaces = poppedRec.surfaces;
+        let surfaces = poppedRecOld.surfaces;
         CAM.surface_prep(currentIndex * RAD2DEG, () => {
             api.hide.alert(alert);
             alert = api.show.alert("[esc] cancels surface editing");
@@ -842,7 +843,7 @@ CAM.init = function(kiri, api) {
         if (!surfaceOn) {
             return;
         }
-        let surfaces = poppedRec.surfaces;
+        let surfaces = poppedRecOld.surfaces;
         for (let wid of Object.keys(surfaces)) {
             let widget = api.widgets.forid(wid);
             if (widget) {
@@ -882,7 +883,7 @@ CAM.init = function(kiri, api) {
                     widget.trace_stack.show();
                     return;
                 }
-                let areas = (poppedRec.areas[widget.id] || []);
+                let areas = (poppedRecOld.areas[widget.id] || []);
                 let stack = new kiri.Stack(widget.mesh);
                 widget.trace_stack = stack;
                 widget.traces.forEach(poly => {
@@ -904,7 +905,7 @@ CAM.init = function(kiri, api) {
             });
             // ensure appropriate traces are toggled matching current record
             kiri.api.widgets.for(widget => {
-                let areas = (poppedRec.areas[widget.id] || []);
+                let areas = (poppedRecOld.areas[widget.id] || []);
                 let stack = widget.trace_stack;
                 stack.meshes.forEach(mesh => {
                     let { poly } = mesh.trace;
@@ -918,7 +919,7 @@ CAM.init = function(kiri, api) {
                     }
                 });
             });
-        }, poppedRec.select === 'lines');
+        }, poppedRecOld.select === 'lines');
     };
     func.traceDone = () => {
         if (!traceOn) {
@@ -1000,7 +1001,7 @@ CAM.init = function(kiri, api) {
         let material = obj.material[0];
         let { color, colorSave } = material;
         let { widget, poly } = obj.trace;
-        let areas = poppedRec.areas;
+        let areas = poppedRecOld.areas;
         if (!areas) {
             return;
         }
