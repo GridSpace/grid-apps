@@ -134,7 +134,9 @@ function inRange(value, min, max) {
 }
 
 function round(v, zeros) {
-    let pow = Math.pow(10, zeros || round_decimal_precision);
+    const prec = zeros !== undefined ? zeros : round_decimal_precision;
+    if (prec === 0) return v | 0;
+    let pow = Math.pow(10, prec);
     return Math.round(v * pow) / pow;
 }
 

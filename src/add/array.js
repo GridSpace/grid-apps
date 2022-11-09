@@ -253,6 +253,7 @@ Math.bound = function(val, min, max) {
 };
 
 Number.prototype.round = function(digits) {
+    if (digits === 0) return this.valueOf() | 0;
     const pow = Math.pow(10, digits || 3);
     return Math.round(this.valueOf() * pow) / pow;
 };

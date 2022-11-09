@@ -131,7 +131,7 @@ CAM.export = function(print, online) {
     function add0(val, opt) {
         let s = val.toString(),
             d = s.indexOf(".");
-        if (d < 0) {
+        if (d < 0 && decimals > 0) {
             return opt ? s : s + '.0';
         } else {
             return val.toFixed(decimals);
@@ -170,7 +170,6 @@ CAM.export = function(print, online) {
         newpos.x = util.round(newpos.x, decimals);
         newpos.y = util.round(newpos.y, decimals);
         newpos.z = util.round(newpos.z, decimals);
-        // newpos.a = util.round(newpos.a || 0, decimals);
 
         // on tool change
         let changeTool = out.tool != pos.t;
@@ -333,7 +332,7 @@ CAM.export = function(print, online) {
                 if (map.Y) scale.y = map.Y;
                 if (map.Z) scale.z = map.Z;
                 if (map.DEC !== undefined) decimals = parseInt(map.DEC);
-                console.log('scaling axes', scale);
+                console.log('export scaling applied', map);
             } catch (e) {
                 console.log('malformed scale directive', line);
             }
