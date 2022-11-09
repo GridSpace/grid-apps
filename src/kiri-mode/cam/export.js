@@ -332,6 +332,7 @@ CAM.export = function(print, online) {
                 if (map.X) scale.x = map.X;
                 if (map.Y) scale.y = map.Y;
                 if (map.Z) scale.z = map.Z;
+                if (map.DEC !== undefined) decimals = parseInt(map.DEC);
                 console.log('scaling axes', scale);
             } catch (e) {
                 console.log('malformed scale directive', line);
