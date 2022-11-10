@@ -192,6 +192,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
         shadowAt,
         slicer,
         addSlices,
+        isIndexed,
         setAxisIndex,
         updateToolDiams,
         zBottom,

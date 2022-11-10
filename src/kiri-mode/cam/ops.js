@@ -45,6 +45,9 @@ class OpIndex extends CamOp {
 
     slice() {
         let { op, state } = this;
+        if (!state.isIndexed) {
+            throw 'index op requires indexed stock';
+        }
         state.setAxisIndex(op.degrees, op.absolute);
     }
 
@@ -819,6 +822,9 @@ class OpTrace extends CamOp {
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
         let { camStockClipTo, camZBottom } = process;
+        if (state.isIndexed) {
+            throw 'trace op not supported with indexed stock';
+        }
         // generate tracing offsets from chosen features
         let sliceOut = this.sliceOut = [];
         let areas = op.areas[widget.id] || [];
@@ -839,6 +845,9 @@ class OpTrace extends CamOp {
             POLY.setWinding([ poly ], cutdir, false);
             polys.push(poly);
         }
+        if (false) newSliceOut(0).output()
+            .setLayer("polys", {line: 0xaaaa00}, false)
+            .addPolys(polys);
         function newSliceOut(z) {
             let slice = newSlice(z);
             addSlices(slice);
