@@ -385,7 +385,7 @@ kiri.load(() => {
 
         stockSlices = [];
         const { x, y, z } = stock;
-        const sliceCount = 20;
+        const sliceCount = 200;
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
             let xmin = -(x/2) + (i * sliceWidth) + sliceWidth / 2;
@@ -469,7 +469,7 @@ kiri.load(() => {
         }
 
         const id = toolID;
-        const rezstep = 1;//rez;
+        const rezstep = rez * 2;
         if (last) {
             const lp = last.point, np = next.point;
             last = next;
