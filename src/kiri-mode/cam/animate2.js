@@ -233,6 +233,7 @@ kiri.load(() => {
 });
 
 // ---( WORKER FUNCTIONS )---
+const { CSG } = root.base;
 
 let nextMeshID = 1;
 
@@ -245,8 +246,7 @@ class Stock {
         this.sends = 0;
         this.newbuf = true;
         this.subtracts = 0;
-        this.mesh = Module.cube([x, y, z], true);
-        // console.log({ new_stock: this.id, x, y, z });
+        this.mesh = CSG.Instance().cube([x, y, z], true);
     }
 
     send(send) {
@@ -279,11 +279,11 @@ class Stock {
         const subs = this.subtracts;
         this.subtracts = 0;
         let start = Date.now();
-        this.mesh.getMesh({
-            normal: () => undefined,
-            index: this.sharedIndexBuffer.bind(this),
-            vertex: this.sharedVertexBuffer.bind(this)
-        });
+        let mesh = this.mesh.getMesh();
+        this.sharedVertexBuffer(mesh.numVert * 3);
+        this.sharedIndexBuffer(mesh.numTri * 3);
+        this.vbuf.set(mesh.vertPos);
+        this.ibuf.set(mesh.triVerts);
         let sub = Date.now();
         updates.push(this);
         if (false) console.log({
@@ -360,7 +360,6 @@ kiri.load(() => {
     let indexCount = 0;
     let updates = 0;
 
-
     kiri.worker.animate_setup2 = function(data, send) {
         const { settings } = data;
         const { process } = settings;
@@ -386,7 +385,7 @@ kiri.load(() => {
 
         stockSlices = [];
         const { x, y, z } = stock;
-        const sliceCount = 10;
+        const sliceCount = 20;
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
             let xmin = -(x/2) + (i * sliceWidth) + sliceWidth / 2;
@@ -591,23 +590,26 @@ kiri.load(() => {
             send.data({ mesh_del: toolID });
         }
         tool = new CAM.Tool({ tools }, undefined, toolnum);
+        const Instance = CSG.Instance();
         const slen = tool.shaftLength() || 15;
         const srad = tool.shaftDiameter() / 2;
         const flen = tool.fluteLength() || 15;
         const frad = toolRadius = tool.fluteDiameter() / 2;
         let mesh;
         if (tool.isBallMill()) {
-            mesh = Module.cylinder(flen + slen - frad, frad, frad, 20, true)
-                .add(Module.sphere(frad, 20).translate(0, 0, -(flen + slen - frad)/2));
+            mesh = Instance.cylinder(flen + slen - frad, frad, frad, 20, true)
+                .add(Instance.sphere(frad, 20).translate(0, 0, -(flen + slen - frad)/2));
         } else if (tool.isTaperMill()) {
             const trad = Math.max(tool.tipDiameter() / 2, 0.001);
-            mesh = Module.cylinder(slen, srad, srad, 20, true).translate(0, 0, slen/2)
-                .add(Module.cylinder(flen, trad, frad, 20, true).translate(0, 0, -flen/2));
+            mesh = Instance.cylinder(slen, srad, srad, 20, true).translate(0, 0, slen/2)
+                .add(Instance.cylinder(flen, trad, frad, 20, true).translate(0, 0, -flen/2));
         } else {
-            mesh = Module.cylinder(flen + slen, frad, frad, 20, true);
+            mesh = Instance.cylinder(flen + slen, frad, frad, 20, true);
         }
         mesh = mesh.translate(0, 0, (flen + slen - stockZ) / 2);
-        const { vertex, index } = mesh.getMesh({ normal: () => undefined });
+        const raw = mesh.getMesh();
+        const vertex = raw.vertPos;
+        const index = raw.triVerts;
         toolMesh = { root: mesh, index, vertex };
         send.data({ mesh_add: { id:--toolID, ind: index, pos: vertex }});
     }

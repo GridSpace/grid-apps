@@ -2,11 +2,13 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
-# Release 3.7
+# Release 3.7 (2022-11-12)
 
 * add CAM axes scaling gcode header directive
 * add CAM 4th axis indexing support, timeline op, updated visuals
+* update most CAM ops to work in 4th axis indexing mode
 * align FDM top/bottom layer options with convention
+* change Kiri:Moto SVG import to default to boolean repair
 * add Mesh:Tool SVG import options for extrusion depth and boolean repair
 * replace jscad/modeling with Manifold project for faster mesh boolean
 * various CAM gcode, preview, animation fixes (3 axis)
