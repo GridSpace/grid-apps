@@ -67,6 +67,13 @@ const CSG = {
             triVerts: index.toUint32()
         });
         return mesh;
+    },
+
+    toBox3(mesh) {
+        const { min, max } = mesh._boundingBox();
+        const vmin = new THREE.Vector3(min.x, min.y, min.z);
+        const vmax = new THREE.Vector3(max.x, max.y, max.z);
+        return new THREE.Box3(vmin, vmax);
     }
 
 };

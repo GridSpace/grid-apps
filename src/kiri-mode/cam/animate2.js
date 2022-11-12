@@ -268,6 +268,7 @@ class Stock {
         // console.log({ translate: this.id, x, y, z });
         const oldmesh = this.mesh;
         this.mesh = this.mesh.translate(x, y, z);
+        this.bounds = CSG.toBox3(this.mesh);
         oldmesh.delete();
         return this;
     }
@@ -385,12 +386,11 @@ kiri.load(() => {
 
         stockSlices = [];
         const { x, y, z } = stock;
-        const sliceCount = 200;
+        const sliceCount = parseInt(settings.controller.animesh || 2000) / 100;
         const sliceWidth = stock.x / sliceCount;
         for (let i=0; i<sliceCount; i++) {
             let xmin = -(x/2) + (i * sliceWidth) + sliceWidth / 2;
             let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, 0);
-            slice.dim = { xmin: xmin - sliceWidth / 2, xmax: xmin + sliceWidth / 2 };
             stockSlices.push(slice);
             slice.updateMesh([]);
             slice.send(send);
@@ -518,18 +518,14 @@ kiri.load(() => {
             }
             toolMove(pos);
             // console.log('renderMoves', {id, moves, seed});
-            let tMinX = pos.x - toolRadius;
-            let tMaxX = pos.x + toolRadius;
+            let subs = 0;
             for (let slice of stockSlices) {
-                let { xmin, xmax } = slice.dim;
-                if (
-                    (tMinX >= xmin && tMinX < xmax) ||
-                    (tMaxX >= xmin && tMaxX < xmax) ||
-                    (tMinX <  xmin && tMaxX > xmax)
-                ) {
+                if (slice.bounds.intersectsBox(toolMesh.bounds)) {
                     slice.subtractTool(toolMesh);
+                    subs++;
                 }
             }
+            // console.log({ index, subs });
             renderDist += pos.md;
             // pause renderer at specified offsets
             if (renderSpeed && renderDist >= renderSpeed) {
@@ -582,6 +578,7 @@ kiri.load(() => {
                 stockIndex = pos.a;
             }
         }
+        toolMesh.bounds = CSG.toBox3(toolMesh.mesh);
     }
 
     // delete old tool mesh, generate tool mesh, send to client
@@ -610,7 +607,7 @@ kiri.load(() => {
         const raw = mesh.getMesh();
         const vertex = raw.vertPos;
         const index = raw.triVerts;
-        toolMesh = { root: mesh, index, vertex };
+        toolMesh = { root: mesh, index, vertex, bounds: CSG.toBox3(mesh) };
         send.data({ mesh_add: { id:--toolID, ind: index, pos: vertex }});
     }
 
