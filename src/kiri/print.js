@@ -128,10 +128,6 @@ class Print {
         return output.last().point;
     }
 
-    extrudePerMM(noz, fil, slice) {
-        return ((Math.PI * util.sqr(noz / 2)) / (Math.PI * util.sqr(fil / 2))) * (slice / noz);
-    }
-
     constReplace(str, consts, start, pad, short) {
         let cs = str.indexOf("{", start || 0),
             ce = str.indexOf("}", cs),

@@ -4,9 +4,10 @@
 
 gapp.register("kiri-mode.fdm.driver", [], (root, exports) => {
 
-const { kiri } = root;
+const { base, kiri } = root;
 const { driver } = kiri;
-const FDM = driver.FDM = { getRangeParameters };
+const { util } = base;
+const FDM = driver.FDM = { getRangeParameters, extrudePerMM, extrudeMM };
 
 // shared by client and worker contexts
 function getRangeParameters(process, index) {
@@ -27,6 +28,20 @@ function getRangeParameters(process, index) {
         }
     }
     return params;
+}
+
+// noz = nozzle diameter
+// fil = filament diameter
+// slice = slice height
+function extrudePerMM(noz, fil, slice) {
+    return ((Math.PI * util.sqr(noz / 2)) / (Math.PI * util.sqr(fil / 2))) * (slice / noz);
+};
+
+// dist = distance between extrusion points
+// perMM = amount extruded per MM (from extrudePerMM)
+// factor = scaling factor (usually 1.0)
+function extrudeMM(dist, perMM, factor) {
+    return dist * perMM * factor;
 }
 
 // defer loading until client and worker exist

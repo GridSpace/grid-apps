@@ -128,7 +128,9 @@ FDM.export = function(print, online, ondone, ondebug) {
         // track purges for palette3 pings
         purgePos,
         purgeOn = 0,
-        purgeOff = 0;
+        purgeOff = 0,
+        extrudeMM = FDM.extrudeMM,
+        extrudePerMM = FDM.extrudePerMM;
 
     let tools_used = Object.keys(tools);
     for (let tool of tools_used) {
@@ -537,7 +539,7 @@ FDM.export = function(print, online, ondone, ondebug) {
             updateParams(path.layer, path.params);
         }
 
-        emitPerMM = print.extrudePerMM(
+        emitPerMM = extrudePerMM(
             lineWidth || extruder.extNozzle,
             extruder.extFilament,
             path.layer === 0 ?
@@ -665,7 +667,7 @@ FDM.export = function(print, online, ondone, ondebug) {
                 extruder = extruders[tool];
                 offset_x = extruder.extOffsetX;
                 offset_y = extruder.extOffsetY;
-                emitPerMM = print.extrudePerMM(
+                emitPerMM = extrudePerMM(
                     lineWidth || extruder.extNozzle,
                     extruder.extFilament,
                     path.layer === 0 ?
@@ -802,7 +804,8 @@ FDM.export = function(print, online, ondone, ondebug) {
                         }
                     }
                 } else {
-                    emitMM = emitPerMM * out.emit * dist;
+                    // emitMM = emitPerMM * out.emit * dist;
+                    emitMM = extrudeMM(dist, emitPerMM, out.emit);
                     moveTo({x:x, y:y, e:emitMM}, speedMMM);
                     emitted += emitMM;
                 }
@@ -847,7 +850,8 @@ FDM.export = function(print, online, ondone, ondebug) {
 
     function emitQrec(rec) {
         let {e, x, y, dist, emitPerMM, speedMMM} = rec;
-        emitMM = emitPerMM * e * dist;
+        // emitMM = emitPerMM * e * dist;
+        emitMM = extrudeMM(dist, emitPerMM, e);
         moveTo({x:x, y:y, e:emitMM}, speedMMM);
         emitted += emitMM;
     }
