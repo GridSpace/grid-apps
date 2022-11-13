@@ -6,8 +6,11 @@ module.exports = function(server) {
 
 server.util.log("--- sample server-side module installed ---");
 
-// insert script after all others in kiri browser code
+// insert script after all others in kiri main code
 server.inject("kiri", "kiri.js", {end: true});
+
+// insert script after all others in kiri worker code
+server.inject("kiri_work", "work.js", {end: true});
 
 server.onload(() => {
     server.util.log("--- called after all modules loaded ---");
