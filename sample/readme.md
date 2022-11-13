@@ -14,3 +14,14 @@ To enable the sample module:
 220128.120432 '[head]' { module: './mod/sample/init.js' }
 220128.120432 '[head]' '--- sample server-side module loaded ---'
 ```
+
+* reloading Kiri:Moto from localhost, you will see these javascript
+* console log messages indicaing the new module code is running
+
+```
+--- kiri main module start ---
+--- kiri main module started ---
+{server_said: 'received 39 bytes'}
+--- kiri worker module start ---
+--- kiri worker module started ---
+```
