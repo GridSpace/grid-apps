@@ -1683,7 +1683,6 @@ function updateStock() {
     const { x, y, z, center } = stock;
 
     UI.func.animate.classList.add('disabled');
-
     if (x && y && z) {
         UI.func.animate.classList.remove('disabled');
         if (!camStock) {

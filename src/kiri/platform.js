@@ -197,7 +197,7 @@ function platformUpdateBounds() {
     const bounds = new THREE.Box3();
     api.widgets.each(widget => {
         let wp = widget.track.pos;
-        let wb = widget.getBoundingBox();
+        let wb = widget.getBoundingBox().clone();
         wb.min.x += wp.x;
         wb.max.x += wp.x;
         wb.min.y += wp.y;
