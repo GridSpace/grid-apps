@@ -440,18 +440,20 @@ class Widget {
      * todo use new prototype.moveMesh()
      */
     moveMesh(x, y, z) {
-        if (!(x || y || z)) {
-            return;
-        }
+        // if (!(x || y || z)) {
+        //     return;
+        // }
         let gap = this.mesh.geometry.attributes.position,
             pa = gap.array;
         // center point array on 0,0,0
-        for (let i=0; i < pa.length; i += 3) {
-            pa[i    ] -= x;
-            pa[i + 1] -= y;
-            pa[i + 2] -= z;
+        if (x || y || z) {
+            for (let i=0; i < pa.length; i += 3) {
+                pa[i    ] -= x;
+                pa[i + 1] -= y;
+                pa[i + 2] -= z;
+            }
+            gap.needsUpdate = true;
         }
-        gap.needsUpdate = true;
         let bb = this.groupBounds();
         // critical to layout and grouping
         this.track.box = {
@@ -461,8 +463,10 @@ class Widget {
         };
         // for use with the packer
         // invalidate cached points
-        this.points = null;
-        this.setModified();
+        if (x || y || z) {
+            this.points = null;
+            this.setModified();
+        }
     }
 
     setIndexed(z) {
