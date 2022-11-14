@@ -410,9 +410,13 @@ CAM.init = function(kiri, api) {
     });
 
     function updateIndex() {
+        let oplist = current.process.ops;
+        if (!(isCamMode && oplist)) {
+            return;
+        }
         let index = 0;
         let indexing = false;
-        for (let op of current.process.ops) {
+        for (let op of oplist) {
             if (op.type === '|') {
                 break;
             }
