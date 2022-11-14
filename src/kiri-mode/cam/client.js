@@ -189,6 +189,7 @@ CAM.init = function(kiri, api) {
         api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
         api.platform.update_bounds();
         updateAxisMode();
+        updateIndex();
         updateStock();
         if (!poppedRec) {
             func.opRender();
@@ -407,6 +408,28 @@ CAM.init = function(kiri, api) {
             func.opRender();
         }
     });
+
+    function updateIndex() {
+        let index = 0;
+        let indexing = false;
+        for (let op of current.process.ops) {
+            if (op.type === '|') {
+                break;
+            }
+            if (op.type === 'index') {
+                indexing = true;
+                if (op.absolute) {
+                    index = op.degrees
+                } else {
+                    index += op.degrees;
+                }
+            }
+        }
+        for (let widget of API.widgets.all()) {
+            widget.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
+        }
+        currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
+    }
 
     api.event.on("cam.op.render", func.opRender = () => {
         let oplist = current.process.ops;
