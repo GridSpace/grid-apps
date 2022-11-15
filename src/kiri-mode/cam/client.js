@@ -88,7 +88,7 @@ CAM.init = function(kiri, api) {
             return;
         }
         for (let widget of api.widgets.all()) {
-            widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
+            widget.setIndexed(camStock && isIndexed ? true : false);
         }
         api.platform.update_bounds();
         // add or remove clock op depending on indexing
@@ -110,7 +110,7 @@ CAM.init = function(kiri, api) {
     api.event.on("widget.add", widget => {
         if (isCamMode && !Array.isArray(widget)) {
             updateAxisMode(true);
-            widget.setIndexed(camStock && isIndexed ? camStock.scale.z : 0);
+            widget.setIndexed(camStock && isIndexed ? true : false);
             api.platform.update_bounds();
         }
     });
@@ -140,17 +140,18 @@ CAM.init = function(kiri, api) {
     api.event.on("mode.set", (mode) => {
         isIndexed = undefined;
         isCamMode = mode === 'CAM';
-        $('set-tools').style.display = isCamMode ? '' : 'none';
         SPACE.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
-        updateStock();
+        $('set-tools').style.display = isCamMode ? '' : 'none';
+        $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         UI.func.animate.style.display = isCamMode ? '' : 'none';
         if (!isCamMode) {
             func.clearPops();
+            func.tabClear();
         }
-        $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         // do not persist traces across page reloads
         func.traceClear();
         func.opRender();
+        updateStock();
     });
 
     api.event.on("view.set", (mode) => {
@@ -188,9 +189,9 @@ CAM.init = function(kiri, api) {
         api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
         api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
         api.platform.update_bounds();
-        updateAxisMode();
         updateIndex();
         updateStock();
+        updateAxisMode();
         if (!poppedRec) {
             func.opRender();
         }
@@ -822,7 +823,8 @@ CAM.init = function(kiri, api) {
         let pos = {
             x: showTab.pos.x - ip.x,
             y: -showTab.pos.z - ip.y,
-            z: showTab.pos.y + ip.z,
+            // z: showTab.pos.y + ip.z,
+            z: showTab.pos.y + ip.z + (isIndexed ? 0 : iw.track.tzoff),
         }
         let id = Date.now();
         let { dim, rot } = showTab;
