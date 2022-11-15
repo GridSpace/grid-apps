@@ -96,10 +96,10 @@ kiri.load(api => {
             const widgets = Object.values(kiri.worker.cache);
             for (let widget of widgets) {
                 if (index) {
-                    widget.setIndexed(1);
+                    widget.setIndexed(true);
                     widget.setAxisIndex(-index);
                 } else {
-                    widget.setIndexed(0);
+                    widget.setIndexed(false);
                     widget.setAxisIndex(0);
                 }
                 CAM.surface_prep(widget, index);
