@@ -138,12 +138,6 @@ const client = exports({
         });
     },
 
-    heal(vertices, callback, refresh) {
-        send("heal", {vertices, refresh}, (output) => {
-            callback(output);
-        });
-    },
-
     config(obj) {
         send("config", obj, noop);
     },

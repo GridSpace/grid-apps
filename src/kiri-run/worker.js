@@ -257,17 +257,6 @@ kiri.worker = {
         send.done(vertices);
     },
 
-    heal(data, send) {
-        let { vertices, refresh } = data;
-        let mesh = new base.Mesh({vertices}).heal();
-        if (mesh.newFaces || refresh) {
-            vertices = mesh.unrolled().toFloat32();
-            send.done({vertices}, [vertices]);
-        } else {
-            send.done({});
-        }
-    },
-
     snap(data, send) {
         current.snap = data;
         send.done();

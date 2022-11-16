@@ -3,7 +3,6 @@
 "use strict";
 
 // dep: geo.base
-// dep: geo.mesh
 // dep: geo.point
 // dep: geo.points
 // dep: geo.polygons
@@ -222,58 +221,6 @@ class Widget {
             // this fixes ray intersections after the mesh is modified
             this.mesh.geometry.boundingSphere = null;
         }
-    }
-
-    heal(debug, refresh) {
-        if (debug) {
-            let mesh = this.debugMesh().heal();
-            let verts = mesh.vertices;
-            let edges = mesh.edges;
-            let split = mesh.edges.filter(l => l.split);
-            let layrz = new kiri.Layers();
-            layrz.setLayer("edges", {line: 0});
-            for (let line of edges) {
-                layrz.addLine(
-                    newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2]),
-                    newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2])
-                );
-            }
-            for (let l=0; l<mesh.loops.length; l++) {
-                layrz.setLayer(`loop ${l}`, {line: [ 0xff0000, 0x00ff00, 0x0000ff ][l % 3]});
-                let zo = [0.15, 0.3, 0.45][l % 3];
-                for (let line of mesh.loops[l]) {
-                    layrz.addLine(
-                        newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - zo),
-                        newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - zo)
-                    );
-                }
-            }
-            layrz.setLayer("split", {line: 0xff00ff});
-            for (let line of split) {
-                layrz.addLine(
-                    newPoint(verts[line.v1], verts[line.v1+1], verts[line.v1+2] - 0.6),
-                    newPoint(verts[line.v2], verts[line.v2+1], verts[line.v2+2] - 0.6)
-                );
-            }
-            let stack = new kiri.Stack(this.mesh);
-            stack.addLayers(layrz);
-            return { mesh, layrz, stack };
-        }
-        return new Promise((resolve, reject) => {
-            kiri.client.heal(this.getVertices().array, data => {
-                if (data.vertices) {
-                    this.loadVertices(data.vertices);
-                    this.modified = true;
-                } else {
-                    this.modified = false;
-                }
-                resolve(this.modified);
-            }, refresh);
-        });
-    }
-
-    debugMesh(precision) {
-        return new base.Mesh({precision, vertices: this.getVertices().array});
     }
 
     // should go away and be replaced by getGeoVertices

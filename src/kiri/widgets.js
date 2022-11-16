@@ -60,24 +60,6 @@ function replace(vertices) {
     }
 }
 
-function heal() {
-    if (!WIDGETS.length) {
-        return;
-    }
-    let marker = api.show.alert("Analyzing objects", 100000);
-    setTimeout(() => {
-        Promise.all(WIDGETS.map(w => w.heal())).then(mod => {
-            api.hide.alert(marker);
-            let healed = mod.filter(m => m).length;
-            if (healed) {
-                api.show.alert(`${healed} Object${healed ? 's':''} healed`);
-            } else {
-                api.show.alert('Nothing found to heal');
-            }
-        });
-    }, 1);
-}
-
 function meshes() {
     let out = [];
     widgets.each(widget => {
@@ -98,7 +80,6 @@ const widgets = api.widgets = {
     load:       Widget.loadFromCatalog,
     new:        newWidget,
     map,
-    heal,
     meshes,
     replace,
     opacity,
