@@ -146,8 +146,10 @@ const selection = {
     update() {
         for (let group of groups) {
             group.select(false);
-            group.wireframe(prefs.map.space.wire || false, prefs.map.wireframe.opacity);
             group.normals(prefs.map.space.norm || false);
+            group.wireframe(prefs.map.space.wire || false, {
+                opacity: prefs.map.wireframe.opacity}
+            );
         }
         api.updateFog();
         // prevent selection of model and its group

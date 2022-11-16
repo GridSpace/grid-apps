@@ -24,6 +24,7 @@ const worker = moto.client.fn;
 let materials = mesh.material = {
     // model unselected
     normal: new MeshPhongMaterial({
+        flatShading: true,
         side: DoubleSide,
         transparent: true,
         shininess: 125,
@@ -33,6 +34,7 @@ let materials = mesh.material = {
     }),
     // model selected
     select: new MeshPhongMaterial({
+        flatShading: true,
         side: DoubleSide,
         transparent: true,
         shininess: 125,
@@ -42,6 +44,7 @@ let materials = mesh.material = {
     }),
     // model selected as tool
     tool: new MeshPhongMaterial({
+        flatShading: true,
         side: DoubleSide,
         transparent: true,
         shininess: 125,
@@ -51,6 +54,7 @@ let materials = mesh.material = {
     }),
     // face selected (for groups ranges)
     face: new MeshPhongMaterial({
+        flatShading: true,
         side: DoubleSide,
         transparent: true,
         shininess: 100,
@@ -59,6 +63,7 @@ let materials = mesh.material = {
         opacity: 1
     }),
     wireframe: new MeshBasicMaterial({
+        flatShading: true,
         side: DoubleSide,
         wireframe: true,
         color: 0x0,
@@ -71,7 +76,7 @@ let materials = mesh.material = {
 mesh.model = class MeshModel extends mesh.object {
     constructor(data, id) {
         super(id);
-        let { file, mesh, vertices, indices, normals } = data;
+        let { file, mesh, vertices, indices } = data;
 
         if (!mesh) {
             dbug.error(`'${file}' missing mesh data`);
@@ -100,7 +105,7 @@ mesh.model = class MeshModel extends mesh.object {
         };
 
         this.file = file || 'unnamed';
-        this.load(mesh || vertices, indices, normals);
+        this.load(mesh || vertices, indices);
     }
 
     get type() {
@@ -192,16 +197,13 @@ mesh.model = class MeshModel extends mesh.object {
         });
     }
 
-    load(vertices, indices, normals) {
+    load(vertices, indices) {
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
         if (indices) {
             // unroll indexed geometries
             geo.setIndex(new BufferAttribute(indices, 1));
             geo = geo.toNonIndexed();
-        }
-        if (!normals) {
-            geo.computeVertexNormals();
         }
 
         let meh = this.mesh = new Mesh(geo, [
@@ -226,7 +228,6 @@ mesh.model = class MeshModel extends mesh.object {
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        geo.setAttribute('normal', undefined);
         if (indices) {
             geo.setIndex(new BufferAttribute(indices, 1));
         }

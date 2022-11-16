@@ -2,6 +2,12 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
+
+# Release 3.8
+
+* refactor object/group storage model in Mesh:Tool
+
+
 # Release 3.7 (2022-11-12)
 
 * add CAM axes scaling gcode header directive
