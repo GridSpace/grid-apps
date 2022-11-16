@@ -74,8 +74,9 @@ const CSG = {
         const vmin = new THREE.Vector3(min.x, min.y, min.z);
         const vmax = new THREE.Vector3(max.x, max.y, max.z);
         return new THREE.Box3(vmin, vmax);
-    }
+    },
 
+    indexVertices
 };
 
 function indexVertices(pos) {

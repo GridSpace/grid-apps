@@ -85,25 +85,22 @@ function init() {
 }
 
 // restore space layout and view from previous session
-function restore_space() {
-    let { api } = mesh;
-    let count = 0;
-    let space = moto.space;
-    let mcache = {};
-    mesh.db.admin.get("camera")
+async function restore_space() {
+    const { api } = mesh;
+    const space = moto.space;
+    const db_admin = mesh.db.admin;
+    const db_space = mesh.db.space;
+    // let mcache = {};
+    await db_admin.get("camera")
         .then(saved => {
             if (saved) {
                 space.view.load(saved.place);
                 space.view.setFocus(saved.focus);
             }
         });
-    mesh.db.admin.get("matrices")
-        .then(data => {
-            if (data) {
-                mcache = data;
-            }
-        });
-    mesh.db.space.iterate({ map: true }).then(cached => {
+    const mcache = await db_admin.get("matrices") || {};
+    let count = 0;
+    await db_space.iterate({ map: true }).then(cached => {
         const keys = [];
         const claimed = [];
         for (let [id, data] of Object.entries(cached)) {
@@ -126,7 +123,7 @@ function restore_space() {
                     mesh.api.group.new(models, id).applyMatrix(mcache[id]);
                 } else {
                     mesh.api.log.emit(`removed empty group ${id}`);
-                    mesh.db.space.remove(id);
+                    db_space.remove(id);
                 }
             }
         }
@@ -138,7 +135,7 @@ function restore_space() {
         }
         // clear out meshes left in the space db along with their matrices
         for (let id of keys) {
-            mesh.db.space.remove(id);
+            db_space.remove(id);
             delete mcache[id];
         }
         // restore global cache only after objects are restored

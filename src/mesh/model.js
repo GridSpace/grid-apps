@@ -63,7 +63,6 @@ let materials = mesh.material = {
         opacity: 1
     }),
     wireframe: new MeshBasicMaterial({
-        flatShading: true,
         side: DoubleSide,
         wireframe: true,
         color: 0x0,
