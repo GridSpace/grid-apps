@@ -823,8 +823,9 @@ CAM.init = function(kiri, api) {
         let pos = {
             x: showTab.pos.x - ip.x,
             y: -showTab.pos.z - ip.y,
-            // z: showTab.pos.y + ip.z,
-            z: showTab.pos.y + ip.z + (isIndexed ? 0 : iw.track.tzoff),
+            z: showTab.stock.z ?
+                showTab.pos.y + ip.z + (isIndexed ? 0 : iw.track.tzoff) :
+                showTab.dim.z/2,
         }
         let id = Date.now();
         let { dim, rot } = showTab;
@@ -1589,7 +1590,7 @@ function createTabBox(iw, ic, n) {
     const pos = { x:ic.x, y:ic.y, z:ic.z };
     const dim = { x:camTabsDepth, y:camTabsWidth, z:camTabsHeight };
     const tab = addbox(pos, boxColor(), 'tabb', dim, { rotate: rot, opacity: boxOpacity() });
-    return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight };
+    return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight, stock };
 }
 
 function addWidgetTab(widget, rec) {
