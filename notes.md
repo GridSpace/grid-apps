@@ -75,6 +75,7 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` add {progress} substitution and maybe {time-remaining} if can be calc'd
 * `F` import and follow 2D paths (conformed like pocket contours)
 * `F` add user-defined origin (issue #28)
 * `F` add custom gcode operation for things like injecting pauses
