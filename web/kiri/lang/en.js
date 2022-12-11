@@ -729,7 +729,7 @@ self.kiri.lang['en-us'] = {
     ad_abkl_s:      "anti-backlash",
     ad_abkl_l:      ["for better flat surface finish","use micro-movements to cancel","backlash in solid layer output","in millimeters","0 to disable","if your firmware has M425","put that in the gcode header","and leave this as 0"],
     ad_lbir_s:      "belt first",
-    ad_lbir_l:      ["always print shells touching the","belt before any other shells"],
+    ad_lbir_l:      ["always print shells touching the belt before any other shells. this is no longer a recommended setting based on extensive testing."],
     ad_altr_s:      "alternating",
     ad_altr_l:      ["alternate shell winding order","clockwise / counter-clockwise","may reduce warping in thin areas","and help with belt edge adhesion"],
     ad_lret_s:      "layer retract",

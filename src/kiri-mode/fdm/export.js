@@ -512,6 +512,9 @@ FDM.export = function(print, online, ondone, ondebug) {
             return;
         }
         last = line;
+        subst.pos_x = epos.x.round(decimals);
+        subst.pos_y = epos.y.round(decimals);
+        subst.pos_z = epos.z.round(decimals);
         append(line);
     }
 
