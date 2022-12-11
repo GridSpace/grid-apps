@@ -458,6 +458,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);
         });
         opSum += weight;
+        if (tool) {
+            newLayer();
+            camOut(printPoint = printPoint.clone().setZ(zmax + zadd + ztOff));
+            newLayer();
+        }
     }
 
     function emitTrace(slice) {

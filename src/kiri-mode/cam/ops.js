@@ -138,13 +138,13 @@ class OpLevel extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, lines, stepOver } = this;
-        let { setTool, setSpindle, printPoint } = ops;
+        let { setTool, setSpindle, printPoint, setPrintPoint } = ops;
         let { polyEmit, newLayer, tip2tipEmit, camOut } = ops;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
         lines = lines.map(p => { return { first: p.first(), last: p.last(), poly: p } });
-        tip2tipEmit(lines, printPoint, (el, point, count) => {
+        printPoint = tip2tipEmit(lines, printPoint, (el, point, count) => {
             let poly = el.poly;
             if (poly.last() === point) {
                 poly.reverse();
@@ -153,6 +153,7 @@ class OpLevel extends CamOp {
                 camOut(point.clone(), pidx > 0, stepOver);
             }, false);
         });
+        setPrintPoint(printPoint);
 
         newLayer();
     }
