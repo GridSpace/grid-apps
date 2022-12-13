@@ -357,14 +357,14 @@ kiri.worker = {
             let xpos = track.pos.x;
             let yoff = proc.beltAnchor || proc.firstLayerBeltLead || 0;
             let ypos = settings.device.bedDepth / 2 + track.pos.y + miny + yoff;
-            let rotation = (Math.PI / 180) * 45;
+            let rotation = (Math.PI / 180) * 90; // 
             for (let w of group) {
                 w.moveMesh(0, miny, 0);
             }
             widget.rotate(rotation, 0, 0, true, false);
             let minr = gmin(group);
             widget.belt = {
-                angle: 45,
+                angle: 90, //  45 
                 xpos,
                 ypos,
                 yadd: minr.maxy - minr.miny,

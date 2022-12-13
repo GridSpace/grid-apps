@@ -147,7 +147,7 @@ exports({
     MODES,
     VIEWS,
     SEED,
-    beltfact: Math.cos(Math.PI / 4)
+    beltfact:  Math.cos(Math.PI / 2) // Math.cos(Math.PI / 4) //
 });
 
 });
