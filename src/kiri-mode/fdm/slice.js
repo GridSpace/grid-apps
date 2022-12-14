@@ -63,8 +63,6 @@ FDM.sliceAll = function(settings, onupdate) {
         .sort((a,b) => {
             return a.slices[0].z - b.slices[0].z
         });
-    // ignore first widget
-    widgets.shift();
     // count extruders used
     let ext = [];
     for (let w of widgets) {
@@ -75,10 +73,17 @@ FDM.sliceAll = function(settings, onupdate) {
             }
         }
     }
+    // sort widgets by first slice Z
+    widgets.sort((a,b) => {
+        return a.slices[0].z - b.slices[0].z;
+    });
+    // give first widget a pass since it should have the anchor
+    widgets.shift();
     // remove anchor slices from other widgets (only with multi-material)
-    if (ext.length > 1)
-    for (let w of widgets) {
-        w.slices = w.slices.filter(s => s.index >= 0);
+    if (ext.length > 1) {
+        for (let w of widgets) {
+            w.slices = w.slices.filter(s => s.index >= 0);
+        }
     }
 };
 

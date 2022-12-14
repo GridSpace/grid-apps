@@ -55,6 +55,8 @@ self.alert = function(o) {
     console.log(o);
 };
 
+self.uuid = ((Math.random() * Date.now()) | 0).toString(36);
+
 function minhandler(msg) {
     let data = msg.data;
     let seq = data.seq;
