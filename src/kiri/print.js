@@ -273,7 +273,7 @@ class Print {
             console.log(...[...arguments].map(o => Object.clone(o)));
         }
 
-        function G2G3(g2, line) {
+        function G2G3(g2, line, index) {
             const rec = {};
 
             line.forEach(tok => {
@@ -281,6 +281,13 @@ class Print {
             });
 
             let center = { x:0, y:0, r:0 };
+
+            if (rec.X === undefined && rec.X === rec.Y) {
+                // bambu generates loop z or wipe loop arcs in place
+                // console.log({ skip_empty_arc: rec });
+                return;
+            }
+            // G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);return;
 
             if (rec.I !== undefined && rec.J !== undefined) {
                 center.x = pos.X + rec.I;
@@ -318,8 +325,19 @@ class Print {
             let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
             let rot = a1 + step;
 
-            // LOG({first: pos, last: rec, center, a1, a2, ad, step, rot, line});
+            let da = Math.abs(a1 - a2);
+            let dx = pos.X - rec.X;
+            let dy = pos.Y - rec.Y;
+            let dd = Math.sqrt(dx * dx + dy * dy);
+
+            // LOG({index, da, dd, first: pos, last: rec, center, a1, a2, ad, step, steps, rot, line});
             // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
+
+            // under 1 degree arc and 5mm, convert to straight line
+            if (da < 0.005 && dd < 5) {
+                G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
+                return;
+            }
 
             let pc = { X: pos.X, Y: pos.Y };
             for (let i=0; i<=steps-2; i++) {
@@ -435,7 +453,7 @@ class Print {
                 let dR = (dE / dV);
                 if (dV > 2 && dE > 0.001) {
                     let lab = (absE ? 'aA' : 'rR')[scope.debugE++ % 2];
-                    console.log(lab, height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(4), pos.F.toFixed(0));
+                    // console.log(lab, height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(4), pos.F.toFixed(0));
                 }
             }
             // add point to current sequence
@@ -508,11 +526,11 @@ class Print {
                     break;
                 case 'G2':
                     // turn arc into a series of points
-                    G2G3(true, line)
+                    G2G3(true, line, idx)
                     break;
                 case 'G3':
                     // turn arc into a series of points
-                    G2G3(false, line);
+                    G2G3(false, line, idx);
                     break;
                 case 'M6':
                     tool = parseInt(line[0].substring(1));
