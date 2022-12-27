@@ -165,7 +165,7 @@ class Topo {
             const newP = newPoint(x,y,z);
             // todo: merge co-linear, not just co-planar
             if (lastP && Math.abs(lastP.z - z) < flatness) {
-                if (false && curvesOnly) {
+                if (curvesOnly) {
                     if ((newtrace.last() || lastP).distTo2D(newP) >= bridge) {
                         end_poly();
                     }
