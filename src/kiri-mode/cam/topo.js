@@ -165,7 +165,7 @@ class Topo {
             const newP = newPoint(x,y,z);
             // todo: merge co-linear, not just co-planar
             if (lastP && Math.abs(lastP.z - z) < flatness) {
-                if (curvesOnly) {
+                if (false && curvesOnly) {
                     if ((newtrace.last() || lastP).distTo2D(newP) >= bridge) {
                         end_poly();
                     }
@@ -177,7 +177,7 @@ class Topo {
                     newtrace.push(latent);
                     latent = null;
                 }
-                if (curvesOnly && lastP) {
+                if (false && curvesOnly && lastP) {
                     // maxangle
                     const dz = Math.abs(lastP.z - z);
                     const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
@@ -211,7 +211,7 @@ class Topo {
         function raster(slices) {
             if (!topo.raster) {
                 console.log(widget.id, 'topo raster cached');
-                return;
+                return topo.box;
             }
             topo.raster = false;
 
@@ -219,7 +219,8 @@ class Topo {
                 gridy,
                 gridi, // index
                 gridv, // value
-                i, il, j, jl, x, y, tv, ltv;
+                i, il, j, jl, x, y, tv, ltv,
+                box = topo.box = new THREE.Box2();
 
             // filter lines pairs to only surface "up-facing", "uncovered" lines
             slices.map(slice => {
@@ -231,7 +232,9 @@ class Topo {
                 outer: for (let i=0; i<len; i++) {
                     let l1 = lines[i], p1 = l1.p1, p2 = l1.p2;
                     // eliminate vertical
-                    if (p1.y === p2.y) continue;
+                    if (Math.abs(p1.y - p2.y) < flatness) continue;
+                    // eliminate horizontal when curves only selected
+                    if (curvesOnly && Math.abs(p1.z - p2.z) < flatness) continue;
                     // eliminate if both points below cutoff
                     if (p1.z < zMin && p2.z < zMin) continue;
                     // sort p1,p2 by y for comparison
@@ -250,6 +253,8 @@ class Topo {
                         }
                     }
                     points.push(p1, p2);
+                    box.expandByPoint(p1);
+                    box.expandByPoint(p2);
                 }
                 slice.points = points;
                 if (debug_topo_lines) slice.output()
@@ -287,7 +292,7 @@ class Topo {
                             if (nz > gridv) {
                                 gridv = data[gridi] = Math.max(nz, zMin);
                                 if (debug_topo) slice.output()
-                                    .setLayer("topo", {face: color, line: color})
+                                    .setLayer("heights", {face: color, line: color})
                                     .addLine(
                                         newPoint(p1.x, y, 0),
                                         newPoint(p1.x, y, gridv)
@@ -300,6 +305,8 @@ class Topo {
                 gridx++;
                 onupdate(++stepsTaken, stepsTotal, "raster surface");
             }
+
+            return box;
         }
 
         function processSlices(slices) {
@@ -309,8 +316,7 @@ class Topo {
                 gridv, // value
                 i, il, j, jl, x, y, tv, ltv;
 
-            raster(slices);
-
+            const box = raster(slices);
             const checkr = newPoint(0,0);
             const inClip = function(polys, checkZ) {
                 checkr.x = x;
@@ -331,12 +337,17 @@ class Topo {
                 startTime = time();
                 // emit slice per X
                 for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
+                    if (x < box.min.x || x > box.max.x) continue;
                     gridx = Math.round(((x - minX) / boundsX) * stepsx);
                     ly = gridy = -gridDelta;
                     slice = newSlice(gridx);
                     newtrace = newPolygon().setOpen();
                     sliceout = [];
                     for (y = minY - partOff; y < maxY + partOff; y += resolution) {
+                        if (y < box.min.y || y > box.max.y) {
+                            gridy++;
+                            continue;
+                        }
                         // find tool z at grid point
                         tv = toolAtZ(gridx, gridy);
                         // when tabs are on and this point is inside the
@@ -373,12 +384,17 @@ class Topo {
                 startTime = time();
                 // emit slice per Y
                 for (y = minY - partOff; y <= maxY + partOff; y += toolStep) {
+                    if (y < box.min.y || y > box.max.y) continue;
                     gridy = Math.round(((y - minY) / boundsY) * stepsy);
                     lx = gridx = -gridDelta;
                     slice = newSlice(gridy);
                     newtrace = newPolygon().setOpen();
                     sliceout = [];
                     for (x = minX - partOff; x <= maxX + partOff; x += resolution) {
+                        if (x < box.min.x || x > box.max.x) {
+                            gridx++;
+                            continue;
+                        }
                         tv = toolAtZ(gridx, gridy);
                         if (tabsOn && tv < tabHeight && inClip(clipTab, tv)) {
                             tv = tabZ;
