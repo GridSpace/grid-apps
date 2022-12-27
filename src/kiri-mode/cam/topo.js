@@ -177,7 +177,7 @@ class Topo {
                     newtrace.push(latent);
                     latent = null;
                 }
-                if (false && curvesOnly && lastP) {
+                if (curvesOnly && lastP) {
                     // maxangle
                     const dz = Math.abs(lastP.z - z);
                     const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
@@ -233,8 +233,6 @@ class Topo {
                     let l1 = lines[i], p1 = l1.p1, p2 = l1.p2;
                     // eliminate vertical
                     if (Math.abs(p1.y - p2.y) < flatness) continue;
-                    // eliminate horizontal when curves only selected
-                    if (curvesOnly && Math.abs(p1.z - p2.z) < flatness) continue;
                     // eliminate if both points below cutoff
                     if (p1.z < zMin && p2.z < zMin) continue;
                     // sort p1,p2 by y for comparison
@@ -303,6 +301,18 @@ class Topo {
                     gridy++;
                 }
                 gridx++;
+                // remove flat lines when curvesOnly
+                if (curvesOnly) {
+                    let nup = [];
+                    for (let i=0, p=slice.points, l=p.length; i<l; i += 2) {
+                        const p1 = p[i];
+                        const p2 = p[i+1];
+                        if (Math.abs(p1.z - p2.z) >= flatness) {
+                            nup.push(p1, p2);
+                        }
+                    }
+                    slice.points = nup;
+                }
                 onupdate(++stepsTaken, stepsTotal, "raster surface");
             }
 
