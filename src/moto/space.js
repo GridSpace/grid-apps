@@ -1368,6 +1368,11 @@ gapp.register("moto.space", [], (root, exports) => {
                 updateLastAction();
                 updateFocus();
             }, (val) => {
+                if (camera && viewControl) {
+                    // increase intersect line precision on zoom
+                    const dist = camera.position.distanceTo(viewControl.target);
+                    raycaster.params.Line.threshold = Math.min(1, dist / 100);
+                }
                 updateLastAction();
                 if (slider) slider(val);
             });

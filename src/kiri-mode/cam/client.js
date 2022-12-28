@@ -986,7 +986,7 @@ CAM.init = function(kiri, api) {
             color.r = colorSave.r;
             color.g = colorSave.g;
             color.b = colorSave.b;
-            lastTrace.position.z -= 0.05;
+            lastTrace.position.z -= 0.01;
         }
         if (data.type === 'platform') {
             lastTrace = null;
@@ -996,7 +996,7 @@ CAM.init = function(kiri, api) {
             return;
         }
         lastTrace = data.int.object;
-        lastTrace.position.z += 0.05;
+        lastTrace.position.z += 0.01;
         if (lastTrace.selected) {
             let event = data.event;
             let target = event.target;
@@ -1043,13 +1043,13 @@ CAM.init = function(kiri, api) {
             };
         }
         if (obj.selected) {
-            obj.position.z += 0.05;
+            obj.position.z += 0.01;
             color.r = colorSave.r = 0.9;
             color.g = colorSave.g = 0;
             color.b = colorSave.b = 0.1;
             if (!skip) wlist.push(poly._trace);
         } else {
-            obj.position.z -= 0.05;
+            obj.position.z -= 0.01;
             color.r = colorSave.r = 0xaa/255;
             color.g = colorSave.g = 0xaa/255;
             color.b = colorSave.b = 0x55/255;
