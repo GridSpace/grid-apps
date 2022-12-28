@@ -818,7 +818,7 @@ class OpTrace extends CamOp {
 
     slice(progress) {
         let { op, state } = this;
-        let { tool, rate, down, plunge, offset } = op;
+        let { tool, rate, down, plunge, offset, thru } = op;
         let { settings, widget, addSlices, zMax, zTop, zThru, tabs } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
@@ -973,7 +973,7 @@ class OpTrace extends CamOp {
                     }
                     for (let pi of poly)
                     if (down) {
-                        let zto = pi.getZ();
+                        let zto = pi.getZ() - thru;
                         if (zThru && similar(zto,0)) {
                             zto -= zThru;
                         }
@@ -989,7 +989,7 @@ class OpTrace extends CamOp {
                 const zbo = widget.track.top - widget.track.box.d;
                 let zmap = {};
                 for (let poly of polys) {
-                    let z = poly.getZ();
+                    let z = poly.getZ() - thru;
                     if (op.bottom && camZBottom) {
                         z = Math.max(z, camZBottom) - zbo;
                     }

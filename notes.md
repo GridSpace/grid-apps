@@ -68,6 +68,7 @@
 
 # CAM
 
+* `B` feed rate for next tool set before tool change (push/pop feed rates?)
 * `B` tab cuts cause loss of direction, parenting, depth, and it's hard to fix
 * `B` tabs do not properly track widget mirror events
 * `B` tabs are not cut to exact height

@@ -446,6 +446,8 @@ self.kiri.lang['en-us'] = {
     cc_sovr_l:      ["a fraction of tool diameter between 0 and 1. values greater than 0.5 may result in uncut areas from acute angle offsets."],
     cc_sdwn_s:      "step down",
     cc_sdwn_l:      ["step down depth","for each pass","in workspace units","0 to disable"],
+    cc_thru_s:      "cut thru",
+    cc_thru_l:      ["additional cut depth below trace bottom"],
     cc_feed_s:      "feed rate",
     cc_feed_l:      ["max cutting speed in","workspace units / minute"],
     cc_plng_s:      "plunge rate",
