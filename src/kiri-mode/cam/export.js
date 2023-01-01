@@ -194,7 +194,7 @@ CAM.export = function(print, online) {
         }
 
         // on spindle change (deferred from layer transition so it's post-toolchange)
-        if ((changeTool && spindleMax) || (newSpindle && newSpindle !== spindle)) {
+        if (spindleMax && newSpindle && (changeTool || newSpindle !== spindle || opt.newOp)) {
             spindle = newSpindle;
             if (!laserOp) {
                 if (spindle > 0) {
@@ -413,7 +413,8 @@ CAM.export = function(print, online) {
             }
         }
         const firstOut = layerout[0];
-        if (newmode && !newmode.silent && mode !== newmode) {
+        const newOp = newmode && !newmode.silent && mode !== newmode;
+        if (newOp) {
             if (mode && !stripComments) {
                 append("; ending " + mode.type + " op after " + Math.round(time/60) + " seconds");
             }
@@ -427,13 +428,13 @@ CAM.export = function(print, online) {
         }
         newSpindle = layerout.spindle;
         // iterate over layer output records
-        for (let out of layerout) {
+        layerout.forEach((out, ind) => {
             if (out.gcode && Array.isArray(out.gcode)) {
                 filterEmit(out.gcode, consts);
             } else {
-                moveTo(out);
+                moveTo(out, { newOp: ind === 0 ? newOp : false });
             }
-        }
+        });
         if (lasering && laserOp) {
             // disable laser
             filterEmit(laserOp.off, consts);

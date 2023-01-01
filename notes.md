@@ -101,6 +101,8 @@
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` maintain several part orientations + op chains in a single profile
 
+* `P` inner corner arc moves
+* `P` log Z interpolation for contour XYZ moves
 * `P` option to start with the smallest poly by area on layer change
 * `P` refactor slicing engine to use common core in geo
 * `P` decrease cutting speed when entire tool is engaged (start of roughing, rest machining)

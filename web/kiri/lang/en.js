@@ -338,7 +338,7 @@ self.kiri.lang['en-us'] = {
     // FDM FILL
     fi_menu:        "infill",
     fi_type:        "fill type",
-    fi_pcnt_s:      "fill fraction",
+    fi_pcnt_s:      "fill amount",
     fi_pcnt_l:      ["fill density values","0.0 - 1.0"],
     fi_rept_s:      "fill repeat",
     fi_rept_l:      ["number of times to repeat","unchanged fill layers"],
