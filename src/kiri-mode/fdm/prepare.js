@@ -1164,7 +1164,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             raft = opt.raft || false,
             flow = opt.flow || 1,
             near = opt.near || false,
-            fast = opt.fast || raft || false,
+            fast = opt.fast || false,
             fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
             thinDist = near ? thinWall : thinWall;
 
