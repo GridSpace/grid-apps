@@ -51,7 +51,7 @@ function platformUpdateOrigin(update_bounds = true) {
     let origin = settings.origin = { x: 0, y: 0, z: 0 };
     let center = MODE === MODES.FDM ? device.originCenter || device.bedRound :
        MODE === MODES.SLA ? false :
-       MODE === MODES.CAM ? process.outputOriginCenter :
+       MODE === MODES.CAM ? process.camOriginCenter :
        device.originCenter || process.outputOriginCenter;
 
     if (MODE === MODES.CAM && process.camOriginTop) {
@@ -77,6 +77,12 @@ function platformUpdateOrigin(update_bounds = true) {
         origin.y = -stockCenter.y;
     } else if (isBelt) {
         origin.y = device.bedDepth / 2;
+    }
+
+    if (MODE === MODES.CAM) {
+        origin.x += process.camOriginOffX;
+        origin.y += process.camOriginOffY;
+        origin.z += process.camOriginOffZ;
     }
 
     if (isIndexed) {

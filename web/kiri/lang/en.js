@@ -706,6 +706,15 @@ self.kiri.lang['en-us'] = {
     or_topp_s:      "origin top",
     or_topp_l:      "origin is references from the top of objects",
 
+    // CAM ORIGIN
+    co_menu:        "origin",
+    co_offx_s:      "offset x",
+    co_offx_l:      ["offset origin along x axis","in workspace units"],
+    co_offy_s:      "offset y",
+    co_offt_l:      ["offset origin along y axis","in workspace units"],
+    co_offz_s:      "offset z",
+    co_offz_l:      ["offset origin along z axis","in workspace units"],
+
     // FDM ADVANCED
     ad_menu:        "expert",
     ad_rdst_s:      "retract dist",

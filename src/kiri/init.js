@@ -585,7 +585,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             return;
         }
         let current = settings(),
-            center = current.process.outputOriginCenter || current.device.bedRound,
+            { device, process} = current,
+            center = process.outputOriginCenter || process.camOriginCenter || device.bedRound,
             bounds = boundsSelection(),
             coord = prompt("Enter X,Y coordinates for selection").split(','),
             x = parseFloat(coord[0] || 0.0),
@@ -593,8 +594,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             z = parseFloat(coord[2] || 0.0);
 
         if (!center) {
-            x = x - current.device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
-            y = y - current.device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
+            x = x - device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
+            y = y - device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
         }
 
         api.selection.move(x, y, z, true);
@@ -1977,10 +1978,17 @@ gapp.register("kiri.init", [], (root, exports) => {
             camConventional:     uc.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
             camEaseDown:         uc.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),
             camDepthFirst:       uc.newBoolean(LANG.ou_depf_s, onBooleanClick, {title:LANG.ou_depf_l, modes:CAM}),
-            outputOriginBounds:  uc.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
-            outputOriginCenter:  uc.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LZR}),
-            camOriginTop:        uc.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
             camForceZMax:        uc.newBoolean(LANG.ou_forz_s, onBooleanClick, {title:LANG.ou_forz_l, modes:CAM}),
+            outputOriginBounds:  uc.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
+            outputOriginCenter:  uc.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:LASER}),
+
+            camOrigin:           uc.newGroup(LANG.co_menu, null, {modes:CAM, xgroup:"cam_origin"}),
+            camOriginTop:        uc.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
+            camOriginCenter:     uc.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM}),
+            camSep:              uc.newBlank({class:"pop-sep", modes:CAM}),
+            camOriginOffX:       uc.newInput(LANG.co_offx_s, {title:LANG.co_offx_l, convert:uc.toInt, modes:CAM}),
+            camOriginOffY:       uc.newInput(LANG.co_offy_s, {title:LANG.co_offy_l, convert:uc.toInt, modes:CAM}),
+            camOriginOffZ:       uc.newInput(LANG.co_offz_s, {title:LANG.co_offz_l, convert:uc.toInt, modes:CAM}),
 
             camExpert:           uc.newGroup(LANG.op_xprt_s, null, {group: "cam_expert", modes:CAM, marker: false}),
             camExpertFast:       uc.newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, modes:CAM, show: () => !ui.camTrueShadow.checked }),

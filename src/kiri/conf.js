@@ -572,7 +572,10 @@ const conf = exports({
                 camIndexAbs: true,
                 camStockOn: true,
                 camConventional: false, // outputClockwise
-                outputOriginCenter: false,
+                camOriginCenter: false,
+                camOriginOffX: 0,
+                camOriginOffY: 0,
+                camOriginOffZ: 0,
                 outputInvertX: false,
                 outputInvertY: false,
                 camExpertFast: false,
