@@ -9,20 +9,14 @@ gapp.register("kiri.files", [], (root, exports) => {
 const { kiri } = self;
 
 class Files {
-    constructor(indexdb, options) {
+    constructor(indexdb) {
         let store = this;
         this.db = indexdb;
         this.files = {};
         this.listeners = [];
-        this.options = options || {};
         this.deferredHandler = null;
         this.concurrent = 0;
         this.refresh();
-    }
-
-    setOptions(options) {
-        this.options = options;
-        return this;
     }
 
     get index() {
@@ -59,16 +53,6 @@ class Files {
 
     removeFileListener(listener) {
         this.listeners.remove(listener);
-    };
-
-    decimate(vertices, callback) {
-        let options = this.options;
-        if (vertices.length < (options.threshold || 500000)) {
-            return callback(vertices);
-        }
-        kiri.client.decimate(vertices, this.options, function(reply) {
-            callback(reply);
-        });
     };
 
     setDeferredHandler(handler) {
@@ -109,14 +93,6 @@ class Files {
                 };
                 return pdb.put('files', store.files);
             })
-            .then(() => {
-                return new Promise((resolve,reject) => {
-                    store.decimate(vertices, resolve);
-                });
-            })
-            .then(decimated => {
-                return pdb.put(`fdec-${name}`, decimated)
-            })
             .then(ondone)
             .catch(ondone);
     };
@@ -133,15 +109,10 @@ class Files {
                 store.files[newname] = store.files[name];
                 delete store.files[name];
                 saveFileList(store);
-                store.db.remove(`fdec-${name}`);
                 store.db.remove(`file-${name}`);
                 callback(error.length ? {error} : {});
             }
         }
-        store.db.get(`fdec-${name}`, (vertices) => {
-            if (!vertices) return complete(false, 'no decimation');
-            store.db.put(`fdec-${newname}`, vertices, complete);
-        });
         store.db.get(`file-${name}`, (vertices) => {
             if (!vertices) return complete(false, 'no raw file');
             store.db.put(`file-${newname}`, vertices, complete);
@@ -159,21 +130,8 @@ class Files {
             if (store.deferredHandler) return store.deferredHandler(rec.deferred, name, callback);
             return callback();
         }
-        this.db.get('fdec-'+name, function(vertices) {
-            if (vertices) {
-                callback(vertices);
-            } else {
-                store.db.get('file-'+name, function(vertices) {
-                    if (vertices) {
-                        store.decimate(vertices, function(decimated) {
-                            store.db.put('fdec-'+name, decimated);
-                            callback(vertices);
-                        });
-                    } else {
-                        return callback();
-                    }
-                });
-            }
+        this.db.get('file-'+name, function(vertices) {
+            callback(vertices);
         });
     };
 
@@ -185,7 +143,6 @@ class Files {
         let store = this;
         if (store.files[name]) {
             delete store.files[name];
-            store.db.remove('fdec-'+name);
             store.db.remove('file-'+name, function(ok) {
                 saveFileList(store);
                 if (callback) callback(ok);
@@ -217,8 +174,8 @@ function notifyFileListeners(store) {
     }
 }
 
-kiri.openFiles = function(indexdb, options) {
-    return new Files(indexdb, options);
+kiri.openFiles = function(indexdb) {
+    return new Files(indexdb);
 };
 
 });

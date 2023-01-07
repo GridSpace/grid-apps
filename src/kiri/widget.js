@@ -104,13 +104,11 @@ class Widget {
         }
         const widget = this;
         const mark = time();
+        const vertices = this.getGeoVertices(true);
         widget.meta.file = filename;
         widget.meta.save = mark;
-        catalog().putFile(filename, this.getGeoVertices(true), vertices => {
-            if (vertices && vertices.length) {
-                console.log("saving decimated mesh ["+vertices.length+"] time ["+(time()-mark)+"]");
-                widget.loadVertices(vertices);
-            }
+        catalog().putFile(filename, vertices, () => {
+            console.log("saved mesh ["+(vertices.length/3)+"] time ["+(time()-mark)+"]");
         });
         return this;
     }

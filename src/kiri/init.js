@@ -194,7 +194,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         control.exportLocal = ui.exportLocal.checked;
         control.exportThumb = ui.exportThumb.checked;
         control.exportPreview = ui.exportPreview.checked;
-        control.decimate = ui.decimate.checked;
         control.healMesh = ui.healMesh.checked;
         control.threaded = setThreaded(ui.threaded.checked);
         control.assembly = ui.assembly.checked;
@@ -204,9 +203,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         // platform.layout();
         api.conf.save();
         api.platform.update_size();
-        api.catalog.setOptions({
-            maxpass: control.decimate ? 10 : 0
-        });
         uc.setHoverPop(false);
         updateStats();
         if (control.decals && !control.dark) {
@@ -1803,7 +1799,6 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             parts:            uc.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
             detail:           uc.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
-            decimate:         uc.newBoolean(LANG.pt_deci_s, booleanSave, {title: LANG.pt_deci_l}),
             healMesh:         uc.newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
             threaded:         uc.newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:FDM_SLA}),
             assembly:         uc.newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:FDM_SLA}),
@@ -2679,7 +2674,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.antiAlias.checked = control.antiAlias;
             ui.reverseZoom.checked = control.reverseZoom;
             ui.autoSave.checked = control.autoSave;
-            ui.decimate.checked = control.decimate;
             ui.healMesh.checked = control.healMesh;
             ui.threaded.checked = setThreaded(control.threaded);
             ui.assembly.checked = control.assembly;

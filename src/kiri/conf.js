@@ -738,7 +738,6 @@ const conf = exports({
             exportLocal: false,
             exportThumb: false,
             exportPreview: false,
-            decimate: true,
             detail: "50",
             animesh: "800",
             healMesh: false,

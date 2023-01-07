@@ -42,6 +42,7 @@ gapp.register("moto.space", [], (root, exports) => {
         showPlatform = true,
         hidePlatformBelow = true,
         hideGridBelow = false,
+        showGrid = true,
         showGridLines = true,
         showFocus = 0,
         focalPoint = undefined,
@@ -1186,7 +1187,7 @@ gapp.register("moto.space", [], (root, exports) => {
             showAxes,
             showVolume,
             showGridBelow: (b) => { hideGridBelow = !b },
-            showGrid:   (b) => { grid.view.visible = b },
+            showGrid:   (b) => { showGrid = grid.view.visible = b },
             showGrid2:  (b) => { showGridLines = grid.lines.visible = b },
             setMaxZ:    (z) => { panY = z / 2 },
             setCenter:  (x,y,z) => { panX = x; panY = z, panZ = y },
@@ -1355,7 +1356,7 @@ gapp.register("moto.space", [], (root, exports) => {
                     volume.visible = showVolume && platform.visible;
                 }
                 if (grid.view) {
-                    grid.view.visible = hideGridBelow ? platform.visible : true;
+                    grid.view.visible = hideGridBelow ? platform.visible : showGrid;
                 }
                 if (cameraLight) {
                     cameraLight.position.copy(camera.position);
