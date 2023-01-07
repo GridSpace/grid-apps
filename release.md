@@ -5,7 +5,17 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.8
 
-* refactor object/group storage model in Mesh:Tool
+* update server-side sample module code
+* add new fdm parameters, range overrides
+* various fixes and improvements to CAM indexing
+* various fixes and improvements to gcode variables
+* move to save Z between CAM ops, refresh spindle speed
+* improve gcode arc import decoding
+* improve trace line selection with zoom adaptive thresholds
+* add CAM origin offset optional parameters
+* remove auto-decimation on object import
+* fix FDM raft line fill strategy
+- refactor object/group storage model in Mesh:Tool
 
 
 # Release 3.7 (2022-11-12)
