@@ -43,6 +43,8 @@ FDM.init = function(kiri, api) {
         "sliceFillGrow": LANG.fi_grow_s,
         "sliceSolidRate": LANG.ou_fini_s,
         "sliceSolidMinArea": LANG.ad_msol_s,
+        "sliceTopLayers": LANG.sl_ltop_s,
+        "sliceBottomLayers": LANG.sl_lbot_s,
         "firstLayerRate": LANG.fl_rate_s,
         "firstLayerPrintMult": LANG.fl_mult_s,
         "firstLayerFanSpeed": LANG.ou_fans_s,

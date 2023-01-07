@@ -110,7 +110,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         useAssembly = controller.assembly,
         isConcurrent = controller.threaded && kiri.minions.concurrent,
         topLayers = process.sliceTopLayers || 0,
-        solidLayers = process.sliceSolidLayers || 0,
         bottomLayers = process.sliceBottomLayers || 0,
         vaseMode = process.sliceFillType === 'vase' && !isSynth,
         metadata = widget.anno,
@@ -699,7 +698,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         // layer boolean diffs need to be computed to find flat areas to fill
         // and overhangs that need to be supported. these are stored in flats
         // and bridges, projected up/down, and merged into an array of solids
-        if ((topLayers || bottomLayers || solidLayers) && !vaseMode && !isSynth) {
+        if (!vaseMode && !isSynth) {
             profileStart("delta");
             forSlices(0.2, 0.34, slice => {
                 let params = slice.params || process;
@@ -710,8 +709,11 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             profileEnd();
             profileStart("delta-project");
             forSlices(0.34, 0.35, slice => {
-                if (solidLayers || topLayers) projectFlats(slice, solidLayers || topLayers);
-                if (solidLayers || bottomLayers) projectBridges(slice, solidLayers || bottomLayers);
+                let params = slice.params || process;
+                topLayers = params.sliceTopLayers || 0;
+                bottomLayers = params.sliceBottomLayers || 0;
+                if (topLayers) projectFlats(slice, topLayers);
+                if (bottomLayers) projectBridges(slice, bottomLayers);
             }, "layer deltas");
             profileEnd();
             profileStart("solid-fill")
