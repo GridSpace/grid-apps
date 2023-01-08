@@ -43,6 +43,7 @@ let debug = self.debug === true,
     },
     wgroup = {},
     wcache = {},
+    pcache = {},
     minions = [],
     minionq = [],
     minifns = {},
@@ -179,6 +180,7 @@ kiri.minions = {
                 reject("concurrent slice unavaiable");
             }
             let { each } = options;
+            // todo use shared array buffer?
             let i = 0, floatP = new Float32Array(points.length * 3);
             for (let p of points) {
                 floatP[i++] = p.x;
@@ -202,9 +204,70 @@ kiri.minions = {
         });
     },
 
+    camSliceZ(zarr, slicer, options) {
+        let { points, bounds, zFlat, zLine, zList, zSum, ox } = slicer;
+        let shared = new SharedArrayBuffer(points.length * 3 * 4)
+        let i = 0, floatP = new Float32Array(shared);
+        options = Object.assign(options, slicer.options);
+        options.each();
+        delete options.each;
+        for (let p of points) {
+            floatP[i++] = p.x;
+            floatP[i++] = p.y;
+            floatP[i++] = p.z;
+        }
+        minwork.broadcast('camSetPoints', shared);
+        let ps = [];
+        let step = zarr.length / concurrent;
+        while (zarr.length) {
+            let arr = zarr.slice(0, step);
+            zarr = zarr.slice(step);
+            ps.push(minwork.queueAsync({
+                cmd: "camSliceZ",
+                zarr: arr,
+                set: {
+                    bounds,
+                    buckets: {},
+                    options,
+                    zFlat,
+                    zLine,
+                    zList,
+                    zSum,
+                    ox
+                }
+            }));
+        }
+        return Promise.all(ps).then(data => {
+            minwork.broadcast('camClearPoints');
+            let result = data
+                .map(data => data.data)
+                .flat()
+                .map(rec => {
+                    const slice = kiri.newSlice(rec.z);
+                    const points = kiri.codec.decodePointArray(rec.lines);
+                    slice.lines = [];
+                    points.forEachPair((p1, p2) => {
+                        slice.lines.push(base.newLine(p1, p2));
+                    });
+                    return {
+                        z: rec.z,
+                        lines: slice.lines,
+                        slice
+                    };
+                });
+            return result;
+        });
+    },
+
     queue(work, ondone, direct) {
         minionq.push({work, ondone, direct});
         minwork.kick();
+    },
+
+    queueAsync(work, direct) {
+        return new Promise(resolve => {
+            minwork.queue(work, resolve, direct);
+        });
     },
 
     kick() {
@@ -228,6 +291,14 @@ kiri.minions = {
                 cmd: "wasm",
                 enable
             });
+        }
+    },
+
+    broadcast(cmd, data, direct) {
+        for (let minion of minions) {
+            minion.postMessage({
+                cmd, data
+            }, direct);
         }
     }
 };

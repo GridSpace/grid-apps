@@ -296,7 +296,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     z += h;
                 }
             }
-            // reduce slice position by half height
+            // reduce slice position by half layer height
             for (let i=0; i<zi.length; i++) {
                 zi[i] = (zi[i] - zh[i] / 2).round(3);
             }

@@ -33,7 +33,7 @@ class CamOp {
         return 1;
     }
 
-    slice() { }
+    async slice() { }
 
     prepare() { }
 }
@@ -106,7 +106,7 @@ class OpLevel extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let { op, state } = this;
         let { settings, widget, addSlices } = state;
         let { updateToolDiams, tabs, cutTabs } = state;
@@ -164,7 +164,7 @@ class OpRough extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let { op, state } = this;
         let { settings, widget, slicer, addSlices, unsafe, color } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
@@ -476,7 +476,7 @@ class OpOutline extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let { op, state } = this;
         let { settings, widget, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
         let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs, cutPolys } = state;
@@ -727,13 +727,13 @@ class OpContour extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let { op, state } = this;
         let { addSlices } = state;
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
-        let topo = new CAM.Topo({
+        let topo = await CAM.Topo({
             // onupdate: (update, msg) => {
             onupdate: (index, total, msg) => {
                 progress(index / total, msg);
@@ -816,7 +816,7 @@ class OpTrace extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let { op, state } = this;
         let { tool, rate, down, plunge, offset, thru } = op;
         let { settings, widget, addSlices, zMax, zTop, zThru, tabs } = state;
@@ -1019,7 +1019,7 @@ class OpPocket extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         const pocket = this;
         const debug = false;
         let { op, state } = this;
@@ -1036,7 +1036,7 @@ class OpPocket extends CamOp {
         let engrave = contour && op.engrave;
         if (contour) {
             down = 0;
-            this.topo = new CAM.Topo({
+            this.topo = await CAM.Topo({
                 // onupdate: (update, msg) => {
                 onupdate: (index, total, msg) => {
                     progress((index / total) * 0.9, msg);
@@ -1242,7 +1242,7 @@ class OpDrill extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let { op, state } = this;
         let { settings, addSlices, tslices, updateToolDiams } = state;
         let { zBottom, zThru, thruHoles, color } = state;
@@ -1332,7 +1332,7 @@ class OpRegister extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let { op, state } = this;
         let { settings, widget, bounds, addSlices, zMax, zThru, color } = state;
         let { updateToolDiams } = state;
@@ -1484,7 +1484,7 @@ class OpXRay extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let { widget, addSlices } = this.state;
         let slicer = new kiri.cam_slicer(widget.getPoints(), {
             zlist: true,
@@ -1512,26 +1512,21 @@ class OpShadow extends CamOp {
         super(state, op);
     }
 
-    slice(progress) {
+    async slice(progress) {
         let state = this.state;
         let { ops, slicer, widget, unsafe, addSlices, shadowAt } = state;
 
-        let real = ops.map(rec => rec.op).filter(op => op);
-        let drill = real.filter(op => op.type === 'drill').length > 0;
-        let rough = real.filter(op => op.type === 'rough').length > 0;
-        let outline = real.filter(op => op.type === 'outline').length > 0;
-        let outlineOut = real.filter(op => op.type === 'outline' && op.outside).length > 0;
+        let realOps = ops.map(rec => rec.op).filter(op => op);
         let trueShadow = state.settings.process.camTrueShadow === true;
 
-        let minStepDown = real
+        let minStepDown = realOps
             .map(op => (op.down || 3) / (trueShadow ? 1 : 3))
             .reduce((a,v) => Math.min(a, v, 1));
 
         let tslices = [];
         let tshadow = [];
         let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
-        let complex = tzindex.length > 50 || widget.vertices.length > 1000000;
-        let skipTerrain = unsafe;// || (!rough && !outline && !drill && complex);
+        let skipTerrain = unsafe;
 
         if (skipTerrain) {
             console.log("skipping terrain generation");
@@ -1540,7 +1535,6 @@ class OpShadow extends CamOp {
 
         let lsz; // only shadow up to bottom of last shadow for progressive union
         let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
-            // let shadow = trueShadow ? CAM.shadowAt(widget, data.z, lsz) : [];
             let shadow = trueShadow ? shadowAt(data.z, lsz) : [];
             tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadow), 0.01, true);
             tslices.push(data.slice);

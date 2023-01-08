@@ -32,6 +32,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         FDM_SLA = [MODES.FDM,MODES.SLA],
         FDM_CAM = [MODES.CAM,MODES.FDM],
         FDM_LZR = [MODES.LASER,MODES.FDM],
+        FDM_CAM_SLA = [MODES.CAM,MODES.FDM,MODES.SLA],
         FDM_LZR_SLA = [MODES.LASER,MODES.FDM,MODES.SLA],
         CAM_LZR = [MODES.LASER,MODES.CAM],
         GCODE = [MODES.FDM, MODES.LASER, MODES.CAM],
@@ -1800,7 +1801,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             parts:            uc.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
             detail:           uc.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
             healMesh:         uc.newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
-            threaded:         uc.newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:FDM_SLA}),
+            threaded:         uc.newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:FDM_CAM_SLA}),
             assembly:         uc.newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:FDM_SLA}),
 
             prefadd:          uc.checkpoint($('prefs-add')),

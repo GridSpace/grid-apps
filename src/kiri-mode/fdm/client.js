@@ -35,6 +35,7 @@ FDM.init = function(kiri, api) {
     const { ui, uc } = api;
     const rangeVars = {
         // slice
+        // "sliceHeight": LANG.sl_lahi_s,
         "sliceShells": LANG.sl_shel_s,
         "sliceFillType": LANG.fi_type,
         "sliceFillWidth": LANG.fi_wdth_s,

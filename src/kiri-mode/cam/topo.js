@@ -21,11 +21,14 @@ const POLY = polygons;
 const RAD2DEG = 180 / Math.PI;
 
 class Topo {
-    constructor(opt = {}) {
+    constructor() { }
+
+    async generate(opt = {}) {
         let { state, contour, onupdate, ondone } = opt;
         let { widget, settings, tshadow, center, tabs, color } = opt.state;
 
-        let density = parseInt(settings.controller.animesh || 100) * 2500,
+        let { controller, process } = settings,
+            density = parseInt(controller.animesh || 100) * 2500,
             axis = contour.axis.toLowerCase(),
             contourX = axis === "x",
             contourY = axis === "y",
@@ -33,7 +36,6 @@ class Topo {
             tolerance = contour.tolerance,
             flatness = contour.flatness || 0.005,
             bridge = contour.bridging || 0,
-            proc = settings.process,
             shadow = tshadow,
             minX = bounds.min.x,
             maxX = bounds.max.x,
@@ -73,7 +75,7 @@ class Topo {
             newslices = [],
             tabsMax = tabs ? Math.max(...tabs.map(tab => tab.dim.z/2 + tab.pos.z)) : 0,
             tabsOn = tabs,
-            tabHeight = Math.max(proc.camTabsHeight + zBottom, tabsMax),
+            tabHeight = Math.max(process.camTabsHeight + zBottom, tabsMax),
             clipTab = tabsOn ? [] : null,
             clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
@@ -437,21 +439,25 @@ class Topo {
 
         let points = base.verticesToPoints(widget.getGeoVertices(true, true));
         let slicer = new kiri.cam_slicer(points, {
-            swapX: true, emptyok: true, notopok: true
+            swapX: true, emptyok: true, notopok: true, threaded: controller.threaded
         });
         let sindex = slicer.interval(resolution);
         if (!topo.slices) stepsTotal += sindex.length * 2;
         if (contourX) stepsTotal += Math.round((maxY-minY) / toolStep);
         if (contourY) stepsTotal += Math.round((maxX-minX) / toolStep);
 
-        let slices = topo.slices = topo.slices || slicer.slice(sindex, { each: (data, index, total) => {
+        let slices = topo.slices = topo.slices || await slicer.sliceAsync(sindex, { each: (data, index, total) => {
             onupdate(++stepsTaken, stepsTotal, "topo slice");
         }, genso: true });
 
         processSlices(slices.filter(s => s.lines).map(data => data.slice));
+
+        return this;
     }
 }
 
-CAM.Topo = Topo;
+CAM.Topo = async function(opt) {
+    return new Topo().generate(opt);
+};
 
 });

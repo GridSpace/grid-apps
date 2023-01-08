@@ -26,7 +26,7 @@ const POLY = polygons;
  * @param {Widget} widget
  * @param {Function} output
  */
-CAM.slice = function(settings, widget, onupdate, ondone) {
+CAM.slice = async function(settings, widget, onupdate, ondone) {
     let mesh = widget.mesh,
         proc = settings.process,
         stock = settings.stock || {},
@@ -238,7 +238,7 @@ CAM.slice = function(settings, widget, onupdate, ondone) {
     setAxisIndex();
     for (let op of opList) {
         let weight = op.weight();
-        op.slice((progress, message) => {
+        await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
         tracker.rotation = isIndexed ? axisRotation : 0;
