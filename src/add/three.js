@@ -5,6 +5,7 @@
 // dep: ext.three
 // dep: ext.three-bgu
 // dep: ext.three-svg
+// dep: ext.three-bvh
 gapp.register("add.three", [], (root, exports) => {
 
 let MP = THREE.Mesh.prototype,
