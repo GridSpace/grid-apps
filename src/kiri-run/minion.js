@@ -138,25 +138,8 @@ const funcs = {
         });
     },
 
-    camSliceZ: (data, seq) => {
-        const { zarr, set } = data;
-        const slicer = new kiri.cam_slicer();
-        set.points = cache.camPoints;
-        set.options.each = (data, index, total) => {
-            // log({ data, index, total });
-            datas.push({
-                z: data.z,
-                lines: kiri.codec.encodePointArray(data.lines.map(line => [ line.p1, line.p2 ]).flat())
-            });
-        };
-        Object.assign(slicer, set);
-        const datas = [];
-        slicer.slice(zarr);
-        reply({ seq, data: datas });
-    },
-
     camSetPoints: data => {
-        const points = new Float32Array(data.data.slice());
+        const points = new Float32Array(data.data);
         let i = 0, p = 0, realp = new Array(points.length / 3);
         while (i < points.length) {
             realp[p++] = base.newPoint(points[i++], points[i++], points[i++]).round(3);

@@ -135,7 +135,7 @@ class Slicer {
         let zSum = this.zSum;
         let zMax = this.bounds.max.z;
         let points = this.points;
-        let bucketCount = this.threaded ? 0 : Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
+        let bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
         let zScale = this.zScale = 1 / (zMax / bucketCount);
         let buckets = this.buckets = {};
 
@@ -164,14 +164,6 @@ class Slicer {
             }
         }
         return this;
-    }
-
-    async sliceAsync(zarr, options) {
-        if (!this.threaded) {
-            return this.slice(zarr, options);
-        }
-        return await kiri.minions.camSliceZ(zarr, this, options);
-        // return this.slice(zarr, options);
     }
 
     // slice through points at given Z and return polygons

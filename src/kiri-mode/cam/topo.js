@@ -446,7 +446,7 @@ class Topo {
         if (contourX) stepsTotal += Math.round((maxY-minY) / toolStep);
         if (contourY) stepsTotal += Math.round((maxX-minX) / toolStep);
 
-        let slices = topo.slices = topo.slices || await slicer.sliceAsync(sindex, { each: (data, index, total) => {
+        let slices = topo.slices = topo.slices || slicer.slice(sindex, { each: (data, index, total) => {
             onupdate(++stepsTaken, stepsTotal, "topo slice");
         }, genso: true });
 

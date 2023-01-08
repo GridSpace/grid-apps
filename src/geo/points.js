@@ -16,7 +16,7 @@ gapp.overlay(base, {
 
 /**
  * converts a geometry point array into a kiri point array
- * with auto-decimation
+ * with optional decimation
  */
 function verticesToPoints(array, options) {
     let parr = new Array(array.length / 3),
@@ -49,7 +49,7 @@ function verticesToPoints(array, options) {
     // maxpass = max number of decimations
     threshold = threshold > 0 ? threshold : config.decimate_threshold;
     precision = precision >= 0 ? precision : config.precision_decimate;
-    maxpass = maxpass >= 0 ? maxpass : 10;
+    maxpass = maxpass >= 0 ? maxpass : 0;
 
     // decimate until all point spacing > precision
     if (maxpass && precision > 0.0)
