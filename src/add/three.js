@@ -22,6 +22,14 @@ THREE.computeFaceNormal = function(vA,vB,vC) {
     return cb;
 };
 
+// https://www.npmjs.com/package/three-mesh-bvh
+THREE.addBVH = function() {
+    const { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } = MeshBVHLib;
+    THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+    THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+    THREE.Mesh.prototype.raycast = acceleratedRaycast;
+};
+
 THREE.dispose = function(obj) {
     if (!obj) {
         return;
