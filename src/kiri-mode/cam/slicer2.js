@@ -41,15 +41,18 @@ class Slicer {
             const x2 = position[i++];
             const y2 = position[i++];
             const z2 = position[i++];
-            if (Math.min(z0, z1, z2) >= min && Math.max(z0, z1, z2) <= max) {
-                pts.push(
-                    newPoint(x0, y0, z0),
-                    newPoint(x1, y1, z1),
-                    newPoint(x2, y2, z2)
-                );
-                this.min = Math.min(this.min, z0, z1, z2);
-                this.max = Math.max(this.max, z0, z1, z2);
+            const minz = Math.min(z0, z1, z2);
+            const maxz = Math.max(z0, z1, z2);
+            if (maxz < min || minz > max) {
+                continue;
             }
+            pts.push(
+                newPoint(x0, y0, z0),
+                newPoint(x1, y1, z1),
+                newPoint(x2, y2, z2)
+            );
+            this.min = options.min || Math.min(this.min, minz);
+            this.max = options.max || Math.max(this.max, maxz);
         }
         return this;
     }
@@ -63,11 +66,14 @@ class Slicer {
             const p0 = points[i++];
             const p1 = points[i++];
             const p2 = points[i++];
-            if (Math.min(p0.z, p1.z, p2.z) >= min && Math.max(p0.z, p1.z, p2.z) <= max) {
-                pts.push(p0, p1, p2);
-                this.min = Math.min(this.min, p0.z, p1.z, p2.z);
-                this.max = Math.max(this.max, p0.z, p1.z, p2.z);
+            const minz = Math.min(p0.z, p1.z, p2.z);
+            const maxz = Math.max(p0.z, p1.z, p2.z);
+            if (maxz < min || minz > max) {
+                continue;
             }
+            pts.push(p0, p1, p2);
+            this.min = options.min || Math.min(this.min, minz);
+            this.max = options.max || Math.max(this.max, maxz);
         }
         return this;
     }
@@ -332,6 +338,18 @@ moto.broker.subscribe("worker.started", msg => {
             range.min = Math.min(range.min, x);
             range.max = Math.max(range.max, x);
         }
+        const shards = Math.ceil(Math.min(25, vertices.length / 27000));
+        const step = (range.max - range.min) / shards;
+        const slices = [];
+        let slice = { min: range.min, max: range.min + step };
+        for (let z = range.min; z < range.max; z += resolution) {
+            if (z > slice.max) {
+                slices.push(slice);
+                slice = { min: z, max: z + step };
+            }
+        }
+        slices.push(slice);
+        console.log({ shards, range, step, slices });
         // define sharded ranges
         if (false && minions.concurrent) {
             dispatch.putCache({ key: widget.id, data: vertices }, { done: data => {
@@ -345,19 +363,25 @@ moto.broker.subscribe("worker.started", msg => {
         } else {
             console.time('nuslice');
             // iterate over shards, merge output
-            const output = new Slicer()
-                .setFromArray(vertices)
-                .slice(resolution)
-                .map(rec => {
-                    const slice = kiri.newSlice(rec.z);
-                    slice.lines = rec.lines;
-                    for (let line of rec.lines) {
-                        const { p1, p2 } = line;
-                        if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
-                        if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
-                    }
-                    return slice;
-                });
+            const output = [];
+            for (let slice of slices) {
+                console.log({ slice });
+                const res = new Slicer()
+                    .setFromArray(vertices, slice)
+                    .slice(resolution)
+                    .map(rec => {
+                        const slice = kiri.newSlice(rec.z);
+                        slice.lines = rec.lines;
+                        for (let line of rec.lines) {
+                            const { p1, p2 } = line;
+                            if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
+                            if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
+                        }
+                        return slice;
+                    });
+                output.appendAll(res);
+            }
+            output.sort((a,b) => a.z - b.z);
             console.log({ output });
             console.timeEnd('nuslice');
             return output;
