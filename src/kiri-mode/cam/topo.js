@@ -35,7 +35,6 @@ class Topo {
             bounds = widget.getBoundingBox().clone(),
             tolerance = contour.tolerance,
             flatness = contour.flatness || 0.005,
-            bridge = contour.bridging || 0,
             shadow = tshadow,
             minX = bounds.min.x,
             maxX = bounds.max.x,
@@ -54,6 +53,7 @@ class Topo {
             traceJoin = toolDiameter / 2,
             maxangle = contour.angle,
             curvesOnly = contour.curves,
+            bridge = contour.bridging || 0,
             R2A = 180 / Math.PI,
             stepsx = Math.ceil(boundsX / resolution),
             stepsy = Math.ceil(boundsY / resolution),
@@ -328,7 +328,9 @@ class Topo {
                 gridv, // value
                 i, il, j, jl, x, y, tv, ltv;
 
-            const box = raster(slices);
+            const box = raster(slices).expandByVector(new THREE.Vector3(
+                partOff, partOff, 0
+            ));
             const checkr = newPoint(0,0);
             const inClip = function(polys, checkZ) {
                 checkr.x = x;
@@ -439,7 +441,7 @@ class Topo {
 
         let points = base.verticesToPoints(widget.getGeoVertices(true, true));
         let slicer = new kiri.cam_slicer(points, {
-            swapX: true, emptyok: true, notopok: true, threaded: controller.threaded
+            swapX: true, emptyok: true, notopok: true
         });
         let sindex = slicer.interval(resolution);
         if (!topo.slices) stepsTotal += sindex.length * 2;
