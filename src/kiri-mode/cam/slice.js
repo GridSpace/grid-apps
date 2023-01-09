@@ -7,6 +7,7 @@
 // dep: kiri.slice
 // dep: kiri-mode.cam.driver
 // use: kiri-mode.cam.slicer
+// use: kiri-mode.cam.slicer2
 // use: kiri-mode.cam.ops
 gapp.register("kiri-mode.cam.slice", [], (root, exports) => {
 

@@ -454,6 +454,11 @@ class Topo {
 
         processSlices(slices.filter(s => s.lines).map(data => data.slice));
 
+        // const t0 = Date.now();
+        // for (let point of points) point.swapXZ();
+        // let lines = new kiri.cam_slicer2().setFromPoints(points).slice(resolution);
+        // console.log({ sindex, lines, time: Date.now() - t0 });
+
         return this;
     }
 }
