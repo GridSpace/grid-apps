@@ -3,8 +3,10 @@
 "use strict";
 
 /**
- * Slicing engine used by CAM
+ * Slicing engine used by CAM Topo
  */
+
+// dep: moto.broker
 // dep: kiri.slice
 gapp.register("kiri-mode.cam.slicer2", [], (root, exports) => {
 
@@ -12,6 +14,10 @@ const { base, kiri } = root;
 const { config, newOrderedLine, newPoint } = base;
 
 class Slicer {
+
+    static intersectPoints = intersectPoints;
+    static checkOverUnderOn = checkOverUnderOn;
+    static removeDuplicateLines = removeDuplicateLines;
 
     constructor() {
         this.min = Infinity;
@@ -80,13 +86,13 @@ class Slicer {
         const zMax = this.max;
         const phash = {};
         const lines = [];
-        
+
         let { under, over, both } = options;
         let p1, p2, p3;
-    
+
         // default to 'over' selection with 2 points on a line
         if (!under && !both) over = true;
-    
+
         // iterate over matching buckets for this z offset
         for (let i = 0; i < points.length; ) {
             p1 = points[i++];
@@ -127,11 +133,11 @@ class Slicer {
                 }
             }
         }
-    
+
         if (lines.length == 0 && options.noEmpty) {
             return;
         }
-        
+
         return removeDuplicateLines(lines);
     }
 
@@ -311,9 +317,56 @@ function removeDuplicateLines(lines, debug) {
     return output;
 }
 
-Slicer.checkOverUnderOn = checkOverUnderOn;
-Slicer.intersectPoints = intersectPoints;
+moto.broker.subscribe("worker.started", msg => {
+    const { dispatch, minions } = msg;
+    // console.log({ cam_slicer2_worker: dispatch });
+    kiri.topo_slice = async (widget, resolution) => {
+        console.log({ topo_slice: widget, resolution });
+        const vertices = widget.getGeoVertices().toShared();
+        const range = { min: Infinity, max: -Infinity };
+        for (let i=0,l=vertices.length; i<l; i += 3) {
+            const x = vertices[i];
+            const z = vertices[i + 2];
+            vertices[i] = z;
+            vertices[i + 2] = x;
+            range.min = Math.min(range.min, x);
+            range.max = Math.max(range.max, x);
+        }
+        // define sharded ranges
+        if (false && minions.concurrent) {
+            dispatch.putCache({ key: widget.id, data: vertices }, { done: data => {
+                console.log({ put_cache_done: data });
+            }});
 
-kiri.cam_slicer2 = Slicer;
+            dispatch.clearCache({}, { done: data => {
+                console.log({ clear_cache_done: data });
+            }});
+            return [];
+        } else {
+            console.time('nuslice');
+            // iterate over shards, merge output
+            const output = new Slicer()
+                .setFromArray(vertices)
+                .slice(resolution)
+                .map(rec => {
+                    const slice = kiri.newSlice(rec.z);
+                    slice.lines = rec.lines;
+                    for (let line of rec.lines) {
+                        const { p1, p2 } = line;
+                        if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
+                        if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
+                    }
+                    return slice;
+                });
+            console.log({ output });
+            console.timeEnd('nuslice');
+            return output;
+        }
+    };
+});
+
+moto.broker.subscribe("minion.started", funcs => {
+    // console.log({ cam_slicer2_minion: funcs });
+});
 
 });

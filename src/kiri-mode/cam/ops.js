@@ -1136,7 +1136,7 @@ class OpPocket extends CamOp {
             }
         }
         let surfaces = op.surfaces[widget.id] || [];
-        let vert = widget.getGeoVertices(true,true).map(v => v.round(4));
+        let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
         // let vert = widget.getVertices().array.map(v => v.round(4));
         let outline = [];
         let faces = CAM.surface_find(widget, surfaces);

@@ -18,6 +18,7 @@ let loc = self.location,
     syncd = {},
     running = {},
     worker = null,
+    minions = false,
     restarting = false
     // occ = new Worker("/kiri/ext/occ-worker.js", {type:"module"}),
     ;
@@ -56,10 +57,12 @@ const client = exports({
 
     pool: {
         start() {
+            minions = true;
             send("pool_start", {}, noop);
         },
 
         stop() {
+            minions = false;
             send("pool_stop", {}, noop);
         }
     },
@@ -126,6 +129,11 @@ const client = exports({
             }
         };
 
+        // restart minions if they were running
+        if (minions) {
+            client.pool.start();
+        }
+
         restarting = false;
     },
 
@@ -166,7 +174,7 @@ const client = exports({
         widgets.forEach(widget => {
             if (widget.modified || !syncd[widget.id]) {
                 syncd[widget.id] = true;
-                let vertices = widget.getGeoVertices().buffer.slice(0);
+                let vertices = widget.getGeoVertices();
                 send("sync", {
                     id: widget.id,
                     meta: widget.meta,
@@ -176,7 +184,7 @@ const client = exports({
                     position: widget.mesh.position,
                 }, done => {
                     widget.modified = false;
-                }, [vertices]);
+                });
             }
         });
     },
@@ -302,6 +310,19 @@ const client = exports({
     wasm(enable) {
         send("wasm", {enable}, reply => {
             // console.log({wasm_worker_said: reply});
+        });
+    },
+
+    putCache(key, data) {
+        console.log({ putCache: key, data });
+        send("putCache", {key, data}, reply => {
+            // console.log({ putCache_reply: reply });
+        });
+    },
+
+    clearCache() {
+        send("clearCache", {}, reply => {
+            // console.log({ clearCache_reply: reply });
         });
     }
 });

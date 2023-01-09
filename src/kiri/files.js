@@ -73,6 +73,8 @@ class Files {
      * @param {Function} [callback]
      */
     putFile(name, vertices, callback) {
+        console.log({ putFile: name, vertices });
+
         let mark = Date.now();
         let store = this;
         let pdb = store.db.promise();

@@ -3,6 +3,7 @@
 "use strict";
 
 // dep: moto.license
+// dep: moto.broker
 // dep: geo.base
 // dep: geo.polygons
 // dep: geo.slicer
@@ -10,6 +11,7 @@
 // dep: kiri.codec
 // dep: kiri-mode.fdm.post
 // use: kiri-mode.cam.slicer
+// dep: kiri-mode.cam.slicer2
 // dep: ext.clip2
 gapp.register("kiri-run.minion", [], (root, exports) => {
 
@@ -22,8 +24,8 @@ const clib = self.ClipperLib;
 const ctyp = clib.ClipType;
 const ptyp = clib.PolyType;
 const cfil = clib.PolyFillType;
-const cache = self.cache = {};
 
+let cache = self.cache = {};
 let name = "unknown";
 
 // catch clipper alerts and convert to console messages
@@ -45,7 +47,7 @@ function log() {
     console.log(`[${name}]`, ...arguments);
 }
 
-const funcs = {
+const funcs = self.minion = {
     label(data, seq) {
         name = data.name;
     },
@@ -138,19 +140,20 @@ const funcs = {
         });
     },
 
-    camSetPoints: data => {
-        const points = new Float32Array(data.data);
-        let i = 0, p = 0, realp = new Array(points.length / 3);
-        while (i < points.length) {
-            realp[p++] = base.newPoint(points[i++], points[i++], points[i++]).round(3);
+    putCache: msg => {
+        const { key, data } = msg;
+        log({ minion_putCache: key, data });
+        if (data) {
+            console.log({ minion_put_cache: key, data });
+            cache[key] = data;
+        } else {
+            console.log({ minion_del_cache: key });
+            delete cache[key];
         }
-        // log({ camSetPoints: points, realp });
-        cache.camPoints = realp;
     },
 
-    camClearPoints: data => {
-        // log({ camClearPoints: data });
-        delete cache.camPoints;
+    clearCache: msg => {
+        cache = self.cache = [];
     },
 
     wasm: data => {
@@ -165,5 +168,7 @@ const funcs = {
         reply({ seq, error: "invalid command" });
     }
 };
+
+moto.broker.publish("minion.started", funcs);
 
 });

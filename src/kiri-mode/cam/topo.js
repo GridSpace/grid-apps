@@ -439,7 +439,16 @@ class Topo {
             ondone(newslices);
         }
 
-        let points = base.verticesToPoints(widget.getGeoVertices(true, true));
+        console.log('get vertices and points');
+        let points = base.verticesToPoints(widget.getGeoVertices({ unroll: true, translate: true }));
+
+        console.log('topo slice 2');
+        const slices2 = await kiri.topo_slice(widget, resolution);
+        console.log({ topo_slice_done: slices2 });
+        processSlices(slices2);
+        return this;
+
+        console.log('old slice setup')
         let slicer = new kiri.cam_slicer(points, {
             swapX: true, emptyok: true, notopok: true
         });
@@ -448,12 +457,15 @@ class Topo {
         if (contourX) stepsTotal += Math.round((maxY-minY) / toolStep);
         if (contourY) stepsTotal += Math.round((maxX-minX) / toolStep);
 
+        console.log('old slice run', stepsTotal)
         let slices = topo.slices = topo.slices || slicer.slice(sindex, { each: (data, index, total) => {
             onupdate(++stepsTaken, stepsTotal, "topo slice");
         }, genso: true });
 
+        console.log('process slices', stepsTaken)
         processSlices(slices.filter(s => s.lines).map(data => data.slice));
 
+        console.log('process done', stepsTaken)
         // const t0 = Date.now();
         // for (let point of points) point.swapXZ();
         // let lines = new kiri.cam_slicer2().setFromPoints(points).slice(resolution);

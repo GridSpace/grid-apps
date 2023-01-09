@@ -39,7 +39,7 @@ class Broker {
             for (let t of topic) {
                 this.subscribe(t, listener);
             }
-            return;
+            return this;
         }
         if (typeof topic !== 'string') {
             console.trace({invalid_topic: topic});
@@ -57,6 +57,7 @@ class Broker {
             channel.push(listener);
             this.publish(".topic.add", topic);
         }
+        return this;
     }
 
     unsubscribe(topic, listener) {

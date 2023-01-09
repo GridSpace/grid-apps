@@ -82,7 +82,7 @@ kiri.load(api => {
             if (!widget.tool) {
                 let tool = widget.tool = new mesh.tool();
                 let translate = index ? true : false;
-                tool.index(widget.getGeoVertices(true, translate));
+                tool.index(widget.getGeoVertices({ unroll: true, translate }));
             }
         };
 

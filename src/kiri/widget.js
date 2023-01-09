@@ -104,7 +104,7 @@ class Widget {
         }
         const widget = this;
         const mark = time();
-        const vertices = this.getGeoVertices(true);
+        const vertices = widget.getGeoVertices({ unroll: true }).slice();
         widget.meta.file = filename;
         widget.meta.save = mark;
         catalog().putFile(filename, vertices, () => {
@@ -123,8 +123,9 @@ class Widget {
             return;
         }
         const widget = this;
+        console.log({ saveState: widget.id });
         index().put('ws-save-'+this.id, {
-            geo: widget.getGeoVertices(false),
+            geo: widget.getGeoVertices({ unroll: false }).slice(),
             track: widget.track,
             group: this.group.id,
             meta: this.meta,
@@ -152,6 +153,7 @@ class Widget {
      * @returns {Widget}
      */
     loadVertices(data, options = { index: false }) {
+        // console.log({ loadVertices: this.id, worker: this.inWorker, data });
         let vertices,
             autoscale = false;
         if (ArrayBuffer.isView(data) || typeof(data) != 'object') {
@@ -160,12 +162,12 @@ class Widget {
             vertices = data.vertices;
             throw "deprecated vertex data format";
         }
-        // will not serialize into indexeddb -- need a performance sensitive workaround
-        // if (window.SharedArrayBuffer) {
-        //     let newvert = new Float32Array(new SharedArrayBuffer(vertices.buffer.byteLength));
-        //     newvert.set(vertices);
-        //     vertices = newvert;
-        // }
+        if (!(vertices.buffer && vertices.buffer instanceof SharedArrayBuffer)) {
+            // console.log('converting to shared vertices');
+            let newvert = new Float32Array(new SharedArrayBuffer(vertices.buffer.byteLength));
+            newvert.set(vertices);
+            vertices = newvert;
+        }
         switch (typeof(autoscale)) {
             case 'boolean':
                 autoscale = options;
@@ -610,7 +612,8 @@ class Widget {
         this.points = null;
     }
 
-    getGeoVertices(unroll, translate) {
+    getGeoVertices(opt = {}) {
+        const { unroll, translate } = opt;
         let geo = this.mesh.geometry;
         let pos = geo.getAttribute('position');
         // if indexed, return points rotated about X and then offset

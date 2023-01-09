@@ -227,6 +227,12 @@ for (let i in AP) {
     });
 }
 
+Float32Array.prototype.toShared = function() {
+    const newvert = new Float32Array(new SharedArrayBuffer(this.buffer.byteLength));
+    newvert.set(this);
+    return newvert;
+};
+
 String.prototype.reverse = function() {
     return this.split('').reverse().join('');
 };

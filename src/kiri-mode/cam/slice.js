@@ -245,7 +245,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         tracker.rotation = isIndexed ? axisRotation : 0;
         // setup new state when indexing the workspace
         if (true && op.op.type === "index") {
-            let points = base.verticesToPoints(widget.getGeoVertices(true, true));
+            let points = base.verticesToPoints(widget.getGeoVertices({ unroll: true, translate: true }));
             state.slicer = new kiri.cam_slicer(points, {
                 zlist: true,
                 zline: true

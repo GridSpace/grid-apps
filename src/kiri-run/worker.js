@@ -8,6 +8,7 @@
 // dep: kiri.codec
 // dep: kiri.slice
 // dep: moto.license
+// dep: moto.broker
 // use: load.png
 // use: ext.jszip
 // use: kiri.render
@@ -230,19 +231,10 @@ kiri.minions = {
         }
     },
 
-    wasm(enable) {
-        for (let minion of minions) {
-            minion.postMessage({
-                cmd: "wasm",
-                enable
-            });
-        }
-    },
-
     broadcast(cmd, data, direct) {
         for (let minion of minions) {
             minion.postMessage({
-                cmd, data
+                cmd, ...data
             }, direct);
         }
     }
@@ -252,6 +244,7 @@ console.log(`kiri | init work | ${gapp.version || "rogue"}`);
 
 // code is running in the worker / server context
 const dispatch =
+self.worker =
 kiri.server =
 kiri.worker = {
     pool_start(data, send) {
@@ -326,8 +319,11 @@ kiri.worker = {
             group.id = data.group;
             wgroup[data.group] = group;
         }
-        let vertices = new Float32Array(data.vertices),
-            widget = kiri.newWidget(data.id, group).loadVertices(vertices).setInWorker();
+
+        let vertices = data.vertices,
+            widget = kiri.newWidget(data.id, group)
+                .setInWorker()
+                .loadVertices(vertices);
 
         // do it here so cancel can work
         wcache[data.id] = widget;
@@ -623,8 +619,26 @@ kiri.worker = {
         } else {
             wasm_ctrl.disable();
         }
-        minwork.wasm(data.enable);
+        minwork.broadcast("wasm", { enable: data.enable ? true : false });
         send.done({ wasm: data });
+    },
+
+    putCache(msg, send) {
+        const { key, data } = msg;
+        console.log({ worker_putCache: key, data });
+        if (data) {
+            pcache[key] = data;
+        } else {
+            delete pcache[key];
+        }
+        minwork.broadcast("putCache", msg);
+        send.done({ ok: true });
+    },
+
+    clearCache(msg, send) {
+        pcache = {};
+        minwork.broadcast("clearCache", msg);
+        send.done({ ok: true });
     }
 };
 
@@ -685,6 +699,8 @@ dispatch.onmessage = self.onmessage = function(e) {
         console.log({worker_unhandled: e, msg, fn: dispatch[msg.task]});
     }
 };
+
+moto.broker.publish("worker.started", { dispatch, minions: minwork });
 
 });
 
