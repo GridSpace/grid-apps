@@ -441,40 +441,18 @@ class Topo {
             ondone(newslices);
         }
 
-        console.log('topo slice 2');
-        const slices2 = await kiri.topo_slice(widget, resolution);
-        console.log({ topo_slice_done: slices2 });
+        const slices2 = await this.topo_slice(widget, resolution);
+
         processSlices(slices2);
-        return this;
-
-        let points = base.verticesToPoints(widget.getGeoVertices({ unroll: true, translate: true }));
-        let slicer = new kiri.cam_slicer(points, {
-            swapX: true, emptyok: true, notopok: true
-        });
-        let sindex = slicer.interval(resolution);
-        if (!topo.slices) stepsTotal += sindex.length * 2;
-        if (contourX) stepsTotal += Math.round((maxY-minY) / toolStep);
-        if (contourY) stepsTotal += Math.round((maxX-minX) / toolStep);
-
-        let slices = topo.slices = topo.slices || slicer.slice(sindex, { each: (data, index, total) => {
-            onupdate(++stepsTaken, stepsTotal, "topo slice");
-        }, genso: true });
-
-        processSlices(slices.filter(s => s.lines).map(data => data.slice));
 
         return this;
     }
-}
 
-CAM.Topo = async function(opt) {
-    return new Topo().generate(opt);
-};
-
-moto.broker.subscribe("worker.started", msg => {
-    const { dispatch, minions } = msg;
-    // console.log({ cam_slicer2_worker: msg });
-    kiri.topo_slice = async (widget, resolution) => {
+    async topo_slice(widget, resolution) {
         console.log({ topo_slice: widget, resolution });
+
+        const dispatch = kiri.worker;
+        const minions = kiri.minions;
         const vertices = widget.getGeoVertices().toShared();
         const range = { min: Infinity, max: -Infinity };
 
@@ -569,13 +547,16 @@ moto.broker.subscribe("worker.started", msg => {
                 output.appendAll(res);
             }
             output.sort((a,b) => a.z - b.z);
-            console.log({ output });
             console.timeEnd('new topo slice');
             return output;
 
         }
-    };
-});
+    }
+}
+
+CAM.Topo = async function(opt) {
+    return new Topo().generate(opt);
+};
 
 moto.broker.subscribe("minion.started", msg => {
     // console.log({ cam_slicer2_minion: msg });

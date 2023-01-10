@@ -5,7 +5,6 @@
 /**
  * Slicing engine used by CAM Topo
  */
-
 gapp.register("kiri-mode.cam.slicer2", [], (root, exports) => {
 
 const { base, kiri } = root;
