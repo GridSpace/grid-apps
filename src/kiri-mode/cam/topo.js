@@ -9,7 +9,9 @@
 // dep: geo.polygons
 // dep: kiri.slice
 // dep: kiri-mode.cam.driver
-gapp.register("kiri-mode.cam.tools", [], (root, exports) => {
+// dep: kiri-mode.cam.slicer2
+// dep: moto.broker
+gapp.register("kiri-mode.cam.topo", [], (root, exports) => {
 
 const { base, kiri } = root;
 const { driver, newSlice } = kiri;
@@ -467,5 +469,136 @@ class Topo {
 CAM.Topo = async function(opt) {
     return new Topo().generate(opt);
 };
+
+moto.broker.subscribe("worker.started", msg => {
+    const { dispatch, minions } = msg;
+    // console.log({ cam_slicer2_worker: msg });
+    kiri.topo_slice = async (widget, resolution) => {
+        console.log({ topo_slice: widget, resolution });
+        const vertices = widget.getGeoVertices().toShared();
+        const range = { min: Infinity, max: -Infinity };
+
+        // swap XZ in shared array
+        for (let i=0,l=vertices.length; i<l; i += 3) {
+            const x = vertices[i];
+            const z = vertices[i + 2];
+            vertices[i] = z;
+            vertices[i + 2] = x;
+            range.min = Math.min(range.min, x);
+            range.max = Math.max(range.max, x);
+        }
+
+        const shards = Math.ceil(Math.min(25, vertices.length / 27000));
+        const step = (range.max - range.min) / shards;
+
+        let slices = [];
+        let slice = { min: range.min, max: range.min + step };
+        for (let z = range.min; z < range.max; z += resolution) {
+            if (z > slice.max) {
+                slices.push(slice);
+                slice = { min: z, max: z + step };
+            }
+        }
+        slices.push(slice);
+        console.log({ shards, range, step, slices });
+
+        // define sharded ranges
+        if (minions.running > 1) {
+
+            console.time('new topo slice minion');
+            dispatch.putCache({ key: widget.id, data: vertices }, { done: data => {
+                // console.log({ put_cache_done: data });
+            }});
+
+            let ps = slices.map(slice => {
+                return new Promise(resolve => {
+                    minions.queue({
+                        cmd: "topo_slice",
+                        id: widget.id,
+                        resolution,
+                        slice
+                    }, data => {
+                        resolve(data);
+                    });
+                });
+            });
+
+            slices = (await Promise.all(ps))
+                .map(rec => rec.res)
+                .flat()
+                .sort((a,b) => a[0] - b[0])
+                .map(rec => {
+                    let slice = kiri.newSlice(rec[0]);
+                    let lines = slice.lines = [];
+                    for (let i=1, l=rec.length; i<l; ) {
+                        lines.push(
+                            base.newLine(
+                                base.newPoint(rec[i++], rec[i++], rec[i++]),
+                                base.newPoint(rec[i++], rec[i++], rec[i++])
+                            )
+                        );
+                    }
+                    return slice;
+                });
+
+            dispatch.clearCache({}, { done: data => {
+                // console.log({ clear_cache_done: data });
+            }});
+            console.timeEnd('new topo slice minion');
+            return slices;
+
+        } else {
+
+            console.time('new topo slice');
+            // iterate over shards, merge output
+            const output = [];
+            for (let slice of slices) {
+                const res = new kiri.topo_slicer()
+                    .setFromArray(vertices, slice)
+                    .slice(resolution)
+                    .map(rec => {
+                        const slice = kiri.newSlice(rec.z);
+                        slice.lines = rec.lines;
+                        for (let line of rec.lines) {
+                            const { p1, p2 } = line;
+                            if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
+                            if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
+                        }
+                        return slice;
+                    });
+                output.appendAll(res);
+            }
+            output.sort((a,b) => a.z - b.z);
+            console.log({ output });
+            console.timeEnd('new topo slice');
+            return output;
+
+        }
+    };
+});
+
+moto.broker.subscribe("minion.started", msg => {
+    // console.log({ cam_slicer2_minion: msg });
+    const { funcs, cache, reply, log } = msg;
+
+    funcs.topo_slice = (data, seq) => {
+        const vertices = cache[data.id];
+        const res = new kiri.topo_slicer()
+            .setFromArray(vertices, data.slice)
+            .slice(data.resolution)
+            .map(rec => {
+                const ret = [ rec.z ];
+                for (let line of rec.lines) {
+                    const { p1, p2 } = line;
+                    if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
+                    if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
+                    ret.push(p1.x, p1.y, p1.z);
+                    ret.push(p2.x, p2.y, p2.z);
+                }
+                return ret;
+            });
+        reply({ seq, res });
+    };
+});
 
 });

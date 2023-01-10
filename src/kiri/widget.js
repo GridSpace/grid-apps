@@ -123,7 +123,7 @@ class Widget {
             return;
         }
         const widget = this;
-        console.log({ saveState: widget.id });
+        // console.log({ saveState: widget.id });
         index().put('ws-save-'+this.id, {
             geo: widget.getGeoVertices({ unroll: false }).slice(),
             track: widget.track,

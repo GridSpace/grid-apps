@@ -6,8 +6,6 @@
  * Slicing engine used by CAM Topo
  */
 
-// dep: moto.broker
-// dep: kiri.slice
 gapp.register("kiri-mode.cam.slicer2", [], (root, exports) => {
 
 const { base, kiri } = root;
@@ -323,74 +321,6 @@ function removeDuplicateLines(lines, debug) {
     return output;
 }
 
-moto.broker.subscribe("worker.started", msg => {
-    const { dispatch, minions } = msg;
-    // console.log({ cam_slicer2_worker: dispatch });
-    kiri.topo_slice = async (widget, resolution) => {
-        console.log({ topo_slice: widget, resolution });
-        const vertices = widget.getGeoVertices().toShared();
-        const range = { min: Infinity, max: -Infinity };
-        for (let i=0,l=vertices.length; i<l; i += 3) {
-            const x = vertices[i];
-            const z = vertices[i + 2];
-            vertices[i] = z;
-            vertices[i + 2] = x;
-            range.min = Math.min(range.min, x);
-            range.max = Math.max(range.max, x);
-        }
-        const shards = Math.ceil(Math.min(25, vertices.length / 27000));
-        const step = (range.max - range.min) / shards;
-        const slices = [];
-        let slice = { min: range.min, max: range.min + step };
-        for (let z = range.min; z < range.max; z += resolution) {
-            if (z > slice.max) {
-                slices.push(slice);
-                slice = { min: z, max: z + step };
-            }
-        }
-        slices.push(slice);
-        console.log({ shards, range, step, slices });
-        // define sharded ranges
-        if (false && minions.concurrent) {
-            dispatch.putCache({ key: widget.id, data: vertices }, { done: data => {
-                console.log({ put_cache_done: data });
-            }});
-
-            dispatch.clearCache({}, { done: data => {
-                console.log({ clear_cache_done: data });
-            }});
-            return [];
-        } else {
-            console.time('nuslice');
-            // iterate over shards, merge output
-            const output = [];
-            for (let slice of slices) {
-                console.log({ slice });
-                const res = new Slicer()
-                    .setFromArray(vertices, slice)
-                    .slice(resolution)
-                    .map(rec => {
-                        const slice = kiri.newSlice(rec.z);
-                        slice.lines = rec.lines;
-                        for (let line of rec.lines) {
-                            const { p1, p2 } = line;
-                            if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
-                            if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
-                        }
-                        return slice;
-                    });
-                output.appendAll(res);
-            }
-            output.sort((a,b) => a.z - b.z);
-            console.log({ output });
-            console.timeEnd('nuslice');
-            return output;
-        }
-    };
-});
-
-moto.broker.subscribe("minion.started", funcs => {
-    // console.log({ cam_slicer2_minion: funcs });
-});
+kiri.topo_slicer = Slicer;
 
 });

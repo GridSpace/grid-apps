@@ -73,7 +73,13 @@ function minhandler(msg) {
 // for concurrent operations
 const minwork =
 kiri.minions = {
-    concurrent,
+    get concurrent() {
+        return concurrent
+    },
+
+    get running() {
+        return minions.length;
+    },
 
     start() {
         if (minions.length || !concurrent) {
@@ -625,7 +631,7 @@ kiri.worker = {
 
     putCache(msg, send) {
         const { key, data } = msg;
-        console.log({ worker_putCache: key, data });
+        // console.log({ worker_putCache: key, data });
         if (data) {
             pcache[key] = data;
         } else {

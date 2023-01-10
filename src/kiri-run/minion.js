@@ -10,8 +10,8 @@
 // dep: geo.wasm
 // dep: kiri.codec
 // dep: kiri-mode.fdm.post
+// dep: kiri-mode.cam.topo
 // use: kiri-mode.cam.slicer
-// dep: kiri-mode.cam.slicer2
 // dep: ext.clip2
 gapp.register("kiri-run.minion", [], (root, exports) => {
 
@@ -142,12 +142,12 @@ const funcs = self.minion = {
 
     putCache: msg => {
         const { key, data } = msg;
-        log({ minion_putCache: key, data });
+        // log({ minion_putCache: key, data });
         if (data) {
-            console.log({ minion_put_cache: key, data });
+            // console.log({ minion_put_cache: key, data });
             cache[key] = data;
         } else {
-            console.log({ minion_del_cache: key });
+            // console.log({ minion_del_cache: key });
             delete cache[key];
         }
     },
@@ -169,6 +169,6 @@ const funcs = self.minion = {
     }
 };
 
-moto.broker.publish("minion.started", funcs);
+moto.broker.publish("minion.started", { funcs, cache, reply, log });
 
 });
