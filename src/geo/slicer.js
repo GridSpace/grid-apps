@@ -45,7 +45,6 @@ async function slice(points, options = {}) {
         zScale,                 // bucket span in z units
         zSum = 0.0,             // sanity check that points enclose non-zere volume
         buckets = [],           // banded/grouped faces to speed up slice/search
-        bucketMap = {},
         overlapMax = options.overlap || 0.75,
         bucketMax = options.bucketMax || 100,
         onupdate = options.onupdate || function() {},
@@ -162,6 +161,11 @@ async function slice(points, options = {}) {
         return {};
     }
 
+    // create empty buckets
+    for (i = 0; i < bucketCount; i++) {
+        buckets.push({ points: [], slices: [] });
+    }
+
     if (bucketCount > 1) {
         let failAt = (points.length * overlapMax) | 0, bucket;
         // copy triples into all matching z-buckets
@@ -175,12 +179,7 @@ async function slice(points, options = {}) {
                 bM = Math.min(Math.ceil(zM * zScale), bucketCount);
             // add point to all buckets in range
             for (j = bm; j < bM; j++) {
-                let map = bucketMap[j];
-                if (!map) {
-                    map = bucketMap[j] = { points: [], slices: [] };
-                    buckets.push(map);
-                }
-                bucket = map.points;
+                bucket = buckets[j].points;
                 bucket.push(p1);
                 bucket.push(p2);
                 bucket.push(p3);
@@ -197,7 +196,6 @@ async function slice(points, options = {}) {
     // fallback if we can't partition point space
     if (bucketCount === 1) {
         buckets = [{ points, slices: [] }];
-        bucketMap[0] = buckets[0];
     }
 
     // create buckets data structure
@@ -206,7 +204,11 @@ async function slice(points, options = {}) {
             index = bucketCount <= 1 ? 0 :
             Math.min(Math.floor(z * zScale), bucketCount - 1),
             bucket = buckets[index];
-        if (bucket) bucket.slices.push(z); else console.log({skip: index});
+        if (bucket) {
+            bucket.slices.push(z);
+        } else {
+            console.log({ missing_bucket: z, index });
+        }
         onupdate((i / zIndexes.length) * 0.1);
     }
 
@@ -403,7 +405,7 @@ async function sliceZ(z, points, options = {}) {
     }
 
     // free objects to be re-claimed and reduce memory pressure
-    if (false) {
+    if (true) {
         delete rval.groups
         delete rval.lines
         delete rval.clip.m_AllPolys
