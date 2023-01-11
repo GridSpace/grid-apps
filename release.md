@@ -15,6 +15,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add CAM origin offset optional parameters
 * remove auto-decimation on object import
 * fix FDM raft line fill strategy
+* slicing memory reduction from team lychee
+* option to control first CAM output point order
 - refactor object/group storage model in Mesh:Tool
 
 

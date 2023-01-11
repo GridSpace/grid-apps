@@ -211,20 +211,37 @@ CAM.export = function(print, online) {
         if (points === 0) {
             pos.x = pos.y = pos.z = 0;
             points++;
-            moveTo({
-                // speed: Infinity,
-                tool: out.tool,
-                point: { x: newpos.x, y: newpos.y, z: pos.z, a: pos.a }
-            }, {
-                dx: 1, dy: 1, dz: 0, time: 0
-            });
-            moveTo({
-                // speed: Infinity,
-                tool: out.tool,
-                point: { x: newpos.x, y: newpos.y, z: newpos.z, a: newpos.a }
-            }, {
-                dx: 0, dy: 0, dz: 1, time: 0
-            });
+            if (spro.camFirstZMax) {
+                moveTo({
+                    // speed: Infinity,
+                    tool: out.tool,
+                    point: { x: pos.x, y: pos.y, z: newpos.z, a: newpos.a }
+                }, {
+                    dx: 0, dy: 0, dz: 1, time: 0
+                });
+                moveTo({
+                    // speed: Infinity,
+                    tool: out.tool,
+                    point: { x: newpos.x, y: newpos.y, z: newpos.z, a: pos.a }
+                }, {
+                    dx: 1, dy: 1, dz: 0, time: 0
+                });
+            } else if (newpos.z <= pos.z) {
+                moveTo({
+                    // speed: Infinity,
+                    tool: out.tool,
+                    point: { x: newpos.x, y: newpos.y, z: pos.z, a: pos.a }
+                }, {
+                    dx: 1, dy: 1, dz: 0, time: 0
+                });
+                moveTo({
+                    // speed: Infinity,
+                    tool: out.tool,
+                    point: { x: newpos.x, y: newpos.y, z: newpos.z, a: newpos.a }
+                }, {
+                    dx: 0, dy: 0, dz: 1, time: 0
+                });
+            }
             points--;
             return;
         }
