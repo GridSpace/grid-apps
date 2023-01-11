@@ -211,7 +211,7 @@ CAM.export = function(print, online) {
         if (points === 0) {
             pos.x = pos.y = pos.z = 0;
             points++;
-            if (newpos.z > pos.z) {
+            if (spro.camFirstZMax) {
                 moveTo({
                     // speed: Infinity,
                     tool: out.tool,

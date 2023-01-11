@@ -581,6 +581,7 @@ const conf = exports({
                 camExpertFast: false,
                 camTrueShadow: false,
                 camForceZMax: false,
+                camFirstZMax: false,
                 ops: [], // current ops
                 op2: []  // flip ops
             }

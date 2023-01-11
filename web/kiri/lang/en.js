@@ -678,6 +678,8 @@ self.kiri.lang['en-us'] = {
     ou_depf_l:      ["optimize pocket cuts","with depth priority"],
     ou_forz_s:      "force z max",
     ou_forz_l:      "all moves between pockets will go to z max (above stock). this is usually required if you are not performing a roughing operation before pocketing operations.",
+    ou_z1st_s:      "first z max",
+    ou_z1st_l:      "first move in the job will be to Z max (travel distance above stock)",
 
     // CAM STOCK
     cs_menu:        "stock",

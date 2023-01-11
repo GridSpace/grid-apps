@@ -1974,6 +1974,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             camConventional:     uc.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
             camEaseDown:         uc.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),
             camDepthFirst:       uc.newBoolean(LANG.ou_depf_s, onBooleanClick, {title:LANG.ou_depf_l, modes:CAM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM_CAM}),
+            camFirstZMax:        uc.newBoolean(LANG.ou_z1st_s, onBooleanClick, {title:LANG.ou_z1st_l, modes:CAM}),
             camForceZMax:        uc.newBoolean(LANG.ou_forz_s, onBooleanClick, {title:LANG.ou_forz_l, modes:CAM}),
             outputOriginBounds:  uc.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
             outputOriginCenter:  uc.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:LASER}),
