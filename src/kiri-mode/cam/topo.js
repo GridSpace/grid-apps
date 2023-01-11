@@ -212,127 +212,48 @@ class Topo {
             lastP = undefined;
         }
 
-        function raster(slices) {
+        function rastering(slices) {
             if (!topo.raster) {
                 console.log(widget.id, 'topo raster cached');
                 return topo.box;
             }
+
             topo.raster = false;
+            topo.box = new THREE.Box2();
 
-            let gridx = 0,
-                gridy,
-                gridi, // index
-                gridv, // value
-                i, il, j, jl, x, y, tv, ltv,
-                box = topo.box = new THREE.Box2();
-
-            // filter lines pairs to only surface "up-facing", "uncovered" lines
-            slices.map(slice => {
+            let gridx = 0;
+            for (let slice of slices) {
                 newslices.push(slice);
-                const points = [];
-                // emit an array of valid line-pairs
-                const lines = slice.lines;
-                const len = lines.length;
-                outer: for (let i=0; i<len; i++) {
-                    let l1 = lines[i], p1 = l1.p1, p2 = l1.p2;
-                    // eliminate vertical
-                    if (Math.abs(p1.y - p2.y) < flatness) continue;
-                    // eliminate if both points below cutoff
-                    if (p1.z < zMin && p2.z < zMin) continue;
-                    // sort p1,p2 by y for comparison
-                    if (p1.y > p2.y) { const tp = p1; p1 = p2; p2 = tp };
-                    // eliminate if points "under" other lines
-                    for (let j=0; j<len; j++) {
-                        // skip self and adjacent
-                        if (j >= i-1 && j <= i+1) continue;
-                        let l2 = lines[j], p3 = l2.p1, p4 = l2.p2;
-                        // sort p3,p4 by y for comparison
-                        if (p3.y > p4.y) { const tp = p3; p3 = p4; p4 = tp };
-                        // it's under the other line
-                        if (Math.max(p1.z,p2.z) < Math.min(p3.z,p4.z)) {
-                            // it's inside the other line, too, so skip
-                            if (p1.y >= p3.y && p2.y <= p4.y) continue outer;
-                        }
-                    }
-                    points.push(p1, p2);
-                    box.expandByPoint(p1);
-                    box.expandByPoint(p2);
-                }
-                slice.points = points;
-                if (debug_topo_lines) slice.output()
-                    .setLayer("topo lines", {face: 0xff00ff, line: 0x880088})
-                    .addLines(points);
-                if (debug_topo_shells) slice.output()
-                    .setLayer("topo shells", {face: 0xff00ff, line: 0x008888})
-                    .addPolys(slice.topPolys());
-            });
-
-            // raster grid: for each Y slice, find z grid value (x/z swapped)
-            for (j=0, jl=slices.length; j<jl; j++) {
-                const slice = slices[j];
-                const points = slice.points;
-                gridy = 0;
-                // rasterize one x slice
-                for (y = minY; y < maxY && gridy < stepsy; y += resolution) {
-                    gridi = gridx * stepsy + gridy;
-                    gridv = data[gridi] || 0;
-                    // strategy using raw lines (faster slice, but more lines)
-                    for (i=0, il=points.length; i<il; i += 2) {
-                        const p1 = points[i], p2 = points[i+1];
-                        // one endpoint above grid
-                        const crossz = (p1.z > gridv || p2.z > gridv);
-                        // segment crosses grid y
-                        const spansy = (p1.y <= y && p2.y >= y);
-                        if (crossz && spansy) {
-                            // compute intersection of z ray up
-                            // and segment at this grid point
-                            const dy = p1.y - p2.y,
-                                dz = p1.z - p2.z,
-                                pct = (p1.y - y) / dy,
-                                nz = p1.z - (dz * pct);
-                            // save if point is greater than existing grid point
-                            if (nz > gridv) {
-                                gridv = data[gridi] = Math.max(nz, zMin);
-                                if (debug_topo) slice.output()
-                                    .setLayer("heights", {face: color, line: color})
-                                    .addLine(
-                                        newPoint(p1.x, y, 0),
-                                        newPoint(p1.x, y, gridv)
-                                    );
-                            }
-                        }
-                    }
-                    gridy++;
-                }
-                gridx++;
-                // remove flat lines when curvesOnly
-                if (curvesOnly) {
-                    let nup = [];
-                    for (let i=0, p=slice.points, l=p.length; i<l; i += 2) {
-                        const p1 = p[i];
-                        const p2 = p[i+1];
-                        if (Math.abs(p1.z - p2.z) >= flatness) {
-                            nup.push(p1, p2);
-                        }
-                    }
-                    slice.points = nup;
-                }
+                slice.points = raster_slice({
+                    lines: slice.lines,
+                    box: topo.box,
+                    data,
+                    resolution,
+                    curvesOnly,
+                    flatness,
+                    zMin,
+                    minY,
+                    maxY,
+                    stepsy,
+                    slice,
+                    gridx: gridx++
+                });
                 onupdate(++stepsTaken, stepsTotal, "raster surface");
             }
 
-            return box;
         }
 
-        function processSlices(slices) {
+        function contouring(slices) {
             let gridx = 0,
                 gridy,
                 gridi, // index
                 gridv, // value
                 i, il, j, jl, x, y, tv, ltv;
 
-            const box = raster(slices).expandByVector(new THREE.Vector3(
+            const box = topo.box.expandByVector(new THREE.Vector3(
                 partOff, partOff, 0
             ));
+
             const checkr = newPoint(0,0);
             const inClip = function(polys, checkZ) {
                 checkr.x = x;
@@ -437,13 +358,13 @@ class Topo {
                     onupdate(++stepsTaken, stepsTotal, "contour x");
                 }
             }
-
-            ondone(newslices);
         }
 
         const slices2 = await this.topo_slice(widget, resolution);
 
-        processSlices(slices2);
+        rastering(slices2);
+        contouring(slices2);
+        ondone(newslices);
 
         return this;
     }
@@ -553,6 +474,97 @@ class Topo {
         }
     }
 }
+
+function raster_slice(inputs) {
+    const { lines, data, box, resolution, curvesOnly } = inputs;
+    const { flatness, zMin, minY, maxY, stepsy, gridx } = inputs;
+    const { slice } = inputs;
+
+    let gridy,
+        gridi, // index
+        gridv, // value
+        i, il, j, jl, x, y, tv, ltv;
+
+    // filter lines pairs to only surface "up-facing", "uncovered" lines
+    const points = [];
+    // emit an array of valid line-pairs
+    const len = lines.length;
+
+    outer: for (let i=0; i<len; i++) {
+        let l1 = lines[i], p1 = l1.p1, p2 = l1.p2;
+        // eliminate vertical
+        if (Math.abs(p1.y - p2.y) < flatness) continue;
+        // eliminate if both points below cutoff
+        if (p1.z < zMin && p2.z < zMin) continue;
+        // sort p1,p2 by y for comparison
+        if (p1.y > p2.y) { const tp = p1; p1 = p2; p2 = tp };
+        // eliminate if points "under" other lines
+        for (let j=0; j<len; j++) {
+            // skip self and adjacent
+            if (j >= i-1 && j <= i+1) continue;
+            let l2 = lines[j], p3 = l2.p1, p4 = l2.p2;
+            // sort p3,p4 by y for comparison
+            if (p3.y > p4.y) { const tp = p3; p3 = p4; p4 = tp };
+            // it's under the other line
+            if (Math.max(p1.z,p2.z) < Math.min(p3.z,p4.z)) {
+                // it's inside the other line, too, so skip
+                if (p1.y >= p3.y && p2.y <= p4.y) continue outer;
+            }
+        }
+        points.push(p1, p2);
+        box.expandByPoint(p1);
+        box.expandByPoint(p2);
+    }
+
+    gridy = 0;
+    // rasterize one x slice
+    for (y = minY; y < maxY && gridy < stepsy; y += resolution) {
+        gridi = gridx * stepsy + gridy;
+        gridv = data[gridi] || 0;
+        // strategy using raw lines (faster slice, but more lines)
+        for (i=0, il=points.length; i<il; i += 2) {
+            const p1 = points[i], p2 = points[i+1];
+            // one endpoint above grid
+            const crossz = (p1.z > gridv || p2.z > gridv);
+            // segment crosses grid y
+            const spansy = (p1.y <= y && p2.y >= y);
+            if (crossz && spansy) {
+                // compute intersection of z ray up
+                // and segment at this grid point
+                const dy = p1.y - p2.y,
+                    dz = p1.z - p2.z,
+                    pct = (p1.y - y) / dy,
+                    nz = p1.z - (dz * pct);
+                // save if point is greater than existing grid point
+                if (nz > gridv) {
+                    gridv = data[gridi] = Math.max(nz, zMin);
+                    if (slice) slice.output()
+                        .setLayer("heights", {face: 0, line: 0})
+                        .addLine(
+                            newPoint(p1.x, y, 0),
+                            newPoint(p1.x, y, gridv)
+                        );
+                }
+            }
+        }
+        gridy++;
+    }
+
+    // remove flat lines when curvesOnly
+    if (curvesOnly) {
+        let nup = [];
+        for (let i=0, p=points, l=p.length; i<l; i += 2) {
+            const p1 = p[i];
+            const p2 = p[i+1];
+            if (Math.abs(p1.z - p2.z) >= flatness) {
+                nup.push(p1, p2);
+            }
+        }
+        points = nup;
+    }
+
+    return points;
+};
 
 CAM.Topo = async function(opt) {
     return new Topo().generate(opt);

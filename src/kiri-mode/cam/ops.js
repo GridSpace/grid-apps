@@ -771,7 +771,10 @@ class OpContour extends CamOp {
         printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
 
         for (let slice of sliceOut) {
-            if (!slice.camLines) continue;
+            // ignore debug slices
+            if (!slice.camLines) {
+                continue;
+            }
             let polys = [], poly, emit;
             slice.camLines.forEach(function (poly) {
                 if (depthFirst) poly = poly.clone(true);
