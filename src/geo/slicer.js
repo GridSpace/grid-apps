@@ -402,6 +402,23 @@ async function sliceZ(z, points, options = {}) {
         if (fn) fn(rval, options);
     }
 
+    // free objects to be re-claimed and reduce memory pressure
+    if (false) {
+        delete rval.groups
+        delete rval.lines
+        delete rval.clip.m_AllPolys
+
+        for (let top of rval.tops) {
+            top.poly.freeParentRefs();
+            top.simple.freeParentRefs();
+            for (let shell of top.shells) shell.freeParentRefs();
+            for (let fillo of top.fill_off) fillo.freeParentRefs();
+            for (let last of top.last) last.freeParentRefs();
+        }
+
+        for (let clip of rval.clip) clip.freeParentRefs();
+    }
+
     if (each) each(rval);
     return rval;
 }

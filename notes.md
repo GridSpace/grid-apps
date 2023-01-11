@@ -76,6 +76,7 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` get gcode coordinates off a part with point/click or hover?
 * `F` include tools in default devices (Carvera)
 * `F` add `match faces` option in `outline` operation
 * `F` add {progress} substitution and maybe {time-remaining} if can be calc'd

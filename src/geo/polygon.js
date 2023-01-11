@@ -1285,6 +1285,18 @@ class Polygon {
         return this;
     }
 
+    freeParentRefs() {
+        if (this.inner && this.inner.length > 0) {
+            for (let inner of this.inner) {
+                inner.freeParentRefs();
+                delete inner.parent;
+            }
+        }
+        for (let p of this.points) {
+            delete p.poly;
+        }
+    }
+
     newUndeleted() {
         let poly = newPolygon();
         this.forEachPoint(p => {
