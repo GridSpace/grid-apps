@@ -408,17 +408,24 @@ async function sliceZ(z, points, options = {}) {
     if (false) {
         delete rval.groups
         delete rval.lines
-        delete rval.clip.m_AllPolys
 
+        if (rval.tops)
         for (let top of rval.tops) {
-            top.poly.freeParentRefs();
-            top.simple.freeParentRefs();
-            for (let shell of top.shells) shell.freeParentRefs();
-            for (let fillo of top.fill_off) fillo.freeParentRefs();
-            for (let last of top.last) last.freeParentRefs();
+            if (top.poly) {
+                top.poly.freeParentRefs();
+                top.simple.freeParentRefs();
+                for (let shell of top.shells) shell.freeParentRefs();
+                for (let fillo of top.fill_off) fillo.freeParentRefs();
+                for (let last of top.last) last.freeParentRefs();
+            } else {
+                top.freeParentRefs();
+            }
         }
 
-        for (let clip of rval.clip) clip.freeParentRefs();
+        if (rval.clip) {
+            for (let clip of rval.clip) clip.freeParentRefs();
+            if (rval.clip.m_AllPolys) delete rval.clip.m_AllPolys
+        }
     }
 
     if (each) each(rval);
