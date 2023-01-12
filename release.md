@@ -18,9 +18,9 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * slicing memory reduction from team lychee
 * option to control first output point order
 * CAM add control to omit initial tool change
+* CAM fix vertical face selection and step over defaults
 
 - refactor object/group storage model in Mesh:Tool
-- select near or vertical pocket faces
 - add omit pocket to rough and outline
 
 

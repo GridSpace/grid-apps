@@ -226,7 +226,7 @@ mesh.tool = class MeshTool {
     // depends on index() being run first
     findConnectedSurface(faces, radians, filterZ, found = {}) {
         const norms = this.getIndex().faces;
-        if (filterZ) {
+        if (filterZ !== undefined) {
             // optional filter to z normal >= value
             faces = faces.filter(f => norms[f * 6 + 2] >= filterZ);
         }

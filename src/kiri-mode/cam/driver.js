@@ -88,7 +88,7 @@ kiri.load(api => {
 
         CAM.surface_find = function(widget, faces) {
             CAM.surface_prep(widget);
-            return widget.tool.findConnectedSurface(faces, 0.1, 0.1);
+            return widget.tool.findConnectedSurface(faces, 0.1, 0.0);
         };
 
         kiri.worker.cam_surfaces = function(data, send) {
