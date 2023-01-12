@@ -676,6 +676,8 @@ self.kiri.lang['en-us'] = {
     ou_conv_l:      ["milling direction","uncheck for 'climb'"],
     ou_depf_s:      "depth first",
     ou_depf_l:      ["optimize pocket cuts","with depth priority"],
+    ou_toin_s:      "tool init",
+    ou_toin_l:      "emit tool change with first operation",
     ou_forz_s:      "force z max",
     ou_forz_l:      "all moves between pockets will go to z max (above stock). this is usually required if you are not performing a roughing operation before pocketing operations.",
     ou_z1st_s:      "first z max",
