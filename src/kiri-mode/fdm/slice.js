@@ -349,6 +349,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             widget.shadow = root.shadow;
             return;
         }
+        console.log({ doShadow: widget, slices });
         // create shadow for clipping supports
         let alltops = widget.group
             .filter(w => !w.track.synth) // no supports in shadow
