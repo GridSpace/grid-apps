@@ -34,6 +34,7 @@ CAM.export = function(print, online) {
         output = [],
         spindle = 0,
         newSpindle = 0,
+        toolChanges = 0,
         spindleMax = device.spindleMax,
         origin = settings.origin || { x: 0, y: 0, z: 0 },
         space = device.gcodeSpace ? ' ' : '',
@@ -188,9 +189,10 @@ CAM.export = function(print, online) {
             pos.t = out.tool;
             consts.tool = pos.t;
             consts.tool_name = toolNameByNumber(out.tool);
-            if (!laserOp) {
+            if (!laserOp && (spro.camToolInit || toolChanges > 0)) {
                 filterEmit(cmdToolChange, { ...consts, spindle: newSpindle } );
             }
+            toolChanges++;
         }
 
         // on spindle change (deferred from layer transition so it's post-toolchange)

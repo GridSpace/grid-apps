@@ -9,15 +9,19 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add new fdm parameters, range overrides
 * various fixes and improvements to CAM indexing
 * various fixes and improvements to gcode variables
-* move to save Z between CAM ops, refresh spindle speed
+* CAM move to save Z between ops, refresh spindle speed
 * improve gcode arc import decoding
 * improve trace line selection with zoom adaptive thresholds
-* add CAM origin offset optional parameters
+* CAM add origin offset optional parameters
 * remove auto-decimation on object import
-* fix FDM raft line fill strategy
+* FDM fix raft line fill strategy
 * slicing memory reduction from team lychee
-* option to control first CAM output point order
+* option to control first output point order
+* CAM add control to omit initial tool change
+* CAM fix vertical face selection and step over defaults
+
 - refactor object/group storage model in Mesh:Tool
+- add omit pocket to rough and outline
 
 
 # Release 3.7 (2022-11-12)

@@ -508,7 +508,7 @@ const conf = exports({
                 camTraceBottom: false,
                 camPocketSpindle: 1000,
                 camPocketTool: 1000,
-                camPocketOver: 0.5,
+                camPocketOver: 0.25,
                 camPocketDown: 1,
                 camPocketSpeed: 250,
                 camPocketPlunge: 200,
@@ -582,6 +582,7 @@ const conf = exports({
                 camTrueShadow: false,
                 camForceZMax: false,
                 camFirstZMax: false,
+                camToolInit: true,
                 ops: [], // current ops
                 op2: []  // flip ops
             }
