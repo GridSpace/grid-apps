@@ -503,7 +503,7 @@ function raster_slice(inputs) {
         i, il, j, jl, x, y, tv, ltv;
 
     // filter lines pairs to only surface "up-facing", "uncovered" lines
-    const points = [];
+    let points = [];
     // emit an array of valid line-pairs
     const len = lines.length;
 
