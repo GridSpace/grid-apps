@@ -250,7 +250,6 @@ console.log(`kiri | init work | ${gapp.version || "rogue"}`);
 
 // code is running in the worker / server context
 const dispatch =
-self.worker =
 kiri.server =
 kiri.worker = {
     pool_start(data, send) {

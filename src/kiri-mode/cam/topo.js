@@ -429,7 +429,7 @@ class Topo {
                     minions.queue({
                         cmd: "topo_slice",
                         id: widget.id,
-                        resolution,
+                        params,
                         slice
                     }, data => {
                         resolve(data);
@@ -592,19 +592,33 @@ moto.broker.subscribe("minion.started", msg => {
     const { funcs, cache, reply, log } = msg;
 
     funcs.topo_slice = (data, seq) => {
-        const vertices = cache[data.id];
-        const res = new kiri.topo_slicer(data.slice.index)
-            .setFromArray(vertices, data.slice)
-            .slice(data.resolution)
+        const { id, slice, params } = data;
+        const { resolution } = params;
+        const vertices = cache[id];
+        const res = new kiri.topo_slicer(slice.index)
+            .setFromArray(vertices, slice)
+            .slice(resolution)
             .map(rec => {
-                const ret = [ rec.z, rec.index ];
-                for (let line of rec.lines) {
+                const { z, index, lines } = rec;
+
+                const ret = [ z, index ];
+                for (let line of lines) {
                     const { p1, p2 } = line;
                     if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
                     if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
                     ret.push(p1.x, p1.y, p1.z);
                     ret.push(p2.x, p2.y, p2.z);
                 }
+
+                // const box = new THREE.Box2();
+                // const points = raster_slice({
+                //     ...params,
+                //     box,
+                //     lines,
+                //     gridx: index
+                // });
+                // console.log({ box, points });
+
                 return ret;
             });
         reply({ seq, res });
