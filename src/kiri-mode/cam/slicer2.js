@@ -16,9 +16,10 @@ class Slicer {
     static checkOverUnderOn = checkOverUnderOn;
     static removeDuplicateLines = removeDuplicateLines;
 
-    constructor() {
+    constructor(index = 0) {
         this.min = Infinity;
         this.max = -Infinity;
+        this.index = index;
     }
 
     // position is a non-indexed 3js geometry position attribute array
@@ -78,7 +79,7 @@ class Slicer {
     slice(interval = 1) {
         const ret = [];
         for (let z = this.min; z < this.max; z += interval) {
-            ret.push({ z, lines: this.sliceZ(z) });
+            ret.push({ z, index: this.index++, lines: this.sliceZ(z) });
         }
         return ret;
     }

@@ -57,14 +57,14 @@ class Topo {
             curvesOnly = contour.curves,
             bridge = contour.bridging || 0,
             R2A = 180 / Math.PI,
-            stepsx = Math.ceil(boundsX / resolution),
-            stepsy = Math.ceil(boundsY / resolution),
+            stepsX = Math.ceil(boundsX / resolution),
+            stepsY = Math.ceil(boundsY / resolution),
             widtopo = widget.topo,
             topoCache = widtopo && widtopo.resolution === resolution ? widtopo : undefined,
             topo = widget.topo = topoCache || {
-                data: new Float32Array(new SharedArrayBuffer(stepsx * stepsy * 4)),
-                stepsx: stepsx,
-                stepsy: stepsy,
+                data: new Float32Array(new SharedArrayBuffer(stepsX * stepsY * 4)),
+                stepsX: stepsX,
+                stepsY: stepsY,
                 bounds: bounds,
                 diameter: toolDiameter,
                 resolution: resolution,
@@ -124,8 +124,8 @@ class Topo {
         // return the touching z given topo x,y and a tool profile
         function toolAtZ(x,y) {
             const profile = toolOffset,
-                sx = stepsx,
-                sy = stepsy,
+                sx = stepsX,
+                sy = stepsY,
                 xl = sx - 1,
                 yl = sy - 1;
 
@@ -151,8 +151,8 @@ class Topo {
         }
 
         // export z probe function
-        const rx = stepsx / boundsX;
-        const ry = stepsx / boundsX;
+        const rx = stepsX / boundsX;
+        const ry = stepsX / boundsX;
         this.toolAtXY = function(px, py) {
             px = Math.round(rx * (px - minX));
             py = Math.round(ry * (py - minY));
@@ -162,7 +162,7 @@ class Topo {
         const zAtXY = this.zAtXY = function(px, py) {
             let ix = Math.round(rx * (px - minX));
             let iy = Math.round(ry * (py - minY));
-            return topo.data[ix * stepsy + iy] || zMin;
+            return topo.data[ix * stepsY + iy] || zMin;
         };
 
         function push_point(x,y,z) {
@@ -234,7 +234,7 @@ class Topo {
                     zMin,
                     minY,
                     maxY,
-                    stepsy,
+                    stepsY,
                     slice,
                     gridx: gridx++
                 });
@@ -275,7 +275,7 @@ class Topo {
                 // emit slice per X
                 for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
                     if (x < box.min.x || x > box.max.x) continue;
-                    gridx = Math.round(((x - minX) / boundsX) * stepsx);
+                    gridx = Math.round(((x - minX) / boundsX) * stepsX);
                     ly = gridy = -gridDelta;
                     slice = newSlice(gridx);
                     newtrace = newPolygon().setOpen();
@@ -322,7 +322,7 @@ class Topo {
                 // emit slice per Y
                 for (y = minY - partOff; y <= maxY + partOff; y += toolStep) {
                     if (y < box.min.y || y > box.max.y) continue;
-                    gridy = Math.round(((y - minY) / boundsY) * stepsy);
+                    gridy = Math.round(((y - minY) / boundsY) * stepsY);
                     lx = gridx = -gridDelta;
                     slice = newSlice(gridy);
                     newtrace = newPolygon().setOpen();
@@ -360,7 +360,18 @@ class Topo {
             }
         }
 
-        const slices2 = await this.topo_slice(widget, resolution);
+        const params = {
+            resolution,
+            curvesOnly,
+            flatness,
+            stepsY,
+            minY,
+            maxY,
+            zMin,
+            data
+        };
+
+        const slices2 = await this.topo_slice(widget, params);
 
         rastering(slices2);
         contouring(slices2);
@@ -369,7 +380,9 @@ class Topo {
         return this;
     }
 
-    async topo_slice(widget, resolution) {
+    async topo_slice(widget, params) {
+        const { resolution } = params;
+
         console.log({ topo_slice: widget, resolution });
 
         const dispatch = kiri.worker;
@@ -391,12 +404,14 @@ class Topo {
         const step = (range.max - range.min) / shards;
 
         let slices = [];
-        let slice = { min: range.min, max: range.min + step };
+        let index = 0;
+        let slice = { min: range.min, max: range.min + step, index };
         for (let z = range.min; z < range.max; z += resolution) {
             if (z > slice.max) {
                 slices.push(slice);
-                slice = { min: z, max: z + step };
+                slice = { min: z, max: z + step, index };
             }
+            index++;
         }
         slices.push(slice);
         console.log({ shards, range, step, slices });
@@ -409,7 +424,7 @@ class Topo {
                 // console.log({ put_cache_done: data });
             }});
 
-            let ps = slices.map(slice => {
+            let ps = slices.map((slice, index) => {
                 return new Promise(resolve => {
                     minions.queue({
                         cmd: "topo_slice",
@@ -428,8 +443,9 @@ class Topo {
                 .sort((a,b) => a[0] - b[0])
                 .map(rec => {
                     let slice = kiri.newSlice(rec[0]);
+                    slice.index = rec[1];
                     let lines = slice.lines = [];
-                    for (let i=1, l=rec.length; i<l; ) {
+                    for (let i=2, l=rec.length; i<l; ) {
                         lines.push(
                             base.newLine(
                                 base.newPoint(rec[i++], rec[i++], rec[i++]),
@@ -452,11 +468,12 @@ class Topo {
             // iterate over shards, merge output
             const output = [];
             for (let slice of slices) {
-                const res = new kiri.topo_slicer()
+                const res = new kiri.topo_slicer(slice.index)
                     .setFromArray(vertices, slice)
                     .slice(resolution)
                     .map(rec => {
                         const slice = kiri.newSlice(rec.z);
+                        slice.index = rec.index;
                         slice.lines = rec.lines;
                         for (let line of rec.lines) {
                             const { p1, p2 } = line;
@@ -477,7 +494,7 @@ class Topo {
 
 function raster_slice(inputs) {
     const { lines, data, box, resolution, curvesOnly } = inputs;
-    const { flatness, zMin, minY, maxY, stepsy, gridx } = inputs;
+    const { flatness, zMin, minY, maxY, stepsY, gridx } = inputs;
     const { slice } = inputs;
 
     let gridy,
@@ -518,8 +535,8 @@ function raster_slice(inputs) {
 
     gridy = 0;
     // rasterize one x slice
-    for (y = minY; y < maxY && gridy < stepsy; y += resolution) {
-        gridi = gridx * stepsy + gridy;
+    for (y = minY; y < maxY && gridy < stepsY; y += resolution) {
+        gridi = gridx * stepsY + gridy;
         gridv = data[gridi] || 0;
         // strategy using raw lines (faster slice, but more lines)
         for (i=0, il=points.length; i<il; i += 2) {
@@ -576,11 +593,11 @@ moto.broker.subscribe("minion.started", msg => {
 
     funcs.topo_slice = (data, seq) => {
         const vertices = cache[data.id];
-        const res = new kiri.topo_slicer()
+        const res = new kiri.topo_slicer(data.slice.index)
             .setFromArray(vertices, data.slice)
             .slice(data.resolution)
             .map(rec => {
-                const ret = [ rec.z ];
+                const ret = [ rec.z, rec.index ];
                 for (let line of rec.lines) {
                     const { p1, p2 } = line;
                     if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
