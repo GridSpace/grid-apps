@@ -405,7 +405,7 @@ async function sliceZ(z, points, options = {}) {
     }
 
     // free objects to be re-claimed and reduce memory pressure
-    if (true) {
+    if (false) {
         delete rval.groups
         delete rval.lines
         delete rval.clip.m_AllPolys
