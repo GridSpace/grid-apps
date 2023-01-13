@@ -212,38 +212,7 @@ class Topo {
             lastP = undefined;
         }
 
-        function rastering(slices) {
-            if (!topo.raster) {
-                console.log(widget.id, 'topo raster cached');
-                return topo.box;
-            }
-
-            topo.raster = false;
-            topo.box = new THREE.Box2();
-
-            let gridx = 0;
-            for (let slice of slices) {
-                newslices.push(slice);
-                slice.points = raster_slice({
-                    lines: slice.lines,
-                    box: topo.box,
-                    data,
-                    resolution,
-                    curvesOnly,
-                    flatness,
-                    zMin,
-                    minY,
-                    maxY,
-                    stepsY,
-                    slice,
-                    gridx: gridx++
-                });
-                onupdate(++stepsTaken, stepsTotal, "raster surface");
-            }
-
-        }
-
-        function contouring(slices) {
+        function contouring() {
             let gridx = 0,
                 gridy,
                 gridi, // index
@@ -360,6 +329,8 @@ class Topo {
             }
         }
 
+        const box = topo.box = new THREE.Box2();
+
         const params = {
             resolution,
             curvesOnly,
@@ -368,13 +339,13 @@ class Topo {
             minY,
             maxY,
             zMin,
-            data
+            data,
+            box
         };
 
-        const slices2 = await this.topo_slice(widget, params);
+        await this.topo_slice(widget, params);
 
-        rastering(slices2);
-        contouring(slices2);
+        contouring();
         ondone(newslices);
 
         return this;
@@ -389,6 +360,7 @@ class Topo {
         const minions = kiri.minions;
         const vertices = widget.getGeoVertices().toShared();
         const range = { min: Infinity, max: -Infinity };
+        const { box } = params;
 
         // swap XZ in shared array
         for (let i=0,l=vertices.length; i<l; i += 3) {
@@ -424,7 +396,7 @@ class Topo {
                 // console.log({ put_cache_done: data });
             }});
 
-            let ps = slices.map((slice, index) => {
+            let promises = slices.map((slice, index) => {
                 return new Promise(resolve => {
                     minions.queue({
                         cmd: "topo_slice",
@@ -437,41 +409,34 @@ class Topo {
                 });
             });
 
-            slices = (await Promise.all(ps))
-                .map(rec => rec.res)
-                .flat()
-                .sort((a,b) => a[0] - b[0])
-                .map(rec => {
-                    let slice = kiri.newSlice(rec[0]);
-                    slice.index = rec[1];
-                    let lines = slice.lines = [];
-                    for (let i=2, l=rec.length; i<l; ) {
-                        lines.push(
-                            base.newLine(
-                                base.newPoint(rec[i++], rec[i++], rec[i++]),
-                                base.newPoint(rec[i++], rec[i++], rec[i++])
-                            )
-                        );
-                    }
-                    return slice;
+            // merge boxes for all rasters for contouring clipping
+            (await Promise.all(promises))
+                .map(rec => rec.box)
+                .map(box => new THREE.Box2(
+                    new THREE.Vector2(box.min.x, box.min.y),
+                    new THREE.Vector2(box.max.x, box.max.y)
+                ))
+                .map(box2 => {
+                    box.union(box2);
+                    return box2;
                 });
 
             dispatch.clearCache({}, { done: data => {
                 // console.log({ clear_cache_done: data });
             }});
             console.timeEnd('new topo slice minion');
-            return slices;
 
         } else {
 
             console.time('new topo slice');
             // iterate over shards, merge output
-            const output = [];
+            // const output = [];
             for (let slice of slices) {
-                const res = new kiri.topo_slicer(slice.index)
+                new kiri.topo_slicer(slice.index)
                     .setFromArray(vertices, slice)
                     .slice(resolution)
                     .map(rec => {
+
                         const slice = kiri.newSlice(rec.z);
                         slice.index = rec.index;
                         slice.lines = rec.lines;
@@ -480,13 +445,18 @@ class Topo {
                             if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
                             if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
                         }
+
+                        raster_slice({
+                            ...params,
+                            box,
+                            lines: rec.lines,
+                            gridx: rec.index
+                        });
+
                         return slice;
                     });
-                output.appendAll(res);
             }
-            output.sort((a,b) => a.z - b.z);
             console.timeEnd('new topo slice');
-            return output;
 
         }
     }
@@ -595,33 +565,28 @@ moto.broker.subscribe("minion.started", msg => {
         const { id, slice, params } = data;
         const { resolution } = params;
         const vertices = cache[id];
-        const res = new kiri.topo_slicer(slice.index)
+        const box = new THREE.Box2();
+        new kiri.topo_slicer(slice.index)
             .setFromArray(vertices, slice)
             .slice(resolution)
-            .map(rec => {
+            .forEach(rec => {
                 const { z, index, lines } = rec;
 
-                const ret = [ z, index ];
                 for (let line of lines) {
                     const { p1, p2 } = line;
                     if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
                     if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
-                    ret.push(p1.x, p1.y, p1.z);
-                    ret.push(p2.x, p2.y, p2.z);
                 }
 
-                // const box = new THREE.Box2();
-                // const points = raster_slice({
-                //     ...params,
-                //     box,
-                //     lines,
-                //     gridx: index
-                // });
-                // console.log({ box, points });
-
-                return ret;
+                raster_slice({
+                    ...params,
+                    box,
+                    lines,
+                    gridx: index
+                });
             });
-        reply({ seq, res });
+        // only pass back bounds of rasters to be merged
+        reply({ seq, box });
     };
 });
 
