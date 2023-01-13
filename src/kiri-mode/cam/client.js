@@ -1281,7 +1281,7 @@ CAM.init = function(kiri, api) {
         axis:      UC.newSelect(LANG.cd_axis, {}, "regaxis"),
         sep:       UC.newBlank({class:"pop-sep"}),
         spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
+        step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,2.0)}),
         rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
         angle:     UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90)}),
         sep:       UC.newBlank({class:"pop-sep"}),

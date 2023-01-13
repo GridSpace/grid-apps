@@ -56,7 +56,7 @@ class Topo {
             maxangle = contour.angle,
             curvesOnly = contour.curves,
             bridge = contour.bridging || 0,
-            R2A = 180 / Math.PI,
+            // R2A = 180 / Math.PI,
             stepsX = Math.ceil(boundsX / resolution),
             stepsY = Math.ceil(boundsY / resolution),
             widtopo = widget.topo,
@@ -116,10 +116,7 @@ class Topo {
             sliceout,
             latent,
             lastP,
-            slice, lx, ly,
-            startTime = time(),
-            stepsTaken = 0,
-            stepsTotal = 0;
+            slice;
 
         // return the touching z given topo x,y and a tool profile
         function toolAtZ(x,y) {
@@ -165,8 +162,8 @@ class Topo {
             return topo.data[ix * stepsY + iy] || zMin;
         };
 
-        function push_point(x,y,z) {
-            const newP = newPoint(x,y,z);
+        function push_point(x, y, z) {
+            const newP = newPoint(x, y, z);
             // todo: merge co-linear, not just co-planar
             if (lastP && Math.abs(lastP.z - z) < flatness) {
                 if (curvesOnly) {
@@ -217,21 +214,28 @@ class Topo {
                 gridy,
                 gridi, // index
                 gridv, // value
-                i, il, j, jl, x, y, tv, ltv;
+                i, il, j, x, y, tv,
+                stepsTaken = 0,
+                stepsTotal = 0;
 
-            const box = topo.box.expandByVector(new THREE.Vector3(
+            if (contourX) {
+                stepsTotal += ((maxX - minX + partOff * 2) / toolStep) | 0;
+            }
+
+            if (contourY) {
+                stepsTotal += ((maxY - minY + partOff * 2) / toolStep) | 0;
+            }
+
+            const box = topo.box.clone().expandByVector(new THREE.Vector3(
                 partOff, partOff, 0
             ));
 
-            const checkr = newPoint(0,0);
-            const inClip = function(polys, checkZ) {
-                checkr.x = x;
-                checkr.y = y;
-                for (let i=0; i<polys.length; i++) {
-                    let poly = polys[i];
+            const inClip = function(clips, checkZ, point) {
+                for (let i=0; i<clips.length; i++) {
+                    let poly = clips[i];
                     let zok = checkZ ? checkZ <= poly.z : true;
                     tabZ = poly.z;
-                    if (zok && checkr.isInPolygon(poly)) {
+                    if (zok && point.isInPolygon(poly)) {
                         return true;
                     }
                 }
@@ -239,111 +243,156 @@ class Topo {
             };
             let tabZ;
 
+            function traceY(params) {
+                let { from, to, step, box, x, gridx, gridy } = params;
+                let { clipTab, tabHeight, clipTo } = params;
+                const checkr = newPoint(0,0);
+                newtrace = newPolygon().setOpen();
+                sliceout = [];
+                for (let y = from; y < to; y += step) {
+                    if (y < box.min.y || y > box.max.y) {
+                        gridy++;
+                        continue;
+                    }
+                    // find tool z at grid point
+                    let tv = toolAtZ(gridx, gridy);
+                    checkr.x = x;
+                    checkr.y = y;
+                    // when tabs are on and this point is inside the
+                    // tab polygon, ensure z is at least tabHeight
+                    if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+                        tv = tabZ;
+                    }
+                    // if the value is on the floor and inside the clip
+                    // poly (usually shadow), end the segment
+                    if (clipTo && !inClip(clipTo, undefined, checkr)) {
+                        end_poly();
+                        gridy++;
+                        continue;
+                    }
+                    push_point(x, y, tv);
+                    gridy++;
+                }
+                end_poly();
+            }
+
+            function traceX(params) {
+                let { from, to, step, box, y, gridx, gridy } = params;
+                let { clipTab, tabHeight, clipTo } = params;
+                const checkr = newPoint(0,0);
+                newtrace = newPolygon().setOpen();
+                sliceout = [];
+                for (let x = from; x < to; x += step) {
+                    if (x < box.min.x || y > box.max.x) {
+                        gridx++;
+                        continue;
+                    }
+                    // find tool z at grid point
+                    let tv = toolAtZ(gridx, gridy);
+                    checkr.x = x;
+                    checkr.y = y;
+                    // when tabs are on and this point is inside the
+                    // tab polygon, ensure z is at least tabHeight
+                    if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+                        tv = tabZ;
+                    }
+                    // if the value is on the floor and inside the clip
+                    // poly (usually shadow), end the segment
+                    if (clipTo && !inClip(clipTo, undefined, checkr)) {
+                        end_poly();
+                        gridx++;
+                        continue;
+                    }
+                    push_point(x, y, tv);
+                    gridx++;
+                }
+                end_poly();
+            }
+
             if (contourY) {
-                startTime = time();
                 // emit slice per X
                 for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
                     if (x < box.min.x || x > box.max.x) continue;
                     gridx = Math.round(((x - minX) / boundsX) * stepsX);
-                    ly = gridy = -gridDelta;
-                    slice = newSlice(gridx);
-                    newtrace = newPolygon().setOpen();
-                    sliceout = [];
-                    for (y = minY - partOff; y < maxY + partOff; y += resolution) {
-                        if (y < box.min.y || y > box.max.y) {
-                            gridy++;
-                            continue;
-                        }
-                        // find tool z at grid point
-                        tv = toolAtZ(gridx, gridy);
-                        // when tabs are on and this point is inside the
-                        // tab polygon, ensure z is at least tabHeight
-                        if (tabsOn && tv < tabHeight && inClip(clipTab, tv)) {
-                            tv = tabZ;//tabHeight;
-                        }
-                        // if the value is on the floor and inside the clip
-                        // poly (usually shadow), end the segment
-                        if (clipTo && !inClip(clipTo)) {
-                            end_poly();
-                            gridy++;
-                            ly = -gridDelta;
-                            continue;
-                        }
-                        push_point(x,y,tv);
-                        ly = y;
-                        ltv = tv;
-                        gridy++;
-                    }
-                    end_poly();
+                    gridy = -gridDelta;
+
+                    traceY({
+                        from: minY - partOff,
+                        to: maxY + partOff,
+                        step: resolution,
+                        box,
+                        x,
+                        gridx,
+                        gridy,
+                        clipTo,
+                        clipTab,
+                        tabHeight
+                    });
+
                     if (sliceout.length > 0) {
-                        newslices.push(slice);
+                        slice = newSlice(gridx);
                         slice.camLines = sliceout;
                         slice.output()
                             .setLayer("contour y", {face: color, line: color})
                             .addPolys(sliceout);
+                        newslices.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour y");
                 }
             }
 
             if (contourX) {
-                startTime = time();
                 // emit slice per Y
                 for (y = minY - partOff; y <= maxY + partOff; y += toolStep) {
                     if (y < box.min.y || y > box.max.y) continue;
                     gridy = Math.round(((y - minY) / boundsY) * stepsY);
-                    lx = gridx = -gridDelta;
-                    slice = newSlice(gridy);
-                    newtrace = newPolygon().setOpen();
-                    sliceout = [];
-                    for (x = minX - partOff; x <= maxX + partOff; x += resolution) {
-                        if (x < box.min.x || x > box.max.x) {
-                            gridx++;
-                            continue;
-                        }
-                        tv = toolAtZ(gridx, gridy);
-                        if (tabsOn && tv < tabHeight && inClip(clipTab, tv)) {
-                            tv = tabZ;
-                        }
-                        if (clipTo && !inClip(clipTo)) {
-                            end_poly();
-                            gridx++;
-                            lx = -gridDelta;
-                            continue;
-                        }
-                        push_point(x,y,tv);
-                        lx = x;
-                        ltv = tv;
-                        gridx++;
-                    }
-                    end_poly();
+                    gridx = -gridDelta;
+
+                    traceX({
+                        from: minX - partOff,
+                        to: maxX + partOff,
+                        step: resolution,
+                        box,
+                        y,
+                        gridx,
+                        gridy,
+                        clipTo,
+                        clipTab,
+                        tabHeight
+                    });
+
                     if (sliceout.length > 0) {
-                        newslices.push(slice);
+                        slice = newSlice(gridy);
                         slice.camLines = sliceout;
                         slice.output()
                             .setLayer("contour x", {face: color, line: color})
                             .addPolys(sliceout);
+                        newslices.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour x");
                 }
             }
         }
 
-        const box = topo.box = new THREE.Box2();
+        if (topo.raster) {
+            const box = topo.box = new THREE.Box2();
 
-        const params = {
-            resolution,
-            curvesOnly,
-            flatness,
-            stepsY,
-            minY,
-            maxY,
-            zMin,
-            data,
-            box
-        };
+            const params = {
+                resolution,
+                curvesOnly,
+                flatness,
+                stepsY,
+                minY,
+                maxY,
+                zMin,
+                data,
+                box
+            };
 
-        await this.topo_slice(widget, params);
+            onupdate(0, 1, "raster");
+            await this.topo_raster(widget, params);
+            topo.raster = false;
+        }
 
         contouring();
         ondone(newslices);
@@ -351,10 +400,10 @@ class Topo {
         return this;
     }
 
-    async topo_slice(widget, params) {
+    async topo_raster(widget, params) {
         const { resolution } = params;
 
-        console.log({ topo_slice: widget, resolution });
+        console.log({ topo_raster: widget, resolution });
 
         const dispatch = kiri.worker;
         const minions = kiri.minions;
@@ -391,7 +440,7 @@ class Topo {
         // define sharded ranges
         if (minions.running > 1) {
 
-            console.time('new topo slice minion');
+            console.time('topo raster minion');
             dispatch.putCache({ key: widget.id, data: vertices }, { done: data => {
                 // console.log({ put_cache_done: data });
             }});
@@ -399,7 +448,7 @@ class Topo {
             let promises = slices.map((slice, index) => {
                 return new Promise(resolve => {
                     minions.queue({
-                        cmd: "topo_slice",
+                        cmd: "topo_raster",
                         id: widget.id,
                         params,
                         slice
@@ -424,11 +473,11 @@ class Topo {
             dispatch.clearCache({}, { done: data => {
                 // console.log({ clear_cache_done: data });
             }});
-            console.timeEnd('new topo slice minion');
+            console.timeEnd('topo raster minion');
 
         } else {
 
-            console.time('new topo slice');
+            console.time('topo raster');
             // iterate over shards, merge output
             // const output = [];
             for (let slice of slices) {
@@ -456,7 +505,7 @@ class Topo {
                         return slice;
                     });
             }
-            console.timeEnd('new topo slice');
+            console.timeEnd('topo raster');
 
         }
     }
@@ -470,7 +519,7 @@ function raster_slice(inputs) {
     let gridy,
         gridi, // index
         gridv, // value
-        i, il, j, jl, x, y, tv, ltv;
+        i, il, j, x, y, tv;
 
     // filter lines pairs to only surface "up-facing", "uncovered" lines
     let points = [];
@@ -561,7 +610,7 @@ moto.broker.subscribe("minion.started", msg => {
     // console.log({ cam_slicer2_minion: msg });
     const { funcs, cache, reply, log } = msg;
 
-    funcs.topo_slice = (data, seq) => {
+    funcs.topo_raster = (data, seq) => {
         const { id, slice, params } = data;
         const { resolution } = params;
         const vertices = cache[id];
