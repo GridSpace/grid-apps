@@ -150,91 +150,11 @@ class Topo {
             ));
 
             const trace = new Trace({
+                probe,
                 curvesOnly,
                 maxangle,
                 flatness
             });
-
-            const { push_point, end_poly, newtrace, newslice } = trace;
-
-            const inClip = function(clips, checkZ, point) {
-                for (let i=0; i<clips.length; i++) {
-                    let poly = clips[i];
-                    let zok = checkZ ? checkZ <= poly.z : true;
-                    tabZ = poly.z;
-                    if (zok && point.isInPolygon(poly)) {
-                        return true;
-                    }
-                }
-                return false;
-            };
-            let tabZ;
-
-            function traceY(params) {
-                let { from, to, step, box, x, gridx, gridy } = params;
-                let { clipTab, tabHeight, clipTo } = params;
-                const checkr = newPoint(0,0);
-                newtrace();
-                newslice();
-                for (let y = from; y < to; y += step) {
-                    if (y < box.min.y || y > box.max.y) {
-                        gridy++;
-                        continue;
-                    }
-                    // find tool z at grid point
-                    let tv = toolAtZ(gridx, gridy);
-                    checkr.x = x;
-                    checkr.y = y;
-                    // when tabs are on and this point is inside the
-                    // tab polygon, ensure z is at least tabHeight
-                    if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
-                        tv = tabZ;
-                    }
-                    // if the value is on the floor and inside the clip
-                    // poly (usually shadow), end the segment
-                    if (clipTo && !inClip(clipTo, undefined, checkr)) {
-                        end_poly();
-                        gridy++;
-                        continue;
-                    }
-                    push_point(x, y, tv);
-                    gridy++;
-                }
-                end_poly();
-            }
-
-            function traceX(params) {
-                let { from, to, step, box, y, gridx, gridy } = params;
-                let { clipTab, tabHeight, clipTo } = params;
-                const checkr = newPoint(0,0);
-                newtrace();
-                newslice();
-                for (let x = from; x < to; x += step) {
-                    if (x < box.min.x || y > box.max.x) {
-                        gridx++;
-                        continue;
-                    }
-                    // find tool z at grid point
-                    let tv = toolAtZ(gridx, gridy);
-                    checkr.x = x;
-                    checkr.y = y;
-                    // when tabs are on and this point is inside the
-                    // tab polygon, ensure z is at least tabHeight
-                    if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
-                        tv = tabZ;
-                    }
-                    // if the value is on the floor and inside the clip
-                    // poly (usually shadow), end the segment
-                    if (clipTo && !inClip(clipTo, undefined, checkr)) {
-                        end_poly();
-                        gridx++;
-                        continue;
-                    }
-                    push_point(x, y, tv);
-                    gridx++;
-                }
-                end_poly();
-            }
 
             if (contourY) {
                 // emit slice per X
@@ -243,7 +163,7 @@ class Topo {
                     gridx = Math.round(((x - minX) / boundsX) * stepsX);
                     gridy = -gridDelta;
 
-                    traceY({
+                    const segments = trace.crossY({
                         from: minY - partOff,
                         to: maxY + partOff,
                         step: resolution,
@@ -256,14 +176,12 @@ class Topo {
                         tabHeight
                     });
 
-                    const sliceout = trace.sliceout;
-
-                    if (sliceout.length > 0) {
+                    if (segments.length > 0) {
                         let slice = newSlice(gridx);
-                        slice.camLines = sliceout;
+                        slice.camLines = segments;
                         slice.output()
                             .setLayer("contour y", {face: color, line: color})
-                            .addPolys(sliceout);
+                            .addPolys(segments);
                         newslices.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour y");
@@ -277,7 +195,7 @@ class Topo {
                     gridy = Math.round(((y - minY) / boundsY) * stepsY);
                     gridx = -gridDelta;
 
-                    traceX({
+                    const segments = trace.crossX({
                         from: minX - partOff,
                         to: maxX + partOff,
                         step: resolution,
@@ -290,14 +208,12 @@ class Topo {
                         tabHeight
                     });
 
-                    const sliceout = trace.sliceout;
-
-                    if (sliceout.length > 0) {
+                    if (segments.length > 0) {
                         let slice = newSlice(gridy);
-                        slice.camLines = sliceout;
+                        slice.camLines = segments;
                         slice.output()
                             .setLayer("contour x", {face: color, line: color})
-                            .addPolys(sliceout);
+                            .addPolys(segments);
                         newslices.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour x");
@@ -500,7 +416,9 @@ class Trace {
 
     constructor(params) {
 
-        const { curvesOnly, maxangle, flatness } = params;
+        const { probe, curvesOnly, maxangle, flatness } = params;
+
+        this.probe = probe;
 
         let trace,
             slice,
@@ -562,12 +480,93 @@ class Trace {
             trace = newPolygon().setOpen();
         }
 
+        const object = this.object = this;
+
+        this.inClip = function (clips, checkZ, point) {
+            for (let i=0; i<clips.length; i++) {
+                let poly = clips[i];
+                let zok = checkZ ? checkZ <= poly.z : true;
+                object.tabZ = poly.z;
+                if (zok && point.isInPolygon(poly)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
     }
 
-    get sliceout() {
+    crossY(params) {
+        const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
+        const { toolAtZ, toolAtXY, zAtXY } = this.probe;
+        let { from, to, step, box, x, gridx, gridy } = params;
+        let { clipTab, tabHeight, clipTo } = params;
+        const checkr = newPoint(0,0);
+        newslice();
+        newtrace();
+        for (let y = from; y < to; y += step) {
+            if (y < box.min.y || y > box.max.y) {
+                gridy++;
+                continue;
+            }
+            // find tool z at grid point
+            let tv = toolAtZ(gridx, gridy);
+            checkr.x = x;
+            checkr.y = y;
+            // when tabs are on and this point is inside the
+            // tab polygon, ensure z is at least tabHeight
+            if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+                tv = trace.tabZ;
+            }
+            // if the value is on the floor and inside the clip
+            // poly (usually shadow), end the segment
+            if (clipTo && !inClip(clipTo, undefined, checkr)) {
+                end_poly();
+                gridy++;
+                continue;
+            }
+            push_point(x, y, tv);
+            gridy++;
+        }
+        end_poly();
         return this.slice;
     }
 
+    crossX(params) {
+        const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
+        const { toolAtZ, toolAtXY, zAtXY } = this.probe;
+        let { from, to, step, box, y, gridx, gridy } = params;
+        let { clipTab, tabHeight, clipTo } = params;
+        const checkr = newPoint(0,0);
+        newslice();
+        newtrace();
+        for (let x = from; x < to; x += step) {
+            if (x < box.min.x || y > box.max.x) {
+                gridx++;
+                continue;
+            }
+            // find tool z at grid point
+            let tv = toolAtZ(gridx, gridy);
+            checkr.x = x;
+            checkr.y = y;
+            // when tabs are on and this point is inside the
+            // tab polygon, ensure z is at least tabHeight
+            if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+                tv = trace.tabZ;
+            }
+            // if the value is on the floor and inside the clip
+            // poly (usually shadow), end the segment
+            if (clipTo && !inClip(clipTo, undefined, checkr)) {
+                end_poly();
+                gridx++;
+                continue;
+            }
+            push_point(x, y, tv);
+            gridx++;
+        }
+        end_poly();
+        return this.slice;
+    }
 }
 
 function raster_slice(inputs) {
