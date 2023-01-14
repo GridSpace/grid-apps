@@ -2173,6 +2173,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         ui.load.onchange = function(event) {
             api.platform.load_files(event.target.files);
+            ui.load.value = ''; // reset so you can re-import the same filee
         };
 
         ui.sliderMin.onclick = () => {

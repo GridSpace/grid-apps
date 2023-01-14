@@ -719,7 +719,9 @@ function platformLoadFiles(files, group) {
         reader.file = files[i];
         reader.onloadend = function(e) {
             function load_dec() {
-                if (--loaded === 0) platform.group_done(isgcode);
+                if (--loaded === 0) {
+                    platform.group_done(isgcode);
+                }
             }
             if (israw) {
                 platform.add(
