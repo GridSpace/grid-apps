@@ -112,7 +112,7 @@ class Topo {
             newslices.push(debug);
         }
 
-        const probe = new Probe({
+        const probe = this.probe = new Probe({
             profile: toolOffset,
             data,
             stepsX,
@@ -128,98 +128,12 @@ class Topo {
         this.toolAtXY = toolAtXY;
         this.zAtXY = zAtXY;
 
-        function contouring() {
-            let gridx = 0,
-                gridy,
-                gridi, // index
-                gridv, // value
-                i, il, j, x, y, tv,
-                stepsTaken = 0,
-                stepsTotal = 0;
-
-            if (contourX) {
-                stepsTotal += ((maxX - minX + partOff * 2) / toolStep) | 0;
-            }
-
-            if (contourY) {
-                stepsTotal += ((maxY - minY + partOff * 2) / toolStep) | 0;
-            }
-
-            const box = topo.box.clone().expandByVector(new THREE.Vector3(
-                partOff, partOff, 0
-            ));
-
-            const trace = new Trace({
-                probe,
-                curvesOnly,
-                maxangle,
-                flatness
-            });
-
-            if (contourY) {
-                // emit slice per X
-                for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
-                    if (x < box.min.x || x > box.max.x) continue;
-                    gridx = Math.round(((x - minX) / boundsX) * stepsX);
-                    gridy = -gridDelta;
-
-                    const segments = trace.crossY({
-                        from: minY - partOff,
-                        to: maxY + partOff,
-                        step: resolution,
-                        box,
-                        x,
-                        gridx,
-                        gridy,
-                        clipTo,
-                        clipTab,
-                        tabHeight
-                    });
-
-                    if (segments.length > 0) {
-                        let slice = newSlice(gridx);
-                        slice.camLines = segments;
-                        slice.output()
-                            .setLayer("contour y", {face: color, line: color})
-                            .addPolys(segments);
-                        newslices.push(slice);
-                    }
-                    onupdate(++stepsTaken, stepsTotal, "contour y");
-                }
-            }
-
-            if (contourX) {
-                // emit slice per Y
-                for (y = minY - partOff; y <= maxY + partOff; y += toolStep) {
-                    if (y < box.min.y || y > box.max.y) continue;
-                    gridy = Math.round(((y - minY) / boundsY) * stepsY);
-                    gridx = -gridDelta;
-
-                    const segments = trace.crossX({
-                        from: minX - partOff,
-                        to: maxX + partOff,
-                        step: resolution,
-                        box,
-                        y,
-                        gridx,
-                        gridy,
-                        clipTo,
-                        clipTab,
-                        tabHeight
-                    });
-
-                    if (segments.length > 0) {
-                        let slice = newSlice(gridy);
-                        slice.camLines = segments;
-                        slice.output()
-                            .setLayer("contour x", {face: color, line: color})
-                            .addPolys(segments);
-                        newslices.push(slice);
-                    }
-                    onupdate(++stepsTaken, stepsTotal, "contour x");
-                }
-            }
-        }
+        const trace = this.trace = new Trace({
+            probe,
+            curvesOnly,
+            maxangle,
+            flatness
+        });
 
         if (topo.raster) {
             const box = topo.box = new THREE.Box2();
@@ -237,26 +151,50 @@ class Topo {
             };
 
             onupdate(0, 1, "raster");
-            await this.topo_raster(widget, params);
+            await this.raster(widget, params);
             topo.raster = false;
         }
 
-        contouring();
+        await this.contour({
+            box: topo.box,
+            minX,
+            maxX,
+            minY,
+            maxY,
+            stepsX,
+            stepsY,
+            boundsX,
+            boundsY,
+            partOff,
+            gridDelta,
+            resolution,
+            toolStep,
+            contourX,
+            contourY,
+            clipTo,
+            clipTab,
+            tabHeight,
+            onupdate,
+            newslices,
+            color
+        });
+
         ondone(newslices);
 
         return this;
     }
 
-    async topo_raster(widget, params) {
+    async raster(widget, params) {
         const { resolution } = params;
+        const { box } = params;
 
         console.log({ topo_raster: widget, resolution });
 
-        const dispatch = kiri.worker;
-        const minions = kiri.minions;
+        // const worker = kiri.worker;
+        // const minions = kiri.minions;
+        const { worker, minions } = kiri;
         const vertices = widget.getGeoVertices().toShared();
         const range = { min: Infinity, max: -Infinity };
-        const { box } = params;
 
         // swap XZ in shared array
         for (let i=0,l=vertices.length; i<l; i += 3) {
@@ -288,7 +226,7 @@ class Topo {
         if (minions.running > 1) {
 
             console.time('topo raster minion');
-            dispatch.putCache({ key: widget.id, data: vertices }, { done: data => {
+            worker.putCache({ key: widget.id, data: vertices }, { done: data => {
                 // console.log({ put_cache_done: data });
             }});
 
@@ -317,7 +255,7 @@ class Topo {
                     return box2;
                 });
 
-            dispatch.clearCache({}, { done: data => {
+            worker.clearCache({}, { done: data => {
                 // console.log({ clear_cache_done: data });
             }});
             console.timeEnd('topo raster minion');
@@ -356,6 +294,99 @@ class Topo {
 
         }
     }
+
+    async contour(params) {
+        const trace = this.trace;
+
+        const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
+        const { gridDelta, resolution, partOff, toolStep, contourX, contourY } = params;
+        const { clipTo, clipTab, tabHeight, onupdate, newslices, color } = params;
+
+        let gridx = 0,
+            gridy,
+            gridi, // index
+            gridv, // value
+            i, il, j, x, y, tv,
+            stepsTaken = 0,
+            stepsTotal = 0;
+
+        if (contourX) {
+            stepsTotal += ((maxX - minX + partOff * 2) / toolStep) | 0;
+        }
+
+        if (contourY) {
+            stepsTotal += ((maxY - minY + partOff * 2) / toolStep) | 0;
+        }
+
+        const box = params.box.clone().expandByVector(new THREE.Vector3(
+            partOff, partOff, 0
+        ));
+
+        if (contourY) {
+            // emit slice per X
+            for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
+                if (x < box.min.x || x > box.max.x) continue;
+                gridx = Math.round(((x - minX) / boundsX) * stepsX);
+                gridy = -gridDelta;
+
+                const segments = trace.crossY({
+                    from: minY - partOff,
+                    to: maxY + partOff,
+                    step: resolution,
+                    box,
+                    x,
+                    gridx,
+                    gridy,
+                    clipTo,
+                    clipTab,
+                    tabHeight
+                });
+
+                if (segments.length > 0) {
+                    let slice = newSlice(gridx);
+                    slice.camLines = segments;
+                    slice.output()
+                        .setLayer("contour y", {face: color, line: color})
+                        .addPolys(segments);
+                    newslices.push(slice);
+                }
+                onupdate(++stepsTaken, stepsTotal, "contour y");
+            }
+        }
+
+        if (contourX) {
+            // emit slice per Y
+            for (y = minY - partOff; y <= maxY + partOff; y += toolStep) {
+                if (y < box.min.y || y > box.max.y) continue;
+                gridy = Math.round(((y - minY) / boundsY) * stepsY);
+                gridx = -gridDelta;
+
+                const segments = trace.crossX({
+                    from: minX - partOff,
+                    to: maxX + partOff,
+                    step: resolution,
+                    box,
+                    y,
+                    gridx,
+                    gridy,
+                    clipTo,
+                    clipTab,
+                    tabHeight
+                });
+
+                if (segments.length > 0) {
+                    let slice = newSlice(gridy);
+                    slice.camLines = segments;
+                    slice.output()
+                        .setLayer("contour x", {face: color, line: color})
+                        .addPolys(segments);
+                    newslices.push(slice);
+                }
+                onupdate(++stepsTaken, stepsTotal, "contour x");
+            }
+        }
+    }
+
 }
 
 class Probe {
