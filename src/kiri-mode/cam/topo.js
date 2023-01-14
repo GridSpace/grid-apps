@@ -128,8 +128,7 @@ class Topo {
         this.toolAtXY = toolAtXY;
         this.zAtXY = zAtXY;
 
-        const trace = this.trace = new Trace({
-            probe,
+        const trace = this.trace = new Trace(probe, {
             curvesOnly,
             maxangle,
             flatness
@@ -190,8 +189,6 @@ class Topo {
 
         console.log({ topo_raster: widget, resolution });
 
-        // const worker = kiri.worker;
-        // const minions = kiri.minions;
         const { worker, minions } = kiri;
         const vertices = widget.getGeoVertices().toShared();
         const range = { min: Infinity, max: -Infinity };
@@ -297,6 +294,7 @@ class Topo {
 
     async contour(params) {
         const trace = this.trace;
+        const concurrent = kiri.minions.running;
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
         const { gridDelta, resolution, partOff, toolStep, contourX, contourY } = params;
@@ -322,6 +320,15 @@ class Topo {
             partOff, partOff, 0
         ));
 
+        trace.init({
+            box,
+            clipTo,
+            clipTab,
+            tabHeight,
+            resolution,
+            concurrent
+        });
+
         if (contourY) {
             // emit slice per X
             for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
@@ -329,28 +336,23 @@ class Topo {
                 gridx = Math.round(((x - minX) / boundsX) * stepsX);
                 gridy = -gridDelta;
 
-                const segments = trace.crossY({
+                trace.crossY({
                     from: minY - partOff,
                     to: maxY + partOff,
-                    step: resolution,
-                    box,
                     x,
                     gridx,
-                    gridy,
-                    clipTo,
-                    clipTab,
-                    tabHeight
+                    gridy
+                }, segments => {
+                    if (segments.length > 0) {
+                        let slice = newSlice(gridx);
+                        slice.camLines = segments;
+                        slice.output()
+                            .setLayer("contour y", {face: color, line: color})
+                            .addPolys(segments);
+                        newslices.push(slice);
+                    }
+                    onupdate(++stepsTaken, stepsTotal, "contour y");
                 });
-
-                if (segments.length > 0) {
-                    let slice = newSlice(gridx);
-                    slice.camLines = segments;
-                    slice.output()
-                        .setLayer("contour y", {face: color, line: color})
-                        .addPolys(segments);
-                    newslices.push(slice);
-                }
-                onupdate(++stepsTaken, stepsTotal, "contour y");
             }
         }
 
@@ -364,14 +366,9 @@ class Topo {
                 const segments = trace.crossX({
                     from: minX - partOff,
                     to: maxX + partOff,
-                    step: resolution,
-                    box,
                     y,
                     gridx,
-                    gridy,
-                    clipTo,
-                    clipTab,
-                    tabHeight
+                    gridy
                 });
 
                 if (segments.length > 0) {
@@ -385,6 +382,8 @@ class Topo {
                 onupdate(++stepsTaken, stepsTotal, "contour x");
             }
         }
+
+        trace.cleanup();
     }
 
 }
@@ -395,6 +394,8 @@ class Probe {
 
         const { data, profile } = params;
         const { stepsX, stepsY, boundsX, boundsY, zMin } = params;
+
+        this.params = params;
 
         // return the touching z given topo x,y and a tool profile
         const toolAtZ = this.toolAtZ = function(x,y) {
@@ -445,10 +446,11 @@ class Probe {
 
 class Trace {
 
-    constructor(params) {
+    constructor(probe, params) {
 
-        const { probe, curvesOnly, maxangle, flatness } = params;
+        const { curvesOnly, maxangle, flatness } = params;
 
+        this.params = params;
         this.probe = probe;
 
         let trace,
@@ -527,15 +529,37 @@ class Trace {
 
     }
 
-    crossY(params) {
+    init(params) {
+        this.cross = params;
+        if (this.cross.concurrent) {
+            const { worker, minions } = kiri;
+            const { codec } = kiri;
+
+            minions.broadcast("trace_init", codec.encode({
+                probe: this.probe.params,
+                trace: this.params,
+                cross: params,
+                // clipTo: codec.encode(params.clipTo)
+            }));
+        }
+    }
+
+    cleanup() {
+        if (this.cross.concurrent) {
+            const { worker, minions } = kiri;
+            minions.broadcast("trace_cleanup");
+        }
+    }
+
+    crossY(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
+        const { clipTab, tabHeight, clipTo, box, resolution } = this.cross;
         const { toolAtZ, toolAtXY, zAtXY } = this.probe;
-        let { from, to, step, box, x, gridx, gridy } = params;
-        let { clipTab, tabHeight, clipTo } = params;
+        let { from, to, x, gridx, gridy } = params;
         const checkr = newPoint(0,0);
         newslice();
         newtrace();
-        for (let y = from; y < to; y += step) {
+        for (let y = from; y < to; y += resolution) {
             if (y < box.min.y || y > box.max.y) {
                 gridy++;
                 continue;
@@ -560,18 +584,18 @@ class Trace {
             gridy++;
         }
         end_poly();
-        return this.slice;
+        then(this.slice);
     }
 
     crossX(params) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
+        const { clipTab, tabHeight, clipTo, box, resolution } = this.cross;
         const { toolAtZ, toolAtXY, zAtXY } = this.probe;
-        let { from, to, step, box, y, gridx, gridy } = params;
-        let { clipTab, tabHeight, clipTo } = params;
+        let { from, to, y, gridx, gridy } = params;
         const checkr = newPoint(0,0);
         newslice();
         newtrace();
-        for (let x = from; x < to; x += step) {
+        for (let x = from; x < to; x += resolution) {
             if (x < box.min.x || y > box.max.x) {
                 gridx++;
                 continue;
@@ -725,6 +749,26 @@ moto.broker.subscribe("minion.started", msg => {
             });
         // only pass back bounds of rasters to be merged
         reply({ seq, box });
+    };
+
+    funcs.trace_init = data => {
+        const { cache } = self;
+        const { codec } = kiri;
+        data.cross.clipTo = codec.decode(data.cross.clipTo);
+        data.cross.clipTab = codec.decode(data.cross.clipTab);
+        const probe = new Probe(data.probe);
+        const trace = new Trace(probe, data.trace);
+        cache.trace = {
+            probe,
+            trace,
+            cross: data.cross
+        };
+        log('trace_init', { data, trace: cache.trace });
+    };
+
+    funcs.trace_cleanup = () => {
+        // log('trace_cleanup');
+        delete cache.trace;
     };
 });
 

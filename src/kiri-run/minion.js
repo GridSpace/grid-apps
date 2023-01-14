@@ -153,7 +153,7 @@ const funcs = self.minion = {
     },
 
     clearCache: msg => {
-        cache = self.cache = [];
+        cache = self.cache = {};
     },
 
     wasm: data => {
