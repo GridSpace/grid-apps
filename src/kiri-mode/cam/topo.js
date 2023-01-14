@@ -150,7 +150,9 @@ class Topo {
             };
 
             onupdate(0, 1, "raster");
-            await this.raster(widget, params);
+            await this.raster(widget, params, (i, l, p) => {
+                onupdate(i / 2, l, p);
+            });
             topo.raster = false;
         }
 
@@ -173,9 +175,10 @@ class Topo {
             clipTo,
             clipTab,
             tabHeight,
-            onupdate,
             newslices,
             color
+        }, (i, l, p) => {
+            onupdate(l / 2 + i / 2, l, p);
         });
 
         ondone(newslices);
@@ -183,13 +186,11 @@ class Topo {
         return this;
     }
 
-    async raster(widget, params) {
+    async raster(widget, params, onupdate) {
         const { resolution } = params;
         const { box } = params;
-
-        console.log({ topo_raster: widget, resolution });
-
         const { worker, minions } = kiri;
+
         const vertices = widget.getGeoVertices().toShared();
         const range = { min: Infinity, max: -Infinity };
 
@@ -219,15 +220,15 @@ class Topo {
         slices.push(slice);
         console.log({ shards, range, step, slices });
 
+        let complete = 0;
         // define sharded ranges
         if (minions.running > 1) {
 
-            console.time('topo raster minion');
             worker.putCache({ key: widget.id, data: vertices }, { done: data => {
                 // console.log({ put_cache_done: data });
             }});
 
-            let promises = slices.map((slice, index) => {
+            let promises = slices.map(slice => {
                 return new Promise(resolve => {
                     minions.queue({
                         cmd: "topo_raster",
@@ -236,6 +237,7 @@ class Topo {
                         slice
                     }, data => {
                         resolve(data);
+                        onupdate(++complete, slices.length, "raster");
                     });
                 });
             });
@@ -255,11 +257,9 @@ class Topo {
             worker.clearCache({}, { done: data => {
                 // console.log({ clear_cache_done: data });
             }});
-            console.timeEnd('topo raster minion');
 
         } else {
 
-            console.time('topo raster');
             // iterate over shards, merge output
             // const output = [];
             for (let slice of slices) {
@@ -286,34 +286,29 @@ class Topo {
 
                         return slice;
                     });
+                onupdate(++complete, slices.length, "raster");
             }
-            console.timeEnd('topo raster');
 
         }
     }
 
-    async contour(params) {
+    async contour(params, onupdate) {
         const trace = this.trace;
         const concurrent = kiri.minions.running;
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
         const { gridDelta, resolution, partOff, toolStep, contourX, contourY } = params;
-        const { clipTo, clipTab, tabHeight, onupdate, newslices, color } = params;
+        const { clipTo, clipTab, tabHeight, newslices, color } = params;
 
-        let gridx = 0,
-            gridy,
-            gridi, // index
-            gridv, // value
-            i, il, j, x, y, tv,
-            stepsTaken = 0,
+        let stepsTaken = 0,
             stepsTotal = 0;
 
         if (contourX) {
-            stepsTotal += ((maxX - minX + partOff * 2) / toolStep) | 0;
+            stepsTotal += ((maxY - minY + partOff * 2) / toolStep) | 0;
         }
 
         if (contourY) {
-            stepsTotal += ((maxY - minY + partOff * 2) / toolStep) | 0;
+            stepsTotal += ((maxX - minX + partOff * 2) / toolStep) | 0;
         }
 
         const box = params.box.clone().expandByVector(new THREE.Vector3(
@@ -329,13 +324,31 @@ class Topo {
             concurrent
         });
 
-        if (contourY) {
-            // emit slice per X
-            for (x = minX - partOff; x <= maxX + partOff; x += toolStep) {
-                if (x < box.min.x || x > box.max.x) continue;
-                gridx = Math.round(((x - minX) / boundsX) * stepsX);
-                gridy = -gridDelta;
+        let resolver;
+        let pcount = 0;
+        let slicesY = [];
+        let slicesX = [];
+        let promise = new Promise(resolve => {
+            resolver = () => {
+                // sort output slices (required for async)
+                slicesY.sort((a,b) => a.z - b.z);
+                slicesX.sort((a,b) => a.z - b.z);
+                newslices.appendAll(slicesY);
+                newslices.appendAll(slicesX);
+                resolve();
+            }
+        });
+        let inc = () => { pcount++ };
+        let dec = () => { if (--pcount === 0) resolver() };
 
+        if (contourY) {
+            onupdate(0, stepsTotal, "contour y");
+            // emit slice per X
+            for (let x = minX - partOff; x <= maxX + partOff; x += toolStep) {
+                if (x < box.min.x || x > box.max.x) continue;
+                const gridx = Math.round(((x - minX) / boundsX) * stepsX);
+                const gridy = -gridDelta;
+                inc();
                 trace.crossY({
                     from: minY - partOff,
                     to: maxY + partOff,
@@ -349,39 +362,44 @@ class Topo {
                         slice.output()
                             .setLayer("contour y", {face: color, line: color})
                             .addPolys(segments);
-                        newslices.push(slice);
+                        slicesY.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour y");
+                    dec();
                 });
             }
         }
 
         if (contourX) {
             // emit slice per Y
-            for (y = minY - partOff; y <= maxY + partOff; y += toolStep) {
+            onupdate(0, stepsTotal, "contour x");
+            for (let y = minY - partOff; y <= maxY + partOff; y += toolStep) {
                 if (y < box.min.y || y > box.max.y) continue;
-                gridy = Math.round(((y - minY) / boundsY) * stepsY);
-                gridx = -gridDelta;
-
-                const segments = trace.crossX({
+                const gridy = Math.round(((y - minY) / boundsY) * stepsY);
+                const gridx = -gridDelta;
+                inc();
+                trace.crossX({
                     from: minX - partOff,
                     to: maxX + partOff,
                     y,
                     gridx,
                     gridy
+                }, segments => {
+                    if (segments.length > 0) {
+                        let slice = newSlice(gridy);
+                        slice.camLines = segments;
+                        slice.output()
+                            .setLayer("contour x", {face: color, line: color})
+                            .addPolys(segments);
+                        slicesX.push(slice);
+                    }
+                    onupdate(++stepsTaken, stepsTotal, "contour x");
+                    dec();
                 });
-
-                if (segments.length > 0) {
-                    let slice = newSlice(gridy);
-                    slice.camLines = segments;
-                    slice.output()
-                        .setLayer("contour x", {face: color, line: color})
-                        .addPolys(segments);
-                    newslices.push(slice);
-                }
-                onupdate(++stepsTaken, stepsTotal, "contour x");
             }
         }
+
+        await promise;
 
         trace.cleanup();
     }
@@ -531,8 +549,9 @@ class Trace {
 
     init(params) {
         this.cross = params;
-        if (this.cross.concurrent) {
-            const { worker, minions } = kiri;
+        const { minions } = kiri;
+
+        if (minions && this.cross.concurrent) {
             const { codec } = kiri;
 
             minions.broadcast("trace_init", codec.encode({
@@ -545,16 +564,47 @@ class Trace {
     }
 
     cleanup() {
-        if (this.cross.concurrent) {
-            const { worker, minions } = kiri;
+        const { minions } = kiri;
+
+        if (minions && this.cross.concurrent) {
             minions.broadcast("trace_cleanup");
         }
     }
 
     crossY(params, then) {
+        const { minions } = kiri;
+
+        if (minions && this.cross.concurrent) {
+            minions.queue({
+                cmd: "trace_y",
+                params
+            }, data => {
+                then(kiri.codec.decode(data.slice));
+            });
+        } else {
+            this.crossY_sync(params, then);
+        }
+    }
+
+    crossX(params, then) {
+        const { minions } = kiri;
+
+        if (minions && this.cross.concurrent) {
+            minions.queue({
+                cmd: "trace_x",
+                params
+            }, data => {
+                then(kiri.codec.decode(data.slice));
+            });
+        } else {
+            this.crossX_sync(params, then);
+        }
+    }
+
+    crossY_sync(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
         const { clipTab, tabHeight, clipTo, box, resolution } = this.cross;
-        const { toolAtZ, toolAtXY, zAtXY } = this.probe;
+        const { toolAtZ } = this.probe;
         let { from, to, x, gridx, gridy } = params;
         const checkr = newPoint(0,0);
         newslice();
@@ -587,16 +637,16 @@ class Trace {
         then(this.slice);
     }
 
-    crossX(params) {
+    crossX_sync(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
         const { clipTab, tabHeight, clipTo, box, resolution } = this.cross;
-        const { toolAtZ, toolAtXY, zAtXY } = this.probe;
+        const { toolAtZ } = this.probe;
         let { from, to, y, gridx, gridy } = params;
         const checkr = newPoint(0,0);
         newslice();
         newtrace();
         for (let x = from; x < to; x += resolution) {
-            if (x < box.min.x || y > box.max.x) {
+            if (x < box.min.x || x > box.max.x) {
                 gridx++;
                 continue;
             }
@@ -620,7 +670,7 @@ class Trace {
             gridx++;
         }
         end_poly();
-        return this.slice;
+        then(this.slice);
     }
 }
 
@@ -720,7 +770,6 @@ CAM.Topo = async function(opt) {
 };
 
 moto.broker.subscribe("minion.started", msg => {
-    // console.log({ cam_slicer2_minion: msg });
     const { funcs, cache, reply, log } = msg;
 
     funcs.topo_raster = (data, seq) => {
@@ -763,11 +812,28 @@ moto.broker.subscribe("minion.started", msg => {
             trace,
             cross: data.cross
         };
-        log('trace_init', { data, trace: cache.trace });
+        trace.init(data.cross);
     };
 
+    funcs.trace_y = (data, seq) => {
+        const { cache } = self;
+        const { trace } = cache.trace;
+        trace.crossY_sync(data.params, slice => {
+            slice = kiri.codec.encode(slice);
+            reply({ seq, slice });
+        });
+    },
+
+    funcs.trace_x = (data, seq) => {
+        const { cache } = self;
+        const { trace } = cache.trace;
+        trace.crossX_sync(data.params, slice => {
+            slice = kiri.codec.encode(slice);
+            reply({ seq, slice });
+        });
+    },
+
     funcs.trace_cleanup = () => {
-        // log('trace_cleanup');
         delete cache.trace;
     };
 });
