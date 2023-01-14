@@ -19,6 +19,7 @@ gapp.overlay(base, {
  * with optional decimation
  */
 function verticesToPoints(array, options) {
+    console.time('verticesToPoints');
     let parr = new Array(array.length / 3),
         i = 0,
         j = 0,
@@ -30,19 +31,6 @@ function verticesToPoints(array, options) {
         oldpoints = parr.length,
         newpoints;
 
-    // replace point objects with their equivalents
-    while (i < array.length) {
-        let p = base.newPoint(array[i++], array[i++], array[i++]),
-            k = p.key,
-            m = hash[k];
-        if (!m) {
-            m = p;
-            hash[k] = p;
-            unique++;
-        }
-        parr[j++] = m;
-    }
-
     let {threshold, precision, maxpass} = options || {};
     // threshold = point count for triggering decimation
     // precision = under which points are merged
@@ -50,6 +38,25 @@ function verticesToPoints(array, options) {
     threshold = threshold > 0 ? threshold : config.decimate_threshold;
     precision = precision >= 0 ? precision : config.precision_decimate;
     maxpass = maxpass >= 0 ? maxpass : 0;
+
+    // replace point objects with their equivalents
+    if (maxpass) {
+        while (i < array.length) {
+            let p = base.newPoint(array[i++], array[i++], array[i++]),
+                k = p.key,
+                m = hash[k];
+            if (!m) {
+                m = p;
+                hash[k] = p;
+                unique++;
+            }
+            parr[j++] = m;
+        }
+    } else {
+        while (i < array.length) {
+            parr[j++] = base.newPoint(array[i++], array[i++], array[i++]);
+        }
+    }
 
     // decimate until all point spacing > precision
     if (maxpass && precision > 0.0)
@@ -115,6 +122,7 @@ function verticesToPoints(array, options) {
         time: (Date.now() - t)
     });
 
+    console.timeEnd('verticesToPoints');
     return parr;
 }
 

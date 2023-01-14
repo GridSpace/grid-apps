@@ -256,7 +256,7 @@ class OpRough extends CamOp {
         }
 
         // console.log('indices', ...indices, {zBottom});
-        slicer.slice(indices, { each: (data, index, total) => {
+        await slicer.slice(indices, { each: (data, index, total) => {
             shadow = unsafe ? data.tops : POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
             if (flats.indexOf(data.z) >= 0) {
                 // exclude flats injected to complete shadow
@@ -517,7 +517,7 @@ class OpOutline extends CamOp {
                 slices.push(slice);
             });
         } else
-        slicer.slice(indices, { each: (data, index, total) => {
+        await slicer.slice(indices, { each: (data, index, total) => {
             shadow = unsafe ? data.tops : POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
             if (flats.indexOf(data.z) >= 0) {
                 // exclude flats injected to complete shadow
@@ -1504,7 +1504,7 @@ class OpXRay extends CamOp {
             slice.xray();
             addSlices(slice);
         }, over: false, flatoff: 0, edges: true, openok: true };
-        slicer.slice(xrayind, xrayopt);
+        await slicer.slice(xrayind, xrayopt);
         // xrayopt.over = true;
         // slicer.slice(xrayind, xrayopt);
     }
@@ -1537,7 +1537,7 @@ class OpShadow extends CamOp {
         }
 
         let lsz; // only shadow up to bottom of last shadow for progressive union
-        let terrain = slicer.slice(tzindex, { each: (data, index, total) => {
+        let terrain = await slicer.slice(tzindex, { each: (data, index, total) => {
             let shadow = trueShadow ? shadowAt(data.z, lsz) : [];
             tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadow), 0.01, true);
             tslices.push(data.slice);

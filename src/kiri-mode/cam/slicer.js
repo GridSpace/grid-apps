@@ -50,10 +50,13 @@ class Slicer {
         this.zLine = {}; // count of z coplanar lines
         this.zList = {}; // count of z values for auto slicing
         this.zSum = 0;   // used in bucketing calculations
-        return this
+        console.time('set points');
+        this
             .computeBounds()
             .computeFeatures()
             .computeBuckets();
+        console.timeEnd('set points');
+        return this;
     }
 
     computeBounds() {
@@ -70,7 +73,7 @@ class Slicer {
     computeFeatures(options) {
         const opt = this.setOptions(options);
         const points = this.points;
-        const bounds = this.bounds;
+        // const bounds = this.bounds;
         const zFlat = this.zFlat;
         const zLine = this.zLine;
         const zList = this.zList;
@@ -80,6 +83,7 @@ class Slicer {
             zList[z] = (zList[z] || 0) + 1;
         }
 
+        console.time('compute features');
         for (let i = 0, il = points.length; i < il; ) {
             let p1 = points[i++];
             let p2 = points[i++];
@@ -122,6 +126,7 @@ class Slicer {
                 }
             }
         }
+        console.timeEnd('compute features');
 
         return this;
     }
@@ -137,8 +142,9 @@ class Slicer {
         let points = this.points;
         let bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
         let zScale = this.zScale = 1 / (zMax / bucketCount);
-        let buckets = this.buckets = {};
+        let buckets = this.buckets = [];
 
+        console.time('compute buckets');
         if (bucketCount > 1) {
             buckets.length = bucketCount;
             // create empty buckets
@@ -163,23 +169,25 @@ class Slicer {
                 }
             }
         }
+        console.timeEnd('compute buckets');
+
         return this;
     }
 
     // slice through points at given Z and return polygons
-    slice(z, options, index, total, mark) {
+    async slice(z, options, index, total, mark) {
         const opt = this.setOptions(options);
 
         // if Z is supplied as an array, iterate and collect
         if (Array.isArray(z)) {
             const mark = util.time();
             const rarr = [];
-            z.forEach((zv,zi) => {
-                const data = this.slice(zv, opt, zi, z.length, mark);
+            for (let zi=0; zi<z.length; zi++) {
+                const data = await this.slice(z[zi], opt, zi, z.length, mark);
                 if (data) {
                     rarr.push(data);
                 }
-            });
+            }
             return rarr;
         }
 

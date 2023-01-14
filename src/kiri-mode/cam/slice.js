@@ -59,8 +59,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         unsafe = proc.camExpertFast,
         units = settings.controller.units === 'in' ? 25.4 : 1,
         axisRotation,
-        axisIndex,
-        thruHoles;
+        axisIndex;
 
     if (tabs) {
         // make tab polygons
