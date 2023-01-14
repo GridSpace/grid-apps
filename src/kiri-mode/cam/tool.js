@@ -127,7 +127,12 @@ class Tool {
             }
         }
 
-        this.profile = toolOffset;
+        // convert to shared array for use with minions
+        const profile = new Float32Array(new SharedArrayBuffer(toolOffset.length * 4));
+        profile.set(toolOffset);
+
+        this.profile = profile;
+
         this.profileDim = {
             size: shaft_diameter,
             pix: profile_pix_iter + 2

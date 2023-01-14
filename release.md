@@ -19,6 +19,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * option to control first output point order
 * CAM add control to omit initial tool change
 * CAM fix vertical face selection and step over defaults
+* CAM fix multi-part object import / grouping
+* CAM fix tracing nested polyline offset ordering
 
 - refactor object/group storage model in Mesh:Tool
 - add omit pocket to rough and outline

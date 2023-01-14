@@ -112,55 +112,33 @@ class Topo {
             newslices.push(debug);
         }
 
+        const probe = new Probe({
+            profile: toolOffset,
+            data,
+            stepsX,
+            stepsY,
+            boundsX,
+            boundsY,
+            zMin
+        });
+
+        const { toolAtZ, toolAtXY, zAtXY } = probe;
+
+        this.toolAtZ = toolAtZ;
+        this.toolAtXY = toolAtXY;
+        this.zAtXY = zAtXY;
+
+        // const trace = new Trace({
+        //
+        // });
+        //
+        // const { push_point, end_poly, newtrace } = trace;
+
         let newtrace,
             sliceout,
             latent,
             lastP,
             slice;
-
-        // return the touching z given topo x,y and a tool profile
-        function toolAtZ(x,y) {
-            const profile = toolOffset,
-                sx = stepsX,
-                sy = stepsY,
-                xl = sx - 1,
-                yl = sy - 1;
-
-            let tx, ty, tz, gv, i = 0, mz = -1;
-
-            while (i < profile.length) {
-                // tool profile point x, y, and z offsets
-                const tx = profile[i++] + x;
-                const ty = profile[i++] + y;
-                const tz = profile[i++];
-                if (tx < 0 || tx > xl || ty < 0 || ty > yl) {
-                    // if outside max topo steps, use zMin
-                    gv = zMin;
-                } else {
-                    // lookup grid value @ tx, ty
-                    gv = topo.data[tx * sy + ty] || zMin;
-                }
-                // update the rest
-                mz = Math.max(tz + gv, mz);
-            }
-
-            return Math.max(mz, 0);
-        }
-
-        // export z probe function
-        const rx = stepsX / boundsX;
-        const ry = stepsX / boundsX;
-        this.toolAtXY = function(px, py) {
-            px = Math.round(rx * (px - minX));
-            py = Math.round(ry * (py - minY));
-            return toolAtZ(px, py);
-        };
-
-        const zAtXY = this.zAtXY = function(px, py) {
-            let ix = Math.round(rx * (px - minX));
-            let iy = Math.round(ry * (py - minY));
-            return topo.data[ix * stepsY + iy] || zMin;
-        };
 
         function push_point(x, y, z) {
             const newP = newPoint(x, y, z);
@@ -509,6 +487,121 @@ class Topo {
 
         }
     }
+}
+
+class Probe {
+    constructor(params) {
+        const { data, profile } = params;
+        const { stepsX, stepsY, boundsX, boundsY, zMin } = params;
+
+        // return the touching z given topo x,y and a tool profile
+        const toolAtZ = this.toolAtZ = function(x,y) {
+            let sx = stepsX,
+                sy = stepsY,
+                xl = sx - 1,
+                yl = sy - 1;
+
+            let tx, ty, tz, gv, i = 0, mz = -1;
+
+            while (i < profile.length) {
+                // tool profile point x, y, and z offsets
+                const tx = profile[i++] + x;
+                const ty = profile[i++] + y;
+                const tz = profile[i++];
+                if (tx < 0 || tx > xl || ty < 0 || ty > yl) {
+                    // if outside max topo steps, use zMin
+                    gv = zMin;
+                } else {
+                    // lookup grid value @ tx, ty
+                    gv = data[tx * sy + ty] || zMin;
+                }
+                // update the rest
+                mz = Math.max(tz + gv, mz);
+            }
+
+            return Math.max(mz, 0);
+        }
+
+        // export z probe function
+        const rx = stepsX / boundsX;
+        const ry = stepsX / boundsX;
+        const toolAtXY = this.toolAtXY = function(px, py) {
+            px = Math.round(rx * (px - minX));
+            py = Math.round(ry * (py - minY));
+            return toolAtZ(px, py);
+        };
+
+        const zAtXY = this.zAtXY = function(px, py) {
+            let ix = Math.round(rx * (px - minX));
+            let iy = Math.round(ry * (py - minY));
+            return data[ix * stepsY + iy] || zMin;
+        };
+    }
+}
+
+class Trace {
+
+    constructor() {
+
+        let trace,
+            sliceout,
+            latent,
+            lastP,
+            slice;
+
+        function push_point(x, y, z) {
+            const newP = newPoint(x, y, z);
+            // todo: merge co-linear, not just co-planar
+            if (lastP && Math.abs(lastP.z - z) < flatness) {
+                if (curvesOnly) {
+                    if ((trace.last() || lastP).distTo2D(newP) >= bridge) {
+                        end_poly();
+                    }
+                } else {
+                    latent = newP;
+                }
+            } else {
+                if (latent) {
+                    trace.push(latent);
+                    latent = null;
+                }
+                if (curvesOnly && lastP) {
+                    // maxangle
+                    const dz = Math.abs(lastP.z - z);
+                    const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
+                    const angle = Math.atan2(dz, dv) * RAD2DEG;
+                    // if (lastP.z < 0.1) console.log('pp', {dz, dxy, angle});
+                    if (angle > maxangle) {
+                        lastP = newP;
+                        return;
+                    }
+                }
+                trace.push(newP);
+            }
+            lastP = newP;
+        }
+
+        function end_poly() {
+            if (latent) {
+                trace.push(latent);
+            }
+            if (trace.length > 0) {
+                // add additional constraint on min perimeter()
+                if (trace.length > 1) {
+                    sliceout.push(trace);
+                }
+                newtrace();
+            }
+            latent = undefined;
+            lastP = undefined;
+        }
+
+        function newtrace() {
+            trace = newPolygon().setOpen();
+        }
+
+    }
+
 }
 
 function raster_slice(inputs) {
