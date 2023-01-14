@@ -955,14 +955,14 @@ class OpTrace extends CamOp {
                 poly2polyEmit(polys, newPoint(0,0,0), (poly, index, count, spoint) => {
                     routed.push(poly);
                 });
-                for (let poly of routed) {
+                for (let poly of POLY.nest(routed)) {
                     let offdist = 0;
                     switch (offset) {
                         case "outside": offdist = toolDiam / 2; break;
                         case "inside": offdist = -toolDiam / 2; break;
                     }
                     if (offdist) {
-                        let pnew = POLY.offset([poly], offdist);
+                        let pnew = POLY.offset([poly], offdist, { minArea: 0 });
                         if (pnew) {
                             poly = POLY.setZ(pnew, poly.getZ());
                         } else {
