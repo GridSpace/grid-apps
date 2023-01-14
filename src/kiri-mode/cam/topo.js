@@ -128,65 +128,6 @@ class Topo {
         this.toolAtXY = toolAtXY;
         this.zAtXY = zAtXY;
 
-        // const trace = new Trace({
-        //
-        // });
-        //
-        // const { push_point, end_poly, newtrace } = trace;
-
-        let newtrace,
-            sliceout,
-            latent,
-            lastP,
-            slice;
-
-        function push_point(x, y, z) {
-            const newP = newPoint(x, y, z);
-            // todo: merge co-linear, not just co-planar
-            if (lastP && Math.abs(lastP.z - z) < flatness) {
-                if (curvesOnly) {
-                    if ((newtrace.last() || lastP).distTo2D(newP) >= bridge) {
-                        end_poly();
-                    }
-                } else {
-                    latent = newP;
-                }
-            } else {
-                if (latent) {
-                    newtrace.push(latent);
-                    latent = null;
-                }
-                if (curvesOnly && lastP) {
-                    // maxangle
-                    const dz = Math.abs(lastP.z - z);
-                    const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
-                    const angle = Math.atan2(dz, dv) * RAD2DEG;
-                    // if (lastP.z < 0.1) console.log('pp', {dz, dxy, angle});
-                    if (angle > maxangle) {
-                        lastP = newP;
-                        return;
-                    }
-                }
-                newtrace.push(newP);
-            }
-            lastP = newP;
-        }
-
-        function end_poly() {
-            if (latent) {
-                newtrace.push(latent);
-            }
-            if (newtrace.length > 0) {
-                // add additional constraint on min perimeter()
-                if (newtrace.length > 1) {
-                    sliceout.push(newtrace);
-                }
-                newtrace = newPolygon().setOpen();
-            }
-            latent = undefined;
-            lastP = undefined;
-        }
-
         function contouring() {
             let gridx = 0,
                 gridy,
@@ -208,6 +149,14 @@ class Topo {
                 partOff, partOff, 0
             ));
 
+            const trace = new Trace({
+                curvesOnly,
+                maxangle,
+                flatness
+            });
+
+            const { push_point, end_poly, newtrace, newslice } = trace;
+
             const inClip = function(clips, checkZ, point) {
                 for (let i=0; i<clips.length; i++) {
                     let poly = clips[i];
@@ -225,8 +174,8 @@ class Topo {
                 let { from, to, step, box, x, gridx, gridy } = params;
                 let { clipTab, tabHeight, clipTo } = params;
                 const checkr = newPoint(0,0);
-                newtrace = newPolygon().setOpen();
-                sliceout = [];
+                newtrace();
+                newslice();
                 for (let y = from; y < to; y += step) {
                     if (y < box.min.y || y > box.max.y) {
                         gridy++;
@@ -258,8 +207,8 @@ class Topo {
                 let { from, to, step, box, y, gridx, gridy } = params;
                 let { clipTab, tabHeight, clipTo } = params;
                 const checkr = newPoint(0,0);
-                newtrace = newPolygon().setOpen();
-                sliceout = [];
+                newtrace();
+                newslice();
                 for (let x = from; x < to; x += step) {
                     if (x < box.min.x || y > box.max.x) {
                         gridx++;
@@ -307,8 +256,10 @@ class Topo {
                         tabHeight
                     });
 
+                    const sliceout = trace.sliceout;
+
                     if (sliceout.length > 0) {
-                        slice = newSlice(gridx);
+                        let slice = newSlice(gridx);
                         slice.camLines = sliceout;
                         slice.output()
                             .setLayer("contour y", {face: color, line: color})
@@ -339,8 +290,10 @@ class Topo {
                         tabHeight
                     });
 
+                    const sliceout = trace.sliceout;
+
                     if (sliceout.length > 0) {
-                        slice = newSlice(gridy);
+                        let slice = newSlice(gridy);
                         slice.camLines = sliceout;
                         slice.output()
                             .setLayer("contour x", {face: color, line: color})
@@ -490,7 +443,9 @@ class Topo {
 }
 
 class Probe {
+
     constructor(params) {
+
         const { data, profile } = params;
         const { stepsX, stepsY, boundsX, boundsY, zMin } = params;
 
@@ -536,20 +491,27 @@ class Probe {
             let iy = Math.round(ry * (py - minY));
             return data[ix * stepsY + iy] || zMin;
         };
+
     }
+
 }
 
 class Trace {
 
-    constructor() {
+    constructor(params) {
+
+        const { curvesOnly, maxangle, flatness } = params;
 
         let trace,
-            sliceout,
+            slice,
             latent,
-            lastP,
-            slice;
+            lastP;
 
-        function push_point(x, y, z) {
+        const newslice = this.newslice = () => {
+            this.slice = slice = [];
+        }
+
+        const push_point = this.push_point = function(x, y, z) {
             const newP = newPoint(x, y, z);
             // todo: merge co-linear, not just co-planar
             if (lastP && Math.abs(lastP.z - z) < flatness) {
@@ -581,14 +543,14 @@ class Trace {
             lastP = newP;
         }
 
-        function end_poly() {
+        const end_poly = this.end_poly = function() {
             if (latent) {
                 trace.push(latent);
             }
             if (trace.length > 0) {
                 // add additional constraint on min perimeter()
                 if (trace.length > 1) {
-                    sliceout.push(trace);
+                    slice.push(trace);
                 }
                 newtrace();
             }
@@ -596,10 +558,14 @@ class Trace {
             lastP = undefined;
         }
 
-        function newtrace() {
+        const newtrace = this.newtrace = function() {
             trace = newPolygon().setOpen();
         }
 
+    }
+
+    get sliceout() {
+        return this.slice;
     }
 
 }
