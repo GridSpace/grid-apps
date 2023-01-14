@@ -80,7 +80,8 @@ class Widget {
                 z: 0
             },
             top: 0, // z top
-            mirror: false
+            mirror: false,
+            indexed: false
         },
         // used to cache shadow geo
         this.cache = {};
