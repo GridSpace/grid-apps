@@ -37,7 +37,7 @@ kiri.load(api => {
             widget.selectFaces(Object.values(widget._surfaces).flat());
         };
 
-        CAM.surface_toggle = function(widget, face, ondone) {
+        CAM.surface_toggle = function(widget, face, radians, ondone) {
             let surfaces = widget._surfaces = widget._surfaces || {};
             for (let [root, faces] of Object.entries(surfaces)) {
                 if (faces.contains(face)) {
@@ -48,7 +48,7 @@ kiri.load(api => {
                     return;
                 }
             }
-            kiri.client.send("cam_surface_find", { id: widget.id, face }, faces => {
+            kiri.client.send("cam_surface_find", { id: widget.id, face, radians }, faces => {
                 if (faces.length) {
                     surfaces[face] = faces;
                     CAM.surface_show(widget);
@@ -92,9 +92,9 @@ kiri.load(api => {
             }
         };
 
-        CAM.surface_find = function(widget, faces) {
+        CAM.surface_find = function(widget, faces, radians) {
             CAM.surface_prep(widget);
-            return widget.tool.findConnectedSurface(faces, 0.1, 0.0);
+            return widget.tool.findConnectedSurface(faces, radians || 0, 0.0);
         };
 
         kiri.worker.cam_surfaces = function(data, send) {
@@ -114,9 +114,9 @@ kiri.load(api => {
         };
 
         kiri.worker.cam_surface_find = function(data, send) {
-            const { id, face } = data;
+            const { id, face, radians } = data;
             const widget = kiri.worker.cache[id];
-            const faces = CAM.surface_find(widget, [face]);
+            const faces = CAM.surface_find(widget, [face], radians);
             send.done(faces);
         }
 

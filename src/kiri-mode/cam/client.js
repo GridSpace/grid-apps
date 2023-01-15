@@ -844,6 +844,7 @@ CAM.init = function(kiri, api) {
         func.clearPops();
         alert = api.show.alert("analyzing surfaces...", 1000);
         let surfaces = poppedRec.surfaces;
+        let radians = poppedRec.follow * DEG2RAD;
         CAM.surface_prep(currentIndex * RAD2DEG, () => {
             api.hide.alert(alert);
             alert = api.show.alert("[esc] cancels surface editing");
@@ -851,7 +852,7 @@ CAM.init = function(kiri, api) {
                 let widget = api.widgets.forid(wid);
                 if (widget && arr.length)
                 for (let faceid of arr) {
-                    CAM.surface_toggle(widget, faceid, faceids => {
+                    CAM.surface_toggle(widget, faceid, radians, faceids => {
                         // surfaces[widget.id] = faceids;
                     });
                 }
@@ -864,7 +865,7 @@ CAM.init = function(kiri, api) {
             let min = Math.min(face.a, face.b, face.c);
             let faceid = min / 3;
             let widget = lastWidget = obj.object.widget;
-            CAM.surface_toggle(widget, faceid, faceids => {
+            CAM.surface_toggle(widget, faceid, radians, faceids => {
                 surfaces[widget.id] = faceids;
             });
         };
@@ -1338,10 +1339,11 @@ CAM.init = function(kiri, api) {
         plunge:    'camPocketPlunge',
         expand:    'camPocketExpand',
         smooth:    'camPocketSmooth',
-        refine:    'cmaPocketRefine',
+        refine:    'camPocketRefine',
+        follow:    'camPocketFollow',
         contour:   'camPocketContour',
         engrave:   'camPocketEngrave',
-        outline:   'cmaPocketOutline',
+        outline:   'camPocketOutline',
         tolerance: 'camTolerance',
     }).inputs = {
         tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1354,8 +1356,9 @@ CAM.init = function(kiri, api) {
         sep:       UC.newBlank({class:"pop-sep"}),
         expand:    UC.newInput(LANG.cp_xpnd_s, {title:LANG.cp_xpnd_l, convert:UC.toFloat, units:true, show:() => !poppedRec.contour}),
         refine:    UC.newInput(LANG.cp_refi_s, {title:LANG.cp_refi_l, convert:UC.toInt, show:() => poppedRec.contour}),
-        smooth:    UC.newInput(LANG.cp_smoo_s, {title:LANG.cp_smoo_l, convert:UC.toFloat, units:true}),
+        smooth:    UC.newInput(LANG.cp_smoo_s, {title:LANG.cp_smoo_l, convert:UC.toInt}),
         tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4, show:() => poppedRec.contour}),
+        follow:    UC.newInput(LANG.cp_foll_s, {title:LANG.cp_foll_l, convert:UC.toFloat}),
         sep:       UC.newBlank({class:"pop-sep"}),
         contour:   UC.newBoolean(LANG.cp_cont_s, undefined, {title:LANG.cp_cont_s}),
         outline:   UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l, show:() => !poppedRec.contour}),

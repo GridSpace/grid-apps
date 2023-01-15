@@ -1054,7 +1054,9 @@ class OpPocket extends CamOp {
                 onupdate: (index, total, msg) => {
                     progress((index / total) * 0.9, msg);
                 },
-                ondone: (slices) => { },
+                ondone: (slices) => {
+                    // console.log({ contour: slices });
+                },
                 contour: {
                     tool,
                     tolerance,

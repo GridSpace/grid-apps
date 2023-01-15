@@ -10,7 +10,7 @@
 gapp.register("kiri-mode.cam.slicer", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { config, util, polygons, newOrderedLine, newPoint } = base;
+const { config, util, polygons, newOrderedLine, newPoint, newLine } = base;
 const { sliceConnect, sliceDedup } = base;
 const { newSlice } = kiri;
 
@@ -237,18 +237,27 @@ class Slicer {
     }
 
     async sliceBucketMinion(bucket, opt, oneach) {
+        const { decode, decodePointArray } = kiri.codec;
         const slices = (await new Promise(resolve => {
             kiri.minions.queue({
                 cmd: "cam_slice",
-                opt: { lines: false },
+                opt: Object.clone(opt),
                 bucket,
             }, resolve);
         })).slices;
         for (let slice of slices) {
+            slice.polys = decode(slice.polys);
+            if (slice.lines) {
+                slice.lines = decodePointArray(slice.lines)
+                    .group(2)
+                    .map(arr => {
+                        return newLine(arr[0], arr[1])
+                    });
+            }
             oneach(slice);
         }
         // console.log(bucket, slices);
-        return kiri.codec.decode(slices);
+        return slices;
     }
 
     async sliceBucket(bucket, opt, oneach) {
@@ -472,10 +481,19 @@ moto.broker.subscribe("minion.started", msg => {
 
     funcs.cam_slice = (data, seq) => {
         const { bucket, opt } = data;
+        const { encode, encodePointArray } = kiri.codec;
+        // log({ slice: bucket, opt });
         cache.slicer.sliceBucket(bucket, opt, slice => {
             // console.log({ slice });
         }).then(data => {
-            reply({ seq, slices: kiri.codec.encode(data) });
+            data.forEach(rec => {
+                rec.polys = encode(rec.polys);
+                if (rec.lines) {
+                    const points = rec.lines.map(l => [l.p1, l.p2]).flat();
+                    rec.lines = encodePointArray(points);
+                }
+            });
+            reply({ seq, slices: data });
         });
     };
 });

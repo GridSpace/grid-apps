@@ -527,6 +527,8 @@ self.kiri.lang['en-us'] = {
     cp_xpnd_l:      ["grow selected area to","encompass corners"],
     cp_smoo_s:      "smooth",
     cp_smoo_l:      ["clean up jagged edges caused by angled walls. can speedup and improve pocketing for detailed geometries. recommend starting with values around 1 if slicing takes too long or the contours look jagged"],
+    cp_foll_s:      "selection",
+    cp_foll_l:      ["curvature selection limit in degrees. values closer to 0 will restrict selections to flatter surfaces"],
     cp_refi_s:      "refine",
     cp_refi_l:      ["number of refining passes to perform on contoured polylines. meant to address Z delta sawtoothing caused by faced geometries whereas smoothing handles XY. values > 10 work well for gently contoured geometries with significant Z movement."],
     cp_cont_s:      "contour",

@@ -333,13 +333,13 @@ CAM.traces = async function(settings, widget, single) {
     let slicer = new kiri.cam_slicer(widget);
     let indices = [...new Set(Object.keys(slicer.zFlat)
         .map(kv => parseFloat(kv).round(5))
-        .appendAll(Object.entries(slicer.zLine).map(ze => {
-            let [ zk, zv ] = ze;
-            return zv > 1 ? parseFloat(zk).round(5) : null;
-        })
-        .filter(v => v !== null)))]
+        // .appendAll(Object.entries(slicer.zLine).map(ze => {
+        //     let [ zk, zv ] = ze;
+        //     return zv > 1 ? parseFloat(zk).round(5) : null;
+        // })
+        // .filter(v => v !== null))
+        )]
         .sort((a,b) => b - a);
-
     let traces = [];
     // find and trim polys (including open) to shadow
     let oneach = data => {
@@ -369,8 +369,9 @@ CAM.traces = async function(settings, widget, single) {
             traces.push(poly);
         });
     };
-    let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true };
+    let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true, lines: true };
     await slicer.slice(indices, opts);
+    // pick up bottom features
     opts.over = true;
     await slicer.slice(indices, opts);
     widget.traces = traces;

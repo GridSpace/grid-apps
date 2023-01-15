@@ -3,7 +3,7 @@
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
 
-# Release 3.8
+# Release 3.8 (2023-01-21)
 
 * update server-side sample module code
 * various fixes and improvements to CAM indexing
@@ -23,6 +23,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM fix tracing nested polyline offset ordering
 * CAM refactor of contouring yields 2x - 20x speedup
 * CAM update traces to async slicing, fix use with flip
+* CAM add threading support for all slicing ops
 
 - refactor object/group storage model in Mesh:Tool
 - add omit pocket to rough and outline
@@ -85,6 +86,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * add CAM Z bottom inversion option to flip operator
 * add CAM custom gcode operator (can be used for pausing, too)
 * add CAM z extend option on registration op independent of "Z Thru" global
+* add CAM pocket surface selection filter by angle
 * add optional CAM operation notes (helps with many similar ops)
 * add option to limit CAM trace ops to Z bottom limit (when in use)
 * extend url loading of workspaces to all formats

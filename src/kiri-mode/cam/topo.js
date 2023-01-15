@@ -119,6 +119,8 @@ class Topo {
             stepsY,
             boundsX,
             boundsY,
+            minX,
+            minY,
             zMin
         });
 
@@ -311,6 +313,10 @@ class Topo {
             stepsTotal += ((maxX - minX + partOff * 2) / toolStep) | 0;
         }
 
+        if (stepsTotal === 0) {
+            return;
+        }
+
         const box = params.box.clone().expandByVector(new THREE.Vector3(
             partOff, partOff, 0
         ));
@@ -411,7 +417,7 @@ class Probe {
     constructor(params) {
 
         const { data, profile } = params;
-        const { stepsX, stepsY, boundsX, boundsY, zMin } = params;
+        const { stepsX, stepsY, boundsX, boundsY, zMin, minX, minY } = params;
 
         this.params = params;
 
