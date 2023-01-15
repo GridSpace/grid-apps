@@ -143,7 +143,6 @@ class Engine {
                     accept(this);
                 }
             });
-            kiri.client.unrotate(this.settings);
         });
     }
 

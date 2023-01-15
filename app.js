@@ -822,7 +822,7 @@ function cookieValue(cookie,key) {
 }
 
 function rewriteHtmlVersion(req, res, next) {
-    if (["/kiri/","/mesh/","/meta/"].indexOf(req.app.path) >= 0) {
+    if (["/kiri/","/mesh/","/meta/","/kiri/engine.html","/kiri/frame.html"].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
         let real_write = res.write;
         let real_end = res.end;
