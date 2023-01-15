@@ -256,7 +256,9 @@ class OpRough extends CamOp {
         }
 
         // console.log('indices', ...indices, {zBottom});
-        await slicer.slice(indices, { each: (data, index, total) => {
+        let cnt = 0;
+        let tot = 0;
+        await slicer.slice(indices, { each: data => {
             shadow = unsafe ? data.tops : POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
             if (flats.indexOf(data.z) >= 0) {
                 // exclude flats injected to complete shadow
@@ -268,8 +270,11 @@ class OpRough extends CamOp {
             // data.slice.tops[0].inner = data.shadow;
             // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
             slices.push(data.slice);
-            progress((index / total) * 0.5);
-        }, genso: true });
+            progress(0.25 + 0.25 * (++cnt / tot));
+        }, progress: (index, total) => {
+            tot = total;
+            progress((index / total) * 0.25);
+        } });
 
         if (trueShadow) {
             shadow = tshadow.clone(true);
@@ -376,7 +381,7 @@ class OpRough extends CamOp {
             slice.output()
                 .setLayer("roughing", {face: color, line: color})
                 .addPolys(offset);
-            progress(0.5 + (index / slices.length) * 0.5);
+            progress(0.5 + 0.5 * (index / slices.length));
         });
 
         this.sliceOut = slices.filter(slice => slice.camLines);
@@ -505,6 +510,8 @@ class OpOutline extends CamOp {
             .filter(v => v > 0 && indices.indexOf(v) < 0);
         indices = indices.appendAll(flats).sort((a,b) => b-a);
         // console.log('indices', ...indices, {zBottom, slicer});
+        let cnt = 0;
+        let tot = 0;
         if (op.outside && !op.inside) {
             // console.log({outline_bypass: indices, down: op.down});
             indices.forEach((ind,i) => {
@@ -517,7 +524,7 @@ class OpOutline extends CamOp {
                 slices.push(slice);
             });
         } else
-        await slicer.slice(indices, { each: (data, index, total) => {
+        await slicer.slice(indices, { each: data => {
             shadow = unsafe ? data.tops : POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
             if (flats.indexOf(data.z) >= 0) {
                 // exclude flats injected to complete shadow
@@ -530,8 +537,11 @@ class OpOutline extends CamOp {
             slices.push(data.slice);
             // data.slice.xray();
             // onupdate(0.2 + (index/total) * 0.1, "outlines");
+            progress(0.5 + 0.5 * (++cnt / tot));
+        }, progress: (index, total) => {
+            tot = total;
             progress((index / total) * 0.5);
-        }, genso: true });
+        } });
         shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
 
         // start slices at top of stock when `clear top` enabled
@@ -1493,7 +1503,7 @@ class OpXRay extends CamOp {
         let xrayind = Object.keys(slicer.zLine)
             .map(v => parseFloat(v).round(5))
             .sort((a,b) => a-b);
-        let xrayopt = { each: (data, index, total) => {
+        let xrayopt = { each: data => {
             let slice = newSlice(data.z);
             slice.addTops(data.tops);
             // data.tops.forEach(top => slice.addTop(top));
@@ -1534,7 +1544,9 @@ class OpShadow extends CamOp {
         }
 
         let lsz; // only shadow up to bottom of last shadow for progressive union
-        let terrain = await slicer.slice(tzindex, { each: (data, index, total) => {
+        let cnt = 0;
+        let tot = 0;
+        let terrain = await slicer.slice(tzindex, { each: data => {
             let shadow = trueShadow ? shadowAt(data.z, lsz) : [];
             tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadow), 0.01, true);
             tslices.push(data.slice);
@@ -1562,8 +1574,11 @@ class OpShadow extends CamOp {
                 //     .addLines(p2, { thin: true });
             }
             lsz = data.z;
-            progress(index / total);
-        }, genso: true });
+            progress(0.5 + 0.5 * (++cnt / tot));
+        }, progress: (index, total) => {
+            tot = total;
+            progress((index / total) * 0.5);
+        } });
 
         if (terrain.length === 0) {
             throw `invalid widget shadow`;

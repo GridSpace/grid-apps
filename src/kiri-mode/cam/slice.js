@@ -342,7 +342,7 @@ CAM.traces = async function(settings, widget, single) {
 
     let traces = [];
     // find and trim polys (including open) to shadow
-    let oneach = (data, index, total) => {
+    let oneach = data => {
         if (single) {
             for (let line of data.lines) {
                 if (line.p1.distTo2D(line.p2) > 1) {

@@ -15,6 +15,15 @@ const { sliceConnect, sliceDedup } = base;
 const { newSlice } = kiri;
 
 const POLY = polygons;
+const timing = false;
+
+const begin = function() {
+    if (timing) console.time(...arguments);
+};
+
+const end = function() {
+    if (timing) console.timeEnd(...arguments);
+};
 
 class Slicer {
     constructor(widget, options = { zlist: true, zline: true, lines: false }) {
@@ -30,14 +39,10 @@ class Slicer {
         return this.options.threaded;
     }
 
-    // notopok = when genso set, allow empty top array
-    // emptyok = allow empty slices
-    // openok = allow open tops
     // zList = generate list of z vertices
     // zline = generate list of z vertices with coplanar lines
     // trace = find z coplanar trace lines
     // flatoff = amount to offset z when slicing on detected flats
-    // genso = generate a slice object with tops
     // each = call for each slice generated from an interval
     setOptions(options) {
         Object.assign(this.options, options || {});
@@ -57,7 +62,7 @@ class Slicer {
     // these are used for auto-slicing in laser
     // and to flats detection in CAM mode
     computeFeatures(options) {
-        console.time('computeFeatures');
+        begin('compute features');
 
         const opt = this.setOptions(options);
         const bounds = this.bounds = new THREE.Box3();
@@ -120,9 +125,8 @@ class Slicer {
             }
         }
 
+        end('compute features');
         // console.log({ bounds, zFlat, zLine, zList });
-
-        console.timeEnd('computeFeatures');
 
         return this;
     }
@@ -151,11 +155,11 @@ class Slicer {
         const plen = points.length;
         const zlen = zs.length;
         const ppz = plen / zlen;
-        const count = 100;//Math.ceil(ppz / 10000);
+        const count = 25;//Math.ceil(ppz / 10000);
         const step = Math.ceil(zlen / count);
         const buckets = [];
 
-        console.log({ plen, zlen, ppz, count, step });
+        // console.log({ plen, zlen, ppz, count, step });
 
         if (count === 1) {
             buckets.push({ zs });
@@ -173,7 +177,7 @@ class Slicer {
                 p2 = newPoint(0,0,0),
                 p3 = newPoint(0,0,0);
 
-            console.time("create buckets");
+            begin("create buckets");
             for (let i = 0, il = points.length; i < il; ) {
                 p1.set(points[i++], points[i++], points[i++]);
                 p2.set(points[i++], points[i++], points[i++]);
@@ -190,30 +194,35 @@ class Slicer {
                     if (zmin > max && zmax > max) {
                         continue;
                     }
-                    index.push(i);
+                    index.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
                 }
             }
-            console.timeEnd("create buckets");
+            end("create buckets");
         }
 
         // console.log({ zs, zlen, count, step, buckets });
 
-        console.time("slicing");
+        begin("slicing");
         const { minions } = kiri;
         const threaded = minions && minions.running;
         const sliceFn = (threaded ? this.sliceBucketMinion : this.sliceBucket).bind(this);
         const track = { count: 0, total: zs.length };
 
-        if (threaded) minions.broadcast("cam_slice_init", { points: this.points });
-        console.log({ buckets });
+        if (threaded) minions.broadcast("cam_slice_init", {});
 
         const promises = []
         for (let bucket of buckets) {
-            promises.push(sliceFn(bucket, opt));
+            promises.push(sliceFn(bucket, opt, slice => {
+                track.count++;
+                if (opt.progress) {
+                    opt.progress(track.count, track.total);
+                }
+                // console.log({ oneach: slice, ...track });
+            }));
         }
         const data = (await Promise.all(promises)).flat();
 
-        data.sort((a,b) => a.z - b.z).forEach((rec, i) => {
+        data.sort((a,b) => b.z - a.z).forEach((rec, i) => {
             rec.tops = rec.polys;
             rec.slice = newSlice(rec.z).addTops(rec.tops);
             if (opt.each) {
@@ -222,13 +231,12 @@ class Slicer {
         });
 
         if (threaded) minions.broadcast("cam_slice_cleanup");
-
-        console.timeEnd("slicing");
+        end("slicing");
 
         return data;
     }
 
-    async sliceBucketMinion(bucket, opt) {
+    async sliceBucketMinion(bucket, opt, oneach) {
         const slices = (await new Promise(resolve => {
             kiri.minions.queue({
                 cmd: "cam_slice",
@@ -236,11 +244,14 @@ class Slicer {
                 bucket,
             }, resolve);
         })).slices;
-        console.log(bucket, slices);
+        for (let slice of slices) {
+            oneach(slice);
+        }
+        // console.log(bucket, slices);
         return kiri.codec.decode(slices);
     }
 
-    async sliceBucket(bucket, opt) {
+    async sliceBucket(bucket, opt, oneach) {
         const { zs, index } = bucket;
         const slices = [];
         for (let z of zs) {
@@ -248,6 +259,7 @@ class Slicer {
             if (slice) {
                 slices.push(slice);
             }
+            oneach(slice);
         }
         return slices;
     }
@@ -259,19 +271,15 @@ class Slicer {
             over = opt.over || false,
             debug = opt.debug,
             phash = {},
-            lines = [],
-            index = 0,
-            next = 0;
+            lines = [];
 
-        const { points } = this,
+        // const { points } = this,
+        const points = indices,
             p1 = newPoint(0,0,0),
             p2 = newPoint(0,0,0),
             p3 = newPoint(0,0,0);
 
-        while (true) {
-            if (indices) {
-                index = indices[next++];
-            }
+        for (let index = 0; index < points.length; ) {
             p1.set(points[index++], points[index++], points[index++]);
             p2.set(points[index++], points[index++], points[index++]);
             p3.set(points[index++], points[index++], points[index++]);
@@ -306,13 +314,6 @@ class Slicer {
                 } else {
                     console.log({msg: "invalid ips", line: line, where: where});
                 }
-            }
-
-            if (index >= points.length) {
-                break;
-            }
-            if (indices && next >= indices.length) {
-                break;
             }
         }
 
@@ -461,8 +462,8 @@ kiri.cam_slicer = Slicer;
 moto.broker.subscribe("minion.started", msg => {
     const { funcs, cache, reply, log } = msg;
 
-    funcs.cam_slice_init = data => {
-        cache.slicer = new Slicer().setPoints(data.points);
+    funcs.cam_slice_init = () => {
+        cache.slicer = new Slicer();
     };
 
     funcs.cam_slice_cleanup = () => {
@@ -471,10 +472,11 @@ moto.broker.subscribe("minion.started", msg => {
 
     funcs.cam_slice = (data, seq) => {
         const { bucket, opt } = data;
-        cache.slicer.sliceBucket(bucket, opt)
-            .then(data => {
-                reply({ seq, slices: kiri.codec.encode(data) });
-            });
+        cache.slicer.sliceBucket(bucket, opt, slice => {
+            // console.log({ slice });
+        }).then(data => {
+            reply({ seq, slices: kiri.codec.encode(data) });
+        });
     };
 });
 
