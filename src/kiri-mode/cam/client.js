@@ -232,7 +232,7 @@ CAM.init = function(kiri, api) {
     ], () => {
         if (!isCamMode) return;
         for (let op of current.process.ops) {
-            if (op.type === 'trace') {
+            if (op.type === 'trace' && !flipping) {
                 op.areas = {};
             }
         }
@@ -720,6 +720,8 @@ CAM.init = function(kiri, api) {
         if (axis === 'Y') {
             API.selection.rotate(0, Math.PI, 0);
         }
+        // clear traces cache
+        CAM.traces_clear();
         flipping = false;
         process.ops = op2;
         process.op2 = ops;

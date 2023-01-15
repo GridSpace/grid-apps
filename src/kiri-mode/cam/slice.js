@@ -331,7 +331,7 @@ CAM.addDogbones = function(poly, dist, reverse) {
     }
 };
 
-CAM.traces = function(settings, widget, single) {
+CAM.traces = async function(settings, widget, single) {
     if (widget.traces && widget.trace_single === single) {
         // do no work if cached
         return false;
@@ -365,12 +365,13 @@ CAM.traces = function(settings, widget, single) {
             let z = poly.getZ();
             for (let i=0, il=traces.length; i<il; i++) {
                 let trace = traces[i];
+                let dz = Math.abs(z - trace.getZ());
                 // only compare polys farther apart in Z
-                if (Math.abs(z - trace.getZ()) > 0.01) {
+                if (dz < 0.01) {
                     continue;
                 }
                 // do not add duplicates
-                if (traces[i].isEquivalent(poly)) {
+                if (traces[i].isEquivalent(poly) && dz < 1) {
                     return;
                 }
             }
@@ -378,9 +379,9 @@ CAM.traces = function(settings, widget, single) {
         });
     };
     let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true };
-    slicer.slice(indices, opts);
+    await slicer.slice(indices, opts);
     opts.over = true;
-    slicer.slice(indices, opts);
+    await slicer.slice(indices, opts);
     widget.traces = traces;
     widget.trace_single = single;
     return true;

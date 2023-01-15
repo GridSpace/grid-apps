@@ -974,7 +974,7 @@ class OpTrace extends CamOp {
                     } else {
                         poly = [ poly ];
                     }
-                    for (let pi of poly)
+                    for (let pi of POLY.flatten(poly, [], true))
                     if (down) {
                         let zto = pi.getZ() - thru;
                         if (zThru && similar(zto,0)) {

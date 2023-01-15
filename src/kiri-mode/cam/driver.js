@@ -75,6 +75,12 @@ kiri.load(api => {
                 ondone(ids);
             });
         };
+
+        CAM.traces_clear = function(ondone) {
+            kiri.client.send("cam_traces_clear", {}, () => {
+                // console.log({clear_traces: true});
+            });
+        };
     }
 
     if (kiri.worker) {
@@ -114,14 +120,27 @@ kiri.load(api => {
             send.done(faces);
         }
 
-        kiri.worker.cam_traces = function(data, send) {
+        kiri.worker.cam_traces = async function(data, send) {
             const { settings, single } = data;
             const widgets = Object.values(kiri.worker.cache);
-            const fresh = widgets.filter(widget => CAM.traces(settings, widget, single));
+            const fresh = [];
+            for (let widget of widgets) {
+                if (await CAM.traces(settings, widget, single)) {
+                    fresh.push(widget);
+                }
+            }
+            // const fresh = widgets.filter(widget => CAM.traces(settings, widget, single));
             send.done(kiri.codec.encode(fresh.map(widget => { return {
                 id: widget.id,
                 traces: widget.traces,
             } } )));
+        };
+
+        kiri.worker.cam_traces_clear = function(data, send) {
+            for (let widget of Object.values(kiri.worker.cache)) {
+                delete widget.traces;
+            }
+            send.done({});
         };
     }
 

@@ -647,11 +647,15 @@ kiri.worker = {
     }
 };
 
+function is_async(fn) {
+    return fn.constructor.name === "AsyncFunction";
+}
+
 dispatch.send = (msg, direct) => {
     self.postMessage(msg, direct);
 };
 
-dispatch.onmessage = self.onmessage = function(e) {
+dispatch.onmessage = self.onmessage = async function(e) {
     let time_recv = time(),
         msg = e.data || {},
         run = dispatch[msg.task],
@@ -683,7 +687,7 @@ dispatch.onmessage = self.onmessage = function(e) {
     if (run) {
         try {
             let time_xfer = (time_recv - msg.time),
-                output = run(msg.data, send),
+                output = is_async(run) ? await run(msg.data, send) : run(msg.data, send),
                 time_send = time(),
                 time_proc = time_send - time_recv;
 

@@ -6,21 +6,22 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 # Release 3.8
 
 * update server-side sample module code
-* add new fdm parameters, range overrides
 * various fixes and improvements to CAM indexing
 * various fixes and improvements to gcode variables
-* CAM move to save Z between ops, refresh spindle speed
 * improve gcode arc import decoding
-* improve trace line selection with zoom adaptive thresholds
-* CAM add origin offset optional parameters
-* remove auto-decimation on object import
+* removed auto-decimation on object import
+* FDM slicing memory reduction from team lychee
+* FDM add new parameters, range overrides
 * FDM fix raft line fill strategy
-* slicing memory reduction from team lychee
-* option to control first output point order
+* CAM improve trace line selection with zoom adaptive thresholds
+* CAM option to control first output point order
+* CAM move to save Z between ops, refresh spindle speed
+* CAM add origin offset optional parameters
 * CAM add control to omit initial tool change
 * CAM fix vertical face selection and step over defaults
 * CAM fix multi-part object import / grouping
 * CAM fix tracing nested polyline offset ordering
+* CAM refactor of contouring yields 2x - 20x speedup
 
 - refactor object/group storage model in Mesh:Tool
 - add omit pocket to rough and outline
