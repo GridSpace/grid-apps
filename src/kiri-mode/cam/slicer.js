@@ -50,12 +50,10 @@ class Slicer {
         this.zLine = {}; // count of z coplanar lines
         this.zList = {}; // count of z values for auto slicing
         this.zSum = 0;   // used in bucketing calculations
-        console.time('set points');
         this
             .computeBounds()
             .computeFeatures()
             .computeBuckets();
-        console.timeEnd('set points');
         return this;
     }
 
