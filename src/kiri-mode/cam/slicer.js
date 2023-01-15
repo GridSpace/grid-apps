@@ -6,20 +6,23 @@
  * Slicing engine used by CAM
  */
 // dep: kiri.slice
+// dep: moto.broker
 gapp.register("kiri-mode.cam.slicer", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { config, util, polygons, newOrderedLine } = base;
+const { config, util, polygons, newOrderedLine, newPoint } = base;
+const { sliceConnect, sliceDedup } = base;
 const { newSlice } = kiri;
 
 const POLY = polygons;
 
 class Slicer {
-    constructor(points, options = {}) {
+    constructor(widget, options = { zlist: true, zline: true, lines: false }) {
         this.options = {};
         this.setOptions(options);
-        if (points) {
-            this.setPoints(points, options);
+        if (widget) {
+            this.setPoints(widget.getGeoVertices());
+            this.computeFeatures();
         }
     }
 
@@ -30,8 +33,6 @@ class Slicer {
     // notopok = when genso set, allow empty top array
     // emptyok = allow empty slices
     // openok = allow open tops
-    // swapX = swap X/Z
-    // swapY = sawp Y/Z
     // zList = generate list of z vertices
     // zline = generate list of z vertices with coplanar lines
     // trace = find z coplanar trace lines
@@ -43,25 +44,12 @@ class Slicer {
         return this.options;
     }
 
-    setPoints(points, options) {
+    setPoints(points) {
         this.bounds = null;
-        this.points = this.swap(points, options);
+        this.points = points;
         this.zFlat = {}; // accumulated flat area at z height
         this.zLine = {}; // count of z coplanar lines
         this.zList = {}; // count of z values for auto slicing
-        this.zSum = 0;   // used in bucketing calculations
-        this
-            .computeBounds()
-            .computeFeatures()
-            .computeBuckets();
-        return this;
-    }
-
-    computeBounds() {
-        if (!this.bounds) {
-            this.bounds = new THREE.Box3();
-            this.bounds.setFromPoints(this.points);
-        }
         return this;
     }
 
@@ -69,9 +57,11 @@ class Slicer {
     // these are used for auto-slicing in laser
     // and to flats detection in CAM mode
     computeFeatures(options) {
+        console.time('computeFeatures');
+
         const opt = this.setOptions(options);
+        const bounds = this.bounds = new THREE.Box3();
         const points = this.points;
-        // const bounds = this.bounds;
         const zFlat = this.zFlat;
         const zLine = this.zLine;
         const zList = this.zList;
@@ -81,12 +71,18 @@ class Slicer {
             zList[z] = (zList[z] || 0) + 1;
         }
 
+        let p1 = newPoint(0,0,0),
+            p2 = newPoint(0,0,0),
+            p3 = newPoint(0,0,0);
+
         for (let i = 0, il = points.length; i < il; ) {
-            let p1 = points[i++];
-            let p2 = points[i++];
-            let p3 = points[i++];
-            // used in bucket calculations
-            this.zSum += (Math.abs(p1.z - p2.z) + Math.abs(p2.z - p3.z) + Math.abs(p3.z - p1.z));
+            p1.set(points[i++], points[i++], points[i++]);
+            p2.set(points[i++], points[i++], points[i++]);
+            p3.set(points[i++], points[i++], points[i++]);
+            // update bounds
+            bounds.expandByPoint(p1);
+            bounds.expandByPoint(p2);
+            bounds.expandByPoint(p3);
             // count occurrences of z values for auto slicing
             if (opt.zlist) {
                 countZ(p1.z);
@@ -124,93 +120,162 @@ class Slicer {
             }
         }
 
-        return this;
-    }
+        // console.log({ bounds, zFlat, zLine, zList });
 
-    /**
-     * bucket polygons into z-bounded groups (inside or crossing)
-     * to reduce the search space in complex models
-     */
-    computeBuckets() {
-        let bounds = this.bounds;
-        let zSum = this.zSum;
-        let zMax = this.bounds.max.z;
-        let points = this.points;
-        let bucketCount = Math.max(1, Math.ceil(zMax / (zSum / points.length)) - 1);
-        let zScale = this.zScale = 1 / (zMax / bucketCount);
-        let buckets = this.buckets = [];
-
-        if (bucketCount > 1) {
-            buckets.length = bucketCount;
-            // create empty buckets
-            let min = Math.floor(bounds.min.z * zScale);
-            let max = Math.ceil(bounds.max.z * zScale);
-            for (let i = min; i <= max; i++) {
-                buckets[i] = [];
-            }
-            // copy triples into all matching z-buckets
-            for (let i = 0, il = points.length; i < il; ) {
-                let p1 = points[i++],
-                    p2 = points[i++],
-                    p3 = points[i++],
-                    zm = Math.min(p1.z, p2.z, p3.z),
-                    zM = Math.max(p1.z, p2.z, p3.z),
-                    bm = Math.floor(zm * zScale),
-                    bM = Math.ceil(zM * zScale);
-                for (let j = bm; j <= bM; j++) {
-                    buckets[j].push(p1);
-                    buckets[j].push(p2);
-                    buckets[j].push(p3);
-                }
-            }
-        }
+        console.timeEnd('computeFeatures');
 
         return this;
     }
 
     // slice through points at given Z and return polygons
-    async slice(z, options, index, total, mark) {
+    async slice(zs, options) {
         const opt = this.setOptions(options);
 
-        // if Z is supplied as an array, iterate and collect
-        if (Array.isArray(z)) {
-            const mark = util.time();
-            const rarr = [];
-            for (let zi=0; zi<z.length; zi++) {
-                const data = await this.slice(z[zi], opt, zi, z.length, mark);
-                if (data) {
-                    rarr.push(data);
+        if (!Array.isArray(zs)) {
+            throw "slice zs parameter must be ab array";
+        }
+
+        // sort Z and offset when on a flat
+        const flatoff = util.numOrDefault(opt.flatoff, 0.01);
+        zs.sort().map(z => {
+            if (!opt.flatoff) {
+                return z;
+            }
+            // console.log({ bump_z: z, znomr, flatoff });
+            const znorm = z.toFixed(5);
+            return this.zFlat[znorm] ? z + flatoff : z;
+        });
+
+        // compute buckets from z slice list
+        const { points } = this;
+        const plen = points.length;
+        const zlen = zs.length;
+        const ppz = plen / zlen;
+        const count = 100;//Math.ceil(ppz / 10000);
+        const step = Math.ceil(zlen / count);
+        const buckets = [];
+
+        console.log({ plen, zlen, ppz, count, step });
+
+        if (count === 1) {
+            buckets.push({ zs });
+        } else {
+            for (let c = 0, b = 0; c < count; c++) {
+                if (b >= zlen) break;
+                buckets.push({
+                    zs: zs.slice(b, b + step),
+                    index: []
+                });
+                b += step;
+            }
+
+            let p1 = newPoint(0,0,0),
+                p2 = newPoint(0,0,0),
+                p3 = newPoint(0,0,0);
+
+            console.time("create buckets");
+            for (let i = 0, il = points.length; i < il; ) {
+                p1.set(points[i++], points[i++], points[i++]);
+                p2.set(points[i++], points[i++], points[i++]);
+                p3.set(points[i++], points[i++], points[i++]);
+                let zmin = Math.min(p1.z, p2.z, p3.z);
+                let zmax = Math.max(p1.z, p2.z, p3.z);
+                for (let bucket of buckets) {
+                    const { zs, index } = bucket;
+                    const min = zs[0];
+                    const max = zs.last();
+                    if (zmin < min && zmax < min) {
+                        continue;
+                    }
+                    if (zmin > max && zmax > max) {
+                        continue;
+                    }
+                    index.push(i);
                 }
             }
-            return rarr;
+            console.timeEnd("create buckets");
         }
 
-        let znorm = z.toFixed(5),
-            flatoff = util.numOrDefault(opt.flatoff, 0.01),
-            onflat = this.zFlat[znorm],
+        // console.log({ zs, zlen, count, step, buckets });
+
+        console.time("slicing");
+        const { minions } = kiri;
+        const threaded = minions && minions.running;
+        const sliceFn = (threaded ? this.sliceBucketMinion : this.sliceBucket).bind(this);
+        const track = { count: 0, total: zs.length };
+
+        if (threaded) minions.broadcast("cam_slice_init", { points: this.points });
+        console.log({ buckets });
+
+        const promises = []
+        for (let bucket of buckets) {
+            promises.push(sliceFn(bucket, opt));
+        }
+        const data = (await Promise.all(promises)).flat();
+
+        data.sort((a,b) => a.z - b.z).forEach((rec, i) => {
+            rec.tops = rec.polys;
+            rec.slice = newSlice(rec.z).addTops(rec.tops);
+            if (opt.each) {
+                opt.each(rec, i, data.length);
+            }
+        });
+
+        if (threaded) minions.broadcast("cam_slice_cleanup");
+
+        console.timeEnd("slicing");
+
+        return data;
+    }
+
+    async sliceBucketMinion(bucket, opt) {
+        const slices = (await new Promise(resolve => {
+            kiri.minions.queue({
+                cmd: "cam_slice",
+                opt: { lines: false },
+                bucket,
+            }, resolve);
+        })).slices;
+        console.log(bucket, slices);
+        return kiri.codec.decode(slices);
+    }
+
+    async sliceBucket(bucket, opt) {
+        const { zs, index } = bucket;
+        const slices = [];
+        for (let z of zs) {
+            const slice = this.sliceZ(z, index, opt);
+            if (slice) {
+                slices.push(slice);
+            }
+        }
+        return slices;
+    }
+
+    sliceZ(z, indices, opt) {
+        let links = opt.links !== false,
+            dedup = opt.dedup !== false,
             edges = opt.edges || false,
             over = opt.over || false,
+            debug = opt.debug,
             phash = {},
             lines = [],
-            zScale = this.zScale,
-            buckets = this.buckets,
-            bucket = buckets.length ? buckets[Math.floor(z * zScale)] : this.points;
+            index = 0,
+            next = 0;
 
-        // compensate by moving z by "flatoff" on flats
-        if (onflat) {
-            z += flatoff;
-        }
+        const { points } = this,
+            p1 = newPoint(0,0,0),
+            p2 = newPoint(0,0,0),
+            p3 = newPoint(0,0,0);
 
-        if (!bucket) {
-            console.log({no_bucket_for_z: z});
-            return;
-        }
+        while (true) {
+            if (indices) {
+                index = indices[next++];
+            }
+            p1.set(points[index++], points[index++], points[index++]);
+            p2.set(points[index++], points[index++], points[index++]);
+            p3.set(points[index++], points[index++], points[index++]);
 
-        // iterate over matching buckets for this z offset
-        for (let i = 0, il = bucket.length; i < il; ) {
-            let p1 = bucket[i++];
-            let p2 = bucket[i++];
-            let p3 = bucket[i++];
             let where = {under: [], over: [], on: []};
             checkOverUnderOn(p1, z, where);
             checkOverUnderOn(p2, z, where);
@@ -234,7 +299,7 @@ class Slicer {
                 // compute two point intersections and construct line
                 let line = intersectPoints(where.over, where.under, z);
                 if (line.length < 2 && where.on.length === 1) {
-                    line.push(where.on[0]);
+                    line.push(where.on[0].clone());
                 }
                 if (line.length === 2) {
                     lines.push(makeZLine(phash, line[0], line[1]));
@@ -242,120 +307,23 @@ class Slicer {
                     console.log({msg: "invalid ips", line: line, where: where});
                 }
             }
-        }
 
-        let retn = { z };
-
-        if (lines.length) {
-            const debug = false;
-            retn.lines = removeDuplicateLines(lines, debug);
-            let polys = connectLines(retn.lines, opt, debug);
-            retn.tops = POLY.nest(polys);
-
-            if (opt.swapX || opt.swapY) {
-                this.unswap(opt.swapX, opt.swapY, retn.lines, retn.tops);
+            if (index >= points.length) {
+                break;
             }
-
-            if (opt.genso) {
-                retn.slice = newSlice(z).addTops(retn.tops);
-                retn.slice.lines = retn.lines;
-                retn.slice.groups = retn.tops;
+            if (indices && next >= indices.length) {
+                break;
             }
         }
 
-        const haslines = lines.length || opt.emptyok;
-        const hastops = !opt.genso || opt.notopok || (retn.tops && retn.tops.length) || edges;
-
-        if (opt.each && haslines && hastops) {
-            opt.each(retn, index, total, util.time() - mark);
+        if (dedup) {
+            lines = sliceDedup(lines, debug);
         }
 
-        return haslines && hastops ? retn : null;
-    }
-
-    swap(points, options) {
-        const opt = this.setOptions(options);
-
-        if (!(opt && (opt.swapX || opt.swapY))) {
-            return points;
-        }
-
-        let btmp = new THREE.Box3(),
-            pref = {},
-            cached;
-
-        points = points.slice();
-        btmp.setFromPoints(points);
-        if (opt.swapX) this.ox = -btmp.max.x;
-        if (opt.swapY) this.oy = -btmp.max.y;
-
-        // array re-uses points so we need
-        // to be careful not to alter a point
-        // more than once
-        for (let p, index=0; index<points.length; index++) {
-            p = points[index];
-            cached = pref[p.key];
-            // skip points already altered
-            if (cached) {
-                points[index] = cached;
-                continue;
-            }
-            cached = p.clone();
-            if (opt.swapX) cached.swapXZ();
-            if (opt.swapY) cached.swapYZ();
-            cached.rekey();
-            pref[p.key] = cached;
-            points[index] = cached;
-        }
-
-        // update temp bounds from new points
-        btmp.setFromPoints(points);
-        for (let p, index=0; index<points.length; index++) {
-            p = points[index];
-            if (p.mod === 1) continue;
-            p.mod = 1;
-            p.z -= btmp.min.z;
-        }
-
-        // update temp bounds from points with altered Z
-        btmp.setFromPoints(points);
-        this.bounds = btmp;
-
-        return points;
-    }
-
-    unswap(swapX, swapY, lines, polys) {
-        let move = {x: this.ox || 0, y: this.oy || 0, z: 0};
-
-        // unswap lines
-        let llen = lines.length,
-            idx, line;
-
-        // shared points causing problems
-        for (idx=0; idx<llen; idx++) {
-            line = lines[idx];
-            line.p1 = line.p1.clone();
-            line.p2 = line.p2.clone();
-        }
-
-        for (idx=0; idx<llen; idx++) {
-            line = lines[idx];
-            if (swapX) {
-                line.p1.swapXZ();
-                line.p2.swapXZ();
-            }
-            if (swapY) {
-                line.p1.swapYZ();
-                line.p2.swapYZ();
-            }
-            line.p1.move(move);
-            line.p2.move(move);
-        }
-
-        polys.forEach(poly => {
-            poly.swap(swapX, swapY);
-            poly.move(move);
-        });
+        return lines.length ? { z,
+            lines: opt.lines !== false ? lines : undefined,
+            polys: links ? POLY.nest(sliceConnect(lines, opt, debug)) : undefined
+        } : null;
     }
 
     interval(step, options) {
@@ -404,8 +372,10 @@ class Slicer {
                 return opt.down ? b-a : a-b;
             });
         }
+
         // filter duplicate values
         array = array.map(v => v.round(5)).filter((e,i,a) => i < 1 || a[i-1] !== a[i]);
+
         // return array.map(v => Math.abs(parseFloat(v.toFixed(5))));
         return array.map(v => parseFloat(v.toFixed(5)));
     }
@@ -475,386 +445,37 @@ function getCachedPoint(phash, p) {
  * @returns {Line}
  */
 function makeZLine(phash, p1, p2, coplanar, edge) {
-    p1 = getCachedPoint(phash, p1);
-    p2 = getCachedPoint(phash, p2);
+    p1 = getCachedPoint(phash, p1.clone());
+    p2 = getCachedPoint(phash, p2.clone());
     let line = newOrderedLine(p1,p2);
     line.coplanar = coplanar || false;
     line.edge = edge || false;
     return line;
 }
 
-/**
- * Given an array of input lines (line soup), find the path through
- * joining line ends that encompasses the greatest area without self
- * interesection.  Eliminate used points and repeat.  Unjoined lines
- * are permitted and handled after all other cases are handled.
- *
- * @param {Line[]} input
- * @param {number} [index]
- * @returns {Array}
- */
-function connectLines(input, opt = {}, debug) {
-    // map points to all other points they're connected to
-    let config = base.config,
-        pmap = {},
-        points = [],
-        output = [],
-        connect = [],
-        search = 1,
-        nextMod = 1,
-        bridge = config.bridgeLineGapDistance,
-        minPoly = opt.openok ? 2 : 3,
-        p1, p2;
-
-    function cachedPoint(p) {
-        let cp = pmap[p.key];
-        if (cp) return cp;
-        points.push(p);
-        pmap[p.key] = p;
-        p.pos = 0;
-        p.mod = nextMod++; // unique seq ID for points
-        p.toString = function() { return this.mod }; // point array concat
-        return p;
-    }
-
-    function addConnected(p1, p2) {
-        if (!p1.group) p1.group = [ p2 ];
-        else p1.group.push(p2);
-    }
-
-    function sliceAtTerm(path, term) {
-        let idx, len = path.length;
-        for (idx = 0; idx < len-1; idx++) {
-            if (path[idx] === term) {
-                return path.slice(idx);
-            }
-        }
-        return path;
-    }
-
-    /**
-     * using minimal recursion, follow points through connected lines
-     * to form candidate output paths.
-     */
-    function findPathsMinRecurse(point, path, paths, from) {
-        let stack = [ ];
-        if (paths.length > 100000) {
-            console.log("excessive path options @ "+paths.length+" #"+input.length);
-            return;
-        }
-        for (;;) {
-            stack.push(point);
-
-            let last = point,
-                links = point.group;
-
-            path.push(point);
-            // use del to mark traversed path
-            point.del = true;
-            // set so point isn't used in another polygon search
-            point.pos = search++;
-            // seed path with two points to prevent redundant opposing seeks
-            if (path.length === 1) {
-                from = point;
-                point = links[0];
-                continue;
-            }
-
-            if (links.length > 2) {
-                // TODO optimize when > 2 and limit to left-most and right-most branches
-                // for now, pursue all possible branches
-                links.forEach(function(nextp) {
-                    // do not backtrack
-                    if (nextp === from) {
-                        return;
-                    }
-                    if (nextp.del) {
-                        paths.push(sliceAtTerm(path,nextp));
-                    } else {
-                        findPathsMinRecurse(nextp, path.slice(), paths, point);
-                    }
-                });
-                break;
-            } else {
-                point = links[0] === from ? links[1] : links[0];
-                from = last;
-                // hit an open end
-                if (!point) {
-                    path.open = true;
-                    paths.push(path);
-                    break;
-                }
-                // hit a point previously in the path (or start)
-                if (point.del) {
-                    paths.push(sliceAtTerm(path,point));
-                    break;
-                }
-            }
-        }
-
-        for (let i=0; i<stack.length; i++) stack[i].del = false;
-        // stack.forEach(function(p) { p.del = false });
-    }
-
-    // emit a polygon if it can be cleaned and still have 2 or more points
-    function emit(poly) {
-        poly = poly.clean();
-        if (poly.length === 2 && opt.openok) poly.setOpen();
-        if (poly.length >= minPoly) output.push(poly);
-    }
-
-    // given an array of paths, emit longest to shortest
-    // eliminating points from the paths as they are emitted
-    // shorter paths any point eliminated are eliminated as candidates.
-    function emitLongestAsPolygon(paths) {
-        let longest = null,
-            emitted = 0,
-            closed = 0,
-            open = 0;
-
-        paths.forEach(function(path) {
-            // use longest perimeter vs longest path?
-            if (!longest || path.length > longest.length) longest = path;
-            if (!path.open) closed++; else open++;
-        });
-
-        // it gets more complicated with multiple possible output paths
-        if (closed > 1 && open === 0) {
-            // add polygon to path (for area sorting)
-            paths.forEach(function(path) { path.poly = base.newPolygon().addPoints(path) });
-
-            // sort descending by area VS (length below -- better in most cases)
-            // paths.sort(function(a,b) { return b.poly.area() - a.poly.area() });
-
-            // sort descending by length
-            paths.sort(function(a,b) { return b.poly.length - a.poly.length });
-
-            // emit polygons largest to smallest
-            // omit polygon if it intersects previously emitted (has del points)
-            paths.forEach(function(path) {
-                if (path.length < minPoly) return;
-                let len = path.length, i;
-                for (i = 0; i < len; i++) if (path[i].del) return;
-                for (i = 0; i < len; i++) path[i].del = true;
-                emit(path.poly);
-                emitted++;
-            });
-        } else {
-            if (longest.open) {
-                connect.push(longest);
-            } else {
-                emit(base.newPolygon().addPoints(longest));
-            }
-        }
-    }
-
-    if (debug) console.log('map', input);
-
-    // create point map, unique point list and point group arrays
-    input.forEach(function(line) {
-        p1 = cachedPoint(line.p1.round(5));
-        p2 = cachedPoint(line.p2.round(5));
-        addConnected(p1,p2);
-        addConnected(p2,p1);
-    });
-
-    // first trace paths starting at dangling endpoinds (bad polygon soup)
-    points.forEach(function(point) {
-        // must not have been used and be a dangling end
-        if (point.pos === 0 && point.group.length === 1) {
-            let path = [],
-                paths = [];
-            findPathsMinRecurse(point, path, paths);
-            if (debug) console.log('dangle', {point, path, paths});
-            if (paths.length > 0) emitLongestAsPolygon(paths);
-        }
-    });
-
-    // for each point, find longest path back to self
-    points.forEach(function(point) {
-        // must not have been used or be at a split
-        if (point.pos === 0 && point.group.length === 2) {
-            let path = [],
-                paths = [];
-            findPathsMinRecurse(point, path, paths);
-            if (paths.length > 0) emitLongestAsPolygon(paths);
-        }
-    });
-
-    // return true if points are deemed "close enough" close a polygon
-    function close(p1,p2) {
-        return p1.distToSq2D(p2) <= 0.01;
-    }
-
-    // reconnect dangling/open polygons to closest endpoint
-    for (let i=0; i<connect.length; i++) {
-
-        let array = connect[i],
-            last = array[array.length-1],
-            tmp, dist, j;
-
-        if (!bridge) {
-            if (opt.openok) {
-                emit(base.newPolygon().addPoints(array).setOpen());
-            }
-            continue;
-        }
-
-        if (array.delete) continue;
-
-        loop: for (let merged=0;;) {
-            let closest = { dist:Infinity };
-            for (j=i+1; j<connect.length; j++) {
-                tmp = connect[j];
-                if (tmp.delete) continue;
-                dist = last.distToSq2D(tmp[0]);
-                if (dist < closest.dist && dist <= bridge) {
-                    closest = {
-                        dist: dist,
-                        array: tmp
-                    }
-                }
-                dist = last.distToSq2D(tmp[tmp.length-1]);
-                if (dist < closest.dist && dist <= bridge) {
-                    closest = {
-                        dist: dist,
-                        array: tmp,
-                        reverse: true
-                    }
-                }
-            }
-
-            if (tmp = closest.array) {
-                if (closest.reverse) tmp.reverse();
-                tmp.delete = true;
-                array.appendAll(tmp);
-                last = array[array.length-1];
-                merged++;
-                // tail meets head (closed)
-                if (close(array[0], last)) {
-                    emit(base.newPolygon().addPoints(array));
-                    break loop;
-                }
-            } else {
-                // no more closest polys (open set)
-                if (opt.openok) {
-                    emit(base.newPolygon().addPoints(array).setOpen());
-                } else {
-                    emit(base.newPolygon().addPoints(array));
-                }
-                break loop;
-            }
-        }
-    }
-
-    return output;
-}
-
-/**
- * eliminate duplicate lines and interior-only lines (coplanar)
- *
- * lines are sorted using lexicographic point keys such that
- * they are comparable even if their points are reversed. hinting
- * for deletion, co-planar and suspect shared edge is detectable at
- * this time.
- *
- * @param {Line[]} lines
- * @returns {Line[]}
- */
-function removeDuplicateLines(lines, debug) {
-    let output = [],
-        tmplines = [],
-        points = [],
-        pmap = {};
-
-    function cachePoint(p) {
-        let cp = pmap[p.key];
-        if (cp) return cp;
-        points.push(p);
-        pmap[p.key] = p;
-        return p;
-    }
-
-    function addLinesToPoint(point, line) {
-        cachePoint(point);
-        if (!point.group) point.group = [ line ];
-        else point.group.push(line);
-    }
-
-    // mark duplicates for deletion preserving edges
-    lines.sort(function (l1, l2) {
-        if (l1.key === l2.key) {
-            l1.del = !l1.edge;
-            l2.del = !l2.edge;
-            if (debug && (l1.del || l2.del)) {
-                console.log('dup', l1, l2);
-            }
-            return 0;
-        }
-        return l1.key < l2.key ? -1 : 1;
-    });
-
-    // associate points with their lines, cull deleted
-    lines.forEach(function(line) {
-        if (!line.del) {
-            tmplines.push(line);
-            addLinesToPoint(line.p1, line);
-            addLinesToPoint(line.p2, line);
-        }
-    });
-
-    // merge collinear lines
-    points.forEach(function(point) {
-        if (point.group.length != 2) return;
-        let l1 = point.group[0],
-            l2 = point.group[1];
-        if (l1.isCollinear(l2)) {
-            l1.del = true;
-            l2.del = true;
-            // find new endpoints that are not shared point
-            let p1 = l1.p1 != point ? l1.p1 : l1.p2,
-                p2 = l2.p1 != point ? l2.p1 : l2.p2,
-                newline = base.newOrderedLine(p1,p2);
-            // remove deleted lines from associated points
-            p1.group.remove(l1);
-            p1.group.remove(l2);
-            p2.group.remove(l1);
-            p2.group.remove(l2);
-            // associate new line with points
-            p1.group.push(newline);
-            p2.group.push(newline);
-            // add new line to lines array
-            newline.edge = l1.edge || l2.edge;
-            tmplines.push(newline);
-        }
-    });
-
-    // mark duplicates for deletion
-    // but preserve one if it's an edge
-    tmplines.sort(function (l1, l2) {
-        if (l1.key === l2.key) {
-            l1.del = true;
-            l2.del = !l2.edge;
-            return 0;
-        }
-        return l1.key < l2.key ? -1 : 1;
-    });
-
-    // create new line array culling deleted
-    tmplines.forEach(function(line) {
-        if (!line.del) {
-            output.push(line);
-            line.p1.group = null;
-            line.p2.group = null;
-        }
-    });
-
-    return output;
-}
-
 Slicer.checkOverUnderOn = checkOverUnderOn;
 Slicer.intersectPoints = intersectPoints;
 
 kiri.cam_slicer = Slicer;
+
+moto.broker.subscribe("minion.started", msg => {
+    const { funcs, cache, reply, log } = msg;
+
+    funcs.cam_slice_init = data => {
+        cache.slicer = new Slicer().setPoints(data.points);
+    };
+
+    funcs.cam_slice_cleanup = () => {
+        delete cache.slicer;
+    };
+
+    funcs.cam_slice = (data, seq) => {
+        const { bucket, opt } = data;
+        cache.slicer.sliceBucket(bucket, opt)
+            .then(data => {
+                reply({ seq, slices: kiri.codec.encode(data) });
+            });
+    };
+});
 
 });

@@ -37,6 +37,14 @@ class Point {
         };
     }
 
+    set(x, y, z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        delete this._key;
+        return this;
+    }
+
     setZ(z) {
         this.z = z;
         return this;

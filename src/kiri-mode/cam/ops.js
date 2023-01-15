@@ -641,7 +641,7 @@ class OpOutline extends CamOp {
 
         // project empty up and render
         for (let slice of slices) {
-            if (false) slice.output()
+            if (true) slice.output()
                 .setLayer("slice", {line: 0xaaaa00}, false)
                 .addPolys(slice.topPolys())
             slice.output()
@@ -1489,10 +1489,7 @@ class OpXRay extends CamOp {
 
     async slice(progress) {
         let { widget, addSlices } = this.state;
-        let slicer = new kiri.cam_slicer(widget.getPoints(), {
-            zlist: true,
-            zline: true
-        });
+        let slicer = new kiri.cam_slicer(widget);
         let xrayind = Object.keys(slicer.zLine)
             .map(v => parseFloat(v).round(5))
             .sort((a,b) => a-b);

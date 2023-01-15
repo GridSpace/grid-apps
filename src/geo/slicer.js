@@ -861,6 +861,7 @@ gapp.overlay(base, {
     slice,
     sliceZ,
     slicePost: {},
+    sliceDedup: removeDuplicateLines,
     sliceConnect
 });
 

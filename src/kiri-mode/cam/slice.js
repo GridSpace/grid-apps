@@ -108,10 +108,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     }
 
     let mark = Date.now();
-    let slicer = new kiri.cam_slicer(widget.getPoints(), {
-        zlist: true,
-        zline: true
-    });
+    let slicer = new kiri.cam_slicer(widget);
 
     function updateToolDiams(toolDiam) {
         minToolDiam = Math.min(minToolDiam, toolDiam);
@@ -244,11 +241,8 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         tracker.rotation = isIndexed ? axisRotation : 0;
         // setup new state when indexing the workspace
         if (true && op.op.type === "index") {
-            let points = base.verticesToPoints(widget.getGeoVertices({ unroll: true, translate: true }));
-            state.slicer = new kiri.cam_slicer(points, {
-                zlist: true,
-                zline: true
-            });
+            let points = base.verticesToPoints();
+            state.slicer = new kiri.cam_slicer(widget);
             shadows = {};
             new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
                 // console.log('reshadow', progress.round(3));
@@ -336,10 +330,7 @@ CAM.traces = async function(settings, widget, single) {
         // do no work if cached
         return false;
     }
-    let slicer = new kiri.cam_slicer(widget.getPoints(), {
-        zlist: true,
-        zline: true
-    });
+    let slicer = new kiri.cam_slicer(widget);
     let indices = [...new Set(Object.keys(slicer.zFlat)
         .map(kv => parseFloat(kv).round(5))
         .appendAll(Object.entries(slicer.zLine).map(ze => {
