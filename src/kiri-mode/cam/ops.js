@@ -587,9 +587,15 @@ class OpOutline extends CamOp {
                     for (let top of tops) {
                         if (!top.inner) continue;
                         top.inner = top.inner.filter(innr => {
-                            return !innr.isEquivalent(hole);
+                            return !innr.isEquivalent(hole, false, 0.1);
                         });
                     }
+                }
+            }
+
+            if (op.omitvoid) {
+                for (let top of tops) {
+                    delete top.inner;
                 }
             }
 

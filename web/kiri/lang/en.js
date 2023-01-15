@@ -499,6 +499,8 @@ self.kiri.lang['en-us'] = {
     co_olot_l:      ["limit cutting to","exterior part boundaries","which can be thought of","as the shadow outline"],
     co_omit_s:      "omit through",
     co_omit_l:      "eliminate thru holes",
+    co_omvd_s:      "omit pocket",
+    co_omvd_l:      "eliminate interior pockets",
     co_olen_s:      "enable",
     co_olen_l:      "enabled outline cutting",
 
