@@ -677,7 +677,7 @@ self.kiri.lang['en-us'] = {
     ou_depf_s:      "depth first",
     ou_depf_l:      ["optimize pocket cuts","with depth priority"],
     ou_toin_s:      "tool init",
-    ou_toin_l:      "emit tool change with first operation",
+    ou_toin_l:      "add tool change with first operation. when disabled, the gcode assumes the first tool is loaded and offset probed",
     ou_forz_s:      "force z max",
     ou_forz_l:      "all moves between pockets will go to z max (above stock). this is usually required if you are not performing a roughing operation before pocketing operations.",
     ou_z1st_s:      "first z max",

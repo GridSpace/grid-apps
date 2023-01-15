@@ -102,6 +102,7 @@
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` maintain several part orientations + op chains in a single profile
 
+* `P` improve parser - do not require spaced tokens and support implied G0 / G1
 * `P` inner corner arc moves
 * `P` log Z interpolation for contour XYZ moves
 * `P` option to start with the smallest poly by area on layer change

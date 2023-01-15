@@ -475,7 +475,10 @@ class Print {
                 newlayer = true;
                 autolayer = false;
             }
-            line = line.split(";")[0].split(" ").filter(v => v);
+            // if (["X","Y","Z"].indexOf(line.charAt(0)) >= 0) {
+            //     line = `G0${line}`;
+            // }
+            line = line.trim().split(";")[0].split(" ").filter(v => v);
             let cmd = line.shift();
             if (!cmd) return;
             if (cmd.charAt(0) === 'T') {
@@ -486,6 +489,7 @@ class Print {
                     xoff.Y = -ext[pos].extOffsetY;
                 }
             }
+
             pos.E = 0.0;
             switch (cmd) {
                 case 'M82':
