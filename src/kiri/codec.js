@@ -39,6 +39,7 @@ function toCodable(object) {
     switch (typeof object) {
         case 'function':
             return undefined;
+        // case 'boolean':
         case 'string':
         case 'number':
             return object;
@@ -101,6 +102,7 @@ function encode(o, state) {
         return arr;
     }
     switch (typeof(o)) {
+        case 'boolean':
         case 'string':
         case 'number':
             return o;
@@ -120,6 +122,7 @@ function decode(o, state) {
         return o;
     }
     switch (typeof(o)) {
+        case 'boolean':
         case 'string':
         case 'number':
             return o;

@@ -133,7 +133,9 @@ class Topo {
         const trace = this.trace = new Trace(probe, {
             curvesOnly,
             maxangle,
-            flatness
+            flatness,
+            bridge,
+            contourX
         });
 
         if (topo.raster) {
@@ -472,7 +474,7 @@ class Trace {
 
     constructor(probe, params) {
 
-        const { curvesOnly, maxangle, flatness } = params;
+        const { curvesOnly, maxangle, flatness, bridge, contourX } = params;
 
         this.params = params;
         this.probe = probe;
@@ -559,7 +561,6 @@ class Trace {
 
         if (minions && this.cross.concurrent) {
             const { codec } = kiri;
-
             minions.broadcast("trace_init", codec.encode({
                 probe: this.probe.params,
                 trace: this.params,
