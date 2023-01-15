@@ -22,6 +22,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM fix multi-part object import / grouping
 * CAM fix tracing nested polyline offset ordering
 * CAM refactor of contouring yields 2x - 20x speedup
+* CAM update traces to async slicing, fix use with flip
 
 - refactor object/group storage model in Mesh:Tool
 - add omit pocket to rough and outline

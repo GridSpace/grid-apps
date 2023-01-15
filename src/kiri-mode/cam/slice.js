@@ -371,7 +371,7 @@ CAM.traces = async function(settings, widget, single) {
                     continue;
                 }
                 // do not add duplicates
-                if (traces[i].isEquivalent(poly) && dz < 1) {
+                if (traces[i].isEquivalent(poly) && dz < 0.1) {
                     return;
                 }
             }
