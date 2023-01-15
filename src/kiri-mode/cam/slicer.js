@@ -83,7 +83,6 @@ class Slicer {
             zList[z] = (zList[z] || 0) + 1;
         }
 
-        console.time('compute features');
         for (let i = 0, il = points.length; i < il; ) {
             let p1 = points[i++];
             let p2 = points[i++];
@@ -126,7 +125,6 @@ class Slicer {
                 }
             }
         }
-        console.timeEnd('compute features');
 
         return this;
     }
@@ -144,7 +142,6 @@ class Slicer {
         let zScale = this.zScale = 1 / (zMax / bucketCount);
         let buckets = this.buckets = [];
 
-        console.time('compute buckets');
         if (bucketCount > 1) {
             buckets.length = bucketCount;
             // create empty buckets
@@ -169,7 +166,6 @@ class Slicer {
                 }
             }
         }
-        console.timeEnd('compute buckets');
 
         return this;
     }
@@ -369,8 +365,8 @@ class Slicer {
             bounds = this.bounds,
             boff = opt.boff || opt.off || 0, // bottom offset
             toff = opt.toff || opt.off || 0, // top offset
-            zmin = opt.min !== undefined ? opt.min : this.bounds.min.z + boff,
-            zmax = (opt.max || this.bounds.max.z) - toff,
+            zmin = opt.min !== undefined ? opt.min : bounds.min.z + boff,
+            zmax = (opt.max || bounds.max.z) - toff,
             steps = (zmax - zmin) / step,
             rem = steps % 1 != 0 ? 0 : 1,
             count = Math.floor(steps) + rem,

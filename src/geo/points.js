@@ -19,7 +19,6 @@ gapp.overlay(base, {
  * with optional decimation
  */
 function verticesToPoints(array, options) {
-    console.time('verticesToPoints');
     let parr = new Array(array.length / 3),
         i = 0,
         j = 0,
@@ -122,7 +121,6 @@ function verticesToPoints(array, options) {
         time: (Date.now() - t)
     });
 
-    console.timeEnd('verticesToPoints');
     return parr;
 }
 

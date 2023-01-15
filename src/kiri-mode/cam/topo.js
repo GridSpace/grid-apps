@@ -558,7 +558,6 @@ class Trace {
                 probe: this.probe.params,
                 trace: this.params,
                 cross: params,
-                // clipTo: codec.encode(params.clipTo)
             }));
         }
     }
