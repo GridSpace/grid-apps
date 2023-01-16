@@ -24,9 +24,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM refactor of contouring yields 2x - 20x speedup
 * CAM update traces to async slicing, fix use with flip
 * CAM add threading support for all slicing ops
-
-- refactor object/group storage model in Mesh:Tool
-- add omit pocket to rough and outline
+* CAM add omit pocket option to outline op
 
 
 # Release 3.7 (2022-11-12)
