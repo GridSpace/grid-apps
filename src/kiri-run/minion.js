@@ -145,16 +145,16 @@ const funcs = self.minion = {
         const { key, data } = msg;
         // log({ minion_putCache: key, data });
         if (data) {
-            // console.log({ minion_put_cache: key, data });
             cache[key] = data;
         } else {
-            // console.log({ minion_del_cache: key });
             delete cache[key];
         }
     },
 
     clearCache: msg => {
-        cache = self.cache = {};
+        for (let key in cache) {
+            delete cache[key];
+        }
     },
 
     wasm: data => {

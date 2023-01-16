@@ -62,15 +62,18 @@ class Topo4 {
         this.resolution = resolution;
 
         onupdate(0, "lathe");
+
         const slices = await this.slice(onupdate);
         for (let slice of slices) {
             slice.output()
                 .setLayer("lathe", { line: 0x888888 })
                 .addPolys(slice.topPolys());
         }
-        onupdate(1, "lathe");
 
-        ondone(slices);
+        const lathe = await this.lathe(onupdate);
+
+        onupdate(1, "lathe");
+        ondone([...slices, ...lathe]);
     }
 
     async slice(onupdate) {
@@ -105,7 +108,6 @@ class Topo4 {
             index++;
         }
         slices.push(slice);
-
         // console.log({ shards, range, step, slices });
 
         if (kiri.minions.running > 1) {
@@ -117,6 +119,7 @@ class Topo4 {
 
     async sliceWorker(onupdate) {
         const { vertices, slices, resolution } = this;
+        const { codec } = kiri;
 
         let output = [];
         let complete = 0;
@@ -133,6 +136,12 @@ class Topo4 {
                     }
                     slice.index = rec.index;
                     slice.addTops(sliceConnect(rec.lines));
+
+                    const points = codec.encodePointArray(rec.lines.map(l => [ l.p1, l.p2 ]).flat());
+                    const shared = new Float32Array(new SharedArrayBuffer(points.length * 4));
+                    shared.set(points);
+                    slice.shared = shared;
+
                     return slice;
                 });
             output.appendAll(recs);
@@ -154,7 +163,7 @@ class Topo4 {
         let promises = slices.map(slice => {
             return new Promise(resolve => {
                 minions.queue({
-                    cmd: "topo4_raster",
+                    cmd: "topo4_slice",
                     id: widget.id,
                     resolution,
                     slice
@@ -169,14 +178,60 @@ class Topo4 {
         const output = codec.decode(await Promise.all(promises))
             .map(rec => rec.recs)
             .flat()
-            .map(rec => newSlice(rec.z).addTops(rec.polys))
+            .map(rec => newSlice(rec.z)
+                .addTops(rec.polys)
+                .setFields({ shared: rec.shared }))
             .sort((a,b) => a.z - b.z);
 
-        worker.clearCache({}, { done: data => {
-            // console.log({ clear_cache_done: data });
-        }});
+        worker.clearCache({}, { done: data => { }});
 
         return output;
+    }
+
+    async lathe(onupdate) {
+        if (kiri.minions.running > 1) {
+            return await this.latheMinions(onupdate);
+        } else {
+            return await this.latheWorker(onupdate);
+        }
+    }
+
+    async latheWorker(onupdate) {
+        return [];
+    }
+
+    async latheMinions(onupdate) {
+        const { worker, minions, codec } = kiri;
+        const { slices, resolution } = this;
+
+        worker.putCache({
+            key: "lathe",
+            data: slices.map(s => {
+                return { z: s.z, lines: s.shared }
+            })
+        }, { done: data => {
+            // console.log({ put_cache_done: data });
+        }});
+
+        let complete = 0;
+        let promises = slices.map(slice => {
+            return new Promise(resolve => {
+                minions.queue({
+                    cmd: "topo4_lathe",
+                    resolution
+                }, data => {
+                    resolve(data);
+                    onupdate(++complete / slices.length);
+                });
+            });
+        });
+
+        // merge boxes for all rasters for contouring clipping
+        const output = await Promise.all(promises);
+
+        worker.clearCache({}, { done: data => { }});
+
+        return [];
     }
 
 }
@@ -189,7 +244,7 @@ moto.broker.subscribe("minion.started", msg => {
     const { funcs, cache, reply, log } = msg;
     const { codec } = kiri;
 
-    funcs.topo4_raster = (data, seq) => {
+    funcs.topo4_slice = (data, seq) => {
         const { id, slice, resolution } = data;
         const vertices = cache[id];
         const recs = new kiri.topo_slicer(slice.index)
@@ -204,27 +259,30 @@ moto.broker.subscribe("minion.started", msg => {
                     if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
                 }
 
-                return codec.encode({ z, index, polys: sliceConnect(lines) });
+                const points = codec.encodePointArray(lines.map(l => [ l.p1, l.p2 ]).flat());
+                const shared = new Float32Array(new SharedArrayBuffer(points.length * 4));
+                shared.set(points);
+
+                return {
+                    z, index, shared,
+                    polys: codec.encode(sliceConnect(lines)),
+                };
             });
         // only pass back bounds of rasters to be merged
         reply({ seq, recs });
     };
 
-    funcs.trace4_init = data => {
-        const { cache } = self;
-        const { codec } = kiri;
-        cache.topo4 = data;
-    };
+    funcs.topo4_lathe = (data, seq) => {
+        console.log({ topo4_lathe: cache });
 
-    funcs.trace4_y = (data, seq) => {
-    };
+        const { resolution } = data;
+        const slices = cache.lathe;
 
-    funcs.trace4_x = (data, seq) => {
-    };
+        log({ slices, resolution });
 
-    funcs.trace4_cleanup = () => {
-        delete cache.topo4;
-    };
+        reply({ seq, abc: 123 });
+    }
+
 });
 
 });

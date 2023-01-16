@@ -184,6 +184,11 @@ class Slice {
         return min;
     };
 
+    setFields(fields = {}) {
+        Object.assign(this, fields);
+        return this;
+    }
+
     // xray(dash = 3) {
     //     // console.log('xray', this);
     //     this.output().setLayer(`xp`, 0x888800).addPolys(this.topPolys());
