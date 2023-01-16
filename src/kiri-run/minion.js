@@ -11,6 +11,7 @@
 // dep: kiri.codec
 // dep: kiri-mode.fdm.post
 // dep: kiri-mode.cam.topo
+// dep: kiri-mode.cam.topo4
 // use: kiri-mode.cam.slicer
 // dep: ext.clip2
 gapp.register("kiri-run.minion", [], (root, exports) => {
@@ -36,7 +37,7 @@ self.alert = function(o) {
 self.onmessage = function(msg) {
     let data = msg.data;
     let cmd = data.cmd;
-    (funcs[cmd] || funcs.bad)(data, data.seq);
+    (funcs[cmd] || funcs.bad)(data, data.seq, cmd);
 };
 
 function reply(msg, direct) {
@@ -164,8 +165,8 @@ const funcs = self.minion = {
         }
     },
 
-    bad: (data, seq) => {
-        reply({ seq, error: "invalid command" });
+    bad: (data, seq, cmd) => {
+        reply({ seq, error: `invalid command (${cmd})` });
     }
 };
 
