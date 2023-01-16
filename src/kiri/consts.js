@@ -101,6 +101,10 @@ const LISTS = {
         { name: "middle" },
         { name: "bottom" }
     ],
+    xyaxis: [
+        { name: "X" },
+        { name: "Y" }
+    ],
     regaxis: [
         { name: "X" },
         { name: "Y" },

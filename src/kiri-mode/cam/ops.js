@@ -9,6 +9,7 @@
 // dep: geo.slicer
 // dep: kiri.slice
 // use: kiri-mode.cam.topo
+// use: kiri-mode.cam.topo4
 gapp.register("kiri-mode.cam.ops", [], (root, exports) => {
 
 const { base, kiri } = root;
@@ -767,16 +768,15 @@ class OpContour extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut } = this;
-        let { setTolerance, setTool, setSpindle, setPrintPoint } = ops;
-        let { polyEmit } = ops;
-        let { camOut, newLayer, printPoint, lastPoint } = ops;
-        let { bounds, zmax } = ops;
         let { settings, widget } = state;
         let { process } = settings;
 
+        let { setTolerance, setTool, setSpindle, setPrintPoint } = ops;
+        let { camOut, polyEmit, newLayer, printPoint, lastPoint } = ops;
+        let { bounds, zmax } = ops;
+
         let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         let stepover = toolDiam * op.step * 2;
-        let cutdir = process.camConventional;
         let depthFirst = process.camDepthFirst;
         let depthData = [];
 
@@ -824,6 +824,78 @@ class OpContour extends CamOp {
                 newLayer();
                 return lastPoint();
             });
+        }
+
+        setPrintPoint(printPoint);
+    }
+}
+
+class OpLathe extends CamOp {
+    constructor(state, op) {
+        super(state, op);
+    }
+
+    async slice(progress) {
+        let { op, state } = this;
+        let { addSlices } = state;
+
+        this.topo = await CAM.Topo4({
+            op,
+            state: state,
+            onupdate: (pct, msg) => {
+                progress(pct, msg);
+            },
+            ondone: (slices) => {
+                this.slices = slices;
+                addSlices(slices);
+            }
+        });
+    }
+
+    prepare(ops, progress) {
+        let { op, state, slices, topo } = this;
+        let { settings, widget } = state;
+        let { process } = settings;
+
+        let { setTolerance, setTool, setSpindle, setPrintPoint } = ops;
+        let { camOut, newLayer, polyEmit, printPoint, lastPoint } = ops;
+        let { bounds, zmax } = ops;
+
+        let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+        let stepover = toolDiam * op.step * 2;
+        let cutdir = process.camConventional;
+        let depthFirst = process.camDepthFirst;
+        let depthData = [];
+
+        setTool(op.tool, op.rate, op.plunge);
+        setSpindle(op.spindle);
+        setTolerance(topo.tolerance);
+
+        // start top center, X = 0, Y = 0 closest to 4th axis chuck
+        printPoint = newPoint(0, 0, zmax);
+
+        for (let slice of slices) {
+            // ignore debug slices
+            if (!slice.camLines) {
+                continue;
+            }
+
+            let polys = [], poly, emit;
+            slice.camLines.forEach(poly => {
+                polys.push({ first:poly.first(), last:poly.last(), poly:poly });
+            });
+
+            printPoint = tip2tipEmit(polys, printPoint, (el, point, count) => {
+                poly = el.poly;
+                if (poly.last() === point) {
+                    poly.reverse();
+                }
+                poly.forEachPoint((point, pidx) => {
+                    camOut(point.clone(), pidx > 0, stepover);
+                }, false);
+            });
+
+            newLayer();
         }
 
         setPrintPoint(printPoint);
@@ -1701,6 +1773,7 @@ CAM.OPS = CamOp.MAP = {
     "outline":   OpOutline,
     "contour":   OpContour,
     "pocket":    OpPocket,
+    "lathe":     OpLathe,
     "trace":     OpTrace,
     "drill":     OpDrill,
     "register":  OpRegister,

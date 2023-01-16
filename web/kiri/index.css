@@ -938,9 +938,6 @@ th, tr, td, label {
     align-items: center;
     gap: 5px;
 }
-#cam-index {
-    grid-column-start: span 2;
-}
 #op-add-list {
     padding: 4px;
     display: flex;

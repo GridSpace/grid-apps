@@ -83,7 +83,12 @@ CAM.init = function(kiri, api) {
         animVer = isIndexed ? 1 : 0;
         SPACE.platform.setVisible(!isIndexed);
         SPACE.platform.showGrid2(!isIndexed || camStockIndexGrid);
-        $('cam-index').style.display = isIndexed ? '' : 'none';
+        const showIndexed = isIndexed ? '' : 'none';
+        const showNonIndexed = isIndexed ? 'none' : '';
+        $('cam-index').style.display = showIndexed;
+        $('cam-lathe').style.display = showIndexed;
+        $('cam-flip').style.display = showNonIndexed;
+        $('cam-reg').style.display = showNonIndexed;
         if (!changed) {
             return;
         }
@@ -282,13 +287,21 @@ CAM.init = function(kiri, api) {
             case "rough": return func.opAddRough();
             case "outline": return func.opAddOutline();
             case "contour":
-                let oplist = current.process.ops, axis = "X";
-                for (let op of oplist) {
+                let caxis = "X";
+                for (let op of current.process.ops) {
                     if (op.type === "contour" && op.axis === "X") {
-                        axis = "Y";
+                        caxis = "Y";
                     }
                 }
-                return func.opAddContour(axis);
+                return func.opAddContour(caxis);
+            case "lathe":
+                let laxis = "X";
+                for (let op of current.process.ops) {
+                    if (op.type === "lathe" && op.axis === "X") {
+                        laxis = "Y";
+                    }
+                }
+                return func.opAddLathe(laxis);
             case "register": return func.opAddRegister('X', 2);
             case "drill": return func.opAddDrill();
             case "trace": return func.opAddTrace();
@@ -340,6 +353,12 @@ CAM.init = function(kiri, api) {
 
     func.opAddContour = (axis) => {
         let rec = popOp.contour.new();
+        rec.axis = axis.toUpperCase();
+        func.opAdd(rec);
+    };
+
+    func.opAddLathe = (axis) => {
+        let rec = popOp.lathe.new();
         rec.axis = axis.toUpperCase();
         func.opAdd(rec);
     };
@@ -1285,7 +1304,7 @@ CAM.init = function(kiri, api) {
         axis:      'X'
     }).inputs = {
         tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
-        axis:      UC.newSelect(LANG.cd_axis, {}, "regaxis"),
+        axis:      UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
         sep:       UC.newBlank({class:"pop-sep"}),
         spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
         rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
@@ -1300,6 +1319,23 @@ CAM.init = function(kiri, api) {
         curves:    UC.newBoolean(LANG.cf_curv_s, undefined, {title:LANG.cf_curv_l}),
         inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l}),
         bottom:    UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf ? conf.process.camZBottom : 0})
+    };
+
+    createPopOp('lathe', {
+        tool:      'camLatheTool',
+        spindle:   'camLatheSpindle',
+        step:      'camLatheOver',
+        rate:      'camLatheSpeed',
+        tolerance: 'camTolerance',
+        axis:      'X'
+    }).inputs = {
+        tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
+        axis:      UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
+        sep:       UC.newBlank({class:"pop-sep"}),
+        spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
+        rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
+        step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,2.0)}),
+        tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
     };
 
     createPopOp('trace', {
