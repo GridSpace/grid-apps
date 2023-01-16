@@ -828,7 +828,7 @@ moto.broker.subscribe("minion.started", msg => {
             slice = kiri.codec.encode(slice);
             reply({ seq, slice });
         });
-    },
+    };
 
     funcs.trace_x = (data, seq) => {
         const { cache } = self;
@@ -837,7 +837,7 @@ moto.broker.subscribe("minion.started", msg => {
             slice = kiri.codec.encode(slice);
             reply({ seq, slice });
         });
-    },
+    };
 
     funcs.trace_cleanup = () => {
         delete cache.trace;
