@@ -1160,7 +1160,7 @@ class OpPocket extends CamOp {
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
         // let vert = widget.getVertices().array.map(v => v.round(4));
         let outline = [];
-        let faces = CAM.surface_find(widget, surfaces);
+        let faces = CAM.surface_find(widget, surfaces, 0.1);
         let zmin = Infinity;
         let j=0, k=faces.length;
         for (let face of faces) {
