@@ -158,8 +158,6 @@ class Slice {
             this.tops.push(top);
             return top;
         }
-        console.log('top', poly);
-        throw "invalid top";
     };
 
     findClosestPointTo(target) {

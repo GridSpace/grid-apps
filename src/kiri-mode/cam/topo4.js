@@ -16,11 +16,12 @@ gapp.register("kiri-mode.cam.topo", [], (root, exports) => {
 const { base, kiri } = root;
 const { driver, newSlice } = kiri;
 const { CAM } = driver;
-const { polygons, newLine, newSlope, newPoint, newPolygon, sliceConnect } = base;
+const { polygons, newPoint, newPolygon, sliceConnect } = base;
 
 const PRO = CAM.process;
 const POLY = polygons;
 const RAD2DEG = 180 / Math.PI;
+const DEG2RAD = Math.PI / 180;
 
 class Topo4 {
     constructor() { }
@@ -186,13 +187,13 @@ class Topo4 {
         }
     }
 
-    async latheWorker(onupdate) {
-        const { range, resolution, sliced, tool } = this;
+    lathePath(slices, tool) {
+        const { resolution } = this;
 
-        const slices = sliced.map(s => { return { z: s.z, lines: s.shared } });
-        const heights = [];
         const tlen = tool.length;
         const slen = slices.length;
+        const heights = [];
+
         // iterate over all slices (real x = z)
         // find max real z using z ray intersect from tool point to slice lines + offset
         for (let si = 0; si < slen; si++) {
@@ -202,7 +203,7 @@ class Topo4 {
             for (let ti = 0; ti < tlen; ) {
                 // tool offset in grid units from present x (si)
                 const xo = tool[ti++]; // x grid offset (slice)
-                const yo = tool[ti++]; // y grid offset (mult rez to get real y)
+                const yo = tool[ti++] * resolution; // y grid offset (mult rez to get real y)
                 const zo = tool[ti++]; // real z delta offset
                 // get slice index corresponding with offset
                 const ts = si + xo;
@@ -218,23 +219,73 @@ class Topo4 {
                     ++i; // skip x which should match slice.z
                     const py1 = lines[i++];
                     const pz1 = lines[i++];
-                    if (py0 <= yo && py1 >= yo) {
+                    if ((py0 <= yo && py1 >= yo) || (py1 <= yo && py0 >= yo)) {
+                        const dz = Math.abs(pz0 - pz1);
+                        const dy = Math.abs(py1 - py0);
+                        const fr = (yo - py0) / dy;
+                        const lz = pz0 + dz * fr + zo;
                         // check z height
-                        mz = Math.max(mz, pz0, pz1);
+                        mz = Math.max(mz, lz);
                     }
                 }
             }
-            heights.push(mz);
+            heights.push(rx, 0, mz);
         }
 
-        console.log({ tool, range, resolution, slices, heights });
+        return heights;
+    }
 
-        return [];
+    async latheWorker(onupdate) {
+        const { sliced, tool } = this;
+
+        const steps = 50;
+        const rota = (360 / steps) * DEG2RAD;
+        const axis = new THREE.Vector3(1, 0, 0);
+        const rot = new THREE.Matrix4().makeRotationAxis(axis, rota);
+
+        const slices = sliced.map(s => { return { z: s.z, lines: s.shared } });
+        const paths = [];
+        const recs = [];
+
+        // this.lathePath(slices, tool, paths);
+
+        let angle = 0;
+        let count = 0;
+        while (count++ < steps) {
+            const heights = this.lathePath(slices, tool, paths);
+            recs.push({ angle, heights });
+            angle -= rota;
+            for (let lines of slices.map(s => s.lines)) {
+                rotatePoints(lines, rot);
+            }
+        }
+
+        console.log({recs});
+
+        for (let rec of recs) {
+            const { angle, heights } = rec;
+            const points = heights.toFloat32();
+            rotatePoints(points, new THREE.Matrix4().makeRotationAxis(axis, angle));
+
+            const poly = newPolygon().setOpen().addPoints(
+                [...points].group(3).map(a => newPoint(a[0], a[1], a[2]))
+            );
+            const slice = newSlice().addTops([ poly ]);
+            slice.output()
+                .setLayer("lathe", { line: 0xffff00 })
+                .addPoly(poly);
+
+            paths.push(slice);
+        }
+
+        console.log({ tool, slices, paths });
+
+        return paths;
     }
 
     async latheMinions(onupdate) {
         const { codec } = kiri;
-        const { sliced, range, resolution, tool } = this;
+        const { sliced, resolution, tool } = this;
         const { putCache, clearCache, queue } = this;
 
         console.log({ sliced });
@@ -276,6 +327,10 @@ class Topo4 {
             kiri.minions.queue({ cmd, ...params }, resolve);
         });
     }
+}
+
+function rotatePoints(lines, rot) {
+    new THREE.BufferAttribute(lines, 3).applyMatrix4(rot);
 }
 
 CAM.Topo4 = async function(opt) {
