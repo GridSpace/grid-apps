@@ -214,15 +214,15 @@ class Topo4 {
                 const plen = lines.length;
                 for (let i = 0; i < plen; ) {
                     ++i; // skip x which should match slice.z
-                    const py0 = lines[i++];
+                    let py0 = lines[i++];
                     const pz0 = lines[i++];
                     ++i; // skip x which should match slice.z
-                    const py1 = lines[i++];
+                    let py1 = lines[i++];
                     const pz1 = lines[i++];
                     if ((py0 <= yo && py1 >= yo) || (py1 <= yo && py0 >= yo)) {
-                        const dz = Math.abs(pz0 - pz1);
+                        const dz = pz1 - pz0;
                         const dy = Math.abs(py1 - py0);
-                        const fr = (yo - py0) / dy;
+                        const fr = Math.abs(yo - py0) / dy;
                         const lz = pz0 + dz * fr + zo;
                         // check z height
                         mz = Math.max(mz, lz);
