@@ -43,28 +43,26 @@ class Topo4 {
                 x: axis === "x",
                 y: axis === "y"
             },
-            tolerance = op.tolerance,
             zMin = min.z + 0.0001,
+            tolerance = op.tolerance,
             resolution = tolerance ? tolerance : 1 / Math.sqrt(density / (span.x * span.y)),
-            toolOffset = tool.generateProfile(resolution).profile,
-            toolDiameter = tool.fluteDiameter(),
-            toolStep = toolDiameter * op.step,
-            steps = {
-                x: Math.ceil(span.x / resolution),
-                y: Math.ceil(span.y / resolution)
-            };
+            step = this.step = tool.fluteDiameter() * op.step;
 
         if (tolerance === 0) {
             console.log(widget.id, 'topo4 auto tolerance', resolution.round(4));
         }
 
-        this.widget = widget;
         this.resolution = resolution;
+        this.vertices = widget.getGeoVertices().toShared();
+        this.tool = tool.generateProfile(resolution).profile;
 
         onupdate(0, "lathe");
 
-        const slices = await this.slice(onupdate);
+        const range = this.range = { min: Infinity, max: -Infinity };
+        const slices = this.sliced = await this.slice(onupdate);
         for (let slice of slices) {
+            range.min = Math.min(range.min, slice.z);
+            range.max = Math.max(range.max, slice.z);
             slice.output()
                 .setLayer("lathe", { line: 0x888888 })
                 .addPolys(slice.topPolys());
@@ -77,9 +75,8 @@ class Topo4 {
     }
 
     async slice(onupdate) {
-        const { widget, resolution } = this;
+        const { vertices, resolution } = this;
 
-        const vertices = this.vertices = widget.getGeoVertices().toShared();
         const range = this.range = { min: Infinity, max: -Infinity };
         const box = this.box = new THREE.Box2();
 
@@ -108,7 +105,7 @@ class Topo4 {
             index++;
         }
         slices.push(slice);
-        // console.log({ shards, range, step, slices });
+        console.log({ shards, range, step, slices });
 
         if (kiri.minions.running > 1) {
             return await this.sliceMinions(onupdate);
@@ -152,25 +149,19 @@ class Topo4 {
     }
 
     async sliceMinions(onupdate) {
-        const { worker, minions, codec } = kiri;
-        const { widget, vertices, slices, resolution } = this;
-
-        worker.putCache({ key: widget.id, data: vertices }, { done: data => {
-            // console.log({ put_cache_done: data });
-        }});
+        const { codec } = kiri;
+        const { queue, putCache, clearCache } = this;
+        const { vertices, slices, resolution } = this;
+        putCache("vertices", vertices);
 
         let complete = 0;
         let promises = slices.map(slice => {
-            return new Promise(resolve => {
-                minions.queue({
-                    cmd: "topo4_slice",
-                    id: widget.id,
-                    resolution,
-                    slice
-                }, data => {
-                    resolve(data);
-                    onupdate(++complete / slices.length);
-                });
+            return queue("topo4_slice", {
+                resolution,
+                slice
+            }).then(data => {
+                onupdate(++complete / slices.length);
+                return data;
             });
         });
 
@@ -183,13 +174,12 @@ class Topo4 {
                 .setFields({ shared: rec.shared }))
             .sort((a,b) => a.z - b.z);
 
-        worker.clearCache({}, { done: data => { }});
-
+        clearCache();
         return output;
     }
 
     async lathe(onupdate) {
-        if (kiri.minions.running > 1) {
+        if (false && kiri.minions.running > 1) {
             return await this.latheMinions(onupdate);
         } else {
             return await this.latheWorker(onupdate);
@@ -197,43 +187,95 @@ class Topo4 {
     }
 
     async latheWorker(onupdate) {
+        const { range, resolution, sliced, tool } = this;
+
+        const slices = sliced.map(s => { return { z: s.z, lines: s.shared } });
+        const heights = [];
+        const tlen = tool.length;
+        const slen = slices.length;
+        // iterate over all slices (real x = z)
+        // find max real z using z ray intersect from tool point to slice lines + offset
+        for (let si = 0; si < slen; si++) {
+            const rx = slices[si].z;
+            let mz = 0;
+            // iterate over tool offsets
+            for (let ti = 0; ti < tlen; ) {
+                // tool offset in grid units from present x (si)
+                const xo = tool[ti++]; // x grid offset (slice)
+                const yo = tool[ti++]; // y grid offset (mult rez to get real y)
+                const zo = tool[ti++]; // real z delta offset
+                // get slice index corresponding with offset
+                const ts = si + xo;
+                // outside of slice array, skip
+                if (ts < 0 || ts >= slen) continue;
+                const slice = slices[ts];
+                const lines = slice.lines;
+                const plen = lines.length;
+                for (let i = 0; i < plen; ) {
+                    ++i; // skip x which should match slice.z
+                    const py0 = lines[i++];
+                    const pz0 = lines[i++];
+                    ++i; // skip x which should match slice.z
+                    const py1 = lines[i++];
+                    const pz1 = lines[i++];
+                    if (py0 <= yo && py1 >= yo) {
+                        // check z height
+                        mz = Math.max(mz, pz0, pz1);
+                    }
+                }
+            }
+            heights.push(mz);
+        }
+
+        console.log({ tool, range, resolution, slices, heights });
+
         return [];
     }
 
     async latheMinions(onupdate) {
-        const { worker, minions, codec } = kiri;
-        const { slices, resolution } = this;
+        const { codec } = kiri;
+        const { sliced, range, resolution, tool } = this;
+        const { putCache, clearCache, queue } = this;
 
-        worker.putCache({
-            key: "lathe",
-            data: slices.map(s => {
-                return { z: s.z, lines: s.shared }
-            })
-        }, { done: data => {
-            // console.log({ put_cache_done: data });
-        }});
+        console.log({ sliced });
+        putCache("lathe", {
+            tool,
+            range,
+            resolution,
+            slices: sliced.map(s => { return { z: s.z, lines: s.shared } })
+        });
 
         let complete = 0;
-        let promises = slices.map(slice => {
-            return new Promise(resolve => {
-                minions.queue({
-                    cmd: "topo4_lathe",
-                    resolution
-                }, data => {
-                    resolve(data);
-                    onupdate(++complete / slices.length);
+        let promises = sliced.map(slice => {
+            return queue("topo4_lathe", {
+                    // resolution
+                }).then(data => {
+                    onupdate(++complete / sliced.length);
+                    return data;
                 });
-            });
         });
 
         // merge boxes for all rasters for contouring clipping
         const output = await Promise.all(promises);
+        console.log({ output });
 
-        worker.clearCache({}, { done: data => { }});
-
+        clearCache();
         return [];
     }
 
+    putCache(key, data) {
+        kiri.worker.putCache({ key, data }, { done: data => { } });
+    }
+
+    clearCache() {
+        kiri.worker.clearCache({}, { done: data => { } });
+    }
+
+    queue(cmd, params) {
+        return new Promise(resolve => {
+            kiri.minions.queue({ cmd, ...params }, resolve);
+        });
+    }
 }
 
 CAM.Topo4 = async function(opt) {
@@ -245,8 +287,8 @@ moto.broker.subscribe("minion.started", msg => {
     const { codec } = kiri;
 
     funcs.topo4_slice = (data, seq) => {
-        const { id, slice, resolution } = data;
-        const vertices = cache[id];
+        const { slice, resolution } = data;
+        const vertices = cache.vertices;
         const recs = new kiri.topo_slicer(slice.index)
             .setFromArray(vertices, slice)
             .slice(resolution)
@@ -273,12 +315,10 @@ moto.broker.subscribe("minion.started", msg => {
     };
 
     funcs.topo4_lathe = (data, seq) => {
-        console.log({ topo4_lathe: cache });
+        // console.log({ topo4_lathe: data });
 
-        const { resolution } = data;
-        const slices = cache.lathe;
-
-        log({ slices, resolution });
+        // const { resolution } = data;
+        const { resolution, sliced, tool } = cache.lathe;
 
         reply({ seq, abc: 123 });
     }

@@ -45,9 +45,16 @@ function parse(text) {
             case 'f':
                 let tok = toks.map(f => parseInt(f.split('/')[0]));
                 // add support for negative indices (offset from last vertex array point)
-                faces.appendAll(verts[tok[0]-1]);
-                faces.appendAll(verts[tok[1]-1]);
-                faces.appendAll(verts[tok[2]-1]);
+                if (toks.length > 3) {
+                    // earcut faces > 3 vertices
+                    // faces.appendAll(verts[tok[1]-1]);
+                    // faces.appendAll(verts[tok[2]-1]);
+                    // faces.appendAll(verts[tok[3]-1]);
+                } else {
+                    faces.appendAll(verts[tok[0]-1]);
+                    faces.appendAll(verts[tok[1]-1]);
+                    faces.appendAll(verts[tok[2]-1]);
+                }
                 break;
             case 'g':
                 if (faces.length) {

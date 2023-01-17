@@ -132,11 +132,11 @@ class Tool {
         profile.set(toolOffset);
 
         this.profile = profile;
-
         this.profileDim = {
             size: shaft_diameter,
             pix: profile_pix_iter + 2
         };
+
         return this;
     }
 }
