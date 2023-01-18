@@ -50,6 +50,11 @@ class Point {
         return this;
     }
 
+    setA(a) {
+        this.a = a;
+        return this;
+    }
+
     swapXZ() {
         let p = this,
             t = p.x;

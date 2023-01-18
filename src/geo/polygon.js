@@ -824,6 +824,18 @@ class Polygon {
         return this;
     }
 
+    setA(a) {
+        for (let p of this.points) {
+            p.setA(a);
+        }
+        if (this.inner) {
+            for (let inner of this.inner) {
+                inner.setA(a);
+            }
+        }
+        return this;
+    }
+
     /**
      * set all points' z value
      *

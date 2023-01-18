@@ -287,15 +287,21 @@ class Topo4 {
         for (let rec of recs) {
             const { angle, heights } = rec;
             const points = heights.toFloat32();
-            rotatePoints(points, new THREE.Matrix4().makeRotationAxis(axis, angle));
 
             const poly = newPolygon().setOpen().addPoints(
+                [...points].group(3).map(a => newPoint(a[0], a[1], a[2]).setA(angle))
+            );
+
+            rotatePoints(points, new THREE.Matrix4().makeRotationAxis(axis, angle));
+            const top = newPolygon().setOpen().addPoints(
                 [...points].group(3).map(a => newPoint(a[0], a[1], a[2]))
             );
-            const slice = newSlice().addTops([ poly ]);
+
+            const slice = newSlice().addTops([ top ]);
+            slice.camLines = [ poly ];
             slice.output()
                 .setLayer("lathe", { line: 0xffff00 })
-                .addPoly(poly);
+                .addPoly(top);
 
             paths.push(slice);
         }

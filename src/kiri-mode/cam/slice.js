@@ -241,7 +241,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         tracker.rotation = isIndexed ? axisRotation : 0;
         // setup new state when indexing the workspace
         if (true && op.op.type === "index") {
-            let points = base.verticesToPoints();
+            // let points = base.verticesToPoints();
             state.slicer = new kiri.cam_slicer(widget);
             shadows = {};
             new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {

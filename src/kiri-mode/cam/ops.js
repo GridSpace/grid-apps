@@ -854,22 +854,17 @@ class OpLathe extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, slices, topo } = this;
-        let { settings, widget } = state;
-        let { process } = settings;
+        let { settings } = state;
 
-        let { setTolerance, setTool, setSpindle, setPrintPoint } = ops;
+        let { setTool, setSpindle, setPrintPoint } = ops;
         let { camOut, newLayer, polyEmit, printPoint, lastPoint } = ops;
         let { bounds, zmax } = ops;
 
         let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         let stepover = toolDiam * op.step * 2;
-        let cutdir = process.camConventional;
-        let depthFirst = process.camDepthFirst;
-        let depthData = [];
 
         setTool(op.tool, op.rate, op.plunge);
         setSpindle(op.spindle);
-        setTolerance(topo.tolerance);
 
         // start top center, X = 0, Y = 0 closest to 4th axis chuck
         printPoint = newPoint(0, 0, zmax);
