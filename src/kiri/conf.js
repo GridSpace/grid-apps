@@ -511,6 +511,7 @@ const conf = exports({
                 camTraceThru: 0,
                 camTraceSpeed: 250,
                 camTracePlunge: 200,
+                camTraceOffOver: 0,
                 camTraceLines: false,
                 camTraceBottom: false,
                 camPocketSpindle: 1000,

@@ -61,6 +61,10 @@ class Tool {
         return this.unitScale() * this.tool.taper_tip;
     }
 
+    traceOffset() {
+        return (this.isTaperMill() ? this.tipDiameter() : this.fluteDiameter()) / 2;
+    }
+
     shaftLength() {
         return this.unitScale() * this.tool.shaft_len;
     }

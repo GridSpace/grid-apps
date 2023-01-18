@@ -1349,6 +1349,7 @@ CAM.init = function(kiri, api) {
         rate:    'camTraceSpeed',
         plunge:  'camTracePlunge',
         bottom:  'camTraceBottom',
+        offover: 'camTraceOffOver',
         select:  'camTraceMode'
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1363,6 +1364,7 @@ CAM.init = function(kiri, api) {
         step:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), show:(op) => popOp.trace.rec.mode === "clear"}),
         down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
         thru:     UC.newInput(LANG.cc_thru_s, {title:LANG.cc_thru_l, convert:UC.toFloat, units:true}),
+        offover:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, show:() => poppedRec.offset !== "none"}),
         sep:      UC.newBlank({class:"pop-sep", modes:MCAM, show:zBottom, poop:true }),
         bottom:   UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom}),
         sep:      UC.newBlank({class:"pop-sep"}),

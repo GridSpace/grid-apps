@@ -909,7 +909,7 @@ class OpTrace extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, rate, down, plunge, offset, thru } = op;
+        let { tool, rate, down, plunge, offset, offover, thru } = op;
         let { settings, widget, addSlices, zMax, zTop, zThru, tabs } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
@@ -920,8 +920,10 @@ class OpTrace extends CamOp {
         // generate tracing offsets from chosen features
         let sliceOut = this.sliceOut = [];
         let areas = op.areas[widget.id] || [];
-        let toolDiam = new CAM.Tool(settings, tool).fluteDiameter();
+        let camTool = new CAM.Tool(settings, tool);
+        let toolDiam = camTool.fluteDiameter();
         let toolOver = toolDiam * op.step;
+        let traceOffset = camTool.traceOffset()
         let cutdir = process.camConventional;
         let polys = [];
         let stockRect = stock.center && stock.x && stock.y ?
@@ -1047,11 +1049,13 @@ class OpTrace extends CamOp {
                     routed.push(poly);
                 });
                 for (let poly of POLY.nest(routed)) {
-                    let offdist = 0;
+                    let offdist = offover;
+                    if (!offdist)
                     switch (offset) {
-                        case "outside": offdist = toolDiam / 2; break;
-                        case "inside": offdist = -toolDiam / 2; break;
+                        case "outside": offdist = traceOffset; break;
+                        case "inside": offdist = -traceOffset; break;
                     }
+                    console.log({ offdist });
                     if (offdist) {
                         let pnew = POLY.offset([poly], offdist, { minArea: 0 });
                         if (pnew) {
@@ -1072,6 +1076,9 @@ class OpTrace extends CamOp {
                             followZ(pi.clone().setZ(z));
                         }
                     } else {
+                        if (thru) {
+                            pi.setZ(pi.getZ() - thru);
+                        }
                         followZ(pi);
                     }
                 }

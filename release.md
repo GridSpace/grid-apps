@@ -25,6 +25,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM update traces to async slicing, fix use with flip
 * CAM add threading support for all slicing ops
 * CAM add omit pocket option to outline op
+* CAM add trace support for taper tip diameter
+* CAM add trace offset override
 
 
 # Release 3.7 (2022-11-12)

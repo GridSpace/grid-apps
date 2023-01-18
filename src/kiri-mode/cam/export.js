@@ -47,14 +47,16 @@ CAM.export = function(print, online) {
         spro = settings.process,
         maxZd = spro.camFastFeedZ,
         maxXYd = spro.camFastFeed,
-        decimals = base.config.gcode_decimals || 4,
+        decimals = base.config.gcode_decimals || 3,
         pos = { x:null, y:null, z:null, a:undefined, f:null, t:null, emit:null },
         line,
         cidx,
         mode,
         point,
         points = 0,
+        lastGn = '',
         rewrite_comments = false,
+        compact_output = false,
         lasering = false,
         laserOp,
         stock = settings.stock || { },
@@ -249,7 +251,8 @@ CAM.export = function(print, online) {
         }
 
         let speed = out.speed,
-            nl = [speed ? 'G1' : 'G0'],
+            gn = speed ? 'G1' : 'G0',
+            nl = (compact_output && lastGn === gn) ? [] : [gn],
             dx = opt.dx || newpos.x - pos.x,
             dy = opt.dy || newpos.y - pos.y,
             dz = opt.dz || newpos.z - pos.z,
@@ -262,6 +265,8 @@ CAM.export = function(print, online) {
         if (!(dx || dy || dz)) {
             return;
         }
+
+        lastGn = gn;
 
         if (dx || newpos.x !== pos.x) {
             pos.x = newpos.x;
@@ -351,6 +356,12 @@ CAM.export = function(print, online) {
             }
         } else if (line.indexOf(';; REWRITE-COMMENTS-PARENS') === 0) {
             rewrite_comments = true;
+        } else if (line.indexOf(';; DECMIALS') === 0) {
+            decimals = parseInt(line.split('=')[1].trim() || 3) || 3;
+        } else if (line.indexOf(';; COMPACT-OUTPUT') === 0) {
+            compact_output = true;
+            stripComments = true;
+            space = '';
         } else {
             gcodePre.push(line);
         }
