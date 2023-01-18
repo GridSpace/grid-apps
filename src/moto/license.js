@@ -5,7 +5,7 @@
     let terms = {
         COPYRIGHT: "Copyright (C) Stewart Allen <sa@grid.space> - All Rights Reserved",
         LICENSE: "See the license.md file included with the source distribution",
-        VERSION: (is_self ? self : this).debug_version || "3.8.D13"
+        VERSION: (is_self ? self : this).debug_version || "3.8.D14"
     };
 
     if (typeof(module) === 'object') {
