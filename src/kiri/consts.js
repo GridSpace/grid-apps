@@ -92,7 +92,7 @@ const LISTS = {
         { name: "clear" }
     ],
     traceoff: [
-        { name: "center" },
+        { name: "none" },
         { name: "inside" },
         { name: "outside" }
     ],
