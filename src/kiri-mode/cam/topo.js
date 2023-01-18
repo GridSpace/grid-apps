@@ -36,7 +36,7 @@ class Topo {
             contourY = axis === "y",
             bounds = widget.getBoundingBox().clone(),
             tolerance = contour.tolerance,
-            flatness = contour.flatness || 0.005,
+            flatness = contour.flatness || 0,
             shadow = tshadow,
             minX = bounds.min.x,
             maxX = bounds.max.x,
