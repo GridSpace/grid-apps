@@ -194,10 +194,32 @@ class Topo4 {
         const slen = slices.length;
         const heights = [];
 
+        // cull slice lines to only the ones in range (5x faster)
+        const maxo = Math.max(...tool) * resolution;
+        const oslices = [];
+        for (let slice of slices) {
+            const lines = slice.lines;
+            const plen = lines.length;
+            const rec = { z: slice.z, lines: [] };
+            for (let i = 0; i < plen; ) {
+                ++i; // skip x which should match slice.z
+                let py0 = lines[i++];
+                const pz0 = lines[i++];
+                ++i; // skip x which should match slice.z
+                let py1 = lines[i++];
+                const pz1 = lines[i++];
+                if ((py0 < -maxo && py1 < -maxo) || (py0 > maxo && py1 > maxo)) {
+                    continue;
+                }
+                rec.lines.push(0, py0, pz0, 0, py1, pz1);
+            }
+            oslices.push(rec);
+        }
+
         // iterate over all slices (real x = z)
         // find max real z using z ray intersect from tool point to slice lines + offset
         for (let si = 0; si < slen; si++) {
-            const rx = slices[si].z;
+            const rx = oslices[si].z;
             let mz = 0;
             // iterate over tool offsets
             for (let ti = 0; ti < tlen; ) {
@@ -209,7 +231,7 @@ class Topo4 {
                 const ts = si + xo;
                 // outside of slice array, skip
                 if (ts < 0 || ts >= slen) continue;
-                const slice = slices[ts];
+                const slice = oslices[ts];
                 const lines = slice.lines;
                 const plen = lines.length;
                 for (let i = 0; i < plen; ) {
@@ -238,7 +260,7 @@ class Topo4 {
     async latheWorker(onupdate) {
         const { sliced, tool } = this;
 
-        const steps = 50;
+        const steps = 100;
         const rota = (360 / steps) * DEG2RAD;
         const axis = new THREE.Vector3(1, 0, 0);
         const rot = new THREE.Matrix4().makeRotationAxis(axis, rota);
