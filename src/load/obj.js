@@ -44,10 +44,19 @@ function parse(text) {
                 break;
             case 'f':
                 let tok = toks.map(f => parseInt(f.split('/')[0]));
-                // add support for negative indices (offset from last vertex array point)
-                faces.appendAll(verts[tok[0]-1]);
-                faces.appendAll(verts[tok[1]-1]);
-                faces.appendAll(verts[tok[2]-1]);
+                if (tok.length > 3) {
+                    const p = tok.map(t => verts[t-1]).flat();
+                    const t = base.util.triangulate(p, [], 3, true);
+                    const r = t.map(i => tok[i]);
+                    for (let v of r) {
+                        faces.appendAll(verts[v - 1]);
+                    }
+                } else {
+                    // add support for negative indices (offset from last vertex array point)
+                    faces.appendAll(verts[tok[0]-1]);
+                    faces.appendAll(verts[tok[1]-1]);
+                    faces.appendAll(verts[tok[2]-1]);
+                }
                 break;
             case 'g':
                 if (faces.length) {

@@ -410,7 +410,7 @@ function orderClosest(array, fn, from) {
 // wrapper for earcut that handles higher order dimensions and finds the
 // two with the greatest delta to pass to the earcut algorith, then returns
 // an unwrapped array in the original dimensions
-function triangulate(array, holes, dims) {
+function triangulate(array, holes, dims, pos) {
     let narray;
     let info;
     if (dims === 2) {
@@ -452,6 +452,9 @@ function triangulate(array, holes, dims) {
         }
     }
     let ec = earcut(narray, holes, 2);
+    if (pos) {
+        return ec;
+    }
     let oa = new Array(ec.length * dims);
     for (let i = 0, e = 0, l = ec.length, ai; i < l; i++) {
         ai = ec[i] * dims;
