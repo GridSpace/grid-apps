@@ -53,6 +53,7 @@ class Topo {
             toolDiameter = tool.fluteDiameter(),
             toolStep = toolDiameter * contour.step,
             traceJoin = toolDiameter / 2,
+            leave = contour.leave || 0,
             maxangle = contour.angle,
             curvesOnly = contour.curves,
             bridge = contour.bridging || 0,
@@ -180,6 +181,7 @@ class Topo {
             clipTab,
             tabHeight,
             newslices,
+            leave,
             color
         }, (i, l, p) => {
             onupdate(l / 2 + i / 2, l, p);
@@ -302,7 +304,7 @@ class Topo {
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
         const { gridDelta, resolution, partOff, toolStep, contourX, contourY } = params;
-        const { clipTo, clipTab, tabHeight, newslices, color } = params;
+        const { clipTo, clipTab, tabHeight, newslices, color, leave } = params;
 
         let stepsTaken = 0,
             stepsTotal = 0;
@@ -325,6 +327,7 @@ class Topo {
 
         trace.init({
             box,
+            leave,
             clipTo,
             clipTab,
             tabHeight,
@@ -474,7 +477,7 @@ class Trace {
 
     constructor(probe, params) {
 
-        const { curvesOnly, maxangle, flatness, bridge, contourX } = params;
+        const { curvesOnly, maxangle, flatness, bridge, contourX, leave } = params;
 
         this.params = params;
         this.probe = probe;
@@ -609,7 +612,7 @@ class Trace {
 
     crossY_sync(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
-        const { clipTab, tabHeight, clipTo, box, resolution } = this.cross;
+        const { clipTab, tabHeight, clipTo, box, resolution, leave } = this.cross;
         const { toolAtZ } = this.probe;
         let { from, to, x, gridx, gridy } = params;
         const checkr = newPoint(0,0);
@@ -636,7 +639,7 @@ class Trace {
                 gridy++;
                 continue;
             }
-            push_point(x, y, tv);
+            push_point(x, y, tv + leave);
             gridy++;
         }
         end_poly();
@@ -645,9 +648,10 @@ class Trace {
 
     crossX_sync(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
-        const { clipTab, tabHeight, clipTo, box, resolution } = this.cross;
+        const { clipTab, tabHeight, clipTo, box, resolution, leave } = this.cross;
         const { toolAtZ } = this.probe;
         let { from, to, y, gridx, gridy } = params;
+
         const checkr = newPoint(0,0);
         newslice();
         newtrace();
@@ -672,7 +676,7 @@ class Trace {
                 gridx++;
                 continue;
             }
-            push_point(x, y, tv);
+            push_point(x, y, tv + leave);
             gridx++;
         }
         end_poly();

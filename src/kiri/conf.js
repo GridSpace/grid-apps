@@ -493,6 +493,7 @@ const conf = exports({
                 camContourOver: 0.5,
                 camContourSpeed: 1000,
                 camContourAngle: 85,
+                camContourLeave: 0,
                 camContourBottom: false,
                 camContourCurves: false,
                 camContourIn: false,
