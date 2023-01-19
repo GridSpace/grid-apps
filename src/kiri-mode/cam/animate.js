@@ -382,6 +382,7 @@ kiri.load(() => {
     let renderSpeed = 0;
     let skipMove = null;
     let toolUpdate;
+    let depth = 0;
 
     // send latest tool position and progress bar
     function renderUpdate(send) {
@@ -488,8 +489,8 @@ kiri.load(() => {
             deformMesh(pos, send);
             toolUpdate = { mesh_move: { id, pos }};
             // pause renderer at specified offsets
-            if (renderSpeed && renderDist >= renderSpeed) {
-                renderDist = 0;
+            if ((renderSpeed && renderDist >= renderSpeed) || (depth > 600)) {
+                renderDist = depth = 0;
                 renderUpdate(send);
                 setTimeout(() => {
                     renderMoves(id, moves, send, index);
@@ -497,6 +498,7 @@ kiri.load(() => {
                 return;
             }
         }
+        depth++;
         renderPath(send);
     }
 

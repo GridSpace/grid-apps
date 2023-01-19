@@ -510,6 +510,8 @@ self.kiri.lang['en-us'] = {
     cn_menu:        "contour",
     cf_angl_s:      "max angle",
     cf_angl_l:      ["angles greater than this","are considered vertical"],
+    cf_leav_s:      "leave stock",
+    cf_leav_l:      ["amount of stock to leave above part surface"],
     cf_botm_s:      "z bottom",
     cf_botm_l:      ["obey z bottom limit"],
     cf_curv_s:      "curves only",
