@@ -21,6 +21,7 @@ const { polygons, newLine, newSlope, newPoint, newPolygon } = base;
 const PRO = CAM.process;
 const POLY = polygons;
 const RAD2DEG = 180 / Math.PI;
+const DEG2RAD = Math.PI / 180;
 
 class Topo {
     constructor() { }
@@ -51,7 +52,7 @@ class Topo {
             tool = new CAM.Tool(settings, contour.tool),
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
-            toolStep = toolDiameter * contour.step,
+            toolStep = toolDiameter * contour.step, //tool.contourOffset(contour.step),
             leave = contour.leave || 0,
             maxangle = contour.angle,
             curvesOnly = contour.curves,
@@ -60,7 +61,10 @@ class Topo {
             stepsX = Math.ceil(boundsX / resolution),
             stepsY = Math.ceil(boundsY / resolution),
             widtopo = widget.topo,
-            topoCache = widtopo && widtopo.resolution === resolution ? widtopo : undefined,
+            topoCache = widtopo
+                && widtopo.resolution === resolution
+                && widtopo.diameter === toolDiameter
+                ? widtopo : undefined,
             topo = widget.topo = topoCache || {
                 data: new Float32Array(new SharedArrayBuffer(stepsX * stepsY * 4)),
                 stepsX: stepsX,
@@ -82,7 +86,7 @@ class Topo {
             clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
             gridDelta = Math.floor(partOff / resolution),
-            debug = false,
+            debug = true,
             debug_clips = debug && true,
             debug_topo = debug && true,
             debug_topo_lines = debug && true,
@@ -93,6 +97,7 @@ class Topo {
             console.log(widget.id, 'topo auto tolerance', resolution.round(4));
         }
 
+        // console.log({ resolution, flatness });
         this.tolerance = resolution;
 
         if (tabs) {
@@ -224,7 +229,7 @@ class Topo {
             index++;
         }
         slices.push(slice);
-        console.log({ shards, range, step, slices });
+        // console.log({ shards, range, step, slices });
 
         let complete = 0;
         // define sharded ranges
@@ -415,6 +420,10 @@ class Topo {
 
         await promise;
 
+        // const lines = newslices.map(s => (s.camLines || []).map(p => p.length));
+        // const points = lines.flat().reduce((a,b) => a+b);
+        // console.log({ lines, points });
+
         trace.cleanup();
     }
 
@@ -488,8 +497,10 @@ class Trace {
         let trace,
             slice,
             latent,
-            lastDZ,
-            lastP;
+            lastPP,
+            lastSlope;
+
+        const curvature = flatness / 10;
 
         const newslice = this.newslice = () => {
             this.slice = slice = [];
@@ -499,7 +510,7 @@ class Trace {
             trace = newPolygon().setOpen();
         }
 
-        const end_poly = this.end_poly = function() {
+        const end_poly = this.end_poly = function(point) {
             if (latent) {
                 trace.push(latent);
             }
@@ -510,47 +521,58 @@ class Trace {
                 }
                 newtrace();
             }
+            lastPP = undefined;
             latent = undefined;
-            lastDZ = undefined;
-            lastP = undefined;
+            lastSlope = undefined;
+            if (point) {
+                trace.push(point);
+                lastPP = point;
+            }
+        }
+
+        const log = function(map) {
+            for (let key in map) {
+                const val = map[key];
+                if (typeof val === 'number') {
+                    map[key] = val.round(4);
+                }
+            }
+            console.log(...arguments);
         }
 
         const push_point = this.push_point = function(x, y, z) {
             const newP = newPoint(x, y, z);
+            const lastP = lastPP;//trace.last();
 
             if (lastP) {
+                const dl = (x - lastP.x) || (y - lastP.y);
                 const dz = z - lastP.z;
-                if (lastDZ !== undefined && Math.abs(lastDZ - dz) < 0.00001) {
+                const slope = Math.atan2(dz, dl);
+                if (curvesOnly && Math.abs(dz) < flatness) {
+                    end_poly(newP);
+                } else if (lastSlope !== undefined && Math.abs(lastSlope - slope) < 0.001) {
                     latent = newP;
                 } else {
-                    if (Math.abs(dz) < flatness) {
-                        if (curvesOnly) {
-                            end_poly();
-                        } else {
-                            latent = newP;
-                        }
-                    } else {
-                        if (latent) {
-                            trace.push(latent);
-                            latent = undefined;
-                        }
-                        if (curvesOnly) {
-                            // maxangle
-                            const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
-                            const angle = Math.atan2( Math.abs(dz), dv) * RAD2DEG;
-                            if (angle > maxangle) {
-                                end_poly();
-                            }
-                        }
-                        trace.push(newP);
+                    if (latent) {
+                        trace.push(latent);
+                        latent = undefined;
                     }
+                    if (curvesOnly) {
+                        const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
+                        // const dz = lastPP.z - z;
+                        const angle = Math.atan2( Math.abs(dz), dv) * RAD2DEG;
+                        if (angle > maxangle) {
+                            end_poly();
+                        }
+                    }
+                    trace.push(newP);
                 }
-                lastDZ = dz;
+                lastSlope = slope;
             } else {
                 trace.push(newP);
             }
 
-            lastP = newP;
+            lastPP = newP;
         }
 
         const object = this.object = this;

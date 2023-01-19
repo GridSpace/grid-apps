@@ -667,7 +667,7 @@ self.kiri.lang['en-us'] = {
     ou_toll_s:      "tolerance",
     ou_toll_l:      ["surface precision","in workspace units","lower is slower and","uses more memory","0 = automatic based","on animate preference"],
     ou_flat_s:      "flatness",
-    ou_flat_l:      ["delta z below which two adjacent","points are considered co-linear"],
+    ou_flat_l:      ["delta z below which two adjacent points are considered co-linear. 0 = compute using tolerance"],
     ou_brdg_s:      "bridging",
     ou_brdg_l:      ["flat distance between curved","areas to bridge with a cut"],
     ou_zanc_s:      "z anchor",

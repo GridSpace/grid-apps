@@ -65,6 +65,11 @@ class Tool {
         return (this.isTaperMill() ? this.tipDiameter() : this.fluteDiameter()) / 2;
     }
 
+    contourOffset(step) {
+        const diam = Math.min(this.isTaperMill() ? this.tipDiameter() : this.fluteDiameter());
+        return diam ? diam * step : step;
+    }
+
     shaftLength() {
         return this.unitScale() * this.tool.shaft_len;
     }
