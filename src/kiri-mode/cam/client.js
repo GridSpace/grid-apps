@@ -295,6 +295,7 @@ CAM.init = function(kiri, api) {
                 }
                 return func.opAddContour(caxis);
             case "lathe":
+                return;
                 let laxis = "X";
                 for (let op of current.process.ops) {
                     if (op.type === "lathe" && op.axis === "X") {

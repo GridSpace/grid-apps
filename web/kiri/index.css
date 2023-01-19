@@ -953,12 +953,17 @@ th, tr, td, label {
 }
 #op-add-list > div:hover {
     background-color: rgba(0,0,0,0.2);
-    border-bottom: 1px rgba(0,0,0,0.5);
 }
 #op-add-contour-menu, #op-add-register-menu {
     position: absolute;
     right: 0;
     top: 0;
+}
+#cam-lathe {
+    color: #888;
+}
+#cam-lathe:hover {
+    background-color: rgba(0,0,0,0) !important;
 }
 
 #progress {
