@@ -179,6 +179,7 @@ class Topo {
             contourY,
             clipTo,
             clipTab,
+            clipTabZ: clipTab ? clipTab.map(t => t.z) : undefined,
             tabHeight,
             newslices,
             leave,
@@ -304,7 +305,7 @@ class Topo {
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
         const { gridDelta, resolution, partOff, toolStep, contourX, contourY } = params;
-        const { clipTo, clipTab, tabHeight, newslices, color, leave } = params;
+        const { clipTo, clipTab, clipTabZ, tabHeight, newslices, color, leave } = params;
 
         let stepsTaken = 0,
             stepsTotal = 0;
@@ -330,6 +331,7 @@ class Topo {
             leave,
             clipTo,
             clipTab,
+            clipTabZ,
             tabHeight,
             resolution,
             concurrent
@@ -519,7 +521,7 @@ class Trace {
 
             if (lastP) {
                 const dz = z - lastP.z;
-                if (lastDZ !== undefined && Math.abs(lastDZ - dz) < 0.0001) {
+                if (lastDZ !== undefined && Math.abs(lastDZ - dz) < 0.00001) {
                     latent = newP;
                 } else {
                     if (Math.abs(dz) < flatness) {
@@ -574,6 +576,15 @@ class Trace {
     init(params) {
         this.cross = params;
         const { minions } = kiri;
+        const { clipTab, clipTabZ } = params;
+
+        // because codec does not encode arbitrary fields
+        // in this case, z is appended to clip tabs in topo constructor
+        // we pass it as a side-channel and re-consitute here
+        if (clipTab)
+        for (let i=0, l=clipTab.length; i<l; i++) {
+            clipTab[i].z = clipTabZ[i];
+        }
 
         if (minions && this.cross.concurrent) {
             const { codec } = kiri;
@@ -644,7 +655,7 @@ class Trace {
             // when tabs are on and this point is inside the
             // tab polygon, ensure z is at least tabHeight
             if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
-                tv = trace.tabZ;
+                tv = this.tabZ;
             }
             // if the value is on the floor and inside the clip
             // poly (usually shadow), end the segment
@@ -681,7 +692,7 @@ class Trace {
             // when tabs are on and this point is inside the
             // tab polygon, ensure z is at least tabHeight
             if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
-                tv = trace.tabZ;
+                tv = this.tabZ;
             }
             // if the value is on the floor and inside the clip
             // poly (usually shadow), end the segment

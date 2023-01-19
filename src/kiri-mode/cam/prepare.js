@@ -163,7 +163,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             tool = new CAM.Tool(settings, toolID);
             toolType = tool.getType();
             toolDiam = tool.fluteDiameter();
-            toolDiamMove = toolType === 'endmill' ? toolDiam / 4 : tolerance * 2;
+            toolDiamMove = toolType === 'endmill' ? toolDiam : tolerance * 2;
             lastTool = toolID;
         }
         feedRate = feed || feedRate;
