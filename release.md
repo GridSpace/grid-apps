@@ -26,8 +26,9 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM add threading support for all slicing ops
 * CAM add omit pocket option to outline op
 * CAM add trace support for taper tip diameter
-* CAM add trace offset override
-* CAM add leave stock to contour
+* CAM add trace offset override parameter
+* CAM add leave stock parameter to contour
+* CAM add contour output density control (reduction)
 
 
 # Release 3.7 (2022-11-12)

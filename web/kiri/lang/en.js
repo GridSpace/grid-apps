@@ -664,10 +664,12 @@ self.kiri.lang['en-us'] = {
     ou_fans_l:      "0 - 255",
 
     // OUTPUT CAM
-    ou_toll_s:      "tolerance",
+    ou_toll_s:      "precision",
     ou_toll_l:      ["surface precision","in workspace units","lower is slower and","uses more memory","0 = automatic based","on animate preference"],
     ou_flat_s:      "flatness",
     ou_flat_l:      ["delta z below which two adjacent points are considered co-linear. 0 = compute using tolerance"],
+    ou_redu_s:      "reduction",
+    ou_redu_l:      ["number of axis steps to skip for each unit of precision. higher precision may require reduction to produce reasonable file sizes. start at 0 and test in increments of 1."],
     ou_brdg_s:      "bridging",
     ou_brdg_l:      ["flat distance between curved","areas to bridge with a cut"],
     ou_zanc_s:      "z anchor",

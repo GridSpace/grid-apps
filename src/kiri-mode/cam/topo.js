@@ -31,7 +31,7 @@ class Topo {
         let { widget, settings, tshadow, center, tabs, color } = opt.state;
 
         let { controller, process } = settings,
-            density = parseInt(controller.animesh || 100) * 2500,
+            animesh = parseInt(controller.animesh || 100) * 2500,
             axis = contour.axis.toLowerCase(),
             contourX = axis === "x",
             contourY = axis === "y",
@@ -48,7 +48,8 @@ class Topo {
             boundsX = maxX - minX,
             boundsY = maxY - minY,
             inside = contour.inside,
-            resolution = tolerance ? tolerance : 1/Math.sqrt(density/(boundsX * boundsY)),
+            density = 1 + (contour.reduction || 0),
+            resolution = tolerance ? tolerance : 1/Math.sqrt(animesh/(boundsX * boundsY)),
             tool = new CAM.Tool(settings, contour.tool),
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
@@ -98,7 +99,7 @@ class Topo {
         }
 
         // console.log({ resolution, flatness });
-        this.tolerance = resolution;
+        // this.tolerance = resolution;
 
         if (tabs) {
             clipTab.appendAll(tabs.map(tab => {
@@ -181,6 +182,7 @@ class Topo {
             toolStep,
             contourX,
             contourY,
+            density,
             clipTo,
             clipTab,
             clipTabZ: clipTab ? clipTab.map(t => t.z) : undefined,
@@ -308,7 +310,7 @@ class Topo {
         const concurrent = kiri.minions.running;
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
-        const { gridDelta, resolution, partOff, toolStep, contourX, contourY } = params;
+        const { gridDelta, resolution, density, partOff, toolStep, contourX, contourY } = params;
         const { clipTo, clipTab, clipTabZ, tabHeight, newslices, color, leave } = params;
 
         let stepsTaken = 0,
@@ -338,7 +340,8 @@ class Topo {
             clipTabZ,
             tabHeight,
             resolution,
-            concurrent
+            concurrent,
+            density
         });
 
         let resolver;
@@ -500,8 +503,6 @@ class Trace {
             lastPP,
             lastSlope;
 
-        const curvature = flatness / 10;
-
         const newslice = this.newslice = () => {
             this.slice = slice = [];
         }
@@ -654,16 +655,18 @@ class Trace {
 
     crossY_sync(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
-        const { clipTab, tabHeight, clipTo, box, resolution, leave } = this.cross;
+        const { clipTab, tabHeight, clipTo, box, resolution, density, leave } = this.cross;
         const { toolAtZ } = this.probe;
+
         let { from, to, x, gridx, gridy } = params;
 
+        const step = resolution * density;
         const checkr = newPoint(0,0);
         newslice();
         newtrace();
-        for (let y = from; y < to; y += resolution) {
+        for (let y = from; y < to; y += step) {
             if (y < box.min.y || y > box.max.y) {
-                gridy++;
+                gridy += density;
                 continue;
             }
             // find tool z at grid point
@@ -679,11 +682,11 @@ class Trace {
             // poly (usually shadow), end the segment
             if (clipTo && !inClip(clipTo, undefined, checkr)) {
                 end_poly();
-                gridy++;
+                gridy += density;
                 continue;
             }
             push_point(x, y, tv + leave);
-            gridy++;
+            gridy += density;
         }
         end_poly();
         then(this.slice);
@@ -691,16 +694,17 @@ class Trace {
 
     crossX_sync(params, then) {
         const { push_point, end_poly, newtrace, newslice, inClip } = this.object;
-        const { clipTab, tabHeight, clipTo, box, resolution, leave } = this.cross;
+        const { clipTab, tabHeight, clipTo, box, resolution, density, leave } = this.cross;
         const { toolAtZ } = this.probe;
         let { from, to, y, gridx, gridy } = params;
 
+        const step = resolution * density;
         const checkr = newPoint(0,0);
         newslice();
         newtrace();
-        for (let x = from; x < to; x += resolution) {
+        for (let x = from; x < to; x += step) {
             if (x < box.min.x || x > box.max.x) {
-                gridx++;
+                gridx += density;
                 continue;
             }
             // find tool z at grid point
@@ -716,11 +720,11 @@ class Trace {
             // poly (usually shadow), end the segment
             if (clipTo && !inClip(clipTo, undefined, checkr)) {
                 end_poly();
-                gridx++;
+                gridx += density;
                 continue;
             }
             push_point(x, y, tv + leave);
-            gridx++;
+            gridx += density;
         }
         end_poly();
         then(this.slice);
