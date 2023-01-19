@@ -356,7 +356,7 @@ CAM.export = function(print, online) {
             }
         } else if (line.indexOf(';; REWRITE-COMMENTS-PARENS') === 0) {
             rewrite_comments = true;
-        } else if (line.indexOf(';; DECMIALS') === 0) {
+        } else if (line.indexOf(';; DECIMALS') === 0) {
             decimals = parseInt(line.split('=')[1].trim() || 3) || 3;
         } else if (line.indexOf(';; COMPACT-OUTPUT') === 0) {
             compact_output = true;

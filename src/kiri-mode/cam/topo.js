@@ -350,7 +350,7 @@ class Topo {
             }
         });
         let inc = () => { pcount++ };
-        let dec = () => { if (--pcount === 0) resolver() };
+        let dec = () => { if (--pcount === 0 && concurrent) resolver() };
 
         if (contourY) {
             onupdate(0, stepsTotal, "contour y");
@@ -409,6 +409,8 @@ class Topo {
                 });
             }
         }
+
+        if (!concurrent) resolver();
 
         await promise;
 
@@ -485,42 +487,15 @@ class Trace {
         let trace,
             slice,
             latent,
+            lastDZ,
             lastP;
 
         const newslice = this.newslice = () => {
             this.slice = slice = [];
         }
 
-        const push_point = this.push_point = function(x, y, z) {
-            const newP = newPoint(x, y, z);
-            // todo: merge co-linear, not just co-planar
-            if (lastP && Math.abs(lastP.z - z) < flatness) {
-                if (curvesOnly) {
-                    if ((trace.last() || lastP).distTo2D(newP) >= bridge) {
-                        end_poly();
-                    }
-                } else {
-                    latent = newP;
-                }
-            } else {
-                if (latent) {
-                    trace.push(latent);
-                    latent = null;
-                }
-                if (curvesOnly && lastP) {
-                    // maxangle
-                    const dz = Math.abs(lastP.z - z);
-                    const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
-                    const angle = Math.atan2(dz, dv) * RAD2DEG;
-                    // if (lastP.z < 0.1) console.log('pp', {dz, dxy, angle});
-                    if (angle > maxangle) {
-                        lastP = newP;
-                        return;
-                    }
-                }
-                trace.push(newP);
-            }
-            lastP = newP;
+        const newtrace = this.newtrace = function() {
+            trace = newPolygon().setOpen();
         }
 
         const end_poly = this.end_poly = function() {
@@ -535,11 +510,49 @@ class Trace {
                 newtrace();
             }
             latent = undefined;
+            lastDZ = undefined;
             lastP = undefined;
         }
 
-        const newtrace = this.newtrace = function() {
-            trace = newPolygon().setOpen();
+        const push_point = this.push_point = function(x, y, z) {
+            const newP = newPoint(x, y, z);
+
+            if (lastP) {
+                const dz = z - lastP.z;
+                if (lastDZ !== undefined && Math.abs(lastDZ - dz) < 0.0001) {
+                    latent = newP;
+                } else {
+                    if (Math.abs(dz) < flatness) {
+                        if (curvesOnly && (trace.last() || lastP).distTo2D(newP) >= bridge) {
+                            end_poly();
+                        } else {
+                            latent = newP;
+                        }
+                    } else {
+                        if (latent) {
+                            trace.push(latent);
+                            latent = undefined;
+                        }
+                        if (curvesOnly) {
+                            // maxangle
+                            const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
+                            const angle = Math.atan2( Math.abs(dz), dv) * RAD2DEG;
+                            // if (lastP.z < 0.1) console.log('pp', {dz, dxy, angle});
+                            // console.log({ angle, maxangle, dz });
+                            if (angle > maxangle) {
+                                end_poly();
+                                return;
+                            }
+                        }
+                        trace.push(newP);
+                    }
+                }
+                lastDZ = dz;
+            } else {
+                trace.push(newP);
+            }
+
+            lastP = newP;
         }
 
         const object = this.object = this;
@@ -615,6 +628,7 @@ class Trace {
         const { clipTab, tabHeight, clipTo, box, resolution, leave } = this.cross;
         const { toolAtZ } = this.probe;
         let { from, to, x, gridx, gridy } = params;
+
         const checkr = newPoint(0,0);
         newslice();
         newtrace();
