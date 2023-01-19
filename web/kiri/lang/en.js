@@ -443,7 +443,7 @@ self.kiri.lang['en-us'] = {
     cc_spnd_s:      "spindle rpm",
     cc_spnd_l:      ["spindle speed in","revolutions / minute"],
     cc_sovr_s:      "step over",
-    cc_sovr_l:      ["a fraction of tool diameter between 0 and 1. values greater than 0.49 may result in uncut areas from acute angle offsets or undesirable artifacts when contour is enabled."],
+    cc_sovr_l:      ["a fraction of tool diameter between 0 and 1. values greater than 0.49 may result in uncut areas from acute angle offsets or undesirable artifacts when contouring."],
     cc_sdwn_s:      "step down",
     cc_sdwn_l:      ["step down depth","for each pass","in workspace units","0 to disable"],
     cc_thru_s:      "cut thru",
@@ -509,7 +509,7 @@ self.kiri.lang['en-us'] = {
     // CNC CONTOUR
     cn_menu:        "contour",
     cf_angl_s:      "max angle",
-    cf_angl_l:      ["angles greater than this","are considered vertical"],
+    cf_angl_l:      ["changes in z that result in angles greater than this are considered vertical and omitted from curves"],
     cf_leav_s:      "leave stock",
     cf_leav_l:      ["amount of stock to leave above part surface"],
     cf_botm_s:      "z bottom",

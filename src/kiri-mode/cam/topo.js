@@ -52,7 +52,6 @@ class Topo {
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
             toolStep = toolDiameter * contour.step,
-            traceJoin = toolDiameter / 2,
             leave = contour.leave || 0,
             maxangle = contour.angle,
             curvesOnly = contour.curves,
@@ -525,7 +524,7 @@ class Trace {
                     latent = newP;
                 } else {
                     if (Math.abs(dz) < flatness) {
-                        if (curvesOnly && (trace.last() || lastP).distTo2D(newP) >= bridge) {
+                        if (curvesOnly) {
                             end_poly();
                         } else {
                             latent = newP;
@@ -539,11 +538,8 @@ class Trace {
                             // maxangle
                             const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
                             const angle = Math.atan2( Math.abs(dz), dv) * RAD2DEG;
-                            // if (lastP.z < 0.1) console.log('pp', {dz, dxy, angle});
-                            // console.log({ angle, maxangle, dz });
                             if (angle > maxangle) {
                                 end_poly();
-                                return;
                             }
                         }
                         trace.push(newP);
