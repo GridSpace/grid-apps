@@ -548,6 +548,7 @@ kiri.worker = {
             });
         }, {
             fdm: mode === 'FDM',
+            cam: mode === 'CAM',
             belt: device.bedBelt
         });
     },

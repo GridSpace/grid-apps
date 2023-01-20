@@ -213,6 +213,7 @@ class Print {
 
     parseGCode(gcode, offset, progress, done, opts = {}) {
         const fdm = opts.fdm;
+        const cam = opts.cam;
         const belt = opts.belt;
         const lines = gcode
             .toUpperCase()
@@ -468,7 +469,13 @@ class Print {
             scope.lastPosE = pos.E;
         }
 
+        const linemod = cam ? Math.ceil(lines.length / 2500) : 0;
+
         lines.forEach((line, idx) => {
+            if (linemod && idx % linemod === 0) {
+                newlayer = true;
+                autolayer = false;
+            }
             if (line.indexOf(';LAYER:') === 0) {
                 newlayer = true;
                 autolayer = false;
