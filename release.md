@@ -29,6 +29,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM add trace offset override parameter
 * CAM add leave stock parameter to contour
 * CAM add contour output density control (reduction)
+* CAM improve parsing and visualization of large files
 
 
 # Release 3.7 (2022-11-12)
