@@ -368,7 +368,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     clearz = maxz = zmax + zadd;
                 }
                 // up if any point between higher than start/outline, go up first
-                const zIsBelow = point.z < maxz;
+                const zIsBelow = point.z <= maxz;
                 if (mustGoUp || zIsBelow) {
                     const zClearance = clearz + ztOff;
                     if (zIsBelow) {
