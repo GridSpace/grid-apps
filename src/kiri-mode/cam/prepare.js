@@ -361,18 +361,20 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         maxToolDiam/2,
                         zclear
                     ),
-                    mustGoUp = Math.max(maxz - point.z, maxz - lastPoint.z) >= tolerance,
+                    maxZdelta = Math.max(maxz - point.z, maxz - lastPoint.z),
+                    mustGoUp = maxZdelta >= tolerance,
                     clearz = maxz;
                 if (zmax_force) {
                     clearz = maxz = zmax + zadd;
                 }
                 // up if any point between higher than start/outline, go up first
-                if (mustGoUp) {
-                    layerPush(lastPoint.clone().setZ(clearz + ztOff), 0, 0, tool.getNumber());
-                }
-                // move to point above target point
-                if (mustGoUp || point.z < maxz) {
-                    layerPush(point.clone().setZ(clearz + ztOff), 0, 0, tool.getNumber());
+                const zIsBelow = point.z < maxz;
+                if (mustGoUp || zIsBelow) {
+                    const zClearance = clearz + ztOff;
+                    if (zIsBelow) {
+                        layerPush(lastPoint.clone().setZ(zClearance), 0, 0, tool.getNumber());
+                    }
+                    layerPush(point.clone().setZ(zClearance), 0, 0, tool.getNumber());
                     // new pos for plunge calc
                     deltaXY = 0;
                 }

@@ -386,6 +386,7 @@ CAM.export = function(print, online) {
 
     // collect tool info to add to header
     let toolz = {}, ctool;
+    const isOffset = offset && (offset.x || offset.y);
     // remap points as necessary for origins, offsets, inversions
     print.output.forEach(layer => {
         if (!Array.isArray(layer)) {
@@ -403,7 +404,7 @@ CAM.export = function(print, online) {
             if (!point || point.mod) return;
             // ensure not point is modified twice
             point.mod = 1;
-            if (offset) {
+            if (isOffset) {
                 point.x += offset.x;
                 point.y += offset.y;
             }

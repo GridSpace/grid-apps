@@ -216,13 +216,16 @@ class Print {
         const belt = opts.belt;
         const lines = gcode
             .toUpperCase()
-            .replace("X", " X")
-            .replace("Y", " Y")
-            .replace("Z", " Z")
-            .replace("A", " A")
-            .replace("E", " E")
-            .replace("F", " F")
-            .replace("  ", " ")
+            .replaceAll("X", " X")
+            .replaceAll("Y", " Y")
+            .replaceAll("Z", " Z")
+            .replaceAll("A", " A")
+            .replaceAll("E", " E")
+            .replaceAll("F", " F")
+            .replaceAll("G", " G")
+            .replaceAll("I", " I")
+            .replaceAll("J", " J")
+            .replaceAll("  ", " ")
             .split("\n");
 
         const scope = this,
@@ -264,7 +267,8 @@ class Print {
             autolayer = true,
             newlayer = false,
             arcdivs = Math.PI / 24,
-            hasmoved = false;
+            hasmoved = false,
+            lastG = 'G1';
 
         const output = scope.output = [ seq ];
         const beltaxis = { X: "X", Y: "Z", Z: "Y", E: "E", F: "F" };
@@ -358,6 +362,8 @@ class Print {
         function G0G1(g0, line) {
             const mov = {};
             const axes = {};
+
+            lastG = g0 ? 'G0' : 'G1';
 
             line.forEach(tok => {
                 let axis = tok.charAt(0);
@@ -479,7 +485,9 @@ class Print {
             //     line = `G0${line}`;
             // }
             line = line.trim().split(";")[0].split(" ").filter(v => v);
-            let cmd = line.shift();
+            if (!line.length) return;
+            const c0 = line[0].charAt(0);
+            let cmd = ["X","Y","Z"].indexOf(c0) >= 0 ? lastG : line.shift();
             if (!cmd) return;
             if (cmd.charAt(0) === 'T') {
                 let ext = scope.settings.device.extruders;
