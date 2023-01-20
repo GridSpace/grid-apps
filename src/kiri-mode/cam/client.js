@@ -891,7 +891,7 @@ CAM.init = function(kiri, api) {
         };
     };
     func.surfaceDone = () => {
-        if (!surfaceOn) {
+        if (!(surfaceOn && poppedRec && poppedRec.surfaces)) {
             return;
         }
         let surfaces = poppedRec.surfaces;
