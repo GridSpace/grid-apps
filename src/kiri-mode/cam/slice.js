@@ -244,7 +244,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
             // let points = base.verticesToPoints();
             state.slicer = new kiri.cam_slicer(widget);
             shadows = {};
-            new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
+            await new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
                 // console.log('reshadow', progress.round(3));
             });
             widget.topo = undefined;
