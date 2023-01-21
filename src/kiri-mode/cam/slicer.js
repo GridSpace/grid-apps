@@ -30,7 +30,7 @@ class Slicer {
         this.options = {};
         this.setOptions(options);
         if (widget) {
-            this.setPoints(widget.getGeoVertices());
+            this.setPoints(widget.getGeoVertices({ unroll: true, translate: true }));
             this.computeFeatures();
         }
     }
