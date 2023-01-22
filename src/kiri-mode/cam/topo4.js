@@ -47,7 +47,7 @@ class Topo4 {
             zMin = min.z + 0.0001,
             tolerance = op.tolerance,
             resolution = tolerance ? tolerance : 1 / Math.sqrt(density / (span.x * span.y)),
-            step = this.step = tool.fluteDiameter() * op.step;
+            step = this.step = (tool.traceOffset() * 2) * op.step;
 
         if (tolerance === 0) {
             console.log(widget.id, 'topo4 auto tolerance', resolution.round(4));
@@ -96,7 +96,7 @@ class Topo4 {
 
         let index = 0;
         let slices = this.slices = [];
-        let slice = { min: range.min, max: range.min + step, index };
+        let slice = { min: range.min - step, max: range.min + step, index };
 
         for (let z = range.min; z < range.max; z += resolution) {
             if (z > slice.max) {
@@ -188,11 +188,14 @@ class Topo4 {
     }
 
     lathePath(slices, tool) {
-        const { resolution } = this;
+        const { resolution, step } = this;
 
         const tlen = tool.length;
         const slen = slices.length;
+        const sinc = Math.max(1, Math.ceil(step / resolution));
         const heights = [];
+
+        // console.log({ slen, step, resolution, sinc });
 
         // cull slice lines to only the ones in range (5x faster)
         const maxo = Math.max(...tool) * resolution;
@@ -218,7 +221,7 @@ class Topo4 {
 
         // iterate over all slices (real x = z)
         // find max real z using z ray intersect from tool point to slice lines + offset
-        for (let si = 0; si < slen; si++) {
+        for (let si = 0; si < slen; si += sinc) {
             const rx = oslices[si].z;
             let mz = 0;
             // iterate over tool offsets
@@ -313,12 +316,13 @@ class Topo4 {
 
     async latheMinions(onupdate) {
         const { codec } = kiri;
-        const { sliced, resolution, tool } = this;
+        const { sliced, resolution, tool, step } = this;
         const { putCache, clearCache, queue } = this;
 
         console.log({ sliced });
         putCache("lathe", {
             tool,
+            step,
             range,
             resolution,
             slices: sliced.map(s => { return { z: s.z, lines: s.shared } })
@@ -401,7 +405,7 @@ moto.broker.subscribe("minion.started", msg => {
         // console.log({ topo4_lathe: data });
 
         // const { resolution } = data;
-        const { resolution, sliced, tool } = cache.lathe;
+        const { resolution, sliced, tool, step } = cache.lathe;
 
         reply({ seq, abc: 123 });
     }

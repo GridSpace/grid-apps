@@ -295,7 +295,9 @@ CAM.init = function(kiri, api) {
                 }
                 return func.opAddContour(caxis);
             case "lathe":
-                return;
+                if (!settings.controller.danger) {
+                    return;
+                }
                 let laxis = "X";
                 for (let op of current.process.ops) {
                     if (op.type === "lathe" && op.axis === "X") {
@@ -1342,7 +1344,7 @@ CAM.init = function(kiri, api) {
         sep:       UC.newBlank({class:"pop-sep"}),
         spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
         rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,2.0)}),
+        step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,10.0)}),
         tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
     };
 
