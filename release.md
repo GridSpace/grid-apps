@@ -3,6 +3,11 @@
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
 
+# Release 3.9
+
+* CAM clearly delineate ops reachable or not on timeline
+
+
 # Release 3.8 (2023-01-21)
 
 * update server-side sample module code

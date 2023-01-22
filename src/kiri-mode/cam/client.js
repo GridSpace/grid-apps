@@ -467,17 +467,20 @@ CAM.init = function(kiri, api) {
         $('ophint').style.display = oplist.length > (isIndexed ? 1 : 0) ? 'none' : '';
         let bind = {};
         let scale = API.view.unit_scale();
+        let notime = false;
         oplist.forEach((rec,i) => {
             let clock = rec.type === '|';
-            let label = clock ? '<i class="fa-regular fa-clock"></i>' : rec.type;
+            let label = clock ? `<i class="fa-regular fa-clock"></i>` : rec.type;
+            let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
             html.appendAll([
-                `<div id="${mark+i}" class="draggable">`,
+                `<div id="${mark+i}" class="${clazz.join(' ')}">`,
                 `<label class="label">${label}</label>`,
                 clock ? '' :
                 `<label id="${mark+i}-x" class="del"><i class="fa-regular fa-circle-xmark"></i></label>`,
                 `</div>`
             ]);
             bind[mark+i] = rec;
+            notime = notime || clock;
         });
         let listel = $('oplist');
         listel.innerHTML = html.join('');
