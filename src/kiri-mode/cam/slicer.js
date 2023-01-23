@@ -141,11 +141,10 @@ class Slicer {
 
         // sort Z and offset when on a flat
         const flatoff = util.numOrDefault(opt.flatoff, 0.01);
-        zs.sort().map(z => {
-            if (!opt.flatoff) {
+        zs = zs.sort((a,b) => a-b).map(z => {
+            if (!flatoff) {
                 return z;
             }
-            // console.log({ bump_z: z, znomr, flatoff });
             const znorm = z.toFixed(5);
             return this.zFlat[znorm] ? z + flatoff : z;
         });
