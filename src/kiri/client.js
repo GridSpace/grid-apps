@@ -164,7 +164,7 @@ const client = exports({
     },
 
     // widget sync
-    sync(widgets) {
+    sync(widgets, copy) {
         if (!widgets) {
             widgets = kiri.api.widgets.all();
         }
@@ -180,7 +180,7 @@ const client = exports({
                     meta: widget.meta,
                     group: widget.group.id,
                     track: widget.track,
-                    vertices: vertices,
+                    vertices: copy ? vertices.slice() : vertices,
                     position: widget.mesh.position,
                 }, done => {
                     widget.modified = false;
