@@ -115,7 +115,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         // force re-sync in belt mode
         client.clear();
     }
-    client.sync();
+    client.sync(undefined, isBelt);
     client.rotate(settings);
 
     function sliceNext() {
