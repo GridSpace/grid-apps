@@ -332,12 +332,12 @@ CAM.traces = async function(settings, widget, single) {
     }
     let slicer = new kiri.cam_slicer(widget);
     let indices = [...new Set(Object.keys(slicer.zFlat)
-        .map(kv => parseFloat(kv).round(5))
-        // .appendAll(Object.entries(slicer.zLine).map(ze => {
-        //     let [ zk, zv ] = ze;
-        //     return zv > 1 ? parseFloat(zk).round(5) : null;
-        // })
-        // .filter(v => v !== null))
+            .map(kv => parseFloat(kv).round(5))
+            .appendAll(Object.entries(single ? slicer.zLine : {}).map(ze => {
+                let [ zk, zv ] = ze;
+                return zv > 1 ? parseFloat(zk).round(5) : null;
+            })
+            .filter(v => v !== null))
         )]
         .sort((a,b) => b - a);
     let traces = [];
