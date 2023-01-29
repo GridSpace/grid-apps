@@ -107,7 +107,7 @@ class Files {
         let store = this;
         function complete(ok, err) {
             if (err) error.push(err);
-            if (++done === 2) {
+            if (++done === 1) {
                 store.files[newname] = store.files[name];
                 delete store.files[name];
                 saveFileList(store);
