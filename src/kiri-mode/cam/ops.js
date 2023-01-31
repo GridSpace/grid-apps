@@ -1116,7 +1116,7 @@ class OpPocket extends CamOp {
         const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
-        let { settings, widget, addSlices, zMax, zTop, zThru, tabs, color } = state;
+        let { settings, widget, addSlices, zTop, zBottom, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt } = state;
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
@@ -1244,6 +1244,7 @@ class OpPocket extends CamOp {
                 .add(vert[i++], vert[i++], zmin = Math.min(zmin, vert[i++]))
             );
         }
+        zmin = Math.max(zBottom, zmin);
         outline = POLY.union(outline, 0.0001, true);
         outline = POLY.setWinding(outline, cutdir, false);
         outline = healPolys(outline);
