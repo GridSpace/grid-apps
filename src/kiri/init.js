@@ -1802,7 +1802,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             detail:           uc.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
             healMesh:         uc.newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
             threaded:         uc.newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:FDM_CAM_SLA}),
-            assembly:         uc.newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:FDM_SLA}),
+            assembly:         uc.newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:FDM_CAM_SLA}),
 
             prefadd:          uc.checkpoint($('prefs-add')),
 

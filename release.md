@@ -6,6 +6,10 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 # Release 3.9
 
 * CAM clearly delineate ops reachable or not on timeline
+- remove clear top (always on)
+- add z top (like z bottom)
+- stock always on
+- add "common" overrides in ops (z top/bottom/thru, direction)
 
 
 # Release 3.8 (2023-01-21)
