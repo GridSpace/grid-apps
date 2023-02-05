@@ -1849,7 +1849,8 @@ class Polygon {
         const newp = [];
         const points = this.points;
         const length = points.length;
-        for (let i=0, p=points, l1=length, l2=l1+1; i<l1; i++) {
+        const l0 = this.open ? length - 1 : length;
+        for (let i=0, p=points, l1=length, l2=l1+1; i<l0; i++) {
             const p1 = p[i];
             const p2 = p[(i + 1) % l1];
             const dx = p2.x - p1.x;
@@ -1873,7 +1874,7 @@ class Polygon {
             }
         }
         if (newp.length > length) {
-            return newPolygon().addPoints(newp.map(p => p.clone()));
+            return newPolygon().addPoints(newp.map(p => p.clone())).setOpenValue(this.open);
         }
         return this;
     }
