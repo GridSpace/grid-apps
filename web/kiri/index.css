@@ -579,8 +579,7 @@ th, tr, td, label {
     border: 1px solid transparent;
     border-radius: 3px;
 }
-#ft-rotate svg:hover {
-    border: 1px solid #ccc;
+#ft-rotate > div:hover > svg {
     background-color: var(--main-color);
     color: white;
 }
