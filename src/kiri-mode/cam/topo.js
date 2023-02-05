@@ -99,7 +99,8 @@ class Topo {
         }
 
         // console.log({ resolution, flatness });
-        // this.tolerance = resolution;
+        // used by Pocket -> Contour
+        this.tolerance = resolution;
 
         if (tabs) {
             clipTab.appendAll(tabs.map(tab => {
@@ -437,7 +438,7 @@ class Probe {
     constructor(params) {
 
         const { data, profile } = params;
-        const { stepsX, stepsY, boundsX, boundsY, zMin, minX, minY } = params;
+        const { stepsX, stepsY, boundsX, zMin, minX, minY } = params;
 
         this.params = params;
 
@@ -448,7 +449,7 @@ class Probe {
                 xl = sx - 1,
                 yl = sy - 1;
 
-            let tx, ty, tz, gv, i = 0, mz = -1;
+            let gv, i = 0, mz = -1;
 
             while (i < profile.length) {
                 // tool profile point x, y, and z offsets

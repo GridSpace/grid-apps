@@ -1270,7 +1270,7 @@ class OpPocket extends CamOp {
     conform(camLines, refine, engrave, progress) {
         const topo = this.topo;
         // re-segment polygon to a higher resolution
-        const hirez = refine > 0 ? camLines.map(p => p.segment(topo.tolerance * 2)) : camLines;
+        const hirez = camLines.map(p => p.segment(topo.tolerance * 2));
         // walk points and offset from surface taking into account tool geometry
         let steps = hirez.length;
         let iter = 0;
