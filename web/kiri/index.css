@@ -376,6 +376,9 @@ th, tr, td, label {
     background-color: rgba(0,0,0,0.2);
 }
 
+#app-xpnd {
+    display: none;
+}
 #app-acct, #app-xpnd {
     align-items: center;
     justify-content: flex-end;

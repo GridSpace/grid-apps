@@ -2409,6 +2409,10 @@ gapp.register("kiri.init", [], (root, exports) => {
             }
         };
 
+        if (DOC.body.requestFullscreen) {
+            $('app-xpnd').style.display = 'flex';
+        }
+
         let hpops = [];
         uc.hoverPop(ui.ltsetup, { group: hpops, target: $('set-pop') });
         uc.hoverPop(ui.ltfile,  { group: hpops, target: $('file-pop') });
