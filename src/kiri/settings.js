@@ -565,6 +565,12 @@ function settingsImport(data, ask) {
             if (api.const.LOCAL) console.log('settings', Object.clone(settings));
             if (isWork) {
                 api.platform.clear();
+                // really old workspaces encoded the types as strings
+                for (let work of data.work) {
+                    if (work.type === "widget") {
+                        work.type = 100;
+                    }
+                }
                 kiri.codec.decode(data.work).forEach(widget => {
                     api.platform.add(widget, 0, true, true);
                 });
