@@ -10,7 +10,7 @@
 gapp.register("geo.polygons", [], (root, exports) => {
 
 const { base } = root;
-const { util, config, newPoint } = base;
+const { util, paths, config, newPoint } = base;
 const { sqr, numOrDefault } = util;
 
 const DEG2RAD = Math.PI / 180,
@@ -543,7 +543,13 @@ function expand(polys, distance, z, out, count, distance2, collector, min) {
  * in FDM mode and uncleared areas in CAM mode.
  */
 function offset(polys, dist, opts = {}) {
-    // do not offset open lines
+    let open = opts.open ? polys.filter(p => p.open) : [];
+    if (open.length) {
+        open = open.map(p => paths.pointsToPath(p.points, dist, true));
+        open = open.map(p => base.newPolygon().setOpen().addPoints(p.right));
+    }
+
+    // do not use clipper to offset open lines
     polys = polys.filter(p => !p.open);
 
     // cause inner / outer polys to be reversed from each other
@@ -570,6 +576,7 @@ function offset(polys, dist, opts = {}) {
     if (opts.wasm && geo.wasm) {
         try {
             polys = geo.wasm.js.offset(polys, offs, zed, clean ? config.clipperClean : 0, simple ? 1 : 0);
+            if (open.length) polys.appendAll(open);
         } catch (e) {
             console.log('wasm error', e.message || e);
             opts.wasm = false;
@@ -629,7 +636,9 @@ function offset(polys, dist, opts = {}) {
         }
     }
 
-    return opts.flat ? opts.outs : polys;
+    let rez = opts.flat ? opts.outs : polys;
+    if (open.length) rez.appendAll(open);
+    return rez;
 }
 
 /**
