@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: add.array
 // dep: data.local
 gapp.register("kiri.conf", [], (root, exports) => {
 
