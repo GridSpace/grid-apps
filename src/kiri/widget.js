@@ -21,6 +21,9 @@ const { avgc, trackFn } = utils;
 const solid_opacity = 1.0;
 const groups = [];
 
+const sharedArrayClass = self.SharedArrayBuffer || undefined;
+const hasSharedArrays = sharedArrayClass ? true : false;
+
 let nextId = 0;
 
 function newWidget(id,group) { return new Widget(id,group) }
@@ -148,6 +151,14 @@ class Widget {
         return o;
     }
 
+    #newBuffer(length) {
+        if (hasSharedArrays) {
+            return new SharedArrayBuffer(length);
+        } else {
+            return new ArrayBuffer(length);
+        }
+    }
+
     /**
      *
      * @param {Float32Array} vertices
@@ -163,9 +174,9 @@ class Widget {
             vertices = data.vertices;
             throw "deprecated vertex data format";
         }
-        if (!(vertices.buffer && vertices.buffer instanceof SharedArrayBuffer)) {
+        if (!(vertices.buffer && vertices.buffer instanceof sharedArrayClass)) {
             // console.log('converting to shared vertices');
-            let newvert = new Float32Array(new SharedArrayBuffer(vertices.buffer.byteLength));
+            let newvert = new Float32Array(this.#newBuffer(vertices.buffer.byteLength));
             newvert.set(vertices);
             vertices = newvert;
         }

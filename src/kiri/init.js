@@ -1499,6 +1499,11 @@ gapp.register("kiri.init", [], (root, exports) => {
     function init_one() {
         let { event, conf, view, show } = api;
 
+        if (!window.SharedArrayBuffer) {
+            api.alerts.show("The security context of this");
+            api.alerts.show("window blocks important functionality");
+        }
+
         event.emit('init.one');
 
         // ensure we have settings from last session
