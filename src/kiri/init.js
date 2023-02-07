@@ -1500,8 +1500,8 @@ gapp.register("kiri.init", [], (root, exports) => {
         let { event, conf, view, show } = api;
 
         if (!window.SharedArrayBuffer) {
-            api.alerts.show("The security context of this");
-            api.alerts.show("window blocks important functionality");
+            api.alerts.show("The security context of this", 10);
+            api.alerts.show("window blocks important functionality", 10);
         }
 
         event.emit('init.one');
