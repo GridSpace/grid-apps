@@ -21,7 +21,7 @@ const { avgc, trackFn } = utils;
 const solid_opacity = 1.0;
 const groups = [];
 
-const sharedArrayClass = self.SharedArrayBuffer || undefined;
+const sharedArrayClass = self.SharedArrayBuffer || String;
 const hasSharedArrays = sharedArrayClass ? true : false;
 
 let nextId = 0;
