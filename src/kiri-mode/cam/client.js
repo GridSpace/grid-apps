@@ -13,6 +13,7 @@ const { driver } = kiri;
 const { CAM } = driver;
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
+const hasSharedArrays = self.SharedArrayBuffer ? true : false;
 
 let isAnimate,
     isArrange,
@@ -502,6 +503,9 @@ CAM.init = function(kiri, api) {
                 indexing = false;
             }
             let el = $(id);
+            if (!hasSharedArrays && (type === 'contour' || type === 'lathe')) {
+                rec.disabled = true;
+            }
             if (rec.disabled) {
                 el.classList.add("disabled");
             }
