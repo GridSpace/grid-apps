@@ -5,6 +5,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 # Release 3.9
 
+* more graceful handling of security contexts blocking SharedArrayBuffer
+* CAM add open poly-line offsetting with trace op
 * CAM clearly delineate ops reachable or not on timeline
 - remove clear top (always on)
 - add z top (like z bottom)
