@@ -847,7 +847,7 @@ class OpLathe extends CamOp {
             },
             ondone: (slices) => {
                 this.slices = slices;
-                addSlices(slices);
+                addSlices(slices, false);
             }
         });
     }
@@ -875,20 +875,11 @@ class OpLathe extends CamOp {
                 continue;
             }
 
-            let polys = [], poly, emit;
-            slice.camLines.forEach(poly => {
-                polys.push({ first:poly.first(), last:poly.last(), poly:poly });
-            });
-
-            printPoint = tip2tipEmit(polys, printPoint, (el, point, count) => {
-                poly = el.poly;
-                if (poly.last() === point) {
-                    poly.reverse();
-                }
-                poly.forEachPoint((point, pidx) => {
+            for (let path of slice.camLines) {
+                path.forEachPoint((point, pidx) => {
                     camOut(point.clone(), pidx > 0, stepover);
                 }, false);
-            });
+            }
 
             newLayer();
         }

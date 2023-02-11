@@ -96,7 +96,7 @@ class Topo4 {
 
         let index = 0;
         let slices = this.slices = [];
-        let slice = { min: range.min - step, max: range.min + step, index };
+        let slice = { min: range.min, max: range.min + step, index };
 
         for (let z = range.min; z < range.max; z += resolution) {
             if (z > slice.max) {
@@ -266,7 +266,7 @@ class Topo4 {
         const steps = 100;
         const rota = (360 / steps) * DEG2RAD;
         const axis = new THREE.Vector3(1, 0, 0);
-        const rot = new THREE.Matrix4().makeRotationAxis(axis, rota);
+        const mrot = new THREE.Matrix4().makeRotationAxis(axis, rota);
 
         const slices = sliced.map(s => { return { z: s.z, lines: s.shared } });
         const paths = [];
@@ -276,31 +276,30 @@ class Topo4 {
 
         let angle = 0;
         let count = 0;
+        // for each step angle, find Z spine heights, produce record
         while (count++ < steps) {
             const heights = this.lathePath(slices, tool, paths);
             recs.push({ angle, heights });
             angle -= rota;
             for (let lines of slices.map(s => s.lines)) {
-                rotatePoints(lines, rot);
+                rotatePoints(lines, mrot);
             }
         }
 
-        console.log({recs});
-
         for (let rec of recs) {
             const { angle, heights } = rec;
+            const degrees = angle * RAD2DEG;
             const points = heights.toFloat32();
 
             const poly = newPolygon().setOpen().addPoints(
-                [...points].group(3).map(a => newPoint(a[0], a[1], a[2]).setA(angle))
+                [...points].group(3).map(a => newPoint(a[0], a[1], a[2]).setA(degrees))
             );
-
             rotatePoints(points, new THREE.Matrix4().makeRotationAxis(axis, angle));
             const top = newPolygon().setOpen().addPoints(
                 [...points].group(3).map(a => newPoint(a[0], a[1], a[2]))
             );
 
-            const slice = newSlice().addTops([ top ]);
+            const slice = newSlice();//.addTops([ top ]);
             slice.camLines = [ poly ];
             slice.output()
                 .setLayer("lathe", { line: 0xffff00 })

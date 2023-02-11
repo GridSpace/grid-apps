@@ -1368,6 +1368,8 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
                     stop.push(solid);
                 }
             }
+            // problematic for organic shapes with lots of big and small tops
+            // the small tops tend to trigger entire layer fills
             if (stop.length) {
                 let top_area = top.poly.areaDeep();
                 let stop_area = stop.map(p => p.areaDeep()).reduce((a,v) => a + v);

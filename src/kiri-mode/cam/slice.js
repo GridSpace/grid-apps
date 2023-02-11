@@ -165,12 +165,12 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         addPolyIndexing(poly.inner, a);
     }
 
-    function addSlices(slices) {
+    function addSlices(slices, addIndexing = isIndexed) {
         if (!Array.isArray(slices)) {
             slices = [ slices ];
         }
         sliceAll.appendAll(slices);
-        if (isIndexed && axisIndex !== undefined) {
+        if (addIndexing && axisIndex !== undefined) {
             // update slice cam lines to add axis indexing
             for (let slice of slices.filter(s => s.camLines)) {
                 addPolyIndexing(slice.camLines, -axisIndex);
