@@ -53,6 +53,7 @@ class Topo4 {
             console.log(widget.id, 'topo4 auto tolerance', resolution.round(4));
         }
 
+        this.zBottom = state.zBottom;
         this.resolution = resolution;
         this.vertices = widget.getGeoVertices().toShared();
         this.tool = tool.generateProfile(resolution).profile;
@@ -188,7 +189,7 @@ class Topo4 {
     }
 
     lathePath(slices, tool) {
-        const { resolution, step } = this;
+        const { resolution, step, zBottom } = this;
 
         const tlen = tool.length;
         const slen = slices.length;
@@ -254,7 +255,7 @@ class Topo4 {
                     }
                 }
             }
-            heights.push(rx, 0, mz);
+            heights.push(rx, 0, Math.max(zBottom, mz));
         }
 
         return heights;

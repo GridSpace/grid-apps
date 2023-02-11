@@ -841,7 +841,7 @@ class OpLathe extends CamOp {
 
         this.topo = await CAM.Topo4({
             op,
-            state: state,
+            state,
             onupdate: (pct, msg) => {
                 progress(pct, msg);
             },
