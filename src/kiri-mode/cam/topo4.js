@@ -288,8 +288,9 @@ class Topo4 {
             }
         }
 
-        for (let heights of recs[0].heights) {
-            let slice = newSlice();
+        count = recs[0].heights.length / 3;
+        while (count-- > 0) {
+            let slice = newSlice(count);
             slice.camLines = [ newPolygon().setOpen() ];
             paths.push(slice);
         }
@@ -304,6 +305,7 @@ class Topo4 {
         for (let slice of paths) {
             const poly = slice.camLines[0];
             if (!poly.length) {
+                console.log('empty', slice);
                 continue;
             }
             slice.camLines[0].push(poly.points[0].clone());
