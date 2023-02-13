@@ -857,8 +857,8 @@ class OpLathe extends CamOp {
         let { settings } = state;
 
         let { setTool, setSpindle, setPrintPoint } = ops;
-        let { camOut, newLayer, polyEmit, printPoint, lastPoint } = ops;
-        let { bounds, zmax } = ops;
+        let { camOut, newLayer, printPoint } = ops;
+        let { zmax } = ops;
 
         let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         let stepover = toolDiam * op.step * 2;

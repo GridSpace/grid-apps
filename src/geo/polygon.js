@@ -15,6 +15,7 @@ const { base } = root;
 const { config, util, polygons, newBounds, newPoint } = base;
 
 const POLY = polygons,
+    XAXIS = new THREE.Vector3(1,0,0),
     DEG2RAD = Math.PI / 180,
     clib = self.ClipperLib,
     clip = clib.Clipper,
@@ -965,6 +966,19 @@ class Polygon {
 
     showKey() {
         return [this.first().key, this.last().key, this.length].join('~~');
+    }
+
+    applyRotations() {
+        for (let point of this.points) {
+            if (point.a) {
+                let p2 = new THREE.Vector3(point.x, point.y, point.z)
+                    .applyAxisAngle(XAXIS, point.a * DEG2RAD);
+                point.x = p2.x;
+                point.y = p2.y;
+                point.z = p2.z;
+            }
+        }
+        return this;
     }
 
     /**

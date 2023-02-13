@@ -505,6 +505,7 @@ const conf = exports({
                 camLatheTool: 1000,
                 camLatheSpindle: 1000,
                 camLatheOver: 0.1,
+                camLatheAngle: 1,
                 camLatheSpeed: 500,
                 camTolerance: 0,
                 camTraceTool: 1000,

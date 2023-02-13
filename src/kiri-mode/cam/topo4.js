@@ -47,7 +47,8 @@ class Topo4 {
             zMin = min.z + 0.0001,
             tolerance = op.tolerance,
             resolution = tolerance ? tolerance : 1 / Math.sqrt(density / (span.x * span.y)),
-            step = this.step = (tool.traceOffset() * 2) * op.step;
+            step = this.step = (tool.traceOffset() * 2) * op.step,
+            angle = this.angle = op.angle || 1;
 
         if (tolerance === 0) {
             console.log(widget.id, 'topo4 auto tolerance', resolution.round(4));
@@ -108,7 +109,7 @@ class Topo4 {
             index++;
         }
         slices.push(slice);
-        console.log({ shards, range, step, slices });
+        // console.log({ shards, range, step, slices });
 
         if (kiri.minions.running > 1) {
             return await this.sliceMinions(onupdate);
@@ -265,11 +266,10 @@ class Topo4 {
     async latheWorker(onupdate) {
         const { sliced, tool } = this;
 
-        const steps = 100;
-        const rota = (360 / steps) * DEG2RAD;
+        const rota = this.angle * DEG2RAD;
+        const steps = (Math.PI * 2) / rota;
         const axis = new THREE.Vector3(1, 0, 0);
         const mrot = new THREE.Matrix4().makeRotationAxis(axis, rota);
-
         const slices = sliced.map(s => { return { z: s.z, lines: s.shared } });
         const paths = [];
         const recs = [];
@@ -295,36 +295,21 @@ class Topo4 {
         }
 
         for (let rec of recs) {
-            const { angle, degrees, heights } = rec;
-            const points = heights.toFloat32();
-
-            const poly = newPolygon().setOpen().addPoints(
-                [...points].group(3).map((a,i) => {
-                    let p = newPoint(a[0], a[1], a[2]).setA(degrees)
-                    paths[i].camLines[0].push(p);
-                    return p;
-                })
-            );
-            rotatePoints(points, new THREE.Matrix4().makeRotationAxis(axis, angle));
-            continue;
-
-            // const slice = newSlice();
-            // slice.camLines = [ poly ];
-
-            // const rndr = newPolygon().setOpen().addPoints(
-            //     [...points].group(3).map(a => newPoint(a[0], a[1], a[2]))
-            // );
-
-            // slice.output()
-            //     .setLayer("lathe", { line: 0xffff00 })
-            //     .addPoly(rndr);
-            // paths.push(slice);
+            const { degrees, heights } = rec;
+            [...heights].group(3).forEach((a,i) => {
+                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2]).setA(degrees) );
+            });
         }
 
         for (let slice of paths) {
+            const poly = slice.camLines[0];
+            if (!poly.length) {
+                continue;
+            }
+            slice.camLines[0].push(poly.points[0].clone());
             slice.output()
                 .setLayer("lathe", { line: 0xffff00 })
-                .addPoly(slice.camLines[0]);
+                .addPoly(poly.clone().applyRotations());
         }
 
         // console.log({ tool, slices, paths });
