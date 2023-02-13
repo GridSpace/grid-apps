@@ -58,6 +58,7 @@ class Topo4 {
         this.resolution = resolution;
         this.vertices = widget.getGeoVertices().toShared();
         this.tool = tool.generateProfile(resolution).profile;
+        this.diam = tool.fluteDiameter();
 
         onupdate(0, "lathe");
 
@@ -93,6 +94,10 @@ class Topo4 {
             range.min = Math.min(range.min, x);
             range.max = Math.max(range.max, x);
         }
+
+        // add tool radius to slice min/max range ot fully carve part
+        range.min -= this.diam / 2;
+        range.max += this.diam / 2;
 
         const shards = Math.ceil(Math.min(25, vertices.length / 27000));
         const step = (range.max - range.min) / shards;
