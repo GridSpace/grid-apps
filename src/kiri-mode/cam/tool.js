@@ -109,7 +109,8 @@ class Tool {
             toolCenter = (shaft_pix_int - (shaft_pix_int % 2)) / 2,
             toolOffset = [],
             larger_shaft = shaft_diameter - flute_diameter > 0.001,
-            rpixsq = flute_radius_pix_float * flute_radius_pix_float;
+            rpixsq = flute_radius_pix_float * flute_radius_pix_float,
+            maxo = -Infinity;
 
         // for each point in tool profile, check inside radius
         for (let x = 0; x < profile_pix_iter; x++) {
@@ -118,6 +119,7 @@ class Tool {
                     dy = y - toolCenter,
                     dist_from_center = Math.sqrt(dx * dx + dy * dy);
                 if (dist_from_center <= flute_radius_pix_float) {
+                    maxo = Math.max(maxo, dx, dy);
                     // console.log({x,y,dx,dy,dist:dist_from_center,ln:dbl.length})
                     // flute offset points
                     let z_offset = 0;
@@ -143,7 +145,8 @@ class Tool {
         this.profile = profile;
         this.profileDim = {
             size: shaft_diameter,
-            pix: profile_pix_iter + 2
+            pix: profile_pix_iter + 2,
+            maxo
         };
 
         return this;

@@ -58,6 +58,7 @@ class Topo4 {
         this.resolution = resolution;
         this.vertices = widget.getGeoVertices().toShared();
         this.tool = tool.generateProfile(resolution).profile;
+        this.maxo = tool.profileDim.maxo * resolution;
         this.diam = tool.fluteDiameter();
 
         onupdate(0, "lathe");
@@ -196,17 +197,14 @@ class Topo4 {
     }
 
     lathePath(slices, tool) {
-        const { resolution, step, zBottom } = this;
+        const { resolution, step, zBottom, maxo } = this;
 
         const tlen = tool.length;
         const slen = slices.length;
         const sinc = Math.max(1, Math.ceil(step / resolution));
         const heights = [];
 
-        // console.log({ slen, step, resolution, sinc });
-
         // cull slice lines to only the ones in range (5x faster)
-        const maxo = Math.max(...tool) * resolution;
         const oslices = [];
         for (let slice of slices) {
             const lines = slice.lines;
