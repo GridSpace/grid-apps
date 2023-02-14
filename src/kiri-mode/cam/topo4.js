@@ -62,7 +62,8 @@ class Topo4 {
 
         this.zBottom = state.zBottom;
         this.resolution = resolution;
-        this.vertices = widget.getGeoVertices().toShared();
+        this.vertices = widget.getGeoVertices();
+        this.tabverts = widget.getTabVertices();
         this.tool = tool.generateProfile(resolution).profile;
         this.maxo = tool.profileDim.maxo * resolution;
         this.diam = tool.fluteDiameter();
@@ -87,7 +88,7 @@ class Topo4 {
     }
 
     async slice(onupdate) {
-        const { vertices, resolution } = this;
+        const { vertices, resolution, tabverts } = this;
 
         const range = this.range = { min: Infinity, max: -Infinity };
         const box = this.box = new THREE.Box2();
@@ -105,6 +106,15 @@ class Topo4 {
         // add tool radius to slice min/max range ot fully carve part
         range.min -= this.diam / 2;
         range.max += this.diam / 2;
+
+        // merge in tab vertices (so they don't affect slice range / dimensions)
+        for (let i=0, l=tabverts.length; i<l; i += 3) {
+            const x = tabverts[i];
+            const z = tabverts[i + 2];
+            tabverts[i] = z;
+            tabverts[i + 2] = x;
+        }
+        this.vertices = [].appendAll(vertices).appendAll(tabverts).toFloat32().toShared();
 
         const shards = Math.ceil(Math.min(25, vertices.length / 27000));
         const step = (range.max - range.min) / shards;

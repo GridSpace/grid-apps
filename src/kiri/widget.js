@@ -626,6 +626,22 @@ class Widget {
         this.points = null;
     }
 
+    getTabVertices() {
+        const vert = [];
+        if (this.anno && this.anno.tab) {
+            for (let tab of this.anno.tab) {
+                const { pos, dim, rot } = tab;
+                const box = new THREE.BoxGeometry(dim.x, dim.y, dim.z).toNonIndexed();
+                box.applyMatrix4(
+                    new THREE.Matrix4().makeRotationFromQuaternion(rot)
+                );
+                box.translate(pos.x, pos.y, pos.z);
+                vert.appendAll(box.attributes.position.array);
+            }
+        }
+        return vert;
+    }
+
     getGeoVertices(opt = {}) {
         const { unroll, translate } = opt;
         let geo = this.mesh.geometry;
