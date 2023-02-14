@@ -31,8 +31,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     let mesh = widget.mesh,
         proc = settings.process,
         stock = settings.stock || {},
-        hasStock = stock.x && stock.y && stock.z && proc.camStockOn,
-        isIndexed = hasStock && proc.camStockIndexed,
+        isIndexed = proc.camStockIndexed,
         camOps = widget.camops = [],
         sliceAll = widget.slices = [],
         bounds = widget.getBoundingBox(),
@@ -40,9 +39,9 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         // widget top z as defined by setTopz()
         wztop = track.top,
         // distance between top of part and top of stock
-        ztOff = isIndexed ? 0 : (hasStock ? stock.z - wztop : 0),
+        ztOff = isIndexed ? 0 : (stock.z - wztop),
         // distance between bottom of part and bottom of stock
-        zbOff = isIndexed ? 0 : (hasStock ? wztop - track.box.d : 0),
+        zbOff = isIndexed ? 0 : (wztop - track.box.d),
         // defined z bottom offset by distance to stock bottom
         // keeps the z bottom relative to the part when z align changes
         zBottom = isIndexed ? proc.camZBottom : proc.camZBottom - zbOff,

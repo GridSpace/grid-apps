@@ -68,6 +68,7 @@
 
 # CAM
 
+* `B` in indexed stock mode, stock should rotate with indexing
 * `B` feed rate for next tool set before tool change (push/pop feed rates?)
 * `B` tab cuts cause loss of direction, parenting, depth, and it's hard to fix
 * `B` tabs do not properly track widget mirror events
@@ -76,6 +77,7 @@
 * `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` allow import, rotation, scaling of stock
 * `F` get gcode coordinates off a part with point/click or hover?
 * `F` include tools in default devices (Carvera)
 * `F` add `match faces` option in `outline` operation

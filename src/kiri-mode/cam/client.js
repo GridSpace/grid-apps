@@ -66,8 +66,8 @@ CAM.init = function(kiri, api) {
     API = api;
 
     function updateAxisMode(refresh) {
-        const { camStockIndexGrid, camStockIndexed, camStockOn } = current.process;
-        let newIndexed = camStockIndexed && camStockOn;
+        const { camStockIndexGrid, camStockIndexed } = current.process;
+        let newIndexed = camStockIndexed;
         let changed = refresh || isIndexed !== newIndexed;
         isIndexed = newIndexed;
         if (!isIndexed || !isCamMode) {
@@ -94,7 +94,7 @@ CAM.init = function(kiri, api) {
             return;
         }
         for (let widget of api.widgets.all()) {
-            widget.setIndexed(camStock && isIndexed ? true : false);
+            widget.setIndexed(isIndexed ? true : false);
         }
         api.platform.update_bounds();
         // add or remove clock op depending on indexing
@@ -116,7 +116,7 @@ CAM.init = function(kiri, api) {
     api.event.on("widget.add", widget => {
         if (isCamMode && !Array.isArray(widget)) {
             updateAxisMode(true);
-            widget.setIndexed(camStock && isIndexed ? true : false);
+            widget.setIndexed(isIndexed ? true : false);
             api.platform.update_bounds();
         }
     });
@@ -126,11 +126,8 @@ CAM.init = function(kiri, api) {
         if (isAnimate) {
             return;
         }
-        if (isCamMode && !camStock) {
-            return api.show.alert("animation requires stock to be enabled");
-        }
         api.function.prepare(() => {
-            if (isCamMode && camStock) {
+            if (isCamMode) {
                 animate();
             }
         });
@@ -193,7 +190,6 @@ CAM.init = function(kiri, api) {
         }
         // show/hide dots in enabled process pop buttons
         api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
-        api.ui.camStock.marker.style.display = proc.camStockOn ? 'flex' : 'none';
         api.platform.update_bounds();
         updateIndex();
         updateStock();
@@ -1653,8 +1649,8 @@ function createTabBox(iw, ic, n) {
     const { track } = iw;
     const { stock, bounds, process } = API.conf.get();
     const { camTabsWidth, camTabsHeight, camTabsDepth, camTabsMidline } = process;
-    const { camZBottom, camStockOn, camStockIndexed } = process;
-    const isIndexed = camStockOn && camStockIndexed;
+    const { camZBottom, camStockIndexed } = process;
+    const isIndexed = camStockIndexed;
     const sz = stock.z || bounds.max.z;
     const zto = sz - iw.track.top;
     const zp = (camZBottom || isIndexed ? camZBottom : sz - track.box.d - zto) + (camTabsMidline ? 0 : camTabsHeight / 2);

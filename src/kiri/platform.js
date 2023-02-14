@@ -45,8 +45,7 @@ function platformUpdateOrigin(update_bounds = true) {
 
     let ruler = controller.showRulers;
     let stockCenter = stock.center || { x: 0, y: 0, z: 0 };
-    let hasStock = stock.x && stock.y && stock.z;
-    let isIndexed = process.camStockIndexed && process.camStockOn;
+    let isIndexed = process.camStockIndexed;
     let isBelt = device.bedBelt;
     let origin = settings.origin = { x: 0, y: 0, z: 0 };
     let center = MODE === MODES.FDM ? device.originCenter || device.bedRound :
@@ -55,11 +54,11 @@ function platformUpdateOrigin(update_bounds = true) {
        device.originCenter || process.outputOriginCenter;
 
     if (MODE === MODES.CAM && process.camOriginTop) {
-        origin.z = (hasStock ? stock.z : topZ) + 0.01;
+        origin.z = stock.z + 0.01;
     }
 
     if (!center) {
-        if (hasStock) {
+        if (MODE === MODES.CAM) {
             origin.x = (-stock.x / 2) + stockCenter.x;
             origin.y = (stock.y / 2) - stockCenter.y;
         } else {
@@ -72,7 +71,7 @@ function platformUpdateOrigin(update_bounds = true) {
                 origin.y = device.bedDepth / 2;
             }
         }
-    } else if (hasStock) {
+    } else if (MODE === MODES.CAM) {
         origin.x = stockCenter.x;
         origin.y = -stockCenter.y;
     } else if (isBelt) {
@@ -92,7 +91,7 @@ function platformUpdateOrigin(update_bounds = true) {
     space.platform.setRulers(ruler, ruler, 1 / api.view.unit_scale(), 'X', isBelt ? 'Z' : 'Y');
 
     let { x, y, z } = origin;
-    let oz = process.camStockIndexed && process.camStockOn ? z / 2 : z;
+    let oz = process.camStockIndexed ? z / 2 : z;
     if (controller.showOrigin && MODE !== MODES.SLA) {
         space.platform.setOrigin(x, y, oz, true);
     } else {
@@ -150,10 +149,9 @@ function platformUpdateMidZ() {
 
 function platformUpdateTopZ(zdelta) {
     const { process, stock } = current();
-    const hasStock = stock.x && stock.y && stock.z;
     const MODE = get_mode();
     api.widgets.each(widget => {
-        if (MODE === MODES.CAM && hasStock) {
+        if (MODE === MODES.CAM) {
             const bounds = widget.getBoundingBox();
             const wzmax = bounds.max.z;
             const zdelta = process.camZOffset || 0;
@@ -177,14 +175,15 @@ function platformUpdateTopZ(zdelta) {
 function platformUpdateStock() {
     const settings = current();
     const { bounds, process, mode } = settings;
-    const { camStockOn, camStockX, camStockY, camStockZ, camStockOffset, camStockIndexed } = process;
-    if (mode === 'CAM' && camStockOn) {
+    const { camStockX, camStockY, camStockZ, camStockOffset, camStockIndexed } = process;
+    if (mode === 'CAM') {
         let stock = settings.stock = {
             x: camStockX,
             y: camStockY,
             z: camStockZ
         };
-        if (camStockOffset) {
+        // drop back to offset mode if any stock dimension is 0
+        if (camStockOffset || (stock.x * stock.y * stock.z === 0)) {
             stock.x += bounds.max.x - bounds.min.x;
             stock.y += bounds.max.y - bounds.min.y;
             stock.z += bounds.max.z - bounds.min.z;

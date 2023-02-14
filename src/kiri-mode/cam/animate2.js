@@ -366,7 +366,7 @@ kiri.load(() => {
         const { process } = settings;
         const print = worker.print;
         const density = parseInt(settings.controller.animesh) * 1000;
-        const isIndexed = process.camStockOn && process.camStockIndexed;
+        const isIndexed = process.camStockIndexed;
 
         pathIndex = 0;
         path = print.output.flat();

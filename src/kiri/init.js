@@ -1912,7 +1912,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 (ui.tabClr = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:CAM, class:"ext-buttons f-row"}),
 
-            camStock:            uc.newGroup(LANG.cs_menu, null, {modes:CAM, marker: true}),
+            camStock:            uc.newGroup(LANG.cs_menu, null, {modes:CAM}),
             camStockX:           uc.newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
             camStockY:           uc.newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
             camStockZ:           uc.newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
@@ -1920,13 +1920,12 @@ gapp.register("kiri.init", [], (root, exports) => {
             camStockOffset:      uc.newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l, modes:CAM}),
             camStockClipTo:      uc.newBoolean(LANG.cs_clip_s, onBooleanClick, {title:LANG.cs_clip_l, modes:CAM}),
             camSep:              uc.newBlank({class:"pop-sep"}),
-            camStockIndexGrid:   uc.newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, modes:CAM, show:() => ui.camStockOn.checked && ui.camStockIndexed.checked}),
-            camStockIndexed:     uc.newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l, modes:CAM, show:() => ui.camStockOn.checked}),
-            camStockOn:          uc.newBoolean(LANG.cs_offe_s, onBooleanClick, {title:LANG.cs_offe_l, modes:CAM}),
+            camStockIndexGrid:   uc.newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, modes:CAM, show:() => ui.camStockIndexed.checked}),
+            camStockIndexed:     uc.newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l, modes:CAM}),
 
             camCommon:           uc.newGroup(LANG.cc_menu, null, {modes:CAM}),
-            camZAnchor:          uc.newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, modes:CAM, trace:true, show:() => ui.camStockOn.checked && !ui.camStockIndexed.checked}, "zanchor"),
-            camSep:              uc.newBlank({class:"pop-sep", show:() => ui.camStockOn.checked && !ui.camStockIndexed.checked}),
+            camZAnchor:          uc.newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, modes:CAM, trace:true, show:() => !ui.camStockIndexed.checked}, "zanchor"),
+            camSep:              uc.newBlank({class:"pop-sep", show:() => !ui.camStockIndexed.checked}),
             camZOffset:          uc.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:uc.toFloat, modes:CAM, units:true}),
             camZBottom:          uc.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:uc.toFloat, modes:CAM, units:true, trigger: true}),
             camZThru:            uc.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:uc.toFloat, bound:uc.bound(0.0,100), modes:CAM, units:true, show:() => { return ui.camZBottom.value == 0 }}),

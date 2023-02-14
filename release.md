@@ -10,10 +10,10 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM clearly delineate ops reachable or not on timeline
 * CAM add 4th axis lathe operation for debug and testing (can be optimized)
 * CAM add rough all stock to aid lathe mode
+* CAM stock is now always on, whether offset or absolute
 - add auto-disable for ops mismatched to axis indexed state
 - remove clear top (always on)
 - add z top (like z bottom)
-- stock always on
 - add "common" overrides in ops (z top/bottom/thru, direction)
 
 
