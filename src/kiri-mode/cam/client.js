@@ -296,9 +296,6 @@ CAM.init = function(kiri, api) {
                 }
                 return func.opAddContour(caxis);
             case "lathe":
-                if (!settings.controller.danger) {
-                    return;
-                }
                 let laxis = "X";
                 for (let op of current.process.ops) {
                     if (op.type === "lathe" && op.axis === "X") {
@@ -508,6 +505,9 @@ CAM.init = function(kiri, api) {
                 indexing = false;
             }
             let el = $(id);
+            if (!isIndexed && type === 'lathe') {
+                rec.disabled = true;
+            }
             if (!hasSharedArrays && (type === 'contour' || type === 'lathe')) {
                 rec.disabled = true;
             }

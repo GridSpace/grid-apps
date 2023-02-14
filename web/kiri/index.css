@@ -964,9 +964,6 @@ th, tr, td, label {
     right: 0;
     top: 0;
 }
-#cam-lathe {
-    color: #888;
-}
 #cam-lathe:hover {
     background-color: rgba(0,0,0,0) !important;
 }
