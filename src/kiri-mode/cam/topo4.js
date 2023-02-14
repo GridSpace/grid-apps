@@ -23,6 +23,12 @@ const POLY = polygons;
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
 
+function scale(fn, factor = 1, base = 0) {
+    return (value, msg) => {
+        fn(base + value * factor, msg);
+    }
+}
+
 class Topo4 {
     constructor() { }
 
@@ -64,7 +70,7 @@ class Topo4 {
         onupdate(0, "lathe");
 
         const range = this.range = { min: Infinity, max: -Infinity };
-        const slices = this.sliced = await this.slice(onupdate);
+        const slices = this.sliced = await this.slice(scale(onupdate, 0.25, 0));
         for (let slice of slices) {
             range.min = Math.min(range.min, slice.z);
             range.max = Math.max(range.max, slice.z);
@@ -73,7 +79,7 @@ class Topo4 {
                 .addPolys(slice.topPolys());
         }
 
-        const lathe = await this.lathe(onupdate);
+        const lathe = await this.lathe(scale(onupdate, 0.75, 0.25));
 
         // ondone([...slices, ...lathe]);
         onupdate(1, "lathe");
@@ -289,6 +295,7 @@ class Topo4 {
             for (let lines of slices.map(s => s.lines)) {
                 rotatePoints(lines, mrot);
             }
+            onupdate(count / steps);
         }
 
         count = recs[0].heights.length / 3;

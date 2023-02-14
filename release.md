@@ -8,6 +8,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * more graceful handling of security contexts blocking SharedArrayBuffer
 * CAM add open poly-line offsetting with trace op
 * CAM clearly delineate ops reachable or not on timeline
+* CAM add 4th axis lathe operation for debug and testing (can be optimized)
+- add auto-disable for ops mismatched to axis indexed state
 - remove clear top (always on)
 - add z top (like z bottom)
 - stock always on
