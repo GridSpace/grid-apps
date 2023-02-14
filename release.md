@@ -9,6 +9,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM add open poly-line offsetting with trace op
 * CAM clearly delineate ops reachable or not on timeline
 * CAM add 4th axis lathe operation for debug and testing (can be optimized)
+* CAM add rough all stock to aid lathe mode
 - add auto-disable for ops mismatched to axis indexed state
 - remove clear top (always on)
 - add z top (like z bottom)

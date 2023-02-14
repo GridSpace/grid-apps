@@ -180,6 +180,7 @@ class OpRough extends CamOp {
         let roughTop = op.top;
         let roughDown = op.down;
         let roughLeave = op.leave;
+        let roughStock = op.all && state.isIndexed;
         let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         let trueShadow = process.camTrueShadow === true;
 
@@ -306,7 +307,9 @@ class OpRough extends CamOp {
 
         // shell = shadow expanded by half tool diameter + leave stock
         const sadd = roughIn ? toolDiam / 2 : toolDiam / 2;
-        const shell = POLY.offset(shadow, sadd + roughLeave);
+        const shell = roughStock ?
+            [ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ] :
+            POLY.offset(shadow, sadd + roughLeave);
 
         slices.forEach((slice, index) => {
             let offset = [shell.clone(true),slice.shadow.clone(true)].flat();

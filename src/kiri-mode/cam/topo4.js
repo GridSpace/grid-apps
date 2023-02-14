@@ -107,13 +107,15 @@ class Topo4 {
         range.min -= this.diam / 2;
         range.max += this.diam / 2;
 
-        // merge in tab vertices (so they don't affect slice range / dimensions)
+        // merge in tab vertices here so they don't affect slice range / dimensions
         for (let i=0, l=tabverts.length; i<l; i += 3) {
             const x = tabverts[i];
             const z = tabverts[i + 2];
             tabverts[i] = z;
             tabverts[i + 2] = x;
         }
+
+        // re-create shared vertex array for workers
         this.vertices = [].appendAll(vertices).appendAll(tabverts).toFloat32().toShared();
 
         const shards = Math.ceil(Math.min(25, vertices.length / 27000));

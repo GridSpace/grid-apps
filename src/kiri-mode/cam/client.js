@@ -1212,6 +1212,10 @@ CAM.init = function(kiri, api) {
         SPACE.update();
     }
 
+    function hasIndexing() {
+        return isIndexed;
+    }
+
     function hasSpindle() {
         return current.device.spindleMax > 0;
     }
@@ -1245,6 +1249,7 @@ CAM.init = function(kiri, api) {
         rate:    'camRoughSpeed',
         plunge:  'camRoughPlunge',
         leave:   'camRoughStock',
+        all:     'camRoughAll',
         voids:   'camRoughVoid',
         flats:   'camRoughFlat',
         inside:  'camRoughIn',
@@ -1260,6 +1265,7 @@ CAM.init = function(kiri, api) {
         step:    UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
         leave:   UC.newInput(LANG.cr_lsto_s, {title:LANG.cr_lsto_l, convert:UC.toFloat, units:true}),
         sep:     UC.newBlank({class:"pop-sep"}),
+        all:     UC.newBoolean(LANG.cr_clst_s, undefined, {title:LANG.cr_clst_l, show:hasIndexing}),
         voids:   UC.newBoolean(LANG.cr_clrp_s, undefined, {title:LANG.cr_clrp_l}),
         flats:   UC.newBoolean(LANG.cr_clrf_s, undefined, {title:LANG.cr_clrf_l}),
         top:     UC.newBoolean(LANG.cr_clrt_s, undefined, {title:LANG.cr_clrt_l}),

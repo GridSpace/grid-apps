@@ -480,6 +480,8 @@ self.kiri.lang['en-us'] = {
     cr_lsto_l:      ["horizontal offset from vertical faces","stock to leave for finishing pass","in workspace units"],
     cr_ease_s:      "ease down",
     cr_ease_l:      ["plunge cuts will","spiral down or ease","along a linear path"],
+    cr_clst_s:      "clear stock",
+    cr_clst_l:      ["in indexed mode, clear entire stock area, not just to part periemter"],
     cr_clrt_s:      "clear top",
     cr_clrt_l:      ["run a clearing pass over","the bounding area of the part","at z = 0"],
     cr_clrp_s:      "clear voids",
