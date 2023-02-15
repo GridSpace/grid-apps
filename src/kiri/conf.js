@@ -470,7 +470,7 @@ const conf = exports({
                 camRoughSpeed: 1000,
                 camRoughPlunge: 250,
                 camRoughStock: 0,
-                camRoughAll: false,
+                camRoughAll: true,
                 camRoughVoid: false,
                 camRoughFlat: true,
                 camRoughTop: true,

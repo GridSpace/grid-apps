@@ -169,7 +169,7 @@ class OpRough extends CamOp {
         let { op, state } = this;
         let { settings, widget, slicer, addSlices, unsafe, color } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
-        let { tshadow, shadowTop, ztOff, zBottom, zMax, shadowAt } = state;
+        let { tshadow, shadowTop, ztOff, zBottom, zMax, shadowAt, isIndexed } = state;
         let { process, stock } = settings;
 
         if (op.down <= 0) {
@@ -180,7 +180,7 @@ class OpRough extends CamOp {
         let roughTop = op.top;
         let roughDown = op.down;
         let roughLeave = op.leave;
-        let roughStock = op.all && state.isIndexed;
+        let roughStock = op.all && isIndexed;
         let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         let trueShadow = process.camTrueShadow === true;
 
@@ -188,11 +188,15 @@ class OpRough extends CamOp {
         if (roughTop) {
             let shadow = tshadow.clone();
             let step = toolDiam * op.step;
-            let inset = POLY.offset(shadow, roughIn ? step : step + roughLeave + toolDiam / 2);
+            let inset = roughStock ?
+                POLY.offset([ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ], step) :
+                POLY.offset(shadow, roughIn ? step : step + roughLeave + toolDiam / 2);
             let facing = POLY.offset(inset, -step, { count: 999, flat: true });
             let zdiv = ztOff / roughDown;
             let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
-            if (ztOff === 0) {
+            if (isIndexed) {
+                ztOff = (stock.z / 2) - zMax;
+            } else if (ztOff === 0) {
                 // compensate for lack of z top offset in this scenario
                 ztOff = zstep;
             }
@@ -308,7 +312,7 @@ class OpRough extends CamOp {
         // shell = shadow expanded by half tool diameter + leave stock
         const sadd = roughIn ? toolDiam / 2 : toolDiam / 2;
         const shell = roughStock ?
-            [ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ] :
+            POLY.offset([ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ], sadd) :
             POLY.offset(shadow, sadd + roughLeave);
 
         slices.forEach((slice, index) => {

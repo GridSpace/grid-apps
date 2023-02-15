@@ -107,6 +107,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         plungeRate = process.camFastFeedZ,
         feedRate,
         lastTool,
+        lastPush,
         lastPoint,
         currentOp,
         nextIsMove = true,
@@ -279,6 +280,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         } else {
             print.addOutput(layerOut, point, emit, speed, tool);
         }
+        lastPush = { point, emit, speed, tool };
         return point;
     }
 
@@ -378,7 +380,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 }
                 // up if any point between higher than start/outline, go up first
                 if (mustGoUp || zIsBelow) {
-                    const zClearance = clearz + ztOff;
+                    const zClearance = clearz + (isIndexed ? 0 : ztOff);
                     if (zIsBelow) {
                         layerPush(lastPoint.clone().setZ(zClearance), 0, 0, tool.getNumber());
                     }
@@ -470,7 +472,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         opSum += weight;
         if (tool) {
             newLayer();
-            camOut(printPoint = printPoint.clone().setZ(zmax + zadd + ztOff));
+            camOut(printPoint = lastPoint.clone().setZ(zmax + zadd));
             newLayer();
         }
     }
