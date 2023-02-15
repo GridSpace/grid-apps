@@ -459,8 +459,9 @@ class Widget {
         let mesh = this.mesh,
             track = this.track,
             mbb = mesh.getBoundingBox(),
-            mbz = mbb.max.z;
-        if (z != undefined) {
+            mbz = mbb.max.z,
+            idx = this.isIndexed;
+        if ((idx && z != undefined) || (!idx && z)) {
             track.top = z;
         } else {
             track.top = mbz;
