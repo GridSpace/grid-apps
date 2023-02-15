@@ -371,11 +371,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     maxZdelta = Math.max(maxz - point.z, maxz - lastPoint.z),
                     mustGoUp = maxZdelta >= tolerance,
                     clearz = maxz;
+                let zIsBelow = point.z <= maxz;
                 if (zmax_force) {
                     clearz = maxz = zmax + zadd;
+                    zIsBelow = true;
                 }
                 // up if any point between higher than start/outline, go up first
-                const zIsBelow = point.z <= maxz;
                 if (mustGoUp || zIsBelow) {
                     const zClearance = clearz + ztOff;
                     if (zIsBelow) {
