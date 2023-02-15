@@ -64,20 +64,21 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
     let device = settings.device,
         process = settings.process,
-        stock = settings.stock || {},
-        outer = settings.bounds || widget.getPositionBox(),
-        outerz = outer.max.z,
-        slices = widget.slices,
         isIndexed = process.camStockIndexed,
         startCenter = process.camOriginCenter,
         alignTop = settings.controller.alignTop,
+        stock = settings.stock || {},
+        stockz = stock.z * (isIndexed ? 0.5 : 1),
+        outer = settings.bounds || widget.getPositionBox(),
+        outerz = outer.max.z,
+        slices = widget.slices,
         zclear = (process.camZClearance || 1),
         zmax_force = process.camForceZMax || false,
-        zmax_outer = stock.z + zclear,
+        zmax_outer = stockz + zclear,
         wztop = widget.track.top,
-        ztOff = stock.z - wztop,
+        ztOff = stockz - wztop,
         bounds = widget.getBoundingBox(),
-        boundsz = bounds.max.z + ztOff,
+        boundsz = isIndexed ? stock.z / 2 : bounds.max.z + ztOff,
         zadd = !isIndexed ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
         zmax = outerz + zclear + process.camOriginOffZ,
         wmpos = widget.track.pos,
@@ -312,7 +313,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         // before first point, move cutting head to point above it
         // then set that new point as the lastPoint
         if (!lastPoint) {
-            let above = point.clone().setZ(zmax + zadd + ztOff);
+            let above = point.clone().setZ(stockz + zclear);
+            // let above = point.clone().setZ(zmax + zadd + ztOff);
             lastPoint = layerPush(above, 0, 0, tool.getNumber());
         }
 
@@ -341,6 +343,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool.getNumber());
                 // new pos for plunge calc
                 deltaXY = 0;
+            }
+        } else if (isMove && currentOp.type === 'lathe') {
+            if (point.z > lastPoint.z) {
+                layerPush(lastPoint.clone().setZ(point.z), 0, 0, tool.getNumber());
+            } else if (point.z < lastPoint.z) {
+                layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool.getNumber());
             }
         } else if (isMove) {
             // for longer moves, check the terrain to see if we need to go up and over
