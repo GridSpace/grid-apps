@@ -430,6 +430,10 @@ class Widget {
         }
     }
 
+    get isIndexed() {
+        return this.track.indexed ? true : false;
+    }
+
     setIndexed(z) {
         if (z !== this.track.indexed) {
             this.track.indexed = z;
@@ -456,7 +460,7 @@ class Widget {
             track = this.track,
             mbb = mesh.getBoundingBox(),
             mbz = mbb.max.z;
-        if (z) {
+        if (z != undefined) {
             track.top = z;
         } else {
             track.top = mbz;
@@ -510,7 +514,7 @@ class Widget {
             let dx = Math.sin(rad) * ln;
             let dy = ln - Math.cos(rad) * ln;
             this.mesh.rotation.x = -rad;
-            z = 0;
+            z = top;
         } else {
             this.mesh.rotation.x = 0;
             z += tz;

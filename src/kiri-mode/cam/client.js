@@ -254,14 +254,14 @@ CAM.init = function(kiri, api) {
 
     api.event.on("preview.end", () => {
         isParsed = false;
-        if (isCamMode && camStock) {
+        if (isCamMode) {
             let bounds = STACKS.getStack("bounds");
             if (bounds) bounds.button("animate", animate);
         }
     });
 
     api.event.on("code.loaded", (info) => {
-        if (isCamMode && camStock) {
+        if (isCamMode) {
             isParsed = true;
             let parse = STACKS.getStack("parse", SPACE.world);
             if (parse) parse.button("animate", animate);

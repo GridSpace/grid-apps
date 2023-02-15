@@ -147,7 +147,7 @@ function platformUpdateMidZ() {
     space.platform.setMaxZ(topZ);
 }
 
-function platformUpdateTopZ(zdelta) {
+function platformUpdateTopZ() {
     const { process, stock } = current();
     const MODE = get_mode();
     api.widgets.each(widget => {
@@ -160,7 +160,11 @@ function platformUpdateTopZ(zdelta) {
                    widget.setTopZ(stock.z - zdelta);
                    break;
                case 'middle':
-                   widget.setTopZ(stock.z - (stock.z - wzmax) / 2);
+                   if (widget.isIndexed) {
+                       widget.setTopZ(zdelta);
+                   } else {
+                       widget.setTopZ(stock.z - (stock.z - wzmax) / 2 + zdelta);
+                   }
                    break;
                case 'bottom':
                    widget.setTopZ(wzmax + zdelta);

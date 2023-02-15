@@ -67,6 +67,7 @@ class Topo4 {
         this.tool = tool.generateProfile(resolution).profile;
         this.maxo = tool.profileDim.maxo * resolution;
         this.diam = tool.fluteDiameter();
+        this.zoff = widget.track.top || 0;
 
         onupdate(0, "lathe");
 
@@ -82,13 +83,13 @@ class Topo4 {
 
         const lathe = await this.lathe(scale(onupdate, 0.75, 0.25));
 
-        // ondone([...slices, ...lathe]);
         onupdate(1, "lathe");
         ondone(lathe);
+        // ondone([...slices, ...lathe]);
     }
 
     async slice(onupdate) {
-        const { vertices, resolution, tabverts } = this;
+        const { vertices, resolution, tabverts, zoff } = this;
 
         const range = this.range = { min: Infinity, max: -Infinity };
         const box = this.box = new THREE.Box2();
@@ -96,7 +97,7 @@ class Topo4 {
         // swap XZ in shared array
         for (let i=0, l=vertices.length; i<l; i += 3) {
             const x = vertices[i];
-            const z = vertices[i + 2];
+            const z = vertices[i + 2] + zoff;
             vertices[i] = z;
             vertices[i + 2] = x;
             range.min = Math.min(range.min, x);
@@ -110,7 +111,7 @@ class Topo4 {
         // merge in tab vertices here so they don't affect slice range / dimensions
         for (let i=0, l=tabverts.length; i<l; i += 3) {
             const x = tabverts[i];
-            const z = tabverts[i + 2];
+            const z = tabverts[i + 2] + zoff;
             tabverts[i] = z;
             tabverts[i + 2] = x;
         }
@@ -245,9 +246,10 @@ class Topo4 {
 
         // iterate over all slices (real x = z)
         // find max real z using z ray intersect from tool point to slice lines + offset
+        let lz = 0;
         for (let si = 0; si < slen; si += sinc) {
             const rx = oslices[si].z;
-            let mz = 0;
+            let mz = -Infinity;
             // iterate over tool offsets
             for (let ti = 0; ti < tlen; ) {
                 // tool offset in grid units from present x (si)
@@ -278,14 +280,19 @@ class Topo4 {
                     }
                 }
             }
-            heights.push(rx, 0, Math.max(zBottom, mz));
+            if (mz === -Infinity) {
+                mz = Math.max(lz, 0);
+            } else if (zBottom && mz < zBottom) {
+                mz = zBottom;
+            }
+            heights.push(rx, 0, lz = mz);
         }
 
         return heights;
     }
 
     async latheWorker(onupdate) {
-        const { sliced, tool } = this;
+        const { sliced, tool, zoff } = this;
 
         const rota = this.angle * DEG2RAD;
         const steps = (Math.PI * 2) / rota;
@@ -333,7 +340,7 @@ class Topo4 {
             slice.camLines[0].push(poly.points[0].clone());
             slice.output()
                 .setLayer("lathe", { line: 0xffff00 })
-                .addPoly(poly.clone().applyRotations());
+                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
         }
 
         // console.log({ tool, slices, paths });

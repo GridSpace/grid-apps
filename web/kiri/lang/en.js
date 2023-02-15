@@ -679,7 +679,7 @@ self.kiri.lang['en-us'] = {
     ou_zanc_s:      "z anchor",
     ou_zanc_l:      ["controls the position of the part","when stock Z exceeds part Z"],
     ou_ztof_s:      "z offset",
-    ou_ztof_l:      ["offset z anchor","in workspace units","has no effect when","anchor is middle"],
+    ou_ztof_l:      ["offset z anchor","in workspace units"],
     ou_zbot_s:      "z bottom",
     ou_zbot_l:      ["offset from part bottom","to limit cutting depth","in workspace units"],
     ou_zclr_s:      "z clearance",
