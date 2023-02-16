@@ -239,14 +239,14 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         });
         tracker.rotation = isIndexed ? axisRotation : 0;
         // setup new state when indexing the workspace
-        if (true && op.op.type === "index") {
+        if (op.op.type === "index") {
+            widget.topo = undefined;
             // let points = base.verticesToPoints();
             state.slicer = new kiri.cam_slicer(widget);
             shadows = {};
             await new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
                 // console.log('reshadow', progress.round(3));
             });
-            widget.topo = undefined;
         }
         camOps.push(op);
         opSum += weight;

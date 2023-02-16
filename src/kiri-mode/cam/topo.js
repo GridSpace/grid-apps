@@ -87,7 +87,7 @@ class Topo {
             clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
             gridDelta = Math.floor(partOff / resolution),
-            debug = true,
+            debug = false,
             debug_clips = debug && true,
             debug_topo = debug && true,
             debug_topo_lines = debug && true,
@@ -205,7 +205,7 @@ class Topo {
         const { box } = params;
         const { worker, minions } = kiri;
 
-        const vertices = widget.getGeoVertices().toShared();
+        const vertices = widget.getGeoVertices({ unroll: true, translate: true }).toShared();
         const range = { min: Infinity, max: -Infinity };
 
         // swap XZ in shared array
@@ -449,7 +449,7 @@ class Probe {
                 xl = sx - 1,
                 yl = sy - 1;
 
-            let gv, i = 0, mz = -1;
+            let gv, i = 0, mz = -Infinity;
 
             while (i < profile.length) {
                 // tool profile point x, y, and z offsets
@@ -467,7 +467,7 @@ class Probe {
                 mz = Math.max(tz + gv, mz);
             }
 
-            return Math.max(mz, 0);
+            return Math.max(mz, zMin);
         }
 
         // export z probe function
@@ -777,7 +777,7 @@ function raster_slice(inputs) {
     // rasterize one x slice
     for (y = minY; y < maxY && gridy < stepsY; y += resolution) {
         gridi = gridx * stepsY + gridy;
-        gridv = data[gridi] || 0;
+        gridv = data[gridi] || zMin;
         // strategy using raw lines (faster slice, but more lines)
         for (i=0, il=points.length; i<il; i += 2) {
             const p1 = points[i], p2 = points[i+1];

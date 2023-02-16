@@ -279,6 +279,10 @@ class Topo4 {
                         mz = Math.max(mz, lz);
                     }
                 }
+                if (mz === -Infinity && xo === 0 && yo === 0) {
+                    // tool tip is off the model
+                    break;
+                }
             }
             if (mz === -Infinity) {
                 mz = Math.max(lz, 0);
