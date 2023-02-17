@@ -49,17 +49,20 @@ class OpIndex extends CamOp {
         if (!state.isIndexed) {
             throw 'index op requires indexed stock';
         }
-        state.setAxisIndex(op.degrees, op.absolute);
+        this.degrees = state.setAxisIndex(op.degrees, op.absolute);
     }
 
     prepare(ops, progress) {
-        const { lastPoint, zmax, camOut, stock } = ops;
-        // max point of stock corner radius when rotating (safe z when indexing)
-        const last = lastPoint();
+        const { lastPoint, zmax, zclear, camOut, stock } = ops;
+        let last = lastPoint();
         if (last) {
-            const rzmax = (Math.max(stock.y, stock.z) * Math.sqrt(2)) / 2;
+            // max point of stock corner radius when rotating (safe z when indexing)
+            const rzmax = (Math.max(stock.y, stock.z) * Math.sqrt(2)) / 2 + zclear;
             const zmove = Math.max(rzmax, zmax);
-            camOut(last.clone().setZ(zmove), 0);
+            // move above rotating stock
+            camOut(last = last.clone().setZ(zmove), 0);
+            // issue rotation command
+            camOut(last = last.clone().setY(0).setA(this.degrees), 0);
         }
     }
 }

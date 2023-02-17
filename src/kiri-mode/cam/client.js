@@ -515,7 +515,7 @@ CAM.init = function(kiri, api) {
             let inside = true;
             let popped = false;
             let poprec = popOp[rec.type];
-            if (type === 'index' & indexing && !rec.disabled) {
+            if (type === 'index' && indexing && !rec.disabled) {
                 index = rec.absolute ? rec.degrees : index + rec.degrees;
             }
             el.rec = rec;
@@ -819,9 +819,9 @@ CAM.init = function(kiri, api) {
         iw = int.object.widget;
         ic = int.point;
         // only near vertical faces
-        if (Math.abs(n.z) > 0.3) {
-            return;
-        }
+        // if (Math.abs(n.z) > 0.3) {
+        //     return;
+        // }
         showTab = createTabBox(iw, ic, n);
     };
     func.tabHoverUp = function(int) {

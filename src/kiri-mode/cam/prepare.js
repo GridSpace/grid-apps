@@ -453,6 +453,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         emitDrills,
         emitTrace,
         bounds,
+        zclear,
         zmax,
         lastPoint: () => { return lastPoint }
     };

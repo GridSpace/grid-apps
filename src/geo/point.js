@@ -45,6 +45,16 @@ class Point {
         return this;
     }
 
+    setX(x) {
+        this.x = x;
+        return this;
+    }
+
+    setY(y) {
+        this.y = y;
+        return this;
+    }
+
     setZ(z) {
         this.z = z;
         return this;

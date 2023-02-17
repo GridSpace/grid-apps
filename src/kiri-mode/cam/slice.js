@@ -146,6 +146,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         axisIndex = absolute ? degrees : axisIndex + degrees;
         axisRotation = (Math.PI / 180) * axisIndex;
         widget.setAxisIndex(isIndexed ? -axisIndex : 0);
+        return isIndexed ? -axisIndex : 0;
     }
 
     function addPolyIndexing(poly, a) {
