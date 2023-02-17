@@ -1150,10 +1150,16 @@ gapp.register("kiri.init", [], (root, exports) => {
         ui.toolFluteLen.value = tool.flute_len;
         ui.toolShaftDiam.value = tool.shaft_diam;
         ui.toolShaftLen.value = tool.shaft_len;
-        // ui.toolTaperAngle.value = tool.taper_angle || 70;
         ui.toolTaperTip.value = tool.taper_tip || 0;
         ui.toolMetric.checked = tool.metric;
         ui.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
+        if (tool.type === 'tapermill') {
+            ui.toolTaperAngle.value = kiri.driver.CAM.calcTaperAngle(
+                (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
+            );
+        } else {
+            ui.toolTaperAngle.value = 0;
+        }
         renderTool(tool);
     }
 
@@ -1179,7 +1185,7 @@ gapp.register("kiri.init", [], (root, exports) => {
     function renderTool(tool) {
         let type = selectedTool.type;
         let taper = type === 'tapermill';
-        // ui.toolTaperAngle.disabled = taper ? undefined : 'true';
+        ui.toolTaperAngle.disabled = taper ? undefined : 'true';
         ui.toolTaperTip.disabled = taper ? undefined : 'true';
         $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
         setTimeout(() => {
@@ -1255,17 +1261,31 @@ gapp.register("kiri.init", [], (root, exports) => {
         }, 10);
     }
 
-    function updateTool() {
+    function updateTool(ev) {
         selectedTool.name = ui.toolName.value;
         selectedTool.number = parseInt(ui.toolNum.value);
         selectedTool.flute_diam = parseFloat(ui.toolFluteDiam.value);
         selectedTool.flute_len = parseFloat(ui.toolFluteLen.value);
         selectedTool.shaft_diam = parseFloat(ui.toolShaftDiam.value);
         selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value);
-        // selectedTool.taper_angle = parseFloat(ui.toolTaperAngle.value);
         selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value);
         selectedTool.metric = ui.toolMetric.checked;
         selectedTool.type = ['endmill','ballmill','tapermill'][ui.toolType.selectedIndex];
+        if (selectedTool.type === 'tapermill') {
+            const CAM = kiri.driver.CAM;
+            const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
+            if (ev && ev.target === ui.toolTaperAngle) {
+                const angle = parseFloat(ev.target.value);
+                const len = CAM.calcTaperLength(rad, angle * DEG2RAD);
+                selectedTool.flute_len = len;
+                ui.toolTaperAngle.value = angle;
+                ui.toolFluteLen.value = selectedTool.flute_len.round(4);
+            } else {
+                ui.toolTaperAngle.value = CAM.calcTaperAngle(rad, selectedTool.flute_len);
+            }
+        } else {
+            ui.toolTaperAngle.value = 0;
+        }
         renderTools();
         ui.toolSelect.selectedIndex = selectedTool.order;
         setToolChanged(true);
@@ -1662,7 +1682,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             toolFluteLen:       $('tool-flen'),
             toolShaftDiam:      $('tool-sdiam'),
             toolShaftLen:       $('tool-slen'),
-            // toolTaperAngle: $('tool-tangle'),
+            toolTaperAngle:     $('tool-tangle'),
             toolTaperTip:       $('tool-ttip'),
             toolMetric:         $('tool-metric'),
 
@@ -2383,6 +2403,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.toolShaftDiam, updateTool,
             ui.toolShaftLen,  updateTool,
             ui.toolTaperTip,  updateTool,
+            ui.toolTaperAngle, updateTool,
             $('rot_x'),       selectionRotate,
             $('rot_y'),       selectionRotate,
             $('rot_z'),       selectionRotate

@@ -10,6 +10,7 @@ const { driver } = kiri;
 const { CAM } = driver;
 
 const HPI = Math.PI/2;
+const RAD2DEG = 180/Math.PI;
 
 class Tool {
     constructor(settings, id, number) {
@@ -70,6 +71,15 @@ class Tool {
         return diam ? diam * step : step;
     }
 
+    setTaperLengthFromAngle(angle) {
+        const rad = (this.flute_diam - this.taper_tip) / 2;
+        return this.flute_len = CAM.calcTaperLength(rad, angle);
+    }
+
+    getTaperAngle() {
+        return CAM.calcTaperAngle((this.flute_diam - this.taper_tip) / 2, this.flute_len);
+    }
+
     shaftLength() {
         return this.unitScale() * this.tool.shaft_len;
     }
@@ -95,8 +105,8 @@ class Tool {
             shaft_offset = this.fluteLength(),
             flute_diameter = this.fluteDiameter(),
             shaft_diameter = this.shaftDiameter(),
-            shaft_radius = shaft_diameter / 2,
-            shaft_pix_float = shaft_diameter / resolution,
+            max_diameter = Math.max(flute_diameter, shaft_diameter),
+            shaft_pix_float = max_diameter / resolution,
             shaft_pix_int = Math.round(shaft_pix_float),
             shaft_radius_pix_float = shaft_pix_float / 2,
             flute_radius = flute_diameter / 2,
@@ -133,7 +143,7 @@ class Tool {
                     toolOffset.push(dx, dy, z_offset);
                 } else if (shaft_offset && larger_shaft && dist_from_center <= shaft_radius_pix_float) {
                     // shaft offset points
-                    toolOffset.push(dx, dy, -shaft_offset);
+                    // toolOffset.push(dx, dy, -shaft_offset);
                 }
             }
         }
@@ -154,6 +164,14 @@ class Tool {
 }
 
 CAM.Tool = Tool;
+
+CAM.calcTaperAngle = function(rad, len) {
+    return (Math.atan(rad / len) * RAD2DEG).round(1);
+};
+
+CAM.calcTaperLength = function(rad, angle) {
+    return rad / Math.tan(angle);
+};
 
 CAM.getToolDiameter = function(settings, id) {
     return new CAM.Tool(settings, id).fluteDiameter();

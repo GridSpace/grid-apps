@@ -6,6 +6,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 # Release 3.9
 
 * more graceful handling of security contexts blocking SharedArrayBuffer
+* CAM add calcualtion of taper length from angle
 * CAM add open poly-line offsetting with trace op
 * CAM clearly delineate ops reachable or not on timeline
 * CAM add 4th axis lathe operation for debug and testing (can be optimized)
