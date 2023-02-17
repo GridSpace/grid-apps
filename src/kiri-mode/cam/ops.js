@@ -341,7 +341,7 @@ class OpRough extends CamOp {
             }) || [];
 
             // add outside pass if not inside only
-            if (!roughIn) {
+            if (!roughIn && !roughStock) {
                 const outside = POLY.offset(shadow.clone(), toolDiam / 2 + roughLeave, {z: slice.z});
                 if (outside) {
                     outside.forEach(p => p.depth = -p.depth);
@@ -387,8 +387,8 @@ class OpRough extends CamOp {
                 // .addPolys(tshadow)
                 // .setLayer("rough shadow", {line: 0x00aa00})
                 // .addPolys(shadow)
-                // .setLayer("rough shell", {line: 0xaa0000})
-                // .addPolys(shell);
+                .setLayer("rough shell", {line: 0xaa0000})
+                .addPolys(shell);
             slice.output()
                 .setLayer("roughing", {face: color, line: color})
                 .addPolys(offset);
