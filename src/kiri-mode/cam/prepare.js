@@ -346,7 +346,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 // new pos for plunge calc
                 deltaXY = 0;
             }
-        } else if (isMove && ['lathe','contour'].contains(currentOp.type)) {
+        } else if (isMove && ['lathe'].contains(currentOp.type)) {
             if (point.z > lastPoint.z) {
                 layerPush(lastPoint.clone().setZ(point.z), 0, 0, tool.getNumber());
             } else if (point.z < lastPoint.z) {

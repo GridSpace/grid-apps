@@ -757,6 +757,26 @@ class OpContour extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { addSlices } = state;
+        let filter = slices => slices;
+        if (op.filter) {
+            try {
+                const obj = eval(`( ${op.filter.join('\n')} )`);
+                let idx = 0;
+                if (obj && obj.slices) {
+                    const nadd = [];
+                    filter = function(slices) {
+                        for (let slice of slices) {
+                            if (obj.slices(slice, idx++)) {
+                                nadd.push(slice);
+                            }
+                        }
+                        return nadd;
+                    };
+                }
+            } catch (e) {
+                console.log('filter parse error', e, op.filter);
+            }
+        }
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
@@ -766,6 +786,7 @@ class OpContour extends CamOp {
                 progress(index / total, msg);
             },
             ondone: (slices) => {
+                slices = filter(slices);
                 this.sliceOut = slices;
                 addSlices(slices);
             },

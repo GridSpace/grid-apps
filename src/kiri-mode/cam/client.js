@@ -1301,6 +1301,8 @@ CAM.init = function(kiri, api) {
         dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:(op) => { return !op.inputs.wide.checked }}),
     };
 
+    const contourFilter = gcodeEditor('Layer Filter', 'filter');
+
     createPopOp('contour', {
         tool:      'camContourTool',
         spindle:   'camContourSpindle',
@@ -1315,6 +1317,7 @@ CAM.init = function(kiri, api) {
         bottom:    'camContourBottom',
         curves:    'camContourCurves',
         inside:    'camContourIn',
+        filter:    'camContourFilter',
         axis:      'X'
     }).inputs = {
         tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1334,7 +1337,8 @@ CAM.init = function(kiri, api) {
         sep:       UC.newBlank({class:"pop-sep"}),
         curves:    UC.newBoolean(LANG.cf_curv_s, undefined, {title:LANG.cf_curv_l}),
         inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l}),
-        bottom:    UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf ? conf.process.camZBottom : 0})
+        bottom:    UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf ? conf.process.camZBottom : 0}),
+        filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
     };
 
     createPopOp('lathe', {
