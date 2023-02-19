@@ -56,13 +56,17 @@ class Topo4 {
             step = this.step = (tool.traceOffset() * 2) * op.step,
             angle = this.angle = op.angle || 1;
 
+        if (tool.isTaperMill() && step === 0) {
+            step = this.step = op.step * tool.unitScale();
+        }
+
         if (tolerance === 0) {
             console.log(widget.id, 'topo4 auto tolerance', resolution.round(4));
         }
 
         this.zBottom = state.zBottom;
         this.resolution = resolution;
-        this.vertices = widget.getGeoVertices();
+        this.vertices = widget.getGeoVertices({ unroll: true, translate: true });
         this.tabverts = widget.getTabVertices();
         this.tool = tool.generateProfile(resolution).profile;
         this.maxo = tool.profileDim.maxo * resolution;
