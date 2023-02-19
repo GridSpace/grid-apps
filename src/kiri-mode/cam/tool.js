@@ -166,11 +166,11 @@ class Tool {
 CAM.Tool = Tool;
 
 CAM.calcTaperAngle = function(rad, len) {
-    return (Math.atan(rad / len) * RAD2DEG).round(1);
+    return (Math.atan(rad / len) * RAD2DEG);
 };
 
 CAM.calcTaperLength = function(rad, angle) {
-    return rad / Math.tan(angle);
+    return (rad / Math.tan(angle));
 };
 
 CAM.getToolDiameter = function(settings, id) {

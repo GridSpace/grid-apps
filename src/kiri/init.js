@@ -1156,7 +1156,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         if (tool.type === 'tapermill') {
             ui.toolTaperAngle.value = kiri.driver.CAM.calcTaperAngle(
                 (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
-            );
+            ).round(1);
         } else {
             ui.toolTaperAngle.value = 0;
         }
@@ -1278,10 +1278,10 @@ gapp.register("kiri.init", [], (root, exports) => {
                 const angle = parseFloat(ev.target.value);
                 const len = CAM.calcTaperLength(rad, angle * DEG2RAD);
                 selectedTool.flute_len = len;
-                ui.toolTaperAngle.value = angle;
+                ui.toolTaperAngle.value = angle.round(1);
                 ui.toolFluteLen.value = selectedTool.flute_len.round(4);
             } else {
-                ui.toolTaperAngle.value = CAM.calcTaperAngle(rad, selectedTool.flute_len);
+                ui.toolTaperAngle.value = CAM.calcTaperAngle(rad, selectedTool.flute_len).round(1);
             }
         } else {
             ui.toolTaperAngle.value = 0;

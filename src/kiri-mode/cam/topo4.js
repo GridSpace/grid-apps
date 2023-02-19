@@ -289,7 +289,7 @@ class Topo4 {
                 }
             }
             if (mz === -Infinity) {
-                mz = Math.max(lz, 0);
+                mz = zBottom; // Math.min(0, lz)
             } else if (zBottom && mz < zBottom) {
                 mz = zBottom;
             }
