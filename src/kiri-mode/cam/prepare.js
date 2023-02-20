@@ -168,7 +168,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             lastTool = toolID;
         }
         feedRate = feed || feedRate;
-        plungeRate = plunge || plungeRate || feedRate;
+        plungeRate = Math.min(feedRate, plunge || plungeRate || feedRate);
     }
 
     function setLasering(bool, power = 0) {
@@ -392,14 +392,14 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // set new plunge rate
-        if (!lasering && deltaZ < -tolerance) {
+        if (!lasering && deltaZ < -tolerance && currentOp.type !== 'lathe') {
             let threshold = Math.min(deltaXY / 2, absDeltaZ),
                 modifier = threshold / absDeltaZ;
             if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
                 // use modifier to speed up long XY move plunge rates
                 rate = Math.round(plungeRate + ((feedRate - plungeRate) * modifier));
             } else {
-                rate = plungeRate;
+                rate = Math.min(feedRate, plungeRate);
             }
         }
 

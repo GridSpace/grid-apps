@@ -68,6 +68,7 @@
 
 # CAM
 
+* `B` rapid moves should be max of terrain zmax and last cut layer height (roughing)
 * `B` in indexed stock mode, stock should rotate with indexing
 * `B` feed rate for next tool set before tool change (push/pop feed rates?)
 * `B` tab cuts cause loss of direction, parenting, depth, and it's hard to fix
