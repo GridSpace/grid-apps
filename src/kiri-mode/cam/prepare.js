@@ -100,6 +100,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         layerOut = [],
         printPoint,
         isNewMode,
+        isLathe,
         tool,
         toolType,
         toolDiam,
@@ -327,7 +328,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             isMove = !cut;
 
         // drop points too close together
-        if (deltaXY < 0.001 && point.z === lastPoint.z) {
+        if (!isLathe && deltaXY < 0.001 && point.z === lastPoint.z) {
             // console.trace(["drop dup",lastPoint,point]);
             return;
         }
@@ -346,7 +347,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 // new pos for plunge calc
                 deltaXY = 0;
             }
-        } else if (isMove && ['lathe'].contains(currentOp.type)) {
+        } else if (isMove && isLathe) {
             if (point.z > lastPoint.z) {
                 layerPush(lastPoint.clone().setZ(point.z), 0, 0, tool.getNumber());
             } else if (point.z < lastPoint.z) {
@@ -392,7 +393,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // set new plunge rate
-        if (!lasering && deltaZ < -tolerance && currentOp.type !== 'lathe') {
+        if (!lasering && deltaZ < -tolerance && !isLathe) {
             let threshold = Math.min(deltaXY / 2, absDeltaZ),
                 modifier = threshold / absDeltaZ;
             if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
@@ -465,6 +466,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         setTolerance(0);
         nextIsMove = true;
         currentOp = op.op;
+        isLathe = currentOp.type === 'lathe';
         let weight = op.weight();
         newLayer(op.op);
         op.prepare(ops, (progress, message) => {

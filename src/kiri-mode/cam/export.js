@@ -255,13 +255,14 @@ CAM.export = function(print, online) {
             dx = opt.dx || newpos.x - pos.x,
             dy = opt.dy || newpos.y - pos.y,
             dz = opt.dz || newpos.z - pos.z,
+            da = newpos.a != pos.a,
             maxf = dz ? maxZd : maxXYd,
             feed = Math.min(speed || maxf, maxf),
             dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
             newFeed = feed && feed !== pos.f;
 
         // drop dup points (all deltas are 0)
-        if (!(dx || dy || dz)) {
+        if (!(dx || dy || dz || da)) {
             return;
         }
 
@@ -285,7 +286,7 @@ CAM.export = function(print, online) {
             runbox.max.z = Math.max(runbox.max.z, pos.z);
             nl.append(space).append("Z").append(add0(pos.z * factor));
         }
-        if (newpos.a !== pos.a) {
+        if (da) {
             pos.a = newpos.a;
             nl.append(space).append("A").append(add0(pos.a * factor));
         }

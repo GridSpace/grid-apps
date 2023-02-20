@@ -68,6 +68,7 @@
 
 # CAM
 
+* `B` roughing leave stock should also increase Z slightly (sqrt(2) * leave)
 * `B` rapid moves should be max of terrain zmax and last cut layer height (roughing)
 * `B` in indexed stock mode, stock should rotate with indexing
 * `B` feed rate for next tool set before tool change (push/pop feed rates?)

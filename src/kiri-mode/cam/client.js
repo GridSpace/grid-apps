@@ -1348,6 +1348,8 @@ CAM.init = function(kiri, api) {
         angle:     'camLatheAngle',
         rate:      'camLatheSpeed',
         tolerance: 'camTolerance',
+        filter:    'camContourFilter',
+        leave:     'camContourLeave',
         axis:      'X'
     }).inputs = {
         tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1355,9 +1357,13 @@ CAM.init = function(kiri, api) {
         sep:       UC.newBlank({class:"pop-sep"}),
         spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
         rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
+        sep:       UC.newBlank({class:"pop-sep"}),
         step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,10.0)}),
         angle:     UC.newInput(LANG.cc_sang_s, {title:LANG.cc_sang_l, convert:UC.toFloat, bound:UC.bound(0.01,90.0)}),
+        sep:       UC.newBlank({class:"pop-sep"}),
         tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
+        leave:     UC.newInput(LANG.cf_leav_s, {title:LANG.cf_leav_l, convert:UC.toFloat, bound:UC.bound(0,100)}),
+        // filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
     };
 
     createPopOp('trace', {

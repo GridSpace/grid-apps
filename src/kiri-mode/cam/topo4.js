@@ -72,6 +72,7 @@ class Topo4 {
         this.maxo = tool.profileDim.maxo * resolution;
         this.diam = tool.fluteDiameter();
         this.zoff = widget.track.top || 0;
+        this.leave = op.leave || 0;
 
         onupdate(0, "lathe");
 
@@ -90,6 +91,8 @@ class Topo4 {
         onupdate(1, "lathe");
         ondone(lathe);
         // ondone([...slices, ...lathe]);
+
+        return this;
     }
 
     async slice(onupdate) {
@@ -300,7 +303,7 @@ class Topo4 {
     }
 
     async latheWorker(onupdate) {
-        const { sliced, tool, zoff } = this;
+        const { sliced, tool, zoff, leave } = this;
 
         const rota = this.angle * DEG2RAD;
         const steps = (Math.PI * 2) / rota;
@@ -335,7 +338,8 @@ class Topo4 {
         for (let rec of recs) {
             const { degrees, heights } = rec;
             [...heights].group(3).forEach((a,i) => {
-                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2]).setA(degrees) );
+                // progress each path 360 degrees to prevent A rolling backwards
+                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees+ i * -360) );
             });
         }
 
@@ -345,7 +349,9 @@ class Topo4 {
                 console.log('empty', slice);
                 continue;
             }
-            slice.camLines[0].push(poly.points[0].clone());
+            // repeat first point 360 degrees progressed
+            const repeat = poly.points[0];
+            slice.camLines[0].push(repeat.clone().setA(repeat.a - 360));
             slice.output()
                 .setLayer("lathe", { line: 0xffff00 })
                 .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
@@ -407,7 +413,7 @@ function rotatePoints(lines, rot) {
     new THREE.BufferAttribute(lines, 3).applyMatrix4(rot);
 }
 
-CAM.Topo4 = async function(opt) {
+CAM.Topo4 = function(opt) {
     return new Topo4().generate(opt);
 };
 

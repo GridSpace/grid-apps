@@ -749,6 +749,30 @@ class OpOutline extends CamOp {
     }
 }
 
+function createFilter(op) {
+    let filter = slices => slices;
+    if (op.filter) {
+        try {
+            const obj = eval(`( ${op.filter.join('\n')} )`);
+            let idx = 0;
+            if (obj && obj.slices) {
+                const nadd = [];
+                filter = function(slices) {
+                    for (let slice of slices) {
+                        if (obj.slices(slice, idx++)) {
+                            nadd.push(slice);
+                        }
+                    }
+                    return nadd;
+                };
+            }
+        } catch (e) {
+            console.log('filter parse error', e, op.filter);
+        }
+    }
+    return filter;
+}
+
 class OpContour extends CamOp {
     constructor(state, op) {
         super(state, op);
@@ -757,26 +781,7 @@ class OpContour extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { addSlices } = state;
-        let filter = slices => slices;
-        if (op.filter) {
-            try {
-                const obj = eval(`( ${op.filter.join('\n')} )`);
-                let idx = 0;
-                if (obj && obj.slices) {
-                    const nadd = [];
-                    filter = function(slices) {
-                        for (let slice of slices) {
-                            if (obj.slices(slice, idx++)) {
-                                nadd.push(slice);
-                            }
-                        }
-                        return nadd;
-                    };
-                }
-            } catch (e) {
-                console.log('filter parse error', e, op.filter);
-            }
-        }
+        let filter = createFilter(op);
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
@@ -869,6 +874,7 @@ class OpLathe extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { addSlices } = state;
+        let filter = createFilter(op);
 
         this.topo = await CAM.Topo4({
             op,
@@ -877,6 +883,7 @@ class OpLathe extends CamOp {
                 progress(pct, msg);
             },
             ondone: (slices) => {
+                slices = filter(slices);
                 this.slices = slices;
                 addSlices(slices, false);
             }
@@ -893,6 +900,7 @@ class OpLathe extends CamOp {
 
         let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         let stepover = toolDiam * op.step * 2;
+        let rez = topo.resolution;
 
         setTool(op.tool, op.rate, op.plunge);
         setSpindle(op.spindle);
@@ -906,16 +914,42 @@ class OpLathe extends CamOp {
                 continue;
             }
 
+            let last;
             for (let path of slice.camLines) {
+                let latent;
                 path.forEachPoint((point, pidx) => {
-                    camOut(point.clone(), pidx > 0, stepover);
+                    if (last) {
+                        const dz = Math.abs(last.z - point.z);
+                        if (dz < rez) {
+                            // latent point should still be included in
+                            // preview b/c arcs would look like straight lines
+                            latent = point.clone();
+                            return;
+                        }
+                        if (latent) {
+                            camOut(latent, true, stepover);
+                            latent = undefined;
+                        }
+                    }
+                    camOut(last = point.clone(), pidx > 0, stepover);
                 }, false);
+                if (latent) {
+                    camOut(latent, true, stepover);
+                }
             }
 
             newLayer();
         }
 
-        setPrintPoint(printPoint);
+        // move to safe height and reset A axis
+        let last = ops.lastPoint();
+        let amax = Math.round(last.a / 360) * 360;
+        camOut(last = last.clone().setZ(zmax), 0);
+        camOut(last = last.clone().setA(amax), 0);
+        newLayer();
+        ops.addGCode("G92A0");
+
+        setPrintPoint(last);
     }
 }
 
