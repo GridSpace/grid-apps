@@ -874,7 +874,7 @@ class OpLathe extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { addSlices } = state;
-        let filter = createFilter(op);
+        // let filter = createFilter(op);
 
         this.topo = await CAM.Topo4({
             op,
@@ -883,7 +883,7 @@ class OpLathe extends CamOp {
                 progress(pct, msg);
             },
             ondone: (slices) => {
-                slices = filter(slices);
+                // slices = filter(slices);
                 this.slices = slices;
                 addSlices(slices, false);
             }
