@@ -509,7 +509,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
     function depthRoughPath(start, depth, levels, tops, emitter, fit, ease) {
         let level = levels[depth];
-        if (!level) {
+        if (!(level && level.length)) {
             return start;
         }
         let ltops = tops[depth];

@@ -410,7 +410,7 @@ class OpRough extends CamOp {
         let danger = controller.danger;
         let easeDown = process.camEaseDown;
         let cutdir = process.camConventional;
-        let depthFirst = process.camDepthFirst;
+        let depthFirst = process.camDepthFirst && !state.isIndexed;
         let depthData = [];
 
         setTool(op.tool, op.rate, op.plunge);
