@@ -111,7 +111,6 @@
 * `P` log Z interpolation for contour XYZ moves
 * `P` option to start with the smallest poly by area on layer change
 * `P` refactor slicing engine to add minion threading
-* `P` decrease cutting speed when entire tool is engaged (start of roughing, rest machining)
 * `P` port arc code from FDM export to CAM export
 * `P` redo all path route / planning in prepare to account for terrain before camOut
 

@@ -6,6 +6,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 # Release 3.9
 
 * more graceful handling of security contexts blocking SharedArrayBuffer
+* CAM decrease cutting speed when entire tool is engaged in roughing
 * CAM add dogbones support to traces ops
 * CAM add scripted contour filtering (to be extended to other ops)
 * CAM add calculation of taper length from angle

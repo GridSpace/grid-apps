@@ -100,6 +100,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         layerOut = [],
         printPoint,
         isNewMode,
+        isRough,
         isLathe,
         tool,
         toolType,
@@ -294,7 +295,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         );
     }
 
-    function camOut(point, cut, moveLen = toolDiamMove) {
+    function camOut(point, cut, moveLen = toolDiamMove, factor = 1) {
         point = point.clone();
         point.x += wmx;
         point.y += wmy;
@@ -311,7 +312,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             nextIsMove = false;
         }
 
-        let rate = feedRate;
+        let rate = feedRate * factor;
 
         // before first point, move cutting head to point above it
         // then set that new point as the lastPoint
@@ -467,6 +468,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         nextIsMove = true;
         currentOp = op.op;
         isLathe = currentOp.type === 'lathe';
+        isRough = currentOp.type === 'rough';
         let weight = op.weight();
         newLayer(op.op);
         op.prepare(ops, (progress, message) => {
@@ -493,12 +495,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let last = null;
         if (easeDown && poly.isClosed()) {
             last = poly.forEachPointEaseDown(function(point, offset) {
-                camOut(point.clone(), offset > 0);
+                camOut(point.clone(), offset > 0, undefined, isRough && count === 1 ? 0.5 : 1);
             }, fromPoint);
         } else {
             poly.forEachPoint(function(point, pidx, points, offset) {
                 last = point;
-                camOut(point.clone(), offset !== 0);
+                camOut(point.clone(), offset !== 0, undefined, isRough && count === 1 ? 0.5 : 1);
             }, poly.isClosed(), index);
         }
         newLayer();
