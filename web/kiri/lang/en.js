@@ -496,6 +496,8 @@ self.kiri.lang['en-us'] = {
     co_menu:        "outline",
     co_dogb_s:      "dogbones",
     co_dogb_l:      ["insert dogbone cuts","into inside corners"],
+    co_dogr_s:      "reverse bones",
+    co_dogr_l:      ["reverse dogbone direction"],
     co_clrt_s:      "clear top",
     co_clrt_l:      ["cut starting at the top of stock","when stock is enabled"],
     co_wide_s:      "wide cutout",

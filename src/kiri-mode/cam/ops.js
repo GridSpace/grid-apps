@@ -1000,6 +1000,9 @@ class OpTrace extends CamOp {
             return slice;
         }
         function followZ(poly) {
+            if (op.dogbones) {
+                CAM.addDogbones(poly, toolDiam / 5, !op.revbone);
+            }
             let z = poly.getZ();
             let slice = newSliceOut(z);
             slice.camTrace = { tool, rate, plunge };
