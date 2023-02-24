@@ -572,7 +572,7 @@ CAM.init = function(kiri, api) {
                     rec.disabled = !rec.disabled;
                     for (let op of ev.shiftKey ? oplist : [ rec ]) {
                         if (op !== rec) {
-                            op.disabled = !rec.disabled;
+                            op.disabled = op.type !== '|' ? !rec.disabled : false;
                         }
                     }
                     for (let el of bounds) {
