@@ -429,14 +429,15 @@ class OpRough extends CamOp {
             // set winding specified in output
             POLY.setWinding(level, cutdir, false);
             printPoint = poly2polyEmit(level, printPoint, function(poly, index, count) {
+                const factor = count === 1 ? 0.5 : 1;
                 poly.forEachPoint(function(point, pidx, points, offset) {
-                    camOut(point.clone(), offset !== 0);
+                    camOut(point.clone(), offset !== 0, undefined, factor);
                 }, true, index);
             });
             newLayer();
         }
 
-        let index = 0;
+        let total = 0;
         for (let slice of sliceOut) {
             let polys = [], t = [], c = [];
             POLY.flatten(slice.camLines).forEach(function (poly) {
@@ -457,12 +458,12 @@ class OpRough extends CamOp {
             } else {
                 printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
                     poly.forEachPoint(function(point, pidx, points, offset) {
-                        camOut(point.clone(), offset !== 0);
+                        camOut(point.clone(), offset !== 0, undefined, count === 1 ? 0.5 : 1);
                     }, poly.isClosed(), index);
                 }, { swapdir: false });
                 newLayer();
             }
-            progress(++index / sliceOut.length, "routing");
+            progress(++total / sliceOut.length, "routing");
         }
 
         function isNeg(v) {
@@ -943,11 +944,11 @@ class OpLathe extends CamOp {
 
         // move to safe height and reset A axis
         let last = ops.lastPoint();
-        let amax = Math.round(last.a / 360) * 360;
-        camOut(last = last.clone().setZ(zmax), 0);
-        camOut(last = last.clone().setA(amax), 0);
+        let amax = (Math.round(last.a / 360) * 360).round(2);
+        // camOut(last = last.clone().setZ(zmax), 0);
+        // camOut(last = last.clone().setA(amax), 0);
         newLayer();
-        ops.addGCode("G92A0");
+        ops.addGCode([`G0 Z${zmax.round(2)}`,`G0 A${amax}`,"G92 A0"]);
 
         setPrintPoint(last);
     }
