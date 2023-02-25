@@ -90,15 +90,15 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
 
     if (stock.x && stock.y && stock.z) {
         if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
-            throw 'stock X too small for part. disable stock or use offset stock';
+            throw 'stock X too small for part. resize stock or use offset stock';
         }
 
         if (stock.y + 0.00001 < bounds.max.y - bounds.min.y) {
-            throw 'stock Y too small for part. disable stock or use offset stock';
+            throw 'stock Y too small for part. resize stock or use offset stock';
         }
 
         if (stock.z + 0.00001 < bounds.max.z - bounds.min.z) {
-            throw 'stock Z too small for part. disable stock or use offset stock';
+            throw 'stock Z too small for part. resize stock or use offset stock';
         }
     }
 
