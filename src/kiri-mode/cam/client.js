@@ -1366,6 +1366,19 @@ CAM.init = function(kiri, api) {
         // filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
     };
 
+    function canDogBones() {
+        if (!poppedRec) return false;
+        return poppedRec.mode === 'follow';// && poppedRec.offset && poppedRec.offset !== 'none';
+    }
+
+    function canDogBonesRev() {
+        return canDogBones() && poppedRec.dogbone;
+    }
+
+    function zDogSep() {
+        return canDogBones() || zBottom();
+    }
+
     createPopOp('trace', {
         mode:    'camTraceType',
         offset:  'camTraceOffset',
@@ -1395,10 +1408,10 @@ CAM.init = function(kiri, api) {
         down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
         thru:     UC.newInput(LANG.cc_thru_s, {title:LANG.cc_thru_l, convert:UC.toFloat, units:true}),
         offover:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, show:() => poppedRec.offset !== "none"}),
-        sep:      UC.newBlank({class:"pop-sep", modes:MCAM, poop:true }),
+        sep:      UC.newBlank({class:"pop-sep", modes:MCAM, xshow:zDogSep}),
         bottom:   UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom}),
-        dogbone:  UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l}),
-        revbone:  UC.newBoolean(LANG.co_dogr_s, undefined, {title:LANG.co_dogr_l, show:(op) => poppedRec.dogbone}),
+        dogbone:  UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:canDogBones}),
+        revbone:  UC.newBoolean(LANG.co_dogr_s, undefined, {title:LANG.co_dogr_l, show:canDogBonesRev}),
         sep:      UC.newBlank({class:"pop-sep"}),
         menu: UC.newRow([
             UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
