@@ -604,16 +604,29 @@ class Polygon {
      * @returns {Point} center of a polygon assuming it's a circle
      */
     circleCenter() {
-        let x = 0,
-            y = 0,
-            l = this.points.length;
-        for (let point of this.points) {
-            x += point.x;
-            y += point.y;
+        let pe = this.perimeter(),
+            pe1 = pe / 3,
+            pe2 = pe1 * 2,
+            p = this.points,
+            l = p.length,
+            i = 1,
+            td = 0,
+            lp = p[0],
+            ap = [ lp ];
+        while (i < l) {
+            let np = p[i++];
+            let d = lp.distTo2D(np);
+            td += d;
+            if (ap.length === 1 && td >= pe1) {
+                ap.push(np);
+            } else if (ap.length === 2 && td >= pe2) {
+                ap.push(np);
+                break;
+            }
+            lp = np;
         }
-        x /= l;
-        y /= l;
-        return newPoint(x, y, this.points[0].z, null);
+        let center = util.center2d(...ap);
+        return newPoint(center.x, center.y, p[0].z, null);
     }
 
     /**
