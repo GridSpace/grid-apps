@@ -80,6 +80,10 @@ class Slicer {
             p2 = newPoint(0,0,0),
             p3 = newPoint(0,0,0);
 
+        // for (let i = 0, il = points.length; i < il; ) {
+        //     points[i] = points[i++].toFixed(5);
+        // }
+
         for (let i = 0, il = points.length; i < il; ) {
             p1.set(points[i++], points[i++], points[i++]);
             p2.set(points[i++], points[i++], points[i++]);
@@ -185,8 +189,8 @@ class Slicer {
                 let zmax = Math.max(p1.z, p2.z, p3.z);
                 for (let bucket of buckets) {
                     const { zs, index } = bucket;
-                    const min = zs[0];
-                    const max = zs.last();
+                    const min = Math.min(...zs);
+                    const max = Math.max(...zs);
                     if (zmin < min && zmax < min) {
                         continue;
                     }
@@ -199,7 +203,7 @@ class Slicer {
             end("create buckets");
         }
 
-        // console.log({ zs, zlen, count, step, buckets });
+        // console.log({ zs, zlen, count, step, buckets, flatoff });
 
         begin("slicing");
         const { minions } = kiri;
@@ -326,6 +330,7 @@ class Slicer {
         }
 
         if (dedup) {
+            // console.log({ z, dedup: lines, points });
             lines = sliceDedup(lines, debug);
         }
 

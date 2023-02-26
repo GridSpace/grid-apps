@@ -353,7 +353,7 @@ CAM.traces = async function(settings, widget, single) {
                 }
             }
         } else
-        base.polygons.flatten(data.tops,null,true).forEach(poly => {
+        base.polygons.flatten(data.tops).forEach(poly => {
             poly.inner = null;
             poly.parent = null;
             let z = poly.getZ();
@@ -366,6 +366,7 @@ CAM.traces = async function(settings, widget, single) {
                 }
                 // do not add duplicates
                 if (traces[i].isEquivalent(poly) && dz < 0.1) {
+                    // console.log({ dup: poly });
                     return;
                 }
             }
