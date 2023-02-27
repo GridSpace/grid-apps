@@ -80,8 +80,8 @@ class Slicer {
             p2 = newPoint(0,0,0),
             p3 = newPoint(0,0,0);
 
-        // for (let i = 0, il = points.length; i < il; ) {
-        //     points[i] = points[i++].toFixed(5);
+        // for (let i = 0, il = points.length; i < il; i++) {
+        //     points[i] = points[i].round(5);
         // }
 
         for (let i = 0, il = points.length; i < il; ) {
@@ -162,46 +162,47 @@ class Slicer {
         const step = Math.ceil(zlen / count);
         const buckets = [];
 
-        // console.log({ plen, zlen, ppz, count, step });
+        // console.log({ points, zs, count, step });
 
-        if (count === 1) {
-            buckets.push({ zs });
-        } else {
-            for (let c = 0, b = 0; c < count; c++) {
-                if (b >= zlen) break;
-                buckets.push({
-                    zs: zs.slice(b, b + step),
-                    index: []
-                });
-                b += step;
-            }
-
-            let p1 = newPoint(0,0,0),
-                p2 = newPoint(0,0,0),
-                p3 = newPoint(0,0,0);
-
-            begin("create buckets");
-            for (let i = 0, il = points.length; i < il; ) {
-                p1.set(points[i++], points[i++], points[i++]);
-                p2.set(points[i++], points[i++], points[i++]);
-                p3.set(points[i++], points[i++], points[i++]);
-                let zmin = Math.min(p1.z, p2.z, p3.z);
-                let zmax = Math.max(p1.z, p2.z, p3.z);
-                for (let bucket of buckets) {
-                    const { zs, index } = bucket;
-                    const min = Math.min(...zs);
-                    const max = Math.max(...zs);
-                    if (zmin < min && zmax < min) {
-                        continue;
-                    }
-                    if (zmin > max && zmax > max) {
-                        continue;
-                    }
-                    index.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
-                }
-            }
-            end("create buckets");
+        for (let c = 0, b = 0; c < count; c++) {
+            if (b >= zlen) break;
+            buckets.push({
+                zs: zs.slice(b, b + step),
+                index: []
+            });
+            b += step;
         }
+
+        let p1 = newPoint(0,0,0),
+            p2 = newPoint(0,0,0),
+            p3 = newPoint(0,0,0),
+            ep = 0.001;
+
+        begin("create buckets");
+        for (let i = 0, il = points.length; i < il; ) {
+            p1.set(points[i++], points[i++], points[i++]);
+            p2.set(points[i++], points[i++], points[i++]);
+            p3.set(points[i++], points[i++], points[i++]);
+            let zmin = Math.min(p1.z, p2.z, p3.z);
+            let zmax = Math.max(p1.z, p2.z, p3.z);
+            for (let bucket of buckets) {
+                const { zs, index } = bucket;
+                const min = Math.min(...zs);
+                const max = Math.max(...zs);
+                if (zmin < min && zmax < min) {
+                    if (Math.abs(zmin - min) > ep && Math.abs(zmax - min) > ep) {
+                        continue;
+                    }
+                }
+                if (zmin > max && zmax > max) {
+                    if (Math.abs(zmin - max) > ep && Math.abs(zmax - max) > ep) {
+                        continue;
+                    }
+                }
+                index.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
+            }
+        }
+        end("create buckets");
 
         // console.log({ zs, zlen, count, step, buckets, flatoff });
 
