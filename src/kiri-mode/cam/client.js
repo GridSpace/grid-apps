@@ -1047,7 +1047,7 @@ CAM.init = function(kiri, api) {
             let { selected } = object;
             let { widget, poly } = object.trace;
             for (let add of widget.adds) {
-                if (add.selected !== selected && add.trace.poly.getZ() === poly.getZ()) {
+                if (add.trace && add.selected !== selected && add.trace.poly.getZ() === poly.getZ()) {
                     func.traceToggle(add);
                 }
             }
@@ -1055,6 +1055,7 @@ CAM.init = function(kiri, api) {
     };
     func.traceToggle = function(obj, skip) {
         let material = obj.material[0];
+        if (!material) return;
         let { color, colorSave } = material;
         let { widget, poly } = obj.trace;
         let areas = poppedRec.areas;

@@ -334,7 +334,8 @@ CAM.traces = async function(settings, widget, single) {
         return false;
     }
     let slicer = new kiri.cam_slicer(widget);
-    let indices = [...new Set(Object.keys(slicer.zFlat)
+    let zees = Object.assign({}, slicer.zFlat, slicer.zLine);
+    let indices = [...new Set(Object.keys(zees)
             .map(kv => parseFloat(kv).round(5))
             .appendAll(Object.entries(single ? slicer.zLine : {}).map(ze => {
                 let [ zk, zv ] = ze;
