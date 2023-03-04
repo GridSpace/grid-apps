@@ -215,7 +215,7 @@ class Topo4 {
     }
 
     async lathe(onupdate) {
-        if (false && kiri.minions.running > 1) {
+        if (kiri.minions.running > 1) {
             return await this.latheMinions(onupdate);
         } else {
             return await this.latheWorker(onupdate);
@@ -313,8 +313,6 @@ class Topo4 {
         const paths = [];
         const recs = [];
 
-        // this.lathePath(slices, tool, paths);
-
         let angle = 0;
         let count = 0;
         // for each step angle, find Z spine heights, produce record
@@ -363,35 +361,80 @@ class Topo4 {
     }
 
     async latheMinions(onupdate) {
-        const { codec } = kiri;
-        const { sliced, resolution, tool, step } = this;
+        const { sliced, tool, zoff, leave, maxo, zBottom, step, resolution } = this;
         const { putCache, clearCache, queue } = this;
 
-        console.log({ sliced });
+        const rota = this.angle * DEG2RAD;
+        const steps = (Math.PI * 2) / rota;
+        const slices = sliced.map(s => { return { z: s.z, lines: s.shared } });
+        const paths = [];
+        const recs = [];
+
         putCache("lathe", {
+            maxo,
             tool,
             step,
-            range,
+            slices,
+            zBottom,
             resolution,
-            slices: sliced.map(s => { return { z: s.z, lines: s.shared } })
         });
 
-        let complete = 0;
-        let promises = sliced.map(slice => {
-            return queue("topo4_lathe", {
-                    // resolution
-                }).then(data => {
-                    onupdate(++complete / sliced.length);
-                    return data;
+        let done = 0;
+        let tangle = 0;
+        let count = 0;
+        let promises = [];
+        // for each step angle, find Z spine heights, produce record
+        while (count++ < steps) {
+            const angle = tangle;
+            let p = new Promise(resolve => {
+                queue("topo4_lathe", { angle }).then(data => {
+                    // console.log({ angle, data });
+                    recs.push({ angle, heights: data.heights, degrees: angle * RAD2DEG });
+                    onupdate(++done / steps);
+                    resolve();
                 });
-        });
+            });
+            // await p;
+            promises.push(p);
+            tangle -= rota;
+        }
 
-        // merge boxes for all rasters for contouring clipping
-        const output = await Promise.all(promises);
-        console.log({ output });
+        await Promise.all(promises);
+        recs.sort((a, b) => { return a.angle - b.angle });
 
+        count = recs[0].heights.length / 3;
+        while (count-- > 0) {
+            let slice = newSlice(count);
+            slice.camLines = [ newPolygon().setOpen() ];
+            paths.push(slice);
+        }
+
+        for (let rec of recs) {
+            const { degrees, heights } = rec;
+            [...heights].group(3).forEach((a,i) => {
+                // progress each path 360 degrees to prevent A rolling backwards
+                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees+ i * -360) );
+            });
+        }
+
+        for (let slice of paths) {
+            const poly = slice.camLines[0];
+            if (!poly.length) {
+                console.log('empty', slice);
+                continue;
+            }
+            // repeat first point 360 degrees progressed
+            const repeat = poly.points[0];
+            slice.camLines[0].push(repeat.clone().setA(repeat.a - 360));
+            slice.output()
+                .setLayer("lathe", { line: 0xffff00 })
+                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
+        }
+
+        // console.log({ tool, slices, paths });
         clearCache();
-        return [];
+
+        return paths;
     }
 
     putCache(key, data) {
@@ -450,12 +493,21 @@ moto.broker.subscribe("minion.started", msg => {
     };
 
     funcs.topo4_lathe = (data, seq) => {
-        // console.log({ topo4_lathe: data });
+        const { angle } = data;
+        const { slices, tool } = cache.lathe;
 
-        // const { resolution } = data;
-        const { resolution, sliced, tool, step } = cache.lathe;
+        const axis = new THREE.Vector3(1, 0, 0);
+        const mrot = new THREE.Matrix4().makeRotationAxis(axis, angle);
+        const stmp = slices.map(s => {
+            const lines = s.lines.slice();
+            rotatePoints(lines, mrot);
+            return { z: s.z, lines }
+        });
 
-        reply({ seq, abc: 123 });
+        const topo4 = Object.assign(new Topo4(), cache.lathe);
+        const heights = topo4.lathePath(stmp, tool);
+
+        reply({ seq, heights });
     }
 
 });
