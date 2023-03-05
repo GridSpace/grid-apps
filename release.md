@@ -3,7 +3,7 @@
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
 
-# Release 3.9
+# Release 3.9 (2023-03-11)
 
 * more graceful handling of security contexts blocking SharedArrayBuffer
 * CAM decrease cutting speed when entire tool is engaged in roughing
@@ -16,7 +16,6 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM add rough all stock to aid lathe mode
 * CAM stock is now always on, whether offset or absolute
 * CAM add lathe worker parallelization (2x - 6x speedup)
-- add auto-disable for ops mismatched to axis indexed state
 - add "common" overrides in ops (z top/bottom/thru, direction)
 
 

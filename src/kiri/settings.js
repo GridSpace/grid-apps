@@ -582,7 +582,13 @@ function settingsImport(data, ask) {
             api.space.restore(() => { ui.sync() }, true);
         }
         if (isTools && Array.isArray(data.tools)) {
-            settings.tools = data.tools;
+            const settool = settings.tools;
+            for (let tool of data.tools) {
+                if (settool.filter(t => t.id === tool.id).length === 0) {
+                    settool.push(tool);
+                }
+            }
+            // settings.tools = data.tools;
             api.show.tools();
         }
     }
