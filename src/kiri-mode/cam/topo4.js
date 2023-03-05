@@ -266,7 +266,7 @@ class Topo4 {
                 // get slice index corresponding with offset
                 const ts = si + xo;
                 // outside of slice array, skip
-                if (ts < 0 || ts >= slen) continue;
+                if (ts < 0 || ts >= slen - 1) continue;
                 const slice = oslices[ts];
                 const lines = slice.lines;
                 const plen = lines.length;
@@ -280,6 +280,7 @@ class Topo4 {
                     if ((py0 <= yo && py1 >= yo) || (py1 <= yo && py0 >= yo)) {
                         const dz = pz1 - pz0;
                         const dy = Math.abs(py1 - py0);
+                        if (dy === 0) continue;
                         const fr = Math.abs(yo - py0) / dy;
                         const lz = pz0 + dz * fr + zo;
                         // check z height
@@ -400,7 +401,7 @@ class Topo4 {
         }
 
         await Promise.all(promises);
-        recs.sort((a, b) => { return a.angle - b.angle });
+        recs.sort((a, b) => { return b.angle - a.angle });
 
         count = recs[0].heights.length / 3;
         while (count-- > 0) {

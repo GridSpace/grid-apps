@@ -17,6 +17,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM stock is now always on, whether offset or absolute
 * CAM add lathe worker parallelization (2x - 6x speedup)
 - add "common" overrides in ops (z top/bottom/thru, direction)
+- fix lathe yellow path in normal (not dark) mode
 
 
 # Release 3.8 (2023-01-21)
