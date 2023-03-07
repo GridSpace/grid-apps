@@ -153,6 +153,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
                 show.progress(0);
                 client.restart();
                 event.emit('slice.error', error);
+                setTimeout(view.set_arrange, 1);
             }
             if (errored) {
                 // terminate slicing
