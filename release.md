@@ -6,6 +6,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 # Release 3.9 (2023-03-11)
 
 * more graceful handling of security contexts blocking SharedArrayBuffer
+* FDM refactor the 'detect' support feature for auto-placing manual supports
 * CAM decrease cutting speed when entire tool is engaged in roughing
 * CAM add dogbones support to traces ops
 * CAM add scripted contour filtering (to be extended to other ops)

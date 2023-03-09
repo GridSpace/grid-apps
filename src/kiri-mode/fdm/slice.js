@@ -1354,7 +1354,7 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
 
     // parent each solid polygon inside the smallest bounding top
     let make_solid_layer = false;
-    let tops_area = tops.map(top => top.poly.areaDeep()).reduce((a,i) => a+i);
+    let tops_area = tops.length ? tops.map(top => top.poly.areaDeep()).reduce((a,i) => a+i) : 0;
     for (let solid of solids) {
         for (let top of tops) {
             let stop = [];
