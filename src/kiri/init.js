@@ -1517,9 +1517,9 @@ gapp.register("kiri.init", [], (root, exports) => {
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
-        let { event, conf, view, show } = api;
+        let { event, conf, view, show, feature } = api;
 
-        if (!window.SharedArrayBuffer) {
+        if (feature.work_alerts && !window.SharedArrayBuffer) {
             api.alerts.show("The security context of this", 10);
             api.alerts.show("window blocks important functionality", 10);
         }
