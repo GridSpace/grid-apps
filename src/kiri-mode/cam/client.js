@@ -747,6 +747,7 @@ CAM.init = function(kiri, api) {
         }
         // clear traces cache
         CAM.traces_clear();
+        kiri.client.clear();
         flipping = false;
         process.ops = op2;
         process.op2 = ops;

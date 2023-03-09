@@ -139,6 +139,7 @@ kiri.load(api => {
         kiri.worker.cam_traces_clear = function(data, send) {
             for (let widget of Object.values(kiri.worker.cache)) {
                 delete widget.traces;
+                delete widget.topo;
             }
             send.done({});
         };
