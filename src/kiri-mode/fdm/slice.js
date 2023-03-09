@@ -831,7 +831,8 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         }
 
         // fill all supports (auto and manual)
-        if (!isBelt && supportDensity) {
+        // if (!isBelt && supportDensity) {
+        if (supportDensity) {
             profileStart("support-fill");
             let promises = false && isConcurrent ? [] : undefined;
             forSlices(0.8, promises ? 0.88 : 0.9, slice => {

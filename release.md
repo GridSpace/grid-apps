@@ -3,7 +3,7 @@
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
 
-# Release 3.9 (2023-03-11)
+# Release 3.9 (2023-03-12)
 
 * more graceful handling of security contexts blocking SharedArrayBuffer
 * FDM refactor the 'detect' support feature for auto-placing manual supports
@@ -19,6 +19,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM add lathe worker parallelization (2x - 6x speedup)
 - add "common" overrides in ops (z top/bottom/thru, direction)
 - fix lathe yellow path in normal (not dark) mode
+- fix pocket/trace selection with flip op
+- fix supports in belt mode
 
 
 # Release 3.8 (2023-01-21)
