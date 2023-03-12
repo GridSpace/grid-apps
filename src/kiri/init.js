@@ -1517,12 +1517,7 @@ gapp.register("kiri.init", [], (root, exports) => {
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
-        let { event, conf, view, show, feature } = api;
-
-        if (feature.work_alerts && !window.SharedArrayBuffer) {
-            api.alerts.show("The security context of this", 10);
-            api.alerts.show("window blocks important functionality", 10);
-        }
+        let { event, conf, view, show } = api;
 
         event.emit('init.one');
 
@@ -2769,6 +2764,12 @@ gapp.register("kiri.init", [], (root, exports) => {
         // show gdpr if it's never been seen and we're not iframed
         if (!sdb.gdpr && WIN.self === WIN.top && !SETUP.debug && !api.const.LOCAL) {
             $('gdpr').style.display = 'flex';
+        }
+
+        // warn of degraded functionality when SharedArrayBuffers are missing
+        if (api.feature.work_alerts && !window.SharedArrayBuffer) {
+            api.alerts.show("The security context of this", 10);
+            api.alerts.show("window blocks important functionality", 10);
         }
 
         // add keyboard focus handler (must use for iframes)
