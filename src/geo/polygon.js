@@ -1906,6 +1906,31 @@ class Polygon {
         return this;
     }
 
+    midpoints(dist = 0.01) {
+        const newp = [];
+        const points = this.points;
+        const length = points.length;
+        const l0 = this.open ? length - 1 : length;
+        let mod = 0;
+        for (let i=0, p=points; i<l0; i++) {
+            const p1 = p[i];
+            const p2 = p[(i + 1) % length];
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const ln = Math.sqrt(dx * dx + dy * dy);
+            if (ln < dist) {
+                newp.push(p1.midPointTo(p2));
+                mod++;
+            } else {
+                newp.push(p1);
+            }
+        }
+        if (mod) {
+            return newPolygon().addPoints(newp.map(p => p.clone())).setOpenValue(this.open);
+        }
+        return this;
+    }
+
 }
 
 // use Slope.angleDiff() then re-test path mitering / rendering

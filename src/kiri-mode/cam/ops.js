@@ -1342,16 +1342,14 @@ class OpPocket extends CamOp {
         }
         steps = steps * refine;
         iter = 0;
-        // walk points noting z deltas and smoothing sawtooth patterns
+        // walk points noting z deltas and smoothing z sawtooth patterns
         for (let j=0; j<refine; j++) {
             for (let poly of hirez) {
                 const points = poly.points, length = points.length;
                 let sn = []; // segment normals
-                let dz = []; // z deltas
                 for (let i=0; i<length; i++) {
                     let p1 = points[i];
                     let p2 = points[(i + 1) % length];
-                    dz.push(p1.z - p2.z);
                     sn.push(segmentNormal(p1, p2));
                 }
                 let vn = []; // vertex normals
@@ -1371,9 +1369,11 @@ class OpPocket extends CamOp {
                         p1.z = (p0.z + p2.z + p1.z) / 3;
                     }
                 }
+
                 progress((iter++ / steps) * 0.2 + 0.8);
             }
         }
+        // return hirez.map(p => p.midpoints(topo.tolerance * 8));
         return hirez;
     }
 
