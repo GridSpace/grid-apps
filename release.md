@@ -7,6 +7,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 
 * more graceful handling of security contexts blocking SharedArrayBuffer
 * FDM refactor the 'detect' support feature for auto-placing manual supports
+* FDM fix supports in belt mode
+* CAM fix surface / trace selection copy on hover/pop/new op
 * CAM decrease cutting speed when entire tool is engaged in roughing
 * CAM add dogbones support to traces ops
 * CAM add scripted contour filtering (to be extended to other ops)
@@ -17,10 +19,8 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * CAM add rough all stock to aid lathe mode
 * CAM stock is now always on, whether offset or absolute
 * CAM add lathe worker parallelization (2x - 6x speedup)
-- add "common" overrides in ops (z top/bottom/thru, direction)
+* CAM fix pocket/trace selection with flip op
 - fix lathe yellow path in normal (not dark) mode
-- fix pocket/trace selection with flip op
-- fix supports in belt mode
 
 
 # Release 3.8 (2023-01-21)

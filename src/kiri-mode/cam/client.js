@@ -343,6 +343,8 @@ CAM.init = function(kiri, api) {
     };
 
     func.opAddPocket = () => {
+        func.traceDone();
+        func.surfaceDone();
         let rec = popOp.pocket.new();
         rec.surfaces = { /* widget.id: [ faces... ] */ };
         func.opAdd(rec);
@@ -527,6 +529,9 @@ CAM.init = function(kiri, api) {
                 popped = false;
             };
             function onEnter(ev) {
+                if ((surfaceOn || traceOn) && poppedRec != rec) {
+                    return;
+                }
                 if (popped && poppedRec != rec) {
                     func.surfaceDone();
                     func.traceDone();

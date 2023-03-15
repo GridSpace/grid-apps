@@ -400,6 +400,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
                 // use modifier to speed up long XY move plunge rates
                 rate = Math.round(plungeRate + ((feedRate - plungeRate) * modifier));
+                cut = 1;
             } else {
                 rate = Math.min(feedRate, plungeRate);
             }
