@@ -571,6 +571,7 @@ CAM.init = function(kiri, api) {
                 if (!clist.contains("draggable")) {
                     return;
                 }
+                // toggle enable / disable
                 if (!clock && (ev.ctrlKey || ev.metaKey)) {
                     ev.preventDefault();
                     ev.stopPropagation();
@@ -587,6 +588,16 @@ CAM.init = function(kiri, api) {
                             el.classList.remove("disabled");
                         }
                     }
+                    return true;
+                }
+                // duplicate op
+                if (!clock && ev.shiftKey) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    oplist = current.process.ops;
+                    oplist.push(Object.clone(rec));
+                    API.conf.save();
+                    func.opRender();
                     return true;
                 }
                 clist.add("drag");
