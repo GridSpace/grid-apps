@@ -105,11 +105,16 @@ function slice(settings, widget, onupdate, ondone) {
     });
 };
 
+function polyLabel(poly, label) {
+    console.log('label', label);
+}
+
 function sliceEmitObjects(print, slice, groups, opt = { }) {
     let start = newPoint(0,0,0);
     let process = print.settings.process;
     let grouped = process.outputLaserGroup;
     let stacked = process.outputLaserStack;
+    let label = false && process.outputLaserLabel;
     let simple = opt.simple || false;
     let group = [];
     let emit = { in: [], out: [], mark: [] };
@@ -118,19 +123,22 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
 
     group.thick = slice.thick;
 
-    function laserOut(poly, group, type) {
+    function laserOut(poly, group, type, index) {
         if (!poly) {
             return;
         }
         if (Array.isArray(poly)) {
-            poly.forEach(function(pi) {
-                laserOut(pi, group, type);
+            poly.forEach((pi, index) => {
+                laserOut(pi, group, type, offset.length > 1 ? index : undefined);
             });
         } else {
             let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1, rate: 1};
             if (type === "mark") {
                 pathOpt.rate = 0.001;
                 pathOpt.extrude = 2;
+            } else if (label && type === "out") {
+                let lbl = index !== undefined ? `${slice.index}-${index}` : `${slice.index}`;
+                polyLabel(poly, lbl);
             }
             if (simple) pathOpt.simple = true;
             if (poly.open) pathOpt.open = true;
