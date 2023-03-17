@@ -8,6 +8,7 @@ Full docs @ https://docs.grid.space/projects/kiri-moto
 * more graceful handling of security contexts blocking SharedArrayBuffer
 * FDM refactor the 'detect' support feature for auto-placing manual supports
 * FDM fix supports in belt mode
+* CAM fix issue #230 shared tool numbers cause animation errors
 * CAM fix surface / trace selection copy on hover/pop/new op
 * CAM decrease cutting speed when entire tool is engaged in roughing
 * CAM add dogbones support to traces ops

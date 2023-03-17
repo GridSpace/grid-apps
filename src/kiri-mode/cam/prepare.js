@@ -291,7 +291,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             null,
             0,
             time,
-            tool.getNumber()
+            tool
         );
     }
 
@@ -319,7 +319,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         if (!lastPoint) {
             let above = point.clone().setZ(stockz + zclear);
             // let above = point.clone().setZ(zmax + zadd + ztOff);
-            lastPoint = layerPush(above, 0, 0, tool.getNumber());
+            lastPoint = layerPush(above, 0, 0, tool);
         }
 
         // measure deltas to last point in XY and Z
@@ -344,15 +344,15 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 isMove = false;
             } else if (deltaZ <= -tolerance) {
                 // move over before descending
-                layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool.getNumber());
+                layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
                 // new pos for plunge calc
                 deltaXY = 0;
             }
         } else if (isMove && isLathe) {
             if (point.z > lastPoint.z) {
-                layerPush(lastPoint.clone().setZ(point.z), 0, 0, tool.getNumber());
+                layerPush(lastPoint.clone().setZ(point.z), 0, 0, tool);
             } else if (point.z < lastPoint.z) {
-                layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool.getNumber());
+                layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
             }
         } else if (isMove) {
             // for longer moves, check the terrain to see if we need to go up and over
@@ -384,9 +384,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 if (mustGoUp || zIsBelow) {
                     const zClearance = clearz + (isIndexed ? 0 : ztOff);
                     if (zIsBelow) {
-                        layerPush(lastPoint.clone().setZ(zClearance), 0, 0, tool.getNumber());
+                        layerPush(lastPoint.clone().setZ(zClearance), 0, 0, tool);
                     }
-                    layerPush(point.clone().setZ(zClearance), 0, 0, tool.getNumber());
+                    layerPush(point.clone().setZ(zClearance), 0, 0, tool);
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
@@ -413,7 +413,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             point,
             cut ? 1 : 0,
             rate,
-            tool.getNumber()
+            tool
         );
     }
 
@@ -476,7 +476,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);
         });
         opSum += weight;
-        if (tool) {
+        if (tool && lastPoint) {
             newLayer();
             camOut(printPoint = lastPoint.clone().setZ(zmax + zadd));
             newLayer();
@@ -593,7 +593,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
     if (lastPoint && newOutput.length) {
         let lastLayer = newOutput.filter(layer => Array.isArray(layer)).peek();
         if (Array.isArray(lastLayer)) {
-            print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool.getNumber());
+            print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
         }
     }
 

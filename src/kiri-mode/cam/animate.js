@@ -425,7 +425,9 @@ kiri.load(() => {
         }
         pathIndex++;
 
-        if (next.tool >= 0 && (!tool || tool.getNumber() !== next.tool)) {
+        const firstTool = !tool && next.tool;
+        const toolChange = !firstTool && (tool.getID() !== next.tool.getID());
+        if (firstTool || toolChange) {
             // on real tool change, go to safe Z first
             if (tool && last.point) {
                 let pos = last.point = {
@@ -533,11 +535,11 @@ kiri.load(() => {
         }
     }
 
-    function updateTool(toolnum, send) {
+    function updateTool(toolobj, send) {
         if (tool) {
             send.data({ mesh_del: toolID });
         }
-        tool = new CAM.Tool({ tools }, undefined, toolnum);
+        tool = new CAM.Tool({ tools }, toolobj.getID());
         tool.generateProfile(rez);
         const flen = tool.fluteLength() || 15;
         const slen = tool.shaftLength() || 15;

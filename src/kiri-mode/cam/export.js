@@ -151,20 +151,6 @@ CAM.export = function(print, online) {
         }
     }
 
-    function toolByNumber(number) {
-        for (let i=0; i<tools.length; i++) {
-            if (tools[i].number === number) return tools[i];
-        }
-        return undefined;
-    }
-
-    function toolNameByNumber(number) {
-        for (let i=0; i<tools.length; i++) {
-            if (tools[i].number === number) return tools[i].name;
-        }
-        return "unknown";
-    }
-
     function moveTo(out, opt = {}) {
         let laser = out.type === 'laser';
         let newpos = out.point;
@@ -188,8 +174,8 @@ CAM.export = function(print, online) {
         let changeTool = out.tool != pos.t;
         if (changeTool) {
             pos.t = out.tool;
-            consts.tool = pos.t;
-            consts.tool_name = toolNameByNumber(out.tool);
+            consts.tool = pos.t.getNumber();
+            consts.tool_name = pos.t.getName();
             if (!laserOp && (spro.camToolInit || toolChanges > 0)) {
                 filterEmit(cmdToolChange, { ...consts, spindle: newSpindle } );
             }
@@ -395,7 +381,7 @@ CAM.export = function(print, online) {
                 return;
             }
             if (out.tool && out.tool !== ctool) {
-                ctool = toolByNumber(out.tool);
+                ctool = out.tool;
                 toolz[out.tool] = ctool;
             }
             point = out.point;
