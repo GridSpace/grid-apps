@@ -1373,7 +1373,7 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
             // problematic for organic shapes with lots of big and small tops
             // the small tops tend to trigger entire layer fills. for now just
             // trip full solid layer if a single top area diff > 50%
-            if (stop.length) {
+            if (false && stop.length) {
                 let top_area = top.poly.areaDeep();
                 let stop_area = stop.map(p => p.areaDeep()).reduce((a,v) => a + v);
                 // if the solid area > 50% of the top area, make entire layer solid
