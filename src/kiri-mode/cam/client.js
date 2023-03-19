@@ -1381,7 +1381,7 @@ CAM.init = function(kiri, api) {
         sep:       UC.newBlank({class:"pop-sep"}),
         tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
         leave:     UC.newInput(LANG.cf_leav_s, {title:LANG.cf_leav_l, convert:UC.toFloat, bound:UC.bound(0,100)}),
-        filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
+        // filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
     };
 
     function canDogBones() {
