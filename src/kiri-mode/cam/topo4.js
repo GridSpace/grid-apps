@@ -73,6 +73,7 @@ class Topo4 {
         this.diam = tool.fluteDiameter();
         this.zoff = widget.track.top || 0;
         this.leave = op.leave || 0;
+        this.lineColor = state.settings.controller.dark ? 0xffff00 : 0x555500;
 
         onupdate(0, "lathe");
 
@@ -352,7 +353,7 @@ class Topo4 {
             const repeat = poly.points[0];
             slice.camLines[0].push(repeat.clone().setA(repeat.a - 360));
             slice.output()
-                .setLayer("lathe", { line: 0xffff00 })
+                .setLayer("lathe", { line: this.lineColor })
                 .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
         }
 
@@ -428,7 +429,7 @@ class Topo4 {
             const repeat = poly.points[0];
             slice.camLines[0].push(repeat.clone().setA(repeat.a - 360));
             slice.output()
-                .setLayer("lathe", { line: 0xffff00 })
+                .setLayer("lathe", { line: this.lineColor })
                 .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
         }
 
