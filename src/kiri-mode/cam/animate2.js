@@ -454,7 +454,7 @@ kiri.load(() => {
         pathIndex++;
         // console.log(next.point.z);
 
-        if (next.tool >= 0 && (!tool || tool.getNumber() !== next.tool)) {
+        if (next.tool && (!tool || tool.getID() !== next.tool.getID())) {
             // on real tool change, go to safe Z first
             if (tool && last.point) {
                 let pos = last.point = {
@@ -465,7 +465,7 @@ kiri.load(() => {
                 toolMove(pos);
                 send.data(toolUpdateMsg);
             }
-            toolUpdate(next.tool, send);
+            toolUpdate(next.tool.getID(), send);
         }
 
         const id = toolID;
@@ -582,11 +582,11 @@ kiri.load(() => {
     }
 
     // delete old tool mesh, generate tool mesh, send to client
-    function toolUpdate(toolnum, send) {
+    function toolUpdate(toolid, send) {
         if (tool) {
             send.data({ mesh_del: toolID });
         }
-        tool = new CAM.Tool({ tools }, undefined, toolnum);
+        tool = new CAM.Tool({ tools }, toolid);
         const Instance = CSG.Instance();
         const slen = tool.shaftLength() || 15;
         const srad = tool.shaftDiameter() / 2;
