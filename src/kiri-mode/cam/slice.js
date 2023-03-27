@@ -80,30 +80,34 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         });
     }
 
+    function error(msg) {
+        ondone(msg);
+    }
+
     if (unsafe) {
         console.log("disabling overhang safeties");
     }
 
     if (!proc.ops || proc.ops.length === 0) {
-        throw 'no processes specified';
+        return error('no processes specified');
     }
 
     if (stock.x && stock.y && stock.z) {
         if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
-            throw 'stock X too small for part. resize stock or use offset stock';
+            return error('stock X too small for part. resize stock or use offset stock');
         }
 
         if (stock.y + 0.00001 < bounds.max.y - bounds.min.y) {
-            throw 'stock Y too small for part. resize stock or use offset stock';
+            return error('stock Y too small for part. resize stock or use offset stock');
         }
 
         if (stock.z + 0.00001 < bounds.max.z - bounds.min.z) {
-            throw 'stock Z too small for part. resize stock or use offset stock';
+            return error('stock Z too small for part. resize stock or use offset stock');
         }
     }
 
     if (zMin >= bounds.max.z) {
-        throw `invalid z bottom ${(zMin/units).round(3)} >= bounds z max ${(zMax/units).round(3)}`;
+        return error(`invalid z bottom ${(zMin/units).round(3)} >= bounds z max ${(zMax/units).round(3)}`);
     }
 
     let mark = Date.now();
