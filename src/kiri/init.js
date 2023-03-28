@@ -2004,9 +2004,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             camOriginTop:        uc.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
             camOriginCenter:     uc.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM}),
             camSep:              uc.newBlank({class:"pop-sep", modes:CAM}),
-            camOriginOffX:       uc.newInput(LANG.co_offx_s, {title:LANG.co_offx_l, convert:uc.toFloat, modes:CAM}),
-            camOriginOffY:       uc.newInput(LANG.co_offy_s, {title:LANG.co_offy_l, convert:uc.toFloat, modes:CAM}),
-            camOriginOffZ:       uc.newInput(LANG.co_offz_s, {title:LANG.co_offz_l, convert:uc.toFloat, modes:CAM}),
+            camOriginOffX:       uc.newInput(LANG.co_offx_s, {title:LANG.co_offx_l, convert:uc.toFloat, units:true, modes:CAM}),
+            camOriginOffY:       uc.newInput(LANG.co_offy_s, {title:LANG.co_offy_l, convert:uc.toFloat, units:true, modes:CAM}),
+            camOriginOffZ:       uc.newInput(LANG.co_offz_s, {title:LANG.co_offz_l, convert:uc.toFloat, units:true, modes:CAM}),
 
             camExpert:           uc.newGroup(LANG.op_xprt_s, null, {group: "cam_expert", modes:CAM, marker: false}),
             camExpertFast:       uc.newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, modes:CAM, show: () => !ui.camTrueShadow.checked }),
