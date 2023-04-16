@@ -339,7 +339,7 @@ class Topo4 {
             const { degrees, heights } = rec;
             [...heights].group(3).forEach((a,i) => {
                 // progress each path 360 degrees to prevent A rolling backwards
-                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees+ i * -360) );
+                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(-degrees + i * -360) );
             });
         }
 
@@ -415,7 +415,7 @@ class Topo4 {
             const { degrees, heights } = rec;
             [...heights].group(3).forEach((a,i) => {
                 // progress each path 360 degrees to prevent A rolling backwards
-                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees+ i * -360) );
+                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(-degrees + i * -360) );
             });
         }
 
