@@ -1685,6 +1685,7 @@ FDM.supports = function(settings, widget) {
     let isBelt = settings.device.bedBelt;
     let process = settings.process;
     let size = process.sliceSupportSize;
+    let s9 = size / 9;
     let s4 = size / 4;
     let s2 = size * 0.45;
     let min = 0.01;
@@ -1701,6 +1702,7 @@ FDM.supports = function(settings, widget) {
     let platform = new THREE.Mesh(
         new THREE.PlaneGeometry(10000,10000,1), mat
     );
+    const now = Date.now();
     // test point
     function tp(point) {
         if (point.added) {
@@ -1728,6 +1730,10 @@ FDM.supports = function(settings, widget) {
         let dca = c.distanceTo(a);
         let max = Math.max(dab, dbc, dca);
         if (max < size) {
+            let min = Math.min(dab, dbc, dca);
+            if (min < s9 && Math.random() < 0.5) {
+                return;
+            }
             // test midpoint of tri face
             return tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
         }
@@ -1770,7 +1776,7 @@ FDM.supports = function(settings, widget) {
         // triangulate larger polys and test centers
         tf(a,b,c);
     }
-
+    console.log(`support generated in ${Date.now() - now} ms`);
     widget.supports = add;
     return add.length > 0;
 };

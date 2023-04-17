@@ -817,7 +817,7 @@ class OpContour extends CamOp {
         let depthFirst = process.camDepthFirst;
         let depthData = [];
 
-        setTool(op.tool, op.rate, op.plunge);
+        setTool(op.tool, op.rate, process.camFastFeedZ);
         setSpindle(op.spindle);
         setTolerance(this.tolerance);
 
