@@ -17,7 +17,7 @@ FDM.export = function(print, online, ondone, ondebug) {
     const { settings, belty, tools } = print;
     const { bounds, controller, device, process, filter, mode } = settings;
     const { danger, exportThumb } = device;
-    const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
+    const { bedWidth, bedDepth, bedRound, bedBelt, hasAbl, directDrive, maxHeight } = device;
     const { extruders, fwRetract } = device;
     const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature } = device;
 
@@ -91,6 +91,14 @@ FDM.export = function(print, online, ondone, ondebug) {
             maxx: bounds.max.x + offset.x,
             miny: bounds.min.y + offset.y,
             maxy: bounds.max.y + offset.y,
+            has_abl: hasAbl,
+            direct_drive: directDrive,
+            origin_center: originCenter,
+            fw_retract: fwRetract,
+            bed_round: bedRound,
+            bed_belt: isBelt,
+            bed_width: bedWidth,
+            bed_depth: bedDepth,
             travel_speed: seekMMM,
             retract_speed: retSpeed,
             retract_distance: retDist,
