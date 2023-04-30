@@ -1,6 +1,6 @@
 {
     "name": "grid-apps",
-    "version": "2.8.1D",
+    "version": "4.0.0D",
     "description": "grid.space 3d slice & modeling tools",
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
@@ -21,20 +21,28 @@
         "slicer"
     ],
     "dependencies": {
+        "@fortawesome/fontawesome-free": "^6.1.1",
+        "@tweenjs/tween.js": "^16.6.0",
         "base64-js": "^1.5.1",
         "buffer-crc32": "^0.2.13",
         "compression": "^1.7.4",
         "connect": "^3.7.0",
-        "earcut": "^2.2.2",
+        "earcut": "^2.2.3",
         "express-useragent": "^1.0.13",
-        "jszip": "^3.5.0",
+        "jszip": "^3.7.1",
         "moment": "^2.24.0",
         "pixi.js": "^4.8.9",
         "serve-static": "^1.14.1",
-        "three": "^0.126.0",
-        "tween.js": "^0.14.0",
-        "uglify-es": "3.3.9",
-        "validator": "^8.2.0",
-        "ws": "^7.2.3"
+        "three": "^0.144.0",
+        "three-mesh-bvh": "^0.5.21",
+        "uglify-js": "3.14.5",
+        "validator": ">=13.7.0",
+        "ws": "^7.5.5"
+    },
+    "devDependencies": {
+        "@gridspace/app-server": "^0.0.7"
+    },
+    "scripts": {
+        "postinstall": "bin/npm-post"
     }
 }

@@ -1,0 +1,1 @@
+../../node_modules/three/examples/js/loaders/SVGLoader.js

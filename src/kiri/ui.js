@@ -2,13 +2,13 @@
 
 "use strict";
 
-(function() {
+// use: kiri.init
+// use: kiri.main
+gapp.register("kiri.ui", [], (root, exports) => {
 
-    if (kiri.ui) return;
+    const { kiri } = root;
 
-    let SELF = self,
-        KIRI = self.kiri,
-        DOC = SELF.document,
+    let DOC = self.document,
         inputAction = null,
         lastGroup = null,
         lastDiv = null,
@@ -36,9 +36,9 @@
         lastPop = null,
         savePop = null;
 
-    SELF.$ = (SELF.$ || function (id) { return DOC.getElementById(id) } );
+    self.$ = (self.$ || function (id) { return DOC.getElementById(id) } );
 
-    KIRI.ui = {
+    kiri.ui = {
         prefix: function(pre) { prefix = pre; return kiri.ui },
         inputAction: function(fn) { inputAction = fn; return kiri.ui },
         lastChange: function() { return lastChange },
@@ -63,8 +63,9 @@
         newBlank,
         newGCode,
         newGroup,
-        newInput,
         newLabel,
+        newInput,
+        newInput2,
         newRange,
         newRow,
         newSelect,
@@ -128,7 +129,7 @@
             }
             $('mod-any').innerHTML = html.join('');
             function done(value) {
-                KIRI.api.modal.hide();
+                kiri.api.modal.hide();
                 setTimeout(() => { resolve(value) }, 150);
             }
             if (iid) {
@@ -148,7 +149,7 @@
                 }
             });
             setTimeout(() => {
-                KIRI.api.modal.show('any');
+                kiri.api.modal.show('any');
                 if (iid) {
                     iid.focus();
                     iid.selectionStart = iid.value.length;
@@ -157,8 +158,8 @@
         });
     }
 
-    function refresh() {
-        setMode(letMode, true);
+    function refresh(all) {
+        setMode(letMode, all ? false : true);
         setters.forEach(input => {
             if (input.setv) {
                 input.setv(input.real);
@@ -172,6 +173,9 @@
         });
         letMode = mode;
         if (nohide) {
+            for (let div of hasModes.filter(d => d.isBlank)) {
+                div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
+            }
             return;
         }
         hasModes.forEach(function(div) {
@@ -633,7 +637,7 @@
 
         row.appendChild(newLabel(label));
         row.appendChild(ip);
-        row.setAttribute("class", "var-row");
+        row.setAttribute("class", opt.class || "var-row");
         if (height > 1) {
             ip.setAttribute("cols", size);
             ip.setAttribute("rows", height);
@@ -657,6 +661,7 @@
         }
         ip.addEventListener('focus', function(event) {
             hidePop();
+            setSticky(true);
         });
         if (action) {
             ip.addEventListener('keydown', function(event) {
@@ -686,6 +691,79 @@
                 }
             });
             ip.addEventListener('blur', function(event) {
+                setSticky(false);
+                lastChange = ip;
+                action(event);
+                if (opt.trigger) {
+                    refresh(opt.trigger === 1);
+                }
+            });
+            if (opt.units) {
+                addUnits(ip, opt.round || 3);
+            }
+        }
+        if (!ip.convert) ip.convert = raw.bind(ip);
+        ip.setVisible = row.setVisible;
+
+        return ip;
+    }
+
+    function newInput2(options) {
+        let opt = options || {},
+            hide = opt && opt.hide,
+            size = opt ? opt.size || 5 : 5,
+            height = opt ? opt.height : 0,
+            ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
+            action = opt.action || bindTo || inputAction;
+
+        ip.setAttribute("class", "var-input");
+        if (Number.isInteger(size)) {
+            ip.setAttribute("size", size);
+        } else {
+            ip.setAttribute("style", `width:${size}`);
+        }
+        ip.setAttribute("type", "text");
+        ip.setAttribute("spellcheck", "false");
+        if (opt) {
+            if (opt.disabled) ip.setAttribute("disabled", "true");
+            if (opt.title) ip.setAttribute("title", opt.title);
+            if (opt.convert) ip.convert = opt.convert.bind(ip);
+            if (opt.bound) ip.bound = opt.bound;
+            if (opt.action) action = opt.action;
+        }
+        ip.addEventListener('focus', function(event) {
+            hidePop();
+            setSticky(true);
+        });
+        if (action) {
+            ip.addEventListener('keydown', function(event) {
+                let key = event.key;
+                if (
+                    opt.text ||
+                    (key >= '0' && key <= '9') ||
+                    key === '.' ||
+                    key === '-' ||
+                    key === 'Backspace' ||
+                    key === 'Delete' ||
+                    key === 'ArrowLeft' ||
+                    key === 'ArrowRight' ||
+                    key === 'Tab' ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    (key === ',' && options.comma)
+                ) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+            });
+            ip.addEventListener('keyup', function(event) {
+                if (event.keyCode === 13) {
+                    ip.blur();
+                }
+            });
+            ip.addEventListener('blur', function(event) {
+                setSticky(false);
                 lastChange = ip;
                 action(event);
                 if (opt.trigger) {
@@ -697,7 +775,7 @@
             }
         }
         if (!ip.convert) ip.convert = raw.bind(ip);
-        ip.setVisible = row.setVisible;
+        // addModeControls(ip);
 
         return ip;
     }
@@ -793,13 +871,17 @@
         ip.setAttribute("type", "checkbox");
         ip.checked = false;
         if (options) {
-            if (options.disabled) ip.setAttribute("disabled", "true");
+            if (options.disabled) {
+                ip.setAttribute("disabled", "true");
+            }
             if (options.title) {
                 ip.setAttribute("title", options.title);
                 row.setAttribute("title", options.title);
             }
         }
-        if (action) ip.onclick = function(ev) { action(ip) };
+        if (action) {
+            ip.onclick = function(ev) { action(ip) };
+        }
         ip.setVisible = row.setVisible;
 
         return ip;
@@ -810,6 +892,7 @@
             row = newDiv(opt),
             hide = opt.hide;
 
+        row.isBlank = true;
         row.setAttribute("class", "var-row");
         row.style.display = hide ? 'none' : '';
 
@@ -895,6 +978,7 @@
         let group = opt.group || [];
         let closes = opt.closes || group;
         let target = opt.target || el;
+        let mobile = false;
         let popped = false;
         group.push(target);
         if (closes !== group) {
@@ -914,7 +998,23 @@
             popped = false;
         };
         if (opt.auto !== false) {
-            el.addEventListener("mouseenter", openit);
+            el.addEventListener("mouseenter", () => {
+                openit();
+            });
+            el.addEventListener("touchstart", (ev) => {
+                if (ev.target.onclick) {
+                    if (mobile && popped) {
+                        setTimeout(closeit, 500);
+                        return;
+                    }
+                }
+                mobile = true;
+                if (popped) {
+                    closeit();
+                } else {
+                    openit();
+                }
+            });
         }
         el.addEventListener("mouseleave", (ev) => {
             closes.timer = setTimeout(() => {
@@ -923,6 +1023,9 @@
         });
         if (!opt.sticky) {
             el.addEventListener("mouseup", (ev) => {
+                if (mobile) {
+                    return;
+                }
                 if (popped) {
                     closeit();
                 } else {
@@ -937,4 +1040,4 @@
         });
     }
 
-})();
+});

@@ -1,0 +1,15 @@
+{
+    "name": "Kiri:Moto 4.0",
+    "short_name": "Kiri:Moto",
+    "description": "Slicer for 3D printers, CNC mills, laser cutters and more",
+    "start_url": "/kiri/",
+    "id": "/kiri/",
+    "display": "standalone",
+    "theme_color": "#7e99b7",
+    "background_color": "#ffffff",
+    "orientation": "landscape-primary",
+    "icons": [
+        { "src": "/kiri/logo-cube-512.png", "type": "image/png", "sizes": "512x512" },
+        { "src": "/kiri/logo-cube-144.png", "type": "image/png", "sizes": "144x144" }
+    ]
+}

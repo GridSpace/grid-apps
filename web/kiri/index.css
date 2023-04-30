@@ -3,9 +3,14 @@
     --bg-gray: rgba(0,0,0,0.25);
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
     --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
+    --holdbar-dk: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,0.25), rgba(100,100,100,0.1));
     --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
-    --highlight: rgba(200,220,220,0.9);
-    --main-color: #7E99B7
+    --highlight: rgba(126,153,183,0.4);
+    --main-color: rgba(126,153,183,1);
+}
+@font-face {
+    font-family: 'Russo One';
+    src: url('/moto/russo-one.ttf');
 }
 a, a:hover, a:visited {
     border: none;
@@ -23,20 +28,21 @@ a, a:hover, a:visited {
     right: 0;
     bottom: 0;
 }
-#app-name, #app-mode-name, #app-acct {
-    cursor: pointer;
+#app-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    z-index: 50;
 }
-#app-mode-name {
-    border-bottom: 2px dotted grey;
+#app-name, #app-acct {
+    cursor: pointer;
 }
 #app,div {
     display: flex;
     padding: 0;
     border: 0;
     margin: 0;
-}
-#device-list, #device-my {
-    background: rgba(0,0,0,0.1);
 }
 #gsbox {
     width: 40px;
@@ -66,8 +72,8 @@ button {
     text-transform: capitalize;
 }
 button:hover {
-    background-color: #aaa;
-    color: black;
+    background-color: var(--main-color);
+    color: white;
 }
 button[load] {
     width: 100%;
@@ -159,7 +165,10 @@ th, tr, td, label {
 .noshow {
     display: none;
 }
-.f-row {
+.grid {
+    display: grid;
+}
+.frow {
     flex-direction: row;
 }
 .f-col {
@@ -203,6 +212,11 @@ th, tr, td, label {
 }
 .center {
     text-align: center;
+}
+.middle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .t-just {
     text-align: justify;
@@ -280,33 +294,42 @@ th, tr, td, label {
     margin: 0 5px 0 5px;
 }
 
-#app-mode, #app-acct {
-    width: 125px;
-}
-#mode-info.hoverpop {
-    display: flex;
-}
 #mode-info {
     display: none;
-    position: absolute;
+    xposition: absolute;
     white-space: nowrap;
     font-size: smaller;
     font-family: sans-serif;
-    margin-top: 5px;
-    padding: 5px;
-    left: -6px;
-    top: 100%;
-    color: var(--fg-gray);
-    border-radius: 3px;
-    border: 1px solid #ddd;
-    background-color: white;
-}
-#mode-info > div {
-    padding: 2px 0 2px 0;
+    top: 50%;
+    height: 100%;
+    transform: translateY(-50%);
+    padding: 1px 0 1px 0;
+    align-items: center;
+    justify-content: center;
 }
 #mode-info label {
+    font-size: smaller;
     font-weight: bold;
-    padding-right: 5px;
+    margin-left: 5px;
+    padding: 2px 5px 2px 5px;
+    color: var(--fg-gray);
+    background-color: #eee;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-top: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+}
+#mode-info > div {
+    font-size: smaller;
+    padding: 2px 5px 2px 5px;
+    color: var(--fg-gray);
+    background-color: white;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-top: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
 }
 
 #app-info.hoverpop {
@@ -327,7 +350,36 @@ th, tr, td, label {
     background-color: white;
 }
 
-#app-acct {
+#doit {
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    font-size: smaller;
+    font-family: sans-serif;
+    margin-top: 5px;
+    padding: 5px;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+#undo, #redo {
+    color: var(--main-color);
+    margin: 2px;
+    padding: 4px;
+}
+#undo:disabled, #redo:disabled {
+    color: rgba(0,0,0,.1) !important;
+    background-color: rgba(0,0,0,0.1) !important;
+}
+#undo:hover, #redo:hover {
+    color: black;
+    background-color: rgba(0,0,0,0.2);
+}
+
+#app-xpnd {
+    display: none;
+}
+#app-acct, #app-xpnd {
     align-items: center;
     justify-content: flex-end;
 }
@@ -356,6 +408,9 @@ th, tr, td, label {
 #acct-pop > div > div:hover {
     color: #000;
     background-color: #f4f4f4;
+}
+#acct-lang {
+    justify-content: flex-end;
 }
 #acct-lang:hover #lang-pop, #acct-ver:hover #ver-pop {
     display: flex;
@@ -396,9 +451,17 @@ th, tr, td, label {
     pointer-events: none;
 }
 
+#mod-print button, #catalogList button, #settingsList button {
+    text-transform: none !important;
+}
+
 #mid-lcol, #mid-rcol, #modal {
     pointer-events: visible;
     text-transform: capitalize;
+}
+
+#mid-lcol label, #mid-lcol svg {
+    pointer-events: none;
 }
 
 #acct-pop {
@@ -414,19 +477,191 @@ th, tr, td, label {
     background-image: var(--gradbar);
 }
 
+.movable {
+    margin: 5px;
+}
+.movable input {
+    background-color: rgba(255,255,255,0.5);
+}
+.movable .title {
+    color: white;
+    padding: 2px 3px 1px 3px;
+    background-color: var(--main-color);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    font-size: smaller;
+    text-align: center;
+}
+.movable .body {
+    margin: 0;
+    padding: 0 5px 0 0;
+    background-color: rgba(245,245,245,0.8);
+}
+.movable:hover .body {
+    background-color: rgba(245,245,245,0.95);
+}
+.movable .footer {
+    height: 10px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    background-color: var(--main-color);
+}
+
+.closer {
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    z-index: 200;
+}
+.closer:hover {
+    color: #555;
+}
+
+.tictac {
+    margin: 2px 2px 2px 0;
+    padding: 4px;
+    border-radius: 3px;
+    border: 1px solid white;
+    background-color: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tictac:hover {
+    border: 1px solid #ccc;
+    background-color: #eee;
+}
+.tictac.selected {
+    background-color: var(--main-color);
+    color: #fff;
+}
+
+#float-tools {
+    position: absolute;
+    margin: 0 0 0 5px;
+    top: 0;
+    left: 100%;
+    z-index: 16;
+}
+#float-tools button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+#float-tools .menu {
+    margin-right: 5px;
+    border-right: 3px solid var(--main-color);
+}
+#float-tools .title {
+    min-height: 18px;
+}
+
+#lab-axis, #lab-scale, #lab-size {
+    border-radius: 3px;
+    padding: 2px;
+    border: 1px solid white;
+}
+#lab-axis:hover, #lab-scale:hover {
+    background-color: var(--main-color);
+    color: white;
+}
+
+#ft-rotate {
+    grid-gap: 2px;
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-columns: auto auto auto auto;
+}
+#ft-rotate label, #ft-rotate svg {
+    text-align: center;
+}
+#ft-rotate svg {
+    margin-top: 2px;
+    padding: 1px 15px 1px 15px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+}
+#ft-rotate > div:hover > svg {
+    background-color: var(--main-color);
+    color: white;
+}
+#ft-rotate > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#ft-rotate .buttons {
+    grid-column: 1/4;
+    align-items: stretch;
+    min-width: 150px;
+}
+#ft-scale {
+    grid-gap: 2px;
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-columns: auto auto auto 1fr;
+}
+#ft-scale label {
+    text-align: center;
+    flex-grow: 1;
+}
+#ft-scale button {
+    grid-column: 1/4;
+    margin-left: 0;
+    margin-right: 0;
+}
+#ft-mesh label {
+    font-size: smaller;
+}
+#ft-mesh .value {
+    font-family: monospace;
+    padding-left: 4px;
+}
+#ft-mesh, #ft-select {
+    min-width: 200px;
+}
+#mesh-info {
+    grid-gap: 2px;
+    grid-template-rows: auto auto auto;
+    grid-template-columns: auto 1fr;
+}
+#lock_x, #lock_y, #lock_z {
+    position: absolute;
+    right: 2px;
+    top: 7px;
+}
+#ft-select {
+    max-height: 300px;
+    overflow-y: auto;
+}
+#ft-select button {
+    text-transform: none;
+}
+#lay-flat.selected {
+    background-color: var(--main-color);
+}
+
 #lt-top {
     height: 10px;
     border-top-right-radius: 10px;
+    border-bottom-right-radius: 1px;
     background-color: var(--main-color);
     left: -5px;
 }
 
-#lt-back, #lt-trash {
+#lt-back, #lt-options {
+    flex-direction: row;
     position: absolute;
     display: none;
+    gap: 5px;
     top: 0;
 }
+#lt-trash:hover, #lt-w-enable:hover, #lt-w-disable:hover {
+    color: var(--main-color);
+}
 #act-sep, #lt-sep {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
     background-color: var(--main-color);
     height: 10px;
     left: -5px;
@@ -434,6 +669,7 @@ th, tr, td, label {
 
 #lt-end {
     height: 10px;
+    border-top-right-radius: 1px;
     border-bottom-right-radius: 10px;
     background-color: var(--main-color);
     left: -5px;
@@ -488,7 +724,7 @@ th, tr, td, label {
     text-align: center;
 }
 .lt-menu label {
-    font-size: smaller;
+    font-size: small;
 }
 .lt-enabled, .lt-active {
     color: var(--fg-gray);
@@ -504,7 +740,7 @@ th, tr, td, label {
 .lt-active .hoverpop {
     display: flex;
 }
-@media only screen and (max-height : 800px) {
+@media only screen and (max-height : 750px) {
     .lt-menu, .pop-lcol {
         font-size: 16px !important;
     }
@@ -522,11 +758,12 @@ th, tr, td, label {
 }
 
 .dev-buttons {
-    margin: 5px 15px 0 15px;
+    margin: 1px -1px 0 -1px;
 }
 .dev-buttons button {
     margin-left: 2px;
     margin-right: 2px;
+    padding-bottom: 2px;
 }
 #dg .ext-buttons button {
     cursor: pointer;
@@ -547,30 +784,7 @@ th, tr, td, label {
     background-color: #eee;
 }
 .txt-sel button, .btn-sel {
-    background-color: #ccc;
-}
-#pop-rotate input.value, #pop-scale input.value {
-    width: 90%;
-}
-#pop-rotate label {
-    padding: 3px;
-}
-#pop-rotate svg {
-    padding: 3px;
-    font-size: 20px;
-    border-radius: 3px;
-    border: 1px solid rgba(0,0,0,0);
-}
-#pop-rotate svg:hover {
-    color: #345;
-    font-size: 20px;
-    background-color: rgba(255,255,255,0.5);
-    border: 1px solid #aaa;
-}
-#lock_x, #lock_y, #lock_z {
-    position: absolute;
-    left: 2px;
-    top: 7px;
+    background-color: var(--highlight);
 }
 
 #end {
@@ -581,11 +795,23 @@ th, tr, td, label {
     text-align: center;
     font-size: smaller;
 }
+#camop_dialog {
+    flex-direction: column;
+}
+#camop_dialog textarea {
+    border: 1px solid gray;
+    margin: 5px 1px 5px 1px;
+    background-color: #f4f4f4;
+}
+#camop_dialog button, #camop_dialog label {
+    text-align: center;
+    display: block;
+}
 #camops {
     display: none;
     padding: 0;
     height: 38px;
-    margin: 0 0 4px 0;
+    margin: 0 0 max(4px, env(safe-area-inset-bottom)) 0;
 }
 #camops .left {
     width: 12px;
@@ -613,6 +839,27 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
+.pop-tics {
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    bottom: 100%;
+    margin: 0 0 2px 0;
+}
+.pop-tics > div {
+    gap: 3px;
+    padding: 5px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 11px;
+    flex-direction: row;
+    background-color: rgba(255,255,255,0.6);
+    border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 5px;
+    word-break: break-word;
+    white-space: normal;
+}
 #oplist > div, .opdiv {
     display: flex;
     flex-direction: column;
@@ -625,28 +872,40 @@ th, tr, td, label {
     background-color: rgba(255,255,255,0.75);
     white-space: nowrap;
 }
+#oplist > div:hover, #op-add:hover {
+    background-color: rgba(255,255,255,0.9);
+}
+#oplist > div.editing {
+    background-color: rgba(190,230,190,0.85);
+}
 #oplist .drag {
     background-color: var(--highlight) !important;
+}
+#oplist .notime {
+    background-color: rgba(150,150,150,0.5) !important;
+}
+#oplist .disabled {
+    background-color: rgba(220,150,150,0.5) !important;
 }
 #oplist div .label {
     pointer-events: none;
 }
 #oplist div .del {
     position: absolute;
-    top: -1px;
-    right: 2px;
+    top: 0px;
+    right: 0px;
     font-size: 12px;
     color: rgba(0,0,0,0);
 }
-#oplist > div.editing {
-    background-color: rgba(220,230,220,0.8);
+.dark #oplist div:hover .del {
+    color: #777;
 }
 #oplist div:hover .del {
-    color: #aaa;
+    color: #888;
     z-index: 10000;
 }
 #oplist div .del:hover {
-    color: #000;
+    color: #000 !important;
 }
 #oplist div .opop {
     position: absolute;
@@ -662,6 +921,12 @@ th, tr, td, label {
 #oplist div:hover .opop {
     display: flex;
 }
+.mobile #oplist {
+    font-size: larger;
+}
+.mobile #op-add-pop {
+    font-size: larger;
+}
 #op-add-pop {
     position: absolute;
     display: none;
@@ -671,28 +936,36 @@ th, tr, td, label {
 #op-add:hover #op-add-pop {
     display: flex;
 }
+.op-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    align-items: center;
+    gap: 5px;
+}
 #op-add-list {
     padding: 4px;
     display: flex;
     align-items: stretch;
-    flex-direction: column-reverse;
+    flex-direction: column;
 }
 #op-add-list > div {
     padding: 3px 5px 3px 5px;
     display: flex;
     flex-direction: column;
+    border: 1px dashed gray;
     border-radius: 3px;
 }
 #op-add-list > div:hover {
     background-color: rgba(0,0,0,0.2);
-    border-bottom: 1px rgba(0,0,0,0.5);
 }
 #op-add-contour-menu, #op-add-register-menu {
     position: absolute;
     right: 0;
     top: 0;
-    xtransform: translateX(-100%);
-    xtransform: translateY(-50%);
+}
+#cam-lathe:hover {
+    background-color: rgba(0,0,0,0) !important;
 }
 
 #progress {
@@ -737,11 +1010,15 @@ th, tr, td, label {
     border-top: 1px solid black;
     overflow: hidden;
 }
+#modal button, #modal select {
+    color: black !important;
+}
 #modal > div {
     position: absolute;
     transform: translateX(50%) translateY(-50%);
     right: 50%;
     top: 50%;
+    max-height: 80%;
 }
 .mdialog {
     display: none;
@@ -757,6 +1034,9 @@ th, tr, td, label {
     border-top-right-radius: 10px;
     background-color: var(--main-color);
 }
+#tool-cols {
+    max-height: 350px;
+}
 #mod-x {
     position: absolute;
     z-index: 30;
@@ -764,13 +1044,13 @@ th, tr, td, label {
     right: 5px;
 }
 #mod-setup {
-    height: 500px;
-    width: 700px;
+    height: 550px;
+    width: 725px;
     padding-bottom: 5px;
 }
 #mod-setup .header {
     text-align: center;
-    border-bottom: 1px solid rgba(150,130,200,0.5);
+    border-bottom: 1px solid rgba(126,153,183,1);
     padding-bottom: 5px;
     margin-bottom: 5px;
 }
@@ -804,23 +1084,55 @@ th, tr, td, label {
     margin-top: 5px;
     border-top: 1px solid rgba(150,130,200,0.5);
 }
+.devlist {
+    background-color: #fdfdfd;
+}
 .devlist button {
     margin: 1px;
     padding: 2px;
-    border: 1px solid rgba(0,0,0,0);
+    border: 0;
     border-radius: 0;
     font-size: 11px;
     font-family: sans-serif;
-    background-color: rgba(255,255,255,0.9);
+    background-color: #f8f8f8;
     text-align: left;
     min-height: 1.5em;
 }
 .devlist button:hover {
-    background-color: rgba(200,200,200,0.9);
+    background-color: var(--main-color);
+    color: white;
 }
 .devlist button.selected {
     background-color: var(--highlight);
     border: 1px solid var(--highlight);
+}
+#mod-help svg {
+    width: 36px;
+    height: 36px;
+    padding-right: 10px;
+    color: var(--main-color);
+}
+#mod-help a {
+    border-radius: 5px;
+    padding: 3px 10px 3px 5px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+#mod-help a:hover {
+    background-color: #eee;
+}
+#mod-help a:hover svg {
+    color: #123;
+}
+#mod-help .title {
+    font-weight: bold;
+    font-size: larger;
+    padding-bottom: 10px;
+}
+#kiri-version {
+    font-family: monospace;
+    padding-top: 5px;
 }
 #mod-print {
     background-color: rgba(255,255,255,0.85);
@@ -894,16 +1206,35 @@ th, tr, td, label {
 #print-download {
     min-height: 4em !important;
 }
+#print-palette {
+    display: none;
+}
 #code-preview-textarea {
     width: 40em;
     height: 12em;
-    font-size: 10px;
+    font-size: smaller;
+    font-family: Courier,monospace;
 }
 .mod-end {
     height: 10px;
     border-bottom-left-radius: 10px;
     border-bottom-right-radius: 10px;
     background-color: var(--main-color);
+}
+#settingsNew {
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px solid var(--main-color);
+}
+#settingsName {
+    margin-right: 4px;
+    padding-right: 4px;
+    padding-left: 4px;
+    text-align: center;
+}
+#settingsList {
+    max-height: 450px;
+    overflow-y: auto;
 }
 #settingsList button.selected {
     font-weight: bold;
@@ -1083,8 +1414,7 @@ th, tr, td, label {
     height: 30px;
 }
 .dev-sel {
-    color: #033;
-    background-color: #bbb;
+    background-color: var(--highlight);
 }
 
 .t-head {
@@ -1125,14 +1455,18 @@ th, tr, td, label {
 #devices {
     width: 225px;
 }
-#device1, #device2 {
+#device1, #device2, #palette3 {
     width: 225px;
+}
+#palette3 {
+    display: none;
 }
 #dev-gcode textarea {
     font-family: monospace;
     overflow: auto;
     padding: 5px;
     width: 100%;
+    background-color: #f8f8f8;
 }
 #device-action, #tool-action {
     margin-top: 5px;
@@ -1157,6 +1491,7 @@ th, tr, td, label {
 
 #layer-animate {
     position: absolute;
+    z-index: 2;
     left: 15px;
     right: 15px;
     bottom: 3px;
@@ -1165,12 +1500,23 @@ th, tr, td, label {
     color: #333;
     font-size: 30px;
 }
+#layer-animate .speed {
+    width: 30px;
+    margin-left: 5px !important;
+}
+#layer-animate .progress {
+    width: 3.5em;
+}
+#layer-animate button {
+    width: 45px;
+    align-items: center;
+    justify-content: center;
+}
 #layer-animate label {
     display: inline-flex;
-    width: 30px;
     border-radius: 3px;
     border: 1px solid #aaa;
-    margin: 1px 2px 2px 4px;
+    margin: 1px 2px 2px 1px;
     padding: 2px;
     justify-content: center;
     align-items: center;
@@ -1180,6 +1526,7 @@ th, tr, td, label {
 
 #layer-toolpos {
     position: absolute;
+    display: none;
     right: 3px;
     bottom: 3px;
 }
@@ -1210,13 +1557,19 @@ th, tr, td, label {
     font-size: smaller;
     left: 15px;
     right: 15px;
-    bottom: 3px;
+    bottom: max(3px, env(safe-area-inset-bottom));
     pointer-events: all;
+}
+#slider.slider-mobile {
+    height: 40px !important;
 }
 #slider {
     display: none;
     height: 30px;
     z-index: 100;
+}
+.mobile .sli-drag-el {
+    background-color: rgba(200,0,0,0.8) !important;
 }
 #slider-hi-val, #slider-lo-val {
     display: none;
@@ -1234,14 +1587,15 @@ th, tr, td, label {
     flex-direction: row;
     align-items: center;
 }
-#slider-max {
-    background-color: #ccc;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    margin-left: 3px;
+.dark #slider-center {
+    background-image: var(--holdbar-dk);
 }
 #slider-center {
     background-image: var(--holdbar);
+}
+.dark #slider-zero, .dark #slider-max {
+    background-color: #555;
+    color: white;
 }
 #slider-zero {
     z-index: 10;
@@ -1250,12 +1604,24 @@ th, tr, td, label {
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
 }
+#slider-max {
+    background-color: #ccc;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    margin-left: 3px;
+}
+.dark #slider-hold {
+    background-color: rgba(255,255,255,0.25);
+}
 #slider-hold {
     background-color: rgba(0,0,0,0.15);
     position: absolute;
     bottom: 0;
     right: 0;
     top: 0;
+}
+#slider-hold .slider-mobile {
+    width: 40px !important;
 }
 #slider-hold .handle {
     width: 15px;
@@ -1328,9 +1694,10 @@ th, tr, td, label {
     top: 3px;
     right: 0;
     bottom: 3px;
-    border-radius: 5px;
-    border: 3px solid rgba(200,200,200,0.5);
-    background-color: #888;
+    background-color: transparent;
+}
+.dark #speedbar label {
+    color: black;
 }
 #speedbar label {
     flex-grow: 1;
@@ -1343,6 +1710,8 @@ th, tr, td, label {
     font-size: 12px;
     padding: 0 5px 0 5px;
     color: #fff;
+    margin: 0.5px;
+    border-radius: 3px;
 }
 
 #settings {
@@ -1356,14 +1725,14 @@ th, tr, td, label {
     color: black;
     padding: 1px 10px 2px 2px;
     border-top-left-radius: 10px;
-    border-bottom-left-radius: 0;
+    border-bottom-left-radius: 1px;
     background-color: var(--main-color);
     min-height: 10px;
 }
 #set-end {
     color: black;
     padding: 1px 10px 2px 2px;
-    border-top-left-radius: 0;
+    border-top-left-radius: 1px;
     border-bottom-left-radius: 10px;
     background-color: var(--main-color);
     height: 10px;
@@ -1373,6 +1742,7 @@ th, tr, td, label {
     padding: 0 !important;
     height: 1px;
     margin-top: 2px;
+    margin-bottom: 2px;
     background-color: #bbb;
 }
 .set-sep {
@@ -1418,6 +1788,15 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
+.set-pop.xdown {
+    transform: translateY(-25%) !important;
+}
+.set-pop.fdmout {
+    transform: translateY(-63%) !important;
+}
+.set-pop.fdmadv {
+    transform: translateY(-74%) !important;
+}
 .set-pop.rough {
     transform: translateY(-14%) !important;
 }
@@ -1439,6 +1818,19 @@ th, tr, td, label {
     padding: 2px 5px 2px 5px;
     margin: 0 2px 3px 2px;
 }
+#layers button {
+    margin-left: 4px;
+    margin-top: 0;
+    margin-bottom: 3px;
+    padding-left: 9px;
+    padding-right: 9px;
+    border-radius: 10px;
+    font-weight: bold;
+    background-color: var(--highlight);
+}
+#layers button:hover {
+    background-color: var(--main-color);
+}
 .var-row {
     white-space: nowrap;
     align-items: center;
@@ -1448,7 +1840,14 @@ th, tr, td, label {
     flex-grow: 1;
     font-size: smaller;
 }
-.var-row input {
+.var-area {
+    gap: 3px;
+}
+.var-area label {
+    padding: 2px 0 2px 0;
+    font-size: smaller;
+}
+.var-row input, .var-area input {
     margin-right: 0;
     margin-bottom: 1px;
     padding-bottom: 1px;
@@ -1473,6 +1872,11 @@ th, tr, td, label {
     font-family: monospace;
 }
 
+#fs-edit {
+    text-transform: none;
+    padding: 1px 3px 1px 3px;
+    margin: 0 3px 0 0 !important;
+}
 #gdpr {
     position: absolute;
     display: none;
@@ -1493,12 +1897,41 @@ th, tr, td, label {
     padding: 5px 20px 5px 20px;
     margin-left: 10px;
 }
-#fps {
+#stats {
     position: fixed;
     font-size: 10px;
     bottom: 5px;
     right: 5px;
     color: #000;
+    flex-direction: column;
+    align-items: flex-end;
+}
+.dark #stats {
+    color: #888;
+}
+#stats:hover #rnfo {
+    display: grid;
+}
+.dark #rnfo {
+    color: #aaa;
+}
+.dark #rnfo label {
+    color: #ada;
+}
+#rnfo {
+    display: none;
+    grid-template-columns: min-content 1fr;
+    position: absolute;
+    bottom: 100%;
+    gap: 3px;
+    right: 0;
+    background-color: rgba(255,255,255,0.05);
+    border: 1px solid black;
+    border-radius: 3px;
+    padding: 5px;
+}
+#rnfo label {
+    text-align: right;
 }
 #tool-info {
     position: fixed;
@@ -1509,13 +1942,6 @@ th, tr, td, label {
     padding: 4px;
     font-family: monospace;
     font-size: 12px;
-    color: #000;
-}
-#winfo {
-    position: fixed;
-    font-size: 10px;
-    bottom: 5px;
-    left: 5px;
     color: #000;
 }
 #context-menu {
@@ -1538,18 +1964,11 @@ th, tr, td, label {
     border-top: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
     background-color: #eee;
+    color: black;
 }
 #context-menu .sep {
     border-top: 1px solid #ddd;
     margin: 5px 0 5px 0;
-}
-
-#lab-axis, #lab-scale {
-    padding: 0 6px 0 6px;
-    border-radius: 3px;
-}
-#lab-axis:hover, #lab-scale:hover {
-    background-color: rgba(0,0,0,0.2);
 }
 
 .range-info {

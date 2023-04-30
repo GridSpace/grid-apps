@@ -1,1 +1,1 @@
-../../node_modules/tween.js/index.js
+../../node_modules/@tweenjs/tween.js/src/Tween.js

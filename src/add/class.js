@@ -1,3 +1,53 @@
+/** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
+
+"use strict";
+
+// use: add.array
+gapp.register("add.class", [], (root, exports) => {
+
+self.ArrayWriter = class ArrayWriter {
+    constructor() {
+        this.pos = 0;
+        this.array = [];
+    }
+
+    seek(pos) {
+        let last = this.pos;
+        this.pos = pos;
+        return last;
+    }
+
+    skip(len) {
+        this.writeBytes(new Array(len).fill(0), len);
+        return this.pos;
+    }
+
+    writeU8(v) {
+        this.array[this.pos++] = v & 0xff;
+    }
+
+    writeU16(v) {
+        this.array[this.pos++] = (v >> 8) & 0xff;
+        this.array[this.pos++] = v & 0xff;
+    }
+
+    writeU32(v) {
+        this.array[this.pos++] = (v >> 24) & 0xff;
+        this.array[this.pos++] = (v >> 16) & 0xff;
+        this.array[this.pos++] = (v >> 8) & 0xff;
+        this.array[this.pos++] = v & 0xff;
+    }
+
+    writeBytes(bytes) {
+        this.array.appendAll(bytes);
+        this.pos += bytes.length;
+    }
+
+    toBuffer() {
+        return new Uint8ClampedArray(this.array).buffer;
+    }
+};
+
 self.DataWriter = class DataWriter {
     constructor(view, pos) {
         this.view = view;
@@ -68,6 +118,12 @@ self.DataReader = class DataReader {
         return p;
     }
 
+    readBytes(len) {
+        let buf = this.view.buffer.slice(this.pos, this.pos + len);
+        this.pos += len;
+        return buf;
+    }
+
     readU8() {
         return this.view.getUint8(this.pos++);
     }
@@ -114,3 +170,5 @@ self.DataReader = class DataReader {
         return v;
     }
 }
+
+});

@@ -1,0 +1,746 @@
+:root {
+    --fg-gray: #495057;
+    --bg-gray: rgba(0,0,0,0.25);
+    --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
+    --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
+    --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
+    --highlight: rgba(126,153,183,0.4);
+    --main-color: rgba(126,153,183,1);
+}
+
+@font-face {
+    font-family: 'Russo One';
+    src: url('/moto/russo-one.ttf');
+}
+
+a, a:hover, a:visited {
+    border: none;
+    color: inherit;
+    text-decoration: none;
+}
+
+body, div {
+    position: relative;
+    display: flex;
+    padding: 0;
+    border: 0;
+    margin: 0;
+}
+
+input {
+    background-color: #eee;
+    border-radius: 3px;
+    border: 1px solid black;
+}
+
+#app {
+    position: fixed;
+    overflow: hidden;
+    flex-direction: column;
+    font-family: sans-serif;
+    font-weight: normal;
+    font-size: larger;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+}
+
+#app-info {
+    z-index: 50;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    user-select: none;
+    flex-direction: column;
+    align-items: center;
+}
+
+#app-info:hover #app-vers {
+    display: flex;
+}
+
+#app-vers {
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    font-size: smaller;
+    font-family: monospace;
+    transform: translate(5px,-50%);
+    color: var(--fg-gray);
+    margin: 0;
+    padding: 2px 3px 2px 3px;
+    border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 3px;
+    left: 100%;
+    top: 50%;
+}
+
+#app-body {
+    flex-grow: 1;
+}
+
+#app-body > div {
+    z-index: 2;
+}
+
+#curtain {
+    z-index: 50000;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: fixed;
+    background-color: #fff;
+    font-family: 'Russo One', sans-serif;
+    justify-content: center;
+    align-items: center;
+}
+
+#container {
+    z-index: 1;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+#container canvas {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#top {
+    z-index: 2;
+    padding: 3px 0 3px 0;
+    flex-direction: row;
+    font-family: 'Russo One', sans-serif;
+    background-color: rgba(255,255,255,0.55);
+}
+
+#top-sep {
+    z-index: 2;
+    height: 1px;
+    background-image: var(--gradbar);
+}
+
+.noselect {
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+:-moz-any() {
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+}
+:-moz-any() {
+    overflow-x: scroll !important;
+    overflow-y: scroll !important;
+    margin-right: -14px !important;
+    margin-bottom: -14px !important;
+}
+
+button {
+    padding: 2px 3px 2px 3px;
+    border: 1px solid rgba(150,150,150,0.5);
+    background-color: rgba(220,220,220,0.75);
+    user-select: none;
+    outline: none;
+}
+
+button:hover {
+    background-color: rgba(210,210,210,1);
+}
+
+/** misc ui **/
+
+.hide {
+    display: none;
+}
+
+.pad3 {
+    width: 3px;
+    height: 3px;
+}
+
+.pad5 {
+    width: 5px;
+    height: 5px;
+}
+
+#top-right {
+    position: absolute;
+    padding: 3px;
+    bottom: 0;
+    right: 3px;
+    top: 0;
+    gap: 8px;
+}
+
+#top-right > div {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    color: #888;
+}
+
+#top-right > div:hover {
+    color: black;
+}
+
+.dark #top-right > div {
+    color: black;
+}
+
+.dark #top-right > div:hover {
+    color: white;
+}
+
+/** specific modal dialogs */
+
+.export {
+    flex-direction: column;
+    font-family: monospace;
+}
+
+.export, .export div {
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.export input, .export button {
+    font-family: monospace;
+    padding: 3px;
+}
+
+.export button {
+    padding: 4px;
+}
+
+.addact {
+    gap: 4px;
+}
+
+.addact input {
+    text-align: center;
+}
+
+.image-import {
+    flex-direction: column;
+    gap: 3px;
+}
+
+.image-import label {
+    padding-right: 5px;
+    flex-grow: 1;
+}
+
+.image-import input {
+    text-align: center;
+}
+
+.image-import button {
+    margin: 10px 20px 1px 20px;
+    flex-grow: 1;
+}
+
+/** generic modal dialogs **/
+
+#modal_page {
+    background-color: rgba(0,0,0,0.25);
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    z-index: 50 !important;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    top: 0;
+    display: none;
+}
+
+#modal_frame {
+    border-radius: 4px !important;
+    background-color: #fff !important;
+    flex-direction: column;
+    padding: 0 !important; /* override common below */
+    z-index: 51;
+    gap: 2px;
+}
+
+#modal_frame > div {
+    flex-direction: column;
+    padding: 5px; /* compensate for removing padding above */
+}
+
+#modal_title {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom: 1px solid gray;
+    background-color: rgba(0,0,0,0.2);
+    font-family: 'Russo One', monospace;
+    font-size: smaller;
+    justify-content: center;
+    align-items: center;
+}
+
+#modal_title_close {
+    position: absolute;
+    color: #555;
+    right: 3px;
+    top: 2px;
+}
+
+#modal_title_close:hover {
+    color: black;
+}
+
+/** welcome dialog **/
+
+.welcome {
+    flex-direction: column;
+    align-items: center;
+    padding: 5px;
+    gap: 5px;
+    font-size: smaller;
+}
+
+.welcome a {
+    color: #038;
+    border-radius: 3px;
+    padding: 0 10px 0 10px;
+}
+
+.welcome a:hover {
+    background-color: #ddd;
+}
+
+.welcome .choice {
+    gap: 5px
+}
+
+/** settings dialog **/
+
+.settings {
+    gap: 5px;
+}
+
+.settings {
+    gap: 5px;
+    display: grid;
+    background-color: #fff;
+    grid: min-content 1fr / min-content 1fr;
+}
+
+.settings > div {
+    display: grid;
+    background-color: #f5f5f5;
+    grid: min-content 1fr / min-content 1fr;
+    white-space: nowrap;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 3px;
+}
+
+.settings .header {
+    grid-column: 1 / 3;
+    text-align: center;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    background-color: #ccc;
+    padding: 0;
+}
+
+.settings label {
+    padding: 0 5px 0 3px;
+}
+
+.settings input {
+    font-family: monospace;
+    text-align: center;
+    background: #fff;
+}
+
+/** spinner animation **/
+
+@keyframes spinner {
+    0% {
+        transform: translate3d(-50%, -50%, 0) rotate(0deg);
+    }
+    100% {
+        transform: translate3d(-50%, -50%, 0) rotate(360deg);
+    }
+}
+
+.spin::before {
+    position: absolute;
+    animation: 2.0s linear infinite spinner;
+    animation-play-state: inherit;
+    border: solid 10px #cfd0d1;
+    border-bottom-color: #1c87c9;
+    border-radius: 50%;
+    content: "";
+    height: 50px;
+    width: 50px;
+    top: 10%;
+    left: 10%;
+    transform: translate3d(-50%, -50%, 0);
+    will-change: transform;
+}
+
+/** common look & feel */
+
+.dark #logger, .dark #modal_frame, .dark #actions > div, .dark #grouplist > div, .dark #actions .pop {
+    border: 1px solid #999;
+}
+
+.dark #actions > div {
+    background-color: rgba(255,255,255,0.6);
+}
+
+#logger, #modal_frame, #actions > div, #grouplist > div {
+    border: 1px solid gray;
+    border-radius: 3px;
+    margin: 0 0 2px 0;
+    padding: 3px;
+    background-color: rgba(255,255,255,0.5);
+}
+
+#actions .vsep, #grouplist .vsep {
+    margin: 1px 0 1px 0;
+    border-bottom: 1px dashed gray;
+}
+
+button.selected {
+    background-color: rgba(0,255,0,0.5);
+}
+
+button.selected:hover {
+    background-color: rgba(0,255,0,0.8);
+}
+
+.dark .head {
+    color: #000 !important;
+}
+
+/** modes menu top/center **/
+
+#modes {
+    position: absolute;
+    gap: 2px;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#modes > div {
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.5);
+    border-radius: 3px;
+    margin-top: 2px;
+    padding: 3px;
+    gap: 2px;
+}
+
+/** slide in/out logging window **/
+
+#logger {
+    display: none;
+    color: #88ff88;
+    min-width: 300px;
+    flex-direction: column;
+    background-color: rgba(0,0,0,0.5);
+    position: absolute;
+    margin: 0 0 3px 3px;
+    bottom: 0;
+    left: 0;
+}
+
+#logtext {
+    flex-direction: column;
+    font-family: monospace;
+    font-size: smaller;
+    max-height: 5em;
+    min-height: 1em;
+    overflow-y: auto;
+}
+
+#logtext::-webkit-scrollbar {
+  width: 6px;
+}
+
+#logtext::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#logtext::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: #ddd;
+  border: 3px solid rgba(255,255,255,0.1);
+}
+
+/** action and keyboard menu **/
+
+#actions {
+    flex-direction: column;
+    position: absolute;
+    margin: 3px 0 0 3px;
+    left: 0;
+    top: 0;
+    gap: 1px;
+}
+
+#actions .pop {
+    display: none;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    transform: translateX(100%);
+    right: -3px;
+    top: -1px;
+    gap: 3px;
+    margin: 0;
+    padding: 3px;
+    border-radius: 3px;
+    border: 1px solid gray;
+    background-color: rgba(255,255,255,0.5);
+}
+
+#actions .back {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: -4px;
+    bottom: 0;
+}
+
+.pop button {
+    width: 100%;
+}
+
+.pop span {
+    margin: 1px;
+    height: 1px;
+    width: 80%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.dark #actions > div:hover {
+    background-color: #bbb;
+}
+
+#actions > div:hover {
+    background-color: #eee;
+}
+
+#actions > div:hover .pop {
+    display: flex;
+}
+
+#actions > div {
+    flex-direction: column;
+    padding: 5px;
+    gap: 2px;
+}
+
+#actions .head {
+    color: #444;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Russo One', monospace;
+    font-weight: lighter;
+    font-size: smaller;
+    border-radius: 3px;
+}
+
+#actions .head:hover {
+    user-select: none;
+}
+
+/** group/model buttons top/right of workspace **/
+
+#grouplist {
+    position: absolute;
+    margin: 3px 3px 0 0;
+    right: 0;
+    top: 0;
+}
+
+#grouplist, #grouplist div {
+    flex-direction: column;
+    gap: 2px;
+}
+
+#grouplist .group {
+    font-weight: bold;
+    padding: 3px;
+}
+
+#grouplist .models {
+    display: grid;
+    grid-template-columns: auto min-content;
+    max-height: 200px;
+    overflow-y: auto;
+    gap: 1px;
+}
+
+#grouplist .models .square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.dark #grouplist .models .square > svg {
+    color: #333;
+}
+
+#grouplist .models .square > svg {
+    aspect-ratio: 1;
+    height: 90%;
+    color: #666;
+}
+
+#grouplist .models > div {
+    flex-direction: row;
+}
+
+#grouplist .models button {
+    text-align: left;
+}
+
+/** selection info bottom/right of workspace **/
+
+#selectlist {
+    font-size: smaller;
+    position: absolute;
+    margin: 0 3px 3px 0;
+    bottom: 0;
+    right: 0;
+    gap: 2px;
+}
+
+#selectlist > .side {
+    position: relative;
+    width: 1.75em;
+    display: none;
+}
+
+#selectlist > .side > div {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    padding-bottom: 2px;
+}
+
+#selectlist > div {
+    flex-direction: column;
+    gap: 2px;
+}
+
+#selectlist > button, #selectlist > div > button {
+    border-radius: 3px;
+}
+
+#selectlist label {
+    border-radius: 3px;
+    font-family: monospace;
+    text-align: right;
+    padding: 2px;
+    background-color: rgba(0,0,0,0.05);
+}
+
+#selectlist .top {
+    display: block;
+    font-weight: bold;
+    font-size: smaller;
+    text-align: center;
+}
+
+#selectlist .side {
+    font-weight: bold;
+    font-size: smaller;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+#selectlist .grid {
+    background-color: rgba(255,255,255,0.8);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 3px;
+    padding: 3px;
+    display: grid;
+    gap: 2px 2px;
+    grid: min-content 1fr 1fr / min-content 1fr 1fr 1fr;
+}
+
+#selectlist .grid1 {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+
+#selectlist .grid2 {
+    grid: min-content 1fr / min-content 1fr;
+}
+
+.grid .ungrouped {
+    background-color: rgba(128,128,128,0.5) !important;
+}
+
+.grid .ungrouped:hover {
+    color: #fff !important;
+}
+
+.tempedit, .rename {
+    gap: 3px;
+}
+
+.tempedit input {
+    text-align: center;
+}
+
+.editable {
+    color: #05a;
+    cursor: default;
+}
+
+.editable:hover {
+    color: #000;
+    background-color: rgba(0,128,255,0.5) !important;
+}
+
+#pinner-box {
+    position: absolute;
+    z-index: 5000;
+    left: 50%;
+    bottom: 50%;
+    transform: translate(-50%, 50%);
+}
+
+#pinner {
+    z-index: 5000;
+    display: none;
+    width: 25px;
+    height: 25px;
+    border: 6px solid rgba(0,0,0,0.1);
+    border-radius: 50%;
+    border-top-color: rgba(0,0,0,0.5);
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg) }
+}

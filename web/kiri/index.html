@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="author" content="Stewart Allen">
-    <meta name="keywords" content="3d slicer,chromebook,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode,cura,simplify 3d,prusaslicer,fdm,sla" />
+    <meta name="keywords" content="3d slicer,chromebook,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode,cura,simplify 3d,prusaslicer,fdm,sla">
     <meta name="copyright" content="stewart allen [sa@grid.space]">
     <meta name="description" content="Browser-based 3D slicer, gcode and CNC toolpath generator">
     <meta property="og:description" content="Kiri:Moto is a unique 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters.">
@@ -11,27 +11,33 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://grid.space/kiri/">
     <meta property="og:image" content="https://static.grid.space/img/logo_km_og.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta http-equiv="origin-trial" content="ApR2x8vCkT5ck48OWSH7Q/0e6MFmnefu7kb7q1uvxSwDNoIlxDsphbW7OPguQ+cl2esyqJFSLpwFwiKhzO4Cmg8AAAB0eyJvcmlnaW4iOiJodHRwczovL2dyaWQuc3BhY2U6NDQzIiwiZmVhdHVyZSI6IlVucmVzdHJpY3RlZFNoYXJlZEFycmF5QnVmZmVyIiwiZXhwaXJ5IjoxNjg4MDgzMTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZX0=">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Kiri:Moto</title>
     <link rel="icon" href="/kiri/favicon.ico">
     <link rel="apple-touch-icon" href="/kiri/favicon-mobile.png">
     <link rel="stylesheet" type="text/css" href="/kiri/index.css?{{version}}">
-    <link href="https://fonts.googleapis.com/css?family=Russo+One&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/js/all.min.js" crossorigin="anonymous"></script>
+    <link href="/font/css/all.min.css" rel="stylesheet">
+    <link href="/kiri/manifest.json" rel="manifest">
+    <script src="/code/cache.js?{{version}}" defer></script>
+    <script src="/font/js/all.min.js" crossorigin="anonymous" defer></script>
     <script src="/code/kiri.js?{{version}}"></script>
 </head>
 <body>
 <div id="app" class="f-col">
-    <div id="curtain" class="j-center a-center"><img id="gsbox"/>loading...</div>
+    <div id="curtain" class="j-center a-center"><img id="gsbox">loading...</div>
     <div id="container"></div>
     <div id="tracker"></div>
     <div id="top-sep"></div>
     <div id="top" class="f-row">
         <div id="app-mode">
-            <div id="app-mode-name"></div>
-            <div id="mode-info" class="f-col">
-                <div><label>Device:</label><div id="mode-device">123</div></div>
-                <div><label>Profile:</label><div id="mode-profile">456</div></div>
+            <div id="mode-info" class="f-row">
+                <label>Mode</label><div id="app-mode-name"></div>
+                <label>Device</label><div id="mode-device"></div>
+                <label>Profile</label><div id="mode-profile"></div>
             </div>
         </div>
         <div class="grow"></div>
@@ -39,19 +45,29 @@
             <div>Kiri:Moto</div>
             <div id="app-info">version</div>
         </div>
+        <div id="doit" class="f-row a-center">
+            <button id="undo"><i class="fas fa-undo-alt"></i></button>
+            <button id="redo"><i class="fas fa-redo-alt"></i></button>
+        </div>
         <div class="grow"></div>
+        <div id="app-xpnd" lkt="fullscreen">
+            <i class="fa-solid fa-maximize"></i>
+        </div>
         <div id="app-acct">
             <i class="fas fa-user-cog"></i>
             <div id="acct-pop" class="f-col">
                 <div id="acct-menu" class="f-col">
                     <div id="acct-lang">
-                        <label><i class="fas fa-caret-left"></i>&nbsp;<span lk="language">language</span></label>
+                        <label><i class="fas fa-caret-left"></i><span class="grow">&nbsp;</span><span lk="language">language</span></label>
                         <div id="lang-pop" class="f-col">
-                            <div id="lset-da">danish</div>
+                            <div id="lset-zh">简体中文</div>
+                            <div id="lset-da">dansk</div>
+                            <div id="lset-de">deutsch</div>
                             <div id="lset-en">english</div>
-                            <div id="lset-fr">french</div>
-                            <div id="lset-de">german</div>
-                            <div id="lset-pl">polish</div>
+                            <div id="lset-es">español</div>
+                            <div id="lset-fr">français</div>
+                            <div id="lset-pl">polskie</div>
+                            <div id="lset-pt">português</div>
                         </div>
                     </div>
                     <div id="acct-export" class="f-col a-end">
@@ -71,10 +87,75 @@
             <div id="lt-back" class="lt-menu lt-enabled">
                 <i class="fas fa-arrow-circle-left"></i>
             </div>
-            <div id="lt-trash" class="lt-menu lt-enabled">
-                <i class="fas fa-times-circle"></i>
+            <div id="lt-options" class="lt-menu lt-enabled">
+                <div id="lt-trash"><i class="fas fa-trash"></i></div>
+                <div id="lt-w-enable"><i class="fas fa-check-circle"></i></div>
+                <div id="lt-w-disable"><i class="fas fa-times-circle"></i></div>
             </div>
-            <div id="lt-top"></div>
+            <div id="lt-top">
+                <div id="float-tools" class="f-col movable">
+                    <div id="float-tools-title" class="title mover">
+                        <label id="ft-label" class="grow">title bar</label>
+                        <div id="float-tools-close" class="closer"><i class="fas fa-times"></i></div>
+                    </div>
+                    <div class="body f-row">
+                        <div class="f-col menu">
+                            <div lkt="rotate" class="tictac" select="ft-rotate" label="ft-label"><i class="fas fa-sync-alt"></i></div>
+                            <div lkt="scale" class="tictac" select="ft-scale" label="ft-label"><i class="fas fa-expand"></i></div>
+                            <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
+                            <div lkt="select" class="tictac" select="ft-select" label="ft-label"><i class="fas fa-mouse-pointer"></i></div>
+                        </div>
+                        <div id="ft-scale" class="grow grid">
+                            <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
+                            <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked></div>
+                            <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked></div>
+                            <div><label id="lab-axis" lk="axis">axis</label></div>
+                            <div><input id="size_x" size="8" class="value"></div>
+                            <div><input id="size_y" size="8" class="value"></div>
+                            <div><input id="size_z" size="8" class="value"></div>
+                            <div><label id="lab-size" lk="size">size</label></div>
+                            <div><input id="scale_x" size="8" class="value" value="1"></div>
+                            <div><input id="scale_y" size="8" class="value" value="1"></div>
+                            <div><input id="scale_z" size="8" class="value" value="1"></div>
+                            <div><label id="lab-scale" lk="scale">scale</label></div>
+                            <button id="scale-reset" class="gr4">reset</button>
+                        </div>
+                        <div id="ft-rotate" class="grow grid">
+                            <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
+                            <label>X</label>
+                            <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
+                            <input id="rot_x" class="value center" size="6" value="0">
+                            <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
+                            <label>Y</label>
+                            <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
+                            <input id="rot_y" class="value center" size="6" value="0">
+                            <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
+                            <label>Z</label>
+                            <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
+                            <input id="rot_z" class="value center" size="6" value="0">
+                            <div class="buttons f-row">
+                                <button id="lay-flat" class="grow">lay flat</button>
+                                <button id="unrotate" class="grow" lk="reset">reset</button>
+                            </div>
+                        </div>
+                        <div id="ft-mesh" class="grow f-col">
+                            <div id="mesh-info" class="grid">
+                                <label>object:</label>
+                                <span id="mesh-name" class="value">[0]</span>
+                                <label>points:</label>
+                                <span id="mesh-points" class="value">-</span>
+                                <label>faces:</label>
+                                <span id="mesh-faces" class="value">-</span>
+                            </div>
+                            <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
+                            <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
+                            <button id="mesh-swap" lk="rc_swap">replace vertices</button>
+                        </div>
+                        <div id="ft-select" class="grow f-col"></div>
+                    </div>
+                    <div class="footer"></div>
+                </div>
+            </div>
             <div id="lt-setup" class="lt-menu lt-active">
                 <i class="fas fa-cogs"></i>
                 <label lk="setup">setup</label>
@@ -103,7 +184,9 @@
                     </div>
                     <div id="file-import">
                         <i class="fas fa-file-upload"></i>
-                        <label lk="import">import<label>
+                        <label lk="import">import</label>
+                        <!-- hidden file input loader -->
+                        <input id="load-file" type="file" name="loadme" style="display:none"></input>
                     </div>
                 </div>
             </div>
@@ -113,16 +196,16 @@
                 <label lk="view">view</label>
                 <div id="pop-view" class="pop-lcol f-row">
                     <div id="view-arrange">
-                        <i class="fas fa-th"></i>
+                        <i class="fas fa-shapes"></i>
                         <label lk="arrange">arrange</label>
-                    </div>
-                    <div id="view-top">
-                        <i class="fas fa-square"></i>
-                        <label lk="top">top</label>
                     </div>
                     <div id="view-home">
                         <i class="fas fa-home"></i>
                         <label lk="home">home</label>
+                    </div>
+                    <div id="view-top">
+                        <i class="fas fa-square"></i>
+                        <label lk="top">top</label>
                     </div>
                     <div id="view-clear">
                         <i class="far fa-square"></i>
@@ -130,21 +213,25 @@
                     </div>
                 </div>
             </div>
-            <div id="act-slice" class="lt-menu lt-active">
-                <i class="fas fa-bars"></i>
-                <label id="label-slice" title="analyze parts" lk="slice">slice</label>
+            <div id="lt-start" class="lt-menu lt-active">
+                <i class="fas fa-person-running"></i>
+                <label id="label-start" title="start a process" lk="start">start</label>
                 <div id="pop-slice" class="pop-lcol f-row">
+                    <div id="act-slice">
+                        <i class="fas fa-bars"></i>
+                        <label id="label-slice" title="generate layer slices" lk="slice">preview</label>
+                    </div>
                     <div id="act-preview">
-                        <i class="fas fa-cubes"></i>
+                        <i class="fas fa-layer-group"></i>
                         <label id="label-preview" title="show routing and paths" lk="preview">preview</label>
                     </div>
                     <div id="act-animate">
-                        <i class="fas fa-running"></i>
+                        <i class="fas fa-film"></i>
                         <label id="label-animate" title="render routing on a mesh" lk="animate">animate</label>
                     </div>
                     <div id="act-export">
                         <i class="fas fa-file-download"></i>
-                        <label id="label-export" title="generate downloadable files" lk="export">export</label>
+                        <label id="label-export" title="generate gcode" lk="export">export</label>
                     </div>
                 </div>
             </div>
@@ -154,7 +241,7 @@
                 <label lk="render">render</label>
                 <div id="pop-render" class="pop-lcol f-row">
                     <div id="render-solid" class="grow a-center">
-                        <i class="fas fa-th-large"></i>
+                        <i class="fas fa-square"></i>
                         <label lk="solid">solid</label>
                     </div>
                     <div id="render-wire" class="grow a-center">
@@ -170,64 +257,25 @@
                     </div>
                 </div>
             </div>
-            <div id="lt-rotate" class="lt-menu">
-                <i class="fas fa-sync-alt"></i>
-                <label lk="rotate">rotate</label>
-                <div id="pop-rotate" class="pop-lcol f-row russo">
-                    <div>
-                        <div class="grow a-center">
-                            <i id="rot_x_lt" class="fas fa-chevron-left"></i>
-                            <label>X</label>
-                            <i id="rot_x_gt" class="fas fa-chevron-right"></i>
-                        </div>
-                        <input id="rot_x" class="value center" size="5"/ value="0">
+            <div id="lt-tools" class="lt-menu lt-active">
+                <i class="fas fa-tools"></i>
+                <label lk="tools">edit</label>
+                <div id="pop-tools" class="pop-lcol f-row">
+                    <div id="tool-rotate" class="grow a-center">
+                        <i class="fas fa-sync-alt"></i>
+                        <label lk="rotate">rotate</label>
                     </div>
-                    <div>
-                        <div class="grow a-center">
-                            <i id="rot_y_lt" class="fas fa-chevron-left"></i>
-                            <label>Y</label>
-                            <i id="rot_y_gt" class="fas fa-chevron-right"></i>
-                        </div>
-                        <input id="rot_y" class="value center" size="5"/ value="0">
+                    <div id="tool-scale" class="grow a-center">
+                        <i class="fas fa-expand"></i>
+                        <label lk="scale">scale</label>
                     </div>
-                    <div>
-                        <div class="grow a-center">
-                            <i id="rot_z_lt" class="fas fa-chevron-left"></i>
-                            <label>Z</label>
-                            <i id="rot_z_gt" class="fas fa-chevron-right"></i>
-                        </div>
-                        <input id="rot_z" class="value center" size="5"/ value="0">
+                    <div id="tool-mesh" class="grow a-center">
+                        <i class="fas fa-dice-d20"></i>
+                        <label lk="mesh">mesh</label>
                     </div>
-                    <!-- <div id="lay-flat" class="f-col j-center center">lay flat</div> -->
-                    <div id="unrotate" class="f-col j-center" lk="reset">reset</div>
-                </div>
-            </div>
-            <div id="lt-scale" class="lt-menu">
-                <i class="fas fa-expand"></i>
-                <label lk="scale">scale</label>
-                <div id="pop-scale" class="pop-lcol f-row russo">
-                    <div>
-                        <input id="lock_x" type="checkbox" checked/>
-                        <div><label>X</label></div>
-                        <div><input id="size_x" xsize="8" class="value"/></div>
-                        <div><input id="scale_x" xsize="8" class="value" value="1"/></div>
-                    </div>
-                    <div>
-                        <input id="lock_y" type="checkbox" checked/>
-                        <div><label>Y</label></div>
-                        <div><input id="size_y" xsize="8" class="value"/></div>
-                        <div><input id="scale_y" xsize="8" class="value" value="1"/></div>
-                    </div>
-                    <div>
-                        <input id="lock_z" type="checkbox" checked/>
-                        <div><label>Z</label></div>
-                        <div><input id="size_z" xsize="8" class="value"/></div>
-                        <div><input id="scale_z" xsize="8" class="value" value="1"/></div>
-                    </div>
-                    <div class="f-col j-center">
-                        <div><label id="lab-axis" lk="axis">axis</label></div>
-                        <div><label id="lab-size" lk="size">size</label></div>
-                        <div><label id="lab-scale" lk="scale">scale</label></div>
+                    <div id="tool-selector" class="grow a-center">
+                        <i class="fas fa-mouse-pointer"></i>
+                        <label lk="select">select</label>
                     </div>
                 </div>
             </div>
@@ -244,11 +292,21 @@
 
                 <div class="mod-top f-row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
                 <div id="mod-help" class="mdialog f-col">
-                    <a href="https://en.wikipedia.org/wiki/Slicer_(3D_printing)">wikipedia</a>
-                    <a href="https://www.onshape.com/cad-blog/partner-spotlight-kirimoto">Onshape</a>
-                    <a href="https://www.inov3d.net/3d-printing-slicer-software-download/">slicer news</a>
-                    <a href="https://sienci.com/2016/08/24/the-story-of-kirimoto/">Sienci Labs</a>
-                    <a href="https://www.youtube.com/watch?v=IZ1VG07oFCo">Teaching Tech</a>
+                    <div class="f-row j-center title">
+                        <label>Kiri:Moto Help</label>
+                    </div>
+                    <div class="f-col">
+                        <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"><i class="fas fa-question-circle"></i>Kiri:Moto Full Documentation</a>
+                        <a href="https://youtu.be/08795Sj22QE" target="youtube"><i class="fab fa-youtube"></i>Video Guide to Kiri:Moto 2.5</a>
+                        <a target="_rsc" href="https://www.youtube.com/c/GridSpace/videos"><i class="fab fa-youtube"></i>YouTube Channel</a>
+                        <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Discord Live Chat</a>
+                        <a target="_rsc" href="https://forum.grid.space"><i class="fab fa-discourse"></i> Discourse Forums</a>
+                        <a target="_rsc" href="https://twitter.com/grid_space_3d"><i class="fab fa-twitter"></i> Follow on Twitter</a>
+                        <a target="_rsc" href="https://paypal.me/gridspace3d?locale.x=en_US"><i class="fab fa-paypal"></i> Donations are welcome!</a>
+                    </div>
+                    <div class="f-row j-center">
+                        <label id="kiri-version"></label>
+                    </div>
                 </div>
                 <div id="mod-setup" class="mdialog f-row">
                     <div class="f-col left a-stretch">
@@ -262,11 +320,11 @@
                                 <th><button id="mode-laser" class="dev-type"><label>LASER</label></button></th>
                             </tr></table>
                         </div>
-                        <div class="header sub f-col j-center">
+                        <div id="dev-header" class="header sub f-col j-center">
                             <label lk="dm_stdd">standard devices</label>
                             <div id="dev-search">
                                 <i class="fas fa-search"></i>
-                                <input id="dev-filter" />
+                                <input id="dev-filter">
                             </div>
                         </div>
                         <div class="f-col mh0 mh35 j-center a-stretch">
@@ -290,6 +348,7 @@
                             <div id="device1" class="f-col t-body t-inset overy grow"></div>
                             <div class="t-pad"></div>
                             <div id="device2" class="f-col t-body t-inset overy grow"></div>
+                            <div id="palette3" class="f-col t-body t-inset overy grow"></div>
                         </div>
                         <div class="t-pad"></div>
                         <div id="gcode-edit" class="f-col grow">
@@ -311,6 +370,10 @@
                 <div id="mod-saves" class="mdialog f-col">
                     <label class="set-header" lk="dm_savs">saved settings</label>
                     <div id="settingsList" class="f-col"></div>
+                    <div id="settingsNew">
+                        <input id="settingsName" class="grow"></input>
+                        <button id="settingsSave" lk="save">Save</button>
+                    </div>
                 </div>
                 <div id="mod-tools" class="mdialog">
                     <div class="f-col">
@@ -321,7 +384,7 @@
                             <div class="t-pad"></div>
                             <label class="t-33" lk="view">view</label>
                         </div>
-                        <div class="f-row">
+                        <div id="tool-cols" class="f-row">
                             <div class="f-col t-33">
                                 <select id="tool-select" size="10" class="grow"></select>
                             </div>
@@ -344,7 +407,7 @@
                                 <div class="f-row var-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
                                 <div class="f-row var-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
                                 <div class="set-header f-col" ln="td_tapr">taper</div>
-                                <!-- <div class="flow-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=5></input></div> -->
+                                <div class="f-row var-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=7></input></div>
                                 <div class="f-row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
                             </div>
                             <div class="t-pad"></div>
@@ -356,6 +419,8 @@
                             <div class="t-pad2"></div>
                             <button id="tools-save" lk="save">save</button>
                             <button id="tools-close" lk="done">done</button>
+                            <div class="t-pad2"></div>
+                            <button id="tools-export" lk="export">export</button>
                         </div>
                     </div>
                 </div>
@@ -380,8 +445,6 @@
                 <div id="mod-local" class="mdialog f-col"></div>
                 <div id="mod-print" class="mdialog f-col"></div>
                 <div id="mod-any" class="mdialog f-col"></div>
-                <!-- hidden file input loader -->
-                <input id="load-file" type="file" name="loadme" style="display:none"/>
                 <div class="mod-end"></div></div>
             </div>
             <div id="layer-slider" class="f-col a-stretch">
@@ -401,7 +464,7 @@
         </div>
         <div id="mid-rcol" class="f-col j-center noshow">
             <div id="set-menu" class="f-col">
-                <div id="speeds"><div id="speedbar" class="f-col a-stretch j-center"></div></div>
+                <div id="speeds"><div id="speedbar" class="f-col a-stretch j-center" lkt="sb_info"></div></div>
                 <div id="set-top" class="set-group"></div>
                 <div id="settings" class="f-col"></div>
                 <div id="set-end" class="set-group"></div>
@@ -420,16 +483,21 @@
                 <div id="op-add" class="opdiv">
                     <i class="fas fa-plus"></i>
                     <div id="op-add-pop" class="f-col">
-                        <div id="op-add-list" class="opdiv">
+                        <div id="op-add-list" class="opdiv op-grid">
+                            <div id="cam-index" title="rotate index axis">index</div>
+                            <div id="cam-lathe" title="lathe operation">lathe</div>
+                            <div id="laser-on" title="turn on laser mode">laser on</div>
+                            <div id="laser-off"  title="turn off laser mode">laser off</div>
+                            <div id="cam-flip" title="flip part and load&#13;profile for other side&#13;for double-sided work">flip</div>
+                            <div id="cam-reg" title="drill registration holes&#13;along the X or Y axis&#13;for double-sided work">register</div>
+                            <div title="drill any holes matching&#13;selected tool diameter">drill</div>
                             <div title="clear stock face&#13;or top of part&#13;when no stock">level</div>
+                            <div title="follow selected features with&#13;a specified tool. often used&#13;for lettering and engraving">trace</div>
+                            <div title="insert custom gcode">gcode</div>
                             <div title="remove an area of material&#13;inside a defined boundary&#13;sometimes called pocketing">rough</div>
                             <div title="clean up after roughing&#13;or perform a part cutout">outline</div>
                             <div title="2.5D tracing along X or Y axis&#13;used for complex part features">contour</div>
-                            <div title="follow selected features with&#13;a specified tool. often used&#13;for lettering and engraving">trace</div>
-                            <div title="drill any holes matching&#13;selected tool diameter">drill</div>
-                            <hr width="100%">
-                            <div title="drill registration holes&#13;along the X or Y axis&#13;for double-sided work">register</div>
-                            <div title="flip part and load&#13;profile for other side&#13;for double-sided work">flip</div>
+                            <div title="clear areas above&#13;selected surfaces">pocket</div>
                         </div>
                     </div>
                 </div>
@@ -443,19 +511,22 @@
     </div>
     <div id="tool-info" class="noshow"></div>
     <div id="context-menu">
-        <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
         <button id="context-export-workspace" lk="rc_xpws">export workspace</button>
+        <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
         <div class="sep"></div>
         <button id="context-layflat" lk="rc_lafl">lay flat</button>
         <button id="context-mirror" lk="rc_mirr">mirror</button>
         <button id="context-duplicate" lk="rc_dupl">duplicate</button>
         <div class="sep"></div>
-        <button id="context-export-stl" lk="rc_xstl">export as STL</button>
+        <button id="context-setfocus" lk="rc_focs">set focus</button>
     </div>
-    <div id="fps" class="noshow"></div>
+    <div id="stats">
+        <div id="rms"></div>
+        <div id="fps"></div>
+        <div id="rnfo"></div>
+    </div>
     <div id="layer-animate" class="f-col a-center"></div>
     <div id="layer-toolpos" class="f-row a-center"></div>
-    <div id="winfo" class="noshow"></div>
     <div id="alert-area">
         <div id="alert-border">
             <div id="alert-text">alerts<br>alerts<br>alerts</div>

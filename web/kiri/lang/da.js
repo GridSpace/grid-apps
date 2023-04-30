@@ -1,3 +1,5 @@
+// Danish localization for Kiri:Moto
+// Will defer to English map for any missing key/value pairs
 kiri.lang['da'] =
 kiri.lang['da-dk'] = {
     version:        "version",
@@ -280,9 +282,9 @@ kiri.lang['da-dk'] = {
     fl_lahi_s: "laghøjde",
     fl_lahi_l: ["højde af hver lag","i millimeter","skulle være >= laghøjde"],
     fl_rate_s: "skal hastighed",
-    fl_rate_l: ["max hastighed på skaller","i millimeter / minuttet"],
+    fl_rate_l: ["max hastighed på skaller","i millimeter / sekund"],
     fl_frat_s: "fylde hastighed",
-    fl_frat_l: ["fylde max print hastighed","i millimeter / minuttet"],
+    fl_frat_l: ["fylde max print hastighed","i millimeter / sekund"],
     fl_mult_s: "print factor",
     fl_mult_l: ["ekstrudering multiplikator","0.0 - 2.0"],
     fl_sfac_s: "width factor",
@@ -474,7 +476,7 @@ kiri.lang['da-dk'] = {
     ou_powr_s: "kraft",
     ou_powr_l: ["0 - 100","repræsenterer %"],
     ou_sped_s: "hastighed",
-    ou_sped_l: "millimeter / minuttet",
+    ou_sped_l: "millimeter / sekund",
     ou_mrgd_s: "sammensæt",
     ou_mrgd_l: ["flet alle lag ved hjælp af","farvekodning for at betegne","stabeldybde"],
     ou_grpd_s: "grupperet",
@@ -492,11 +494,11 @@ kiri.lang['da-dk'] = {
     ou_bedd_s: "plade temp",
     ou_bedd_l: "grader i celsius",
     ou_feed_s: "print hastighed",
-    ou_feed_l: ["max print hastighed","millimeter / minuttet"],
+    ou_feed_l: ["max print hastighed","millimeter / sekund"],
     ou_fini_s: "afslutningshastighed",
-    ou_fini_l: ["yderste skalhastighed","millimeter / minuttet"],
+    ou_fini_l: ["yderste skalhastighed","millimeter / sekund"],
     ou_move_s: "print hastighed",
-    ou_move_l: ["rejsehastighed","millimeter / minuttet","0 = aktiver G0 bevægelser"],
+    ou_move_l: ["rejsehastighed","millimeter / sekund","0 = aktiver G0 bevægelser"],
     ou_shml_s: "skal faktor",
     ou_flml_s: "solid faktor",
     ou_spml_s: "fylde faktor",
@@ -576,7 +578,7 @@ kiri.lang['da-dk'] = {
     ad_play_s: "polish layers",
     ad_play_l: ["polish up to specified","# of layers at a time"],
     ad_pspd_s: "polish speed",
-    ad_pspd_l: ["polishing speed","in millimeters / minute"],
+    ad_pspd_l: ["polishing speed","in millimeters / second"],
 
     // CAM EXPERT
     cx_fast_s: "spring skygge over",

@@ -1,5 +1,5 @@
-// english. other language maps will defer to english
-// map for any missing key/value pairs
+// German localization for Kiri:Moto
+// Will defer to English map for any missing key/value pairs
 kiri.lang['de'] =
 kiri.lang['de-de'] = {
     // common keys and menus
@@ -57,19 +57,19 @@ kiri.lang['de-de'] = {
     dm_sldt:        "Wähle einen Geräte-Typ aus",
     dm_stdd:        "Vordefinierte Geräte",
     dm_mydd:        "Meine Geräte",
-    dm_seld:        "Ausgweähltes Gerät",
+    dm_seld:        "Ausgewähltes Gerät",
     dm_rcnt:        "Letzte Dateien",
     dm_savs:        "Gespeicherte Voreinstellungen",
-    dm_appp:        "Anwendungseinsetllungen",
+    dm_appp:        "Anwendungseinstellungen",
 
     // CAM Tool Dialog
     td_tyem:        "end",          // end mill
     td_tybm:        "ball",         // ball mill
-    td_tytm:        "taper",        // taper mill
-    td_tonm:        "tool #",
-    td_shft:        "shaft",        // endmill shaft specs
-    td_flut:        "flute",        // endmill flute specs
-    td_tapr:        "taper",        // endmill taper specs
+    td_tytm:        "Kegel",        // taper mill
+    td_tonm:        "Werkzeug #",
+    td_shft:        "Schafft",      // endmill shaft specs
+    td_flut:        "Spannut",      // endmill flute specs
+    td_tapr:        "Kegel",        // endmill taper specs
 
     // DEVICE dialog groups
     dv_gr_dev:      "Gerät",
@@ -90,7 +90,7 @@ kiri.lang['de-de'] = {
     dv_bedd_l:      "Maßeinheiten der Arbeitsfläche",
     dv_bedh_s:      "Höhe",
     dv_bedh_l:      ["Maximale Objekthöhe","in Maßeinheiten der Arbeitsfläche"],
-    dv_spmx_s:      "Spindel-Maximum",
+    dv_spmx_s:      "Max. Spindelgeschwindigkeit",
     dv_spmx_l:      ["Maximale Umdrehungen pro Minute der Spindel","0 zum deaktivieren"],
     dv_xtab_s:      "Absolute Positionierung",
     dv_xtab_l:      "Filament wird mit absoluter Positionierung extrudiert",
@@ -114,10 +114,10 @@ kiri.lang['de-de'] = {
     dv_strc_l:      ["Kommentare aus GCode entfernen","Kommentare beginnen mit ;"],
     dv_fext_s:      "Datei-Erweiterung",
     dv_fext_l:      "Datei-Erweiterung",
-    dv_dwll_s:      "dwell",
-    dv_dwll_l:      "gcode dwell script",
+    dv_dwll_s:      "Verweilzeit",
+    dv_dwll_l:      "gcode Verweilzeit script",
     dv_tool_s:      "Werkzeg-Wechel",
-    dv_tool_l:      "Skript zum Werkzegwechsel",
+    dv_tool_l:      "Skript zum Werkzeugwechsel",
     dv_sspd_s:      "Spindelgeschwindigkeit",
     dv_sspd_l:      "Einstellung der Spindelgeschwindigkeit",
     dv_paus_s:      "Pause",
@@ -130,7 +130,7 @@ kiri.lang['de-de'] = {
     dv_lzon_l:      "Skript, um den Laser einzuschalten",
     dv_lzof_s:      "Laser aus",
     dv_lzof_l:      "Skript, um den Laser auszuschalten",
-    dv_exts_s:      "Auswhälen",
+    dv_exts_s:      "Auswählen",
     dv_exts_l:      "GCode, um diesen Extruder auszuwählen",
     dv_dext_s:      "Abwählen",
     dv_dext_l:      "GCode, bevor ein anderer Extruder ausgewählt wird",
@@ -149,7 +149,7 @@ kiri.lang['de-de'] = {
     mo_cncm:        "CNC-Fräsen",
 
     // SETUP
-    su_menu:        "setup",
+    su_menu:        "Setup",
     su_devi:        "Geräte",
     su_tool:        "Werkzeuge",
     su_locl:        "Lokal",
@@ -183,7 +183,7 @@ kiri.lang['de-de'] = {
     ws_cler:        "Leeren",
 
     // OPTIONS
-    op_menu:        "interface",
+    op_menu:        "Interface",
     op_disp:        "Anzeige",
     op_xprt_s:      "Fortgeschritten",
     op_xprt_l:      "weitere Einstellungen",
@@ -279,9 +279,9 @@ kiri.lang['de-de'] = {
     fl_lahi_s:      "Schichthöhe",
     fl_lahi_l:      ["Höhe der ersten Schicht","in in mm","sollte >= der Standard-Schichthöhe sein"],
     fl_rate_s:      "Wand-Geschwindigkeit",
-    fl_rate_l:      ["Maximalgeschwindigkeit beim Drucken von Wänden","in mm / min"],
+    fl_rate_l:      ["Maximalgeschwindigkeit beim Drucken von Wänden","in mm / s"],
     fl_frat_s:      "Füll-Geschwindikeit",
-    fl_frat_l:      ["Maximalgeschwindikeit beim Drucken von Füllung","in mm / min"],
+    fl_frat_l:      ["Maximalgeschwindikeit beim Drucken von Füllung","in mm / s"],
     fl_mult_s:      "Extrusions-Faktor",
     fl_mult_l:      ["Exktrusions-Faktor","0.0 - 2.0"],
     fl_sfac_s:      "Breiten-Faktor",
@@ -345,12 +345,12 @@ kiri.lang['de-de'] = {
 
     // CNC COMMON terms
     cc_tool:        "Werkzeug",
-    cc_offs_s:      "offset",
-    cc_offs_l:      ["offset tool center","from chosen path"],
+    cc_offs_s:      "Versatz",
+    cc_offs_l:      ["Versatz tool center","from chosen path"],
     cc_spnd_s:      "spindle rpm",
     cc_spnd_l:      ["spindle speed in","revolutions / minute"],
     cc_sovr_s:      "step over",
-    cc_sovr_l:      ["as a fraction of","tool diameter"],
+    cc_sovr_l:      ["as a fraction of","tool durchmesser"],
     cc_sdwn_s:      "step down",
     cc_sdwn_l:      ["step down depth","for each pass","in workspace units","0 to disable"],
     cc_feed_s:      "feed rate",
@@ -361,20 +361,20 @@ kiri.lang['de-de'] = {
     cc_sngl_l:      ["select only single edges","instead of connected polylines"],
 
     // CNC COMMON
-    cc_menu:        "limits",
-    cc_flip:        "flip",
+    cc_menu:        "Begrenzungen",
+    cc_flip:        "Umdrehen",
     cc_rapd_s:      "xy feed",
     cc_rapd_l:      ["max xy moves feedrate","in workspace units / minute"],
     cc_rzpd_s:      "z feed",
     cc_rzpd_l:      ["max z moves feedrate","in workspace units / minute"],
 
-    cc_loff_s:      "offset",
+    cc_loff_s:      "Versatz",
     cc_loff_l:      ["distance from stock face","for leveling pass","in workspace units"],
 
     // CNC ROUGHING
     cr_menu:        "rough",
     cr_lsto_s:      "leave stock",
-    cr_lsto_l:      ["horizontal offset from vertical faces","stock to leave for finishing pass","in workspace units"],
+    cr_lsto_l:      ["horizontal Versatz from vertical faces","stock to leave for finishing pass","in workspace units"],
     cr_ease_s:      "ease down",
     cr_ease_l:      ["plunge cuts will","spiral down or ease","along a linear path"],
     cr_clrt_s:      "clear top",
@@ -416,35 +416,35 @@ kiri.lang['de-de'] = {
 
     // CNC TRACE
     cu_menu:        "trace",
-    cu_type_s:      "type",
+    cu_type_s:      "Typ",
     cu_type_l:      ["follow = tool tip follows line","right or left = tool tip","follows line offset by tool radius"],
 
     // CNC DRILLING
     cd_menu:        "drill",
     cd_axis:        "axis",
-    cd_points:      "points",
+    cd_points:      "Punkte",
     cd_plpr_s:      "plunge per",
     cd_plpr_l:      ["max plunge between","dwell periods","in workspace units","0 to disable"],
-    cd_dwll_s:      "dwell time",
-    cd_dwll_l:      ["dwell time","between plunges in","in milliseconds"],
+    cd_dwll_s:      "Verweilzeit",
+    cd_dwll_l:      ["Verweilzeit","between plunges in","in milliseconds"],
     cd_lift_s:      "drill lift",
     cd_lift_l:      ["lift between plunges","after dwell period","in workspace units","0 to disable"],
     cd_regi_s:      "register",
     cd_regi_l:      ["drill registration holes","for double-sided parts","independent of enable","drilling but uses same","tool and settings"],
 
     // CNC CUTOUT TABS
-    ct_menu:        "tabs",
+    ct_menu:        "Fräslasche",
     ct_angl_s:      "angle",
     ct_angl_l:      ["starting angle for tab spacing","in degrees (0-360)"],
     ct_numb_s:      "count",
     ct_numb_l:      ["number of tabs to use","will be spaced evenly","around the part"],
-    ct_wdth_s:      "width",
+    ct_wdth_s:      "Breite",
     ct_wdth_l:      "width in workspace units",
-    ct_hght_s:      "height",
+    ct_hght_s:      "Höhe",
     ct_hght_l:      "height in workspace units",
-    ct_dpth_s:      "depth",
+    ct_dpth_s:      "Tiefe",
     ct_dpth_l:      ["distance in workspace units","that the tab projects from","the part surface"],
-    ct_midl_s:      "midline",
+    ct_midl_s:      "Mittellinie",
     ct_midl_l:      ["use midline of tab","instead of z bottom","for double-sided work"],
     ct_nabl_s:      "auto",
     ct_nabl_l:      ["auto generate radial tabs","projected from part center","using count and angle offset"],
@@ -458,7 +458,7 @@ kiri.lang['de-de'] = {
     dk_dpth_l:      ["final cut depth","in millimeters"],
     dk_pass_s:      "cut passes",
     dk_pass_l:      ["number of passes","down to cut depth"],
-    dk_offs_s:      "tip offset",
+    dk_offs_s:      "Spitze Versatz",
     dk_offs_l:      ["distance from blade tip","to center of tool","in millimeters"],
 
     // OUTPUT LASER
@@ -469,7 +469,7 @@ kiri.lang['de-de'] = {
     ou_powr_s:      "power",
     ou_powr_l:      ["0 - 100","represents %"],
     ou_sped_s:      "speed",
-    ou_sped_l:      "millimeters / minute",
+    ou_sped_l:      "millimeters / seconds",
     ou_mrgd_s:      "merged",
     ou_mrgd_l:      ["merge all layers using","color coding to denote","stacking depth"],
     ou_grpd_s:      "grouped",
@@ -487,11 +487,11 @@ kiri.lang['de-de'] = {
     ou_bedd_s:      "Betttemperatur",
     ou_bedd_l:      "In Grad Celsius",
     ou_feed_s:      "Druckgewschwindigkeit",
-    ou_feed_l:      ["Maximale Druckgeschwindigkeit","mm / min"],
+    ou_feed_l:      ["Maximale Druckgeschwindigkeit","mm / s"],
     ou_fini_s:      "Außengeschwindigkeit",
-    ou_fini_l:      ["Geschwindigkeit für Außenwände","mm / min"],
+    ou_fini_l:      ["Geschwindigkeit für Außenwände","mm / s"],
     ou_move_s:      "Bewegungsgeschwnidgkeit",
-    ou_move_l:      ["Geschwndigkeit, wenn nicht gedruckt wird ","mm / min","0 = aktiviere G0 Befehle"],
+    ou_move_l:      ["Geschwndigkeit, wenn nicht gedruckt wird ","mm / s","0 = aktiviere G0 Befehle"],
     ou_shml_s:      "Wand-Faktor",
     ou_flml_s:      "Voll-Füll-Faktor",
     ou_spml_s:      "Füll-Material-Faktor",
@@ -512,24 +512,24 @@ kiri.lang['de-de'] = {
     ou_zclr_l:      ["safe travel offset","from top of part","in workspace units"],
     ou_ztru_s:      "z thru",
     ou_ztru_l:      ["extend cutout pass down","in workspace units"],
-    ou_conv_s:      "conventional",
+    ou_conv_s:      "Gegenlauffräsen",
     ou_conv_l:      ["milling direction","uncheck for 'climb'"],
     ou_depf_s:      "depth first",
     ou_depf_l:      ["optimize pocket cuts","with depth priority"],
 
     // CAM STOCK
-    cs_menu:        "stock",
+    cs_menu:        "Rohteil",
     cs_wdth_s:      "width",
     cs_wdth_l:      ["width (x) in workspace units","0 defaults to part size"],
     cs_dpth_s:      "depth",
     cs_dpth_l:      ["depth (y) in workspace units","0 defaults to part size"],
     cs_hght_s:      "height",
     cs_hght_l:      ["height (z) in workspace units","0 defaults to part size"],
-    cs_offs_s:      "offset",
+    cs_offs_s:      "Versatz",
     cs_offs_l:      ["use width, depth, height","as offsets from max","part size on platform"],
     cs_clip_s:      "clip to",
     cs_clip_l:      ["rough and outline","clip cutting paths","to defined stock"],
-    cs_offe_s:      "enable",
+    cs_offe_s:      "Aktivieren",
     cs_offe_l:      "enable milling stock",
 
     // ORIGIN (CAM & LASER)
@@ -569,7 +569,7 @@ kiri.lang['de-de'] = {
     ad_play_s:      "Ebenen glätten",
     ad_play_l:      ["glätte bis zu","dieser Anzahl Ebenen"],
     ad_pspd_s:      "Glätt-Geschwindigkeit",
-    ad_pspd_l:      ["Glätt-Geschwindigkeit","in mm / min"],
+    ad_pspd_l:      ["Glätt-Geschwindigkeit","in mm / s"],
 
     // CAM EXPERT
     cx_fast_s:      "skip shadow",
@@ -628,7 +628,7 @@ kiri.lang['de-de'] = {
     sa_sldn_l:      ["used to compute the","number of support pillars","0.0-1.0 (0 = disable)"],
     sa_slsz_s:      "size",
     sa_slsz_l:      ["max size of a","support pillar","in millimeters"],
-    sa_slpt_s:      "points",
+    sa_slpt_s:      "Punkte",
     sa_slpt_l:      ["number of points in","each support pillar","in millimeters"],
     sl_slen_l:      "enable supports",
 

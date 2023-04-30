@@ -2,133 +2,138 @@
 
 "use strict";
 
-(function() {
+// dep: ext.three
+// dep: ext.three-bgu
+// dep: ext.three-svg
+// dep: ext.three-bvh
+gapp.register("add.three", [], (root, exports) => {
 
-    var MP = THREE.Mesh.prototype,
-        BP = THREE.BufferGeometry.prototype;
+let MP = THREE.Mesh.prototype,
+    XP = THREE.Box3.prototype,
+    BP = THREE.BufferGeometry.prototype;
 
-    THREE.computeFaceNormal = function(vA,vB,vC) {
-        const ab = new THREE.Vector3();
-        const cb = new THREE.Vector3();
-        cb.subVectors( vC, vB );
-        ab.subVectors( vA, vB );
-        cb.cross( ab );
-        cb.normalize();
-        return cb;
-    };
+THREE.computeFaceNormal = function(vA,vB,vC) {
+    const ab = new THREE.Vector3();
+    const cb = new THREE.Vector3();
+    cb.subVectors( vC, vB );
+    ab.subVectors( vA, vB );
+    cb.cross( ab );
+    cb.normalize();
+    return cb;
+};
 
-    MP.getBoundingBox = function(update) {
-        return this.geometry.getBoundingBox(update);
-    };
+// https://www.npmjs.com/package/three-mesh-bvh
+THREE.addBVH = function() {
+    const { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } = MeshBVHLib;
+    THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+    THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
+    THREE.Mesh.prototype.raycast = acceleratedRaycast;
+};
 
-    MP.center = function() {
-        this.geometry.center();
-        return this;
-    };
-
-    MP.mirrorX = function() {
-        return this.mirror(0);
-    };
-
-    MP.mirrorY = function() {
-        return this.mirror(1);
-    };
-
-    MP.mirrorZ = function() {
-        return this.mirror(2);
-    };
-
-    // fast mirror of vertices given axis array offset
-    // array elements are repeating [x,y,z,x,y,z,...]
-    MP.mirror = function(start) {
-        var i,
-            geo = this.geometry,
-            at = geo.attributes,
-            pa = at.position.array,
-            nm = at.normal.array;
-        for (i = start || 0 ; i < pa.length; i += 3) {
-            pa[i] = -pa[i];
-            nm[i] = -nm[i];
+THREE.dispose = function(obj) {
+    if (!obj) {
+        return;
+    }
+    if (obj.geometry) {
+        obj.geometry.dispose();
+    }
+    if (obj.material && obj.material.map && obj.material.map.dispose) {
+        obj.material.map.dispose();
+    }
+    if (obj.children && obj.children.length) {
+        for (let c of obj.children) {
+            THREE.dispose(c);
         }
-        geo.computeVertexNormals();
-        return this;
-    };
+    }
+};
 
-    // center geometry on x,y,z coordinates (defaults to 0,0,0)
-    BP.center = function(x,y,z) {
-        var box = this.getBoundingBox(),
-            mid = box.dim.clone().multiplyScalar(0.5),
-            dif = mid.clone().add(box.min),
-            pos = this.attributes.position,
-            arr = pos.array,
-            maxx = Math.max(mid.x, mid.y, mid.z),
-            i = 0;
-        if (x) dif.x -= (maxx - mid.x) * x;
-        if (y) dif.y -= (maxx - mid.y) * y;
-        if (z) dif.z -= (maxx - mid.z) * z;
-        while (i < arr.length) {
-            arr[i++] -= dif.x;
-            arr[i++] -= dif.y;
-            arr[i++] -= dif.z;
+// add .dim and .mid getters to Box3
+Object.defineProperties(XP, {
+    dim: {
+        get: function() {
+            return this.max.clone().sub(this.min);
         }
-        pos.needsUpdate = true;
-        // force update of (obsolete) bounding box
-        this.getBoundingBox(true);
-        return this;
-    };
-
-    // return cached or refreshed (when update = true) bounding box
-    BP.getBoundingBox = function(update) {
-        if (update || !this.boundingBox) {
-            this.boundingBox = null;
-            this.computeBoundingBox();
+    },
+    mid: {
+        get: function() {
+            return this.dim.clone().multiplyScalar(0.5).add(this.min);
         }
-        this.boundingBox.dim = this.boundingBox.max.clone().sub(this.boundingBox.min);
-        return this.boundingBox;
-    };
+    }
+});
 
-    // uniformly scale any mesh to a max x/y/z dim of 'unit' (defaults to 1)
-    BP.unitScale = function(unit) {
-        var bbox = this.getBoundingBox().clone(),
-            scale = (unit || 1) / Math.max(
-                bbox.max.x - bbox.min.x,
-                bbox.max.y - bbox.min.y,
-                bbox.max.z - bbox.min.z
-            );
-        this.applyMatrix4(new THREE.Matrix4().makeScale(scale,scale,scale));
-        // force update of (obsolete) bounding box
-        this.getBoundingBox(true);
-        return this;
-    };
+MP.getBoundingBox = function(update) {
+    return this.geometry.getBoundingBox(update);
+};
 
-    BP.fixNormals = function() {
-        this.computeVertexNormals();
-        return this;
-    };
+MP.mirrorX = function() {
+    return this.mirror(0);
+};
 
-    // may be faster than the equivalent matrix transform. to be tested
-//     BP.translate = function(x,y,z) {
-//         let off = [x,y,z],
-//             arr = this.attributes.position.array,
-//             len = arr.length;
-//         for (let i=0; i<len; i++) {
-//             arr[i] += off[i%3];
-//         }
-//         return this;
-//     }
+MP.mirrorY = function() {
+    return this.mirror(1);
+};
 
-    THREE.Object3D.prototype.newGroup = function() {
-        var group = new THREE.Group();
-        this.add(group);
-        return group;
-    };
+MP.mirrorZ = function() {
+    return this.mirror(2);
+};
 
-    THREE.Object3D.prototype.removeAll = function() {
-        this.children.slice().forEach(function (c) {
-            c.parent = undefined;
-            c.dispatchEvent( { type: 'removed' } );
-        });
-        this.children = [];
-    };
+// fast mirror of vertices given axis array offset
+// array elements are repeating [x,y,z,x,y,z,...]
+MP.mirror = function(start) {
+    let i,
+        geo = this.geometry,
+        at = geo.attributes,
+        pa = at.position.array,
+        nm = at.normal.array;
+    for (i = start || 0 ; i < pa.length; i += 3) {
+        pa[i] = -pa[i];
+        nm[i] = -nm[i];
+    }
+    geo.computeVertexNormals();
+    return this;
+};
 
-})();
+// return cached or refreshed (when update = true) bounding box
+BP.getBoundingBox = function(update) {
+    if (update || !this.boundingBox) {
+        this.boundingBox = null;
+        this.computeBoundingBox();
+    }
+    return this.boundingBox;
+};
+
+BP.moveMesh = function(x = 0, y = 0, z = 0) {
+    let gap = this.attributes.position,
+        pa = gap.array;
+    for (let i=0; i < pa.length; i += 3) {
+        pa[i    ] += x;
+        pa[i + 1] += y;
+        pa[i + 2] += z;
+    }
+    gap.needsUpdate = true;
+    return this;
+}
+
+BP.shallowClone = function() {
+    let geo = new THREE.BufferGeometry();
+    for (let [k, v] of Object.entries(this.attributes)) {
+        geo.setAttribute(k, new THREE.BufferAttribute(v.array, v.itemSize));
+    }
+    return geo;
+};
+
+THREE.Object3D.prototype.newGroup = function() {
+    let group = new THREE.Group();
+    this.add(group);
+    return group;
+};
+
+THREE.Object3D.prototype.removeAll = function() {
+    this.children.slice().forEach(function (c) {
+        c.parent = undefined;
+        c.dispatchEvent( { type: 'removed' } );
+    });
+    this.children = [];
+};
+
+});

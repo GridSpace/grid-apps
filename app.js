@@ -1,5 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+// ensure each app gets a local version-specific copy, not shared
 function require_fresh(path) {
     const rpa = require.resolve(path);
     delete require.cache[rpa];
@@ -7,10 +8,10 @@ function require_fresh(path) {
 }
 
 const fs = require('fs');
-const uglify = require('uglify-es');
+const uglify = require('uglify-js');
 const moment = require('moment');
 const agent = require('express-useragent');
-const license = require_fresh('./src/license.js');
+const license = require_fresh('./src/moto/license.js');
 const version = license.VERSION || "rogue";
 
 const fileCache = {};
@@ -21,29 +22,197 @@ const load = [];
 const synth = {};
 const api = {};
 
+let serviceWorker = true;
+let crossOrigin = false;
 let setupFn;
 let cacheDir;
 let startTime;
 let oversion;
+let dversion;
 let lastmod;
 let logger;
 let debug;
+let over;
 let http;
 let util;
 let dir;
 let log;
+
+const EventEmitter = require('events');
+class AppEmitter extends EventEmitter {}
+const events = new AppEmitter();
+
+function addonce(array, v) {
+    if (array.indexOf(v) < 0) {
+        array.push(v);
+    }
+};
 
 function init(mod) {
     startTime = time();
     lastmod = mod.util.lastmod;
     logger = mod.log;
     debug = mod.env.debug || mod.meta.debug;
+    oversion = mod.env.over || mod.meta.over;
+    crossOrigin = mod.env.xorigin || mod.meta.xorigin || false;
+    serviceWorker = (mod.env.service || mod.meta.service) !== false;
     http = mod.http;
     util = mod.util;
     dir = mod.dir;
     log = mod.log;
 
+    dversion = debug ? `_${version}` : version;
     cacheDir = mod.util.datadir("cache");
+
+    const approot = "main/gapp";
+    const refcache = {};
+    const callstack = [];
+    let xxxx = false;
+
+    function find_refs(cache, path) {
+        let rec = refcache[path];
+        if (rec) {
+            let crec = cache[path];
+            if (!crec) {
+                cache[path] = rec;
+                for (let d of rec.deps) find_refs(cache, d);
+                for (let u of rec.uses) find_refs(cache, u);
+            }
+            return;
+        }
+        callstack.push(path);
+        rec = cache[path] = refcache[path] = {
+            uses: [],
+            deps: [ approot ]
+        };
+        let full = `${dir}/src/${path}.js`;
+        try {
+            fs.lstatSync(full);
+        } catch (e) {
+            console.log({missing: full, callstack});
+            throw e;
+        }
+        let lines = fs.readFileSync(full)
+            .toString()
+            .split('\n');
+        for (let line of lines) {
+            let arr, pos;
+            let upos = line.indexOf('// use:');
+            if (upos >= 0) {
+                arr = rec.uses;
+                pos = upos + 7;
+            }
+            let dpos = line.indexOf('// dep:');
+            if (dpos >= 0) {
+                arr = rec.deps;
+                pos = dpos + 7;
+            }
+            if (upos >= 0 && dpos >= 0) {
+                console.log(`invalid line: ${line}`);
+                process.exit();
+            }
+            if (arr && pos >= 0) {
+                let path = line.substring(pos).trim().replace(/\./g,'/').trim();
+                addonce(arr, path);
+                find_refs(cache, path);
+            }
+        }
+        // if (xxxx) console.log({path, ...rec});
+        if (false) {
+            let seek = 'mesh/api';
+            if (rec.uses.indexOf(seek) >= 0 || rec.deps.indexOf(seek) >= 0) {
+                console.log({PULLS:seek, path});
+            }
+        }
+        callstack.pop();
+    }
+
+    // return record position indicated by path
+    function pos(path, list) {
+        for (let i=0; i<list.length; i++) {
+            if (list[i].path === path) {
+                return i;
+            }
+        }
+        console.log(`not found: ${path}`);
+        process.exit();
+    }
+
+    function order_refs(cache) {
+        const recs = Object.entries(cache).map(entry => {
+            return { path: entry[0], deps: entry[1].deps }
+        }).sort((a,b) => {
+            return a.path === b.path ? 0 : a.path < b.path ? -1 : 1;
+        });
+        if (xxxx) console.log({ordering: recs});
+
+        // for each rec, ensure that dependencies are inserted before it
+        let lrec = recs.slice();
+        for (let rec of lrec) {
+            let { path, deps } = rec;
+            for (let dep of deps) {
+                let rpos = pos(path, recs);
+                let dpos = pos(dep, recs);
+                if (dpos > rpos) {
+                    let drec = recs[dpos];
+                    // remove old dep record
+                    recs.splice(dpos, 1);
+                    // insert dep before
+                    recs.splice(rpos, 0, drec);
+                    let nrpos = pos(path, recs);
+                    let ndpos = pos(dep, recs);
+                    let fail = nrpos != ndpos + 1;
+                    // if (xxxx) { console.log({move: dep, dpos, before: path, rpos}); }
+                    if (fail) {
+                        console.log({move: dep, dpos, before: path, rpos, ndpos, nrpos, recs: recs.slice(0,10)});
+                        process.exit();
+                    }
+                }
+            }
+        }
+        if (xxxx) console.log({recs});
+        return recs.map(rec => rec.path);
+    }
+
+    // process script dependencies, expand paths
+    for (let [ key, val ] of Object.entries(script)) {
+        if (val.indexOf(approot) < 0) {
+            val = [ approot, ...val ];
+        }
+        const list = val.map(p => p.charAt(0) === '&' ? p.substring(1) : p);
+        const cache = {};
+        const roots = [];
+        // xxxx = key === "kiri_work";
+        // for each path in the list, find deps and add to list
+        for (let path of val) {
+            let fc = path.charAt(0);
+            if (fc === '@') {
+                continue;
+            }
+            if (fc === '&') {
+                path = path.substring(1);
+                addonce(roots, path);
+            }
+            find_refs(cache, path);
+        }
+        if (xxxx) console.log({processing: key, val});
+        let refs = order_refs(cache).filter(p => roots.indexOf(p) < 0);
+        // remove paths that are in refs
+        let paths = list.filter(p => {
+            if (p.charAt(0) === '&') {
+                p = p.substring(1);
+            }
+            return refs.indexOf(p) < 0 && roots.indexOf(p) < 0;
+        });
+        // when dependency roots exist, re-write val array
+        if (roots.length) {
+            val = [...refs, ...paths, ...roots];
+        }
+        // val.splice(1, 0, ...roots);
+        if (xxxx) console.log({key, cache, refs, paths, roots, val});
+        script[key] = val.map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p);
+        // console.log({script: key, files: script[key]});
+    }
 
     mod.on.test((req) => {
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;
@@ -59,20 +228,22 @@ function init(mod) {
 
     mod.add(handleSetup);
     mod.add(handleOptions);
+    mod.add(handleWasm);
     mod.add(fullpath({
         "/kiri"            : redir("/kiri/", 301),
+        "/mesh"            : redir("/mesh/", 301),
         "/meta"            : redir("/meta/", 301),
         "/kiri/index.html" : redir("/kiri/", 301),
+        "/mesh/index.html" : redir("/mesh/", 301),
         "/meta/index.html" : redir("/meta/", 301)
     }));
     mod.add(handleVersion);
     mod.add(prepath([
         [ "/code/", handleCode ],
-        [ "/wasm/", handleWasm ]
+        // [ "/wasm/", handleWasm ]
     ]));
     mod.add(fixedmap("/api/", api));
     if (debug) {
-        mod.static("/src/", "src");
         mod.static("/mod/", "mod");
         mod.sync("/reload", () => {
             mod.reload();
@@ -80,7 +251,10 @@ function init(mod) {
         });
     }
     mod.add(rewriteHtmlVersion);
+    mod.static("/src/", "src");
     mod.static("/obj/", "web/obj");
+    mod.static("/font/", "web/font");
+    mod.static("/mesh/", "web/mesh");
     mod.static("/moto/", "web/moto");
     mod.static("/meta/", "web/meta");
     mod.static("/kiri/", "web/kiri");
@@ -124,11 +298,14 @@ function loadModule(mod, dir) {
 function initModule(mod, file, dir) {
     logger.log({module: file});
     require_fresh(file)({
+        // express functions added here show up at "/api/" url root
         api: api,
         adm: {
             reload: prepareScripts,
-            setver: (ver) => { oversion = ver }
+            setver: (ver) => { oversion = ver },
+            crossOrigin: (bool) => { crossOrigin = bool }
         },
+        events,
         const: {
             args: {},
             meta: mod.meta,
@@ -136,7 +313,7 @@ function initModule(mod, file, dir) {
             script: script,
             moddir: dir,
             rootdir: mod.dir,
-            version: version
+            version: oversion || version
         },
         env: mod.env,
         pkg: {
@@ -158,17 +335,13 @@ function initModule(mod, file, dir) {
             getCookieValue: cookieValue,
             logger: log.new
         },
-        inject: (code, file, options) => {
-            if (!script[code]) {
+        inject: (code, file, opt = {}) => {
+            let codelist = script[code];
+            if (!codelist) {
                 return logger.log(`inject missing target "${code}"`);
             }
-            const opt = options || {};
             const path = `${dir}/${file}`;
-            if (opt.end) {
-                script[code].push(path);
-            } else {
-                script[code].splice(0, 0, path);
-            }
+            codelist.push(path);
             if (opt.cachever) {
                 cachever[path] = opt.cachever;
             }
@@ -202,6 +375,7 @@ function initModule(mod, file, dir) {
             addCORS: addCorsHeaders,
             redirect: http.redirect,
             reply404: http.reply404,
+            decodePost: http.decodePost,
             reply: quickReply
         },
         ws: {
@@ -218,171 +392,47 @@ function initModule(mod, file, dir) {
 
 const script = {
     kiri : [
-        "kiri",
-        "ext/three",
-        "ext/three-bgu",
-        "license",
-        "ext/clip2", // work.test
-        "ext/tween",
-        "ext/fsave",
-        "ext/earcut", // work.test
-        "ext/base64",
-        "add/array",
-        "add/three",
-        "geo/base",
-        "geo/debug",
-        "geo/render",
-        "geo/point",
-        "geo/points",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygon",
-        "geo/polygons",
-        // "geo/gyroid",
-        "moto/kv",
-        "moto/ajax",
-        "moto/ctrl",
-        "moto/pack",
-        "moto/space",
-        "moto/load-stl",
-        "moto/db",
-        "kiri/ui",
-        "kiri/lang",
-        "kiri/lang-en",
-        "kiri/db",
-        "kiri/slice",
-        "kiri/layers",
-        "kiri/client",
-        "mode/fdm/fill",
-        "mode/fdm/driver",
-        "mode/fdm/client",
-        "mode/sla/driver",
-        "mode/sla/client",
-        "mode/cam/driver",
-        "mode/cam/client",
-        "mode/cam/tool",
-        "mode/cam/animate",
-        "mode/laser/driver",
-        "kiri/stack",
-        "kiri/stacks",
-        "kiri/widget",
-        "kiri/print",
-        "kiri/codec",
-        "kiri/conf",
-        "kiri/main",
-        "kiri/init",
-        "kiri/export",
         "@devices",
-        "@icons"
-    ].map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p),
-    worker : [
-        "kiri",
-        "ext/three",
-        "ext/pngjs",
-        "ext/jszip",
-        "license",
-        "ext/clip2",
-        "ext/earcut",
-        "add/array",
-        "add/three",
-        "add/class",
-        "geo/base",
-        // "geo/wasm",
-        "geo/debug",
-        "geo/point",
-        "geo/points",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygon",
-        "geo/polygons",
-        "geo/gyroid",
-        "moto/pack",
-        "kiri/slice",
-        "kiri/slicer",
-        "kiri/slicer2",
-        "kiri/layers",
-        "mode/fdm/fill",
-        "mode/fdm/driver",
-        "mode/fdm/slice",
-        "mode/fdm/prepare",
-        "mode/fdm/export",
-        "mode/sla/driver",
-        "mode/sla/slice",
-        "mode/sla/export",
-        "mode/cam/driver",
-        "mode/cam/ops",
-        "mode/cam/tool",
-        "mode/cam/topo",
-        "mode/cam/slice",
-        "mode/cam/prepare",
-        "mode/cam/export",
-        "mode/cam/animate",
-        "mode/laser/driver",
-        "kiri/widget",
-        "kiri/print",
-        "kiri/codec",
-        "kiri/worker"
-    ].map(p => `src/${p}.js`),
+        "@icons",
+        "kiri/ui",
+        "&main/kiri",
+        "&kiri/lang-en"
+    ],
+    kiri_work : [
+        "kiri-run/worker",
+        "&main/kiri",
+    ],
+    kiri_pool : [
+        "&kiri-run/minion",
+        "&main/kiri",
+    ],
     engine : [
-        "kiri",
-        "license",
-        "ext/three",
-        "add/array",
-        "add/three",
-        "geo/base",
-        "geo/debug",
-        "geo/render",
-        "geo/point",
-        "geo/points",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygon",
-        "geo/polygons",
-        "moto/kv",
-        // "moto/ajax",
-        "moto/load-stl",
-        "kiri/conf",
-        "kiri/client",
-        "kiri/slice",
-        "kiri/layers",
-        "kiri/widget",
-        "kiri/codec",
-        "kiri/engine"
-    ].map(p => `src/${p}.js`),
+        "&kiri-run/engine",
+        "&main/kiri",
+    ],
     frame : [
-        "kiri/frame"
-    ].map(p => `src/${p}.js`),
+        "kiri-run/frame"
+    ],
     meta : [
-        "ext/three",
-        "license",
-        "ext/tween",
-        "ext/fsave",
-        "ext/earcut",
-        "add/array",
-        "add/three",
-        "geo/base",
-        "geo/debug",
-        "geo/render",
-        "geo/point",
-        "geo/slope",
-        "geo/line",
-        "geo/bounds",
-        "geo/polygon",
-        "geo/polygons",
-        "geo/gyroid",
-        "moto/kv",
-        "moto/ajax",
-        "moto/ctrl",
-        "moto/space",
-        "moto/load-stl",
-        "moto/db",
-        "moto/ui",
-        "kiri/db",
-        "meta"
-    ].map(p => `src/${p}.js`)
+        "main/meta",
+    ],
+    mesh : [
+        "&main/mesh"
+    ],
+    mesh_work : [
+        "&mesh/work"
+    ],
+    mesh_pool : [
+        "&mesh/pool"
+    ],
+    cache : [
+        "moto/license",
+        "main/service",
+    ],
+    service : [
+        "moto/license",
+        "moto/service"
+    ]
 };
 
 // prevent caching of specified modules
@@ -421,8 +471,8 @@ function handleSetup(req, res, next) {
 }
 
 function handleVersion(req, res, next) {
-    let vstr = oversion || version;
-    if (req.app.path === "/kiri/" && req.url.indexOf(vstr) < 0) {
+    let vstr = oversion || dversion || version;
+    if (["/kiri/","/mesh/","/meta/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
             return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {
@@ -439,6 +489,7 @@ function handleOptions(req, res, next) {
     } catch (e) {
         logger.log("ua parse error on : "+req.headers['user-agent']);
     }
+    res.setHeader("Service-Worker-Allowed", "/");
     if (req.method === 'OPTIONS') {
         addCorsHeaders(req, res);
         res.end();
@@ -448,12 +499,12 @@ function handleOptions(req, res, next) {
 }
 
 function handleWasm(req, res, next) {
-    let [root, file] = req.app.path.split('/').slice(1);
+    let file = req.app.path.split('/').pop();
     let ext = (file || '').split('.')[1];
-    let path = `${dir}/wasm/${file}`;
+    let path = `${dir}/src/wasm/${file}`;
     let mod = lastmod(path);
 
-    if (root === 'wasm' && ext === 'wasm' && mod) {
+    if (ext === 'wasm' && mod) {
         let imd = ifModifiedDate(req);
         if (imd && mod <= imd) {
             res.writeHead(304, "Not Modified");
@@ -523,7 +574,7 @@ function serveCode(req, res, code) {
 }
 
 function generateIcons() {
-    let root = `${dir}/src/ico`;
+    let root = `${dir}/src/kiri-ico`;
     let icos = {};
     fs.readdirSync(root).forEach(file => {
         let name = file.split(".")[0]   ;
@@ -533,7 +584,7 @@ function generateIcons() {
 }
 
 function generateDevices() {
-    let root = `${dir}/src/dev`;
+    let root = `${dir}/src/kiri-dev`;
     let devs = {};
     fs.readdirSync(root).forEach(type => {
         let map = devs[type] = devs[type] || {};
@@ -547,11 +598,9 @@ function generateDevices() {
 function prepareScripts() {
     generateIcons();
     generateDevices();
-    code.meta = concatCode(script.meta);
-    code.kiri = concatCode(script.kiri);
-    code.worker = concatCode(script.worker);
-    code.engine = concatCode(script.engine);
-    code.frame = concatCode(script.frame);
+    for (let key of Object.keys(script)) {
+        code[key] = concatCode(script[key]);
+    }
 }
 
 function concatCode(array) {
@@ -559,12 +608,18 @@ function concatCode(array) {
     let direct = array.filter(f => f.charAt(0) !== '@');
     let inject = array.filter(f => f.charAt(0) === '@').map(f => f.substring(1));
 
+    synth.inject = "/* injection point */";
+
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
-        const code = [ '(function() { let load = [ ' ];
+        const code = [
+            oversion ? `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` : '',
+            'self.debug=true;',
+            '(function() { let load = [ '
+        ];
         direct.forEach(file => {
-            const vers = cachever[file] || version;
+            const vers = cachever[file] || oversion || dversion || version;
             code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
         });
         code.push([
@@ -577,8 +632,7 @@ function concatCode(array) {
             's.src = file;',
             's.onload = load_next;',
             'document.head.appendChild(s);',
-            '} load_next(); })();',
-            'self.debug=true;'
+            '} load_next(); })();'
         ].join('\n'));
         inject.forEach(key => {
             code.push(synth[key]);
@@ -590,6 +644,9 @@ function concatCode(array) {
         let cached = getCachedFile(file, function(path) {
             return minify(`${dir}/${file}`);
         });
+        if (oversion) {
+            cached = `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` + cached;
+        }
         code.push(cached);
     });
 
@@ -652,7 +709,13 @@ function getCachedFile(file, fn) {
 
 function minify(path) {
     let code = fs.readFileSync(path);
-    let mini = uglify.minify(code.toString());
+    if (path.indexOf("ext/three.js") > 0) {
+        // console.log({skip_min: path});
+        return code;
+    }
+    let mini = uglify.minify(code.toString(), {
+        compress: { unused: false }
+    });
     if (mini.error) {
         console.trace(mini.error);
         throw mini.error;
@@ -679,7 +742,11 @@ function ifModifiedDate(req) {
 function addCorsHeaders(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Headers', 'X-Moto-Ajax, Content-Type');
-    res.setHeader("Access-Control-Allow-Origin", req.headers['origin'] || '*');
+    res.setHeader('Access-Control-Allow-Origin', req.headers['origin'] || '*');
+    if (!crossOrigin) {
+        res.setHeader("Cross-Origin-Opener-Policy", 'same-origin');
+        res.setHeader("Cross-Origin-Embedder-Policy", 'require-corp');
+    }
     res.setHeader("Allow", "GET,POST,OPTIONS");
 }
 
@@ -755,16 +822,24 @@ function cookieValue(cookie,key) {
 }
 
 function rewriteHtmlVersion(req, res, next) {
-    if (req.app.path === "/kiri/") {
+    if (["/kiri/","/mesh/","/meta/","/kiri/engine.html","/kiri/frame.html"].indexOf(req.app.path) >= 0) {
+        addCorsHeaders(req, res);
         let real_write = res.write;
         let real_end = res.end;
+        let mlen = '{{version}}'.length;
+        let vstr = oversion || dversion || version;
+        if (vstr.length < mlen) {
+            vstr = vstr.padStart(mlen,0);
+        } else if (vstr.length > mlen) {
+            vstr = vstr.substring(0,mlen);
+        }
         res.write = function() {
-            arguments[0] = arguments[0].toString().replace(/{{version}}/g,version);
+            arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
             real_write.apply(res, arguments);
         };
         res.end = function() {
             if (arguments[0]) {
-                arguments[0] = arguments[0].toString().replace(/{{version}}/g,version);
+                arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
             }
             real_end.apply(res, arguments);
         };

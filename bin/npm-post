@@ -1,0 +1,4 @@
+#!/bin/sh
+
+( curl https://static.grid.space/gapp/manifold.js > src/ext/manifold.js ) > /dev/null 2>&1 
+( curl https://static.grid.space/gapp/manifold.wasm > src/wasm/manifold.wasm ) > /dev/null 2>&1 

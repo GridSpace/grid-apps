@@ -1,50 +1,42 @@
-
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 "use strict";
 
-(function() {
+// dep: geo.base
+// dep: kiri.api
+// dep: kiri.main
+// dep: kiri.lang
+// dep: kiri.stats
+// dep: kiri.consts
+// dep: kiri.platform
+// dep: kiri.selection
+// use: kiri.tools
+// use: kiri.pack
+gapp.register("kiri.init", [], (root, exports) => {
 
-    if (self.kiri.init) return;
+    const { base, kiri } = root;
+    const { api, catalog, conf, consts, space } = kiri;
+    const { sdb, stats, js2o, o2js, platform, selection, ui, uc } = api;
+    const { VIEWS, MODES, SEED } = consts;
+    const { LANG, LOCAL, SETUP } = api.const;
 
-    const KIRI = self.kiri,
-        BASE = self.base,
-        MOTO = self.moto,
-        CONF = KIRI.conf,
-        WIN = self.window,
+    const WIN = self.window,
         DOC = self.document,
-        LOC = self.location,
-        API = KIRI.api,
-        SDB = API.sdb,
-        UI = API.ui,
-        UC = API.uc,
-        SEED = API.const.SEED,
-        LANG = API.const.LANG,
-        VIEWS = API.const.VIEWS,
-        MODES = API.const.MODES,
-        LOCAL = API.const.LOCAL,
-        SETUP = API.const.SETUP,
         DEFMODE = SETUP.dm && SETUP.dm.length === 1 ? SETUP.dm[0] : 'FDM',
         STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
-        SPACE = KIRI.space,
-        STATS = API.stats,
-        DEG = Math.PI/180,
+        DEG2RAD = Math.PI/180,
         ALL = [MODES.FDM, MODES.LASER, MODES.CAM, MODES.SLA],
         CAM = [MODES.CAM],
         SLA = [MODES.SLA],
         FDM = [MODES.FDM],
         FDM_SLA = [MODES.FDM,MODES.SLA],
         FDM_CAM = [MODES.CAM,MODES.FDM],
-        FDM_LASER = [MODES.LASER,MODES.FDM],
-        FDM_LASER_SLA = [MODES.LASER,MODES.FDM,MODES.SLA],
-        CAM_LASER = [MODES.LASER,MODES.CAM],
+        FDM_LZR = [MODES.LASER,MODES.FDM],
+        FDM_CAM_SLA = [MODES.CAM,MODES.FDM,MODES.SLA],
+        FDM_LZR_SLA = [MODES.LASER,MODES.FDM,MODES.SLA],
+        CAM_LZR = [MODES.LASER,MODES.CAM],
         GCODE = [MODES.FDM, MODES.LASER, MODES.CAM],
         LASER = [MODES.LASER],
-        CATALOG = API.catalog,
-        js2o = API.js2o,
-        o2js = API.o2js,
-        platform = API.platform,
-        selection = API.selection,
         proto = location.protocol,
         ver = Date.now().toString(36);
 
@@ -56,31 +48,33 @@
         selectedTool = null,
         editTools = null,
         maxTool = 0,
-        fpsTimer = null,
         platformColor,
         contextInt;
 
     // extend KIRI API with local functions
-    API.show.devices = showDevices;
-    API.device.set = selectDevice;
-    API.device.clone = cloneDevice;
+    api.show.devices = showDevices;
+    api.device.set = selectDevice;
+    api.device.clone = cloneDevice;
 
     function settings() {
-        return API.conf.get();
+        return api.conf.get();
     }
 
     function checkSeed(then) {
         // skip sample object load in onshape (or any script postload)
-        if (!SDB[SEED]) {
-            SDB[SEED] = new Date().getTime();
-            if (!SETUP.s && API.feature.seed) {
+        if (!sdb[SEED]) {
+            sdb[SEED] = new Date().getTime();
+            if (!SETUP.s && api.feature.seed) {
+                if (SETUP.debug) {
+                    return then();
+                }
                 platform.load_stl("/obj/cube.stl", function(vert) {
-                    CATALOG.putFile("sample cube.stl", vert);
-                    platform.compute_max_z();
-                    SPACE.view.home();
-                    setTimeout(() => { API.space.save(true) },500);
+                    catalog.putFile("sample cube.stl", vert);
+                    platform.update_bounds();
+                    space.view.home();
+                    setTimeout(() => { api.space.save(true) },500);
                     then();
-                    API.help.show();
+                    api.help.show();
                 });
                 return true;
             }
@@ -89,116 +83,185 @@
     }
 
     function unitsSave() {
-        API.conf.update({controller:true});
+        api.conf.update({ controller: true });
         platform.update_size();
     }
 
     function aniMeshSave() {
-        API.conf.update({controller:true});
-        API.conf.save();
+        api.conf.update({ controller: true });
+        api.conf.save();
     }
 
     function lineTypeSave() {
-        const sel = UI.lineType.options[UI.lineType.selectedIndex];
+        const sel = ui.lineType.options[ui.lineType.selectedIndex];
         if (sel) {
             settings().controller.lineType = sel.value;
-            API.conf.save();
+            api.conf.save();
+        }
+    }
+
+    function filamentSourceEditUpdate() {
+        if (ui.filamentSource && ui.filamentSourceEdit) {
+            api.event.emit("filament.source");
+            const sel = ui.filamentSource.options[ui.filamentSource.selectedIndex];
+            if (sel) {
+                ui.filamentSourceEdit.style.display = sel.value === 'palette3' ? '' : 'none';
+            }
+        }
+    }
+
+    function filamentSourceSave() {
+        const sel = ui.filamentSource.options[ui.filamentSource.selectedIndex];
+        if (sel) {
+            settings().device.filamentSource = sel.value;
+            api.conf.save();
+        }
+        filamentSourceEditUpdate();
+    }
+
+    function thinWallSave() {
+        let opt = ui.sliceDetectThin;
+        let level = opt.options[opt.selectedIndex];
+        if (level) {
+            settings().process.sliceDetectThin = level.value;
+            api.conf.save();
         }
     }
 
     function detailSave() {
-        let level = UI.detail.options[UI.detail.selectedIndex];
+        let level = ui.detail.options[ui.detail.selectedIndex];
         if (level) {
             level = level.value;
-            let rez = BASE.config.clipperClean;
+            let rez = base.config.clipperClean;
             switch (level) {
-                case 'best': rez = 50; break;
-                case 'good': rez = BASE.config.clipperClean; break;
-                case 'fair': rez = 500; break;
-                case 'poor': rez = 1000; break;
+                case '100': rez = 50; break;
+                case '75': rez = base.config.clipperClean; break;
+                case '50': rez = 500; break;
+                case '25': rez = 1000; break;
             }
-            KIRI.client.config({
+            kiri.client.config({
                 base: { clipperClean: rez }
             });
             settings().controller.detail = level;
-            API.conf.save();
+            api.conf.save();
         }
     }
 
     function speedSave() {
-        settings().controller.showSpeeds = UI.showSpeeds.checked;
-        API.platform.update_speeds();
+        settings().controller.showSpeeds = ui.showSpeeds.checked;
+        api.platform.update_speeds();
     }
 
     function zAnchorSave() {
-        API.conf.update();
-        API.platform.update_top_z();
+        api.conf.update();
+        api.platform.update_top_z();
     }
+
+    function setThreaded(bool) {
+        if (bool) {
+            kiri.client.pool.start();
+        } else {
+            kiri.client.pool.stop();
+        }
+        return bool;
+    }
+
+    api.event.on("set.threaded", bool => setThreaded(bool));
 
     function booleanSave() {
         let control = settings().controller;
         let isDark = control.dark;
-        let doAlert = UI.ortho.checked !== control.ortho;
-        control.decals = UI.decals.checked;
-        control.danger = UI.danger.checked;
-        control.showOrigin = UI.showOrigin.checked;
-        control.showRulers = UI.showRulers.checked;
-        control.autoLayout = UI.autoLayout.checked;
-        control.freeLayout = UI.freeLayout.checked;
-        control.autoSave = UI.autoSave.checked;
-        control.reverseZoom = UI.reverseZoom.checked;
-        control.dark = UI.dark.checked;
-        control.exportOcto = UI.exportOcto.checked;
-        control.exportGhost = UI.exportGhost.checked;
-        control.exportLocal = UI.exportLocal.checked;
-        control.exportPreview = UI.exportPreview.checked;
-        control.decimate = UI.decimate.checked;
-        control.healMesh = UI.healMesh.checked;
-        control.ortho = UI.ortho.checked;
-        SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
+        let doAlert = ui.ortho.checked !== control.ortho;
+        if (control.assembly != ui.assembly.checked) {
+            kiri.client.wasm(ui.assembly.checked);
+        }
+        if (control.antiAlias != ui.antiAlias.checked) {
+            api.show.alert('Page Reload Required to Change Aliasing');
+        }
+        control.shiny = ui.shiny.checked;
+        control.decals = ui.decals.checked;
+        control.danger = ui.danger.checked;
+        control.showOrigin = ui.showOrigin.checked;
+        control.showRulers = ui.showRulers.checked;
+        control.autoLayout = ui.autoLayout.checked;
+        control.freeLayout = ui.freeLayout.checked;
+        control.spaceRandoX = ui.spaceRandoX.checked;
+        control.autoSave = ui.autoSave.checked;
+        control.antiAlias = ui.antiAlias.checked;
+        control.reverseZoom = ui.reverseZoom.checked;
+        control.dark = ui.dark.checked;
+        control.exportOcto = ui.exportOcto.checked;
+        control.exportGhost = ui.exportGhost.checked;
+        control.exportLocal = ui.exportLocal.checked;
+        control.exportThumb = ui.exportThumb.checked;
+        control.exportPreview = ui.exportPreview.checked;
+        control.healMesh = ui.healMesh.checked;
+        control.threaded = setThreaded(ui.threaded.checked);
+        control.assembly = ui.assembly.checked;
+        control.ortho = ui.ortho.checked;
+        control.devel = ui.devel.checked;
+        space.view.setZoom(control.reverseZoom, control.zoomSpeed);
         // platform.layout();
-        API.conf.save();
-        API.platform.update_size();
-        API.catalog.setOptions({
-            maxpass: control.decimate ? 10 : 0
-        });
-        UC.setHoverPop(false);
-        updateFPS();
-        if (control.decals) {
+        api.conf.save();
+        api.platform.update_size();
+        uc.setHoverPop(false);
+        updateStats();
+        if (control.decals && !control.dark) {
+            // disable decals in dark mode
             loadDeviceTexture(currentDevice, deviceTexture);
         } else {
             clearDeviceTexture();
         }
-        API.event.emit('boolean.update');
+        api.event.emit('boolean.update');
         if (doAlert) {
-            API.show.alert("change requires page refresh");
+            api.show.alert("change requires page refresh");
         }
     }
 
-    function updateFPS() {
-        clearTimeout(fpsTimer);
-        UI.fps.style.display = 'block';
+    function updateStats() {
+        if (self.debug !== true) {
+            return;
+        }
+        let { div, fps, rms, rnfo } = ui.stats;
+        div.style.display = 'flex';
         setInterval(() => {
-            const nv = SPACE.view.getFPS().toFixed(2);
-            if (nv !== UI.fps.innerText) {
-                UI.fps.innerText = nv;
+            const nrms = space.view.getRMS().toFixed(1);
+            const nfps = space.view.getFPS().toFixed(1);
+            const rend = space.renderInfo();
+            const { memory, render } = rend;
+            if (nfps !== fps.innerText) {
+                fps.innerText = nfps;
+            }
+            if (nrms !== rms.innerText) {
+                rms.innerText = nrms;
+            }
+            if (rnfo.offsetParent !== null) {
+                rnfo.innerHTML = Object.entries({ ...memory, ...render, render_ms: nrms, frames_sec: nfps }).map(row => {
+                    return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`
+                }).join('');
             }
         }, 100);
     }
 
-    function onLayerToggle() {
-        API.conf.update();
-        API.show.slices();
+    function parentWithClass(el, classname) {
+        while (el) {
+            if (el.classList.contains(classname)) {
+                return el;
+            }
+            el = el.parentNode;
+        }
+        return el;
     }
 
-    function onBooleanClick() {
-        // prevent hiding elements in device editor on clicks
-        // if (!API.modal.visible()) {
-            UC.refresh();
-        // }
-        API.conf.update();
+    function onBooleanClick(el) {
+        uc.refresh();
+        api.conf.update();
         DOC.activeElement.blur();
-        API.event.emit("boolean.click");
+        api.event.emit("boolean.click");
+        updateLaserState();
+        if (el === ui.camStockIndexed) {
+            api.space.set_focus();
+        }
     }
 
     function onButtonClick(ev) {
@@ -206,7 +269,7 @@
         while (target && target.tagName !== 'BUTTON') {
             target = target.parentNode;
         }
-        API.event.emit("button.click", target);
+        api.event.emit("button.click", target);
     }
 
     function inputHasFocus() {
@@ -215,7 +278,7 @@
     }
 
     function inputTextOK() {
-        return DOC.activeElement === UI.deviceName;
+        return DOC.activeElement === ui.deviceName;
     }
 
     function textAreaHasFocus() {
@@ -232,8 +295,8 @@
     }
 
     function keyUpHandler(evt) {
-        if (API.feature.on_key) {
-            if (API.feature.on_key({up:evt})) return;
+        if (api.feature.on_key) {
+            if (api.feature.on_key({up:evt})) return;
         }
         switch (evt.keyCode) {
             // escape
@@ -241,28 +304,28 @@
                 // blur text input focus
                 DOC.activeElement.blur();
                 // dismiss modals
-                API.modal.hide();
+                api.modal.hide();
                 // deselect widgets
                 platform.deselect();
                 // hide all dialogs
-                API.dialog.hide();
+                api.dialog.hide();
                 // cancel slicing
-                API.function.cancel();
+                api.function.cancel();
                 // kill any poppers in compact mode
-                UC.hidePoppers();
+                uc.hidePoppers();
                 // and send an event (used by FDM client)
-                API.event.emit("key.esc");
+                api.event.emit("key.esc");
                 break;
         }
         return false;
     }
 
     function keyDownHandler(evt) {
-        if (API.modal.visible()) {
+        if (api.modal.visible()) {
             return false;
         }
-        if (API.feature.on_key) {
-            if (API.feature.on_key({down:evt})) return;
+        if (api.feature.on_key) {
+            if (api.feature.on_key({down:evt})) return;
         }
         let move = evt.altKey ? 5 : 0,
             deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
@@ -270,33 +333,33 @@
             case 8: // apple: delete/backspace
             case 46: // others: delete
                 if (inputHasFocus()) return false;
-                platform.delete(API.selection.meshes());
+                platform.delete(api.selection.meshes());
                 evt.preventDefault();
                 break;
             case 37: // left arrow
                 if (inputHasFocus()) return false;
-                if (deg) API.selection.rotate(0, 0, -deg);
-                if (move > 0) API.selection.move(-move, 0, 0);
+                if (deg) api.selection.rotate(0, 0, -deg);
+                if (move > 0) api.selection.move(-move, 0, 0);
                 evt.preventDefault();
                 break;
             case 39: // right arrow
                 if (inputHasFocus()) return false;
-                if (deg) API.selection.rotate(0, 0, deg);
-                if (move > 0) API.selection.move(move, 0, 0);
+                if (deg) api.selection.rotate(0, 0, deg);
+                if (move > 0) api.selection.move(move, 0, 0);
                 evt.preventDefault();
                 break;
             case 38: // up arrow
                 if (inputHasFocus()) return false;
-                if (evt.metaKey) return API.show.layer(API.var.layer_at+1);
-                if (deg) API.selection.rotate(deg, 0, 0);
-                if (move > 0) API.selection.move(0, move, 0);
+                if (evt.metaKey) return api.show.layer(api.var.layer_at+1);
+                if (deg) api.selection.rotate(deg, 0, 0);
+                if (move > 0) api.selection.move(0, move, 0);
                 evt.preventDefault();
                 break;
             case 40: // down arrow
                 if (inputHasFocus()) return false;
-                if (evt.metaKey) return API.show.layer(API.var.layer_at-1);
-                if (deg) API.selection.rotate(-deg, 0, 0);
-                if (move > 0) API.selection.move(0, -move, 0);
+                if (evt.metaKey) return api.show.layer(api.var.layer_at-1);
+                if (deg) api.selection.rotate(-deg, 0, 0);
+                if (move > 0) api.selection.move(0, -move, 0);
                 evt.preventDefault();
                 break;
             case 65: // 'a' for select all
@@ -310,18 +373,18 @@
             case 83: // 's' for save workspace
                 if (evt.ctrlKey) {
                     evt.preventDefault();
-                    API.conf.save();
+                    api.conf.save();
                     console.log("settings saved");
                 } else
                 if (evt.metaKey) {
                     evt.preventDefault();
-                    API.space.save();
+                    api.space.save();
                 }
                 break;
             case 76: // 'l' for restore workspace
                 if (evt.metaKey) {
                     evt.preventDefault();
-                    API.space.restore();
+                    api.space.restore();
                 }
                 break;
         }
@@ -329,79 +392,79 @@
 
     function keyHandler(evt) {
         let handled = true;
-        if (API.modal.visible() || inputHasFocus()) {
+        if (api.modal.visible() || inputHasFocus()) {
             return false;
         }
-        if (API.feature.on_key) {
-            if (API.feature.on_key({key:evt})) return;
+        if (api.feature.on_key) {
+            if (api.feature.on_key({key:evt})) return;
         }
         if (evt.ctrlKey) {
             switch (evt.key) {
-                case 'g': return API.group.merge();
-                case 'u': return API.group.split();
+                case 'g': return api.group.merge();
+                case 'u': return api.group.split();
             }
         }
         switch (evt.charCode) {
-            case cca('`'): API.show.slices(0); break;
-            case cca('0'): API.show.slices(API.var.layer_max); break;
-            case cca('1'): API.show.slices(API.var.layer_max/10); break;
-            case cca('2'): API.show.slices(API.var.layer_max*2/10); break;
-            case cca('3'): API.show.slices(API.var.layer_max*3/10); break;
-            case cca('4'): API.show.slices(API.var.layer_max*4/10); break;
-            case cca('5'): API.show.slices(API.var.layer_max*5/10); break;
-            case cca('6'): API.show.slices(API.var.layer_max*6/10); break;
-            case cca('7'): API.show.slices(API.var.layer_max*7/10); break;
-            case cca('8'): API.show.slices(API.var.layer_max*8/10); break;
-            case cca('9'): API.show.slices(API.var.layer_max*9/10); break;
+            case cca('`'): api.show.slices(0); break;
+            case cca('0'): api.show.slices(api.var.layer_max); break;
+            case cca('1'): api.show.slices(api.var.layer_max/10); break;
+            case cca('2'): api.show.slices(api.var.layer_max*2/10); break;
+            case cca('3'): api.show.slices(api.var.layer_max*3/10); break;
+            case cca('4'): api.show.slices(api.var.layer_max*4/10); break;
+            case cca('5'): api.show.slices(api.var.layer_max*5/10); break;
+            case cca('6'): api.show.slices(api.var.layer_max*6/10); break;
+            case cca('7'): api.show.slices(api.var.layer_max*7/10); break;
+            case cca('8'): api.show.slices(api.var.layer_max*8/10); break;
+            case cca('9'): api.show.slices(api.var.layer_max*9/10); break;
             case cca('?'):
-                API.help.show();
+                api.help.show();
                 break;
             case cca('Z'): // reset stored state
-                UC.confirm('clear all settings and preferences?').then(yes => {
-                    if (yes) SDB.clear();
+                uc.confirm('clear all settings and preferences?').then(yes => {
+                    if (yes) sdb.clear();
                 });
                 break;
             case cca('C'): // refresh catalog
-                CATALOG.refresh();
+                catalog.refresh();
                 break;
             case cca('i'): // file import
-                API.event.import();
+                api.event.import();
                 break;
             case cca('S'): // slice
             case cca('s'): // slice
                 if (evt.shiftKey) {
-                    API.show.alert('CAPS lock on?');
+                    api.show.alert('CAPS lock on?');
                 }
-                API.function.slice();
+                api.function.slice();
                 break;
             case cca('P'): // prepare
             case cca('p'): // prepare
                 if (evt.shiftKey) {
-                    API.show.alert('CAPS lock on?');
+                    api.show.alert('CAPS lock on?');
                 }
-                if (API.mode.get() !== 'SLA') {
+                if (api.mode.get() !== 'SLA') {
                     // hidden in SLA mode
-                    API.function.print();
+                    api.function.print();
                 }
                 break;
             case cca('X'): // export
             case cca('x'): // export
                 if (evt.shiftKey) {
-                    API.show.alert('CAPS lock on?');
+                    api.show.alert('CAPS lock on?');
                 }
-                API.function.export();
+                api.function.export();
                 break;
             case cca('g'): // CAM animate
-                API.function.animate();
+                api.function.animate();
                 break;
             case cca('O'): // manual rotation
                 rotateInputSelection();
                 break;
             case cca('r'): // recent files
-                API.modal.show('files');
+                api.modal.show('files');
                 break;
             case cca('q'): // preferences
-                API.modal.show('prefs');
+                api.modal.show('prefs');
                 break;
             case cca('l'): // device
                 settingsLoad();
@@ -409,22 +472,25 @@
             case cca('e'): // device
                 showDevices();
                 break;
+            case cca('w'): // scale
+                api.event.emit("tool.next");
+                break;
             case cca('o'): // tools
                 showTools();
                 break;
             case cca('c'): // local devices
-                API.show.local();
+                api.show.local();
                 break;
             case cca('v'): // toggle single slice view mode
-                if (API.view.get() === VIEWS.ARRANGE) {
-                    API.space.set_focus(API.selection.widgets());
+                if (api.view.get() === VIEWS.ARRANGE) {
+                    api.space.set_focus(api.selection.widgets());
                 }
-                if (API.var.layer_hi == API.var.layer_lo) {
-                    API.var.layer_lo = 0;
+                if (api.var.layer_hi == api.var.layer_lo) {
+                    api.var.layer_lo = 0;
                 } else {
-                    API.var.layer_lo = API.var.layer_hi;
+                    api.var.layer_lo = api.var.layer_hi;
                 }
-                API.show.slices();
+                api.show.slices();
                 break;
             case cca('d'): // duplicate object
                 duplicateSelection();
@@ -434,20 +500,22 @@
                 break;
             case cca('R'): // toggle slice render mode
                 renderMode++;
-                API.function.slice();
+                api.function.slice();
                 break;
             case cca('a'):
-                if (API.view.get() === VIEWS.ARRANGE) {
+                if (api.view.get() === VIEWS.ARRANGE) {
                     // auto arrange items on platform
                     platform.layout();
-                    API.space.set_focus(API.selection.widgets());
+                    if (!api.conf.get().controller.spaceRandoX) {
+                        api.space.set_focus(api.selection.widgets());
+                    }
                 } else {
                     // go to arrange view
-                    API.view.set(VIEWS.ARRANGE);
+                    api.view.set(VIEWS.ARRANGE);
                 }
                 break;
             default:
-                API.event.emit('keypress', evt);
+                api.event.emit('keypress', evt);
                 handled = false;
                 break;
         }
@@ -463,37 +531,23 @@
         if (int && int.object && int.object.widget) {
             let q = new THREE.Quaternion();
             q.setFromUnitVectors(contextInt[0].face.normal, new THREE.Vector3(0,0,-1));
-            API.selection.rotate(q);
+            api.selection.rotate(q);
+        }
+    }
+
+    function setFocus() {
+        let int = contextInt[0];
+        if (int && int.object && int.object.widget) {
+            api.space.set_focus(undefined, int.point);
         }
     }
 
     function duplicateSelection() {
-        API.selection.for_widgets(function(widget) {
-            let mesh = widget.mesh;
-            let bb = mesh.getBoundingBox();
-            let ow = widget;
-            let nw = API.widgets.new().loadGeometry(mesh.geometry.clone());
-            nw.meta.file = ow.meta.file;
-            nw.meta.vertices = ow.meta.vertices;
-            nw.move(bb.max.x - bb.min.x + 1, 0, 0);
-            platform.add(nw,true);
-            let owa = API.widgets.annotate(ow.id);
-            let nwa = API.widgets.annotate(nw.id);
-            if (owa.tab) {
-                nwa.tab = Object.clone(owa.tab);
-                nwa.tab.forEach((tab,i) => {
-                    tab.id = Date.now() + i
-                });
-            }
-            KIRI.driver.CAM.restoreTabs([nw]);
-        });
+        api.selection.duplicate();
     }
 
     function mirrorSelection() {
-        API.selection.for_widgets(function(widget) {
-            widget.mirror();
-        });
-        SPACE.update();
+        api.selection.mirror();
     }
 
     function keys(o) {
@@ -509,8 +563,8 @@
     }
 
     function rotateInputSelection() {
-        if (API.selection.meshes().length === 0) {
-            API.show.alert("select object to rotate");
+        if (api.selection.meshes().length === 0) {
+            api.show.alert("select object to rotate");
             return;
         }
         let coord = (prompt("Enter X,Y,Z degrees of rotation") || '').split(','),
@@ -519,16 +573,17 @@
             y = parseFloat(coord[1] || 0.0) * prod,
             z = parseFloat(coord[2] || 0.0) * prod;
 
-        API.selection.rotate(x, y, z);
+        api.selection.rotate(x, y, z);
     }
 
     function positionSelection() {
-        if (API.selection.meshes().length === 0) {
-            API.show.alert("select object to position");
+        if (api.selection.meshes().length === 0) {
+            api.show.alert("select object to position");
             return;
         }
         let current = settings(),
-            center = current.process.outputOriginCenter,
+            { device, process} = current,
+            center = process.outputOriginCenter || process.camOriginCenter || device.bedRound,
             bounds = boundsSelection(),
             coord = prompt("Enter X,Y coordinates for selection").split(','),
             x = parseFloat(coord[0] || 0.0),
@@ -536,11 +591,11 @@
             z = parseFloat(coord[2] || 0.0);
 
         if (!center) {
-            x = x - current.device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
-            y = y - current.device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
+            x = x - device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
+            y = y - device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
         }
 
-        moveSelection(x, y, z, true);
+        api.selection.move(x, y, z, true);
     }
 
     function deviceExport(exp, name) {
@@ -548,21 +603,21 @@
             .toLowerCase()
             .replace(/ /g,'_')
             .replace(/\./g,'_');
-        UC.prompt("Export Device Filename", name).then(name => {
+        uc.prompt("Export Device Filename", name).then(name => {
             if (name) {
-                API.util.download(exp, `${name}.km`);
+                api.util.download(exp, `${name}.km`);
             }
         });
     }
 
-    function objectsExport() {
-        // return API.selection.export();
-        UC.confirm("Export Filename", {ok:true, cancel: false}, "selected.stl").then(name => {
+    function objectsExport(format = "stl") {
+        // return api.selection.export();
+        uc.confirm("Export Filename", {ok:true, cancel: false}, `selected.${format}`).then(name => {
             if (!name) return;
-            if (name.toLowerCase().indexOf(".stl") < 0) {
-                name = `${name}.stl`;
+            if (name.toLowerCase().indexOf(`.${format}`) < 0) {
+                name = `${name}.${format}`;
             }
-            API.util.download(API.selection.export(), name);
+            api.util.download(api.selection.export(format), name);
         });
     }
 
@@ -580,31 +635,40 @@
             "  </div>",
             "</div>"
         ]};
-        UC.confirm("Export Filename", {ok:true, cancel: false}, "workspace", opt).then(name => {
+        uc.confirm("Export Filename", {ok:true, cancel: false}, "workspace", opt).then(name => {
             if (name) {
-                let work = $('incwork').checked,
-                    json = API.conf.export({work});
-                API.util.download(json, `${name}.km`);
+                let work = $('incwork').checked;
+                let json = api.conf.export({work, clear:true});
+
+                kiri.client.zip([
+                    {name:"workspace.json", data:JSON.stringify(json)}
+                ], progress => {
+                    api.show.progress(progress.percent/100, "compressing workspace");
+                }, output => {
+                    api.show.progress(0);
+                    api.util.download(output, `${name}.kmz`);
+                });
             }
         });
     }
 
-    function settingsSave(ev) {
+    function settingsSave(ev, name) {
         if (ev) {
             ev.stopPropagation();
             ev.preventDefault();
         }
 
-        API.dialog.hide();
-        let mode = API.mode.get(),
+        api.dialog.hide();
+        let mode = api.mode.get(),
             s = settings(),
             def = "default",
             cp = s.process,
             pl = s.sproc[mode],
-            lp = s.cproc[mode];
-
-        UC.prompt("Save Settings As", cp ? lp || def : def).then(name => {
-            if (name) {
+            lp = s.cproc[mode],
+            saveAs = (name) => {
+                if (!name) {
+                    return;
+                }
                 let np = pl[name] = {};
                 cp.processName = name;
                 pl[name] = Object.clone(cp);
@@ -614,26 +678,31 @@
                 }
                 s.cproc[mode] = name;
                 s.devproc[s.device.deviceName] = name;
-                API.conf.save();
-                API.conf.update();
-                API.event.settings();
-            }
-        });
+                api.conf.save();
+                api.conf.update();
+                api.event.settings();
+            };
+
+        if (name) {
+            saveAs(name);
+        } else {
+            uc.prompt("Save Settings As", cp ? lp || def : def).then(saveAs);
+        }
     }
 
     function settingsLoad() {
-        UC.hidePoppers();
-        API.conf.show();
+        uc.hidePoppers();
+        api.conf.show();
     }
 
     function putLocalDevice(devicename, obj) {
         settings().devices[devicename] = obj;
-        API.conf.save();
+        api.conf.save();
     }
 
     function removeLocalDevice(devicename) {
         delete settings().devices[devicename];
-        API.conf.save();
+        api.conf.save();
     }
 
     function isLocalDevice(devicename) {
@@ -641,14 +710,14 @@
     }
 
     function getSelectedDevice() {
-        return API.device.get();
+        return api.device.get();
     }
 
     function selectDevice(devicename) {
         if (isLocalDevice(devicename)) {
             setDeviceCode(settings().devices[devicename], devicename);
         } else {
-            let code = devices[API.mode.get_lower()][devicename];
+            let code = devices[api.mode.get_lower()][devicename];
             if (code) {
                 setDeviceCode(code, devicename);
             }
@@ -657,27 +726,43 @@
 
     // only for local filters
     function cloneDevice() {
-        let name = `${getSelectedDevice().replace(/\./g,' ')} Copy`;
-        let code = API.clone(settings().device);
-        code.mode = API.mode.get();
+        let name = `${getSelectedDevice().replace(/\./g,' ')}`;
+        let code = api.clone(settings().device);
+        code.mode = api.mode.get();
+        if (name.toLowerCase().indexOf('my ') >= 0) {
+            name = `${name} copy`;
+        } else {
+            name = `My ${name}`;
+        }
         putLocalDevice(name, code);
         setDeviceCode(code, name);
     }
 
+    function updateLaserState() {
+        const dev = settings().device;
+        $('laser-on').style.display = dev.useLaser ? 'flex' : 'none';
+        $('laser-off').style.display = dev.useLaser ? 'flex' : 'none';
+    }
+
     function setDeviceCode(code, devicename) {
+        api.event.emit('device.select', {devicename, code});
         try {
             if (typeof(code) === 'string') code = js2o(code) || {};
 
-            API.event.emit('device.set', devicename);
+            api.event.emit('device.set', devicename);
 
-            let mode = API.mode.get(),
+            let mode = api.mode.get(),
+                lmode = mode.toLowerCase(),
                 current = settings(),
                 local = isLocalDevice(devicename),
-                dev = current.device = CONF.device_from_code(code,mode),
+                dev = current.device = conf.device_from_code(code,mode),
                 dproc = current.devproc[devicename], // last process name for this device
                 newdev = dproc === undefined,   // first time device is selected
                 predev = current.filter[mode],  // previous device selection
                 chgdev = predev !== devicename; // device is changing
+
+            // fill missing device fields
+            conf.fill_cull_once(dev, conf.defaults[lmode].d);
 
             // first time device use, add any print profiles and set to default if present
             if (code.profiles) {
@@ -699,11 +784,12 @@
             dev.new = false;
             dev.deviceName = devicename;
 
-            UI.deviceName.value = devicename;
-            UI.deviceBelt.checked = dev.bedBelt;
-            UI.deviceRound.checked = dev.bedRound;
-            UI.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter;
-            UI.fwRetract.checked = dev.fwRetract;
+            ui.deviceName.value = devicename;
+            ui.deviceBelt.checked = dev.bedBelt;
+            ui.deviceRound.checked = dev.bedRound;
+            ui.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter || dev.bedRound;
+            ui.fwRetract.checked = dev.fwRetract;
+            if (!dev.filamentSource) ui.filamentSource.selectedIndex = 0;
 
             // add extruder selection buttons
             if (dev.extruders) {
@@ -713,7 +799,7 @@
                         ext.extDeselect = [];
                     }
                 }
-                let ext = API.lists.extruders = [];
+                let ext = api.lists.extruders = [];
                 dev.internal = 0;
                 let selext = $('pop-nozzle');
                 selext.innerHTML = '';
@@ -723,10 +809,10 @@
                     d.setAttribute('id', `sel-ext-${i}`);
                     d.setAttribute('class', 'col j-center');
                     d.onclick = function() {
-                        API.selection.for_widgets(w => {
-                            API.widgets.annotate(w.id).extruder = i;
+                        api.selection.for_widgets(w => {
+                            api.widgets.annotate(w.id).extruder = i;
                         });
-                        API.platform.update_selected();
+                        api.platform.update_selected();
                     };
                     selext.appendChild(d);
                     ext.push({id:i, name:i});
@@ -735,61 +821,69 @@
 
             // disable editing for non-local devices
             [
-                UI.deviceName,
-                UI.gcodePre,
-                UI.gcodePost,
-                UI.gcodePause,
-                UI.bedDepth,
-                UI.bedWidth,
-                UI.maxHeight,
-                UI.deviceOrigin,
-                UI.deviceRound,
-                UI.deviceBelt,
-                UI.fwRetract,
-                UI.gcodeFan,
-                UI.gcodeTrack,
-                UI.gcodeLayer,
-                UI.extFilament,
-                UI.extNozzle,
-                UI.spindleMax,
-                UI.gcodeSpindle,
-                UI.gcodeDwell,
-                UI.gcodeChange,
-                UI.gcodeFExt,
-                UI.gcodeSpace,
-                UI.gcodeStrip,
-                UI.gcodeLaserOn,
-                UI.gcodeLaserOff,
-                UI.extPrev,
-                UI.extNext,
-                UI.extAdd,
-                UI.extDel,
-                UI.extOffsetX,
-                UI.extOffsetY,
-                UI.extSelect,
-                UI.extDeselect
+                ui.deviceName,
+                ui.gcodePre,
+                ui.gcodePost,
+                ui.bedDepth,
+                ui.bedWidth,
+                ui.maxHeight,
+                ui.useLaser,
+                ui.resolutionX,
+                ui.resolutionY,
+                ui.deviceOrigin,
+                ui.deviceRound,
+                ui.deviceBelt,
+                ui.fwRetract,
+                ui.filamentSource,
+                ui.deviceZMax,
+                ui.gcodeTime,
+                ui.gcodeFan,
+                ui.gcodeFeature,
+                ui.gcodeTrack,
+                ui.gcodeLayer,
+                ui.extFilament,
+                ui.extNozzle,
+                ui.spindleMax,
+                ui.gcodeSpindle,
+                ui.gcodeDwell,
+                ui.gcodeChange,
+                ui.gcodeFExt,
+                ui.gcodeSpace,
+                ui.gcodeStrip,
+                ui.gcodeLaserOn,
+                ui.gcodeLaserOff,
+                ui.extPrev,
+                ui.extNext,
+                ui.extAdd,
+                ui.extDel,
+                ui.extOffsetX,
+                ui.extOffsetY,
+                ui.extSelect,
+                ui.extDeselect
             ].forEach(function(e) {
                 e.disabled = !local;
             });
 
-            UI.deviceSave.disabled = !local;
-            UI.deviceDelete.disabled = !local;
-            UI.deviceExport.disabled = !local;
+            ui.deviceSave.disabled = !local;
+            ui.deviceDelete.disabled = !local;
+            ui.deviceExport.disabled = !local;
             if (local) {
-                UI.deviceAdd.innerText = "copy";
-                UI.deviceDelete.style.display = '';
-                UI.deviceExport.style.display = '';
+                ui.deviceAdd.innerText = "copy";
+                ui.deviceDelete.style.display = '';
+                ui.deviceExport.style.display = '';
             } else {
-                UI.deviceAdd.innerText = "customize";
-                UI.deviceDelete.style.display = 'none';
-                UI.deviceExport.style.display = 'none';
+                ui.deviceAdd.innerText = "customize";
+                ui.deviceDelete.style.display = 'none';
+                ui.deviceExport.style.display = 'none';
             }
-            UI.deviceAdd.disabled = dev.noclone;
+            ui.deviceAdd.disabled = dev.noclone;
 
-            API.view.update_fields();
+            api.conf.update_fields();
+            space.platform.setBelt(isBelt());
             platform.update_size();
             platform.update_origin();
             platform.update();
+            updateLaserState();
 
             // store current device name for this mode
             current.filter[mode] = devicename;
@@ -798,20 +892,26 @@
 
             if (dproc) {
                 // restore last process associated with this device
-                API.conf.load(null, dproc);
+                api.conf.load(null, dproc);
             } else {
-                API.conf.update();
+                api.conf.update();
             }
 
-            API.conf.save();
+            api.conf.save();
 
-            API.const.SPACE.view.setHome(dev.bedBelt ? Math.PI/2 : 0);
+            if (isBelt()) {
+                // space.view.setHome(dev.bedBelt ? Math.PI/2 : 0, Math.PI / 2.5);
+                space.view.setHome(0, Math.PI / 2.5);
+            } else {
+                space.view.setHome(0);
+            }
             // when changing devices, update focus on widgets
             if (chgdev) {
-                setTimeout(API.space.set_focus, 0);
+                setTimeout(api.space.set_focus, 0);
             }
 
-            UC.refresh();
+            uc.refresh(1);
+            filamentSourceEditUpdate();
 
             if (dev.imageURL) {
                 if (dev.imageURL !== deviceURL) {
@@ -823,18 +923,18 @@
             }
         } catch (e) {
             console.log({error:e, device:code, devicename});
-            API.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
-            API.show.alert(`please select a new device`, 10);
+            api.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
+            api.show.alert(`please select a new device`, 10);
             throw e;
             showDevices();
         }
-        API.function.clear();
-        API.event.settings();
+        api.function.clear();
+        api.event.settings();
     }
 
     function clearDeviceTexture() {
         if (deviceImage) {
-            SPACE.world.remove(deviceImage);
+            space.world.remove(deviceImage);
             deviceImage = null;
             deviceURL = null;
         }
@@ -856,7 +956,9 @@
     function loadDeviceTexture(dev, texture) {
         clearDeviceTexture();
         deviceTexture = texture;
-        if (!(texture && API.conf.get().controller.decals)) {
+        let { decals, dark } = api.conf.get().controller;
+        // disable decals in dark mode
+        if (!(texture && decals && !dark)) {
             return;
         }
         let { width, height } = texture.image;
@@ -886,7 +988,7 @@
             case 7: pos = { x: 0,                     y: -(bedDepth - height)/2 }; break;
             case 8: pos = { x:  (bedWidth - width)/2, y: -(bedDepth - height)/2 }; break;
         }
-        let geometry = new THREE.PlaneBufferGeometry(width, height, 1),
+        let geometry = new THREE.PlaneGeometry(width, height, 1),
             material = new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
             mesh = new THREE.Mesh(geometry, material);
         mesh.position.z = -bedHeight;
@@ -895,26 +997,33 @@
             mesh.position.x = pos.x;
             mesh.position.y = pos.y;
         }
-        SPACE.world.add(deviceImage = mesh);
+        space.world.add(deviceImage = mesh);
     }
 
     function updateDeviceName() {
-        let newname = UI.deviceName.value,
-            selected = API.device.get(),
+        let newname = ui.deviceName.value,
+            selected = api.device.get(),
             devs = settings().devices;
         if (newname !== selected) {
             devs[newname] = devs[selected];
             delete devs[selected];
-            UI.deviceSave.onclick();
             selectDevice(newname);
             updateDeviceList();
         }
     }
 
+    function updateDeviceSize() {
+        api.conf.update();
+        platform.update_size();
+        platform.update_origin();
+    }
+
     function renderDevices(devices) {
         let selectedIndex = -1,
-            selected = API.device.get(),
-            devs = settings().devices;
+            selected = api.device.get(),
+            features = api.feature,
+            devs = settings().devices,
+            dfilter = typeof(features.device_filter) === 'function' ? features.device_filter : undefined;
 
         for (let local in devs) {
             if (!(devs.hasOwnProperty(local) && devs[local])) {
@@ -922,44 +1031,48 @@
             }
             let dev = devs[local],
                 fdmCode = dev.cmd,
-                fdmMode = (API.mode.get() === 'FDM');
+                fdmMode = (api.mode.get() === 'FDM');
 
-            if (dev.mode ? (dev.mode === API.mode.get()) : (fdmCode ? fdmMode : !fdmMode)) {
+            if (dev.mode ? (dev.mode === api.mode.get()) : (fdmCode ? fdmMode : !fdmMode)) {
                 devices.push(local);
             }
         };
 
         devices = devices.sort();
 
-        UI.deviceSave.onclick = function() {
-            API.function.clear();
-            API.conf.save();
+        api.event.emit('devices.render', devices);
+
+        ui.deviceSave.onclick = function() {
+            api.event.emit('device.save');
+            api.function.clear();
+            api.conf.save();
             showDevices();
-            API.modal.hide();
+            api.modal.hide();
         };
-        UI.deviceAdd.onclick = function() {
-            API.function.clear();
+        ui.deviceAdd.onclick = function() {
+            api.function.clear();
             cloneDevice();
             showDevices();
         };
-        UI.deviceDelete.onclick = function() {
-            API.function.clear();
+        ui.deviceDelete.onclick = function() {
+            api.function.clear();
             removeLocalDevice(getSelectedDevice());
             showDevices();
         };
-        UI.deviceExport.onclick = function() {
-            let exp = API.util.b64enc({
-                version: KIRI.version,
+        ui.deviceExport.onclick = function(event) {
+            const record = {
+                version: kiri.version,
                 device: selected,
-                process: API.process.code(),
+                process: api.process.code(),
                 code: devs[selected],
                 time: Date.now()
-            });
-            deviceExport(exp, selected);
+            };
+            let exp = api.util.b64enc(record);
+            api.device.export(exp, selected, { event, record });
         };
 
-        UI.deviceList.innerHTML = '';
-        UI.deviceMy.innerHTML = '';
+        ui.deviceList.innerHTML = '';
+        ui.deviceMy.innerHTML = '';
         let incr = 0;
         let found = null;
         let first = devices[0];
@@ -976,6 +1089,10 @@
             if (!loc && deviceFilter && device.toLowerCase().indexOf(deviceFilter) < 0) {
                 return;
             }
+            // allow for device filter feature
+            if (dfilter && dfilter(device) === false) {
+                return;
+            }
             if (incr === 0) {
                 first = device;
             }
@@ -988,16 +1105,16 @@
                     found.classList.remove("selected");
                 }
                 found = opt;
-                API.platform.layout();
+                api.platform.layout();
             };
             if (loc) {
-                UI.deviceMy.appendChild(opt);
+                ui.deviceMy.appendChild(opt);
             } else {
-                UI.deviceList.appendChild(opt);
+                ui.deviceList.appendChild(opt);
             }
             if (device === selected) {
                 // scroll to highlighted selection
-                setTimeout(() => UI.deviceList.scrollTop = opt.offsetTop, 0);
+                setTimeout(() => ui.deviceList.scrollTop = opt.offsetTop, 0);
                 opt.classList.add("selected");
                 selectedIndex = incr;
                 found = opt;
@@ -1013,7 +1130,7 @@
     }
 
     function renderTools() {
-        UI.toolSelect.innerHTML = '';
+        ui.toolSelect.innerHTML = '';
         maxTool = 0;
         editTools.forEach(function(tool, index) {
             maxTool = Math.max(maxTool, tool.number);
@@ -1021,22 +1138,28 @@
             let opt = DOC.createElement('option');
             opt.appendChild(DOC.createTextNode(tool.name));
             opt.onclick = function() { selectTool(tool) };
-            UI.toolSelect.appendChild(opt);
+            ui.toolSelect.appendChild(opt);
         });
     }
 
     function selectTool(tool) {
         selectedTool = tool;
-        UI.toolName.value = tool.name;
-        UI.toolNum.value = tool.number;
-        UI.toolFluteDiam.value = tool.flute_diam;
-        UI.toolFluteLen.value = tool.flute_len;
-        UI.toolShaftDiam.value = tool.shaft_diam;
-        UI.toolShaftLen.value = tool.shaft_len;
-        // UI.toolTaperAngle.value = tool.taper_angle || 70;
-        UI.toolTaperTip.value = tool.taper_tip || 0;
-        UI.toolMetric.checked = tool.metric;
-        UI.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
+        ui.toolName.value = tool.name;
+        ui.toolNum.value = tool.number;
+        ui.toolFluteDiam.value = tool.flute_diam;
+        ui.toolFluteLen.value = tool.flute_len;
+        ui.toolShaftDiam.value = tool.shaft_diam;
+        ui.toolShaftLen.value = tool.shaft_len;
+        ui.toolTaperTip.value = tool.taper_tip || 0;
+        ui.toolMetric.checked = tool.metric;
+        ui.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
+        if (tool.type === 'tapermill') {
+            ui.toolTaperAngle.value = kiri.driver.CAM.calcTaperAngle(
+                (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
+            ).round(1);
+        } else {
+            ui.toolTaperAngle.value = 0;
+        }
         renderTool(tool);
     }
 
@@ -1062,8 +1185,8 @@
     function renderTool(tool) {
         let type = selectedTool.type;
         let taper = type === 'tapermill';
-        // UI.toolTaperAngle.disabled = taper ? undefined : 'true';
-        UI.toolTaperTip.disabled = taper ? undefined : 'true';
+        ui.toolTaperAngle.disabled = taper ? undefined : 'true';
+        ui.toolTaperTip.disabled = taper ? undefined : 'true';
         $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
         setTimeout(() => {
             let svg = $('tool-svg');
@@ -1138,31 +1261,44 @@
         }, 10);
     }
 
-    function updateTool() {
-        selectedTool.name = UI.toolName.value;
-        selectedTool.number = parseInt(UI.toolNum.value);
-        selectedTool.flute_diam = parseFloat(UI.toolFluteDiam.value);
-        selectedTool.flute_len = parseFloat(UI.toolFluteLen.value);
-        selectedTool.shaft_diam = parseFloat(UI.toolShaftDiam.value);
-        selectedTool.shaft_len = parseFloat(UI.toolShaftLen.value);
-        // selectedTool.taper_angle = parseFloat(UI.toolTaperAngle.value);
-        selectedTool.taper_tip = parseFloat(UI.toolTaperTip.value);
-        selectedTool.metric = UI.toolMetric.checked;
-        selectedTool.type = ['endmill','ballmill','tapermill'][UI.toolType.selectedIndex];
+    function updateTool(ev) {
+        selectedTool.name = ui.toolName.value;
+        selectedTool.number = parseInt(ui.toolNum.value);
+        selectedTool.flute_diam = parseFloat(ui.toolFluteDiam.value);
+        selectedTool.flute_len = parseFloat(ui.toolFluteLen.value);
+        selectedTool.shaft_diam = parseFloat(ui.toolShaftDiam.value);
+        selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value);
+        selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value);
+        selectedTool.metric = ui.toolMetric.checked;
+        selectedTool.type = ['endmill','ballmill','tapermill'][ui.toolType.selectedIndex];
+        if (selectedTool.type === 'tapermill') {
+            const CAM = kiri.driver.CAM;
+            const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
+            if (ev && ev.target === ui.toolTaperAngle) {
+                const angle = parseFloat(ev.target.value);
+                const len = CAM.calcTaperLength(rad, angle * DEG2RAD);
+                selectedTool.flute_len = len;
+                ui.toolTaperAngle.value = angle.round(1);
+                ui.toolFluteLen.value = selectedTool.flute_len.round(4);
+            } else {
+                ui.toolTaperAngle.value = CAM.calcTaperAngle(rad, selectedTool.flute_len).round(1);
+            }
+        } else {
+            ui.toolTaperAngle.value = 0;
+        }
         renderTools();
-        UI.toolSelect.selectedIndex = selectedTool.order;
+        ui.toolSelect.selectedIndex = selectedTool.order;
         setToolChanged(true);
         renderTool(selectedTool);
     }
 
     function setToolChanged(changed) {
         editTools.changed = changed;
-        UI.toolsSave.disabled = !changed;
+        ui.toolsSave.disabled = !changed;
     }
 
     function showTools() {
-        if (API.mode.get_id() !== MODES.CAM) return;
-
+        if (api.mode.get_id() !== MODES.CAM) return;
         let selectedIndex = null;
 
         editTools = settings().tools.slice().sort((a,b) => {
@@ -1171,11 +1307,11 @@
 
         setToolChanged(false);
 
-        UI.toolsClose.onclick = function() {
+        ui.toolsClose.onclick = function() {
             if (editTools.changed && !confirm("abandon changes?")) return;
-            API.dialog.hide();
+            api.dialog.hide();
         };
-        UI.toolAdd.onclick = function() {
+        ui.toolAdd.onclick = function() {
             editTools.push({
                 id: Date.now(),
                 number: maxTool + 1,
@@ -1191,46 +1327,62 @@
             });
             setToolChanged(true);
             renderTools();
-            UI.toolSelect.selectedIndex = editTools.length-1;
+            ui.toolSelect.selectedIndex = editTools.length-1;
             selectTool(editTools[editTools.length-1]);
         };
-        UI.toolDelete.onclick = function() {
+        ui.toolDelete.onclick = function() {
             editTools.remove(selectedTool);
             setToolChanged(true);
             renderTools();
         };
-        UI.toolsSave.onclick = function() {
+        ui.toolsSave.onclick = function() {
             if (selectedTool) updateTool();
             settings().tools = editTools.sort((a,b) => {
                 return a.name < b.name ? -1 : 1;
             });
             setToolChanged(false);
-            API.conf.save();
-            API.view.update_fields();
-            API.event.settings();
+            api.conf.save();
+            api.conf.update_fields();
+            api.event.settings();
+        };
+        ui.toolsExport.onclick = () => {
+            uc.prompt("Export Tools Filename", "tools").then(name => {
+                if (!name) {
+                    return;
+                }
+                const record = {
+                    version: kiri.version,
+                    tools: api.conf.get().tools,
+                    time: Date.now()
+                };
+                api.util.download(api.util.b64enc(record), `${name}.km`);
+            });
         };
 
         renderTools();
         if (editTools.length > 0) {
             selectTool(editTools[0]);
-            UI.toolSelect.selectedIndex = 0;
+            ui.toolSelect.selectedIndex = 0;
         } else {
-            UI.toolAdd.onclick();
+            ui.toolAdd.onclick();
         }
 
-        API.dialog.show('tools');
-        UI.toolSelect.focus();
+        api.dialog.show('tools');
+        ui.toolSelect.focus();
     }
 
+    // not the best way to do this, but main decl of api.show is broken
+    api.show.tools = showTools;
+
     function updateDeviceList() {
-        renderDevices(Object.keys(devices[API.mode.get_lower()]).sort());
+        renderDevices(Object.keys(devices[api.mode.get_lower()]).sort());
     }
 
     function showDevices() {
         // disable device filter and show devices
-        UI.dev.search.onclick(true);
-        API.modal.show('setup');
-        UI.deviceList.focus();
+        ui.dev.header.onclick(true);
+        api.modal.show('setup');
+        ui.deviceList.focus();
     }
 
     function dragOverHandler(evt) {
@@ -1238,17 +1390,17 @@
         evt.preventDefault();
 
         // prevent drop actions when a dialog is open
-        if (API.modal.visible()) {
+        if (api.modal.visible()) {
             return;
         }
 
         evt.dataTransfer.dropEffect = 'copy';
-        let oldcolor = SPACE.platform.setColor(0x00ff00);
+        let oldcolor = space.platform.setColor(0x00ff00);
         if (oldcolor !== 0x00ff00) platformColor = oldcolor;
     }
 
     function dragLeave() {
-        SPACE.platform.setColor(platformColor);
+        space.platform.setColor(platformColor);
     }
 
     function dropHandler(evt) {
@@ -1256,49 +1408,39 @@
         evt.preventDefault();
 
         // prevent drop actions when a dialog is open
-        if (API.modal.visible()) {
+        if (api.modal.visible()) {
             return;
         }
 
-        SPACE.platform.setColor(platformColor);
+        space.platform.setColor(platformColor);
 
         let files = evt.dataTransfer.files;
 
-        switch (API.feature.drop_group) {
+        switch (api.feature.drop_group) {
             case true:
-                return API.platform.load_files(files, []);
+                return api.platform.load_files(files, []);
             case false:
-                return API.platform.load_files(files, undefined);
+                return api.platform.load_files(files, undefined);
         }
 
-        function ck_group() {
-            if (files.length === 1) {
-                API.platform.load_files(files);
-            } else {
-                UC.confirm(`group ${files.length} files?`).then(yes => {
-                    API.platform.load_files(files, yes ? [] : undefined);
-                });
-            }
-        }
-
-        if (files.length > 5) {
-            UC.confirm(`add ${files.length} objects to workspace?`).then(yes => {
-                if (yes) ck_group();
-            });
+        if (files.length === 1) {
+            api.platform.load_files(files);
         } else {
-            ck_group();
+            uc.confirm(`group ${files.length} files?`).then(yes => {
+                api.platform.load_files(files, yes ? [] : undefined);
+            });
         }
     }
 
     function loadCatalogFile(e) {
-        API.widgets.load(e.target.getAttribute('load'), function(widget) {
+        api.widgets.load(e.target.getAttribute('load'), function(widget) {
             platform.add(widget);
-            API.dialog.hide();
+            api.dialog.hide();
         });
     }
 
     function updateCatalog(files) {
-        let table = UI.catalogList,
+        let table = ui.catalogList,
             list = [];
         table.innerHTML = '';
         for (let name in files) {
@@ -1326,8 +1468,8 @@
             renm.onclick = () => {
                 let newname = prompt(`rename file`, short);
                 if (newname && newname !== short) {
-                    CATALOG.rename(name, `${newname}${ext}`, then => {
-                        CATALOG.refresh();
+                    catalog.rename(name, `${newname}${ext}`, then => {
+                        catalog.refresh();
                     });
                 }
             };
@@ -1339,12 +1481,12 @@
 
             del.setAttribute('del', name);
             del.setAttribute('title', "remove '"+name+"'");
-            del.onclick = () => { CATALOG.deleteFile(name) };
+            del.onclick = () => { catalog.deleteFile(name) };
             del.innerHTML = '<i class="far fa-trash-alt"></i>';
 
             size.setAttribute("disabled", true);
             size.setAttribute("class", "label");
-            size.appendChild(DOC.createTextNode(BASE.util.comma(file.v)));
+            size.appendChild(DOC.createTextNode(base.util.comma(file.v)));
 
             row.setAttribute("class", "f-row a-center");
             row.appendChild(renm);
@@ -1355,8 +1497,13 @@
         }
     }
 
+    function isMultiHead() {
+        let dev = api.conf.get().device;
+        return isNotBelt() && dev.extruders && dev.extruders.length > 1;
+    }
+
     function isBelt() {
-        return UI.deviceBelt.checked;
+        return ui.deviceBelt.checked;
     }
 
     function isNotBelt() {
@@ -1364,16 +1511,18 @@
     }
 
     function isDanger() {
-        return UI.danger.checked;
+        return ui.danger.checked;
     }
 
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
-        API.event.emit('init.one');
+        let { event, conf, view, show } = api;
+
+        event.emit('init.one');
 
         // ensure we have settings from last session
-        API.conf.restore();
+        conf.restore();
 
         let container = $('container'),
             welcome = $('welcome'),
@@ -1381,50 +1530,55 @@
             tracker = $('tracker'),
             controller = settings().controller;
 
-        UC.setHoverPop(false);
+        uc.setHoverPop(false);
 
         WIN.addEventListener("resize", () => {
-            API.event.emit('resize');
+            event.emit('resize');
         });
 
-        API.event.on('resize', () => {
+        event.on('resize', () => {
             if (WIN.innerHeight < 800) {
-                UI.modalBox.classList.add('mh85');
+                ui.modalBox.classList.add('mh85');
             } else {
-                UI.modalBox.classList.remove('mh85');
+                ui.modalBox.classList.remove('mh85');
             }
-            API.view.update_slider();
+            view.update_slider();
         });
 
-        SPACE.showSkyGrid(false);
-        SPACE.setSkyColor(controller.dark ? 0 : 0xffffff);
-        SPACE.init(container, function (delta) {
-            if (API.var.layer_max === 0 || !delta) return;
+        space.sky.showGrid(false);
+        space.sky.setColor(controller.dark ? 0 : 0xffffff);
+        space.setAntiAlias(controller.antiAlias);
+        space.init(container, function (delta) {
+            let vars = api.var;
+            if (vars.layer_max === 0 || !delta) return;
             if (controller.reverseZoom) delta = -delta;
-            let same = API.var.layer_hi === API.var.layer_lo;
-            let track = API.var.layer_lo > 0;
+            let same = vars.layer_hi === vars.layer_lo;
+            let track = vars.layer_lo > 0;
             if (delta > 0) {
-                API.var.layer_hi = Math.max(same ? 0 : API.var.layer_lo, API.var.layer_hi - 1);
+                vars.layer_hi = Math.max(same ? 0 : vars.layer_lo, vars.layer_hi - 1);
                 if (track) {
-                    API.var.layer_lo = Math.max(0, API.var.layer_lo - 1);
+                    vars.layer_lo = Math.max(0, vars.layer_lo - 1);
                 }
             } else if (delta < 0) {
-                API.var.layer_hi = Math.min(API.var.layer_max, API.var.layer_hi + 1);
+                vars.layer_hi = Math.min(vars.layer_max, vars.layer_hi + 1);
                 if (track) {
-                    API.var.layer_lo = Math.min(API.var.layer_hi, API.var.layer_lo + 1);
+                    vars.layer_lo = Math.min(vars.layer_hi, vars.layer_lo + 1);
                 }
             }
             if (same) {
-                API.var.layer_lo = API.var.layer_hi;
+                vars.layer_lo = vars.layer_hi;
             }
-            API.view.update_slider();
-            API.show.slices();
+            view.update_slider();
+            show.slices();
         }, controller.ortho);
-        SPACE.platform.onMove(API.conf.save);
-        SPACE.platform.setRound(true);
-        SPACE.useDefaultKeys(API.feature.on_key === undefined || API.feature.on_key_defaults);
+        space.platform.onMove(conf.save);
+        space.platform.setRound(true);
+        space.useDefaultKeys(api.feature.on_key === undefined || api.feature.on_key_defaults);
 
-        Object.assign(UI, {
+        // api augmentation with local functions
+        api.device.export = deviceExport;
+
+        Object.assign(ui, {
             tracker:            tracker,
             container:          container,
 
@@ -1449,24 +1603,41 @@
                 export:         $('acct-export')
             },
             dev: {
+                header:         $('dev-header'),
                 search:         $('dev-search'),
                 filter:         $('dev-filter')
             },
+            mesh: {
+                name:           $('mesh-name'),
+                points:         $('mesh-points'),
+                faces:          $('mesh-faces'),
+            },
 
-            fps:                $('fps'),
+            stats: {
+                fps:            $('fps'),
+                rms:            $('rms'),
+                div:            $('stats'),
+                rnfo:           $('rnfo'),
+            },
+
             load:               $('load-file'),
             speeds:             $('speeds'),
             speedbar:           $('speedbar'),
             context:            $('context-menu'),
 
+            options: {
+                area:           $('lt-options'),
+                trash:          $('lt-trash'),
+                enable:         $('lt-w-enable'),
+                disable:        $('lt-w-disable'),
+            },
+
             back:               $('lt-back'),
-            trash:              $('lt-trash'),
             ltsetup:            $('lt-setup'),
             ltfile:             $('lt-file'),
             ltview:             $('lt-view'),
-            ltact:              $('act-slice'),
-            rotate:             $('lt-rotate'),
-            scale:              $('lt-scale'),
+            ltact:              $('lt-start'),
+            edit:               $('lt-tools'),
             nozzle:             $('lt-nozzle'),
             render:             $('lt-render'),
 
@@ -1474,10 +1645,10 @@
             modalBox:           $('modal-box'),
             help:               $('mod-help'),
             setup:              $('mod-setup'),
-            tools:              $('mod-tools'),
             prefs:              $('mod-prefs'),
             files:              $('mod-files'),
             saves:              $('mod-saves'),
+            tools:              $('mod-tools'),
             print:              $('mod-print'),
             local:              $('mod-local'),
             any:                $('mod-any'),
@@ -1495,6 +1666,7 @@
 
             toolsSave:          $('tools-save'),
             toolsClose:         $('tools-close'),
+            toolsExport:        $('tools-export'),
             toolSelect:         $('tool-select'),
             toolAdd:            $('tool-add'),
             toolDelete:         $('tool-del'),
@@ -1505,7 +1677,7 @@
             toolFluteLen:       $('tool-flen'),
             toolShaftDiam:      $('tool-sdiam'),
             toolShaftLen:       $('tool-slen'),
-            // toolTaperAngle: $('tool-tangle'),
+            toolTaperAngle:     $('tool-tangle'),
             toolTaperTip:       $('tool-ttip'),
             toolMetric:         $('tool-metric'),
 
@@ -1542,313 +1714,405 @@
             stockDepth:         $('stock-width'),
             stockHeight:        $('stock-width'),
 
-            device:           UC.newGroup(LANG.dv_gr_dev, $('device1'), {group:"ddev", inline:true, class:"noshow"}),
-            deviceName:       UC.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"65%", text:true, action:updateDeviceName}),
-            bedWidth:         UC.newInput(LANG.dv_bedw_s, {title:LANG.dv_bedw_l, convert:UC.toFloat, size:6, units:true, round:2}),
-            bedDepth:         UC.newInput(LANG.dv_bedd_s, {title:LANG.dv_bedd_l, convert:UC.toFloat, size:6, units:true, round:2}),
-            maxHeight:        UC.newInput(LANG.dv_bedh_s, {title:LANG.dv_bedh_l, convert:UC.toFloat, size:6, modes:FDM_SLA}),
-            spindleMax:       UC.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:UC.toInt, size: 6, modes:CAM}),
-            deviceOrigin:     UC.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LASER_SLA}),
-            deviceRound:      UC.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),
-            deviceBelt:       UC.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true, show:() => !UI.deviceRound.checked}),
-            fwRetract:        UC.newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
+            device:           uc.newGroup(LANG.dv_gr_dev, $('device1'), {group:"ddev", inline:true, class:"noshow"}),
+            deviceName:       uc.newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"70%", text:true, action:updateDeviceName}),
 
-            extruder:         UC.newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
-            extFilament:      UC.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:UC.toFloat, modes:FDM}),
-            extNozzle:        UC.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:UC.toFloat, modes:FDM}),
-            extOffsetX:       UC.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:UC.toFloat, modes:FDM}),
-            extOffsetY:       UC.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:UC.toFloat, modes:FDM}),
-            extSelect:        UC.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
-            extDeselect:      UC.newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, modes:FDM, size:14, height:3, modes:FDM, area:gcode}),
-            extActions:       UC.newRow([
-                UI.extPrev = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-less-than"></i>'}),
-                UI.extAdd = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-plus"></i>'}),
-                UI.extDel = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
-                UI.extNext = UC.newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
+            devbed:           uc.newRow([
+                uc.newLabel(LANG.volume, { class: "grow" }),
+                uc.newLabel('X'),
+                ui.bedWidth   = uc.newInput2({title:LANG.dv_bedw_l, convert:uc.toFloat, size:5, units:true, round:2, action:updateDeviceSize}),
+                uc.newLabel('Y'),
+                ui.bedDepth   = uc.newInput2({title:LANG.dv_bedd_l, convert:uc.toFloat, size:5, units:true, round:2, action:updateDeviceSize}),
+                uc.newLabel('Z'),
+                ui.maxHeight  = uc.newInput2({title:LANG.dv_bedh_l, convert:uc.toFloat, size:5, modes:FDM_SLA, action:updateDeviceSize}),
+            ], { class: "var-area" }),
+
+            resolutionX:      uc.newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:uc.toInt, size:5, modes:SLA}),
+            resolutionY:      uc.newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:uc.toInt, size:5, modes:SLA}),
+            spindleMax:       uc.newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:uc.toInt, size:5, modes:CAM, trigger:1}),
+            deviceZMax:       uc.newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:uc.toInt, size:5, modes:FDM}),
+            gcodeTime:        uc.newInput(LANG.dv_time_s, {title:LANG.dv_time_l, convert:uc.toFloat, size:5, modes:FDM}),
+            fdmSep:           uc.newBlank({class:"pop-sep", modes:FDM}),
+            filamentSource:   uc.newSelect(LANG.dv_fsrc_s, {title: LANG.dv_fsrc_l, action: filamentSourceSave, modes:FDM}, "filasrc"),
+            fwRetract:        uc.newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
+            deviceOrigin:     uc.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LZR, show:() => !ui.deviceRound.checked}),
+            deviceRound:      uc.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),
+            deviceBelt:       uc.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true, show:() => !ui.deviceRound.checked}),
+
+            extruder:         uc.newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
+            extFilament:      uc.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:uc.toFloat, modes:FDM}),
+            extNozzle:        uc.newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:uc.toFloat, modes:FDM}),
+            extOffsetX:       uc.newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:uc.toFloat, modes:FDM}),
+            extOffsetY:       uc.newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:uc.toFloat, modes:FDM}),
+            extSelect:        uc.newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, modes:FDM, size:14, height:3, area:gcode}),
+            extDeselect:      uc.newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, modes:FDM, size:14, height:3, area:gcode}),
+            extPad:           uc.newBlank({class:"grow", modes:FDM}),
+            extActions:       uc.newRow([
+                ui.extPrev = uc.newButton(undefined, undefined, {icon:'<i class="fas fa-less-than"></i>'}),
+                ui.extAdd = uc.newButton(undefined, undefined, {icon:'<i class="fas fa-plus"></i>'}),
+                ui.extDel = uc.newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
+                ui.extNext = uc.newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
             ], {modes:FDM, class:"dev-buttons ext-buttons"}),
 
-            gcode:            UC.newGroup(LANG.dv_gr_out, $('device2'), {group:"dgco", inline:true, modes:CAM_LASER}),
-            gcodeSpace:       UC.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LASER}),
-            gcodeStrip:       UC.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
-            gcodeFExt:        UC.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LASER, size:7, text:true}),
+            palette:          uc.newGroup(LANG.dv_gr_pal, $('palette3'), {group:"dext2", inline:true, modes:FDM}),
+            paletteId:        uc.newInput(LANG.dv_paid_s, {title:LANG.dv_paid_l, modes:FDM, size:15, text:true}),
+            palettePing:      uc.newInput(LANG.dv_paps_s, {title:LANG.dv_paps_l, modes:FDM, convert:uc.toInt}),
+            paletteFeed:      uc.newInput(LANG.dv_pafe_s, {title:LANG.dv_pafe_l, modes:FDM, convert:uc.toInt}),
+            palettePush:      uc.newInput(LANG.dv_papl_s, {title:LANG.dv_papl_l, modes:FDM, convert:uc.toInt}),
+            paletteOffset:    uc.newInput(LANG.dv_paof_s, {title:LANG.dv_paof_l, modes:FDM, convert:uc.toInt}),
+            paletteSep:       uc.newBlank({class:"pop-sep", modes:FDM}),
+            paletteHeat:      uc.newInput(LANG.dv_pahe_s, {title:LANG.dv_pahe_l, modes:FDM, convert:uc.toInt}),
+            paletteCool:      uc.newInput(LANG.dv_paco_s, {title:LANG.dv_paco_l, modes:FDM, convert:uc.toInt}),
+            palettePress:     uc.newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:uc.toInt}),
 
-            gcodeEd:          UC.newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline:true, modes:GCODE}),
-            gcodeFanTrack: UC.newRow([
-                (UI.gcodePre = UC.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, area:gcode})).button,
-                (UI.gcodePost = UC.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button,
-                (UI.gcodeFan = UC.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
-                (UI.gcodeTrack = UC.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button,
-                (UI.gcodeLayer = UC.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
-                (UI.gcodePause = UC.newGCode(LANG.dv_paus_s, {title:LANG.dv_paus_l, modes:FDM, area:gcode})).button,
-                (UI.gcodeLaserOn = UC.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
-                (UI.gcodeLaserOff = UC.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, area:gcode})).button,
-                (UI.gcodeChange = UC.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button,
-                (UI.gcodeDwell = UC.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, area:gcode})).button,
-                (UI.gcodeSpindle = UC.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, area:gcode})).button
-            ], {class:"ext-buttons f-row"}),
+            gcode:            uc.newGroup(LANG.dv_gr_out, $('device2'), {group:"dgco", inline:true, modes:CAM_LZR}),
+            gcodeStrip:       uc.newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
+            gcodeSpace:       uc.newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LZR}),
+            useLaser:         uc.newBoolean(LANG.dv_lazr_s, onBooleanClick, {title:LANG.dv_lazr_l, modes:CAM}),
+            gcodeFExt:        uc.newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LZR, size:7, text:true}),
 
-            lprefs:           UC.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
-            reverseZoom:      UC.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
-            ortho:            UC.newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
-            dark:             UC.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
-            decals:           UC.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
-            danger:           UC.newBoolean(LANG.op_dang_s, booleanSave, {title:LANG.op_dang_l}),
+            gcodeEd:          uc.newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline:true, modes:GCODE}),
+            gcodeMacros:      uc.newRow([
+                (ui.gcodePre = uc.newGCode(LANG.dv_head_s, {title:LANG.dv_head_l, modes:GCODE, area:gcode})).button,
+                (ui.gcodePost = uc.newGCode(LANG.dv_foot_s, {title:LANG.dv_foot_l, modes:GCODE, area:gcode})).button,
+                (ui.gcodeLayer = uc.newGCode(LANG.dv_layr_s, {title:LANG.dv_layr_l, modes:FDM, area:gcode})).button,
+                (ui.gcodeTrack = uc.newGCode(LANG.dv_prog_s, {title:LANG.dv_prog_l, modes:FDM, area:gcode})).button,
+                (ui.gcodeFan = uc.newGCode(LANG.dv_fanp_s, {title:LANG.dv_fanp_l, modes:FDM, area:gcode})).button,
+                (ui.gcodeFeature = uc.newGCode(LANG.dv_feat_s, {title:LANG.dv_feat_l, modes:FDM, area:gcode})).button,
+                (ui.gcodeLaserOn = uc.newGCode(LANG.dv_lzon_s, {title:LANG.dv_lzon_l, modes:LASER, area:gcode})).button,
+                (ui.gcodeLaserOff = uc.newGCode(LANG.dv_lzof_s, {title:LANG.dv_lzof_l, modes:LASER, area:gcode})).button,
+                (ui.gcodeChange = uc.newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:CAM, area:gcode})).button,
+                (ui.gcodeDwell = uc.newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM, area:gcode})).button,
+                (ui.gcodeSpindle = uc.newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM, area:gcode, show:() => ui.spindleMax.value > 0})).button
+            ], {class:"ext-buttons f-row gcode-macros"}),
 
-            lprefs:           UC.newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
-            showOrigin:       UC.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
-            showRulers:       UC.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
-            showSpeeds:       UC.newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
-            lineType:         UC.newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
-            animesh:          UC.newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
-            units:            UC.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM, trace:true}, "units"),
+            lprefs:           uc.newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
+            antiAlias:        uc.newBoolean(LANG.op_anta_s, booleanSave, {title:LANG.op_anta_l}),
+            reverseZoom:      uc.newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
+            ortho:            uc.newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
+            dark:             uc.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
+            devel:            uc.newBoolean(LANG.op_devl_s, booleanSave, {title:LANG.op_devl_l}),
+            danger:           uc.newBoolean(LANG.op_dang_s, booleanSave, {title:LANG.op_dang_l}),
 
-            layout:           UC.newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
-            autoSave:         UC.newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
-            autoLayout:       UC.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
-            freeLayout:       UC.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
-            spaceLayout:      UC.newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:UC.toFloat, size:3, units:true}),
+            lprefs:           uc.newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
+            showOrigin:       uc.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
+            showRulers:       uc.newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
+            showSpeeds:       uc.newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
+            decals:           uc.newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
+            shiny:            uc.newBoolean(LANG.op_shny_s, booleanSave, {title:LANG.op_shny_l, modes:FDM}),
+            lineType:         uc.newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
+            animesh:          uc.newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
+            units:            uc.newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM, trace:true}, "units"),
 
-            export:           UC.newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
-            exportOcto:       UC.newBoolean(`OctoPrint`, booleanSave),
-            exportGhost:      UC.newBoolean(`Grid:Host`, booleanSave),
-            exportLocal:      UC.newBoolean(`Grid:Local`, booleanSave),
-            exportPreview:    UC.newBoolean(`Code Preview`, booleanSave),
+            layout:           uc.newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
+            autoSave:         uc.newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
+            autoLayout:       uc.newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
+            freeLayout:       uc.newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
+            spaceRandoX:      uc.newBoolean(LANG.op_spcx_s, booleanSave, {title:LANG.op_spcx_l, show:isBelt}),
+            spaceLayout:      uc.newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:uc.toFloat, size:3, units:true}),
 
-            parts:            UC.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
-            detail:           UC.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
-            decimate:         UC.newBoolean(LANG.pt_deci_s, booleanSave, {title: LANG.pt_deci_l}),
-            healMesh:         UC.newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
+            export:           uc.newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
+            exportLocal:      uc.newBoolean(`Grid:Local`, booleanSave, {title:LANG.op_exgl_l}),
+            exportGhost:      uc.newBoolean(`Grid:Host`, booleanSave, {title:LANG.op_exgh_l}),
+            exportOcto:       uc.newBoolean(`OctoPrint`, booleanSave, {title:LANG.op_exop_l}),
+            exportThumb:      uc.newBoolean(`Thumbnail`, booleanSave, {modes:FDM}),
+            exportPreview:    uc.newBoolean(`Code Preview`, booleanSave),
 
-            prefadd:          UC.checkpoint($('prefs-add')),
+            parts:            uc.newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
+            detail:           uc.newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
+            healMesh:         uc.newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
+            threaded:         uc.newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:FDM_CAM_SLA}),
+            assembly:         uc.newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:FDM_CAM_SLA}),
 
-            process:             UC.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LASER}),
-            sliceHeight:         UC.newInput(LANG.sl_lahi_s, {title:LANG.sl_lahi_l, convert:UC.toFloat, modes:FDM}),
-            sliceMinHeight:      UC.newInput(LANG.ad_minl_s, {title:LANG.ad_minl_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM, show: () => UI.sliceAdaptive.checked}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceShells:         UC.newInput(LANG.sl_shel_s, {title:LANG.sl_shel_l, convert:UC.toFloat, modes:FDM}),
-            sliceTopLayers:      UC.newInput(LANG.sl_ltop_s, {title:LANG.sl_ltop_l, convert:UC.toInt, modes:FDM}),
-            sliceSolidLayers:    UC.newInput(LANG.sl_lsld_s, {title:LANG.sl_lsld_l, convert:UC.toInt, modes:FDM}),
-            sliceBottomLayers:   UC.newInput(LANG.sl_lbot_s, {title:LANG.sl_lbot_l, convert:UC.toInt, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceAdaptive:       UC.newBoolean(LANG.ad_adap_s, onBooleanClick, {title: LANG.ad_adap_l, modes:FDM, trigger: true}),
-            detectThinWalls:     UC.newBoolean(LANG.ad_thin_s, onBooleanClick, {title: LANG.ad_thin_l, modes:FDM}),
+            prefadd:          uc.checkpoint($('prefs-add')),
 
-            laserOffset:         UC.newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:UC.toFloat, modes:LASER}),
-            laserSliceHeight:    UC.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:UC.toFloat, modes:LASER, trigger: true}),
-            laserSliceHeightMin: UC.newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:UC.toFloat, modes:LASER, show:() => { return UI.laserSliceHeight.value == 0 }}),
-            laserSliceSingle:    UC.newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:LASER}),
+            process:             uc.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LZR, class:"xdown"}),
+            sliceHeight:         uc.newInput(LANG.sl_lahi_s, {title:LANG.sl_lahi_l, convert:uc.toFloat, modes:FDM}),
+            sliceMinHeight:      uc.newInput(LANG.ad_minl_s, {title:LANG.ad_minl_l, bound:uc.bound(0,3.0), convert:uc.toFloat, modes:FDM, show: () => ui.sliceAdaptive.checked}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceShells:         uc.newInput(LANG.sl_shel_s, {title:LANG.sl_shel_l, convert:uc.toFloat, modes:FDM}),
+            sliceLineWidth:      uc.newInput(LANG.sl_line_s, {title:LANG.sl_line_l, convert:uc.toFloat, bound:uc.bound(0,5), modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceTopLayers:      uc.newInput(LANG.sl_ltop_s, {title:LANG.sl_ltop_l, convert:uc.toInt, modes:FDM}),
+            sliceBottomLayers:   uc.newInput(LANG.sl_lbot_s, {title:LANG.sl_lbot_l, convert:uc.toInt, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceDetectThin:     uc.newSelect(LANG.ad_thin_s, {title: LANG.ad_thin_l, action: thinWallSave, modes:FDM}, "thin"),
+            sliceAdaptive:       uc.newBoolean(LANG.ad_adap_s, onBooleanClick, {title: LANG.ad_adap_l, modes:FDM, trigger: true}),
 
-            firstLayer:          UC.newGroup(LANG.fl_menu, null, {modes:FDM}),
-            firstSliceHeight:    UC.newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:UC.toFloat, modes:FDM, show:isNotBelt}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
-            firstLayerNozzleTemp:UC.newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:UC.toInt, modes:FDM, show:isNotBelt}),
-            firstLayerBedTemp:   UC.newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:UC.toInt, modes:FDM, show:isNotBelt}),
-            firstLayerFanSpeed:  UC.newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:UC.toInt, bound:UC.bound(0,255), modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
-            firstLayerYOffset:   UC.newInput(LANG.fl_zoff_s, {title:LANG.fl_zoff_l, convert:UC.toFloat, modes:FDM, show:isBelt}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
-            firstLayerRate:      UC.newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:UC.toFloat, modes:FDM}),
-            firstLayerFillRate:  UC.newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:UC.toFloat, modes:FDM, show:isNotBelt}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
-            firstLayerLineMult:  UC.newInput(LANG.fl_sfac_s, {title:LANG.fl_sfac_l, convert:UC.toFloat, bound:UC.bound(0.5,2), modes:FDM, show:isNotBelt}),
-            firstLayerPrintMult: UC.newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:UC.toFloat, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
-            firstLayerBrim:      UC.newInput(LANG.fl_brim_s, {title:LANG.fl_brim_l, convert:UC.toFloat, modes:FDM, show:isBelt}),
-            firstLayerBrimTrig:  UC.newInput(LANG.fl_brmn_s, {title:LANG.fl_brmn_l, convert:UC.toFloat, modes:FDM, show:isBelt}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
-            firstLayerBeltLead:  UC.newInput(LANG.fl_bled_s, {title:LANG.fl_bled_l, convert:UC.toFloat, modes:FDM, show:isBelt}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
-            outputBrimCount:     UC.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:UC.toInt, modes:FDM, show:isNotBelt}),
-            outputBrimOffset:    UC.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:UC.toFloat, modes:FDM, show:isNotBelt}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
-            outputRaftSpacing:   UC.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:UC.toFloat, bound:UC.bound(0.0,3.0), modes:FDM, show: () => UI.outputRaft.checked && isNotBelt() }),
-            outputRaft:          UC.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true, show:isNotBelt}),
+            laserOffset:         uc.newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:uc.toFloat, modes:LASER}),
+            laserSliceHeight:    uc.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:uc.toFloat, modes:LASER, trigger: true}),
+            laserSliceHeightMin: uc.newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:uc.toFloat, modes:LASER, show:() => { return ui.laserSliceHeight.value == 0 }}),
+            laserSep:            uc.newBlank({class:"pop-sep", modes:LASER}),
+            laserSliceSingle:    uc.newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:LASER}),
 
-            fdmInfill:           UC.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
-            sliceFillType:       UC.newSelect(LANG.fi_type, {modes:FDM}, "infill"),
-            sliceFillSparse:     UC.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceFillOverlap:    UC.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            sliceFillRate:       UC.newInput(LANG.ou_feed_s, {title:LANG.fi_rate_l, convert:UC.toInt, bound:UC.bound(0,300), modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceFillAngle:      UC.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:UC.toFloat, modes:FDM}),
-            // sliceFillWidth:      UC.newInput(LANG.fi_wdth_s, {title:LANG.fi_wdth_l, convert:UC.toFloat, modes:FDM}),
+            firstLayer:          uc.newGroup(LANG.fl_menu, null, {modes:FDM, class:"xdown"}),
+            firstSliceHeight:    uc.newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:uc.toFloat, modes:FDM, show:isNotBelt}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
+            firstLayerNozzleTemp:uc.newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:uc.toInt, modes:FDM, show:isNotBelt}),
+            firstLayerBedTemp:   uc.newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:uc.toInt, modes:FDM, show:isNotBelt}),
+            firstLayerFanSpeed:  uc.newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:uc.toInt, bound:uc.bound(0,255), modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
+            firstLayerYOffset:   uc.newInput(LANG.fl_zoff_s, {title:LANG.fl_zoff_l, convert:uc.toFloat, modes:FDM, show:isBelt}),
+            firstLayerFlatten:   uc.newInput(LANG.fl_flat_s, {title:LANG.fl_flat_l, convert:uc.toFloat, modes:FDM, show:isBelt}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
+            firstLayerRate:      uc.newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:uc.toFloat, modes:FDM}),
+            firstLayerFillRate:  uc.newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:uc.toFloat, modes:FDM, show:isNotBelt}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
+            firstLayerLineMult:  uc.newInput(LANG.fl_sfac_s, {title:LANG.fl_sfac_l, convert:uc.toFloat, bound:uc.bound(0.5,2), modes:FDM, show:isNotBelt}),
+            firstLayerPrintMult: uc.newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:uc.toFloat, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
+            firstLayerBrim:      uc.newInput(LANG.fl_brim_s, {title:LANG.fl_brim_l, convert:uc.toInt, modes:FDM, show:isBelt}),
+            firstLayerBrimIn:    uc.newInput(LANG.fl_brin_s, {title:LANG.fl_brin_l, convert:uc.toInt, modes:FDM, show:isBelt}),
+            firstLayerBrimTrig:  uc.newInput(LANG.fl_brmn_s, {title:LANG.fl_brmn_l, convert:uc.toInt, modes:FDM, show:isBelt}),
+            firstLayerBrimGap:   uc.newInput(LANG.fl_brgp_s, {title:LANG.fl_brgp_l, convert:uc.toFloat, modes:FDM, show:isBelt}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isBelt}),
+            firstLayerBeltLead:  uc.newInput(LANG.fl_bled_s, {title:LANG.fl_bled_l, convert:uc.toFloat, modes:FDM, show:isBelt}),
+            firstLayerBeltBump:  uc.newInput(LANG.fl_blmp_s, {title:LANG.fl_blmp_l, convert:uc.toFloat, bound:uc.bound(0, 10), modes:FDM, show:isBelt}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
+            outputBrimCount:     uc.newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:uc.toInt, modes:FDM, show:isNotBelt}),
+            outputBrimOffset:    uc.newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:uc.toFloat, modes:FDM, show:isNotBelt}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
+            outputRaftSpacing:   uc.newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:uc.toFloat, bound:uc.bound(0.0,3.0), modes:FDM, show: () => ui.outputRaft.checked && isNotBelt() }),
+            outputRaft:          uc.newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, modes:FDM, trigger: true, show:() => isNotBelt()}),
+            outputDraftShield:   uc.newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, modes:FDM, trigger: true, show:() => isNotBelt()}),
 
-            fdmSupport:          UC.newGroup(LANG.sp_menu, null, {modes:FDM, marker:false}),
-            sliceSupportNozzle:  UC.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM}, "extruders"),
-            sliceSupportDensity: UC.newInput(LANG.sp_dens_s, {title:LANG.sp_dens_l, convert:UC.toFloat, bound:UC.bound(0.0,1.0), modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceSupportSize:    UC.newInput(LANG.sp_size_s, {title:LANG.sp_size_l, bound:UC.bound(1.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportOffset:  UC.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportGap:     UC.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:UC.bound(0,5), convert:UC.toInt, modes:FDM, show:isNotBelt}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceSupportArea:    UC.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            sliceSupportExtra:   UC.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:UC.bound(0.0,200.0), convert:UC.toFloat, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceSupportAngle:   UC.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:UC.bound(0.0,90.0), convert:UC.toFloat, modes:FDM, xshow:isNotBelt}),
-            sliceSupportEnable:  UC.newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, modes:FDM, show:isNotBelt}),
+            fdmInfill:           uc.newGroup(LANG.fi_menu, $('settings'), {modes:FDM}),
+            sliceFillType:       uc.newSelect(LANG.fi_type, {modes:FDM, trigger:true}, "infill"),
+            sliceFillSparse:     uc.newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:uc.toFloat, bound:uc.bound(0.0,1.0), modes:FDM}),
+            sliceFillRepeat:     uc.newInput(LANG.fi_rept_s, {title:LANG.fi_rept_l, convert:uc.toInt, bound:uc.bound(1,10), show:fillShow, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceFillOverlap:    uc.newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:uc.toFloat, bound:uc.bound(0.0,2.0), modes:FDM}),
+            sliceFillRate:       uc.newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:uc.toInt, bound:uc.bound(0,500), modes:FDM}),
+            sliceSolidRate:      uc.newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:uc.toInt, bound:uc.bound(0,500), modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceFillGrow:       uc.newInput(LANG.fi_grow_s, {title:LANG.fi_grow_l, convert:uc.toFloat, modes:FDM}),
+            sliceFillAngle:      uc.newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:uc.toFloat, modes:FDM}),
 
-            sliceSupportGen:     UC.newRow([
-                UI.ssaGen = UC.newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
+            fdmSupport:          uc.newGroup(LANG.sp_menu, null, {modes:FDM, marker:false}),
+            sliceSupportNozzle:  uc.newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, modes:FDM}, "extruders"),
+            sliceSupportDensity: uc.newInput(LANG.sp_dens_s, {title:LANG.sp_dens_l, convert:uc.toFloat, bound:uc.bound(0.0,1.0), modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceSupportSize:    uc.newInput(LANG.sp_size_s, {title:LANG.sp_size_l, bound:uc.bound(1.0,200.0), convert:uc.toFloat, modes:FDM}),
+            sliceSupportOffset:  uc.newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM}),
+            sliceSupportGap:     uc.newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, bound:uc.bound(0,5), convert:uc.toInt, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceSupportArea:    uc.newInput(LANG.sp_area_s, {title:LANG.sp_area_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM}),
+            sliceSupportExtra:   uc.newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, bound:uc.bound(0.0,10.0), convert:uc.toFloat, modes:FDM}),
+            sliceSupportGrow:    uc.newInput(LANG.sp_grow_s, {title:LANG.sp_grow_l, bound:uc.bound(0.0,10.0), convert:uc.toFloat, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceSupportAngle:   uc.newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, bound:uc.bound(0.0,90.0), convert:uc.toFloat, modes:FDM}),
+            sliceSupportSpan:    uc.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, modes:FDM, show:() => ui.sliceSupportEnable.checked}),
+            sliceSupportEnable:  uc.newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, modes:FDM, show:isNotBelt}),
+            sliceSupportOutline: uc.newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, modes:FDM}),
+
+            sliceSupportGen:     uc.newRow([
+                ui.ssaGen = uc.newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
             ], { modes: FDM, class: "ext-buttons f-row grow" }),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
-            sliceSupportManual: UC.newRow([
-                (UI.ssmAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
-                (UI.ssmDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
-                (UI.ssmClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM, show:isNotBelt}),
+            sliceSupportManual: uc.newRow([
+                (ui.ssmAdd = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (ui.ssmDun = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
+                (ui.ssmClr = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:FDM, class:"ext-buttons f-row"}),
 
-            camTabs:             UC.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
-            camTabsWidth:        UC.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabsHeight:       UC.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabsDepth:        UC.newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:UC.toFloat, bound:UC.bound(0.005,100), modes:CAM, units:true}),
-            camTabsMidline:      UC.newBoolean(LANG.ct_midl_s, onBooleanClick, {title:LANG.ct_midl_l, modes:CAM}),
-            camSep:              UC.newBlank({class:"pop-sep"}),
-            camTabsManual: UC.newRow([
-                (UI.tabAdd = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
-                (UI.tabDun = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
-                (UI.tabClr = UC.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
+            camTabs:             uc.newGroup(LANG.ct_menu, null, {modes:CAM, marker:true}),
+            camTabsWidth:        uc.newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:uc.toFloat, bound:uc.bound(0.005,100), modes:CAM, units:true}),
+            camTabsHeight:       uc.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:uc.toFloat, bound:uc.bound(0.005,100), modes:CAM, units:true}),
+            camTabsDepth:        uc.newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:uc.toFloat, bound:uc.bound(0.005,100), modes:CAM, units:true}),
+            camTabsMidline:      uc.newBoolean(LANG.ct_midl_s, onBooleanClick, {title:LANG.ct_midl_l, modes:CAM}),
+            camSep:              uc.newBlank({class:"pop-sep"}),
+            camTabsManual: uc.newRow([
+                (ui.tabAdd = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (ui.tabDun = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
+                (ui.tabClr = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {modes:CAM, class:"ext-buttons f-row"}),
 
-            camStock:            UC.newGroup(LANG.cs_menu, null, {modes:CAM, marker: true}),
-            camStockX:           UC.newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
-            camStockY:           UC.newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
-            camStockZ:           UC.newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:UC.toFloat, bound:UC.bound(0,9999), modes:CAM, units:true}),
-            camStockOffset:      UC.newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l, modes:CAM}),
-            camStockClipTo:      UC.newBoolean(LANG.cs_clip_s, onBooleanClick, {title:LANG.cs_clip_l, modes:CAM}),
-            camSep:              UC.newBlank({class:"pop-sep"}),
-            camStockOn:          UC.newBoolean(LANG.cs_offe_s, onBooleanClick, {title:LANG.cs_offe_l, modes:CAM}),
+            camStock:            uc.newGroup(LANG.cs_menu, null, {modes:CAM}),
+            camStockX:           uc.newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
+            camStockY:           uc.newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
+            camStockZ:           uc.newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:uc.toFloat, bound:uc.bound(0,9999), modes:CAM, units:true}),
+            camSep:              uc.newBlank({class:"pop-sep"}),
+            camStockOffset:      uc.newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l, modes:CAM}),
+            camStockClipTo:      uc.newBoolean(LANG.cs_clip_s, onBooleanClick, {title:LANG.cs_clip_l, modes:CAM}),
+            camSep:              uc.newBlank({class:"pop-sep"}),
+            camStockIndexGrid:   uc.newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, modes:CAM, show:() => ui.camStockIndexed.checked}),
+            camStockIndexed:     uc.newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l, modes:CAM}),
 
-            camCommon:           UC.newGroup(LANG.cc_menu, null, {modes:CAM}),
-            camZAnchor:          UC.newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, modes:CAM, trace:true}, "zanchor"),
-            camZOffset:          UC.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:UC.toFloat, modes:CAM, units:true}),
-            camZBottom:          UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, modes:CAM, units:true, trigger: true}),
-            camZThru:            UC.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:UC.toFloat, bound:UC.bound(0.0,100), modes:CAM, units:true, show:() => { return UI.camZBottom.value == 0 }}),
-            camSep:              UC.newBlank({class:"pop-sep"}),
-            camZClearance:       UC.newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:UC.toFloat, bound:UC.bound(0.01,100), modes:CAM, units:true}),
-            camSep:              UC.newBlank({class:"pop-sep"}),
-            camFastFeedZ:        UC.newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:UC.toFloat, modes:CAM, units:true}),
-            camFastFeed:         UC.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:UC.toFloat, modes:CAM, units:true}),
+            camCommon:           uc.newGroup(LANG.cc_menu, null, {modes:CAM}),
+            camZAnchor:          uc.newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, modes:CAM, trace:true, show:() => !ui.camStockIndexed.checked}, "zanchor"),
+            camSep:              uc.newBlank({class:"pop-sep", show:() => !ui.camStockIndexed.checked}),
+            camZOffset:          uc.newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:uc.toFloat, modes:CAM, units:true}),
+            camZBottom:          uc.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:uc.toFloat, modes:CAM, units:true, trigger: true}),
+            camZThru:            uc.newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:uc.toFloat, bound:uc.bound(0.0,100), modes:CAM, units:true, show:() => { return ui.camZBottom.value == 0 }}),
+            camSep:              uc.newBlank({class:"pop-sep"}),
+            camZClearance:       uc.newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:uc.toFloat, bound:uc.bound(0.01,100), modes:CAM, units:true}),
+            camSep:              uc.newBlank({class:"pop-sep"}),
+            camFastFeedZ:        uc.newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:uc.toFloat, modes:CAM, units:true}),
+            camFastFeed:         uc.newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:uc.toFloat, modes:CAM, units:true}),
 
-            laserLayout:         UC.newGroup(LANG.lo_menu, null, {modes:LASER, group:"lz-lo"}),
-            outputTileSpacing:   UC.newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:UC.toInt, modes:LASER}),
-            outputLaserMerged:   UC.newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l, modes:LASER}),
-            outputLaserGroup:    UC.newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, modes:LASER}),
+            laserLayout:         uc.newGroup(LANG.lo_menu, null, {modes:LASER, group:"lz-lo"}),
+            outputTileSpacing:   uc.newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:uc.toInt, modes:LASER}),
+            outputLaserMerged:   uc.newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l, modes:LASER}),
+            outputLaserGroup:    uc.newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, modes:LASER}),
 
-            knife:               UC.newGroup(LANG.dk_menu, null, {modes:LASER, marker:true}),
-            outputKnifeDepth:    UC.newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:UC.toFloat, bound:UC.bound(0.0,5.0), modes:LASER}),
-            outputKnifePasses:   UC.newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:UC.toInt, bound:UC.bound(0,5), modes:LASER}),
-            outputKnifeTip:      UC.newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:UC.toFloat, bound:UC.bound(0.0,10.0), modes:LASER}),
-            knifeSep:            UC.newBlank({class:"pop-sep", modes:LASER}),
-            knifeOn:             UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.ou_drkn_l, modes:LASER}),
+            knife:               uc.newGroup(LANG.dk_menu, null, {modes:LASER, marker:true}),
+            outputKnifeDepth:    uc.newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:uc.toFloat, bound:uc.bound(0.0,5.0), modes:LASER}),
+            outputKnifePasses:   uc.newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:uc.toInt, bound:uc.bound(0,5), modes:LASER}),
+            outputKnifeTip:      uc.newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:uc.toFloat, bound:uc.bound(0.0,10.0), modes:LASER}),
+            knifeSep:            uc.newBlank({class:"pop-sep", modes:LASER}),
+            knifeOn:             uc.newBoolean(LANG.enable, onBooleanClick, {title:LANG.ou_drkn_l, modes:LASER}),
 
-            output:              UC.newGroup(LANG.ou_menu, null, {modes:GCODE}),
-            outputLaserPower:    UC.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:UC.toInt, bound:UC.bound(1,100), modes:LASER}),
-            outputLaserSpeed:    UC.newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:UC.toInt, modes:LASER}),
-            outputLaserZColor:   UC.newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, modes:LASER, show:() => { return UI.outputLaserMerged.checked === false }}),
-            outputLaserLayer:    UC.newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l, modes:LASER}),
+            output:              uc.newGroup(LANG.ou_menu, null, {class: "fdmout", modes:GCODE}),
+            outputLaserPower:    uc.newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:uc.toInt, bound:uc.bound(1,100), modes:LASER}),
+            outputLaserSpeed:    uc.newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:uc.toInt, modes:LASER}),
+            laserSep:            uc.newBlank({class:"pop-sep", modes:LASER}),
+            outputLaserZColor:   uc.newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, modes:LASER, show:() => { return ui.outputLaserMerged.checked === false }}),
+            outputLaserLayer:    uc.newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l, modes:LASER}),
+            outputLaserStack:    uc.newBoolean(LANG.ou_lays_s, onBooleanClick, {title:LANG.ou_lays_l, modes:LASER}),
+            laserSep:            uc.newBlank({class:"pop-sep", modes:LASER}),
 
-            outputTemp:          UC.newInput(LANG.ou_nozl_s, {title:LANG.ou_nozl_l, convert:UC.toInt, modes:FDM}),
-            outputBedTemp:       UC.newInput(LANG.ou_bedd_s, {title:LANG.ou_bedd_l, convert:UC.toInt, modes:FDM}),
-            outputFanSpeed:      UC.newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:UC.toInt, bound:UC.bound(0,255), modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            outputFeedrate:      UC.newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:UC.toInt, modes:FDM}),
-            outputFinishrate:    UC.newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:UC.toInt, modes:FDM}),
-            outputSeekrate:      UC.newInput(LANG.ou_move_s, {title:LANG.ou_move_l, convert:UC.toInt, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            outputShellMult:     UC.newInput(LANG.ou_shml_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            outputFillMult:      UC.newInput(LANG.ou_flml_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            outputSparseMult:    UC.newInput(LANG.ou_spml_s, {title:LANG.ou_exml_l, convert:UC.toFloat, bound:UC.bound(0.0,2.0), modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceShellOrder:     UC.newSelect(LANG.sl_ordr_s, {title:LANG.sl_ordr_l, modes:FDM}, "shell"),
-            sliceLayerStart:     UC.newSelect(LANG.sl_strt_s, {title:LANG.sl_strt_l, modes:FDM}, "start"),
-            camConventional:     UC.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
-            camEaseDown:         UC.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),
-            camDepthFirst:       UC.newBoolean(LANG.ou_depf_s, onBooleanClick, {title:LANG.ou_depf_l, modes:CAM}),
-            outputOriginBounds:  UC.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
-            outputOriginCenter:  UC.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM_LASER}),
-            camOriginTop:        UC.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
+            outputTemp:          uc.newInput(LANG.ou_nozl_s, {title:LANG.ou_nozl_l, convert:uc.toInt, modes:FDM}),
+            outputBedTemp:       uc.newInput(LANG.ou_bedd_s, {title:LANG.ou_bedd_l, convert:uc.toInt, modes:FDM}),
+            outputFanSpeed:      uc.newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:uc.toInt, bound:uc.bound(0,255), modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            outputFeedrate:      uc.newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:uc.toInt, modes:FDM}),
+            outputFinishrate:    uc.newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:uc.toInt, modes:FDM}),
+            outputSeekrate:      uc.newInput(LANG.ou_move_s, {title:LANG.ou_move_l, convert:uc.toInt, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            outputShellMult:     uc.newInput(LANG.ou_shml_s, {title:LANG.ou_exml_l, convert:uc.toFloat, bound:uc.bound(0.0,2.0), modes:FDM}),
+            outputFillMult:      uc.newInput(LANG.ou_flml_s, {title:LANG.ou_exml_l, convert:uc.toFloat, bound:uc.bound(0.0,2.0), modes:FDM}),
+            outputSparseMult:    uc.newInput(LANG.ou_spml_s, {title:LANG.ou_exml_l, convert:uc.toFloat, bound:uc.bound(0.0,2.0), modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceShellOrder:     uc.newSelect(LANG.sl_ordr_s, {title:LANG.sl_ordr_l, modes:FDM}, "shell"),
+            sliceLayerStart:     uc.newSelect(LANG.sl_strt_s, {title:LANG.sl_strt_l, modes:FDM}, "start"),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            outputLayerRetract:  uc.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM}),
+            outputAvoidGaps:     uc.newBoolean(LANG.ad_agap_s, onBooleanClick, {title:LANG.ad_agap_l, modes:FDM}),
+            outputAlternating:   uc.newBoolean(LANG.ad_altr_s, onBooleanClick, {title:LANG.ad_altr_l, modes:FDM}),
+            outputBeltFirst:     uc.newBoolean(LANG.ad_lbir_s, onBooleanClick, {title:LANG.ad_lbir_l, show: isBelt, modes:FDM}),
+            camConventional:     uc.newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l, modes:CAM}),
+            camEaseDown:         uc.newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l, modes:CAM}),
+            camDepthFirst:       uc.newBoolean(LANG.ou_depf_s, onBooleanClick, {title:LANG.ou_depf_l, modes:CAM}),
+            camToolInit:         uc.newBoolean(LANG.ou_toin_s, onBooleanClick, {title:LANG.ou_toin_l, modes:CAM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM_CAM}),
+            camFirstZMax:        uc.newBoolean(LANG.ou_z1st_s, onBooleanClick, {title:LANG.ou_z1st_l, modes:CAM}),
+            camForceZMax:        uc.newBoolean(LANG.ou_forz_s, onBooleanClick, {title:LANG.ou_forz_l, modes:CAM}),
+            outputOriginBounds:  uc.newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, modes:LASER}),
+            outputOriginCenter:  uc.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:LASER}),
 
-            camExpert:           UC.newGroup(LANG.op_xprt_s, null, {group: "cam_expert", modes:CAM, marker: false}),
-            camExpertFast:       UC.newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, modes:CAM}),
+            camOrigin:           uc.newGroup(LANG.co_menu, null, {modes:CAM, xgroup:"cam_origin"}),
+            camOriginTop:        uc.newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l, modes:CAM}),
+            camOriginCenter:     uc.newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, modes:CAM}),
+            camSep:              uc.newBlank({class:"pop-sep", modes:CAM}),
+            camOriginOffX:       uc.newInput(LANG.co_offx_s, {title:LANG.co_offx_l, convert:uc.toFloat, units:true, modes:CAM}),
+            camOriginOffY:       uc.newInput(LANG.co_offy_s, {title:LANG.co_offy_l, convert:uc.toFloat, units:true, modes:CAM}),
+            camOriginOffZ:       uc.newInput(LANG.co_offz_s, {title:LANG.co_offz_l, convert:uc.toFloat, units:true, modes:CAM}),
 
-            advanced:            UC.newGroup(LANG.ad_menu, null, {modes:FDM}),
-            outputRetractDist:   UC.newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:UC.toFloat, modes:FDM}),
-            outputRetractSpeed:  UC.newInput(LANG.ad_rrat_s, {title:LANG.ad_rrat_l, convert:UC.toInt, modes:FDM}),
-            outputRetractWipe:   UC.newInput(LANG.ad_wpln_s, {title:LANG.ad_wpln_l, bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
-            outputRetractDwell:  UC.newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:UC.toInt, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            sliceSolidMinArea:   UC.newInput(LANG.ad_msol_s, {title:LANG.ad_msol_l, convert:UC.toFloat, modes:FDM}),
-            outputMinSpeed:      UC.newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, bound:UC.bound(5,200), convert:UC.toFloat, modes:FDM}),
-            outputShortPoly:     UC.newInput(LANG.ad_spol_s, {title:LANG.ad_spol_l, bound:UC.bound(0,10000), convert:UC.toFloat, modes:FDM}),
-            outputCoastDist:     UC.newInput(LANG.ad_scst_s, {title:LANG.ad_scst_l, bound:UC.bound(0.0,10), convert:UC.toFloat, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            zHopDistance:        UC.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:UC.bound(0,3.0), convert:UC.toFloat, modes:FDM}),
-            arcTolerance:        UC.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:UC.bound(0,1.0), convert:UC.toFloat, modes:FDM, show:() => { return isDanger() && isNotBelt() }}),
-            antiBacklash:        UC.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:UC.bound(0,3), convert:UC.toInt, modes:FDM}),
-            fdmSep:              UC.newBlank({class:"pop-sep", modes:FDM}),
-            outputPeelGuard:     UC.newInput(LANG.ag_peel_s, {title:LANG.ag_peel_l, convert:UC.toInt, modes:FDM, comma:true, show:isBelt}),
-            gcodePauseLayers:    UC.newInput(LANG.ag_paws_s, {title:LANG.ag_paws_l, modes:FDM, comma:true, show:isNotBelt}),
-            outputLoopLayers:    UC.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, modes:FDM, comma:true, show:isBelt}),
-            outputLayerRetract:  UC.newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l, modes:FDM}),
+            camExpert:           uc.newGroup(LANG.op_xprt_s, null, {group: "cam_expert", modes:CAM, marker: false}),
+            camExpertFast:       uc.newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, modes:CAM, show: () => !ui.camTrueShadow.checked }),
+            camTrueShadow:       uc.newBoolean(LANG.cx_true_s, onBooleanClick, {title:LANG.cx_true_l, modes:CAM, show: () => !ui.camExpertFast.checked }),
+
+            advanced:            uc.newGroup(LANG.ad_menu, null, {modes:FDM, class:"fdmadv"}),
+            outputRetractDist:   uc.newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:uc.toFloat, modes:FDM}),
+            outputRetractSpeed:  uc.newInput(LANG.ad_rrat_s, {title:LANG.ad_rrat_l, convert:uc.toInt, modes:FDM}),
+            outputRetractWipe:   uc.newInput(LANG.ad_wpln_s, {title:LANG.ad_wpln_l, bound:uc.bound(0.0,10), convert:uc.toFloat, modes:FDM}),
+            outputRetractDwell:  uc.newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:uc.toInt, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            sliceSolidMinArea:   uc.newInput(LANG.ad_msol_s, {title:LANG.ad_msol_l, convert:uc.toFloat, modes:FDM}),
+            outputMinSpeed:      uc.newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, bound:uc.bound(1,200), convert:uc.toFloat, modes:FDM}),
+            outputShortPoly:     uc.newInput(LANG.ad_spol_s, {title:LANG.ad_spol_l, bound:uc.bound(0,10000), convert:uc.toFloat, modes:FDM}),
+            outputCoastDist:     uc.newInput(LANG.ad_scst_s, {title:LANG.ad_scst_l, bound:uc.bound(0.0,10), convert:uc.toFloat, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            zHopDistance:        uc.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:uc.bound(0,3.0), convert:uc.toFloat, modes:FDM}),
+            arcTolerance:        uc.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:uc.bound(0,1.0), convert:uc.toFloat, modes:FDM, show:() => { return isDanger() && isNotBelt() }}),
+            antiBacklash:        uc.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:uc.bound(0,3), convert:uc.toInt, modes:FDM}),
+            fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
+            outputLoops:         uc.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, convert:uc.toInt, bound:uc.bound(-1,1000), modes:FDM, show:isBelt}),
+            outputPurgeTower:    uc.newInput(LANG.ad_purg_s, {title:LANG.ad_purg_l, convert:uc.toInt, bound:uc.bound(0,1000), modes:FDM}),
 
             // SLA
-            slaProc:             UC.newGroup(LANG.sa_menu, null, {modes:SLA, group:"sla-slice"}),
-            slaSlice:            UC.newInput(LANG.sa_lahe_s, {title:LANG.sa_lahe_l, convert:UC.toFloat, modes:SLA}),
-            slaShell:            UC.newInput(LANG.sa_shel_s, {title:LANG.sa_shel_l, convert:UC.toFloat, modes:SLA}),
-            slaOpenTop:          UC.newBoolean(LANG.sa_otop_s, onBooleanClick, {title:LANG.sa_otop_l, modes:SLA}),
-            slaOpenBase:         UC.newBoolean(LANG.sa_obas_s, onBooleanClick, {title:LANG.sa_obas_l, modes:SLA}),
+            slaProc:             uc.newGroup(LANG.sa_menu, null, {modes:SLA, group:"sla-slice"}),
+            slaSlice:            uc.newInput(LANG.sa_lahe_s, {title:LANG.sa_lahe_l, convert:uc.toFloat, modes:SLA}),
+            slaShell:            uc.newInput(LANG.sa_shel_s, {title:LANG.sa_shel_l, convert:uc.toFloat, modes:SLA}),
+            slaOpenTop:          uc.newBoolean(LANG.sa_otop_s, onBooleanClick, {title:LANG.sa_otop_l, modes:SLA}),
+            slaOpenBase:         uc.newBoolean(LANG.sa_obas_s, onBooleanClick, {title:LANG.sa_obas_l, modes:SLA}),
 
             // SLA
-            slaOutput:           UC.newGroup(LANG.sa_layr_m, null, {modes:SLA, group:"sla-layers"}),
-            slaLayerOn:          UC.newInput(LANG.sa_lton_s, {title:LANG.sa_lton_l, convert:UC.toFloat, modes:SLA}),
-            slaLayerOff:         UC.newInput(LANG.sa_ltof_s, {title:LANG.sa_ltof_l, convert:UC.toFloat, modes:SLA}),
-            slaPeelDist:         UC.newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:UC.toFloat, modes:SLA}),
-            slaPeelLiftRate:     UC.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:UC.toFloat, modes:SLA}),
-            slaPeelDropRate:     UC.newInput(LANG.sa_pldr_s, {title:LANG.sa_pldr_l, convert:UC.toFloat, modes:SLA}),
+            slaOutput:           uc.newGroup(LANG.sa_layr_m, null, {modes:SLA, group:"sla-layers"}),
+            slaLayerOn:          uc.newInput(LANG.sa_lton_s, {title:LANG.sa_lton_l, convert:uc.toFloat, modes:SLA}),
+            slaLayerOff:         uc.newInput(LANG.sa_ltof_s, {title:LANG.sa_ltof_l, convert:uc.toFloat, modes:SLA}),
+            slaPeelDist:         uc.newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:uc.toFloat, modes:SLA}),
+            slaPeelLiftRate:     uc.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:uc.toFloat, modes:SLA}),
+            slaPeelDropRate:     uc.newInput(LANG.sa_pldr_s, {title:LANG.sa_pldr_l, convert:uc.toFloat, modes:SLA}),
 
-            slaOutput:           UC.newGroup(LANG.sa_base_m, null, {modes:SLA, group:"sla-base"}),
-            slaBaseLayers:       UC.newInput(LANG.sa_balc_s, {title:LANG.sa_balc_l, convert:UC.toInt, modes:SLA}),
-            slaBaseOn:           UC.newInput(LANG.sa_lton_s, {title:LANG.sa_bltn_l, convert:UC.toFloat, modes:SLA}),
-            slaBaseOff:          UC.newInput(LANG.sa_ltof_s, {title:LANG.sa_bltf_l, convert:UC.toFloat, modes:SLA}),
-            slaBasePeelDist:     UC.newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:UC.toFloat, modes:SLA}),
-            slaBasePeelLiftRate: UC.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:UC.toFloat, modes:SLA}),
+            slaOutput:           uc.newGroup(LANG.sa_base_m, null, {modes:SLA, group:"sla-base"}),
+            slaBaseLayers:       uc.newInput(LANG.sa_balc_s, {title:LANG.sa_balc_l, convert:uc.toInt, modes:SLA}),
+            slaBaseOn:           uc.newInput(LANG.sa_lton_s, {title:LANG.sa_bltn_l, convert:uc.toFloat, modes:SLA}),
+            slaBaseOff:          uc.newInput(LANG.sa_ltof_s, {title:LANG.sa_bltf_l, convert:uc.toFloat, modes:SLA}),
+            slaBasePeelDist:     uc.newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:uc.toFloat, modes:SLA}),
+            slaBasePeelLiftRate: uc.newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:uc.toFloat, modes:SLA}),
 
-            slaFill:             UC.newGroup(LANG.sa_infl_m, null, {modes:SLA, group:"sla-infill"}),
-            slaFillDensity:      UC.newInput(LANG.sa_ifdn_s, {title:LANG.sa_ifdn_l, convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
-            slaFillLine:         UC.newInput(LANG.sa_iflw_s, {title:LANG.sa_iflw_l, convert:UC.toFloat, bound:UC.bound(0,5), modes:SLA}),
+            slaFill:             uc.newGroup(LANG.sa_infl_m, null, {modes:SLA, group:"sla-infill"}),
+            slaFillDensity:      uc.newInput(LANG.sa_ifdn_s, {title:LANG.sa_ifdn_l, convert:uc.toFloat, bound:uc.bound(0,1), modes:SLA}),
+            slaFillLine:         uc.newInput(LANG.sa_iflw_s, {title:LANG.sa_iflw_l, convert:uc.toFloat, bound:uc.bound(0,5), modes:SLA}),
 
-            slaSupport:          UC.newGroup(LANG.sa_supp_m, null, {modes:SLA, group:"sla-support"}),
-            slaSupportLayers:    UC.newInput(LANG.sa_slyr_s, {title:LANG.sa_slyr_l, convert:UC.toInt, bound:UC.bound(5,100), modes:SLA}),
-            slaSupportGap:       UC.newInput(LANG.sa_slgp_s, {title:LANG.sa_slgp_l, convert:UC.toInt, bound:UC.bound(3,30), modes:SLA}),
-            slaSupportDensity:   UC.newInput(LANG.sa_sldn_s, {title:LANG.sa_sldn_l, convert:UC.toFloat, bound:UC.bound(0.01,0.9), modes:SLA}),
-            slaSupportSize:      UC.newInput(LANG.sa_slsz_s, {title:LANG.sa_slsz_l, convert:UC.toFloat, bound:UC.bound(0.1,1), modes:SLA}),
-            slaSupportPoints:    UC.newInput(LANG.sa_slpt_s, {title:LANG.sa_slpt_l, convert:UC.toInt, bound:UC.bound(3,10), modes:SLA}),
-            slaSupportEnable:    UC.newBoolean(LANG.enable, onBooleanClick, {title:LANG.sl_slen_l, modes:SLA}),
+            slaSupport:          uc.newGroup(LANG.sa_supp_m, null, {modes:SLA, group:"sla-support"}),
+            slaSupportLayers:    uc.newInput(LANG.sa_slyr_s, {title:LANG.sa_slyr_l, convert:uc.toInt, bound:uc.bound(5,100), modes:SLA}),
+            slaSupportGap:       uc.newInput(LANG.sa_slgp_s, {title:LANG.sa_slgp_l, convert:uc.toInt, bound:uc.bound(3,30), modes:SLA}),
+            slaSupportDensity:   uc.newInput(LANG.sa_sldn_s, {title:LANG.sa_sldn_l, convert:uc.toFloat, bound:uc.bound(0.01,0.9), modes:SLA}),
+            slaSupportSize:      uc.newInput(LANG.sa_slsz_s, {title:LANG.sa_slsz_l, convert:uc.toFloat, bound:uc.bound(0.1,1), modes:SLA}),
+            slaSupportPoints:    uc.newInput(LANG.sa_slpt_s, {title:LANG.sa_slpt_l, convert:uc.toInt, bound:uc.bound(3,10), modes:SLA}),
+            slaSupportEnable:    uc.newBoolean(LANG.enable, onBooleanClick, {title:LANG.sl_slen_l, modes:SLA}),
 
-            slaOutput:           UC.newGroup(LANG.sa_outp_m, null, {modes:SLA, group:"sla-first"}),
-            slaFirstOffset:      UC.newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:UC.toFloat, bound:UC.bound(0,1), modes:SLA}),
-            slaAntiAlias:        UC.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias"),
+            slaOutput:           uc.newGroup(LANG.sa_outp_m, null, {modes:SLA, group:"sla-first"}),
+            slaFirstOffset:      uc.newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:uc.toFloat, bound:uc.bound(0,1), modes:SLA}),
+            slaAntiAlias:        uc.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias"),
 
-            rangeGroup:    UC.newGroup("ranges", null, {modes:FDM, group:"ranges"}),
-            rangeList:     UC.newRow([], {}),
+            rangeGroup:    uc.newGroup("ranges", null, {modes:FDM, group:"ranges"}),
+            rangeList:     uc.newRow([], {}),
 
-            settingsGroup: UC.newGroup(LANG.se_menu, $('settings')),
-            settingsTable: UC.newRow([ UI.settingsLoad = UC.newButton(LANG.se_load, settingsLoad) ]),
-            settingsTable: UC.newRow([ UI.settingsSave = UC.newButton(LANG.se_save, settingsSave) ]),
+            settingsGroup: uc.newGroup(LANG.se_menu, $('settings')),
+            settingsTable: uc.newRow([ ui.settingsLoad = uc.newButton(LANG.se_load, settingsLoad) ]),
+            settingsTable: uc.newRow([ ui.settingsSave = uc.newButton(LANG.se_save, settingsSave) ]),
+            settingsSave: $('settingsSave'),
+            settingsName: $('settingsName'),
 
-            layers:        UC.setGroup($("layers")),
+            layers:        uc.setGroup($("layers")),
         });
+
+        // override old style settings two-button menu
+        ui.settingsGroup.onclick = settingsLoad;
+        ui.settingsSave.onclick = () => {
+            settingsSave(undefined, ui.settingsName.value);
+        };
+
+        function optSelected(sel) {
+            let opt = sel.options[sel.selectedIndex];
+            return opt ? opt.value : undefined;
+        }
+
+        function fillShow() {
+            return optSelected(ui.sliceFillType) === 'linear';
+        }
 
         function spindleShow() {
             return settings().device.spindleMax > 0;
         }
 
         // slider setup
-        const slbar = 30;
+        const mobile = moto.space.info.mob;
+        const slbar = mobile ? 80 : 30;
         const slbar2 = slbar * 2;
-        const slider = UI.sliderRange;
+        const slider = ui.sliderRange;
         const drag = { };
+
+        if (mobile) {
+            ui.slider.classList.add('slider-mobile');
+            ui.sliderLo.classList.add('slider-mobile');
+            ui.sliderHi.classList.add('slider-mobile');
+            // add css style for mobile devices
+            DOC.body.classList.add('mobile');
+        }
 
         function pxToInt(txt) {
             return txt ? parseInt(txt.substring(0,txt.length-2)) : 0;
@@ -1857,26 +2121,29 @@
         function sliderUpdate() {
             let start = drag.low / drag.maxval;
             let end = (drag.low + drag.mid - slbar) / drag.maxval;
-            API.event.emit('slider.pos', { start, end });
-            API.var.layer_lo = Math.round(start * API.var.layer_max);
-            API.var.layer_hi = Math.round(end * API.var.layer_max);
-            API.show.layer();
-            SPACE.scene.active();
+            api.event.emit('slider.pos', { start, end });
+            api.var.layer_lo = Math.round(start * api.var.layer_max);
+            api.var.layer_hi = Math.round(end * api.var.layer_max);
+            api.show.layer();
+            space.scene.active();
         }
 
         function dragit(el, delta) {
-            el.onmousedown = (ev) => {
+            el.ontouchstart = el.onmousedown = (ev) => {
+                // el.classList.add('sli-drag-el');
                 tracker.style.display = 'block';
                 ev.stopPropagation();
+                let obj = (ev.touches ? ev.touches[0] : ev);
                 drag.width = slider.clientWidth;
                 drag.maxval = drag.width - slbar2;
-                drag.start = ev.screenX;
-                drag.loat = drag.low = pxToInt(UI.sliderHold.style.marginLeft);
-                drag.mdat = drag.mid = UI.sliderMid.clientWidth;
-                drag.hiat = pxToInt(UI.sliderHold.style.marginRight);
+                drag.start = obj.screenX;
+                drag.loat = drag.low = pxToInt(ui.sliderHold.style.marginLeft);
+                drag.mdat = drag.mid = ui.sliderMid.clientWidth;
+                drag.hiat = pxToInt(ui.sliderHold.style.marginRight);
                 drag.mdmax = drag.width - slbar - drag.loat;
                 drag.himax = drag.width - slbar - drag.mdat;
-                let cancel_drag = tracker.onmouseup = (ev) => {
+                let cancel_drag = tracker.ontouchend = tracker.onmouseup = (ev) => {
+                    // el.classList.remove('sli-drag-el');
                     if (ev) {
                         ev.stopPropagation();
                         ev.preventDefault();
@@ -1884,100 +2151,109 @@
                     slider.onmousemove = undefined;
                     tracker.style.display = 'none';
                 };
-                tracker.onmousemove = (ev) => {
+                el.ontouchend = cancel_drag;
+                el.ontouchmove = tracker.ontouchmove = tracker.onmousemove = (ev) => {
                     ev.stopPropagation();
                     ev.preventDefault();
                     if (ev.buttons === 0) {
                         return cancel_drag();
                     }
-                    if (delta) delta(ev.screenX - drag.start);
+                    if (delta) {
+                        let obj = (ev.touches ? ev.touches[0] : ev);
+                        delta(obj.screenX - drag.start);
+                    }
                 };
             };
         }
 
-        dragit(UI.sliderLo, (delta) => {
+        dragit(ui.sliderLo, (delta) => {
             let midval = drag.mdat - delta;
             let lowval = drag.loat + delta;
             if (midval < slbar || lowval < 0) {
                 return;
             }
-            UI.sliderHold.style.marginLeft = `${lowval}px`;
-            UI.sliderMid.style.width = `${midval}px`;
+            ui.sliderHold.style.marginLeft = `${lowval}px`;
+            ui.sliderMid.style.width = `${midval}px`;
             drag.low = lowval;
             drag.mid = midval;
             sliderUpdate();
         });
-        dragit(UI.sliderMid, (delta) => {
+        dragit(ui.sliderMid, (delta) => {
             let loval = drag.loat + delta;
             let hival = drag.hiat - delta;
             if (loval < 0 || hival < 0) return;
-            UI.sliderHold.style.marginLeft = `${loval}px`;
-            UI.sliderHold.style.marginRight = `${hival}px`;
+            ui.sliderHold.style.marginLeft = `${loval}px`;
+            ui.sliderHold.style.marginRight = `${hival}px`;
             drag.low = loval;
             sliderUpdate();
         });
-        dragit(UI.sliderHi, (delta) => {
+        dragit(ui.sliderHi, (delta) => {
             let midval = drag.mdat + delta;
             let hival = drag.hiat - delta;
             if (midval < slbar || midval > drag.mdmax || hival < 0) return;
-            UI.sliderMid.style.width = `${midval}px`;
-            UI.sliderHold.style.marginRight = `${hival}px`;
+            ui.sliderMid.style.width = `${midval}px`;
+            ui.sliderHold.style.marginRight = `${hival}px`;
             drag.mid = midval;
             sliderUpdate();
         });
 
-        UI.sliderMin.onclick = () => {
-            API.show.layer(0,0);
-        }
-
-        UI.sliderMax.onclick = () => {
-            API.show.layer(API.var.layer_max,0);
-        }
-
-        UI.slider.onmouseover = (ev) => {
-            API.event.emit('slider.label');
+        ui.load.onchange = function(event) {
+            api.platform.load_files(event.target.files);
+            ui.load.value = ''; // reset so you can re-import the same filee
         };
 
-        UI.slider.onmouseleave = (ev) => {
-            if (!ev.buttons) API.event.emit('slider.unlabel');
+        ui.sliderMin.onclick = () => {
+            api.show.layer(0,0);
+        }
+
+        ui.sliderMax.onclick = () => {
+            api.show.layer(api.var.layer_max,0);
+        }
+
+        ui.slider.onmouseover = (ev) => {
+            api.event.emit('slider.label');
         };
 
-        UI.dev.search.onclick = (hide) => {
-            let style = UI.dev.filter.style;
+        ui.slider.onmouseleave = (ev) => {
+            if (!ev.buttons) api.event.emit('slider.unlabel');
+        };
+
+        ui.dev.header.onclick = (hide) => {
+            let style = ui.dev.filter.style;
             if (style.display === 'flex' || hide === true) {
                 style.display = '';
                 deviceFilter = null;
                 updateDeviceList();
             } else {
                 style.display = 'flex';
-                UI.dev.filter.focus();
-                deviceFilter = UI.dev.filter.value.toLowerCase();
+                ui.dev.filter.focus();
+                deviceFilter = ui.dev.filter.value.toLowerCase();
                 updateDeviceList();
             }
         };
 
-        UI.dev.filter.onkeyup = (ev) => {
-            deviceFilter = UI.dev.filter.value.toLowerCase();
+        ui.dev.filter.onkeyup = (ev) => {
+            deviceFilter = ui.dev.filter.value.toLowerCase();
             updateDeviceList();
         };
 
-        UI.dev.filter.onclick = (ev) => {
+        ui.dev.filter.onclick = (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
         };
 
-        API.event.on('slider.unlabel', (values) => {
+        api.event.on('slider.unlabel', (values) => {
         });
 
-        API.event.on('slider.label', (values) => {
-            let digits = API.var.layer_max.toString().length;
+        api.event.on('slider.label', (values) => {
+            let digits = api.var.layer_max.toString().length;
             $('slider-zero').style.width = `${digits}em`;
             $('slider-max').style.width = `${digits}em`;
-            $('slider-zero').innerText = API.var.layer_lo;
-            $('slider-max').innerText = API.var.layer_hi;
+            $('slider-zero').innerText = api.var.layer_lo;
+            $('slider-max').innerText = api.var.layer_hi;
         });
 
-        API.event.on('slider.set', (values) => {
+        api.event.on('slider.set', (values) => {
             let width = slider.clientWidth;
             let maxval = width - slbar2;
             let start = Math.max(0, Math.min(1, values.start));
@@ -1985,47 +2261,59 @@
             let lowval = start * maxval;
             let midval = ((end - start) * maxval) + slbar;
             let hival = maxval - end * maxval;
-            UI.sliderHold.style.marginLeft = `${lowval}px`;
-            UI.sliderMid.style.width = `${midval}px`;
-            UI.sliderHold.style.marginRight = `${hival}px`;
+            ui.sliderHold.style.marginLeft = `${lowval}px`;
+            ui.sliderMid.style.width = `${midval}px`;
+            ui.sliderHold.style.marginRight = `${hival}px`;
         });
 
         // store layer preferences
-        API.event.on('stack.show', label => {
-            let mode = API.mode.get();
-            let view = API.view.get();
-            API.conf.get().labels[`${mode}-${view}-${label}`] = true;
+        api.event.on('stack.show', label => {
+            let mode = api.mode.get();
+            let view = api.view.get();
+            api.conf.get().labels[`${mode}-${view}-${label}`] = true;
         });
 
-        API.event.on('stack.hide', label => {
-            let mode = API.mode.get();
-            let view = API.view.get();
-            API.conf.get().labels[`${mode}-${view}-${label}`] = false;
+        api.event.on('stack.hide', label => {
+            let mode = api.mode.get();
+            let view = api.view.get();
+            api.conf.get().labels[`${mode}-${view}-${label}`] = false;
         });
 
         // bind language choices
         $('lset-en').onclick = function() {
-            SDB.setItem('kiri-lang', 'en-us');
-            API.space.reload();
+            sdb.setItem('kiri-lang', 'en-us');
+            api.space.reload();
         };
         $('lset-da').onclick = function() {
-            SDB.setItem('kiri-lang', 'da-dk');
-            API.space.reload();
+            sdb.setItem('kiri-lang', 'da-dk');
+            api.space.reload();
         };
         $('lset-de').onclick = function() {
-            SDB.setItem('kiri-lang', 'de-de');
-            API.space.reload();
+            sdb.setItem('kiri-lang', 'de-de');
+            api.space.reload();
         };
         $('lset-fr').onclick = function() {
-            SDB.setItem('kiri-lang', 'fr-fr');
-            API.space.reload();
+            sdb.setItem('kiri-lang', 'fr-fr');
+            api.space.reload();
         };
         $('lset-pl').onclick = function() {
-            SDB.setItem('kiri-lang', 'pl-pl');
-            API.space.reload();
+            sdb.setItem('kiri-lang', 'pl-pl');
+            api.space.reload();
+        };
+        $('lset-pt').onclick = function() {
+            sdb.setItem('kiri-lang', 'pt-pt');
+            api.space.reload();
+        };
+        $('lset-es').onclick = function() {
+            sdb.setItem('kiri-lang', 'es-es');
+            api.space.reload();
+        };
+        $('lset-zh').onclick = function() {
+            sdb.setItem('kiri-lang', 'zh');
+            api.space.reload();
         };
 
-        SPACE.addEventHandlers(self, [
+        space.event.addHandlers(self, [
             'keyup', keyUpHandler,
             'keydown', keyDownHandler,
             'keypress', keyHandler,
@@ -2038,122 +2326,139 @@
             let dv = parseFloat(e.target.value || 1),
                 pv = parseFloat(e.target.was || 1),
                 ra = dv / pv,
-                xv = parseFloat(UI.sizeX.was),
-                yv = parseFloat(UI.sizeY.was),
-                zv = parseFloat(UI.sizeZ.was),
+                xv = parseFloat(ui.sizeX.was),
+                yv = parseFloat(ui.sizeY.was),
+                zv = parseFloat(ui.sizeZ.was),
                 ta = e.target,
-                xc = UI.lockX.checked,
-                yc = UI.lockY.checked,
-                zc = UI.lockZ.checked,
-                xt = ta === UI.sizeX,
-                yt = ta === UI.sizeY,
-                zt = ta === UI.sizeZ,
+                xc = ui.lockX.checked,
+                yc = ui.lockY.checked,
+                zc = ui.lockZ.checked,
+                xt = ta === ui.sizeX,
+                yt = ta === ui.sizeY,
+                zt = ta === ui.sizeZ,
                 tl = (xt && xc) || (yt && yc) || (zt && zc),
                 xr = ((tl && xc) || (!tl && xt) ? ra : 1),
                 yr = ((tl && yc) || (!tl && yt) ? ra : 1),
                 zr = ((tl && zc) || (!tl && zt) ? ra : 1);
-            API.selection.scale(xr,yr,zr);
-            UI.sizeX.was = UI.sizeX.value = xv * xr;
-            UI.sizeY.was = UI.sizeY.value = yv * yr;
-            UI.sizeZ.was = UI.sizeZ.value = zv * zr;
+            // prevent null scale
+            if (xr * yr * zr === 0) {
+                return;
+            }
+            api.selection.scale(xr,yr,zr);
+            ui.sizeX.was = ui.sizeX.value = xv * xr;
+            ui.sizeY.was = ui.sizeY.value = yv * yr;
+            ui.sizeZ.was = ui.sizeZ.value = zv * zr;
         }
 
         function selectionScale(e) {
             let dv = parseFloat(e.target.value || 1),
                 pv = parseFloat(e.target.was || 1),
                 ra = dv / pv,
-                xv = parseFloat(UI.scaleX.was),
-                yv = parseFloat(UI.scaleY.was),
-                zv = parseFloat(UI.scaleZ.was),
+                xv = parseFloat(ui.scaleX.was),
+                yv = parseFloat(ui.scaleY.was),
+                zv = parseFloat(ui.scaleZ.was),
                 ta = e.target,
-                xc = UI.lockX.checked,
-                yc = UI.lockY.checked,
-                zc = UI.lockZ.checked,
-                xt = ta === UI.scaleX,
-                yt = ta === UI.scaleY,
-                zt = ta === UI.scaleZ,
+                xc = ui.lockX.checked,
+                yc = ui.lockY.checked,
+                zc = ui.lockZ.checked,
+                xt = ta === ui.scaleX,
+                yt = ta === ui.scaleY,
+                zt = ta === ui.scaleZ,
                 tl = (xt && xc) || (yt && yc) || (zt && zc),
                 xr = ((tl && xc) || (!tl && xt) ? ra : 1),
                 yr = ((tl && yc) || (!tl && yt) ? ra : 1),
                 zr = ((tl && zc) || (!tl && zt) ? ra : 1);
-            API.selection.scale(xr,yr,zr);
-            UI.scaleX.was = UI.scaleX.value = xv * xr;
-            UI.scaleY.was = UI.scaleY.value = yv * yr;
-            UI.scaleZ.was = UI.scaleZ.value = zv * zr;
+            api.selection.scale(xr,yr,zr);
+            ui.scaleX.was = ui.scaleX.value = xv * xr;
+            ui.scaleY.was = ui.scaleY.value = yv * yr;
+            ui.scaleZ.was = ui.scaleZ.value = zv * zr;
         }
 
         function selectionRotate(e) {
-            let deg = parseFloat(e.target.value) * DEG;
+            let deg = parseFloat(e.target.value) * DEG2RAD;
             e.target.value = 0;
             switch (e.target.id.split('').pop()) {
-                case 'x': return API.selection.rotate(deg,0,0);
-                case 'y': return API.selection.rotate(0,deg,0);
-                case 'z': return API.selection.rotate(0,0,deg);
+                case 'x': return api.selection.rotate(deg,0,0);
+                case 'y': return api.selection.rotate(0,deg,0);
+                case 'z': return api.selection.rotate(0,0,deg);
             }
         }
 
-        SPACE.onEnterKey([
-            UI.scaleX,        selectionScale,
-            UI.scaleY,        selectionScale,
-            UI.scaleZ,        selectionScale,
-            UI.sizeX,         selectionSize,
-            UI.sizeY,         selectionSize,
-            UI.sizeZ,         selectionSize,
-            UI.toolName,      updateTool,
-            UI.toolNum,       updateTool,
-            UI.toolFluteDiam, updateTool,
-            UI.toolFluteLen,  updateTool,
-            UI.toolShaftDiam, updateTool,
-            UI.toolShaftLen,  updateTool,
-            UI.toolTaperTip,  updateTool,
+        space.event.onEnterKey([
+            ui.scaleX,        selectionScale,
+            ui.scaleY,        selectionScale,
+            ui.scaleZ,        selectionScale,
+            ui.sizeX,         selectionSize,
+            ui.sizeY,         selectionSize,
+            ui.sizeZ,         selectionSize,
+            ui.toolName,      updateTool,
+            ui.toolNum,       updateTool,
+            ui.toolFluteDiam, updateTool,
+            ui.toolFluteLen,  updateTool,
+            ui.toolShaftDiam, updateTool,
+            ui.toolShaftLen,  updateTool,
+            ui.toolTaperTip,  updateTool,
+            ui.toolTaperAngle, updateTool,
             $('rot_x'),       selectionRotate,
             $('rot_y'),       selectionRotate,
             $('rot_z'),       selectionRotate
-        ]);
+        ], true);
 
         $('lab-axis').onclick = () => {
-            UI.lockX.checked =
-            UI.lockY.checked =
-            UI.lockZ.checked = !(
-                UI.lockX.checked ||
-                UI.lockY.checked ||
-                UI.lockZ.checked
+            ui.lockX.checked =
+            ui.lockY.checked =
+            ui.lockZ.checked = !(
+                ui.lockX.checked ||
+                ui.lockY.checked ||
+                ui.lockZ.checked
             );
         };
 
-        $('lab-scale').onclick = () => {
-            API.selection.scale(1 / UI.scaleX.was, 1 / UI.scaleY.was, 1 / UI.scaleZ.was);
-            UI.scaleX.value = UI.scaleY.value = UI.scaleZ.value =
-            UI.scaleX.was = UI.scaleY.was = UI.scaleZ.was = 1;
+        $('scale-reset').onclick = $('lab-scale').onclick = () => {
+            api.selection.scale(1 / ui.scaleX.was, 1 / ui.scaleY.was, 1 / ui.scaleZ.was);
+            ui.scaleX.value = ui.scaleY.value = ui.scaleZ.value =
+            ui.scaleX.was = ui.scaleY.was = ui.scaleZ.was = 1;
         };
 
-        let hpops = [];
-        UC.hoverPop(UI.ltsetup, { group: hpops, target: $('set-pop') });
-        UC.hoverPop(UI.ltfile,  { group: hpops, target: $('file-pop') });
-        UC.hoverPop(UI.ltview,  { group: hpops, target: $('pop-view') });
-        UC.hoverPop(UI.ltact,   { group: hpops, target: $('pop-slice') });
-        UC.hoverPop(UI.render,  { group: hpops, target: $('pop-render'), sticky: true });
-        UC.hoverPop(UI.rotate,  { group: hpops, target: $('pop-rotate'), sticky: true });
-        UC.hoverPop(UI.scale,   { group: hpops, target: $('pop-scale'), sticky: true });
-        UC.hoverPop(UI.nozzle,  { group: hpops, target: $('pop-nozzle'), sticky: true });
-        UC.hoverPop($('app-acct'), { group: hpops, target: $('acct-pop') } );
-        UC.hoverPop($('app-mode'), { group: hpops, target: $('mode-info') } );
-        UC.hoverPop($('app-name'), { group: hpops, target: $('app-info') } );
+        $('app-xpnd').onclick = () => {
+            try {
+                DOC.body.requestFullscreen();
+            } catch (e) {
+                event.emit('resize');
+                moto.space.event.onResize();
+            }
+        };
 
-        UC.onBlur([
-            UI.toolName,
-            UI.toolNum,
-            UI.toolFluteDiam,
-            UI.toolFluteLen,
-            UI.toolShaftDiam,
-            UI.toolShaftLen,
-            UI.toolTaperTip,
+        if (DOC.body.requestFullscreen) {
+            $('app-xpnd').style.display = 'flex';
+        }
+
+        let hpops = [];
+        uc.hoverPop(ui.ltsetup, { group: hpops, target: $('set-pop') });
+        uc.hoverPop(ui.ltfile,  { group: hpops, target: $('file-pop') });
+        uc.hoverPop(ui.ltview,  { group: hpops, target: $('pop-view') });
+        uc.hoverPop(ui.ltact,   { group: hpops, target: $('pop-slice') });
+        uc.hoverPop(ui.render,  { group: hpops, target: $('pop-render'), xsticky: false });
+        uc.hoverPop(ui.edit,    { group: hpops, target: $('pop-tools'), xsticky: false });
+        uc.hoverPop(ui.nozzle,  { group: hpops, target: $('pop-nozzle'), xsticky: true });
+        uc.hoverPop($('app-acct'), { group: hpops, target: $('acct-pop') } );
+        // uc.hoverPop($('app-mode'), { group: hpops, target: $('mode-info') } );
+        uc.hoverPop($('app-name'), { group: hpops, target: $('app-info') } );
+
+        uc.onBlur([
+            ui.toolName,
+            ui.toolNum,
+            ui.toolFluteDiam,
+            ui.toolFluteLen,
+            ui.toolShaftDiam,
+            ui.toolShaftLen,
+            ui.toolTaperTip,
         ], updateTool);
 
-        UI.toolMetric.onclick = updateTool;
-        UI.toolType.onchange = updateTool;
+        ui.toolMetric.onclick = updateTool;
+        ui.toolType.onchange = updateTool;
         // default show gcode pre
-        UI.gcodePre.button.click();
+        ui.gcodePre.button.click();
 
         function mksvg(src) {
             let svg = DOC.createElement('svg');
@@ -2167,44 +2472,58 @@
             return lbl;
         }
 
-        $('mode-fdm').appendChild(mksvg(icons.fdm));
-        $('mode-sla').appendChild(mksvg(icons.sla));
-        $('mode-cam').appendChild(mksvg(icons.cnc));
-        $('mode-laser').appendChild(mksvg(icons.laser));
+        for (let mode of ["fdm","sla","cam","laser"]) {
+            if (api.feature.modes.indexOf(mode) >= 0) {
+                $(`mode-${mode}`).appendChild(mksvg(icons[mode]));
+            } else {
+                $(`mode-${mode}`).style.display = 'none';
+            }
+        }
 
-        API.platform.update_size();
+        api.platform.update_size();
 
-        SPACE.mouse.onHover((int, event, ints) => {
-            if (!API.feature.hover) return;
-            if (!int) return API.feature.hovers || API.widgets.meshes();
-            API.event.emit('mouse.hover', {int, ints, event, point: int.point, type: 'widget'});
-        });
+        function mouseOnHover(int, event, ints) {
+            if (!api.feature.hover) return;
+            if (!int) return api.feature.hovers || api.widgets.meshes();
+            api.event.emit('mouse.hover', {int, ints, event, point: int.point, type: 'widget'});
+        }
 
-        SPACE.platform.onHover((int, event) => {
-            if (!API.feature.hover) return;
-            if (int) API.event.emit('mouse.hover', {point: int, event, type: 'platform'});
+        function platformOnHover(int, event) {
+            if (!api.feature.hover) return;
+            if (int) api.event.emit('mouse.hover', {point: int, event, type: 'platform'});
+        }
+
+        api.event.on("feature.hover", enable => {
+            space.mouse.onHover(enable ? mouseOnHover : undefined);
+            space.platform.onHover(enable ? platformOnHover : undefined);
         });
 
         // block standard browser context menu
         DOC.oncontextmenu = (event) => {
-            if (event.target.tagName === 'CANVAS') {
+            let et = event.target;
+            if (et.tagName === 'CANVAS' || et.id === 'context-menu' || et.classList.contains('draggable')) {
                 event.preventDefault();
                 event.stopPropagation();
                 return false;
             }
         };
 
-        SPACE.mouse.up((event, int) => {
+        space.mouse.up((event, int) => {
+            // context menu
             if (event.button === 2) {
-                let full = API.view.isArrange();
+                let et = event.target;
+                if (et.tagName != 'CANVAS' && et.id != 'context-menu') {
+                    return;
+                }
+                let full = api.view.is_arrange();
                 for (let key of ["layflat","mirror","duplicate"]) {
                     $(`context-${key}`).disabled = !full;
                 }
-                let style = UI.context.style;
+                let style = ui.context.style;
                 style.display = 'flex';
                 style.left = `${event.clientX-3}px`;
                 style.top = `${event.clientY-3}px`;
-                UI.context.onmouseleave = () => {
+                ui.context.onmouseleave = () => {
                     style.display = '';
                 };
                 event.preventDefault();
@@ -2213,57 +2532,69 @@
             }
         });
 
-        SPACE.mouse.downSelect((int,event) => {
-            if (API.feature.hover) {
+        space.mouse.downSelect((int, event) => {
+            if (api.feature.on_mouse_down) {
                 if (int) {
-                    API.event.emit('mouse.hover.down', {int, point: int.point});
+                    api.feature.on_mouse_down(int, event);
                     return;
                 }
-                return;
+            }
+            if (api.feature.hover) {
+                if (int) {
+                    return api.event.emit('mouse.hover.down', {int, point: int.point});
+                } else {
+                    return api.selection.meshes();
+                }
             }
             // lay flat with meta or ctrl clicking a selected face
-            if (int && (event.ctrlKey || event.metaKey || API.feature.on_face_select)) {
+            if (int && (event.ctrlKey || event.metaKey || api.feature.on_face_select)) {
                 let q = new THREE.Quaternion();
                 // find intersecting point, look "up" on Z and rotate to face that
                 q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
-                API.selection.rotate(q);
+                api.selection.rotate(q);
             }
-            if (API.view.get() !== VIEWS.ARRANGE) {
+            if (api.view.get() !== VIEWS.ARRANGE) {
                 // return no selection in modes other than arrange
                 return null;
             } else {
                 // return selected meshes for further mouse processing
-                return API.feature.hovers || API.selection.meshes();
-            }
-            if (event.button === 2 && API.view.isArrange()) {
-                event.preventDefault();
-                event.stopPropagation();
+                return api.feature.hovers || api.selection.meshes();
             }
         });
 
-        SPACE.mouse.upSelect(function(object, event) {
-            if (event && API.feature.hover) {
-                API.event.emit('mouse.hover.up', { object, event });
+        space.mouse.upSelect((object, event) => {
+            if (api.feature.on_mouse_up) {
+                if (event && object) {
+                    return api.feature.on_mouse_up(object, event);
+                } else {
+                    return api.widgets.meshes();
+                }
+            }
+            if (event && api.feature.hover) {
+                api.event.emit('mouse.hover.up', { object, event });
                 return;
             }
             if (event && event.target.nodeName === "CANVAS") {
                 if (object && object.object) {
                     if (object.object.widget) {
-                        platform.select(object.object.widget, event.shiftKey);
+                        platform.select(object.object.widget, event.shiftKey, false);
                     }
                 } else {
                     platform.deselect();
                 }
             } else {
-                return API.feature.hovers || API.widgets.meshes();
+                return api.feature.hovers || api.widgets.meshes();
             }
         });
 
-        SPACE.mouse.onDrag(function(delta) {
-            if (API.feature.hover) {
+        space.mouse.onDrag(function(delta, offset, up = false) {
+            if (api.feature.hover) {
                 return;
             }
-            if (delta && UI.freeLayout.checked) {
+            if (up) {
+                api.event.emit('mouse.drag.done', offset);
+            }
+            if (delta && ui.freeLayout.checked) {
                 let set = settings();
                 let dev = set.device;
                 let bound = set.bounds_sel;
@@ -2281,28 +2612,28 @@
                     if (bound.max.x + delta.x >= width) return;
                     if (bound.max.y + delta.y >= depth) return;
                 }
-                API.selection.move(delta.x, delta.y, 0);
-                API.event.emit('selection.drag', delta);
+                api.selection.move(delta.x, delta.y, 0);
+                api.event.emit('selection.drag', delta);
             } else {
-                return API.selection.meshes().length > 0;
+                return api.selection.meshes().length > 0;
             }
         });
 
-        API.space.restore(init_two) || checkSeed(init_two) || init_two();
+        api.space.restore(init_two) || checkSeed(init_two) || init_two();
 
     };
 
     // SECOND STAGE INIT AFTER UI RESTORED
 
     function init_two() {
-        API.event.emit('init.two');
+        api.event.emit('init.two');
 
-        // API.space.set_focus();
+        // api.space.set_focus();
 
         // call driver initializations, if present
-        Object.values(KIRI.driver).forEach(driver => {
+        Object.values(kiri.driver).forEach(driver => {
             if (driver.init) try {
-                driver.init(KIRI, API);
+                driver.init(kiri, api);
             } catch (error) {
                 console.log({driver_init_fail: driver, error})
             }
@@ -2312,10 +2643,10 @@
         if (SETUP.s) SETUP.s.forEach(function(lib) {
             let scr = DOC.createElement('script');
             scr.setAttribute('defer',true);
-            scr.setAttribute('src',`/code/${lib}.js?${KIRI.version}`);
+            scr.setAttribute('src',`/code/${lib}.js?${kiri.version}`);
             DOC.body.appendChild(scr);
-            STATS.add('load_'+lib);
-            API.event.emit('load.lib', lib);
+            stats.add('load_'+lib);
+            api.event.emit('load.lib', lib);
         });
 
         // load CSS extensions
@@ -2324,52 +2655,62 @@
             let ss = DOC.createElement('link');
             ss.setAttribute("type", "text/css");
             ss.setAttribute("rel", "stylesheet");
-            ss.setAttribute("href", `${style}.css?${KIRI.version}`);
+            ss.setAttribute("href", `${style}.css?${kiri.version}`);
             DOC.body.appendChild(ss);
         });
 
         // override stored settings
         if (SETUP.v) SETUP.v.forEach(function(kv) {
             kv = kv.split('=');
-            SDB.setItem(kv[0],kv[1]);
+            sdb.setItem(kv[0],kv[1]);
         });
 
         // import octoprint settings
         if (SETUP.ophost) {
-            let ohost = API.const.OCTO = {
+            let ohost = api.const.OCTO = {
                 host: SETUP.ophost[0],
                 apik: SETUP.opkey ? SETUP.opkey[0] : ''
             };
-            SDB['octo-host'] = ohost.host;
-            SDB['octo-apik'] = ohost.apik;
+            sdb['octo-host'] = ohost.host;
+            sdb['octo-apik'] = ohost.apik;
             console.log({octoprint:ohost});
         }
 
+        // load workspace from url
+        if (SETUP.wrk) {
+            api.settings.import_url(`${proto}//${SETUP.wrk[0]}`, false);
+        }
+
         // bind this to UI so main can call it on settings import
-        UI.sync = function() {
+        ui.sync = function() {
             const current = settings();
             const control = current.controller;
             const process = settings.process;
 
             platform.deselect();
-            CATALOG.addFileListener(updateCatalog);
-            SPACE.view.setZoom(control.reverseZoom, control.zoomSpeed);
-            SPACE.platform.setZOff(0.2);
+            catalog.addFileListener(updateCatalog);
+            space.view.setZoom(control.reverseZoom, control.zoomSpeed);
+            space.platform.setGridZOff(undefined);
+            space.platform.setZOff(0.05);
 
             // restore UI state from settings
-            UI.showOrigin.checked = control.showOrigin;
-            UI.showRulers.checked = control.showRulers;
-            UI.showSpeeds.checked = control.showSpeeds;
-            UI.freeLayout.checked = control.freeLayout;
-            UI.autoLayout.checked = control.autoLayout;
-            UI.reverseZoom.checked = control.reverseZoom;
-            UI.autoSave.checked = control.autoSave;
-            UI.decimate.checked = control.decimate;
-            UI.healMesh.checked = control.healMesh;
-            UI.ortho.checked = control.ortho;
+            ui.showOrigin.checked = control.showOrigin;
+            ui.showRulers.checked = control.showRulers;
+            ui.showSpeeds.checked = control.showSpeeds;
+            ui.freeLayout.checked = control.freeLayout;
+            ui.autoLayout.checked = control.autoLayout;
+            ui.spaceRandoX.checked = control.spaceRandoX;
+            ui.antiAlias.checked = control.antiAlias;
+            ui.reverseZoom.checked = control.reverseZoom;
+            ui.autoSave.checked = control.autoSave;
+            ui.healMesh.checked = control.healMesh;
+            ui.threaded.checked = setThreaded(control.threaded);
+            ui.assembly.checked = control.assembly;
+            ui.ortho.checked = control.ortho;
+            ui.devel.checked = control.devel;
             lineTypeSave();
             detailSave();
-            updateFPS();
+            updateStats();
 
             // optional set-and-lock mode (hides mode menu)
             let SETMODE = SETUP.mode ? SETUP.mode[0] : null;
@@ -2378,48 +2719,57 @@
             let DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
 
             // setup default mode and enable mode locking, if set
-            API.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
+            api.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
 
             // fill device list
             updateDeviceList();
 
             // ensure settings has gcode
-            selectDevice(DEVNAME || API.device.get());
+            selectDevice(DEVNAME || api.device.get());
 
             // update ui fields from settings
-            API.view.update_fields();
+            api.conf.update_fields();
 
             // default to ARRANGE view mode
-            API.view.set(VIEWS.ARRANGE);
+            api.view.set(VIEWS.ARRANGE);
 
             // add ability to override
-            API.show.controls(API.feature.controls);
+            api.show.controls(api.feature.controls);
 
             // update everything dependent on the platform size
             platform.update_size();
+
+            // load wasm if indicated
+            kiri.client.wasm(control.assembly === true);
         };
 
-        UI.sync();
+        ui.sync();
 
         // clear alerts as they build up
-        setInterval(API.event.alerts, 1000);
+        setInterval(api.event.alerts, 1000);
 
         // add hide-alerts-on-alert-click
-        UI.alert.dialog.onclick = function() {
-            API.event.alerts(true);
+        ui.alert.dialog.onclick = function() {
+            api.event.alerts(true);
         };
 
         // enable modal hiding
-        $('mod-x').onclick = API.modal.hide;
+        $('mod-x').onclick = api.modal.hide;
 
-        if (!SETUP.s) console.log(`kiri | init main | ${KIRI.version}`);
+        if (!SETUP.s) console.log(`kiri | init main | ${kiri.version}`);
 
         // send init-done event
-        API.event.emit('init-done', STATS);
+        api.event.emit('init-done', stats);
 
         // show gdpr if it's never been seen and we're not iframed
-        if (!SDB.gdpr && WIN.self === WIN.top && !SETUP.debug) {
+        if (!sdb.gdpr && WIN.self === WIN.top && !SETUP.debug && !api.const.LOCAL) {
             $('gdpr').style.display = 'flex';
+        }
+
+        // warn of degraded functionality when SharedArrayBuffers are missing
+        if (api.feature.work_alerts && !window.SharedArrayBuffer) {
+            api.alerts.show("The security context of this", 10);
+            api.alerts.show("window blocks important functionality", 10);
         }
 
         // add keyboard focus handler (must use for iframes)
@@ -2433,84 +2783,259 @@
         // dismiss gdpr alert
         $('gotit').onclick = () => {
             $('gdpr').style.display = 'none';
-            SDB.gdpr = Date.now();
+            sdb.gdpr = Date.now();
         };
 
         // lift curtain
         $('curtain').style.display = 'none';
 
-        function showSetup() {
-            API.modal.show('setup');
-        }
-
         // bind interface action elements
-        $('app-name').onclick = API.help.show;
-        $('app-mode').onclick = (ev) => { ev.stopPropagation(); showSetup() };
-        $('set-device').onclick = (ev) => { ev.stopPropagation(); showSetup() };
+        $('app-name').onclick = api.help.show;
+        $('app-mode').onclick = (ev) => { ev.stopPropagation(); showDevices() };
+        $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
-        $('set-prefs').onclick = (ev) => { ev.stopPropagation(); API.modal.show('prefs') };
-        UI.acct.help.onclick = (ev) => { ev.stopPropagation(); API.help.show() };
-        UI.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
-        UI.acct.export.title = LANG.acct_xpo;
-        $('file-recent').onclick = () => { API.modal.show('files') };
-        $('file-import').onclick = (ev) => { API.event.import(ev) };
-        UI.back.onclick = API.platform.layout;
-        UI.trash.onclick = API.selection.delete;
-        UI.func.slice.onclick = (ev) => { ev.stopPropagation(); API.function.slice() };
-        UI.func.preview.onclick = (ev) => { ev.stopPropagation(); API.function.print() };
-        UI.func.animate.onclick = (ev) => { ev.stopPropagation(); API.function.animate() };
-        UI.func.export.onclick = (ev) => { ev.stopPropagation(); API.function.export() };
-        $('view-arrange').onclick = API.platform.layout;
-        $('view-top').onclick = SPACE.view.top;
-        $('view-home').onclick = SPACE.view.home;
-        $('view-clear').onclick = API.platform.clear;
-        $('mode-fdm').onclick = () => { API.mode.set('FDM') };
-        $('mode-sla').onclick = () => { API.mode.set('SLA') };
-        $('mode-cam').onclick = () => { API.mode.set('CAM') };
-        $('mode-laser').onclick = () => { API.mode.set('LASER') };
-        $('unrotate').onclick = () => { API.widgets.for(w => w.unrotate()) };
+        $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };
+        ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
+        ui.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
+        ui.acct.export.title = LANG.acct_xpo;
+        $('file-recent').onclick = () => { api.modal.show('files') };
+        $('file-import').onclick = (ev) => { api.event.import(ev); };
+        ui.back.onclick = api.platform.layout;
+        ui.options.trash.onclick = api.selection.delete;
+        ui.options.enable.onclick = api.selection.enable;
+        ui.options.disable.onclick = api.selection.disable;
+        ui.func.slice.onclick = (ev) => { ev.stopPropagation(); api.function.slice() };
+        ui.func.preview.onclick = (ev) => { ev.stopPropagation(); api.function.print() };
+        ui.func.animate.onclick = (ev) => { ev.stopPropagation(); api.function.animate() };
+        ui.func.export.onclick = (ev) => { ev.stopPropagation(); api.function.export() };
+        $('view-arrange').onclick = api.platform.layout;
+        $('view-top').onclick = space.view.top;
+        $('view-home').onclick = space.view.home;
+        $('view-clear').onclick = api.platform.clear;
+        $('mode-fdm').onclick = () => { api.mode.set('FDM'); api.space.set_focus() };
+        $('mode-sla').onclick = () => { api.mode.set('SLA'); api.space.set_focus() };
+        $('mode-cam').onclick = () => { api.mode.set('CAM'); api.space.set_focus() };
+        $('mode-laser').onclick = () => { api.mode.set('LASER'); api.space.set_focus() };
+        $('unrotate').onclick = () => {
+            api.widgets.for(w => w.unrotate());
+            api.selection.update_info();
+        };
+        $('lay-flat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
         // rotation buttons
         let d = (Math.PI / 180) * 5;
-        $('rot_x_lt').onclick = () => { API.selection.rotate(-d,0,0) };
-        $('rot_x_gt').onclick = () => { API.selection.rotate( d,0,0) };
-        $('rot_y_lt').onclick = () => { API.selection.rotate(0,-d,0) };
-        $('rot_y_gt').onclick = () => { API.selection.rotate(0, d,0) };
-        $('rot_z_lt').onclick = () => { API.selection.rotate(0,0, d) };
-        $('rot_z_gt').onclick = () => { API.selection.rotate(0,0,-d) };
+        $('rot_x_lt').onclick = () => { api.selection.rotate(-d,0,0) };
+        $('rot_x_gt').onclick = () => { api.selection.rotate( d,0,0) };
+        $('rot_y_lt').onclick = () => { api.selection.rotate(0,-d,0) };
+        $('rot_y_gt').onclick = () => { api.selection.rotate(0, d,0) };
+        $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d) };
+        $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d) };
         // rendering options
-        $('render-hide').onclick = () => { API.view.wireframe(false, 0, 0); };
-        $('render-ghost').onclick = () => { API.view.wireframe(false, 0, 0.5); };
-        $('render-wire').onclick = () => { API.view.wireframe(true, 0, 0.5); };
-        $('render-solid').onclick = () => { API.view.wireframe(false, 0, 1); };
+        $('render-hide').onclick = () => { api.view.wireframe(false, 0, 0); };
+        $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
+        $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
+        $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
+        // mesh buttons
+        $('mesh-swap').onclick = () => { api.widgets.replace() };
+        $('mesh-export-stl').onclick = () => { objectsExport('stl') };
+        $('mesh-export-obj').onclick = () => { objectsExport('obj') };
         // context menu
-        $('context-export-stl').onclick = () => { objectsExport() };
         $('context-export-workspace').onclick = () => { profileExport(true) };
         $('context-clear-workspace').onclick = () => {
-            API.view.set(VIEWS.ARRANGE);
-            API.platform.clear();
-            UI.context.onmouseleave();
+            api.view.set(VIEWS.ARRANGE);
+            api.platform.clear();
+            ui.context.onmouseleave();
         };
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
         $('context-layflat').onclick = layFlat;
+        $('context-setfocus').onclick = setFocus;
 
-        UI.modal.onclick = API.modal.hide;
-        UI.modalBox.onclick = (ev) => { ev.stopPropagation() };
+        ui.modal.onclick = api.modal.hide;
+        ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
 
         // add app name hover info
-        $('app-info').innerText = KIRI.version;
+        $('app-info').innerText = kiri.version;
         // show topline separator when iframed
         // try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { }
 
+        // bind tictac buttons to panel show/hide
+        let groups = {};
+        for (let tt of [...document.getElementsByClassName('tictac')]) {
+            let sid = tt.getAttribute('select');
+            let gid = tt.getAttribute('group') || 'default';
+            let grp = groups[gid] = groups[gid] || [];
+            let target = $(sid);
+            target.style.display = 'none';
+            target.control = tt;
+            grp.push({button: tt, div: target});
+            tt.onclick = () => {
+                for (let rec of grp) {
+                    let {button, div} = rec;
+                    if (div === target) {
+                        div.style.display = '';
+                        button.classList.add('selected');
+                    } else {
+                        div.style.display = 'none';
+                        button.classList.remove('selected');
+                    }
+                }
+                let lid = tt.getAttribute('label');
+                if (lid) {
+                    $(lid).innerText = tt.getAttribute('title');
+                }
+            };
+        }
+        // bind closer X to hiding parent action
+        for (let tt of [...document.getElementsByClassName('closer')]) {
+            let tid = tt.getAttribute('target');
+            let target = tid ? $(tid) : parentWithClass(tt, 'movable');
+            target.style.display = 'none';
+            let close = tt.onmousedown = (ev) => {
+                target.style.display = 'none';
+                if (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                }
+            };
+            api.event.on('key.esc', close);
+        }
+        // add drag behavior to movers
+        [...document.getElementsByClassName('mover')].forEach(mover => {
+            mover.onmousedown = (ev) => {
+                let moving = parentWithClass(mover, 'movable');
+                let mpos = {
+                    x: moving.offsetLeft,
+                    y: moving.offsetTop
+                };
+                ev.preventDefault();
+                ev.stopPropagation();
+                let origin = {
+                    x: ev.screenX,
+                    y: ev.screenY
+                };
+                let tracker = ui.tracker;
+                tracker.style.display = 'block';
+                tracker.onmousemove = (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    let pos = {
+                        x: ev.screenX,
+                        y: ev.screenY
+                    };
+                    let delta = {
+                        x: pos.x - origin.x,
+                        y: pos.y - origin.y
+                    };
+                    moving.style.left = `${mpos.x + delta.x}px`;
+                    moving.style.top = `${mpos.y + delta.y}px`;
+                };
+                tracker.onmouseup = (ev) => {
+                    ui.tracker.style.display = 'none';
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    tracker.onmouseup = null;
+                    tracker.onmouseout = null;
+                    tracker.onmousemove = null;
+                };
+            };
+        });
+
+        // bind tool buttons
+        {
+            let { event } = api;
+            let next = 0;
+            let list = ['rotate','scale','mesh','select'];
+            event.on("tool.next", () => {
+                event.emit("tool.show", list[next++ % 4]);
+            });
+            event.on("tool.show", tictac => {
+                if (typeof(tictac) === 'string') {
+                    next = list.indexOf(tictac)+1;
+                    tictac = $(`ft-${tictac}`);
+                }
+                let mover = parentWithClass(tictac.control, 'movable');
+                mover.style.display = 'flex';
+                tictac.control.onclick();
+            });
+            $('tool-rotate').onclick = event.bind("tool.show", "rotate");
+            $('tool-scale').onclick = event.bind("tool.show", "scale");
+            $('tool-mesh').onclick = event.bind("tool.show", "mesh");
+            $('tool-selector').onclick = event.bind("tool.show", "select");
+        }
+
         // warn users they are running a beta release
-        if (KIRI.beta && KIRI.beta > 0 && SDB.kiri_beta != KIRI.beta) {
-            API.show.alert("this is a beta / development release");
-            SDB.kiri_beta = KIRI.beta;
+        if (kiri.beta && kiri.beta > 0 && sdb.kiri_beta != kiri.beta) {
+            api.show.alert("this is a beta / development release");
+            sdb.kiri_beta = kiri.beta;
+        }
+
+        // add palette3 edit button after filament source selector
+        {
+            let randomId = Math.round(Math.random() * 0xffffffffffff).toString(16);
+            let fsp = ui.filamentSource.parentNode;
+            let btn = ui.filamentSourceEdit = DOC.createElement('button');
+            btn.setAttribute('id', 'fs-edit');
+            btn.appendChild(DOC.createTextNode('edit'));
+            fsp.insertBefore(btn, ui.filamentSource);
+            let editDone = () => {
+                let device = api.conf.get().device;
+                let extra = device.extras = device.extras || {};
+                btn.onclick = edit;
+                btn.innerText = 'edit';
+                ui.extruder.parentNode.style.display = 'flex';
+                ui.palette.parentNode.style.display = 'none';
+                // save settings
+                extra.palette = {
+                    printer: ui.paletteId.value || randomId,
+                    ping: ui.palettePing.convert(),
+                    feed: ui.paletteFeed.convert(),
+                    push: ui.palettePush.convert(),
+                    offset: ui.paletteOffset.convert(),
+                    heat: ui.paletteHeat.convert(),
+                    cool: ui.paletteCool.convert(),
+                    press: ui.palettePress.convert()
+                };
+            };
+            let edit = btn.onclick = () => {
+                let device = api.conf.get().device;
+                let extra = device.extras = device.extras || {};
+                let pinfo = extra.palette;
+                if (!pinfo) {
+                    pinfo = extra.palette = {
+                        printer: randomId,
+                        feed: 570,
+                        push: 600,
+                        heat: 0,
+                        cool: 0,
+                        press: 0
+                    };
+                }
+                ui.paletteId.value = pinfo.printer;
+                ui.palettePing.value = pinfo.ping || 0;
+                ui.paletteFeed.value = pinfo.feed || 0;
+                ui.palettePush.value = pinfo.push || 0;
+                ui.paletteOffset.value = pinfo.offset || 0;
+                ui.paletteHeat.value = pinfo.heat || 0;
+                ui.paletteCool.value = pinfo.cool || 0;
+                ui.palettePress.value = pinfo.press || 0;
+                ui.extruder.parentNode.style.display = 'none';
+                ui.palette.parentNode.style.display = 'flex';
+                btn.innerText = 'done';
+                btn.onclick = editDone;
+            };
+            api.event.on(["device.select", "filament.source"], () => {
+                ui.extruder.parentNode.style.display = 'flex';
+                ui.palette.parentNode.style.display = 'none';
+                btn.innerText = 'edit';
+                btn.onclick = edit;
+            });
+            api.event.on("device.save", editDone);
         }
     }
 
     // update static html elements with language overrides
-    UI.lang = function() {
+    ui.lang = function() {
+        // lk attribute causes inner text to be replaced with lang value
         for (let el of [...DOC.querySelectorAll("[lk]")]) {
             let key = el.getAttribute('lk');
             let val = LANG[key];
@@ -2520,52 +3045,56 @@
                 console.log({missing_ln: key});
             }
         }
-    };
-
-    // if a language needs to load, the script is injected and loaded
-    // first.  once this loads, or doesn't, the initialization begins
-    let lang_load = false;
-    let lang_set = undefined;
-    let lang = SETUP.ln ? SETUP.ln[0] : SDB.getItem('kiri-lang') || KIRI.lang.get();
-
-    // inject language script if not english
-    if (lang && lang !== 'en' && lang !== 'en-us') {
-        lang_set = lang;
-        let map = KIRI.lang.map(lang);
-        let scr = DOC.createElement('script');
-        // scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/kiri/lang/${map}.js?${KIRI.version}`);
-        (DOC.body || DOC.head).appendChild(scr);
-        STATS.set('ll',lang);
-        scr.onload = function() {
-            lang_load = true;
-            KIRI.lang.set(map);
-            UI.lang();
-            init_one();
-        };
-        scr.onerror = function(err) {
-            console.log({language_load_error: err, lang})
-            init_one();
+        // lkt attribute causes a title attribute to be set from lang value
+        for (let el of [...DOC.querySelectorAll("[lkt]")]) {
+            let key = el.getAttribute('lkt');
+            let val = LANG[key];
+            if (val) {
+                el.setAttribute("title", val);
+            } else {
+                console.log({missing_ln: key});
+            }
         }
     }
 
-    // set to browser default which will be overridden
-    // by any future script loads (above)
-    if (!lang_load) {
-        KIRI.lang.set();
-        UI.lang();
-    }
-
-    // schedule init_one to run after all page content is loaded
-    // unless a languge script is loading first, in which case it
-    // will call init once it's done (or failed)
-    if (!lang_set) {
-        if (document.readyState === 'loading') {
-            SPACE.addEventListener(DOC, 'DOMContentLoaded', init_one);
+    // init lang must happen before all other init functions
+    function init_lang() {
+        // if a language needs to load, the script is injected and loaded
+        // first.  once this loads, or doesn't, the initialization begins
+        let lang = SETUP.ln ? SETUP.ln[0] : sdb.getItem('kiri-lang') || kiri.lang.get();
+        // inject language script if not english
+        if (lang && lang !== 'en' && lang !== 'en-us') {
+            let map = kiri.lang.map(lang);
+            let scr = DOC.createElement('script');
+            // scr.setAttribute('defer',true);
+            scr.setAttribute('src',`/kiri/lang/${map}.js?${kiri.version}`);
+            (DOC.body || DOC.head).appendChild(scr);
+            stats.set('ll',lang);
+            scr.onload = function() {
+                kiri.lang.set(map);
+                ui.lang();
+                init_one();
+            };
+            scr.onerror = function(err) {
+                console.log({language_load_error: err, lang})
+                kiri.lang.set();
+                ui.lang();
+                init_one();
+            }
         } else {
-            // happens in debug mode when scripts are chain loaded
+            // set to browser default which will be overridden
+            // by any future script loads (above)
+            kiri.lang.set();
+            ui.lang();
             init_one();
         }
     }
 
-})();
+    // setup init() trigger when dom + scripts complete
+    DOC.onreadystatechange = function() {
+        if (DOC.readyState === 'complete') {
+            init_lang();
+        }
+    }
+
+});
