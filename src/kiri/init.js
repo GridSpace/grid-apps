@@ -789,6 +789,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.deviceRound.checked = dev.bedRound;
             ui.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter || dev.bedRound;
             ui.fwRetract.checked = dev.fwRetract;
+            ui.deviceAbl.checked = dev.hasAbl;
+            ui.directDrive.checked = dev.directDrive;
             if (!dev.filamentSource) ui.filamentSource.selectedIndex = 0;
 
             // add extruder selection buttons
@@ -834,6 +836,8 @@ gapp.register("kiri.init", [], (root, exports) => {
                 ui.deviceRound,
                 ui.deviceBelt,
                 ui.fwRetract,
+                ui.deviceAbl,
+                ui.directDrive,
                 ui.filamentSource,
                 ui.deviceZMax,
                 ui.gcodeTime,
@@ -1738,6 +1742,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             deviceOrigin:     uc.newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LZR, show:() => !ui.deviceRound.checked}),
             deviceRound:      uc.newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),
             deviceBelt:       uc.newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true, show:() => !ui.deviceRound.checked}),
+            deviceAbl:        uc.newBoolean(LANG.dv_abl_s, onBooleanClick, {title:LANG.dv_abl_l, modes:FDM}),
+            directDrive:      uc.newBoolean(LANG.dv_dird_s, onBooleanClick, {title:LANG.dv_dird_l, modes:FDM}),
 
             extruder:         uc.newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
             extFilament:      uc.newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:uc.toFloat, modes:FDM}),

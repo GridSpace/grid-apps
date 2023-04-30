@@ -49,6 +49,8 @@ function saveSettings() {
     settings.device.bedRound = ui.deviceRound.checked;
     settings.device.originCenter = ui.deviceOrigin.checked || ui.deviceRound.checked;
     settings.device.fwRetract = ui.fwRetract.checked;
+    settings.device.hasAbl = ui.deviceAbl.checked;
+    settings.device.directDrive = ui.directDrive.checked;
     local.setItem('ws-settings', JSON.stringify(settings));
     api.event.emit('settings.saved', settings);
 }
