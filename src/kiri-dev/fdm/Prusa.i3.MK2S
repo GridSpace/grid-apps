@@ -320,5 +320,7 @@
             "sliceDetectThin": "off",
             "beltAnchor": 200
         }
-    ]
+    ],
+    "hasAbl": true,
+    "directDrive": true
 }

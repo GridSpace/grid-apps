@@ -79,5 +79,7 @@
             "cool": null,
             "press": null
         }
-    }
+    },
+    "hasAbl": true,
+    "directDrive": true
 }

@@ -294,7 +294,9 @@ const conf = exports({
                 }],
                 profiles: [],
                 // other stored info like palette3 config
-                extras: {}
+                extras: {},
+                hasAbl: false,
+                directDrive: false
             },
             // process defaults FDM:Process
             p:{
