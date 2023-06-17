@@ -253,6 +253,10 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} [tool] tool
      */
     function layerPush(point, emit, speed, tool) {
+        const dz = lastPush ? point.z - lastPush.point.z : 0;
+        if (dz < 0 && speed > plungeRate) {
+            speed = plungeRate;
+        }
         layerOut.mode = currentOp;
         if (lasering) {
             let power = emit ? laserPower : 0;
