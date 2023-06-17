@@ -1,5 +1,6 @@
 [
     "main/gapp",
+    "moto/broker",
     "moto/license",
     "add/array",
     "add/class",
@@ -12,7 +13,6 @@
     "geo/base",
     "geo/bounds",
     "geo/line",
-    "geo/mesh",
     "geo/point",
     "geo/paths",
     "geo/points",

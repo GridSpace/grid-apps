@@ -100,7 +100,11 @@ class Broker {
                 }
             }
         } else if (topic.indexOf(".topic.") < 0) {
-            dbug.debug(`undelivered '${topic}'`, message);
+            if (self.dbug) {
+                self.dbug.debug(`undelivered '${topic}'`, message);
+            } else {
+                console.log(`undelivered '${topic}'`, message);
+            }
         }
         return message;
     }

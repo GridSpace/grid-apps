@@ -29,7 +29,7 @@
 // use: kiri-mode.laser.driver
 gapp.register("kiri-run.worker", [], (root, exports) => {
 
-const { base, kiri } = root;
+const { base, kiri, moto } = root;
 const { util, polygons, wasm_ctrl } = base;
 const { codec } = kiri;
 const { time } = util;

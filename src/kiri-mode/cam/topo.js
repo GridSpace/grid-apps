@@ -7,13 +7,13 @@
 // dep: geo.point
 // dep: geo.polygon
 // dep: geo.polygons
+// dep: moto.broker
 // dep: kiri.slice
 // dep: kiri-mode.cam.driver
 // dep: kiri-mode.cam.slicer2
-// dep: moto.broker
 gapp.register("kiri-mode.cam.topo", [], (root, exports) => {
 
-const { base, kiri } = root;
+const { base, kiri, moto } = root;
 const { driver, newSlice } = kiri;
 const { CAM } = driver;
 const { polygons, newLine, newSlope, newPoint, newPolygon } = base;
