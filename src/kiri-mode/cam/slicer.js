@@ -9,7 +9,7 @@
 // dep: moto.broker
 gapp.register("kiri-mode.cam.slicer", [], (root, exports) => {
 
-const { base, kiri } = root;
+const { base, kiri, moto } = root;
 const { config, util, polygons, newOrderedLine, newPoint, newLine } = base;
 const { sliceConnect, sliceDedup } = base;
 const { newSlice } = kiri;
