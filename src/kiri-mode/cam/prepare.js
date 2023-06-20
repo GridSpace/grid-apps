@@ -169,8 +169,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
             toolDiamMove = toolType === 'endmill' ? toolDiam : tolerance * 2;
             lastTool = toolID;
         }
-        feedRate = feed || feedRate;
-        plungeRate = Math.min(feedRate, plunge || plungeRate || feedRate);
+        feedRate = feed || feedRate || plunge;
+        plungeRate = Math.min(feedRate || plunge, plunge || plungeRate || feedRate);
     }
 
     function setLasering(bool, power = 0) {
@@ -253,7 +253,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} [tool] tool
      */
     function layerPush(point, emit, speed, tool) {
-        const dz = lastPush ? point.z - lastPush.point.z : 0;
+        const dz = (point && lastPush && lastPush.point) ? point.z - lastPush.point.z : 0;
         if (dz < 0 && speed > plungeRate) {
             speed = plungeRate;
         }

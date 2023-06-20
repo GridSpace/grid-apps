@@ -1474,7 +1474,6 @@ class OpDrill extends CamOp {
         let { op, state } = this;
         let { settings, widget, addSlices, updateToolDiams } = state;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
-
         setTool(op.tool, undefined, op.rate);
         setDrill(op.down, op.lift, op.dwell);
         setSpindle(op.spindle);
