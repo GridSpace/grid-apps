@@ -577,6 +577,7 @@ class OpOutline extends CamOp {
         if (zThru) {
             let last = slices[slices.length-1];
             for (let zneg of base.util.lerp(0, zThru, op.down)) {
+                if (!last) continue;
                 let add = last.clone(true);
                 add.tops.forEach(top => top.poly.setZ(add.z));
                 add.shadow = last.shadow.clone(true);
