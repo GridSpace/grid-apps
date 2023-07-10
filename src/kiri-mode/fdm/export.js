@@ -16,14 +16,14 @@ const debug = false;
 FDM.export = function(print, online, ondone, ondebug) {
     const { settings, belty, tools } = print;
     const { bounds, controller, device, process, filter, mode } = settings;
-    const { danger, exportThumb } = device;
+    const { danger, extruders, fwRetract } = device;
     const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
-    const { extruders, fwRetract } = device;
     const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature } = device;
 
     let layers = print.output,
         extras = device.extras || {},
         { extrudeAbs } = device,
+        { exportThumb } = controller,
         extused = Object.keys(print.extruders).map(v => parseInt(v)),
         timeFactor = (device.gcodeTime || 1) * 1.5,
         decimals = config.gcode_decimals || 4,
