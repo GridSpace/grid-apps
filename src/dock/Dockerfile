@@ -1,4 +1,4 @@
-FROM node:15.14.0-stretch
+FROM node:18-buster
 WORKDIR /grid
 COPY package.json /grid
 COPY app.js /grid
