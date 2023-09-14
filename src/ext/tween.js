@@ -1,1 +1,1 @@
-../../node_modules/@tweenjs/tween.js/src/Tween.js
+../../node_modules/@tweenjs/tween.js/dist/tween.umd.js
