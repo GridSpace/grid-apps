@@ -216,7 +216,7 @@ class Slicer {
 
         const promises = []
         for (let bucket of buckets) {
-            promises.push(sliceFn(bucket, opt, slice => {
+            promises.push(sliceFn(bucket, { ...opt, minZ: this.bounds.min.z }, slice => {
                 track.count++;
                 if (opt.progress) {
                     opt.progress(track.count, track.total);
@@ -281,7 +281,7 @@ class Slicer {
         let links = opt.links !== false,
             dedup = opt.dedup !== false,
             edges = opt.edges || false,
-            over = opt.over || false,
+            over = opt.over || z <= opt.minZ,
             debug = opt.debug,
             phash = {},
             lines = [];
