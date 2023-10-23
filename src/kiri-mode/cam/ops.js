@@ -1027,7 +1027,7 @@ class OpTrace extends CamOp {
                 for (let z of zs) {
                     let slice = newSliceOut(z);
                     slice.camTrace = { tool, rate, plunge };
-                    POLY.offset([ poly ], -toolOver, {
+                    POLY.offset([ poly ], [ -toolDiam/2, -toolOver ], {
                         count:999, outs: slice.camLines = [], flat:true, z
                     });
                     if (tabs) {
