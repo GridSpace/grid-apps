@@ -1110,6 +1110,8 @@ class OpTrace extends CamOp {
                     switch (offset) {
                         case "outside": offdist = traceOffset; break;
                         case "inside": offdist = -traceOffset; break;
+                    } else if (offset === "inside") {
+                        offdist = -offdist;
                     }
                     if (offdist) {
                         let pnew = POLY.offset([poly], offdist, { minArea: 0, open: true });
