@@ -1146,7 +1146,17 @@ class OpTrace extends CamOp {
                     if (op.bottom && camZBottom) {
                         z = Math.max(z, camZBottom) - zbo;
                     }
-                    (zmap[z] = zmap[z] || []).push(poly);
+                    if (offover) {
+                        let pnew = POLY.offset([poly], -offover, { minArea: 0, open: true });
+                        if (pnew) {
+                            poly = POLY.setZ(pnew, poly.getZ());
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        poly = [ poly ];
+                    }
+                    (zmap[z] = zmap[z] || []).appendAll(poly);
                 }
                 for (let [zv, polys] of Object.entries(zmap)) {
                     clearZ(polys, parseFloat(zv), down);
