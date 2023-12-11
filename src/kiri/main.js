@@ -886,7 +886,7 @@ gapp.register("kiri.main", [], (root, exports) => {
     }
 
     function switchMode(mode) {
-        setMode(mode, platform.update_size);
+        setMode(mode, null, platform.update_size);
     }
 
     function setMode(mode, lock, then) {

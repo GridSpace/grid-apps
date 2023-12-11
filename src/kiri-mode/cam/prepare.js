@@ -394,6 +394,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     // new pos for plunge calc
                     deltaXY = 0;
                 }
+            } else if (isRough && deltaZ < 0) {
+                layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
             }
         }
 
