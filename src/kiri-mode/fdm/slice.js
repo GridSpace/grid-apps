@@ -289,16 +289,17 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 // console.log({zIndexes, zHeights});
             } else {
                 // simple based + fixed increment
-                while (z <= zMax) {
+                while (true) {
+                    // reduce slice position by half layer height
+                    let realz = (z - (h / 2)).round(3);
+                    if (realz > zMax) {
+                        break;
+                    }
                     zh.push(h);
-                    zi.push(z);
+                    zi.push(realz);
                     h = h1;
                     z += h;
                 }
-            }
-            // reduce slice position by half layer height
-            for (let i=0; i<zi.length; i++) {
-                zi[i] = (zi[i] - zh[i] / 2).round(3);
             }
             return zi;
         },
