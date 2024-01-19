@@ -59,6 +59,7 @@ window.addEventListener('message', msg => {
 
     if (data.features) {
         Object.assign(feature, data.features);
+        api.show.controls(api.feature.controls);
     }
 
     if (data.device) {
