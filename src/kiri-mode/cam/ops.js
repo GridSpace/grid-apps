@@ -265,7 +265,9 @@ class OpRough extends CamOp {
             indices = indices.appendAll(flats).sort((a,b) => b-a);
         }
 
+        indices = indices.filter(v => v >= zBottom);
         // console.log('indices', ...indices, {zBottom});
+
         let cnt = 0;
         let tot = 0;
         await slicer.slice(indices, { each: data => {
@@ -545,6 +547,7 @@ class OpOutline extends CamOp {
             .map(v => (parseFloat(v) - 0.01).round(5))
             .filter(v => v > 0 && indices.indexOf(v) < 0);
         indices = indices.appendAll(flats).sort((a,b) => b-a);
+        indices = indices.filter(v => v >= zBottom);
         // console.log('indices', ...indices, {zBottom, slicer});
         let cnt = 0;
         let tot = 0;
