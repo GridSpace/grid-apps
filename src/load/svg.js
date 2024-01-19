@@ -27,7 +27,6 @@ function parse(text, opt = { soup: true }) {
         || xmlat['extrude']
         || {value: 5};
 
-
     for (let i = 0; i < paths.length; i++) {
         let path = paths[i];
         let shapes = path.toShapes(true);
@@ -72,6 +71,7 @@ function parse(text, opt = { soup: true }) {
                 }
             }
         }));
+
         let z = parseFloat(depth.value);
         for (let poly of nest) {
             let obj = [];
