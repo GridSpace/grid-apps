@@ -383,6 +383,14 @@ class OpRough extends CamOp {
             });
 
             slice.camLines = offset;
+            if (roughLeave) {
+                // offset roughing in Z as well to minimize
+                // tool marks on curved surfaces
+                const roughLeaveZ = 1 * Math.min(roughDown, roughLeave / 2);
+                slice.camLines.forEach(p => {
+                    p.setZ(p.getZ() + roughLeaveZ);
+                });
+            }
             if (false) slice.output()
                 .setLayer("slice", {line: 0xaaaa00}, true)
                 .addPolys(slice.topPolys())
