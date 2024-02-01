@@ -172,7 +172,7 @@ class OpRough extends CamOp {
         let { op, state } = this;
         let { settings, widget, slicer, addSlices, unsafe, color } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
-        let { tshadow, shadowTop, ztOff, zBottom, zMax, shadowAt, isIndexed } = state;
+        let { tshadow, shadowTop, ztOff, zBottom, zThru, zMax, shadowAt, isIndexed } = state;
         let { process, stock } = settings;
 
         if (op.down <= 0) {
@@ -398,13 +398,28 @@ class OpRough extends CamOp {
                 // .addPolys(shadow)
                 .setLayer("rough shell", {line: 0xaa0000})
                 .addPolys(shell);
-            slice.output()
-                .setLayer("roughing", {face: color, line: color})
-                .addPolys(offset);
             progress(0.5 + 0.5 * (index / slices.length));
         });
 
+        let last = slices[slices.length-1];
+        for (let zneg of base.util.lerp(0, zThru, op.down)) {
+            if (!last) continue;
+            let add = last.clone(true);
+            add.z -= zneg;
+            add.camLines = last.camLines.clone(true);
+            add.camLines.forEach(p => p.setZ(add.z));
+            // add.tops.forEach(top => top.poly.setZ(add.z));
+            // add.shadow = last.shadow.clone(true);
+            slices.push(add);
+        }
+
+        slices.forEach(slice => {
+            slice.output()
+                .setLayer("roughing", {face: color, line: color})
+                .addPolys(slice.camLines);
+        });
         this.sliceOut = slices.filter(slice => slice.camLines);
+
         addSlices(this.sliceOut);
     }
 
