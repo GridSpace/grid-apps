@@ -113,7 +113,7 @@ FDM.export = function(print, online, ondone, ondebug) {
         pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
         lines = 0,
         bytes = 0,
-        bcos = Math.cos(Math.PI / 4),
+        bcos = Math.cos(Math.PI / 2),
         icos = 1 / bcos,
         inloops = 0,
         arcQ = [],
