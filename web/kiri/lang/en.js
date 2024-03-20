@@ -445,6 +445,8 @@ self.kiri.lang['en-us'] = {
     cc_spnd_l:      ["spindle speed in","revolutions / minute"],
     cc_sovr_s:      "step over",
     cc_sovr_l:      ["a fraction of tool diameter between 0 and 1. values greater than 0.49 may result in uncut areas or undesirable artifacts."],
+    cc_sovc_s:      "wide steps",
+    cc_sovc_l:      ["number of wide cutout steps"],
     cc_sang_s:      "step angle",
     cc_sang_l:      ["rotation in degrees between lathe axial points"],
     cc_sdwn_s:      "step down",

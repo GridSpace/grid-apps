@@ -663,6 +663,7 @@ class OpOutline extends CamOp {
             } else {
                 if (op.wide) {
                     let stepover = toolDiam * op.step;
+                    for (let c = (op.steps || 1); c > 0; c--)
                     offset.slice().forEach(op => {
                         // clone removes inners but the real solution is
                         // to limit expanded shells to through holes

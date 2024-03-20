@@ -482,6 +482,7 @@ const conf = exports({
                 camOutlineTop: true,
                 camOutlineDown: 3,
                 camOutlineOver: 0.4,
+                camOutlineOverCount: 1,
                 camOutlineSpeed: 800,
                 camOutlinePlunge: 250,
                 camOutlineWide: false,
