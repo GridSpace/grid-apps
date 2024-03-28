@@ -481,6 +481,8 @@ self.kiri.lang['en-us'] = {
     cr_menu:        "rough",
     cr_lsto_s:      "leave stock",
     cr_lsto_l:      ["horizontal offset from vertical faces","stock to leave for finishing pass","in workspace units"],
+    cr_lstz_s:      "leave stock z",
+    cr_lstz_l:      ["vertical offset for roughing passes in workspace units. best for roughing curved surfaces."],
     cr_ease_s:      "ease down",
     cr_ease_l:      ["plunge cuts will","spiral down or ease","along a linear path"],
     cr_clst_s:      "clear stock",
