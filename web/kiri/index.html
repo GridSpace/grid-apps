@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="author" content="Stewart Allen">
-    <meta name="keywords" content="3d slicer,chromebook,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode,cura,simplify 3d,prusaslicer,fdm,sla">
+    <meta name="keywords" content="3d slicer,chromebook,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,iFactory3D,iFactory3D,gcode,cura,simplify 3d,prusaslicer,fdm,sla">
     <meta name="copyright" content="stewart allen [sa@grid.space]">
     <meta name="description" content="Browser-based 3D slicer, gcode and CNC toolpath generator">
-    <meta property="og:description" content="Kiri:Moto is a unique 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters.">
+    <meta property="og:description" content="iFactory3D is a unique 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters.">
     <meta property="og:title" content="Browser-based 3D Slicer">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://grid.space/kiri/">
@@ -16,7 +16,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta http-equiv="origin-trial" content="AqowoIyLrJdKrT7wgV7OtFshD8JyLU2i6Y9FN+2z4ftYXDUUTAlEkJmaRAZKZP0Lmy+GoJRoWxL3Mo6FkUOLOQAAAAB0eyJvcmlnaW4iOiJodHRwczovL2dyaWQuc3BhY2U6NDQzIiwiZmVhdHVyZSI6IlVucmVzdHJpY3RlZFNoYXJlZEFycmF5QnVmZmVyIiwiZXhwaXJ5IjoxNzE5MzU5OTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZX0=">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Kiri:Moto</title>
+    <title>iFactory3D</title>
     <link rel="icon" href="/kiri/favicon.ico">
     <link rel="apple-touch-icon" href="/kiri/favicon-mobile.png">
     <link rel="stylesheet" type="text/css" href="/kiri/index.css?{{version}}">
@@ -42,7 +42,7 @@
         </div>
         <div class="grow"></div>
         <div id="app-name" class="f-col a-center">
-            <div>Kiri:Moto</div>
+            <div>iFactory3D</div>
             <div id="app-info">version</div>
         </div>
         <div id="doit" class="f-row a-center">
@@ -156,24 +156,6 @@
                     <div class="footer"></div>
                 </div>
             </div>
-            <div id="lt-setup" class="lt-menu lt-active">
-                <i class="fas fa-cogs"></i>
-                <label lk="setup">setup</label>
-                <div id="set-pop" class="pop-lcol f-row">
-                    <div id="set-device">
-                        <i class="fas fa-cube"></i>
-                        <label lk="machine">machine</label>
-                    </div>
-                    <div id="set-tools">
-                        <i class="fas fa-tools"></i>
-                        <label lk="tools">tools<label>
-                    </div>
-                    <div id="set-prefs">
-                        <i class="fas fa-sliders-h"></i>
-                        <label lk="prefs">prefs<label>
-                    </div>
-                </div>
-            </div>
             <div id="lt-file" class="lt-menu lt-active">
                 <i class="fas fa-folder"></i>
                 <label lk="files">files</label>
@@ -191,28 +173,6 @@
                 </div>
             </div>
             <div id="act-sep"></div>
-            <div id="lt-view" class="lt-menu lt-active">
-                <i class="fas fa-eye"></i>
-                <label lk="view">view</label>
-                <div id="pop-view" class="pop-lcol f-row">
-                    <div id="view-arrange">
-                        <i class="fas fa-shapes"></i>
-                        <label lk="arrange">arrange</label>
-                    </div>
-                    <div id="view-home">
-                        <i class="fas fa-home"></i>
-                        <label lk="home">home</label>
-                    </div>
-                    <div id="view-top">
-                        <i class="fas fa-square"></i>
-                        <label lk="top">top</label>
-                    </div>
-                    <div id="view-clear">
-                        <i class="far fa-square"></i>
-                        <label lk="clear">clear</label>
-                    </div>
-                </div>
-            </div>
             <div id="lt-start" class="lt-menu lt-active">
                 <i class="fas fa-person-running"></i>
                 <label id="label-start" title="start a process" lk="start">start</label>
@@ -236,6 +196,28 @@
                 </div>
             </div>
             <div id="lt-sep"></div>
+            <div id="lt-view" class="lt-menu lt-active">
+                <i class="fas fa-eye"></i>
+                <label lk="view">view</label>
+                <div id="pop-view" class="pop-lcol f-row">
+                    <div id="view-arrange">
+                        <i class="fas fa-shapes"></i>
+                        <label lk="arrange">arrange</label>
+                    </div>
+                    <div id="view-home">
+                        <i class="fas fa-home"></i>
+                        <label lk="home">home</label>
+                    </div>
+                    <div id="view-top">
+                        <i class="fas fa-square"></i>
+                        <label lk="top">top</label>
+                    </div>
+                    <div id="view-clear">
+                        <i class="far fa-square"></i>
+                        <label lk="clear">clear</label>
+                    </div>
+                </div>
+            </div>
             <div id="lt-render" class="lt-menu lt-active">
                 <i class="fas fa-border-style"></i>
                 <label lk="render">render</label>
@@ -284,6 +266,24 @@
                 <label>nozzle</label>
                 <div id="pop-nozzle" class="pop-lcol f-row fillh russo"></div>
             </div>
+            <div id="lt-setup" class="lt-menu lt-active">
+                <i class="fas fa-cogs"></i>
+                <label lk="setup">setup</label>
+                <div id="set-pop" class="pop-lcol f-row">
+                    <div id="set-device">
+                        <i class="fas fa-cube"></i>
+                        <label lk="machine">machine</label>
+                    </div>
+                    <div id="set-tools">
+                        <i class="fas fa-tools"></i>
+                        <label lk="tools">tools</label>
+                    </div>
+                    <div id="set-prefs">
+                        <i class="fas fa-sliders-h"></i>
+                        <label lk="prefs">prefs</label>
+                    </div>
+                </div>
+            </div>
             <div id="lt-end"></div>
         </div>
         <div id="mid-mcol" class="grow">
@@ -293,11 +293,11 @@
                 <div class="mod-top f-row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
                 <div id="mod-help" class="mdialog f-col">
                     <div class="f-row j-center title">
-                        <label>Kiri:Moto Help</label>
+                        <label>iFactory3D Help</label>
                     </div>
                     <div class="f-col">
-                        <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"><i class="fas fa-question-circle"></i>Kiri:Moto Full Documentation</a>
-                        <a href="https://youtu.be/08795Sj22QE" target="youtube"><i class="fab fa-youtube"></i>Video Guide to Kiri:Moto 2.5</a>
+                        <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"><i class="fas fa-question-circle"></i>iFactory3D Full Documentation</a>
+                        <a href="https://youtu.be/08795Sj22QE" target="youtube"><i class="fab fa-youtube"></i>Video Guide to iFactory3D 2.5</a>
                         <a target="_rsc" href="https://www.youtube.com/c/GridSpace/videos"><i class="fab fa-youtube"></i>YouTube Channel</a>
                         <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Discord Live Chat</a>
                         <a target="_rsc" href="https://forum.grid.space"><i class="fab fa-discourse"></i> Discourse Forums</a>

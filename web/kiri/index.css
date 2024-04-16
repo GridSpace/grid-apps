@@ -5,8 +5,8 @@
     --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
     --holdbar-dk: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,0.25), rgba(100,100,100,0.1));
     --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
-    --highlight: rgba(126,153,183,0.4);
-    --main-color: rgba(126,153,183,1);
+    --highlight: rgba(243, 106, 21, 0.55);
+    --main-color: rgb(238, 76, 43);
 }
 @font-face {
     font-family: 'Russo One';
