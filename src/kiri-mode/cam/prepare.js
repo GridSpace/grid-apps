@@ -362,7 +362,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             // for longer moves, check the terrain to see if we need to go up and over
             const bigXY = (deltaXY > moveLen && !lasering);
             const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
-            const midZ = (tolerance && absDeltaZ >= tolerance);
+            const midZ = (tolerance && absDeltaZ >= tolerance) && currentOp.type !== 'contour';
 
             if (bigXY || bigZ || midZ) {
                 let maxz = getZClearPath(
