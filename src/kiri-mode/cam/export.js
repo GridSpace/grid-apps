@@ -43,6 +43,7 @@ CAM.export = function(print, online) {
         cmdToolChange = device.gcodeChange || [ "M6 T{tool}" ],
         cmdSpindle = device.gcodeSpindle || [ "M3 S{speed}" ],
         cmdDwell = device.gcodeDwell || [ "G4 P{time}" ],
+        axis = { X: 'X', Y: 'Y', Z: 'Z', A: 'A', F: 'F'},
         dev = settings.device,
         spro = settings.process,
         maxZd = spro.camFastFeedZ,
@@ -258,27 +259,27 @@ CAM.export = function(print, online) {
             pos.x = newpos.x;
             runbox.min.x = Math.min(runbox.min.x, pos.x);
             runbox.max.x = Math.max(runbox.max.x, pos.x);
-            nl.append(space).append("X").append(add0(consts.pos_x =  pos.x * factor));
+            nl.append(space).append(axis.X).append(add0(consts.pos_x =  pos.x * factor));
         }
         if (dy || newpos.y !== pos.y) {
             pos.y = newpos.y;
             runbox.min.y = Math.min(runbox.min.y, pos.y);
             runbox.max.y = Math.max(runbox.max.y, pos.y);
-            nl.append(space).append("Y").append(add0(consts.pos_y = pos.y * factor));
+            nl.append(space).append(axis.Y).append(add0(consts.pos_y = pos.y * factor));
         }
         if (dz || newpos.z !== pos.z) {
             pos.z = newpos.z;
             runbox.min.z = Math.min(runbox.min.z, pos.z);
             runbox.max.z = Math.max(runbox.max.z, pos.z);
-            nl.append(space).append("Z").append(add0(consts.pos_z = pos.z * factor));
+            nl.append(space).append(axis.Z).append(add0(consts.pos_z = pos.z * factor));
         }
         if (da) {
             pos.a = newpos.a;
-            nl.append(space).append("A").append(add0(consts.pos_a = pos.a * factor));
+            nl.append(space).append(axis.A).append(add0(consts.pos_a = pos.a * factor));
         }
         if (newFeed) {
             pos.f = feed;
-            nl.append(space).append("F").append(add0(consts.feed = feed * factor, true));
+            nl.append(space).append(axis.F).append(add0(consts.feed = feed * factor, true));
         }
 
         // temp hack to support RML1 dialect from a file extensions trigger
@@ -287,7 +288,7 @@ CAM.export = function(print, online) {
                 if (newFeed) {
                     append(`VS${feed};`);
                 }
-                nl = [ "Z", add0(pos.x * factor), ",", add0(pos.y * factor), ",", add0(pos.z * factor), ";" ];
+                nl = [ axis.Z, add0(pos.x * factor), ",", add0(pos.y * factor), ",", add0(pos.z * factor), ";" ];
             } else {
                 nl = [ "PU", add0(pos.x * factor), ",", add0(pos.y * factor), ";" ];
             }
@@ -348,6 +349,11 @@ CAM.export = function(print, online) {
             compact_output = true;
             stripComments = true;
             space = '';
+        } if (line.indexOf(";; AXISMAP ") === 0) {
+            let axmap = JSON.parse(line.substring(11).trim());
+            for (let key in axmap) {
+                axis[key] = axmap[key];
+            }
         } else {
             gcodePre.push(line);
         }

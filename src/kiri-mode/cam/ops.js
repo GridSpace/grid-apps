@@ -182,7 +182,8 @@ class OpRough extends CamOp {
         let roughIn = op.inside;
         let roughTop = op.top;
         let roughDown = op.down;
-        let roughLeave = op.leave;
+        let roughLeave = op.leave || 0;
+        let roughLeaveZ = op.leavez || 0;
         let roughStock = op.all && isIndexed;
         let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         let trueShadow = process.camTrueShadow === true;
@@ -210,7 +211,7 @@ class OpRough extends CamOp {
             for (let z = zstart; zsteps > 0; zsteps--) {
                 let slice = shadowTop.slice.clone(false);
                 slice.z = z;
-                slice.camLines = POLY.setZ(facing.clone(true), slice.z);
+                slice.camLines = POLY.setZ(facing.clone(true), slice.z + roughLeaveZ);
                 slice.output()
                     .setLayer("face", {face: color, line: color})
                     .addPolys(slice.camLines);
@@ -383,10 +384,10 @@ class OpRough extends CamOp {
             });
 
             slice.camLines = offset;
-            if (roughLeave) {
+            if (roughLeaveZ) {
                 // offset roughing in Z as well to minimize
                 // tool marks on curved surfaces
-                const roughLeaveZ = 1 * Math.min(roughDown, roughLeave / 2);
+                // const roughLeaveZ = 1 * Math.min(roughDown, roughLeave / 2);
                 slice.camLines.forEach(p => {
                     p.setZ(p.getZ() + roughLeaveZ);
                 });
@@ -409,7 +410,7 @@ class OpRough extends CamOp {
             let add = last.clone(true);
             add.z -= zneg;
             add.camLines = last.camLines.clone(true);
-            add.camLines.forEach(p => p.setZ(add.z));
+            add.camLines.forEach(p => p.setZ(add.z + roughLeaveZ));
             // add.tops.forEach(top => top.poly.setZ(add.z));
             // add.shadow = last.shadow.clone(true);
             slices.push(add);
@@ -535,7 +536,7 @@ class OpOutline extends CamOp {
         let shadow = [];
         let slices = [];
         let intopt = {
-            down: true, min: 0, fit: true, off: 0.01,
+            down: true, min: zBottom, fit: true, off: 0.01,
             max: op.top ? zMax + ztOff : undefined
         };
         let indices = slicer.interval(op.down, intopt);
@@ -663,6 +664,7 @@ class OpOutline extends CamOp {
             } else {
                 if (op.wide) {
                     let stepover = toolDiam * op.step;
+                    for (let c = (op.steps || 1); c > 0; c--)
                     offset.slice().forEach(op => {
                         // clone removes inners but the real solution is
                         // to limit expanded shells to through holes

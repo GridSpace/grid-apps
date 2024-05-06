@@ -533,7 +533,9 @@ class Print {
                     });
                     break;
                 case 'G10':
-                    seq.last().retract = true;
+                    if (seq && seq.length) {
+                        seq.last().retract = true;
+                    }
                     break;
                 case 'G11':
                     break;
