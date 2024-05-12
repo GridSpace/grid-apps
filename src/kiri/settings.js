@@ -759,6 +759,7 @@ api.settings = {
     proc() { return settings.process },
     ctrl() { return settings.controller },
     mode() { return settings.mode },
+    prof() { return settings.sproc[settings.mode] },
 };
 
 });

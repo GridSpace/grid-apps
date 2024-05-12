@@ -1064,6 +1064,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 version: kiri.version,
                 device: selected,
                 process: api.process.code(),
+                profiles: event.altKey ? api.settings.prof() : undefined,
                 code: devs[selected],
                 time: Date.now()
             };
