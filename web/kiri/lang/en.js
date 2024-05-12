@@ -671,6 +671,8 @@ self.kiri.lang['en-us'] = {
     ou_flml_s:      "solid factor",
     ou_spml_s:      "infill factor",
     ou_exml_l:      ["extrusion multiplier","0.0 - 2.0"],
+    ou_fanl_s:      "fan on",
+    ou_fanl_l:      ["layer # to turn on fan","layers start at 0"],
     ou_fans_s:      "fan speed",
     ou_fans_l:      "0 - 255",
 
