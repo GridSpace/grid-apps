@@ -80,8 +80,8 @@ FDM.export = function(print, online, ondone, ondebug) {
         nozzleTemp = process.firstLayerNozzleTemp || process.outputTemp,
         bedTemp = process.firstLayerBedTemp || process.outputBedTemp,
         fanSpeedSave = undefined,
-        fanSpeedBase = undefined,
-        fanSpeed = undefined,
+        fanSpeedBase = 0,
+        fanSpeed = 0,
         lastType = undefined,
         lastNozzleTemp = nozzleTemp,
         lastBedTemp = bedTemp,
@@ -167,9 +167,8 @@ FDM.export = function(print, online, ondone, ondebug) {
             params.firstLayerBedTemp || params.outputBedTemp :
             params.outputBedTemp || params.firstLayerBedTemp;
         fanSpeedBase = params.firstLayerFanSpeed || 0;
-        fanSpeed = layer === 0 ?
-            params.firstLayerFanSpeed || 0 :
-            params.outputFanSpeed || 0;
+        fanSpeed = layer >= (params.outputFanLayer ?? 1) ?
+            params.outputFanSpeed || 0 : fanSpeedBase;
         Object.assign(subst, {
             temp_bed: bedTemp,
             bed_temp: bedTemp,

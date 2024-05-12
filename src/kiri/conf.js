@@ -357,6 +357,7 @@ const conf = exports({
                 outputShellMult: 1.25,
                 outputFillMult: 1.25,
                 outputSparseMult: 1.25,
+                outputFanLayer: 1,
                 outputFanSpeed: 255,
                 outputRetractDist: 1.5,
                 outputRetractSpeed: 40,
