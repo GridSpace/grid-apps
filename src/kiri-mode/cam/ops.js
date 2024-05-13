@@ -1269,7 +1269,7 @@ class OpPocket extends CamOp {
                 toolDiam = toolOver;
             }
             if (contour) {
-                expand = engrave ? 0 : toolOver * 2;
+                expand = engrave ? 0 : expand;
             }
             if (expand) {
                 polys = POLY.offset(polys, expand);
@@ -1298,7 +1298,8 @@ class OpPocket extends CamOp {
                     let count = engrave ? 1 : 999;
                     slice.camTrace = { tool, rate, plunge };
                     if (toolDiam) {
-                        POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
+                        const offs = contour ? [ expand ? expand : -0.02, -toolOver ] : [ -toolDiam / 2, -toolOver ];
+                        POLY.offset(clip, offs, {
                             count, outs: slice.camLines = [], flat:true, z
                         });
                     } else {
