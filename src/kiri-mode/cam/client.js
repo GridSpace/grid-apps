@@ -1462,7 +1462,7 @@ CAM.init = function(kiri, api) {
         step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
         down:      UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true, show:() => !poppedRec.contour}),
         sep:       UC.newBlank({class:"pop-sep"}),
-        expand:    UC.newInput(LANG.cp_xpnd_s, {title:LANG.cp_xpnd_l, convert:UC.toFloat, units:true, show:() => !poppedRec.contour}),
+        expand:    UC.newInput(LANG.cp_xpnd_s, {title:LANG.cp_xpnd_l, convert:UC.toFloat, units:true, xshow:() => !poppedRec.contour}),
         refine:    UC.newInput(LANG.cp_refi_s, {title:LANG.cp_refi_l, convert:UC.toInt, show:() => poppedRec.contour}),
         smooth:    UC.newInput(LANG.cp_smoo_s, {title:LANG.cp_smoo_l, convert:UC.toInt}),
         tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4, show:() => poppedRec.contour}),
