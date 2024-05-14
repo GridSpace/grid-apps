@@ -837,8 +837,10 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             profileStart("support-fill");
             let promises = false && isConcurrent ? [] : undefined;
             forSlices(0.8, promises ? 0.88 : 0.9, slice => {
+                let params = slice.params || process;
+                let density = params.sliceSupportDensity;
                 doSupportFill({
-                    promises, slice, lineWidth, density: supportDensity,
+                    promises, slice, lineWidth, density,
                     minArea: process.sliceSupportArea, isBelt,
                     angle: process.sliceSupportFill,
                     outline: process.sliceSupportOutline !== false
