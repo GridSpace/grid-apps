@@ -1407,10 +1407,14 @@ class OpPocket extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut } = this;
-        let { setTool, setSpindle } = ops;
+        let { setTool, setSpindle, setTolerance } = ops;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
+
+        if (this.topo) {
+            setTolerance(this.topo.tolerance);
+        }
 
         let i=0, l=sliceOut.length;
         for (let slice of sliceOut.filter(s => s.camLines)) {

@@ -100,6 +100,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         layerOut = [],
         printPoint,
         isNewMode,
+        isContour,
         isRough,
         isLathe,
         tool,
@@ -151,6 +152,10 @@ function prepEach(widget, settings, print, firstPoint, update) {
     // non-zero means contouring
     function setTolerance(dist) {
         tolerance = dist;
+        if (isContour) {
+            // avoid moves to safe Z when contouring short steps
+            toolDiamMove = currentOp.step * toolDiam * 1.5;
+        }
     }
 
     function setPrintPoint(point) {
@@ -362,7 +367,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             // for longer moves, check the terrain to see if we need to go up and over
             const bigXY = (deltaXY > moveLen && !lasering);
             const bigZ = (deltaZ > toolDiam/2 && deltaXY > tolerance);
-            const midZ = (tolerance && absDeltaZ >= tolerance) && currentOp.type !== 'contour';
+            const midZ = (tolerance && absDeltaZ >= tolerance) && !isContour;
 
             if (bigXY || bigZ || midZ) {
                 let maxz = getZClearPath(
@@ -476,6 +481,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         currentOp = op.op;
         isLathe = currentOp.type === 'lathe';
         isRough = currentOp.type === 'rough';
+        isContour = currentOp.type === 'contour' || (currentOp.type === 'pocket' && currentOp.contour);
         let weight = op.weight();
         newLayer(op.op);
         op.prepare(ops, (progress, message) => {
