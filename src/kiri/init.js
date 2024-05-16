@@ -1393,11 +1393,11 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     async function sync_get() {
-        api.settings.sync && await api.settings.sync.get();
+        await api.settings.sync.get();
     }
 
     async function sync_put() {
-        api.settings.sync && await api.settings.sync.put();
+        await api.settings.sync.put();
     }
 
     function showDevices() {

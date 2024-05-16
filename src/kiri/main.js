@@ -697,6 +697,7 @@ gapp.register("kiri.main", [], (root, exports) => {
                     api.conf.load(null, name);
                 }
                 api.conf.save();
+                api.settings.sync.put();
             } catch (e) {
                 UC.alert('malformed settings object');
             }
@@ -726,6 +727,7 @@ gapp.register("kiri.main", [], (root, exports) => {
         let current = settings.get();
         let name = e.target.getAttribute("del");
         delete current.sproc[getMode()][name];
+        api.settings.sync.put();
         updateProcessList();
         api.conf.save();
         triggerSettingsEvent();

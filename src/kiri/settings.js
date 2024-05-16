@@ -83,9 +83,11 @@ function loadSettings(evt, named) {
 }
 
 function showSettings() {
-    api.dialog.update_process_list();
-    api.modal.show("saves");
-    api.ui.settingsName.focus();
+    api.settings.sync.get().then(() => {
+        api.dialog.update_process_list();
+        api.modal.show("saves");
+        api.ui.settingsName.focus();
+    });
 }
 
 function updateSettings(opt = {}) {
@@ -760,6 +762,11 @@ api.settings = {
     ctrl() { return settings.controller },
     mode() { return settings.mode },
     prof() { return settings.sproc[settings.mode] },
+    sync: {
+        async get() {},
+        async put() {},
+        status: false
+    }
 };
 
 });
