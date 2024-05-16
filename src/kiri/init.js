@@ -681,6 +681,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 api.conf.save();
                 api.conf.update();
                 api.event.settings();
+                sync_put();
             };
 
         if (name) {
@@ -691,6 +692,10 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function settingsLoad() {
+        sync_get().then(_settingsLoad());
+    }
+
+    function _settingsLoad() {
         uc.hidePoppers();
         api.conf.show();
     }
@@ -703,6 +708,7 @@ gapp.register("kiri.init", [], (root, exports) => {
     function removeLocalDevice(devicename) {
         delete settings().devices[devicename];
         api.conf.save();
+        sync_put();
     }
 
     function isLocalDevice(devicename) {
@@ -736,6 +742,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
         putLocalDevice(name, code);
         setDeviceCode(code, name);
+        sync_put();
     }
 
     function updateLaserState() {
@@ -1046,6 +1053,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.event.emit('device.save');
             api.function.clear();
             api.conf.save();
+            sync_put();
             showDevices();
             api.modal.hide();
         };
@@ -1300,6 +1308,10 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     function showTools() {
         if (api.mode.get_id() !== MODES.CAM) return;
+        sync_get().then(_showTools);
+    }
+
+    function _showTools() {
         let selectedIndex = null;
 
         editTools = settings().tools.slice().sort((a,b) => {
@@ -1345,6 +1357,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.conf.save();
             api.conf.update_fields();
             api.event.settings();
+            sync_put();
         };
         ui.toolsExport.onclick = () => {
             uc.prompt("Export Tools Filename", "tools").then(name => {
@@ -1379,7 +1392,19 @@ gapp.register("kiri.init", [], (root, exports) => {
         renderDevices(Object.keys(devices[api.mode.get_lower()]).sort());
     }
 
+    async function sync_get() {
+        api.settings.sync && await api.settings.sync.get();
+    }
+
+    async function sync_put() {
+        api.settings.sync && await api.settings.sync.put();
+    }
+
     function showDevices() {
+        sync_get().then(_showDevices);
+    }
+
+    function _showDevices() {
         // disable device filter and show devices
         ui.dev.header.onclick(true);
         api.modal.show('setup');
