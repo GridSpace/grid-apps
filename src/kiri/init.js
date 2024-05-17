@@ -692,10 +692,6 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function settingsLoad() {
-        sync_get().then(_settingsLoad());
-    }
-
-    function _settingsLoad() {
         uc.hidePoppers();
         api.conf.show();
     }
