@@ -13,6 +13,7 @@ const moment = require('moment');
 const agent = require('express-useragent');
 const license = require_fresh('./src/moto/license.js');
 const version = license.VERSION || "rogue";
+const netdb = require('@gridspace/net-level-client');
 
 const fileCache = {};
 const code_src = {};
@@ -41,6 +42,18 @@ let log;
 const EventEmitter = require('events');
 class AppEmitter extends EventEmitter {}
 const events = new AppEmitter();
+
+netdb.create = async function(map = {}) {
+    if (util.isfile(map.conf)) {
+        Object.assign(map, JSON.parse(fs.readFileSync(map.conf)));
+    }
+    const client = new netdb();
+    if (map.host && map.port) await client.open(map.host, map.port);
+    if (map.user && map.pass) await client.auth(map.user, map.pass);
+    if (map.base) await client.use(map.base);
+    logger.log({ netdb: map.host, user: map.user, base: map.base });
+    return client;
+};
 
 function addonce(array, v) {
     if (array.indexOf(v) < 0) {
@@ -318,7 +331,8 @@ function initModule(mod, file, dir) {
         env: mod.env,
         pkg: {
             agent,
-            moment
+            moment,
+            netdb,
         },
         mod: mods,
         util: {
