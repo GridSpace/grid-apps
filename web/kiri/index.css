@@ -13,6 +13,7 @@
     --menu-text: #222;
     --menu-border: #555;
     --dark-menu-text: #111;
+    --menu-hover: #ddd;
 }
 @font-face {
     font-family: 'Russo One';
@@ -97,6 +98,9 @@ a, a:hover, a:visited {
 .top-menu-right {
     align-items: self-end;
 }
+.top-menu-center .content > div > label {
+    text-align: center !important;
+}
 .top-menu-right .content {
     border-top-left-radius: 4px; 
 }
@@ -117,6 +121,10 @@ a, a:hover, a:visited {
     font-size: smaller;
 }
 #top .content {
+    gap: 4px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
     background-color: var(--menu);
     border-top: 1px dashed var(--menu-border);
     border-left: 1px solid var(--menu-border);
@@ -124,29 +132,37 @@ a, a:hover, a:visited {
     border-bottom: 1px solid var(--menu-border);
     border-bottom-right-radius: 4px;
     border-bottom-left-radius: 4px;
-    padding: 3px 5px 3px 5px;
-    gap: 4px;
-    display: grid;
-    align-items: center;
-    grid-template-columns: auto 1fr;
+}
+#top .content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 2px;
 }
 #top .content > div {
-    display: contents;
-}
-#top .content > div > span {
-    text-align: center;
-    padding-left: 10px;
+    display: flex;
+    flex-direction: row;
 }
 #top .content > div > label {
-    border-radius: 3px;
+    text-align: left;
+    flex-grow: 1;
+}
+#top .content > div > span {
+    text-align: right;
+}
+#top .content > div > span {
+    padding: 2px 7px 2px 7px;
+    padding-left: 10px;
+    text-align: center;
+}
+#top .content > div > label {
+    padding: 2px 7px 2px 7px;
     justify-self: stretch;
     align-self: stretch;
+    border-radius: 3px;
 }
-#top .content > div > label:hover {
-    background-color: #ddd;
-}
-#top .content.onecol {
-    grid-template-columns: 1fr !important;
+#top .content > div:hover {
+    background-color: var(--menu-hover);
 }
 
 #app-name {
@@ -166,15 +182,12 @@ a, a:hover, a:visited {
     display: flex;
 }
 #app-name-pop {
-    /* display: none; */
     color: var(--fg-gray);
     font-family: sans-serif;
     position: absolute;
-    /* right: -6px; */
     top: 100%;
 }
 #app-name-pop .content {
-    /* grid-template-columns: 1fr; */
     text-align: center;
 }
 #app-lang {
@@ -518,31 +531,30 @@ th, tr, td, label {
 #lang-hold {
     background-color: transparent;
     position: absolute;
-    top: 0;
-    left: 0;
-    right: -15px;
-    bottom: 0;
+    top: -35px;
+    left: -35px;
+    right: -35px;
+    bottom: -35px;
 }
 #lang-pop {
-    border: 1px solid red;
     display: none;
     position: absolute;
-    right: 100%;
-    top: -1px;
-    align-items: stretch;
+    right: calc(100% + 2px);
+    top: 0;
+    padding: 1px;
     text-align: right;
-    border-radius: 3px;
-    border: 1px solid #ddd;
-    background-color: white;
+    align-items: stretch;
     white-space: nowrap;
+    background-color: var(--menu);
+    border: 1px solid var(--menu-border);
+    border-radius: 4px;
     flex-direction: column;
 }
 #lang-pop > div {
-    padding: 5px 7px 5px 7px;
+    padding: 2px 7px 2px 7px;
 }
 #lang-pop > div:hover {
-    color: #000;
-    background-color: #f4f4f4;
+    background-color: var(--menu-hover);
 }
 
 #mid {
@@ -888,7 +900,7 @@ th, tr, td, label {
     display: block;
 }
 #camops {
-    display: none;
+    display: flex;
     padding: 0;
     height: 38px;
     margin: 0 0 max(4px, env(safe-area-inset-bottom)) 0;

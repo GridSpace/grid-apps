@@ -78,7 +78,14 @@ gapp.register("kiri.ui", [], (root, exports) => {
         confirm,
         prompt,
         alert,
-        onBlur
+        onBlur,
+        setVisible(el, bool) {
+            if (bool) {
+                el.classList.remove('hide');
+            } else {
+                el.classList.add('hide');
+            }
+        }
     };
 
     function onBlur(obj, fn) {
