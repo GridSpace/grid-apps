@@ -30,7 +30,7 @@ self.kiri.lang['en-us'] = {
     name:           "name",
     off:            "off",          // turn something off (like a lightbulb)
     on:             "on",           // turn something on (like a lightbulb)
-    prefs:          "prefs",        // left menu "preferences"
+    prefs:          "preferences",  // left menu "preferences"
     preview:        "preview",
     recent:         "recent",
     render:         "render",       // left render pop menu

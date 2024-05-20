@@ -12,7 +12,7 @@
 // dep: kiri-mode.laser.driver
 gapp.register("kiri.function", [], (root, exports) => {
 
-const { kiri, noop } = root;
+const { kiri } = root;
 const { api, client, consts, utils } = kiri;
 const { space } = moto;
 const { COLOR, PMODES } = consts;
@@ -427,6 +427,7 @@ function parseCode(code, type) {
     });
 }
 
+// extend API (api.function)
 const functions = api.function = {
     slice: prepareSlices,
     print: preparePreview,

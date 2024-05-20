@@ -1,3 +1,5 @@
+// code for a ServiceWorker that provides support for running cached/offline
+
 const version = self.gapp.version;
 const origin = self.location.origin;
 const stats = {

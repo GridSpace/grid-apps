@@ -861,14 +861,16 @@ gapp.register("kiri.main", [], (root, exports) => {
                 break;
             case VIEWS.SLICE:
                 UI.back.style.display = 'flex';
-                if (!isCAM) UI.render.classList.remove('lt-enabled');
+                if (isCAM) UI.render.classList.add('hide');
+                else UI.render.classList.remove('hide');
                 updateSpeeds();
                 updateSliderMax();
                 setWidgetVisibility(true);
                 break;
             case VIEWS.PREVIEW:
                 UI.back.style.display = 'flex';
-                if (!isCAM) UI.render.classList.remove('lt-enabled');
+                if (isCAM) UI.render.classList.add('hide');
+                else UI.render.classList.remove('hide');
                 setWidgetVisibility(true);
                 break;
             default:

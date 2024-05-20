@@ -267,6 +267,7 @@ function setDisabled(bool) {
     api.platform.update_selected();
 }
 
+// extend API (api.selection)
 const selection = api.selection = {
     move,
     scale,

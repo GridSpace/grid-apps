@@ -32,54 +32,202 @@
     <div id="container"></div>
     <div id="tracker"></div>
     <div id="top-sep"></div>
+
+    <!-- TOP MENU BAR -->
     <div id="top" class="f-row">
-        <div id="app-mode">
-            <div id="mode-info" class="f-row">
-                <label>Mode</label><div id="app-mode-name"></div>
-                <label>Device</label><div id="mode-device"></div>
-                <label>Profile</label><div id="mode-profile"></div>
-            </div>
+        <div class="f-row top-menu">
+            <span>
+                <i class="fas fa-person-running"></i>
+                <label>start</label>
+                <div class="top-menu-drop top-menu-left">
+                    <div class="content">
+
+                        <div id="act-slice">
+                            <label id="label-slice" title="generate layer slices" lk="slice">preview</label>
+                            <span><i class="fas fa-bars"></i></span>
+                        </div>
+                        <div id="act-preview">
+                            <label id="label-preview" title="show routing and paths" lk="preview">preview</label>
+                            <span><i class="fas fa-layer-group"></i></span>
+                        </div>
+                        <div id="act-animate">
+                            <label id="label-animate" title="render routing on a mesh" lk="animate">animate</label>
+                            <span><i class="fas fa-film"></i></span>
+                        </div>
+                        <div id="act-export">
+                            <label id="label-export" title="generate gcode" lk="export">export</label>
+                            <span><i class="fas fa-file-download"></i></span>
+                        </div>
+    
+                    </div>
+                </div>
+            </span>
+            <span>
+                <i class="fas fa-folder"></i>
+                <label>files</label>
+                <div class="top-menu-drop top-menu-left">
+                    <div class="content">
+                        <div id="file-recent">
+                            <label lk="recent">recent</label>
+                            <span><i class="fas fa-list"></i></span>
+                        </div>
+                        <div id="file-import">
+                            <label lk="import">import</label>
+                            <span><i class="fas fa-file-upload"></i></span>
+                            <!-- hidden file input loader -->
+                            <input id="load-file" type="file" name="loadme" style="display:none"></input>
+                        </div>
+                    </div>
+                </div>
+            </span>
+            <span>
+                <i class="fas fa-dice-d20"></i>
+                <label>mesh</label>
+                <div class="top-menu-drop top-menu-left">
+                    <div class="content">
+                        <div id="tool-rotate">
+                            <label lk="rotate">rotate</label>
+                            <span><i class="fas fa-sync-alt"></i></span>
+                        </div>
+                        <div id="tool-scale">
+                            <label lk="scale">scale</label>
+                            <span><i class="fas fa-expand"></i></span>
+                        </div>
+                        <div id="tool-mesh">
+                            <label lk="mesh">mesh</label>
+                            <span><i class="fas fa-dice-d20"></i></span>
+                        </div>
+                        <div id="tool-selector">
+                            <label lk="select">select</label>
+                            <span><i class="fas fa-mouse-pointer"></i></span>
+                        </div>
+                            <div id="view-clear">
+                            <label lk="clear">clear</label>
+                            <span><i class="far fa-square"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </span>
+            <span id="menu-nozzle">
+                <i class="fas fa-map-marker"></i>
+                <label>tool</label>
+                <div class="top-menu-drop top-menu-left">
+                    <div id="pop-nozzle" class="content onecol"></div>
+                </div>
+            </span>
         </div>
         <div class="grow"></div>
-        <div id="app-name" class="f-col a-center">
-            <div>Kiri:Moto</div>
-            <div id="app-info">version</div>
+        <div id="app-name" class="f-col a-center top-menu">
+            <span>
+                <label>Kiri:Moto</label>
+                <div id="app-name-pop" class="top-menu-drop top-menu-center">
+                    <div class="content onecol">
+                        <div id="app-help">
+                            <label lk="help">help</label>
+                        </div>
+                        <div>
+                            <hr width="100%">
+                            <label id="app-info">version</label>
+                        </div>
+                    </div>
+                </div>
+            </span>
         </div>
         <div id="doit" class="f-row a-center">
             <button id="undo"><i class="fas fa-undo-alt"></i></button>
             <button id="redo"><i class="fas fa-redo-alt"></i></button>
         </div>
         <div class="grow"></div>
-        <div id="app-xpnd" lkt="fullscreen">
-            <i class="fa-solid fa-maximize"></i>
-        </div>
-        <div id="app-acct">
-            <i class="fas fa-user-cog"></i>
-            <div id="acct-pop" class="f-col">
-                <div id="acct-menu" class="f-col">
-                    <div id="acct-lang">
-                        <label><i class="fas fa-caret-left"></i><span class="grow">&nbsp;</span><span lk="language">language</span></label>
-                        <div id="lang-pop" class="f-col">
-                            <div id="lset-zh">简体中文</div>
-                            <div id="lset-da">dansk</div>
-                            <div id="lset-de">deutsch</div>
-                            <div id="lset-en">english</div>
-                            <div id="lset-es">español</div>
-                            <div id="lset-fr">français</div>
-                            <div id="lset-pl">polskie</div>
-                            <div id="lset-pt">português</div>
+        <div class="f-row top-menu">
+            <span id="menu-render">
+                <i class="fas fa-dice-d20"></i>
+                <label>render</label>
+                <div class="top-menu-drop top-menu-right">
+                    <div class="content">
+                        <div id="render-solid" class="grow a-center">
+                            <label lk="solid">solid</label>
+                            <span><i class="fas fa-square"></i></span>
+                        </div>
+                        <div id="render-wire" class="grow a-center">
+                            <label lk="wire">wire</label>
+                            <span><i class="fas fa-border-all"></i></span>
+                        </div>
+                        <div id="render-ghost" class="grow a-center">
+                            <label lk="ghost">ghost</label>
+                            <span><i class="fas fa-border-none"></i></span>
+                        </div>
+                        <div id="render-hide" class="grow a-center">
+                            <label lk="hide">hide</label>
                         </div>
                     </div>
-                    <div id="acct-export" class="f-col a-end">
-                        <label lk="export">export</label>
-                    </div>
-                    <div id="acct-help" class="f-col a-end">
-                        <label lk="help">help</label>
+                </div>
+            </span>
+            <span>
+                <i class="fas fa-eye"></i>
+                <label>view</label>
+                <div class="top-menu-drop top-menu-right">
+                    <div class="content">
+                        <div id="view-arrange">
+                            <label lk="arrange">arrange</label>
+                            <span><i class="fas fa-shapes"></i></span>
+                        </div>
+                        <div id="view-home">
+                            <label lk="home">home</label>
+                            <span><i class="fas fa-home"></i></span>
+                        </div>
+                        <div id="view-top">
+                            <label lk="top">top</label>
+                            <span><i class="fas fa-square"></i></span>
+                        </div>
+                        <div id="app-xpnd">
+                            <label lk="fullscreen">fullscreen</label>
+                            <span><i class="fas fa-maximize"></i></span>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </span>
+            <span>
+                <i class="fas fa-cog"></i>
+                <label>setup</label>
+                <div class="top-menu-drop top-menu-right">
+                    <div class="content">
+                        <div id="set-prefs">
+                            <label lk="prefs">prefs</label>
+                            <span><i class="fas fa-sliders-h"></i></span>
+                        </div>
+                        <div id="set-device">
+                            <label lk="machine">machine</label>
+                            <span><i class="fas fa-cube"></i></span>
+                        </div>
+                        <div id="set-tools">
+                            <label lk="tools">tools<label>
+                            <span><i class="fas fa-tools"></i></span>
+                        </div>
+                        <div id="app-lang">
+                            <label lk="language">language</label>
+                            <span><i class="fas fa-language"></i></span>
+                            <div id="lang-pop">
+                                <div id="lset-zh">简体中文</div>
+                                <div id="lset-da">dansk</div>
+                                <div id="lset-de">deutsch</div>
+                                <div id="lset-en">english</div>
+                                <div id="lset-es">español</div>
+                                <div id="lset-fr">français</div>
+                                <div id="lset-pl">polskie</div>
+                                <div id="lset-pt">português</div>
+                                <span id="lang-hold"></span>
+                            </div>
+                        </div>
+                        <div id="app-export">
+                            <label lk="export">export</label>
+                            <span><i class="fas fa-download"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </span>
         </div>
     </div>
+
     <div id="mid-sep"></div>
     <div id="mid" class="grow f-row">
         <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
@@ -156,135 +304,6 @@
                     <div class="footer"></div>
                 </div>
             </div>
-            <div id="lt-setup" class="lt-menu lt-active">
-                <i class="fas fa-cogs"></i>
-                <label lk="setup">setup</label>
-                <div id="set-pop" class="pop-lcol f-row">
-                    <div id="set-device">
-                        <i class="fas fa-cube"></i>
-                        <label lk="machine">machine</label>
-                    </div>
-                    <div id="set-tools">
-                        <i class="fas fa-tools"></i>
-                        <label lk="tools">tools<label>
-                    </div>
-                    <div id="set-prefs">
-                        <i class="fas fa-sliders-h"></i>
-                        <label lk="prefs">prefs<label>
-                    </div>
-                </div>
-            </div>
-            <div id="lt-file" class="lt-menu lt-active">
-                <i class="fas fa-folder"></i>
-                <label lk="files">files</label>
-                <div id="file-pop" class="pop-lcol f-row">
-                    <div id="file-recent">
-                        <i class="fas fa-list"></i>
-                        <label lk="recent">recent</label>
-                    </div>
-                    <div id="file-import">
-                        <i class="fas fa-file-upload"></i>
-                        <label lk="import">import</label>
-                        <!-- hidden file input loader -->
-                        <input id="load-file" type="file" name="loadme" style="display:none"></input>
-                    </div>
-                </div>
-            </div>
-            <div id="act-sep"></div>
-            <div id="lt-view" class="lt-menu lt-active">
-                <i class="fas fa-eye"></i>
-                <label lk="view">view</label>
-                <div id="pop-view" class="pop-lcol f-row">
-                    <div id="view-arrange">
-                        <i class="fas fa-shapes"></i>
-                        <label lk="arrange">arrange</label>
-                    </div>
-                    <div id="view-home">
-                        <i class="fas fa-home"></i>
-                        <label lk="home">home</label>
-                    </div>
-                    <div id="view-top">
-                        <i class="fas fa-square"></i>
-                        <label lk="top">top</label>
-                    </div>
-                    <div id="view-clear">
-                        <i class="far fa-square"></i>
-                        <label lk="clear">clear</label>
-                    </div>
-                </div>
-            </div>
-            <div id="lt-start" class="lt-menu lt-active">
-                <i class="fas fa-person-running"></i>
-                <label id="label-start" title="start a process" lk="start">start</label>
-                <div id="pop-slice" class="pop-lcol f-row">
-                    <div id="act-slice">
-                        <i class="fas fa-bars"></i>
-                        <label id="label-slice" title="generate layer slices" lk="slice">preview</label>
-                    </div>
-                    <div id="act-preview">
-                        <i class="fas fa-layer-group"></i>
-                        <label id="label-preview" title="show routing and paths" lk="preview">preview</label>
-                    </div>
-                    <div id="act-animate">
-                        <i class="fas fa-film"></i>
-                        <label id="label-animate" title="render routing on a mesh" lk="animate">animate</label>
-                    </div>
-                    <div id="act-export">
-                        <i class="fas fa-file-download"></i>
-                        <label id="label-export" title="generate gcode" lk="export">export</label>
-                    </div>
-                </div>
-            </div>
-            <div id="lt-sep"></div>
-            <div id="lt-render" class="lt-menu lt-active">
-                <i class="fas fa-border-style"></i>
-                <label lk="render">render</label>
-                <div id="pop-render" class="pop-lcol f-row">
-                    <div id="render-solid" class="grow a-center">
-                        <i class="fas fa-square"></i>
-                        <label lk="solid">solid</label>
-                    </div>
-                    <div id="render-wire" class="grow a-center">
-                        <i class="fas fa-border-all"></i>
-                        <label lk="wire">wire</label>
-                    </div>
-                    <div id="render-ghost" class="grow a-center">
-                        <i class="fas fa-border-none"></i>
-                        <label lk="ghost">ghost</label>
-                    </div>
-                    <div id="render-hide" class="grow a-center">
-                        <label lk="hide">hide</label>
-                    </div>
-                </div>
-            </div>
-            <div id="lt-tools" class="lt-menu lt-active">
-                <i class="fas fa-tools"></i>
-                <label lk="tools">edit</label>
-                <div id="pop-tools" class="pop-lcol f-row">
-                    <div id="tool-rotate" class="grow a-center">
-                        <i class="fas fa-sync-alt"></i>
-                        <label lk="rotate">rotate</label>
-                    </div>
-                    <div id="tool-scale" class="grow a-center">
-                        <i class="fas fa-expand"></i>
-                        <label lk="scale">scale</label>
-                    </div>
-                    <div id="tool-mesh" class="grow a-center">
-                        <i class="fas fa-dice-d20"></i>
-                        <label lk="mesh">mesh</label>
-                    </div>
-                    <div id="tool-selector" class="grow a-center">
-                        <i class="fas fa-mouse-pointer"></i>
-                        <label lk="select">select</label>
-                    </div>
-                </div>
-            </div>
-            <div id="lt-nozzle" class="lt-menu noshow">
-                <i class="fas fa-map-marker"></i>
-                <label>nozzle</label>
-                <div id="pop-nozzle" class="pop-lcol f-row fillh russo"></div>
-            </div>
-            <div id="lt-end"></div>
         </div>
         <div id="mid-mcol" class="grow">
             <div id="modal">
@@ -520,6 +539,15 @@
         <div class="sep"></div>
         <button id="context-setfocus" lk="rc_focs">set focus</button>
     </div>
+
+    <div id="app-state">
+        <div id="mode-info" class="f-row">
+            <label>Mode</label><div id="app-mode-name"></div>
+            <label>Device</label><div id="mode-device"></div>
+            <label>Profile</label><div id="mode-profile"></div>
+        </div>
+    </div>
+
     <div id="stats">
         <div id="rms"></div>
         <div id="fps"></div>

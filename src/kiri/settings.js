@@ -733,6 +733,7 @@ function setEnableWASM(bool) {
     api.event.emit("set.assembly", bool);
 }
 
+// extend API (api.conf)
 api.conf = {
     dbo: () => { return ls2o('ws-settings') },
     get: getSettings,
@@ -751,6 +752,7 @@ api.conf = {
     import: settingsImport,
 };
 
+// extend API (api.settings)
 api.settings = {
     get: getSettings,
     import: settingsImport,

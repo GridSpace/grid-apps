@@ -149,7 +149,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     function speedSave() {
         settings().controller.showSpeeds = ui.showSpeeds.checked;
-        api.platform.update_speeds();
+        api.view.update_speeds();
     }
 
     function zAnchorSave() {
@@ -808,9 +808,8 @@ gapp.register("kiri.init", [], (root, exports) => {
                 selext.innerHTML = '';
                 for (let i=0; i<dev.extruders.length; i++) {
                     let d = DOC.createElement('div');
-                    d.appendChild(DOC.createTextNode(i));
+                    d.innerHTML = `<label>extruder ${i}</label>`;
                     d.setAttribute('id', `sel-ext-${i}`);
-                    d.setAttribute('class', 'col j-center');
                     d.onclick = function() {
                         api.selection.for_widgets(w => {
                             api.widgets.annotate(w.id).extruder = i;
@@ -1621,8 +1620,8 @@ gapp.register("kiri.init", [], (root, exports) => {
                 export:         $('label-export'),
             },
             acct: {
-                help:           $('acct-help'),
-                export:         $('acct-export')
+                help:           $('app-help'),
+                export:         $('app-export')
             },
             dev: {
                 header:         $('dev-header'),
@@ -1660,8 +1659,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             ltview:             $('lt-view'),
             ltact:              $('lt-start'),
             edit:               $('lt-tools'),
-            nozzle:             $('lt-nozzle'),
-            render:             $('lt-render'),
+            nozzle:             $('menu-nozzle'),
+            render:             $('menu-render'),
 
             modal:              $('modal'),
             modalBox:           $('modal-box'),
@@ -2452,21 +2451,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             }
         };
 
-        if (DOC.body.requestFullscreen) {
-            $('app-xpnd').style.display = 'flex';
+        if (!DOC.body.requestFullscreen) {
+            $('app-xpnd').style.display = 'none';
         }
-
-        let hpops = [];
-        uc.hoverPop(ui.ltsetup, { group: hpops, target: $('set-pop') });
-        uc.hoverPop(ui.ltfile,  { group: hpops, target: $('file-pop') });
-        uc.hoverPop(ui.ltview,  { group: hpops, target: $('pop-view') });
-        uc.hoverPop(ui.ltact,   { group: hpops, target: $('pop-slice') });
-        uc.hoverPop(ui.render,  { group: hpops, target: $('pop-render'), xsticky: false });
-        uc.hoverPop(ui.edit,    { group: hpops, target: $('pop-tools'), xsticky: false });
-        uc.hoverPop(ui.nozzle,  { group: hpops, target: $('pop-nozzle'), xsticky: true });
-        uc.hoverPop($('app-acct'), { group: hpops, target: $('acct-pop') } );
-        // uc.hoverPop($('app-mode'), { group: hpops, target: $('mode-info') } );
-        uc.hoverPop($('app-name'), { group: hpops, target: $('app-info') } );
 
         uc.onBlur([
             ui.toolName,
@@ -2814,7 +2801,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // bind interface action elements
         $('app-name').onclick = api.help.show;
-        $('app-mode').onclick = (ev) => { ev.stopPropagation(); showDevices() };
+        $('app-state').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };

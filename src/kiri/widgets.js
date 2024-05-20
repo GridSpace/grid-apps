@@ -76,6 +76,7 @@ function opacity(value) {
     moto.space.update();
 }
 
+// extend API (api.widgets)
 const widgets = api.widgets = {
     load:       Widget.loadFromCatalog,
     new:        newWidget,
