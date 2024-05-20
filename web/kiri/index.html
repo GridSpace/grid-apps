@@ -228,7 +228,69 @@
         </div>
     </div>
 
-    <div id="mid-sep"></div>
+    <div id="float-tools" class="f-col movable hide">
+        <div id="float-tools-title" class="title mover">
+            <label id="ft-label" class="grow">title bar</label>
+            <div id="float-tools-close" class="closer"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="body f-row">
+            <div class="f-col menu">
+                <div lkt="rotate" class="tictac" select="ft-rotate" label="ft-label"><i class="fas fa-sync-alt"></i></div>
+                <div lkt="scale" class="tictac" select="ft-scale" label="ft-label"><i class="fas fa-expand"></i></div>
+                <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
+                <div lkt="select" class="tictac" select="ft-select" label="ft-label"><i class="fas fa-mouse-pointer"></i></div>
+            </div>
+            <div id="ft-scale" class="grow grid">
+                <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
+                <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked></div>
+                <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked></div>
+                <div><label id="lab-axis" lk="axis">axis</label></div>
+                <div><input id="size_x" size="8" class="value"></div>
+                <div><input id="size_y" size="8" class="value"></div>
+                <div><input id="size_z" size="8" class="value"></div>
+                <div><label id="lab-size" lk="size">size</label></div>
+                <div><input id="scale_x" size="8" class="value" value="1"></div>
+                <div><input id="scale_y" size="8" class="value" value="1"></div>
+                <div><input id="scale_z" size="8" class="value" value="1"></div>
+                <div><label id="lab-scale" lk="scale">scale</label></div>
+                <button id="scale-reset" class="gr4">reset</button>
+            </div>
+            <div id="ft-rotate" class="grow grid">
+                <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
+                <label>X</label>
+                <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
+                <input id="rot_x" class="value center" size="6" value="0">
+                <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
+                <label>Y</label>
+                <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
+                <input id="rot_y" class="value center" size="6" value="0">
+                <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
+                <label>Z</label>
+                <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
+                <input id="rot_z" class="value center" size="6" value="0">
+                <div class="buttons f-row">
+                    <button id="lay-flat" class="grow">lay flat</button>
+                    <button id="unrotate" class="grow" lk="reset">reset</button>
+                </div>
+            </div>
+            <div id="ft-mesh" class="grow f-col">
+                <div id="mesh-info" class="grid">
+                    <label>object:</label>
+                    <span id="mesh-name" class="value">[0]</span>
+                    <label>points:</label>
+                    <span id="mesh-points" class="value">-</span>
+                    <label>faces:</label>
+                    <span id="mesh-faces" class="value">-</span>
+                </div>
+                <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
+                <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
+                <button id="mesh-swap" lk="rc_swap">replace vertices</button>
+            </div>
+            <div id="ft-select" class="grow f-col"></div>
+        </div>
+        <div class="footer"></div>
+    </div>
+
     <div id="mid" class="grow f-row">
         <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
         <div id="mid-lcol" class="f-col j-center noshow">
@@ -241,68 +303,7 @@
                 <div id="lt-w-disable"><i class="fas fa-times-circle"></i></div>
             </div>
             <div id="lt-top">
-                <div id="float-tools" class="f-col movable">
-                    <div id="float-tools-title" class="title mover">
-                        <label id="ft-label" class="grow">title bar</label>
-                        <div id="float-tools-close" class="closer"><i class="fas fa-times"></i></div>
-                    </div>
-                    <div class="body f-row">
-                        <div class="f-col menu">
-                            <div lkt="rotate" class="tictac" select="ft-rotate" label="ft-label"><i class="fas fa-sync-alt"></i></div>
-                            <div lkt="scale" class="tictac" select="ft-scale" label="ft-label"><i class="fas fa-expand"></i></div>
-                            <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
-                            <div lkt="select" class="tictac" select="ft-select" label="ft-label"><i class="fas fa-mouse-pointer"></i></div>
-                        </div>
-                        <div id="ft-scale" class="grow grid">
-                            <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
-                            <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked></div>
-                            <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked></div>
-                            <div><label id="lab-axis" lk="axis">axis</label></div>
-                            <div><input id="size_x" size="8" class="value"></div>
-                            <div><input id="size_y" size="8" class="value"></div>
-                            <div><input id="size_z" size="8" class="value"></div>
-                            <div><label id="lab-size" lk="size">size</label></div>
-                            <div><input id="scale_x" size="8" class="value" value="1"></div>
-                            <div><input id="scale_y" size="8" class="value" value="1"></div>
-                            <div><input id="scale_z" size="8" class="value" value="1"></div>
-                            <div><label id="lab-scale" lk="scale">scale</label></div>
-                            <button id="scale-reset" class="gr4">reset</button>
-                        </div>
-                        <div id="ft-rotate" class="grow grid">
-                            <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
-                            <label>X</label>
-                            <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
-                            <input id="rot_x" class="value center" size="6" value="0">
-                            <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
-                            <label>Y</label>
-                            <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
-                            <input id="rot_y" class="value center" size="6" value="0">
-                            <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
-                            <label>Z</label>
-                            <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
-                            <input id="rot_z" class="value center" size="6" value="0">
-                            <div class="buttons f-row">
-                                <button id="lay-flat" class="grow">lay flat</button>
-                                <button id="unrotate" class="grow" lk="reset">reset</button>
-                            </div>
-                        </div>
-                        <div id="ft-mesh" class="grow f-col">
-                            <div id="mesh-info" class="grid">
-                                <label>object:</label>
-                                <span id="mesh-name" class="value">[0]</span>
-                                <label>points:</label>
-                                <span id="mesh-points" class="value">-</span>
-                                <label>faces:</label>
-                                <span id="mesh-faces" class="value">-</span>
-                            </div>
-                            <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
-                            <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
-                            <button id="mesh-swap" lk="rc_swap">replace vertices</button>
-                        </div>
-                        <div id="ft-select" class="grow f-col"></div>
-                    </div>
-                    <div class="footer"></div>
-                </div>
+
             </div>
         </div>
         <div id="mid-mcol" class="grow">

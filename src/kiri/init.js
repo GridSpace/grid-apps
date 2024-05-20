@@ -2893,9 +2893,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         for (let tt of [...document.getElementsByClassName('closer')]) {
             let tid = tt.getAttribute('target');
             let target = tid ? $(tid) : parentWithClass(tt, 'movable');
-            target.style.display = 'none';
+            target.classList.add('hide');
             let close = tt.onmousedown = (ev) => {
-                target.style.display = 'none';
+                target.classList.add('hide');
                 if (ev) {
                     ev.preventDefault();
                     ev.stopPropagation();
@@ -2958,7 +2958,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                     tictac = $(`ft-${tictac}`);
                 }
                 let mover = parentWithClass(tictac.control, 'movable');
-                mover.style.display = 'flex';
+                mover.classList.remove('hide');
                 tictac.control.onclick();
             });
             $('tool-rotate').onclick = event.bind("tool.show", "rotate");

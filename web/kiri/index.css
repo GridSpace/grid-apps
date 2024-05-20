@@ -577,7 +577,7 @@ th, tr, td, label {
 #top-sep {
     display: none;
 }
-#top-sep, #mid-sep {
+#top-sep {
     z-index: 14;
     height: 1px;
     background-image: var(--gradbar);
@@ -645,8 +645,9 @@ th, tr, td, label {
 #float-tools {
     position: absolute;
     margin: 0 0 0 5px;
-    top: 0;
-    left: 100%;
+    top: 35px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 16;
 }
 #float-tools button {
