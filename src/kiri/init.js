@@ -180,7 +180,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
         control.shiny = ui.shiny.checked;
         control.decals = ui.decals.checked;
-        control.danger = ui.danger.checked;
         control.showOrigin = ui.showOrigin.checked;
         control.showRulers = ui.showRulers.checked;
         control.autoLayout = ui.autoLayout.checked;
@@ -1531,10 +1530,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         return !isBelt();
     }
 
-    function isDanger() {
-        return ui.danger.checked;
-    }
-
     // MAIN INITIALIZATION FUNCTION
 
     function init_one() {
@@ -1813,7 +1808,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             ortho:            uc.newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
             dark:             uc.newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             devel:            uc.newBoolean(LANG.op_devl_s, booleanSave, {title:LANG.op_devl_l}),
-            danger:           uc.newBoolean(LANG.op_dang_s, booleanSave, {title:LANG.op_dang_l}),
 
             lprefs:           uc.newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
             showOrigin:       uc.newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
@@ -2046,7 +2040,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             outputCoastDist:     uc.newInput(LANG.ad_scst_s, {title:LANG.ad_scst_l, bound:uc.bound(0.0,10), convert:uc.toFloat, modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
             zHopDistance:        uc.newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, bound:uc.bound(0,3.0), convert:uc.toFloat, modes:FDM}),
-            arcTolerance:        uc.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:uc.bound(0,1.0), convert:uc.toFloat, modes:FDM, show:() => { return isDanger() && isNotBelt() }}),
+            arcTolerance:        uc.newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, bound:uc.bound(0,1.0), convert:uc.toFloat, modes:FDM, show:() => { return isNotBelt() }}),
             antiBacklash:        uc.newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, bound:uc.bound(0,3), convert:uc.toInt, modes:FDM}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
             outputLoops:         uc.newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, convert:uc.toInt, bound:uc.bound(-1,1000), modes:FDM, show:isBelt}),

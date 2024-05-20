@@ -23,7 +23,7 @@ const POLY = polygons;
 base.slicePost.FDM = function(data, options) {
     const { z, lines, groups } = data;
     const { useAssembly, post_args, zIndexes } = options;
-    const { process, isSynth, isDanger, vaseMode } = post_args;
+    const { process, isSynth, vaseMode } = post_args;
     const { shellOffset, fillOffset, clipOffset } = post_args;
     data.tops = POLY.nest(groups);
     if (isSynth) {

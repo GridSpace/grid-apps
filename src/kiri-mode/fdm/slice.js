@@ -106,7 +106,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         isBelt = device.bedBelt,
         isSynth = widget.track.synth,
         isSupport = widget.track.support,
-        isDanger = controller.danger,
         useAssembly = controller.assembly,
         isConcurrent = controller.threaded && kiri.minions.concurrent,
         topLayers = process.sliceTopLayers || 0,
@@ -220,7 +219,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             vaseMode,
             isSynth,
             process,
-            isDanger,
         },
         // z index generator
         zGen(zopt) {
@@ -823,7 +821,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             profileStart("support");
             let promises = [];
             forSlices(0.7, 0.75, slice => {
-                promises.push(doSupport(slice, process, widget.shadow, { exp: isDanger }));
+                promises.push(doSupport(slice, process, widget.shadow, { }));
             }, "support");
             await tracker(promises, (i, t) => {
                 trackupdate(i / t, 0.75, 0.8);

@@ -38,14 +38,13 @@ FDM.prepare = async function(widgets, settings, update) {
         { sliceHeight, firstSliceHeight, firstLayerRate, sliceSupportOutline } = process,
         { outputSeekrate, outputDraftShield, outputPurgeTower } = process,
         { bedWidth, bedDepth, filamentSource } = device,
-        { lineType, danger } = controller,
+        { lineType } = controller,
         printPoint = newPoint(0,0,0),
         print = self.worker.print = kiri.newPrint(settings, widgets),
         nozzle = process.sliceLineWidth || device.extruders[0].extNozzle,
         isBelt = device.bedBelt,
         isThin = lineType === "line",
         isFlat = lineType === "flat",
-        isDanger = danger || false,
         isPalette = filamentSource === 'palette3',
         useRaft = process.outputRaft || false,
         firstLayerHeight = isBelt ? sliceHeight : firstSliceHeight || sliceHeight,
@@ -561,7 +560,6 @@ FDM.prepare = async function(widgets, settings, update) {
                 {
                     routeAround: process.outputAvoidGaps,
                     seedPoint: printPoint.sub(offset),
-                    danger: isDanger,
                     params, // range parameters
                     first: slice.index === 0,
                     support: slice.widget.support,

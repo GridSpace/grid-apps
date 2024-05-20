@@ -434,7 +434,6 @@ class OpRough extends CamOp {
         let { settings, widget } = state;
         let { process, controller } = settings;
 
-        let danger = controller.danger;
         let easeDown = process.camEaseDown;
         let cutdir = process.camConventional;
         let depthFirst = process.camDepthFirst && !state.isIndexed;
@@ -498,7 +497,7 @@ class OpRough extends CamOp {
         }
 
         if (depthFirst) {
-            let ease = danger && op.down && easeDown ? op.down : 0;
+            let ease = op.down && easeDown ? op.down : 0;
             let ins = depthData.map(a => a.filter(p => !isNeg(p.depth)));
             let itops = ins.map(level => {
                 return POLY.nest(level.filter(poly => poly.depth === 0).clone());
@@ -718,7 +717,6 @@ class OpOutline extends CamOp {
         let { settings, widget } = state;
         let { process, controller } = settings;
 
-        let danger = controller.danger;
         let easeDown = process.camEaseDown;
         let toolDiam = this.toolDiam;
         let cutdir = process.camConventional;
@@ -769,7 +767,7 @@ class OpOutline extends CamOp {
                     .sort((a,b) => { return a.area() - b.area() })[0]
                     .average();
                 // experimental start of ease down
-                let ease = danger && op.down && easeDown ? op.down : 0;
+                let ease = op.down && easeDown ? op.down : 0;
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false, ease);
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true, ease);
             }

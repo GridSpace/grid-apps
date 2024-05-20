@@ -246,8 +246,6 @@ self.kiri.lang['en-us'] = {
     op_decl_l:      "show device decals and logos",
     op_shny_s:      "detail render",
     op_shny_l:      "choose a slice render method that is slower and uses specular highlighting. this makes it easier to see detail in some models at the expense of render speed",
-    op_dang_s:      "experimental",
-    op_dang_l:      "show experimental parameters",
     op_devl_s:      "developer",
     op_devl_l:      ["show developer options","enable developer debugging"],
     op_hopo_s:      "hover pop",

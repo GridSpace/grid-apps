@@ -137,9 +137,9 @@ FDM.init = function(kiri, api) {
         if (!isFdmMode) {
             return;
         }
-        if (!api.conf.get().controller.danger) {
+        // if (!api.conf.get().controller.danger) {
             return;
-        }
+        // }
         let pct = 0;
         let int = setInterval(() => {
             if (pct <= 1) {

@@ -16,7 +16,7 @@ const debug = false;
 FDM.export = function(print, online, ondone, ondebug) {
     const { settings, belty, tools } = print;
     const { bounds, controller, device, process, filter, mode } = settings;
-    const { danger, extruders, fwRetract } = device;
+    const { extruders, fwRetract } = device;
     const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
     const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature } = device;
 
@@ -57,7 +57,7 @@ FDM.export = function(print, online, ondone, ondebug) {
         retSpeed = process.outputRetractSpeed * 60 || 1, // range
         retDwell = process.outputRetractDwell || 0, // range
         timeDwell = retDwell / 1000,
-        arcDist = isBelt || !danger ? 0 : (process.arcTolerance || 0),
+        arcDist = isBelt ? 0 : (process.arcTolerance || 0),
         arcMin = 1,
         arcRes = 20,
         arcDev = 0.5,
