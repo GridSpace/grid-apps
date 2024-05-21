@@ -2812,6 +2812,10 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('view-arrange').onclick = api.platform.layout;
         $('view-top').onclick = space.view.top;
         $('view-home').onclick = space.view.home;
+        $('view-front').onclick = space.view.front;
+        $('view-back').onclick = space.view.back;
+        $('view-left').onclick = space.view.left;
+        $('view-right').onclick = space.view.right;
         $('view-clear').onclick = api.platform.clear;
         $('mode-fdm').onclick = () => { api.mode.set('FDM'); api.space.set_focus() };
         $('mode-sla').onclick = () => { api.mode.set('SLA'); api.space.set_focus() };

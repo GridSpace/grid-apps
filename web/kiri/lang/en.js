@@ -6,6 +6,7 @@ self.kiri.lang['en-us'] = {
     animate:        "animate",      // CAM animate button
     arrange:        "arrange",      // layout workspace objects
     axis:           "axis",         // left object scale pop menu
+    back:           "back",
     clear:          "clear",        // clear workspace (remove all objects)
     copy:           "copy",
     delete:         "delete",
@@ -17,6 +18,7 @@ self.kiri.lang['en-us'] = {
     export:         "export",
     files:          "files",
     filter:         "filter",
+    front:          "front",
     fullscreen:     "fullscreen",
     help:           "help",
     ghost:          "ghost",        // left render pop menu (wireframe)
@@ -24,6 +26,7 @@ self.kiri.lang['en-us'] = {
     home:           "home",
     import:         "import",
     language:       "language",
+    left:           "left",
     machine:        "machine",      // device or machine
     mesh:           "mesh",         // mesh editing
     metric:         "metric",
@@ -36,6 +39,7 @@ self.kiri.lang['en-us'] = {
     recent:         "recent",
     render:         "render",       // left render pop menu
     reset:          "reset",
+    right:          "right",
     rotate:         "rotate",       // left rotate pop menu
     save:           "save",
     scale:          "scale",        // left object scale pop menu

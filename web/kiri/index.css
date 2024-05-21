@@ -57,6 +57,14 @@ a, a:hover, a:visited {
     border-left: 1px solid transparent;
     border-right: 1px solid transparent;
 }
+.top-menu hr {
+    width: calc(100% - 3px);
+    margin: 0;
+    border: 0;
+    padding: 0;
+    height: 0.5px;
+    background-color: var(--menu-border);
+}
 .top-menu label {
     color: #444;
 }
@@ -108,21 +116,17 @@ a, a:hover, a:visited {
 .top-menu-drop {
     position: absolute;
     display: none;
-    /* border: 1px solid #555; */
     top: 100%;
     left: -1px;
     right: -1px;
-    /* min-width: 100%; */
-    /* min-width: 500px; */
-    /* min-height: 100%; */
     flex-direction: column;
     font-family: sans-serif;
 }
 .top-menu-drop svg {
-    font-size: smaller;
+    width: 15px;
 }
 #top .content {
-    gap: 4px;
+    gap: 2px;
     display: flex;
     align-items: center;
     flex-direction: column;
