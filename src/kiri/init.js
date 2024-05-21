@@ -2087,9 +2087,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             rangeGroup:    uc.newGroup("ranges", null, {modes:FDM, group:"ranges"}),
             rangeList:     uc.newRow([], {}),
 
-            settingsGroup: uc.newGroup(LANG.se_menu, $('settings')),
-            settingsTable: uc.newRow([ ui.settingsLoad = uc.newButton(LANG.se_load, settingsLoad) ]),
-            settingsTable: uc.newRow([ ui.settingsSave = uc.newButton(LANG.se_save, settingsSave) ]),
             settingsSave: $('settingsSave'),
             settingsName: $('settingsName'),
 
@@ -2097,7 +2094,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         });
 
         // override old style settings two-button menu
-        ui.settingsGroup.onclick = settingsLoad;
         ui.settingsSave.onclick = () => {
             settingsSave(undefined, ui.settingsName.value);
         };
@@ -2797,6 +2793,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('app-name').onclick = api.help.show;
         $('app-state').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
+        $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };
         ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };

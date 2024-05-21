@@ -112,8 +112,9 @@ a, a:hover, a:visited {
     top: 100%;
     left: -1px;
     right: -1px;
-    min-width: 100%;
-    min-height: 100%;
+    /* min-width: 100%; */
+    /* min-width: 500px; */
+    /* min-height: 100%; */
     flex-direction: column;
     font-family: sans-serif;
 }
