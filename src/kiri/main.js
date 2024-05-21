@@ -919,8 +919,9 @@ gapp.register("kiri.main", [], (root, exports) => {
             current.device = clone(current.cdev[mode]);
             api.event.emit('device.set', currentDeviceName());
         }
-        // really belongs in CAM driver (lots of work / abstraction needed)
-        // updateStockVisibility();
+        // hide/show
+        api.uc.setVisible($('menu-nozzle'), mode === 'FDM');
+        api.uc.setVisible($('set-tools'), mode === 'CAM');
         // updates right-hand menu by enabling/disabling fields
         setViewMode(VIEWS.ARRANGE);
         UC.setMode(MODE);

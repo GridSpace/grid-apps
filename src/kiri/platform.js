@@ -247,7 +247,6 @@ function platformUpdateSelected() {
         let disC = selwid.filter(w => w.meta.disabled === true).length;
         enable.style.display = disC ? 'flex' : 'none';
         disable.style.display = enaC ? 'flex' : 'none';
-        ui.nozzle.classList.remove('hide');
         if (api.feature.meta && selcount === 1) {
             let sel = selwid[0];
             let name = sel.meta.file || sel.meta.url;
@@ -276,10 +275,7 @@ function platformUpdateSelected() {
         ui.mesh.name.innerText = '[0]';
         ui.mesh.points.innerText = '-';
         ui.mesh.faces.innerText = '-';
-        ui.nozzle.classList.add('hide');
     }
-
-    ui.nozzle.style.display = extruders && extruders.length > 1 ? 'flex' : '';
 
     if (extruders) {
         for (let i = 0; i < extruders.length; i++) {

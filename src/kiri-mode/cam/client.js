@@ -144,12 +144,8 @@ CAM.init = function(kiri, api) {
         isIndexed = undefined;
         isCamMode = mode === 'CAM';
         SPACE.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
-        api.uc.setVisible($('set-tools'), isCamMode);
         api.uc.setVisible($('camops'), isCamMode && isArrange);
         api.uc.setVisible(UI.func.animate, isCamMode);
-        // $('set-tools').style.display = isCamMode ? '' : 'none';
-        // $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
-        // UI.func.animate.style.display = isCamMode ? '' : 'none';
         if (!isCamMode) {
             func.clearPops();
             func.tabClear();
