@@ -29,18 +29,23 @@ a, a:hover, a:visited {
     overflow: hidden;
     font-weight: normal;
     font-family: sans-serif;
-    font-size: larger;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
 }
 
+@media only screen and (max-width : 1024px) {
+    #top {
+        font-size: smaller;
+    }
+}
+
 #top {
     text-transform: capitalize;
-    font-family: 'Russo One', sans-serif;
     background-color: var(--top);
     z-index: 15;
+    font-family: sans-serif;
 }
 #top > div {
     margin: 0 5px 0 5px;
@@ -179,7 +184,18 @@ a, a:hover, a:visited {
 }
 #app-name {
     cursor: pointer;
+
 }
+
+.km-font {
+    font-family: 'Russo One', sans-serif;
+}
+.menu-title {
+    font-size: larger;
+    font-weight: bold;
+}
+
+
 #app-name hr {
     margin: 1px;
 }
@@ -582,7 +598,7 @@ th, tr, td, label {
 #top-sep {
     display: none;
 }
-#top-sep {
+#top-sep, #mid-sep {
     z-index: 14;
     height: 1px;
     background-image: var(--gradbar);
@@ -1151,6 +1167,7 @@ th, tr, td, label {
     border-bottom: 1px solid rgba(126,153,183,1);
     padding-bottom: 5px;
     margin-bottom: 5px;
+    font-weight: bold;
 }
 #mod-setup .header.sub {
     padding-top: 10px;
