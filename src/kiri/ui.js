@@ -80,10 +80,13 @@ gapp.register("kiri.ui", [], (root, exports) => {
         alert,
         onBlur,
         setVisible(el, bool) {
+            kiri.ui.setClass(el, 'hide', bool);
+        },
+        setClass(el, clazz, bool) {
             if (bool) {
-                el.classList.remove('hide');
+                el.classList.remove(clazz);
             } else {
-                el.classList.add('hide');
+                el.classList.add(clazz);
             }
         }
     };

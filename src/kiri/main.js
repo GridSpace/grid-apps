@@ -961,8 +961,8 @@ gapp.register("kiri.main", [], (root, exports) => {
     }
 
     function setControlsVisible(show) {
-        $('mid-lcol').style.display = show ? 'flex' : 'none';
-        $('mid-rcol').style.display = show ? 'flex' : 'none';
+        $('mid-left').style.display = show ? 'flex' : 'none';
+        $('mid-right').style.display = show ? 'flex' : 'none';
     }
 
     function downloadBlob(data, filename) {

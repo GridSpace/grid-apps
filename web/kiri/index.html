@@ -28,12 +28,10 @@
 </head>
 <body>
 <div id="app" class="f-col">
-    <div id="curtain" class="j-center a-center"><img id="gsbox">loading...</div>
-    <div id="container"></div>
-    <div id="tracker"></div>
+    <div id="curtain" class="j-center a-center"><img id="loading">loading...</div>
+
     <div id="top-sep"></div>
 
-    <!-- TOP MENU BAR -->
     <div id="top" class="f-row">
         <div class="f-row top-menu">
             <span>
@@ -240,81 +238,22 @@
                         </div>
                         <div id="set-prefs">
                             <label lk="prefs">prefs</label>
-                            <span><i class="fa-solid fa-ssquare-check"></i></span>
+                            <span><i class="fa-solid fa-square-check"></i></span>
                         </div>
                     </div>
                 </div>
             </span>
         </div>
     </div>
-    <div id="mid-sep"></div>
 
-    <div id="float-tools" class="f-col movable hide">
-        <div id="float-tools-title" class="title mover">
-            <label id="ft-label" class="grow">title bar</label>
-            <div id="float-tools-close" class="closer"><i class="fas fa-times"></i></div>
-        </div>
-        <div class="body f-row">
-            <div class="f-col menu">
-                <div lkt="rotate" class="tictac" select="ft-rotate" label="ft-label"><i class="fas fa-sync-alt"></i></div>
-                <div lkt="scale" class="tictac" select="ft-scale" label="ft-label"><i class="fas fa-expand"></i></div>
-                <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
-                <div lkt="select" class="tictac" select="ft-select" label="ft-label"><i class="fas fa-mouse-pointer"></i></div>
-            </div>
-            <div id="ft-scale" class="grow grid">
-                <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
-                <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked></div>
-                <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked></div>
-                <div><label id="lab-axis" lk="axis">axis</label></div>
-                <div><input id="size_x" size="8" class="value"></div>
-                <div><input id="size_y" size="8" class="value"></div>
-                <div><input id="size_z" size="8" class="value"></div>
-                <div><label id="lab-size" lk="size">size</label></div>
-                <div><input id="scale_x" size="8" class="value" value="1"></div>
-                <div><input id="scale_y" size="8" class="value" value="1"></div>
-                <div><input id="scale_z" size="8" class="value" value="1"></div>
-                <div><label id="lab-scale" lk="scale">scale</label></div>
-                <button id="scale-reset" class="gr4">reset</button>
-            </div>
-            <div id="ft-rotate" class="grow grid">
-                <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
-                <label>X</label>
-                <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
-                <input id="rot_x" class="value center" size="6" value="0">
-                <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
-                <label>Y</label>
-                <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
-                <input id="rot_y" class="value center" size="6" value="0">
-                <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
-                <label>Z</label>
-                <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
-                <input id="rot_z" class="value center" size="6" value="0">
-                <div class="buttons f-row">
-                    <button id="lay-flat" class="grow">lay flat</button>
-                    <button id="unrotate" class="grow" lk="reset">reset</button>
-                </div>
-            </div>
-            <div id="ft-mesh" class="grow f-col">
-                <div id="mesh-info" class="grid">
-                    <label>object:</label>
-                    <span id="mesh-name" class="value">[0]</span>
-                    <label>points:</label>
-                    <span id="mesh-points" class="value">-</span>
-                    <label>faces:</label>
-                    <span id="mesh-faces" class="value">-</span>
-                </div>
-                <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
-                <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
-                <button id="mesh-swap" lk="rc_swap">replace vertices</button>
-            </div>
-            <div id="ft-select" class="grow f-col"></div>
-        </div>
-        <div class="footer"></div>
-    </div>
+    <div id="top-mid-sep"></div>
 
     <div id="mid" class="grow f-row">
         <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
-        <div id="mid-lcol" class="f-col j-center noshow">
+
+        <!-- left settings menu -->
+        <div id="mid-left" class="f-col j-left noshow">
+            <!-- ephemeral -->
             <div id="lt-back" class="lt-menu lt-enabled">
                 <i class="fas fa-arrow-circle-left"></i>
             </div>
@@ -323,9 +262,21 @@
                 <div id="lt-w-enable"><i class="fas fa-check-circle"></i></div>
                 <div id="lt-w-disable"><i class="fas fa-times-circle"></i></div>
             </div>
-            <div id="settings" class="f-col"></div>
+            <!-- always up -->
+            <div class="chonk"></div>
+            <div id="mode-info" class="f-col">
+                <div><label>Mode</label><span id="app-mode-name"></span></div>
+                <div><label>Device</label><span id="mode-device"></span></div>
+                <div><label>Profile</label><span id="mode-profile"></span></div>
+            </div>
+            <div class="chonk"></div>
+            <div id="settings" class="f-col grow"></div>
+            <div class="chonk"></div>
         </div>
-        <div id="mid-mcol" class="grow">
+
+        <div class="mid-sep"></div>
+
+        <div id="mid-mid" class="grow">
             <div id="modal">
                 <div id="modal-box" class="f-col">
 
@@ -501,54 +452,69 @@
                 </div>
             </div>
         </div>
-        <div id="mid-rcol" class="f-col j-center noshow">
+
+        <div id="mid-right" class="f-row j-center">
             <div id="set-menu" class="f-col">
                 <div id="speeds"><div id="speedbar" class="f-col a-stretch j-center" lkt="sb_info"></div></div>
-                <!-- <div id="set-top" class="set-group"></div>
-                <div id="settings" class="f-col"></div>
-                <div id="set-end" class="set-group"></div> -->
             </div>
-        </div>
-    </div>
-    <div id="end" class="f-col a-center">
-        <div id="bottom">
-            <div id="camops" class="f-row a-stretch j-center">
-                <div class="left"></div>
-                <div id="oplist" class="f-row j-center"></div>
-                <div id="ophint" class="f-row">
-                    <div class="opdiv">use + menu to add milling operations</div>
-                    <div class="opdiv">drag to re-order</div>
-                </div>
-                <div id="op-add" class="opdiv">
-                    <i class="fas fa-plus"></i>
-                    <div id="op-add-pop" class="f-col">
-                        <div id="op-add-list" class="opdiv op-grid">
-                            <div id="cam-index" title="rotate index axis">index</div>
-                            <div id="cam-lathe" title="lathe operation">lathe</div>
-                            <div id="laser-on" title="turn on laser mode">laser on</div>
-                            <div id="laser-off"  title="turn off laser mode">laser off</div>
-                            <div id="cam-flip" title="flip part and load&#13;profile for other side&#13;for double-sided work">flip</div>
-                            <div id="cam-reg" title="drill registration holes&#13;along the X or Y axis&#13;for double-sided work">register</div>
-                            <div title="drill any holes matching&#13;selected tool diameter">drill</div>
-                            <div title="clear stock face&#13;or top of part&#13;when no stock">level</div>
-                            <div title="follow selected features with&#13;a specified tool. often used&#13;for lettering and engraving">trace</div>
-                            <div title="insert custom gcode">gcode</div>
-                            <div title="remove an area of material&#13;inside a defined boundary&#13;sometimes called pocketing">rough</div>
-                            <div title="clean up after roughing&#13;or perform a part cutout">outline</div>
-                            <div title="2.5D tracing along X or Y axis&#13;used for complex part features">contour</div>
-                            <div title="clear areas above&#13;selected surfaces">pocket</div>
+            <div class="mid-sep"></div>
+            <div id="right-work" class="f-col j-center slim-hide">
+                <div class="chonk"></div>
+                <div>operation chain</div>
+                <div class="chonk"></div>
+                <div id="camops" class="f-col a-stretch grow">
+                    <div id="oplist" class="f-col j-center"></div>
+                    <div id="ophint" class="f-row">
+                        <div class="opdiv">use + menu to add milling operations</div>
+                        <div class="opdiv">drag to re-order</div>
+                    </div>
+                    <div id="op-add" class="opdiv">
+                        <i class="fas fa-plus"></i>
+                        <div id="op-add-pop" class="f-col">
+                            <div id="op-add-list" class="opdiv op-grid">
+                                <div id="cam-index" title="rotate index axis">index</div>
+                                <div id="cam-lathe" title="lathe operation">lathe</div>
+                                <div id="laser-on" title="turn on laser mode">laser on</div>
+                                <div id="laser-off"  title="turn off laser mode">laser off</div>
+                                <div id="cam-flip" title="flip part and load&#13;profile for other side&#13;for double-sided work">flip</div>
+                                <div id="cam-reg" title="drill registration holes&#13;along the X or Y axis&#13;for double-sided work">register</div>
+                                <div title="drill any holes matching&#13;selected tool diameter">drill</div>
+                                <div title="clear stock face&#13;or top of part&#13;when no stock">level</div>
+                                <div title="follow selected features with&#13;a specified tool. often used&#13;for lettering and engraving">trace</div>
+                                <div title="insert custom gcode">gcode</div>
+                                <div title="remove an area of material&#13;inside a defined boundary&#13;sometimes called pocketing">rough</div>
+                                <div title="clean up after roughing&#13;or perform a part cutout">outline</div>
+                                <div title="2.5D tracing along X or Y axis&#13;used for complex part features">contour</div>
+                                <div title="clear areas above&#13;selected surfaces">pocket</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="right"></div>
+                <div class="chonk"></div>
             </div>
         </div>
     </div>
+
+    <div id="end" class="f-col a-center">
+        <div id="bottom">
+        </div>
+    </div>
+
+    <!-- ThreeJS container -->
+    <div id="container"></div>
+
+    <!-- click + drag mouse tracking  -->
+    <div id="tracker"></div>
+
+    <!-- EU compliance -->
     <div id="gdpr" class="noshow">
         <p>this site uses <A href="/privacy.html" target="privacy">cookies</a> to preserve application preferences</p>
         <button id="gotit" class="f-col j-center">got it</button>
     </div>
-    <div id="tool-info" class="noshow"></div>
+
+    <!-- <div id="tool-info" class="noshow"></div> -->
+
+    <!-- right click pop-up menu -->
     <div id="context-menu">
         <button id="context-export-workspace" lk="rc_xpws">export workspace</button>
         <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
@@ -561,28 +527,98 @@
     </div>
 
     <div id="app-state">
-        <div id="mode-info" class="f-row">
+        <!-- <div id="mode-info" class="f-row">
             <label>Mode</label><div id="app-mode-name"></div>
             <label>Device</label><div id="mode-device"></div>
             <label>Profile</label><div id="mode-profile"></div>
-        </div>
+        </div> -->
     </div>
 
+    <!-- developer debugging -->
     <div id="stats">
         <div id="rms"></div>
         <div id="fps"></div>
         <div id="rnfo"></div>
     </div>
+
+    <!-- CAM animation controls and readout -->
     <div id="layer-animate" class="f-col a-center"></div>
     <div id="layer-toolpos" class="f-row a-center"></div>
+
+    <!-- ephemeral non-modal alerts -->
     <div id="alert-area">
         <div id="alert-border">
             <div id="alert-text">alerts<br>alerts<br>alerts</div>
         </div>
     </div>
+
     <div id="top-slider" class="f-col grow">
         <input id="anim-slider" type="range" min="0" max="1000" value="0"></input>
     </div>
+
+    <div id="float-tools" class="f-col movable hide">
+        <div id="float-tools-title" class="title mover">
+            <label id="ft-label" class="grow">title bar</label>
+            <div id="float-tools-close" class="closer"><i class="fas fa-times"></i></div>
+        </div>
+        <div class="body f-row">
+            <div class="f-col menu">
+                <div lkt="rotate" class="tictac" select="ft-rotate" label="ft-label"><i class="fas fa-sync-alt"></i></div>
+                <div lkt="scale" class="tictac" select="ft-scale" label="ft-label"><i class="fas fa-expand"></i></div>
+                <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
+                <div lkt="select" class="tictac" select="ft-select" label="ft-label"><i class="fas fa-mouse-pointer"></i></div>
+            </div>
+            <div id="ft-scale" class="grow grid">
+                <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
+                <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked></div>
+                <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked></div>
+                <div><label id="lab-axis" lk="axis">axis</label></div>
+                <div><input id="size_x" size="8" class="value"></div>
+                <div><input id="size_y" size="8" class="value"></div>
+                <div><input id="size_z" size="8" class="value"></div>
+                <div><label id="lab-size" lk="size">size</label></div>
+                <div><input id="scale_x" size="8" class="value" value="1"></div>
+                <div><input id="scale_y" size="8" class="value" value="1"></div>
+                <div><input id="scale_z" size="8" class="value" value="1"></div>
+                <div><label id="lab-scale" lk="scale">scale</label></div>
+                <button id="scale-reset" class="gr4">reset</button>
+            </div>
+            <div id="ft-rotate" class="grow grid">
+                <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
+                <label>X</label>
+                <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
+                <input id="rot_x" class="value center" size="6" value="0">
+                <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
+                <label>Y</label>
+                <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
+                <input id="rot_y" class="value center" size="6" value="0">
+                <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
+                <label>Z</label>
+                <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
+                <input id="rot_z" class="value center" size="6" value="0">
+                <div class="buttons f-row">
+                    <button id="lay-flat" class="grow">lay flat</button>
+                    <button id="unrotate" class="grow" lk="reset">reset</button>
+                </div>
+            </div>
+            <div id="ft-mesh" class="grow f-col">
+                <div id="mesh-info" class="grid">
+                    <label>object:</label>
+                    <span id="mesh-name" class="value">[0]</span>
+                    <label>points:</label>
+                    <span id="mesh-points" class="value">-</span>
+                    <label>faces:</label>
+                    <span id="mesh-faces" class="value">-</span>
+                </div>
+                <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
+                <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
+                <button id="mesh-swap" lk="rc_swap">replace vertices</button>
+            </div>
+            <div id="ft-select" class="grow f-col"></div>
+        </div>
+        <div class="footer"></div>
+    </div>
+
 </div>
 </body>
 </html>

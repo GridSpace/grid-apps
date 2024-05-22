@@ -2,234 +2,53 @@
     --fg-gray: #495057;
     --bg-gray: rgba(0,0,0,0.25);
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
+    --gradbar-vert: linear-gradient(to bottom, #ddd, #666, #ddd);
     --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
     --holdbar-dk: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,0.25), rgba(100,100,100,0.1));
     --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
     --highlight: rgba(126,153,183,0.4);
     --main-color: rgba(126,153,183,1);
     --main-color-hover: rgb(96, 127, 164);
-    --top: rgba(255,255,255,0.75);
+    --work-area: rgba(255,255,255,0.75);
     --menu: #f0f0f0;
     --menu-text: #222;
     --menu-border: #555;
     --dark-menu-text: #111;
     --menu-hover: #ddd;
 }
+
+/* surface size configuration and font import */
 @font-face {
     font-family: 'Russo One';
     src: url('/moto/russo-one.ttf');
 }
-a, a:hover, a:visited {
-    border: none;
-    color: inherit;
-    text-decoration: none;
-}
-#app {
-    position: fixed;
-    overflow: hidden;
-    font-weight: normal;
-    font-family: sans-serif;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-}
-
 @media only screen and (max-width : 1024px) {
     #top {
         font-size: smaller;
     }
 }
-
-#top {
-    text-transform: capitalize;
-    background-color: var(--top);
-    z-index: 15;
-    font-family: sans-serif;
-}
-#top > div {
-    margin: 0 5px 0 5px;
-}
-
-.top-menu {
-    display: flex;
-    gap: 3px;
-    align-items: center;
-    white-space: nowrap;
-}
-.top-menu > span {
-    padding: 3px 6px 3px 6px;
-    border-left: 1px solid transparent;
-    border-right: 1px solid transparent;
-}
-.top-menu hr {
-    width: calc(100% - 3px);
-    margin: 0;
-    border: 0;
-    padding: 0;
-    height: 0.5px;
-    background-color: var(--menu-border);
-}
-.top-menu label {
-    color: #444;
-}
-.dark .top-menu label {
-    color: var(--dark-menu-text)
-}
-.top-menu svg {
-    color: var(--main-color);
-}
-.top-menu > span {
-    position: relative;
-    display: flex;
-    gap: 5px;
-    align-items: center;
-}
-.top-menu > span:hover label {
-    color: var(--menu-text);
-}
-.dark .top-menu > span:hover label {
-    color: var(--dark-menu-text) !important;
-}
-.top-menu > span:hover > svg {
-    color: var(--main-color-hover);
-}
-.top-menu > span:hover {
-    background-color: var(--menu);
-    border-left: 1px solid var(--menu-border);
-    border-right: 1px solid var(--menu-border);
-}
-.top-menu > span:hover .top-menu-drop {
-    display: flex;
-}
-.top-menu-left {
-    align-items: self-start;
-}
-.top-menu-left .content {
-    border-top-right-radius: 4px; 
-}
-.top-menu-right {
-    align-items: self-end;
-}
-.top-menu-center .content > div > label {
-    text-align: center !important;
-}
-.top-menu-right .content {
-    border-top-left-radius: 4px; 
+@media only screen and (max-height : 750px) {
+    .lt-menu, .pop-lcol {
+        font-size: 16px !important;
+    }
+    .lt-menu svg {
+        font-size: 30px !important;
+    }
+    .pop-lcol svg {
+        font-size: 20px !important;
+    }
+    #mod-x {
+        position: absolute;
+        font-size: 30px;
+        top: 8px;
+    }
 }
 
-.top-menu-drop {
-    position: absolute;
-    display: none;
-    top: 100%;
-    left: -1px;
-    right: -1px;
-    flex-direction: column;
-    font-family: sans-serif;
-}
-.top-menu-drop svg {
-    width: 15px;
-}
-#top .content {
-    gap: 2px;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    background-color: var(--menu);
-    border-top: 1px dashed var(--menu-border);
-    border-left: 1px solid var(--menu-border);
-    border-right: 1px solid var(--menu-border);
-    border-bottom: 1px solid var(--menu-border);
-    border-bottom-right-radius: 4px;
-    border-bottom-left-radius: 4px;
-}
-#top .content {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 2px;
-}
-#top .content > div {
-    display: flex;
-    flex-direction: row;
-}
-#top .content > div > label {
-    text-align: left;
-    flex-grow: 1;
-}
-#top .content > div > span {
-    text-align: right;
-}
-#top .content > div > span {
-    padding: 2px 7px 2px 7px;
-    padding-left: 10px;
-    text-align: center;
-}
-#top .content > div > label {
-    padding: 2px 7px 2px 7px;
-    justify-self: stretch;
-    align-self: stretch;
-    border-radius: 3px;
-}
-#top .content > div:hover {
-    background-color: var(--menu-hover);
-}
-
-#app-name {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-50%);
-    z-index: 50;
-}
-#app-name {
-    cursor: pointer;
-
-}
-
-.km-font {
-    font-family: 'Russo One', sans-serif;
-}
-.menu-title {
-    font-size: larger;
-    font-weight: bold;
-}
-
-
-#app-name hr {
-    margin: 1px;
-}
-#app-name:hover #app-name-pop {
-    display: flex;
-}
-#app-name-pop {
-    color: var(--fg-gray);
-    font-family: sans-serif;
-    position: absolute;
-    top: 100%;
-}
-#app-name-pop .content {
-    text-align: center;
-}
-#app-lang {
-    justify-content: flex-end;
-}
-#app-lang:hover #lang-pop {
-    display: flex;
-}
-
-#app,div {
-    display: flex;
-    padding: 0;
-    border: 0;
-    margin: 0;
-}
-#gsbox {
-    width: 40px;
-    height: 40px;
-    padding-right: 15px;
-    position: fixed;
-    display: none;
+/* default element configuration */
+a, a:hover, a:visited {
+    border: none;
+    color: inherit;
+    text-decoration: none;
 }
 div {
     position: relative;
@@ -332,11 +151,213 @@ th, tr, td, span, div, label, button {
 th, tr, td, label {
     white-space: nowrap;
 }
+
+/* container for entire page / app */
+#app {
+    position: fixed;
+    overflow: hidden;
+    font-weight: normal;
+    font-family: sans-serif;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* top menu bar, drop menus */
+#top {
+    background-color: var(--work-area);
+    text-transform: capitalize;
+    font-family: sans-serif;
+    z-index: 15;
+}
+#top > div {
+    margin: 0 5px 0 5px;
+}
+
+.top-menu {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    white-space: nowrap;
+}
+.top-menu > span {
+    padding: 3px 6px 3px 6px;
+    border-left: 1px solid transparent;
+    border-right: 1px solid transparent;
+}
+.top-menu hr {
+    width: calc(100% - 3px);
+    margin: 0;
+    border: 0;
+    padding: 0;
+    height: 0.5px;
+    background-color: var(--menu-border);
+}
+.top-menu label {
+    color: #444;
+}
+.dark .top-menu label {
+    color: var(--dark-menu-text)
+}
+.top-menu svg {
+    color: var(--main-color);
+}
+.top-menu > span {
+    position: relative;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+.top-menu > span:hover label {
+    color: var(--menu-text);
+}
+.dark .top-menu > span:hover label {
+    color: var(--dark-menu-text) !important;
+}
+.top-menu > span:hover > svg {
+    color: var(--main-color-hover);
+}
+.top-menu > span:hover {
+    background-color: var(--menu);
+    border-left: 1px solid var(--menu-border);
+    border-right: 1px solid var(--menu-border);
+}
+.top-menu > span:hover .top-menu-drop {
+    display: flex;
+}
+.top-menu-left {
+    align-items: self-start;
+}
+.top-menu-left .content {
+    border-top-right-radius: 4px; 
+}
+.top-menu-right {
+    align-items: self-end;
+}
+.top-menu-center .content > div > label {
+    text-align: center !important;
+}
+.top-menu-right .content {
+    border-top-left-radius: 4px; 
+}
+.top-menu-drop {
+    position: absolute;
+    display: none;
+    top: 100%;
+    left: -1px;
+    right: -1px;
+    flex-direction: column;
+    font-family: sans-serif;
+}
+.top-menu-drop svg {
+    width: 15px;
+}
+#top .content {
+    gap: 2px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: var(--menu);
+    border-top: 1px dashed var(--menu-border);
+    border-left: 1px solid var(--menu-border);
+    border-right: 1px solid var(--menu-border);
+    border-bottom: 1px solid var(--menu-border);
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+#top .content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 2px;
+}
+#top .content > div {
+    display: flex;
+    flex-direction: row;
+}
+#top .content > div > label {
+    text-align: left;
+    flex-grow: 1;
+}
+#top .content > div > span {
+    text-align: right;
+}
+#top .content > div > span {
+    padding: 2px 7px 2px 7px;
+    padding-left: 10px;
+    text-align: center;
+}
+#top .content > div > label {
+    padding: 2px 7px 2px 7px;
+    justify-self: stretch;
+    align-self: stretch;
+    border-radius: 3px;
+}
+#top .content > div:hover {
+    background-color: var(--menu-hover);
+}
+
+#app-name {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    z-index: 50;
+}
+#app-name {
+    cursor: pointer;
+
+}
+#app-name hr {
+    margin: 1px;
+}
+#app-name:hover #app-name-pop {
+    display: flex;
+}
+#app-name-pop {
+    color: var(--fg-gray);
+    font-family: sans-serif;
+    position: absolute;
+    top: 100%;
+}
+#app-name-pop .content {
+    text-align: center;
+}
+#app-lang {
+    justify-content: flex-end;
+}
+#app-lang:hover #lang-pop {
+    display: flex;
+}
+
+#app,div {
+    display: flex;
+    padding: 0;
+    border: 0;
+    margin: 0;
+}
+#loading {
+    width: 40px;
+    height: 40px;
+    padding-right: 15px;
+    position: fixed;
+    display: none;
+}
+
 .noselect {
     -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+.km-font {
+    font-family: 'Russo One', sans-serif;
+}
+.menu-title {
+    font-size: larger;
+    font-weight: bold;
 }
 
 .hide {
@@ -469,17 +490,19 @@ th, tr, td, label {
     bottom: 0;
     left: 0;
     right: 0;
+    z-index: -1;
+}
+.chonk {
+    height: 15px;
+    min-width: 100px;
+    background-color: rgba(0,0,0,0.25);
 }
 #mode-info {
-    /* display: none; */
     white-space: nowrap;
     font-size: smaller;
     font-family: sans-serif;
-    top: 50%;
-    height: 100%;
-    /* transform: translateY(-50%); */
     padding: 1px 0 1px 0;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     padding: 3px;
 }
@@ -496,7 +519,7 @@ th, tr, td, label {
     border-left: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
 }
-#mode-info > div {
+#mode-info span {
     font-size: smaller;
     padding: 2px 5px 2px 5px;
     color: var(--fg-gray);
@@ -586,22 +609,36 @@ th, tr, td, label {
     text-transform: none !important;
 }
 
-#mid-lcol, #mid-rcol, #modal {
+#mid-left {
+    background-color: var(--work-area);
+}
+#mid-left, #mid-right, #modal {
     pointer-events: visible;
     text-transform: capitalize;
 }
-
-#mid-lcol label, #mid-lcol svg {
+#mid-left label, #mid-left svg {
     pointer-events: none;
+}
+
+#right-work {
+    overflow: hidden;
+}
+.slim-hide {
+    width: 0;
 }
 
 #top-sep {
     display: none;
 }
-#top-sep, #mid-sep {
+#top-sep, #top-mid-sep {
     z-index: 14;
     height: 1px;
     background-image: var(--gradbar);
+}
+.mid-sep {
+    z-index: 14;
+    width: 1px;
+    background-image: var(--gradbar-vert);
 }
 
 .movable {
@@ -816,22 +853,6 @@ th, tr, td, label {
 .lt-menu label {
     font-size: small;
 }
-@media only screen and (max-height : 750px) {
-    .lt-menu, .pop-lcol {
-        font-size: 16px !important;
-    }
-    .lt-menu svg {
-        font-size: 30px !important;
-    }
-    .pop-lcol svg {
-        font-size: 20px !important;
-    }
-    #mod-x {
-        position: absolute;
-        font-size: 30px;
-        top: 8px;
-    }
-}
 
 .dev-buttons {
     margin: 1px -1px 0 -1px;
@@ -871,6 +892,7 @@ th, tr, td, label {
     text-align: center;
     font-size: smaller;
 }
+
 #camop_dialog {
     flex-direction: column;
 }
@@ -884,35 +906,22 @@ th, tr, td, label {
     display: block;
 }
 #camops {
+    background-color: var(--work-area);
     display: flex;
-    padding: 0;
-    height: 38px;
-    margin: 0 0 max(4px, env(safe-area-inset-bottom)) 0;
-}
-#camops .left {
-    width: 12px;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
-    background-color: var(--main-color);
-    margin-right: 1px;
-}
-#camops .right {
-    width: 12px;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    background-color: var(--main-color);
-    margin-left: 1px;
+    padding: 5px 0 0 0;
 }
 .cam-pop-op {
     text-align: left;
     position: absolute;
     white-space: nowrap;
     flex-direction: column;
-    bottom: 40px;
+    top: 0;
+    right: 100%;
+    /* transform: translateY(-30%); */
     background-color: rgba(255,255,255,0.8);
     border: 1px solid #aaa;
     border-radius: 5px;
-    margin-right: 5px;
+    margin-right: 6px;
     padding: 5px;
 }
 .pop-tics {
@@ -936,6 +945,10 @@ th, tr, td, label {
     word-break: break-word;
     white-space: normal;
 }
+#oplist {
+    gap: 3px;
+    margin-bottom: 3px;
+}
 #oplist > div, .opdiv {
     display: flex;
     flex-direction: column;
@@ -943,8 +956,8 @@ th, tr, td, label {
     justify-content: center;
     border: 1px solid rgba(0,0,0,0.25);
     border-radius: 4px;
-    margin: 0 2px 0 2px;
-    padding: 2px 10px 2px 10px;
+    margin: 0 5px 0 5px;
+    padding: 5px 10px 5px 10px;
     background-color: rgba(255,255,255,0.75);
     white-space: nowrap;
 }
@@ -1006,8 +1019,9 @@ th, tr, td, label {
 #op-add-pop {
     position: absolute;
     display: none;
-    padding: 5px;
-    bottom: 35px;
+    right: 100%;
+    top: 0;
+    transform: translateY(-50%);
 }
 #op-add:hover #op-add-pop {
     display: flex;
@@ -1795,10 +1809,6 @@ th, tr, td, label {
     align-items: stretch;
     text-transform: capitalize;
     background-color: rgba(255,255,255,0.5);
-    /* border: 1px solid var(--menu-border); */
-    border: 1px solid #aaa;
-    border-bottom-right-radius: 5px;
-    border-top-right-radius: 5px;
     padding: 5px;
     gap: 5px;
 }
@@ -1997,7 +2007,7 @@ th, tr, td, label {
 #rnfo label {
     text-align: right;
 }
-#tool-info {
+/* #tool-info {
     position: fixed;
     white-space: pre;
     background-color: rgba(255,255,255,0.25);
@@ -2007,7 +2017,7 @@ th, tr, td, label {
     font-family: monospace;
     font-size: 12px;
     color: #000;
-}
+} */
 #context-menu {
     display: none;
     position: absolute;

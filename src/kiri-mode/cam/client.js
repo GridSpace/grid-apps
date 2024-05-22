@@ -144,7 +144,7 @@ CAM.init = function(kiri, api) {
         isIndexed = undefined;
         isCamMode = mode === 'CAM';
         SPACE.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
-        api.uc.setVisible($('camops'), isCamMode && isArrange);
+        api.uc.setClass($('right-work'), 'slim-hide', isCamMode);
         api.uc.setVisible(UI.func.animate, isCamMode);
         if (!isCamMode) {
             func.clearPops();
@@ -162,8 +162,7 @@ CAM.init = function(kiri, api) {
         isAnimate = false;
         animFn().animate_clear(api);
         func.clearPops();
-        api.uc.setVisible($('camops'), isCamMode && isArrange);
-        // $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
+        api.uc.setClass($('right-work'), 'slim-hide', isCamMode);
         if (isCamMode && isPreview) {
             for (let widget of API.widgets.all()) {
                 widget.setAxisIndex(0);
@@ -636,13 +635,13 @@ CAM.init = function(kiri, api) {
                     for (let el of bounds) {
                         if (el === target) continue;
                         let rect = el.getBoundingClientRect();
-                        let left = rect.left;
-                        let right = rect.left + rect.width;
+                        let top = rect.top;
+                        let bottom = rect.bottom;// + rect.height;
                         let tar = mobile ? ev.touches[0] : ev;
-                        if (tar.pageX >= left && tar.pageX <= right) {
-                            let mid = (left + right) / 2;
+                        if (tar.pageY >= top && tar.pageY <= bottom) {
+                            let mid = (top + bottom) / 2;
                             try { listel.removeChild(target); } catch (e) { }
-                            el.insertAdjacentElement(tar.pageX < mid ? "beforebegin" : "afterend", target);
+                            el.insertAdjacentElement(tar.pageY < mid ? "beforebegin" : "afterend", target);
                         }
                     }
                 }
