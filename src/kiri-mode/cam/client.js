@@ -162,7 +162,8 @@ CAM.init = function(kiri, api) {
         isAnimate = false;
         animFn().animate_clear(api);
         func.clearPops();
-        $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
+        api.uc.setVisible($('camops'), isCamMode && isArrange);
+        // $('camops').style.display = isCamMode && isArrange ? 'flex' : '';
         if (isCamMode && isPreview) {
             for (let widget of API.widgets.all()) {
                 widget.setAxisIndex(0);

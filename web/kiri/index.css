@@ -769,14 +769,6 @@ th, tr, td, label {
     background-color: var(--main-color);
 }
 
-#lt-top {
-    height: 10px;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 1px;
-    background-color: var(--main-color);
-    left: -5px;
-}
-
 #lt-back, #lt-options {
     flex-direction: row;
     position: absolute;
@@ -804,36 +796,6 @@ th, tr, td, label {
 }
 #act-animate.disabled {
     color: #aaa !important;
-}
-
-.pop-lcol {
-    position: absolute;
-    display: none;
-    top: -3px;
-    bottom: -3px;
-    left: 100%;
-    z-index: 10;
-    padding-left: 2px;
-}
-.pop-lcol > div {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    margin: 1px;
-    padding: 5px;
-    background-color: rgba(255,255,255,0.85);
-    border: 1px solid rgba(0,0,0,0.1);
-    border-radius: 3px;
-    min-width: 60px;
-    color: var(--fg-gray);
-}
-.pop-lcol > div:hover {
-    background-color: #eee;
-    border: 1px solid #aaa;
-    color: #000;
-}
-.pop-sel {
-    background-color: #ddd !important;
 }
 
 .lt-menu {
@@ -1832,25 +1794,16 @@ th, tr, td, label {
 #settings {
     align-items: stretch;
     text-transform: capitalize;
+    background-color: rgba(255,255,255,0.5);
+    /* border: 1px solid var(--menu-border); */
+    border: 1px solid #aaa;
+    border-bottom-right-radius: 5px;
+    border-top-right-radius: 5px;
+    padding: 5px;
+    gap: 5px;
 }
 #settings .set-group {
     cursor: pointer;
-}
-#set-top {
-    color: black;
-    padding: 1px 10px 2px 2px;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 1px;
-    background-color: var(--main-color);
-    min-height: 10px;
-}
-#set-end {
-    color: black;
-    padding: 1px 10px 2px 2px;
-    border-top-left-radius: 1px;
-    border-bottom-left-radius: 10px;
-    background-color: var(--main-color);
-    height: 10px;
 }
 .pop-sep {
     border: 0 !important;
@@ -1871,19 +1824,15 @@ th, tr, td, label {
     white-space: nowrap;
     justify-content: center;
     border-radius: 2px;
-    padding: 1px 0 2px 0;
-    margin: 2px 0 3px 0;
 }
 .set-group {
     align-items: center;
     flex-direction: column;
-    background-color: rgba(255,255,255,0.75);
-    border: 1px solid rgba(0,0,0,0);
+    background-color: rgba(255,255,255,0.9);
+    border: 1px solid rgba(0,0,0,0.2);
     border-radius: 3px;
-    margin: 2px 0 2px 4px;
-    padding: 8px 10px 8px 5px;
+    padding: 8px 10px 8px 10px;
     color: var(--fg-gray);
-    right: -5px;
 }
 .set-group:hover {
     background-color: #eee;
@@ -1892,7 +1841,7 @@ th, tr, td, label {
 }
 .set-pop {
     top: 50%;
-    right: 100%;
+    left: calc(100% + 6px);
     position: absolute;
     white-space: nowrap;
     flex-direction: column;
