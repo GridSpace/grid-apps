@@ -184,6 +184,7 @@ th, tr, td, label {
     text-transform: capitalize;
     font-family: sans-serif;
     z-index: 15;
+    height: 36px;
 }
 #top > div {
     margin: 0 5px 0 5px;
@@ -194,6 +195,7 @@ th, tr, td, label {
     gap: 0px;
     align-items: center;
     white-space: nowrap;
+    align-items: stretch;
 }
 .top-menu > span {
     padding: 5px 9px 5px 9px;
@@ -618,9 +620,14 @@ th, tr, td, label {
 }
 
 #mid {
-    flex-grow: true;
+    position: fixed;
+    top: 45px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* flex-grow: true; */
     pointer-events: none;
-    max-height: 99%;
+    /* max-height: 99%; */
 }
 
 #mod-print button, #catalogList button, #settingsList button {
@@ -1809,8 +1816,7 @@ th, tr, td, label {
 #speedbar {
     position: absolute;
     top: 3px;
-    right: 0;
-    bottom: 3px;
+    right: 3px;
     background-color: transparent;
 }
 .dark #speedbar label {
