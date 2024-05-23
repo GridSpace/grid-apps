@@ -22,7 +22,12 @@
     font-family: 'Russo One';
     src: url('/moto/russo-one.ttf');
 }
-@media only screen and (max-width : 1024px) {
+@media only screen and (max-width : 1000px) {
+    .top-menu > span > label {
+        display: none;
+    }
+}
+@media only screen and (max-width : 1200px) {
     #top {
         font-size: smaller;
     }
@@ -917,7 +922,7 @@ th, tr, td, label {
     display: flex;
     padding: 5px 0 0 0;
 }
-#cam-ops-header {
+.work-header {
     background-color: var(--work-area);
     font-size: smaller;
     flex-direction: column;
@@ -1823,11 +1828,10 @@ th, tr, td, label {
 #settings {
     max-height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
     align-items: stretch;
     text-transform: capitalize;
     background-color: rgba(255,255,255,0.5);
-    /* padding: 5px; */
-    /* gap: 2px; */
 }
 #settings .set-group {
     cursor: pointer;
