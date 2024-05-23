@@ -28,10 +28,13 @@
 </head>
 <body>
 <div id="app" class="f-col">
+    <!-- hide page contents and provide loading message during initialization -->
     <div id="curtain" class="j-center a-center"><img id="loading">Kiri:Moto is Loading</div>
 
+    <!-- when running iframed, provide a separator between the menu bar and enclosing page -->
     <div id="top-sep"></div>
 
+    <!-- top menu bar -->
     <div id="top" class="f-row">
         <div class="f-row top-menu">
             <span id="view-arrange">
@@ -90,7 +93,7 @@
                         <div id="file-import">
                             <label lk="import">import</label>
                             <span><i class="fas fa-file-upload"></i></span>
-                            <!-- hidden file input loader -->
+                            <!-- required file input loader -->
                             <input id="load-file" type="file" name="loadme" style="display:none"></input>
                         </div>
                     </div>
@@ -239,6 +242,7 @@
         </div>
     </div>
 
+    <!-- line betwwen menu bar and main application windows -->
     <div id="top-mid-sep"></div>
 
     <div id="mid" class="grow f-row">
@@ -267,8 +271,10 @@
             <div class="chonk"></div>
         </div>
 
+        <!-- vertical separation between settings tray and workspace -->
         <div class="mid-sep"></div>
 
+        <!-- main workspace -->
         <div id="mid-mid" class="grow">
             <div id="modal">
                 <div id="modal-box" class="f-col">
@@ -446,10 +452,12 @@
             </div>
         </div>
 
+        <!-- allows right tray to slide/hide but still show speeds menu -->
         <div id="mid-right" class="f-row j-center">
             <div id="set-menu" class="f-col">
                 <div id="speeds"><div id="speedbar" class="f-col a-stretch j-center" lkt="sb_info"></div></div>
             </div>
+            <!-- vertical separation between workspace and right tray -->
             <div class="mid-sep"></div>
             <div id="right-work" class="f-col j-center slim-hide">
                 <div class="chonk"></div>
@@ -519,14 +527,6 @@
         <button id="context-setfocus" lk="rc_focs">set focus</button>
     </div>
 
-    <div id="app-state">
-        <!-- <div id="mode-info" class="f-row">
-            <label>Mode</label><div id="app-mode-name"></div>
-            <label>Device</label><div id="mode-device"></div>
-            <label>Profile</label><div id="mode-profile"></div>
-        </div> -->
-    </div>
-
     <!-- developer debugging -->
     <div id="stats">
         <div id="rms"></div>
@@ -545,10 +545,12 @@
         </div>
     </div>
 
+    <!-- slice/preview layer slider -->
     <div id="top-slider" class="f-col grow">
         <input id="anim-slider" type="range" min="0" max="1000" value="0"></input>
     </div>
 
+    <!-- movable tool tray for mesh tools -->
     <div id="float-tools" class="f-col movable hide">
         <div id="float-tools-title" class="title mover">
             <label id="ft-label" class="grow">title bar</label>

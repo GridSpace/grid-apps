@@ -2791,7 +2791,6 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // bind interface action elements
         $('app-name').onclick = api.help.show;
-        $('app-state').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
