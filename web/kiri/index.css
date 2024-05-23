@@ -44,6 +44,11 @@
     }
 }
 
+html, body {
+    position: relative;
+    height: 100%;
+    margin: 0;
+}
 /* default element configuration */
 a, a:hover, a:visited {
     border: none;
@@ -155,7 +160,6 @@ th, tr, td, label {
 /* container for entire page / app */
 #app {
     position: fixed;
-    overflow: hidden;
     font-weight: normal;
     font-family: sans-serif;
     top: 0;
@@ -493,7 +497,8 @@ th, tr, td, label {
     z-index: -1;
 }
 .chonk {
-    height: 15px;
+    height: 10px;
+    min-height: 10px;
     min-width: 100px;
     background-color: rgba(0,0,0,0.25);
 }
@@ -602,7 +607,9 @@ th, tr, td, label {
 }
 
 #mid {
+    flex-grow: true;
     pointer-events: none;
+    max-height: 99%;
 }
 
 #mod-print button, #catalogList button, #settingsList button {
@@ -610,6 +617,7 @@ th, tr, td, label {
 }
 
 #mid-left {
+    max-height: 100%;
     background-color: var(--work-area);
 }
 #mid-left, #mid-right, #modal {
@@ -620,11 +628,9 @@ th, tr, td, label {
     pointer-events: none;
 }
 
-#right-work {
-    overflow: hidden;
-}
 .slim-hide {
     width: 0;
+    overflow: hidden;
 }
 
 #top-sep {
@@ -1806,11 +1812,13 @@ th, tr, td, label {
 }
 
 #settings {
+    max-height: 100%;
+    overflow-y: auto;
     align-items: stretch;
     text-transform: capitalize;
     background-color: rgba(255,255,255,0.5);
     padding: 5px;
-    gap: 5px;
+    gap: 2px;
 }
 #settings .set-group {
     cursor: pointer;
@@ -1819,6 +1827,7 @@ th, tr, td, label {
     border: 0 !important;
     padding: 0 !important;
     height: 1px;
+    min-height: 1px;
     margin-top: 2px;
     margin-bottom: 2px;
     background-color: #bbb;
@@ -1862,7 +1871,7 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
-.set-pop.xdown {
+/* .set-pop.xdown {
     transform: translateY(-25%) !important;
 }
 .set-pop.fdmout {
@@ -1876,7 +1885,7 @@ th, tr, td, label {
 }
 .set-pop.outline {
     transform: translateY(-36%) !important;
-}
+} */
 .marker {
     position:absolute;
     border-radius: 2px;

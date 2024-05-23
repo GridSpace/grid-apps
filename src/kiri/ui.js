@@ -18,7 +18,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         groupShow = {},
         groupSticky = false,
         groupName = undefined,
-        poppable = {},
         hasModes = [],
         isExpert = [],
         setters = [],
@@ -84,9 +83,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
         },
         setClass(el, clazz, bool) {
             if (bool) {
-                el.classList.remove(clazz);
-            } else {
                 el.classList.add(clazz);
+            } else {
+                el.classList.remove(clazz);
             }
         }
     };
@@ -248,8 +247,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
 
     function addCollapsableGroup(label, div, opt = {}) {
 
+        opt.inline = true;
+
         let group = opt.group || label;
-        poppable[group] = opt.inline === true ? false : true;
 
         let row = DOC.createElement('div'),
             dbkey = `beta-${prefix}-show-${group}`,
@@ -299,6 +299,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
             if (ev.target !== link && ev.target !== row) {
                 return;
             }
+            console.log({ toggleGroup: group, dbkey });
             toggleGroup(group, dbkey);
         };
         if (popper) {
@@ -354,20 +355,22 @@ gapp.register("kiri.ui", [], (root, exports) => {
     function showGroup(groupname) {
         Object.keys(groups).forEach(name => {
             let group = groups[name];
-            groupShow[name] = state[group.key] = (groupname === name);
+            groupShow[name] = true;//state[group.key] = (groupname === name);
             updateGroupShow(name);
         });
         groupSticky = false;
     }
 
     function toggleGroup(groupname, dbkey) {
-        let show = state[dbkey] === 'false';
-        groupShow[groupname] = poppable[groupname] ? state[dbkey] = show : true;
+        let show = state[dbkey] === 'true' || state[dbkey] === true;
+        groupShow[groupname] = state[dbkey] = !show;
+        // console.log({ state, show });
         updateGroupShow(groupname);
     }
 
     function updateGroupShow(groupname) {
-        let show = groupShow[groupname] || !poppable[groupname];
+        let show = groupShow[groupname] ?? true;
+        // console.log({ updateGroupShow: groupname, show: groupShow[groupname] });
         let group = groups[groupname];
         group.forEach(div => {
             if (show) div.setMode(letMode);
