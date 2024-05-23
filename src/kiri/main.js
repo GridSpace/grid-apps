@@ -302,15 +302,10 @@ gapp.register("kiri.main", [], (root, exports) => {
          return proto.toLowerCase().indexOf("https") === 0;
     }
 
-    function setProgress(value, msg) {
-        if (value) {
-            value = (value * 100).round(4);
-            UI.loading.display = 'block';
-            UI.progress.width = value+'%';
-            if (msg) UI.prostatus.innerHTML = msg;
-        } else {
-            UI.loading.display = 'none';
-        }
+    function setProgress(value = 0, msg) {
+        value = (value * 100).round(4);
+        UI.progress.width = value+'%';
+        if (msg) UI.prostatus.innerHTML = msg;
     }
 
     function bound(v,min,max) {
