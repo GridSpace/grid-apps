@@ -28,92 +28,31 @@
 </head>
 <body>
 <div id="app" class="f-col">
-    <div id="curtain" class="j-center a-center"><img id="loading">loading...</div>
+    <div id="curtain" class="j-center a-center"><img id="loading">Kiri:Moto is Loading</div>
 
     <div id="top-sep"></div>
 
     <div id="top" class="f-row">
         <div class="f-row top-menu">
-            <span>
-                <i class="fas fa-person-running"></i>
-                <label>start</label>
-                <div class="top-menu-drop top-menu-left">
-                    <div class="content">
-                        <div id="view-arrange">
-                            <label lk="arrange">arrange</label>
-                            <span><i class="fas fa-shapes"></i></span>
-                        </div>
-                        <div id="act-slice">
-                            <label id="label-slice" title="generate layer slices" lk="slice">preview</label>
-                            <span><i class="fas fa-bars"></i></span>
-                        </div>
-                        <div id="act-preview">
-                            <label id="label-preview" title="show routing and paths" lk="preview">preview</label>
-                            <span><i class="fas fa-layer-group"></i></span>
-                        </div>
-                        <div id="act-animate">
-                            <label id="label-animate" title="render routing on a mesh" lk="animate">animate</label>
-                            <span><i class="fas fa-film"></i></span>
-                        </div>
-                        <div id="act-export">
-                            <label id="label-export" title="generate gcode" lk="export">export</label>
-                            <span><i class="fas fa-file-download"></i></span>
-                        </div>
-                    </div>
-                </div>
+            <span id="view-arrange">
+                <span><i class="fas fa-shapes"></i></span>
+                <label lk="arrange">arrange</label>
             </span>
-            <span>
-                <i class="fas fa-folder"></i>
-                <label>files</label>
-                <div class="top-menu-drop top-menu-left">
-                    <div class="content">
-                        <div id="file-recent">
-                            <label lk="recent">recent</label>
-                            <span><i class="fas fa-list"></i></span>
-                        </div>
-                        <div id="file-import">
-                            <label lk="import">import</label>
-                            <span><i class="fas fa-file-upload"></i></span>
-                            <!-- hidden file input loader -->
-                            <input id="load-file" type="file" name="loadme" style="display:none"></input>
-                        </div>
-                    </div>
-                </div>
+            <span id="act-slice">
+                <span><i class="fas fa-bars"></i></span>
+                <label id="label-slice" title="generate layer slices" lk="slice">preview</label>
             </span>
-            <span>
-                <i class="fas fa-dice-d20"></i>
-                <label>mesh</label>
-                <div class="top-menu-drop top-menu-left">
-                    <div class="content">
-                        <div id="tool-rotate">
-                            <label lk="rotate">rotate</label>
-                            <span><i class="fas fa-sync-alt"></i></span>
-                        </div>
-                        <div id="tool-scale">
-                            <label lk="scale">scale</label>
-                            <span><i class="fas fa-expand"></i></span>
-                        </div>
-                        <div id="tool-mesh">
-                            <label lk="mesh">mesh</label>
-                            <span><i class="fas fa-dice-d20"></i></span>
-                        </div>
-                        <div id="tool-selector">
-                            <label lk="select">select</label>
-                            <span><i class="fas fa-mouse-pointer"></i></span>
-                        </div>
-                            <div id="view-clear">
-                            <label lk="clear">clear</label>
-                            <span><i class="far fa-square"></i></span>
-                        </div>
-                    </div>
-                </div>
+            <span id="act-preview">
+                <span><i class="fas fa-layer-group"></i></span>
+                <label id="label-preview" title="show routing and paths" lk="preview">preview</label>
             </span>
-            <span id="menu-nozzle">
-                <i class="fas fa-map-marker"></i>
-                <label>tool</label>
-                <div class="top-menu-drop top-menu-left">
-                    <div id="pop-nozzle" class="content"></div>
-                </div>
+            <span id="act-animate">
+                <span><i class="fas fa-film"></i></span>
+                <label id="label-animate" title="render routing on a mesh" lk="animate">animate</label>
+            </span>
+            <span id="act-export">
+                <span><i class="fas fa-file-download"></i></span>
+                <label id="label-export" title="generate gcode" lk="export">export</label>
             </span>
         </div>
         <div class="grow"></div>
@@ -139,6 +78,60 @@
         </div>
         <div class="grow"></div>
         <div class="f-row top-menu">
+            <span>
+                <i class="fas fa-folder"></i>
+                <label>files</label>
+                <div class="top-menu-drop top-menu-right">
+                    <div class="content">
+                        <div id="file-recent">
+                            <label lk="recent">recent</label>
+                            <span><i class="fas fa-list"></i></span>
+                        </div>
+                        <div id="file-import">
+                            <label lk="import">import</label>
+                            <span><i class="fas fa-file-upload"></i></span>
+                            <!-- hidden file input loader -->
+                            <input id="load-file" type="file" name="loadme" style="display:none"></input>
+                        </div>
+                    </div>
+                </div>
+            </span>
+            <span>
+                <i class="fas fa-dice-d20"></i>
+                <label>mesh</label>
+                <div class="top-menu-drop top-menu-right">
+                    <div class="content">
+                        <div id="tool-rotate">
+                            <label lk="rotate">rotate</label>
+                            <span><i class="fas fa-sync-alt"></i></span>
+                        </div>
+                        <div id="tool-scale">
+                            <label lk="scale">scale</label>
+                            <span><i class="fas fa-expand"></i></span>
+                        </div>
+                        <div id="tool-mesh">
+                            <label lk="mesh">mesh</label>
+                            <span><i class="fas fa-dice-d20"></i></span>
+                        </div>
+                        <div id="tool-selector">
+                            <label lk="select">select</label>
+                            <span><i class="fas fa-mouse-pointer"></i></span>
+                        </div>
+                        <hr>
+                        <div id="view-clear">
+                            <label lk="clear">clear</label>
+                            <span><i class="far fa-square"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </span>
+            <span id="menu-nozzle">
+                <i class="fas fa-map-marker"></i>
+                <label>tool</label>
+                <div class="top-menu-drop top-menu-right">
+                    <div id="pop-nozzle" class="content"></div>
+                </div>
+            </span>
             <span id="menu-render">
                 <i class="fas fa-dice-d20"></i>
                 <label>render</label>
@@ -460,7 +453,7 @@
             <div class="mid-sep"></div>
             <div id="right-work" class="f-col j-center slim-hide">
                 <div class="chonk"></div>
-                <div>operation chain</div>
+                <div id="cam-ops-header"><span>CNC</span><span>operations</span></div>
                 <div class="chonk"></div>
                 <div id="camops" class="f-col a-stretch grow">
                     <div id="oplist" class="f-col j-center"></div>

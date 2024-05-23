@@ -79,7 +79,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
         alert,
         onBlur,
         setVisible(el, bool) {
-            kiri.ui.setClass(el, 'hide', bool);
+            kiri.ui.setClass(el, 'hide', !bool);
         },
         setClass(el, clazz, bool) {
             if (bool) {

@@ -181,12 +181,12 @@ th, tr, td, label {
 
 .top-menu {
     display: flex;
-    gap: 3px;
+    gap: 0px;
     align-items: center;
     white-space: nowrap;
 }
 .top-menu > span {
-    padding: 3px 6px 3px 6px;
+    padding: 5px 9px 5px 9px;
     border-left: 1px solid transparent;
     border-right: 1px solid transparent;
 }
@@ -464,7 +464,7 @@ th, tr, td, label {
     position: fixed;
     background-color: #fff;
     font-family: 'Russo One', sans-serif;
-    z-index: 11;
+    z-index: 1000;
 }
 
 #tracker {
@@ -639,6 +639,7 @@ th, tr, td, label {
 #top-sep, #top-mid-sep {
     z-index: 14;
     height: 1px;
+    min-height: 1px;
     background-image: var(--gradbar);
 }
 .mid-sep {
@@ -915,6 +916,15 @@ th, tr, td, label {
     background-color: var(--work-area);
     display: flex;
     padding: 5px 0 0 0;
+}
+#cam-ops-header {
+    background-color: var(--work-area);
+    font-size: smaller;
+    flex-direction: column;
+    justify-content: stretch;
+    text-align: center;
+    padding: 10px;
+    gap: 5px;
 }
 .cam-pop-op {
     text-align: left;
