@@ -187,8 +187,6 @@ CAM.init = function(kiri, api) {
             if (wannot.tab && wannot.tab.length) hasTabs = true;
             if (wannot.trace && wannot.trace.length) hasTraces = true;
         }
-        // show/hide dots in enabled process pop buttons
-        api.ui.camTabs.marker.style.display = hasTabs ? 'flex' : 'none';
         api.platform.update_bounds();
         updateIndex();
         updateStock();

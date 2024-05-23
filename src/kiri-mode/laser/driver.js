@@ -28,7 +28,6 @@ const LASER = driver.LASER = {
 function init(kiri, api) {
     api.event.on("settings.saved", (settings) => {
         let ui = kiri.api.ui;
-        ui.knife.marker.style.display = ui.knifeOn.checked ? '' : 'none';
     });
 }
 

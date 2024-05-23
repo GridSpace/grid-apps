@@ -253,48 +253,47 @@ gapp.register("kiri.ui", [], (root, exports) => {
 
         let row = DOC.createElement('div'),
             dbkey = `beta-${prefix}-show-${group}`,
-            popper = !opt.inline && label,
+            // popper = !opt.inline && label,
             link;
 
-        if (popper) {
-            let pop = DOC.createElement('div');
-            pop.classList.add('set-pop');
-            if (opt.class) {
-                for (let ce of opt.class.split(' ')) {
-                    pop.classList.add(ce);
-                }
-            }
-            row.appendChild(pop);
-            row.setAttribute("class", "set-group noselect");
-            addTo = pop;
-        } else {
+        // if (popper) {
+        //     let pop = DOC.createElement('div');
+        //     pop.classList.add('set-pop');
+        //     if (opt.class) {
+        //         for (let ce of opt.class.split(' ')) {
+        //             pop.classList.add(ce);
+        //         }
+        //     }
+        //     row.appendChild(pop);
+        //     row.setAttribute("class", "set-group noselect");
+        //     addTo = pop;
+        // } else {
             if (opt.class) {
                 opt.class.split(' ').forEach(ce => {
                     row.classList.add(ce);
                 });
             } else {
-                row.setAttribute("class", "set-header col");
+                row.setAttribute("class", "set-header");
             }
             addTo = lastDiv;
-        }
-
-        if (opt.marker) {
-            let marker = row.marker = DOC.createElement('div');
-            marker.setAttribute('class', 'marker');
-            row.appendChild(marker);
-        }
+        // }
 
         div.appendChild(row);
         if (label) {
             link = DOC.createElement('a');
             link.appendChild(DOC.createTextNode(label));
             row.appendChild(link);
+            let line = DOC.createElement('hr');
+            line.classList.add('set-header-line');
+            row.appendChild(line);
         }
+
         addModeControls(row, opt);
         lastGroup = groups[group] = [];
         lastGroup.key = dbkey;
         groupName = group;
-        groupShow[group] = popper ? state[dbkey] === 'true' : state[dbkey] !== 'false';
+        groupShow[group] = state[dbkey] !== 'false';
+        // groupShow[group] = popper ? state[dbkey] === 'true' : state[dbkey] !== 'false';
         row.onclick = function(ev) {
             if (ev.target !== link && ev.target !== row) {
                 return;
@@ -302,41 +301,41 @@ gapp.register("kiri.ui", [], (root, exports) => {
             console.log({ toggleGroup: group, dbkey });
             toggleGroup(group, dbkey);
         };
-        if (popper) {
-            let saveclick = row.onclick;
-            row.onclick = function(ev) {
-                let showing = groupShow[group];
-                if (saveclick && showing) {
-                    saveclick(ev);
-                } else {
-                    row.onmouseenter(ev, true);
-                }
-            };
-            row.onmouseenter = function(ev, click) {
-                let showing = groupShow[group];
-                if (!(letHoverPop || click || showing)) {
-                    return;
-                }
-                if (ev.target !== link && ev.target !== row) {
-                    return;
-                }
-                clearTimeout(exitimer);
-                showGroup(group);
-            };
-            row.onmouseleave = function(ev) {
-                if (groupSticky) {
-                    return;
-                }
-                if (ev.target !== link && ev.target !== row) {
-                    return;
-                }
-                clearTimeout(exitimer);
-                exitimer = setTimeout(showGroup, 1000);
-            };
-            addTo._group = group;
-            addModeControls(addTo, opt);
-            lastGroup.push(addTo);
-        }
+        // if (popper) {
+        //     let saveclick = row.onclick;
+        //     row.onclick = function(ev) {
+        //         let showing = groupShow[group];
+        //         if (saveclick && showing) {
+        //             saveclick(ev);
+        //         } else {
+        //             row.onmouseenter(ev, true);
+        //         }
+        //     };
+        //     row.onmouseenter = function(ev, click) {
+        //         let showing = groupShow[group];
+        //         if (!(letHoverPop || click || showing)) {
+        //             return;
+        //         }
+        //         if (ev.target !== link && ev.target !== row) {
+        //             return;
+        //         }
+        //         clearTimeout(exitimer);
+        //         showGroup(group);
+        //     };
+        //     row.onmouseleave = function(ev) {
+        //         if (groupSticky) {
+        //             return;
+        //         }
+        //         if (ev.target !== link && ev.target !== row) {
+        //             return;
+        //         }
+        //         clearTimeout(exitimer);
+        //         exitimer = setTimeout(showGroup, 1000);
+        //     };
+        //     addTo._group = group;
+        //     addModeControls(addTo, opt);
+        //     lastGroup.push(addTo);
+        // }
 
         return row;
     }

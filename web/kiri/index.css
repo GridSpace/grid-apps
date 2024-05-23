@@ -497,10 +497,12 @@ th, tr, td, label {
     z-index: -1;
 }
 .chonk {
-    height: 10px;
-    min-height: 10px;
+    margin: 10px 0 10px 0;
+    height: 0px;
+    min-height: 0px;
+    max-height: 0px;
     min-width: 100px;
-    background-color: rgba(0,0,0,0.25);
+    border-top: 3px dashed black;
 }
 #mode-info {
     white-space: nowrap;
@@ -927,13 +929,12 @@ th, tr, td, label {
     gap: 5px;
 }
 .cam-pop-op {
+    top: 0;
+    right: 100%;
     text-align: left;
     position: absolute;
     white-space: nowrap;
     flex-direction: column;
-    top: 0;
-    right: 100%;
-    /* transform: translateY(-30%); */
     background-color: rgba(255,255,255,0.8);
     border: 1px solid #aaa;
     border-radius: 5px;
@@ -1827,11 +1828,14 @@ th, tr, td, label {
     align-items: stretch;
     text-transform: capitalize;
     background-color: rgba(255,255,255,0.5);
-    padding: 5px;
-    gap: 2px;
+    /* padding: 5px; */
+    /* gap: 2px; */
 }
 #settings .set-group {
     cursor: pointer;
+}
+#settings .pop-sep {
+    display: none !important;
 }
 .pop-sep {
     border: 0 !important;
@@ -1848,11 +1852,18 @@ th, tr, td, label {
     right: -9px;
 }
 .set-header {
-    background-color: rgba(0,0,0,0.1);
-    text-align: center;
+    padding: 3px 5px 3px 5px;
+    margin: 7px 3px 3px 3px;
     white-space: nowrap;
-    justify-content: center;
     border-radius: 2px;
+}
+.set-header:hover {
+    background-color: rgba(0,0,0,0.1);
+    border-radius: 2px;
+}
+.set-header-line {
+    margin-left: 5px;
+    width: 100%;
 }
 .set-group {
     align-items: center;
@@ -1881,29 +1892,12 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
-/* .set-pop.xdown {
-    transform: translateY(-25%) !important;
+#settings .var-row {
+    margin: 0 10px 0 15px;
 }
-.set-pop.fdmout {
-    transform: translateY(-63%) !important;
-}
-.set-pop.fdmadv {
-    transform: translateY(-74%) !important;
-}
-.set-pop.rough {
-    transform: translateY(-14%) !important;
-}
-.set-pop.outline {
-    transform: translateY(-36%) !important;
-} */
-.marker {
-    position:absolute;
-    border-radius: 2px;
-    background-color: rgba(0,0,0,0.25);
-    bottom: 1px;
-    left: 1px;
-    width: 4px;
-    height: 4px;
+#settings .ext-buttons {
+    margin: 0 9px 0 14px;
+    gap: 3px;
 }
 #layers .var-row {
     border-radius: 10px;

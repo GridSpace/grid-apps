@@ -1951,8 +1951,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             camStockOffset:      uc.newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l, modes:CAM}),
             camStockClipTo:      uc.newBoolean(LANG.cs_clip_s, onBooleanClick, {title:LANG.cs_clip_l, modes:CAM}),
             camSep:              uc.newBlank({class:"pop-sep", modes:CAM}),
-            camStockIndexGrid:   uc.newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, modes:CAM, show:() => ui.camStockIndexed.checked}),
             camStockIndexed:     uc.newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l, modes:CAM}),
+            camStockIndexGrid:   uc.newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, modes:CAM, show:() => ui.camStockIndexed.checked}),
 
             camCommon:           uc.newGroup(LANG.cc_menu, null, {modes:CAM}),
             camZAnchor:          uc.newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, modes:CAM, trace:true, show:() => !ui.camStockIndexed.checked}, "zanchor"),
