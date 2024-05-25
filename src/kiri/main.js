@@ -898,8 +898,14 @@ gapp.register("kiri.main", [], (root, exports) => {
         current.mode = mode;
         MODE = MODES[mode];
         DRIVER = kiri.driver[mode];
-        // update mode display
-        $('app-mode-name').innerHTML = mode === 'CAM' ? 'CNC' : mode;
+        // update mode drop-down
+        {
+            const modename = $('mode-name');
+            const options = modename.options;
+            const optlist = ["FDM","CAM","SLA","LASER"];
+            options.selectedIndex = optlist.indexOf(mode);
+            modename.onchange = (ev) => setMode(optlist[options.selectedIndex]);
+        }
         // highlight relevant device mode button
         ["fdm","sla","cam","laser"].forEach(dev => {
             let cl = $(`mode-${dev}`).classList;

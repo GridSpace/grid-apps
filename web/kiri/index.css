@@ -376,6 +376,9 @@ th, tr, td, label {
     font-weight: bold;
 }
 
+.contents {
+    display: contents;
+}
 .hide {
     display: none !important;
 }
@@ -536,15 +539,18 @@ th, tr, td, label {
     border-left: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
 }
-#mode-info span {
+#mode-info span, #mode-info select {
     margin: 2px 5px 2px 0;
     font-size: smaller;
     padding: 2px 5px 2px 5px;
     color: var(--fg-gray);
     background-color: white;
+    border-top-left-radius: 0;
     border-top-right-radius: 5px;
+    border-bottom-left-radius: 0;
     border-bottom-right-radius: 5px;
     border-top: 1px solid #ddd;
+    border-left: 0;
     border-right: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
 }
@@ -625,16 +631,14 @@ th, tr, td, label {
     left: 0;
     right: 0;
     bottom: 0;
-    /* flex-grow: true; */
     pointer-events: none;
-    /* max-height: 99%; */
 }
 
 #mod-print button, #catalogList button, #settingsList button {
     text-transform: none !important;
 }
 
-#mid-left {
+#mid-left, #right-work {
     max-height: 100%;
     background-color: var(--work-area);
 }
@@ -644,6 +648,9 @@ th, tr, td, label {
 }
 #mid-left label, #mid-left svg {
     pointer-events: none;
+}
+#right-work > div {
+    padding: 0 5px 0 5px;
 }
 
 .slim-hide {
@@ -807,7 +814,7 @@ th, tr, td, label {
     font-family: monospace;
     padding-left: 4px;
 }
-#ft-mesh, #ft-select {
+#ft-mesh {
     min-width: 200px;
 }
 #mesh-info {
@@ -819,13 +826,6 @@ th, tr, td, label {
     position: absolute;
     right: 2px;
     top: 7px;
-}
-#ft-select {
-    max-height: 300px;
-    overflow-y: auto;
-}
-#ft-select button {
-    text-transform: none;
 }
 #lay-flat.selected {
     background-color: var(--main-color);
@@ -931,7 +931,6 @@ th, tr, td, label {
     display: block;
 }
 #camops {
-    background-color: var(--work-area);
     display: flex;
     padding: 5px 0 0 0;
 }

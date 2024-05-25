@@ -116,10 +116,6 @@
                             <label lk="mesh">mesh</label>
                             <span><i class="fas fa-dice-d20"></i></span>
                         </div>
-                        <div id="tool-selector">
-                            <label lk="select">select</label>
-                            <span><i class="fas fa-mouse-pointer"></i></span>
-                        </div>
                         <hr>
                         <div id="view-clear">
                             <label lk="clear">clear</label>
@@ -261,9 +257,13 @@
                 <div id="lt-w-disable"><i class="fas fa-times-circle"></i></div>
             </div>
             <!-- always up -->
-            <div class="chonk"></div>
             <div id="mode-info" class="f-col">
-                <div><label>Mode</label><span id="app-mode-name"></span></div>
+                <div><label>Mode</label><select id="mode-name">
+                    <option>FDM</option>
+                    <option>CNC</option>
+                    <option>SLA</option>
+                    <option>Laser</option>
+                </select></div>
                 <div><label>Device</label><span id="mode-device"></span></div>
                 <div><label>Profile</label><span id="mode-profile"></span></div>
             </div>
@@ -460,39 +460,43 @@
             </div>
             <!-- vertical separation between workspace and right tray -->
             <div class="mid-sep"></div>
-            <div id="right-work" class="f-col j-center slim-hide">
-                <div class="chonk"></div>
+            <div id="right-work" class="f-col j-start">
                 <div class="work-header"><span>workspace</span></div>
                 <div class="chonk"></div>
-                <div id="workspace-tool">
-
+                <div id="ws-widgets" class="f-col"></div>
+                <div class="contents mode-fdm">
+                    <div class="chonk"></div>
+                    <div id="fdm-ranges" class="f-col"></div>
                 </div>
-                <div class="work-header"><span>CNC</span><span>operations</span></div>
-                <div class="chonk"></div>
-                <div id="camops" class="f-col a-stretch grow">
-                    <div id="oplist" class="f-col j-center"></div>
-                    <div id="ophint" class="f-row">
-                        <div class="opdiv">use + menu to add milling operations</div>
-                        <div class="opdiv">drag to re-order</div>
+                <div id="workspace-tool"></div>
+                <div class="contents mode-cam">
+                    <div class="chonk"></div>
+                    <div class="work-header">
+                        <span>CNC</span>
+                        <span>operations</span>
                     </div>
-                    <div id="op-add" class="opdiv">
-                        <i class="fas fa-plus"></i>
-                        <div id="op-add-pop" class="f-col">
-                            <div id="op-add-list" class="opdiv op-grid">
-                                <div id="cam-index" title="rotate index axis">index</div>
-                                <div id="cam-lathe" title="lathe operation">lathe</div>
-                                <div id="laser-on" title="turn on laser mode">laser on</div>
-                                <div id="laser-off"  title="turn off laser mode">laser off</div>
-                                <div id="cam-flip" title="flip part and load&#13;profile for other side&#13;for double-sided work">flip</div>
-                                <div id="cam-reg" title="drill registration holes&#13;along the X or Y axis&#13;for double-sided work">register</div>
-                                <div title="drill any holes matching&#13;selected tool diameter">drill</div>
-                                <div title="clear stock face&#13;or top of part&#13;when no stock">level</div>
-                                <div title="follow selected features with&#13;a specified tool. often used&#13;for lettering and engraving">trace</div>
-                                <div title="insert custom gcode">gcode</div>
-                                <div title="remove an area of material&#13;inside a defined boundary&#13;sometimes called pocketing">rough</div>
-                                <div title="clean up after roughing&#13;or perform a part cutout">outline</div>
-                                <div title="2.5D tracing along X or Y axis&#13;used for complex part features">contour</div>
-                                <div title="clear areas above&#13;selected surfaces">pocket</div>
+                    <div class="chonk"></div>
+                    <div id="camops" class="f-col a-stretch grow">
+                        <div id="oplist" class="f-col j-center"></div>
+                        <div id="op-add" class="opdiv">
+                            <i class="fas fa-plus"></i>
+                            <div id="op-add-pop" class="f-col">
+                                <div id="op-add-list" class="opdiv op-grid">
+                                    <div id="cam-index" title="rotate index axis">index</div>
+                                    <div id="cam-lathe" title="lathe operation">lathe</div>
+                                    <div id="laser-on" title="turn on laser mode">laser on</div>
+                                    <div id="laser-off"  title="turn off laser mode">laser off</div>
+                                    <div id="cam-flip" title="flip part and load&#13;profile for other side&#13;for double-sided work">flip</div>
+                                    <div id="cam-reg" title="drill registration holes&#13;along the X or Y axis&#13;for double-sided work">register</div>
+                                    <div title="drill any holes matching&#13;selected tool diameter">drill</div>
+                                    <div title="clear stock face&#13;or top of part&#13;when no stock">level</div>
+                                    <div title="follow selected features with&#13;a specified tool. often used&#13;for lettering and engraving">trace</div>
+                                    <div title="insert custom gcode">gcode</div>
+                                    <div title="remove an area of material&#13;inside a defined boundary&#13;sometimes called pocketing">rough</div>
+                                    <div title="clean up after roughing&#13;or perform a part cutout">outline</div>
+                                    <div title="2.5D tracing along X or Y axis&#13;used for complex part features">contour</div>
+                                    <div title="clear areas above&#13;selected surfaces">pocket</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -567,7 +571,6 @@
                 <div lkt="rotate" class="tictac" select="ft-rotate" label="ft-label"><i class="fas fa-sync-alt"></i></div>
                 <div lkt="scale" class="tictac" select="ft-scale" label="ft-label"><i class="fas fa-expand"></i></div>
                 <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
-                <div lkt="select" class="tictac" select="ft-select" label="ft-label"><i class="fas fa-mouse-pointer"></i></div>
             </div>
             <div id="ft-scale" class="grow grid">
                 <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
@@ -615,7 +618,6 @@
                 <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
                 <button id="mesh-swap" lk="rc_swap">replace vertices</button>
             </div>
-            <div id="ft-select" class="grow f-col"></div>
         </div>
         <div class="footer"></div>
     </div>

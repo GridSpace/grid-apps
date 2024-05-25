@@ -2084,8 +2084,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             slaFirstOffset:      uc.newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:uc.toFloat, bound:uc.bound(0,1), modes:SLA}),
             slaAntiAlias:        uc.newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l, modes:SLA}, "antialias"),
 
-            rangeGroup:    uc.newGroup("ranges", null, {modes:FDM, group:"ranges"}),
-            rangeList:     uc.newRow([], {}),
+            fdmRanges:    $('fdm-ranges'),
 
             settingsSave: $('settingsSave'),
             settingsName: $('settingsName'),
@@ -2964,7 +2963,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             $('tool-rotate').onclick = event.bind("tool.show", "rotate");
             $('tool-scale').onclick = event.bind("tool.show", "scale");
             $('tool-mesh').onclick = event.bind("tool.show", "mesh");
-            $('tool-selector').onclick = event.bind("tool.show", "select");
         }
 
         // warn users they are running a beta release

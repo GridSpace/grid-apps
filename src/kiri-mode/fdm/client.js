@@ -101,11 +101,11 @@ FDM.init = function(kiri, api) {
 
     function clearRanges() {
         api.conf.get().process.ranges = [];
-        ui.rangeGroup.firstElementChild.innerHTML = '';
+        ui.fdmRanges.innerHTML = '';
     }
 
+    // re-render ranges menu
     function updateRanges(ranges = []) {
-        ui.rangeGroup.style.display = isFdmMode && ranges && ranges.length ? 'flex' : 'none';
         let html = [];
         let bind = [];
         let now = Date.now();
@@ -120,7 +120,7 @@ FDM.init = function(kiri, api) {
             ]);
             bind.push({id, range});
         }
-        ui.rangeGroup.firstElementChild.innerHTML = html.join('');
+        ui.fdmRanges.innerHTML = html.join('');
         for (let rec of bind) {
             $(`sel_${rec.id}`).onclick = () => {
               api.show.layer(rec.range.hi, rec.range.lo);
@@ -159,6 +159,10 @@ FDM.init = function(kiri, api) {
     api.event.on("mode.set", mode => {
         isFdmMode = mode === 'FDM';
         lastMode = mode;
+        // hide/show fdm mode elements
+        for (let el of [...document.getElementsByClassName('mode-fdm')]) {
+            api.uc.setClass(el, 'hide', !isFdmMode);
+        }
         updateVisiblity();
     });
     api.event.on("view.set", view => {
@@ -180,7 +184,6 @@ FDM.init = function(kiri, api) {
                 }
             }
         }
-        // ui.rangeGroup.style.display = ranges && ranges.length ? 'flex' : 'none';
     });
     api.event.on("range.updates", updateRanges);
     api.event.on("settings.load", (settings) => {
@@ -191,8 +194,6 @@ FDM.init = function(kiri, api) {
     });
     api.event.on("settings.saved", (settings) => {
         updateRanges(settings.process.ranges);
-        // let ranges = settings.process.ranges;
-        // ui.rangeGroup.style.display = isFdmMode && ranges && ranges.length ? 'flex' : 'none';
     });
     api.event.on("button.click", target => {
         switch (target) {

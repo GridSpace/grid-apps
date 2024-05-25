@@ -280,12 +280,17 @@ gapp.register("kiri.ui", [], (root, exports) => {
 
         div.appendChild(row);
         if (label) {
+            // let l1 = DOC.createElement('hr');
+            // l1.classList.add('set-header-line');
+            // row.appendChild(l1);
+
             link = DOC.createElement('a');
             link.appendChild(DOC.createTextNode(label));
             row.appendChild(link);
-            let line = DOC.createElement('hr');
-            line.classList.add('set-header-line');
-            row.appendChild(line);
+
+            let l2 = DOC.createElement('hr');
+            l2.classList.add('set-header-line');
+            row.appendChild(l2);
         }
 
         addModeControls(row, opt);

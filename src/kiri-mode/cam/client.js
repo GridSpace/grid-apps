@@ -144,8 +144,11 @@ CAM.init = function(kiri, api) {
         isIndexed = undefined;
         isCamMode = mode === 'CAM';
         SPACE.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
-        api.uc.setClass($('right-work'), 'slim-hide', !isCamMode);
         api.uc.setVisible(UI.func.animate, isCamMode);
+        // hide/show cam mode elements
+        for (let el of [...document.getElementsByClassName('mode-cam')]) {
+            api.uc.setClass(el, 'hide', !isCamMode);
+        }
         if (!isCamMode) {
             func.clearPops();
             func.tabClear();
@@ -162,7 +165,6 @@ CAM.init = function(kiri, api) {
         isAnimate = false;
         animFn().animate_clear(api);
         func.clearPops();
-        api.uc.setClass($('right-work'), 'slim-hide', !isCamMode);
         if (isCamMode && isPreview) {
             for (let widget of API.widgets.all()) {
                 widget.setAxisIndex(0);
@@ -460,7 +462,6 @@ CAM.init = function(kiri, api) {
         oplist = oplist.filter(rec => !Array.isArray(rec));
         let mark = Date.now();
         let html = [];
-        $('ophint').style.display = oplist.length > (isIndexed ? 1 : 0) ? 'none' : '';
         let bind = {};
         let scale = API.view.unit_scale();
         let notime = false;

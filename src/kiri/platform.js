@@ -566,8 +566,10 @@ function platformDeletePost() {
     platformChanged();
 }
 
+// render list of current widgets
 function platformChanged() {
-    h.bind($('ft-select'), api.widgets.all().map(w => {
+    h.bind($('ws-widgets'), api.widgets.all().map(w => {
+        console.log('widget ...',w);
         let color;
         return [
             h.button({
