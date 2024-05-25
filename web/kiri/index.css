@@ -179,7 +179,7 @@ th, tr, td, label {
 }
 
 /* top menu bar, drop menus */
-#top {
+#top, #app-name {
     background-color: var(--work-area);
     text-transform: capitalize;
     font-family: sans-serif;
@@ -242,9 +242,6 @@ th, tr, td, label {
 .top-menu > span:hover .top-menu-drop {
     display: flex;
 }
-.top-menu-left {
-    align-items: self-start;
-}
 .top-menu-left .content {
     border-top-right-radius: 4px; 
 }
@@ -269,6 +266,7 @@ th, tr, td, label {
 .top-menu-drop svg {
     width: 15px;
 }
+
 #top .content {
     gap: 2px;
     display: flex;
@@ -316,9 +314,11 @@ th, tr, td, label {
 
 #app-name {
     position: absolute;
-    top: 50%;
+    /* top: 50%; */
+    top: 0;
     left: 50%;
-    transform: translateX(-50%) translateY(-50%);
+    transform: translateX(-50%);
+    /* transform: translateX(-50%) translateY(-50%); */
     z-index: 50;
 }
 #app-name {
