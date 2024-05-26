@@ -137,6 +137,9 @@ class Print {
             let eva = [];
             for (let [k,v] of Object.entries(consts)) {
                 switch (typeof v) {
+                    case 'object':
+                        eva.push(`let ${k} = ${JSON.stringify(v)};`);
+                        break;
                     case 'number':
                     case 'boolean':
                         eva.push(`let ${k} = ${v};`);
@@ -147,7 +150,7 @@ class Print {
                         break;
                 }
             }
-            eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(4) }`)
+            eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(4) }`);
             eva.push(`try {( ${tok} )} catch (e) {console.log(e);0}`);
             let scr = eva.join('');
             let evl = eval(`{ ${scr} }`);

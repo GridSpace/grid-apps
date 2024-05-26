@@ -78,6 +78,7 @@ CAM.export = function(print, online) {
             z: 1
         },
         consts = {
+            box: runbox,
             tool: 0,
             tool_name: "unknown",
             top: (offset ? dev.bedDepth : dev.bedDepth/2),
