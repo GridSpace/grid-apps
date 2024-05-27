@@ -241,11 +241,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function newGroup(label, div, opt = {}) {
-        lastDiv = div || lastDiv;
-    //     return addCollapsableGroup(label, lastDiv, options);
-    // }
-
-    // function addCollapsableGroup(label, div, opt = {}) {
+        lastDiv = div = (div || lastDiv);
 
         opt.inline = true;
 

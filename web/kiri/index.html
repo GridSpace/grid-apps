@@ -289,7 +289,6 @@
                 <div id="lzr-slice" class="f-col set2-group mode-laser"></div>
                 <div id="lzr-layout" class="f-col set2-group mode-laser"></div>
                 <div id="lzr-knife" class="f-col set2-group mode-laser"></div>
-                <div id="lzr-origin" class="f-col set2-group mode-laser"></div>
                 <div id="lzr-output" class="f-col set2-group mode-laser"></div>
                 <!-- SLA -->
                 <div id="sla-slice" class="f-col set2-group mode-sla"></div>
@@ -493,21 +492,26 @@
             <!-- vertical separation between workspace and right tray -->
             <div class="mid-sep"></div>
             <div id="right-work" class="f-col j-start">
-                <div class="work-header"><span>workspace</span></div>
+                <div class="set-header f-col">
+                    <a class="work-header"><span>workspace</span></a>
+                    <div id="ws-widgets" class="f-col"></div>
+                </div>
+                <div class="line-sep"></div>
                 <div class="chonk"></div>
-                <div id="ws-widgets" class="f-col"></div>
-                <div class="contents mode-fdm">
-                    <div class="chonk"></div>
+                <div class="line-sep"></div>
+                <div class="set-header f-col mode-fdm">
+                    <a class="work-header"><span>ranges</span></a>
                     <div id="fdm-ranges" class="f-col"></div>
                 </div>
                 <div id="workspace-tool"></div>
                 <div class="contents mode-cam">
-                    <div class="chonk"></div>
                     <div class="work-header">
                         <span>CNC</span>
                         <span>operations</span>
                     </div>
+                    <div class="line-sep"></div>
                     <div class="chonk"></div>
+                    <div class="line-sep"></div>
                     <div id="camops" class="f-col a-stretch grow">
                         <div id="oplist" class="f-col j-center"></div>
                         <div id="op-add" class="opdiv">
@@ -533,7 +537,9 @@
                         </div>
                     </div>
                 </div>
+                <div class="line-sep"></div>
                 <div class="chonk"></div>
+                <div class="line-sep"></div>
             </div>
         </div>
     </div>
