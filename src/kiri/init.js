@@ -2055,12 +2055,15 @@ gapp.register("kiri.init", [], (root, exports) => {
             slaFirstOffset:      newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:toFloat, bound:bound(0,1)}),
             slaAntiAlias:        newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l}, "antialias"),
 
-            layers:        uc.setGroup($("layers")),
+            layers:             uc.setGroup($("layers")),
+
+            settingsName:       $('settingsName'),
+            settingsSave:       $('settingsSave'),
         });
 
         // override old style settings two-button menu
-        $('settingsSave').onclick = () => {
-            settingsSave(undefined, $('settingsName').value);
+        ui.settingsSave.onclick = () => {
+            settingsSave(undefined, ui.settingsName.value);
         };
 
         function optSelected(sel) {
