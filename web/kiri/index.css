@@ -1874,8 +1874,10 @@ th, tr, td, label {
 
 }
 .set2-group .set-header a {
+    text-transform: uppercase;
     text-align: center;
     font-weight: bold;
+    font-size: smaller;
     flex-grow: 1;
 }
 .set2-group .set-header hr {

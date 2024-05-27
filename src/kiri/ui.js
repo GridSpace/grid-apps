@@ -240,12 +240,12 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return el;
     }
 
-    function newGroup(label, div, options) {
+    function newGroup(label, div, opt = {}) {
         lastDiv = div || lastDiv;
-        return addCollapsableGroup(label, lastDiv, options);
-    }
+    //     return addCollapsableGroup(label, lastDiv, options);
+    // }
 
-    function addCollapsableGroup(label, div, opt = {}) {
+    // function addCollapsableGroup(label, div, opt = {}) {
 
         opt.inline = true;
 
@@ -253,44 +253,27 @@ gapp.register("kiri.ui", [], (root, exports) => {
 
         let row = DOC.createElement('div'),
             dbkey = `beta-${prefix}-show-${group}`,
-            // popper = !opt.inline && label,
             link;
 
-        // if (popper) {
-        //     let pop = DOC.createElement('div');
-        //     pop.classList.add('set-pop');
-        //     if (opt.class) {
-        //         for (let ce of opt.class.split(' ')) {
-        //             pop.classList.add(ce);
-        //         }
-        //     }
-        //     row.appendChild(pop);
-        //     row.setAttribute("class", "set-group noselect");
-        //     addTo = pop;
-        // } else {
-            if (opt.class) {
-                opt.class.split(' ').forEach(ce => {
-                    row.classList.add(ce);
-                });
-            } else {
-                row.setAttribute("class", "set-header");
-            }
-            addTo = lastDiv;
-        // }
+        if (opt.class) {
+            opt.class.split(' ').forEach(ce => {
+                row.classList.add(ce);
+            });
+        } else {
+            row.setAttribute("class", "set-header");
+        }
+
+        if (div && opt.driven) {
+            addModeControls(div, opt);
+        }
+
+        addTo = lastDiv;
 
         div.appendChild(row);
         if (label) {
-            // let l1 = DOC.createElement('hr');
-            // l1.classList.add('set-header-line');
-            // row.appendChild(l1);
-
             link = DOC.createElement('a');
             link.appendChild(DOC.createTextNode(label));
             row.appendChild(link);
-
-            let l2 = DOC.createElement('hr');
-            l2.classList.add('set-header-line');
-            row.appendChild(l2);
         }
 
         addModeControls(row, opt);
@@ -756,7 +739,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
             }
         }
         if (!ip.convert) ip.convert = raw.bind(ip);
-        // addModeControls(ip);
 
         return ip;
     }
