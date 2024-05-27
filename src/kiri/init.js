@@ -1905,7 +1905,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceSupportSpan:    uc.newInput(LANG.sp_span_s, {title:LANG.sp_span_l, bound:uc.bound(0.0,200.0), convert:uc.toFloat, show:() => ui.sliceSupportEnable.checked}),
             sliceSupportEnable:  uc.newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, show:isNotBelt}),
             sliceSupportOutline: uc.newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l}),
-
+            separator:           uc.newBlank({ class:"set-sep", driven }),
             sliceSupportGen:     uc.newRow([
                 ui.ssaGen = uc.newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
             ], { modes: FDM, class: "ext-buttons f-row grow" }),
@@ -1956,6 +1956,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             camTabsHeight:       uc.newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:uc.toFloat, bound:uc.bound(0.005,100), units:true}),
             camTabsDepth:        uc.newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:uc.toFloat, bound:uc.bound(0.005,100), units:true}),
             camTabsMidline:      uc.newBoolean(LANG.ct_midl_s, onBooleanClick, {title:LANG.ct_midl_l}),
+            separator:           uc.newBlank({ class:"set-sep", driven }),
             camTabsManual: uc.newRow([
                 (ui.tabAdd = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
                 (ui.tabDun = uc.newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),

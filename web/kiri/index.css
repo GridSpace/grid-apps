@@ -1,6 +1,7 @@
 :root {
     --fg-gray: #495057;
     --bg-gray: rgba(0,0,0,0.25);
+    --bg-gray-lt: rgba(0,0,0,0.15);
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
     --gradbar-vert: linear-gradient(to bottom, #ddd, #666, #ddd);
     --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
@@ -505,12 +506,13 @@ th, tr, td, label {
 }
 
 .chonk {
-    margin: 10px 0 10px 0;
-    height: 0px;
-    min-height: 0px;
-    max-height: 0px;
+    /* margin: 10px 0 10px 0; */
+    /* height: 0px; */
+    min-height: 6px;
+    max-height: 6px;
     min-width: 100px;
-    border-top: 3px dashed black;
+    /* border-top: 3px dashed black; */
+    background-color: var(--bg-gray-lt);
 }
 #mode-info {
     white-space: nowrap;
@@ -662,10 +664,11 @@ th, tr, td, label {
 #top-sep {
     display: none;
 }
-#top-sep, #top-mid-sep {
+#top-sep, .line-sep {
     z-index: 14;
     height: 1px;
     min-height: 1px;
+    max-height: 1px;
     background-image: var(--gradbar);
 }
 .mid-sep {
@@ -1886,7 +1889,7 @@ th, tr, td, label {
     max-width: 0 !important;
     max-height: 0 o !important;
 }
-.pop-sep {
+.pop-sep, .set-sep {
     border: 0 !important;
     padding: 0 !important;
     height: 1px;
@@ -1894,11 +1897,6 @@ th, tr, td, label {
     margin-top: 2px;
     margin-bottom: 2px;
     background-color: #bbb;
-}
-.set-sep {
-    background-color: var(--bg-gray) !important;
-    height: 10px;
-    right: -9px;
 }
 .set-header {
     padding: 3px 5px 3px 5px;
