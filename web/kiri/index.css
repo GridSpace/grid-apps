@@ -529,6 +529,7 @@ th, tr, td, label {
 #mode-info label {
     font-size: smaller;
     font-weight: bold;
+    align-self: center;
     margin: 2px 0 2px 5px;
     padding: 2px 5px 2px 5px;
     color: var(--fg-gray);
@@ -1849,6 +1850,39 @@ th, tr, td, label {
 }
 #settings .pop-sep {
     display: none !important;
+}
+.set2-group {
+    background-color: #f8f8f8;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding-bottom: 2px;
+    margin: 3px;
+    gap: 1.5px;
+}
+.set2-group .var-row {
+    margin: 0 7px 0 7px !important;
+}
+.set2-group .var-row label {
+    margin-right: 25px;
+}
+.set2-group .set-header {
+    background-color: #ddd !important;
+    padding: 5px !important;
+    margin: 0 0 3px 0 !important;
+    border-top-left-radius: 10px !important;
+    border-top-right-radius: 10px !important;
+
+}
+.set2-group .set-header a {
+    text-align: center;
+    font-weight: bold;
+    flex-grow: 1;
+}
+.set2-group .set-header hr {
+    border: 0 !important;
+    flex-grow: 0 !important;
+    max-width: 0 !important;
+    max-height: 0 o !important;
 }
 .pop-sep {
     border: 0 !important;

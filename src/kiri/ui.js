@@ -298,7 +298,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         lastGroup.key = dbkey;
         groupName = group;
         groupShow[group] = state[dbkey] !== 'false';
-        // groupShow[group] = popper ? state[dbkey] === 'true' : state[dbkey] !== 'false';
         row.onclick = function(ev) {
             if (ev.target !== link && ev.target !== row) {
                 return;
@@ -306,41 +305,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
             console.log({ toggleGroup: group, dbkey });
             toggleGroup(group, dbkey);
         };
-        // if (popper) {
-        //     let saveclick = row.onclick;
-        //     row.onclick = function(ev) {
-        //         let showing = groupShow[group];
-        //         if (saveclick && showing) {
-        //             saveclick(ev);
-        //         } else {
-        //             row.onmouseenter(ev, true);
-        //         }
-        //     };
-        //     row.onmouseenter = function(ev, click) {
-        //         let showing = groupShow[group];
-        //         if (!(letHoverPop || click || showing)) {
-        //             return;
-        //         }
-        //         if (ev.target !== link && ev.target !== row) {
-        //             return;
-        //         }
-        //         clearTimeout(exitimer);
-        //         showGroup(group);
-        //     };
-        //     row.onmouseleave = function(ev) {
-        //         if (groupSticky) {
-        //             return;
-        //         }
-        //         if (ev.target !== link && ev.target !== row) {
-        //             return;
-        //         }
-        //         clearTimeout(exitimer);
-        //         exitimer = setTimeout(showGroup, 1000);
-        //     };
-        //     addTo._group = group;
-        //     addModeControls(addTo, opt);
-        //     lastGroup.push(addTo);
-        // }
 
         return row;
     }

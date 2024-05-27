@@ -1841,7 +1841,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             prefadd:          uc.checkpoint($('prefs-add')),
 
-            process:             uc.newGroup(LANG.sl_menu, $('settings'), {modes:FDM_LZR}),
+            process:             uc.newGroup(LANG.sl_menu, $('fdm-layers'), {modes:FDM_LZR}),
             sliceHeight:         uc.newInput(LANG.sl_lahi_s, {title:LANG.sl_lahi_l, convert:uc.toFloat, modes:FDM}),
             sliceMinHeight:      uc.newInput(LANG.ad_minl_s, {title:LANG.ad_minl_l, bound:uc.bound(0,3.0), convert:uc.toFloat, modes:FDM, show: () => ui.sliceAdaptive.checked}),
             fdmSep:              uc.newBlank({class:"pop-sep", modes:FDM}),
@@ -1855,6 +1855,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceDetectThin:     uc.newSelect(LANG.ad_thin_s, {title: LANG.ad_thin_l, action: thinWallSave, modes:FDM}, "thin"),
             sliceAdaptive:       uc.newBoolean(LANG.ad_adap_s, onBooleanClick, {title: LANG.ad_adap_l, modes:FDM, trigger: true}),
 
+            laserMode:           uc.newGroup(LANG.sl_menu, $('settings'), {modes:LASER}),
             laserOffset:         uc.newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:uc.toFloat, modes:LASER}),
             laserSliceHeight:    uc.newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:uc.toFloat, modes:LASER, trigger: true}),
             laserSliceHeightMin: uc.newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:uc.toFloat, modes:LASER, show:() => { return ui.laserSliceHeight.value == 0 }}),
