@@ -251,6 +251,17 @@ gapp.register("kiri.ui", [], (root, exports) => {
             dbkey = `beta-${prefix}-show-${group}`,
             link;
 
+        // if (opt.separator) {
+        //     const sep = DOC.createElement('div');
+        //     sep.classList.add('set2-sep');
+        //     sep.innerHTML = [
+        //         '<div class="line-sep2"></div>',
+        //         '<div class="chonk"></div>',
+        //         '<div class="line-sep2"></div>',
+        //     ].join('');
+        //     lastDiv.appendChild(sep);
+        // }
+
         if (opt.class) {
             opt.class.split(' ').forEach(ce => {
                 row.classList.add(ce);
@@ -270,6 +281,17 @@ gapp.register("kiri.ui", [], (root, exports) => {
             link = DOC.createElement('a');
             link.appendChild(DOC.createTextNode(label));
             row.appendChild(link);
+        }
+
+        if (opt.separator) {
+            const sep = DOC.createElement('div');
+            sep.classList.add('set2-sep');
+            sep.innerHTML = [
+                '<div class="line-sep2"></div>',
+                '<div class="chonk2"></div>',
+                '<div class="line-sep2"></div>',
+            ].join('');
+            lastDiv.appendChild(sep);
         }
 
         addModeControls(row, opt);

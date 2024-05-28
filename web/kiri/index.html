@@ -246,7 +246,7 @@
     <div id="mid" class="grow f-row">
 
         <!-- left settings menu -->
-        <div id="mid-left" class="f-col j-left">
+        <div id="panel-left" class="f-col j-left">
             <!-- ephemeral -->
             <div id="lt-back" class="lt-menu lt-enabled">
                 <i class="fas fa-arrow-circle-left"></i>
@@ -267,10 +267,10 @@
                 <div><label>Device</label><span id="mode-device"></span></div>
                 <div><label>Profile</label><span id="mode-profile"></span></div>
             </div>
-            <div class="line-sep"></div>
-            <div class="chonk"></div>
-            <div class="line-sep"></div>
-            <div id="settings" class="f-col grow">
+            <div class="line-sep2"></div>
+            <!-- <div class="chonk"></div>
+            <div class="line-sep"></div> -->
+            <div class="f-col grow settings">
                 <!-- FDM -->
                 <div id="fdm-layers" class="f-col set2-group mode-fdm"></div>
                 <div id="fdm-base" class="f-col set2-group mode-fdm"></div>
@@ -308,166 +308,6 @@
 
         <!-- main workspace -->
         <div id="mid-mid" class="grow">
-            <div id="modal">
-                <div id="modal-box" class="f-col">
-
-                <div class="mod-top f-row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
-                <div id="mod-help" class="mdialog f-col">
-                    <div class="f-row j-center title">
-                        <label>Kiri:Moto Help</label>
-                    </div>
-                    <div class="f-col">
-                        <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"><i class="fas fa-question-circle"></i>Kiri:Moto Full Documentation</a>
-                        <a href="https://youtu.be/08795Sj22QE" target="youtube"><i class="fab fa-youtube"></i>Video Guide to Kiri:Moto 2.5</a>
-                        <a target="_rsc" href="https://www.youtube.com/c/GridSpace/videos"><i class="fab fa-youtube"></i>YouTube Channel</a>
-                        <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Discord Live Chat</a>
-                        <a target="_rsc" href="https://forum.grid.space"><i class="fab fa-discourse"></i> Discourse Forums</a>
-                        <a target="_rsc" href="https://twitter.com/grid_space_3d"><i class="fab fa-twitter"></i> Follow on Twitter</a>
-                        <a target="_rsc" href="https://paypal.me/gridspace3d?locale.x=en_US"><i class="fab fa-paypal"></i> Donations are welcome!</a>
-                    </div>
-                    <div class="f-row j-center">
-                        <label id="kiri-version"></label>
-                    </div>
-                </div>
-                <div id="mod-setup" class="mdialog f-row">
-                    <div class="f-col left a-stretch">
-                        <label class="header" lk="dm_sldt">select a device type</label>
-                        <div class="f-col">
-                            <table><tr>
-                                <th><button id="mode-fdm" class="dev-type"><label>FDM</label></button></th>
-                                <th><button id="mode-sla" class="dev-type"><label>SLA</label></button></th>
-                            </tr><tr>
-                                <th><button id="mode-cam" class="dev-type"><label>CNC</label></button></th>
-                                <th><button id="mode-laser" class="dev-type"><label>LASER</label></button></th>
-                            </tr></table>
-                        </div>
-                        <div id="dev-header" class="header sub f-col j-center">
-                            <label lk="dm_stdd">standard devices</label>
-                            <div id="dev-search">
-                                <i class="fas fa-search"></i>
-                                <input id="dev-filter">
-                            </div>
-                        </div>
-                        <div class="f-col mh0 mh35 j-center a-stretch">
-                            <div id="device-list" class="devlist f-col overy"></div>
-                        </div>
-                        <label class="header sub" lk="dm_mydd">my devices</label>
-                        <div class="f-col grow">
-                            <div id="device-my" class="devlist f-col grow overy"></div>
-                            <div class="f-row footer">
-                                <div class="grow"></div>
-                                <button id="device-add" lk="copy">copy</button>
-                                <button id="device-del" lk="delete">delete</button>
-                                <button id="device-exp" lk="export">export</button>
-                                <div class="grow"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="f-col grow a-stretch">
-                        <label class="header" lk="dm_seld">selected device</label>
-                        <div class="f-row">
-                            <div id="device1" class="f-col t-body t-inset overy grow"></div>
-                            <div class="t-pad"></div>
-                            <div id="device2" class="f-col t-body t-inset overy grow"></div>
-                            <div id="palette3" class="f-col t-body t-inset overy grow"></div>
-                        </div>
-                        <div class="t-pad"></div>
-                        <div id="gcode-edit" class="f-col grow">
-                            <div id="dg" class="f-col t-body t-inset"></div>
-                            <div class="t-pad"></div>
-                            <div id="dev-gcode" class="grow"></div>
-                        </div>
-                        <div id="device-action" class="f-row footer">
-                            <div class="grow"></div>
-                            <button id="device-save" lk="save">save</button>
-                            <div class="grow"></div>
-                        </div>
-                    </div>
-                </div>
-                <div id="mod-files" class="mdialog f-col">
-                    <label class="set-header menu-title" lk="dm_rcnt">recent files</label>
-                    <div id="catalogList" class="f-col"></div>
-                </div>
-                <div id="mod-saves" class="mdialog f-col">
-                    <label class="set-header menu-title" lk="dm_savs">saved settings</label>
-                    <div id="settingsList" class="f-col"></div>
-                    <div id="settingsNew">
-                        <input id="settingsName" class="grow"></input>
-                        <button id="settingsSave" lk="save">Save</button>
-                    </div>
-                </div>
-                <div id="mod-tools" class="mdialog">
-                    <div class="f-col">
-                        <div class="f-row t-head">
-                            <label class="t-33" lk="tool">tool</label>
-                            <div class="t-pad"></div>
-                            <label class="t-33" lk="detail">detail</label>
-                            <div class="t-pad"></div>
-                            <label class="t-33" lk="view">view</label>
-                        </div>
-                        <div id="tool-cols" class="f-row">
-                            <div class="f-col t-33">
-                                <select id="tool-select" size="10" class="grow"></select>
-                            </div>
-                            <div class="t-pad"></div>
-                            <div class="f-col t-33 t-body t-inset">
-                                <div class="f-row var-row"><label lk="name">name</label><input id="tool-name" size="15"></input></div>
-                                <div class="f-row var-row"><label lk="type">type</label>
-                                    <select id="tool-type">
-                                        <option value="endmill" lk="td_tyem" selected>end</option>
-                                        <option value="ballmill" lk="td_tybm">ball</option>
-                                        <option value="tapermill" lk="td_tytm">taper</option>
-                                    </select>
-                                </div>
-                                <div class="f-row var-row" title="tool number to use&#010;in gcode commands"><label lk="td_tonm">tool #</label><input id="tool-num" size="7"></input></div>
-                                <div class="f-row var-row"><label lk="metric">metric</label><input id="tool-metric" type="checkbox"></input></div>
-                                <div class="set-header f-col" lk="td_shft">shaft</div>
-                                <div class="f-row var-row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
-                                <div class="f-row var-row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
-                                <div class="set-header f-col" lk="td_flut">flute</div>
-                                <div class="f-row var-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
-                                <div class="f-row var-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
-                                <div class="set-header f-col" ln="td_tapr">taper</div>
-                                <div class="f-row var-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=7></input></div>
-                                <div class="f-row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
-                            </div>
-                            <div class="t-pad"></div>
-                            <div id="tool-view" class="f-col t-33 t-body"></div>
-                        </div>
-                        <div id="tool-action" class="f-row j-center">
-                            <button id="tool-add"><i class="fas fa-plus"></i></button>
-                            <button id="tool-del"><i class="fas fa-minus"></i></button>
-                            <div class="t-pad2"></div>
-                            <button id="tools-save" lk="save">save</button>
-                            <button id="tools-close" lk="done">done</button>
-                            <div class="t-pad2"></div>
-                            <button id="tools-export" lk="export">export</button>
-                        </div>
-                    </div>
-                </div>
-                <div id="mod-prefs" class="mdialog f-col a-center">
-                    <label lk="dm_appp" class="menu-title">Application Preferences</label>
-                    <hr width="80%">
-                    <div class="f-row">
-                        <div id="prefs-gen1" class="f-col"></div>
-                        <div class="t-pad2"></div>
-                        <div id="prefs-gen2" class="f-col"></div>
-                        <div class="t-pad2"></div>
-                        <div id="prefs-lay" class="f-col"></div>
-                        <div class="t-pad2"></div>
-                        <div id="prefs-xpo" class="f-col"></div>
-                        <div class="t-pad2"></div>
-                        <div id="prefs-prt" class="f-col"></div>
-                        <div class="t-pad2"></div>
-                        <div id="prefs-add" class="f-col"></div>
-                        <div class="t-pad2"></div>
-                    </div>
-                </div>
-                <div id="mod-local" class="mdialog f-col"></div>
-                <div id="mod-print" class="mdialog f-col"></div>
-                <div id="mod-any" class="mdialog f-col"></div>
-                <div class="mod-end"></div></div>
-            </div>
             <div id="layer-slider" class="f-col a-stretch">
                 <div id="layers" class="f-row j-center"></div>
                 <div id="slider" class="f-row russo">
@@ -485,33 +325,47 @@
         </div>
 
         <!-- allows right tray to slide/hide but still show speeds menu -->
-        <div id="mid-right" class="f-row j-center">
+        <div class="f-row j-center">
             <div id="set-menu" class="f-col">
                 <div id="speeds"><div id="speedbar" class="f-col a-stretch j-center" lkt="sb_info"></div></div>
             </div>
             <!-- vertical separation between workspace and right tray -->
             <div class="mid-sep"></div>
-            <div id="right-work" class="f-col j-start">
-                <div class="set-header f-col">
-                    <a class="work-header"><span>workspace</span></a>
+            <div id="panel-right" class="f-col j-start settings">
+                <div class="set2-group f-col">
+                    <div class="set-header">
+                        <a>workspace</a>
+                    </div>
+                    <div class="set2-set f-col">
+                        <div class="line-sep2"></div>
+                        <div class="chonk2"></div>
+                        <div class="line-sep2"></div>
+                    </div>
                     <div id="ws-widgets" class="f-col"></div>
                 </div>
-                <div class="line-sep"></div>
-                <div class="chonk"></div>
-                <div class="line-sep"></div>
-                <div class="set-header f-col mode-fdm">
-                    <a class="work-header"><span>ranges</span></a>
+                <div class="set2-group f-col mode-fdm">
+                    <div class="set-header">
+                        <a>ranges</a>
+                    </div>
+                    <div class="set2-set f-col">
+                        <div class="line-sep2"></div>
+                        <div class="chonk2"></div>
+                        <div class="line-sep2"></div>
+                    </div>
                     <div id="fdm-ranges" class="f-col"></div>
                 </div>
-                <div id="workspace-tool"></div>
-                <div class="contents mode-cam">
-                    <div class="work-header">
-                        <span>CNC</span>
-                        <span>operations</span>
+                <div class="set2-group f-col">
+                    <div id="workspace-tool"></div>
+                </div>
+                <div class="set2-group f-col mode-cam">
+                    <div class="set-header mode-cam">
+                        <a>operation list</a>
                     </div>
-                    <div class="line-sep"></div>
-                    <div class="chonk"></div>
-                    <div class="line-sep"></div>
+                    <div class="set2-set f-col">
+                        <div class="line-sep2"></div>
+                        <div class="chonk2"></div>
+                        <div class="line-sep2"></div>
+                    </div>
                     <div id="camops" class="f-col a-stretch grow">
                         <div id="oplist" class="f-col j-center"></div>
                         <div id="op-add" class="opdiv">
@@ -537,9 +391,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="line-sep"></div>
+                <div class="grow"></div>
+                <div class="line-sep2"></div>
                 <div class="chonk"></div>
-                <div class="line-sep"></div>
+                <div class="line-sep2"></div>
             </div>
         </div>
     </div>
@@ -551,6 +406,168 @@
 
     <!-- ThreeJS container -->
     <div id="container"></div>
+
+    <!-- modal dialogs-->
+    <div id="modal">
+        <div id="modal-box" class="f-col">
+
+        <div class="mod-top f-row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
+        <div id="mod-help" class="mdialog f-col">
+            <div class="f-row j-center title">
+                <label>Kiri:Moto Help</label>
+            </div>
+            <div class="f-col">
+                <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"><i class="fas fa-question-circle"></i>Kiri:Moto Full Documentation</a>
+                <a href="https://youtu.be/08795Sj22QE" target="youtube"><i class="fab fa-youtube"></i>Video Guide to Kiri:Moto 2.5</a>
+                <a target="_rsc" href="https://www.youtube.com/c/GridSpace/videos"><i class="fab fa-youtube"></i>YouTube Channel</a>
+                <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Discord Live Chat</a>
+                <a target="_rsc" href="https://forum.grid.space"><i class="fab fa-discourse"></i> Discourse Forums</a>
+                <a target="_rsc" href="https://twitter.com/grid_space_3d"><i class="fab fa-twitter"></i> Follow on Twitter</a>
+                <a target="_rsc" href="https://paypal.me/gridspace3d?locale.x=en_US"><i class="fab fa-paypal"></i> Donations are welcome!</a>
+            </div>
+            <div class="f-row j-center">
+                <label id="kiri-version"></label>
+            </div>
+        </div>
+        <div id="mod-setup" class="mdialog f-row">
+            <div class="f-col left a-stretch">
+                <label class="header" lk="dm_sldt">select a device type</label>
+                <div class="f-col">
+                    <table><tr>
+                        <th><button id="mode-fdm" class="dev-type"><label>FDM</label></button></th>
+                        <th><button id="mode-sla" class="dev-type"><label>SLA</label></button></th>
+                    </tr><tr>
+                        <th><button id="mode-cam" class="dev-type"><label>CNC</label></button></th>
+                        <th><button id="mode-laser" class="dev-type"><label>LASER</label></button></th>
+                    </tr></table>
+                </div>
+                <div id="dev-header" class="header sub f-col j-center">
+                    <label lk="dm_stdd">standard devices</label>
+                    <div id="dev-search">
+                        <i class="fas fa-search"></i>
+                        <input id="dev-filter">
+                    </div>
+                </div>
+                <div class="f-col mh0 mh35 j-center a-stretch">
+                    <div id="device-list" class="devlist f-col overy"></div>
+                </div>
+                <label class="header sub" lk="dm_mydd">my devices</label>
+                <div class="f-col grow">
+                    <div id="device-my" class="devlist f-col grow overy"></div>
+                    <div class="f-row footer">
+                        <div class="grow"></div>
+                        <button id="device-add" lk="copy">copy</button>
+                        <button id="device-del" lk="delete">delete</button>
+                        <button id="device-exp" lk="export">export</button>
+                        <div class="grow"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="f-col grow a-stretch">
+                <label class="header" lk="dm_seld">selected device</label>
+                <div class="f-row">
+                    <div id="device1" class="f-col t-body t-inset overy grow"></div>
+                    <div class="t-pad"></div>
+                    <div id="device2" class="f-col t-body t-inset overy grow"></div>
+                    <div id="palette3" class="f-col t-body t-inset overy grow"></div>
+                </div>
+                <div class="t-pad"></div>
+                <div id="gcode-edit" class="f-col grow">
+                    <div id="dg" class="f-col t-body t-inset"></div>
+                    <div class="t-pad"></div>
+                    <div id="dev-gcode" class="grow"></div>
+                </div>
+                <div id="device-action" class="f-row footer">
+                    <div class="grow"></div>
+                    <button id="device-save" lk="save">save</button>
+                    <div class="grow"></div>
+                </div>
+            </div>
+        </div>
+        <div id="mod-files" class="mdialog f-col">
+            <label class="set-header menu-title" lk="dm_rcnt">recent files</label>
+            <div id="catalogList" class="f-col"></div>
+        </div>
+        <div id="mod-saves" class="mdialog f-col">
+            <label class="set-header menu-title" lk="dm_savs">saved settings</label>
+            <div id="settingsList" class="f-col"></div>
+            <div id="settingsNew">
+                <input id="settingsName" class="grow"></input>
+                <button id="settingsSave" lk="save">Save</button>
+            </div>
+        </div>
+        <div id="mod-tools" class="mdialog">
+            <div class="f-col">
+                <div class="f-row t-head">
+                    <label class="t-33" lk="tool">tool</label>
+                    <div class="t-pad"></div>
+                    <label class="t-33" lk="detail">detail</label>
+                    <div class="t-pad"></div>
+                    <label class="t-33" lk="view">view</label>
+                </div>
+                <div id="tool-cols" class="f-row">
+                    <div class="f-col t-33">
+                        <select id="tool-select" size="10" class="grow"></select>
+                    </div>
+                    <div class="t-pad"></div>
+                    <div class="f-col t-33 t-body t-inset">
+                        <div class="f-row var-row"><label lk="name">name</label><input id="tool-name" size="15"></input></div>
+                        <div class="f-row var-row"><label lk="type">type</label>
+                            <select id="tool-type">
+                                <option value="endmill" lk="td_tyem" selected>end</option>
+                                <option value="ballmill" lk="td_tybm">ball</option>
+                                <option value="tapermill" lk="td_tytm">taper</option>
+                            </select>
+                        </div>
+                        <div class="f-row var-row" title="tool number to use&#010;in gcode commands"><label lk="td_tonm">tool #</label><input id="tool-num" size="7"></input></div>
+                        <div class="f-row var-row"><label lk="metric">metric</label><input id="tool-metric" type="checkbox"></input></div>
+                        <div class="set-header f-col" lk="td_shft">shaft</div>
+                        <div class="f-row var-row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
+                        <div class="f-row var-row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
+                        <div class="set-header f-col" lk="td_flut">flute</div>
+                        <div class="f-row var-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
+                        <div class="f-row var-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
+                        <div class="set-header f-col" ln="td_tapr">taper</div>
+                        <div class="f-row var-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=7></input></div>
+                        <div class="f-row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
+                    </div>
+                    <div class="t-pad"></div>
+                    <div id="tool-view" class="f-col t-33 t-body"></div>
+                </div>
+                <div id="tool-action" class="f-row j-center">
+                    <button id="tool-add"><i class="fas fa-plus"></i></button>
+                    <button id="tool-del"><i class="fas fa-minus"></i></button>
+                    <div class="t-pad2"></div>
+                    <button id="tools-save" lk="save">save</button>
+                    <button id="tools-close" lk="done">done</button>
+                    <div class="t-pad2"></div>
+                    <button id="tools-export" lk="export">export</button>
+                </div>
+            </div>
+        </div>
+        <div id="mod-prefs" class="mdialog f-col a-center">
+            <label lk="dm_appp" class="menu-title">Application Preferences</label>
+            <hr width="80%">
+            <div class="f-row">
+                <div id="prefs-gen1" class="f-col"></div>
+                <div class="t-pad2"></div>
+                <div id="prefs-gen2" class="f-col"></div>
+                <div class="t-pad2"></div>
+                <div id="prefs-lay" class="f-col"></div>
+                <div class="t-pad2"></div>
+                <div id="prefs-xpo" class="f-col"></div>
+                <div class="t-pad2"></div>
+                <div id="prefs-prt" class="f-col"></div>
+                <div class="t-pad2"></div>
+                <div id="prefs-add" class="f-col"></div>
+                <div class="t-pad2"></div>
+            </div>
+        </div>
+        <div id="mod-local" class="mdialog f-col"></div>
+        <div id="mod-print" class="mdialog f-col"></div>
+        <div id="mod-any" class="mdialog f-col"></div>
+        <div class="mod-end"></div></div>
+    </div>
 
     <!-- click + drag mouse tracking  -->
     <div id="tracker"></div>

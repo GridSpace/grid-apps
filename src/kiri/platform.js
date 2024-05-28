@@ -234,13 +234,11 @@ function platformUpdateSelected() {
     const { device } = settings;
     const { extruders } = device;
     const { selection, ui } = api;
-    const { area, enable, disable } = ui.options;
+    const { enable, disable } = ui.options;
 
     const selreal = selection.widgets();
     const selwid = selection.widgets(true);
     const selcount = selwid.length;
-
-    area.style.display = selreal.length ? 'flex' : '';
 
     if (selcount) {
         let enaC = selwid.filter(w => w.meta.disabled !== true).length;

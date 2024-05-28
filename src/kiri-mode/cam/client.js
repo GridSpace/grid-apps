@@ -274,7 +274,7 @@ CAM.init = function(kiri, api) {
     $('op-add-list').onclick = (ev) => {
         let settings = API.conf.get();
         let { process, device } = settings;
-        switch (ev.target.innerText) {
+        switch (ev.target.innerText.toLowerCase()) {
             case "index": return func.opAddIndex();
             case "laser on": return func.opAddLaserOn();
             case "laser off": return func.opAddLaserOff();

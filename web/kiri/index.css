@@ -3,6 +3,7 @@
     --bg-gray: rgba(0,0,0,0.25);
     --bg-gray-lt: rgba(0,0,0,0.15);
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
+    --gradbar2: linear-gradient(to right, #ddd, #999, #ddd);
     --gradbar-vert: linear-gradient(to bottom, #ddd, #666, #ddd);
     --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
     --holdbar-dk: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,0.25), rgba(100,100,100,0.1));
@@ -177,6 +178,10 @@ th, tr, td, label {
     left: 0;
     right: 0;
     bottom: 0;
+}
+
+#app-name .km-font {
+    font-size: larger;
 }
 
 /* top menu bar, drop menus */
@@ -514,6 +519,15 @@ th, tr, td, label {
     /* border-top: 3px dashed black; */
     background-color: var(--bg-gray-lt);
 }
+.chonk2 {
+    /* margin: 10px 0 10px 0; */
+    /* height: 0px; */
+    min-height: 3px;
+    max-height: 3px;
+    min-width: 100px;
+    /* border-top: 3px dashed black; */
+    background-color: var(--bg-gray-lt);
+}
 #mode-info {
     white-space: nowrap;
     font-size: smaller;
@@ -641,19 +655,16 @@ th, tr, td, label {
     text-transform: none !important;
 }
 
-#mid-left, #right-work {
+#panel-left, #panel-right {
     max-height: 100%;
     background-color: var(--work-area);
 }
-#mid-left, #mid-right, #modal {
+#panel-left, #panel-right, #modal {
     pointer-events: visible;
     text-transform: capitalize;
 }
-#mid-left label, #mid-left svg {
+#panel-left label, #panel-left svg {
     pointer-events: none;
-}
-#right-work > div {
-    padding: 0 5px 0 5px;
 }
 
 .slim-hide {
@@ -670,6 +681,13 @@ th, tr, td, label {
     min-height: 1px;
     max-height: 1px;
     background-image: var(--gradbar);
+}
+.line-sep2 {
+    z-index: 14;
+    height: 1px;
+    min-height: 1px;
+    max-height: 1px;
+    background-image: var(--gradbar2);
 }
 .mid-sep {
     z-index: 14;
@@ -938,18 +956,9 @@ th, tr, td, label {
     display: flex;
     padding: 5px 0 0 0;
 }
-.work-header {
-    background-color: var(--work-area);
-    font-size: smaller;
-    flex-direction: column;
-    justify-content: stretch;
-    text-align: center;
-    padding: 10px;
-    gap: 5px;
-}
 .cam-pop-op {
     top: 0;
-    right: 100%;
+    right: calc(100% + 4px);
     text-align: left;
     position: absolute;
     white-space: nowrap;
@@ -1055,8 +1064,8 @@ th, tr, td, label {
 #op-add-pop {
     position: absolute;
     display: none;
-    right: 100%;
     top: 0;
+    right: 100%;
     transform: translateY(-50%);
 }
 #op-add:hover #op-add-pop {
@@ -1070,10 +1079,12 @@ th, tr, td, label {
     gap: 5px;
 }
 #op-add-list {
+    margin-right: 10px;
     padding: 4px;
     display: flex;
     align-items: stretch;
     flex-direction: column;
+    text-transform: none !important;
 }
 #op-add-list > div {
     padding: 3px 5px 3px 5px;
@@ -1081,6 +1092,7 @@ th, tr, td, label {
     flex-direction: column;
     border: 1px dashed gray;
     border-radius: 3px;
+    text-align: center;
 }
 #op-add-list > div:hover {
     background-color: rgba(0,0,0,0.2);
@@ -1840,7 +1852,10 @@ th, tr, td, label {
     border-radius: 3px;
 }
 
-#settings {
+#panel-right{
+    overflow: unset;
+}
+.settings {
     max-height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -1848,46 +1863,38 @@ th, tr, td, label {
     text-transform: capitalize;
     background-color: rgba(255,255,255,0.5);
 }
-#settings .set-group {
+.settings .set-group {
     cursor: pointer;
 }
-#settings .pop-sep {
+.settings .pop-sep {
     display: none !important;
 }
+.settings .set-header a {
+    font-size: smaller;
+}
 .set2-group {
-    background-color: #f8f8f8;
-    border: 1px solid #ccc;
-    border-radius: 10px;
     padding-bottom: 2px;
     margin: 3px;
     gap: 1.5px;
 }
 .set2-group .var-row {
-    margin: 0 7px 0 7px !important;
+    padding: 0 7px 0 7px !important;
+    margin: 0 !important;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+}
+.set2-group .var-row:hover {
+    border-left: 3px solid #ddd;
+    border-right: 3px solid #ddd;
+    background-color: #f8f8f8 !important;
 }
 .set2-group .var-row label {
     margin-right: 25px;
 }
-.set2-group .set-header {
-    background-color: #ddd !important;
-    padding: 5px !important;
-    margin: 0 0 3px 0 !important;
-    border-top-left-radius: 10px !important;
-    border-top-right-radius: 10px !important;
-
-}
-.set2-group .set-header a {
-    text-transform: uppercase;
-    text-align: center;
-    font-weight: bold;
-    font-size: smaller;
-    flex-grow: 1;
-}
-.set2-group .set-header hr {
-    border: 0 !important;
-    flex-grow: 0 !important;
-    max-width: 0 !important;
-    max-height: 0 o !important;
+.set2-sep {
+    flex-shrink: 0;
+    flex-direction: column;
+    margin: 0 0 3px 0;
 }
 .pop-sep, .set-sep {
     border: 0 !important;
@@ -1899,26 +1906,18 @@ th, tr, td, label {
     background-color: #bbb;
 }
 .set-header {
-    padding: 3px 5px 3px 5px;
-    margin: 7px 3px 3px 3px;
     white-space: nowrap;
     border-radius: 2px;
     justify-content: center;
     background-color: var(--menu);
+    border-left: 3px solid #ddd;
+    border-right: 3px solid #ddd;
+    padding: 4px;
+    margin: 0 0 4px 0;
 }
-.set-header hr {
-    display: none;
-}
-#settings .set-header {
-    justify-content: left !important;
-    background-color: transparent;
+.settings .set-header {
     border-radius: 2px;
-}
-#settings .set-header hr {
-    display: flex !important;
-}
-#settings .set-header:hover {
-    background-color: rgba(0,0,0,0.1) !important;
+    margin: 0 !important;
 }
 .set-header-line {
     margin-left: 5px;
@@ -1951,13 +1950,13 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
-#settings .var-row {
+.settings .var-row {
     margin: 0 10px 0 15px;
 }
-#settings .var-row:hover {
+/* .settings .var-row:hover {
     color: blue;
-}
-#settings .ext-buttons {
+} */
+.settings .ext-buttons {
     margin: 0 9px 0 14px;
     gap: 3px;
 }
