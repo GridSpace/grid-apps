@@ -21,8 +21,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
         hasModes = [],
         isExpert = [],
         setters = [],
-        letMode = null,
-        letExpert = true,
+        lastMode = null,
+        lastExpert = true,
         letHoverPop = true,
         exitimer = undefined,
         NOMODE = "nomode",
@@ -168,7 +168,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function refresh(all) {
-        setMode(letMode, all ? false : true);
+        setMode(lastMode, all ? false : true);
         setters.forEach(input => {
             if (input.setv) {
                 input.setv(input.real);
@@ -177,10 +177,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function setMode(mode, nohide) {
+console.log({ gs: groupShow });
         Object.keys(groupShow).forEach(group => {
             updateGroupShow(group);
         });
-        letMode = mode;
+        lastMode = mode;
         if (nohide) {
             for (let div of hasModes.filter(d => d.isBlank)) {
                 div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
@@ -194,8 +195,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function setExpert(bool) {
-        // letExpert = bool;
-        // setMode(letMode);
+        // lastExpert = bool;
+        // setMode(lastMode);
     }
 
     function setHoverPop(bool) {
@@ -243,24 +244,10 @@ gapp.register("kiri.ui", [], (root, exports) => {
     function newGroup(label, div, opt = {}) {
         lastDiv = div = (div || lastDiv);
 
-        opt.inline = true;
-
-        let group = opt.group || label;
-
-        let row = DOC.createElement('div'),
+        let group = opt.group || label,
+            row = DOC.createElement('div'),
             dbkey = `beta-${prefix}-show-${group}`,
             link;
-
-        // if (opt.separator) {
-        //     const sep = DOC.createElement('div');
-        //     sep.classList.add('set2-sep');
-        //     sep.innerHTML = [
-        //         '<div class="line-sep2"></div>',
-        //         '<div class="chonk"></div>',
-        //         '<div class="line-sep2"></div>',
-        //     ].join('');
-        //     lastDiv.appendChild(sep);
-        // }
 
         if (opt.class) {
             opt.class.split(' ').forEach(ce => {
@@ -282,17 +269,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
             link.appendChild(DOC.createTextNode(label));
             row.appendChild(link);
         }
-
-        // if (opt.separator) {
-        //     const sep = DOC.createElement('div');
-        //     sep.classList.add('set2-sep');
-        //     sep.innerHTML = [
-        //         '<div class="line-sep2"></div>',
-        //         '<div class="chonk2"></div>',
-        //         '<div class="line-sep2"></div>',
-        //     ].join('');
-        //     lastDiv.appendChild(sep);
-        // }
 
         addModeControls(row, opt);
         lastGroup = groups[group] = [];
@@ -342,7 +318,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
         // console.log({ updateGroupShow: groupname, show: groupShow[groupname] });
         let group = groups[groupname];
         group.forEach(div => {
-            if (show) div.setMode(letMode);
+            if (show) div.setMode(lastMode);
             else div.setMode(NOMODE);
         });
     }
@@ -399,37 +375,34 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return label;
     }
 
-    function addId(el, options) {
-        if (options && options.id) {
-            el.setAttribute("id", options.id);
+    function addId(el, opt = {}) {
+        if (opt.id) {
+            el.setAttribute("id", opt.id);
         }
     }
 
     function addModeControls(el, opt = {}) {
+        if (opt.trace2) {
+            console.log({ AMC: el, opt, groupName });
+        }
         el.__opt = opt;
-        el.__show = true;
-        el.__modeSave = null;
         el.showMe = function() {
-            if (el.__show) return;
-            el.style.display = el.__modeSave;
-            el.__show = true;
-            el.__modeSave = null;
+            el.classList.remove('hide');
         };
         el.hideMe = function() {
-            if (!el.__show) return;
-            el.__show = false;
-            el.__modeSave = el.style.display;
-            el.style.display = 'none';
+            el.classList.add('hide');
         };
         el.setVisible = function(show) {
+            if (opt.trace2) console.log({ setVisible: show, el });
             if (show) el.showMe();
             else el.hideMe();
         };
         el.setMode = function(mode) {
-            let show = opt.expert === undefined || (opt.expert === letExpert);
-            let test = !opt.show || (opt.show && opt.show());
+            let xprt = opt.expert === undefined || (opt.expert === lastExpert);
+            let show = opt.show ? opt.show() : true;
             let disp = opt.visible ? opt.visible() : true;
-            el.setVisible(el.hasMode(mode) && test && show && disp);
+            if (opt.trace2) console.log({ setMode: el, xprt, show, disp, fn: el.__opt.show });
+            el.setVisible(el.hasMode(mode) && show && xprt && disp);
         }
         el.hasMode = function(mode) {
             if (mode === NOMODE) return false;
@@ -442,9 +415,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
         }
     }
 
-    function newDiv(options) {
+    function newDiv(opt = {}) {
         let div = DOC.createElement('div');
-        addModeControls(div, options);
+        addModeControls(div, opt);
         addTo.appendChild(div);
         lastGroup.push(div);
         div._group = groupName;
@@ -476,7 +449,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
 
     function newGCode(label, options) {
         let opt = options || {},
-            row = lastDiv,
+            // row = lastDiv,
             btn = DOC.createElement("button"),
             txt = DOC.createElement("textarea"),
             area = opt.area;
@@ -608,12 +581,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return txt;
     }
 
-    function newInput(label, options) {
-        let opt = options || {},
-            row = newDiv(opt),
-            hide = opt && opt.hide,
-            size = opt ? opt.size || 5 : 5,
-            height = opt ? opt.height : 0,
+    function newInput(label, opt = {}) {
+        let row = newDiv(opt),
+            hide = opt.hide,
+            size = opt.size || 5,
+            height = opt.height || 0,
             ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
             action = opt.action || bindTo || inputAction;
 
@@ -634,13 +606,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
         ip.setAttribute("type", "text");
         ip.setAttribute("spellcheck", "false");
         row.style.display = hide ? 'none' : '';
-        if (opt) {
-            if (opt.disabled) ip.setAttribute("disabled", "true");
-            if (opt.title) row.setAttribute("title", opt.title);
-            if (opt.convert) ip.convert = opt.convert.bind(ip);
-            if (opt.bound) ip.bound = opt.bound;
-            if (opt.action) action = opt.action;
-        }
+        if (opt.disabled) ip.setAttribute("disabled", "true");
+        if (opt.title) row.setAttribute("title", opt.title);
+        if (opt.convert) ip.convert = opt.convert.bind(ip);
+        if (opt.bound) ip.bound = opt.bound;
+        if (opt.action) action = opt.action;
         ip.addEventListener('focus', function(event) {
             hidePop();
             setSticky(true);
@@ -690,11 +660,10 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return ip;
     }
 
-    function newInput2(options) {
-        let opt = options || {},
-            hide = opt && opt.hide,
-            size = opt ? opt.size || 5 : 5,
-            height = opt ? opt.height : 0,
+    function newInput2(opt = {}) {
+        let hide = opt.hide,
+            size = opt.size || 5,
+            height = opt.height || 0,
             ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
             action = opt.action || bindTo || inputAction;
 
@@ -706,13 +675,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
         }
         ip.setAttribute("type", "text");
         ip.setAttribute("spellcheck", "false");
-        if (opt) {
-            if (opt.disabled) ip.setAttribute("disabled", "true");
-            if (opt.title) ip.setAttribute("title", opt.title);
-            if (opt.convert) ip.convert = opt.convert.bind(ip);
-            if (opt.bound) ip.bound = opt.bound;
-            if (opt.action) action = opt.action;
-        }
+        if (opt.disabled) ip.setAttribute("disabled", "true");
+        if (opt.title) ip.setAttribute("title", opt.title);
+        if (opt.convert) ip.convert = opt.convert.bind(ip);
+        if (opt.bound) ip.bound = opt.bound;
+        if (opt.action) action = opt.action;
         ip.addEventListener('focus', function(event) {
             hidePop();
             setSticky(true);
@@ -732,7 +699,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                     key === 'Tab' ||
                     event.metaKey ||
                     event.ctrlKey ||
-                    (key === ',' && options.comma)
+                    (key === ',' && opt.comma)
                 ) {
                     return;
                 }
@@ -838,10 +805,10 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return ip;
     }
 
-    function newBoolean(label, action = bindTo, options) {
-        let row = newDiv(options),
+    function newBoolean(label, action = bindTo, opt = {}) {
+        let row = newDiv(opt),
             ip = DOC.createElement('input'),
-            hide = options && options.hide;
+            hide = opt.hide;
 
         if (label) {
             row.appendChild(newLabel(label));
@@ -851,17 +818,20 @@ gapp.register("kiri.ui", [], (root, exports) => {
         row.style.display = hide ? 'none' : '';
         ip.setAttribute("type", "checkbox");
         ip.checked = false;
-        if (options) {
-            if (options.disabled) {
-                ip.setAttribute("disabled", "true");
-            }
-            if (options.title) {
-                ip.setAttribute("title", options.title);
-                row.setAttribute("title", options.title);
-            }
+        if (opt.disabled) {
+            ip.setAttribute("disabled", "true");
+        }
+        if (opt.title) {
+            ip.setAttribute("title", opt.title);
+            row.setAttribute("title", opt.title);
         }
         if (action) {
-            ip.onclick = function(ev) { action(ip) };
+            ip.onclick = function(ev) {
+                action(ip);
+                if (opt.trigger) {
+                    refresh();
+                }
+            };
         }
         ip.setVisible = row.setVisible;
 

@@ -855,7 +855,6 @@ gapp.register("kiri.main", [], (root, exports) => {
                 api.widgets.opacity(1);
                 break;
             case VIEWS.SLICE:
-                UI.back.style.display = 'flex';
                 if (isCAM) UI.render.classList.add('hide');
                 else UI.render.classList.remove('hide');
                 updateSpeeds();
@@ -863,7 +862,6 @@ gapp.register("kiri.main", [], (root, exports) => {
                 setWidgetVisibility(true);
                 break;
             case VIEWS.PREVIEW:
-                UI.back.style.display = 'flex';
                 if (isCAM) UI.render.classList.add('hide');
                 else UI.render.classList.remove('hide');
                 setWidgetVisibility(true);
@@ -906,15 +904,6 @@ gapp.register("kiri.main", [], (root, exports) => {
             options.selectedIndex = optlist.indexOf(mode);
             modename.onchange = (ev) => setMode(optlist[options.selectedIndex]);
         }
-        // highlight relevant device mode button
-        // ["fdm","sla","cam","laser"].forEach(dev => {
-        //     let cl = $(`mode-${dev}`).classList;
-        //     if (dev === mode.toLowerCase()) {
-        //         cl.add("dev-sel");
-        //     } else {
-        //         cl.remove("dev-sel");
-        //     }
-        // });
         // restore cached device profile for this mode
         if (current.cdev[mode]) {
             current.device = clone(current.cdev[mode]);

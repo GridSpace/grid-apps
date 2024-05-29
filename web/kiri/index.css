@@ -111,7 +111,7 @@ input {
     position: relative;
 }
 input:focus {
-    color: #495057;
+    /* color: #495057; */
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgb(0 100 255 / 10%);
 }
@@ -232,7 +232,7 @@ th, tr, td, label {
     align-items: center;
 }
 .top-menu > span:hover label {
-    color: var(--menu-hover);
+    color: #000;
 }
 .dark .top-menu > span:hover label {
     color: var(--dark-menu-text) !important;
@@ -1064,7 +1064,7 @@ th, tr, td, label {
     background-color: rgba(150,150,150,0.5) !important;
 }
 #oplist .disabled {
-    background-color: rgba(220,150,150,0.5) !important;
+    background-color: rgba(125,125,125,0.5) !important;
 }
 #oplist div .label {
     pointer-events: none;
