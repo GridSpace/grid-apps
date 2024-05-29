@@ -795,33 +795,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.fwRetract.checked = dev.fwRetract;
             if (!dev.filamentSource) ui.filamentSource.selectedIndex = 0;
 
-            // add extruder selection buttons
-            if (dev.extruders) {
-                for (let ext of dev.extruders) {
-                    // add missing deselect field from legacy configs
-                    if (!ext.extDeselect) {
-                        ext.extDeselect = [];
-                    }
-                }
-                let ext = api.lists.extruders = [];
-                dev.internal = 0;
-                let selext = $('pop-nozzle');
-                selext.innerHTML = '';
-                for (let i=0; i<dev.extruders.length; i++) {
-                    let d = DOC.createElement('div');
-                    d.innerHTML = `<label>extruder ${i}</label>`;
-                    d.setAttribute('id', `sel-ext-${i}`);
-                    d.onclick = function() {
-                        api.selection.for_widgets(w => {
-                            api.widgets.annotate(w.id).extruder = i;
-                        });
-                        api.platform.update_selected();
-                    };
-                    selext.appendChild(d);
-                    ext.push({id:i, name:i});
-                }
-            }
-
             // disable editing for non-local devices
             [
                 ui.deviceName,
@@ -1646,12 +1619,12 @@ gapp.register("kiri.init", [], (root, exports) => {
             speedbar:           $('speedbar'),
             context:            $('context-menu'),
 
-            options: {
-                // area:           $('lt-options'),
-                trash:          $('lt-trash'),
-                enable:         $('lt-w-enable'),
-                disable:        $('lt-w-disable'),
-            },
+            // options: {
+            //     // area:           $('lt-options'),
+            //     // trash:          $('lt-trash'),
+            //     // enable:         $('lt-w-enable'),
+            //     // disable:        $('lt-w-disable'),
+            // },
 
             back:               $('lt-back'),
             ltsetup:            $('lt-setup'),
@@ -1854,41 +1827,19 @@ gapp.register("kiri.init", [], (root, exports) => {
             _____:               newGroup(LANG.sw_menu, $('fdm-walls'), { modes:FDM, driven, separator }),
             sliceShells:         newInput(LANG.sl_shel_s, { title:LANG.sl_shel_l, convert:toFloat }),
             sliceLineWidth:      newInput(LANG.sl_line_s, { title:LANG.sl_line_l, convert:toFloat, bound:bound(0,5) }),
-            sliceShellOrder:     newSelect(LANG.sl_ordr_s, {title:LANG.sl_ordr_l}, "shell"),
+            separator:           newBlank({ class:"set-sep", driven }),
+            sliceShellOrder:     newSelect(LANG.sl_ordr_s, { title:LANG.sl_ordr_l}, "shell"),
             sliceDetectThin:     newSelect(LANG.ad_thin_s, { title: LANG.ad_thin_l, action: thinWallSave }, "thin"),
             outputAlternating:   newBoolean(LANG.ad_altr_s, onBooleanClick, {title:LANG.ad_altr_l}),
-            _____:               newGroup(LANG.fl_menu, $('fdm-base'), { modes:FDM, driven, separator }),
-            firstSliceHeight:    newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:toFloat, show:isNotBelt}),
-            firstLayerNozzleTemp:newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:toInt,   show:isNotBelt}),
-            firstLayerBedTemp:   newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:toInt,   show:isNotBelt}),
-            firstLayerFanSpeed:  newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:toInt,   bound:bound(0,255), show:isBelt}),
-            firstLayerYOffset:   newInput(LANG.fl_zoff_s, {title:LANG.fl_zoff_l, convert:toFloat, show:isBelt}),
-            firstLayerFlatten:   newInput(LANG.fl_flat_s, {title:LANG.fl_flat_l, convert:toFloat, show:isBelt}),
-            firstLayerRate:      newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:toFloat}),
-            firstLayerFillRate:  newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:toFloat, show:isNotBelt}),
-            separator:           newBlank({ class:"set-sep", driven }),
-            firstLayerLineMult:  newInput(LANG.fl_sfac_s, {title:LANG.fl_sfac_l, convert:toFloat, bound:bound(0.5,2), show:isNotBelt}),
-            firstLayerPrintMult: newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:toFloat}),
-            firstLayerBrim:      newInput(LANG.fl_brim_s, {title:LANG.fl_brim_l, convert:toInt,   show:isBelt}),
-            firstLayerBrimIn:    newInput(LANG.fl_brin_s, {title:LANG.fl_brin_l, convert:toInt,   show:isBelt}),
-            firstLayerBrimTrig:  newInput(LANG.fl_brmn_s, {title:LANG.fl_brmn_l, convert:toInt,   show:isBelt}),
-            firstLayerBrimGap:   newInput(LANG.fl_brgp_s, {title:LANG.fl_brgp_l, convert:toFloat, show:isBelt}),
-            firstLayerBeltLead:  newInput(LANG.fl_bled_s, {title:LANG.fl_bled_l, convert:toFloat, show:isBelt}),
-            firstLayerBeltBump:  newInput(LANG.fl_blmp_s, {title:LANG.fl_blmp_l, convert:toFloat, bound:bound(0, 10), show:isBelt}),
-            separator:           newBlank({ class:"set-sep", driven }),
-            outputBrimCount:     newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:toInt,   show:isNotBelt}),
-            outputBrimOffset:    newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:toFloat, show:isNotBelt}),
-            outputRaftSpacing:   newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:toFloat, bound:bound(0.0,3.0), show: () => ui.outputRaft.checked && isNotBelt() }),
-            separator:           newBlank({ class:"set-sep", driven }),
-            outputRaft:          newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, trigger: true, show:() => isNotBelt()}),
-            outputDraftShield:   newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, trigger: true, show:() => isNotBelt()}),
             _____:               newGroup(LANG.fi_menu, $('fdm-fill'), { modes:FDM, driven, separator }),
             sliceFillType:       newSelect(LANG.fi_type, {trigger:true}, "infill"),
             sliceFillSparse:     newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:toFloat, bound:bound(0.0,1.0)}),
-            sliceFillRepeat:     newInput(LANG.fi_rept_s, {title:LANG.fi_rept_l, convert:toInt,   bound:bound(1,10), show:fillShow}),
+            sliceFillRepeat:     newInput(LANG.fi_rept_s, {title:LANG.fi_rept_l, convert:toInt,   bound:bound(1,10), show: fillShow}),
             sliceFillOverlap:    newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:toFloat, bound:bound(0.0,2.0)}),
+            separator:           newBlank({ class:"set-sep", driven }),
             sliceFillRate:       newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:toInt,   bound:bound(0,500)}),
             sliceSolidRate:      newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:toInt,   bound:bound(0,500)}),
+            separator:           newBlank({ class:"set-sep", driven }),
             sliceFillGrow:       newInput(LANG.fi_grow_s, {title:LANG.fi_grow_l, convert:toFloat}),
             sliceFillAngle:      newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:toFloat}),
             _____:               newGroup(LANG.fh_menu, $('fdm-heat'), { modes:FDM, driven, separator }),
@@ -1915,27 +1866,58 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceSupportGen:     newRow([
                 ui.ssaGen = newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
             ], { modes: FDM, class: "ext-buttons f-row grow" }),
+            separator:           newBlank({ class:"set-sep", driven }),
             sliceSupportManual: newRow([
                 (ui.ssmAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
                 (ui.ssmDun = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
                 (ui.ssmClr = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {class:"ext-buttons f-row"}),
+            _____:               newGroup(LANG.fl_menu, $('fdm-base'), { modes:FDM, driven, separator }),
+            firstSliceHeight:    newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:toFloat, show:isNotBelt}),
+            firstLayerNozzleTemp:newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:toInt,   show:isNotBelt}),
+            firstLayerBedTemp:   newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:toInt,   show:isNotBelt}),
+            separator:           newBlank({ class:"set-sep", driven }),
+            firstLayerFanSpeed:  newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:toInt,   bound:bound(0,255), show:isBelt}),
+            firstLayerYOffset:   newInput(LANG.fl_zoff_s, {title:LANG.fl_zoff_l, convert:toFloat, show:isBelt}),
+            firstLayerFlatten:   newInput(LANG.fl_flat_s, {title:LANG.fl_flat_l, convert:toFloat, show:isBelt}),
+            firstLayerRate:      newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:toFloat}),
+            firstLayerFillRate:  newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:toFloat, show:isNotBelt}),
+            separator:           newBlank({ class:"set-sep", driven }),
+            firstLayerLineMult:  newInput(LANG.fl_sfac_s, {title:LANG.fl_sfac_l, convert:toFloat, bound:bound(0.5,2), show:isNotBelt}),
+            firstLayerPrintMult: newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:toFloat}),
+            firstLayerBrim:      newInput(LANG.fl_brim_s, {title:LANG.fl_brim_l, convert:toInt,   show:isBelt}),
+            firstLayerBrimIn:    newInput(LANG.fl_brin_s, {title:LANG.fl_brin_l, convert:toInt,   show:isBelt}),
+            firstLayerBrimTrig:  newInput(LANG.fl_brmn_s, {title:LANG.fl_brmn_l, convert:toInt,   show:isBelt}),
+            firstLayerBrimGap:   newInput(LANG.fl_brgp_s, {title:LANG.fl_brgp_l, convert:toFloat, show:isBelt}),
+            firstLayerBeltLead:  newInput(LANG.fl_bled_s, {title:LANG.fl_bled_l, convert:toFloat, show:isBelt}),
+            firstLayerBeltBump:  newInput(LANG.fl_blmp_s, {title:LANG.fl_blmp_l, convert:toFloat, bound:bound(0, 10), show:isBelt}),
+            separator:           newBlank({ class:"set-sep", driven }),
+            outputBrimCount:     newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:toInt,   show:isNotBelt}),
+            outputBrimOffset:    newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:toFloat, show:isNotBelt}),
+            outputRaftSpacing:   newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:toFloat, bound:bound(0.0,3.0), show: () => ui.outputRaft.checked && isNotBelt() }),
+            separator:           newBlank({ class:"set-sep", driven }),
+            outputRaft:          newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, trigger: true, show:() => isNotBelt()}),
+            outputDraftShield:   newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, trigger: true, show:() => isNotBelt()}),
             _____:               newGroup(LANG.ou_menu, $('fdm-output'), { modes:FDM, driven, separator }),
             outputFeedrate:      newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:toInt}),
             outputFinishrate:    newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:toInt}),
             outputSeekrate:      newInput(LANG.ou_move_s, {title:LANG.ou_move_l, convert:toInt}),
+            separator:           newBlank({ class:"set-sep", driven }),
             outputShellMult:     newInput(LANG.ou_shml_s, {title:LANG.ou_exml_l, convert:toFloat, bound:bound(0.0,2.0)}),
             outputFillMult:      newInput(LANG.ou_flml_s, {title:LANG.ou_exml_l, convert:toFloat, bound:bound(0.0,2.0)}),
             outputSparseMult:    newInput(LANG.ou_spml_s, {title:LANG.ou_exml_l, convert:toFloat, bound:bound(0.0,2.0)}),
-            sliceLayerStart:     newSelect(LANG.sl_strt_s, {title:LANG.sl_strt_l}, "start"),
             separator:           newBlank({ class:"set-sep", driven }),
-            outputLayerRetract:  newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l}),
-            outputAvoidGaps:     newBoolean(LANG.ad_agap_s, onBooleanClick, {title:LANG.ad_agap_l}),
-            outputBeltFirst:     newBoolean(LANG.ad_lbir_s, onBooleanClick, {title:LANG.ad_lbir_l, show: isBelt}),
-            _____:               newGroup(LANG.ad_menu, $('fdm-expert'), { modes:FDM, driven, separator }),
             outputRetractDist:   newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:toFloat}),
             outputRetractSpeed:  newInput(LANG.ad_rrat_s, {title:LANG.ad_rrat_l, convert:toInt}),
             outputRetractWipe:   newInput(LANG.ad_wpln_s, {title:LANG.ad_wpln_l, convert:toFloat, bound:bound(0.0,10)}),
+            separator:           newBlank({ class:"set-sep", driven }),
+            sliceLayerStart:     newSelect(LANG.sl_strt_s, {title:LANG.sl_strt_l}, "start"),
+            outputLayerRetract:  newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l}),
+            outputAvoidGaps:     newBoolean(LANG.ad_agap_s, onBooleanClick, {title:LANG.ad_agap_l}),
+            separator:           newBlank({ class:"set-sep", driven }),
+            outputBeltFirst:     newBoolean(LANG.ad_lbir_s, onBooleanClick, {title:LANG.ad_lbir_l, show: isBelt}),
+            outputNozzle:        newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l}, "extruders"),
+            _____:               newGroup(LANG.ad_menu, $('fdm-expert'), { modes:FDM, driven, separator }),
             outputRetractDwell:  newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:toInt}),
             sliceSolidMinArea:   newInput(LANG.ad_msol_s, {title:LANG.ad_msol_l, convert:toFloat}),
             outputMinSpeed:      newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, convert:toFloat, bound:bound(1,200)}),
@@ -2773,10 +2755,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         ui.acct.export.title = LANG.acct_xpo;
         $('file-recent').onclick = () => { api.modal.show('files') };
         $('file-import').onclick = (ev) => { api.event.import(ev); };
-        ui.back.onclick = api.platform.layout;
-        ui.options.trash.onclick = api.selection.delete;
-        ui.options.enable.onclick = api.selection.enable;
-        ui.options.disable.onclick = api.selection.disable;
+        // ui.options.trash.onclick = api.selection.delete;
+        // ui.options.enable.onclick = api.selection.enable;
+        // ui.options.disable.onclick = api.selection.disable;
         ui.func.slice.onclick = (ev) => { ev.stopPropagation(); api.function.slice() };
         ui.func.preview.onclick = (ev) => { ev.stopPropagation(); api.function.print() };
         ui.func.animate.onclick = (ev) => { ev.stopPropagation(); api.function.animate() };
@@ -2789,10 +2770,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('view-left').onclick = space.view.left;
         $('view-right').onclick = space.view.right;
         $('view-clear').onclick = api.platform.clear;
-        // $('mode-fdm').onclick = () => { api.mode.set('FDM'); api.space.set_focus() };
-        // $('mode-sla').onclick = () => { api.mode.set('SLA'); api.space.set_focus() };
-        // $('mode-cam').onclick = () => { api.mode.set('CAM'); api.space.set_focus() };
-        // $('mode-laser').onclick = () => { api.mode.set('LASER'); api.space.set_focus() };
         $('unrotate').onclick = () => {
             api.widgets.for(w => w.unrotate());
             api.selection.update_info();

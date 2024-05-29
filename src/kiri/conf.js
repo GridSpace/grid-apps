@@ -374,6 +374,7 @@ const conf = exports({
                 outputAlternating: false,
                 outputLayerRetract: false,
                 outputOriginCenter: true,
+                outputNozzle: 0,
                 outputLoops: 0,
                 outputInvertX: false,
                 outputInvertY: false,

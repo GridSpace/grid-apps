@@ -124,13 +124,6 @@
                     </div>
                 </div>
             </span>
-            <span id="menu-nozzle">
-                <i class="fas fa-map-marker"></i>
-                <label>tool</label>
-                <div class="top-menu-drop top-menu-right">
-                    <div id="pop-nozzle" class="content"></div>
-                </div>
-            </span>
             <span>
                 <i class="fas fa-eye"></i>
                 <label>view</label>
@@ -224,15 +217,6 @@
 
         <!-- left settings menu -->
         <div id="panel-left" class="f-col j-left">
-            <!-- ephemeral -->
-            <div id="lt-back" class="lt-menu lt-enabled">
-                <i class="fas fa-arrow-circle-left"></i>
-            </div>
-            <div id="lt-options" class="lt-menu lt-enabled">
-                <div id="lt-trash"><i class="fas fa-trash"></i></div>
-                <div id="lt-w-enable"><i class="fas fa-check-circle"></i></div>
-                <div id="lt-w-disable"><i class="fas fa-times-circle"></i></div>
-            </div>
             <!-- always up -->
             <div id="mode-info" class="f-col">
                 <div><label>Mode</label><select id="mode-name">
@@ -245,16 +229,14 @@
                 <div><label>Profile</label><span id="mode-profile"></span></div>
             </div>
             <div class="line-sep2"></div>
-            <!-- <div class="chonk"></div>
-            <div class="line-sep"></div> -->
             <div class="f-col grow settings">
                 <!-- FDM -->
                 <div id="fdm-layers" class="set2-group mode-fdm"></div>
                 <div id="fdm-walls" class="set2-group mode-fdm"></div>
-                <div id="fdm-base" class="set2-group mode-fdm"></div>
                 <div id="fdm-fill" class="set2-group mode-fdm"></div>
                 <div id="fdm-heat" class="set2-group mode-fdm"></div>
                 <div id="fdm-cool" class="set2-group mode-fdm"></div>
+                <div id="fdm-base" class="set2-group mode-fdm"></div>
                 <div id="fdm-support" class="set2-group mode-fdm"></div>
                 <div id="fdm-output" class="set2-group mode-fdm"></div>
                 <div id="fdm-expert" class="set2-group mode-fdm"></div>
@@ -316,20 +298,7 @@
                     <div class="set-header">
                         <a>workspace</a>
                     </div>
-                    <div class="set2-set f-col">
-                        <div class="line-sep2"></div>
-                        <div class="chonk2"></div>
-                        <div class="line-sep2"></div>
-                    </div>
                     <div id="ws-widgets" class="f-col"></div>
-                    <div class="set-header">
-                        <a>render</a>
-                    </div>
-                    <div class="set2-set f-col">
-                        <div class="line-sep2"></div>
-                        <div class="chonk2"></div>
-                        <div class="line-sep2"></div>
-                    </div>
                     <div id="menu-render" class="j-center">
                         <span id="render-solid" class="j-center" title="solid">
                             <i class="fas fa-square"></i>
@@ -346,11 +315,6 @@
                 <div class="set2-group f-col mode-fdm">
                     <div class="set-header">
                         <a>ranges</a>
-                    </div>
-                    <div class="set2-set f-col">
-                        <div class="line-sep2"></div>
-                        <div class="chonk2"></div>
-                        <div class="line-sep2"></div>
                     </div>
                     <div id="fdm-ranges" class="f-col"></div>
                 </div>
@@ -399,11 +363,6 @@
         </div>
     </div>
 
-    <!-- <div id="end" class="f-col a-center">
-        the end
-        <div id="bottom">the bottom</div>
-    </div> -->
-
     <!-- ThreeJS container -->
     <div id="container"></div>
 
@@ -436,16 +395,6 @@
         <!-- device selector / editor -->
         <div id="mod-setup" class="mdialog f-row">
             <div class="f-col left a-stretch">
-                <!-- <label class="header" lk="dm_sldt">select a device type</label>
-                <div class="f-col">
-                    <table><tr>
-                        <th><button id="mode-fdm" class="dev-type"><label>FDM</label></button></th>
-                        <th><button id="mode-sla" class="dev-type"><label>SLA</label></button></th>
-                    </tr><tr>
-                        <th><button id="mode-cam" class="dev-type"><label>CNC</label></button></th>
-                        <th><button id="mode-laser" class="dev-type"><label>LASER</label></button></th>
-                    </tr></table>
-                </div> -->
                 <div id="dev-header" class="header sub f-col j-center">
                     <label lk="dm_stdd">standard devices</label>
                     <div id="dev-search">
@@ -592,8 +541,6 @@
         <p>this site uses <A href="/privacy.html" target="privacy">cookies</a> to preserve application preferences</p>
         <button id="gotit" class="f-col j-center">got it</button>
     </div>
-
-    <!-- <div id="tool-info" class="noshow"></div> -->
 
     <!-- right click pop-up menu -->
     <div id="context-menu">

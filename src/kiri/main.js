@@ -921,7 +921,6 @@ gapp.register("kiri.main", [], (root, exports) => {
             api.event.emit('device.set', currentDeviceName());
         }
         // hide/show
-        api.uc.setVisible($('menu-nozzle'), mode === 'FDM');
         api.uc.setVisible($('set-tools'), mode === 'CAM');
         // updates right-hand menu by enabling/disabling fields
         setViewMode(VIEWS.ARRANGE);

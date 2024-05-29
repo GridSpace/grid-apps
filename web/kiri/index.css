@@ -10,8 +10,10 @@
     --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
     --highlight: rgba(126,153,183,0.4);
     --main-color: rgba(126,153,183,1);
-    --main-color-hover: rgb(96, 127, 164);
-    --work-area: rgba(255,255,255,0.75);
+    --main-color-hover: rgb(96,127,164);
+    --row-hover: rgb(126,153,183,0.25);
+    --work-area: rgba(255,255,255,1);
+    --header: rgba(126,153,183,0.5);
     --menu: #f0f0f0;
     --menu-text: #222;
     --menu-border: #555;
@@ -99,10 +101,10 @@ button[del] {
     margin-left: 5px;
 }
 input {
-    background-color: #eeeeeed6;
+    background-color: #f8f8ff;
     margin-bottom: 1px;
     text-align: right;
-    border: 1px solid #bbb;
+    border: 0.5px solid #bbb;
     padding-top: 0;
     padding-bottom: 0;
     margin-top: 1px;
@@ -110,10 +112,8 @@ input {
 }
 input:focus {
     color: #495057;
-    background-color: #fff;
-    border-color: #6C7F94;
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 10%);
+    box-shadow: 0 0 0 0.2rem rgb(0 100 255 / 10%);
 }
 input[disabled] {
     background-color: #ddd;
@@ -223,7 +223,7 @@ th, tr, td, label {
     color: var(--dark-menu-text)
 }
 .top-menu svg {
-    color: var(--main-color);
+    color: #555;
 }
 .top-menu > span {
     position: relative;
@@ -232,16 +232,16 @@ th, tr, td, label {
     align-items: center;
 }
 .top-menu > span:hover label {
-    color: var(--menu-text);
+    color: var(--menu-hover);
 }
 .dark .top-menu > span:hover label {
     color: var(--dark-menu-text) !important;
 }
 .top-menu > span:hover > svg {
-    color: var(--main-color-hover);
+    color: black;
 }
 .top-menu > span:hover {
-    background-color: var(--menu);
+    background-color: var(--row-hover);
     border-left: 1px solid var(--menu-border);
     border-right: 1px solid var(--menu-border);
 }
@@ -858,6 +858,7 @@ th, tr, td, label {
     min-width: 200px;
 }
 #menu-render {
+    margin: 4px 0 0 0;
     gap: 3px;
     flex-direction: row;;
 }
@@ -1926,9 +1927,10 @@ th, tr, td, label {
     border-right: 3px solid transparent;
 }
 .set2-group .var-row:hover {
-    border-left: 3px solid #ddd;
-    border-right: 3px solid #ddd;
-    background-color: #f8f8f8 !important;
+    /* border-left: 3px solid var(--main-color-hover); */
+    border-right: 3px solid var(--main-color-hover);
+    /* background-color: #f8f8f8 !important; */
+    background-color: var(--row-hover) !important;
 }
 .set2-group .var-row label {
     margin-right: 25px;
@@ -1950,15 +1952,16 @@ th, tr, td, label {
 .set-header {
     white-space: nowrap;
     border-radius: 2px;
-    justify-content: center;
-    background-color: var(--menu);
-    border-left: 3px solid #ddd;
-    border-right: 3px solid #ddd;
+    justify-content: left;
+    background-color: var(--header);
+    /* /* border-top: 0.5px solid #888; */
+    border-left: 3px solid transparent;
+    border-right: 3px solid var(--main-color-hover);
+    border-bottom: 0.5px solid var(--main-color-hover);
     padding: 4px;
     margin: 0 0 4px 0;
 }
 .settings .set-header {
-    border-radius: 2px;
     margin: 0 !important;
 }
 .set-header-line {

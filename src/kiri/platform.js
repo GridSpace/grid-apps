@@ -234,7 +234,7 @@ function platformUpdateSelected() {
     const { device } = settings;
     const { extruders } = device;
     const { selection, ui } = api;
-    const { enable, disable } = ui.options;
+    // const { enable, disable } = ui.options;
 
     const selreal = selection.widgets();
     const selwid = selection.widgets(true);
@@ -243,8 +243,8 @@ function platformUpdateSelected() {
     if (selcount) {
         let enaC = selwid.filter(w => w.meta.disabled !== true).length;
         let disC = selwid.filter(w => w.meta.disabled === true).length;
-        enable.style.display = disC ? 'flex' : 'none';
-        disable.style.display = enaC ? 'flex' : 'none';
+        // enable.style.display = disC ? 'flex' : 'none';
+        // disable.style.display = enaC ? 'flex' : 'none';
         if (api.feature.meta && selcount === 1) {
             let sel = selwid[0];
             let name = sel.meta.file || sel.meta.url;

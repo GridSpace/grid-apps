@@ -328,22 +328,22 @@ self.kiri.lang['en-us'] = {
     sl_lbot_l:      ["number of solid layers at bottom of the print or under bridge spans"],
 
     // FDM WALLS
-    sw_menu:        "walls",
-    sl_shel_s:      "wall count",
+    sw_menu:        "shells",
+    sl_shel_s:      "shell count",
     sl_shel_l:      ["number of perimeter","walls to generate"],
     ad_thin_s:      "thin wall",
     ad_thin_l:      ["detect and fill gaps","between shell walls"],
 
     // FDM SHELLS
-    sl_line_s:      "wall width",
+    sl_line_s:      "shell width",
     sl_line_l:      ["extrusion width in millimeters","0 = nozzle diameter"],
-    sl_ordr_s:      "wall order",
+    sl_ordr_s:      "shell order",
     sl_ordr_l:      ["output shell order","inside to outside","or outside to inside","affects surface quality"],
     sl_strt_s:      "layer start",
     sl_strt_l:      ["layer starting point","last = last layer end","center = part center","origin = device origin"],
 
     // FDM FILL
-    fi_menu:        "infill",
+    fi_menu:        "sparse fill",
     fi_type:        "fill type",
     fi_pcnt_s:      "fill amount",
     fi_pcnt_l:      ["fill density values","0.0 - 1.0"],
