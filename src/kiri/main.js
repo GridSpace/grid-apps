@@ -844,7 +844,7 @@ gapp.register("kiri.main", [], (root, exports) => {
         switch (mode) {
             case VIEWS.ARRANGE:
                 api.function.clear_progress();
-                UI.back.style.display = '';
+                // UI.back.style.display = '';
                 UI.render.style.display = '';
                 kiri.client.clear();
                 STACKS.clear();
@@ -907,14 +907,14 @@ gapp.register("kiri.main", [], (root, exports) => {
             modename.onchange = (ev) => setMode(optlist[options.selectedIndex]);
         }
         // highlight relevant device mode button
-        ["fdm","sla","cam","laser"].forEach(dev => {
-            let cl = $(`mode-${dev}`).classList;
-            if (dev === mode.toLowerCase()) {
-                cl.add("dev-sel");
-            } else {
-                cl.remove("dev-sel");
-            }
-        });
+        // ["fdm","sla","cam","laser"].forEach(dev => {
+        //     let cl = $(`mode-${dev}`).classList;
+        //     if (dev === mode.toLowerCase()) {
+        //         cl.add("dev-sel");
+        //     } else {
+        //         cl.remove("dev-sel");
+        //     }
+        // });
         // restore cached device profile for this mode
         if (current.cdev[mode]) {
             current.device = clone(current.cdev[mode]);

@@ -283,16 +283,16 @@ gapp.register("kiri.ui", [], (root, exports) => {
             row.appendChild(link);
         }
 
-        if (opt.separator) {
-            const sep = DOC.createElement('div');
-            sep.classList.add('set2-sep');
-            sep.innerHTML = [
-                '<div class="line-sep2"></div>',
-                '<div class="chonk2"></div>',
-                '<div class="line-sep2"></div>',
-            ].join('');
-            lastDiv.appendChild(sep);
-        }
+        // if (opt.separator) {
+        //     const sep = DOC.createElement('div');
+        //     sep.classList.add('set2-sep');
+        //     sep.innerHTML = [
+        //         '<div class="line-sep2"></div>',
+        //         '<div class="chonk2"></div>',
+        //         '<div class="line-sep2"></div>',
+        //     ].join('');
+        //     lastDiv.appendChild(sep);
+        // }
 
         addModeControls(row, opt);
         lastGroup = groups[group] = [];

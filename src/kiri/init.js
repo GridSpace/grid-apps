@@ -2445,13 +2445,13 @@ gapp.register("kiri.init", [], (root, exports) => {
             return lbl;
         }
 
-        for (let mode of ["fdm","sla","cam","laser"]) {
-            if (api.feature.modes.indexOf(mode) >= 0) {
-                $(`mode-${mode}`).appendChild(mksvg(icons[mode]));
-            } else {
-                $(`mode-${mode}`).style.display = 'none';
-            }
-        }
+        // for (let mode of ["fdm","sla","cam","laser"]) {
+        //     if (api.feature.modes.indexOf(mode) >= 0) {
+        //         $(`mode-${mode}`).appendChild(mksvg(icons[mode]));
+        //     } else {
+        //         $(`mode-${mode}`).style.display = 'none';
+        //     }
+        // }
 
         api.platform.update_size();
 
@@ -2789,10 +2789,10 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('view-left').onclick = space.view.left;
         $('view-right').onclick = space.view.right;
         $('view-clear').onclick = api.platform.clear;
-        $('mode-fdm').onclick = () => { api.mode.set('FDM'); api.space.set_focus() };
-        $('mode-sla').onclick = () => { api.mode.set('SLA'); api.space.set_focus() };
-        $('mode-cam').onclick = () => { api.mode.set('CAM'); api.space.set_focus() };
-        $('mode-laser').onclick = () => { api.mode.set('LASER'); api.space.set_focus() };
+        // $('mode-fdm').onclick = () => { api.mode.set('FDM'); api.space.set_focus() };
+        // $('mode-sla').onclick = () => { api.mode.set('SLA'); api.space.set_focus() };
+        // $('mode-cam').onclick = () => { api.mode.set('CAM'); api.space.set_focus() };
+        // $('mode-laser').onclick = () => { api.mode.set('LASER'); api.space.set_focus() };
         $('unrotate').onclick = () => {
             api.widgets.for(w => w.unrotate());
             api.selection.update_info();

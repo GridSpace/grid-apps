@@ -131,29 +131,6 @@
                     <div id="pop-nozzle" class="content"></div>
                 </div>
             </span>
-            <span id="menu-render">
-                <i class="fas fa-dice-d20"></i>
-                <label>render</label>
-                <div class="top-menu-drop top-menu-right">
-                    <div class="content">
-                        <div id="render-solid" class="grow a-center">
-                            <label lk="solid">solid</label>
-                            <span><i class="fas fa-square"></i></span>
-                        </div>
-                        <div id="render-wire" class="grow a-center">
-                            <label lk="wire">wire</label>
-                            <span><i class="fas fa-border-all"></i></span>
-                        </div>
-                        <div id="render-ghost" class="grow a-center">
-                            <label lk="ghost">ghost</label>
-                            <span><i class="fas fa-border-none"></i></span>
-                        </div>
-                        <div id="render-hide" class="grow a-center">
-                            <label lk="hide">hide</label>
-                        </div>
-                    </div>
-                </div>
-            </span>
             <span>
                 <i class="fas fa-eye"></i>
                 <label>view</label>
@@ -345,6 +322,26 @@
                         <div class="line-sep2"></div>
                     </div>
                     <div id="ws-widgets" class="f-col"></div>
+                    <div class="set-header">
+                        <a>render</a>
+                    </div>
+                    <div class="set2-set f-col">
+                        <div class="line-sep2"></div>
+                        <div class="chonk2"></div>
+                        <div class="line-sep2"></div>
+                    </div>
+                    <div id="menu-render" class="j-center">
+                        <span id="render-solid" class="j-center" title="solid">
+                            <i class="fas fa-square"></i>
+                        </span>
+                        <span id="render-wire" class="j-center" title="wireframe">
+                            <i class="fas fa-border-all"></i>
+                        </span>
+                        <span id="render-ghost" class="a-center" title="ghost">
+                            <i class="fas fa-border-none"></i>
+                        </span>
+                        <span id="render-hide" class="a-center j-center" title="hide"><a></a></span>
+                    </div>
                 </div>
                 <div class="set2-group f-col mode-fdm">
                     <div class="set-header">
@@ -414,7 +411,10 @@
     <div id="modal">
         <div id="modal-box" class="f-col">
 
+        <!-- title bar and closer -->
         <div class="mod-top f-row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
+
+        <!-- help menu -->
         <div id="mod-help" class="mdialog f-col">
             <div class="f-row j-center title">
                 <label>Kiri:Moto Help</label>
@@ -432,9 +432,11 @@
                 <label id="kiri-version"></label>
             </div>
         </div>
+
+        <!-- device selector / editor -->
         <div id="mod-setup" class="mdialog f-row">
             <div class="f-col left a-stretch">
-                <label class="header" lk="dm_sldt">select a device type</label>
+                <!-- <label class="header" lk="dm_sldt">select a device type</label>
                 <div class="f-col">
                     <table><tr>
                         <th><button id="mode-fdm" class="dev-type"><label>FDM</label></button></th>
@@ -443,7 +445,7 @@
                         <th><button id="mode-cam" class="dev-type"><label>CNC</label></button></th>
                         <th><button id="mode-laser" class="dev-type"><label>LASER</label></button></th>
                     </tr></table>
-                </div>
+                </div> -->
                 <div id="dev-header" class="header sub f-col j-center">
                     <label lk="dm_stdd">standard devices</label>
                     <div id="dev-search">
@@ -487,10 +489,14 @@
                 </div>
             </div>
         </div>
+
+        <!-- recent file menu -->
         <div id="mod-files" class="mdialog f-col">
             <label class="set-header menu-title" lk="dm_rcnt">recent files</label>
             <div id="catalogList" class="f-col"></div>
         </div>
+
+        <!-- settings list and editor -->
         <div id="mod-saves" class="mdialog f-col">
             <label class="set-header menu-title" lk="dm_savs">saved settings</label>
             <div id="settingsList" class="f-col"></div>
@@ -499,6 +505,8 @@
                 <button id="settingsSave" lk="save">Save</button>
             </div>
         </div>
+
+        <!-- cnc tool menu -->
         <div id="mod-tools" class="mdialog">
             <div class="f-col">
                 <div class="f-row t-head">
@@ -548,6 +556,8 @@
                 </div>
             </div>
         </div>
+
+        <!-- system preferences -->
         <div id="mod-prefs" class="mdialog f-col a-center">
             <label lk="dm_appp" class="menu-title">Application Preferences</label>
             <hr width="80%">
@@ -566,6 +576,8 @@
                 <div class="t-pad2"></div>
             </div>
         </div>
+
+        <!-- grid local list -->
         <div id="mod-local" class="mdialog f-col"></div>
         <div id="mod-print" class="mdialog f-col"></div>
         <div id="mod-any" class="mdialog f-col"></div>
