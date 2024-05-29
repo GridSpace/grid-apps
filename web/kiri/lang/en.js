@@ -312,32 +312,35 @@ self.kiri.lang['en-us'] = {
     se_load:        "load",
     se_save:        "save",
 
-    // FDM SLICING
+    // FDM LAYERS
     sl_menu:        "layers",
     sl_lahi_s:      "height",
     sl_lahi_l:      ["height of each slice","layer in millimeters"],
     ad_minl_s:      "height min",
     ad_minl_l:      ["adaptive min layer height","in millimeters","must be non-zero"],
+    ad_adap_s:      "adaptive",
+    ad_adap_l:      ["use adaptive layer heights","with 'layer height' as max","and 'layer min' as the min"],
     sl_ltop_s:      "top layers",
     sl_ltop_l:      ["number of solid layers at the top of the print or on flat areas facing up"],
     sl_lsld_s:      "solid layers",
     sl_lsld_l:      ["solid fill areas computed","from bridges and flat areas","detected betwen sliced layers"],
     sl_lbot_s:      "base layers",
     sl_lbot_l:      ["number of solid layers at bottom of the print or under bridge spans"],
-    ad_adap_s:      "adaptive",
-    ad_adap_l:      ["use adaptive layer heights","with 'layer height' as max","and 'layer min' as the min"],
+
+    // FDM WALLS
+    sw_menu:        "walls",
+    sl_shel_s:      "wall count",
+    sl_shel_l:      ["number of perimeter","walls to generate"],
+    ad_thin_s:      "thin wall",
+    ad_thin_l:      ["detect and fill gaps","between shell walls"],
 
     // FDM SHELLS
-    sl_shel_s:      "shell count",
-    sl_shel_l:      ["number of perimeter","walls to generate"],
-    sl_line_s:      "line width",
+    sl_line_s:      "wall width",
     sl_line_l:      ["extrusion width in millimeters","0 = nozzle diameter"],
-    sl_ordr_s:      "shell order",
+    sl_ordr_s:      "wall order",
     sl_ordr_l:      ["output shell order","inside to outside","or outside to inside","affects surface quality"],
     sl_strt_s:      "layer start",
     sl_strt_l:      ["layer starting point","last = last layer end","center = part center","origin = device origin"],
-    ad_thin_s:      "thin wall",
-    ad_thin_l:      ["detect and fill gaps","between shell walls"],
 
     // FDM FILL
     fi_menu:        "infill",
@@ -354,6 +357,12 @@ self.kiri.lang['en-us'] = {
     fi_over_l:      ["overlap with shell and other fill","as fraction of nozzle diameter","0.0 - 2.0"],
     // fi_rate_s:      "print speed",
     fi_rate_l:      ["extrusion speed for infill","set to 0 to use default","output print speeds"],
+
+    // FDM HEATING
+    fh_menu:        "heating",
+
+    // FDM COOLING
+    fc_menu:        "cooling",
 
     // FDM FIRST LAYER
     fl_menu:        "base",
@@ -674,7 +683,7 @@ self.kiri.lang['en-us'] = {
     ou_flml_s:      "solid factor",
     ou_spml_s:      "infill factor",
     ou_exml_l:      ["extrusion multiplier","0.0 - 2.0"],
-    ou_fanl_s:      "fan on",
+    ou_fanl_s:      "fan on layer",
     ou_fanl_l:      ["layer # to turn on fan","layers start at 0"],
     ou_fans_s:      "fan speed",
     ou_fans_l:      "0 - 255",
