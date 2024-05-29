@@ -967,7 +967,8 @@ th, tr, td, label {
     border: 1px solid #aaa;
     border-radius: 5px;
     margin-right: 6px;
-    padding: 5px;
+    padding: 5px 3px 5px 3px;
+    gap: 1.5px;
 }
 .pop-tics {
     position: absolute;
@@ -1866,19 +1867,17 @@ th, tr, td, label {
 .settings .set-group {
     cursor: pointer;
 }
-.settings .pop-sep {
-    display: none !important;
-}
 .settings .set-header a {
     font-size: smaller;
 }
 .set2-group {
+    flex-flow: column;
     padding-bottom: 2px;
     margin: 3px;
     gap: 1.5px;
 }
 .set2-group .var-row {
-    padding: 0 7px 0 7px !important;
+    padding: 0 4px 0 4px !important;
     margin: 0 !important;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
@@ -1950,12 +1949,6 @@ th, tr, td, label {
     margin-right: 5px;
     padding: 5px;
 }
-.settings .var-row {
-    margin: 0 10px 0 15px;
-}
-/* .settings .var-row:hover {
-    color: blue;
-} */
 .settings .ext-buttons {
     margin: 0 9px 0 14px;
     gap: 3px;
