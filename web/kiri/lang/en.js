@@ -314,9 +314,9 @@ self.kiri.lang['en-us'] = {
 
     // FDM LAYERS
     sl_menu:        "layers",
-    sl_lahi_s:      "height",
+    sl_lahi_s:      "layer height",
     sl_lahi_l:      ["height of each slice","layer in millimeters"],
-    ad_minl_s:      "height min",
+    ad_minl_s:      "layer minimum",
     ad_minl_l:      ["adaptive min layer height","in millimeters","must be non-zero"],
     ad_adap_s:      "adaptive",
     ad_adap_l:      ["use adaptive layer heights","with 'layer height' as max","and 'layer min' as the min"],
@@ -331,7 +331,7 @@ self.kiri.lang['en-us'] = {
     sw_menu:        "shells",
     sl_shel_s:      "shell count",
     sl_shel_l:      ["number of perimeter","walls to generate"],
-    ad_thin_s:      "thin wall",
+    ad_thin_s:      "thin walls",
     ad_thin_l:      ["detect and fill gaps","between shell walls"],
 
     // FDM SHELLS
@@ -353,8 +353,8 @@ self.kiri.lang['en-us'] = {
     fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
     fi_grow_s:      "solid expand",
     fi_grow_l:      ["expand projected solids","can help with solid areas","over sparse infill areas","units in millimeters"],
-    fi_over_s:      "shell overlap",
-    fi_over_l:      ["overlap with shell and other fill","as fraction of nozzle diameter","0.0 - 2.0"],
+    fi_over_s:      "fill overlap",
+    fi_over_l:      ["overlap with shell and other fill","for improved extrusion bonding","as fraction of nozzle diameter","0.0 - 2.0"],
     // fi_rate_s:      "print speed",
     fi_rate_l:      ["extrusion speed for infill","set to 0 to use default","output print speeds"],
 
@@ -434,7 +434,7 @@ self.kiri.lang['en-us'] = {
     sp_grow_l:      ["grow support column to fill small gaps","in millimeters"],
     sp_nozl_s:      "extruder",
     sp_nozl_l:      ["in multi-extruder systems","the extruder to use for","support material"],
-    sp_outl_s:      "outline",
+    sp_outl_s:      "enclosed",
     sp_outl_l:      ["enclose support pattern","inside a perimeter shell"],
     sp_auto_s:      "automatic",
     sp_auto_l:      ["enable generated supports","using at-slice-time geometry","supports will only appear","after slicing completes"],

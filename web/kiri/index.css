@@ -694,6 +694,9 @@ th, tr, td, label {
     pointer-events: none;
 }
 
+#ws-widgets button {
+    text-transform: none;
+}
 .slim-hide {
     width: 0;
     overflow: hidden;
@@ -1173,14 +1176,14 @@ th, tr, td, label {
     height: 6px;
     min-height: 6px;
     text-align: center;
-    background-color: rgba(0,0,0,0.15);
+    background-color: rgb(220,220,220);
     border-radius: 3px;
 }
 #progbar {
     width: 0;
     text-align: left;
     position: relative;
-    background-color: rgba(255,0,0,0.65);
+    background-color: rgb(255,90,90);
     border-radius: 3px;
 }
 #progtxt {
