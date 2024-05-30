@@ -380,8 +380,7 @@ function prepareAnimation() {
         api.alerts.show("window prevents animations");
         return;
     }
-    const settings = api.conf.get();
-    api.event.emit("function.animate", {mode: settings.mode});
+    api.event.emit("function.animate", {mode: api.conf.get().mode});
 }
 
 function prepareExport() {

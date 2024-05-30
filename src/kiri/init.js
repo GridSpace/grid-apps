@@ -1633,7 +1633,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             ltact:              $('lt-start'),
             edit:               $('lt-tools'),
             nozzle:             $('menu-nozzle'),
-            render:             $('menu-render'),
+            // render:             $('menu-render'),
 
             modal:              $('modal'),
             modalBox:           $('modal-box'),
@@ -1794,7 +1794,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             shiny:            newBoolean(LANG.op_shny_s, booleanSave, {title:LANG.op_shny_l, modes:FDM}),
             lineType:         newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
             animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
-            units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM, trace:true}, "units"),
+            units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM, trace:false}, "units"),
             layout:           newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
             autoSave:         newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
             autoLayout:       newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
@@ -1819,7 +1819,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             _____:               newGroup(LANG.sl_menu, $('fdm-layers'), { modes:FDM, driven, separator }),
             sliceHeight:         newInput(LANG.sl_lahi_s, { title:LANG.sl_lahi_l, convert:toFloat }),
-            sliceMinHeight:      newInput(LANG.ad_minl_s, { title:LANG.ad_minl_l, convert:toFloat, bound:bound(0,3.0), show:() => ui.sliceAdaptive.checked, trace2:true }),
+            sliceMinHeight:      newInput(LANG.ad_minl_s, { title:LANG.ad_minl_l, convert:toFloat, bound:bound(0,3.0), show:() => ui.sliceAdaptive.checked }),
             sliceTopLayers:      newInput(LANG.sl_ltop_s, { title:LANG.sl_ltop_l, convert:toInt }),
             sliceBottomLayers:   newInput(LANG.sl_lbot_s, { title:LANG.sl_lbot_l, convert:toInt }),
             separator:           newBlank({ class:"set-sep", driven }),
@@ -1858,7 +1858,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceSupportExtra:   newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, convert:toFloat, bound:bound(0.0,10.0)}),
             sliceSupportGrow:    newInput(LANG.sp_grow_s, {title:LANG.sp_grow_l, convert:toFloat, bound:bound(0.0,10.0)}),
             sliceSupportAngle:   newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, convert:toFloat, bound:bound(0.0,90.0)}),
-            sliceSupportSpan:    newInput(LANG.sp_span_s, {title:LANG.sp_span_l, convert:toFloat, bound:bound(0.0,200.0), show:() => ui.sliceSupportEnable.checked, trace2:false }),
+            sliceSupportSpan:    newInput(LANG.sp_span_s, {title:LANG.sp_span_l, convert:toFloat, bound:bound(0.0,200.0), show:() => ui.sliceSupportEnable.checked }),
             separator:           newBlank({ class:"set-sep", driven }),
             sliceSupportEnable:  newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, show:isNotBelt}),
             sliceSupportOutline: newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l}),
@@ -1955,7 +1955,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             camStockIndexed:     newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l}),
             camStockIndexGrid:   newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, show:() => ui.camStockIndexed.checked}),
             camLimits:           newGroup(LANG.cc_menu, $('cam-limits'), { modes:CAM, driven, separator }),
-            camZAnchor:          newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, trace:true, show:() => !ui.camStockIndexed.checked}, "zanchor"),
+            camZAnchor:          newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, trace:false, show:() => !ui.camStockIndexed.checked}, "zanchor"),
             camZOffset:          newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:toFloat, units:true}),
             camZBottom:          newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:toFloat, units:true, trigger: true}),
             camZThru:            newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:toFloat, bound:bound(0.0,100), units:true, show:() => { return ui.camZBottom.value == 0 }}),
@@ -2769,7 +2769,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('view-back').onclick = space.view.back;
         $('view-left').onclick = space.view.left;
         $('view-right').onclick = space.view.right;
-        $('view-clear').onclick = api.platform.clear;
+        // $('view-clear').onclick = api.platform.clear;
         $('unrotate').onclick = () => {
             api.widgets.for(w => w.unrotate());
             api.selection.update_info();
@@ -2784,7 +2784,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d) };
         $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d) };
         // rendering options
-        $('render-hide').onclick = () => { api.view.wireframe(false, 0, 0); };
+        // $('render-hide').onclick = () => { api.view.wireframe(false, 0, 0); };
         $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
         $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
         $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };

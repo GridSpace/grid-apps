@@ -15,7 +15,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         addTo = null,
         bindTo = null,
         groups = {},
-        groupShow = {},
         groupSticky = false,
         groupName = undefined,
         hasModes = [],
@@ -24,10 +23,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
         lastMode = null,
         lastExpert = true,
         letHoverPop = true,
-        exitimer = undefined,
-        NOMODE = "nomode",
         prefix = "tab",
-        state = {},
         units = 1,
         lastChange = null,
         lastBtn = null,
@@ -167,8 +163,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
         });
     }
 
-    function refresh(all) {
-        setMode(lastMode, all ? false : true);
+    function refresh() {
+        setMode(lastMode);
         setters.forEach(input => {
             if (input.setv) {
                 input.setv(input.real);
@@ -176,21 +172,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
         });
     }
 
-    function setMode(mode, nohide) {
-console.log({ gs: groupShow });
-        Object.keys(groupShow).forEach(group => {
-            updateGroupShow(group);
-        });
+    function setMode(mode) {
         lastMode = mode;
-        if (nohide) {
-            for (let div of hasModes.filter(d => d.isBlank)) {
-                div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
-            }
-            return;
-        }
-        hasModes.forEach(function(div) {
-            div.setMode(div._group && !groupShow[div._group] ? NOMODE : mode);
-        });
+        hasModes.forEach(div => div.setMode(mode));
         hidePoppers();
     }
 
@@ -200,7 +184,7 @@ console.log({ gs: groupShow });
     }
 
     function setHoverPop(bool) {
-        letHoverPop = bool;
+        // letHoverPop = bool;
     }
 
     function checkpoint(at) {
@@ -274,14 +258,6 @@ console.log({ gs: groupShow });
         lastGroup = groups[group] = [];
         lastGroup.key = dbkey;
         groupName = group;
-        groupShow[group] = state[dbkey] !== 'false';
-        row.onclick = function(ev) {
-            if (ev.target !== link && ev.target !== row) {
-                return;
-            }
-            console.log({ toggleGroup: group, dbkey });
-            toggleGroup(group, dbkey);
-        };
 
         return row;
     }
@@ -294,33 +270,7 @@ console.log({ gs: groupShow });
     }
 
     function hidePoppers() {
-        showGroup(undefined);
-    }
-
-    function showGroup(groupname) {
-        Object.keys(groups).forEach(name => {
-            let group = groups[name];
-            groupShow[name] = true;//state[group.key] = (groupname === name);
-            updateGroupShow(name);
-        });
-        groupSticky = false;
-    }
-
-    function toggleGroup(groupname, dbkey) {
-        let show = state[dbkey] === 'true' || state[dbkey] === true;
-        groupShow[groupname] = state[dbkey] = !show;
-        // console.log({ state, show });
-        updateGroupShow(groupname);
-    }
-
-    function updateGroupShow(groupname) {
-        let show = groupShow[groupname] ?? true;
-        // console.log({ updateGroupShow: groupname, show: groupShow[groupname] });
-        let group = groups[groupname];
-        group.forEach(div => {
-            if (show) div.setMode(lastMode);
-            else div.setMode(NOMODE);
-        });
+        // showGroup(undefined);
     }
 
     function bound(low,high) {
@@ -344,10 +294,8 @@ console.log({ gs: groupShow });
     function toFloat() {
         let nv = this.value !== '' ? parseFloat(this.value) : null;
         if (nv !== null && this.bound) nv = this.bound(nv);
-        // this.value = nv;
         if (this.setv) {
             return this.setv(nv * units);
-            // return this.real = (nv * units);
         } else {
             this.value = nv;
         }
@@ -381,6 +329,14 @@ console.log({ gs: groupShow });
         }
     }
 
+    function safecall(fn) {
+        try {
+            return fn();
+        } catch (e) {
+            return true;
+        }
+    }
+
     function addModeControls(el, opt = {}) {
         if (opt.trace2) {
             console.log({ AMC: el, opt, groupName });
@@ -399,20 +355,16 @@ console.log({ gs: groupShow });
         };
         el.setMode = function(mode) {
             let xprt = opt.expert === undefined || (opt.expert === lastExpert);
-            let show = opt.show ? opt.show() : true;
+            let show = opt.show ? safecall(opt.show) : true;
             let disp = opt.visible ? opt.visible() : true;
-            if (opt.trace2) console.log({ setMode: el, xprt, show, disp, fn: el.__opt.show });
+            if (opt.trace2) console.log({ setMode: el, mode, modes: el.modes, xprt, show, disp, fn: el.__opt.show });
             el.setVisible(el.hasMode(mode) && show && xprt && disp);
         }
         el.hasMode = function(mode) {
-            if (mode === NOMODE) return false;
-            if (!el.modes) return true;
-            return el.modes.contains(mode);
+            return el.modes.length === 0 || el.modes.contains(mode);
         }
-        if (opt.modes) {
-            el.modes = opt.modes;
-            hasModes.push(el);
-        }
+        el.modes = opt.modes || [];
+        hasModes.push(el);
     }
 
     function newDiv(opt = {}) {
@@ -449,7 +401,6 @@ console.log({ gs: groupShow });
 
     function newGCode(label, options) {
         let opt = options || {},
-            // row = lastDiv,
             btn = DOC.createElement("button"),
             txt = DOC.createElement("textarea"),
             area = opt.area;

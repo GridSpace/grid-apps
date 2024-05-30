@@ -133,7 +133,8 @@ const MODES = {
 const VIEWS = {
     ARRANGE: 1,
     SLICE: 2,
-    PREVIEW: 3
+    PREVIEW: 3,
+    ANIMATE: 4
 };
 
 // preview modes

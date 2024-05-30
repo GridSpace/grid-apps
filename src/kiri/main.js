@@ -186,9 +186,11 @@ gapp.register("kiri.main", [], (root, exports) => {
             set_arrange() { api.view.set(VIEWS.ARRANGE) },
             set_slice() { api.view.set(VIEWS.SLICE) },
             set_preview() { api.view.set(VIEWS.PREVIEW) },
+            set_animate() { api.view.set(VIEWS.ANIMATE) },
             is_arrange() { return viewMode === VIEWS.ARRANGE },
             is_slice() { return viewMode === VIEWS.SLICE },
             is_preview() { return viewMode === VIEWS.PREVIEW },
+            is_animate() { return viewMode === VIEWS.ANIMATE },
             update_stack_labels: updateStackLabelState,
             update_slider_max: updateSliderMax,
             update_slider: updateSlider,
@@ -840,12 +842,13 @@ gapp.register("kiri.main", [], (root, exports) => {
         platform.deselect();
         selection.update_info();
         // disable clear in non-arrange modes
-        $('view-clear').style.display = mode === VIEWS.ARRANGE ? '' : 'none';
+        ['view-arrange','act-slice','act-preview','act-animate'].forEach(el => {
+            $(el).classList.remove('selected')
+        });
         switch (mode) {
             case VIEWS.ARRANGE:
+                $('view-arrange').classList.add('selected');
                 api.function.clear_progress();
-                // UI.back.style.display = '';
-                UI.render.style.display = '';
                 kiri.client.clear();
                 STACKS.clear();
                 hideSlider();
@@ -855,16 +858,17 @@ gapp.register("kiri.main", [], (root, exports) => {
                 api.widgets.opacity(1);
                 break;
             case VIEWS.SLICE:
-                if (isCAM) UI.render.classList.add('hide');
-                else UI.render.classList.remove('hide');
+                $('act-slice').classList.add('selected');
                 updateSpeeds();
                 updateSliderMax();
                 setWidgetVisibility(true);
                 break;
             case VIEWS.PREVIEW:
-                if (isCAM) UI.render.classList.add('hide');
-                else UI.render.classList.remove('hide');
+                $('act-preview').classList.add('selected');
                 setWidgetVisibility(true);
+                break;
+            case VIEWS.ANIMATE:
+                $('act-animate').classList.add('selected');
                 break;
             default:
                 console.log("invalid view mode: "+mode);

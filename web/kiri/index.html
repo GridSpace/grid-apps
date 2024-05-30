@@ -100,31 +100,6 @@
                 </div>
             </span>
             <span>
-                <i class="fas fa-dice-d20"></i>
-                <label>mesh</label>
-                <div class="top-menu-drop top-menu-right">
-                    <div class="content">
-                        <div id="tool-rotate">
-                            <label lk="rotate">rotate</label>
-                            <span><i class="fas fa-sync-alt"></i></span>
-                        </div>
-                        <div id="tool-scale">
-                            <label lk="scale">scale</label>
-                            <span><i class="fas fa-expand"></i></span>
-                        </div>
-                        <div id="tool-mesh">
-                            <label lk="mesh">mesh</label>
-                            <span><i class="fas fa-dice-d20"></i></span>
-                        </div>
-                        <hr>
-                        <div id="view-clear">
-                            <label lk="clear">clear</label>
-                            <span><i class="far fa-square"></i></span>
-                        </div>
-                    </div>
-                </div>
-            </span>
-            <span>
                 <i class="fas fa-eye"></i>
                 <label>view</label>
                 <div class="top-menu-drop top-menu-right">
@@ -295,36 +270,27 @@
             <div class="mid-sep"></div>
             <div id="panel-right" class="f-col j-start settings">
                 <div class="set2-group f-col">
-                    <div class="set-header">
-                        <a>workspace</a>
-                    </div>
+                    <div class="set-header"><a>workspace</a></div>
                     <div id="ws-widgets" class="f-col"></div>
-                    <div id="menu-render" class="j-center">
-                        <span id="render-solid" class="j-center" title="solid">
-                            <i class="fas fa-square"></i>
-                        </span>
-                        <span id="render-wire" class="j-center" title="wireframe">
-                            <i class="fas fa-border-all"></i>
-                        </span>
-                        <span id="render-ghost" class="a-center" title="ghost">
-                            <i class="fas fa-border-none"></i>
-                        </span>
-                        <span id="render-hide" class="a-center j-center" title="hide"><a></a></span>
+                    <div class="set-header"><a>mesh tools</a></div>
+                    <div class="render-tools">
+                        <span id="tool-rotate"><i class="fas fa-sync-alt"></i></span></span>
+                        <span id="tool-scale"><i class="fas fa-expand"></i></span></span>
+                        <span id="tool-mesh"><i class="fas fa-dice-d20"></i></span></span>
+                        <span id="render-solid" class="j-center" title="solid"><i class="fas fa-square"></i></span>
+                        <span id="render-wire" class="j-center" title="wireframe"><i class="fas fa-border-all"></i></span>
+                        <span id="render-ghost" class="a-center" title="ghost"><i class="fas fa-border-none"></i></span>
                     </div>
                 </div>
                 <div class="set2-group f-col mode-fdm">
-                    <div class="set-header">
-                        <a>ranges</a>
-                    </div>
+                    <div class="set-header"><a>ranges</a></div>
                     <div id="fdm-ranges" class="f-col"></div>
                 </div>
                 <div class="set2-group f-col">
                     <div id="workspace-tool"></div>
                 </div>
                 <div class="set2-group f-col mode-cam">
-                    <div class="set-header mode-cam">
-                        <a>operation list</a>
-                    </div>
+                    <div class="set-header mode-cam"><a>operation list</a></div>
                     <div id="camops" class="f-col a-stretch grow">
                         <div id="oplist" class="f-col j-center"></div>
                         <div id="op-add" class="opdiv">

@@ -19,6 +19,12 @@
     --menu-border: #555;
     --dark-menu-text: #111;
     --menu-hover: #ddd;
+    --blue-1: rgb(96,127,164);
+    --blue-2: rgb(126,153,183);
+    --blue-3: rgb(190, 204, 219);
+    --blue-4: rgb(221, 228, 234);
+    --blue-5: rgb(240, 243, 245);
+    --blue-6: rgb(247, 249, 250);
 }
 
 /* surface size configuration and font import */
@@ -241,9 +247,12 @@ th, tr, td, label {
     color: black;
 }
 .top-menu > span:hover {
-    background-color: var(--row-hover);
-    border-left: 1px solid var(--menu-border);
-    border-right: 1px solid var(--menu-border);
+    background-color: var(--blue-4);
+    border-left: 1px solid var(--blue-2);
+    border-right: 1px solid var(--blue-2);
+}
+.top-menu > span.selected {
+    background-color: var(--blue-3);
 }
 .top-menu > span:hover .top-menu-drop {
     display: flex;
@@ -278,11 +287,11 @@ th, tr, td, label {
     display: flex;
     align-items: center;
     flex-direction: column;
-    background-color: var(--menu);
-    border-top: 1px dashed var(--menu-border);
-    border-left: 1px solid var(--menu-border);
-    border-right: 1px solid var(--menu-border);
-    border-bottom: 1px solid var(--menu-border);
+    background-color: #fff;
+    border-top: 1px dashed var(--blue-2);
+    border-left: 1px solid var(--blue-2);
+    border-right: 1px solid var(--blue-2);
+    border-bottom: 1px solid var(--blue-2);
     border-bottom-right-radius: 4px;
     border-bottom-left-radius: 4px;
 }
@@ -315,7 +324,7 @@ th, tr, td, label {
     border-radius: 3px;
 }
 #top .content > div:hover {
-    background-color: var(--menu-hover);
+    background-color: var(--blue-4);
 }
 
 #app-name {
@@ -648,8 +657,8 @@ th, tr, td, label {
     text-align: right;
     align-items: stretch;
     white-space: nowrap;
-    background-color: var(--menu);
-    border: 1px solid var(--menu-border);
+    background-color: #fff;
+    border: 1px solid var(--blue-2);
     border-radius: 4px;
     flex-direction: column;
 }
@@ -657,7 +666,7 @@ th, tr, td, label {
     padding: 2px 7px 2px 7px;
 }
 #lang-pop > div:hover {
-    background-color: var(--menu-hover);
+    background-color: var(--blue-4);
 }
 
 #mid {
@@ -857,25 +866,32 @@ th, tr, td, label {
 #ft-mesh {
     min-width: 200px;
 }
-#menu-render {
+.render-tools {
+    display: grid;
     margin: 4px 0 0 0;
-    gap: 3px;
-    flex-direction: row;;
+    /* gap: 3px; */
+    grid-template-columns: 1fr 1fr 1fr;
 }
-#menu-render > span {
-    width: 20px;
-    height: 20px;
+.render-tools > span {
+    justify-self: center;
+    width: 25px;
+    height: 25px;
     display: flex;
     flex-shrink: 0;
     flex-direction: column;
 }
-#menu-render > span > * {
+.render-tools > span > * {
     padding: 0;
     margin: 0;
-    width: 20px;
-    height: 20px;
-    align-items: stretch;
-    justify-content: stretch;
+}
+.render-tools svg {
+    border: 1px solid transparent;
+    border-radius: 3px;
+    padding: 3px;
+}
+.render-tools svg:hover {
+    border: 1px solid blue;
+    background-color: var(--blue-4);
 }
 #render-hide > a {
     border: 0.5px dashed black;
@@ -1927,10 +1943,8 @@ th, tr, td, label {
     border-right: 3px solid transparent;
 }
 .set2-group .var-row:hover {
-    /* border-left: 3px solid var(--main-color-hover); */
-    border-right: 3px solid var(--main-color-hover);
-    /* background-color: #f8f8f8 !important; */
-    background-color: var(--row-hover) !important;
+    border-right: 3px solid var(--blue-1);
+    background-color: var(--blue-4) !important;
 }
 .set2-group .var-row label {
     margin-right: 25px;
@@ -1953,8 +1967,7 @@ th, tr, td, label {
     white-space: nowrap;
     border-radius: 2px;
     justify-content: left;
-    background-color: var(--header);
-    /* /* border-top: 0.5px solid #888; */
+    background-color: var(--blue-3);
     border-left: 3px solid transparent;
     border-right: 3px solid var(--main-color-hover);
     border-bottom: 0.5px solid var(--main-color-hover);

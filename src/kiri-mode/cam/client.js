@@ -123,7 +123,7 @@ CAM.init = function(kiri, api) {
 
     // wire up animate button in ui
     api.event.on("function.animate", (mode) => {
-        if (isAnimate) {
+        if (isAnimate || !isCamMode) {
             return;
         }
         api.function.prepare(() => {
@@ -1809,6 +1809,7 @@ function animate() {
     API.hide.slider();
     STACKS.clear();
     animFn().animate(API);
+    API.view.set_animate();
 }
 
 function updateStock() {
