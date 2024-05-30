@@ -791,6 +791,15 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.fwRetract.checked = dev.fwRetract;
             if (!dev.filamentSource) ui.filamentSource.selectedIndex = 0;
 
+            // add extruder selection buttons
+            if (dev.extruders) {
+                let ext = api.lists.extruders = [];
+                dev.internal = 0;
+                for (let i=0; i<dev.extruders.length; i++) {
+                    ext.push({id:i, name:i});
+                }
+            }
+
             // disable editing for non-local devices
             [
                 ui.deviceName,

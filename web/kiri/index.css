@@ -688,7 +688,7 @@ th, tr, td, label {
 }
 #panel-left, #panel-right, #modal {
     pointer-events: visible;
-    text-transform: capitalize;
+    /* text-transform: capitalize; */
 }
 #panel-left label, #panel-left svg {
     pointer-events: none;
@@ -1026,7 +1026,7 @@ th, tr, td, label {
     position: absolute;
     white-space: nowrap;
     flex-direction: column;
-    background-color: rgba(255,255,255,0.8);
+    background-color: #fff;
     border: 1px solid #aaa;
     border-radius: 5px;
     margin-right: 6px;
@@ -1071,7 +1071,7 @@ th, tr, td, label {
     white-space: nowrap;
 }
 #oplist > div:hover, #op-add:hover {
-    background-color: rgba(255,255,255,0.9);
+    background-color: #fff;
 }
 #oplist > div.editing {
     background-color: rgba(190,230,190,0.85);
