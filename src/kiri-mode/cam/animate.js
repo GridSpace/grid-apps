@@ -178,7 +178,7 @@ kiri.load(() => {
         if (steps !== 1) {
             playButton.style.display = 'none';
             pauseButton.style.display = '';
-            $('render-hide').onclick();
+            // $('render-hide').onclick();
         }
         kiri.client.animate({
             speed,
