@@ -418,6 +418,12 @@ th, tr, td, label {
 .gap3 {
     gap: 3px;
 }
+.gap4 {
+    gap: 4px;
+}
+.gap5 {
+    gap: 5px;
+}
 .grid {
     display: grid;
 }
@@ -491,6 +497,12 @@ th, tr, td, label {
 }
 .mh85 {
     max-height: 85%;
+}
+.mlr10 {
+    margin: 0 10px 0 10px;
+}
+.mt10 {
+    margin-top: 5px;
 }
 
 :-moz-any() {
@@ -787,7 +799,7 @@ th, tr, td, label {
 #float-tools {
     position: absolute;
     margin: 0 0 0 5px;
-    top: 35px;
+    top: 50px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 16;

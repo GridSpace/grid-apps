@@ -618,34 +618,34 @@ gapp.register("kiri.init", [], (root, exports) => {
         });
     }
 
-    function profileExport(workspace) {
-        let checked = workspace ? ' checked' : '';
+    function profileExport() {
         const opt = {pre: [
-            "<div class='f-col a-center'>",
-            `  <h3>${workspace ? "Workspace" : "Profile"} Export</h3>`,
-            "  <label>This will create a backup of</label>",
-            workspace ?
-            "  <label>your workspace and settings</label>" :
-            "  <label>your device profiles and settings</label><br>",
-            `  <div class='f-row' style="display:${workspace ? 'none' : ''}">`,
-            `  <input id='incwork' type='checkbox'${checked}>&nbsp;include workspace`,
-            "  </div>",
+            "<div class='f-col a-center gap5 mlr10'>",
+            "  <h3>Workspace Export</h3>",
+            "  <label>This will create a backup of your</label>",
+            "  <label>workspace, devices, and settings</label>",
+            "  <span class='mt10'><input id='excwork' type='checkbox'>&nbsp;Exclude meshes</span>",
             "</div>"
         ]};
-        uc.confirm("Export Filename", {ok:true, cancel: false}, "workspace", opt).then(name => {
-            if (name) {
-                let work = $('incwork').checked;
-                let json = api.conf.export({work, clear:true});
+        let suggestion = "workspace";
+        let file = api.widgets.all()[0]?.meta.file || '';
+        if (file) {
+            suggestion = `${suggestion}_${file.split('.')[0]}`.replaceAll(' ','_');
+        };
+        uc.confirm("Filename", {ok:true, cancel: false}, suggestion, opt).then(name => {
+            if (!name) return;
 
-                kiri.client.zip([
-                    {name:"workspace.json", data:JSON.stringify(json)}
-                ], progress => {
-                    api.show.progress(progress.percent/100, "compressing workspace");
-                }, output => {
-                    api.show.progress(0);
-                    api.util.download(output, `${name}.kmz`);
-                });
-            }
+            let work = !$('excwork').checked;
+            let json = api.conf.export({work, clear:true});
+
+            kiri.client.zip([
+                {name:"workspace.json", data:JSON.stringify(json)}
+            ], progress => {
+                api.show.progress(progress.percent/100, "compressing workspace");
+            }, output => {
+                api.show.progress(0);
+                api.util.download(output, `${name}.kmz`);
+            });
         });
     }
 
@@ -2907,9 +2907,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         {
             let { event } = api;
             let next = 0;
-            let list = ['rotate','scale','mesh','select'];
+            let list = ['rotate','scale','mesh'];
             event.on("tool.next", () => {
-                event.emit("tool.show", list[next++ % 4]);
+                event.emit("tool.show", list[next++ % list.length]);
             });
             event.on("tool.show", tictac => {
                 if (typeof(tictac) === 'string') {
