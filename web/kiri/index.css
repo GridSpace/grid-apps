@@ -12,7 +12,7 @@
     --main-color: rgba(126,153,183,1);
     --main-color-hover: rgb(96,127,164);
     --row-hover: rgb(126,153,183,0.25);
-    --work-area: rgba(255,255,255,1);
+    --work-area: transparent;
     --header: rgba(126,153,183,0.5);
     --menu: #f0f0f0;
     --menu-text: #222;
@@ -117,7 +117,6 @@ input {
     position: relative;
 }
 input:focus {
-    /* color: #495057; */
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgb(0 100 255 / 10%);
 }
@@ -192,7 +191,7 @@ th, tr, td, label {
 
 /* top menu bar, drop menus */
 #top, #app-name {
-    background-color: var(--work-area);
+    background-color: #fff;
     text-transform: capitalize;
     font-family: sans-serif;
     z-index: 15;
@@ -251,7 +250,7 @@ th, tr, td, label {
     border-left: 1px solid var(--blue-2);
     border-right: 1px solid var(--blue-2);
 }
-.top-menu > span.selected {
+.top-menu > span.selected, .top-menu-drop div.selected {
     background-color: var(--blue-3);
 }
 .top-menu > span:hover .top-menu-drop {
@@ -329,12 +328,10 @@ th, tr, td, label {
 
 #app-name {
     position: absolute;
-    /* top: 50%; */
     top: 0;
     left: 50%;
-    transform: translateX(-50%);
-    /* transform: translateX(-50%) translateY(-50%); */
     z-index: 50;
+    transform: translateX(-50%);
 }
 #app-name {
     cursor: pointer;
@@ -418,6 +415,12 @@ th, tr, td, label {
 .gap3 {
     gap: 3px;
 }
+.gap4 {
+    gap: 4px;
+}
+.gap5 {
+    gap: 5px;
+}
 .grid {
     display: grid;
 }
@@ -492,6 +495,12 @@ th, tr, td, label {
 .mh85 {
     max-height: 85%;
 }
+.mlr10 {
+    margin: 0 10px 0 10px;
+}
+.mt10 {
+    margin-top: 5px;
+}
 
 :-moz-any() {
     overflow-x: hidden !important;
@@ -538,33 +547,29 @@ th, tr, td, label {
 }
 
 .chonk {
-    /* margin: 10px 0 10px 0; */
-    /* height: 0px; */
-    min-height: 6px;
-    max-height: 6px;
-    min-width: 100px;
-    /* border-top: 3px dashed black; */
-    background-color: var(--bg-gray-lt);
-}
-.chonk2 {
-    /* margin: 10px 0 10px 0; */
-    /* height: 0px; */
     min-height: 3px;
     max-height: 3px;
     min-width: 100px;
-    /* border-top: 3px dashed black; */
+    background-color: var(--bg-gray-lt);
+}
+.chonk2 {
+    min-height: 3px;
+    max-height: 3px;
+    min-width: 100px;
     background-color: var(--bg-gray-lt);
 }
 #mode-info {
     white-space: nowrap;
     font-size: smaller;
     font-family: sans-serif;
-    padding: 1px 0 1px 0;
     align-items: stretch;
     justify-content: center;
-    padding: 3px;
+    padding: 2px 0 2px 0;
     display: grid !important;
+    margin-right: 0 !important;
+    margin-bottom: 2px !important;
     grid-template-columns: auto 1fr;
+    row-gap: 1px;
 }
 #mode-info > div {
     display: contents;
@@ -572,46 +577,32 @@ th, tr, td, label {
 #mode-info label {
     font-size: smaller;
     font-weight: bold;
-    align-self: center;
-    margin: 2px 0 2px 5px;
-    padding: 2px 5px 2px 5px;
+    align-self: right;
+    margin: 0 0 0 5px;
+    padding: 3px 5px 3px 5px;
     color: var(--fg-gray);
-    background-color: #eee;
+    background-color: var(--blue-4);
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
-    border-top: 1px solid #ddd;
-    border-left: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
+    border-top: 1px solid var(--blue-3);
+    border-left: 1px solid var(--blue-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--blue-3);
 }
-#mode-info span, #mode-info select {
-    margin: 2px 5px 2px 0;
+#mode-info span {
     font-size: smaller;
-    padding: 2px 5px 2px 5px;
+    margin: 0 5px 0 0;
+    padding: 3px 5px 3px 5px;
     color: var(--fg-gray);
     background-color: white;
     border-top-left-radius: 0;
     border-top-right-radius: 5px;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 5px;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--blue-3);
     border-left: 0;
-    border-right: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
-}
-
-#app-info {
-    /* display: none; */
-    /* position: absolute;
-    white-space: nowrap;
-    font-size: smaller;
-    font-family: sans-serif;
-    margin-top: 5px;
-    padding: 5px;
-    top: 100%;
-    color: var(--fg-gray);
-    border-radius: 3px;
-    border: 1px solid #ddd;
-    background-color: white; */
+    border-right: 1px solid var(--blue-3);
+    border-bottom: 1px solid var(--blue-3);
 }
 
 #doit {
@@ -688,12 +679,20 @@ th, tr, td, label {
 }
 #panel-left, #panel-right, #modal {
     pointer-events: visible;
-    text-transform: capitalize;
 }
 #panel-left label, #panel-left svg {
     pointer-events: none;
 }
 
+#ws-widgets button {
+    text-transform: none;
+    text-align: left;
+    align-items: center;
+}
+#ws-widgets button.selected {
+    background-color: var(--blue-4);
+    color: #000;
+}
 .slim-hide {
     width: 0;
     overflow: hidden;
@@ -702,7 +701,7 @@ th, tr, td, label {
 #top-sep {
     display: none;
 }
-#top-sep, .line-sep {
+#top-sep {
     z-index: 14;
     height: 1px;
     min-height: 1px;
@@ -715,11 +714,6 @@ th, tr, td, label {
     min-height: 1px;
     max-height: 1px;
     background-image: var(--gradbar2);
-}
-.mid-sep {
-    z-index: 14;
-    width: 1px;
-    background-image: var(--gradbar-vert);
 }
 
 .movable {
@@ -784,7 +778,7 @@ th, tr, td, label {
 #float-tools {
     position: absolute;
     margin: 0 0 0 5px;
-    top: 35px;
+    top: 50px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 16;
@@ -1023,7 +1017,7 @@ th, tr, td, label {
     position: absolute;
     white-space: nowrap;
     flex-direction: column;
-    background-color: rgba(255,255,255,0.8);
+    background-color: #fff;
     border: 1px solid #aaa;
     border-radius: 5px;
     margin-right: 6px;
@@ -1055,20 +1049,30 @@ th, tr, td, label {
     gap: 3px;
     margin-bottom: 3px;
 }
+#oplist .clock {
+    border: 0;
+    background-color: var(--blue-3);
+}
+#oplist 
+#camops .set-sep {
+    margin-bottom: 4px;
+}
+#oplist .clock:hover {
+    background-color: var(--blue-2);
+}
 #oplist > div, .opdiv {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: left;
     justify-content: center;
     border: 1px solid rgba(0,0,0,0.25);
     border-radius: 4px;
-    margin: 0 5px 0 5px;
     padding: 5px 10px 5px 10px;
     background-color: rgba(255,255,255,0.75);
     white-space: nowrap;
 }
 #oplist > div:hover, #op-add:hover {
-    background-color: rgba(255,255,255,0.9);
+    background-color: var(--blue-4);
 }
 #oplist > div.editing {
     background-color: rgba(190,230,190,0.85);
@@ -1087,9 +1091,9 @@ th, tr, td, label {
 }
 #oplist div .del {
     position: absolute;
-    top: 0px;
-    right: 0px;
-    font-size: 12px;
+    top: 1px;
+    right: 2px;
+    font-size: 14px;
     color: rgba(0,0,0,0);
 }
 .dark #oplist div:hover .del {
@@ -1156,7 +1160,7 @@ th, tr, td, label {
     text-align: center;
 }
 #op-add-list > div:hover {
-    background-color: rgba(0,0,0,0.2);
+    background-color: var(--blue-4);
 }
 #op-add-contour-menu, #op-add-register-menu {
     position: absolute;
@@ -1173,15 +1177,17 @@ th, tr, td, label {
     height: 6px;
     min-height: 6px;
     text-align: center;
-    background-color: rgba(0,0,0,0.15);
-    border-radius: 3px;
+    background-color: rgb(220,220,220);
+    border-top: 1px solid #888;
+    border-bottom: 1px solid #888;
+    /* border-radius: 3px; */
 }
 #progbar {
     width: 0;
     text-align: left;
     position: relative;
-    background-color: rgba(255,0,0,0.65);
-    border-radius: 3px;
+    background-color: rgb(255,90,90);
+    /* border-radius: 3px; */
 }
 #progtxt {
     display: none;
@@ -1922,7 +1928,7 @@ th, tr, td, label {
     overflow-x: hidden;
     align-items: stretch;
     text-transform: capitalize;
-    background-color: rgba(255,255,255,0.5);
+    /* background-color: rgba(255,255,255,0.5); */
 }
 .settings .set-group {
     cursor: pointer;
@@ -1931,13 +1937,16 @@ th, tr, td, label {
     font-size: smaller;
 }
 .set2-group {
+    border-radius: 3px;
+    border: 1px solid #ddd !important;
+    background-color: #fff;
     flex-flow: column;
-    padding-bottom: 2px;
+    padding: 4px;
     margin: 3px;
-    gap: 1.5px;
 }
 .set2-group .var-row {
-    padding: 0 4px 0 4px !important;
+    background: #fff;
+    padding: 1px 4px 1px 4px;
     margin: 0 !important;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
@@ -1950,6 +1959,7 @@ th, tr, td, label {
     margin-right: 25px;
 }
 .set2-sep {
+    background: #fff;
     flex-shrink: 0;
     flex-direction: column;
     margin: 0 0 3px 0;
@@ -1959,9 +1969,10 @@ th, tr, td, label {
     padding: 0 !important;
     height: 1px;
     min-height: 1px;
+    max-height: 1px;
     margin-top: 2px;
     margin-bottom: 2px;
-    background-color: #bbb;
+    background-color: #bbb !important;
 }
 .set-header {
     white-space: nowrap;
@@ -1973,9 +1984,6 @@ th, tr, td, label {
     border-bottom: 0.5px solid var(--main-color-hover);
     padding: 4px;
     margin: 0 0 4px 0;
-}
-.settings .set-header {
-    margin: 0 !important;
 }
 .set-header-line {
     margin-left: 5px;
@@ -2133,17 +2141,6 @@ th, tr, td, label {
 #rnfo label {
     text-align: right;
 }
-/* #tool-info {
-    position: fixed;
-    white-space: pre;
-    background-color: rgba(255,255,255,0.25);
-    border: 1px solid rgba(0,0,0,0.25);
-    border-radius: 4px;
-    padding: 4px;
-    font-family: monospace;
-    font-size: 12px;
-    color: #000;
-} */
 #context-menu {
     display: none;
     position: absolute;

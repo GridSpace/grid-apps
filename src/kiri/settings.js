@@ -162,7 +162,6 @@ function updateSettings(opt = {}) {
 
     $('mode-device').innerText = device.deviceName;
     $('mode-profile').innerText = `${cproc[mode]}${same ? '' : ' *'}`;
-    $('mode-info').style.display = 'flex';
 }
 
 function updateSettingsFromFields(setrec, uirec = api.ui, changes) {

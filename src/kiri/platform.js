@@ -234,7 +234,6 @@ function platformUpdateSelected() {
     const { device } = settings;
     const { extruders } = device;
     const { selection, ui } = api;
-    // const { enable, disable } = ui.options;
 
     const selreal = selection.widgets();
     const selwid = selection.widgets(true);
@@ -243,8 +242,6 @@ function platformUpdateSelected() {
     if (selcount) {
         let enaC = selwid.filter(w => w.meta.disabled !== true).length;
         let disC = selwid.filter(w => w.meta.disabled === true).length;
-        // enable.style.display = disC ? 'flex' : 'none';
-        // disable.style.display = enaC ? 'flex' : 'none';
         if (api.feature.meta && selcount === 1) {
             let sel = selwid[0];
             let name = sel.meta.file || sel.meta.url;
@@ -268,8 +265,6 @@ function platformUpdateSelected() {
             ui.mesh.faces.innerText = '-';
         }
     } else {
-        enable.style.display = 'none';
-        disable.style.display = 'none';
         ui.mesh.name.innerText = '[0]';
         ui.mesh.points.innerText = '-';
         ui.mesh.faces.innerText = '-';
@@ -327,6 +322,7 @@ function platformSelect(widget, shift, recurse = true) {
         selection.add(widget);
         event.emit('widget.select', widget);
         widget.setColor(COLOR.selected);
+        $(`ws-${widget.id}`)?.classList.add('selected');
         selection.update_info();
     }
 
@@ -362,6 +358,7 @@ function platformDeselect(widget, recurse = true) {
         api.event.emit('widget.deselect', widget);
     }
 
+    $(`ws-${widget.id}`)?.classList.remove('selected');
     widget.setColor(COLOR.deselected);
     platform.update_selected();
     selection.update_info();
@@ -569,20 +566,28 @@ function platformChanged() {
     h.bind($('ws-widgets'), api.widgets.all().map(w => {
         let color;
         return [
-            h.button({
-                _: w.meta.file || 'no name',
-                onmouseenter() {
-                    color = w.getColor();
-                    w.setColor(0x0088ff);
-                },
-                onmouseleave() {
-                    w.setColor(color);
-                },
-                onclick() {
-                    platformSelect(w, true, false);
-                    color = w.getColor();
-                }
-            })
+
+            h.div([
+
+                h.button({
+                    _: w.meta.file || 'no name',
+                    id: `ws-${w.id}`,
+                    onmouseenter() {
+                        color = w.getColor();
+                        w.setColor(0x0088ff);
+                    },
+                    onmouseleave() {
+                        w.setColor(color);
+                    },
+                    onclick() {
+                        platformSelect(w, true, false);
+                        color = w.getColor();
+                    }
+                }),
+
+                h.button([ h.i({ class:"fas fa-trash" }) ])
+
+            ])
         ]
     }));
 }

@@ -404,7 +404,11 @@ CAM.init = function(kiri, api) {
         func.clearPops();
         let oplist = current.process.ops;
         if (oplist.indexOf(rec) < 0) {
-            oplist.push(rec);
+            if (oplist.length && oplist[oplist.length-1].type === '|') {
+                oplist.splice(oplist.length-1,0,rec);
+            } else {
+                oplist.push(rec);
+            }
             let fpos = oplist.findWith(rec => rec.type === 'flip');
             if (fpos >= 0 && oplist.length > 1) {
                 let oprec = oplist.splice(fpos,1);
@@ -467,9 +471,11 @@ CAM.init = function(kiri, api) {
         let notime = false;
         oplist.forEach((rec,i) => {
             let clock = rec.type === '|';
-            let label = clock ? `<i class="fa-regular fa-clock"></i>` : rec.type;
+            // let label = clock ? `<i class="fa-regular fa-clock"></i>` : rec.type;
+            let label = clock ? `` : rec.type;
             let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
             let notable = rec.note?.split(' ').filter(v => v.charAt(0) === '#');
+            if (clock) clazz.push('clock');
             if (notable?.length) label = notable[0].slice(1);
             html.appendAll([
                 `<div id="${mark+i}" class="${clazz.join(' ')}">`,

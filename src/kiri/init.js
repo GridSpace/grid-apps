@@ -22,18 +22,14 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     const WIN = self.window,
         DOC = self.document,
-        DEFMODE = SETUP.dm && SETUP.dm.length === 1 ? SETUP.dm[0] : 'FDM',
         STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
         DEG2RAD = Math.PI/180,
-        ALL = [MODES.FDM, MODES.LASER, MODES.CAM, MODES.SLA],
         CAM = [MODES.CAM],
         SLA = [MODES.SLA],
         FDM = [MODES.FDM],
         FDM_SLA = [MODES.FDM,MODES.SLA],
-        FDM_CAM = [MODES.CAM,MODES.FDM],
         FDM_LZR = [MODES.LASER,MODES.FDM],
         FDM_CAM_SLA = [MODES.CAM,MODES.FDM,MODES.SLA],
-        FDM_LZR_SLA = [MODES.LASER,MODES.FDM,MODES.SLA],
         CAM_LZR = [MODES.LASER,MODES.CAM],
         GCODE = [MODES.FDM, MODES.LASER, MODES.CAM],
         LASER = [MODES.LASER],
@@ -622,34 +618,34 @@ gapp.register("kiri.init", [], (root, exports) => {
         });
     }
 
-    function profileExport(workspace) {
-        let checked = workspace ? ' checked' : '';
+    function profileExport() {
         const opt = {pre: [
-            "<div class='f-col a-center'>",
-            `  <h3>${workspace ? "Workspace" : "Profile"} Export</h3>`,
-            "  <label>This will create a backup of</label>",
-            workspace ?
-            "  <label>your workspace and settings</label>" :
-            "  <label>your device profiles and settings</label><br>",
-            `  <div class='f-row' style="display:${workspace ? 'none' : ''}">`,
-            `  <input id='incwork' type='checkbox'${checked}>&nbsp;include workspace`,
-            "  </div>",
+            "<div class='f-col a-center gap5 mlr10'>",
+            "  <h3>Workspace Export</h3>",
+            "  <label>This will create a backup of your</label>",
+            "  <label>workspace, devices, and settings</label>",
+            "  <span class='mt10'><input id='excwork' type='checkbox'>&nbsp;Exclude meshes</span>",
             "</div>"
         ]};
-        uc.confirm("Export Filename", {ok:true, cancel: false}, "workspace", opt).then(name => {
-            if (name) {
-                let work = $('incwork').checked;
-                let json = api.conf.export({work, clear:true});
+        let suggestion = "workspace";
+        let file = api.widgets.all()[0]?.meta.file || '';
+        if (file) {
+            suggestion = `${suggestion}_${file.split('.')[0]}`.replaceAll(' ','_');
+        };
+        uc.confirm("Filename", {ok:true, cancel: false}, suggestion, opt).then(name => {
+            if (!name) return;
 
-                kiri.client.zip([
-                    {name:"workspace.json", data:JSON.stringify(json)}
-                ], progress => {
-                    api.show.progress(progress.percent/100, "compressing workspace");
-                }, output => {
-                    api.show.progress(0);
-                    api.util.download(output, `${name}.kmz`);
-                });
-            }
+            let work = !$('excwork').checked;
+            let json = api.conf.export({work, clear:true});
+
+            kiri.client.zip([
+                {name:"workspace.json", data:JSON.stringify(json)}
+            ], progress => {
+                api.show.progress(progress.percent/100, "compressing workspace");
+            }, output => {
+                api.show.progress(0);
+                api.util.download(output, `${name}.kmz`);
+            });
         });
     }
 
@@ -794,6 +790,15 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter || dev.bedRound;
             ui.fwRetract.checked = dev.fwRetract;
             if (!dev.filamentSource) ui.filamentSource.selectedIndex = 0;
+
+            // add extruder selection buttons
+            if (dev.extruders) {
+                let ext = api.lists.extruders = [];
+                dev.internal = 0;
+                for (let i=0; i<dev.extruders.length; i++) {
+                    ext.push({id:i, name:i});
+                }
+            }
 
             // disable editing for non-local devices
             [
@@ -1849,7 +1854,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             outputFanLayer:      newInput(LANG.ou_fanl_s, { title:LANG.ou_fanl_l, convert:toInt,   bound:bound(0,255) }),
             outputFanSpeed:      newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:toInt, bound:bound(0,255)}),
             _____:               newGroup(LANG.sp_menu, $('fdm-support'), { modes:FDM, marker:false, driven, separator }),
-            sliceSupportNozzle:  newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l}, "extruders"),
+            sliceSupportNozzle:  newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, show:isMultiHead}, "extruders"),
             sliceSupportDensity: newInput(LANG.sp_dens_s, {title:LANG.sp_dens_l, convert:toFloat, bound:bound(0.0,1.0)}),
             sliceSupportSize:    newInput(LANG.sp_size_s, {title:LANG.sp_size_l, convert:toFloat, bound:bound(1.0,200.0)}),
             sliceSupportOffset:  newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, convert:toFloat, bound:bound(0.0,200.0)}),
@@ -1914,9 +1919,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceLayerStart:     newSelect(LANG.sl_strt_s, {title:LANG.sl_strt_l}, "start"),
             outputLayerRetract:  newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l}),
             outputAvoidGaps:     newBoolean(LANG.ad_agap_s, onBooleanClick, {title:LANG.ad_agap_l}),
-            separator:           newBlank({ class:"set-sep", driven }),
+            separator:           newBlank({ class:"set-sep", driven, show:isMultiHead }),
             outputBeltFirst:     newBoolean(LANG.ad_lbir_s, onBooleanClick, {title:LANG.ad_lbir_l, show: isBelt}),
-            outputNozzle:        newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l}, "extruders"),
+            outputNozzle:        newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, show:isMultiHead}, "extruders"),
             _____:               newGroup(LANG.ad_menu, $('fdm-expert'), { modes:FDM, driven, separator }),
             outputRetractDwell:  newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:toInt}),
             sliceSolidMinArea:   newInput(LANG.ad_msol_s, {title:LANG.ad_msol_l, convert:toFloat}),
@@ -2746,6 +2751,10 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // bind interface action elements
         $('app-name').onclick = api.help.show;
+        $('mode-fdm').onclick = () => api.mode.set('FDM');
+        $('mode-cam').onclick = () => api.mode.set('CAM');
+        $('mode-sla').onclick = () => api.mode.set('SLA');
+        $('mode-laser').onclick = () => api.mode.set('LASER');
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
@@ -2898,9 +2907,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         {
             let { event } = api;
             let next = 0;
-            let list = ['rotate','scale','mesh','select'];
+            let list = ['rotate','scale','mesh'];
             event.on("tool.next", () => {
-                event.emit("tool.show", list[next++ % 4]);
+                event.emit("tool.show", list[next++ % list.length]);
             });
             event.on("tool.show", tictac => {
                 if (typeof(tictac) === 'string') {

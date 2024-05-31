@@ -96,6 +96,11 @@
                             <!-- required file input loader -->
                             <input id="load-file" type="file" name="loadme" style="display:none"></input>
                         </div>
+                        <hr>
+                        <div id="app-export">
+                            <label lk="export">export</label>
+                            <span><i class="fas fa-download"></i></span>
+                        </div>
                     </div>
                 </div>
             </span>
@@ -138,6 +143,30 @@
                 </div>
             </span>
             <span>
+                <i class="fas fa-code-branch"></i>
+                <label>mode</label>
+                <div class="top-menu-drop top-menu-right">
+                    <div class="content">
+                        <div id="mode-fdm">
+                            <label>FDM</label>
+                            <span><i class="fas fa-layer-group"></i></span>
+                        </div>
+                        <div id="mode-cam">
+                            <label>CNC</label>
+                            <span><i class="fas fa-bore-hole"></i></span>
+                        </div>
+                        <div id="mode-laser">
+                            <label>Laser</label>
+                            <span><i class="fas fa-bolt"></i></span>
+                        </div>
+                        <div id="mode-sla">
+                            <label>SLA</label>
+                            <span><i class="fas fa-cube"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </span>
+            <span>
                 <i class="fas fa-cog"></i>
                 <label>setup</label>
                 <div class="top-menu-drop top-menu-right">
@@ -153,10 +182,6 @@
                         <div id="set-tools">
                             <label lk="tools">tools</label>
                             <span><i class="fas fa-tools"></i></span>
-                        </div>
-                        <div id="app-export">
-                            <label lk="export">export</label>
-                            <span><i class="fas fa-download"></i></span>
                         </div>
                         <div id="app-lang">
                             <label lk="language">language</label>
@@ -184,22 +209,14 @@
     </div>
 
     <!-- line betwwen menu bar and main application windows -->
-    <div class="line-sep"></div>
     <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
-    <div class="line-sep"></div>
 
     <div id="mid" class="grow f-row">
 
         <!-- left settings menu -->
         <div id="panel-left" class="f-col j-left">
             <!-- always up -->
-            <div id="mode-info" class="f-col">
-                <div><label>Mode</label><select id="mode-name">
-                    <option>FDM</option>
-                    <option>CNC</option>
-                    <option>SLA</option>
-                    <option>Laser</option>
-                </select></div>
+            <div id="mode-info">
                 <div><label>Device</label><span id="mode-device"></span></div>
                 <div><label>Profile</label><span id="mode-profile"></span></div>
             </div>
@@ -235,13 +252,9 @@
                 <div id="sla-support" class="set2-group mode-sla"></div>
                 <div id="sla-output" class="set2-group mode-sla"></div>
             </div>
-            <div class="line-sep"></div>
+            <div class="line-sep2"></div>
             <div class="chonk"></div>
-            <div class="line-sep"></div>
         </div>
-
-        <!-- vertical separation between settings tray and workspace -->
-        <div class="mid-sep"></div>
 
         <!-- main workspace -->
         <div id="mid-mid" class="grow">
@@ -267,27 +280,28 @@
                 <div id="speeds"><div id="speedbar" class="f-col a-stretch j-center" lkt="sb_info"></div></div>
             </div>
             <!-- vertical separation between workspace and right tray -->
-            <div class="mid-sep"></div>
             <div id="panel-right" class="f-col j-start settings">
                 <div class="set2-group f-col">
-                    <div class="set-header"><a>workspace</a></div>
-                    <div id="ws-widgets" class="f-col"></div>
                     <div class="set-header"><a>mesh tools</a></div>
                     <div class="render-tools">
-                        <span id="tool-rotate"><i class="fas fa-sync-alt"></i></span></span>
-                        <span id="tool-scale"><i class="fas fa-expand"></i></span></span>
-                        <span id="tool-mesh"><i class="fas fa-dice-d20"></i></span></span>
-                        <span id="render-solid" class="j-center" title="solid"><i class="fas fa-square"></i></span>
-                        <span id="render-wire" class="j-center" title="wireframe"><i class="fas fa-border-all"></i></span>
-                        <span id="render-ghost" class="a-center" title="ghost"><i class="fas fa-border-none"></i></span>
+                        <span id="tool-rotate"><i class="fas fa-sync-alt" title="rotate"></i></span>
+                        <span id="tool-scale"><i class="fas fa-expand" title="scale"></i></span>
+                        <span id="tool-mesh"><i class="fas fa-dice-d20" title="mesh tool"></i></span>
+                        <span id="context-mirror" xlk="rc_mirr"><i class="fas fa-arrows-left-right-to-line" title="mirror"></i></span>
+                        <span id="context-duplicate" xlk="rc_dupl"><i class="fas fa-copy" title="duplicate"></i></span>
+                        <span id="context-layflat" xlk="rc_lafl"><i class="fas fa-arrows-down-to-line" title="lay flat"></i></span>
+                        <span id="render-solid" class="j-center" title="view solid"><i class="fas fa-square"></i></span>
+                        <span id="render-wire" class="j-center" title="view wireframe"><i class="fas fa-border-all"></i></span>
+                        <span id="render-ghost" class="a-center" title="view transparent"><i class="fas fa-border-none"></i></span>
                     </div>
+                </div>
+                <div class="set2-group f-col">
+                    <div class="set-header"><a>objects</a></div>
+                    <div id="ws-widgets" class="f-col"></div>
                 </div>
                 <div class="set2-group f-col mode-fdm">
                     <div class="set-header"><a>ranges</a></div>
                     <div id="fdm-ranges" class="f-col"></div>
-                </div>
-                <div class="set2-group f-col">
-                    <div id="workspace-tool"></div>
                 </div>
                 <div class="set2-group f-col mode-cam">
                     <div class="set-header mode-cam"><a>operation list</a></div>
@@ -319,7 +333,6 @@
                 <div class="grow"></div>
                 <div class="line-sep2"></div>
                 <div class="chonk"></div>
-                <div class="line-sep2"></div>
             </div>
         </div>
     </div>
@@ -507,10 +520,6 @@
     <div id="context-menu">
         <button id="context-export-workspace" lk="rc_xpws">export workspace</button>
         <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
-        <div class="sep"></div>
-        <button id="context-layflat" lk="rc_lafl">lay flat</button>
-        <button id="context-mirror" lk="rc_mirr">mirror</button>
-        <button id="context-duplicate" lk="rc_dupl">duplicate</button>
         <div class="sep"></div>
         <button id="context-setfocus" lk="rc_focs">set focus</button>
     </div>

@@ -901,13 +901,22 @@ gapp.register("kiri.main", [], (root, exports) => {
         MODE = MODES[mode];
         DRIVER = kiri.driver[mode];
         // update mode drop-down
-        {
+        if (false) {
             const modename = $('mode-name');
             const options = modename.options;
             const optlist = ["FDM","CAM","SLA","LASER"];
             options.selectedIndex = optlist.indexOf(mode);
             modename.onchange = (ev) => setMode(optlist[options.selectedIndex]);
         }
+        // highlight selected mode menu item
+        ["FDM","CAM","SLA","LASER"].forEach(sm => {
+            const cl = $(`mode-${sm.toLowerCase()}`).classList;
+            if (sm === mode) {
+                cl.add('selected');
+            } else {
+                cl.remove('selected');
+            }
+        });
         // restore cached device profile for this mode
         if (current.cdev[mode]) {
             current.device = clone(current.cdev[mode]);
