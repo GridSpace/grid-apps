@@ -322,6 +322,7 @@ function platformSelect(widget, shift, recurse = true) {
         selection.add(widget);
         event.emit('widget.select', widget);
         widget.setColor(COLOR.selected);
+        $(`ws-${widget.id}`)?.classList.add('selected');
         selection.update_info();
     }
 
@@ -357,6 +358,7 @@ function platformDeselect(widget, recurse = true) {
         api.event.emit('widget.deselect', widget);
     }
 
+    $(`ws-${widget.id}`)?.classList.remove('selected');
     widget.setColor(COLOR.deselected);
     platform.update_selected();
     selection.update_info();
@@ -564,20 +566,28 @@ function platformChanged() {
     h.bind($('ws-widgets'), api.widgets.all().map(w => {
         let color;
         return [
-            h.button({
-                _: w.meta.file || 'no name',
-                onmouseenter() {
-                    color = w.getColor();
-                    w.setColor(0x0088ff);
-                },
-                onmouseleave() {
-                    w.setColor(color);
-                },
-                onclick() {
-                    platformSelect(w, true, false);
-                    color = w.getColor();
-                }
-            })
+
+            h.div([
+
+                h.button({
+                    _: w.meta.file || 'no name',
+                    id: `ws-${w.id}`,
+                    onmouseenter() {
+                        color = w.getColor();
+                        w.setColor(0x0088ff);
+                    },
+                    onmouseleave() {
+                        w.setColor(color);
+                    },
+                    onclick() {
+                        platformSelect(w, true, false);
+                        color = w.getColor();
+                    }
+                }),
+
+                h.button([ h.i({ class:"fas fa-trash" }) ])
+
+            ])
         ]
     }));
 }

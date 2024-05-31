@@ -148,19 +148,19 @@
                 <div class="top-menu-drop top-menu-right">
                     <div class="content">
                         <div id="mode-fdm">
-                            <label lk="fdm">FDM</label>
+                            <label>FDM</label>
                             <span><i class="fas fa-layer-group"></i></span>
                         </div>
                         <div id="mode-cam">
-                            <label lk="cnc">CNC</label>
+                            <label>CNC</label>
                             <span><i class="fas fa-bore-hole"></i></span>
                         </div>
                         <div id="mode-laser">
-                            <label lk="laser">Laser</label>
+                            <label>Laser</label>
                             <span><i class="fas fa-bolt"></i></span>
                         </div>
                         <div id="mode-sla">
-                            <label lk="sla">SLA</label>
+                            <label>SLA</label>
                             <span><i class="fas fa-cube"></i></span>
                         </div>
                     </div>
@@ -209,22 +209,14 @@
     </div>
 
     <!-- line betwwen menu bar and main application windows -->
-    <div class="line-sep"></div>
     <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
-    <div class="line-sep"></div>
 
     <div id="mid" class="grow f-row">
 
         <!-- left settings menu -->
         <div id="panel-left" class="f-col j-left">
             <!-- always up -->
-            <div id="mode-info" class="f-col set2-group">
-                <!-- <div><label>Mode</label><select id="mode-name">
-                    <option>FDM</option>
-                    <option>CNC</option>
-                    <option>SLA</option>
-                    <option>Laser</option>
-                </select></div> -->
+            <div id="mode-info">
                 <div><label>Device</label><span id="mode-device"></span></div>
                 <div><label>Profile</label><span id="mode-profile"></span></div>
             </div>
@@ -260,12 +252,9 @@
                 <div id="sla-support" class="set2-group mode-sla"></div>
                 <div id="sla-output" class="set2-group mode-sla"></div>
             </div>
-            <div class="line-sep"></div>
+            <div class="line-sep2"></div>
             <div class="chonk"></div>
         </div>
-
-        <!-- vertical separation between settings tray and workspace -->
-        <div class="mid-sep"></div>
 
         <!-- main workspace -->
         <div id="mid-mid" class="grow">
@@ -291,7 +280,6 @@
                 <div id="speeds"><div id="speedbar" class="f-col a-stretch j-center" lkt="sb_info"></div></div>
             </div>
             <!-- vertical separation between workspace and right tray -->
-            <div class="mid-sep"></div>
             <div id="panel-right" class="f-col j-start settings">
                 <div class="set2-group f-col">
                     <div class="set-header"><a>mesh tools</a></div>

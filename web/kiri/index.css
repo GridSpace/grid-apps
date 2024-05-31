@@ -562,13 +562,14 @@ th, tr, td, label {
     white-space: nowrap;
     font-size: smaller;
     font-family: sans-serif;
-    padding: 1px 0 1px 0;
     align-items: stretch;
     justify-content: center;
-    padding: 3px;
+    padding: 2px 0 2px 0;
     display: grid !important;
-    grid-template-columns: auto 1fr;
     margin-right: 0 !important;
+    margin-bottom: 2px !important;
+    grid-template-columns: auto 1fr;
+    row-gap: 1px;
 }
 #mode-info > div {
     display: contents;
@@ -576,31 +577,32 @@ th, tr, td, label {
 #mode-info label {
     font-size: smaller;
     font-weight: bold;
-    align-self: center;
-    margin: 2px 0 2px 5px;
-    padding: 2px 5px 2px 5px;
+    align-self: right;
+    margin: 0 0 0 5px;
+    padding: 3px 5px 3px 5px;
     color: var(--fg-gray);
-    background-color: #eee;
+    background-color: var(--blue-4);
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
-    border-top: 1px solid #ddd;
-    border-left: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
+    border-top: 1px solid var(--blue-3);
+    border-left: 1px solid var(--blue-3);
+    border-right: 0;
+    border-bottom: 1px solid var(--blue-3);
 }
-#mode-info span, #mode-info select {
-    margin: 2px 5px 2px 0;
+#mode-info span {
     font-size: smaller;
-    padding: 2px 5px 2px 5px;
+    margin: 0 5px 0 0;
+    padding: 3px 5px 3px 5px;
     color: var(--fg-gray);
     background-color: white;
     border-top-left-radius: 0;
     border-top-right-radius: 5px;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 5px;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--blue-3);
     border-left: 0;
-    border-right: 1px solid #ddd;
-    border-bottom: 1px solid #ddd;
+    border-right: 1px solid var(--blue-3);
+    border-bottom: 1px solid var(--blue-3);
 }
 
 #doit {
@@ -684,6 +686,12 @@ th, tr, td, label {
 
 #ws-widgets button {
     text-transform: none;
+    text-align: left;
+    align-items: center;
+}
+#ws-widgets button.selected {
+    background-color: var(--blue-4);
+    color: #000;
 }
 .slim-hide {
     width: 0;
@@ -693,7 +701,7 @@ th, tr, td, label {
 #top-sep {
     display: none;
 }
-#top-sep, .line-sep {
+#top-sep {
     z-index: 14;
     height: 1px;
     min-height: 1px;
@@ -706,12 +714,6 @@ th, tr, td, label {
     min-height: 1px;
     max-height: 1px;
     background-image: var(--gradbar2);
-}
-.mid-sep {
-    display: none;
-    z-index: 14;
-    width: 1px;
-    background-image: var(--gradbar-vert);
 }
 
 .movable {
@@ -1047,20 +1049,30 @@ th, tr, td, label {
     gap: 3px;
     margin-bottom: 3px;
 }
+#oplist .clock {
+    border: 0;
+    background-color: var(--blue-3);
+}
+#oplist 
+#camops .set-sep {
+    margin-bottom: 4px;
+}
+#oplist .clock:hover {
+    background-color: var(--blue-2);
+}
 #oplist > div, .opdiv {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: left;
     justify-content: center;
     border: 1px solid rgba(0,0,0,0.25);
     border-radius: 4px;
-    margin: 0 5px 0 5px;
     padding: 5px 10px 5px 10px;
     background-color: rgba(255,255,255,0.75);
     white-space: nowrap;
 }
 #oplist > div:hover, #op-add:hover {
-    background-color: #fff;
+    background-color: var(--blue-4);
 }
 #oplist > div.editing {
     background-color: rgba(190,230,190,0.85);
@@ -1079,9 +1091,9 @@ th, tr, td, label {
 }
 #oplist div .del {
     position: absolute;
-    top: 0px;
-    right: 0px;
-    font-size: 12px;
+    top: 1px;
+    right: 2px;
+    font-size: 14px;
     color: rgba(0,0,0,0);
 }
 .dark #oplist div:hover .del {
@@ -1148,7 +1160,7 @@ th, tr, td, label {
     text-align: center;
 }
 #op-add-list > div:hover {
-    background-color: rgba(0,0,0,0.2);
+    background-color: var(--blue-4);
 }
 #op-add-contour-menu, #op-add-register-menu {
     position: absolute;
@@ -1166,14 +1178,16 @@ th, tr, td, label {
     min-height: 6px;
     text-align: center;
     background-color: rgb(220,220,220);
-    border-radius: 3px;
+    border-top: 1px solid #888;
+    border-bottom: 1px solid #888;
+    /* border-radius: 3px; */
 }
 #progbar {
     width: 0;
     text-align: left;
     position: relative;
     background-color: rgb(255,90,90);
-    border-radius: 3px;
+    /* border-radius: 3px; */
 }
 #progtxt {
     display: none;
@@ -1932,7 +1946,7 @@ th, tr, td, label {
 }
 .set2-group .var-row {
     background: #fff;
-    padding: 1px 4px 1px 4px !important;
+    padding: 1px 4px 1px 4px;
     margin: 0 !important;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
@@ -1955,9 +1969,10 @@ th, tr, td, label {
     padding: 0 !important;
     height: 1px;
     min-height: 1px;
+    max-height: 1px;
     margin-top: 2px;
     margin-bottom: 2px;
-    background-color: #bbb;
+    background-color: #bbb !important;
 }
 .set-header {
     white-space: nowrap;
