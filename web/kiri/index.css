@@ -12,7 +12,7 @@
     --main-color: rgba(126,153,183,1);
     --main-color-hover: rgb(96,127,164);
     --row-hover: rgb(126,153,183,0.25);
-    --work-area: rgba(255,255,255,1);
+    --work-area: transparent;
     --header: rgba(126,153,183,0.5);
     --menu: #f0f0f0;
     --menu-text: #222;
@@ -117,7 +117,6 @@ input {
     position: relative;
 }
 input:focus {
-    /* color: #495057; */
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgb(0 100 255 / 10%);
 }
@@ -192,7 +191,7 @@ th, tr, td, label {
 
 /* top menu bar, drop menus */
 #top, #app-name {
-    background-color: var(--work-area);
+    background-color: #fff;
     text-transform: capitalize;
     font-family: sans-serif;
     z-index: 15;
@@ -329,12 +328,10 @@ th, tr, td, label {
 
 #app-name {
     position: absolute;
-    /* top: 50%; */
     top: 0;
     left: 50%;
-    transform: translateX(-50%);
-    /* transform: translateX(-50%) translateY(-50%); */
     z-index: 50;
+    transform: translateX(-50%);
 }
 #app-name {
     cursor: pointer;
@@ -550,21 +547,15 @@ th, tr, td, label {
 }
 
 .chonk {
-    /* margin: 10px 0 10px 0; */
-    /* height: 0px; */
-    min-height: 6px;
-    max-height: 6px;
-    min-width: 100px;
-    /* border-top: 3px dashed black; */
-    background-color: var(--bg-gray-lt);
-}
-.chonk2 {
-    /* margin: 10px 0 10px 0; */
-    /* height: 0px; */
     min-height: 3px;
     max-height: 3px;
     min-width: 100px;
-    /* border-top: 3px dashed black; */
+    background-color: var(--bg-gray-lt);
+}
+.chonk2 {
+    min-height: 3px;
+    max-height: 3px;
+    min-width: 100px;
     background-color: var(--bg-gray-lt);
 }
 #mode-info {
@@ -577,6 +568,7 @@ th, tr, td, label {
     padding: 3px;
     display: grid !important;
     grid-template-columns: auto 1fr;
+    margin-right: 0 !important;
 }
 #mode-info > div {
     display: contents;
@@ -609,21 +601,6 @@ th, tr, td, label {
     border-left: 0;
     border-right: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
-}
-
-#app-info {
-    /* display: none; */
-    /* position: absolute;
-    white-space: nowrap;
-    font-size: smaller;
-    font-family: sans-serif;
-    margin-top: 5px;
-    padding: 5px;
-    top: 100%;
-    color: var(--fg-gray);
-    border-radius: 3px;
-    border: 1px solid #ddd;
-    background-color: white; */
 }
 
 #doit {
@@ -700,7 +677,6 @@ th, tr, td, label {
 }
 #panel-left, #panel-right, #modal {
     pointer-events: visible;
-    /* text-transform: capitalize; */
 }
 #panel-left label, #panel-left svg {
     pointer-events: none;
@@ -732,6 +708,7 @@ th, tr, td, label {
     background-image: var(--gradbar2);
 }
 .mid-sep {
+    display: none;
     z-index: 14;
     width: 1px;
     background-image: var(--gradbar-vert);
@@ -1937,7 +1914,7 @@ th, tr, td, label {
     overflow-x: hidden;
     align-items: stretch;
     text-transform: capitalize;
-    background-color: rgba(255,255,255,0.5);
+    /* background-color: rgba(255,255,255,0.5); */
 }
 .settings .set-group {
     cursor: pointer;
@@ -1946,13 +1923,16 @@ th, tr, td, label {
     font-size: smaller;
 }
 .set2-group {
+    border-radius: 3px;
+    border: 1px solid #ddd !important;
+    background-color: #fff;
     flex-flow: column;
-    padding-bottom: 2px;
+    padding: 4px;
     margin: 3px;
-    gap: 1.5px;
 }
 .set2-group .var-row {
-    padding: 0 4px 0 4px !important;
+    background: #fff;
+    padding: 1px 4px 1px 4px !important;
     margin: 0 !important;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
@@ -1965,6 +1945,7 @@ th, tr, td, label {
     margin-right: 25px;
 }
 .set2-sep {
+    background: #fff;
     flex-shrink: 0;
     flex-direction: column;
     margin: 0 0 3px 0;
@@ -1988,9 +1969,6 @@ th, tr, td, label {
     border-bottom: 0.5px solid var(--main-color-hover);
     padding: 4px;
     margin: 0 0 4px 0;
-}
-.settings .set-header {
-    margin: 0 !important;
 }
 .set-header-line {
     margin-left: 5px;
@@ -2148,17 +2126,6 @@ th, tr, td, label {
 #rnfo label {
     text-align: right;
 }
-/* #tool-info {
-    position: fixed;
-    white-space: pre;
-    background-color: rgba(255,255,255,0.25);
-    border: 1px solid rgba(0,0,0,0.25);
-    border-radius: 4px;
-    padding: 4px;
-    font-family: monospace;
-    font-size: 12px;
-    color: #000;
-} */
 #context-menu {
     display: none;
     position: absolute;
