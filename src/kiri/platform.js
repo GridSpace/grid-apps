@@ -572,6 +572,7 @@ function platformChanged() {
                 h.button({
                     _: w.meta.file || 'no name',
                     id: `ws-${w.id}`,
+                    class: "grow",
                     onmouseenter() {
                         color = w.getColor();
                         w.setColor(0x0088ff);
@@ -585,7 +586,10 @@ function platformChanged() {
                     }
                 }),
 
-                h.button([ h.i({ class:"fas fa-trash" }) ])
+                h.button(
+                    { onclick() { platformDelete(w) } },
+                    [ h.i({ class:"fas fa-trash" }), ]
+                )
 
             ])
         ]
