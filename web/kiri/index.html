@@ -229,26 +229,6 @@
                 <div><label>Profile</label><span id="mode-profile"></span></div>
             </div>
             <div class="line-sep2"></div>
-            <!-- <div class="set2-group f-col">
-                <div class="set-header"><a>mesh tools</a></div>
-                <div class="render-tools">
-                    <span id="tool-rotate"><i class="fas fa-sync-alt" title="rotate"></i></span></span>
-                    <span id="tool-scale"><i class="fas fa-expand" title="scale"></i></span></span>
-                    <span id="tool-mesh"><i class="fas fa-dice-d20" title="mesh tool"></i></span></span>
-                    <span id="render-solid" class="j-center" title="view solid"><i class="fas fa-square"></i></span>
-                    <span id="render-wire" class="j-center" title="view wireframe"><i class="fas fa-border-all"></i></span>
-                    <span id="render-ghost" class="a-center" title="view transparent"><i class="fas fa-border-none"></i></span>
-                </div>
-                <div class="set-header"><a>objects</a></div>
-                <div id="ws-widgets" class="f-col"></div>
-            </div>
-            <div class="set2-group f-col mode-fdm">
-                <div class="set-header"><a>ranges</a></div>
-                <div id="fdm-ranges" class="f-col"></div>
-            </div>
-            <div class="set2-group f-col">
-                <div id="workspace-tool"></div>
-            </div> -->
             <div class="f-col grow settings">
                 <!-- FDM -->
                 <div id="fdm-layers" class="set2-group mode-fdm"></div>
@@ -317,9 +297,12 @@
                 <div class="set2-group f-col">
                     <div class="set-header"><a>mesh tools</a></div>
                     <div class="render-tools">
-                        <span id="tool-rotate"><i class="fas fa-sync-alt" title="rotate"></i></span></span>
-                        <span id="tool-scale"><i class="fas fa-expand" title="scale"></i></span></span>
-                        <span id="tool-mesh"><i class="fas fa-dice-d20" title="mesh tool"></i></span></span>
+                        <span id="tool-rotate"><i class="fas fa-sync-alt" title="rotate"></i></span>
+                        <span id="tool-scale"><i class="fas fa-expand" title="scale"></i></span>
+                        <span id="tool-mesh"><i class="fas fa-dice-d20" title="mesh tool"></i></span>
+                        <span id="context-mirror" xlk="rc_mirr"><i class="fas fa-arrows-left-right-to-line" title="mirror"></i></span>
+                        <span id="context-duplicate" xlk="rc_dupl"><i class="fas fa-copy" title="duplicate"></i></span>
+                        <span id="context-layflat" xlk="rc_lafl"><i class="fas fa-arrows-down-to-line" title="lay flat"></i></span>
                         <span id="render-solid" class="j-center" title="view solid"><i class="fas fa-square"></i></span>
                         <span id="render-wire" class="j-center" title="view wireframe"><i class="fas fa-border-all"></i></span>
                         <span id="render-ghost" class="a-center" title="view transparent"><i class="fas fa-border-none"></i></span>
@@ -552,10 +535,6 @@
     <div id="context-menu">
         <button id="context-export-workspace" lk="rc_xpws">export workspace</button>
         <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
-        <div class="sep"></div>
-        <button id="context-layflat" lk="rc_lafl">lay flat</button>
-        <button id="context-mirror" lk="rc_mirr">mirror</button>
-        <button id="context-duplicate" lk="rc_dupl">duplicate</button>
         <div class="sep"></div>
         <button id="context-setfocus" lk="rc_focs">set focus</button>
     </div>

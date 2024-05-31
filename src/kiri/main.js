@@ -908,6 +908,15 @@ gapp.register("kiri.main", [], (root, exports) => {
             options.selectedIndex = optlist.indexOf(mode);
             modename.onchange = (ev) => setMode(optlist[options.selectedIndex]);
         }
+        // highlight selected mode menu item
+        ["FDM","CAM","SLA","LASER"].forEach(sm => {
+            const cl = $(`mode-${sm.toLowerCase()}`).classList;
+            if (sm === mode) {
+                cl.add('selected');
+            } else {
+                cl.remove('selected');
+            }
+        });
         // restore cached device profile for this mode
         if (current.cdev[mode]) {
             current.device = clone(current.cdev[mode]);

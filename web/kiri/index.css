@@ -251,7 +251,7 @@ th, tr, td, label {
     border-left: 1px solid var(--blue-2);
     border-right: 1px solid var(--blue-2);
 }
-.top-menu > span.selected {
+.top-menu > span.selected, .top-menu-drop div.selected {
     background-color: var(--blue-3);
 }
 .top-menu > span:hover .top-menu-drop {
