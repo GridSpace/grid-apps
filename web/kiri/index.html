@@ -138,6 +138,30 @@
                 </div>
             </span>
             <span>
+                <i class="fas fa-code-branch"></i>
+                <label>mode</label>
+                <div class="top-menu-drop top-menu-right">
+                    <div class="content">
+                        <div id="mode-fdm">
+                            <label lk="fdm">FDM</label>
+                            <span><i class="fas fa-layer-group"></i></span>
+                        </div>
+                        <div id="mode-cam">
+                            <label lk="cnc">CNC</label>
+                            <span><i class="fas fa-bore-hole"></i></span>
+                        </div>
+                        <div id="mode-laser">
+                            <label lk="laser">Laser</label>
+                            <span><i class="fas fa-bolt"></i></span>
+                        </div>
+                        <div id="mode-sla">
+                            <label lk="sla">SLA</label>
+                            <span><i class="fas fa-cube"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </span>
+            <span>
                 <i class="fas fa-cog"></i>
                 <label>setup</label>
                 <div class="top-menu-drop top-menu-right">
@@ -194,16 +218,36 @@
         <div id="panel-left" class="f-col j-left">
             <!-- always up -->
             <div id="mode-info" class="f-col">
-                <div><label>Mode</label><select id="mode-name">
+                <!-- <div><label>Mode</label><select id="mode-name">
                     <option>FDM</option>
                     <option>CNC</option>
                     <option>SLA</option>
                     <option>Laser</option>
-                </select></div>
+                </select></div> -->
                 <div><label>Device</label><span id="mode-device"></span></div>
                 <div><label>Profile</label><span id="mode-profile"></span></div>
             </div>
             <div class="line-sep2"></div>
+            <!-- <div class="set2-group f-col">
+                <div class="set-header"><a>mesh tools</a></div>
+                <div class="render-tools">
+                    <span id="tool-rotate"><i class="fas fa-sync-alt" title="rotate"></i></span></span>
+                    <span id="tool-scale"><i class="fas fa-expand" title="scale"></i></span></span>
+                    <span id="tool-mesh"><i class="fas fa-dice-d20" title="mesh tool"></i></span></span>
+                    <span id="render-solid" class="j-center" title="view solid"><i class="fas fa-square"></i></span>
+                    <span id="render-wire" class="j-center" title="view wireframe"><i class="fas fa-border-all"></i></span>
+                    <span id="render-ghost" class="a-center" title="view transparent"><i class="fas fa-border-none"></i></span>
+                </div>
+                <div class="set-header"><a>objects</a></div>
+                <div id="ws-widgets" class="f-col"></div>
+            </div>
+            <div class="set2-group f-col mode-fdm">
+                <div class="set-header"><a>ranges</a></div>
+                <div id="fdm-ranges" class="f-col"></div>
+            </div>
+            <div class="set2-group f-col">
+                <div id="workspace-tool"></div>
+            </div> -->
             <div class="f-col grow settings">
                 <!-- FDM -->
                 <div id="fdm-layers" class="set2-group mode-fdm"></div>

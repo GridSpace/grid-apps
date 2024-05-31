@@ -901,7 +901,7 @@ gapp.register("kiri.main", [], (root, exports) => {
         MODE = MODES[mode];
         DRIVER = kiri.driver[mode];
         // update mode drop-down
-        {
+        if (false) {
             const modename = $('mode-name');
             const options = modename.options;
             const optlist = ["FDM","CAM","SLA","LASER"];

@@ -2751,6 +2751,10 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // bind interface action elements
         $('app-name').onclick = api.help.show;
+        $('mode-fdm').onclick = () => api.mode.set('FDM');
+        $('mode-cam').onclick = () => api.mode.set('CAM');
+        $('mode-sla').onclick = () => api.mode.set('SLA');
+        $('mode-laser').onclick = () => api.mode.set('LASER');
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
