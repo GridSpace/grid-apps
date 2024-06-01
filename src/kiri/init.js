@@ -2391,14 +2391,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             return lbl;
         }
 
-        // for (let mode of ["fdm","sla","cam","laser"]) {
-        //     if (api.feature.modes.indexOf(mode) >= 0) {
-        //         $(`mode-${mode}`).appendChild(mksvg(icons[mode]));
-        //     } else {
-        //         $(`mode-${mode}`).style.display = 'none';
-        //     }
-        // }
-
         api.platform.update_size();
 
         function mouseOnHover(int, event, ints) {
@@ -2707,6 +2699,8 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // bind interface action elements
         $('app-name').onclick = api.help.show;
+        $('mode-device').onclick = showDevices;
+        $('mode-profile').onclick = settingsLoad;
         $('mode-fdm').onclick = () => api.mode.set('FDM');
         $('mode-cam').onclick = () => api.mode.set('CAM');
         $('mode-sla').onclick = () => api.mode.set('SLA');
