@@ -27,6 +27,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         CAM = [MODES.CAM],
         SLA = [MODES.SLA],
         FDM = [MODES.FDM],
+        FDM_CAM = [MODES.FDM,MODES.CAM],
         FDM_SLA = [MODES.FDM,MODES.SLA],
         FDM_LZR = [MODES.LASER,MODES.FDM],
         FDM_CAM_SLA = [MODES.CAM,MODES.FDM,MODES.SLA],
@@ -274,18 +275,18 @@ gapp.register("kiri.init", [], (root, exports) => {
         return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
     }
 
-    function inputTextOK() {
-        return DOC.activeElement === ui.deviceName;
-    }
+    // function inputTextOK() {
+    //     return DOC.activeElement === ui.deviceName;
+    // }
 
-    function textAreaHasFocus() {
-        let active = DOC.activeElement;
-        return active && active.nodeName === "TEXTAREA";
-    }
+    // function textAreaHasFocus() {
+    //     let active = DOC.activeElement;
+    //     return active && active.nodeName === "TEXTAREA";
+    // }
 
-    function inputSize() {
-        return parseInt(DOC.activeElement.size);
-    }
+    // function inputSize() {
+    //     return parseInt(DOC.activeElement.size);
+    // }
 
     function cca(c) {
         return c.charCodeAt(0);
@@ -784,7 +785,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             dev.new = false;
             dev.deviceName = devicename;
 
-            ui.deviceName.value = devicename;
+            // ui.deviceName.value = devicename;
             ui.deviceBelt.checked = dev.bedBelt;
             ui.deviceRound.checked = dev.bedRound;
             ui.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter || dev.bedRound;
@@ -802,7 +803,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             // disable editing for non-local devices
             [
-                ui.deviceName,
+                // ui.deviceName,
                 ui.gcodePre,
                 ui.gcodePost,
                 ui.bedDepth,
@@ -847,14 +848,19 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             ui.deviceSave.disabled = !local;
             ui.deviceDelete.disabled = !local;
+            ui.deviceRename.disabled = !local;
             ui.deviceExport.disabled = !local;
+            ui.deviceAdd.style.display = mode === 'SLA' ? 'none' : '';
+
             if (local) {
                 ui.deviceAdd.innerText = "copy";
                 ui.deviceDelete.style.display = '';
+                ui.deviceRename.style.display = '';
                 ui.deviceExport.style.display = '';
             } else {
                 ui.deviceAdd.innerText = "customize";
                 ui.deviceDelete.style.display = 'none';
+                ui.deviceRename.style.display = 'none';
                 ui.deviceExport.style.display = 'none';
             }
             ui.deviceAdd.disabled = dev.noclone;
@@ -981,9 +987,8 @@ gapp.register("kiri.init", [], (root, exports) => {
         space.world.add(deviceImage = mesh);
     }
 
-    function updateDeviceName() {
-        let newname = ui.deviceName.value,
-            selected = api.device.get(),
+    function updateDeviceName(newname) {
+        let selected = api.device.get(),
             devs = settings().devices;
         if (newname !== selected) {
             devs[newname] = devs[selected];
@@ -1000,8 +1005,7 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function renderDevices(devices) {
-        let selectedIndex = -1,
-            selected = api.device.get(),
+        let selected = api.device.get() || devices[0],
             features = api.feature,
             devs = settings().devices,
             dfilter = typeof(features.device_filter) === 'function' ? features.device_filter : undefined;
@@ -1039,7 +1043,12 @@ gapp.register("kiri.init", [], (root, exports) => {
         ui.deviceDelete.onclick = function() {
             api.function.clear();
             removeLocalDevice(getSelectedDevice());
+            selectDevice(getModeDevices()[0]);
             showDevices();
+        };
+        ui.deviceRename.onclick = function() {
+            const newname = prompt(`Rename "${selected}`, selected);
+            if (newname) updateDeviceName(newname);
         };
         ui.deviceExport.onclick = function(event) {
             const record = {
@@ -1054,12 +1063,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.device.export(exp, selected, { event, record });
         };
 
-        ui.deviceList.innerHTML = '';
-        ui.deviceMy.innerHTML = '';
-        let incr = 0;
-        let found = null;
-        let first = devices[0];
         let dedup = {};
+        let list_cdev = [];
+        let list_mdev = [];
         devices.forEach(function(device, index) {
             // prevent device from appearing twice
             // such as local name = standard device name
@@ -1068,48 +1074,31 @@ gapp.register("kiri.init", [], (root, exports) => {
             }
             dedup[device] = device;
             let loc = isLocalDevice(device);
-            // if filter set, use
-            if (!loc && deviceFilter && device.toLowerCase().indexOf(deviceFilter) < 0) {
-                return;
-            }
-            // allow for device filter feature
             if (dfilter && dfilter(device) === false) {
                 return;
             }
-            if (incr === 0) {
-                first = device;
-            }
-            let opt = DOC.createElement('button');
-            opt.appendChild(DOC.createTextNode(device.replace(/\./g,' ')));
-            opt.onclick = function() {
-                selectDevice(device);
-                opt.classList.add("selected");
-                if (found && found !== opt) {
-                    found.classList.remove("selected");
-                }
-                found = opt;
-                api.platform.layout();
-            };
             if (loc) {
-                ui.deviceMy.appendChild(opt);
+                list_mdev.push(h.option(device));
             } else {
-                ui.deviceList.appendChild(opt);
+                list_cdev.push(h.option(device));
             }
-            if (device === selected) {
-                // scroll to highlighted selection
-                setTimeout(() => ui.deviceList.scrollTop = opt.offsetTop, 0);
-                opt.classList.add("selected");
-                selectedIndex = incr;
-                found = opt;
-            }
-            incr++;
         });
 
-        if (selectedIndex >= 0) {
-            selectDevice(selected);
-        } else {
-            selectDevice(first);
+        let dev_list = $('dev-list');
+        h.bind(dev_list, [
+            h.option({ _: '-- My Devices --', disabled: true }),
+            ...list_mdev,
+            h.option({ _: '-- Stock Devices --', disabled: true }),
+            ...list_cdev
+        ]);
+        let dev_opts = [...dev_list.options].map(o => o.label);
+        dev_list.selectedIndex = dev_opts.indexOf(selected);
+        dev_list.onchange = ev => {
+            const seldev = dev_list.options[dev_list.selectedIndex];
+            selectDevice(seldev.label);
+            api.platform.layout();
         }
+        selectDevice(selected);
     }
 
     function renderTools() {
@@ -1362,8 +1351,12 @@ gapp.register("kiri.init", [], (root, exports) => {
     // not the best way to do this, but main decl of api.show is broken
     api.show.tools = showTools;
 
+    function getModeDevices() {
+        return Object.keys(devices[api.mode.get_lower()]).sort();
+    }
+
     function updateDeviceList() {
-        renderDevices(Object.keys(devices[api.mode.get_lower()]).sort());
+        renderDevices(getModeDevices());
     }
 
     async function sync_get() {
@@ -1379,10 +1372,8 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function _showDevices() {
-        // disable device filter and show devices
-        ui.dev.header.onclick(true);
+        updateDeviceList();
         api.modal.show('setup');
-        ui.deviceList.focus();
     }
 
     function dragOverHandler(evt) {
@@ -1516,7 +1507,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         let { event, conf, view, show } = api;
         let { bound, toInt, toFloat } = uc;
         let { newBlank, newButton, newBoolean, newGroup, newInput } = uc;
-        let { newInput2, newSelect, newText, newRow, newGCode } = uc;
+        let { newSelect, newText, newRow, newGCode } = uc;
 
         event.emit('init.one');
 
@@ -1624,13 +1615,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             speedbar:           $('speedbar'),
             context:            $('context-menu'),
 
-            // options: {
-            //     // area:           $('lt-options'),
-            //     // trash:          $('lt-trash'),
-            //     // enable:         $('lt-w-enable'),
-            //     // disable:        $('lt-w-disable'),
-            // },
-
             back:               $('lt-back'),
             ltsetup:            $('lt-setup'),
             ltfile:             $('lt-file'),
@@ -1638,7 +1622,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             ltact:              $('lt-start'),
             edit:               $('lt-tools'),
             nozzle:             $('menu-nozzle'),
-            // render:             $('menu-render'),
 
             modal:              $('modal'),
             modalBox:           $('modal-box'),
@@ -1656,10 +1639,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             catalogList:        $('catalogList'),
 
             devices:            $('devices'),
-            deviceList:         $('device-list'),
-            deviceMy:           $('device-my'),
             deviceAdd:          $('device-add'),
             deviceDelete:       $('device-del'),
+            deviceRename:       $('device-ren'),
             deviceExport:       $('device-exp'),
             deviceSave:         $('device-save'),
 
@@ -1715,45 +1697,45 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             /** Device Browser / Editor */
 
-            device:           newGroup(LANG.dv_gr_dev, $('device1'), {group:"ddev", inline:true, class:"noshow"}),
-            deviceName:       newInput(LANG.dv_name_s, {title:LANG.dv_name_l, size:"70%", text:true, action:updateDeviceName}),
+            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true }),
+            device:           newGroup(LANG.dv_gr_dev, null, {group:"ddev", inline:true, class:"noshow"}),
 
-            devbed:           newRow([
-                uc.newLabel(LANG.volume, { class: "grow" }),
-                uc.newLabel('X'),
-                ui.bedWidth   = newInput2({title:LANG.dv_bedw_l, convert:toFloat, size:5, units:true, round:2, action:updateDeviceSize}),
-                uc.newLabel('Y'),
-                ui.bedDepth   = newInput2({title:LANG.dv_bedd_l, convert:toFloat, size:5, units:true, round:2, action:updateDeviceSize}),
-                uc.newLabel('Z'),
-                ui.maxHeight  = newInput2({title:LANG.dv_bedh_l, convert:toFloat, size:5, modes:FDM_SLA, action:updateDeviceSize}),
-            ], { class: "var-area" }),
-
-            resolutionX:      newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:toInt, size:5, modes:SLA}),
-            resolutionY:      newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:toInt, size:5, modes:SLA}),
+            _____:            newGroup("workspace", null, {group:"dext", inline:true}),
+            bedWidth:         newInput('X (width)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
+            bedDepth:         newInput('Y (depth)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
+            maxHeight:        newInput('Z (height)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
+            resolutionX:      newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:toInt, size:6, modes:SLA}),
+            resolutionY:      newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:toInt, size:6, modes:SLA}),
+            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:GCODE }),
+            _____:            newGroup("firmware", null, {group:"dext", inline:true}),
+            fwRetract:        newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
+            deviceOrigin:     newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LZR, show:() => !ui.deviceRound.checked}),
+            deviceRound:      newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),
+            deviceBelt:       newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true, show:() => !ui.deviceRound.checked}),
+            separator:        newBlank({class:"pop-sep", modes:FDM, driven:true}),
             spindleMax:       newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:toInt, size:5, modes:CAM, trigger:1}),
             deviceZMax:       newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:toInt, size:5, modes:FDM}),
             gcodeTime:        newInput(LANG.dv_time_s, {title:LANG.dv_time_l, convert:toFloat, size:5, modes:FDM}),
-            separator:        newBlank({class:"pop-sep", modes:FDM}),
-            filamentSource:   newSelect(LANG.dv_fsrc_s, {title: LANG.dv_fsrc_l, action: filamentSourceSave, modes:FDM}, "filasrc"),
-            fwRetract:        newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
-            deviceOrigin:     newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LZR, show:() => !ui.deviceRound.checked}),
-            deviceRound:      newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, trigger:true, show:isNotBelt}),
-            deviceBelt:       newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, trigger:true, show:() => !ui.deviceRound.checked}),
-            extruder:         newGroup(LANG.dv_gr_ext, $('device2'), {group:"dext", inline:true, modes:FDM}),
+            filamentSource:   newSelect(LANG.dv_fsrc_s, {title: LANG.dv_fsrc_l, action: filamentSourceSave, modes:FDM, show:() => false}, "filasrc"),
+            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM }),
+            extruder:         newGroup(LANG.dv_gr_ext, null, {group:"dext", inline:true}),
             extFilament:      newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:toFloat, modes:FDM}),
             extNozzle:        newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:toFloat, modes:FDM}),
             extOffsetX:       newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:toFloat, modes:FDM}),
             extOffsetY:       newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:toFloat, modes:FDM}),
-            extSelect:        newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, size:14, height:3, area:gcode}),
-            extDeselect:      newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, size:14, height:3, area:gcode}),
+            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:GCODE }),
+            _____:            newGroup(LANG.dv_gr_too, null, {group:"dext", inline:true}),
+            extSelect:        newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, size:14, height:3, area:gcode, modes:GCODE}),
+            extDeselect:      newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, size:14, height:3, area:gcode, modes:GCODE}),
             extPad:           newBlank({class:"grow", modes:FDM}),
             extActions:       newRow([
                 ui.extPrev = newButton(undefined, undefined, {icon:'<i class="fas fa-less-than"></i>'}),
                 ui.extAdd  = newButton(undefined, undefined, {icon:'<i class="fas fa-plus"></i>'}),
                 ui.extDel  = newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
                 ui.extNext = newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
-            ], {class:"dev-buttons ext-buttons"}),
-            palette:          newGroup(LANG.dv_gr_pal, $('palette3'), {group:"dext2", inline:true, modes:FDM}),
+            ], {class:"dev-buttons ext-buttons", modes:FDM}),
+            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM, show: () => false && ui.filamentSource.selectedOptions[0].value === 'palette3' }),
+            palette:          newGroup(LANG.dv_gr_pal, null, {group:"dext2", inline:true, modes:FDM}),
             paletteId:        newInput(LANG.dv_paid_s, {title:LANG.dv_paid_l, modes:FDM, size:15, text:true}),
             palettePing:      newInput(LANG.dv_paps_s, {title:LANG.dv_paps_l, modes:FDM, convert:toInt}),
             paletteFeed:      newInput(LANG.dv_pafe_s, {title:LANG.dv_pafe_l, modes:FDM, convert:toInt}),
@@ -1763,7 +1745,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             paletteHeat:      newInput(LANG.dv_pahe_s, {title:LANG.dv_pahe_l, modes:FDM, convert:toInt}),
             paletteCool:      newInput(LANG.dv_paco_s, {title:LANG.dv_paco_l, modes:FDM, convert:toInt}),
             palettePress:     newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:toInt}),
-            gcode:            newGroup(LANG.dv_gr_out, $('device2'), {group:"dgco", inline:true, modes:CAM_LZR}),
+            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:CAM_LZR }),
+            _____:            newGroup(LANG.dv_gr_out, null, {group:"dgco", inline:true}),
             gcodeStrip:       newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeSpace:       newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LZR}),
             useLaser:         newBoolean(LANG.dv_lazr_s, onBooleanClick, {title:LANG.dv_lazr_l, modes:CAM}),
@@ -1785,13 +1768,13 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             /** Preferences Menu */
 
-            lprefs:           newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
+            _____:            newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
             antiAlias:        newBoolean(LANG.op_anta_s, booleanSave, {title:LANG.op_anta_l}),
             reverseZoom:      newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
             ortho:            newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
             dark:             newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             devel:            newBoolean(LANG.op_devl_s, booleanSave, {title:LANG.op_devl_l}),
-            lprefs:           newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
+            _____:            newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
             showOrigin:       newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
             showRulers:       newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
             showSpeeds:       newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
@@ -1799,20 +1782,20 @@ gapp.register("kiri.init", [], (root, exports) => {
             shiny:            newBoolean(LANG.op_shny_s, booleanSave, {title:LANG.op_shny_l, modes:FDM}),
             lineType:         newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
             animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
-            units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM, trace:false}, "units"),
-            layout:           newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
+            units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM}, "units"),
+            _____:            newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
             autoSave:         newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
             autoLayout:       newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
             spaceRandoX:      newBoolean(LANG.op_spcx_s, booleanSave, {title:LANG.op_spcx_l, show:isBelt}),
             spaceLayout:      newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:toFloat, size:3, units:true}),
-            export:           newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
+            _____:            newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
             exportLocal:      newBoolean(`Grid:Local`, booleanSave, {title:LANG.op_exgl_l}),
             exportGhost:      newBoolean(`Grid:Host`, booleanSave, {title:LANG.op_exgh_l}),
             exportOcto:       newBoolean(`OctoPrint`, booleanSave, {title:LANG.op_exop_l}),
             exportThumb:      newBoolean(`Thumbnail`, booleanSave, {modes:FDM}),
             exportPreview:    newBoolean(`Code Preview`, booleanSave),
-            parts:            newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
+            _____:            newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
             detail:           newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
             healMesh:         newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
             threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:FDM_CAM_SLA}),
@@ -1960,7 +1943,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             camStockIndexed:     newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l}),
             camStockIndexGrid:   newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, show:() => ui.camStockIndexed.checked}),
             camLimits:           newGroup(LANG.cc_menu, $('cam-limits'), { modes:CAM, driven, separator }),
-            camZAnchor:          newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, trace:false, show:() => !ui.camStockIndexed.checked}, "zanchor"),
+            camZAnchor:          newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, show:() => !ui.camStockIndexed.checked}, "zanchor"),
             camZOffset:          newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:toFloat, units:true}),
             camZBottom:          newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:toFloat, units:true, trigger: true}),
             camZThru:            newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:toFloat, bound:bound(0.0,100), units:true, show:() => { return ui.camZBottom.value == 0 }}),
@@ -2190,30 +2173,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             if (!ev.buttons) api.event.emit('slider.unlabel');
         };
 
-        ui.dev.header.onclick = (hide) => {
-            let style = ui.dev.filter.style;
-            if (style.display === 'flex' || hide === true) {
-                style.display = '';
-                deviceFilter = null;
-                updateDeviceList();
-            } else {
-                style.display = 'flex';
-                ui.dev.filter.focus();
-                deviceFilter = ui.dev.filter.value.toLowerCase();
-                updateDeviceList();
-            }
-        };
-
-        ui.dev.filter.onkeyup = (ev) => {
-            deviceFilter = ui.dev.filter.value.toLowerCase();
-            updateDeviceList();
-        };
-
-        ui.dev.filter.onclick = (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-        };
-
         api.event.on('slider.unlabel', (values) => {
         });
 
@@ -2431,14 +2390,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             lbl.innerText = src;
             return lbl;
         }
-
-        // for (let mode of ["fdm","sla","cam","laser"]) {
-        //     if (api.feature.modes.indexOf(mode) >= 0) {
-        //         $(`mode-${mode}`).appendChild(mksvg(icons[mode]));
-        //     } else {
-        //         $(`mode-${mode}`).style.display = 'none';
-        //     }
-        // }
 
         api.platform.update_size();
 
@@ -2684,9 +2635,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             // fill device list
             updateDeviceList();
 
-            // ensure settings has gcode
-            selectDevice(DEVNAME || api.device.get());
-
             // update ui fields from settings
             api.conf.update_fields();
 
@@ -2751,6 +2699,8 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // bind interface action elements
         $('app-name').onclick = api.help.show;
+        $('mode-device').onclick = showDevices;
+        $('mode-profile').onclick = settingsLoad;
         $('mode-fdm').onclick = () => api.mode.set('FDM');
         $('mode-cam').onclick = () => api.mode.set('CAM');
         $('mode-sla').onclick = () => api.mode.set('SLA');

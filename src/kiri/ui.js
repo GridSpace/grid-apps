@@ -56,11 +56,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
         newBoolean,
         newButton,
         newBlank,
+        newDiv,
         newGCode,
         newGroup,
         newLabel,
         newInput,
-        newInput2,
         newRange,
         newRow,
         newSelect,
@@ -333,23 +333,23 @@ gapp.register("kiri.ui", [], (root, exports) => {
         try {
             return fn();
         } catch (e) {
-            return true;
+            // console.log({ safecall_error: e });
+            return false;
         }
     }
 
     function addModeControls(el, opt = {}) {
-        if (opt.trace2) {
-            console.log({ AMC: el, opt, groupName });
-        }
         el.__opt = opt;
         el.showMe = function() {
+            if (opt.trace) console.log({ showMe: el });
             el.classList.remove('hide');
         };
         el.hideMe = function() {
+            if (opt.trace) console.log({ hideMe: el });
             el.classList.add('hide');
         };
         el.setVisible = function(show) {
-            if (opt.trace2) console.log({ setVisible: show, el });
+            if (opt.trace) console.log({ setVisible: show });
             if (show) el.showMe();
             else el.hideMe();
         };
@@ -357,8 +357,10 @@ gapp.register("kiri.ui", [], (root, exports) => {
             let xprt = opt.expert === undefined || (opt.expert === lastExpert);
             let show = opt.show ? safecall(opt.show) : true;
             let disp = opt.visible ? opt.visible() : true;
-            if (opt.trace2) console.log({ setMode: el, mode, modes: el.modes, xprt, show, disp, fn: el.__opt.show });
-            el.setVisible(el.hasMode(mode) && show && xprt && disp);
+            let hmod = el.hasMode(mode);
+            if (opt.trace) console.log({ setMode: mode, xprt, show, disp, hmod, modes:el.modes });
+            if (opt.manual) return;
+            el.setVisible(hmod && show && xprt && disp);
         }
         el.hasMode = function(mode) {
             return el.modes.length === 0 || el.modes.contains(mode);
@@ -370,8 +372,10 @@ gapp.register("kiri.ui", [], (root, exports) => {
     function newDiv(opt = {}) {
         let div = DOC.createElement('div');
         addModeControls(div, opt);
-        addTo.appendChild(div);
-        lastGroup.push(div);
+        (opt.addto || addTo).appendChild(div);
+        if (opt.addto) lastDiv = addTo = div;
+        if (opt.addto && opt.class) div.setAttribute('class', opt.class);
+        lastGroup?.push(div);
         div._group = groupName;
         return div;
     }
@@ -431,6 +435,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                     cols = Math.max(cols, row.length);
                 });
                 txt.setAttribute("cols", Math.max(30, cols + 1));
+                txt.setAttribute("rows", 6);
 
                 let showing = btn === lastBtn;
                 hidePop();
@@ -607,74 +612,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         }
         if (!ip.convert) ip.convert = raw.bind(ip);
         ip.setVisible = row.setVisible;
-
-        return ip;
-    }
-
-    function newInput2(opt = {}) {
-        let hide = opt.hide,
-            size = opt.size || 5,
-            height = opt.height || 0,
-            ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
-            action = opt.action || bindTo || inputAction;
-
-        ip.setAttribute("class", "var-input");
-        if (Number.isInteger(size)) {
-            ip.setAttribute("size", size);
-        } else {
-            ip.setAttribute("style", `width:${size}`);
-        }
-        ip.setAttribute("type", "text");
-        ip.setAttribute("spellcheck", "false");
-        if (opt.disabled) ip.setAttribute("disabled", "true");
-        if (opt.title) ip.setAttribute("title", opt.title);
-        if (opt.convert) ip.convert = opt.convert.bind(ip);
-        if (opt.bound) ip.bound = opt.bound;
-        if (opt.action) action = opt.action;
-        ip.addEventListener('focus', function(event) {
-            hidePop();
-            setSticky(true);
-        });
-        if (action) {
-            ip.addEventListener('keydown', function(event) {
-                let key = event.key;
-                if (
-                    opt.text ||
-                    (key >= '0' && key <= '9') ||
-                    key === '.' ||
-                    key === '-' ||
-                    key === 'Backspace' ||
-                    key === 'Delete' ||
-                    key === 'ArrowLeft' ||
-                    key === 'ArrowRight' ||
-                    key === 'Tab' ||
-                    event.metaKey ||
-                    event.ctrlKey ||
-                    (key === ',' && opt.comma)
-                ) {
-                    return;
-                }
-                event.preventDefault();
-                event.stopPropagation();
-            });
-            ip.addEventListener('keyup', function(event) {
-                if (event.keyCode === 13) {
-                    ip.blur();
-                }
-            });
-            ip.addEventListener('blur', function(event) {
-                setSticky(false);
-                lastChange = ip;
-                action(event);
-                if (opt.trigger) {
-                    refresh();
-                }
-            });
-            if (opt.units) {
-                addUnits(ip, opt.round || 3);
-            }
-        }
-        if (!ip.convert) ip.convert = raw.bind(ip);
 
         return ip;
     }

@@ -172,7 +172,7 @@
                 <div class="top-menu-drop top-menu-right">
                     <div class="content">
                         <div id="set-device">
-                            <label lk="machine">machine</label>
+                            <label lk="machines">machines</label>
                             <span><i class="fas fa-cube"></i></span>
                         </div>
                         <div id="set-profs">
@@ -367,49 +367,32 @@
         </div>
 
         <!-- device selector / editor -->
-        <div id="mod-setup" class="mdialog f-row">
-            <div class="f-col left a-stretch">
-                <div id="dev-header" class="header sub f-col j-center">
-                    <label lk="dm_stdd">standard devices</label>
-                    <div id="dev-search">
-                        <i class="fas fa-search"></i>
-                        <input id="dev-filter">
-                    </div>
+        <div id="mod-setup" class="mdialog f-col gap3">
+            <div class="f-row gap4 a-center">
+                <label id="dev-sel" class="set-header">select device</label>
+                <select id="dev-list"></select>
+                <div class="f-row grow j-end">
+                    <button id="device-add" lk="copy">copy</button>
+                    <button id="device-ren" lk="rename">rename</button>
+                    <button id="device-del" lk="delete">delete</button>
+                    <button id="device-exp" lk="export">export</button>
                 </div>
-                <div class="f-col mh0 mh35 j-center a-stretch">
-                    <div id="device-list" class="devlist f-col overy"></div>
-                </div>
-                <label class="header sub" lk="dm_mydd">my devices</label>
+            </div>
+            <div class="set-sep"></div>
+            <div class="f-row grow gap4">
+                <div id="dev-config" class="f-col gap4 overy shrink0"></div>
                 <div class="f-col grow">
-                    <div id="device-my" class="devlist f-col grow overy"></div>
-                    <div class="f-row footer">
-                        <div class="grow"></div>
-                        <button id="device-add" lk="copy">copy</button>
-                        <button id="device-del" lk="delete">delete</button>
-                        <button id="device-exp" lk="export">export</button>
-                        <div class="grow"></div>
+                    <div id="gcode-edit" class="f-col grow gap4">
+                        <div id="dg" class="f-col t-body t-inset"></div>
+                        <div id="dev-gcode" class="grow"></div>
                     </div>
                 </div>
             </div>
-            <div class="f-col grow a-stretch">
-                <label class="header" lk="dm_seld">selected device</label>
-                <div class="f-row">
-                    <div id="device1" class="f-col t-body t-inset overy grow"></div>
-                    <div class="t-pad"></div>
-                    <div id="device2" class="f-col t-body t-inset overy grow"></div>
-                    <div id="palette3" class="f-col t-body t-inset overy grow"></div>
-                </div>
-                <div class="t-pad"></div>
-                <div id="gcode-edit" class="f-col grow">
-                    <div id="dg" class="f-col t-body t-inset"></div>
-                    <div class="t-pad"></div>
-                    <div id="dev-gcode" class="grow"></div>
-                </div>
-                <div id="device-action" class="f-row footer">
-                    <div class="grow"></div>
-                    <button id="device-save" lk="save">save</button>
-                    <div class="grow"></div>
-                </div>
+            <div class="set-sep"></div>
+            <div id="device-action" class="f-row">
+                <div class="grow"></div>
+                <button id="device-save" lk="save">save</button>
+                <div class="grow"></div>
             </div>
         </div>
 

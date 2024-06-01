@@ -133,7 +133,10 @@ gapp.overlay(root, {
 });
 
 // add common element types
-["a", "i", "hr", "div", "span", "label", "input", "button", "svg", "textarea"].forEach(type => {
+[
+    "a", "i", "hr", "div", "span", "label", "input",
+    "button", "svg", "textarea", "select", "option"
+].forEach(type => {
     h[type] = (attr, innr) => {
         return h.el(type, attr, innr);
     }

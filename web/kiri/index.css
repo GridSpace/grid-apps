@@ -123,7 +123,7 @@ input:focus {
 input[disabled] {
     background-color: #ddd;
     color: #000;
-    border-width: 1px;
+    /* border-width: 1px; */
 }
 input[type="range"] {
     width: 85px;
@@ -439,6 +439,9 @@ th, tr, td, label {
 .grow {
     flex-grow: 1;
 }
+.shrink0 {
+    flex-shrink: 0;
+}
 .a-start {
     align-items: flex-start;
 }
@@ -690,7 +693,7 @@ th, tr, td, label {
     align-items: center;
 }
 #ws-widgets button.selected {
-    background-color: var(--blue-4);
+    background-color: var(--blue-3);
     color: #000;
 }
 .slim-hide {
@@ -1229,7 +1232,6 @@ th, tr, td, label {
     display: none;
     padding: 10px;
     min-height: 20px;
-    font-size: smaller;
     background-color: #fff;
 }
 
@@ -1243,15 +1245,26 @@ th, tr, td, label {
     max-height: 350px;
 }
 #mod-x {
+    border-radius: 5px;
+    border: 2px solid rgba(255,255,255,0.5);
+    background-color: rgba(255,255,255,0.5);
     position: absolute;
     z-index: 30;
     bottom: -20px;
-    right: 5px;
+    right: 0;
+}
+#mod-x svg {
+    aspect-ratio: 1 / 1 !important;
 }
 #mod-setup {
-    height: 550px;
-    width: 725px;
+    min-height: 550px;
+    max-height: 60%;
+    min-width: 725px;
+    max-width: 70%;
     padding-bottom: 5px;
+}
+#mod-setup textarea {
+    border-radius: 3px;
 }
 #mod-setup .header {
     text-align: center;
@@ -1263,32 +1276,11 @@ th, tr, td, label {
 #mod-setup .header.sub {
     padding-top: 10px;
 }
-#dev-search {
-    position: absolute;
-    font-size: 10px;
-    right: 3px;
-}
-#dev-search:hover {
-    color: #00f;
-}
-#dev-filter {
-    transform: translateY(-7px);
-    text-align: center;
-    position: absolute;
-    display: none;
-    padding: 1px;
-    right: 150%;
-}
 #mod-setup .left {
     width: 180px;
     padding-right: 10px;
     margin-right: 10px;
     border-right: 1px solid #ddd;
-}
-#mod-setup .footer {
-    padding-top: 5px;
-    margin-top: 5px;
-    border-top: 1px solid rgba(150,130,200,0.5);
 }
 .devlist {
     background-color: #fdfdfd;
@@ -1661,9 +1653,9 @@ th, tr, td, label {
 #devices {
     width: 225px;
 }
-#device1, #device2, #palette3 {
+/* #device1, #device2, #palette3 {
     width: 225px;
-}
+} */
 #palette3 {
     display: none;
 }
@@ -1674,7 +1666,7 @@ th, tr, td, label {
     width: 100%;
     background-color: #f8f8f8;
 }
-#device-action, #tool-action {
+#tool-action {
     margin-top: 5px;
 }
 #device-action button, #tool-action button {
@@ -1936,6 +1928,16 @@ th, tr, td, label {
 .settings .set-header a {
     font-size: smaller;
 }
+#dev-sel {
+    margin-bottom: 0;
+}
+#dev-list {
+    align-self: stretch;
+    padding: 0 5px 0 5px;
+}
+#dev-list:hover {
+    background-color: var(--blue-4);
+}
 .set2-group {
     border-radius: 3px;
     border: 1px solid #ddd !important;
@@ -1944,18 +1946,18 @@ th, tr, td, label {
     padding: 4px;
     margin: 3px;
 }
-.set2-group .var-row {
+.set2-group .var-row, .var-row {
     background: #fff;
     padding: 1px 4px 1px 4px;
     margin: 0 !important;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
 }
-.set2-group .var-row:hover {
+.set2-group .var-row:hover, .var-row:hover {
     border-right: 3px solid var(--blue-1);
     background-color: var(--blue-4) !important;
 }
-.set2-group .var-row label {
+.set2-group .var-row label, #mod-setup .var-row label {
     margin-right: 25px;
 }
 .set2-sep {
@@ -2048,14 +2050,13 @@ th, tr, td, label {
     flex-grow: 1;
     font-size: smaller;
 }
-.var-area {
-    gap: 3px;
-}
-.var-area label {
-    padding: 2px 0 2px 0;
+.var-row .dim {
+    text-align: right;
     font-size: smaller;
+    align-self: center;
+    justify-self: center;
 }
-.var-row input, .var-area input {
+.var-row input {
     margin-right: 0;
     margin-bottom: 1px;
     padding-bottom: 1px;
