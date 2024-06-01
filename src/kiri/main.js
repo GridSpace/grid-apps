@@ -908,6 +908,8 @@ gapp.register("kiri.main", [], (root, exports) => {
             options.selectedIndex = optlist.indexOf(mode);
             modename.onchange = (ev) => setMode(optlist[options.selectedIndex]);
         }
+        // gcode edit area for any non-SLA mode
+        api.uc.setVisible($('gcode-edit'), mode !== 'SLA');
         // highlight selected mode menu item
         ["FDM","CAM","SLA","LASER"].forEach(sm => {
             const cl = $(`mode-${sm.toLowerCase()}`).classList;

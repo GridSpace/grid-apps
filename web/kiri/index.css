@@ -439,6 +439,9 @@ th, tr, td, label {
 .grow {
     flex-grow: 1;
 }
+.shrink0 {
+    flex-shrink: 0;
+}
 .a-start {
     align-items: flex-start;
 }
@@ -1229,7 +1232,6 @@ th, tr, td, label {
     display: none;
     padding: 10px;
     min-height: 20px;
-    font-size: smaller;
     background-color: #fff;
 }
 
@@ -1243,10 +1245,16 @@ th, tr, td, label {
     max-height: 350px;
 }
 #mod-x {
+    border-radius: 5px;
+    border: 2px solid rgba(255,255,255,0.5);
+    background-color: rgba(255,255,255,0.5);
     position: absolute;
     z-index: 30;
     bottom: -20px;
-    right: 5px;
+    right: 0;
+}
+#mod-x svg {
+    aspect-ratio: 1 / 1 !important;
 }
 #mod-setup {
     height: 550px;
@@ -2048,14 +2056,12 @@ th, tr, td, label {
     flex-grow: 1;
     font-size: smaller;
 }
-.var-area {
-    gap: 3px;
-}
-.var-area label {
-    padding: 2px 0 2px 0;
+.var-row .dim {
+    text-align: right;
+    padding-right: 3px;
     font-size: smaller;
 }
-.var-row input, .var-area input {
+.var-row input {
     margin-right: 0;
     margin-bottom: 1px;
     padding-bottom: 1px;
