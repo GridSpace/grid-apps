@@ -566,7 +566,6 @@ function platformChanged() {
     h.bind($('ws-widgets'), api.widgets.all().map(w => {
         let color;
         return [
-
             h.div([
 
                 h.button({
@@ -585,12 +584,10 @@ function platformChanged() {
                         color = w.getColor();
                     }
                 }),
-
                 h.button(
                     { onclick() { platformDelete(w) } },
                     [ h.i({ class:"fas fa-trash" }), ]
                 )
-
             ])
         ]
     }));

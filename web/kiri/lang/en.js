@@ -37,6 +37,7 @@ self.kiri.lang['en-us'] = {
     prefs:          "preferences",  // right menu "preferences"
     preview:        "preview",
     recent:         "recent",
+    rename:         "rename",
     render:         "render",       // left render pop menu
     reset:          "reset",
     right:          "right",
@@ -95,7 +96,7 @@ self.kiri.lang['en-us'] = {
     // DEVICE dialog groups
     dv_gr_dev:      "device",
     dv_gr_ext:      "extruder",
-    dv_gr_too:      "tool",
+    dv_gr_too:      "tool macros",
     dv_gr_pal:      "palette",
     dv_gr_out:      "output",
     dv_gr_gco:      "gcode macros",
