@@ -427,6 +427,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                     cols = Math.max(cols, row.length);
                 });
                 txt.setAttribute("cols", Math.max(30, cols + 1));
+                txt.setAttribute("rows", 6);
 
                 let showing = btn === lastBtn;
                 hidePop();
