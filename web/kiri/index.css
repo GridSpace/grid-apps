@@ -690,7 +690,7 @@ th, tr, td, label {
     align-items: center;
 }
 #ws-widgets button.selected {
-    background-color: var(--blue-4);
+    background-color: var(--blue-3);
     color: #000;
 }
 .slim-hide {
@@ -1944,14 +1944,14 @@ th, tr, td, label {
     padding: 4px;
     margin: 3px;
 }
-.set2-group .var-row {
+.set2-group .var-row, .var-row {
     background: #fff;
     padding: 1px 4px 1px 4px;
     margin: 0 !important;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
 }
-.set2-group .var-row:hover {
+.set2-group .var-row:hover, .var-row:hover {
     border-right: 3px solid var(--blue-1);
     background-color: var(--blue-4) !important;
 }

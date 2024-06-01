@@ -338,9 +338,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function addModeControls(el, opt = {}) {
-        if (opt.trace2) {
-            console.log({ AMC: el, opt, groupName });
-        }
         el.__opt = opt;
         el.showMe = function() {
             el.classList.remove('hide');
@@ -349,7 +346,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
             el.classList.add('hide');
         };
         el.setVisible = function(show) {
-            if (opt.trace2) console.log({ setVisible: show, el });
             if (show) el.showMe();
             else el.hideMe();
         };
@@ -357,7 +353,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
             let xprt = opt.expert === undefined || (opt.expert === lastExpert);
             let show = opt.show ? safecall(opt.show) : true;
             let disp = opt.visible ? opt.visible() : true;
-            if (opt.trace2) console.log({ setMode: el, mode, modes: el.modes, xprt, show, disp, fn: el.__opt.show });
+            if (opt.manual) return;
             el.setVisible(el.hasMode(mode) && show && xprt && disp);
         }
         el.hasMode = function(mode) {
