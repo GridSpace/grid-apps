@@ -2760,7 +2760,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         };
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
-        $('context-layflat').onclick = layFlat;
+        $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
         $('context-setfocus').onclick = setFocus;
 
         ui.modal.onclick = api.modal.hide;

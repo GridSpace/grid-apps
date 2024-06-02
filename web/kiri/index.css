@@ -722,9 +722,6 @@ th, tr, td, label {
 .movable {
     margin: 5px;
 }
-.movable input {
-    background-color: rgba(255,255,255,0.5);
-}
 .movable .title {
     color: white;
     padding: 2px 3px 1px 3px;
@@ -737,10 +734,9 @@ th, tr, td, label {
 .movable .body {
     margin: 0;
     padding: 0 5px 0 0;
-    background-color: rgba(245,245,245,0.8);
-}
-.movable:hover .body {
-    background-color: rgba(245,245,245,0.95);
+    background-color: #fff;
+    border-left: 1px solid #eee;
+    border-right: 1px solid #eee;
 }
 .movable .footer {
     height: 10px;
@@ -780,7 +776,7 @@ th, tr, td, label {
 
 #float-tools {
     position: absolute;
-    margin: 0 0 0 5px;
+    margin: 0;
     top: 50px;
     left: 50%;
     transform: translateX(-50%);

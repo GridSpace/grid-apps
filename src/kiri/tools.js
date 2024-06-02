@@ -126,8 +126,9 @@ api.event.on('mouse.hover', (ev) => {
             pmesh.position.y = -v.z;
             pmesh.position.z = v.y;
         } else {
+            const zcomp = api.mode.get() === 'CAM' ? track.tzoff : 0;
             pmesh.position.y = -point.z - opos.y + norm.y * 0.1;
-            pmesh.position.z = point.y + track.tzoff + norm.z * 0.1;
+            pmesh.position.z = point.y + zcomp + norm.z * 0.1;
         }
         let q = new Quaternion().setFromUnitVectors(ZAXIS,
             new Vector3(norm.x,norm.y,norm.z)
