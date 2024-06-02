@@ -381,13 +381,15 @@ th, tr, td, label {
     display: none;
 }
 
+.hide-scroll {
+    scrollbar-color: transparent transparent !important;
+}
 .noselect {
     -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
 }
-
 .km-font {
     font-family: 'Russo One', sans-serif;
 }
@@ -395,7 +397,6 @@ th, tr, td, label {
     font-size: larger;
     font-weight: bold;
 }
-
 .b0 {
     border: 0px;
 }
