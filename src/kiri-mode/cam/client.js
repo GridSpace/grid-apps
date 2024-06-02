@@ -103,10 +103,12 @@ CAM.init = function(kiri, api) {
             return;
         }
         const clockOp = cp.ops.filter(op => op.type === '|')[0];
-        if (isIndexed && !clockOp) {
+        // if (isIndexed && !clockOp) {
+        //     func.opAdd(popOp['|'].new());
+        // } else if (!isIndexed && clockOp) {
+        //     func.opDel(clockOp);
+        if (!clockOp) {
             func.opAdd(popOp['|'].new());
-        } else if (!isIndexed && clockOp) {
-            func.opDel(clockOp);
         } else {
             func.opRender();
         }
