@@ -275,19 +275,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
     }
 
-    // function inputTextOK() {
-    //     return DOC.activeElement === ui.deviceName;
-    // }
-
-    // function textAreaHasFocus() {
-    //     let active = DOC.activeElement;
-    //     return active && active.nodeName === "TEXTAREA";
-    // }
-
-    // function inputSize() {
-    //     return parseInt(DOC.activeElement.size);
-    // }
-
     function cca(c) {
         return c.charCodeAt(0);
     }
@@ -522,15 +509,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             evt.stopPropagation();
         }
         return false;
-    }
-
-    function layFlat() {
-        let int = contextInt[0];
-        if (int && int.object && int.object.widget) {
-            let q = new THREE.Quaternion();
-            q.setFromUnitVectors(contextInt[0].face.normal, new THREE.Vector3(0,0,-1));
-            api.selection.rotate(q);
-        }
     }
 
     function setFocus() {
@@ -1502,12 +1480,11 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     // MAIN INITIALIZATION FUNCTION
-
     function init_one() {
         let { event, conf, view, show } = api;
         let { bound, toInt, toFloat } = uc;
         let { newBlank, newButton, newBoolean, newGroup, newInput } = uc;
-        let { newSelect, newText, newRow, newGCode } = uc;
+        let { newSelect, newText, newRow, newGCode, newDiv } = uc;
 
         event.emit('init.one');
 
@@ -1697,7 +1674,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             /** Device Browser / Editor */
 
-            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true }),
+            _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true }),
             device:           newGroup(LANG.dv_gr_dev, null, {group:"ddev", inline:true, class:"noshow"}),
 
             _____:            newGroup("workspace", null, {group:"dext", inline:true}),
@@ -1706,7 +1683,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             maxHeight:        newInput('Z (height)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
             resolutionX:      newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:toInt, size:6, modes:SLA}),
             resolutionY:      newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:toInt, size:6, modes:SLA}),
-            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:GCODE }),
+            _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:GCODE }),
             _____:            newGroup("firmware", null, {group:"dext", inline:true}),
             fwRetract:        newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
             deviceOrigin:     newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LZR, show:() => !ui.deviceRound.checked}),
@@ -1717,13 +1694,13 @@ gapp.register("kiri.init", [], (root, exports) => {
             deviceZMax:       newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:toInt, size:5, modes:FDM}),
             gcodeTime:        newInput(LANG.dv_time_s, {title:LANG.dv_time_l, convert:toFloat, size:5, modes:FDM}),
             filamentSource:   newSelect(LANG.dv_fsrc_s, {title: LANG.dv_fsrc_l, action: filamentSourceSave, modes:FDM, show:() => false}, "filasrc"),
-            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM }),
+            _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM }),
             extruder:         newGroup(LANG.dv_gr_ext, null, {group:"dext", inline:true}),
             extFilament:      newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:toFloat, modes:FDM}),
             extNozzle:        newInput(LANG.dv_nozl_s, {title:LANG.dv_nozl_l, convert:toFloat, modes:FDM}),
             extOffsetX:       newInput(LANG.dv_exox_s, {title:LANG.dv_exox_l, convert:toFloat, modes:FDM}),
             extOffsetY:       newInput(LANG.dv_exoy_s, {title:LANG.dv_exoy_l, convert:toFloat, modes:FDM}),
-            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:GCODE }),
+            _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:GCODE }),
             _____:            newGroup(LANG.dv_gr_too, null, {group:"dext", inline:true}),
             extSelect:        newText(LANG.dv_exts_s, {title:LANG.dv_exts_l, size:14, height:3, area:gcode, modes:GCODE}),
             extDeselect:      newText(LANG.dv_dext_s, {title:LANG.dv_dext_l, size:14, height:3, area:gcode, modes:GCODE}),
@@ -1734,7 +1711,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 ui.extDel  = newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
                 ui.extNext = newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
             ], {class:"dev-buttons ext-buttons", modes:FDM}),
-            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM, show: () => false && ui.filamentSource.selectedOptions[0].value === 'palette3' }),
+            _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM, show: () => false && ui.filamentSource.selectedOptions[0].value === 'palette3' }),
             palette:          newGroup(LANG.dv_gr_pal, null, {group:"dext2", inline:true, modes:FDM}),
             paletteId:        newInput(LANG.dv_paid_s, {title:LANG.dv_paid_l, modes:FDM, size:15, text:true}),
             palettePing:      newInput(LANG.dv_paps_s, {title:LANG.dv_paps_l, modes:FDM, convert:toInt}),
@@ -1745,7 +1722,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             paletteHeat:      newInput(LANG.dv_pahe_s, {title:LANG.dv_pahe_l, modes:FDM, convert:toInt}),
             paletteCool:      newInput(LANG.dv_paco_s, {title:LANG.dv_paco_l, modes:FDM, convert:toInt}),
             palettePress:     newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:toInt}),
-            _____:            uc.newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:CAM_LZR }),
+            _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:CAM_LZR }),
             _____:            newGroup(LANG.dv_gr_out, null, {group:"dgco", inline:true}),
             gcodeStrip:       newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeSpace:       newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LZR}),
@@ -2535,7 +2512,6 @@ gapp.register("kiri.init", [], (root, exports) => {
     };
 
     // SECOND STAGE INIT AFTER UI RESTORED
-
     function init_two() {
         api.event.emit('init.two');
 
@@ -2714,9 +2690,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         ui.acct.export.title = LANG.acct_xpo;
         $('file-recent').onclick = () => { api.modal.show('files') };
         $('file-import').onclick = (ev) => { api.event.import(ev); };
-        // ui.options.trash.onclick = api.selection.delete;
-        // ui.options.enable.onclick = api.selection.enable;
-        // ui.options.disable.onclick = api.selection.disable;
         ui.func.slice.onclick = (ev) => { ev.stopPropagation(); api.function.slice() };
         ui.func.preview.onclick = (ev) => { ev.stopPropagation(); api.function.print() };
         ui.func.animate.onclick = (ev) => { ev.stopPropagation(); api.function.animate() };
@@ -2728,7 +2701,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('view-back').onclick = space.view.back;
         $('view-left').onclick = space.view.left;
         $('view-right').onclick = space.view.right;
-        // $('view-clear').onclick = api.platform.clear;
         $('unrotate').onclick = () => {
             api.widgets.for(w => w.unrotate());
             api.selection.update_info();
@@ -2743,7 +2715,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d) };
         $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d) };
         // rendering options
-        // $('render-hide').onclick = () => { api.view.wireframe(false, 0, 0); };
         $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
         $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
         $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
@@ -2768,8 +2739,9 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // add app name hover info
         $('app-info').innerText = kiri.version;
+
         // show topline separator when iframed
-        // try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { }
+        try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { console.log(e) }
 
         // bind tictac buttons to panel show/hide
         let groups = {};
@@ -2798,6 +2770,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 }
             };
         }
+
         // bind closer X to hiding parent action
         for (let tt of [...document.getElementsByClassName('closer')]) {
             let tid = tt.getAttribute('target');
@@ -2812,6 +2785,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             };
             api.event.on('key.esc', close);
         }
+
         // add drag behavior to movers
         [...document.getElementsByClassName('mover')].forEach(mover => {
             mover.onmousedown = (ev) => {
