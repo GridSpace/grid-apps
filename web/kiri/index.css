@@ -25,6 +25,7 @@
     --blue-4: rgb(221, 228, 234);
     --blue-5: rgb(240, 243, 245);
     --blue-6: rgb(247, 249, 250);
+    --scroll-bg: rgba(221, 228, 234, 0.25)
 }
 
 /* surface size configuration and font import */
@@ -38,8 +39,13 @@
     }
 }
 @media only screen and (max-width : 1200px) {
-    #top {
+    body {
         font-size: smaller;
+    }
+}
+@media only screen and (max-width : 900px) {
+    body {
+        font-size: x-small;
     }
 }
 @media only screen and (max-height : 1024px) {
@@ -68,6 +74,8 @@ html, body {
     position: relative;
     height: 100%;
     margin: 0;
+    scrollbar-width: none !important;
+    scrollbar-color: var(--blue-2) var(--scroll-bg);
 }
 /* default element configuration */
 a, a:hover, a:visited {
@@ -373,13 +381,15 @@ th, tr, td, label {
     display: none;
 }
 
+.hide-scroll {
+    scrollbar-color: transparent transparent !important;
+}
 .noselect {
     -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
 }
-
 .km-font {
     font-family: 'Russo One', sans-serif;
 }
@@ -387,7 +397,6 @@ th, tr, td, label {
     font-size: larger;
     font-weight: bold;
 }
-
 .b0 {
     border: 0px;
 }
@@ -505,17 +514,6 @@ th, tr, td, label {
     margin-top: 5px;
 }
 
-:-moz-any() {
-    overflow-x: hidden !important;
-    overflow-y: hidden !important;
-}
-:-moz-any() {
-    overflow-x: scroll !important;
-    overflow-y: scroll !important;
-    margin-right: -14px !important;
-    margin-bottom: -14px !important;
-}
-
 #curtain {
     top: 0;
     left: 0;
@@ -607,6 +605,10 @@ th, tr, td, label {
     border-right: 1px solid var(--blue-3);
     border-bottom: 1px solid var(--blue-3);
 }
+#mode-device, #mode-profile {
+    max-width: 100px;
+    overflow: hidden;
+}
 
 #doit {
     display: none;
@@ -674,6 +676,39 @@ th, tr, td, label {
 
 #mod-print button, #catalogList button, #settingsList button {
     text-transform: none !important;
+}
+
+.slideshow #panel-left .settings {
+    transform: translateX(-90%);
+    transition: transform 0.15s ease-in-out;
+}
+.slideshow #panel-left:hover .settings {
+    transform: translateX(0);
+}
+.slideshow #panel-left:hover #slide-show {
+    left: -100%;
+}
+.slideshow #slide-show {
+    transition: left 0.15s ease-in-out;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20px;
+    background-color: var(--blue-3);
+    border-right: 2px dashed var(--blue-1);
+    z-index: 5000;
+}
+.slideshow #slide-show span {
+    display: flex;
+}
+#slide-show {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;;
+}
+#slide-show span {
+    display: none;
 }
 
 #panel-left, #panel-right {
@@ -1914,11 +1949,10 @@ th, tr, td, label {
 }
 .settings {
     max-height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow-y: scroll;
+    overflow-x: visible;
     align-items: stretch;
     text-transform: capitalize;
-    /* background-color: rgba(255,255,255,0.5); */
 }
 .settings .set-group {
     cursor: pointer;
@@ -1942,7 +1976,7 @@ th, tr, td, label {
     background-color: #fff;
     flex-flow: column;
     padding: 4px;
-    margin: 3px;
+    margin: 2px;
 }
 .set2-group .var-row, .var-row {
     background: #fff;

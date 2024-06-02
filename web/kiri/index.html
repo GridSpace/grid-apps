@@ -215,12 +215,8 @@
 
         <!-- left settings menu -->
         <div id="panel-left" class="f-col j-left">
-            <!-- always up -->
-            <div id="mode-info">
-                <div><label>Device</label><span id="mode-device"></span></div>
-                <div><label>Profile</label><span id="mode-profile"></span></div>
-            </div>
-            <div class="line-sep2"></div>
+            <!-- <div class="line-sep2"></div> -->
+            <div id="slide-show"><span><i class="fa-solid fa-arrow-right"></i></span></div>
             <div class="f-col grow settings">
                 <!-- FDM -->
                 <div id="fdm-layers" class="set2-group mode-fdm"></div>
@@ -281,6 +277,10 @@
             </div>
             <!-- vertical separation between workspace and right tray -->
             <div id="panel-right" class="f-col j-start settings">
+                <div id="mode-info">
+                    <div><label>Device</label><span id="mode-device"></span></div>
+                    <div><label>Profile</label><span id="mode-profile"></span></div>
+                </div>
                 <div class="set2-group f-col">
                     <div class="set-header"><a>mesh tools</a></div>
                     <div class="render-tools">
@@ -404,7 +404,7 @@
 
         <!-- settings list and editor -->
         <div id="mod-saves" class="mdialog f-col">
-            <label class="set-header menu-title" lk="dm_savs">saved settings</label>
+            <label class="set-header menu-title" lk="dm_savs">settings</label>
             <div id="settingsList" class="f-col"></div>
             <div id="settingsNew">
                 <input id="settingsName" class="grow"></input>

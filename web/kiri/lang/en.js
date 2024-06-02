@@ -81,7 +81,7 @@ self.kiri.lang['en-us'] = {
     dm_mydd:        "my devices",
     dm_seld:        "selected device",
     dm_rcnt:        "recent files",
-    dm_savs:        "saved settings",
+    dm_savs:        "settings",
     dm_appp:        "Application Preferences",
 
     // CAM Tool Dialog

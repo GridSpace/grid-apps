@@ -124,6 +124,11 @@ gapp.overlay(root, {
         $(id).innerHTML = h;
     },
 
+    $c: (id, add, del) => {
+        add && $(id).classList.add(add);
+        del && $(id).classList.remove(del);
+    },
+
     h,
 
     estop: (evt) => {
