@@ -766,6 +766,7 @@ const conf = exports({
             shiny: false,
             decals: false,
             drawer: false,
+            scrolls: true,
             zoomSpeed: 1.0,
             lineType: "path",
             autoSave: true,

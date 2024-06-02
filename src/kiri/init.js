@@ -179,6 +179,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         control.shiny = ui.shiny.checked;
         control.decals = ui.decals.checked;
         control.drawer = ui.drawer.checked;
+        control.scrolls = ui.scrolls.checked;
         control.showOrigin = ui.showOrigin.checked;
         control.showRulers = ui.showRulers.checked;
         control.autoLayout = ui.autoLayout.checked;
@@ -218,8 +219,9 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function updateDrawer() {
-        const { drawer } = settings().controller;
-        $c('app', drawer ? 'slideshow' : '', !drawer ? 'slideshow' : '');
+        const { drawer, scrolls } = settings().controller;
+        $c('app', drawer  ? 'slideshow' : '',   drawer  ? '' : 'slideshow');
+        $c('app', scrolls ? '' : 'hide-scroll', scrolls ? 'hide-scroll' : '');
     }
 
     function updateStats() {
@@ -1758,6 +1760,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             ortho:            newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
             dark:             newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
             drawer:           newBoolean('slide out', booleanSave, {title:'slide out settings drawer'}),
+            scrolls:          newBoolean('scrollbars', booleanSave, {title:'show scrollbars'}),
             devel:            newBoolean(LANG.op_devl_s, booleanSave, {title:LANG.op_devl_l}),
             _____:            newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
             showOrigin:       newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
