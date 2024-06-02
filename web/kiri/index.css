@@ -698,6 +698,17 @@ th, tr, td, label {
     border-right: 2px dashed var(--blue-1);
     z-index: 5000;
 }
+.slideshow #slide-show span {
+    display: flex;
+}
+#slide-show {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;;
+}
+#slide-show span {
+    display: none;
+}
 
 #panel-left, #panel-right {
     max-height: 100%;
