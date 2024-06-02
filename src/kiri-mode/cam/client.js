@@ -103,10 +103,12 @@ CAM.init = function(kiri, api) {
             return;
         }
         const clockOp = cp.ops.filter(op => op.type === '|')[0];
-        if (isIndexed && !clockOp) {
+        // if (isIndexed && !clockOp) {
+        //     func.opAdd(popOp['|'].new());
+        // } else if (!isIndexed && clockOp) {
+        //     func.opDel(clockOp);
+        if (!clockOp) {
             func.opAdd(popOp['|'].new());
-        } else if (!isIndexed && clockOp) {
-            func.opDel(clockOp);
         } else {
             func.opRender();
         }
@@ -457,7 +459,7 @@ CAM.init = function(kiri, api) {
         currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
     }
 
-    // (re)render thea re-orderable op list
+    // (re)render the re-orderable op list
     api.event.on("cam.op.render", func.opRender = () => {
         let oplist = current.process.ops;
         if (!(isCamMode && oplist)) {
@@ -470,18 +472,18 @@ CAM.init = function(kiri, api) {
         let scale = API.view.unit_scale();
         let notime = false;
         oplist.forEach((rec,i) => {
+            let title = '';
             let clock = rec.type === '|';
-            // let label = clock ? `<i class="fa-regular fa-clock"></i>` : rec.type;
             let label = clock ? `` : rec.type;
             let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
             let notable = rec.note?.split(' ').filter(v => v.charAt(0) === '#');
-            if (clock) clazz.push('clock');
+            if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
             if (notable?.length) label = notable[0].slice(1);
             html.appendAll([
-                `<div id="${mark+i}" class="${clazz.join(' ')}">`,
+                `<div id="${mark+i}" class="${clazz.join(' ')}"${title}>`,
                 `<label class="label">${label}</label>`,
                 clock ? '' :
-                `<label id="${mark+i}-x" class="del"><i class="fa-regular fa-circle-xmark"></i></label>`,
+                `<label id="${mark+i}-x" class="del"><i class="fa fa-trash"></i></label>`,
                 `</div>`
             ]);
             bind[mark+i] = rec;
