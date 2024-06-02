@@ -169,7 +169,6 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     function booleanSave() {
         let control = settings().controller;
-        let isDark = control.dark;
         let doAlert = ui.ortho.checked !== control.ortho;
         if (control.assembly != ui.assembly.checked) {
             kiri.client.wasm(ui.assembly.checked);
@@ -179,6 +178,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
         control.shiny = ui.shiny.checked;
         control.decals = ui.decals.checked;
+        control.drawer = ui.drawer.checked;
         control.showOrigin = ui.showOrigin.checked;
         control.showRulers = ui.showRulers.checked;
         control.autoLayout = ui.autoLayout.checked;
@@ -204,6 +204,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.platform.update_size();
         uc.setHoverPop(false);
         updateStats();
+        updateDrawer();
         if (control.decals && !control.dark) {
             // disable decals in dark mode
             loadDeviceTexture(currentDevice, deviceTexture);
@@ -214,6 +215,11 @@ gapp.register("kiri.init", [], (root, exports) => {
         if (doAlert) {
             api.show.alert("change requires page refresh");
         }
+    }
+
+    function updateDrawer() {
+        const { drawer } = settings().controller;
+        $c('app', drawer ? 'slideshow' : '', !drawer ? 'slideshow' : '');
     }
 
     function updateStats() {
@@ -1541,6 +1547,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         space.platform.onMove(conf.save);
         space.platform.setRound(true);
         space.useDefaultKeys(api.feature.on_key === undefined || api.feature.on_key_defaults);
+        updateDrawer();
 
         // api augmentation with local functions
         api.device.export = deviceExport;
@@ -1750,6 +1757,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             reverseZoom:      newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
             ortho:            newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
             dark:             newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
+            drawer:           newBoolean('slide out', booleanSave, {title:'slide out settings drawer'}),
             devel:            newBoolean(LANG.op_devl_s, booleanSave, {title:LANG.op_devl_l}),
             _____:            newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
             showOrigin:       newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),

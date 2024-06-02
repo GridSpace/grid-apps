@@ -25,7 +25,8 @@
     --blue-4: rgb(221, 228, 234);
     --blue-5: rgb(240, 243, 245);
     --blue-6: rgb(247, 249, 250);
-    --scroll-bg: rgba(221, 228, 234, 0.25)
+    --slide-bg: rgba(190, 204, 219, 0.5);
+    --scroll-bg: rgba(221, 228, 234, 0.25);
 }
 
 /* surface size configuration and font import */
@@ -679,7 +680,7 @@ th, tr, td, label {
 }
 
 .slideshow #panel-left .settings {
-    transform: translateX(-90%);
+    transform: translateX(-100%);
     transition: transform 0.15s ease-in-out;
 }
 .slideshow #panel-left:hover .settings {
@@ -689,15 +690,19 @@ th, tr, td, label {
     left: -100%;
 }
 .slideshow #slide-show {
-    transition: left 0.15s ease-in-out;
+    /* transition: left 0.15s ease-in-out; */
     position: absolute;
-    top: 0;
+    top: 5px;
     left: 0;
-    bottom: 0;
-    width: 20px;
-    background-color: var(--blue-3);
-    border-right: 2px dashed var(--blue-1);
-    z-index: 5000;
+    bottom: 5px;
+    width: 25px;
+    background-color: var(--slide-bg);
+    border-top: 1px solid var(--blue-1);
+    border-right: 1px solid var(--blue-1);
+    border-bottom: 1px solid var(--blue-1);
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+    z-index: -1;
 }
 .slideshow #slide-show span {
     display: flex;
