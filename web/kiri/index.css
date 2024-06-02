@@ -19,6 +19,7 @@
     --menu-border: #555;
     --dark-menu-text: #111;
     --menu-hover: #ddd;
+    --blue-0: rgb(48, 64, 82);
     --blue-1: rgb(96,127,164);
     --blue-2: rgb(126,153,183);
     --blue-3: rgb(190, 204, 219);
@@ -1791,6 +1792,7 @@ th, tr, td, label {
 #layer-slider {
     position: absolute;
     font-size: smaller;
+    gap: 2px;
     left: 15px;
     right: 15px;
     bottom: max(3px, env(safe-area-inset-bottom));
@@ -1801,7 +1803,7 @@ th, tr, td, label {
 }
 #slider {
     display: none;
-    height: 30px;
+    height: 25px;
     z-index: 100;
 }
 .mobile .sli-drag-el {
@@ -1812,9 +1814,7 @@ th, tr, td, label {
     position: absolute;
     font-family: monospace;
     transform: translateY(-50%);
-    background-color: rgba(255,255,255,0.5);
     border: 1px solid #ddd;
-    border-radius: 3px;
     bottom: 110%;
     left: 50%;
 }
@@ -1824,10 +1824,12 @@ th, tr, td, label {
     align-items: center;
 }
 .dark #slider-center {
-    background-image: var(--holdbar-dk);
+    border: 1px solid #555;
+    background-color: rgba(255,255,255,0.15);
 }
 #slider-center {
-    background-image: var(--holdbar);
+    border: 1px solid #ccc;
+    background-color: rgba(255,255,255,0.5);
 }
 .dark #slider-zero, .dark #slider-max {
     background-color: #555;
@@ -1835,22 +1837,20 @@ th, tr, td, label {
 }
 #slider-zero {
     z-index: 10;
-    margin-right: 3px;
     background-color: #ccc;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
 }
 #slider-max {
     background-color: #ccc;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    margin-left: 3px;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
 }
 .dark #slider-hold {
-    background-color: rgba(255,255,255,0.25);
+    background-color: var(--blue-0);
 }
 #slider-hold {
-    background-color: rgba(0,0,0,0.15);
+    background-color: var(--blue-3);
     position: absolute;
     bottom: 0;
     right: 0;
@@ -1859,10 +1859,12 @@ th, tr, td, label {
 #slider-hold .slider-mobile {
     width: 40px !important;
 }
+.dark #slider-hold .handle {
+    background-color: #999;
+}
 #slider-hold .handle {
     width: 15px;
     height: 100%;
-    border-radius: 3px;
     background-color: var(--bg-gray);
 }
 #slider-mid {
