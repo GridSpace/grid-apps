@@ -457,7 +457,7 @@ CAM.init = function(kiri, api) {
         currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
     }
 
-    // (re)render thea re-orderable op list
+    // (re)render the re-orderable op list
     api.event.on("cam.op.render", func.opRender = () => {
         let oplist = current.process.ops;
         if (!(isCamMode && oplist)) {
@@ -471,7 +471,6 @@ CAM.init = function(kiri, api) {
         let notime = false;
         oplist.forEach((rec,i) => {
             let clock = rec.type === '|';
-            // let label = clock ? `<i class="fa-regular fa-clock"></i>` : rec.type;
             let label = clock ? `` : rec.type;
             let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
             let notable = rec.note?.split(' ').filter(v => v.charAt(0) === '#');
@@ -481,7 +480,7 @@ CAM.init = function(kiri, api) {
                 `<div id="${mark+i}" class="${clazz.join(' ')}">`,
                 `<label class="label">${label}</label>`,
                 clock ? '' :
-                `<label id="${mark+i}-x" class="del"><i class="fa-regular fa-circle-xmark"></i></label>`,
+                `<label id="${mark+i}-x" class="del"><i class="fa fa-trash"></i></label>`,
                 `</div>`
             ]);
             bind[mark+i] = rec;

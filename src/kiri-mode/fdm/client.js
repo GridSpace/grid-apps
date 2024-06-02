@@ -114,7 +114,7 @@ FDM.init = function(kiri, api) {
             let id = (now++).toString(36);
             let rows = Object.entries(range.fields).map(a => `<div><label class="pad">${rangeVars[a[0]]}</label><span></span><label class="val">${a[1]}</label></div>`).join('');
             let hover = `<div id="hov_${id}" class="range-detail">${rows}</div>`;
-            let info = `<button id="sel_${id}" class="j-center grow">${range.lo} - ${range.hi}</button><button id="del_${id}"><i class="far fa-trash-alt"></i></button>`;
+            let info = `<button id="sel_${id}" class="j-center grow">${range.lo} - ${range.hi}</button><button id="del_${id}"><i class="fa fa-trash"></i></button>`;
             html.appendAll([
                 `<div id="rng_${id}" class="range-info">${hover}${info}</div>`
             ]);
