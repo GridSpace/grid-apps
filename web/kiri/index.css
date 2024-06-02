@@ -677,6 +677,28 @@ th, tr, td, label {
     text-transform: none !important;
 }
 
+.slideshow #panel-left .settings {
+    transform: translateX(-90%);
+    transition: transform 0.15s ease-in-out;
+}
+.slideshow #panel-left:hover .settings {
+    transform: translateX(0);
+}
+.slideshow #panel-left:hover #slide-show {
+    left: -100%;
+}
+.slideshow #slide-show {
+    transition: left 0.15s ease-in-out;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20px;
+    background-color: var(--blue-3);
+    border-right: 2px dashed var(--blue-1);
+    z-index: 5000;
+}
+
 #panel-left, #panel-right {
     max-height: 100%;
     background-color: var(--work-area);
@@ -1915,8 +1937,8 @@ th, tr, td, label {
 }
 .settings {
     max-height: 100%;
-    /* overflow-y: overlay !important; */
-    overflow-x: hidden;
+    overflow-y: scroll;
+    overflow-x: visible;
     align-items: stretch;
     text-transform: capitalize;
 }
