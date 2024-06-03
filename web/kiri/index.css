@@ -134,7 +134,6 @@ input:focus {
 input[disabled] {
     background-color: #ddd;
     color: #000;
-    /* border-width: 1px; */
 }
 input[type="range"] {
     width: 85px;
@@ -201,11 +200,21 @@ th, tr, td, label {
 }
 
 /** dark conversion */
+.dark input[disabled] {
+    border-color: #666;
+    background-color: #444;
+    color: #888;
+}
 .dark input,
-.dark textarea
+.dark select,
+.dark option
 {
     border-color: #888;
     background-color: #555;
+    color: #fff;
+}
+.dark textarea {
+    background-color: #333;
     color: #fff;
 }
 .dark button {
@@ -215,6 +224,24 @@ th, tr, td, label {
 .dark #progress {
     background-color: #666;
 }
+.dark #mode-info label {
+    color: #fff;
+    border-color: #888;
+    background-color: var(--blue-0);
+}
+.dark #mode-info span {
+    color: #fff;
+    border-color: #888;
+    background-color: #333;
+}
+.dark #oplist div .del {
+    color: #aaa;
+}
+.dark #oplist div:hover .del {
+    color: #333 !important;
+}
+.dark #lang-pop,
+.dark .pop-tics > div,
 .dark #top,
 .dark #top .content,
 .dark #app-name,
@@ -222,10 +249,12 @@ th, tr, td, label {
 .dark .set2-group .var-row,
 .dark .set2-sep,
 .dark .var-row,
-.dark .movable .body
+.dark .movable .body,
 .dark #slider-zero,
 .dark #slider-max,
-.dark .mdialog
+.dark .mdialog,
+.dark .t-body,
+.dark .cam-pop-op
 {
     background-color: #444;
     color: white;
@@ -248,9 +277,10 @@ th, tr, td, label {
 .dark #oplist > div,
 .dark .opdiv
 {
-    background-color: #777;
-    border: 1px solid #999;
+    background-color: #333;
+    border: 1px solid #888;
 }
+.dark #lang-pop > div:hover,
 .dark #oplist > div:hover,
 .dark #op-add:hover {
     background-color: var(--blue-1);
@@ -263,6 +293,10 @@ th, tr, td, label {
 }
 .dark .top-menu label {
     color: var(--dark-menu-text)
+}
+.dark .render-tools svg:hover {
+    background-color: var(--blue-1);
+    border-color: var(--blue-3  );
 }
 .dark .top-menu > span:hover {
     background-color: var(--blue-1);
@@ -1242,7 +1276,7 @@ th, tr, td, label {
     z-index: 10000;
 }
 #oplist div .del:hover {
-    color: #000 !important;
+    color: #000;
 }
 #oplist div .opop {
     position: absolute;
