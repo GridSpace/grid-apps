@@ -19,13 +19,15 @@
     --menu-border: #555;
     --dark-menu-text: #111;
     --menu-hover: #ddd;
+    --blue-0: rgb(48, 64, 82);
     --blue-1: rgb(96,127,164);
     --blue-2: rgb(126,153,183);
     --blue-3: rgb(190, 204, 219);
     --blue-4: rgb(221, 228, 234);
     --blue-5: rgb(240, 243, 245);
     --blue-6: rgb(247, 249, 250);
-    --scroll-bg: rgba(221, 228, 234, 0.25)
+    --slide-bg: rgba(190, 204, 219, 0.5);
+    --scroll-bg: rgba(221, 228, 234, 0.25);
 }
 
 /* surface size configuration and font import */
@@ -236,7 +238,7 @@ th, tr, td, label {
     color: var(--dark-menu-text)
 }
 .top-menu svg {
-    color: #555;
+    color: var(--blue-1);
 }
 .top-menu > span {
     position: relative;
@@ -679,7 +681,7 @@ th, tr, td, label {
 }
 
 .slideshow #panel-left .settings {
-    transform: translateX(-90%);
+    transform: translateX(-100%);
     transition: transform 0.15s ease-in-out;
 }
 .slideshow #panel-left:hover .settings {
@@ -689,15 +691,19 @@ th, tr, td, label {
     left: -100%;
 }
 .slideshow #slide-show {
-    transition: left 0.15s ease-in-out;
+    /* transition: left 0.15s ease-in-out; */
     position: absolute;
-    top: 0;
+    top: 5px;
     left: 0;
-    bottom: 0;
-    width: 20px;
-    background-color: var(--blue-3);
-    border-right: 2px dashed var(--blue-1);
-    z-index: 5000;
+    bottom: 5px;
+    width: 25px;
+    background-color: var(--slide-bg);
+    border-top: 1px solid var(--blue-1);
+    border-right: 1px solid var(--blue-1);
+    border-bottom: 1px solid var(--blue-1);
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+    z-index: -1;
 }
 .slideshow #slide-show span {
     display: flex;
@@ -1786,6 +1792,7 @@ th, tr, td, label {
 #layer-slider {
     position: absolute;
     font-size: smaller;
+    gap: 2px;
     left: 15px;
     right: 15px;
     bottom: max(3px, env(safe-area-inset-bottom));
@@ -1796,7 +1803,7 @@ th, tr, td, label {
 }
 #slider {
     display: none;
-    height: 30px;
+    height: 25px;
     z-index: 100;
 }
 .mobile .sli-drag-el {
@@ -1807,9 +1814,7 @@ th, tr, td, label {
     position: absolute;
     font-family: monospace;
     transform: translateY(-50%);
-    background-color: rgba(255,255,255,0.5);
     border: 1px solid #ddd;
-    border-radius: 3px;
     bottom: 110%;
     left: 50%;
 }
@@ -1819,10 +1824,23 @@ th, tr, td, label {
     align-items: center;
 }
 .dark #slider-center {
-    background-image: var(--holdbar-dk);
+    /* background-color: rgba(255,255,255,0.15); */
 }
 #slider-center {
-    background-image: var(--holdbar);
+    /* background-color: rgba(255,255,255,0.5); */
+}
+.dark #slider-line {
+    background-color: #555;
+}
+#slider-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50%-1.5px);
+    height: 3px;
+    min-height: 3px;
+    max-height: 3px;
+    background-color: #bbb;
 }
 .dark #slider-zero, .dark #slider-max {
     background-color: #555;
@@ -1830,22 +1848,20 @@ th, tr, td, label {
 }
 #slider-zero {
     z-index: 10;
-    margin-right: 3px;
-    background-color: #ccc;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+    background-color: #bbb;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
 }
 #slider-max {
-    background-color: #ccc;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    margin-left: 3px;
+    background-color: #bbb;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
 }
 .dark #slider-hold {
-    background-color: rgba(255,255,255,0.25);
+    background-color: var(--blue-0);
 }
 #slider-hold {
-    background-color: rgba(0,0,0,0.15);
+    background-color: var(--blue-3);
     position: absolute;
     bottom: 0;
     right: 0;
@@ -1854,11 +1870,13 @@ th, tr, td, label {
 #slider-hold .slider-mobile {
     width: 40px !important;
 }
+.dark #slider-hold .handle {
+    background-color: #999;
+}
 #slider-hold .handle {
     width: 15px;
     height: 100%;
-    border-radius: 3px;
-    background-color: var(--bg-gray);
+    background-color: var(--blue-1);
 }
 #slider-mid {
     width: 20px;
@@ -1949,7 +1967,7 @@ th, tr, td, label {
 }
 .settings {
     max-height: 100%;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: visible;
     align-items: stretch;
     text-transform: capitalize;

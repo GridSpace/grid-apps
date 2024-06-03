@@ -125,8 +125,8 @@ gapp.overlay(root, {
     },
 
     $c: (id, add, del) => {
-        add && $(id).classList.add(add);
-        del && $(id).classList.remove(del);
+        if (add) $(id).classList.add(add);
+        if (del) $(id).classList.remove(del);
     },
 
     h,
