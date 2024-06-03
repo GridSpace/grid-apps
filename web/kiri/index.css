@@ -1093,7 +1093,6 @@ th, tr, td, label {
     border: 0;
     background-color: var(--blue-3);
 }
-#oplist 
 #camops .set-sep {
     margin-bottom: 4px;
 }
@@ -1320,6 +1319,9 @@ th, tr, td, label {
     padding-right: 10px;
     margin-right: 10px;
     border-right: 1px solid #ddd;
+}
+#mod-tools .set-header {
+    margin: 0;
 }
 .devlist {
     background-color: #fdfdfd;
@@ -1705,9 +1707,6 @@ th, tr, td, label {
     width: 100%;
     background-color: #f8f8f8;
 }
-#tool-action {
-    margin-top: 5px;
-}
 #device-action button, #tool-action button {
     flex-direction: column;
     justify-content: center;
@@ -1968,7 +1967,7 @@ th, tr, td, label {
 .settings {
     max-height: 100%;
     overflow-y: auto;
-    overflow-x: visible;
+    overflow-x: hidden;
     align-items: stretch;
     text-transform: capitalize;
 }

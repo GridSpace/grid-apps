@@ -415,19 +415,16 @@
 
         <!-- cnc tool menu -->
         <div id="mod-tools" class="mdialog">
-            <div class="f-col">
-                <div class="f-row t-head">
-                    <label class="t-33" lk="tool">tool</label>
-                    <div class="t-pad"></div>
-                    <label class="t-33" lk="detail">detail</label>
-                    <div class="t-pad"></div>
-                    <label class="t-33" lk="view">view</label>
+            <div class="f-col gap3">
+                <div class="f-row t-head gap3">
+                    <label class="t-33 set-header" lk="tool">tool</label>
+                    <label class="t-33 set-header" lk="detail">detail</label>
+                    <label class="t-33 set-header" lk="view">view</label>
                 </div>
-                <div id="tool-cols" class="f-row">
+                <div id="tool-cols" class="f-row gap3">
                     <div class="f-col t-33">
                         <select id="tool-select" size="10" class="grow"></select>
                     </div>
-                    <div class="t-pad"></div>
                     <div class="f-col t-33 t-body t-inset">
                         <div class="f-row var-row"><label lk="name">name</label><input id="tool-name" size="15"></input></div>
                         <div class="f-row var-row"><label lk="type">type</label>
@@ -449,9 +446,9 @@
                         <div class="f-row var-row" title="taper angle"><label>angle</label><input id="tool-tangle" size=7></input></div>
                         <div class="f-row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
                     </div>
-                    <div class="t-pad"></div>
                     <div id="tool-view" class="f-col t-33 t-body"></div>
                 </div>
+                <div class="set-sep"></div>
                 <div id="tool-action" class="f-row j-center">
                     <button id="tool-add"><i class="fas fa-plus"></i></button>
                     <button id="tool-del"><i class="fas fa-minus"></i></button>
