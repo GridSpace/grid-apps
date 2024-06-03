@@ -238,7 +238,7 @@ th, tr, td, label {
     color: var(--dark-menu-text)
 }
 .top-menu svg {
-    color: #555;
+    color: var(--blue-1);
 }
 .top-menu > span {
     position: relative;
@@ -1824,12 +1824,23 @@ th, tr, td, label {
     align-items: center;
 }
 .dark #slider-center {
-    border: 1px solid #555;
-    background-color: rgba(255,255,255,0.15);
+    /* background-color: rgba(255,255,255,0.15); */
 }
 #slider-center {
-    border: 1px solid #ccc;
-    background-color: rgba(255,255,255,0.5);
+    /* background-color: rgba(255,255,255,0.5); */
+}
+.dark #slider-line {
+    background-color: #555;
+}
+#slider-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50%-1.5px);
+    height: 3px;
+    min-height: 3px;
+    max-height: 3px;
+    background-color: #bbb;
 }
 .dark #slider-zero, .dark #slider-max {
     background-color: #555;
@@ -1837,12 +1848,12 @@ th, tr, td, label {
 }
 #slider-zero {
     z-index: 10;
-    background-color: #ccc;
+    background-color: #bbb;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
 }
 #slider-max {
-    background-color: #ccc;
+    background-color: #bbb;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
 }
@@ -1865,7 +1876,7 @@ th, tr, td, label {
 #slider-hold .handle {
     width: 15px;
     height: 100%;
-    background-color: var(--bg-gray);
+    background-color: var(--blue-1);
 }
 #slider-mid {
     width: 20px;
@@ -1956,7 +1967,7 @@ th, tr, td, label {
 }
 .settings {
     max-height: 100%;
-    overflow-y: scroll;
+    overflow-y: auto;
     overflow-x: visible;
     align-items: stretch;
     text-transform: capitalize;
