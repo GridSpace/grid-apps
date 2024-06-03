@@ -17,7 +17,7 @@
     --menu: #f0f0f0;
     --menu-text: #222;
     --menu-border: #555;
-    --dark-menu-text: #111;
+    --dark-menu-text: #fff;
     --menu-hover: #ddd;
     --blue-0: rgb(48, 64, 82);
     --blue-1: rgb(96,127,164);
@@ -27,7 +27,7 @@
     --blue-5: rgb(240, 243, 245);
     --blue-6: rgb(247, 249, 250);
     --slide-bg: rgba(190, 204, 219, 0.5);
-    --scroll-bg: rgba(221, 228, 234, 0.25);
+    --scroll-bg: transparent;
 }
 
 /* surface size configuration and font import */
@@ -94,6 +94,7 @@ button.yellow {
 }
 button.yellow:hover {
     background-color: #eea;
+
 }
 button {
     display: flex;
@@ -199,6 +200,110 @@ th, tr, td, label {
     font-size: larger;
 }
 
+/** dark conversion */
+.dark input,
+.dark textarea
+{
+    border-color: #888;
+    background-color: #555;
+    color: #fff;
+}
+.dark button {
+    background-color: #777;
+    border: 1px solid #999;
+}
+.dark #progress {
+    background-color: #666;
+}
+.dark #top,
+.dark #top .content,
+.dark #app-name,
+.dark .set2-group,
+.dark .set2-group .var-row,
+.dark .set2-sep,
+.dark .var-row,
+.dark .movable .body
+.dark #slider-zero,
+.dark #slider-max,
+.dark .mdialog
+{
+    background-color: #444;
+    color: white;
+}
+.dark .set2-group {
+    border: 1px solid #888 !important;
+}
+.dark .set2-group .var-row:hover,
+.dark .var-row:hover
+{
+    border-right: 3px solid var(--blue-3);
+    background-color: var(--blue-1) !important;
+}
+.dark #slider-line {
+    background-color: #444;
+}
+.dark .set-header {
+    background-color: var(--blue-0);
+}
+.dark #oplist > div,
+.dark .opdiv
+{
+    background-color: #777;
+    border: 1px solid #999;
+}
+.dark #oplist > div:hover,
+.dark #op-add:hover {
+    background-color: var(--blue-1);
+}
+.dark #oplist div:hover .del {
+    color: #777;
+}
+.dark #top .content > div:hover {
+    background-color: var(--blue-1);
+}
+.dark .top-menu label {
+    color: var(--dark-menu-text)
+}
+.dark .top-menu > span:hover {
+    background-color: var(--blue-1);
+}
+.dark .top-menu > span:hover label,
+.dark .top-menu > span:hover svg
+{
+    color: var(--dark-menu-text) !important;
+}
+.dark .top-menu > span.selected,
+.dark .top-menu > span.selected svg,
+.dark .top-menu-drop div.selected
+{
+    background-color: var(--blue-1);
+    color: #fff;
+}
+.dark #slider-hold {
+    background-color: var(--blue-0);
+}
+.dark #stats {
+    color: #888;
+}
+.dark #rnfo {
+    color: #aaa;
+}
+.dark #rnfo label {
+    color: #ada;
+}
+.dark #slider-center {
+    /* background-color: rgba(255,255,255,0.15); */
+}
+#slider-center {
+    /* background-color: rgba(255,255,255,0.5); */
+}
+.dark #slider-hold .handle {
+    background-color: #999;
+}
+.dark #speedbar label {
+    color: black;
+}
+
 /* top menu bar, drop menus */
 #top, #app-name {
     background-color: #fff;
@@ -234,9 +339,6 @@ th, tr, td, label {
 .top-menu label {
     color: #444;
 }
-.dark .top-menu label {
-    color: var(--dark-menu-text)
-}
 .top-menu svg {
     color: var(--blue-1);
 }
@@ -249,9 +351,6 @@ th, tr, td, label {
 .top-menu > span:hover label {
     color: #000;
 }
-.dark .top-menu > span:hover label {
-    color: var(--dark-menu-text) !important;
-}
 .top-menu > span:hover > svg {
     color: black;
 }
@@ -260,7 +359,9 @@ th, tr, td, label {
     border-left: 1px solid var(--blue-2);
     border-right: 1px solid var(--blue-2);
 }
-.top-menu > span.selected, .top-menu-drop div.selected {
+.top-menu > span.selected,
+.top-menu-drop div.selected
+{
     background-color: var(--blue-3);
 }
 .top-menu > span:hover .top-menu-drop {
@@ -1040,7 +1141,6 @@ th, tr, td, label {
 #camop_dialog textarea {
     border: 1px solid gray;
     margin: 5px 1px 5px 1px;
-    background-color: #f4f4f4;
 }
 #camop_dialog button, #camop_dialog label {
     text-align: center;
@@ -1137,9 +1237,6 @@ th, tr, td, label {
     font-size: 14px;
     color: rgba(0,0,0,0.25);
 }
-.dark #oplist div:hover .del {
-    color: #777;
-}
 #oplist div:hover .del {
     color: #888;
     z-index: 10000;
@@ -1221,14 +1318,12 @@ th, tr, td, label {
     background-color: rgb(220,220,220);
     border-top: 1px solid #888;
     border-bottom: 1px solid #888;
-    /* border-radius: 3px; */
 }
 #progbar {
     width: 0;
     text-align: left;
     position: relative;
     background-color: rgb(255,90,90);
-    /* border-radius: 3px; */
 }
 #progtxt {
     display: none;
@@ -1266,19 +1361,20 @@ th, tr, td, label {
     top: 50%;
     max-height: 80%;
 }
+
 .mdialog {
     display: none;
     padding: 10px;
     min-height: 20px;
     background-color: #fff;
 }
-
 .mod-top {
     height: 10px;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     background-color: var(--main-color);
 }
+
 #tool-cols {
     max-height: 350px;
 }
@@ -1323,7 +1419,7 @@ th, tr, td, label {
 #mod-tools .set-header {
     margin: 0;
 }
-.devlist {
+/* .devlist {
     background-color: #fdfdfd;
 }
 .devlist button {
@@ -1344,7 +1440,7 @@ th, tr, td, label {
 .devlist button.selected {
     background-color: var(--highlight);
     border: 1px solid var(--highlight);
-}
+} */
 #mod-help svg {
     width: 36px;
     height: 36px;
@@ -1657,9 +1753,7 @@ th, tr, td, label {
 }
 
 .t-head {
-    text-align: center;
     font-weight: bold;
-    padding-bottom: 5px;
 }
 .t-33 {
     width: 33%;
@@ -1705,7 +1799,7 @@ th, tr, td, label {
     overflow: auto;
     padding: 5px;
     width: 100%;
-    background-color: #f8f8f8;
+    /* background-color: #f8f8f8; */
 }
 #device-action button, #tool-action button {
     flex-direction: column;
@@ -1822,15 +1916,6 @@ th, tr, td, label {
     flex-direction: row;
     align-items: center;
 }
-.dark #slider-center {
-    /* background-color: rgba(255,255,255,0.15); */
-}
-#slider-center {
-    /* background-color: rgba(255,255,255,0.5); */
-}
-.dark #slider-line {
-    background-color: #555;
-}
 #slider-line {
     position: absolute;
     left: 0;
@@ -1840,10 +1925,6 @@ th, tr, td, label {
     min-height: 3px;
     max-height: 3px;
     background-color: #bbb;
-}
-.dark #slider-zero, .dark #slider-max {
-    background-color: #555;
-    color: white;
 }
 #slider-zero {
     z-index: 10;
@@ -1856,9 +1937,6 @@ th, tr, td, label {
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
 }
-.dark #slider-hold {
-    background-color: var(--blue-0);
-}
 #slider-hold {
     background-color: var(--blue-3);
     position: absolute;
@@ -1868,9 +1946,6 @@ th, tr, td, label {
 }
 #slider-hold .slider-mobile {
     width: 40px !important;
-}
-.dark #slider-hold .handle {
-    background-color: #999;
 }
 #slider-hold .handle {
     width: 15px;
@@ -1943,9 +2018,6 @@ th, tr, td, label {
     right: 3px;
     background-color: transparent;
 }
-.dark #speedbar label {
-    color: black;
-}
 #speedbar label {
     flex-grow: 1;
     text-align: center;
@@ -1970,9 +2042,6 @@ th, tr, td, label {
     overflow-x: hidden;
     align-items: stretch;
     text-transform: capitalize;
-}
-.settings .set-group {
-    cursor: pointer;
 }
 .settings .set-header a {
     font-size: smaller;
@@ -2039,20 +2108,6 @@ th, tr, td, label {
 .set-header-line {
     margin-left: 5px;
     width: 100%;
-}
-.set-group {
-    align-items: center;
-    flex-direction: column;
-    background-color: rgba(255,255,255,0.9);
-    border: 1px solid rgba(0,0,0,0.2);
-    border-radius: 3px;
-    padding: 8px 10px 8px 10px;
-    color: var(--fg-gray);
-}
-.set-group:hover {
-    background-color: #eee;
-    border: 1px solid #aaa;
-    color: #000;
 }
 .set-pop {
     top: 50%;
@@ -2164,17 +2219,8 @@ th, tr, td, label {
     flex-direction: column;
     align-items: flex-end;
 }
-.dark #stats {
-    color: #888;
-}
 #stats:hover #rnfo {
     display: grid;
-}
-.dark #rnfo {
-    color: #aaa;
-}
-.dark #rnfo label {
-    color: #ada;
 }
 #rnfo {
     display: none;
