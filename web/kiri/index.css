@@ -19,6 +19,7 @@
     --menu-border: #555;
     --dark-menu-text: #fff;
     --menu-hover: #ddd;
+    --blue-00: rgb(31, 48, 66);
     --blue-0: rgb(48, 64, 82);
     --blue-1: rgb(96,127,164);
     --blue-2: rgb(126,153,183);
@@ -210,8 +211,11 @@ th, tr, td, label {
 .dark option
 {
     border-color: #888;
-    background-color: #555;
+    background-color: #333;
     color: #fff;
+}
+.dark hr {
+    border-color: #555;
 }
 .dark textarea {
     background-color: #333;
@@ -222,9 +226,11 @@ th, tr, td, label {
     border: 1px solid #999;
 }
 .dark #progress {
-    background-color: #666;
+    background-color: #333;
+    border-top: 1px solid #555;
+    border-bottom: 1px solid #555;
 }
-.dark #mode-info label {
+.dark.dark #mode-info label {
     color: #fff;
     border-color: #888;
     background-color: var(--blue-0);
@@ -240,6 +246,14 @@ th, tr, td, label {
 .dark #oplist div:hover .del {
     color: #333 !important;
 }
+.dark .mod-top, .dark .mod-end {
+    background-color: var(--blue-00);
+}
+.dark .pop-sep,
+.dark .set-sep
+{
+    background-color: #555 !important;
+}
 .dark #lang-pop,
 .dark .pop-tics > div,
 .dark #top,
@@ -250,17 +264,22 @@ th, tr, td, label {
 .dark .set2-sep,
 .dark .var-row,
 .dark .movable .body,
+.dark #layers .var-row,
 .dark #slider-zero,
 .dark #slider-max,
 .dark .mdialog,
 .dark .t-body,
 .dark .cam-pop-op
 {
-    background-color: #444;
+    background-color: #222;
     color: white;
 }
+.dark #modal select {
+    color: #fff !important;
+}
+.dark .t-body,
 .dark .set2-group {
-    border: 1px solid #888 !important;
+    border: 1px solid #444 !important;
 }
 .dark .set2-group .var-row:hover,
 .dark .var-row:hover
@@ -272,7 +291,7 @@ th, tr, td, label {
     background-color: #444;
 }
 .dark .set-header {
-    background-color: var(--blue-0);
+    background-color: var(--blue-00);
 }
 .dark #oplist > div,
 .dark .opdiv
