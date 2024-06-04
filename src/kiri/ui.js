@@ -18,18 +18,15 @@ gapp.register("kiri.ui", [], (root, exports) => {
         groupSticky = false,
         groupName = undefined,
         hasModes = [],
-        isExpert = [],
         setters = [],
         lastMode = null,
         lastExpert = true,
-        letHoverPop = true,
         prefix = "tab",
         units = 1,
         lastChange = null,
         lastBtn = null,
         lastTxt = null,
-        lastPop = null,
-        savePop = null;
+        lastPop = null;
 
     self.$ = (self.$ || function (id) { return DOC.getElementById(id) } );
 
@@ -41,15 +38,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
         restore,
         refresh,
         setMode,
-        setExpert,
-        setHoverPop,
-        hidePoppers,
-        hoverPop,
         bound,
         toInt,
         toFloat,
-        hidePop,
-        isPopped,
         isSticky,
         setSticky,
         newElement,
@@ -175,16 +166,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
     function setMode(mode) {
         lastMode = mode;
         hasModes.forEach(div => div.setMode(mode));
-        hidePoppers();
-    }
-
-    function setExpert(bool) {
-        // lastExpert = bool;
-        // setMode(lastMode);
-    }
-
-    function setHoverPop(bool) {
-        // letHoverPop = bool;
     }
 
     function checkpoint(at) {
@@ -267,10 +248,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         if (parent) parent.appendChild(row);
         if (lastGroup) lastGroup.push(row);
         return row;
-    }
-
-    function hidePoppers() {
-        // showGroup(undefined);
     }
 
     function bound(low,high) {
@@ -380,21 +357,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return div;
     }
 
-    function hidePop() {
-        if (lastPop) {
-            lastPop.style.display = "none";
-        }
-        if (savePop) {
-            savePop();
-            savePop = null;
-        }
-        lastPop = null;
-    }
-
-    function isPopped() {
-        return lastPop !== null;
-    }
-
     function isSticky() {
         return groupSticky;
     }
@@ -438,7 +400,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 txt.setAttribute("rows", 6);
 
                 let showing = btn === lastBtn;
-                hidePop();
                 if (lastTxt) {
                     lastTxt.classList.remove('txt-sel');
                 }
@@ -502,7 +463,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 txt.setAttribute("cols", Math.max(30, cols + 1));
 
                 let showing = pop === lastPop;
-                hidePop();
                 if (lastBtn) {
                     lastBtn.classList.remove('btn-sel');
                 }
@@ -511,7 +471,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 }
                 if (!showing) {
                     row.classList.add('txt-sel');
-                    savePop = inputAction;
                     pop.style.display = "flex";
                     lastPop = pop;
                     lastTxt = row;
@@ -568,7 +527,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         if (opt.bound) ip.bound = opt.bound;
         if (opt.action) action = opt.action;
         ip.addEventListener('focus', function(event) {
-            hidePop();
             setSticky(true);
         });
         if (action) {
@@ -752,7 +710,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         let b = DOC.createElement('button');
 
         b.onclick = function() {
-            hidePoppers();
             if (action) action(...arguments);
         };
 
@@ -810,76 +767,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
             array.push(newRowTable(arrayOfArrays[i]));
         }
         return array;
-    }
-
-    function hoverPop(el, opt = {}) {
-        if (Array.isArray(el)) {
-            opt.group = [];
-            return el.forEach(ev => hoverPop(ev, opt));
-        }
-        let group = opt.group || [];
-        let closes = opt.closes || group;
-        let target = opt.target || el;
-        let mobile = false;
-        let popped = false;
-        group.push(target);
-        if (closes !== group) {
-            closes.push(target);
-        }
-        let openit = () => {
-            clearTimeout(closes.timer);
-            for (let close of closes) {
-                close.classList.remove("hoverpop");
-            }
-            target.classList.add("hoverpop");
-            popped = true;
-        };
-        let closeit = () => {
-            target.classList.remove("hoverpop");
-            clearTimeout(closes.timer);
-            popped = false;
-        };
-        if (opt.auto !== false) {
-            el.addEventListener("mouseenter", () => {
-                openit();
-            });
-            el.addEventListener("touchstart", (ev) => {
-                if (ev.target.onclick) {
-                    if (mobile && popped) {
-                        setTimeout(closeit, 500);
-                        return;
-                    }
-                }
-                mobile = true;
-                if (popped) {
-                    closeit();
-                } else {
-                    openit();
-                }
-            });
-        }
-        el.addEventListener("mouseleave", (ev) => {
-            closes.timer = setTimeout(() => {
-                target.classList.remove("hoverpop");
-            }, 750);
-        });
-        if (!opt.sticky) {
-            el.addEventListener("mouseup", (ev) => {
-                if (mobile) {
-                    return;
-                }
-                if (popped) {
-                    closeit();
-                } else {
-                    openit();
-                }
-            });
-        }
-        document.addEventListener("keydown", (ev) => {
-            if (ev.keyCode === 27 || ev.code === 'Escape') {
-                closeit();
-            }
-        });
     }
 
 });

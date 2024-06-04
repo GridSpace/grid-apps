@@ -203,7 +203,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         // platform.layout();
         api.conf.save();
         api.platform.update_size();
-        uc.setHoverPop(false);
         updateStats();
         updateDrawer();
         if (control.decals && !control.dark) {
@@ -304,8 +303,6 @@ gapp.register("kiri.init", [], (root, exports) => {
                 api.dialog.hide();
                 // cancel slicing
                 api.function.cancel();
-                // kill any poppers in compact mode
-                uc.hidePoppers();
                 // and send an event (used by FDM client)
                 api.event.emit("key.esc");
                 break;
@@ -676,7 +673,6 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function settingsLoad() {
-        uc.hidePoppers();
         api.conf.show();
     }
 
@@ -1504,8 +1500,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             gcode = $('dev-gcode'),
             tracker = $('tracker'),
             controller = settings().controller;
-
-        uc.setHoverPop(false);
 
         WIN.addEventListener("resize", () => {
             event.emit('resize');

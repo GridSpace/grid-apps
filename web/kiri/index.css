@@ -222,6 +222,7 @@ th, tr, td, label {
     color: #fff;
 }
 .dark button {
+    color: #fff;
     background-color: #777;
     border: 1px solid #999;
 }
@@ -274,6 +275,17 @@ th, tr, td, label {
     background-color: #222;
     color: white;
 }
+.dark .cam-pop-op {
+    border-color: #555;
+}
+.dark .btn-sel,
+.dark .txt-sel button {
+    /* color: #fff; */
+    background-color: var(--blue-1);
+}
+.dark #modal {
+    color: #fff !important;
+}
 .dark #modal select {
     color: #fff !important;
 }
@@ -315,7 +327,7 @@ th, tr, td, label {
 }
 .dark .render-tools svg:hover {
     background-color: var(--blue-1);
-    border-color: var(--blue-3  );
+    border-color: var(--blue-3);
 }
 .dark .top-menu > span:hover {
     background-color: var(--blue-1);
@@ -1195,7 +1207,9 @@ th, tr, td, label {
     border: 1px solid gray;
     margin: 5px 1px 5px 1px;
 }
-#camop_dialog button, #camop_dialog label {
+#camop_dialog button,
+#camop_dialog label
+{
     text-align: center;
     display: block;
 }
@@ -1405,7 +1419,7 @@ th, tr, td, label {
     overflow: hidden;
 }
 #modal button, #modal select {
-    color: black !important;
+    /* color: black !important; */
 }
 #modal > div {
     position: absolute;
