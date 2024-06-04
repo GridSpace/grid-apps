@@ -377,10 +377,6 @@ th, tr, td, label {
     z-index: 15;
     height: 36px;
 }
-#top > div {
-    margin: 0 5px 0 5px;
-}
-
 .top-menu {
     display: flex;
     gap: 0px;
@@ -882,7 +878,15 @@ th, tr, td, label {
 #slide-show span {
     display: none;
 }
-
+#panel-right {
+    overflow: unset;
+}
+/* #panel-right {
+    direction: rtl;
+}
+#panel-right * {
+    direction: ltr;
+} */
 #panel-left, #panel-right {
     max-height: 100%;
     background-color: var(--work-area);
@@ -893,7 +897,6 @@ th, tr, td, label {
 #panel-left label, #panel-left svg {
     pointer-events: none;
 }
-
 #ws-widgets button {
     text-transform: none;
     text-align: left;
@@ -903,11 +906,10 @@ th, tr, td, label {
     background-color: var(--blue-3);
     color: #000;
 }
-.slim-hide {
+/* .slim-hide {
     width: 0;
     overflow: hidden;
-}
-
+} */
 #top-sep {
     display: none;
 }
@@ -925,7 +927,6 @@ th, tr, td, label {
     max-height: 1px;
     background-image: var(--gradbar2);
 }
-
 .movable {
     margin: 5px;
 }
@@ -2100,9 +2101,6 @@ th, tr, td, label {
     border-radius: 3px;
 }
 
-#panel-right{
-    overflow: unset;
-}
 .settings {
     max-height: 100%;
     overflow-y: auto;
@@ -2190,7 +2188,7 @@ th, tr, td, label {
     padding: 5px;
 }
 .settings .ext-buttons {
-    margin: 0 9px 0 14px;
+    margin: 0 4px 0 4px;
     gap: 3px;
 }
 #layers .var-row {
