@@ -462,9 +462,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             case cca('e'): // device
                 showDevices();
                 break;
-            case cca('w'): // scale
-                api.event.emit("tool.next");
-                break;
+            // case cca('w'): // scale
+            //     api.event.emit("tool.next");
+            //     break;
             case cca('o'): // tools
                 showTools();
                 break;
@@ -514,13 +514,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             evt.stopPropagation();
         }
         return false;
-    }
-
-    function setFocus() {
-        let int = contextInt[0];
-        if (int && int.object && int.object.widget) {
-            api.space.set_focus(undefined, int.point);
-        }
     }
 
     function duplicateSelection() {
@@ -1595,7 +1588,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             speedbar:           $('speedbar'),
             context:            $('context-menu'),
 
-            back:               $('lt-back'),
             ltsetup:            $('lt-setup'),
             ltfile:             $('lt-file'),
             ltview:             $('lt-view'),
@@ -1940,12 +1932,12 @@ gapp.register("kiri.init", [], (root, exports) => {
             camFirstZMax:        newBoolean(LANG.ou_z1st_s, onBooleanClick, {title:LANG.ou_z1st_l}),
             camForceZMax:        newBoolean(LANG.ou_forz_s, onBooleanClick, {title:LANG.ou_forz_l}),
             camOrigin:           newGroup(LANG.co_menu, $('cam-origin'), { modes:CAM, driven, separator }),
+            camOriginTop:        newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l}),
+            camOriginCenter:     newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
+            separator:           newBlank({ class:"set-sep", driven }),
             camOriginOffX:       newInput(LANG.co_offx_s, {title:LANG.co_offx_l, convert:toFloat, units:true}),
             camOriginOffY:       newInput(LANG.co_offy_s, {title:LANG.co_offy_l, convert:toFloat, units:true}),
             camOriginOffZ:       newInput(LANG.co_offz_s, {title:LANG.co_offz_l, convert:toFloat, units:true}),
-            separator:           newBlank({ class:"set-sep", driven }),
-            camOriginTop:        newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l}),
-            camOriginCenter:     newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
             camExpert:           newGroup(LANG.op_xprt_s, $('cam-expert'), { group: "cam_expert", modes:CAM, marker: false, driven, separator }),
             camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, show: () => !ui.camTrueShadow.checked }),
             camTrueShadow:       newBoolean(LANG.cx_true_s, onBooleanClick, {title:LANG.cx_true_l, show: () => !ui.camExpertFast.checked }),
@@ -2401,29 +2393,29 @@ gapp.register("kiri.init", [], (root, exports) => {
             }
         };
 
-        space.mouse.up((event, int) => {
-            // context menu
-            if (event.button === 2) {
-                let et = event.target;
-                if (et.tagName != 'CANVAS' && et.id != 'context-menu') {
-                    return;
-                }
-                let full = api.view.is_arrange();
-                for (let key of ["layflat","mirror","duplicate"]) {
-                    $(`context-${key}`).disabled = !full;
-                }
-                let style = ui.context.style;
-                style.display = 'flex';
-                style.left = `${event.clientX-3}px`;
-                style.top = `${event.clientY-3}px`;
-                ui.context.onmouseleave = () => {
-                    style.display = '';
-                };
-                event.preventDefault();
-                event.stopPropagation();
-                contextInt = int;
-            }
-        });
+        // space.mouse.up((event, int) => {
+        //     // context menu
+        //     if (event.button === 2) {
+        //         let et = event.target;
+        //         if (et.tagName != 'CANVAS' && et.id != 'context-menu') {
+        //             return;
+        //         }
+        //         let full = api.view.is_arrange();
+        //         for (let key of ["layflat","mirror","duplicate"]) {
+        //             $(`context-${key}`).disabled = !full;
+        //         }
+        //         let style = ui.context.style;
+        //         style.display = 'flex';
+        //         style.left = `${event.clientX-3}px`;
+        //         style.top = `${event.clientY-3}px`;
+        //         ui.context.onmouseleave = () => {
+        //             style.display = '';
+        //         };
+        //         event.preventDefault();
+        //         event.stopPropagation();
+        //         contextInt = int;
+        //     }
+        // });
 
         space.mouse.downSelect((int, event) => {
             if (api.feature.on_mouse_down) {
@@ -2519,8 +2511,6 @@ gapp.register("kiri.init", [], (root, exports) => {
     // SECOND STAGE INIT AFTER UI RESTORED
     function init_two() {
         api.event.emit('init.two');
-
-        // api.space.set_focus();
 
         // call driver initializations, if present
         Object.values(kiri.driver).forEach(driver => {
@@ -2710,7 +2700,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.widgets.for(w => w.unrotate());
             api.selection.update_info();
         };
-        $('lay-flat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
         // rotation buttons
         let d = (Math.PI / 180) * 5;
         $('rot_x_lt').onclick = () => { api.selection.rotate(-d,0,0) };
@@ -2727,17 +2716,15 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('mesh-swap').onclick = () => { api.widgets.replace() };
         $('mesh-export-stl').onclick = () => { objectsExport('stl') };
         $('mesh-export-obj').onclick = () => { objectsExport('obj') };
-        // context menu
-        $('context-export-workspace').onclick = () => { profileExport(true) };
-        $('context-clear-workspace').onclick = () => {
-            api.view.set(VIEWS.ARRANGE);
-            api.platform.clear();
-            ui.context.onmouseleave();
-        };
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
         $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
-        $('context-setfocus').onclick = setFocus;
+        $('context-setfocus').onclick = () => {
+            api.event.emit(
+                "tool.camera.focus",
+                ev => api.space.set_focus(undefined, ev.object.point)
+            );
+        };
 
         ui.modal.onclick = api.modal.hide;
         ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
@@ -2747,112 +2734,6 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // show topline separator when iframed
         try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { console.log(e) }
-
-        // bind tictac buttons to panel show/hide
-        let groups = {};
-        for (let tt of [...document.getElementsByClassName('tictac')]) {
-            let sid = tt.getAttribute('select');
-            let gid = tt.getAttribute('group') || 'default';
-            let grp = groups[gid] = groups[gid] || [];
-            let target = $(sid);
-            target.style.display = 'none';
-            target.control = tt;
-            grp.push({button: tt, div: target});
-            tt.onclick = () => {
-                for (let rec of grp) {
-                    let {button, div} = rec;
-                    if (div === target) {
-                        div.style.display = '';
-                        button.classList.add('selected');
-                    } else {
-                        div.style.display = 'none';
-                        button.classList.remove('selected');
-                    }
-                }
-                let lid = tt.getAttribute('label');
-                if (lid) {
-                    $(lid).innerText = tt.getAttribute('title');
-                }
-            };
-        }
-
-        // bind closer X to hiding parent action
-        for (let tt of [...document.getElementsByClassName('closer')]) {
-            let tid = tt.getAttribute('target');
-            let target = tid ? $(tid) : parentWithClass(tt, 'movable');
-            target.classList.add('hide');
-            let close = tt.onmousedown = (ev) => {
-                target.classList.add('hide');
-                if (ev) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                }
-            };
-            api.event.on('key.esc', close);
-        }
-
-        // add drag behavior to movers
-        [...document.getElementsByClassName('mover')].forEach(mover => {
-            mover.onmousedown = (ev) => {
-                let moving = parentWithClass(mover, 'movable');
-                let mpos = {
-                    x: moving.offsetLeft,
-                    y: moving.offsetTop
-                };
-                ev.preventDefault();
-                ev.stopPropagation();
-                let origin = {
-                    x: ev.screenX,
-                    y: ev.screenY
-                };
-                let tracker = ui.tracker;
-                tracker.style.display = 'block';
-                tracker.onmousemove = (ev) => {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    let pos = {
-                        x: ev.screenX,
-                        y: ev.screenY
-                    };
-                    let delta = {
-                        x: pos.x - origin.x,
-                        y: pos.y - origin.y
-                    };
-                    moving.style.left = `${mpos.x + delta.x}px`;
-                    moving.style.top = `${mpos.y + delta.y}px`;
-                };
-                tracker.onmouseup = (ev) => {
-                    ui.tracker.style.display = 'none';
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    tracker.onmouseup = null;
-                    tracker.onmouseout = null;
-                    tracker.onmousemove = null;
-                };
-            };
-        });
-
-        // bind tool buttons
-        {
-            let { event } = api;
-            let next = 0;
-            let list = ['rotate','scale','mesh'];
-            event.on("tool.next", () => {
-                event.emit("tool.show", list[next++ % list.length]);
-            });
-            event.on("tool.show", tictac => {
-                if (typeof(tictac) === 'string') {
-                    next = list.indexOf(tictac)+1;
-                    tictac = $(`ft-${tictac}`);
-                }
-                let mover = parentWithClass(tictac.control, 'movable');
-                mover.classList.remove('hide');
-                tictac.control.onclick();
-            });
-            $('tool-rotate').onclick = event.bind("tool.show", "rotate");
-            $('tool-scale').onclick = event.bind("tool.show", "scale");
-            $('tool-mesh').onclick = event.bind("tool.show", "mesh");
-        }
 
         // warn users they are running a beta release
         if (kiri.beta && kiri.beta > 0 && sdb.kiri_beta != kiri.beta) {

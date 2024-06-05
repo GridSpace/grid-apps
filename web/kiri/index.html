@@ -211,6 +211,70 @@
     <!-- line betwwen menu bar and main application windows -->
     <div id="progress"><div id="progbar"><div id="progtxt">loading</div></div></div>
 
+    <!-- toolbar with mesh and rendering options -->
+    <div>
+        <div id="render-tools">
+            <span id="tool-rotate"><i class="fas fa-sync-alt" title="rotate selection"></i>
+                <div id="ft-rotate" class="grid pop">
+                    <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
+                    <label>X</label>
+                    <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
+                    <input id="rot_x" class="value center" size="6" value="0">
+                    <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
+                    <label>Y</label>
+                    <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
+                    <input id="rot_y" class="value center" size="6" value="0">
+                    <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
+                    <label>Z</label>
+                    <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
+                    <input id="rot_z" class="value center" size="6" value="0">
+                    <div class="buttons f-row">
+                        <button id="unrotate" class="grow" lk="reset">reset</button>
+                    </div>
+                </div>
+            </span>
+            <span id="tool-scale"><i class="fas fa-expand" title="scale selection"></i>
+                <div id="ft-scale" class="grid pop">
+                    <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
+                    <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked></div>
+                    <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked></div>
+                    <div><label id="lab-axis" lk="axis">axis</label></div>
+                    <div><input id="size_x" size="8" class="value"></div>
+                    <div><input id="size_y" size="8" class="value"></div>
+                    <div><input id="size_z" size="8" class="value"></div>
+                    <div><label id="lab-size" lk="size">size</label></div>
+                    <div><input id="scale_x" size="8" class="value" value="1"></div>
+                    <div><input id="scale_y" size="8" class="value" value="1"></div>
+                    <div><input id="scale_z" size="8" class="value" value="1"></div>
+                    <div><label id="lab-scale" lk="scale">scale</label></div>
+                    <button id="scale-reset" class="gr4">reset</button>
+                </div>
+            </span>
+            <span id="tool-mesh"><i class="fas fa-dice-d20" title="selected mesh tool"></i>
+                <div id="ft-mesh" class="grow f-col pop">
+                    <div id="mesh-info" class="grid">
+                        <label>object:</label>
+                        <span id="mesh-name" class="value">[0]</span>
+                        <label>points:</label>
+                        <span id="mesh-points" class="value">-</span>
+                        <label>faces:</label>
+                        <span id="mesh-faces" class="value">-</span>
+                    </div>
+                    <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
+                    <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
+                    <button id="mesh-swap" lk="rc_swap">replace vertices</button>
+                </div>
+            </span>
+            <span id="context-mirror" xlk="rc_mirr"><i class="fas fa-arrows-left-right-to-line" title="mirror selection"></i></span>
+            <span id="context-duplicate" xlk="rc_dupl"><i class="fas fa-copy" title="duplicate selection"></i></span>
+            <span id="context-layflat" xlk="rc_lafl"><i class="fas fa-arrows-down-to-line" title="lay flat: choose a face to place on the work surface"></i></span>
+            <span id="context-setfocus" xlk="rc_focs"><i class="fas fa-eye" title="choose focal point, camera orbit center"></i></span>
+            <span id="render-solid" class="j-center" title="view solid"><i class="fas fa-square"></i></span>
+            <span id="render-wire" class="j-center" title="view wireframe"><i class="fas fa-border-all"></i></span>
+            <span id="render-ghost" class="a-center" title="view transparent"><i class="fas fa-border-none"></i></span>
+        </div>
+    </div>
+
     <div id="mid" class="grow f-row">
 
         <!-- left settings menu -->
@@ -254,17 +318,6 @@
 
         <!-- main workspace -->
         <div id="mid-mid" class="grow">
-            <div id="render-tools">
-                <span id="tool-rotate"><i class="fas fa-sync-alt" title="rotate"></i></span>
-                <span id="tool-scale"><i class="fas fa-expand" title="scale"></i></span>
-                <span id="tool-mesh"><i class="fas fa-dice-d20" title="mesh tool"></i></span>
-                <span id="context-mirror" xlk="rc_mirr"><i class="fas fa-arrows-left-right-to-line" title="mirror"></i></span>
-                <span id="context-duplicate" xlk="rc_dupl"><i class="fas fa-copy" title="duplicate"></i></span>
-                <span id="context-layflat" xlk="rc_lafl"><i class="fas fa-arrows-down-to-line" title="lay flat"></i></span>
-                <span id="render-solid" class="j-center" title="view solid"><i class="fas fa-square"></i></span>
-                <span id="render-wire" class="j-center" title="view wireframe"><i class="fas fa-border-all"></i></span>
-                <span id="render-ghost" class="a-center" title="view transparent"><i class="fas fa-border-none"></i></span>
-            </div>
             <div id="layer-slider" class="f-col a-stretch">
                 <div id="layers" class="f-row j-center gap2"></div>
                 <div id="slider" class="f-row russo">
@@ -446,13 +499,15 @@
                     <div id="tool-view" class="f-col t-33 t-body"></div>
                 </div>
                 <div class="set-sep"></div>
-                <div id="tool-action" class="f-row j-center">
-                    <button id="tool-add"><i class="fas fa-plus"></i></button>
-                    <button id="tool-del"><i class="fas fa-minus"></i></button>
-                    <div class="t-pad2"></div>
-                    <button id="tools-save" lk="save">save</button>
-                    <button id="tools-close" lk="done">done</button>
-                    <div class="t-pad2"></div>
+                <div id="tool-action" class="f-row j-center gap10">
+                    <div class="f-row">
+                        <button id="tool-add"><i class="fas fa-plus"></i></button>
+                        <button id="tool-del"><i class="fas fa-minus"></i></button>    
+                    </div>
+                    <div class="f-row">
+                        <button id="tools-save" lk="save">save</button>
+                        <button id="tools-close" lk="done">done</button>
+                    </div>
                     <button id="tools-export" lk="export">export</button>
                 </div>
             </div>
@@ -462,19 +517,13 @@
         <div id="mod-prefs" class="mdialog f-col a-center">
             <label lk="dm_appp" class="menu-title">Application Preferences</label>
             <hr width="80%">
-            <div class="f-row">
+            <div class="f-row gap10">
                 <div id="prefs-gen1" class="f-col"></div>
-                <div class="t-pad2"></div>
                 <div id="prefs-gen2" class="f-col"></div>
-                <div class="t-pad2"></div>
                 <div id="prefs-lay" class="f-col"></div>
-                <div class="t-pad2"></div>
                 <div id="prefs-xpo" class="f-col"></div>
-                <div class="t-pad2"></div>
                 <div id="prefs-prt" class="f-col"></div>
-                <div class="t-pad2"></div>
                 <div id="prefs-add" class="f-col"></div>
-                <div class="t-pad2"></div>
             </div>
         </div>
 
@@ -492,14 +541,6 @@
     <div id="gdpr" class="noshow">
         <p>this site uses <A href="/privacy.html" target="privacy">cookies</a> to preserve application preferences</p>
         <button id="gotit" class="f-col j-center">got it</button>
-    </div>
-
-    <!-- right click pop-up menu -->
-    <div id="context-menu">
-        <button id="context-export-workspace" lk="rc_xpws">export workspace</button>
-        <button id="context-clear-workspace" lk="rc_clws">clear workspace</button>
-        <div class="sep"></div>
-        <button id="context-setfocus" lk="rc_focs">set focus</button>
     </div>
 
     <!-- developer debugging -->
@@ -523,68 +564,6 @@
     <!-- slice/preview layer slider -->
     <div id="top-slider" class="f-col grow">
         <input id="anim-slider" type="range" min="0" max="1000" value="0"></input>
-    </div>
-
-    <!-- movable tool tray for mesh tools -->
-    <div id="float-tools" class="f-col movable hide">
-        <div id="float-tools-title" class="title mover">
-            <label id="ft-label" class="grow">title bar</label>
-            <div id="float-tools-close" class="closer"><i class="fas fa-times"></i></div>
-        </div>
-        <div class="body f-row">
-            <div class="f-col menu">
-                <div lkt="rotate" class="tictac" select="ft-rotate" label="ft-label"><i class="fas fa-sync-alt"></i></div>
-                <div lkt="scale" class="tictac" select="ft-scale" label="ft-label"><i class="fas fa-expand"></i></div>
-                <div lkt="mesh" class="tictac" select="ft-mesh" label="ft-label"><i class="fas fa-dice-d20"></i></div>
-            </div>
-            <div id="ft-scale" class="grow grid">
-                <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
-                <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked></div>
-                <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked></div>
-                <div><label id="lab-axis" lk="axis">axis</label></div>
-                <div><input id="size_x" size="8" class="value"></div>
-                <div><input id="size_y" size="8" class="value"></div>
-                <div><input id="size_z" size="8" class="value"></div>
-                <div><label id="lab-size" lk="size">size</label></div>
-                <div><input id="scale_x" size="8" class="value" value="1"></div>
-                <div><input id="scale_y" size="8" class="value" value="1"></div>
-                <div><input id="scale_z" size="8" class="value" value="1"></div>
-                <div><label id="lab-scale" lk="scale">scale</label></div>
-                <button id="scale-reset" class="gr4">reset</button>
-            </div>
-            <div id="ft-rotate" class="grow grid">
-                <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
-                <label>X</label>
-                <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
-                <input id="rot_x" class="value center" size="6" value="0">
-                <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
-                <label>Y</label>
-                <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
-                <input id="rot_y" class="value center" size="6" value="0">
-                <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
-                <label>Z</label>
-                <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
-                <input id="rot_z" class="value center" size="6" value="0">
-                <div class="buttons f-row">
-                    <button id="lay-flat" class="grow">lay flat</button>
-                    <button id="unrotate" class="grow" lk="reset">reset</button>
-                </div>
-            </div>
-            <div id="ft-mesh" class="grow f-col">
-                <div id="mesh-info" class="grid">
-                    <label>object:</label>
-                    <span id="mesh-name" class="value">[0]</span>
-                    <label>points:</label>
-                    <span id="mesh-points" class="value">-</span>
-                    <label>faces:</label>
-                    <span id="mesh-faces" class="value">-</span>
-                </div>
-                <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
-                <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
-                <button id="mesh-swap" lk="rc_swap">replace vertices</button>
-            </div>
-        </div>
-        <div class="footer"></div>
     </div>
 
 </div>

@@ -712,6 +712,12 @@ gapp.register("moto.space", [], (root, exports) => {
             m.renderOrder = 3;
         });
         Space.scene.add(group);
+        const scale = grid.origin.scale = () => {
+            const dist = camera.position.distanceTo(group.position);
+            const scale = Math.min(dist / 100, 0.5);
+            group.scale.set(scale, scale, scale);
+        };
+        scale();
         updateDraws();
     }
 
@@ -1369,11 +1375,15 @@ gapp.register("moto.space", [], (root, exports) => {
                 updateLastAction();
                 updateFocus();
             }, (val) => {
+                if (camera && grid?.origin?.scale) {
+                    grid.origin.scale();
+                }
                 if (camera && viewControl) {
                     // increase intersect line precision on zoom
                     const dist = camera.position.distanceTo(viewControl.target);
                     raycaster.params.Line.threshold = Math.min(1, dist / 100);
                 }
+                moto.broker.publish("space.view.zoom", camera);
                 updateLastAction();
                 if (slider) slider(val);
             });

@@ -1559,6 +1559,7 @@ CAM.init = function(kiri, api) {
     }
 
     api.event.on('tool.mesh.face-normal', normal => {
+        console.log({ poppedRec });
         poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
         poppedRec.absolute = true;
         func.opRender();

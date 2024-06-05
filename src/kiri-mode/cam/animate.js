@@ -178,7 +178,6 @@ kiri.load(() => {
         if (steps !== 1) {
             playButton.style.display = 'none';
             pauseButton.style.display = '';
-            // $('render-hide').onclick();
         }
         kiri.client.animate({
             speed,
@@ -192,7 +191,6 @@ kiri.load(() => {
         updateSpeed(1);
         playButton.style.display = 'none';
         pauseButton.style.display = '';
-        // $('render-hide').onclick();
         kiri.client.animate({
             speed,
             steps: steps || Infinity,

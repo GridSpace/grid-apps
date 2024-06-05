@@ -5,7 +5,7 @@
 gapp.register("kiri.tools", [], (root, exports) => {
 
 const { Vector3, Quaternion } = THREE;
-const { kiri } = root;
+const { kiri, moto } = root;
 const { api } = kiri;
 
 const XAXIS = new THREE.Vector3(1,0,0);
@@ -13,7 +13,7 @@ const ZAXIS = new THREE.Vector3(0,0,1);
 
 // circle
 let pgeo = new THREE.CircleGeometry(8, 30);
-let pmat = new THREE.MeshBasicMaterial({color: 0xff0000, opacity: 0.5, transparent: true});
+let pmat = new THREE.MeshBasicMaterial({color: 0xddeeff, opacity: 0.6, transparent: true});
 let pmesh = new THREE.Mesh(pgeo, pmat);
 
 // circle outline
@@ -34,7 +34,7 @@ for (let i=0; i<pi.length; i++) {
 let wgeo = new THREE.BufferGeometry();
 wgeo.setAttribute('position', new THREE.BufferAttribute(np.toFloat32(), 3));
 
-let wmat = new THREE.LineBasicMaterial({ color: 0x883333 });
+let wmat = new THREE.LineBasicMaterial({ color: 0x6699cc });
 let wmesh = new THREE.LineSegments(wgeo, wmat);
 pmesh.add(wmesh);
 
@@ -48,12 +48,12 @@ let onDone = onLayFlatSelect;
 function onLayFlatSelect() {
     let q = new Quaternion().setFromUnitVectors(lastface.normal, new Vector3(0,0,-1));
     api.selection.rotate(q);
-    endIt();
+    // endIt();
 }
 
 function onFaceUpSelect() {
     api.event.emit('tool.mesh.face-normal', lastface.normal);
-    endIt();
+    // endIt();
 }
 
 function startIt() {
@@ -91,6 +91,12 @@ function cleanup() {
 
 api.event.on('key.esc', endIt);
 
+api.event.on('tool.camera.focus', (fn) => {
+    opName = 'camera focus';
+    onDone = fn;
+    startIt();
+});
+
 api.event.on('tool.mesh.face-up', () => {
     opName = 'face select';
     onDone = onFaceUpSelect;
@@ -102,6 +108,16 @@ api.event.on('tool.mesh.lay-flat', () => {
     onDone = onLayFlatSelect;
     startIt();
 });
+
+function scale() {
+    let cam = moto.space.internals().camera;
+    let dist = cam.position.distanceTo(pmesh.position);
+    let scale = opName === 'camera focus' ?
+        Math.min(0.25, 100 / dist) : dist / 100;
+    pmesh.scale.set(scale,scale,scale);
+}
+
+api.event.on("space.view.zoom", scale);
 
 api.event.on('mouse.hover', (ev) => {
     if (!enabled) {
@@ -134,6 +150,7 @@ api.event.on('mouse.hover', (ev) => {
             new Vector3(norm.x,norm.y,norm.z)
         );
         pmesh.setRotationFromQuaternion(q);
+        scale();
     }
 });
 
@@ -145,7 +162,8 @@ api.event.on('mouse.hover.up', (ev) => {
     if (!object) {
         return;
     }
-    onDone();
+    onDone(ev);
+    endIt();
 });
 
 });

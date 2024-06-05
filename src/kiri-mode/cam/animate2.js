@@ -72,7 +72,6 @@ kiri.load(() => {
             api.event.emit('animate', 'CAM');
             api.alerts.hide(alert);
             // moto.space.platform.showGridBelow(false);
-            $('render-hide').onclick();
         });
     }
 
@@ -147,7 +146,6 @@ kiri.load(() => {
         if (steps !== 1) {
             playButton.style.display = 'none';
             pauseButton.style.display = '';
-            $('render-hide').onclick();
         }
         kiri.client.animate2({
             speed,
@@ -161,7 +159,6 @@ kiri.load(() => {
         updateSpeed(1);
         playButton.style.display = 'none';
         pauseButton.style.display = '';
-        $('render-hide').onclick();
         kiri.client.animate2({
             speed,
             steps: steps || Infinity,
