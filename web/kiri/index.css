@@ -255,6 +255,7 @@ th, tr, td, label {
 {
     background-color: #555 !important;
 }
+.dark #render-tools svg,
 .dark #lang-pop,
 .dark .pop-tics > div,
 .dark #top,
@@ -275,6 +276,7 @@ th, tr, td, label {
     background-color: #222;
     color: white;
 }
+.dark #render-tools svg,
 .dark .cam-pop-op {
     border-color: #555;
 }
@@ -325,7 +327,7 @@ th, tr, td, label {
 .dark .top-menu label {
     color: var(--dark-menu-text)
 }
-.dark .render-tools svg:hover {
+.dark #render-tools svg:hover {
     background-color: var(--blue-1);
     border-color: var(--blue-3);
 }
@@ -853,7 +855,6 @@ th, tr, td, label {
     left: -100%;
 }
 .slideshow #slide-show {
-    /* transition: left 0.15s ease-in-out; */
     position: absolute;
     top: 5px;
     left: 0;
@@ -985,7 +986,7 @@ th, tr, td, label {
 #float-tools {
     position: absolute;
     margin: 0;
-    top: 50px;
+    top: 90px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 16;
@@ -1067,30 +1068,27 @@ th, tr, td, label {
 #ft-mesh {
     min-width: 200px;
 }
-.render-tools {
-    display: grid;
-    margin: 4px 0 0 0;
-    /* gap: 3px; */
-    grid-template-columns: 1fr 1fr 1fr;
+#render-tools {
+    pointer-events: all;
+    position: absolute;
+    gap: 2px;
+    top: 3px;
+    left: 0;
+    right: 0;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    z-index: 102;
 }
-.render-tools > span {
-    justify-self: center;
-    width: 25px;
-    height: 25px;
-    display: flex;
-    flex-shrink: 0;
-    flex-direction: column;
-}
-.render-tools > span > * {
-    padding: 0;
-    margin: 0;
-}
-.render-tools svg {
-    border: 1px solid transparent;
+#render-tools svg {
+    font-size: 20px;
+    aspect-ratio: 1/1;
+    background-color: #fff;
+    border: 1px solid var(--blue-4);
     border-radius: 3px;
-    padding: 3px;
+    padding: 8px;
 }
-.render-tools svg:hover {
+#render-tools svg:hover {
     border: 1px solid blue;
     background-color: var(--blue-4);
 }
@@ -1307,7 +1305,7 @@ th, tr, td, label {
 }
 #oplist div:hover .del {
     color: #888;
-    z-index: 10000;
+    z-index: 103;
 }
 #oplist div .del:hover {
     color: #000;

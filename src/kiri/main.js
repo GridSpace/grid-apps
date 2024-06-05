@@ -845,9 +845,11 @@ gapp.register("kiri.main", [], (root, exports) => {
         ['view-arrange','act-slice','act-preview','act-animate'].forEach(el => {
             $(el).classList.remove('selected')
         });
+        $('render-tools').classList.add('hide');
         switch (mode) {
             case VIEWS.ARRANGE:
                 $('view-arrange').classList.add('selected');
+                $('render-tools').classList.remove('hide');
                 api.function.clear_progress();
                 kiri.client.clear();
                 STACKS.clear();
