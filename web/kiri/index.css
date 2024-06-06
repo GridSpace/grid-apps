@@ -1014,6 +1014,9 @@ th, tr, td, label {
     justify-content: center;
     flex-direction: row;
 }
+#render-tools span {
+    position: relative;
+}
 #render-tools svg {
     font-size: 20px;
     aspect-ratio: 1/1;
@@ -1044,6 +1047,10 @@ th, tr, td, label {
     margin-top: 3px;
     padding: 3px;
     top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    white-space: nowrap;
 }
 #render-tools > span:not(:hover) .pop {
     display: none;
