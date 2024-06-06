@@ -1222,7 +1222,7 @@ th, tr, td, label {
     padding: 5px 0 0 0;
 }
 .cam-pop-op {
-    top: 0;
+    top: 50%;
     right: calc(100% + 4px);
     text-align: left;
     position: absolute;

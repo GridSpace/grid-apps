@@ -554,6 +554,10 @@ CAM.init = function(kiri, api) {
                 poprec.use(rec);
                 hoveredOp = el;
                 if (!clock) {
+                    const { innerHeight } = window;
+                    const { pageY } = ev;
+                    const PY = (pageY / innerHeight) * 90;
+                    poprec.div.style.transform = `translateY(${-PY}%)`;
                     el.appendChild(poprec.div);
                     poprec.addNote();
                 }
@@ -1629,7 +1633,6 @@ function createPopOp(type, map) {
                 let type = val.type;
                 let from = map[key];
                 if (rec[key] === undefined && type && from) {
-                    let newval = current.process[from];
                     rec[key] = current.process[from];
                 }
             }
