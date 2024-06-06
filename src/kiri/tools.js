@@ -65,7 +65,6 @@ function startIt() {
         console.log(`${opName} cannot pre-empt hover`);
         return;
     }
-    $('lay-flat').classList.add('selected');
     api.feature.hover = true;
     enabled = true;
     alert = api.show.alert(`[ESC] to end ${opName}`, 600000);
@@ -74,7 +73,6 @@ function startIt() {
 function endIt() {
     if (enabled) {
         api.hide.alert(alert);
-        $('lay-flat').classList.remove('selected');
         api.feature.hover = false;
         enabled = false;
         alert = undefined;

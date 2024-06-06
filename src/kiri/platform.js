@@ -226,25 +226,29 @@ function platformUpdateBounds() {
 
 function platformSelectedCount() {
     return api.view.is_arrange() ? api.selection.count() : 0;
-    // return viewMode === VIEWS.ARRANGE ? selectedMeshes.length : 0;
 }
 
 function platformUpdateSelected() {
     const settings = current();
+
     const { device } = settings;
     const { extruders } = device;
     const { selection, ui } = api;
 
-    const selreal = selection.widgets();
     const selwid = selection.widgets(true);
+    const selreal = selection.widgets(false).length;
     const selcount = selwid.length;
+
+    $('mesh-enable').disabled = selreal != 1;
+    $('mesh-disable').disabled = selreal != 1;
+    $('mesh-rename').disabled = selcount != 1;
+    $('mesh-swap').disabled = selcount != 1;
 
     if (selcount) {
         let enaC = selwid.filter(w => w.meta.disabled !== true).length;
         let disC = selwid.filter(w => w.meta.disabled === true).length;
-        if (api.feature.meta && selcount === 1) {
-            let sel = selwid[0];
-            let name = sel.meta.file || sel.meta.url;
+        if (api.feature.meta && selcount) {
+            let name = selwid[0].meta.file || selwid[0].meta.url;
             if (name) {
                 name = name
                     .toLowerCase()
@@ -255,20 +259,19 @@ function platformUpdateSelected() {
                 if (sp >= 0) {
                     name = name.substring(sp + 1);
                 }
-                ui.mesh.name.innerText = name;
             }
-            ui.mesh.points.innerText = util.comma(sel.meta.vertices);
-            ui.mesh.faces.innerText = util.comma(sel.meta.vertices / 3);
+            let vert = selwid.map(w => w.meta.vertices).reduce((a,b) => a+b);
+            ui.mesh.points.innerText = util.comma(vert);
+            ui.mesh.faces.innerText = util.comma(vert / 3);
         } else {
-            ui.mesh.name.innerText = `[${selcount}]`;
             ui.mesh.points.innerText = '-';
             ui.mesh.faces.innerText = '-';
         }
     } else {
-        ui.mesh.name.innerText = '[0]';
         ui.mesh.points.innerText = '-';
         ui.mesh.faces.innerText = '-';
     }
+    ui.mesh.name.innerText = selection.widgets(false).length;
 
     if (extruders) {
         for (let i = 0; i < extruders.length; i++) {
@@ -867,6 +870,7 @@ function fitDeviceToWidgets() {
 const platform = api.platform = {
     fit: fitDeviceToWidgets,
     add: platformAdd,
+    changed: platformChanged,
     delete: platformDelete,
     layout: platformLayout,
     group: platformGroup,

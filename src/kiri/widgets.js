@@ -29,6 +29,20 @@ function annotate(id) {
     return (w.anno = w.anno || {});
 }
 
+function rename() {
+    let widgets = api.selection.widgets(true);
+    if (widgets.length !== 1) {
+        return;
+    }
+    let widget = widgets[0];
+    const newname = prompt("new widget name", widget.meta.file);
+    if (newname) {
+        widget.meta.file = newname;
+        api.platform.changed();
+        api.space.save(true);
+    }
+}
+
 function replace(vertices) {
     let widgets = api.selection.widgets(true);
     if (!widgets.length) {
@@ -82,6 +96,7 @@ const widgets = api.widgets = {
     new:        newWidget,
     map,
     meshes,
+    rename,
     replace,
     opacity,
     annotate,

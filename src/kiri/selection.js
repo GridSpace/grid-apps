@@ -24,10 +24,16 @@ function for_groups(fn) {
 function for_widgets(fn, noauto) {
     let m = selectedMeshes;
     let w = api.widgets.all();
-    if (m.length === 0 && w.length === 1) {
-        m = noauto ? [] : [ w[0].mesh ];
+    if (m.length === 0 && w.length) {
+        m = noauto ? [] : w.map(w => w.mesh);
     }
     m.slice().forEach(mesh => { fn(mesh.widget) });
+}
+
+function for_status(fn) {
+    api.widgets.all().forEach(w => {
+        fn(w, selectedMeshes.contains(w.mesh));
+    });
 }
 
 function for_meshes(fn) {
@@ -276,6 +282,7 @@ const selection = api.selection = {
     duplicate,
     for_groups,
     for_meshes,
+    for_status,
     for_widgets,
     update_bounds,
     update_info,

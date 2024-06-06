@@ -560,7 +560,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             ann.url = widget.meta.url;
         });
         SDB.setItem('ws-widgets', o2js(newWidgets));
-        oldWidgets.forEach(function(wid) {
+        oldWidgets.forEach(wid => {
             Widget.deleteFromState(wid);
         });
         // eliminate dangling saved widgets

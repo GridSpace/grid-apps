@@ -488,10 +488,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             case cca('m'): // mirror object
                 mirrorSelection();
                 break;
-            case cca('R'): // toggle slice render mode
-                renderMode++;
-                api.function.slice();
-                break;
             case cca('a'):
                 if (api.view.get() === VIEWS.ARRANGE) {
                     // auto arrange items on platform
@@ -2231,9 +2227,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             let dv = parseFloat(e.target.value || 1),
                 pv = parseFloat(e.target.was || 1),
                 ra = dv / pv,
-                xv = parseFloat(ui.sizeX.was),
-                yv = parseFloat(ui.sizeY.was),
-                zv = parseFloat(ui.sizeZ.was),
+                xv = parseFloat(ui.sizeX.was ?? ui.scaleX.value) || 1,
+                yv = parseFloat(ui.sizeY.was ?? ui.scaleY.value) || 1,
+                zv = parseFloat(ui.sizeZ.was ?? ui.scaleZ.value) || 1,
                 ta = e.target,
                 xc = ui.lockX.checked,
                 yc = ui.lockY.checked,
@@ -2259,9 +2255,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             let dv = parseFloat(e.target.value || 1),
                 pv = parseFloat(e.target.was || 1),
                 ra = dv / pv,
-                xv = parseFloat(ui.scaleX.was),
-                yv = parseFloat(ui.scaleY.was),
-                zv = parseFloat(ui.scaleZ.was),
+                xv = parseFloat(ui.scaleX.was ?? ui.scaleX.value) || 1,
+                yv = parseFloat(ui.scaleY.was ?? ui.scaleY.value) || 1,
+                zv = parseFloat(ui.scaleZ.was ?? ui.scaleY.value) || 1,
                 ta = e.target,
                 xc = ui.lockX.checked,
                 yc = ui.lockY.checked,
@@ -2273,6 +2269,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 xr = ((tl && xc) || (!tl && xt) ? ra : 1),
                 yr = ((tl && yc) || (!tl && yt) ? ra : 1),
                 zr = ((tl && zc) || (!tl && zt) ? ra : 1);
+
             api.selection.scale(xr,yr,zr);
             ui.scaleX.was = ui.scaleX.value = xv * xr;
             ui.scaleY.was = ui.scaleY.value = yv * yr;
@@ -2280,13 +2277,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
 
         function selectionRotate(e) {
-            let deg = parseFloat(e.target.value) * DEG2RAD;
-            e.target.value = 0;
-            switch (e.target.id.split('').pop()) {
-                case 'x': return api.selection.rotate(deg,0,0);
-                case 'y': return api.selection.rotate(0,deg,0);
-                case 'z': return api.selection.rotate(0,0,deg);
-            }
+            let val = parseFloat(e.target.value) || 0;
+            // let deg = val * DEG2RAD;
+            e.target.value = val;
         }
 
         space.event.onEnterKey([
@@ -2392,30 +2385,6 @@ gapp.register("kiri.init", [], (root, exports) => {
                 return false;
             }
         };
-
-        // space.mouse.up((event, int) => {
-        //     // context menu
-        //     if (event.button === 2) {
-        //         let et = event.target;
-        //         if (et.tagName != 'CANVAS' && et.id != 'context-menu') {
-        //             return;
-        //         }
-        //         let full = api.view.is_arrange();
-        //         for (let key of ["layflat","mirror","duplicate"]) {
-        //             $(`context-${key}`).disabled = !full;
-        //         }
-        //         let style = ui.context.style;
-        //         style.display = 'flex';
-        //         style.left = `${event.clientX-3}px`;
-        //         style.top = `${event.clientY-3}px`;
-        //         ui.context.onmouseleave = () => {
-        //             style.display = '';
-        //         };
-        //         event.preventDefault();
-        //         event.stopPropagation();
-        //         contextInt = int;
-        //     }
-        // });
 
         space.mouse.downSelect((int, event) => {
             if (api.feature.on_mouse_down) {
@@ -2701,19 +2670,22 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.selection.update_info();
         };
         // rotation buttons
-        let d = (Math.PI / 180) * 5;
-        $('rot_x_lt').onclick = () => { api.selection.rotate(-d,0,0) };
-        $('rot_x_gt').onclick = () => { api.selection.rotate( d,0,0) };
-        $('rot_y_lt').onclick = () => { api.selection.rotate(0,-d,0) };
-        $('rot_y_gt').onclick = () => { api.selection.rotate(0, d,0) };
-        $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d) };
-        $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d) };
+        let d = (Math.PI / 180);
+        $('rot_x_lt').onclick = () => { api.selection.rotate(-d * $('rot_x').value,0,0) };
+        $('rot_x_gt').onclick = () => { api.selection.rotate( d * $('rot_x').value,0,0) };
+        $('rot_y_lt').onclick = () => { api.selection.rotate(0,-d * $('rot_y').value,0) };
+        $('rot_y_gt').onclick = () => { api.selection.rotate(0, d * $('rot_y').value,0) };
+        $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d * $('rot_z').value) };
+        $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d * $('rot_z').value) };
         // rendering options
         $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
         $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
         $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
         // mesh buttons
         $('mesh-swap').onclick = () => { api.widgets.replace() };
+        $('mesh-enable').onclick = () => { api.selection.enable() };
+        $('mesh-disable').onclick = () => { api.selection.disable() };
+        $('mesh-rename').onclick = () => { api.widgets.rename() };
         $('mesh-export-stl').onclick = () => { objectsExport('stl') };
         $('mesh-export-obj').onclick = () => { objectsExport('obj') };
         $('context-duplicate').onclick = duplicateSelection;

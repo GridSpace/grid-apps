@@ -219,15 +219,15 @@
                     <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
                     <label>X</label>
                     <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
-                    <input id="rot_x" class="value center" size="6" value="0">
+                    <input id="rot_x" class="value center" size="6" value="5">
                     <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
                     <label>Y</label>
                     <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
-                    <input id="rot_y" class="value center" size="6" value="0">
+                    <input id="rot_y" class="value center" size="6" value="5">
                     <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
                     <label>Z</label>
                     <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
-                    <input id="rot_z" class="value center" size="6" value="0">
+                    <input id="rot_z" class="value center" size="6" value="5">
                     <div class="buttons f-row">
                         <button id="unrotate" class="grow" lk="reset">reset</button>
                     </div>
@@ -235,34 +235,48 @@
             </span>
             <span id="tool-scale"><i class="fas fa-expand" title="scale selection"></i>
                 <div id="ft-scale" class="grid pop">
-                    <div><label class="middle">X</label><input id="lock_x" type="checkbox" checked></div>
-                    <div><label class="middle">Y</label><input id="lock_y" type="checkbox" checked></div>
-                    <div><label class="middle">Z</label><input id="lock_z" type="checkbox" checked></div>
-                    <div><label id="lab-axis" lk="axis">axis</label></div>
-                    <div><input id="size_x" size="8" class="value"></div>
-                    <div><input id="size_y" size="8" class="value"></div>
-                    <div><input id="size_z" size="8" class="value"></div>
-                    <div><label id="lab-size" lk="size">size</label></div>
-                    <div><input id="scale_x" size="8" class="value" value="1"></div>
-                    <div><input id="scale_y" size="8" class="value" value="1"></div>
-                    <div><input id="scale_z" size="8" class="value" value="1"></div>
-                    <div><label id="lab-scale" lk="scale">scale</label></div>
-                    <button id="scale-reset" class="gr4">reset</button>
+                    <div><label>X</label><input id="lock_x" type="checkbox" checked></div>
+                    <div><label>Y</label><input id="lock_y" type="checkbox" checked></div>
+                    <div><label>Z</label><input id="lock_z" type="checkbox" checked></div>
+                    <label id="lab-axis" lk="axis">axis</label>
+                    <input id="size_x" size="8" class="value">
+                    <input id="size_y" size="8" class="value">
+                    <input id="size_z" size="8" class="value">
+                    <label id="lab-size" lk="size">size</label>
+                    <input id="scale_x" size="8" class="value" value="1">
+                    <input id="scale_y" size="8" class="value" value="1">
+                    <input id="scale_z" size="8" class="value" value="1">
+                    <label id="lab-scale" lk="scale">scale</label>
+                    <div class="buttons f-row">
+                        <button id="scale-reset" class="grow j-center">reset</button>
+                    </div>
                 </div>
             </span>
             <span id="tool-mesh"><i class="fas fa-dice-d20" title="selected mesh tool"></i>
                 <div id="ft-mesh" class="grow f-col pop">
-                    <div id="mesh-info" class="grid">
-                        <label>object:</label>
-                        <span id="mesh-name" class="value">[0]</span>
-                        <label>points:</label>
-                        <span id="mesh-points" class="value">-</span>
-                        <label>faces:</label>
-                        <span id="mesh-faces" class="value">-</span>
+                    <div id="ft-mesh-btn">
+                        <div><button id="mesh-enable" lkx="rc_swap">enable</button></div>
+                        <div><button id="mesh-disable" lkx="rc_swap">disable</button></div>
+                        <div><button id="mesh-rename" lkx="rc_swap">rename</button></div>
+                        <div><button id="mesh-swap" lkx="rc_swap">replace</button></div>
+                        <div><button id="mesh-export-obj" lk="rc_xobj">export OBJ</button></div>
+                        <div><button id="mesh-export-stl" lk="rc_xstl">export STL</button></div>
                     </div>
-                    <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
-                    <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
-                    <button id="mesh-swap" lk="rc_swap">replace vertices</button>
+                    <div class="set-sep"></div>
+                    <div id="mesh-info" class="f-row gap3">
+                        <div class="em1">
+                            <label>selected</label>
+                            <span id="mesh-name" class="value">[0]</span>
+                        </div>
+                        <div class="em3">
+                            <label>faces</label>
+                            <span id="mesh-faces" class="value">-</span>
+                        </div>
+                        <div class="em3">
+                            <label>points</label>
+                            <span id="mesh-points" class="value">-</span>
+                        </div>
+                    </div>
                 </div>
             </span>
             <span id="context-mirror" xlk="rc_mirr"><i class="fas fa-arrows-left-right-to-line" title="mirror selection"></i></span>

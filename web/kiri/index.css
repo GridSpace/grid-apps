@@ -231,12 +231,16 @@ th, tr, td, label {
     border-top: 1px solid #555;
     border-bottom: 1px solid #555;
 }
-.dark.dark #mode-info label {
+.dark #mesh-info label,
+.dark #mode-info label
+{
     color: #fff;
     border-color: #888;
     background-color: var(--blue-0);
 }
-.dark #mode-info span {
+.dark #mesh-info span,
+.dark #mode-info span
+{
     color: #fff;
     border-color: #888;
     background-color: #333;
@@ -651,11 +655,6 @@ th, tr, td, label {
 .center {
     text-align: center;
 }
-.middle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 .t-just {
     text-align: justify;
 }
@@ -706,15 +705,23 @@ th, tr, td, label {
 }
 
 #container {
+    border: 0;
+    margin: 0;
+    padding: 0;
     position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: -1;
-    width: 100%;
-    height: 100%;
 }
 #container canvas {
+    overflow: hidden;
+    margin: 0;
+    border: 0;
+    padding: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden;
 }
 
 .chonk {
@@ -745,7 +752,7 @@ th, tr, td, label {
 #mode-info > div {
     display: contents;
 }
-#mode-info label {
+#mode-info label, #mesh-info label {
     font-size: smaller;
     font-weight: bold;
     align-self: right;
@@ -760,7 +767,7 @@ th, tr, td, label {
     border-right: 0;
     border-bottom: 1px solid var(--blue-3);
 }
-#mode-info span {
+#mode-info span, #mesh-info span {
     font-size: smaller;
     margin: 0 5px 0 0;
     padding: 3px 5px 3px 5px;
@@ -1034,30 +1041,36 @@ th, tr, td, label {
     border: 1px solid #aaa;
     border-radius: 3px;
     position: absolute;
-    display: none;
     margin-top: 3px;
     padding: 3px;
     top: 100%;
 }
-#render-tools > span:hover .pop {
-    display: grid;
+#render-tools > span:not(:hover) .pop {
+    display: none;
 }
 /** selection rotation */
 #ft-rotate {
-    grid-gap: 2px;
+    gap: 2px;
     grid-template-rows: auto auto auto 1fr;
     grid-template-columns: auto auto auto auto;
 }
+#ft-rotate label {
+    padding: 0 5px 0 5px;
+}
 #ft-rotate label,
-#ft-rotate svg 
+#ft-rotate svg,
+#fr-rotate div
 {
+    margin: 0;
     text-align: center;
+    align-self: center;
 }
 #ft-rotate svg {
+    padding: 2px;
     margin-top: 2px;
-    padding: 1px 15px 1px 15px;
-    border: 1px solid transparent;
+    aspect-ratio: 2/1;
     border-radius: 3px;
+    border: 1px solid transparent;
 }
 #ft-rotate > div:hover > svg {
     background-color: var(--main-color);
@@ -1069,26 +1082,50 @@ th, tr, td, label {
     justify-content: center;
 }
 #ft-rotate .buttons {
-    grid-column: 1/4;
     align-items: stretch;
-    min-width: 150px;
+    grid-column: 1/4;
+    min-width: 100px;
+}
+#ft-rotate button {
+    justify-content: center;
 }
 /** selection scaling */
 #ft-scale {
-    grid-gap: 2px;
+    gap: 3px;
     grid-template-rows: auto auto auto 1fr;
     grid-template-columns: auto auto auto 1fr;
+    justify-content: stretch;
+    align-items: stretch;
 }
-#ft-scale label {
-    text-align: center;
+#ft-scale > div {
+    align-items: center;
+    flex-direction: row;
+}
+#ft-scale > input {
+    margin: 0;
+}
+#ft-scale > div > label {
     flex-grow: 1;
+    text-align: center;
 }
-#ft-scale button {
-    grid-column: 1/4;
-    margin-left: 0;
-    margin-right: 0;
+#ft-scale > div > input {
+    position: absolute;
+    right: 0;
+}
+#ft-scale .buttons {
+    grid-column: 1/4 !important;
 }
 /** selection mesh actions */
+#ft-mesh-btn {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-rows: 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
+}
+#ft-mesh-btn button {
+    justify-content: center;
+    flex-grow: 1;
+}
 #ft-mesh label {
     font-size: smaller;
 }
@@ -1096,18 +1133,22 @@ th, tr, td, label {
     font-family: monospace;
     padding-left: 4px;
 }
-#ft-mesh {
-    min-width: 200px;
-}
 #mesh-info {
-    grid-gap: 2px;
-    grid-template-rows: auto auto auto;
-    grid-template-columns: auto 1fr;
+    margin: 2px 1px 1px 1px;
 }
-#lock_x, #lock_y, #lock_z {
-    position: absolute;
-    right: 2px;
-    top: 7px;
+#mesh-info label, #mesh-info span {
+    align-self: unset !important;
+    margin: 0;
+}
+#mesh-info span {
+    display: inline-flex;
+    align-items: center;
+}
+#mesh-info .em1 span {
+    min-width: 1em;
+}
+#mesh-info .em3 span {
+    min-width: 3.5em;
 }
 #lay-flat.selected {
     background-color: var(--main-color);
@@ -1965,7 +2006,7 @@ th, tr, td, label {
     justify-content: center;
     align-items: center;
     position: absolute;
-    top: 57px;
+    top: 90px;
     right: 0;
     left: 0;
 }
