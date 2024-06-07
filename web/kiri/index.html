@@ -214,7 +214,7 @@
     <!-- toolbar with mesh and rendering options -->
     <div>
         <div id="render-tools">
-            <span id="tool-rotate"><i class="fas fa-sync-alt" title="rotate selection"></i>
+            <span id="tool-rotate"><i class="fas fa-rotate-right" title="rotate selection"></i>
                 <div id="ft-rotate" class="grid pop">
                     <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
                     <label>X</label>
@@ -233,7 +233,7 @@
                     </div>
                 </div>
             </span>
-            <span id="tool-scale"><i class="fas fa-expand" title="scale selection"></i>
+            <span id="tool-scale"><i class="fas fa-expand" title="scale or resize selection"></i>
                 <div id="ft-scale" class="grid pop">
                     <div><label>X</label><input id="lock_x" type="checkbox" checked></div>
                     <div><label>Y</label><input id="lock_y" type="checkbox" checked></div>
@@ -252,30 +252,11 @@
                     </div>
                 </div>
             </span>
-            <span id="tool-mesh"><i class="fas fa-dice-d20" title="selected mesh tool"></i>
+            <span id="tool-mesh"><i class="fas fa-dice-d20"></i>
                 <div id="ft-mesh" class="grow f-col pop">
                     <div id="ft-mesh-btn">
-                        <div><button id="mesh-enable" lkx="rc_swap">enable</button></div>
-                        <div><button id="mesh-disable" lkx="rc_swap">disable</button></div>
-                        <div><button id="mesh-rename" lkx="rc_swap">rename</button></div>
-                        <div><button id="mesh-swap" lkx="rc_swap">replace</button></div>
                         <div><button id="mesh-export-obj" lk="rc_xobj">export OBJ</button></div>
                         <div><button id="mesh-export-stl" lk="rc_xstl">export STL</button></div>
-                    </div>
-                    <div class="set-sep"></div>
-                    <div id="mesh-info" class="f-row gap3">
-                        <div class="em1">
-                            <label>selected</label>
-                            <span id="mesh-name" class="value">[0]</span>
-                        </div>
-                        <div class="em3">
-                            <label>faces</label>
-                            <span id="mesh-faces" class="value">-</span>
-                        </div>
-                        <div class="em3">
-                            <label>points</label>
-                            <span id="mesh-points" class="value">-</span>
-                        </div>
                     </div>
                 </div>
             </span>

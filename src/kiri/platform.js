@@ -235,44 +235,6 @@ function platformUpdateSelected() {
     const { extruders } = device;
     const { selection, ui } = api;
 
-    const selwid = selection.widgets(true);
-    const selreal = selection.widgets(false).length;
-    const selcount = selwid.length;
-
-    $('mesh-enable').disabled = selreal != 1;
-    $('mesh-disable').disabled = selreal != 1;
-    $('mesh-rename').disabled = selcount != 1;
-    $('mesh-swap').disabled = selcount != 1;
-
-    if (selcount) {
-        let enaC = selwid.filter(w => w.meta.disabled !== true).length;
-        let disC = selwid.filter(w => w.meta.disabled === true).length;
-        if (api.feature.meta && selcount) {
-            let name = selwid[0].meta.file || selwid[0].meta.url;
-            if (name) {
-                name = name
-                    .toLowerCase()
-                    .replace(/_/g, ' ')
-                    .replace(/.png/, '')
-                    .replace(/.stl/, '');
-                let sp = name.indexOf('/');
-                if (sp >= 0) {
-                    name = name.substring(sp + 1);
-                }
-            }
-            let vert = selwid.map(w => w.meta.vertices).reduce((a,b) => a+b);
-            ui.mesh.points.innerText = util.comma(vert);
-            ui.mesh.faces.innerText = util.comma(vert / 3);
-        } else {
-            ui.mesh.points.innerText = '-';
-            ui.mesh.faces.innerText = '-';
-        }
-    } else {
-        ui.mesh.points.innerText = '-';
-        ui.mesh.faces.innerText = '-';
-    }
-    ui.mesh.name.innerText = selection.widgets(false).length;
-
     if (extruders) {
         for (let i = 0; i < extruders.length; i++) {
             let b = $(`sel-ext-${i}`);
@@ -568,29 +530,77 @@ function platformDeletePost() {
 function platformChanged() {
     h.bind($('ws-widgets'), api.widgets.all().map(w => {
         let color;
+        let file = w.meta.file || 'no name';
+        let fsho = file.length > 25 ? file.slice(0,20) + '..' + file.slice(-2) : file;
         return [
-            h.div([
-
+            h.div({
+                onmouseenter() {
+                    color = w.getColor();
+                    w.setColor(0x0088ff, null, false);
+                },
+                onmouseleave() {
+                    w.setColor(color, null, false);
+                },
+            },[
+                h.div({ class: "widpop" }, [
+                    h.div({ class: "widopt" }, [
+                        h.button(
+                            {
+                                title: "rename",
+                                onclick() { api.widgets.rename(w)
+                            }},
+                            [ h.i({ class:"fas fa-pen-to-square" }) ]
+                        ),
+                        h.button(
+                            {
+                                title: "replace",
+                                onclick() { api.widgets.replace(null,w) }
+                            },
+                            [ h.i({ class:"fas fa-rotate" }) ]
+                        ),
+                        h.button(
+                            {
+                                id: `w-en-${w.id}`,
+                                title: "toggle disabled",
+                                class: w.meta.disabled ? "disabled" : "",
+                                onclick() {
+                                    let dis = w.meta.disabled = !w.meta.disabled;
+                                    let sel = api.selection.contains(w);
+                                    api.uc.setClass($(`w-en-${w.id}`), "disabled", dis);
+                                    w.setColor(sel ? COLOR.selected : COLOR.deselected, null, false);
+                                }
+                            },
+                            [ h.i({ class:"fas fa-ban" }) ]
+                        ),
+                        h.button(
+                            {
+                                title: "delete",
+                                onclick() { platformDelete(w) }
+                            },
+                            [ h.i({ class:"fas fa-trash" }), ]
+                        )
+                    ]),
+                    h.button([
+                        h.i({ class: "fa-solid fa-caret-left" })
+                    ])
+                ]),
                 h.button({
-                    _: w.meta.file || 'no name',
+                    _: fsho,
                     id: `ws-${w.id}`,
-                    class: "grow",
-                    onmouseenter() {
-                        color = w.getColor();
-                        w.setColor(0x0088ff);
-                    },
-                    onmouseleave() {
-                        w.setColor(color);
-                    },
+                    class: "grow name",
+                    title: file,
+                    // onmouseenter() {
+                    //     color = w.getColor();
+                    //     w.setColor(0x0088ff, null, false);
+                    // },
+                    // onmouseleave() {
+                    //     w.setColor(color, null, false);
+                    // },
                     onclick() {
                         platformSelect(w, true, false);
                         color = w.getColor();
                     }
-                }),
-                h.button(
-                    { onclick() { platformDelete(w) } },
-                    [ h.i({ class:"fas fa-trash" }), ]
-                )
+                })
             ])
         ]
     }));

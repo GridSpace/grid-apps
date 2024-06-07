@@ -29,8 +29,9 @@ function annotate(id) {
     return (w.anno = w.anno || {});
 }
 
-function rename() {
-    let widgets = api.selection.widgets(true);
+/** TODO really should be on widget, not widgets */
+function rename(sel) {
+    let widgets = sel ? [ sel ] : api.selection.widgets(true);
     if (widgets.length !== 1) {
         return;
     }
@@ -43,8 +44,8 @@ function rename() {
     }
 }
 
-function replace(vertices) {
-    let widgets = api.selection.widgets(true);
+function replace(vertices, sel) {
+    let widgets = sel ? [sel] : api.selection.widgets(true);
     if (!widgets.length) {
         return;
     }

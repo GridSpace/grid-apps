@@ -2682,10 +2682,10 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
         $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
         // mesh buttons
-        $('mesh-swap').onclick = () => { api.widgets.replace() };
-        $('mesh-enable').onclick = () => { api.selection.enable() };
-        $('mesh-disable').onclick = () => { api.selection.disable() };
-        $('mesh-rename').onclick = () => { api.widgets.rename() };
+        // $('mesh-swap').onclick = () => { api.widgets.replace() };
+        // $('mesh-enable').onclick = () => { api.selection.enable() };
+        // $('mesh-disable').onclick = () => { api.selection.disable() };
+        // $('mesh-rename').onclick = () => { api.widgets.rename() };
         $('mesh-export-stl').onclick = () => { objectsExport('stl') };
         $('mesh-export-obj').onclick = () => { objectsExport('obj') };
         $('context-duplicate').onclick = duplicateSelection;

@@ -912,16 +912,28 @@ th, tr, td, label {
 #ws-widgets button {
     text-transform: none;
     text-align: left;
+    white-space: nowrap;
     align-items: center;
+    overflow: hidden;
+    max-width: 150px;
 }
 #ws-widgets button.selected {
     background-color: var(--blue-3);
     color: #000;
 }
-/* .slim-hide {
-    width: 0;
-    overflow: hidden;
-} */
+.widpop:not(:hover) .widopt {
+    display: none;
+}
+.widopt {
+    background-color: white;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+.widopt button.disabled {
+    background-color: var(--blue-3);
+}
 #top-sep {
     display: none;
 }
@@ -1126,8 +1138,7 @@ th, tr, td, label {
 #ft-mesh-btn {
     display: grid;
     grid-auto-flow: row;
-    grid-template-rows: 1fr 1fr;
-    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
 }
 #ft-mesh-btn button {
     justify-content: center;
