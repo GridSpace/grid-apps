@@ -17,6 +17,7 @@ const { space } = moto;
 const { local } = data;
 const { clone } = Object;
 const { areEqual, ls2o, js2o } = utils;
+const { COLOR } = consts;
 const localFilterKey ='kiri-gcode-filters';
 const localFilters = js2o(local.getItem(localFilterKey)) || [];
 
@@ -304,6 +305,28 @@ function updateExtruderFields(device) {
             device.internal = device.extruders.length - 1;
             updateExtruderFields(device);
         };
+        api.uc.setClass($('tool-nozzle'), 'hide', false);
+        h.bind($('ft-nozzle'), device.extruders.map((d,i) => h.div([
+            h.button({
+                _: `extruder ${i}`,
+                onclick() {
+                    api.selection.for_widgets(w => {
+                        w.anno.extruder = i;
+                        w.setColor(
+                            api.selection.contains(w) ?
+                                COLOR.selected : COLOR.deselected,
+                            undefined,
+                            false);
+                    });
+                }
+            }),
+            h.div({
+                class: "splat",
+                style: `background-color: #${COLOR.deselected[i].toString(16)}`
+            })
+        ])));
+    } else {
+        api.uc.setClass($('tool-nozzle'), 'hide', true);
     }
 }
 

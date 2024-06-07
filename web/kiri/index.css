@@ -1067,6 +1067,18 @@ th, tr, td, label {
 #render-tools > span:not(:hover) .pop {
     display: none;
 }
+/** fdm extruder drop-down */
+#ft-nozzle .splat {
+    width: 10px;
+    height: 10px;
+    margin: 3px;
+    border-radius: 3px;
+    border: 1px solid #555;
+}
+#ft-nozzle > div {
+    flex-direction: row;
+    align-items: center;
+}
 /** selection rotation */
 #ft-rotate {
     gap: 2px;
