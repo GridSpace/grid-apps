@@ -428,24 +428,77 @@ function prepEach(widget, settings, print, firstPoint, update) {
         );
     }
 
+    function sliceOutput(sliceOut, opts = {}) {
+        const { cutdir, depthFirst, easeDown, progress } = opts;
+
+        let total = 0;
+        let depthData = [];
+
+        for (let slice of sliceOut) {
+            let polys = [], t = [], c = [];
+            POLY.flatten(slice.camLines).forEach(function (poly) {
+                let child = poly.parent;
+                if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
+                if (child) c.push(poly); else t.push(poly);
+                poly.layer = depthData.layer;
+                polys.push(poly);
+            });
+
+            // set cut direction on outer polys
+            POLY.setWinding(t, cutdir);
+            // set cut direction on inner polys
+            POLY.setWinding(c, !cutdir);
+
+            if (depthFirst) {
+                depthData.push(polys);
+            } else {
+                printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
+                    poly.forEachPoint(function(point, pidx, points, offset) {
+                        camOut(point.clone(), offset !== 0, undefined, count === 1 ? 0.5 : 1);
+                    }, poly.isClosed(), index);
+                }, { swapdir: false });
+                newLayer();
+            }
+            progress(++total, sliceOut.length);
+        }
+
+        // crucially returns true for -0 as well as other negative #s
+        function isNeg(v) {
+            return v < 0 || (v === 0 && 1/v === -Infinity);
+        }
+
+        if (depthFirst) {
+            let ins = depthData.map(a => a.filter(p => !isNeg(p.depth)));
+            let itops = ins.map(level => {
+                return POLY.nest(level.filter(poly => poly.depth === 0).clone());
+            });
+            let outs = depthData.map(a => a.filter(p => isNeg(p.depth)));
+            let otops = outs.map(level => {
+                return POLY.nest(level.filter(poly => poly.depth === 0).clone());
+            });
+            printPoint = depthRoughPath(printPoint, 0, ins, itops, polyEmit, false, easeDown);
+            printPoint = depthRoughPath(printPoint, 0, outs, otops, polyEmit, false, easeDown);
+        }
+    }
+
     // coming from a previous widget, use previous last point
     lastPoint = firstPoint;
 
     // make top start offset configurable
     printPoint = firstPoint || origin;
 
-    // accumulated data for depth-first optimiztions
-    let depthData = {
-        rough: [],
-        outline: [],
-        roughDiam: 0,
-        outlineDiam: 0,
-        contourx: [],
-        contoury: [],
-        trace: [],
-        drill: [],
-        layer: 0,
-    };
+    // accumulated data for depth-first optimizations
+    // let depthData = {
+    //     rough: [],
+    //     outline: [],
+    //     roughDiam: 0,
+    //     outlineDiam: 0,
+    //     contourx: [],
+    //     contoury: [],
+    //     trace: [],
+    //     drill: [],
+    //     layer: 0,
+    // };
 
     let ops = {
         stock,
@@ -464,6 +517,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         tip2tipEmit,
         depthRoughPath,
         depthOutlinePath,
+        sliceOutput,
         emitDrills,
         emitTrace,
         bounds,

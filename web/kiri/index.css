@@ -375,6 +375,9 @@ th, tr, td, label {
 .dark #speedbar label {
     color: black;
 }
+.dark .widopt {
+    background-color: #222;
+}
 
 /* top menu bar, drop menus */
 #top, #app-name {
@@ -926,6 +929,7 @@ th, tr, td, label {
 }
 .widopt {
     background-color: white;
+    border-radius: 3px;
     position: absolute;
     top: 0;
     right: 0;

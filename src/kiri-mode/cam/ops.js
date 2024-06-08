@@ -428,11 +428,10 @@ class OpRough extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut, camFaces } = this;
-        let { setTool, setSpindle, setPrintPoint } = ops;
-        let { polyEmit, depthRoughPath } = ops;
+        let { setTool, setSpindle, setPrintPoint, sliceOutput } = ops;
         let { camOut, newLayer, printPoint } = ops;
-        let { settings, widget } = state;
-        let { process, controller } = settings;
+        let { settings } = state;
+        let { process } = settings;
 
         let easeDown = process.camEaseDown;
         let cutdir = process.camConventional;
@@ -463,54 +462,13 @@ class OpRough extends CamOp {
             newLayer();
         }
 
-        let total = 0;
-        for (let slice of sliceOut) {
-            let polys = [], t = [], c = [];
-            POLY.flatten(slice.camLines).forEach(function (poly) {
-                let child = poly.parent;
-                if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
-                if (child) c.push(poly); else t.push(poly);
-                poly.layer = depthData.layer;
-                polys.push(poly);
-            });
-
-            // set cut direction on outer polys
-            POLY.setWinding(t, cutdir);
-            // set cut direction on inner polys
-            POLY.setWinding(c, !cutdir);
-
-            if (depthFirst) {
-                depthData.push(polys);
-            } else {
-                printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
-                    poly.forEachPoint(function(point, pidx, points, offset) {
-                        camOut(point.clone(), offset !== 0, undefined, count === 1 ? 0.5 : 1);
-                    }, poly.isClosed(), index);
-                }, { swapdir: false });
-                newLayer();
-            }
-            progress(++total / sliceOut.length, "routing");
-        }
-
-        function isNeg(v) {
-            return v < 0 || (v === 0 && 1/v === -Infinity);
-        }
-
-        if (depthFirst) {
-            let ease = op.down && easeDown ? op.down : 0;
-            let ins = depthData.map(a => a.filter(p => !isNeg(p.depth)));
-            let itops = ins.map(level => {
-                return POLY.nest(level.filter(poly => poly.depth === 0).clone());
-            });
-            let outs = depthData.map(a => a.filter(p => isNeg(p.depth)));
-            let otops = outs.map(level => {
-                return POLY.nest(level.filter(poly => poly.depth === 0).clone());
-            });
-            printPoint = depthRoughPath(printPoint, 0, ins, itops, polyEmit, false, ease);
-            printPoint = depthRoughPath(printPoint, 0, outs, otops, polyEmit, false, ease);
-        }
-
         setPrintPoint(printPoint);
+        sliceOutput(sliceOut, {
+            cutdir,
+            depthFirst,
+            easeDown: op.down && easeDown ? op.down : 0,
+            progress: (n,m) => progress(n/m, "routing")
+        });
     }
 }
 
@@ -1419,7 +1377,8 @@ class OpPocket extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut } = this;
-        let { setTool, setSpindle, setTolerance } = ops;
+        let { setTool, setSpindle, setTolerance, sliceOutput } = ops;
+        let { process } = state.settings;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
@@ -1428,11 +1387,12 @@ class OpPocket extends CamOp {
             setTolerance(this.topo.tolerance);
         }
 
-        let i=0, l=sliceOut.length;
-        for (let slice of sliceOut.filter(s => s.camLines)) {
-            ops.emitTrace(slice);
-            progress(++i / l, "pocket");
-        }
+        sliceOutput(sliceOut, {
+            cutdir: process.camConventional,
+            depthFirst: process.camDepthFirst && !state.isIndexed,
+            easeDown: op.down && process.easeDown ? op.down : 0,
+            progress: (n,m) => progress(n/m, "pocket")
+        });
     }
 }
 
