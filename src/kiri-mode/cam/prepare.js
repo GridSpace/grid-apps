@@ -26,9 +26,8 @@ const POLY = polygons;
  * @param {Number} [index] into widget array
  * @param {Object} [firstPoint] starting point
  */
-CAM.prepare = async function(widgets, settings, update) {
-    widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
-
+CAM.prepare = async function(widall, settings, update) {
+    const widgets = widall.filter(w => !w.track.ignore && !w.meta.disabled);
     const count = widgets.length;
     const weight = 1/count;
     const print = self.worker.print = kiri.newPrint(settings, widgets);
