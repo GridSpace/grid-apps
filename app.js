@@ -714,7 +714,10 @@ function minify(path) {
         return code;
     }
     let mini = uglify.minify(code.toString(), {
-        compress: { unused: false }
+        compress: {
+            merge_vars: false,
+            unused: false
+        }
     });
     if (mini.error) {
         console.trace(mini.error);
