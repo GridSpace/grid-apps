@@ -11,7 +11,6 @@ gapp.register("kiri-mode.laser.driver", [], (root, exports) => {
 
 const { base, kiri } = root;
 const { driver, newSlice } = kiri;
-const { FDM, CAM } = driver;
 const { polygons, newPoint } = base;
 
 const POLY = polygons;
@@ -26,7 +25,7 @@ const LASER = driver.LASER = {
 };
 
 function init(kiri, api) {
-    api.event.on("settings.saved", (settings) => {
+    api.event.on("settings.saved", settings => {
         let ui = kiri.api.ui;
     });
 }
@@ -89,7 +88,7 @@ function slice(settings, widget, onupdate, ondone) {
             onupdate(v);
         }
     }).then(output => {
-        let slices = widget.slices = output.slices.map(data => {
+        widget.slices = output.slices.map(data => {
             let { z, lines, groups } = data;
             let tops = POLY.nest(groups);
             let slice = newSlice(z).addTops(tops);
@@ -111,24 +110,21 @@ function polyLabel(poly, label) {
 function sliceEmitObjects(print, slice, groups, opt = { }) {
     let start = newPoint(0,0,0);
     let process = print.settings.process;
-    let grouped = process.outputLaserGroup;
     let stacked = process.outputLaserStack;
+    let grouped = stacked || process.outputLaserGroup;
     let label = false && process.outputLaserLabel;
     let simple = opt.simple || false;
-    let group = [];
     let emit = { in: [], out: [], mark: [] };
     let lastEmit = opt.lastEmit;
     let zcolor = print.settings.process.outputLaserZColor;
 
-    group.thick = slice.thick;
-
-    function laserOut(poly, group, type, index) {
+    function laserOut(poly, group, type, indexed) {
         if (!poly) {
             return;
         }
         if (Array.isArray(poly)) {
             poly.forEach((pi, index) => {
-                laserOut(pi, group, type, offset.length > 1 ? index : undefined);
+                laserOut(pi, group, type, indexed ? index : undefined);
             });
         } else {
             let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1, rate: 1};
@@ -153,21 +149,23 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
         }
     }
 
-    let offset = slice.offset;
-    let inner = offset.map(poly => poly.inner || []).flat();
-
-    // cut inside before outside
-    laserOut(inner, group, "in");
-    laserOut(offset, group, "out");
-
-    if (!grouped) {
-        groups.push(group);
-        group = [];
-        group.thick = slice.thick;
-    }
-
     if (grouped) {
+        let group = [];
+        group.thick = slice.thick;
+        let offset = slice.offset;
+        let inner = offset.map(poly => poly.inner || []).flat();
+        // cut inside before outside
+        laserOut(inner, group, "in", offset.length > 1);
+        laserOut(offset, group, "out", offset.length > 1);
         groups.push(group);
+    } else {
+        for (let top of slice.offset) {
+            let group = [];
+            group.thick = slice.thick;
+            laserOut([ top ], group, "in");
+            laserOut(top.inner || [], group, "out");
+            groups.push(group);
+        }
     }
 
     return emit;
@@ -184,8 +182,8 @@ async function prepare(widgets, settings, update) {
         process = settings.process,
         print = self.worker.print = kiri.newPrint(settings, widgets),
         knifeOn = process.knifeOn,
-        knifeDepth = process.outputKnifeDepth,
-        knifePasses = process.outputKnifePasses,
+        // knifeDepth = process.outputKnifeDepth,
+        // knifePasses = process.outputKnifePasses,
         knifeTipOff = process.outputKnifeTip,
         output = print.output = [],
         totalSlices = 0,
@@ -259,16 +257,16 @@ async function prepare(widgets, settings, update) {
     }
 
     // find max layers (for updates)
-    widgets.forEach(function(widget) {
+    widgets.forEach(widget => {
         totalSlices += widget.slices.length;
     });
 
     // emit objects from each slice into output array
-    widgets.forEach(function(widget) {
+    widgets.forEach(widget => {
         // slice stack merging
         if (process.outputLaserMerged) {
             let merged = [];
-            widget.slices.forEach(function(slice) {
+            widget.slices.forEach(slice => {
                 let polys = [];
                 slice.offset.clone(true).forEach(p => p.flattenTo(polys));
                 polys.forEach(p => {
@@ -322,9 +320,9 @@ async function prepare(widgets, settings, update) {
     let pack = true;
 
     // compute tile width / height
-    output.forEach(function(layerout) {
+    output.forEach(layerout => {
         let min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
-        layerout.forEach(function(out) {
+        layerout.forEach(out => {
             p = out.point;
             out.point = p.clone(); // b/c first/last point are often shared
             min.w = Math.min(min.w, p.x);
@@ -336,7 +334,7 @@ async function prepare(widgets, settings, update) {
         layerout.h = max.h - min.h;
         // shift objects to top/left of w/h bounds
         if (pack)
-        layerout.forEach(function(out) {
+        layerout.forEach(out => {
             p = out.point;
             p.x -= min.w;
             p.y -= min.h;
@@ -622,38 +620,48 @@ function exportDXF(settings, data) {
         data,
         function(min, max) {
             lines.appendAll([
-                '  0',
-                'SECTION',
-                '  2',
-                'HEADER',
-                '  9',
-                '$ACADVER',
-                '1',
-                'AC1014',
-                '  0',
-                'ENDSEC',
-                '  0',
-                'SECTION',
-                '  2',
-                'ENTITIES',
+                "  0",
+                "SECTION",
+                "  2",
+                "HEADER",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "SECTION",
+                "  2",
+                "TABLES",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "SECTION",
+                "  2",
+                "BLOCKS",
+                "  0",
+                "ENDSEC",
+                "  0",
+                "SECTION",
+                "  2",
+                "ENTITIES",
             ]);
         },
         function(poly) {
             lines.appendAll([
-                '  0',
-                'LWPOLYLINE',
-                '100', // subgroup required
-                'AcDbPolyline',
-                ' 90', // poly vertices
-                poly.length,
-                ' 70', // open
-                '0',
-                ' 43', // constant width line
-                '0.0'
+                "  0",
+                "POLYLINE",
+                "  8",
+                "0",
+                "  66",
+                "1",
+                "  70",
+                "1",
             ]);
 
-            poly.forEach(function(point) {
+            poly.forEach(point => {
                 lines.appendAll([
+                    '  0',
+                    'VERTEX',
+                    '  8',
+                    '0',
                     ' 10',
                     point.x,
                     ' 20',
@@ -668,6 +676,12 @@ function exportDXF(settings, data) {
         },
         function() {
             lines.appendAll([
+                '  0',
+                'ENDSEC',
+                '  0',
+                'SECTION',
+                '  2',
+                'OBJECTS',
                 '  0',
                 'ENDSEC',
                 '  0',
