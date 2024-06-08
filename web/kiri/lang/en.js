@@ -441,16 +441,6 @@ self.kiri.lang['en-us'] = {
     sp_auto_s:      "automatic",
     sp_auto_l:      ["enable generated supports","using at-slice-time geometry","supports will only appear","after slicing completes"],
 
-    // LASER SLICING
-    ls_offs_s:      "offset",
-    ls_offs_l:      ["adjust for beam width","also known as kerf","in millimeters"],
-    ls_lahi_s:      "height",
-    ls_lahi_l:      ["layer height","in millimeters","0 = auto/detect"],
-    ls_lahm_s:      "min",
-    ls_lahm_l:      ["layer height minimum","will merge auto slices","under this thickness","in millimeters"],
-    ls_sngl_s:      "single",
-    ls_sngl_l:      ["perform only one slice","at specified layer height"],
-
     // CNC COMMON terms
     cc_tool:        "tool",
     cc_offs_s:      "offset",
@@ -599,7 +589,7 @@ self.kiri.lang['en-us'] = {
     ci_face_s:      "face",
     ci_face_l:      "select face to rotate facing up",
 
-    // CNC LASER
+    // CNC LASER On/Off Operations (Carvera)
     cl_powr_s:      "power",
     cl_powr_l:      "laser power from 0 to 1.0",
     cl_adap_s:      "adaptive",
@@ -639,8 +629,18 @@ self.kiri.lang['en-us'] = {
     // OUTPUT
     ou_menu:        "output",
 
+    // LASER SLICING
+    ls_offs_s:      "offset / kerf",
+    ls_offs_l:      ["adjust for beam width","also known as kerf","in millimeters"],
+    ls_lahi_s:      "slice height",
+    ls_lahi_l:      ["layer height","in millimeters","0 = auto/detect"],
+    ls_lahm_s:      "slice minimum",
+    ls_lahm_l:      ["layer height minimum","will merge auto slices","under this thickness","in millimeters"],
+    ls_sngl_s:      "single slice",
+    ls_sngl_l:      ["perform only one slice","at specified layer height"],
+
     // LASER KNIFE
-    dk_menu:        "knife",
+    dk_menu:        "drag knife",
     dk_dpth_s:      "cut depth",
     dk_dpth_l:      ["final cut depth","in millimeters"],
     dk_pass_s:      "cut passes",
@@ -648,7 +648,7 @@ self.kiri.lang['en-us'] = {
     dk_offs_s:      "tip offset",
     dk_offs_l:      ["distance from blade tip","to center of tool","in millimeters"],
 
-    // OUTPUT LASER
+    // LASER OUTPUT
     ou_spac_s:      "spacing",
     ou_spac_l:      ["distance between layer output","in millimeters"],
     ou_scal_s:      "scaling",

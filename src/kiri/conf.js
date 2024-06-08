@@ -627,10 +627,10 @@ const conf = exports({
             // process defaults Laser:Process
             p:{
                 processName: "default",
-                laserOffset: 0.25,
+                laserOffset: 0.1,
                 laserSliceHeight: 1,
                 laserSliceHeightMin: 0,
-                laserSliceSingle: false,
+                laserSliceSingle: true,
                 outputTileSpacing: 1,
                 outputLaserPower: 100,
                 outputLaserSpeed: 1000,
