@@ -11,6 +11,8 @@
 // dep: kiri-mode.sla.client
 // dep: kiri-mode.laser.driver
 // dep: kiri-mode.drag.driver
+// dep: kiri-mode.wjet.driver
+// dep: kiri-mode.wedm.driver
 gapp.register("kiri.function", [], (root, exports) => {
 
 const { kiri } = root;

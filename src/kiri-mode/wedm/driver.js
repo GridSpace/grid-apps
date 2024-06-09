@@ -3,9 +3,9 @@
 "use strict";
 
 // dep: kiri-mode.laser.driver
-gapp.register("kiri-mode.drag.driver", [], (root, exports) => {
+gapp.register("kiri-mode.wedm.driver", [], (root, exports) => {
 
-root.kiri.driver.DRAG = root.kiri.driver.LASER;
+root.kiri.driver.WEDM = root.kiri.driver.LASER;
 
 });
 

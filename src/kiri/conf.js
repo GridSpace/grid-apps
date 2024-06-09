@@ -663,10 +663,92 @@ const conf = exports({
                 gcodePost: [],
                 gcodeFExt: "",
                 gcodeSpace: true,
+            },
+            // process defaults Drag:Process
+            p:{
+                processName: "default",
+                laserOffset: 0.1,
+                laserSliceHeight: 1,
+                laserSliceHeightMin: 0,
+                laserSliceSingle: true,
+                outputTileSpacing: 1,
+                outputLaserPower: 100,
+                outputLaserSpeed: 1000,
+                outputLaserGroup: true,
+                outputLaserZColor: false,
+                outputLaserLayer: false,
+                outputLaserStack: false,
+                outputLaserMerged: false,
+                outputOriginCenter: true,
+                outputInvertX: false,
+                outputInvertY: false,
+                outputKnifeDepth: 1,
+                outputKnifePasses: 1,
+                outputKnifeTip: 2
+            },
+        },
+        wjet: {
+            // device defaults WaterJet:Device
+            d:{
+                new: true,
+                mode: "",
+                deviceName: "",
+                imageURL: "",
+                internal: 0,
+                bedWidth: 300,
+                bedDepth: 200,
+                bedHeight: 2.5,
+                maxHeight: 100,
+                gcodePre: [],
+                gcodePost: [],
+                gcodeFExt: "",
+                gcodeSpace: true,
                 gcodeLaserOn: ["M106 S{power}"],
                 gcodeLaserOff: ["M107"]
             },
-            // process defaults Drag:Process
+            // process defaults WaterJet:Process
+            p:{
+                processName: "default",
+                laserOffset: 0.1,
+                laserSliceHeight: 1,
+                laserSliceHeightMin: 0,
+                laserSliceSingle: true,
+                outputTileSpacing: 1,
+                outputLaserPower: 100,
+                outputLaserSpeed: 1000,
+                outputLaserGroup: true,
+                outputLaserZColor: false,
+                outputLaserLayer: false,
+                outputLaserStack: false,
+                outputLaserMerged: false,
+                outputOriginCenter: true,
+                outputInvertX: false,
+                outputInvertY: false,
+                outputKnifeDepth: 1,
+                outputKnifePasses: 1,
+                outputKnifeTip: 2
+            },
+        },
+        wedm: {
+            // device defaults WireEDM:Device
+            d:{
+                new: true,
+                mode: "",
+                deviceName: "",
+                imageURL: "",
+                internal: 0,
+                bedWidth: 300,
+                bedDepth: 200,
+                bedHeight: 2.5,
+                maxHeight: 100,
+                gcodePre: [],
+                gcodePost: [],
+                gcodeFExt: "",
+                gcodeSpace: true,
+                gcodeLaserOn: ["M106 S{power}"],
+                gcodeLaserOff: ["M107"]
+            },
+            // process defaults WireEDM:Process
             p:{
                 processName: "default",
                 laserOffset: 0.1,
@@ -772,24 +854,30 @@ const conf = exports({
             FDM: "default",
             SLA: "default",
             CAM: "default",
-            LASER: "default",
             DRAG: "default",
+            WJET: "default",
+            WEDM: "default",
+            LASER: "default",
         },
         // stored processes by mode
         sproc:{
             FDM: {},
             SLA: {},
             CAM: {},
-            LASER: {},
             DRAG: {},
+            WJET: {},
+            WEDM: {},
+            LASER: {},
         },
         // current device name by mode
         filter:{
             FDM: "Any.Generic.Marlin",
             SLA: "Anycubic.Photon",
             CAM: "Any.Generic.Grbl",
+            DRAG: "Any.Generic.DragKnife",
+            WJET: "HydroBLADE",
+            WEDM: "Any.Generic.WireEDM",
             LASER: "Any.Generic.Laser",
-            DRAG: "Any.Generic.Laser",
         },
         // stored device by mode
         cdev: {
@@ -863,9 +951,15 @@ settings.sproc.FDM.default = clone(settings.process);
 settings.sproc.SLA.default = clone(settings.process);
 settings.sproc.CAM.default = clone(settings.process);
 settings.sproc.LASER.default = clone(settings.process);
+settings.sproc.DRAG.default = clone(settings.process);
+settings.sproc.WJET.default = clone(settings.process);
+settings.sproc.WEDM.default = clone(settings.process);
 settings.cdev.FDM = clone(settings.device);
 settings.cdev.SLA = clone(settings.device);
 settings.cdev.CAM = clone(settings.device);
 settings.cdev.LASER = clone(settings.device);
+settings.cdev.DRAG = clone(settings.device);
+settings.cdev.WJET = clone(settings.device);
+settings.cdev.WEDM = clone(settings.device);
 
 });

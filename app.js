@@ -606,6 +606,7 @@ function generateDevices() {
             map[device] = JSON.parse(fs.readFileSync(`${root}/${type}/${device}`));
         });
     });
+    // console.log({ devs });
     synth.devices = `self.devices = ${JSON.stringify(devs)};`;
 }
 

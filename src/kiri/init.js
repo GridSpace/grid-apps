@@ -2643,6 +2643,8 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('mode-sla').onclick = () => api.mode.set('SLA');
         $('mode-laser').onclick = () => api.mode.set('LASER');
         $('mode-drag').onclick = () => api.mode.set('DRAG');
+        $('mode-wjet').onclick = () => api.mode.set('WJET');
+        $('mode-wedm').onclick = () => api.mode.set('WEDM');
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };

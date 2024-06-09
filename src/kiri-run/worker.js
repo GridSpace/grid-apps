@@ -28,6 +28,8 @@
 // use: kiri-mode.fdm.export
 // use: kiri-mode.laser.driver
 // use: kiri-mode.drag.driver
+// use: kiri-mode.wjet.driver
+// use: kiri-mode.wedm.driver
 gapp.register("kiri-run.worker", [], (root, exports) => {
 
 const { base, kiri, moto } = root;

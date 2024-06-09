@@ -906,7 +906,7 @@ gapp.register("kiri.main", [], (root, exports) => {
         // gcode edit area for any non-SLA mode
         api.uc.setVisible($('gcode-edit'), mode !== 'SLA');
         // highlight selected mode menu item
-        ["FDM","CAM","SLA","LASER","DRAG"].forEach(sm => {
+        ["FDM","CAM","SLA","LASER","DRAG","WJET","WEDM"].forEach(sm => {
             const cl = $(`mode-${sm.toLowerCase()}`).classList;
             if (sm === mode) {
                 cl.add('selected');
