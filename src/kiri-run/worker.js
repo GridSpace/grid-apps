@@ -27,6 +27,7 @@
 // use: kiri-mode.fdm.prepare
 // use: kiri-mode.fdm.export
 // use: kiri-mode.laser.driver
+// use: kiri-mode.drag.driver
 gapp.register("kiri-run.worker", [], (root, exports) => {
 
 const { base, kiri, moto } = root;
@@ -40,7 +41,8 @@ let debug = self.debug === true,
     concurrent = self.Worker && ccvalue > 3 ? ccvalue - 1 : 0,
     current = self.worker = {
         print: null,
-        snap: null
+        snap: null,
+        mode: null
     },
     wgroup = {},
     wcache = {},
@@ -401,12 +403,13 @@ kiri.worker = {
     slice(data, send) {
         send.data({update:0.001, updateStatus:"slicing"});
 
-        current.print = null;
-
         let settings = data.settings,
             widget = wcache[data.id],
             last = time(),
             now;
+
+        current.print = null;
+        current.mode = settings.mode.toUpperCase();
 
         widget.anno = data.anno || widget.anno;
 

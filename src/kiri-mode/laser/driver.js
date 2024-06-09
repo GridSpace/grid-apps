@@ -14,7 +14,7 @@ const { driver, newSlice } = kiri;
 const { polygons, newPoint } = base;
 
 const POLY = polygons;
-const LASER = driver.LASER = {
+const DRIVER = driver.LASER = {
     init,
     slice,
     prepare,
@@ -181,9 +181,7 @@ async function prepare(widgets, settings, update) {
     let device = settings.device,
         process = settings.process,
         print = self.worker.print = kiri.newPrint(settings, widgets),
-        knifeOn = process.knifeOn,
-        // knifeDepth = process.outputKnifeDepth,
-        // knifePasses = process.outputKnifePasses,
+        knifeOn = self.worker.mode === 'DRAG',
         knifeTipOff = process.outputKnifeTip,
         output = print.output = [],
         totalSlices = 0,

@@ -29,6 +29,7 @@ function exportFile(options) {
         .map(v => v.split('.')[0]);
     api.event.emit('export', mode);
     switch (mode) {
+        case 'DRAG':
         case 'LASER': return callExportLaser(options, names);
         case 'FDM': return callExport(options, mode, names);
         case 'CAM': return callExport(options, mode, names);

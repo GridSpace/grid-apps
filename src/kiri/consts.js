@@ -123,16 +123,19 @@ const LISTS = {
 
 // primary device mode
 const MODES = {
-    FDM: 1,   // fused deposition modeling (also FFF)
-    LASER: 2, // laser cutters
-    CAM: 3,   // 3 axis milling/machining
-    SLA: 4    // cured resin printers
+    FDM:   1,  // fused deposition modeling (also FFF)
+    LASER: 2,  // laser cutters (base for all 2d device types)
+    CAM:   3,  // 3 axis milling/machining
+    SLA:   4,  // cured resin printers
+    DRAG:  5,  // drag knife (a variation on laser / 2d)
+    WJET:  6,  // waterjet (a varation on laser / 2d)
+    WEDM:  7   // wire-edm (a variation on laser / 2d)
 };
 
 // view mode within device mode
 const VIEWS = {
     ARRANGE: 1,
-    SLICE: 2,
+    SLICE:   2,
     PREVIEW: 3,
     ANIMATE: 4
 };

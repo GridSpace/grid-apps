@@ -340,7 +340,9 @@ gapp.register("kiri.ui", [], (root, exports) => {
             el.setVisible(hmod && show && xprt && disp);
         }
         el.hasMode = function(mode) {
-            return el.modes.length === 0 || el.modes.contains(mode);
+            return (el.modes.length === 0) ||
+                (el.modes.contains && el.modes.contains(mode)) ||
+                (el.modes === mode);
         }
         el.modes = opt.modes || [];
         hasModes.push(el);

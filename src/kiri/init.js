@@ -22,18 +22,15 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     const WIN = self.window,
         DOC = self.document,
+        DEG2RAD = Math.PI / 180,
         STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
-        DEG2RAD = Math.PI/180,
-        CAM = [MODES.CAM],
-        SLA = [MODES.SLA],
-        FDM = [MODES.FDM],
-        FDM_CAM = [MODES.FDM,MODES.CAM],
-        FDM_SLA = [MODES.FDM,MODES.SLA],
-        FDM_LZR = [MODES.LASER,MODES.FDM],
-        FDM_CAM_SLA = [MODES.CAM,MODES.FDM,MODES.SLA],
-        CAM_LZR = [MODES.LASER,MODES.CAM],
-        GCODE = [MODES.FDM, MODES.LASER, MODES.CAM],
-        LASER = [MODES.LASER],
+        { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
+        TWOD = [LASER, DRAG, WJET, WEDM],
+        THREED = [FDM, CAM, SLA],
+        GCODE = [FDM, CAM, ...TWOD],
+        CAM_LZR = [CAM, ...TWOD],
+        FDM_LZR = [FDM, ...TWOD],
+        FDM_CAM = [FDM, CAM],
         proto = location.protocol,
         ver = Date.now().toString(36),
         separator = true,
@@ -1323,6 +1320,8 @@ gapp.register("kiri.init", [], (root, exports) => {
     api.show.tools = showTools;
 
     function getModeDevices() {
+        // devices are injected into self scope by
+        // app.js generateDevices()
         return Object.keys(devices[api.mode.get_lower()]).sort();
     }
 
@@ -1768,8 +1767,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             _____:            newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
             detail:           newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
             healMesh:         newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
-            threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:FDM_CAM_SLA}),
-            assembly:         newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:FDM_CAM_SLA}),
+            threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:THREED}),
+            assembly:         newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:THREED}),
 
             prefadd:          uc.checkpoint($('prefs-add')),
 
@@ -1940,23 +1939,21 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             /** LASER Settings */
 
-            laserMode:           newGroup(LANG.sl_menu, $('lzr-slice'), { modes:LASER, driven, separator }),
+            laserMode:           newGroup(LANG.sl_menu, $('lzr-slice'), { modes:TWOD, driven, separator }),
             laserOffset:         newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:toFloat}),
             laserSliceHeight:    newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:toFloat, trigger: true}),
             laserSliceHeightMin: newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:toFloat, show:() => ui.laserSliceHeight.value == 0 && !ui.laserSliceSingle.checked }),
             separator:           newBlank({ class:"set-sep", driven }),
             laserSliceSingle:    newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l}),
-            knife:               newGroup(LANG.dk_menu, $('lzr-knife'), { modes:LASER, marker:true, driven, separator }),
-            outputKnifeDepth:    newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:toFloat, bound:bound(0.0,5.0), show:() => ui.knifeOn.checked }),
-            outputKnifePasses:   newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:toInt,   bound:bound(0,5), show:() => ui.knifeOn.checked}),
-            outputKnifeTip:      newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:toFloat, bound:bound(0.0,10.0), show:() => ui.knifeOn.checked}),
-            separator:           newBlank({ class:"set-sep", driven, show:() => ui.knifeOn.checked }),
-            knifeOn:             newBoolean(LANG.enable, onBooleanClick, {title:LANG.ou_drkn_l}),
-            laserLayout:         newGroup(LANG.lo_menu, $('lzr-layout'), { modes:LASER, driven, separator }),
+            knife:               newGroup(LANG.dk_menu, $('lzr-knife'), { modes:DRAG, marker:true, driven, separator }),
+            outputKnifeDepth:    newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:toFloat, bound:bound(0.0,5.0) }),
+            outputKnifePasses:   newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:toInt,   bound:bound(0,5) }),
+            outputKnifeTip:      newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:toFloat, bound:bound(0.0,10.0) }),
+            laserLayout:         newGroup(LANG.lo_menu, $('lzr-layout'), { modes:TWOD, driven, separator }),
             outputTileSpacing:   newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:toInt}),
             outputLaserMerged:   newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l}),
             outputLaserGroup:    newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, show:() => !ui.outputLaserStack.checked}),
-            laserOutput:         newGroup(LANG.ou_menu, $('lzr-output'), { modes:LASER, driven, separator }),
+            laserOutput:         newGroup(LANG.ou_menu, $('lzr-output'), { modes:TWOD, driven, separator }),
             outputLaserPower:    newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:toInt, bound:bound(1,100)}),
             outputLaserSpeed:    newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:toInt}),
             separator:           newBlank({ class:"set-sep", driven }),
@@ -2645,6 +2642,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('mode-cam').onclick = () => api.mode.set('CAM');
         $('mode-sla').onclick = () => api.mode.set('SLA');
         $('mode-laser').onclick = () => api.mode.set('LASER');
+        $('mode-drag').onclick = () => api.mode.set('DRAG');
         $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
         $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };

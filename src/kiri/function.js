@@ -10,6 +10,7 @@
 // dep: kiri-mode.fdm.client
 // dep: kiri-mode.sla.client
 // dep: kiri-mode.laser.driver
+// dep: kiri-mode.drag.driver
 gapp.register("kiri.function", [], (root, exports) => {
 
 const { kiri } = root;

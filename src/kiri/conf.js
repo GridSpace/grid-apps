@@ -644,8 +644,49 @@ const conf = exports({
                 outputInvertY: false,
                 outputKnifeDepth: 1,
                 outputKnifePasses: 1,
-                outputKnifeTip: 2,
-                knifeOn: false
+                outputKnifeTip: 2
+            }
+        },
+        drag: {
+            // device defaults Drag:Device
+            d:{
+                new: true,
+                mode: "",
+                deviceName: "",
+                imageURL: "",
+                internal: 0,
+                bedWidth: 300,
+                bedDepth: 200,
+                bedHeight: 2.5,
+                maxHeight: 100,
+                gcodePre: [],
+                gcodePost: [],
+                gcodeFExt: "",
+                gcodeSpace: true,
+                gcodeLaserOn: ["M106 S{power}"],
+                gcodeLaserOff: ["M107"]
+            },
+            // process defaults Drag:Process
+            p:{
+                processName: "default",
+                laserOffset: 0.1,
+                laserSliceHeight: 1,
+                laserSliceHeightMin: 0,
+                laserSliceSingle: true,
+                outputTileSpacing: 1,
+                outputLaserPower: 100,
+                outputLaserSpeed: 1000,
+                outputLaserGroup: true,
+                outputLaserZColor: false,
+                outputLaserLayer: false,
+                outputLaserStack: false,
+                outputLaserMerged: false,
+                outputOriginCenter: true,
+                outputInvertX: false,
+                outputInvertY: false,
+                outputKnifeDepth: 1,
+                outputKnifePasses: 1,
+                outputKnifeTip: 2
             }
         }
     },
@@ -731,28 +772,32 @@ const conf = exports({
             FDM: "default",
             SLA: "default",
             CAM: "default",
-            LASER: "default"
+            LASER: "default",
+            DRAG: "default",
         },
         // stored processes by mode
         sproc:{
             FDM: {},
             SLA: {},
             CAM: {},
-            LASER: {}
+            LASER: {},
+            DRAG: {},
         },
         // current device name by mode
         filter:{
             FDM: "Any.Generic.Marlin",
             SLA: "Anycubic.Photon",
             CAM: "Any.Generic.Grbl",
-            LASER: "Any.Generic.Laser"
+            LASER: "Any.Generic.Laser",
+            DRAG: "Any.Generic.Laser",
         },
         // stored device by mode
         cdev: {
             FDM: null,
             SLA: null,
             CAM: null,
-            LASER: null
+            LASER: null,
+            DRAG: null,
         },
         // custom devices by name (all modes)
         devices:{},
