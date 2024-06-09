@@ -288,8 +288,8 @@ kiri.load(() => {
         const stepsY = Math.floor(stock.y / step);
         const { pos, ind, sab } = createGrid(stepsX, stepsY, stock, step);
         const offset = {
-            x: process.outputOriginCenter ? 0 : stock.x / 2,
-            y: process.outputOriginCenter ? 0 : stock.y / 2,
+            x: process.camOriginCenter ? 0 : stock.x / 2,
+            y: process.camOriginCenter ? 0 : stock.y / 2,
             z: process.camOriginTop ? -stock.z : 0
         }
 

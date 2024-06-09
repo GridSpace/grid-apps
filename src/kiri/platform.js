@@ -51,7 +51,7 @@ function platformUpdateOrigin(update_bounds = true) {
     let center = MODE === MODES.FDM ? device.originCenter || device.bedRound :
        MODE === MODES.SLA ? false :
        MODE === MODES.CAM ? process.camOriginCenter :
-       device.originCenter || process.outputOriginCenter;
+       device.originCenter || process.ctOriginCenter;
 
     if (MODE === MODES.CAM && process.camOriginTop) {
         origin.z = stock.z + 0.01;
@@ -62,7 +62,7 @@ function platformUpdateOrigin(update_bounds = true) {
             origin.x = (-stock.x / 2) + stockCenter.x;
             origin.y = (stock.y / 2) - stockCenter.y;
         } else {
-            if (MODE === MODES.LASER && process.outputOriginBounds) {
+            if (MODE === MODES.LASER && process.ctOriginBounds) {
                 let b = bounds;
                 origin.x = b.min.x,
                 origin.y = -b.min.y
@@ -631,7 +631,7 @@ function platformLayout(event, gap) {
             break;
         case MODES.CAM:
         case MODES.LASER:
-            gap = gap || process.outputTileSpacing || 1;
+            gap = gap || process.ctOutTileSpacing || 1;
             break;
         case MODES.FDM:
             gap = gap || ((process.sliceSupportExtra || 0) * 2) + 1;

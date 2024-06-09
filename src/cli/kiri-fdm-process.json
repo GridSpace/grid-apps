@@ -45,7 +45,7 @@
     "outputCoastDist": 0.1,
     "outputLayerRetract": true,
     "detectThinWalls": true,
-    "outputOriginCenter": false,
+    "ctOriginCenter": false,
     "sliceFillRate": 0,
     "sliceSupportEnable": false,
     "firstSliceHeight": 0.25,

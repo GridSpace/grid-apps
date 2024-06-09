@@ -30,6 +30,6 @@
     },
     "profiles":[{
         "processName": "Snapmaker Laser",
-        "outputOriginCenter": false
+        "ctOriginCenter": false
     }]
 }

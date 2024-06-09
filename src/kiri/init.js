@@ -550,7 +550,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
         let current = settings(),
             { device, process} = current,
-            center = process.outputOriginCenter || process.camOriginCenter || device.bedRound,
+            center = process.ctOriginCenter || process.camOriginCenter || device.bedRound || device.originCenter,
             bounds = boundsSelection(),
             coord = prompt("Enter X,Y coordinates for selection").split(','),
             x = parseFloat(coord[0] || 0.0),
@@ -756,7 +756,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             // ui.deviceName.value = devicename;
             ui.deviceBelt.checked = dev.bedBelt;
             ui.deviceRound.checked = dev.bedRound;
-            ui.deviceOrigin.checked = dev.outputOriginCenter || dev.originCenter || dev.bedRound;
+            ui.deviceOrigin.checked = dev.ctOriginCenter || dev.originCenter || dev.bedRound;
             ui.fwRetract.checked = dev.fwRetract;
             if (!dev.filamentSource) ui.filamentSource.selectedIndex = 0;
 
@@ -1937,32 +1937,32 @@ gapp.register("kiri.init", [], (root, exports) => {
             camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, show: () => !ui.camTrueShadow.checked }),
             camTrueShadow:       newBoolean(LANG.cx_true_s, onBooleanClick, {title:LANG.cx_true_l, show: () => !ui.camExpertFast.checked }),
 
-            /** LASER Settings */
+            /** LASER/DRAG/WJET/WEDM cut tool Settings */
 
-            laserMode:           newGroup(LANG.sl_menu, $('lzr-slice'), { modes:TWOD, driven, separator }),
-            laserOffset:         newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:toFloat}),
-            laserSliceHeight:    newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:toFloat, trigger: true}),
-            laserSliceHeightMin: newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:toFloat, show:() => ui.laserSliceHeight.value == 0 && !ui.laserSliceSingle.checked }),
+            _____:               newGroup(LANG.sl_menu, $('lzr-slice'), { modes:TWOD, driven, separator }),
+            ctSliceKerf:         newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:toFloat}),
+            ctSliceHeight:       newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:toFloat, trigger: true}),
+            ctSliceHeightMin:    newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:toFloat, show:() => ui.ctSliceHeight.value == 0 && !ui.ctSliceSingle.checked }),
             separator:           newBlank({ class:"set-sep", driven }),
-            laserSliceSingle:    newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l}),
+            ctSliceSingle:       newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l}),
             knife:               newGroup(LANG.dk_menu, $('lzr-knife'), { modes:DRAG, marker:true, driven, separator }),
-            outputKnifeDepth:    newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:toFloat, bound:bound(0.0,5.0) }),
-            outputKnifePasses:   newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:toInt,   bound:bound(0,5) }),
-            outputKnifeTip:      newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:toFloat, bound:bound(0.0,10.0) }),
+            ctOutKnifeDepth:     newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:toFloat, bound:bound(0.0,5.0) }),
+            ctOutKnifePasses:    newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:toInt,   bound:bound(0,5) }),
+            ctOutKnifeTip:       newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:toFloat, bound:bound(0.0,10.0) }),
             laserLayout:         newGroup(LANG.lo_menu, $('lzr-layout'), { modes:TWOD, driven, separator }),
-            outputTileSpacing:   newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:toInt}),
-            outputLaserMerged:   newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l}),
-            outputLaserGroup:    newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, show:() => !ui.outputLaserStack.checked}),
+            ctOutTileSpacing:    newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:toInt}),
+            ctOutMerged:         newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l}),
+            ctOutGroup:          newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, show:() => !ui.ctOutStack.checked}),
             laserOutput:         newGroup(LANG.ou_menu, $('lzr-output'), { modes:TWOD, driven, separator }),
-            outputLaserPower:    newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:toInt, bound:bound(1,100)}),
-            outputLaserSpeed:    newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:toInt}),
+            ctOutPower:          newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:toInt, bound:bound(1,100)}),
+            ctOutSpeed:          newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:toInt}),
             separator:           newBlank({ class:"set-sep", driven }),
-            outputOriginBounds:  newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l}),
-            outputOriginCenter:  newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
+            ctOriginBounds:      newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l}),
+            ctOriginCenter:  newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
             separator:           newBlank({ class:"set-sep", driven }),
-            outputLaserZColor:   newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, show:() => { return ui.outputLaserMerged.checked === false }}),
-            outputLaserLayer:    newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l}),
-            outputLaserStack:    newBoolean(LANG.ou_lays_s, onBooleanClick, {title:LANG.ou_lays_l}),
+            ctOutZColor:         newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, show:() => { return ui.ctOutMerged.checked === false }}),
+            ctOutLayer:          newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l}),
+            ctOutStack:          newBoolean(LANG.ou_lays_s, onBooleanClick, {title:LANG.ou_lays_l}),
 
             /** SLA SETTINGS */
 

@@ -152,7 +152,6 @@
             "outputBeltFirst": false,
             "outputAvoidGaps": true,
             "outputLayerRetract": false,
-            "outputOriginCenter": false,
             "outputLoops": 0,
             "outputInvertX": false,
             "outputInvertY": false,

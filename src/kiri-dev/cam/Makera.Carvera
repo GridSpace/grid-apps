@@ -119,7 +119,7 @@
             "camStockClipTo": false,
             "camStockOn": true,
             "camConventional": false,
-            "outputOriginCenter": false,
+            "camOriginCenter": false,
             "outputInvertX": false,
             "outputInvertY": false,
             "camExpertFast": false,

@@ -62,7 +62,7 @@ FDM.export = function(print, online, ondone, ondebug) {
         arcRes = 20,
         arcDev = 0.5,
         arcMax = 40,
-        originCenter = process.outputOriginCenter || bedRound,
+        originCenter = device.originCenter || bedRound,
         offset = originCenter ? {
             x: 0,
             y: 0,

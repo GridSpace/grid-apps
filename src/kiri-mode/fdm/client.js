@@ -188,7 +188,6 @@ FDM.init = function(kiri, api) {
     api.event.on("range.updates", updateRanges);
     api.event.on("settings.load", (settings) => {
         if (settings.mode !== 'FDM') return;
-        settings.process.outputOriginCenter = (settings.device.originCenter || false);
         restoreSupports(api.widgets.all());
         updateRanges(settings.process.ranges);
     });

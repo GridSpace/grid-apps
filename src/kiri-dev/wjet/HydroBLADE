@@ -1,21 +1,53 @@
 {
-    "file-ext": "gcode",
-    "token-space": " ",
-    "pre":[
+    "mode": "WJET",
+    "internal": 0,
+    "imageURL": "",
+    "bedHeight": 2.5,
+    "bedWidth": 300,
+    "bedDepth": 300,
+    "maxHeight": 150,
+    "gcodePre": [
         "G21 ; set units to MM (required)",
         "G90 ; absolute position mode (required)"
     ],
-    "post":[
+    "gcodePost": [
         "M30 ; program end"
     ],
-    "laser-on":[
+    "gcodeFExt": "gcode",
+    "gcodeSpace": true,
+    "gcodeLaserOn": [
         "M106 S{power}"
     ],
-    "laser-off":[
+    "gcodeLaserOff": [
         "M107"
     ],
-	"settings": {
-		"bed_width": 300,
-		"bed_depth": 300
-	}
+    "new": false,
+    "deviceName": "HydroBLADE",
+    "bedBelt": false,
+    "bedRound": false,
+    "originCenter": false,
+    "fwRetract": false,
+    "profiles": [
+        {
+            "processName": "waterjet",
+            "ctSliceKerf": 0.1,
+            "ctSliceHeight": 10,
+            "ctSliceHeightMin": 0,
+            "ctSliceSingle": false,
+            "ctOutTileSpacing": 1,
+            "ctOutPower": 100,
+            "ctOutSpeed": 1000,
+            "ctOutGroup": true,
+            "ctOutZColor": false,
+            "ctOutLayer": false,
+            "ctOutStack": false,
+            "ctOutMerged": false,
+            "ctOriginCenter": true,
+            "outputInvertX": false,
+            "outputInvertY": false,
+            "ctOutKnifeDepth": 1,
+            "ctOutKnifePasses": 1,
+            "ctOutKnifeTip": 2
+        }
+    ]
 }

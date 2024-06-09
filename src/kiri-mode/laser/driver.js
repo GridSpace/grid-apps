@@ -40,14 +40,14 @@ function init(kiri, api) {
  */
 function slice(settings, widget, onupdate, ondone) {
     let proc = settings.process;
-    let offset = proc.laserOffset || 0;
+    let offset = proc.ctSliceKerf || 0;
     let color = settings.controller.dark ? 0xbbbbbb : 0;
 
-    if (proc.laserSliceHeight < 0) {
+    if (proc.ctSliceHeight < 0) {
         return ondone("invalid slice height");
     }
 
-    let { laserSliceSingle, laserSliceHeight, laserSliceHeightMin } = proc;
+    let { ctSliceSingle, ctSliceHeight, ctSliceHeightMin } = proc;
     let bounds = widget.getBoundingBox();
     let points = widget.getPoints();
     let indices = [];
@@ -57,10 +57,10 @@ function slice(settings, widget, onupdate, ondone) {
         zMax: bounds.max.z,
         zGen(zopt) {
             let { zMin, zMax, zIndexes } = zopt;
-            if (laserSliceSingle) {
-                indices = [ laserSliceHeight ];
-            } else if (laserSliceHeight) {
-                for (let z = zMin + laserSliceHeight / 2; z < zMax; z += laserSliceHeight) {
+            if (ctSliceSingle) {
+                indices = [ ctSliceHeight ];
+            } else if (ctSliceHeight) {
+                for (let z = zMin + ctSliceHeight / 2; z < zMax; z += ctSliceHeight) {
                     indices.push(z);
                 }
                 indices;
@@ -69,11 +69,11 @@ function slice(settings, widget, onupdate, ondone) {
                     indices.push((zIndexes[i-1] + zIndexes[i]) / 2);
                 }
                 // discard layers too
-                if (laserSliceHeightMin) {
+                if (ctSliceHeightMin) {
                     let last;
                     indices = indices.filter(v => {
                         let ok = true;
-                        if (last !== undefined && Math.abs(v - last) < laserSliceHeightMin) {
+                        if (last !== undefined && Math.abs(v - last) < ctSliceHeightMin) {
                             ok = false;
                         } else {
                             last = v;
@@ -110,13 +110,13 @@ function polyLabel(poly, label) {
 function sliceEmitObjects(print, slice, groups, opt = { }) {
     let start = newPoint(0,0,0);
     let process = print.settings.process;
-    let stacked = process.outputLaserStack;
-    let grouped = stacked || process.outputLaserGroup;
+    let stacked = process.ctOutStack;
+    let grouped = stacked || process.ctOutGroup;
     let label = false && process.outputLaserLabel;
     let simple = opt.simple || false;
     let emit = { in: [], out: [], mark: [] };
     let lastEmit = opt.lastEmit;
-    let zcolor = print.settings.process.outputLaserZColor;
+    let zcolor = print.settings.process.ctOutZColor;
 
     function laserOut(poly, group, type, indexed) {
         if (!poly) {
@@ -182,7 +182,7 @@ async function prepare(widgets, settings, update) {
         process = settings.process,
         print = self.worker.print = kiri.newPrint(settings, widgets),
         knifeOn = self.worker.mode === 'DRAG',
-        knifeTipOff = process.outputKnifeTip,
+        knifeTipOff = process.ctOutKnifeTip,
         output = print.output = [],
         totalSlices = 0,
         slices = 0;
@@ -262,7 +262,7 @@ async function prepare(widgets, settings, update) {
     // emit objects from each slice into output array
     widgets.forEach(widget => {
         // slice stack merging
-        if (process.outputLaserMerged) {
+        if (process.ctOutMerged) {
             let merged = [];
             widget.slices.forEach(slice => {
                 let polys = [];
@@ -343,16 +343,16 @@ async function prepare(widgets, settings, update) {
     let i, m, e,
         dw = device.bedWidth / 2,
         dh = device.bedDepth / 2,
-        sort = !process.outputLaserLayer,
+        sort = !process.ctOutLayer,
         // sort objects by size when not using laser layer ordering
         c = sort ? output.sort(kiri.Sort) : output,
-        p = new kiri.Pack(dw, dh, process.outputTileSpacing).fit(c, !sort);
+        p = new kiri.Pack(dw, dh, process.ctOutTileSpacing).fit(c, !sort);
 
     // test different ratios until packed
     while (!p.packed) {
         dw *= 1.1;
         dh *= 1.1;
-        p = new kiri.Pack(dw, dh, process.outputTileSpacing).fit(c ,!sort);
+        p = new kiri.Pack(dw, dh, process.ctOutTileSpacing).fit(c ,!sort);
     }
 
     if (pack)
@@ -383,7 +383,7 @@ function exportLaser(print, online, ondone) {
  */
 function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlayer) {
     let process = settings.process,
-        zcolor = process.outputLaserZColor,
+        zcolor = process.ctOutZColor,
         last,
         point,
         poly = [],
@@ -402,7 +402,7 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
         });
     });
 
-    if (!process.outputOriginCenter) {
+    if (!process.ctOriginCenter) {
         // normalize against origin lower left
         output.forEach(function(layer) {
             layer.forEach(function(out) {
@@ -432,7 +432,7 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
         min.y = 0;
     }
 
-    onpre(min, max, process.outputLaserPower, process.outputLaserSpeed);
+    onpre(min, max, process.ctOutPower, process.ctOutSpeed);
 
     output.forEach(function(layer, index) {
         let thick = 0;
@@ -476,8 +476,8 @@ function exportGCode(settings, data) {
     let laser_on = dev.gcodeLaserOn || [];
     let laser_off = dev.gcodeLaserOff || [];
     let knifeOn = proc.knifeOn;
-    let knifeDepth = proc.outputKnifeDepth;
-    let passes = knifeOn ? proc.outputKnifePasses : 1;
+    let knifeDepth = proc.ctOutKnifeDepth;
+    let passes = knifeOn ? proc.ctOutKnifePasses : 1;
 
     exportElements(
         settings,
@@ -554,8 +554,8 @@ function exportGCode(settings, data) {
  */
 function exportSVG(settings, data, cut_color) {
     let { process } = settings;
-    let zcolor = process.outputLaserZColor ? 1 : 0;
-    let zstack = process.outputLaserStack;
+    let zcolor = process.ctOutZColor ? 1 : 0;
+    let zstack = process.ctOutStack;
     let lines = [], dx = 0, dy = 0, my, z = 0;
     let colors = [
         "black",
