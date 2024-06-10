@@ -554,6 +554,7 @@ CAM.init = function(kiri, api) {
                 poprec.use(rec);
                 hoveredOp = el;
                 if (!clock) {
+                    // offset Y position of pop div by % of Y screen location of button
                     el.appendChild(poprec.div);
                     poprec.addNote();
                     const { innerHeight } = window;
