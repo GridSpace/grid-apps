@@ -554,12 +554,14 @@ CAM.init = function(kiri, api) {
                 poprec.use(rec);
                 hoveredOp = el;
                 if (!clock) {
-                    const { innerHeight } = window;
-                    const { pageY } = ev;
-                    const PY = (pageY / innerHeight) * 90;
-                    poprec.div.style.transform = `translateY(${-PY}%)`;
                     el.appendChild(poprec.div);
                     poprec.addNote();
+                    const { innerHeight } = window;
+                    const brect = ev.target.getBoundingClientRect();
+                    const prect = poprec.div.getBoundingClientRect();
+                    const pcty = (brect.top / innerHeight) * 0.9;
+                    const offpx = -pcty * prect.height;
+                    poprec.div.style.transform = `translateY(${offpx}px)`;
                 }
                 // option click event appears latent
                 // and overides the sticky settings
