@@ -41,6 +41,8 @@ function platformUpdateOrigin(update_bounds = true) {
 
     const settings = current();
     const { device, process, controller, stock, bounds } = settings;
+    const { FDM, CAM, SLA, LASER, DRAG, WJET, WEDM } = MODES;
+    const TWOD = [ LASER, DRAG, WJET, WEDM ];
     const MODE = get_mode();
 
     let ruler = controller.showRulers;
@@ -62,7 +64,7 @@ function platformUpdateOrigin(update_bounds = true) {
             origin.x = (-stock.x / 2) + stockCenter.x;
             origin.y = (stock.y / 2) - stockCenter.y;
         } else {
-            if (MODE === MODES.LASER && process.ctOriginBounds) {
+            if (TWOD.contains(MODE) && process.ctOriginBounds) {
                 let b = bounds;
                 origin.x = b.min.x,
                 origin.y = -b.min.y
@@ -74,6 +76,14 @@ function platformUpdateOrigin(update_bounds = true) {
     } else if (MODE === MODES.CAM) {
         origin.x = stockCenter.x;
         origin.y = -stockCenter.y;
+    } else if (TWOD.contains(MODE) && process.ctOriginBounds ) {
+        let b = bounds,
+            mx = bounds.min.x,
+            my = bounds.min.y,
+            xd = b.max.x - mx,
+            yd = b.max.y - my;
+        origin.x += (mx + xd / 2);
+        origin.y -= (my + yd / 2);
     } else if (isBelt) {
         origin.y = device.bedDepth / 2;
     }

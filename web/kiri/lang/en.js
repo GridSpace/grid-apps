@@ -648,6 +648,10 @@ self.kiri.lang['en-us'] = {
     dk_offs_s:      "tip offset",
     dk_offs_l:      ["distance from blade tip","to center of tool","in millimeters"],
 
+    // WIRE EDM
+    we_omit_s:      "omit inner",
+    we_omit_l:      "omit inner polygons",
+
     // LASER OUTPUT
     ou_spac_s:      "spacing",
     ou_spac_l:      ["distance between layer output","in millimeters"],

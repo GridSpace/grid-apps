@@ -25,10 +25,14 @@ const DRIVER = driver.LASER = {
     exportDXF
 };
 
-function init(kiri, api, driver) {
+const state = {};
+
+function init(kiri, api, current) {
     api.event.on("settings.saved", settings => {
         let ui = kiri.api.ui;
     });
+    state.driver = current;
+    state.isWEDM = (current === driver.WEDM);
 }
 
 /**
@@ -40,6 +44,8 @@ function init(kiri, api, driver) {
  * @param {Function} ondone (called when complete with an array of Slice objects)
  */
 function slice(settings, widget, onupdate, ondone) {
+    let { isWEDM } = state;
+
     let proc = settings.process;
     let offset = proc.ctSliceKerf || 0;
     let color = settings.controller.dark ? 0xbbbbbb : 0;
@@ -48,7 +54,7 @@ function slice(settings, widget, onupdate, ondone) {
         return ondone("invalid slice height");
     }
 
-    let { ctSliceSingle, ctSliceHeight, ctSliceHeightMin } = proc;
+    let { ctSliceSingle, ctSliceHeight, ctSliceHeightMin, ctOmitInner } = proc;
     let bounds = widget.getBoundingBox();
     let points = widget.getPoints();
     let indices = [];
@@ -92,6 +98,7 @@ function slice(settings, widget, onupdate, ondone) {
         widget.slices = output.slices.map(data => {
             let { z, lines, groups } = data;
             let tops = POLY.nest(groups);
+            if (ctOmitInner) tops.forEach(top => delete top.inner);
             let slice = newSlice(z).addTops(tops);
             slice.index = indices.indexOf(z);
             let offsets = slice.offset = offset ?
@@ -191,6 +198,7 @@ async function prepare(widgets, settings, update) {
     // filter ignored widgets
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
+    // convert arc into line segments
     function arc(center, s1, s2, out) {
         let a1 = s1.angle;
         let a2 = s2.angle;
@@ -321,6 +329,7 @@ async function prepare(widgets, settings, update) {
     // compute tile width / height
     output.forEach(layerout => {
         let min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
+        // compute bounding box for each layer
         layerout.forEach(out => {
             p = out.point;
             out.point = p.clone(); // b/c first/last point are often shared
@@ -356,7 +365,7 @@ async function prepare(widgets, settings, update) {
         p = new kiri.Pack(dw, dh, process.ctOutTileSpacing).fit(c ,!sort);
     }
 
-    if (pack)
+    if (true)
     for (i = 0; i < c.length; i++) {
         m = c[i];
         m.fit.x += m.w + p.pad;

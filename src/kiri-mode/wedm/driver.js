@@ -78,11 +78,9 @@ WEDM.init = (kiri, api, driver) => {
     });
 
     api.event.on("mode.set", (mode) => {
-        console.log({ dev_mode: mode });
     });
 
     api.event.on("view.set", (mode) => {
-        console.log({ view_mode: mode });
     });
 
     // Surface Selection Buttons

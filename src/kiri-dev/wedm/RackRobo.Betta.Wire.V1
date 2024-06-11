@@ -3,8 +3,8 @@
     "internal": 0,
     "imageURL": "",
     "bedHeight": 2.5,
-    "bedWidth": 200,
-    "bedDepth": 100,
+    "bedWidth": 100,
+    "bedDepth": 200,
     "maxHeight": 50,
     "gcodePre": [
         "G21 ; set units to MM (required)",
