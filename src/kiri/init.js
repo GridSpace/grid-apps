@@ -26,6 +26,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
         { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
         TWOD = [LASER, DRAG, WJET, WEDM],
+        TWONED= [LASER, DRAG, WJET],
         THREED = [FDM, CAM, SLA],
         GCODE = [FDM, CAM, ...TWOD],
         CAM_LZR = [CAM, ...TWOD],
@@ -1941,28 +1942,34 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             _____:               newGroup(LANG.sl_menu, $('lzr-slice'), { modes:TWOD, driven, separator }),
             ctSliceKerf:         newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:toFloat}),
-            ctSliceHeight:       newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:toFloat, trigger: true}),
-            ctSliceHeightMin:    newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:toFloat, show:() => ui.ctSliceHeight.value == 0 && !ui.ctSliceSingle.checked }),
-            separator:           newBlank({ class:"set-sep", driven }),
-            ctSliceSingle:       newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l}),
-            knife:               newGroup(LANG.dk_menu, $('lzr-knife'), { modes:DRAG, marker:true, driven, separator }),
+            ctSliceHeight:       newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:toFloat, trigger: true, modes:TWONED}),
+            ctSliceHeightMin:    newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:toFloat, modes:TWONED, show:() => ui.ctSliceHeight.value == 0 && !ui.ctSliceSingle.checked }),
+            separator:           newBlank({ class:"set-sep", driven, modes:TWONED }),
+            ctSliceSingle:       newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l, modes:TWONED}),
+            _____:               newGroup('surfaces', $('lzr-surface'), { modes:WEDM, driven, separator }),
+            ctSurfaces: newRow([
+                (ui.faceAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
+                (ui.faceDun = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
+                (ui.faceClr = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
+            ], {class:"ext-buttons f-row", modes:WEDM}),
+            _____:               newGroup(LANG.dk_menu, $('lzr-knife'), { modes:DRAG, marker:true, driven, separator }),
             ctOutKnifeDepth:     newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:toFloat, bound:bound(0.0,5.0) }),
             ctOutKnifePasses:    newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:toInt,   bound:bound(0,5) }),
             ctOutKnifeTip:       newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:toFloat, bound:bound(0.0,10.0) }),
-            laserLayout:         newGroup(LANG.lo_menu, $('lzr-layout'), { modes:TWOD, driven, separator }),
+            _____:               newGroup(LANG.lo_menu, $('lzr-layout'), { modes:TWONED, driven, separator }),
             ctOutTileSpacing:    newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:toInt}),
             ctOutMerged:         newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l}),
             ctOutGroup:          newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, show:() => !ui.ctOutStack.checked}),
-            laserOutput:         newGroup(LANG.ou_menu, $('lzr-output'), { modes:TWOD, driven, separator }),
+            _____:               newGroup(LANG.ou_menu, $('lzr-output'), { modes:TWOD, driven, separator }),
             ctOutPower:          newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:toInt, bound:bound(1,100)}),
             ctOutSpeed:          newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:toInt}),
             separator:           newBlank({ class:"set-sep", driven }),
             ctOriginBounds:      newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l}),
-            ctOriginCenter:  newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
-            separator:           newBlank({ class:"set-sep", driven }),
-            ctOutZColor:         newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, show:() => { return ui.ctOutMerged.checked === false }}),
-            ctOutLayer:          newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l}),
-            ctOutStack:          newBoolean(LANG.ou_lays_s, onBooleanClick, {title:LANG.ou_lays_l}),
+            ctOriginCenter:      newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
+            separator:           newBlank({ class:"set-sep", driven, modes:TWONED }),
+            ctOutZColor:         newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, modes:TWONED, show:() => { return ui.ctOutMerged.checked === false }}),
+            ctOutLayer:          newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l, modes:TWONED}),
+            ctOutStack:          newBoolean(LANG.ou_lays_s, onBooleanClick, {title:LANG.ou_lays_l, modes:TWONED}),
 
             /** SLA SETTINGS */
 
@@ -2481,7 +2488,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         // call driver initializations, if present
         Object.values(kiri.driver).forEach(driver => {
             if (driver.init) try {
-                driver.init(kiri, api);
+                driver.init(kiri, api, driver);
             } catch (error) {
                 console.log({driver_init_fail: driver, error})
             }

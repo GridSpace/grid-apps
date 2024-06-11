@@ -5,7 +5,8 @@
 // dep: kiri-mode.laser.driver
 gapp.register("kiri-mode.wjet.driver", [], (root, exports) => {
 
-root.kiri.driver.WJET = root.kiri.driver.LASER;
+const DRIVERS = root.kiri.driver;
+DRIVERS.WJET = Object.assign({}, DRIVERS.LASER, { name: 'WaterJet' });
 
 });
 

@@ -905,7 +905,7 @@ CAM.init = function(kiri, api) {
         let radians = poppedRec.follow * DEG2RAD;
         CAM.surface_prep(currentIndex * RAD2DEG, () => {
             api.hide.alert(alert);
-            alert = api.show.alert("[esc] cancels surface editing");
+            alert = api.show.alert("[esc] cancels surface selection");
             for (let [wid, arr] of Object.entries(surfaces)) {
                 let widget = api.widgets.forid(wid);
                 if (widget && arr.length)

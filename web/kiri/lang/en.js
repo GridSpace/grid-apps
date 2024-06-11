@@ -315,7 +315,7 @@ self.kiri.lang['en-us'] = {
     se_save:        "save",
 
     // FDM LAYERS
-    sl_menu:        "layers",
+    sl_menu:        "paths",
     sl_lahi_s:      "layer height",
     sl_lahi_l:      ["height of each slice","layer in millimeters"],
     ad_minl_s:      "layer minimum",

@@ -1314,7 +1314,7 @@ th, tr, td, label {
 #oplist > div:hover, #op-add:hover {
     background-color: var(--blue-4);
 }
-#oplist > div.editing {
+#oplist > div.editing, #lzr-surface button.editing {
     background-color: rgba(190,230,190,0.85);
 }
 #oplist .drag {

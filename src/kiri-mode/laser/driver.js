@@ -15,6 +15,7 @@ const { polygons, newPoint } = base;
 
 const POLY = polygons;
 const DRIVER = driver.LASER = {
+    name: 'Laser',
     init,
     slice,
     prepare,
@@ -24,7 +25,7 @@ const DRIVER = driver.LASER = {
     exportDXF
 };
 
-function init(kiri, api) {
+function init(kiri, api, driver) {
     api.event.on("settings.saved", settings => {
         let ui = kiri.api.ui;
     });
