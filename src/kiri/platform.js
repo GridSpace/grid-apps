@@ -93,16 +93,15 @@ function platformUpdateOrigin(update_bounds = true) {
         origin.x += process.camOriginOffX;
         origin.y += process.camOriginOffY;
         origin.z += process.camOriginOffZ;
+        if (isIndexed) {
+            origin.y = 0;
+        }
     }
 
     //  WireEDM origin offsets
     if (MODE === MODES.WEDM) {
         origin.x -= process.ctOriginOffX;
-        origin.y -= process.ctOriginOffY;
-    }
-
-    if (isIndexed) {
-        origin.y = 0;
+        origin.y += process.ctOriginOffY;
     }
 
     space.platform.setRulers(ruler, ruler, 1 / api.view.unit_scale(), 'X', isBelt ? 'Z' : 'Y');

@@ -12,35 +12,45 @@ gapp.register("kiri.pack", [], (root, exports) => {
 const { kiri } = root;
 
 class Packer {
-    constructor(w, h, spacing, inv) {
+    constructor(w, h, spacing, opt = {}) {
         this.root = { x: 0, y: 0, w: w, h: h };
         this.max = { w: 0, h: 0 };
         this.packed = false;
         this.spacing = typeof(spacing) === 'number' ? spacing : 1;
-        this.inv = inv;
+        this.opt = opt;
         this.pad = this.spacing / 2;
     }
 
+    // array of blocks/tiles with {w,h} properties
     simple(blocks) {
-        let n = 0, block, x = 0, y = 0, mh = 0;
+        let n = 0, block, x = 0, y = 0, mh = 0, maxx = 0, maxy = 0;
         let spacing = blocks.length > 1 ? this.spacing : 0;
         while (n < blocks.length) {
             block = blocks[n++];
             block.fit = { x, y };
             this.max.w = Math.max(this.max.w, x + block.w);
             this.max.h = Math.max(this.max.h, y + block.h);
+            maxx = Math.max(maxx, x);
+            maxy = Math.max(maxy, y);
             mh = Math.max(mh, block.h);
             x += block.w + spacing;
             if (x > this.root.w) {
                 x = 0;
-                y += ((mh + spacing) * (this.inv ? -1 : 1));
+                y = y + mh + spacing;
                 mh = 0;
-            }
-            if (this.inv && (y < -this.root.h)) {
-                return this;
             }
             if (y > this.root.h) {
                 return this;
+            }
+        }
+        if (this.opt.invx) {
+            for (let block of blocks) {
+                block.fit.x = maxx - block.fit.x;
+            }
+        }
+        if (this.opt.invy) {
+            for (let block of blocks) {
+                block.fit.y = maxy - block.fit.y;
             }
         }
         this.packed = true;

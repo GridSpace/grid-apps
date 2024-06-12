@@ -275,7 +275,9 @@ th, tr, td, label {
 .dark #slider-max,
 .dark .mdialog,
 .dark .t-body,
-.dark .cam-pop-op
+.dark .cam-pop-op,
+.dark #mod-print,
+.dark #mod-print .header label
 {
     background-color: #222;
     color: white;

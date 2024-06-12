@@ -328,10 +328,10 @@ async function prepare(widgets, settings, update) {
     }
 
     // compute tile width / height
-    for (let layerout of output) {
+    for (let layer of output) {
         let min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
         // compute bounding box for each layer
-        for (let out of layerout) {
+        for (let out of layer) {
             p = out.point;
             out.point = p.clone(); // b/c first/last point are often shared
             min.w = Math.min(min.w, p.x);
@@ -339,10 +339,10 @@ async function prepare(widgets, settings, update) {
             min.h = Math.min(min.h, p.y);
             max.h = Math.max(max.h, p.y);
         }
-        layerout.w = max.w - min.w;
-        layerout.h = max.h - min.h;
+        layer.w = max.w - min.w;
+        layer.h = max.h - min.h;
         // shift objects to top/left of w/h box bounds
-        for (let out of layerout) {
+        for (let out of layer) {
             p = out.point;
             p.x -= min.w;
             p.y -= min.h;
@@ -356,13 +356,13 @@ async function prepare(widgets, settings, update) {
         spacing = process.ctOutTileSpacing,
         // sort objects by size when not using laser layer ordering
         c = sort ? output.sort() : output,
-        p = new kiri.Pack(dw, dh, spacing, isWire).fit(c, !sort);
+        p = new kiri.Pack(dw, dh, spacing, {invy:isWire}).fit(c, !sort);
 
     // test different ratios until packed
     while (!p.packed) {
         dw *= 1.1;
         dh *= 1.1;
-        p = new kiri.Pack(dw, dh, spacing, isWire).fit(c ,!sort);
+        p = new kiri.Pack(dw, dh, spacing, {invy:isWire}).fit(c ,!sort);
     }
 
     // update packed tile with new location
@@ -392,62 +392,91 @@ function exportLaser(print, online, ondone) {
  *
  */
 function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlayer) {
-    let process = settings.process,
-        zcolor = process.ctOutZColor,
+    let { process, device } = settings,
+        { bedWidth, bedDepth } = device,
+        { ctOriginCenter, ctOriginBounds } = process,
+        { outputInvertX, outputInvertY } = process,
+        { ctOriginOffX, ctOriginOffY } = process,
         last,
         point,
         poly = [],
+        off = {x:ctOriginOffX||0, y:ctOriginOffY||0},
         min = {x:0, y:0},
-        max = {x:0, y:0};
+        max = {x:0, y:0},
+        size = {w:0, h:0};
 
-    output.forEach(function(layer) {
-        layer.forEach(function(out) {
+    // compute bounds for entire output
+    output.forEach(layer => {
+        layer.forEach(out => {
             point = out.point;
-            if (process.outputInvertX) point.x = -point.x;
-            if (process.outputInvertY) point.y = -point.y;
+            if (outputInvertX) point.x = -point.x;
+            if (outputInvertY) point.y = -point.y;
             min.x = Math.min(min.x, point.x);
             max.x = Math.max(max.x, point.x);
             min.y = Math.min(min.y, point.y);
             max.y = Math.max(max.y, point.y);
         });
     });
+    size.w = max.x - min.x;
+    size.h = max.y - min.y;
+    console.log('export bounds', min, max, size);
 
-    if (!process.ctOriginCenter) {
-        // normalize against origin lower left
-        output.forEach(function(layer) {
-            layer.forEach(function(out) {
+    let bounds = base.newBounds();
+    if (ctOriginCenter) {
+        // place origin at geometric center of all points
+        // regardless of workspace size
+        for (let layer of output) {
+            for (let out of layer) {
                 point = out.point;
-                point.x -= min.x;
-                point.y -= min.y;
-            });
-        });
-        max.x = max.x - min.x;
-        max.y = max.y - min.y;
+                point.x = point.x - min.x - size.w / 2 + off.x;
+                point.y = point.y - min.y - size.h / 2 + off.y;
+                bounds.update(point);
+            }
+        }
+        max.x = max.x - min.x + off.x;
+        max.y = max.y - min.y + off.y;
+        min.x = 0;
+        min.y = 0;
+    } else if (ctOriginBounds) {
+        // place origin at min x,y of all points
+        for (let layer of output) {
+            for (let out of layer) {
+                point = out.point;
+                point.x = point.x - min.x + ctOriginOffX;
+                point.y = point.y - min.y + ctOriginOffY;
+                bounds.update(point);
+            }
+        }
+        max.x = max.x - min.x + off.x;
+        max.y = max.y - min.y + off.y;
         min.x = 0;
         min.y = 0;
     } else {
-        // normalize against center of build area
-        let w = settings.device.bedWidth;
-        let h = settings.device.bedDepth;
-        output.forEach(function(layer) {
-            layer.forEach(function(out) {
+        // place origin at min x,y taking into account
+        // each layer's relative position
+        let w = bedWidth;
+        let h = bedDepth;
+        for (let layer of output) {
+            for (let out of layer) {
                 point = out.point;
-                point.x += w/2;
-                point.y += h/2;
-            });
-        });
-        max.x = w;
-        max.y = h;
+                point.x += w / 2 + off.x;
+                point.y += h / 2 + off.y;
+                bounds.update(point);
+            }
+        }
+        max.x = w + off.x;
+        max.y = h + off.y;
         min.x = 0;
         min.y = 0;
     }
 
     onpre(min, max, process.ctOutPower, process.ctOutSpeed);
 
-    output.forEach(function(layer, index) {
+    // output each layer with moves between them
+    output.forEach((layer, index) => {
         let thick = 0;
         let color = 0;
-        layer.forEach(function(out, li) {
+        layer.forEach((out, li) => {
             thick = out.thick;
             point = out.point;
             if (onlayer) {
