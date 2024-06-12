@@ -2482,7 +2482,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         });
 
         api.space.restore(init_two) || checkSeed(init_two) || init_two();
-
     };
 
     // SECOND STAGE INIT AFTER UI RESTORED

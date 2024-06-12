@@ -423,7 +423,7 @@ function platformAdd(widget, shift, nolayout, defer) {
             return;
         }
         if (!grouping) {
-            platformGroupDone();
+            platformGroupDone(nolayout);
             if (!current().controller.autoLayout) {
                 positionNewWidget(widget);
             }
@@ -432,15 +432,17 @@ function platformAdd(widget, shift, nolayout, defer) {
 }
 
 function platformAddDeferred() {
+    let skiplayout = false;
     for (let rec of deferred) {
         let { widget, shift, nolayout } = rec;
+        skiplayout |= nolayout;
         // platform.select(widget, shift);
         if (!nolayout && !current().controller.autoLayout) {
             positionNewWidget(widget);
         }
     }
     if (!grouping) {
-        platformGroupDone();
+        platformGroupDone(skiplayout);
     }
     api.event.emit('widget.add', deferred.map(r => r.widget));
     platform.update_bounds();
@@ -622,7 +624,7 @@ function platformSelectAll() {
     });
 }
 
-function platformLayout(event, gap) {
+function platformLayout() {
     const MODE = get_mode();
     const settings = current();
     const { process, device, controller } = settings;
@@ -633,7 +635,7 @@ function platformLayout(event, gap) {
         isArrange = api.view.is_arrange(),
         layout = isArrange && auto;
 
-    gap = gap || controller.spaceLayout;
+    let gap = controller.spaceLayout;
 
     switch (MODE) {
         case MODES.SLA:
