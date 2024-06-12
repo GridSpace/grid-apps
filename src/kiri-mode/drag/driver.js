@@ -5,7 +5,10 @@
 // dep: kiri-mode.laser.driver
 gapp.register("kiri-mode.drag.driver", [], (root, exports) => {
 
-root.kiri.driver.DRAG = root.kiri.driver.LASER;
+const DRIVERS = root.kiri.driver;
+const { LASER } = DRIVERS;
+const { TYPE } = LASER;
+DRIVERS.DRAG = Object.assign({}, LASER, { name: "DragKnife", type: TYPE.DRAG });
 
 });
 

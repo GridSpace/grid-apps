@@ -14,7 +14,16 @@ const { driver, newSlice } = kiri;
 const { polygons, newPoint } = base;
 
 const POLY = polygons;
-const DRIVER = driver.LASER = {
+const TYPE = {
+    LASER: 0,
+    DRAG: 1,
+    WJET: 2,
+    WEDM: 3
+};
+
+driver.LASER = {
+    TYPE,
+    type: TYPE.LASER,
     name: 'Laser',
     init,
     slice,
@@ -22,17 +31,13 @@ const DRIVER = driver.LASER = {
     export: exportLaser,
     exportGCode,
     exportSVG,
-    exportDXF
+    exportDXF,
 };
-
-const state = {};
 
 function init(kiri, api, current) {
     api.event.on("settings.saved", settings => {
         let ui = kiri.api.ui;
     });
-    state.driver = current;
-    state.isWEDM = (current === driver.WEDM);
 }
 
 /**
@@ -44,8 +49,6 @@ function init(kiri, api, current) {
  * @param {Function} ondone (called when complete with an array of Slice objects)
  */
 function slice(settings, widget, onupdate, ondone) {
-    let { isWEDM } = state;
-
     let proc = settings.process;
     let offset = proc.ctSliceKerf || 0;
     let color = settings.controller.dark ? 0xbbbbbb : 0;
@@ -201,9 +204,8 @@ async function prepare(widgets, settings, update) {
     // convert arc into line segments
     function arc(center, s1, s2, out) {
         let a1 = s1.angle;
-        let a2 = s2.angle;
-        let diff = s1.angleDiff(s2,true);
         let step = 5;
+        let diff = s1.angleDiff(s2, true);
         let ticks = Math.abs(Math.floor(diff / step));
         let dir = Math.sign(diff);
         let off = (diff % step) / 2;

@@ -8,7 +8,13 @@ gapp.register("kiri-mode.wedm.driver", [], (root, exports) => {
 const { kiri, moto } = root;
 const DRIVERS = kiri.driver;
 const { CAM, LASER } = DRIVERS;
-const WEDM = DRIVERS.WEDM = Object.assign({}, LASER, { name: "WireEDM" });
+const { TYPE } = LASER;
+const WEDM = DRIVERS.WEDM = Object.assign({}, LASER, {
+    name: "WireEDM",
+    type: TYPE.WEDM,
+    init,
+    prepare
+});
 const DEG2RAD = Math.PI / 180;
 
 const state = {
@@ -66,7 +72,7 @@ function faceDone() {
     state.selecting = false;
 }
 
-WEDM.init = (kiri, api, driver) => {
+function init(kiri, api, driver) {
     LASER.init(kiri, api, driver);
 
     state.api = api;
@@ -102,6 +108,17 @@ WEDM.init = (kiri, api, driver) => {
 
 };
 
+async function prepare(widgets, settings, update) {
+    // let device = settings.device,
+    //     process = settings.process,
+    //     print = self.worker.print = kiri.newPrint(settings, widgets),
+    //     output = print.output = [];
+
+    // filter ignored widgets
+    widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
+
+    LASER.prepare(widgets, settings, update);
+}
 
 });
 
