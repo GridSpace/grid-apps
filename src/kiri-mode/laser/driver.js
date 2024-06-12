@@ -192,6 +192,7 @@ async function prepare(widgets, settings, update) {
     let device = settings.device,
         process = settings.process,
         print = self.worker.print = kiri.newPrint(settings, widgets),
+        isWire = self.worker.mode === 'WEDM',
         knifeOn = self.worker.mode === 'DRAG',
         knifeTipOff = process.ctOutKnifeTip,
         output = print.output = [],
@@ -266,12 +267,12 @@ async function prepare(widgets, settings, update) {
     }
 
     // find max layers (for updates)
-    widgets.forEach(widget => {
+    for (let widget of widgets) {
         totalSlices += widget.slices.length;
-    });
+    }
 
     // emit objects from each slice into output array
-    widgets.forEach(widget => {
+    for (let widget of widgets) {
         // slice stack merging
         if (process.ctOutMerged) {
             let merged = [];
@@ -324,61 +325,58 @@ async function prepare(widgets, settings, update) {
                 update((slices++ / totalSlices) * 0.5, "prepare");
             }
         }
-    });
-
-    let pack = true;
+    }
 
     // compute tile width / height
-    output.forEach(layerout => {
+    for (let layerout of output) {
         let min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
         // compute bounding box for each layer
-        layerout.forEach(out => {
+        for (let out of layerout) {
             p = out.point;
             out.point = p.clone(); // b/c first/last point are often shared
             min.w = Math.min(min.w, p.x);
             max.w = Math.max(max.w, p.x);
             min.h = Math.min(min.h, p.y);
             max.h = Math.max(max.h, p.y);
-        });
+        }
         layerout.w = max.w - min.w;
         layerout.h = max.h - min.h;
-        // shift objects to top/left of w/h bounds
-        if (pack)
-        layerout.forEach(out => {
+        // shift objects to top/left of w/h box bounds
+        for (let out of layerout) {
             p = out.point;
             p.x -= min.w;
             p.y -= min.h;
-        });
-    });
+        }
+    }
 
     // do object layout packing
-    let i, m, e,
-        dw = device.bedWidth / 2,
+    let dw = device.bedWidth / 2,
         dh = device.bedDepth / 2,
         sort = !process.ctOutLayer,
+        spacing = process.ctOutTileSpacing,
         // sort objects by size when not using laser layer ordering
-        c = sort ? output.sort(kiri.Sort) : output,
-        p = new kiri.Pack(dw, dh, process.ctOutTileSpacing).fit(c, !sort);
+        c = sort ? output.sort() : output,
+        p = new kiri.Pack(dw, dh, spacing, isWire).fit(c, !sort);
 
     // test different ratios until packed
     while (!p.packed) {
         dw *= 1.1;
         dh *= 1.1;
-        p = new kiri.Pack(dw, dh, process.ctOutTileSpacing).fit(c ,!sort);
+        p = new kiri.Pack(dw, dh, spacing, isWire).fit(c ,!sort);
     }
 
-    if (true)
-    for (i = 0; i < c.length; i++) {
-        m = c[i];
-        m.fit.x += m.w + p.pad;
-        m.fit.y += m.h + p.pad;
-        m.forEach(function(o, i) {
+    // update packed tile with new location
+    let pad = c.length > 1 ? p.pad : 0;
+    for (let m of c) {
+        m.fit.x += m.w + pad;
+        m.fit.y += m.h + pad;
+        for (let o of m) {
             // because first point emitted twice (begin/end)
-            e = o.point;
+            let e = o.point;
             e.x += p.max.w / 2 - m.fit.x;
             e.y += p.max.h / 2 - m.fit.y;
             e.z = 0;
-        });
+        }
     }
 
     return kiri.render.path(output, (progress, layer) => {

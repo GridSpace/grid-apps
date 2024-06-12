@@ -12,27 +12,32 @@ gapp.register("kiri.pack", [], (root, exports) => {
 const { kiri } = root;
 
 class Packer {
-    constructor(w, h, spacing) {
+    constructor(w, h, spacing, inv) {
         this.root = { x: 0, y: 0, w: w, h: h };
         this.max = { w: 0, h: 0 };
         this.packed = false;
         this.spacing = typeof(spacing) === 'number' ? spacing : 1;
+        this.inv = inv;
         this.pad = this.spacing / 2;
     }
 
     simple(blocks) {
         let n = 0, block, x = 0, y = 0, mh = 0;
+        let spacing = blocks.length > 1 ? this.spacing : 0;
         while (n < blocks.length) {
             block = blocks[n++];
             block.fit = { x, y };
             this.max.w = Math.max(this.max.w, x + block.w);
             this.max.h = Math.max(this.max.h, y + block.h);
             mh = Math.max(mh, block.h);
-            x += block.w + this.spacing;
+            x += block.w + spacing;
             if (x > this.root.w) {
                 x = 0;
-                y += mh + this.spacing;
+                y += ((mh + spacing) * (this.inv ? -1 : 1));
                 mh = 0;
+            }
+            if (this.inv && (y < -this.root.h)) {
+                return this;
             }
             if (y > this.root.h) {
                 return this;
@@ -47,10 +52,11 @@ class Packer {
             return this.simple(blocks);
         }
         let n = 0, node, block, w, h;
+        let spacing = blocks.length > 1 ? this.spacing : 0;
         while (n < blocks.length) {
             block = blocks[n++];
-            w = block.w + this.spacing;
-            h = block.h + this.spacing;
+            w = block.w + spacing;
+            h = block.h + spacing;
             if (node = this.findNode(this.root, w, h)) {
                 block.fit = this.splitNode(node, w, h);
             } else {
@@ -80,16 +86,6 @@ class Packer {
         return node;
     }
 }
-
-// kiri.Sort = function (a, b) {
-//     let aa = (a.w * a.h);
-//     let ab = (b.w * b.h);
-//     if (Math.abs(aa - ab) < 1) {
-//         return (b.w / b.h) - (a.w / a.h);
-//     } else {
-//         return ab - aa;
-//     }
-// };
 
 kiri.Pack = Packer;
 

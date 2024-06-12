@@ -768,6 +768,8 @@ const conf = exports({
                 ctOutMerged: false,
                 ctOriginCenter: false,
                 ctOriginBounds: true,
+                ctOriginOffX: 0,
+                ctOriginOffY: -10,
                 outputInvertX: false,
                 outputInvertY: false,
                 ctOutKnifeDepth: 1,

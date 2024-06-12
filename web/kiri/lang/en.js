@@ -750,6 +750,10 @@ self.kiri.lang['en-us'] = {
     or_cntr_l:      "origin is referenced from the center",
     or_topp_s:      "origin top",
     or_topp_l:      "origin is references from the top of objects",
+    or_offx_s:      "origin offset X",
+    or_offx_l:      "origin offset X",
+    or_offy_s:      "origin offset Y",
+    or_offy_l:      "origin offset Y",
 
     // CAM ORIGIN
     co_menu:        "origin",

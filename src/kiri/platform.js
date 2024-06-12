@@ -88,10 +88,17 @@ function platformUpdateOrigin(update_bounds = true) {
         origin.y = device.bedDepth / 2;
     }
 
+    // CNC origin offsets
     if (MODE === MODES.CAM) {
         origin.x += process.camOriginOffX;
         origin.y += process.camOriginOffY;
         origin.z += process.camOriginOffZ;
+    }
+
+    //  WireEDM origin offsets
+    if (MODE === MODES.WEDM) {
+        origin.x -= process.ctOriginOffX;
+        origin.y -= process.ctOriginOffY;
     }
 
     if (isIndexed) {
@@ -711,7 +718,7 @@ function platformLayout() {
         let i, m, sz = space.platform.size(),
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
-            c = Widget.Groups.blocks().sort(moto.Sort),
+            c = Widget.Groups.blocks().sort(),
             p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
 
         while (!p.packed) {
