@@ -23,6 +23,7 @@ const { COLOR, MODES } = consts;
 
 const V0 = new THREE.Vector3(0,0,0);
 
+let setbounds = undefined;
 let grouping = false;
 let topZ = 0;
 
@@ -218,8 +219,14 @@ function platformUpdateStock() {
     }
 }
 
+function platformSetBounds(bounds) {
+    setbounds = bounds;
+    return platformUpdateBounds();
+}
+
 function platformUpdateBounds() {
-    const bounds = new THREE.Box3();
+    const bounds = setbounds || new THREE.Box3();
+    if (!setbounds)
     api.widgets.each(widget => {
         let wp = widget.track.pos;
         let wb = widget.getBoundingBox().clone();
@@ -911,6 +918,7 @@ const platform = api.platform = {
     select: platformSelect,
     select_all: platformSelectAll,
     selected_count: platformSelectedCount,
+    set_bounds: platformSetBounds,
     update_origin: platformUpdateOrigin,
     update_bounds: platformUpdateBounds,
     update_size: platformUpdateSize,

@@ -903,6 +903,7 @@ gapp.register("kiri.main", [], (root, exports) => {
         current.mode = mode;
         MODE = MODES[mode];
         DRIVER = kiri.driver[mode];
+        kiri.driver.current = DRIVER;
         // gcode edit area for any non-SLA mode
         api.uc.setVisible($('gcode-edit'), mode !== 'SLA');
         // highlight selected mode menu item

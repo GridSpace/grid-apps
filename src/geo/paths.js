@@ -16,7 +16,9 @@ const DEG2RAD = Math.PI / 180;
 
 /**
  * emit each element in an array based on
- * the next closest endpoint.
+ * the next closest endpoint. arrays contain
+ * elements with { first, last } points and
+ * may be open polys, unlike poly2polyEmit
  */
 function tip2tipEmit(array, startPoint, emitter) {
     let mindist, dist, found, count = 0;

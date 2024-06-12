@@ -129,13 +129,13 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
     let lastEmit = opt.lastEmit;
     let zcolor = print.settings.process.ctOutZColor;
 
-    function laserOut(poly, group, type, indexed) {
+    function polyOut(poly, group, type, indexed) {
         if (!poly) {
             return;
         }
         if (Array.isArray(poly)) {
             poly.forEach((pi, index) => {
-                laserOut(pi, group, type, indexed ? index : undefined);
+                polyOut(pi, group, type, indexed ? index : undefined);
             });
         } else {
             let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1, rate: 1};
@@ -153,7 +153,7 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
             if (stacked && type === "out" && lastEmit) {
                 for (let out of lastEmit.out) {
                     if (out.isInside(poly)) {
-                        laserOut(out, group, "mark");
+                        polyOut(out, group, "mark");
                     }
                 }
             }
@@ -166,15 +166,15 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
         let offset = slice.offset;
         let inner = offset.map(poly => poly.inner || []).flat();
         // cut inside before outside
-        laserOut(inner, group, "in", offset.length > 1);
-        laserOut(offset, group, "out", offset.length > 1);
+        polyOut(inner, group, "in", offset.length > 1);
+        polyOut(offset, group, "out", offset.length > 1);
         groups.push(group);
     } else {
         for (let top of slice.offset) {
             let group = [];
             group.thick = slice.thick;
-            laserOut([ top ], group, "in");
-            laserOut(top.inner || [], group, "out");
+            polyOut([ top ], group, "in");
+            polyOut(top.inner || [], group, "out");
             groups.push(group);
         }
     }
@@ -274,9 +274,12 @@ async function prepare(widgets, settings, update) {
     // emit objects from each slice into output array
     for (let widget of widgets) {
         // slice stack merging
+        // there is not layout in this mode
+        // there are no inner vs outer polys
+        // merged/same polys "increase" color/weight
         if (process.ctOutMerged) {
             let merged = [];
-            widget.slices.forEach(slice => {
+            for (let slice of widget.slices) {
                 let polys = [];
                 slice.offset.clone(true).forEach(p => p.flattenTo(polys));
                 polys.forEach(p => {
@@ -295,10 +298,10 @@ async function prepare(widgets, settings, update) {
                     }
                 });
                 update((slices++ / totalSlices) * 0.5, "prepare");
-            });
+            }
             let start = newPoint(0,0,0);
             let gather = [];
-            merged.forEach(poly => {
+            for (let poly of merged) {
                 if (knifeOn) {
                     addKnifeRadii(poly);
                 }
@@ -306,19 +309,20 @@ async function prepare(widgets, settings, update) {
                     extrude: poly.depth,
                     rate: poly.depth * 10
                 });
-            });
+            }
             output.push(gather);
         } else {
             if (knifeOn) {
-                widget.slices.forEach(slice => {
+                for (let slice of widget.slices) {
                     slice.offset.forEach(poly => {
                         addKnifeRadii(poly);
                         if (poly.inner) poly.inner.forEach(ip => {
                             addKnifeRadii(ip);
                         });
                     });
-                });
+                }
             }
+            // TODO packing / layout SHOULD be done here instead
             let lastEmit;
             for (let slice of widget.slices.reverse()) {
                 lastEmit = sliceEmitObjects(print, slice, output, {simple: knifeOn, lastEmit});
@@ -379,6 +383,8 @@ async function prepare(widgets, settings, update) {
         }
     }
 
+    console.log({ output });
+
     return kiri.render.path(output, (progress, layer) => {
         update(0.5 + progress * 0.5, "render", layer);
     }, { thin: true, z: 0, action: "cut", moves: process.knifeOn });
@@ -419,7 +425,6 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
     });
     size.w = max.x - min.x;
     size.h = max.y - min.y;
-    console.log('export bounds', min, max, size);
 
     let bounds = base.newBounds();
     if (ctOriginCenter) {

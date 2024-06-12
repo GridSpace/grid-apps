@@ -279,7 +279,7 @@ th, tr, td, label {
 .dark #mod-print,
 .dark #mod-print .header label
 {
-    background-color: #222;
+    background-color: #282828;
     color: white;
 }
 .dark #render-tools .pop,
