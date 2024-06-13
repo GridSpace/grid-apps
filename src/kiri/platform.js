@@ -735,8 +735,8 @@ function platformLayout() {
 
         for (i = 0; i < c.length; i++) {
             m = c[i];
-            m.fit.x += m.w / 2 + p.pad;
-            m.fit.y += m.h / 2 + p.pad;
+            m.fit.x += m.w / 2;
+            m.fit.y += m.h / 2;
             m.move(p.max.w / 2 - m.fit.x, p.max.h / 2 - m.fit.y, 0, true);
         }
     }

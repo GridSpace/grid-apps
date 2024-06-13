@@ -717,10 +717,10 @@ class Polygon {
     /**
      * move all poly points by some offset
      */
-    move(offset) {
+    move(offset, skipinner) {
         this._bounds = undefined;
         this.points = this.points.map(point => point.move(offset));
-        if (this.inner) {
+        if (!skipinner && this.inner) {
             for (let inner of this.inner) {
                 inner.move(offset);
             }

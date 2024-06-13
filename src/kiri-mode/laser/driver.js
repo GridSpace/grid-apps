@@ -40,6 +40,139 @@ function init(kiri, api, current) {
     });
 }
 
+function polyLabel(poly, label) {
+    console.log('label', label);
+}
+
+function sliceEmitObjects(print, slice, groups, opt = { }) {
+    let process = print.settings.process;
+    let stacked = process.ctOutStack;
+    let grouped = stacked || process.ctOutGroup;
+    let label = false && process.outputLaserLabel;
+    let simple = opt.simple || false;
+    let emit = { in: [], out: [], mark: [] };
+    let lastEmit = opt.lastEmit;
+    let zcolor = print.settings.process.ctOutZColor;
+
+    function polyOut(poly, group, type, indexed) {
+        if (!poly) {
+            return;
+        }
+        if (Array.isArray(poly)) {
+            poly.forEach((pi, index) => {
+                polyOut(pi, group, type, indexed ? index : undefined);
+            });
+        } else {
+            let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1, rate: 1};
+            if (type === "mark") {
+                pathOpt.rate = 0.001;
+                pathOpt.extrude = 2;
+            } else if (label && type === "out") {
+                let lbl = index !== undefined ? `${slice.index}-${index}` : `${slice.index}`;
+                polyLabel(poly, lbl);
+            }
+            if (simple) pathOpt.simple = true;
+            if (poly.open) pathOpt.open = true;
+            emit[type].push(poly);
+            print.PPP(poly, group, pathOpt);
+            // when stacking (top down widget slices), if the last layer is fully contained
+            // by the current layer, then it is "marked" onto the current layer in a different color
+            if (stacked && type === "out" && lastEmit) {
+                for (let out of lastEmit.out) {
+                    if (out.isInside(poly)) {
+                        polyOut(out, group, "mark");
+                    }
+                }
+            }
+        }
+    }
+
+    if (grouped) {
+        let group = [];
+        group.thick = slice.thick;
+        let outer = slice.offset;
+        let inner = outer.map(poly => poly.inner || []).flat();
+        // cut inside before outside
+        polyOut(inner, group, "in", outer.length > 1);
+        polyOut(outer, group, "out", outer.length > 1);
+        groups.push(group);
+    } else {
+        for (let top of slice.offset) {
+            let group = [];
+            group.thick = slice.thick;
+            polyOut([ top ], group, "in");
+            polyOut(top.inner || [], group, "out");
+            groups.push(group);
+        }
+    }
+
+    return emit;
+};
+
+// convert arc into line segments
+function arc(center, rad, s1, s2, out) {
+    let a1 = s1.angle;
+    let step = 5;
+    let diff = s1.angleDiff(s2, true);
+    let ticks = Math.abs(Math.floor(diff / step));
+    let dir = Math.sign(diff);
+    let off = (diff % step) / 2;
+    if (off == 0) {
+        ticks++;
+    } else {
+        out.push( center.projectOnSlope(s1, rad) );
+    }
+    while (ticks-- > 0) {
+        out.push( center.projectOnSlope(base.newSlopeFromAngle(a1 + off), rad) );
+        a1 += step * dir;
+    }
+    out.push( center.projectOnSlope(s2, rad) );
+}
+
+// start to the "left" of the first point
+function addKnifeRadii(poly, tipoff) {
+    poly.setClockwise();
+    let oldpts = poly.points.slice();
+    // find leftpoint and make that the first point
+    let start = oldpts[0];
+    let startI = 0;
+    for (let i=1; i<oldpts.length; i++) {
+        let pt = oldpts[i];
+        if (pt.x < start.x || pt.y > start.y) {
+            start = pt;
+            startI = i;
+        }
+    }
+    if (startI > 0) {
+        oldpts = oldpts.slice(startI,oldpts.length).appendAll(oldpts.slice(0,startI));
+    }
+
+    let lastpt = oldpts[0].clone().move({x:-tipoff,y:0,z:0});
+    let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
+    let newpts = [ lastpt, lastpt = oldpts[0].clone() ];
+    let tmp;
+    for (let i=1; i<oldpts.length + 1; i++) {
+        let nextpt = oldpts[i % oldpts.length];
+        let nextsl = lastpt.slopeTo(nextpt).toUnit();
+        if (lastsl.angleDiff(nextsl) >= 10) {
+            if (lastpt.distTo2D(nextpt) >= tipoff) {
+                arc(lastpt, tipoff, lastsl, nextsl, newpts);
+            } else {
+                // todo handle short segments
+                // newpts.push(lastpt.projectOnSlope(lastsl, tipoff) );
+                // newpts.push( lastpt.projectOnSlope(nextsl, tipoff) );
+            }
+        }
+        newpts.push(nextpt);
+        lastsl = nextsl;
+        lastpt = nextpt;
+    }
+    newpts.push( tmp = lastpt.projectOnSlope(lastsl, tipoff) );
+    newpts.push( tmp.clone().move({x:tipoff, y:0, z: 0}) );
+    poly.open = true;
+    poly.points = newpts;
+}
+
 /**
  * DRIVER SLICE CONTRACT
  *
@@ -98,88 +231,24 @@ function slice(settings, widget, onupdate, ondone) {
             onupdate(v);
         }
     }).then(output => {
+        // ensure slice order is high Z to low Z for stacking
         widget.slices = output.slices.map(data => {
             let { z, lines, groups } = data;
             let tops = POLY.nest(groups);
+            // for WireEDM, we commonly omit inner polys because we can't
+            // navigate to cut them separately unlike laser, water, drag
             if (ctOmitInner) tops.forEach(top => delete top.inner);
             let slice = newSlice(z).addTops(tops);
             slice.index = indices.indexOf(z);
+            // create top offsets (even if 0)
             let offsets = slice.offset = offset ?
                 POLY.offset(tops, offset, {z: slice.z, miter: 2 / offset}) : tops;
-            slice.output().setLayer("layer", { line: 0x888800 }).addPolys(tops);
+            slice.output().setLayer("object", { line: 0x888800 }).addPolys(tops);
             slice.output().setLayer("cut", { line: color }).addPolys(offsets);
             return slice;
-        });
+        }).sort((a,b) => b.z - a.z);
         ondone();
     });
-};
-
-function polyLabel(poly, label) {
-    console.log('label', label);
-}
-
-function sliceEmitObjects(print, slice, groups, opt = { }) {
-    let start = newPoint(0,0,0);
-    let process = print.settings.process;
-    let stacked = process.ctOutStack;
-    let grouped = stacked || process.ctOutGroup;
-    let label = false && process.outputLaserLabel;
-    let simple = opt.simple || false;
-    let emit = { in: [], out: [], mark: [] };
-    let lastEmit = opt.lastEmit;
-    let zcolor = print.settings.process.ctOutZColor;
-
-    function polyOut(poly, group, type, indexed) {
-        if (!poly) {
-            return;
-        }
-        if (Array.isArray(poly)) {
-            poly.forEach((pi, index) => {
-                polyOut(pi, group, type, indexed ? index : undefined);
-            });
-        } else {
-            let pathOpt = zcolor ? {extrude: slice.z, rate: slice.z} : {extrude: 1, rate: 1};
-            if (type === "mark") {
-                pathOpt.rate = 0.001;
-                pathOpt.extrude = 2;
-            } else if (label && type === "out") {
-                let lbl = index !== undefined ? `${slice.index}-${index}` : `${slice.index}`;
-                polyLabel(poly, lbl);
-            }
-            if (simple) pathOpt.simple = true;
-            if (poly.open) pathOpt.open = true;
-            emit[type].push(poly);
-            print.polyPrintPath(poly, start, group, pathOpt);
-            if (stacked && type === "out" && lastEmit) {
-                for (let out of lastEmit.out) {
-                    if (out.isInside(poly)) {
-                        polyOut(out, group, "mark");
-                    }
-                }
-            }
-        }
-    }
-
-    if (grouped) {
-        let group = [];
-        group.thick = slice.thick;
-        let offset = slice.offset;
-        let inner = offset.map(poly => poly.inner || []).flat();
-        // cut inside before outside
-        polyOut(inner, group, "in", offset.length > 1);
-        polyOut(offset, group, "out", offset.length > 1);
-        groups.push(group);
-    } else {
-        for (let top of slice.offset) {
-            let group = [];
-            group.thick = slice.thick;
-            polyOut([ top ], group, "in");
-            polyOut(top.inner || [], group, "out");
-            groups.push(group);
-        }
-    }
-
-    return emit;
 };
 
 /**
@@ -197,74 +266,27 @@ async function prepare(widgets, settings, update) {
         knifeTipOff = process.ctOutKnifeTip,
         output = print.output = [],
         totalSlices = 0,
-        slices = 0;
+        slices = 0,
+        { bedWidth, bedDepth } = device,
+        { ctOriginCenter, ctOriginBounds } = process,
+        { ctOriginOffX, ctOriginOffY } = process;
+
+    // shim to adapt older code -- should be refactored
+    let pppo = [];
+    let pppg = [];
+    let tile = [];
+    let tiles = [];
+    print.PPP = function(poly, group, options) {
+        if (!pppg.contains(group)){
+            pppg.push(group);
+            tiles.push(tile = []);
+        }
+        pppo.push({ poly, group, options });
+        tile.push({ poly, group, options });
+    };
 
     // filter ignored widgets
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
-
-    // convert arc into line segments
-    function arc(center, s1, s2, out) {
-        let a1 = s1.angle;
-        let step = 5;
-        let diff = s1.angleDiff(s2, true);
-        let ticks = Math.abs(Math.floor(diff / step));
-        let dir = Math.sign(diff);
-        let off = (diff % step) / 2;
-        if (off == 0) {
-            ticks++;
-        } else {
-            out.push( center.projectOnSlope(s1, knifeTipOff) );
-        }
-        while (ticks-- > 0) {
-            out.push( center.projectOnSlope(base.newSlopeFromAngle(a1 + off), knifeTipOff) );
-            a1 += step * dir;
-        }
-        out.push( center.projectOnSlope(s2, knifeTipOff) );
-    }
-
-    // start to the "left" of the first point
-    function addKnifeRadii(poly) {
-        poly.setClockwise();
-        let oldpts = poly.points.slice();
-        // find leftpoint and make that the first point
-        let start = oldpts[0];
-        let startI = 0;
-        for (let i=1; i<oldpts.length; i++) {
-            let pt = oldpts[i];
-            if (pt.x < start.x || pt.y > start.y) {
-                start = pt;
-                startI = i;
-            }
-        }
-        if (startI > 0) {
-            oldpts = oldpts.slice(startI,oldpts.length).appendAll(oldpts.slice(0,startI));
-        }
-
-        let lastpt = oldpts[0].clone().move({x:-knifeTipOff,y:0,z:0});
-        let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
-        let newpts = [ lastpt, lastpt = oldpts[0] ];
-        let tmp;
-        for (let i=1; i<oldpts.length + 1; i++) {
-            let nextpt = oldpts[i % oldpts.length];
-            let nextsl = lastpt.slopeTo(nextpt).toUnit();
-            if (lastsl.angleDiff(nextsl) >= 10) {
-                if (lastpt.distTo2D(nextpt) >= knifeTipOff) {
-                    arc(lastpt, lastsl, nextsl, newpts);
-                } else {
-                    // todo handle short segments
-                    // newpts.push(lastpt.projectOnSlope(lastsl, knifeTipOff) );
-                    // newpts.push( lastpt.projectOnSlope(nextsl, knifeTipOff) );
-                }
-            }
-            newpts.push(nextpt);
-            lastsl = nextsl;
-            lastpt = nextpt;
-        }
-        newpts.push( tmp = lastpt.projectOnSlope(lastsl, knifeTipOff) );
-        newpts.push( tmp.clone().move({x:knifeTipOff, y:0, z: 0}) );
-        poly.open = true;
-        poly.points = newpts;
-    }
 
     // find max layers (for updates)
     for (let widget of widgets) {
@@ -273,11 +295,11 @@ async function prepare(widgets, settings, update) {
 
     // emit objects from each slice into output array
     for (let widget of widgets) {
-        // slice stack merging
-        // there is not layout in this mode
-        // there are no inner vs outer polys
-        // merged/same polys "increase" color/weight
         if (process.ctOutMerged) {
+            // slice stack merging
+            // there is not layout in this mode
+            // there are no inner vs outer polys
+            // merged/same polys "increase" color/weight
             let merged = [];
             for (let slice of widget.slices) {
                 let polys = [];
@@ -299,30 +321,29 @@ async function prepare(widgets, settings, update) {
                 });
                 update((slices++ / totalSlices) * 0.5, "prepare");
             }
-            let start = newPoint(0,0,0);
             let gather = [];
             for (let poly of merged) {
                 if (knifeOn) {
-                    addKnifeRadii(poly);
+                    addKnifeRadii(poly, knifeTipOff);
                 }
-                print.polyPrintPath(poly, start, gather, {
+                print.PPP(poly, gather, {
                     extrude: poly.depth,
                     rate: poly.depth * 10
-                });
+                })
             }
             output.push(gather);
         } else {
+            // output a layer for each slice
             if (knifeOn) {
                 for (let slice of widget.slices) {
                     slice.offset.forEach(poly => {
-                        addKnifeRadii(poly);
+                        addKnifeRadii(poly, knifeTipOff);
                         if (poly.inner) poly.inner.forEach(ip => {
-                            addKnifeRadii(ip);
+                            addKnifeRadii(ip, knifeTipOff);
                         });
                     });
                 }
             }
-            // TODO packing / layout SHOULD be done here instead
             let lastEmit;
             for (let slice of widget.slices.reverse()) {
                 lastEmit = sliceEmitObjects(print, slice, output, {simple: knifeOn, lastEmit});
@@ -331,59 +352,50 @@ async function prepare(widgets, settings, update) {
         }
     }
 
-    // compute tile width / height
-    for (let layer of output) {
-        let min = {w:Infinity, h:Infinity}, max = {w:-Infinity, h:-Infinity}, p;
-        // compute bounding box for each layer
-        for (let out of layer) {
-            p = out.point;
-            out.point = p.clone(); // b/c first/last point are often shared
-            min.w = Math.min(min.w, p.x);
-            max.w = Math.max(max.w, p.x);
-            min.h = Math.min(min.h, p.y);
-            max.h = Math.max(max.h, p.y);
-        }
-        layer.w = max.w - min.w;
-        layer.h = max.h - min.h;
-        // shift objects to top/left of w/h box bounds
-        for (let out of layer) {
-            p = out.point;
-            p.x -= min.w;
-            p.y -= min.h;
-        }
-    }
-
-    // do object layout packing
+    // for tile layout packing
     let dw = device.bedWidth / 2,
         dh = device.bedDepth / 2,
         sort = !process.ctOutLayer,
-        spacing = process.ctOutTileSpacing,
-        // sort objects by size when not using laser layer ordering
-        c = sort ? output.sort() : output,
-        p = new kiri.Pack(dw, dh, spacing, {invy:isWire}).fit(c, !sort);
+        spacing = process.ctOutTileSpacing;
 
-    // test different ratios until packed
-    while (!p.packed) {
-        dw *= 1.1;
-        dh *= 1.1;
-        p = new kiri.Pack(dw, dh, spacing, {invy:isWire}).fit(c ,!sort);
+    // compute tile bounds
+    for (let tile of tiles) {
+        let bounds = base.newBounds();
+        tile.forEach(rec => bounds.merge(rec.poly.bounds));
+        tile.w = bounds.width();
+        tile.h = bounds.height();
+        tile.bounds = bounds;
     }
 
-    // update packed tile with new location
-    let pad = c.length > 1 ? p.pad : 0;
-    for (let m of c) {
-        m.fit.x += m.w + pad;
-        m.fit.y += m.h + pad;
-        for (let o of m) {
-            // because first point emitted twice (begin/end)
-            let e = o.point;
-            e.x += p.max.w / 2 - m.fit.x;
-            e.y += p.max.h / 2 - m.fit.y;
-            e.z = 0;
+    // pack tiles
+    let tp = new kiri.Pack(dw, dh, spacing, { invy:isWire, simple: !sort }).pack(tiles, packer => {
+        return packer.rescale(1.1, 1.1);
+    });
+
+    let currentPos =
+        ctOriginCenter ? newPoint(0,0,0) :
+        ctOriginBounds ? newPoint(- tp.max.w/2 - ctOriginOffX, - tp.max.h/2 - ctOriginOffY, 0) :
+        newPoint(-dw, -dh, 0);
+
+    // output tiles
+    for (let tile of tiles) {
+        let { fit, bounds } = tile;
+        for (let { poly, group, options } of tile) {
+            poly.setZ(0);
+            poly.move({
+                x: fit.x - (tp.max.w / 2) - bounds.minx ,
+                y: fit.y - (tp.max.h / 2) - bounds.miny,
+                z: 0}, true);
+            currentPos = print.polyPrintPath(poly, currentPos, group, options);
         }
     }
 
-    console.log({ output });
+    // clone output points to prevent double offsetting during export
+    for (let layer of output) {
+        for (let rec of layer) {
+            rec.point = rec.point.clone();
+        }
+    }
 
     return kiri.render.path(output, (progress, layer) => {
         update(0.5 + progress * 0.5, "render", layer);
