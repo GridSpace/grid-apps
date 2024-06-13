@@ -280,6 +280,7 @@ async function prepare(widgets, settings, update) {
         if (!pppg.contains(group)){
             pppg.push(group);
             tiles.push(tile = []);
+            tile.num = tiles.length;
         }
         pppo.push({ poly, group, options });
         tile.push({ poly, group, options });
@@ -294,6 +295,7 @@ async function prepare(widgets, settings, update) {
     }
 
     // emit objects from each slice into output array
+    let layers = [];
     for (let widget of widgets) {
         if (process.ctOutMerged) {
             // slice stack merging
@@ -331,7 +333,7 @@ async function prepare(widgets, settings, update) {
                     rate: poly.depth * 10
                 })
             }
-            output.push(gather);
+            layers.push(gather);
         } else {
             // output a layer for each slice
             if (knifeOn) {
@@ -346,7 +348,7 @@ async function prepare(widgets, settings, update) {
             }
             let lastEmit;
             for (let slice of widget.slices.reverse()) {
-                lastEmit = sliceEmitObjects(print, slice, output, {simple: knifeOn, lastEmit});
+                lastEmit = sliceEmitObjects(print, slice, layers, {simple: knifeOn, lastEmit});
                 update((slices++ / totalSlices) * 0.5, "prepare");
             }
         }
@@ -372,22 +374,49 @@ async function prepare(widgets, settings, update) {
         return packer.rescale(1.1, 1.1);
     });
 
+    // reposition tiles into their packed locations
+    for (let tile of tiles) {
+        let { fit, bounds } = tile;
+        for (let { poly } of tile) {
+            poly.setZ(0);
+            poly.move({
+                x: fit.x - (tp.max.w / 2) - bounds.minx,
+                y: fit.y - (tp.max.h / 2) - bounds.miny,
+                z: 0}, true);
+        }
+        tile.bounds = base.newBounds();
+        for (let { poly } of tile) {
+            tile.bounds.merge(poly.bounds);
+        }
+    }
+
+    // set starting point based on origin type
     let currentPos =
         ctOriginCenter ? newPoint(0,0,0) :
         ctOriginBounds ? newPoint(- tp.max.w/2 - ctOriginOffX, - tp.max.h/2 - ctOriginOffY, 0) :
         newPoint(-dw, -dh, 0);
 
-    // output tiles
-    for (let tile of tiles) {
-        let { fit, bounds } = tile;
-        for (let { poly, group, options } of tile) {
-            poly.setZ(0);
-            poly.move({
-                x: fit.x - (tp.max.w / 2) - bounds.minx ,
-                y: fit.y - (tp.max.h / 2) - bounds.miny,
-                z: 0}, true);
-            currentPos = print.polyPrintPath(poly, currentPos, group, options);
+    // output tiles starting with closest to origin
+    let remain = tiles.slice();
+    while (remain.length) {
+        let closest = { dist: Infinity };
+        for (let tile of remain) {
+            for (let { poly } of tile) {
+                for (let p of poly.points) {
+                    let pd = currentPos.distTo2D(p);
+                    if (pd < closest.dist) {
+                        closest.dist = pd;
+                        closest.tile = tile;
+                    }
+                }
+            }
         }
+        if (!closest.tile) throw "no closest found";
+        for (let { poly, group, options } of closest.tile) {
+            currentPos = print.polyPrintPath(poly, currentPos, group, options);
+            if (!output.contains(group)) output.push(group);
+        }
+        remain.remove(closest.tile);
     }
 
     // clone output points to prevent double offsetting during export
