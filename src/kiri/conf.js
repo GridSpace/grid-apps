@@ -613,9 +613,9 @@ const conf = exports({
                 imageURL: "",
                 internal: 0,
                 bedWidth: 300,
-                bedDepth: 175,
+                bedDepth: 200,
                 bedHeight: 2.5,
-                maxHeight: 300,
+                maxHeight: 100,
                 gcodePre: [],
                 gcodePost: [],
                 gcodeFExt: "",
@@ -663,6 +663,8 @@ const conf = exports({
                 gcodePost: [],
                 gcodeFExt: "",
                 gcodeSpace: true,
+                gcodeKnifeDn: [";; Z down"],
+                gcodeKnifeUp: [";; Z up"]
             },
             // process defaults Drag:Process
             p:{
@@ -704,8 +706,8 @@ const conf = exports({
                 gcodePost: [],
                 gcodeFExt: "",
                 gcodeSpace: true,
-                gcodeLaserOn: ["M106 S{power}"],
-                gcodeLaserOff: ["M107"]
+                gcodeWaterOn: ["M106 S{power}"],
+                gcodeWaterOff: ["M107"]
             },
             // process defaults WaterJet:Process
             p:{
@@ -746,9 +748,7 @@ const conf = exports({
                 gcodePre: [],
                 gcodePost: [],
                 gcodeFExt: "",
-                gcodeSpace: true,
-                gcodeLaserOn: ["M106 S{power}"],
-                gcodeLaserOff: ["M107"]
+                gcodeSpace: true
             },
             // process defaults WireEDM:Process
             p:{

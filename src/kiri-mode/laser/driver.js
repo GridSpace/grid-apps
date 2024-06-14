@@ -558,8 +558,8 @@ function exportGCode(settings, data) {
     let proc = settings.process;
     let space = dev.gcodeSpace ? ' ' : '';
     let power = 255;
-    let laser_on = dev.gcodeLaserOn || [];
-    let laser_off = dev.gcodeLaserOff || [];
+    let cut_on = dev.gcodeLaserOn || dev.gcodeWaterOn || dev.gcodeKnifeDn || [];
+    let cut_off = dev.gcodeLaserOff || dev.gcodeWaterOff || dev.gcodeKnifeUp || [];
     let knifeOn = proc.knifeOn;
     let knifeDepth = proc.ctOutKnifeDepth;
     let passes = knifeOn ? proc.ctOutKnifePasses : 1;
@@ -597,7 +597,7 @@ function exportGCode(settings, data) {
                             lines.appendAll(['; drag-knife down', `G0${space}Z${-i * knifeDepth}`]);
                         }
                     } else if (index === 1) {
-                        laser_on.forEach(line => {
+                        cut_on.forEach(line => {
                             line = line.replace('{power}', power);
                             line = line.replace('{color}', color);
                             line = line.replace('{thick}', thick);
@@ -609,7 +609,7 @@ function exportGCode(settings, data) {
                         lines.push(`G1${space}${point}`);
                     }
                 });
-                laser_off.forEach(line => {
+                cut_off.forEach(line => {
                     lines.push(line);
                 });
             }

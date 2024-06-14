@@ -175,6 +175,17 @@ self.kiri.lang['en-us'] = {
     dv_lzon_l:      "gcode laser on script",
     dv_lzof_s:      "laser off",
     dv_lzof_l:      "gcode laser off script",
+
+    dv_waon_s:      "water on",
+    dv_waon_l:      "gcode water pump on script",
+    dv_waof_s:      "water off",
+    dv_waof_l:      "gcode water pump off script",
+
+    dv_dkon_s:      "knife down",
+    dv_dkon_l:      "gcode knife down script",
+    dv_dkof_s:      "knife up",
+    dv_dkof_l:      "gcode knife up script",
+
     dv_exts_s:      "select",
     dv_exts_l:      "gcode run to enable this extruder",
     dv_dext_s:      "deselect",
