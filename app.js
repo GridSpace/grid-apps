@@ -14,6 +14,7 @@ const agent = require('express-useragent');
 const license = require_fresh('./src/moto/license.js');
 const version = license.VERSION || "rogue";
 const netdb = require('@gridspace/net-level-client');
+const PATH = require('path');
 
 const fileCache = {};
 const code_src = {};
@@ -23,6 +24,7 @@ const load = [];
 const synth = {};
 const api = {};
 
+let forceUseCache = false;
 let serviceWorker = true;
 let crossOrigin = false;
 let setupFn;
@@ -74,10 +76,13 @@ function init(mod) {
     dir = mod.dir;
     log = mod.log;
 
+    if (mod.env.single) console.log({ cwd: process.cwd(), env: mod.env });
     dversion = debug ? `_${version}` : version;
-    cacheDir = mod.util.datadir("cache");
+    cacheDir = mod.env.cache || mod.util.datadir("cache");
+    if (mod.env.single) logger.log({ cacheDir });
+    forceUseCache = mod.env.cache ? true : false;
 
-    const approot = "main/gapp";
+    const approot = PATH.join("main","gapp");
     const refcache = {};
     const callstack = [];
     let xxxx = false;
@@ -98,7 +103,7 @@ function init(mod) {
             uses: [],
             deps: [ approot ]
         };
-        let full = `${dir}/src/${path}.js`;
+        let full = PATH.join(dir,"src",`${path}.js`);
         try {
             fs.lstatSync(full);
         } catch (e) {
@@ -369,7 +374,7 @@ function initModule(mod, file, dir) {
                 mod.static(pre || "/", root);
             },
             code: (endpoint, path) => {
-                let fpath = mod.dir + "/" + path;
+                let fpath = PATH.join(mod.dir, path);
                 if (debug) {
                     code[endpoint] = fs.readFileSync(fpath);
                 } else {
@@ -515,7 +520,7 @@ function handleOptions(req, res, next) {
 function handleWasm(req, res, next) {
     let file = req.app.path.split('/').pop();
     let ext = (file || '').split('.')[1];
-    let path = `${dir}/src/wasm/${file}`;
+    let path = PATH.join(dir,"src","wasm",file);
     let mod = lastmod(path);
 
     if (ext === 'wasm' && mod) {
@@ -588,7 +593,7 @@ function serveCode(req, res, code) {
 }
 
 function generateIcons() {
-    let root = `${dir}/src/kiri-ico`;
+    let root = PATH.join(dir,"src","kiri-ico");
     let icos = {};
     fs.readdirSync(root).forEach(file => {
         let name = file.split(".")[0]   ;
@@ -598,12 +603,12 @@ function generateIcons() {
 }
 
 function generateDevices() {
-    let root = `${dir}/src/kiri-dev`;
+    let root = PATH.join(dir,"src","kiri-dev");
     let devs = {};
     fs.readdirSync(root).forEach(type => {
         let map = devs[type] = devs[type] || {};
-        fs.readdirSync(`${root}/${type}`).forEach(device => {
-            map[device] = JSON.parse(fs.readFileSync(`${root}/${type}/${device}`));
+        fs.readdirSync(PATH.join(root,type)).forEach(device => {
+            map[device] = JSON.parse(fs.readFileSync(PATH.join(root,type,device)));
         });
     });
     // console.log({ devs });
@@ -657,7 +662,7 @@ function concatCode(array) {
 
     direct.forEach(file => {
         let cached = getCachedFile(file, function(path) {
-            return minify(`${dir}/${file}`);
+            return minify(PATH.join(dir,file));
         });
         if (oversion) {
             cached = `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` + cached;
@@ -673,8 +678,8 @@ function concatCode(array) {
 }
 
 function getCachedFile(file, fn) {
-    let filePath = `${dir}/${file}`;
-    let cachePath = cacheDir + "/" + file
+    let filePath = PATH.join(dir,file);
+    let cachePath = cacheDir + PATH.sep + file
             .replace(/\//g,'_')
             .replace(/\\/g,'_')
             .replace(/:/g,'_'),
@@ -702,7 +707,7 @@ function getCachedFile(file, fn) {
             cmod = lastmod(cachePath),
             cacheData;
 
-        if (cmod >= smod) {
+        if (cmod >= smod || (forceUseCache && cmod)) {
             cacheData = fs.readFileSync(cachePath);
         } else {
             logger.log({update_cache:filePath});

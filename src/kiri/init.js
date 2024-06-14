@@ -2624,7 +2624,8 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.event.emit('init-done', stats);
 
         // show gdpr if it's never been seen and we're not iframed
-        if (!sdb.gdpr && WIN.self === WIN.top && !SETUP.debug && !api.const.LOCAL) {
+        const isLocal = api.const.LOCAL || WIN.location.host.split(':')[0] === 'localhost';
+        if (!sdb.gdpr && WIN.self === WIN.top && !SETUP.debug && !isLocal) {
             $('gdpr').style.display = 'flex';
         }
 

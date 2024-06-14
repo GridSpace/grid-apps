@@ -4,11 +4,11 @@ const server = require('@gridspace/app-server');
 
 const basDir = __dirname;
 const usrDir = app.getPath("userData");
-const appDir = path.join(usrDir, 'apps/gs');
+const appDir = path.join(usrDir, 'gapp');
 const cnfDir = path.join(appDir, 'conf');
 const logDir = path.join(appDir, 'logs');
 const datDir = path.join(appDir, 'data');
-const debug = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('debug');
+const debug = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('debugg');
 const devel = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('devel');
 
 // console.log({ appDir, usrDir, logDir, datDir, basDir });
@@ -26,6 +26,7 @@ server({
     data: datDir,
     conf: cnfDir,
     logs: logDir,
+    cache: path.join(basDir,"data","cache"),
     debug
 });
 
