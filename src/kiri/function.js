@@ -332,9 +332,11 @@ function preparePreview(callback, scale = 1, offset = 0) {
             startTime = Date.now();
             stacks.clear();
             const stack = stacks.create('print', space.world)
+            const view = stack.obj.view;
             output.forEach(layer => {
                 stack.add(layer);
             });
+            event.emit('preview.view', view);
             // rotate stack for belt beds
             if (isBelt && widgets[0].belt) {
                 let ri = widgets[0].belt;

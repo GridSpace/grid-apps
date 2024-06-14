@@ -842,6 +842,8 @@ gapp.register("kiri.main", [], (root, exports) => {
         viewMode = mode;
         platform.deselect();
         selection.update_info();
+        // clear any bounds forced by, for example, WireEDM previews
+        api.platform.set_bounds();
         // disable clear in non-arrange modes
         ['view-arrange','act-slice','act-preview','act-animate'].forEach(el => {
             $(el).classList.remove('selected')

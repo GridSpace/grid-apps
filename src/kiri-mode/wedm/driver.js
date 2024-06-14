@@ -83,10 +83,18 @@ function init(kiri, api, driver) {
         }
     });
 
-    api.event.on("mode.set", (mode) => {
-    });
+    // api.event.on("mode.set", (mode) => { });
 
-    api.event.on("view.set", (mode) => {
+    // api.event.on("view.set", (mode) => { });
+
+    api.event.on("preview.view", view => {
+        const process = api.conf.get().process;
+        if (!process.ctOriginBounds) return;
+        const bounds = new THREE.Box3().expandByObject(view);
+        api.platform.set_bounds(new THREE.Box3(
+            new THREE.Vector3(bounds.min.x, bounds.min.z, bounds.min.y),
+            new THREE.Vector3(bounds.max.x, bounds.max.z, bounds.max.y),
+        ));
     });
 
     // Surface Selection Buttons
