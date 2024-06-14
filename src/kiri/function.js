@@ -382,7 +382,8 @@ function preparePreview(callback, scale = 1, offset = 0) {
 function prepareAnimation() {
     if (!window.SharedArrayBuffer) {
         api.alerts.show("The security context of this");
-        api.alerts.show("window prevents animations");
+        api.alerts.show("window prevents animations.");
+        api.alerts.show("Try a Chromium-based browser");
         return;
     }
     api.event.emit("function.animate", {mode: api.conf.get().mode});
