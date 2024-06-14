@@ -2771,7 +2771,8 @@ gapp.register("kiri.init", [], (root, exports) => {
         // warn of degraded functionality when SharedArrayBuffers are missing
         if (api.feature.work_alerts && !window.SharedArrayBuffer) {
             api.alerts.show("The security context of this", 10);
-            api.alerts.show("window blocks important functionality", 10);
+            api.alerts.show("Window blocks important functionality.", 10);
+            api.alerts.show("Try a Chromium-base Browser instead", 10);
         }
 
         // add keyboard focus handler (must use for iframes)
