@@ -1,8 +1,9 @@
-mod
-tmp
 .DS_Store
 node_modules
-package-lock.json
-app.json
+mod
+dist
+tmp
 logs/*
 data/*
+package-lock.json
+app.json

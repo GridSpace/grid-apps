@@ -22,6 +22,7 @@
     ],
     "dependencies": {
         "@fortawesome/fontawesome-free": "^6.1.1",
+        "@gridspace/app-server": "^0.0.10",
         "@gridspace/net-level-client": "^0.2.3",
         "@tweenjs/tween.js": "^16.6.0",
         "base64-js": "^1.5.1",
@@ -30,6 +31,7 @@
         "connect": "^3.7.0",
         "earcut": "^2.2.3",
         "express-useragent": "^1.0.13",
+        "fs-extra": "^11.2.0",
         "jszip": "^3.7.1",
         "moment": "^2.29.4",
         "serve-static": "^1.14.1",
@@ -40,9 +42,51 @@
         "ws": "^7.5.5"
     },
     "devDependencies": {
-        "@gridspace/app-server": "^0.0.7"
+        "electron": "latest",
+        "electron-builder": "latest"
     },
     "scripts": {
-        "postinstall": "bin/npm-post"
+        "start": "electron .",
+        "build": "npm run prebuild && electron-builder",
+        "build-debug": "npm run prebuild && DEBUG=electron-builder electron-builder",
+        "prebuild": "node app-el-prep.js",
+        "postbuild": "bin/npm-post",
+        "preinstall": "bin/npm-pre"
+    },
+    "main": "app-el.js",
+    "build": {
+        "appId": "space.grid.kiri",
+        "files": [
+            {
+                "from": "tmp/src",
+                "to": "src",
+                "filter": [ "**/*" ]
+            },
+            {
+                "from": "tmp/web",
+                "to": "web",
+                "filter": [ "**/*" ]
+            },
+            "conf/**/*",
+            "data/**/*",
+            "dist/**/*",
+            "app-el.js",
+            "app.js",
+            "package.json"
+        ],
+        "extraFiles": [
+        ],
+        "directories": {
+            "output": "dist"
+        },
+        "win": {
+            "target": "nsis"
+        },
+        "mac": {
+            "target": "dmg"
+        },
+        "linux": {
+            "target": "AppImage"
+        }
     }
 }
