@@ -447,7 +447,7 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
         last,
         point,
         poly = [],
-        off = {x:ctOriginOffX||0, y:ctOriginOffY||0},
+        off = ctOriginBounds ? {x:ctOriginOffX||0, y:ctOriginOffY||0} : {x:0, y:0},
         min = {x:0, y:0},
         max = {x:0, y:0},
         size = {w:0, h:0};

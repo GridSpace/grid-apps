@@ -100,7 +100,7 @@ function platformUpdateOrigin(update_bounds = true) {
     }
 
     //  WireEDM origin offsets
-    if (MODE === MODES.WEDM) {
+    if (MODE === MODES.WEDM && process.ctOriginBounds) {
         origin.x -= process.ctOriginOffX;
         origin.y += process.ctOriginOffY;
     }

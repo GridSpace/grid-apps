@@ -769,12 +769,9 @@ const conf = exports({
                 ctOriginCenter: false,
                 ctOriginBounds: true,
                 ctOriginOffX: 0,
-                ctOriginOffY: -10,
+                ctOriginOffY: 0,
                 outputInvertX: false,
-                outputInvertY: false,
-                ctOutKnifeDepth: 1,
-                ctOutKnifePasses: 1,
-                ctOutKnifeTip: 2
+                outputInvertY: false
             }
         }
     },
