@@ -91,9 +91,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/GridApps-linux-x64.zip
+          asset_path: artifacts/KiriMoto-linux-x64.zip
           asset_name: kiri-ubuntu-${{ env.TAG_NAME }}.zip
-          asset_content_type: application/octet-stream
+          asset_content_type: application/zip
 
       - name: Upload Release Asset (macOS)
         uses: actions/upload-release-asset@v1.0.2
@@ -101,9 +101,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/GridApps-mac-arm64.zip
+          asset_path: artifacts/KiriMoto-mac-arm64.zip
           asset_name: kiri-macos-${{ env.TAG_NAME }}.zip
-          asset_content_type: application/octet-stream
+          asset_content_type: application/zip
 
       - name: Upload Release Asset (Windows)
         uses: actions/upload-release-asset@v1.0.2
@@ -111,6 +111,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/GridApps-win-x64.zip
+          asset_path: artifacts/KiriMoto-win-x64.zip
           asset_name: kiri-windows-${{ env.TAG_NAME }}.zip
-          asset_content_type: application/octet-stream
+          asset_content_type: application/zip

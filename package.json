@@ -57,7 +57,7 @@
     "main": "app-el.js",
     "build": {
         "appId": "space.grid.kiri",
-        "artifactName": "GridApps-${os}-${arch}.${ext}",
+        "artifactName": "KiriMoto-${os}-${arch}.${ext}",
         "files": [
             {
                 "from": "tmp/src",
@@ -86,13 +86,13 @@
             "output": "dist"
         },
         "win": {
-            "target": "zip"
+            "target": [ "nsis", "zip" ]
         },
         "mac": {
-            "target": "zip"
+            "target": [ "dmg", "zip" ]
         },
         "linux": {
-            "target": "zip"
+            "target": [ "AppImage", "zip" ]
         }
     }
 }
