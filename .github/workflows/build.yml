@@ -45,14 +45,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-win
-          path: dist/*.zip
+          path: dist/*.exe
 
       - name: Upload Mac artifact
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: build-mac
-          path: dist/*.zip
+          path: dist/*.dmg
 
   create_release:
     runs-on: ubuntu-latest
@@ -85,6 +85,9 @@ jobs:
       - name: Display Downloaded Assets
         run: ls -ltR artifacts
 
+      - name: Zip Windows artifact
+        run: zip -r artifacts/KiriMoto-win-x64.zip artifacts/KiriMoto-win-x64.exe
+
       - name: Upload Release Asset (Linux)
         uses: actions/upload-release-asset@v1.0.2
         env:
@@ -92,7 +95,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: artifacts/KiriMoto-linux-x64.zip
-          asset_name: kiri-ubuntu-${{ env.TAG_NAME }}.zip
+          asset_name: KiriMoto-Ubuntu-x64-${{ env.TAG_NAME }}.zip
           asset_content_type: application/zip
 
       - name: Upload Release Asset (macOS)
@@ -101,9 +104,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/KiriMoto-mac-arm64.zip
-          asset_name: kiri-macos-${{ env.TAG_NAME }}.zip
-          asset_content_type: application/zip
+          asset_path: artifacts/KiriMoto-mac-arm64.dmg
+          asset_name: KiriMoto-MacOS-arm-${{ env.TAG_NAME }}.dmg
+          asset_content_type: application/octet-stream
 
       - name: Upload Release Asset (Windows)
         uses: actions/upload-release-asset@v1.0.2
@@ -112,5 +115,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: artifacts/KiriMoto-win-x64.zip
-          asset_name: kiri-windows-${{ env.TAG_NAME }}.zip
+          asset_name: KiriMoto-Win-x64-${{ env.TAG_NAME }}.zip
           asset_content_type: application/zip
