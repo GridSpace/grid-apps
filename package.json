@@ -20,9 +20,12 @@
         "gcode",
         "slicer"
     ],
+    "engines": {
+        "node": ">=18.0.0"
+    },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^6.1.1",
-        "@gridspace/app-server": "^0.0.10",
+        "@gridspace/app-server": "^0.0.11",
         "@gridspace/net-level-client": "^0.2.3",
         "@tweenjs/tween.js": "^16.6.0",
         "base64-js": "^1.5.1",
@@ -48,8 +51,14 @@
     },
     "scripts": {
         "start": "electron .",
+        "start-dev": "electron . --devel",
+        "start-dbg": "electron . --debugg",
+        "start-ddb": "electron . --devel --debugg",
         "build": "npm run prebuild && electron-builder",
         "build-debug": "npm run prebuild && DEBUG=electron-builder electron-builder",
+        "build-linux": "npm run build -- --linux --x64",
+        "build-win": "npm run build -- --win --x64",
+        "build-mac": "npm run build -- --mac --arm",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
         "preinstall": "node bin/install-pre.js"
@@ -86,13 +95,22 @@
             "output": "dist"
         },
         "win": {
-            "target": [ "nsis", "zip" ]
+            "target": [
+                "nsis",
+                "zip"
+            ]
         },
         "mac": {
-            "target": [ "dmg", "zip" ]
+            "target": [
+                "dmg",
+                "zip"
+            ]
         },
         "linux": {
-            "target": [ "AppImage", "zip" ]
+            "target": [
+                "AppImage",
+                "zip"
+            ]
         }
     }
 }

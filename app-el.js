@@ -8,7 +8,7 @@ const appDir = path.join(usrDir, 'apps/gs');
 const cnfDir = path.join(appDir, 'conf');
 const logDir = path.join(appDir, 'logs');
 const datDir = path.join(appDir, 'data');
-const debug = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('debug');
+const debug = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('debugg');
 const devel = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('devel');
 
 // console.log({ appDir, usrDir, logDir, datDir, basDir });
