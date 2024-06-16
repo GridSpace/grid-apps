@@ -9,6 +9,9 @@ fs.copySync("src", srcTmp, { dereference: true });
 const webTmp = path.join('tmp','web');
 fs.copySync("web", webTmp, { dereference: true });
 
+// const modTmp = path.join('tmp','mod');
+// fs.copySync("mod", modTmp, { dereference: true });
+
 // pre-build asset cache
 server({
     dryrun: true,

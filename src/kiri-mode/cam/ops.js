@@ -505,7 +505,7 @@ class OpOutline extends CamOp {
             .map(v => (parseFloat(v) - 0.01).round(5))
             .filter(v => v > 0 && indices.indexOf(v) < 0);
         indices = indices.appendAll(flats).sort((a,b) => b-a);
-        indices = indices.filter(v => v >= zBottom);
+        indices = indices.filter(v => v - zBottom >= -0.001);
         // console.log('indices', ...indices, {zBottom, slicer});
         let cnt = 0;
         let tot = 0;
