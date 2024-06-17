@@ -687,19 +687,22 @@ gapp.register("kiri.main", [], (root, exports) => {
             mode = getMode(),
             name = e.target.getAttribute("name"),
             load = current.sproc[mode][name],
-            edit = prompt(`settings for "${name}"`, JSON.stringify(load));
-        if (edit) {
-            try {
-                current.sproc[mode][name] = JSON.parse(edit);
-                if (name === current.proc().processName) {
-                    api.conf.load(null, name);
+            loadstr = JSON.stringify(load,null,4).split('\n');
+        UC.prompt(`settings for "${name}"`, loadstr).then(edit => {
+            if (edit) {
+                try {
+                    current.sproc[mode][name] = JSON.parse(edit);
+                    if (name === settings.proc().processName) {
+                        api.conf.load(null, name);
+                    }
+                    api.conf.save();
+                    api.settings.sync.put();
+                } catch (e) {
+                    console.log({ malformed_settings: e });
+                    UC.alert('malformed settings object');
                 }
-                api.conf.save();
-                api.settings.sync.put();
-            } catch (e) {
-                UC.alert('malformed settings object');
             }
-        }
+        });
     }
 
     function exportSettings(e) {

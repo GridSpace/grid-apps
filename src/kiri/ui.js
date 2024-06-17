@@ -111,9 +111,12 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 html = opt.pre.appendAll(html);
             }
             let iid;
-            if (input !== undefined) {
+            if (typeof(input) === 'string') {
                 iid = `confirm-input-${rnd}`;
-                html.append(`<div><input class="grow" type="text" spellcheck="false" value="${input}" id="${iid}"/></div>`);
+                html.append(`<div><input class="grow" type="text" spellcheck="false" id="${iid}"/></div>`);
+            } else if (Array.isArray(input)) {
+                iid = `confirm-input-${rnd}`;
+                html.append(`<div><textarea rows="15" cols="40" class="grow" type="text" spellcheck="false" id="${iid}"></textarea></div>`);
             }
             html.append(`<div class="f-row j-end">`);
             Object.entries(btns).forEach((row,i) => {
@@ -129,7 +132,10 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 setTimeout(() => { resolve(value) }, 150);
             }
             if (iid) {
+                let array = Array.isArray(input);
                 iid = $(iid);
+                iid.value = array ? input.join('\n') : input;
+                if (!array)
                 iid.onkeypress = (ev) => {
                     if (ev.key === 'Enter' || ev.charCode === 13) {
                         done(ev.target.value);

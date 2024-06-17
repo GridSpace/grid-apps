@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, shell, BrowserWindow } = require('electron');
 const path = require('path');
 const server = require('@gridspace/app-server');
 
@@ -8,8 +8,8 @@ const appDir = path.join(usrDir, 'gapp');
 const cnfDir = path.join(appDir, 'conf');
 const logDir = path.join(appDir, 'logs');
 const datDir = path.join(appDir, 'data');
-const debug = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('debugg');
-const devel = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('devel');
+const debug = process.argv.slice(2).map(v => v.replaceAll('-', '')).contains('debugg');
+const devel = process.argv.slice(2).map(v => v.replaceAll('-', '')).contains('devel');
 
 // console.log({ appDir, usrDir, logDir, datDir, basDir });
 // console.log({ argv: process.argv, debug, devel });
@@ -21,12 +21,13 @@ const devel = process.argv.slice(2).map(v => v.replaceAll('-','')).contains('dev
 // });
 
 server({
-    single: true,
+    port: 5309,
     apps: basDir,
     data: datDir,
     conf: cnfDir,
     logs: logDir,
-    cache: path.join(basDir,"data","cache"),
+    cache: path.join(basDir, "data", "cache"),
+    single: true,
     electron: true,
     debug
 });
@@ -40,7 +41,12 @@ function createWindow() {
         }
     });
 
-    mainWindow.loadURL('http://localhost:8080/kiri');
+    mainWindow.loadURL('http://localhost:5309/kiri');
+
+    mainWindow.webContents.setWindowOpenHandler((details) => {
+        shell.openExternal(details.url);
+        return { action: 'deny' }
+    });
 
     if (devel) {
         console.log("opening developer tools");
@@ -49,11 +55,13 @@ function createWindow() {
 }
 
 app.on('ready', createWindow);
+
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
 });
+
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();

@@ -537,13 +537,14 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.show.alert("select object to rotate");
             return;
         }
-        let coord = (prompt("Enter X,Y,Z degrees of rotation") || '').split(','),
-            prod = Math.PI / 180,
-            x = parseFloat(coord[0] || 0.0) * prod,
-            y = parseFloat(coord[1] || 0.0) * prod,
-            z = parseFloat(coord[2] || 0.0) * prod;
-
-        api.selection.rotate(x, y, z);
+        api.uc.prompt("Enter X,Y,Z degrees of rotation","").then(coord => {
+            coord = (coord || '').split(',');
+            let prod = Math.PI / 180,
+                x = parseFloat(coord[0] || 0.0) * prod,
+                y = parseFloat(coord[1] || 0.0) * prod,
+                z = parseFloat(coord[2] || 0.0) * prod;
+            api.selection.rotate(x, y, z);
+        });
     }
 
     function positionSelection() {
@@ -554,18 +555,21 @@ gapp.register("kiri.init", [], (root, exports) => {
         let current = settings(),
             { device, process} = current,
             center = process.ctOriginCenter || process.camOriginCenter || device.bedRound || device.originCenter,
-            bounds = boundsSelection(),
-            coord = prompt("Enter X,Y coordinates for selection").split(','),
-            x = parseFloat(coord[0] || 0.0),
-            y = parseFloat(coord[1] || 0.0),
-            z = parseFloat(coord[2] || 0.0);
+            bounds = boundsSelection();
 
-        if (!center) {
-            x = x - device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
-            y = y - device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
-        }
+        api.uc.prompt("Enter X,Y coordinates for selection","").then(coord => {
+            coord = (coord || '').split(',');
+            let x = parseFloat(coord[0] || 0.0),
+                y = parseFloat(coord[1] || 0.0),
+                z = parseFloat(coord[2] || 0.0);
 
-        api.selection.move(x, y, z, true);
+            if (!center) {
+                x = x - device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
+                y = y - device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
+            }
+
+            api.selection.move(x, y, z, true);
+        });
     }
 
     function deviceExport(exp, name) {
@@ -1018,8 +1022,14 @@ gapp.register("kiri.init", [], (root, exports) => {
             showDevices();
         };
         ui.deviceRename.onclick = function() {
-            const newname = prompt(`Rename "${selected}`, selected);
-            if (newname) updateDeviceName(newname);
+            api.uc.prompt(`Rename "${selected}`, selected).then(newname => {
+                if (newname) {
+                    updateDeviceName(newname);
+                    showDevices();
+                } else {
+                    showDevices();
+                }
+            });
         };
         ui.deviceExport.onclick = function(event) {
             const record = {
@@ -1430,12 +1440,13 @@ gapp.register("kiri.init", [], (root, exports) => {
             renm.setAttribute('title', 'rename file');
             renm.innerHTML = '<i class="far fa-edit"></i>';
             renm.onclick = () => {
-                let newname = prompt(`rename file`, short);
-                if (newname && newname !== short) {
-                    catalog.rename(name, `${newname}${ext}`, then => {
-                        catalog.refresh();
-                    });
-                }
+                api.uc.prompt(`rename file`, short).then(newname => {
+                    if (newname && newname !== short) {
+                        catalog.rename(name, `${newname}${ext}`, then => {
+                            api.modal.show('files');
+                        });
+                    }
+                });
             };
 
             load.setAttribute('load', name);

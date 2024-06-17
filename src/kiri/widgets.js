@@ -36,12 +36,13 @@ function rename(sel) {
         return;
     }
     let widget = widgets[0];
-    const newname = prompt("new widget name", widget.meta.file);
-    if (newname) {
-        widget.meta.file = newname;
-        api.platform.changed();
-        api.space.save(true);
-    }
+    kiri.ui.prompt("new widget name", widget.meta.file || "no name").then(newname => {
+        if (newname) {
+            widget.meta.file = newname;
+            api.platform.changed();
+            api.space.save(true);
+        }
+    });
 }
 
 function replace(vertices, sel) {

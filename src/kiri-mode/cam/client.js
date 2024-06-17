@@ -1688,12 +1688,13 @@ function createPopOp(type, map) {
                 const { divid, noteid } = op.note;
                 const div = $(divid);
                 if (div) div.onclick = () => {
-                    let note = op.x = prompt('Edit Note for Operation', poppedRec.note || '');
-                    if (note !== undefined && note !== null) {
-                        $(noteid).innerText = poppedRec.note = note;
-                        API.conf.save();
-                    }
-                    func.opRender();
+                    API.uc.prompt('Edit Note for Operation', poppedRec.note || '').then(note => {
+                        if (note !== undefined && note !== null) {
+                            poppedRec.note = op.x = note;
+                            API.conf.save();
+                        }
+                        func.opRender();
+                    });
                 };
                 const note = $(noteid);
                 if (note) note.innerText = poppedRec.note || '';
