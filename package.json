@@ -52,10 +52,10 @@
         "node-fetch": "^3.3.2"
     },
     "scripts": {
-        "start": "electron .",
-        "start-dev": "electron . --devel",
-        "start-dbg": "electron . --debugg",
-        "start-ddb": "electron . --devel --debugg",
+        "start": "npm run prebuild && electron .",
+        "start-dev": "npm run prebuild && electron . --devel",
+        "start-dbg": "npm run prebuild && electron . --debugg",
+        "start-ddb": "npm run prebuild && electron . --devel --debugg",
         "build": "npm run prebuild && electron-builder",
         "build-debug": "npm run prebuild && DEBUG=electron-builder electron-builder",
         "build-linux": "npm run build -- --linux --x64",
@@ -83,6 +83,13 @@
             {
                 "from": "tmp/web",
                 "to": "web",
+                "filter": [
+                    "**/*"
+                ]
+            },
+            {
+                "from": "tmp/mod",
+                "to": "mod",
                 "filter": [
                     "**/*"
                 ]
@@ -119,6 +126,7 @@
             "entitlements": "bin/electron-entitlements.plist",
             "entitlementsInherit": "bin/electron-entitlements.plist",
             "target": [
+                "dmg",
                 "zip"
             ]
         },

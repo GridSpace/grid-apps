@@ -21,10 +21,17 @@ gapp.main("main.kiri", [], (root) => {
             modfns.push(fn);
         },
         load_exec(api) {
+            const saferun = (fn) => {
+                try {
+                    fn(api || kiri.api);
+                } catch (error) {
+                    console.log({ module_error: error });
+                }
+            };
             // complete module loading
-            modfns.forEach(modfn => { modfn(api || kiri.api)} );
+            modfns.forEach(modfn => saferun(modfn));
             // rewrite load() to be immediate post-finalize
-            kiri.load = (modfn) => { modfn(api || kiri.api) };
+            kiri.load = (modfn) => saferun(modfn);
         }
     };
 

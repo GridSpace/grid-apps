@@ -64,23 +64,25 @@ function addonce(array, v) {
 };
 
 function init(mod) {
+    const ENV = mod.env;
+
     startTime = time();
     lastmod = mod.util.lastmod;
     logger = mod.log;
-    debug = mod.env.debug || mod.meta.debug;
-    oversion = mod.env.over || mod.meta.over;
-    crossOrigin = mod.env.xorigin || mod.meta.xorigin || false;
-    serviceWorker = (mod.env.service || mod.meta.service) !== false;
+    debug = ENV.debug || mod.meta.debug;
+    oversion = ENV.over || mod.meta.over;
+    crossOrigin = ENV.xorigin || mod.meta.xorigin || false;
+    serviceWorker = (ENV.service || mod.meta.service) !== false;
     http = mod.http;
     util = mod.util;
     dir = mod.dir;
     log = mod.log;
 
-    if (mod.env.single) console.log({ cwd: process.cwd(), env: mod.env });
+    if (ENV.single) console.log({ cwd: process.cwd(), env: ENV });
     dversion = debug ? `_${version}` : version;
-    cacheDir = mod.env.cache || mod.util.datadir("cache");
-    if (mod.env.single) logger.log({ cacheDir });
-    forceUseCache = mod.env.cache ? true : false;
+    cacheDir = ENV.cache || mod.util.datadir("cache");
+    if (ENV.single) logger.log({ cacheDir });
+    forceUseCache = ENV.cache ? true : false;
 
     const approot = PATH.join("main","gapp");
     const refcache = {};
@@ -283,7 +285,14 @@ function init(mod) {
         if (dir.charAt(0) === '.') return;
         const stats = fs.lstatSync(`${mod.dir}/${modpath}`);
         if (!(stats.isDirectory() || stats.isSymbolicLink())) return;
-        loadModule(mod, modpath);
+        const isElectronMod = util.isfile(PATH.join(mod.dir,modpath,".electron"));
+        if (ENV.electron && !isElectronMod) return;
+        if (!ENV.electron && isElectronMod) return;
+        try {
+            loadModule(mod, modpath);
+        } catch (error) {
+            console.log({ module: dir, error });
+        }
     });
 
     // run loads injected by modules

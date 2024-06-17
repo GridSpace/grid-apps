@@ -27,6 +27,7 @@ server({
     conf: cnfDir,
     logs: logDir,
     cache: path.join(basDir,"data","cache"),
+    electron: true,
     debug
 });
 
