@@ -12,6 +12,22 @@
 
 [`Mesh:Tool`](https://grid.space/mesh) is a browser-based mesh repair and editing tool
 
+## Electron Builds (Desktop Binaries)
+
+https://github.com/GridSpace/grid-apps/releases/
+
+Click on "Assets" under the release name to reveal files
+
+Linux x86 requires the following to run:
+
+```
+sudo apt -y install fuse
+chmod 755 KiriMoto-linux-x86_64.AppImage
+./KiriMoto-linux-x86_64.AppImage --no-sandbox
+```
+
+The Windows and Mac binaries are not signed, so you will need to jump through a few "safety" hoops to get them to open the first time.
+
 ## Primary Documentation
 
 https://docs.grid.space/projects/kiri-moto

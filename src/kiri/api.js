@@ -61,6 +61,11 @@ const tweak = {
 };
 
 const api = exports({
+    clip: (text) => {
+        navigator.clipboard
+            .writeText(text)
+            .catch(err => console.error('Clipboard Error:', err));
+    },
     clone: Object.clone,
     sdb: data.local,
     ajax: ajax,
