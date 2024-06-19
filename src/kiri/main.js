@@ -549,6 +549,7 @@ gapp.register("kiri.main", [], (root, exports) => {
 
     function saveWorkspace(quiet) {
         api.conf.save();
+        api.settings.sync.put();
         const newWidgets = [];
         const oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
         api.widgets.each(function(widget) {
