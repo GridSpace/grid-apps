@@ -26,7 +26,7 @@ chmod 755 KiriMoto-linux-x86_64.AppImage
 ./KiriMoto-linux-x86_64.AppImage --no-sandbox
 ```
 
-The Windows and Mac binaries are not signed, so you will need to jump through a few "safety" hoops to get them to open the first time.
+The Windows and Mac binaries are not signed, so you will need to jump through a few safety hoops to get them to open the first time.
 
 ## Primary Documentation
 
