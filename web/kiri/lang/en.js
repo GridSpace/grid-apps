@@ -734,6 +734,8 @@ self.kiri.lang['en-us'] = {
     ou_forz_l:      "all moves between pockets will go to z max (above stock). this is usually required if you are not performing a roughing operation before pocketing operations.",
     ou_z1st_s:      "first z max",
     ou_z1st_l:      "first move in the job will be to Z max (travel distance above stock)",
+    ou_feng_s:      "engage factor",
+    ou_feng_l:      "speed scale (0.1-1) when endmill is fully engaged on a new cut. stepped over cuts when the endmill is less than fully engaged run at a factor of 1 relative to output speed. typically this relates to roughing or any operation with step over.",
 
     // CAM STOCK
     cs_menu:        "stock",

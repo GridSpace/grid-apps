@@ -89,6 +89,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         output = print.output,
         easeDown = process.camEaseDown,
         depthFirst = process.camDepthFirst,
+        engageFactor = process.camFullEngage,
         tolerance = 0,
         drillDown = 0,
         drillLift = 0,
@@ -99,6 +100,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         layerOut = [],
         printPoint,
         isNewMode,
+        isPocket,
         isContour,
         isRough,
         isLathe,
@@ -303,6 +305,13 @@ function prepEach(widget, settings, print, firstPoint, update) {
         );
     }
 
+    /**
+     * emit a cut or move operation from the current location to a new location
+     * @param {*} point destination for move
+     * @param {*} cut 1/true = cut, 0/false = move
+     * @param {*} moveLen typically = tool diameter used to trigger terrain detection
+     * @param {*} factor speed scale factor
+     */
     function camOut(point, cut, moveLen = toolDiamMove, factor = 1) {
         point = point.clone();
         point.x += wmx;
@@ -453,7 +462,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
             } else {
                 printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
                     poly.forEachPoint(function(point, pidx, points, offset) {
-                        camOut(point.clone(), offset !== 0, undefined, count === 1 ? 0.5 : 1);
+                        // scale speed of first cutting poly since it engages the full bit
+                        camOut(point.clone(), offset !== 0, undefined, count === 1 ? engageFactor : 1);
                     }, poly.isClosed(), index);
                 }, { swapdir: false });
                 newLayer();
@@ -534,7 +544,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         currentOp = op.op;
         isLathe = currentOp.type === 'lathe';
         isRough = currentOp.type === 'rough';
-        isContour = currentOp.type === 'contour' || (currentOp.type === 'pocket' && currentOp.contour);
+        isPocket = currentOp.type === 'pocket';
+        isContour = currentOp.type === 'contour' || (isPocket && currentOp.contour);
         let weight = op.weight();
         newLayer(op.op);
         op.prepare(ops, (progress, message) => {
@@ -559,14 +570,16 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
     function polyEmit(poly, index, count, fromPoint) {
         let last = null;
+        // scale speed of first cutting poly since it engages the full bit
+        let scale = ((isRough || isPocket) && count === 1) ? engageFactor : 1;
         if (easeDown && poly.isClosed()) {
             last = poly.forEachPointEaseDown(function(point, offset) {
-                camOut(point.clone(), offset > 0, undefined, isRough && count === 1 ? 0.5 : 1);
+                camOut(point.clone(), offset > 0, undefined, scale);
             }, fromPoint);
         } else {
             poly.forEachPoint(function(point, pidx, points, offset) {
                 last = point;
-                camOut(point.clone(), offset !== 0, undefined, isRough && count === 1 ? 0.5 : 1);
+                camOut(point.clone(), offset !== 0, undefined, scale);
             }, poly.isClosed(), index);
         }
         newLayer();

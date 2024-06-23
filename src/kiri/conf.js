@@ -600,6 +600,7 @@ const conf = exports({
                 camForceZMax: false,
                 camFirstZMax: false,
                 camToolInit: true,
+                camFullEngage: 0.8,
                 ops: [], // current ops
                 op2: []  // flip ops
             }
