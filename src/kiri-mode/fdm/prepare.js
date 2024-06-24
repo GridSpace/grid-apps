@@ -1171,7 +1171,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             lastIndex = -1,
             raft = opt.raft || false,
             flow = opt.flow || 1,
-            near = opt.near || false,
+            near = opt.near || (antiBacklash ? false : true),
             fast = opt.fast || false,
             fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
             thinDist = near ? thinWall : thinWall;
@@ -1182,7 +1182,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             found = false;
             mindist = Infinity;
 
-            // use next nearest line strategy
+            // use next nearest line endpoint strategy
             if (near)
             for (let i=0; i<lines.length; i += 2) {
                 t1 = lines[i];
@@ -1192,7 +1192,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 t2 = lines[i+1];
                 let d1 = t1.distToSq2D(startPoint);
                 let d2 = t2.distToSq2D(startPoint);
-                if (d1 < mindist || d2 < mindist) {
+                let idiff = startPoint.index ? Math.abs(startPoint.index - t1.index) : 1;
+                let min = Math.min(d1, d2) * (idiff !== 1 ? 10 : 1);
+                if (min < mindist) {
                     if (d2 < d1) {
                         p2 = t1;
                         p1 = t2;
@@ -1200,13 +1202,11 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                         p1 = t1;
                         p2 = t2;
                     }
-                    mindist = Math.min(d1, d2);
-                    lastIndex = i;
+                    mindist = min;
                 }
             }
 
-            // use next index line strategy
-            // order all points by distance to last point
+            // use next line index strategy (perpendicular offset from origin)
             if (!near)
             for (let i=start; i<lines.length; i += 2) {
                 p = lines[i];
@@ -1267,7 +1267,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             // re-seek a new start index within fill array
             let restart = lastIndex < 0;
 
-            // mark as used (temporarily)
+            // mark as used
             p1.del = true;
             p2.del = true;
             marked += 2;
@@ -1301,7 +1301,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 } else {
                     print.addOutput(preout, p1, 0, moveSpeed, extruder);
                 }
-
                 print.addOutput(preout, p2, fill, fillSpeed, extruder);
             }
 

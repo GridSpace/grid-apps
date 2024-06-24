@@ -382,7 +382,7 @@ const conf = exports({
                 sliceAdaptive: false,
                 zHopDistance: 0.2,
                 arcTolerance: 0,
-                antiBacklash: 1,
+                antiBacklash: 0,
                 ranges: []
             }
         },

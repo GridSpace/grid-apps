@@ -132,29 +132,18 @@ FDM.init = function(kiri, api) {
             };
           }
     }
-
     api.event.on("function.animate", (mode) => {
-        if (!isFdmMode) {
+        if (!(isFdmMode && lastView === VIEWS.PREVIEW)) {
             return;
         }
-        if (!api.conf.get().controller.danger) {
-            return;
-        }
-        let pct = 0;
-        let int = setInterval(() => {
-            if (pct <= 1) {
-                api.const.STACKS.setFraction(pct);
-                pct += 0.05;
-            } else {
-                api.const.STACKS.setFraction(1);
-                clearTimeout(int);
-            }
-        }, 50);
-        // let slider = $('top-slider');
-        // slider.style.display = 'flex';
-        // slider.oninput = slider.onchange = (ev) => {
-        //     api.const.STACKS.setFraction(parseInt(ev.target.value)/100);
-        // };
+        let slider = $('top-slider');
+        slider.style.display = 'flex';
+        slider.oninput = slider.onchange = (ev) => {
+            api.const.STACKS.setFraction(parseInt(ev.target.value)/1000);
+            api.space.update();
+        };
+        $('anim-slider').value = 500;
+        api.const.STACKS.setFraction(0.5);
     });
     api.event.on("mode.set", mode => {
         isFdmMode = mode === 'FDM';
@@ -166,6 +155,7 @@ FDM.init = function(kiri, api) {
         updateVisiblity();
     });
     api.event.on("view.set", view => {
+        $('top-slider').style.display = 'none';
         lastView = view;
         updateVisiblity();
         filterSynth();

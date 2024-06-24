@@ -2029,9 +2029,11 @@ th, tr, td, label {
 #top-slider {
     position: absolute;
     display: none;
-    top: 60px;
-    left: 50px;
+    top: 10px;
+    left: 35px;
     right: 50px;
+    z-index: 1000;
+    pointer-events: all;
 }
 #anim-slider {
     width: 100%;
