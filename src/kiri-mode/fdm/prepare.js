@@ -790,7 +790,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         nozzleSize = process.sliceLineWidth || device.extruders[extruder].extNozzle,
         firstLayer = (opt.first || false) && !opt.support,
         thinWall = nozzleSize * (opt.thinWall || 1.75),
-        retractDist = opt.retractOver || 2,
+        retractDist = opt.retractOver || (nozzleSize * 5),
         fillMult = opt.mult || process.outputFillMult,
         shellMult = opt.mult || process.outputShellMult || (process.ctSliceHeight >= 0 ? 1 : 0),
         shellOrder = {"out-in":-1,"in-out":1}[process.sliceShellOrder] || -1,
@@ -1005,6 +1005,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         return false;
     }
 
+    // solid infill
     function outputTraces(poly, opt = {}) {
         if (!poly) return;
         if (Array.isArray(poly)) {
@@ -1073,6 +1074,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     }
 
     /**
+     * output sparse infill
      * @param {Polygon[]} polys
      */
     function outputSparse(polys, extrude, speed) {
@@ -1112,6 +1114,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         });
     }
 
+    /**
+     * convert cross-hatch thin-fill into lines by connecting short segment mid-points
+     */
     function outputThin(lines) {
         if (!lines) {
             return;
@@ -1150,6 +1155,11 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
     }
 
+    /**
+     * output solid infill
+     * @param {*} lines
+     * @param {*} opt
+     */
     function outputFills(lines, opt = {}) {
         if (!lines || lines.length === 0) {
             return;
@@ -1166,6 +1176,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
             thinDist = near ? thinWall : thinWall;
 
+        // continue until all lines in array are "marked" as used
         while (lines && marked < lines.length) {
             group = null;
             found = false;
@@ -1372,6 +1383,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 outputFills(next.fill, {fast: true, near: true});
             }
         } else {
+            // solid infill
             let top = next;
             let isRaft = top.isRaft;
 
@@ -1449,7 +1461,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             lastTop = next;
         }
     }, function(obj) {
-        // for tops
+        // for tops, return the wrapped poly
         return obj instanceof Polygon ? obj : obj.poly;
     });
 
