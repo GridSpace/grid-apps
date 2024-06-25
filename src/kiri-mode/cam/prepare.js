@@ -568,6 +568,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
         newLayer();
     }
 
+    // prepare
+    // sliceOutput
+    // depthRoughPath
+    // poly2polyEmit
+    // roughTopEmit
+    // poly2polyEmit
     function polyEmit(poly, index, count, fromPoint) {
         let last = null;
         // scale speed of first cutting poly since it engages the full bit

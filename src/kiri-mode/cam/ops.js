@@ -466,7 +466,7 @@ class OpRough extends CamOp {
         sliceOutput(sliceOut, {
             cutdir,
             depthFirst,
-            easeDown: op.down && easeDown ? op.down : 0,
+            easeDown: op.down && easeDown ? 0.001 : 0,
             progress: (n,m) => progress(n/m, "routing")
         });
     }
@@ -725,7 +725,7 @@ class OpOutline extends CamOp {
                     .sort((a,b) => { return a.area() - b.area() })[0]
                     .average();
                 // experimental start of ease down
-                let ease = op.down && easeDown ? op.down : 0;
+                let ease = op.down && easeDown ? 0.001 : 0;
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, false, ease);
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true, ease);
             }

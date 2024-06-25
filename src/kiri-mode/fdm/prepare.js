@@ -1172,7 +1172,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             raft = opt.raft || false,
             flow = opt.flow || 1,
             near = opt.near || (antiBacklash ? false : true),
-            fast = opt.fast || false,
+            fast = opt.fast || false, // support infill only!
             fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
             thinDist = near ? thinWall : thinWall;
 
@@ -1192,6 +1192,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 t2 = lines[i+1];
                 let d1 = t1.distToSq2D(startPoint);
                 let d2 = t2.distToSq2D(startPoint);
+                // penalize next nearest point if it's not on an adjacent line
                 let idiff = startPoint.index ? Math.abs(startPoint.index - t1.index) : 1;
                 let min = Math.min(d1, d2) * (idiff !== 1 ? 10 : 1);
                 if (min < mindist) {
