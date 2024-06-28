@@ -172,11 +172,21 @@ CAM.init = function(kiri, api) {
                         poly = undefined;
                         let { shape } = tool;
                         switch (shape.type) {
+                            case 'obround':
+                                if (shape.xSize === shape.ySize) {
+                                    circs.push(base.newPolygon().centerCircle(pos, shape.xSize / 2, 20));
+                                } else {
+                                    console.log('TODO', shape);
+                                }
+                                break;
                             case 'circle':
                                 circs.push(base.newPolygon().centerCircle(pos, shape.diameter / 2, 20));
                                 break;
                             case 'rectangle':
                                 rects.push(base.newPolygon().centerRectangle(pos, shape.xSize, shape.ySize));
+                                break;
+                            default:
+                                console.log('TODO', shape);
                                 break;
                         }
                         break;
@@ -192,12 +202,24 @@ CAM.init = function(kiri, api) {
                 z: 0
             });
         }
-        console.log(polys, circs, rects);
+        const open = [];
+        const closed = [];
+        for (let poly of polys) {
+            if (poly.appearsClosed()) {
+                closed.push(...poly.simplify());
+            } else {
+                open.push(poly);
+            }
+        }
+        console.log({ open, closed, circs, rects });
         const widget = api.widgets.all()[0];
         const stack = new kiri.Stack(widget.mesh);
         const layers = new kiri.Layers();
-        for (let poly of polys) {
-            layers.setLayer("paths", {line: 0xff0000}, false).addPoly(poly);
+        for (let poly of open) {
+            layers.setLayer("open", {line: 0xff8800}, false).addPoly(poly);
+        }
+        for (let poly of closed) {
+            layers.setLayer("close", {line: 0xff0000}, false).addPoly(poly);
         }
         for (let poly of circs) {
             layers.setLayer("circs", {line: 0x008800}, false).addPoly(poly);
@@ -206,6 +228,7 @@ CAM.init = function(kiri, api) {
             layers.setLayer("rects", {line: 0x0000ff}, false).addPoly(poly);
         }
         stack.addLayers(layers);
+        console.log(r, tools);
     });
 
     api.event.on("widget.add", widget => {
