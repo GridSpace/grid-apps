@@ -79,6 +79,16 @@ gapp.register = function() {
     mods.push(mod);
 };
 
+function safeFN(fn, name) {
+    return function() {
+        try {
+            return fn(...arguments);
+        } catch (error) {
+            console.log({ register_fail: name, error });
+        }
+    };
+}
+
 // perform dependency checks and run module load functions
 gapp.main = function() {
     const args = exargs([...arguments]);
@@ -115,7 +125,7 @@ gapp.main = function() {
             }
         }
         let tmp = path[map] || {};
-        fn(root, exports => {
+        safeFN(fn, name)(root, exports => {
             if (exports) {
                 return path[map] = Object.assign(tmp, exports);
             }

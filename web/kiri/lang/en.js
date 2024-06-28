@@ -642,7 +642,7 @@ self.kiri.lang['en-us'] = {
 
     // LASER SLICING
     ls_offs_s:      "offset / kerf",
-    ls_offs_l:      ["adjust for beam width","also known as kerf","in millimeters"],
+    ls_offs_l:      ["distance between the center of the cutting","path and the edge of remaining material","in millimeters"],
     ls_lahi_s:      "slice height",
     ls_lahi_l:      ["layer height","in millimeters","0 = auto/detect"],
     ls_lahm_s:      "slice minimum",

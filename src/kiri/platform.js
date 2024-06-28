@@ -763,7 +763,8 @@ function platformLoadFiles(files, group) {
             isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
             isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0,
             iskmz = lower.indexOf(".kmz") > 0,
-            isini = lower.indexOf(".ini") > 0;
+            isini = lower.indexOf(".ini") > 0,
+            isgrb = lower.indexOf(".grb");
         reader.file = files[i];
         reader.onloadend = function(e) {
             function load_dec() {
@@ -816,6 +817,12 @@ function platformLoadFiles(files, group) {
                     });
                 } else {
                     odon();
+                }
+            } else if (isgrb && api.conf.get().controller.devel) {
+                if (api.mode.is_cam()) {
+                    api.event.emit('cam.parse.gerber', e.target.result);
+                } else {
+                    api.alerts.show('Gerber import not availabe in this device mode');
                 }
             } else if (is3mf) {
                 let odon = function(models) {
@@ -870,7 +877,7 @@ function platformLoadFiles(files, group) {
             else if (ispng) api.image.dialog(e.target.result, e.target.file.name);
             else if (isjpg) api.image.convert(e.target.result, e.target.file.name);
             else if (isini) api.settings.import_prusa(e.target.result);
-            else api.show.alert(`Unsupported file: ${files[i].name}`);
+            else api.show.alert(`Unsupported file: ${reader.file.name}`);
         };
         if (isstl || ispng || isjpg || iskmz) {
             reader.readAsArrayBuffer(reader.file);

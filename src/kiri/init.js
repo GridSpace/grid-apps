@@ -12,6 +12,7 @@
 // dep: kiri.selection
 // use: kiri.tools
 // use: kiri.pack
+// use: ext.gerber
 gapp.register("kiri.init", [], (root, exports) => {
 
     const { base, kiri } = root;
@@ -369,6 +370,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 if (evt.metaKey) {
                     evt.preventDefault();
                     api.space.save();
+                    api.settings.sync.put();
                 }
                 break;
             case 76: // 'l' for restore workspace

@@ -139,8 +139,16 @@ gapp.register("kiri.main", [], (root, exports) => {
             is_fdm() { return MODE === MODES.FDM },
             is_cam() { return MODE === MODES.CAM },
             is_sla() { return MODE === MODES.SLA },
-            is_laser() { return MODE === MODES.LASER },
             is_drag() { return MODE === MODES.DRAG },
+            is_wedm() { return MODE === MODES.WEDM },
+            is_wjet() { return MODE === MODES.WJET },
+            is_laser() { return MODE === MODES.LASER },
+            is_2d() { return
+                api.mode.is_drag() ||
+                api.mode.is_wedm() ||
+                api.mode.is_wjet() ||
+                api.mode.is_laser()
+            }
         },
         probe: {
             live: "https://live.grid.space",
@@ -549,7 +557,6 @@ gapp.register("kiri.main", [], (root, exports) => {
 
     function saveWorkspace(quiet) {
         api.conf.save();
-        api.settings.sync.put();
         const newWidgets = [];
         const oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
         api.widgets.each(function(widget) {

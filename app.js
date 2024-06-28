@@ -23,6 +23,7 @@ const mods = {};
 const load = [];
 const synth = {};
 const api = {};
+const wrap = {};
 
 let forceUseCache = false;
 let serviceWorker = true;
@@ -56,6 +57,14 @@ netdb.create = async function(map = {}) {
     logger.log({ netdb: map.host, user: map.user, base: map.base });
     return client;
 };
+
+function wrapdata(path, buf) {
+    return [
+        `gapp.register("${path}", [], (root, exports) => {`,
+        buf.toString(),
+        "});"
+    ].join('\n');
+}
 
 function addonce(array, v) {
     if (array.indexOf(v) < 0) {
@@ -209,6 +218,9 @@ function init(mod) {
             if (fc === '@') {
                 continue;
             }
+            if (fc === '#') {
+                continue;
+            }
             if (fc === '&') {
                 path = path.substring(1);
                 addonce(roots, path);
@@ -230,7 +242,16 @@ function init(mod) {
         }
         // val.splice(1, 0, ...roots);
         if (xxxx) console.log({key, cache, refs, paths, roots, val});
-        script[key] = val.map(p => p.charAt(0) !== '@' ? `src/${p}.js` : p);
+        script[key] = val.map(p => {
+            let fc = p.charAt(0);
+            if (fc === '@') return p;
+            if (fc === '#') {
+                let nupath = `src/${p.substring(1)}.js`;
+                wrap[nupath] = true;
+                return nupath;
+            }
+            return `src/${p}.js`;
+        });
         // console.log({script: key, files: script[key]});
     }
 
@@ -271,6 +292,17 @@ function init(mod) {
         });
     }
     mod.add(rewriteHtmlVersion);
+    mod.add((req, res, next) => {
+        const path = req.gs.path.substring(1);
+        if (wrap[path]) {
+            const data = getCachedFile(path, data => {
+                console.log({ do_not_min: data });
+                return data;
+            });
+            return res.end(data);
+        }
+        next();
+    });
     mod.static("/src/", "src");
     mod.static("/obj/", "web/obj");
     mod.static("/font/", "web/font");
@@ -722,6 +754,10 @@ function getCachedFile(file, fn) {
             logger.log({update_cache:filePath});
             cacheData = fn(filePath);
             fs.writeFileSync(cachePath, cacheData);
+        }
+
+        if (wrap[file]) {
+            cacheData = wrapdata(file, cacheData);
         }
 
         cached = {

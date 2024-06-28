@@ -115,6 +115,99 @@ CAM.init = function(kiri, api) {
         updateStock();
     }
 
+    api.event.on("cam.parse.gerber", gerber => {
+        let fact = 1000000;
+        let tools = {};
+        let tool;
+        let poly;
+        let polys = [];
+        let circs = [];
+        let rects = [];
+        let last = {};
+        let bounds = base.newBounds();
+        let p = TracespaceParser.createParser();
+        p.feed(gerber);
+        let r = p.results();
+        let c = r.children
+            .filter(c => {
+                switch (c.type) {
+                    case 'toolDefinition':
+                        tools[c.code] = c.shape;
+                        break;
+                    case 'toolChange':
+                        tool = { code: c.code, shape: tools[c.code] };
+                        break;
+                    case 'graphic':
+                        c.tool = tool;
+                        return true;
+                }
+                return false;
+            })
+            .map(r => {
+                return {
+                    type: r.graphic,
+                    tool: r.tool,
+                    x: parseInt(r.coordinates.x),
+                    y: parseInt(r.coordinates.y)
+                };
+            })
+            .map(r => {
+                const { x, y, tool, type } = r;
+                const pos = { x:x/fact, y:y/fact, z: 0};
+                bounds.update(pos);
+                switch (type) {
+                    case 'move':
+                        if (true && poly && last.x === x && last.y === y && last.tool === tool) {
+                            // console.log('continuation');
+                        } else {
+                            poly = base.newPolygon().setOpen().add(pos.x, pos.y, 0);
+                            poly.tool = tool;
+                            polys.push(poly);
+                        }
+                        break;
+                    case 'segment':
+                        poly.add(pos.x, pos.y, 0);
+                        break;
+                    case 'shape':
+                        poly = undefined;
+                        let { shape } = tool;
+                        switch (shape.type) {
+                            case 'circle':
+                                circs.push(base.newPolygon().centerCircle(pos, shape.diameter / 2, 20));
+                                break;
+                            case 'rectangle':
+                                rects.push(base.newPolygon().centerRectangle(pos, shape.xSize, shape.ySize));
+                                break;
+                        }
+                        break;
+                }
+                last = { x, y, tool };
+                return r;
+            });
+        const { minx, maxx, miny, maxy } = bounds;
+        for (let poly of [...polys, ...circs, ...rects]) {
+            poly.move({
+                x: -((maxx-minx)/2 + minx),
+                y: -((maxy-miny)/2 + miny),
+                z: 0
+            });
+        }
+        console.log(polys, circs, rects);
+        const widget = api.widgets.all()[0];
+        const stack = new kiri.Stack(widget.mesh);
+        const layers = new kiri.Layers();
+        for (let poly of polys) {
+            layers.setLayer("paths", {line: 0xff0000}, false).addPoly(poly);
+        }
+        for (let poly of circs) {
+            layers.setLayer("circs", {line: 0x008800}, false).addPoly(poly);
+        }
+        for (let poly of rects) {
+            layers.setLayer("rects", {line: 0x0000ff}, false).addPoly(poly);
+        }
+        stack.addLayers(layers);
+    });
+
     api.event.on("widget.add", widget => {
         if (isCamMode && !Array.isArray(widget)) {
             updateAxisMode(true);
