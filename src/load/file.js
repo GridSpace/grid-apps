@@ -13,6 +13,7 @@ if (load.File) return;
 // dep: load.svg
 // dep: load.url
 // dep: load.png
+// dep: load.gbr
 gapp.register('load.file', []);
 
 const types = {
@@ -48,6 +49,10 @@ const types = {
                 resolve({ mesh: data, file });
             }
         });
+    },
+
+    gbr(data, file, resolve, reject, opt = {}) {
+        resolve([{ mesh: load.GBR.toMesh(data).toFloat32(), file }])
     }
 };
 

@@ -12,7 +12,6 @@
 // dep: kiri.selection
 // use: kiri.tools
 // use: kiri.pack
-// use: ext.gerber
 gapp.register("kiri.init", [], (root, exports) => {
 
     const { base, kiri } = root;

@@ -11,6 +11,7 @@
 // dep: load.stl
 // dep: load.obj
 // dep: load.3mf
+// dep: load.gbr
 // use: kiri-mode.cam.tool
 gapp.register("kiri.platform", [], (root, exports) => {
 
@@ -753,18 +754,18 @@ function platformLoadFiles(files, group) {
         const file = files[i],
             reader = new FileReader(),
             lower = files[i].name.toLowerCase(),
-            israw = lower.indexOf(".raw") > 0 || lower.indexOf('.') < 0,
-            isstl = lower.indexOf(".stl") > 0,
-            isobj = lower.indexOf(".obj") > 0,
-            is3mf = lower.indexOf(".3mf") > 0,
-            issvg = lower.indexOf(".svg") > 0,
-            ispng = lower.indexOf(".png") > 0,
-            isjpg = lower.indexOf(".jpg") > 0,
-            isgcode = lower.indexOf(".gcode") > 0 || lower.indexOf(".nc") > 0,
-            isset = lower.indexOf(".b64") > 0 || lower.indexOf(".km") > 0,
-            iskmz = lower.indexOf(".kmz") > 0,
-            isini = lower.indexOf(".ini") > 0,
-            isgrb = lower.indexOf(".grb");
+            israw = lower.endsWith(".raw") || lower.indexOf('.') < 0,
+            isstl = lower.endsWith(".stl"),
+            isobj = lower.endsWith(".obj"),
+            is3mf = lower.endsWith(".3mf"),
+            issvg = lower.endsWith(".svg"),
+            ispng = lower.endsWith(".png"),
+            isjpg = lower.endsWith(".jpg"),
+            isgcode = lower.endsWith(".gcode") || lower.endsWith(".nc"),
+            isset = lower.endsWith(".b64") || lower.endsWith(".km"),
+            iskmz = lower.endsWith(".kmz"),
+            isini = lower.endsWith(".ini"),
+            isgbr = lower.endsWith(".gbr");
         reader.file = files[i];
         reader.onloadend = function(e) {
             function load_dec() {
@@ -818,11 +819,17 @@ function platformLoadFiles(files, group) {
                 } else {
                     odon();
                 }
-            } else if (isgrb && api.conf.get().controller.devel) {
+            } else if (isgbr && api.conf.get().controller.devel) {
                 if (api.mode.is_cam()) {
                     api.event.emit('cam.parse.gerber', e.target.result);
                 } else {
-                    api.alerts.show('Gerber import not availabe in this device mode');
+                    let mesh = load.GBR.toMesh(e.target.result);
+                    platform.add(
+                        newWidget(undefined, group)
+                        .loadVertices(mesh.toFloat32(), true)
+                        .saveToCatalog(e.target.file.name)
+                    );
+                    // api.alerts.show('Gerber import not availabe in this device mode');
                 }
             } else if (is3mf) {
                 let odon = function(models) {

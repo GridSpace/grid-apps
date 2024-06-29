@@ -40,7 +40,7 @@ const POLY = polygons;
 
 let debug = self.debug === true,
     ccvalue = this.navigator ? navigator.hardwareConcurrency || 0 : 0,
-    concurrent = self.Worker && ccvalue > 3 ? ccvalue - 1 : 0,
+    concurrent = Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
     current = self.worker = {
         print: null,
         snap: null,

@@ -1851,8 +1851,8 @@ class Polygon {
         return this;
     }
 
-    // turn 2d polygon into closed 3d mesh faces
-    extrude(z = 1) {
+    // turn 2d polygon into a 2.5D ribbon extruded in Z
+    ribbonZ(z = 1) {
         let poly = this.clone().setClockwise();
         let faces = [];
         let points = poly.points;
@@ -1868,6 +1868,25 @@ class Polygon {
             faces.push(p0.x, p0.y, p0.z + z);
         }
         return faces;
+    }
+
+    // extrude poly (with inner voids) into 3d mesh
+    extrude(z = 1) {
+        let obj = [];
+        let earcut = this.earcut();
+        for (let poly of earcut) {
+            for (let point of poly.points) {
+                obj.push(point.x, point.y, z);
+            }
+            for (let point of poly.points.reverse()) {
+                obj.push(point.x, point.y, 0);
+            }
+        }
+        obj.appendAll(this.ribbonZ(z));
+        for (let inner of this.inner || []) {
+            obj.appendAll(inner.ribbonZ(z));
+        }
+        return obj;
     }
 
     // split long straight lines into segments no longer than max

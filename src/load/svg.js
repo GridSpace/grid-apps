@@ -74,20 +74,7 @@ function parse(text, opt = { soup: true }) {
 
         let z = parseFloat(depth.value);
         for (let poly of nest) {
-            let obj = [];
-            let earcut = poly.earcut();
-            for (let poly of earcut) {
-                for (let point of poly.points) {
-                    obj.push(point.x, point.y, z);
-                }
-                for (let point of poly.points.reverse()) {
-                    obj.push(point.x, point.y, 0);
-                }
-            }
-            obj.appendAll(poly.extrude(z));
-            for (let inner of poly.inner || []) {
-                obj.appendAll(inner.extrude(z));
-            }
+            let obj = poly.extrude(z);
             objs.push(obj);
             // invert y
             for (let i=1, l=obj.length; i<l; i += 3) {
