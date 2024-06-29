@@ -6,4 +6,5 @@ tmp
 logs/*
 data/*
 package-lock.json
+src/ext/three.js
 app.json

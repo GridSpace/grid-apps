@@ -2,14 +2,13 @@
 
 'use strict';
 
-(function() {
-
-let load = self.load = self.load || {};
-if (load.TMF) return;
-
 // dep: add.three
 // dep: ext.jszip
-gapp.register('load.3mf');
+gapp.register('load.3mf', [], (root, exports) => {
+
+let load = self.load = self.load || {};
+
+if (load.TMF) return;
 
 load.TMF = {
     parseAsync
@@ -174,4 +173,4 @@ function parseAsync(data) {
     });
 }
 
-})();
+});

@@ -28,7 +28,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
         lastTxt = null,
         lastPop = null;
 
-    self.$ = (self.$ || function (id) { return DOC.getElementById(id) } );
+    self.$ = function (id) { return DOC.getElementById(id) };
 
     kiri.ui = {
         prefix: function(pre) { prefix = pre; return kiri.ui },

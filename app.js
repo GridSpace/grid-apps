@@ -475,7 +475,6 @@ const script = {
         "&kiri/lang-en"
     ],
     kiri_work : [
-        // "#ext/manifold2",
         "kiri-run/worker",
         "&main/kiri",
     ],

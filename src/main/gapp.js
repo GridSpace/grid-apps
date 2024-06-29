@@ -72,10 +72,13 @@ function exargs(args) {
 
 // register module without a load function
 gapp.register = function() {
+// console.log(1, { mods });
     const args = exargs([...arguments]);
     const name = args.strings[0];
     const fn = args.funcs[0];
     const mod = { fn, name };
+// console.log(2, { mods });
+// console.log('reg', { mod, mods });
     mods.push(mod);
 };
 

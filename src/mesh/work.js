@@ -4,8 +4,6 @@
 
 // dep: moto.license
 // dep: ext.clip2
-// dep: ext.three
-// dep: ext.three-bgu
 // dep: add.three
 // dep: add.array
 // dep: moto.client

@@ -3,10 +3,13 @@
 "use strict";
 
 // dep: ext.three
-// dep: ext.three-bgu
-// dep: ext.three-svg
-// dep: ext.three-bvh
 gapp.register("add.three", [], (root, exports) => {
+
+const { THREE, SVGLoader, BufferGeometryUtils } = ThreeBundle;
+
+root.THREE = THREE;
+THREE.BufferGeometryUtils = BufferGeometryUtils;
+THREE.SVGLoader = SVGLoader.SVGLoader;
 
 let MP = THREE.Mesh.prototype,
     XP = THREE.Box3.prototype,

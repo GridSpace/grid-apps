@@ -7,8 +7,7 @@
 // dep: moto.broker
 // dep: moto.space
 // dep: mesh.util
-// dep: ext.three
-// dep: ext.three-bgu
+// dep: add.three
 // use: add.array
 gapp.register("mesh.api", [], (root, exports) => {
 

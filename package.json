@@ -39,7 +39,7 @@
         "manifold-3d": "^2.5.1",
         "moment": "^2.29.4",
         "serve-static": "^1.14.1",
-        "three": "^0.147.0",
+        "three": "^0.166.0",
         "three-mesh-bvh": "^0.5.21",
         "uglify-js": "3.14.5",
         "validator": ">=13.7.0",
@@ -51,7 +51,10 @@
         "electron": "latest",
         "electron-builder": "latest",
         "fs-extra": "^11.2.0",
-        "node-fetch": "^3.3.2"
+        "node-fetch": "^3.3.2",
+        "terser-webpack-plugin": "^5.3.10",
+        "webpack": "^5.92.1",
+        "webpack-cli": "^5.1.4"
     },
     "scripts": {
         "start": "npm run prebuild && electron .",
@@ -70,7 +73,7 @@
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
-        "preinstall": "node bin/install-pre.js"
+        "preinstall": "node bin/install-pre.js; npx webpack --config bin/webpack-three.js"
     },
     "main": "app-el.js",
     "build": {

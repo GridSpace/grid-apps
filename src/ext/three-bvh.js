@@ -1,1 +1,0 @@
-../../node_modules/three-mesh-bvh/build/index.umd.cjs

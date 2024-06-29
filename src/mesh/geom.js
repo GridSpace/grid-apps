@@ -4,8 +4,7 @@
 
 // dep: moto.license
 // dep: add.array
-// dep: ext.three
-// dep: ext.three-bgu
+// dep: add.three
 gapp.register("mesh.geom", [], (root, exports) => {
 
 const { Matrix4, Matrix3, Vector3, Box3 } = THREE;
