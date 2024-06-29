@@ -58,10 +58,15 @@ netdb.create = async function(map = {}) {
     return client;
 };
 
-function wrapdata(path, buf) {
+// experimental wrapping of esm modules using embedded data urls
+function wrap_module(buf, as) {
+    const base64 = buf.toString('base64');
+    const path = as.split('.');
+    const exp = path.pop();
     return [
-        `gapp.register("${path}", [], (root, exports) => {`,
-        buf.toString(),
+        `gapp.register("${path.join('.')}", [], (root, exports) => {`,
+        `const url = "data:text/javascript;base64,${base64}";`,
+        `exports({ ["${exp}"]: import(url) });`,
         "});"
     ].join('\n');
 }
@@ -98,7 +103,7 @@ function init(mod) {
     const callstack = [];
     let xxxx = false;
 
-    function find_refs(cache, path) {
+    function find_refs(cache, path, ismod) {
         let rec = refcache[path];
         if (rec) {
             let crec = cache[path];
@@ -121,6 +126,11 @@ function init(mod) {
             console.log({missing: full, callstack});
             throw e;
         }
+        // skip interrogating file if it's a module (external compacted)
+        if (ismod) {
+            wrap[`src/${path}.js`] = path.replaceAll('/','.');
+            return;
+        }
         let lines = fs.readFileSync(full)
             .toString()
             .split('\n');
@@ -136,6 +146,11 @@ function init(mod) {
                 arr = rec.deps;
                 pos = dpos + 7;
             }
+            let mpos = line.indexOf('// mod:');
+            if (mpos >= 0) {
+                arr = rec.deps;
+                pos = mpos + 7;
+            }
             if (upos >= 0 && dpos >= 0) {
                 console.log(`invalid line: ${line}`);
                 process.exit();
@@ -143,7 +158,7 @@ function init(mod) {
             if (arr && pos >= 0) {
                 let path = line.substring(pos).trim().replace(/\./g,'/').trim();
                 addonce(arr, path);
-                find_refs(cache, path);
+                find_refs(cache, path, mpos >= 0);
             }
         }
         // if (xxxx) console.log({path, ...rec});
@@ -163,7 +178,7 @@ function init(mod) {
                 return i;
             }
         }
-        console.log(`not found: ${path}`);
+        console.trace(`not found: ${path}`);
         process.exit();
     }
 
@@ -227,7 +242,7 @@ function init(mod) {
             }
             find_refs(cache, path);
         }
-        if (xxxx) console.log({processing: key, val});
+        if (xxxx) console.log({ processing: key, val });
         let refs = order_refs(cache).filter(p => roots.indexOf(p) < 0);
         // remove paths that are in refs
         let paths = list.filter(p => {
@@ -246,8 +261,9 @@ function init(mod) {
             let fc = p.charAt(0);
             if (fc === '@') return p;
             if (fc === '#') {
-                let nupath = `src/${p.substring(1)}.js`;
-                wrap[nupath] = true;
+                fc = p.split('#');
+                let nupath = `src/${fc[1]}.js`;
+                wrap[nupath] = fc[1].replaceAll('/','.');
                 return nupath;
             }
             return `src/${p}.js`;
@@ -295,10 +311,10 @@ function init(mod) {
     mod.add((req, res, next) => {
         const path = req.gs.path.substring(1);
         if (wrap[path]) {
-            const data = getCachedFile(path, data => {
-                console.log({ do_not_min: data });
-                return data;
+            const data = getCachedFile(path, file => {
+                return fs.readFileSync(file);
             });
+            res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
             return res.end(data);
         }
         next();
@@ -459,6 +475,7 @@ const script = {
         "&kiri/lang-en"
     ],
     kiri_work : [
+        // "#ext/manifold2",
         "kiri-run/worker",
         "&main/kiri",
     ],
@@ -757,7 +774,7 @@ function getCachedFile(file, fn) {
         }
 
         if (wrap[file]) {
-            cacheData = wrapdata(file, cacheData);
+            cacheData = wrap_module(cacheData, wrap[file]);
         }
 
         cached = {

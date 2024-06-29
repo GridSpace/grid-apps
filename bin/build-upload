@@ -1,0 +1,14 @@
+#!/bin/bash
+target=$1
+tag=${2:-latest}
+echo "build and release target=$target tag=$tag"
+[ -z "$target" ] && echo "missing target" && exit
+[ -z "$tag" ] && echo "missing tag" && exit
+rm -rf dist && npm run build-${target} && for i in dist/*{exe,dmg,AppImage}; do
+	if [ -f "$i" ]; then
+		bn=$(basename $i)
+		gh release delete-asset ${tag} ${bn} -y
+		gh release upload ${tag} ${i}
+	fi
+done
+

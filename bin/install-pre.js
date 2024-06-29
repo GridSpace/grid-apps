@@ -29,16 +29,6 @@ async function download(url, filePath) {
 async function main() {
     console.log('npm pre running');
 
-    await download(
-        "https://static.grid.space/gapp/manifold.js",
-        path.join("src", "ext", "manifold.js")
-    );
-
-    await download(
-        "https://static.grid.space/gapp/manifold.wasm",
-        path.join("src", "wasm", "manifold.wasm")
-    );
-
     const links = fs.readFileSync("links.csv")
         .toString()
         .trim()
@@ -47,32 +37,14 @@ async function main() {
         .map(line => line.split(',').map(v => v.trim()));
 
     if (os.platform() === 'win32')
+        // convert links to the contents of the files/directories they reference
         for (let [link, target] of links) {
             const absoluteTarget = path.resolve(path.dirname(link), target);
-            // console.log({ link, target, absoluteTarget });
             try {
-                // Remove existing link if it exists
-                // if (fs.existsSync(link)) {
-                //     console.log({ unlink: link });
-                //     fs.unlinkSync(link);
-                // } else {
-                //     console.log('no file', link);
-                // }
-
                 console.log({ win32_replace: link });
                 await fs.remove(link).catch(error => console.log({ remove_error: error }));
-
-                // console.log({ copy: absoluteTarget, to: link });
                 await fs.copy(absoluteTarget, link, { dereference: true }).catch(error => console.log({ copy_error: error }));
-
-                // const targetStats = fs.lstatSync(absoluteTarget);
-                // let type = targetStats.isDirectory() ? 'junction' : 'file';
-
-                // // Create the symlink
-                // console.log(`relink: ${link} as ${type}`);
-                // fs.symlinkSync(absoluteTarget, link, type);
             } catch (err) {
-                // console.error(`Error creating symlink: ${link} -> ${target}`, err);
                 console.error(`Error creating symlink: ${link} -> ${absoluteTarget}`, err);
             }
         }

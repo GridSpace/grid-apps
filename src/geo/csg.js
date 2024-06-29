@@ -3,14 +3,13 @@
 "use strict";
 
 // dep: geo.base
-// dep: ext.manifold
+// mod: ext.manifold
 gapp.register("geo.csg", [], (root, exports) => {
 
-const { base } = root;
+const { base, ext } = root;
 const debug = true;
 
 const CSG = {
-
     // accepts 2 or more arguments with threejs vertex position arrays
     union() {
         return CSG.moduleOp('manifold.union', 'union', ...arguments);
@@ -33,7 +32,7 @@ const CSG = {
         if (args.length < 2) {
             throw "missing one or more meshes";
         }
-        const result = Instance[op](...args);
+        const result = Instance.Manifold[op](...args);
         const output = result.getMesh();
         const errors = [ ...args, result ].map(m => m.status().value);
         for (let m of [ ...args, result ]) {
@@ -46,7 +45,8 @@ const CSG = {
     },
 
     toPositionArray(mesh) {
-        let { vertPos, triVerts } = mesh;
+        let { vertProperties, triVerts } = mesh;
+        let vertPos = vertProperties;
         if (vertPos && triVerts) {
             const vertices = new Float32Array(triVerts.length * 3);
             for (let p=0, i=0, l=triVerts.length; i<l; i++) {
@@ -63,7 +63,7 @@ const CSG = {
     fromPositionArray(pos) {
         const { index, vertices } = indexVertices(pos);
         let mesh = new Instance.Mesh({
-            vertPos: vertices.toFloat32(),
+            vertProperties: vertices.toFloat32(),
             triVerts: index.toUint32()
         });
         return mesh;
@@ -108,10 +108,15 @@ function indexVertices(pos) {
 }
 
 let Instance;
-Module().then(Module => {
-    Module.setup();
-    Instance = Module;
-    CSG.Instance = () => { return Instance };
+
+ext.manifold.then(mod => {
+    mod.default({
+        locateFile() { return "/wasm/manifold.wasm" }
+    }).then(inst => {
+        inst.setup();
+        Instance = inst;
+        CSG.Instance = () => { return Instance };
+    });
 });
 
 gapp.overlay(base, {
