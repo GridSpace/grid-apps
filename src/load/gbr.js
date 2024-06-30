@@ -17,29 +17,66 @@ load.GBR = {
 };
 
 function toMesh(text, opt = { z: 1 }) {
+    // for now ignore open trace lines
+    // future exports should allow a way to represent them for cnc
     const { open, closed, circs, rects } =  parse(text);
 
-    const nest = base.polygons.nest([...closed, ...circs, ...rects], true);
+    // for the copper layer:
+    // should produce one top level poly which is the board outline
+    // next level down should be the remaining copper trace which we
+    // subtract from the board to produce paths that can be milled
+    const nest = POLYS.nest([...closed, ...circs, ...rects], true);
 
-    const flat = POLYS.flatten(nest, [], true);
+    const flat = [];
+    for (let n of nest) n.flattenTo(flat, [], true);
+
     const z0 = opt.z  || opt.z0 || 1;
     const z1 = opt.z1 || 0.25;
 
+    // board outline
     const top = [];
     for (let poly of flat.filter(p => p.depth === 0)) {
         top.push(poly.extrude(z0));
     }
 
+    // nothing to render
+    if (top.length === 0) {
+        return [];
+    }
+
+    // copper traces
     const mid = [];
     for (let poly of flat.filter(p => p.depth === 1)) {
         mid.push(poly.extrude(z1, z0 - z1));
     }
 
+    // if no traces, return board
+    if (mid.length === 0) {
+        return top[0];
+    }
+
+    // inner polys for traces which we will punch thru for vias
+    const low = [];
+    for (let poly of flat.filter(p => p.depth === 2)) {
+        low.push(poly.extrude(z0));
+    }
+
+    // convert vertex arrays to csg mesh definitions
     const topMesh = CSG.fromPositionArray(top[0]);
     const midMesh = mid.map(v => CSG.fromPositionArray(v));
-    const subMesh = CSG.subtract(topMesh, ...midMesh);
 
-    return CSG.toPositionArray(subMesh);
+    // subtract mid from top
+    const v0Mesh = CSG.subtract(topMesh, ...midMesh);
+
+    if (low.length === 0) {
+        return CSG.toPositionArray(v0Mesh);
+    }
+
+    // subtract low (vias) from remaining
+    const lowMesh = low.map(v => CSG.fromPositionArray(v))
+    const v1Mesh = CSG.subtract(v0Mesh, ...lowMesh);
+
+    return CSG.toPositionArray(v1Mesh);
 }
 
 function parse(text) {

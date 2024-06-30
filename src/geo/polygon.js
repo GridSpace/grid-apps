@@ -1617,11 +1617,27 @@ class Polygon {
 
     /**
      * @param {Polygon[]} out
+     * @param {[]} deep recurse and track recursion
+     * @param {boolean} crush remove inner array after flatten
      * @returns {Polygon[]}
      */
-    flattenTo(out) {
+    flattenTo(out, deep, crush) {
         out.push(this);
-        if (this.inner) out.appendAll(this.inner);
+        if (deep) {
+            if (deep.contains(this)) {
+                console.log('flat recursion @', this);
+                return;
+            }
+            deep.push(this);
+        }
+        if (this.inner) {
+            for (let p of this.inner) {
+                p.flattenTo(out, deep, crush);
+            }
+        }
+        if (crush) {
+            this.inner = undefined;
+        }
         return out;
     }
 
