@@ -60,7 +60,7 @@ netdb.create = async function(map = {}) {
 
 // experimental wrapping of esm modules using embedded data urls
 function wrap_module(buf, as) {
-    const base64 = buf.toString('base64');
+    const base64 = Buffer.from(buf).toString('base64');
     const path = as.split('.');
     const exp = path.pop();
     return [
@@ -312,6 +312,7 @@ function init(mod) {
         const path = req.gs.path.substring(1);
         if (wrap[path]) {
             const data = getCachedFile(path, file => {
+                console.log({ hot_wrap: file });
                 return fs.readFileSync(file);
             });
             res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
@@ -718,7 +719,7 @@ function concatCode(array) {
     }
 
     direct.forEach(file => {
-        let cached = getCachedFile(file, function(path) {
+        let cached = getCachedFile(file, path => {
             return minify(PATH.join(dir,file));
         });
         if (oversion) {
@@ -773,6 +774,7 @@ function getCachedFile(file, fn) {
         }
 
         if (wrap[file]) {
+            // console.log('WRAP', filePath, cacheData.length);
             cacheData = wrap_module(cacheData, wrap[file]);
         }
 
@@ -785,15 +787,12 @@ function getCachedFile(file, fn) {
         fileCache[filePath] = cached;
     }
 
+    // console.log('[*]', filePath, cached.data.length);
     return cached.data;
 }
 
 function minify(path) {
     let code = fs.readFileSync(path);
-    if (path.indexOf("ext/three.js") > 0) {
-        // console.log({skip_min: path});
-        return code;
-    }
     let mini = uglify.minify(code.toString(), {
         compress: {
             merge_vars: false,
