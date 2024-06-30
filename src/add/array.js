@@ -233,6 +233,8 @@ Float32Array.prototype.toShared = function() {
     return newvert;
 };
 
+Float32Array.prototype.toFloat32 = function() { return this };
+
 String.prototype.reverse = function() {
     return this.split('').reverse().join('');
 };

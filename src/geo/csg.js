@@ -9,6 +9,14 @@ gapp.register("geo.csg", [], (root, exports) => {
 const { base, ext } = root;
 const debug = true;
 
+function log() {
+    if (root?.mesh?.log) {
+        root.mesh.log(...arguments)
+    } else if (root.debug === true) {
+        console.log(...arguments);
+    }
+}
+
 const CSG = {
     // accepts 2 or more arguments with threejs vertex position arrays
     union() {
@@ -27,7 +35,7 @@ const CSG = {
     },
 
     moduleOp(name, op) {
-        mesh.log(`${name} ${arguments.length} meshes`);
+        log(`${name} ${arguments.length} meshes`);
         const args = [...arguments].slice(2).map(a => new Instance.Manifold(a));
         if (args.length < 2) {
             throw "missing one or more meshes";
@@ -80,7 +88,7 @@ const CSG = {
 };
 
 function indexVertices(pos) {
-    mesh.log(`indexing ${pos.length/3} vertices`);
+    log(`indexing ${pos.length/3} vertices`);
     let ipos = 0;
     const index = [];
     const vertices = [];

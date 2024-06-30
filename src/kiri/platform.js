@@ -819,17 +819,21 @@ function platformLoadFiles(files, group) {
                 } else {
                     odon();
                 }
-            } else if (isgbr && api.conf.get().controller.devel) {
-                if (api.mode.is_cam()) {
-                    api.event.emit('cam.parse.gerber', e.target.result);
+            } else if (isgbr) {
+                if (api.conf.get().controller.devel) {
+                    api.event.emit('cam.parse.gerber', { data: e.target.result });
                 } else {
                     let mesh = load.GBR.toMesh(e.target.result);
-                    platform.add(
+                    let wid;
+                    platform.add(wid =
                         newWidget(undefined, group)
-                        .loadVertices(mesh.toFloat32(), true)
+                        .loadVertices(mesh, true)
                         .saveToCatalog(e.target.file.name)
                     );
-                    // api.alerts.show('Gerber import not availabe in this device mode');
+                    if (api.mode.is_cam()) {
+                        // attach raw illustration
+                        api.event.emit('cam.parse.gerber', { data: e.target.result, mesh: wid.mesh });
+                    }
                 }
             } else if (is3mf) {
                 let odon = function(models) {

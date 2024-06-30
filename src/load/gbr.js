@@ -4,24 +4,42 @@
 // use: geo.polygon
 // use: geo.polygons
 // use: ext.gerber
+// use: geo.csg
 gapp.register("load.gbr", (root, exports) => {
 
 const { load } = root;
+const POLYS = base.polygons;
+const CSG = base.CSG;
 
 load.GBR = {
     parse,
     toMesh
 };
 
-function toMesh(text, opt = { z: 3 }) {
+function toMesh(text, opt = { z: 1 }) {
     const { open, closed, circs, rects } =  parse(text);
+
     const nest = base.polygons.nest([...closed, ...circs, ...rects], true);
-    console.log({ nest });
-    const obj = [];
-    for (let poly of nest) {
-        obj.appendAll(poly.extrude(opt.z || 3));
+
+    const flat = POLYS.flatten(nest, [], true);
+    const z0 = opt.z  || opt.z0 || 1;
+    const z1 = opt.z1 || 0.25;
+
+    const top = [];
+    for (let poly of flat.filter(p => p.depth === 0)) {
+        top.push(poly.extrude(z0));
     }
-    return obj;
+
+    const mid = [];
+    for (let poly of flat.filter(p => p.depth === 1)) {
+        mid.push(poly.extrude(z1, z0 - z1));
+    }
+
+    const topMesh = CSG.fromPositionArray(top[0]);
+    const midMesh = mid.map(v => CSG.fromPositionArray(v));
+    const subMesh = CSG.subtract(topMesh, ...midMesh);
+
+    return CSG.toPositionArray(subMesh);
 }
 
 function parse(text) {

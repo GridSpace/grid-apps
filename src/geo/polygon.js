@@ -1852,39 +1852,42 @@ class Polygon {
     }
 
     // turn 2d polygon into a 2.5D ribbon extruded in Z
-    ribbonZ(z = 1) {
+    ribbonZ(z = 1, zadd = 0, rev) {
         let poly = this.clone().setClockwise();
         let faces = [];
         let points = poly.points;
         let length = points.length;
+        if (rev) {
+            points = points.slice().reverse();
+        }
         for (let i=0; i<length; i++) {
             let p0 = points[i];
             let p1 = points[(i + 1) % length];
-            faces.push(p0.x, p0.y, p0.z);
-            faces.push(p1.x, p1.y, p0.z);
-            faces.push(p1.x, p1.y, p1.z + z);
-            faces.push(p0.x, p0.y, p0.z);
-            faces.push(p1.x, p1.y, p1.z + z);
-            faces.push(p0.x, p0.y, p0.z + z);
+            faces.push(p0.x, p0.y, p0.z + zadd);
+            faces.push(p1.x, p1.y, p1.z + z + zadd);
+            faces.push(p1.x, p1.y, p0.z + zadd);
+            faces.push(p0.x, p0.y, p0.z + zadd);
+            faces.push(p0.x, p0.y, p0.z + z + zadd);
+            faces.push(p1.x, p1.y, p1.z + z + zadd);
         }
         return faces;
     }
 
     // extrude poly (with inner voids) into 3d mesh
-    extrude(z = 1) {
+    extrude(z = 1, zadd = 0) {
         let obj = [];
         let earcut = this.earcut();
         for (let poly of earcut) {
             for (let point of poly.points) {
-                obj.push(point.x, point.y, z);
+                obj.push(point.x, point.y, z + zadd);
             }
             for (let point of poly.points.reverse()) {
-                obj.push(point.x, point.y, 0);
+                obj.push(point.x, point.y, zadd);
             }
         }
-        obj.appendAll(this.ribbonZ(z));
+        obj.appendAll(this.ribbonZ(z, zadd));
         for (let inner of this.inner || []) {
-            obj.appendAll(inner.ribbonZ(z));
+            obj.appendAll(inner.ribbonZ(z, zadd, true));
         }
         return obj;
     }

@@ -116,10 +116,10 @@ CAM.init = function(kiri, api) {
         updateStock();
     }
 
-    api.event.on("cam.parse.gerber", gerber => {
-        const { open, closed, circs, rects } = load.GBR.parse(gerber);
-        const widget = api.widgets.all()[0];
-        const stack = new kiri.Stack(widget.mesh);
+    api.event.on("cam.parse.gerber", opts => {
+        const { data, mesh } = opts;
+        const { open, closed, circs, rects } = load.GBR.parse(data);
+        const stack = new kiri.Stack(mesh || moto.space.world.newGroup());
         const layers = new kiri.Layers();
         for (let poly of open) {
             layers.setLayer("open", {line: 0xff8800}, false).addPoly(poly);
