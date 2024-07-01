@@ -158,6 +158,7 @@ function parse(text) {
             last = { x, y, tool };
             return r;
         });
+    // center board on origin
     const { minx, maxx, miny, maxy } = bounds;
     for (let poly of [...polys, ...circs, ...rects]) {
         poly.move({
@@ -166,10 +167,13 @@ function parse(text) {
             z: 0
         });
     }
+    // separate open and closed polys (traces vs areas)
     const open = [];
     const closed = [];
     for (let poly of polys) {
         if (poly.appearsClosed()) {
+            // clean up gnarly overlapping lines
+            // make contiguous, simpler enclosed areas
             closed.push(...poly.simplify());
         } else {
             open.push(poly);

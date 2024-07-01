@@ -747,113 +747,92 @@ function platformLayout() {
     api.event.emit('platform.layout');
 }
 
+function platformLoadWidget(group, vertices, filename) {
+    const widget = newWidget(undefined, group).loadVertices(vertices.toFloat32(), true);
+    if (filename) widget.saveToCatalog(filename);
+    platformAdd(widget);
+    return widget;
+}
+
 function platformLoadFiles(files, group) {
-    let loaded = files.length;
     platform.group();
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i],
+    let loading = files.length;
+    for (let file of files) {
+        const name = file.name,
             reader = new FileReader(),
-            lower = files[i].name.toLowerCase(),
-            israw = lower.endsWith(".raw") || lower.indexOf('.') < 0,
+            lower = name.toLowerCase(),
             isstl = lower.endsWith(".stl"),
             isobj = lower.endsWith(".obj"),
             is3mf = lower.endsWith(".3mf"),
             issvg = lower.endsWith(".svg"),
             ispng = lower.endsWith(".png"),
             isjpg = lower.endsWith(".jpg"),
-            isgcode = lower.endsWith(".gcode") || lower.endsWith(".nc"),
-            isset = lower.endsWith(".b64") || lower.endsWith(".km"),
             iskmz = lower.endsWith(".kmz"),
             isini = lower.endsWith(".ini"),
-            isgbr = lower.endsWith(".gbr");
-        reader.file = files[i];
+            isgbr = lower.endsWith(".gbr"),
+            israw = lower.endsWith(".raw") || lower.indexOf('.') < 0,
+            isset = lower.endsWith(".b64") || lower.endsWith(".km"),
+            isgcode = lower.endsWith(".gcode") || lower.endsWith(".nc");
+        reader.file = file;
         reader.onloadend = function(e) {
+            const data = e.target.result;
             function load_dec() {
-                if (--loaded === 0) {
+                if (--loading === 0) {
                     platform.group_done(isgcode);
                 }
             }
             if (israw) {
-                platform.add(
-                    newWidget(undefined, group)
-                    .loadVertices(JSON.parse(e.target.result).toFloat32())
-                );
+                platformLoadWidget(group, JSON.parse(data));
                 load_dec();
             } else if (api.feature.on_load && (isstl || isobj || is3mf)) {
-                api.feature.on_load(e.target.result, file);
+                api.feature.on_load(data, file);
+                load_dec();
+            } else if (api.feature.on_add_stl && isstl) {
+                api.feature.on_add_stl(data, file);
                 load_dec();
             } else if (isstl) {
-                if (api.feature.on_add_stl) {
-                    api.feature.on_add_stl(e.target.result, file);
-                } else {
-                    platform.add(
-                        newWidget(undefined, group)
-                        .loadVertices(new load.STL().parse(e.target.result, api.view.unit_scale()))
-                        .saveToCatalog(e.target.file.name)
-                    );
-                }
+                const stl = new load.STL().parse(data, api.view.unit_scale());
+                platformLoadWidget(group, stl, name);
                 load_dec();
             } else if (isobj) {
-                let objs = load.OBJ.parse(e.target.result);
-                let odon = function() {
+                const objs = load.OBJ.parse(data.textDecode('utf-8'));
+                const ondn = function() {
                     for (let obj of objs) {
-                        let name = e.target.file.name;
-                        if (obj.name) {
-                            name = obj.name + ' - ' + name;
-                        }
-                        platform.add(
-                            newWidget(undefined, group)
-                            .loadVertices(obj.toFloat32(), true)
-                            .saveToCatalog(name)
-                        );
+                        platformLoadWidget(group, obj, obj.name ? `${obj.name}-${name}` : name);
                     }
                     load_dec();
                 };
                 if (objs.length > 1 && !group) {
                     api.uc.confirm('group objects?').then(ok => {
-                        if (ok) {
-                            group = [];
-                        }
-                        odon();
+                        group = ok ? [] : group;
+                        ondn();
                     });
                 } else {
-                    odon();
+                    ondn();
                 }
             } else if (isgbr) {
+                let text = data.textDecode('utf-8');
                 if (api.conf.get().controller.devel) {
-                    api.event.emit('cam.parse.gerber', { data: e.target.result });
+                    api.event.emit('cam.parse.gerber', { data: text });
                 } else {
-                    let mesh = load.GBR.toMesh(e.target.result);
-                    let wid;
-                    platform.add(wid =
-                        newWidget(undefined, group)
-                        .loadVertices(mesh, true)
-                        .saveToCatalog(e.target.file.name)
-                    );
+                    let mesh = load.GBR.toMesh(text);
+                    let wid = platformLoadWidget(group, mesh, name);
                     if (api.mode.is_cam()) {
                         // attach raw illustration
-                        api.event.emit('cam.parse.gerber', { data: e.target.result, mesh: wid.mesh });
+                        api.event.emit('cam.parse.gerber', { data: text, mesh: wid.mesh });
                     }
                 }
             } else if (is3mf) {
                 let odon = function(models) {
                     let msg = api.show.alert('Adding Objects');
                     for (let model of models) {
-                        let name = e.target.file.name;
-                        if (model.name) {
-                            name = model.name + ' - ' + name;
-                        }
-                        platform.add(
-                            newWidget(undefined, group)
-                            .loadVertices(model.faces.toFloat32())
-                            .saveToCatalog(name)
-                        );
+                        platformLoadWidget(group, model.faces, model.name ? `${model.name}-${name}` : name);
                     }
                     load_dec();
                     api.hide.alert(msg);
                 }
                 let msg = api.show.alert('Decoding 3MF');
-                load.TMF.parseAsync(e.target.result).then(models => {
+                load.TMF.parseAsync(data).then(models => {
                     api.hide.alert(msg);
                     if (models.length > 1 && !group) {
                         UC.confirm(`group ${models.length} objects?`).then(ok => {
@@ -867,34 +846,25 @@ function platformLoadFiles(files, group) {
                     }
                 });
             } else if (isgcode) {
-                api.function.parse(e.target.result, 'gcode');
+                api.function.parse(data.textDecode('utf-8'), 'gcode');
                 load_dec();
             } else if (issvg) {
                 group = group || [];
-                let name = e.target.file.name;
-                let svg = load.SVG.parse(e.target.result);
+                let svg = load.SVG.parse(data.textDecode('utf-8'));
                 let ind = 0;
                 for (let v of svg) {
-                    let num = ind++;
-                    platform.add(
-                        newWidget(undefined, group)
-                        .loadVertices(svg[num].toFloat32())
-                        .saveToCatalog(num ? `${name}-${num}` : name)
-                    );
+                    platformLoadWidget(group, svg[ind], ind ? `${name}-${ind++}` : name);
                 }
                 load_dec();
-            } else if (iskmz) api.settings.import_zip(e.target.result, true);
-            else if (isset) api.settings.import(e.target.result, true);
-            else if (ispng) api.image.dialog(e.target.result, e.target.file.name);
-            else if (isjpg) api.image.convert(e.target.result, e.target.file.name);
-            else if (isini) api.settings.import_prusa(e.target.result);
+            }
+            else if (iskmz) api.settings.import_zip(data, true);
+            else if (isset) api.settings.import(data, true);
+            else if (ispng) api.image.dialog(data, name);
+            else if (isjpg) api.image.convert(data, name);
+            else if (isini) api.settings.import_prusa(data.textDecode('utf-8'));
             else api.show.alert(`Unsupported file: ${reader.file.name}`);
         };
-        if (isstl || ispng || isjpg || iskmz) {
-            reader.readAsArrayBuffer(reader.file);
-        } else {
-            reader.readAsBinaryString(reader.file);
-        }
+        reader.readAsArrayBuffer(reader.file);
     }
 }
 

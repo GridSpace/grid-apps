@@ -34,7 +34,7 @@ function index() { return catalog().index }
 
 class Widget {
     constructor(id, group) {
-        this.id = id || new Date().getTime().toString(36)+(nextId++);
+        this.id = id || Date.now().toString(36)+(nextId++);
         this.grouped = group ? true : false;
         this.group = group || [];
         this.group.push(this);

@@ -235,6 +235,10 @@ Float32Array.prototype.toShared = function() {
 
 Float32Array.prototype.toFloat32 = function() { return this };
 
+ArrayBuffer.prototype.textDecode = function(encoding = 'utf-8') {
+    return new TextDecoder(encoding).decode(this);
+};
+
 String.prototype.reverse = function() {
     return this.split('').reverse().join('');
 };
