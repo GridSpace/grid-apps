@@ -9,5 +9,5 @@ kiri-geo.wasm: kiri-geo.cpp
 kiri-ani.wasm: kiri-ani.c
 	emcc --no-entry -o kiri-ani.wasm kiri-ani.c -O3 -s ERROR_ON_UNDEFINED_SYMBOLS=0
 
-clean: *.wasm
+clean: kiri-*.wasm
 	rm *.wasm
