@@ -126,7 +126,7 @@ CAM.init = function(kiri, api) {
             let diam = poly.tool?.shape?.diameter;
             if (diam) {
                 const exp = poly.offset_open(diam, 'round');
-                layers.setLayer("open2", {line: 0xff5555}, false).addPolys(exp);
+                layers.setLayer("open-exp", {line: 0xff5555}, false).addPolys(exp);
             }
         }
         for (let poly of closed) {

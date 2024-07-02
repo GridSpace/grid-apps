@@ -10,6 +10,7 @@
 // dep: moto.license
 // dep: moto.broker
 // use: load.png
+// use: load.gbr
 // use: ext.jszip
 // use: kiri.render
 // use: kiri-mode.cam.animate
@@ -604,6 +605,13 @@ kiri.worker = {
             progress(progress) { send.data({ progress }) },
             done(vertices) { send.done({ vertices }, [ vertices.buffer ])}
         });
+    },
+
+    gerber2mesh(data, send) {
+        const vertices = load.GBR.toMesh(data, { progress(pct) {
+            send.data({ progress: pct/100 });
+        } } );
+        send.data({ vertices }, [ vertices.buffer ]);
     },
 
     zip(data, send) {

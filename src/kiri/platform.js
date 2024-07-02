@@ -815,13 +815,17 @@ function platformLoadFiles(files, group) {
                 if (api.conf.get().controller.devel) {
                     api.event.emit('cam.parse.gerber', { data: text });
                 } else {
-                    let mesh = load.GBR.toMesh(text);
-                    let wid = platformLoadWidget(group, mesh, name);
-                    if (api.mode.is_cam()) {
-                        // attach raw illustration
-                        api.event.emit('cam.parse.gerber', { data: text, mesh: wid.mesh });
-                    }
-                }
+                    kiri.client.gerber2mesh(text, progress => {
+                        api.show.progress(progress, "converting");
+                    }, vertices => {
+                        api.show.progress(0);
+                        let wid = platformLoadWidget(group, vertices, name);
+                        if (api.mode.is_cam()) {
+                            // attach raw illustration
+                            api.event.emit('cam.parse.gerber', { data: text, mesh: wid.mesh });
+                        }
+                    });
+            }
             } else if (is3mf) {
                 let odon = function(models) {
                     let msg = api.show.alert('Adding Objects');

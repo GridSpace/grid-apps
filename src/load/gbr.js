@@ -17,9 +17,12 @@ load.GBR = {
 };
 
 function toMesh(text, opt = { z: 1 }) {
+    const progress = opt.progress || function(){};
+
     // for now ignore open trace lines
     // future exports should allow a way to represent them for cnc
-    const { open, closed, circs, rects } =  parse(text);
+    const { open, closed, circs, rects } = parse(text);
+    progress(5);
 
     // for the copper layer:
     // should produce one top level poly which is the board outline
@@ -29,6 +32,7 @@ function toMesh(text, opt = { z: 1 }) {
 
     const flat = [];
     for (let n of nest) n.flattenTo(flat, [], true);
+    progress(8);
 
     const z0 = opt.z  || opt.z0 || 1;
     const z1 = opt.z1 || 0.25;
@@ -38,6 +42,7 @@ function toMesh(text, opt = { z: 1 }) {
     for (let poly of flat.filter(p => p.depth === 0)) {
         top.push(poly.extrude(z0));
     }
+    progress(15);
 
     // nothing to render
     if (top.length === 0) {
@@ -49,6 +54,7 @@ function toMesh(text, opt = { z: 1 }) {
     for (let poly of flat.filter(p => p.depth === 1)) {
         mid.push(poly.extrude(z1, z0 - z1));
     }
+    progress(20);
 
     // if no traces, return board
     if (mid.length === 0) {
@@ -63,10 +69,11 @@ function toMesh(text, opt = { z: 1 }) {
 
     // union open trace expansions
     const opn = [];
-    for (let poly of POLYS.union(open_exp)) {
+    for (let poly of POLYS.union(open_exp, 0, true)) {
         const tool = poly.tool;
         opn.push(poly.extrude(z0));
     }
+    progress(25);
 
     // inner polys for traces which we add back to the top
     // and (optionally) remove from the bottom for making vias
@@ -74,25 +81,30 @@ function toMesh(text, opt = { z: 1 }) {
     for (let poly of flat.filter(p => p.depth === 2)) {
         low.push(poly.extrude(z1, z0 - z1));
     }
+    progress(30);
 
     // convert vertex arrays to csg mesh definitions
     const topMesh = CSG.fromPositionArray(top[0]);
     const midMesh = mid.map(v => CSG.fromPositionArray(v));
+    progress(35);
 
     // subtract mid from top
     let meshOut = CSG.subtract(topMesh, ...midMesh);
+    progress(50);
 
     if (opn.length) {
         // add back raised traces (before removing vias)
         const opnMesh = opn.map(v => CSG.fromPositionArray(v))
         meshOut = CSG.union(meshOut, ...opnMesh);
     }
+    progress(70);
 
     if (low.length) {
         // subtract low (vias) from remaining
         const lowMesh = low.map(v => CSG.fromPositionArray(v))
         meshOut = CSG.union(meshOut, ...lowMesh);
     }
+    progress(90);
 
     return CSG.toPositionArray(meshOut);
 }

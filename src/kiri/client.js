@@ -297,6 +297,17 @@ const client = exports({
         }, [ data.png ]);
     },
 
+    gerber2mesh(data, progress, output) {
+        send('gerber2mesh', data, reply => {
+            if (reply.progress) {
+                progress(reply.progress);
+            }
+            if (reply.vertices) {
+                output(reply.vertices);
+            }
+        });
+    },
+
     zip(files, progress, output) {
         send("zip", {files}, reply => {
             if (reply.percent !== undefined) {
