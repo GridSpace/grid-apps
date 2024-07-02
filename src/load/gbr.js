@@ -44,7 +44,7 @@ function toMesh(text, opt = { z: 1 }) {
         return [];
     }
 
-    // copper traces
+    // copper pads
     const mid = [];
     for (let poly of flat.filter(p => p.depth === 1)) {
         mid.push(poly.extrude(z1, z0 - z1));
@@ -55,10 +55,24 @@ function toMesh(text, opt = { z: 1 }) {
         return top[0];
     }
 
-    // inner polys for traces which we will punch thru for vias
+    // copper traces (expand first since open)
+    const open_exp = open.map(poly => {
+        const diam = poly.tool?.shape?.diameter;
+        return diam ? poly.offset_open(diam, 'round') : null;
+    }).filter(p => p).flat();
+
+    // union open trace expansions
+    const opn = [];
+    for (let poly of POLYS.union(open_exp)) {
+        const tool = poly.tool;
+        opn.push(poly.extrude(z0));
+    }
+
+    // inner polys for traces which we add back to the top
+    // and (optionally) remove from the bottom for making vias
     const low = [];
     for (let poly of flat.filter(p => p.depth === 2)) {
-        low.push(poly.extrude(z0));
+        low.push(poly.extrude(z1, z0 - z1));
     }
 
     // convert vertex arrays to csg mesh definitions
@@ -66,17 +80,21 @@ function toMesh(text, opt = { z: 1 }) {
     const midMesh = mid.map(v => CSG.fromPositionArray(v));
 
     // subtract mid from top
-    const v0Mesh = CSG.subtract(topMesh, ...midMesh);
+    let meshOut = CSG.subtract(topMesh, ...midMesh);
 
-    if (low.length === 0) {
-        return CSG.toPositionArray(v0Mesh);
+    if (opn.length) {
+        // add back raised traces (before removing vias)
+        const opnMesh = opn.map(v => CSG.fromPositionArray(v))
+        meshOut = CSG.union(meshOut, ...opnMesh);
     }
 
-    // subtract low (vias) from remaining
-    const lowMesh = low.map(v => CSG.fromPositionArray(v))
-    const v1Mesh = CSG.subtract(v0Mesh, ...lowMesh);
+    if (low.length) {
+        // subtract low (vias) from remaining
+        const lowMesh = low.map(v => CSG.fromPositionArray(v))
+        meshOut = CSG.union(meshOut, ...lowMesh);
+    }
 
-    return CSG.toPositionArray(v1Mesh);
+    return CSG.toPositionArray(meshOut);
 }
 
 function parse(text) {

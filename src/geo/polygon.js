@@ -1495,7 +1495,6 @@ class Polygon {
 
     toClipper(inout) {
         let poly = this,
-            cur = [],
             out = inout || [];
         out.push(poly.points.map(p => p.toClipper()));
         if (poly.inner) {
@@ -1517,6 +1516,37 @@ class Polygon {
      */
     offset(offset, output) {
         return POLY.expand([this], -offset, this.getZ(), output);
+    }
+
+    /**
+     * ofsetting an open line uses a different procedure and options
+     *
+     * @param {number} distance
+     * @param {'square'|'round'|'miter'} type
+     * @returns {Polygon[]}
+     */
+    offset_open(distance, type = 'miter') {
+        if (this.isOpen()) {
+            let cjnt = clib.JoinType,
+                cety = clib.EndType,
+                coff = new clib.ClipperOffset(),
+                ctre = new clib.PolyTree(),
+                entt = {
+                    'square' : cety.etOpenSquare,
+                    'round' : cety.etOpenRound,
+                    'miter' : cety.etOpenSquare
+                }[type] || cety.etOpenSquare,
+                jntt = {
+                    'square': cjnt.jtSquare,
+                    'round': cjnt.jtRound,
+                    'miter': cjnt.jtMiter
+                }[type] || cjnt.jtMiter;
+                coff.AddPaths(this.toClipper(), jntt, entt);
+                coff.Execute(ctre, distance * config.clipper);
+            return POLY.fromClipperTree(ctre, this.getZ(), null, null, 0);
+        } else {
+            return this.offset(distance);
+        }
     }
 
     /**

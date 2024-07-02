@@ -34,7 +34,7 @@ const POLYS = base.polygons = {
     offset,
     trimTo,
     expand,
-    expand_lines,
+    // expand_lines,
     points,
     length,
     route,
@@ -508,18 +508,18 @@ function sumCirc(polys) {
  * @param {number} distance offset
  * @param {number} [z] defaults to 0
  */
-function expand_lines(poly, distance, z) {
-    let fact = config.clipper,
-        cjnt = clib.JoinType,
-        cety = clib.EndType,
-        coff = new clib.ClipperOffset(),
-        ctre = new clib.PolyTree();
+// function expand_lines(poly, distance, z) {
+//     let fact = config.clipper,
+//         cjnt = clib.JoinType,
+//         cety = clib.EndType,
+//         coff = new clib.ClipperOffset(),
+//         ctre = new clib.PolyTree();
 
-    coff.AddPaths(poly.toClipper(), cjnt.jtMiter, cety.etOpenSquare);
-    coff.Execute(ctre, distance * fact);
+//     coff.AddPaths(poly.toClipper(), cjnt.jtMiter, cety.etOpenSquare);
+//     coff.Execute(ctre, distance * fact);
 
-    return fromClipperTree(ctre, z, null, null, 0);
-}
+//     return fromClipperTree(ctre, z, null, null, 0);
+// }
 
 /**
  * @param {Polygon[]} polys
