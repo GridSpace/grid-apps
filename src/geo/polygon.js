@@ -601,18 +601,20 @@ class Polygon {
     }
 
     /**
+     * using perimeter length, find 3 equally spaced points to
+     * return a more accruate center point.
      * @returns {Point} center of a polygon assuming it's a circle
      */
-    circleCenter() {
+    calcCircleCenter() {
         let pe = this.perimeter(),
-            pe1 = pe / 3,
-            pe2 = pe1 * 2,
+            pe1 = pe / 3, // point 2
+            pe2 = pe1 * 2, // point 3
             p = this.points,
             l = p.length,
             i = 1,
             td = 0,
-            lp = p[0],
-            ap = [ lp ];
+            lp = p[0], // first point
+            ap = [ lp ]; // array of 3 points
         while (i < l) {
             let np = p[i++];
             let d = lp.distTo2D(np);
@@ -627,6 +629,67 @@ class Polygon {
         }
         let center = util.center2d(...ap);
         return newPoint(center.x, center.y, p[0].z, null);
+    }
+
+    /**
+     * iterate over poly points and find sequences of 5 or more points
+     * with a common center point and collect as a midpoint/radius
+     */
+    findArcCenters(opt = {}) {
+        if (this.length < 6) return [];
+        let tolerance = opt.tolerance || 1e-2,
+            inside = opt.inside ?? true,
+            seq = this.points.slice(),
+            util = base.util;
+        if (this.isClosed()) seq.appendAll(seq.slice(0,5));
+        let recs = [], // accumulated arc points
+            cand = []; // candidate center array
+        for (let pos=3; pos<seq.length; pos++) {
+            let next = util.circleCenter(...seq.slice(pos-3, pos));
+            let prev = cand.peek();
+            if (inside && !newPoint(next.x,next.y).inPolygon(this)) {
+                // require point be inside current polygon
+                next = null;
+            }
+            // console.log({ pos, next, prev, cand });
+            if (next && !prev) {
+                // seed candidate list
+                cand.push(next);
+                continue;
+            }
+            if (!next) {
+                // next is a bust, reset candidate list
+                cand.length = 0;
+                continue;
+            }
+            // const dist = util.dist2D(next,prev);
+            // console.log({ dist: dist.round(6) });
+            if (util.dist2D(next,prev) < tolerance) {
+                // add new candidate
+                cand.push(next);
+                continue;
+            } else if (cand.length >= 3) {
+                // emit record on 5 points
+                recs.push(cand.peek());
+            }
+            // reset candidate array
+            cand = [ next ];
+        }
+        if (cand.length >= 3) {
+            recs.push(cand.peek());
+        }
+        // filter dups
+        recs.sort((a,b) => {
+            return util.dist2D(a,b);
+        });
+        recs = recs.filter((r,i) => {
+            if (i > 0) {
+                return util.dist2D(r, recs[i-1]) < tolerance*10 ? null : r;
+            } else {
+                return r;
+            }
+        });
+        return recs;
     }
 
     /**

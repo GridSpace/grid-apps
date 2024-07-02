@@ -1418,31 +1418,43 @@ class OpDrill extends CamOp {
 
         // for each slice, look for polygons with 98.5% circularity whose
         // area is within the tolerance of a circle matching the tool diameter
-        tslices.forEach(function(slice) {
-            if (slice.z < zBottom) return;
+        for (let slice of tslices) {
+            if (slice.z < zBottom) {
+                continue;
+            }
             let inner = slice.topPolyInners([]);
-            inner.forEach(function(poly) {
+            for (let poly of inner) {
                 if (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta) {
-                    let center = poly.circleCenter(),
+                    let center = poly.calcCircleCenter(),
                         merged = false,
                         closest = Infinity,
                         dist;
                     // TODO reject if inside camShellPolys (means there is material above)
-                    if (center.isInPolygon(slice.shadow)) return;
-                    drills.forEach(function(drill) {
-                        if (merged) return;
+                    if (center.isInPolygon(slice.shadow)) {
+                        continue;
+                    }
+                    for (let drill of drills) {
+                        if (merged) {
+                            continue;
+                        }
                         if ((dist = drill.last().distTo2D(center)) <= centerDiff) {
                             merged = true;
                             drill.push(center);
                         }
                         closest = Math.min(closest,dist);
-                    });
+                    }
                     if (!merged) {
                         drills.push(newPolygon().append(center));
                     }
+                } else if (op.arcs) {
+                    // find arcs
+                    let arcs = poly.findArcCenters();
+                    for (let arc of arcs) {
+                        drills.push(newPolygon().add(arc.x,arc.y,arc.z||0));
+                    }
                 }
-            });
-        });
+            }
+        }
 
         // drill points to use center (average of all points) of the polygon
         drills.forEach(function(drill) {

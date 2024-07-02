@@ -110,6 +110,13 @@ function sqr(v) {
 }
 
 /**
+ * return distance between two points
+ */
+function dist2D(p1, p2) {
+    return Math.sqrt(distSq(p1, p2));
+}
+
+/**
  * return distance squared between two points
  */
 function distSq(p1, p2) {
@@ -569,6 +576,7 @@ base.util = {
     pwait,
     ptimer,
     flatten,
+    dist2D,
     distSq,
     distSqv2,
     center2d,
@@ -577,6 +585,7 @@ base.util = {
     orderClosest,
     doCombinations,
     offsetPrecision,
+    circleCenter,
     numOrDefault,
     thetaDiff,
     intersect,
