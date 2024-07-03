@@ -49,7 +49,6 @@ const POLYS = base.polygons = {
     offset,
     trimTo,
     expand,
-    // expand_lines,
     points,
     length,
     route,
@@ -776,7 +775,7 @@ function fillArea(polys, angle, spacing, output, minLen, maxLen) {
     if (clip.Execute(ClipIntersect, tree, FillNonZero, FillEvenOdd)) {
         for (let poly of tree.m_AllPolys) {
             if (minlen || maxlen) {
-                let plen = clib.JS.PerimeterOfPath(poly.m_polygon, false, 1);
+                let plen = ClipperLib.JS.PerimeterOfPath(poly.m_polygon, false, 1);
                 if (minlen && plen < minlen) continue;
                 if (maxlen && plen > maxlen) continue;
             }

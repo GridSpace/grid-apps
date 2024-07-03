@@ -273,7 +273,7 @@ FDM.init = function(kiri, api) {
                 // eliminate / normalize uv to allow other widget merge
                 box.setAttribute('uv',new BufferAttribute(new Float32Array(0), 3));
             }
-            let bbg = BufferGeometryUtils.mergeBufferGeometries(boxen);
+            let bbg = BufferGeometryUtils.mergeGeometries(boxen);
             let sw = kiri.newWidget(null, group);
             let fwp = group[0].track.pos;
             sw.loadGeometry(bbg);
