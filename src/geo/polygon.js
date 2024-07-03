@@ -17,11 +17,24 @@ const { config, util, polygons, newBounds, newPoint } = base;
 const POLY = polygons,
     XAXIS = new THREE.Vector3(1,0,0),
     DEG2RAD = Math.PI / 180,
-    clib = self.ClipperLib,
-    clip = clib.Clipper,
-    ctyp = clib.ClipType,
-    ptyp = clib.PolyType,
-    cfil = clib.PolyFillType;
+    ClipperLib = self.ClipperLib,
+    Clipper = ClipperLib.Clipper,
+    ClipType = ClipperLib.ClipType,
+    PolyType = ClipperLib.PolyType,
+    PolyFillType = ClipperLib.PolyFillType,
+    CleanPolygon = Clipper.CleanPolygon,
+    FillNonZero = PolyFillType.pftNonZero,
+    FillEvenOdd = PolyFillType.pftEvenOdd,
+    PathSubject = PolyType.ptSubject,
+    PathClip = PolyType.ptClip,
+    EndType = ClipperLib.EndType,
+    JoinType = ClipperLib.JoinType,
+    PolyTree = ClipperLib.PolyTree,
+    ClipDiff = ClipType.ctDifference,
+    ClipUnion = ClipType.ctUnion,
+    ClipIntersect = ClipType.ctIntersection,
+    ClipperOffset = ClipperLib.ClipperOffset
+    ;
 
 let seqid = Math.round(Math.random() * 0xffffffff);
 
@@ -1519,7 +1532,7 @@ class Polygon {
      * non-nested polygons. used primarily in slicer/connectLines.
      */
     clean(deep, parent, merge = config.clipperClean) {
-        let clean = clip.CleanPolygon(this.toClipper()[0], merge),
+        let clean = CleanPolygon(this.toClipper()[0], merge),
             poly = fromClipperPath(clean, this.getZ());
         if (poly.length === 0) return this;
         if (deep && this.inner) {
@@ -1590,23 +1603,21 @@ class Polygon {
      */
     offset_open(distance, type = 'miter') {
         if (this.isOpen()) {
-            let cjnt = clib.JoinType,
-                cety = clib.EndType,
-                coff = new clib.ClipperOffset(),
-                ctre = new clib.PolyTree(),
+            let coff = new ClipperOffset(),
+                tree = new PolyTree(),
                 entt = {
-                    'square' : cety.etOpenSquare,
-                    'round' : cety.etOpenRound,
-                    'miter' : cety.etOpenSquare
-                }[type] || cety.etOpenSquare,
+                    'square' : EndType.etOpenSquare,
+                    'round' : EndType.etOpenRound,
+                    'miter' : EndType.etOpenSquare
+                }[type] || EndType.etOpenSquare,
                 jntt = {
-                    'square': cjnt.jtSquare,
-                    'round': cjnt.jtRound,
-                    'miter': cjnt.jtMiter
-                }[type] || cjnt.jtMiter;
+                    'square': JoinType.jtSquare,
+                    'round': JoinType.jtRound,
+                    'miter': JoinType.jtMiter
+                }[type] || JoinType.jtMiter;
                 coff.AddPaths(this.toClipper(), jntt, entt);
-                coff.Execute(ctre, distance * config.clipper);
-            return POLY.fromClipperTree(ctre, this.getZ(), null, null, 0);
+                coff.Execute(tree, distance * config.clipper);
+            return POLY.fromClipperTree(tree, this.getZ(), null, null, 0);
         } else {
             return this.offset(distance);
         }
@@ -1748,16 +1759,16 @@ class Polygon {
      */
     diff(poly) {
         let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clip = new clib.Clipper(),
-            ctre = new clib.PolyTree(),
+            clip = new Clipper(),
+            tree = new PolyTree(),
             sp1 = this.toClipper(),
             sp2 = poly.toClipper();
 
-        clip.AddPaths(sp1, ptyp.ptSubject, true);
-        clip.AddPaths(sp2, ptyp.ptClip, true);
+        clip.AddPaths(sp1, PathSubject, true);
+        clip.AddPaths(sp2, PathClip, true);
 
-        if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            poly = POLY.fromClipperTree(ctre, poly.getZ());
+        if (clip.Execute(ClipDiff, tree, FillEvenOdd, FillEvenOdd)) {
+            poly = POLY.fromClipperTree(tree, poly.getZ());
             poly.forEach(p => {
                 p.fillang = fillang;
             })
@@ -1773,15 +1784,15 @@ class Polygon {
      */
     mask(poly, nullOnEquiv, minarea) {
         let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clip = new clib.Clipper(),
-            ctre = new clib.PolyTree(),
+            clip = new Clipper(),
+            tree = new PolyTree(),
             sp1 = this.toClipper(),
             sp2 = poly.toClipper();
-        clip.AddPaths(sp1, ptyp.ptSubject, true);
-        clip.AddPaths(sp2, ptyp.ptClip, true);
+        clip.AddPaths(sp1, PathSubject, true);
+        clip.AddPaths(sp2, PathClip, true);
 
-        if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            poly = POLY.fromClipperTree(ctre, this.getZ(), undefined, undefined, minarea);
+        if (clip.Execute(ClipIntersect, tree, FillEvenOdd, FillEvenOdd)) {
+            poly = POLY.fromClipperTree(tree, this.getZ(), undefined, undefined, minarea);
             poly.forEach(p => {
                 p.fillang = fillang;
             })
@@ -1810,17 +1821,17 @@ class Polygon {
             }
         }
 
-        let clip = new clib.Clipper(),
-            ctre = new clib.PolyTree(),
-            type = inter ? ctyp.ctIntersection : ctyp.ctDifference,
+        let clip = new Clipper(),
+            tree = new PolyTree(),
+            type = inter ? ClipIntersect : ClipDiff,
             sp1 = target.toClipper(),
             sp2 = POLY.toClipper(polys);
 
-        clip.AddPaths(sp1, ptyp.ptSubject, false);
-        clip.AddPaths(sp2, ptyp.ptClip, true);
+        clip.AddPaths(sp1, PathSubject, false);
+        clip.AddPaths(sp2, PathClip, true);
 
-        if (clip.Execute(type, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            let cuts = POLY.fromClipperTree(ctre, target.getZ(), null, null, 0);
+        if (clip.Execute(type, tree, FillEvenOdd, FillEvenOdd)) {
+            let cuts = POLY.fromClipperTree(tree, target.getZ(), null, null, 0);
             cuts.forEach(no => {
                 // heal open but really closed polygons because cutting
                 // has to open the poly to perform the cut. but the result
@@ -1841,22 +1852,22 @@ class Polygon {
     intersect(poly, min) {
         if (!this.overlaps(poly)) return null;
 
-        let clip = new clib.Clipper(),
-            ctre = new clib.PolyTree(),
-            sp1 = this.toClipper(),
-            sp2 = poly.toClipper(),
-            minarea = min >= 0 ? min : 0.1;
-
         if (this.isInside(poly)) {
             return [this];
         }
 
-        clip.AddPaths(sp1, ptyp.ptSubject, true);
-        clip.AddPaths(sp2, ptyp.ptClip, true);
+        let clip = new Clipper(),
+            tree = new PolyTree(),
+            sp1 = this.toClipper(),
+            sp2 = poly.toClipper(),
+            minarea = min >= 0 ? min : 0.1;
 
-        if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftNonZero)) {
+        clip.AddPaths(sp1, PathSubject, true);
+        clip.AddPaths(sp2, PathClip, true);
+
+        if (clip.Execute(ClipIntersect, tree, FillNonZero, FillNonZero)) {
             let inter = POLY
-                .fromClipperTreeUnion(ctre, poly.getZ(), minarea)
+                .fromClipperTreeUnion(tree, poly.getZ(), minarea)
                 // .filter(p => p.isEquivalent(this) || p.isInside(this))
                 .filter(p => p.isInside(this));
             return inter;
@@ -1890,7 +1901,7 @@ class Polygon {
         }
 
         let clip = this.toClipper(),
-            res = clib.Clipper.SimplifyPolygons(clip, cfil.pftNonZero);
+            res = CLIB.Clipper.SimplifyPolygons(clip, FillNonZero);
 
         if (!(res && res.length)) {
             return null;
@@ -1919,17 +1930,17 @@ class Polygon {
         if (!this.overlaps(poly)) return null;
 
         let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clip = new clib.Clipper(),
-            ctre = new clib.PolyTree(),
+            clip = new Clipper(),
+            tree = new PolyTree(),
             sp1 = this.toClipper(),
             sp2 = poly.toClipper(),
             minarea = min >= 0 ? min : 0.1;
 
-        clip.AddPaths(sp1, ptyp.ptSubject, true);
-        clip.AddPaths(sp2, ptyp.ptClip, true);
+        clip.AddPaths(sp1, PathSubject, true);
+        clip.AddPaths(sp2, PathClip, true);
 
-        if (clip.Execute(ctyp.ctUnion, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-            let union = POLY.fromClipperTreeUnion(ctre, poly.getZ(), minarea);
+        if (clip.Execute(ClipUnion, tree, FillEvenOdd, FillEvenOdd)) {
+            let union = POLY.fromClipperTreeUnion(tree, poly.getZ(), minarea);
             if (all) {
                 if (union.length === 2) {
                     return null;

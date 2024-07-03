@@ -18,11 +18,26 @@ const DEG2RAD = Math.PI / 180,
     SQR = util.sqr,
     ABS = Math.abs;
 
-const clib = self.ClipperLib,
-    clip = clib.Clipper,
-    ctyp = clib.ClipType,
-    ptyp = clib.PolyType,
-    cfil = clib.PolyFillType;
+const ClipperLib = self.ClipperLib,
+    Clipper = ClipperLib.Clipper,
+    ClipType = ClipperLib.ClipType,
+    PolyType = ClipperLib.PolyType,
+    PolyFillType = ClipperLib.PolyFillType,
+    CleanPolygon = Clipper.CleanPolygon,
+    CleanPolygons = Clipper.CleanPolygons,
+    SimplifyPolygons = Clipper.SimplifyPolygons,
+    FillNonZero = PolyFillType.pftNonZero,
+    FillEvenOdd = PolyFillType.pftEvenOdd,
+    PathSubject = PolyType.ptSubject,
+    PathClip = PolyType.ptClip,
+    EndType = ClipperLib.EndType,
+    JoinType = ClipperLib.JoinType,
+    PolyTree = ClipperLib.PolyTree,
+    ClipDiff = ClipType.ctDifference,
+    ClipUnion = ClipType.ctUnion,
+    ClipIntersect = ClipType.ctIntersection,
+    ClipperOffset = ClipperLib.ClipperOffset
+    ;
 
 const POLYS = base.polygons = {
     rayIntersect,
@@ -152,7 +167,7 @@ function fromClipperTreeUnion(tnode, z, minarea, tops, parent) {
 function cleanClipperTree(tree) {
     if (tree.m_Childs)
     for (let child of tree.m_Childs) {
-        child.m_polygon = clip.CleanPolygon(child.m_polygon, config.clipperClean);
+        child.m_polygon = CleanPolygon(child.m_polygon, config.clipperClean);
         cleanClipperTree(child.m_Childs);
     }
 
@@ -354,31 +369,31 @@ function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
             outB.appendAll(filter(oB));
         }
     } else {
-        let clip = new clib.Clipper(),
-            ctre = new clib.PolyTree(),
+        let clip = new Clipper(),
+            tree = new PolyTree(),
             sp1 = toClipper(setA),
             sp2 = toClipper(setB);
 
         // more expensive? worth it?
         clip.StrictlySimple = true;
         if (outA) {
-            clip.AddPaths(sp1, ptyp.ptSubject, true);
-            clip.AddPaths(sp2, ptyp.ptClip, true);
-            if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-                cleanClipperTree(ctre);
-                filter(fromClipperTree(ctre, z, null, null, min), outA);
+            clip.AddPaths(sp1, PathSubject, true);
+            clip.AddPaths(sp2, PathClip, true);
+            if (clip.Execute(ClipDiff, tree, FillEvenOdd, FillEvenOdd)) {
+                cleanClipperTree(tree);
+                filter(fromClipperTree(tree, z, null, null, min), outA);
             }
         }
         if (outB) {
             if (outA) {
-                ctre.Clear();
+                tree.Clear();
                 clip.Clear();
             }
-            clip.AddPaths(sp2, ptyp.ptSubject, true);
-            clip.AddPaths(sp1, ptyp.ptClip, true);
-            if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-                cleanClipperTree(ctre);
-                filter(fromClipperTree(ctre, z, null, null, min), outB);
+            clip.AddPaths(sp2, PathSubject, true);
+            clip.AddPaths(sp1, PathClip, true);
+            if (clip.Execute(ClipDiff, tree, FillEvenOdd, FillEvenOdd)) {
+                cleanClipperTree(tree);
+                filter(fromClipperTree(tree, z, null, null, min), outB);
             }
         }
     }
@@ -459,16 +474,16 @@ function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
  * @returns {?Polygon[]}
  */
 function diff(setA, setB, z) {
-    let clip = new clib.Clipper(),
-        ctre = new clib.PolyTree(),
+    let clip = new Clipper(),
+        tree = new PolyTree(),
         sp1 = toClipper(setA),
         sp2 = toClipper(setB);
 
-    clip.AddPaths(sp1, ptyp.ptSubject, true);
-    clip.AddPaths(sp2, ptyp.ptClip, true);
+    clip.AddPaths(sp1, PathSubject, true);
+    clip.AddPaths(sp2, PathClip, true);
 
-    if (clip.Execute(ctyp.ctDifference, ctre, cfil.pftEvenOdd, cfil.pftEvenOdd)) {
-        return fromClipperTree(ctre, z);
+    if (clip.Execute(ClipDiff, tree, FillEvenOdd, FillEvenOdd)) {
+        return fromClipperTree(tree, z);
     } else {
         return null;
     }
@@ -502,24 +517,6 @@ function sumCirc(polys) {
     });
     return sum;
 }
-
-/**
- * @param {Polygon[]} polys
- * @param {number} distance offset
- * @param {number} [z] defaults to 0
- */
-// function expand_lines(poly, distance, z) {
-//     let fact = config.clipper,
-//         cjnt = clib.JoinType,
-//         cety = clib.EndType,
-//         coff = new clib.ClipperOffset(),
-//         ctre = new clib.PolyTree();
-
-//     coff.AddPaths(poly.toClipper(), cjnt.jtMiter, cety.etOpenSquare);
-//     coff.Execute(ctre, distance * fact);
-
-//     return fromClipperTree(ctre, z, null, null, 0);
-// }
 
 /**
  * @param {Polygon[]} polys
@@ -565,9 +562,9 @@ function offset(polys, dist, opts = {}) {
         depth = numOrDefault(opts.depth, 0),
         clean = opts.clean !== false,
         simple = opts.simple !== false,
-        fill = numOrDefault(opts.fill, clib.PolyFillType.pftNonZero),
-        join = numOrDefault(opts.join, clib.JoinType.jtMiter),
-        type = numOrDefault(opts.type, clib.EndType.etClosedPolygon),
+        fill = numOrDefault(opts.fill, FillNonZero),
+        join = numOrDefault(opts.join, JoinType.jtMiter),
+        type = numOrDefault(opts.type, EndType.etClosedPolygon),
         // if dist is array with values, shift out next offset
         offs = Array.isArray(dist) ? (dist.length > 1 ? dist.shift() : dist[0]) : dist,
         mina = numOrDefault(opts.minArea, 0.1),
@@ -583,21 +580,21 @@ function offset(polys, dist, opts = {}) {
             return offset(polys, dist, opts);
         }
     } else {
-        let coff = new clib.ClipperOffset(opts.miter, opts.arc),
-            ctre = new clib.PolyTree();
+        let coff = new ClipperOffset(opts.miter, opts.arc),
+            tree = new PolyTree();
 
         // setup offset
         for (let poly of polys) {
             // convert to clipper format
             poly = poly.toClipper();
-            if (clean) poly = clib.Clipper.CleanPolygons(poly, config.clipperClean);
-            if (simple) poly = clib.Clipper.SimplifyPolygons(poly, fill);
+            if (clean) poly = CleanPolygons(poly, config.clipperClean);
+            if (simple) poly = SimplifyPolygons(poly, fill);
             coff.AddPaths(poly, join, type);
         }
         // perform offset
-        coff.Execute(ctre, offs * config.clipper);
+        coff.Execute(tree, offs * config.clipper);
         // convert back from clipper output format
-        polys = fromClipperTree(ctre, zed, null, null, mina);
+        polys = fromClipperTree(tree, zed, null, null, mina);
     }
 
 
@@ -748,8 +745,8 @@ function fillArea(polys, angle, spacing, output, minLen, maxLen) {
         step = SQRT(SQR(stepX) + SQR(stepY)),
         steps = dist / step,
         start = angle < 0 ? { x:bounds.minx, y:bounds.miny, z:zpos } : { x:bounds.maxx, y:bounds.miny, z:zpos },
-        clip = new clib.Clipper(),
-        ctre = new clib.PolyTree(),
+        clip = new Clipper(),
+        tree = new PolyTree(),
         minlen = base.config.clipper * (minLen || 0),
         maxlen = base.config.clipper * (maxLen || 0),
         lines = [];
@@ -771,13 +768,13 @@ function fillArea(polys, angle, spacing, output, minLen, maxLen) {
         start.y += stepY;
     }
 
-    clip.AddPaths(lines, ptyp.ptSubject, false);
-    clip.AddPaths(toClipper(polys), ptyp.ptClip, true);
+    clip.AddPaths(lines, PathSubject, false);
+    clip.AddPaths(toClipper(polys), PathClip, true);
 
     lines = [];
 
-    if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
-        for (let poly of ctre.m_AllPolys) {
+    if (clip.Execute(ClipIntersect, tree, FillNonZero, FillEvenOdd)) {
+        for (let poly of tree.m_AllPolys) {
             if (minlen || maxlen) {
                 let plen = clib.JS.PerimeterOfPath(poly.m_polygon, false, 1);
                 if (minlen && plen < minlen) continue;
