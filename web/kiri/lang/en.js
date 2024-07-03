@@ -556,7 +556,7 @@ self.kiri.lang['en-us'] = {
 
     // CNC POCKET
     cp_xpnd_s:      "expand",
-    cp_xpnd_l:      ["grow selected area to","encompass corners"],
+    cp_xpnd_l:      ["grow (+) or shrink (-) selected areas","contour uses entire selected area","non-contour defaults to tool radius","in workspace units"],
     cp_smoo_s:      "smooth",
     cp_smoo_l:      ["clean up jagged edges caused by angled walls. can speedup and improve pocketing for detailed geometries. recommend starting with values around 1 if slicing takes too long or the contours look jagged"],
     cp_foll_s:      "selection",
