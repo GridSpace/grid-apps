@@ -319,7 +319,7 @@ CAM.export = function(print, online) {
 
         // update time calculation
         time += opt.time >= 0 ? opt.time : (dist / (pos.f || 1000)) * 60;
-
+        consts.time = Math.round(time);
         // if (comment && !stripComments) {
         //     nl.append(" ; ").append(comment);
         //     nl.append(" ; ").append(points);
@@ -438,7 +438,7 @@ CAM.export = function(print, online) {
         const newOp = newmode && !newmode.silent && mode !== newmode;
         if (newOp) {
             if (mode && !stripComments) {
-                append("; ending " + mode.type + " op after " + Math.round(time/60) + " seconds");
+                append("; ending " + mode.type + " op after " + Math.round(time) + " seconds");
             }
             mode = newmode;
             if (mode) {
@@ -465,7 +465,7 @@ CAM.export = function(print, online) {
     }
 
     if (mode && !stripComments) {
-        append("; ending " + mode.type + " op after " + Math.round(time/60) + " seconds");
+        append("; ending " + mode.type + " op after " + Math.round(time) + " seconds");
     }
 
     // emit gcode post
