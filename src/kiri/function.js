@@ -27,12 +27,15 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     const { stacks } = kiri;
 
     if (view.is_arrange()) {
+        // in arrange mode, create a screenshot at the start slicing
+        // this can be used later by exports and rendered on some devices
         let snap = space.screenshot();
         view.snapshot = snap.substring(snap.indexOf(",") + 1);
         client.snap(space.screenshot2({width: 640}));
     }
 
     if (mode.is_sla() && !callback) {
+        // in SLA mode, slice and preview are the same thing
         callback = preparePreview;
     }
 
@@ -43,6 +46,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     const mark = Date.now();
 
     // force layout in belt mode when widget exceeds bed length
+    // which has the side-effect (intended) of increasing the bed size
     if (widgets.length && isBelt) {
         let doLayout = false;
         for (let w of widgets) {
@@ -115,18 +119,23 @@ function prepareSlices(callback, scale = 1, offset = 0) {
 
     stacks.clear();
     if (isBelt) {
-        // force re-sync in belt mode
+        // clearing cache causes data to be re-sent to worker
         client.clear();
+        // we send copies of vertices in belt mode only (possibly obsolete?)
+        client.sync(undefined, true);
+        // belt op required to rotate meshes for slicing
+        client.rotate(settings);
+    } else {
+        // send updated vertices if widget has been rotated/scaled
+        client.sync();
     }
-    client.sync(undefined, isBelt);
-    client.rotate(settings);
 
     function sliceNext() {
         if (toSlice.length) {
             // while more widgets to slice
             sliceWidget(toSlice.shift())
         } else {
-            // once all slicing done, run sliceAll() once
+            // once all slicing done, run sliceAll() once for all widgets
             client.sliceAll(settings, sliceDone);
         }
     }

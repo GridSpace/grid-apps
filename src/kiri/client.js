@@ -137,15 +137,6 @@ const client = exports({
         restarting = false;
     },
 
-    decimate(vertices, options, callback) {
-        let alert = kiri.api.show.alert('processing model', 1000);
-        vertices = vertices.buffer.slice(0);
-        send("decimate", {vertices, options}, (output) => {
-            kiri.api.hide.alert(alert);
-            callback(output);
-        });
-    },
-
     config(obj) {
         send("config", obj, noop);
     },
@@ -171,27 +162,27 @@ const client = exports({
         // send list of currently valid widgets
         send("sync", { valid: widgets.map(w => w.id) }, () =>  {});
         // sync any widget that has changed
-        widgets.forEach(widget => {
-            if (widget.modified || !syncd[widget.id]) {
-                syncd[widget.id] = true;
-                let vertices = widget.getGeoVertices();
-                send("sync", {
-                    id: widget.id,
-                    meta: widget.meta,
-                    group: widget.group.id,
-                    track: widget.track,
-                    vertices: copy ? vertices.slice() : vertices,
-                    position: widget.mesh.position,
-                }, done => {
-                    widget.modified = false;
-                });
-            }
-        });
+        for (let widget of widgets.filter(w => w.modified || !syncd[w.id])) {
+            syncd[widget.id] = true;
+            let vertices = widget.getGeoVertices();
+            send("sync", {
+                id: widget.id,
+                meta: widget.meta,
+                group: widget.group.id,
+                track: widget.track,
+                vertices: copy ? vertices.slice() : vertices,
+                position: widget.mesh.position,
+            }, done => {
+                widget.modified = false;
+            });
+        }
     },
 
+    // for belt / angled printing
     rotate(settings, callback) {
         send("rotate", { settings }, reply => {
             if (reply.group) {
+                // collect post-rotation data for slice/preview renders
                 for (let widget of kiri.Widget.Groups.forid(reply.group)) {
                     widget.belt = reply.belt;
                 }
@@ -201,6 +192,7 @@ const client = exports({
         });
     },
 
+    // called once for each widget
     slice(settings, widget, callback) {
         send("slice", {
             id: widget.id,
@@ -217,10 +209,13 @@ const client = exports({
         });
     },
 
+    // called once after each widget is sliced
+    // performs merged actions that consider all widget slice data
     sliceAll(settings, callback) {
         send("sliceAll", { settings }, callback);
     },
 
+    // turn widget slices into unified path output
     prepare(settings, update, done) {
         send("prepare", { settings }, reply => {
             if (reply.progress) {
@@ -235,6 +230,7 @@ const client = exports({
         });
     },
 
+    // convert path output to gcode or other target file output
     export(settings, online, ondone) {
         send("export", { settings }, reply => {
             if (reply.line) {

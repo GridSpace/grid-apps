@@ -258,6 +258,7 @@ FDM.init = function(kiri, api) {
         updateVisiblity();
 
         // synth support widget for each widget group
+        // iow, create support meshes based on support widget annotation
         let synth = [];
         for (let group of kiri.Widget.Groups.list()) {
             let merge = group.filter(w => w.sups).map(w => Object.values(w.sups)).flat();
@@ -290,10 +291,9 @@ FDM.init = function(kiri, api) {
         }
     });
     api.event.on("key.esc", () => {
-        if (!isFdmMode) {
-            return;
+        if (isFdmMode) {
+            func.sdone()
         }
-        func.sdone()
     });
     api.event.on("selection.scale", () => {
         if (isFdmMode) {
@@ -304,7 +304,6 @@ FDM.init = function(kiri, api) {
     api.event.on("widget.delete", widget => {
         if (isFdmMode) {
             clearRanges();
-            return;
         }
     });
     api.event.on("widget.duplicate", (widget, oldwidget) => {

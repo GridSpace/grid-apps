@@ -271,13 +271,6 @@ kiri.worker = {
 
     cache: wcache,
 
-    decimate(data, send) {
-        let { vertices, options } = data;
-        vertices = new Float32Array(vertices),
-        vertices = base.pointsToVertices(base.verticesToPoints(vertices, options));
-        send.done(vertices);
-    },
-
     snap(data, send) {
         current.snap = data;
         send.done();
@@ -297,6 +290,7 @@ kiri.worker = {
         }
     },
 
+    // purge all sync data
     clear(data, send) {
         // current.snap = null;
         current.print = null;
@@ -346,6 +340,7 @@ kiri.worker = {
         send.done(data.id);
     },
 
+    // belt mode rotate widgets 45 degrees on X axis before slicing
     rotate(data, send) {
         let { settings } = data;
         if (!settings.device.bedBelt) {

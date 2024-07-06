@@ -13,9 +13,9 @@
 // dep: kiri-mode.fdm.driver
 gapp.register("kiri-mode.fdm.prepare", [], (root, exports) => {
 
-const { base, kiri, noop } = root;
-const { consts, driver, newSlice, utils, render } = kiri;
-const { config, polygons, paths, util, newPoint, newPolygon, Polygon } = base;
+const { base, kiri } = root;
+const { consts, driver, newSlice, render } = kiri;
+const { polygons, paths, util, newPoint, newPolygon, Polygon } = base;
 const { poly2polyEmit, tip2tipEmit } = paths;
 const { numOrDefault } = util;
 const { fillArea } = polygons;
@@ -34,10 +34,10 @@ FDM.prepare = async function(widgets, settings, update) {
     // filter ignored widgets
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
-    let { device, process, controller, bounds, mode } = settings,
-        { sliceHeight, firstSliceHeight, firstLayerRate, sliceSupportOutline } = process,
+    let { device, process, controller, bounds } = settings,
+        { sliceHeight, firstSliceHeight, firstLayerRate } = process,
         { outputSeekrate, outputDraftShield, outputPurgeTower } = process,
-        { bedWidth, bedDepth, filamentSource } = device,
+        { bedWidth, bedDepth } = device,
         { lineType } = controller,
         printPoint = newPoint(0,0,0),
         print = self.worker.print = kiri.newPrint(settings, widgets),
@@ -45,7 +45,6 @@ FDM.prepare = async function(widgets, settings, update) {
         isBelt = device.bedBelt,
         isThin = lineType === "line",
         isFlat = lineType === "flat",
-        isPalette = filamentSource === 'palette3',
         useRaft = process.outputRaft || false,
         firstLayerHeight = isBelt ? sliceHeight : firstSliceHeight || sliceHeight,
         layerno = 0,
@@ -135,14 +134,14 @@ FDM.prepare = async function(widgets, settings, update) {
                     POLY.expand(brims, nozzle * 4, 0, null, 1) : brims;
 
             function raft(height, angle, spacing, speed, extrude, outline) {
-                let slice = kiri.newSlice(zoff + height / 2);
+                let slice = newSlice(zoff + height / 2);
                 for (let brim of rafts) {
                     // use first point of first brim as start point
                     if (printPoint === null) printPoint = brim.first();
                     let t = slice.addTop(brim);
                     if (outline) t.traces = [ brim ];
                     t.inner = POLY.expand([ brim ], nozzle * -0.8, 0, null, 1);
-                    t.fill_lines = POLY.fillArea(t.inner, angle, spacing, []);
+                    t.fill_lines = fillArea(t.inner, angle, spacing, []);
                     t.isRaft = true;
                 }
                 offset.z = slice.z;
@@ -238,7 +237,7 @@ FDM.prepare = async function(widgets, settings, update) {
             if (!slice.supports) {
                 continue;
             }
-            let sslice = kiri.newSlice(slice.z);
+            let sslice = newSlice(slice.z);
             sslice.extruder = process.sliceSupportNozzle;
             sslice.supports = slice.supports.slice();
             sslice.height = slice.height;
@@ -315,10 +314,10 @@ FDM.prepare = async function(widgets, settings, update) {
             noz = exi.extNozzle,
             pos = {x:blokpos.x + walkpos.x * i, y:blokpos.y + walkpos.y * i, z:0},
             rect = newPolygon().centerRectangle(pos, blok.x, blok.y),
-            full = linesToPoly(POLY.fillArea([
+            full = linesToPoly(fillArea([
                 newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
             ], angle, noz)),
-            sparse = rect.area() > 10 ? linesToPoly(POLY.fillArea([
+            sparse = rect.area() > 10 ? linesToPoly(fillArea([
                 newPolygon().centerRectangle(pos, blok.x - noz, blok.y - noz)
             ], angle + 90, noz * thin)) : newPolygon(),
             rec = {

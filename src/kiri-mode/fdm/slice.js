@@ -596,9 +596,12 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     }
                 }
             }
+            // experimental emboss text on a flat underside of an object
+            // in belt mode only
             if (process.pooch && self.OffscreenCanvas) {
                 const { length, width, height, text } = process.pooch;
                 let firstZ, firstI, lastZ, lastI, minX = 0, maxX = 0, maxY = 0;
+                // locate suitable flat spot
                 for (let slice of slices) {
                     let { belt } = slice;
                     if (!belt.touch) {
