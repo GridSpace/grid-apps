@@ -742,6 +742,10 @@ class Widget {
         onupdate(0.0001, "slicing");
 
         if (kiri.client && !widget.inWorker) {
+            // store slicing visuals
+            widget.stack = kiri.stacks.create(widget.id, widget.mesh);
+            // compensate for zcut (widget moved through floor)
+            widget.stack.obj.view.position.z = widget.track.zcut || 0;
             // in case result of slice is nothing, do not preserve previous
             widget.slices = []
 

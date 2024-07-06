@@ -72,7 +72,6 @@ function prepareSlices(callback, scale = 1, offset = 0) {
 
     // refresh widget list because 'slice.begin' may generate support widgets
     const slicing = api.widgets.all()
-        .slice()
         .filter(w => !w.track.ignore && !w.meta.disabled);
 
     if (slicing.length === 0) {
@@ -117,17 +116,13 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         process.beltAnchor = process.firstLayerBeltLead;
     }
 
-    stacks.clear();
+    stacks.clear(); // clear rendered stacks
+    client.clear(); // clear worker cache
+    client.sync(); // send fresh widget data to worker
+
     if (isBelt) {
-        // clearing cache causes data to be re-sent to worker
-        client.clear();
-        // we send copies of vertices in belt mode only (possibly obsolete?)
-        client.sync(undefined, true);
         // belt op required to rotate meshes for slicing
         client.rotate(settings);
-    } else {
-        // send updated vertices if widget has been rotated/scaled
-        client.sync();
     }
 
     function sliceNext() {
@@ -141,11 +136,8 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     }
 
     function sliceWidget(widget) {
-        widget.stack = stacks.create(widget.id, widget.mesh);
+        // weight each widget progress % by their # vertices
         let factor = (widget.getVertices().count / defvert);
-
-        // compensate for zcut (widget moved through floor)
-        widget.stack.obj.view.position.z = widget.track.zcut || 0;
 
         widget.slice(settings, (sliced, error) => {
             let mark = Date.now();
@@ -229,8 +221,6 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         if (scale === 1) {
             show.progress(0);
         }
-        // cause visuals to update
-        space.scene.active();
         // mark slicing complete for prep/preview
         complete.slice = true;
         event.emit('slice.end', settings.mode);
@@ -240,9 +230,16 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         if (callback && typeof callback === 'function') {
             callback();
         }
+        if (isBelt) {
+            // required to render supports properly (in belt mode)
+            // because this updates widget top z which is affected by rotation
+            api.platform.update_top_z();
+        }
+        // refresh / repaint workspace
+        space.refresh();
     }
 
-    // kick of slicing chain
+    // kick off slicing chain
     sliceNext();
 }
 

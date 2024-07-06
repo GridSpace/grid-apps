@@ -302,21 +302,7 @@ kiri.worker = {
 
     // widget sync
     sync(data, send) {
-        if (data.valid) {
-            // remove widgets not present in valid list
-            for (let key in wcache) {
-                if (data.valid.indexOf(key) < 0) {
-                    delete wcache[key];
-                    for (let [id,group] of Object.entries(wgroup)) {
-                        wgroup[id] = group = group.filter(v => v.id !== key);
-                        group.id = id;
-                    }
-                }
-            }
-            send.done(data.id);
-            return;
-        }
-
+        // ensure each widget belongs to at least one group
         let group = wgroup[data.group];
         if (!group) {
             group = [];
@@ -380,13 +366,14 @@ kiri.worker = {
             for (let w of group) {
                 w.moveMesh(0, miny, 0);
             }
+            // rotating the root of the group rotates all widgets in the group
             widget.rotate(rotation, 0, 0, true, false);
-            let minr = gmin(group);
             widget.belt = {
                 angle: 45,
+                // used during prepare
                 xpos,
                 ypos,
-                yadd: minr.maxy - minr.miny,
+                // used during slice
                 dy: - miny - yoff,
                 dz: 0
             };

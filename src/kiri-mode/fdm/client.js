@@ -132,6 +132,7 @@ FDM.init = function(kiri, api) {
             };
           }
     }
+
     api.event.on("function.animate", (mode) => {
         if (!(isFdmMode && lastView === VIEWS.PREVIEW)) {
             return;
@@ -145,6 +146,7 @@ FDM.init = function(kiri, api) {
         $('anim-slider').value = 500;
         api.const.STACKS.setFraction(0.5);
     });
+
     api.event.on("mode.set", mode => {
         isFdmMode = mode === 'FDM';
         lastMode = mode;
@@ -152,12 +154,13 @@ FDM.init = function(kiri, api) {
         for (let el of [...document.getElementsByClassName('mode-fdm')]) {
             api.uc.setClass(el, 'hide', !isFdmMode);
         }
-        updateVisiblity();
+        updateSupportVisiblity();
     });
+
     api.event.on("view.set", view => {
         $('top-slider').style.display = 'none';
         lastView = view;
-        updateVisiblity();
+        updateSupportVisiblity();
         filterSynth();
         func.sdone();
         // let ranges = api.conf.get().process.ranges;
@@ -175,27 +178,28 @@ FDM.init = function(kiri, api) {
             }
         }
     });
+
     api.event.on("range.updates", updateRanges);
+
     api.event.on("settings.load", (settings) => {
         if (settings.mode !== 'FDM') return;
         restoreSupports(api.widgets.all());
         updateRanges(settings.process.ranges);
     });
+
     api.event.on("settings.saved", (settings) => {
         updateRanges(settings.process.ranges);
     });
+
     api.event.on("button.click", target => {
         switch (target) {
             case api.ui.ssaGen: return func.sgen();
             case api.ui.ssmAdd: return func.sadd();
             case api.ui.ssmDun: return func.sdone();
-            case api.ui.ssmClr:
-                // return api.uc.confirm("clear supports?").then(ok => {
-                //     if (ok) func.sclear();
-                // });
-                func.sclear();
+            case api.ui.ssmClr: return func.sclear();
         }
     });
+
     api.event.on("fdm.supports.detect", func.sgen = () => {
         let alerts = [];
         let { process, device } = api.conf.get();
@@ -232,10 +236,12 @@ FDM.init = function(kiri, api) {
             api.event.emit("fdm.supports.detected");
         });
     });
+
     api.event.on("fdm.supports.add", func.sadd = () => {
         alert = api.show.alert("[esc] key cancels support editing");
         api.feature.hover = addingSupports = true;
     });
+
     api.event.on("fdm.supports.done", func.sdone = () => {
         delbox('intZ');
         delbox('intW');
@@ -244,22 +250,22 @@ FDM.init = function(kiri, api) {
         api.feature.hover = addingSupports = false;
         fromPillar = undefined;
     });
+
     api.event.on("fdm.supports.clear", func.sclear = () => {
         func.sdone();
         if (clearAllWidgetSupports()) {
             api.conf.save();
         }
     });
+
     api.event.on("slice.begin", () => {
         if (!isFdmMode) {
             return;
         }
         func.sdone();
-        updateVisiblity();
-
+        updateSupportVisiblity();
         // synth support widget for each widget group
         // iow, create support meshes based on support widget annotation
-        let synth = [];
         for (let group of kiri.Widget.Groups.list()) {
             let merge = group.filter(w => w.sups).map(w => Object.values(w.sups)).flat();
             if (!merge.length) {
@@ -285,27 +291,32 @@ FDM.init = function(kiri, api) {
             kiri.space.world.add(sw.mesh);
         }
     });
+
     api.event.on("slice.end", () => {
         if (!isFdmMode) {
             return;
         }
     });
+
     api.event.on("key.esc", () => {
         if (isFdmMode) {
             func.sdone()
         }
     });
+
     api.event.on("selection.scale", () => {
         if (isFdmMode) {
             clearRanges();
             func.sclear();
         }
     });
+
     api.event.on("widget.delete", widget => {
         if (isFdmMode) {
             clearRanges();
         }
     });
+
     api.event.on("widget.duplicate", (widget, oldwidget) => {
         if (!isFdmMode) {
             return;
@@ -318,6 +329,7 @@ FDM.init = function(kiri, api) {
             restoreSupports([widget]);
         }
     });
+
     api.event.on("widget.mirror", widget => {
         if (!isFdmMode) {
             return;
@@ -329,6 +341,7 @@ FDM.init = function(kiri, api) {
             wsup.box.position.x = wsup.x = sup.x = -sup.x;
         });
     });
+
     api.event.on("widget.rotate", rot => {
         if (!isFdmMode) {
             return;
@@ -351,6 +364,7 @@ FDM.init = function(kiri, api) {
             });
         }
     });
+
     api.event.on("mouse.hover.up", func.hoverup = (on = {}) => {
         let { event } = on;
         if (!isFdmMode) {
@@ -405,6 +419,7 @@ FDM.init = function(kiri, api) {
         fromPillar = addWidgetSupport(iw, rec);
         api.conf.save();
     });
+
     function addSupportAtPoint(targets, point, ip, angle, id) {
         let up = new Vector3(0,1,0)
         let dn = new Vector3(0,-1,0)
@@ -432,6 +447,7 @@ FDM.init = function(kiri, api) {
             }
         }
     }
+
     api.event.on("mouse.hover", data => {
         if (!isFdmMode) {
             return;
@@ -489,6 +505,7 @@ FDM.init = function(kiri, api) {
             return func.hoverup();
         }
     });
+
     api.event.on("export.debug", msg => {
         if (msg.arcQ && msg.arcQ.length > 2) {
             if (xpdebug) {
@@ -539,17 +556,6 @@ function scheduleSupportSave(widget) {
     }, 50);
 }
 
-function activeSupports() {
-    const active = [];
-    api.widgets.all().forEach(widget => {
-        Object.values(widget.sups || {}).forEach(support => {
-            active.push(support.box);
-            support.box.support = true;
-        });
-    });
-    return active;
-}
-
 function restoreSupports(widgets) {
     widgets.forEach(widget => {
         const supports = api.widgets.annotate(widget.id).support || [];
@@ -594,10 +600,11 @@ function removeWidgetSupport(widget, rec) {
     fromPillar = undefined;
 }
 
-function updateVisiblity() {
-    api.widgets.all().forEach(w => {
-        setSupportVisiblity(w, lastMode === 'FDM' && lastView === VIEWS.ARRANGE);
-    });
+function updateSupportVisiblity() {
+    const visible = (lastMode === 'FDM' && lastView === VIEWS.ARRANGE);
+    for (let w of api.widgets.all()) {
+        setSupportVisiblity(w, visible);
+    }
 }
 
 function setSupportVisiblity(widget, bool) {

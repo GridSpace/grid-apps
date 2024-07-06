@@ -1433,26 +1433,27 @@ gapp.register("moto.space", [], (root, exports) => {
 
             let animates = 0;
             let rateStart = Date.now();
-
-            let renders = [];
             let renderStart;
+            let renders = [];
 
             function animate() {
                 animates++;
                 const now = Date.now();
                 if (now - rateStart > 1000) {
+                    // compute stats roughly every second
                     const delta = now - rateStart;
                     fps = 1000 * animates / delta;
                     animates = 0;
                     rateStart = now;
+                    // look for slowest rendered frame
                     renderTime = Math.max(0, ...renders);
                     renders.length = 0;
                 }
-
                 requestAnimationFrame(animate);
                 if (docVisible && !freeze && Date.now() - lastAction < 1500) {
                     renderStart = Date.now();
                     renderer.render(SCENE, camera);
+                    // track frame render times
                     renders.push(Date.now() - renderStart);
                 } else {
                     fps = 0;

@@ -155,12 +155,10 @@ const client = exports({
     },
 
     // widget sync
-    sync(widgets, copy) {
+    sync(widgets) {
         if (!widgets) {
             widgets = kiri.api.widgets.all();
         }
-        // send list of currently valid widgets
-        send("sync", { valid: widgets.map(w => w.id) }, () =>  {});
         // sync any widget that has changed
         for (let widget of widgets.filter(w => w.modified || !syncd[w.id])) {
             syncd[widget.id] = true;
@@ -170,7 +168,7 @@ const client = exports({
                 meta: widget.meta,
                 group: widget.group.id,
                 track: widget.track,
-                vertices: copy ? vertices.slice() : vertices,
+                vertices,
                 position: widget.mesh.position,
             }, done => {
                 widget.modified = false;
