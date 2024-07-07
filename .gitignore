@@ -1,10 +1,11 @@
 .DS_Store
-node_modules
-mod
+.env
+app.json
+data
 dist
-tmp
-logs/*
-data/*
+logs
+mod
+node_modules
 package-lock.json
 src/ext/three.js
-app.json
+tmp
