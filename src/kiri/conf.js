@@ -299,6 +299,7 @@ const conf = exports({
             // process defaults FDM:Process
             p:{
                 processName: "default",
+                sliceAngle: 45,
                 sliceHeight: 0.25,
                 sliceShells: 3,
                 sliceShellOrder: "in-out",

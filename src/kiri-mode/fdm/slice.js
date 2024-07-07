@@ -492,6 +492,10 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
 
         // add lead in anchor when specified in belt mode (but not for synths)
         if (isBelt && !isSynth) {
+            let mrad = Math.cos(Math.PI/4);
+            let arad = Math.cos((Math.PI/180) * process.sliceAngle);
+            let ymlt = arad / mrad;
+            console.log({ arad, ymlt });
             // find adjusted zero point from slices
             let smin = Infinity;
             for (let slice of slices) {
@@ -499,12 +503,16 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 for (let poly of slice.topPolys()) {
                     let y = poly.bounds.maxy;
                     let z = slice.z;
-                    let by = z - y;
+                    // at 45 degrees, 1mm in Z is 1mm in Y
+                    // find formula for other angles
+                    let by = z - (y * ymlt);
                     if (by < miny) miny = by;
                     if (by < smin) smin = by;
                 }
                 slice.belt = { miny, touch: false };
+                console.log({ miny, z:slice.z });
             }
+            console.log({ smin });
             // mark slices with tops touching belt
             // also find max width of first 5 layers
             let start;

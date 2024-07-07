@@ -359,17 +359,18 @@ kiri.worker = {
             let widget = group[0];
             let proc = settings.process;
             let track = widget.track;
+            let angle = proc.sliceAngle;
             let xpos = track.pos.x;
             let yoff = proc.beltAnchor || proc.firstLayerBeltLead || 0;
             let ypos = settings.device.bedDepth / 2 + track.pos.y + miny + yoff;
-            let rotation = (Math.PI / 180) * 45;
+            let rotation = (Math.PI / 180) * angle;
             for (let w of group) {
                 w.moveMesh(0, miny, 0);
             }
             // rotating the root of the group rotates all widgets in the group
             widget.rotate(rotation, 0, 0, true, false);
             widget.belt = {
-                angle: 45,
+                angle,
                 // used during prepare
                 xpos,
                 ypos,

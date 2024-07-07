@@ -327,6 +327,8 @@ self.kiri.lang['en-us'] = {
 
     // FDM LAYERS
     sl_menu:        "paths",
+    sl_angl_s:      "slice angle",
+    sl_angl_l:      ["slice angle bias in degrees"],
     sl_lahi_s:      "layer height",
     sl_lahi_l:      ["height of each slice","layer in millimeters"],
     ad_minl_s:      "layer minimum",
