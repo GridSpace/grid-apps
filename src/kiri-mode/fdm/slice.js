@@ -18,7 +18,6 @@ const { base, kiri, noop } = root;
 const { consts, driver, fill, fill_fixed, newSlice, utils } = kiri;
 const { config, polygons, util, newPoint } = base;
 const { fillArea } = polygons;
-const { beltfact } = consts;
 const { FDM } = driver;
 const { doTopShells, getRangeParameters } = FDM;
 
@@ -179,16 +178,17 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
     // handle z cutting (floor method) and base flattening
     let zPress = isBelt ? process.firstLayerFlatten || 0 : 0;
     let zCut = widget.track.zcut || 0;
+    let { belt } = widget;
     if (zCut || zPress) {
         for (let p of points) {
             if (!p._z) {
                 p._z = p.z;
                 if (zPress) {
                     if (isBelt) {
-                        let zb = (p.z - p.y) * beltfact;
-                        if (zb > 0 && zb <= zPress) {
-                            p.y += zb * beltfact;
-                            p.z -= zb * beltfact;
+                        let zd = (belt.slope * p.z) - p.y;
+                        if (zd > 0 && zd <= zPress) {
+                            p.y += zd * belt.cosf;
+                            p.z -= zd * belt.sinf;
                         }
                     } else {
                         if (p.z <= zPress) p.z = 0;
@@ -492,10 +492,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
 
         // add lead in anchor when specified in belt mode (but not for synths)
         if (isBelt && !isSynth) {
-            let mrad = Math.cos(Math.PI/4);
-            let arad = Math.cos((Math.PI/180) * process.sliceAngle);
-            let ymlt = arad / mrad;
-            console.log({ arad, ymlt });
+            let { cosf, slope } = widget.belt;
             // find adjusted zero point from slices
             let smin = Infinity;
             for (let slice of slices) {
@@ -505,14 +502,14 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     let z = slice.z;
                     // at 45 degrees, 1mm in Z is 1mm in Y
                     // find formula for other angles
-                    let by = z - (y * ymlt);
+                    let by = (slope * z) - y;
                     if (by < miny) miny = by;
                     if (by < smin) smin = by;
                 }
-                slice.belt = { miny, touch: false };
-                console.log({ miny, z:slice.z });
+                slice.belt = { miny, touch: miny.round(3) == 0 };
+                // console.log({ miny: miny.round(3), z:slice.z, touch: slice.belt.touch });
             }
-            console.log({ smin });
+            console.log({ smin: smin.round(5) });
             // mark slices with tops touching belt
             // also find max width of first 5 layers
             let start;
@@ -527,10 +524,11 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 }
                 // mark slice as touching belt if near miny
                 // if (Math.abs(slice.belt.miny - smin) < 0.01) {
-                if (Math.abs(slice.belt.miny) < 0.01) {
-                    slice.belt.touch = true;
-                    if (!start) start = slice;
-                }
+                if (!start && slice.belt.touch) start = slice;
+                // if (Math.abs(slice.belt.miny) < 0.01) {
+                //     slice.belt.touch = true;
+                //     if (!start) start = slice;
+                // }
             }
             // ensure we start against a layer with shells
             while (start && start.up && start.topShells().length === 0) {
@@ -544,11 +542,12 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             }
             // array of added top.fill_sparse arrays
             let adds = [];
-            let anchorlen = (process.beltAnchor || process.firstLayerBeltLead) * beltfact;
+            let step = sliceHeight;
+            let anchorlen = (process.beltAnchor || process.firstLayerBeltLead) * cosf;
             while (anchorlen && start && anchorlen >= sliceHeight) {
                 let addto = start.down;
                 if (!addto) {
-                    addto = newSlice(start.z - sliceHeight);
+                    addto = newSlice(start.z - step);
                     addto.extruder = extruder;
                     addto.belt = { };
                     addto.height = start.height;
@@ -565,12 +564,13 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 // by removing the forced start-point in print.js
                 addto.belt.touch = false;
                 let z = addto.z;
-                let y = z - smin - (lineWidth / 2);
+                let y = (slope * z) - smin - (lineWidth / 2);
                 let splat = base.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
                 let snew = addto.addTop(splat).fill_sparse = [ splat ];
                 adds.push(snew);
                 start = addto;
-                anchorlen -= sliceHeight;
+                // console.log({ z: z.round(3), anchorlen: anchorlen.round(3) });
+                anchorlen -= (step * slope);
             }
             // add anchor bump
             let bump = process.firstLayerBeltBump;

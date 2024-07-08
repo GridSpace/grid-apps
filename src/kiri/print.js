@@ -10,8 +10,7 @@
 gapp.register("kiri.print", [], (root, evets) => {
 
 const { base, kiri } = self;
-const { paths, util, newPoint, Polygon } = base;
-const { tip2tipEmit } = paths;
+const { paths, util, newPoint } = base;
 const { numOrDefault } = util;
 const { beltfact } = kiri.consts;
 const XAXIS = new THREE.Vector3(1,0,0);

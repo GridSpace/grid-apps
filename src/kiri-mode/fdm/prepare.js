@@ -440,11 +440,10 @@ FDM.prepare = async function(widgets, settings, update) {
         let { belt } = widget;
         let offset = Object.clone(widget.track.pos);
         if (isBelt) {
-            let o = belt.ypos * beltfact;
             offset = {
                 x: belt.xpos,
-                y: o,
-                z: o
+                y: belt.ypos * belt.cosf,
+                z: belt.ypos * belt.sinf
             };
         } else {
             // when rafts used this is non-zero
@@ -648,12 +647,14 @@ FDM.prepare = async function(widgets, settings, update) {
 
     // post-process for base extrusions (touching the bed)
     if (isBelt) {
+        // all widgets should have the same belt scaling constants
+        let belt = widgets[0].belt;
         // tune base threshold
         let thresh = Infinity;
         for (let layer of output) {
             for (let rec of layer) {
                 let point = rec.point;
-                thresh = Math.min(thresh, point.z - point.y);
+                thresh = Math.min(thresh, (belt.slope * point.z) - point.y);
             }
         }
         // store this offset to be removed from Y values in export
@@ -680,7 +681,7 @@ FDM.prepare = async function(widgets, settings, update) {
                 let brate = params.firstLayerRate || firstLayerRate;
                 let bmult = params.firstLayerPrintMult || params.firstLayerPrintMult;
                 let point = rec.point;
-                let belty = rec.belty = -point.y + point.z;
+                let belty = rec.belty = -point.y + (point.z * belt.slope);
                 let lowrate = belty <= thresh ? brate : overate || brate;
                 miny = Math.min(miny, belty);
                 if (layer.anchor) {

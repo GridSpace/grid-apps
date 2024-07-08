@@ -363,7 +363,8 @@ kiri.worker = {
             let xpos = track.pos.x;
             let yoff = proc.beltAnchor || proc.firstLayerBeltLead || 0;
             let ypos = settings.device.bedDepth / 2 + track.pos.y + miny + yoff;
-            let rotation = (Math.PI / 180) * angle;
+            let radians = Math.PI / 180;
+            let rotation = radians * angle;
             for (let w of group) {
                 w.moveMesh(0, miny, 0);
             }
@@ -376,7 +377,12 @@ kiri.worker = {
                 ypos,
                 // used during slice
                 dy: - miny - yoff,
-                dz: 0
+                dz: 0,
+                // ratio for anchor lengths, path offsets
+                cosf: Math.cos(radians * angle), // Y comp
+                sinf: Math.sin(radians * angle), // Z comp
+                // slope for calculating z = 0 from angle bias
+                slope: Math.tan(radians * (90 - angle))
             };
             for (let others of group.slice(1)) {
                 others.belt = widget.belt;
