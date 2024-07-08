@@ -931,7 +931,7 @@ gapp.register("kiri.main", [], (root, exports) => {
         // restore cached device profile for this mode
         if (current.cdev[mode]) {
             current.device = clone(current.cdev[mode]);
-            api.event.emit('device.set', currentDeviceName());
+            api.event.emit('device.select', currentDeviceName());
         }
         // hide/show
         api.uc.setVisible($('set-tools'), mode === 'CAM');

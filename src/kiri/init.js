@@ -259,6 +259,13 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function onBooleanClick(el) {
+        // copy some ui elements to target settings
+        let settings = api.conf.get();
+        settings.device.bedBelt = ui.deviceBelt.checked && api.mode.is_fdm();
+        settings.device.bedRound = ui.deviceRound.checked && api.mode.is_fdm();
+        settings.device.originCenter = ui.deviceOrigin.checked || ui.deviceRound.checked;
+        settings.device.fwRetract = ui.fwRetract.checked;
+        // refresh vars and other ui elements
         uc.refresh();
         api.conf.update();
         DOC.activeElement.blur();
@@ -725,8 +732,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.event.emit('device.select', {devicename, code});
         try {
             if (typeof(code) === 'string') code = js2o(code) || {};
-
-            api.event.emit('device.set', devicename);
 
             let mode = api.mode.get(),
                 lmode = mode.toLowerCase(),

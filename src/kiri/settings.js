@@ -46,10 +46,11 @@ function saveSettings() {
     const mode = settings.mode;
     settings.sproc[mode].default = settings.process;
     settings.sproc[mode][settings.process.processName] = settings.process;
-    settings.device.bedBelt = ui.deviceBelt.checked;
-    settings.device.bedRound = ui.deviceRound.checked;
-    settings.device.originCenter = ui.deviceOrigin.checked || ui.deviceRound.checked;
-    settings.device.fwRetract = ui.fwRetract.checked;
+    // moved to init.onBooleanClick() -- delete later after confirming no side-effects
+    // settings.device.bedBelt = ui.deviceBelt.checked;
+    // settings.device.bedRound = ui.deviceRound.checked;
+    // settings.device.originCenter = ui.deviceOrigin.checked || ui.deviceRound.checked;
+    // settings.device.fwRetract = ui.fwRetract.checked;
     local.setItem('ws-settings', JSON.stringify(settings));
     api.event.emit('settings.saved', settings);
 }

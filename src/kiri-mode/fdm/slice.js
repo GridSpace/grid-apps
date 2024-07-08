@@ -501,17 +501,14 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     let y = poly.bounds.maxy;
                     let z = slice.z;
                     // at 45 degrees, 1mm in Z is 1mm in Y
-                    // find formula for other angles
                     let by = (slope * z) - y;
                     if (by < miny) miny = by;
                     if (by < smin) smin = by;
                 }
+                // mark slices with tops touching belt
                 slice.belt = { miny, touch: miny.round(3) == 0 };
-                // console.log({ miny: miny.round(3), z:slice.z, touch: slice.belt.touch });
             }
-            console.log({ smin: smin.round(5) });
-            // mark slices with tops touching belt
-            // also find max width of first 5 layers
+            // find max width of first 5 layers for brim additions
             let start;
             let minx = Infinity, maxx = -Infinity;
             let peek = 0;
@@ -522,13 +519,10 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                         maxx = Math.max(maxx, poly.bounds.maxx);
                     }
                 }
-                // mark slice as touching belt if near miny
-                // if (Math.abs(slice.belt.miny - smin) < 0.01) {
-                if (!start && slice.belt.touch) start = slice;
-                // if (Math.abs(slice.belt.miny) < 0.01) {
-                //     slice.belt.touch = true;
-                //     if (!start) start = slice;
-                // }
+                // find first slice touching belt for start of anchor
+                if (!start && slice.belt.touch) {
+                    start = slice;
+                }
             }
             // ensure we start against a layer with shells
             while (start && start.up && start.topShells().length === 0) {
@@ -569,7 +563,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 let snew = addto.addTop(splat).fill_sparse = [ splat ];
                 adds.push(snew);
                 start = addto;
-                // console.log({ z: z.round(3), anchorlen: anchorlen.round(3) });
                 anchorlen -= (step * slope);
             }
             // add anchor bump
