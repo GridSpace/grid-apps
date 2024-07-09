@@ -722,7 +722,14 @@ FDM.prepare = async function(widgets, settings, update) {
                 let g = firstLayerBrimGap || 0;
                 let b = Math.max(firstLayerBrim, 1) + g;
                 let bi = Math.max(firstLayerBrimIn, 1) + g;
-                layer.last().retract = true;
+                let lastLayerOut = layer.last();
+                lastLayerOut.retract = true;
+                // if routaround selected, move to belt before moving to brim start
+                if (process.outputAvoidGaps) {
+                    let beltPoint = lastLayerOut.point.clone();
+                    beltPoint.y = y;
+                    print.addOutput(tmpout, beltPoint, 0, outputSeekrate, tool);
+                }
                 // outside brim
                 if (firstLayerBrim && !brimHalf) {
                     print.addOutput(tmpout, newPoint(maxx + b, y, z), 0,    outputSeekrate, tool);
@@ -857,6 +864,8 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
     }
 
+    // return true if move path from p1 to p2 intersects a
+    // top and a path around the top (inside print) was not found
     function intersectsTop(p1, p2) {
         if (slice.index < 0) {
             return false;
