@@ -267,10 +267,13 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 row,
                 arr,
                 update() {
-                    arr.innerHTML = (hidden[group] ?
-                        '<i class="fa-solid fa-caret-down"></i>' :
-                        '<i class="fa-solid fa-caret-up"></i>'
-                    );
+                    if (hidden[group]) {
+                        arr.innerHTML = '<i class="fa-solid fa-caret-down"></i>';
+                        row.classList.add('hidden');
+                    } else {
+                        arr.innerHTML = '<i class="fa-solid fa-caret-up"></i>';
+                        row.classList.remove('hidden');
+                    }
                 }
             };
             row.onclick = () => {

@@ -2174,8 +2174,12 @@ th, tr, td, label {
     padding: 4px;
     margin: 0 0 4px 0;
 }
+.set-header.hidden {
+    margin-bottom: 0 !important;
+}
 .set-header > span {
     color: var(--blue-2);
+    font-size: smaller;
 }
 .set-header-line {
     margin-left: 5px;
