@@ -17,6 +17,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
         groups = {},
         groupSticky = false,
         groupName = undefined,
+        heads = {}, // hideable group heads (clickable label)
+        hidden = {}, // hidden groups (by name)
         hasModes = [],
         setters = [],
         lastMode = null,
@@ -37,6 +39,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
         checkpoint,
         restore,
         refresh,
+        setHidden,
         setMode,
         bound,
         toInt,
@@ -76,6 +79,14 @@ gapp.register("kiri.ui", [], (root, exports) => {
             }
         }
     };
+
+    function setHidden(map) {
+        hidden = map;
+        refresh();
+        for (let ctrl of Object.values(heads)) {
+            ctrl.update();
+        }
+    }
 
     function onBlur(obj, fn) {
         if (Array.isArray(obj)) {
@@ -246,6 +257,29 @@ gapp.register("kiri.ui", [], (root, exports) => {
         lastGroup.key = dbkey;
         groupName = group;
 
+        if (opt.hideable) {
+            let pad = DOC.createElement('i');
+            let arr = DOC.createElement('span');
+            pad.setAttribute('class','grow');
+            row.appendChild(pad);
+            row.appendChild(arr);
+            const ctrl = heads[group] = {
+                row,
+                arr,
+                update() {
+                    arr.innerHTML = (hidden[group] ?
+                        '<i class="fa-solid fa-caret-down"></i>' :
+                        '<i class="fa-solid fa-caret-up"></i>'
+                    );
+                }
+            };
+            row.onclick = () => {
+                hidden[group] = !hidden[group];
+                refresh();
+                ctrl.update();
+            };
+        }
+
         return row;
     }
 
@@ -337,13 +371,14 @@ gapp.register("kiri.ui", [], (root, exports) => {
             else el.hideMe();
         };
         el.setMode = function(mode) {
+            let hidn = hidden[el._group] === true;
             let xprt = opt.expert === undefined || (opt.expert === lastExpert);
             let show = opt.show ? safecall(opt.show) : true;
             let disp = opt.visible ? opt.visible() : true;
             let hmod = el.hasMode(mode);
             if (opt.trace) console.log({ setMode: mode, xprt, show, disp, hmod, modes:el.modes });
             if (opt.manual) return;
-            el.setVisible(hmod && show && xprt && disp);
+            el.setVisible(!hidn && hmod && show && xprt && disp);
         }
         el.hasMode = function(mode) {
             return (el.modes.length === 0) ||

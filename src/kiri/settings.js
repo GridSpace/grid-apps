@@ -82,6 +82,9 @@ function loadSettings(evt, named) {
 
     // publish event when loading from ui event
     if (evt) api.event.settings();
+
+    // update hidden map from settings
+    api.uc.setHidden(settings.hidden);
 }
 
 function showSettings() {

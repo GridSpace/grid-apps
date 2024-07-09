@@ -931,6 +931,14 @@ const conf = exports({
             ortho: false,
             devel: false
         },
+        // hidden ui groups
+        hidden: {
+            "fdm-base": true,
+            "fdm-cool": true,
+            "fdm-fill": true,
+            "fdm-supp": true,
+            "fdm-xprt": true
+        },
         // label state preferences
         labels: {
             'CAM-3-arrows': false,

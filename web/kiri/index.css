@@ -2174,6 +2174,9 @@ th, tr, td, label {
     padding: 4px;
     margin: 0 0 4px 0;
 }
+.set-header > span {
+    color: var(--blue-2);
+}
 .set-header-line {
     margin-left: 5px;
     width: 100%;
