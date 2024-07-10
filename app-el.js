@@ -43,9 +43,18 @@ function createWindow() {
 
     mainWindow.loadURL('http://localhost:5309/kiri');
 
+    // default normal url navigation or page opens to happen outside Electron
     mainWindow.webContents.setWindowOpenHandler((details) => {
+        // console.log('EXTERNAL');
         shell.openExternal(details.url);
         return { action: 'deny' }
+    });
+
+    // prevent "other" urls from opening inside Electron (alerts are problematic)
+    mainWindow.webContents.on('will-navigate', (event, url) => {
+        // console.log('DIVERT');
+        event.preventDefault();
+        shell.openExternal(url);
     });
 
     if (devel) {
