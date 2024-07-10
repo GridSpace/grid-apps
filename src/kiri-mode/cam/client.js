@@ -755,6 +755,7 @@ CAM.init = function(kiri, api) {
     }
 
     func.opFlip = () => {
+        API.view.set_arrange();
         let widgets = API.widgets.all();
         let { process } = current;
         let { ops, op2 } = process;
