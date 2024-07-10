@@ -1177,7 +1177,8 @@ class OpPocket extends CamOp {
         let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt } = state;
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
-        let sliceOut = this.sliceOut = [];
+        let sliceOut;
+        let pockets = this.pockets = [];
         let camTool = new CAM.Tool(settings, tool);
         let toolDiam = camTool.fluteDiameter();
         let toolOver = toolDiam * op.step;
@@ -1208,6 +1209,9 @@ class OpPocket extends CamOp {
                 tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
             });
         }
+        function newPocket() {
+            pockets.push(sliceOut = []);
+        }
         function newSliceOut(z) {
             let slice = newSlice(z);
             sliceOut.push(slice);
@@ -1229,6 +1233,7 @@ class OpPocket extends CamOp {
             }
             let zpro = 0, zinc = 1 / (polys.length * zs.length);
             for (let poly of polys) {
+                newPocket();
                 for (let z of zs) {
                     let clip = [], shadow;
                     if (contour) {
@@ -1375,7 +1380,7 @@ class OpPocket extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state, sliceOut } = this;
+        let { op, state, pockets } = this;
         let { setTool, setSpindle, setTolerance, sliceOutput } = ops;
         let { process } = state.settings;
 
@@ -1386,12 +1391,14 @@ class OpPocket extends CamOp {
             setTolerance(this.topo.tolerance);
         }
 
-        sliceOutput(sliceOut, {
-            cutdir: process.camConventional,
-            depthFirst: process.camDepthFirst && !state.isIndexed,
-            easeDown: op.down && process.easeDown ? op.down : 0,
-            progress: (n,m) => progress(n/m, "pocket")
-        });
+        for (let sliceOut of pockets) {
+            sliceOutput(sliceOut, {
+                cutdir: process.camConventional,
+                depthFirst: process.camDepthFirst && !state.isIndexed,
+                easeDown: op.down && process.easeDown ? op.down : 0,
+                progress: (n,m) => progress(n/m, "pocket")
+            });
+        }
     }
 }
 
