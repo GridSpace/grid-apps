@@ -506,7 +506,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     if (by < smin) smin = by;
                 }
                 // mark slices with tops touching belt
-                slice.belt = { miny, touch: miny.round(3) == 0 };
+                slice.belt = { miny, touch: miny.round(3) < sliceHeightBase };
             }
             // find max width of first 5 layers for brim additions
             let start;

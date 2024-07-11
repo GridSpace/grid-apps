@@ -659,7 +659,10 @@ FDM.prepare = async function(widgets, settings, update) {
         }
         // store this offset to be removed from Y values in export
         print.belty = thresh;
-        thresh = thresh + firstLayerHeight * 0.25;
+        thresh = Math.max(0, thresh) + firstLayerHeight * belt.slope;
+        // track last layer out b/c it might be connected to the current
+        // layer first point, in which case the injected brim will cause a long print line
+        let lastLayerOut;
         // iterate over layers, find extrusion on belt and
         // apply corrections and add brim when specified
         for (let layer of output) {
@@ -688,7 +691,7 @@ FDM.prepare = async function(widgets, settings, update) {
                     // apply base rate to entire anchor (including bump)
                     rec.speed = Math.min(rec.speed, lowrate);
                 }
-                if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.005) {
+                if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.01) {
                     // apply base speed to segments touching belt
                     rec.speed = params.firstLayerRate || Math.min(rec.speed, lowrate);
                     rec.emit *= bmult;
@@ -761,12 +764,18 @@ FDM.prepare = async function(widgets, settings, update) {
                     print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    outputSeekrate, tool);
                     print.addOutput(tmpout, newPoint(minx - g, y, z), emit, firstLayerRate, tool).retract = false;
                 }
+                // when there is a printing move between layers
+                // inject non-printing move to after brim to prevent erroneous extrusion
+                if (layer[0].emit && lastLayerOut) {
+                    print.addOutput(tmpout, layer[0].point.clone(), 0, outputSeekrate, tool);
+                }
+                layer.splice(0,0,...tmpout);
             } else {
                 // for any layer touching belt, ensure start point is nearest origin
                 // print.addOutput(tmpout, newPoint(minx, maxy, minz), 0, outputSeekrate, first.tool);
                 // print.lastPoint = newPoint(minx, maxy, minz);
             }
-            layer.splice(0,0,...tmpout);
+            lastLayerOut = layer.peek();
         }
     }
 
