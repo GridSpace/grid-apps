@@ -264,6 +264,7 @@ class Print {
             height = 0,
             factor = 1,
             tool = 0,
+            time = 0,
             minf = Infinity,
             maxf = 0,
             seq = [],
@@ -458,11 +459,13 @@ class Print {
                     (Math.pow(pos.X - lastPos.X, 2)) +
                     (Math.pow(pos.Y - lastPos.Y, 2))
                 );
+                // debug print time
+                time += (dV * pos.F) / 1000;
                 // filament per mm
                 let dR = (dE / dV);
                 if (dV > 2 && dE > 0.001) {
                     let lab = (absE ? 'aA' : 'rR')[scope.debugE++ % 2];
-                    // console.log(lab, height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(4), pos.F.toFixed(0));
+                    console.log(lab, height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(4), pos.F.toFixed(0));
                 }
             }
             // add point to current sequence
@@ -577,6 +580,10 @@ class Print {
         scope.minSpeed = Math.floor(minf / 60);
         scope.maxSpeed = Math.floor(maxf / 60);
         scope.belt = belt;
+
+        if (scope.debugE) {
+            console.log({ print_time: time.round(2) });
+        }
 
         done({ output: scope.output });
     }

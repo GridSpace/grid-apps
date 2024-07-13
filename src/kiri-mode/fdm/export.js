@@ -828,7 +828,13 @@ FDM.export = function(print, online, ondone, ondebug) {
             }
 
             // update time and distance (should calc in moveTo() instead)
-            time += (dist / speedMMM) * 60 * timeFactor;
+            if (dist && speedMMM) {
+                time += (dist / speedMMM) * 60 * timeFactor;
+            }
+            // if (isNaN(time)) {
+            //     console.log({ layer, path, dist, speedMMM, timeFactor });
+            //     throw "NaN";
+            // }
             distance += dist;
             subst.progress = progress = Math.round((distance / totaldistance) * 100);
 

@@ -388,9 +388,21 @@ async function sliceZ(z, points, options = {}) {
     if (groupFn) {
         let groups = groupFn(lines, z, options);
         if (options.union) {
+            let points = groups.map(p => p.length).reduce((a,b) => a + b);
             // simplistic healing of non-manifold meshes
             let opt = { x: 1 };
             let union = POLY.union(POLY.nest(groups), 0.1, true, opt);
+            // fall back to xor'ing polygons that might overlap
+            // when one does not cleanly contain the other and we lose lots of points
+            // trigger when 2 polygons and we lose > 40% of points in the union
+            let delta = opt.changes < 0 ? Math.abs(opt.changes / points) : 0; 
+            if (groups.length === 2 && delta >= 0.4) {
+                let xor = groups[0].xor(groups[1]);
+                console.log({ points, pct: (opt.changes / points).round(3), xor: xor.length });
+                if (xor.length) {
+                    union = xor;
+                }
+            }
             // track total poly length changes to determine if healed
             rval.changes = opt.changes;
             groups = POLY.flatten(union, null, true);
@@ -749,7 +761,7 @@ function sliceConnect(input, z, opt = {}) {
         emit(newPolygon().addPoints(array));
     }
 
-    if (debug) console.log({ emitted });
+    if (debug) console.log({ emitted, output });
     if (debug && emitted < points.length) console.log({ leftovers:points.length - emitted });
 
     return output;

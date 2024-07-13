@@ -30,6 +30,7 @@ const POLY = polygons,
     EndType = ClipperLib.EndType,
     JoinType = ClipperLib.JoinType,
     PolyTree = ClipperLib.PolyTree,
+    ClipXOR = ClipType.ctXor,
     ClipDiff = ClipType.ctDifference,
     ClipUnion = ClipType.ctUnion,
     ClipIntersect = ClipType.ctIntersection,
@@ -1769,9 +1770,30 @@ class Polygon {
 
         if (clip.Execute(ClipDiff, tree, FillEvenOdd, FillEvenOdd)) {
             poly = POLY.fromClipperTree(tree, poly.getZ());
-            poly.forEach(p => {
-                p.fillang = fillang;
-            })
+            poly.forEach(p => p.fillang = fillang);
+            return poly;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @param {Polygon} poly poly to xor against this one
+     * @returns {?Polygon[]}
+     */
+    xor(poly) {
+        let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
+            clip = new Clipper(),
+            tree = new PolyTree(),
+            sp1 = this.toClipper(),
+            sp2 = poly.toClipper();
+
+        clip.AddPaths(sp1, PathSubject, true);
+        clip.AddPaths(sp2, PathClip, true);
+
+        if (clip.Execute(ClipXOR, tree, FillNonZero, FillNonZero)) {
+            poly = POLY.fromClipperTree(tree, poly.getZ());
+            poly.forEach(p => p.fillang = fillang);
             return poly;
         } else {
             return null;

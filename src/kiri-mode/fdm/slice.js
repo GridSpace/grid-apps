@@ -323,7 +323,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 healed = true;
                 slice.changes = changes;
                 if (self.debug) {
-                    console.log('slice healed', slice.index, slice.z);
+                    console.log('slice healed', slice.index, slice.z, changes);
                 }
             }
             if (process.xray) {
