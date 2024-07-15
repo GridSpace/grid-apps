@@ -1942,7 +1942,7 @@ class Polygon {
         }
 
         let clip = this.toClipper(),
-            res = CLIB.Clipper.SimplifyPolygons(clip, FillNonZero);
+            res = Clipper.SimplifyPolygons(clip, FillNonZero);
 
         if (!(res && res.length)) {
             return null;
