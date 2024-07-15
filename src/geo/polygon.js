@@ -1219,6 +1219,25 @@ class Polygon {
         return list;
     }
 
+    // return true if any line segments on either poly crosses the other
+    // this is a shallow test and does not inspect inners
+    intersects(poly) {
+        let p0 = this.points.slice(); p0.push(p0[0]);
+        let p1 = poly.points.slice(); p1.push(p1[0]);
+        for (let i=1; i<p0.length; i++) {
+            let a = p0[i-1];
+            let b = p0[i];
+            for (let j=1; j<p1.length; j++) {
+                let c = p1[j-1];
+                let d = p1[j];
+                if (util.intersect(a, b, c, d, base.key.SEGINT)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /**
      * using two points, split polygon into two open polygons
      * or return null if p1,p2 does not intersect or poly is open

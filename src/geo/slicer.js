@@ -387,6 +387,9 @@ async function sliceZ(z, points, options = {}) {
     let rval = { z, lines };
     if (groupFn) {
         let groups = groupFn(lines, z, options);
+        if (options.xor) {
+            groups = POLY.xor(groups);
+        }
         if (options.union) {
             let points = groups.map(p => p.length).reduce((a,b) => a + b);
             // simplistic healing of non-manifold meshes

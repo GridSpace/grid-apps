@@ -33,6 +33,7 @@ const ClipperLib = self.ClipperLib,
     EndType = ClipperLib.EndType,
     JoinType = ClipperLib.JoinType,
     PolyTree = ClipperLib.PolyTree,
+    ClipXOR = ClipType.ctXor,
     ClipDiff = ClipType.ctDifference,
     ClipUnion = ClipType.ctUnion,
     ClipIntersect = ClipType.ctIntersection,
@@ -58,6 +59,7 @@ const POLYS = base.polygons = {
     inner,
     nest,
     diff,
+    xor,
     setZ,
     filter,
     toClipper,
@@ -486,7 +488,47 @@ function diff(setA, setB, z) {
     } else {
         return null;
     }
-};
+}
+
+/**
+ * @param {Polygon} poly clipping mask
+ * @returns {?Polygon[]}
+ */
+ function xor(set, z) {
+    z = z || set[0].getZ();
+    outer: for (;;) {
+        // sort largest to smallest area
+        set.sort((a,b) => b.area() - a.area());
+        for (let i=0; i<set.length; i++) {
+            let p0 = set[i];
+            for (let j=i+1; j<set.length; j++) {
+                let p1 = set[j];
+                // if polys overlap, xor and check result
+                // if output differs from input, update set
+                // and start from scratch
+                if (p1.overlaps(p0) && p1.intersects(p0)) {
+                    let xor = p0.xor(p1);
+                    if (xor.length === 2) {
+                        let same0 = Math.abs(p0.area() - xor[0].area()) + Math.abs(p1.area() - xor[1].area()) < 0.01;
+                        let same1 = Math.abs(p1.area() - xor[0].area()) + Math.abs(p0.area() - xor[1].area()) < 0.01;
+                        if (same0 || same1) {
+                            continue;
+                        }
+                    }
+                    // console.log({ p0, p1, xor, i, j });
+                    set[i] = null;
+                    set[j] = null;
+                    set = set.filter(o => o);
+                    set.appendAll(xor);
+                    continue outer;
+                }
+            }
+        }
+        // exit when no change to set occur
+        break;
+    }
+    return set;
+}
 
 /**
  * Slice.doProjectedFills()
