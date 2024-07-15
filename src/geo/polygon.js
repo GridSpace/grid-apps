@@ -1125,7 +1125,7 @@ class Polygon {
      * Ease down along the polygonal path.
      *
      * 1. Travel from fromPoint to closest point on polygon, to rampZ above that that point,
-     * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slop until target Z is hit,
+     * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slope until target Z is hit,
      * 3. then the rest of the path is completed and repeated at target Z until touchdown point is reached.
      *
      */
@@ -1143,16 +1143,23 @@ class Polygon {
             done;
 
         // XXX: These should be UI configurable options.
-        const degrees = 1;                                  // Rough "slope" of the ease-down path in degrees. It's probably only a slope if projected onto XZ or YZ planes.
-        const slope = Math.tan((degrees * Math.PI) / 180);  // Slope for computations.
-        const maxDist2d = 0.5;                              // Maximum segment length, not sure if that's neccessary. Maybe misunderstanding of existing code.
-        const rampZ = 2.0;                                  // Z height above polygon Z from which to start the ease-down. Machine will travel from "fromPoint" to "nearest point, Z + rampZ", then start the easy down.
+
+        // "Slope" of the ease-down path in degrees, or an approximation thereof.
+        const degrees = 1;
+        // Slope for computations.
+        const slope = Math.tan((degrees * Math.PI) / 180);
+        // Maximum segment length, not sure if that's neccessary. Maybe misunderstanding of existing code.
+        const maxDist2d = 0.5;
+        // Z height above polygon Z from which to start the ease-down.
+        // Machine will travel from "fromPoint" to "nearest point x, y, z' => with z' = point z + rampZ",
+        // then start the ease down along path.
+        const rampZ = 2.0;
 
         while (true) {
             next = points[index % length];
 
             if (last && next.z < fromZ) {
-                // Only "in Ease-Down" (while target Z not yet reached) - follow path while slowly decreasing Z.
+                // When "in Ease-Down" (ie. while target Z not yet reached) - follow path while slowly decreasing Z.
                 let deltaZ = fromZ - next.z;
                 dist2next = last.distTo2D(next);
 
@@ -1179,12 +1186,12 @@ class Polygon {
               break;
             }
             if (touch < 0 && next.z <= targetZ) {
-                // Save touch-down index so as to be able to "complete" the full cut at target Z, i.e. keep following the path loop until the touch down point is reached again.
+                // Save touch-down index so as to be able to "complete" the full cut at target Z,
+                // i.e. keep following the path loop until the touch down point is reached again.
                 touch = ((index - 1) % length);
             }
             index++;
         }
-
 
         return last;
     }
