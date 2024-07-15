@@ -1121,6 +1121,14 @@ class Polygon {
         return false;
     }
 
+    /**
+     * Ease down along the polygonal path.
+     *
+     * 1. Travel from fromPoint to closest point on polygon, to rampZ above that that point,
+     * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slop until target Z is hit,
+     * 3. then the rest of the path is completed and repeated at target Z until touchdown point is reached.
+     *
+     */
     forEachPointEaseDown(fn, fromPoint) {
         let index = this.findClosestPointTo(fromPoint).index,
             fromZ = fromPoint.z,
@@ -1134,30 +1142,49 @@ class Polygon {
             next,
             done;
 
+        // XXX: These should be UI configurable options.
+        const degrees = 1;                                  // Rough "slope" of the ease-down path in degrees. It's probably only a slope if projected onto XZ or YZ planes.
+        const slope = Math.tan((degrees * Math.PI) / 180);  // Slope for computations.
+        const maxDist2d = 0.5;                              // Maximum segment length, not sure if that's neccessary. Maybe misunderstanding of existing code.
+        const rampZ = 2.0;                                  // Z height above polygon Z from which to start the ease-down. Machine will travel from "fromPoint" to "nearest point, Z + rampZ", then start the easy down.
+
         while (true) {
             next = points[index % length];
+
             if (last && next.z < fromZ) {
+                // Only "in Ease-Down" (while target Z not yet reached) - follow path while slowly decreasing Z.
                 let deltaZ = fromZ - next.z;
                 dist2next = last.distTo2D(next);
-                if (dist2next > deltaZ * 2) {
-                    // too long: synth intermediate
-                    fn(last.followTo(next, deltaZ).setZ(next.z), offset++);
-                } else if (dist2next >= deltaZ) {
-                    // ease down on this segment
+
+                if (dist2next > maxDist2d) {
+                    // long move: synth intermediate - neccessary?
+                    last = next = last.followTo(next, maxDist2d).setZ(last.z - maxDist2d * slope)
+                    fromZ = next.z;
+                    fn(next, offset++);
+                    continue;
                 } else {
                     // too short: clone n move z
-                    next = next.clone().setZ(fromZ - dist2next / 2);
+                    next = next.clone().setZ(fromZ - maxDist2d * slope);
                 }
                 fromZ = next.z;
             } else if (offset === 0 && next.z < fromZ) {
+                // First point, move to rampZ height above next.
+                let deltaZ = fromZ - next.z;
+                fromZ = next.z + Math.min(deltaZ, rampZ)
                 next = next.clone().setZ(fromZ);
             }
             last = next;
             fn(next, offset++);
-            if ((index % length) === touch) break;
-            if (touch < 0 && next.z <= targetZ) touch = (index % length);
+            if ((index % length) === touch) {
+              break;
+            }
+            if (touch < 0 && next.z <= targetZ) {
+                // Save touch-down index so as to be able to "complete" the full cut at target Z, i.e. keep following the path loop until the touch down point is reached again.
+                touch = ((index - 1) % length);
+            }
             index++;
         }
+
 
         return last;
     }
