@@ -1165,13 +1165,13 @@ class Polygon {
                 let deltaZFullMove = dist2next * slope;
 
                 if (deltaZFullMove > deltaZ) {
-                  // Too long: easing along full path would overshoot depth, synth intermediate point at target Z.
-                  //
-                  // XXX: please check my super basic trig - this should follow from `last` to `next` up until the
-                  //      intersect at the target Z distance.
-                  fn(last.followTo(next, dist2next * deltaZ / deltaZFullMove).setZ(next.z), offset++);
+                    // Too long: easing along full path would overshoot depth, synth intermediate point at target Z.
+                    //
+                    // XXX: please check my super basic trig - this should follow from `last` to `next` up until the
+                    //      intersect at the target Z distance.
+                    fn(last.followTo(next, dist2next * deltaZ / deltaZFullMove).setZ(next.z), offset++);
                 } else {
-                  next = next.clone().setZ(fromZ - deltaZFullMove);
+                    next = next.clone().setZ(fromZ - deltaZFullMove);
                 }
 
                 fromZ = next.z;
