@@ -1162,21 +1162,13 @@ class Polygon {
                 // When "in Ease-Down" (ie. while target Z not yet reached) - follow path while slowly decreasing Z.
                 let deltaZ = fromZ - next.z;
                 dist2next = last.distTo2D(next);
+                next = next.clone().setZ(fromZ - dist2next * slope);
 
-                if (dist2next > maxDist2d) {
-                    // long move: synth intermediate - neccessary?
-                    last = next = last.followTo(next, maxDist2d).setZ(last.z - maxDist2d * slope)
-                    fromZ = next.z;
-                    fn(next, offset++);
-                    continue;
-                } else {
-                    // too short: clone n move z
-                    next = next.clone().setZ(fromZ - maxDist2d * slope);
-                }
                 fromZ = next.z;
             } else if (offset === 0 && next.z < fromZ) {
                 // First point, move to rampZ height above next.
                 let deltaZ = fromZ - next.z;
+
                 fromZ = next.z + Math.min(deltaZ, rampZ)
                 next = next.clone().setZ(fromZ);
             }
