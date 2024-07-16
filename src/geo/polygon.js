@@ -1162,7 +1162,17 @@ class Polygon {
                 // When "in Ease-Down" (ie. while target Z not yet reached) - follow path while slowly decreasing Z.
                 let deltaZ = fromZ - next.z;
                 dist2next = last.distTo2D(next);
-                next = next.clone().setZ(fromZ - dist2next * slope);
+                let deltaZFullMove = dist2next * slope;
+
+                if (deltaZFullMove > deltaZ) {
+                  // Too long: easing along full path would overshoot depth, synth intermediate point at target Z.
+                  //
+                  // XXX: please check my super basic trig - this should follow from `last` to `next` up until the
+                  //      intersect at the target Z distance.
+                  fn(last.followTo(next, dist2next * deltaZ / deltaZFullMove).setZ(next.z), offset++);
+                } else {
+                  next = next.clone().setZ(fromZ - deltaZFullMove);
+                }
 
                 fromZ = next.z;
             } else if (offset === 0 && next.z < fromZ) {
