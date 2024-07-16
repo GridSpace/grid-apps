@@ -1169,6 +1169,7 @@ class Polygon {
                     //      intersect at the target Z distance.
                     fn(last.followTo(next, dist2next * deltaZ / deltaZFullMove).setZ(next.z), offset++);
                 } else {
+                    // Ok: execute full move at desired slope.
                     next = next.clone().setZ(fromZ - deltaZFullMove);
                 }
 
