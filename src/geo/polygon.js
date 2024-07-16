@@ -1148,8 +1148,6 @@ class Polygon {
         const degrees = 1;
         // Slope for computations.
         const slope = Math.tan((degrees * Math.PI) / 180);
-        // Maximum segment length, not sure if that's neccessary. Maybe misunderstanding of existing code.
-        const maxDist2d = 0.5;
         // Z height above polygon Z from which to start the ease-down.
         // Machine will travel from "fromPoint" to "nearest point x, y, z' => with z' = point z + rampZ",
         // then start the ease down along path.
