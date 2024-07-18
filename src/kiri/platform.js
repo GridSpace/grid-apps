@@ -862,7 +862,7 @@ function platformLoadFiles(files, group) {
                 load_dec();
             }
             else if (iskmz) api.settings.import_zip(data, true);
-            else if (isset) api.settings.import(data, true);
+            else if (isset) api.settings.import(data.textDecode('utf-8'), true);
             else if (ispng) api.image.dialog(data, name);
             else if (isjpg) api.image.convert(data, name);
             else if (isini) api.settings.import_prusa(data.textDecode('utf-8'));
