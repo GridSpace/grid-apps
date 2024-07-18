@@ -24,6 +24,7 @@ const LISTS = {
     shell: [
         { name: "in-out" },
         { name: "out-in" },
+        { name: "alternate" }
     ],
     start: [
         { name: "last" },

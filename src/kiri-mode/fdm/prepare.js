@@ -809,7 +809,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         retractDist = opt.retractOver || (nozzleSize * 5),
         fillMult = opt.mult || process.outputFillMult,
         shellMult = opt.mult || process.outputShellMult || (process.ctSliceHeight >= 0 ? 1 : 0),
-        shellOrder = {"out-in":-1,"in-out":1}[process.sliceShellOrder] || -1,
+        shellOrder = {"out-in":-1,"in-out":1,"alternate":2}[process.sliceShellOrder] || -1,
         sparseMult = process.outputSparseMult,
         coastDist = process.outputCoastDist || 0,
         finishSpeed = opt.speed || process.outputFinishrate,
@@ -840,6 +840,11 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         switchTop = print.lastPoly && print.lastPoly.perimeter() < process.outputShortPoly,
         z = slice.z,
         lastPoly;
+
+    // support alternating shell order
+    if (Math.abs(shellOrder) > 1 && slice.index % 2 === 1) {
+        shellOrder = -shellOrder;
+    }
 
     if (slice.finishSolids) {
         fillSpeed = process.sliceSolidRate || finishSpeed;
@@ -1458,12 +1463,12 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             // }
 
             // output inner polygons
-            if (shellOrder === 1) outputTraces(inner, { sort: shellOrder, shell: true });
+            if (shellOrder > 0) outputTraces(inner, { sort: shellOrder, shell: true });
 
             outputTraces(shells, { sort: shellOrder, shell: true });
 
             // output outer polygons
-            if (shellOrder === -1) outputTraces(inner, { sort: shellOrder, shell: true });
+            if (shellOrder < 0) outputTraces(inner, { sort: shellOrder, shell: true });
 
             // output thin fill
             print.setType('thin fill');
