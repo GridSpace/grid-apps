@@ -809,7 +809,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         retractDist = opt.retractOver || (nozzleSize * 5),
         fillMult = opt.mult || process.outputFillMult,
         shellMult = opt.mult || process.outputShellMult || (process.ctSliceHeight >= 0 ? 1 : 0),
-        shellOrder = {"out-in":-1,"in-out":1,"alternate":2}[process.sliceShellOrder] || -1,
+        shellOrder = {"out-in":-1,"in-out":1,"alternate":-2}[process.sliceShellOrder] || -1,
         sparseMult = process.outputSparseMult,
         coastDist = process.outputCoastDist || 0,
         finishSpeed = opt.speed || process.outputFinishrate,
