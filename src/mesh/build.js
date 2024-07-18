@@ -373,6 +373,7 @@ function ui_build() {
             h.div({ class: "pop"}, [
                 h.button({ _: 'cylinder', onclick: add.cylinder }),
                 h.button({ _: 'cube', onclick: add.cube }),
+                h.button({ _: 'gear', onclick: add.gear }),
                 devel ? h.button({ _: 'input', onclick: add.input }) : undefined
             ])
         ]),

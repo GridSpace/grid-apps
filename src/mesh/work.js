@@ -21,9 +21,10 @@
 gapp.main("mesh.work", [], (root) => {
 
 const { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
-const { mesh, moto } = root;
+const { base, mesh, moto } = root;
 const { client, worker } = moto;
 const { util } = mesh;
+const { newPolygon } = base;
 const cache = {};
 
 // add scoped access to cache
@@ -397,6 +398,14 @@ let model = {
             log(`${id} | rebuild complete`);
             send.done({ lines: layers });
         });;
+    },
+
+    gen_gear(data, send) {
+        const { teeth, module, angle, z } = data;
+        let points = new mesh.tool().generateGear(teeth, module, angle);
+        let verts = points.map(v => [...v, 0]).flat();
+        let poly = newPolygon().addVerts(verts).extrude(z || 10);
+        send.done(poly);
     }
 };
 

@@ -737,6 +737,79 @@ mesh.tool = class MeshTool {
         }
         return out;
     }
+
+    generateGear(numTeeth, module, pressureAngle) {
+        // Adapted from: Public Domain Parametric Involute Spur Gear by Leemon Baird, 2011, Leemon@Leemon.com http://www.thingiverse.com/thing:5505
+        // see also http://grabcad.com/questions/tutorial-how-to-model-involute-gears-in-solidworks-and-show-design-intent
+
+        const pi = Math.PI;
+
+        // degrees to radians
+        function degrees_to_radians(theta) { return theta / 180 * pi; }
+
+        // polar to cartesian
+        function polar(r, theta) { return [r * Math.sin(theta), r * Math.cos(theta)]; }
+
+        // point on involute curve
+        function q6(b, s, t, d) { return polar(d, s * (iang(b, d) + t)); }
+
+        // unwind this many degrees to go from r1 to r2
+        function iang(r1, r2) { return Math.sqrt((r2 / r1) * (r2 / r1) - 1) - Math.acos(r1 / r2); }
+
+        // radius a fraction f up the curved side of the tooth
+        function q7(f, r, b, r2, t, s) { return q6(b, s, t, (1 - f) * Math.max(b, r) + f * r2); }
+
+        // rotate an array of 2d points
+        function rotate(points_array, angle) {
+            let answer = [];
+            for (let i = 0; i < points_array.length; i++) {
+                let x = points_array[i][0];
+                let y = points_array[i][1];
+                let xr = x * Math.cos(angle) - y * Math.sin(angle);
+                let yr = y * Math.cos(angle) + x * Math.sin(angle);
+                answer.push([xr, yr]);
+            }
+            return answer;
+        }
+
+        // involute gear maker
+        function build_gear(number_of_teeth) {
+            let p = mm_per_tooth * number_of_teeth / pi / 2;  // radius of pitch circle
+            let c = p + mm_per_tooth / pi - clearance;        // radius of outer circle
+            let b = p * Math.cos(pressure_angle);             // radius of base circle
+            let r = p - (c - p) - clearance;                  // radius of root circle
+            let t = mm_per_tooth / 2 - backlash / 2;          // tooth thickness at pitch circle
+            let k = -iang(b, p) - t / 2 / p;                  // angle where involute meets base circle on side of tooth
+
+            // here is the magic - a set of [x,y] points to create a single gear tooth
+            let points = [polar(r, -3.142 / number_of_teeth), polar(r, r < b ? k : -pi / number_of_teeth),
+            q7(0 / 5, r, b, c, k, 1), q7(1 / 5, r, b, c, k, 1), q7(2 / 5, r, b, c, k, 1), q7(3 / 5, r, b, c, k, 1), q7(4 / 5, r, b, c, k, 1), q7(5 / 5, r, b, c, k, 1),
+            q7(5 / 5, r, b, c, k, -1), q7(4 / 5, r, b, c, k, -1), q7(3 / 5, r, b, c, k, -1), q7(2 / 5, r, b, c, k, -1), q7(1 / 5, r, b, c, k, -1), q7(0 / 5, r, b, c, k, -1),
+            polar(r, r < b ? -k : pi / number_of_teeth), polar(r, 3.142 / number_of_teeth)];
+
+            let answer = [];
+
+            // create every gear tooth by rotating the first tooth
+            for (var i = 0; i < number_of_teeth; i++) {
+                answer = answer.concat(rotate(points, -i * 2 * pi / number_of_teeth));
+            }
+
+            return answer; // returns an array of [x,y] points
+        }
+
+        // gear parameter setup
+        // number_of_teeth = numTeeth; // number of teeth (typically the only parameter to change)
+        // note: rest of parameters must be unchanged if you want gears to fit.
+        let mm_per_tooth = 9 * module * pi; // pixel size of one gear tooth (even though it says millimeters, it's pixels) must be same for two gears to fit each other
+        // let pressure_angle = pressureAngle; // in degrees, determines gear shape, range is 10 to 40 degrees, most common is 20 degrees
+        let clearance = 4; // freedom between two gear centers
+        let backlash = 4; // freedom between two gear contact points
+        let axle_radius = 20; // center hole radius in pixels
+        let pressure_angle = degrees_to_radians(pressureAngle); // convet degrees to radians
+
+        return build_gear(numTeeth);
+    }
+
 };
 
 });

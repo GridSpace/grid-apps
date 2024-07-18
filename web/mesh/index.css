@@ -225,8 +225,18 @@ button:hover {
     gap: 4px;
 }
 
-.addact input {
+.addact input, .addgear input {
     text-align: center;
+}
+
+.addgear {
+    gap: 5px;
+    display: grid;
+    grid-template-columns: 1fr 50px;
+}
+
+.addgear button {
+    column-span: all;
 }
 
 .image-import {

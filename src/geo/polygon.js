@@ -993,6 +993,20 @@ class Polygon {
     }
 
     /**
+     * @param {int[]} verts flat array of x,y,z vertices
+     */
+    addVerts(verts) {
+        for (let i=0; i<verts.length; ) {
+            this.add(
+                verts[i++],
+                verts[i++],
+                verts[i++]
+            );
+        }
+        return this;
+    }
+
+    /**
      * append point to polygon and return point
      */
     push(p) {
