@@ -235,8 +235,13 @@ button:hover {
     grid-template-columns: 1fr 50px;
 }
 
-.addgear button {
-    column-span: all;
+.addgear hr {
+    width: 100%;
+}
+
+.addgear button, .addgear hr, .addgear code {
+    grid-column: span 2;
+    text-align: center;
 }
 
 .image-import {
