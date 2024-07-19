@@ -2055,8 +2055,8 @@ class Polygon {
         if (!(this.inner && this.inner.length === 1)) {
             return undefined;
         }
-        let outer = this.clone();
-        let inner = this.inner[0].clone().alignWinding(outer);
+        let outer = this.clone().setClockwise();
+        let inner = this.inner[0].clone().setClockwise();
         let c0 = outer.circularity();
         let c1 = inner.circularity();
         let n0 = outer.points.length;
@@ -2132,25 +2132,30 @@ class Polygon {
 
         // create chamfers (when defined)
         if (chamfer_top) {
-            let top_in = this.offset(chamfer_top);
-            if (top_in.length === 1) {
-                top_in[0].setZ(z_top);
-                top_face = top_in[0].earcut();
+            let inset = this.offset(chamfer_top);
+            if (inset.length === 1) {
+                inset[0].setZ(z_top);
+                top_face = inset[0].earcut();
                 z_side_top -= chamfer_top;
-                let renest = POLY.renest([this.clone(true).setZ(z_side_top), top_in[0]]);
+                let renest = POLY.renest([this.clone(true).setZ(z_side_top), inset[0]]);
                 for (let rnpoly of renest) {
-                    if (rnpoly.depth === 0) {
-                        // outer chamfer
-                        obj.appendAll(rnpoly.ribbonMesh());
-                    } else {
-                        // inner chamfer
-                        obj.appendAll(rnpoly.ribbonMesh(true));
-                    }
+                    obj.appendAll(rnpoly.ribbonMesh(true));
                 }
             }
         }
 
         if (chamfer_bottom) {
+            let inset = this.offset(chamfer_bottom);
+            if (inset.length === 1) {
+                inset[0].setZ(0);
+                bottom_face = inset[0].earcut();
+                z_side_top -= chamfer_top;
+                z_side_bottom += chamfer_top;
+                let renest = POLY.renest([this.clone(true).setZ(z_side_bottom), inset[0]]);
+                for (let rnpoly of renest) {
+                    obj.appendAll(rnpoly.ribbonMesh(false));
+                }
+            }
         }
 
         for (let poly of top_face) {
