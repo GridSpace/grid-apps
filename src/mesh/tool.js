@@ -810,7 +810,6 @@ mesh.tool = class MeshTool {
                 polar(r, r < b ? -k : pi / numTeeth),
                 // polar(r, 3.142 / numTeeth)                 // omit b/c overlaps start when rotated
             ];
-            console.log({ p, f });
 
             // create all gear teeth by rotating the first tooth
             for (var i = 0; i < numTeeth; i++) {

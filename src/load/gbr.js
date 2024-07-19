@@ -74,7 +74,7 @@ function toMesh(text, opt = {}) {
     // copper pads
     const mid = [];
     for (let poly of flat.filter(p => p.depth === 1)) {
-        mid.push(poly.extrude(z1, z0 - z1));
+        mid.push(poly.extrude(z1, { zadd: z0 - z1 }));
     }
     progress(20);
     debug({ mid });
@@ -103,7 +103,7 @@ function toMesh(text, opt = {}) {
     // and (optionally) remove from the bottom for making vias
     const low = [];
     for (let poly of flat.filter(p => p.depth === 2)) {
-        low.push(poly.extrude(z1, z0 - z1));
+        low.push(poly.extrude(z1, { zadd: z0 - z1 }));
     }
     progress(30);
 

@@ -322,8 +322,7 @@ let add = {
 
     gear(opt = {}) {
         function gengear(bound) {
-            console.log({ bound });
-            const { _teeth, _module, _angle, _twist, _shaft, _offset, _height } = bound;
+            const { _teeth, _module, _angle, _twist, _shaft, _offset, _height, _chamfer } = bound;
             api.modal.hide();
             worker.model_gen_gear({
                 teeth: parseInt(_teeth.value),
@@ -333,6 +332,7 @@ let add = {
                 shaft: parseFloat(_shaft.value),
                 offset: parseFloat(_offset.value),
                 height: parseFloat(_height.value),
+                chamfer: parseFloat(_chamfer.value),
             }).then(gear => {
                 const nmdl = new mesh.model({ file: "gear", mesh: gear.toFloat32() });
                 const ngrp = group.new([ nmdl ]);
@@ -348,6 +348,8 @@ let add = {
                 h.input({ value: opt.shaft || 5, size: 5, id: "_shaft" }),
                 h.label('z height'),
                 h.input({ value: opt.height || 15, size: 5, id: "_height" }),
+                h.label('chamfer'),
+                h.input({ value: opt.chamfer || 0, size: 5, id: "_chamfer" }),
                 h.hr(),
                 h.code("all other settings must"),
                 h.code("match for gears to mesh"),

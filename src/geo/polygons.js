@@ -52,6 +52,7 @@ const POLYS = base.polygons = {
     expand,
     points,
     length,
+    renest,
     route,
     union,
     inset,
@@ -191,6 +192,13 @@ function filter(array, output, fn) {
 
 function points(polys) {
     return polys.length ? polys.map(p => p.deepLength).reduce((a,v) => a+v) : 0;
+}
+
+/**
+ * redo nesting of polygons that might already have inners
+ */
+function renest(polygons, deep) {
+    return nest(flatten(polygons, [], true), deep);
 }
 
 /**

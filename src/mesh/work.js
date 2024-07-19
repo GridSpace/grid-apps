@@ -401,7 +401,7 @@ let model = {
     },
 
     gen_gear(data, send) {
-        const { teeth, module, angle, twist, shaft, offset, height } = data;
+        const { teeth, module, angle, twist, shaft, offset, height, chamfer } = data;
         const { gear, pitch } = new mesh.tool().generateGear(teeth, module, angle, offset);
         const points = gear.map(v => [...v, 0]).flat();
         const poly = newPolygon().addVerts(points);
@@ -410,7 +410,7 @@ let model = {
             const srad = shaft / 2;
             poly.addInner( newPolygon().centerCircle({ x:0, y:0, z:0 }, srad, nump) );
         }
-        const verts = poly.extrude(height || 15);
+        const verts = poly.extrude(height || 15, { chamfer });
         if (twist) {
             const rad = base.util.toRadians(twist);
             for (let i=0; i<verts.length; i += 3) {

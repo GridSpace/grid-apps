@@ -879,7 +879,7 @@ class Polygon {
      * @returns {Polygon}
      */
     clone(deep) {
-        let np = newPolygon().copyZ(this.z),
+        let np = newPolygon().copyZ(this.getZ()),
             ln = this.length,
             i = 0;
 
@@ -938,9 +938,7 @@ class Polygon {
             ln = ar.length,
             i = 0;
         while (i < ln) ar[i++].z = z;
-        if (this.inner) this.inner.forEach(function(c) {
-            c.setZ(z)
-        });
+        if (this.inner) this.inner.forEach(c => c.setZ(z));
         return this;
     }
 
@@ -2050,22 +2048,131 @@ class Polygon {
         return faces;
     }
 
+    // for turning a poly with an inner offset into a
+    // 3d mesh if and only if the inner has the same
+    // circularity and <= num points. used to make chamfers
+    ribbonMesh(swap) {
+        if (!(this.inner && this.inner.length === 1)) {
+            return undefined;
+        }
+        let outer = this.clone();
+        let inner = this.inner[0].clone().alignWinding(outer);
+        let c0 = outer.circularity();
+        let c1 = inner.circularity();
+        let n0 = outer.points.length;
+        let n1 = inner.points.length;
+        let p0 = outer.points.slice();
+        let p1 = inner.points.slice();
+        let min = { d: Infinity, i:0, j:0 };
+        for (let i=0; i<p0.length; i++) {
+            for (let j=0; j<p1.length; j++) {
+                let d = p0[i].distTo2D(p1[j]);
+                if (d < min.d) {
+                    min = { d, i, j };
+                }
+            }
+        }
+        p0 = p0.slice(min.i).concat(p0.slice(0, min.i)); p0.push(p0[0]);
+        p1 = p1.slice(min.j).concat(p1.slice(0, min.j)); p1.push(p1[0]);
+        // walk both arrays moving to the next poly + point that forms
+        // the shortest line segment between the two polys
+        let faces = [];
+        let pi0 = 0;
+        let pi1 = 0;
+        let pp0 = p0[pi0];
+        let pp1 = p1[pi1];
+        for (;;) {
+            let pn0 = p0[pi0 + 1];
+            let pn1 = p1[pi1 + 1];
+            if ((!pn0 && pn1) || (pn1 && pp0.distTo2D(pn1) < pp1.distTo2D(pn0))) {
+                // emit and increment bottom
+                faces.push(pp0.x, pp0.y, pp0.z);
+                if (swap) {
+                    faces.push(pp1.x, pp1.y, pp1.z);
+                    faces.push(pn1.x, pn1.y, pn1.z);
+                } else {
+                    faces.push(pn1.x, pn1.y, pn1.z);
+                    faces.push(pp1.x, pp1.y, pp1.z);
+                }
+                pi1++;
+                pp1 = p1[pi1];
+            } else if (pn0) {
+                // emit and increment top
+                faces.push(pp0.x, pp0.y, pp0.z);
+                if (swap) {
+                    faces.push(pp1.x, pp1.y, pp1.z);
+                    faces.push(pn0.x, pn0.y, pn0.z);
+                } else {
+                    faces.push(pn0.x, pn0.y, pn0.z);
+                    faces.push(pp1.x, pp1.y, pp1.z);
+                }
+                pi0++;
+                pp0 = p0[pi0];
+            } else {
+                break;
+            }
+        }
+        return faces;
+    }
+
     // extrude poly (with inner voids) into 3d mesh
-    extrude(z = 1, zadd = 0) {
-        let obj = [];
-        let earcut = this.earcut();
-        for (let poly of earcut) {
+    extrude(z = 1, opt = {}) {
+        let chamfer = opt.chamfer || 0;
+        let chamfer_top = opt.chamfer_top || chamfer;
+        let chamfer_bottom = opt.chamfer_bottom || chamfer;
+        let zadd = (typeof opt === 'number' ? opt : opt.zadd || 0); // z bottom
+        let earcut = this.earcut(); // array of 3-point polygons
+        let obj = []; // flat output vertex array (float-x,float-y,float-z,...)
+        let top_face = earcut;
+        let bottom_face = earcut;
+        let z_top = z + zadd;
+        let z_bottom = zadd;
+        let z_side_top = z;
+        let z_side_bottom = z_bottom;
+
+        // create chamfers (when defined)
+        if (chamfer_top) {
+            let top_in = this.offset(chamfer_top);
+            if (top_in.length === 1) {
+                top_in[0].setZ(z_top);
+                top_face = top_in[0].earcut();
+                z_side_top -= chamfer_top;
+                let renest = POLY.renest([this.clone(true).setZ(z_side_top), top_in[0]]);
+                for (let rnpoly of renest) {
+                    if (rnpoly.depth === 0) {
+                        // outer chamfer
+                        obj.appendAll(rnpoly.ribbonMesh());
+                    } else {
+                        // inner chamfer
+                        obj.appendAll(rnpoly.ribbonMesh(true));
+                    }
+                }
+            }
+        }
+
+        if (chamfer_bottom) {
+        }
+
+        for (let poly of top_face) {
             for (let point of poly.points) {
-                obj.push(point.x, point.y, z + zadd);
+                obj.push(point.x, point.y, z_top);
             }
+        }
+
+        // bottom face (reversed to reverse normals)
+        for (let poly of bottom_face) {
             for (let point of poly.points.reverse()) {
-                obj.push(point.x, point.y, zadd);
+                obj.push(point.x, point.y, z_bottom);
             }
         }
-        obj.appendAll(this.ribbonZ(z, zadd));
+
+        // outside wall
+        obj.appendAll(this.ribbonZ(z_side_top, z_side_bottom));
         for (let inner of this.inner || []) {
-            obj.appendAll(inner.ribbonZ(z, zadd, true));
+            // inside wall(s)
+            obj.appendAll(inner.ribbonZ(z_side_top, z_side_bottom, true));
         }
+
         return obj;
     }
 
