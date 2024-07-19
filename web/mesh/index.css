@@ -482,7 +482,7 @@ button.selected:hover {
     flex-direction: column;
     font-family: monospace;
     font-size: smaller;
-    max-height: 5em;
+    max-height: 8em;
     min-height: 1em;
     overflow-y: auto;
 }
