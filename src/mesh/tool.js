@@ -744,6 +744,7 @@ mesh.tool = class MeshTool {
         // Adapted from: Public Domain Parametric Involute Spur Gear by Leemon Baird, 2011, Leemon@Leemon.com http://www.thingiverse.com/thing:5505
         // see also http://grabcad.com/questions/tutorial-how-to-model-involute-gears-in-solidworks-and-show-design-intent
 
+        // const pitch_radius = (numTeeth * module) / 2;
         const pi = Math.PI;
 
         // degrees to radians
@@ -761,6 +762,7 @@ mesh.tool = class MeshTool {
         // radius a fraction f up the curved side of the tooth
         function q7(f, r, b, r2, t, s) { return q6(b, s, t, (1 - f) * Math.max(b, r) + f * r2); }
 
+        // lerp q7 0..1 with a given # steps
         function qf(steps, r, b, r2, t, s) {
             let res = [];
             let step = 1/steps;
@@ -783,41 +785,37 @@ mesh.tool = class MeshTool {
             return answer;
         }
 
+        // gear parameter setup
+        let mm_per_tooth = module * pi; // mm size of one gear tooth
+        let clearance = 0.1; // freedom between two gear centers
+        let backlash = 0.1; // freedom between two gear contact points
+        let pressure_angle = degrees_to_radians(pressureAngle);
+        let gear = [];
+
         // involute gear maker
-        function build_gear(number_of_teeth) {
-            let p = mm_per_tooth * number_of_teeth / pi / 2;  // radius of pitch circle
+        {
+            let p = mm_per_tooth * numTeeth / pi / 2;         // radius of pitch circle
             let c = p + mm_per_tooth / pi - clearance;        // radius of outer circle
             let b = p * Math.cos(pressure_angle);             // radius of base circle
             let r = p - (c - p) - clearance;                  // radius of root circle
             let t = mm_per_tooth / 2 - backlash / 2;          // tooth thickness at pitch circle
             let k = -iang(b, p) - t / 2 / p;                  // angle where involute meets base circle on side of tooth
             let points = [                                    // [x,y] points for a single gear tooth
-                polar(r, -pi / number_of_teeth),
-                polar(r, r < b ? k : -pi / number_of_teeth),
+                polar(r, -pi / numTeeth),
+                polar(r, r < b ? k : -pi / numTeeth),
                 ...qf(10, r, b, c, k, 1),
                 ...qf(10, r, b, c, k, -1).reverse(),
-                polar(r, r < b ? -k : pi / number_of_teeth),
-                // polar(r, 3.142 / number_of_teeth)
+                polar(r, r < b ? -k : pi / numTeeth),
+                // polar(r, 3.142 / numTeeth)                 // omit b/c overlaps start when rotated
             ];
 
-            let gear = [];
             // create all gear teeth by rotating the first tooth
-            for (var i = 0; i < number_of_teeth; i++) {
-                gear.appendAll(rotate(points, -i * 2 * pi / number_of_teeth));
+            for (var i = 0; i < numTeeth; i++) {
+                gear.appendAll(rotate(points, -i * 2 * pi / numTeeth));
             }
-
-            return gear; // returns an array of [x,y] points
         }
 
-        // gear parameter setup
-        let mm_per_tooth = 2 * module * pi; // mm size of one gear tooth
-        let clearance = 0; // freedom between two gear centers
-        let backlash = 0; // freedom between two gear contact points
-        let pressure_angle = degrees_to_radians(pressureAngle);
-
-        console.log({ mm_per_tooth });
-
-        return build_gear(numTeeth);
+        return gear;
     }
 
 };
