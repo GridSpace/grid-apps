@@ -109,6 +109,25 @@ function sqr(v) {
     return v * v
 }
 
+// radians rotatition around origin
+function rotate(x,y,radians) {
+    return [
+        x * Math.cos(radians) - y * Math.sin(radians),
+        y * Math.cos(radians) + x * Math.sin(radians)
+    ];
+}
+
+const deg2rad = (Math.PI / 180);
+const rad2deg = (180 / Math.PI);
+
+function toRadians(degrees) {
+    return degrees * deg2rad;
+}
+
+function toDegrees(radians) {
+    return radians * rad2deg;
+}
+
 /**
  * return distance between two points
  */
@@ -576,6 +595,7 @@ base.util = {
     pwait,
     ptimer,
     flatten,
+    rotate,
     dist2D,
     distSq,
     distSqv2,
@@ -587,6 +607,8 @@ base.util = {
     offsetPrecision,
     circleCenter,
     numOrDefault,
+    toRadians,
+    toDegrees,
     thetaDiff,
     intersect,
     inRange,

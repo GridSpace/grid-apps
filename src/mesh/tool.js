@@ -738,6 +738,8 @@ mesh.tool = class MeshTool {
         return out;
     }
 
+    // returns points array for a polygon
+    // extrusion and twist is handled in work.js
     generateGear(numTeeth, module, pressureAngle) {
         // Adapted from: Public Domain Parametric Involute Spur Gear by Leemon Baird, 2011, Leemon@Leemon.com http://www.thingiverse.com/thing:5505
         // see also http://grabcad.com/questions/tutorial-how-to-model-involute-gears-in-solidworks-and-show-design-intent
@@ -758,6 +760,15 @@ mesh.tool = class MeshTool {
 
         // radius a fraction f up the curved side of the tooth
         function q7(f, r, b, r2, t, s) { return q6(b, s, t, (1 - f) * Math.max(b, r) + f * r2); }
+
+        function qf(steps, r, b, r2, t, s) {
+            let res = [];
+            let step = 1/steps;
+            for (let f=0; f <= 1; f += step) {
+                res.push(q7(f, r, b, r2, t, s));
+            }
+            return res;
+        }
 
         // rotate an array of 2d points
         function rotate(points_array, angle) {
@@ -780,32 +791,31 @@ mesh.tool = class MeshTool {
             let r = p - (c - p) - clearance;                  // radius of root circle
             let t = mm_per_tooth / 2 - backlash / 2;          // tooth thickness at pitch circle
             let k = -iang(b, p) - t / 2 / p;                  // angle where involute meets base circle on side of tooth
+            let points = [                                    // [x,y] points for a single gear tooth
+                polar(r, -pi / number_of_teeth),
+                polar(r, r < b ? k : -pi / number_of_teeth),
+                ...qf(10, r, b, c, k, 1),
+                ...qf(10, r, b, c, k, -1).reverse(),
+                polar(r, r < b ? -k : pi / number_of_teeth),
+                // polar(r, 3.142 / number_of_teeth)
+            ];
 
-            // here is the magic - a set of [x,y] points to create a single gear tooth
-            let points = [polar(r, -3.142 / number_of_teeth), polar(r, r < b ? k : -pi / number_of_teeth),
-            q7(0 / 5, r, b, c, k, 1), q7(1 / 5, r, b, c, k, 1), q7(2 / 5, r, b, c, k, 1), q7(3 / 5, r, b, c, k, 1), q7(4 / 5, r, b, c, k, 1), q7(5 / 5, r, b, c, k, 1),
-            q7(5 / 5, r, b, c, k, -1), q7(4 / 5, r, b, c, k, -1), q7(3 / 5, r, b, c, k, -1), q7(2 / 5, r, b, c, k, -1), q7(1 / 5, r, b, c, k, -1), q7(0 / 5, r, b, c, k, -1),
-            polar(r, r < b ? -k : pi / number_of_teeth), polar(r, 3.142 / number_of_teeth)];
-
-            let answer = [];
-
-            // create every gear tooth by rotating the first tooth
+            let gear = [];
+            // create all gear teeth by rotating the first tooth
             for (var i = 0; i < number_of_teeth; i++) {
-                answer = answer.concat(rotate(points, -i * 2 * pi / number_of_teeth));
+                gear.appendAll(rotate(points, -i * 2 * pi / number_of_teeth));
             }
 
-            return answer; // returns an array of [x,y] points
+            return gear; // returns an array of [x,y] points
         }
 
         // gear parameter setup
-        // number_of_teeth = numTeeth; // number of teeth (typically the only parameter to change)
-        // note: rest of parameters must be unchanged if you want gears to fit.
-        let mm_per_tooth = 9 * module * pi; // pixel size of one gear tooth (even though it says millimeters, it's pixels) must be same for two gears to fit each other
-        // let pressure_angle = pressureAngle; // in degrees, determines gear shape, range is 10 to 40 degrees, most common is 20 degrees
-        let clearance = 4; // freedom between two gear centers
-        let backlash = 4; // freedom between two gear contact points
-        let axle_radius = 20; // center hole radius in pixels
-        let pressure_angle = degrees_to_radians(pressureAngle); // convet degrees to radians
+        let mm_per_tooth = 2 * module * pi; // mm size of one gear tooth
+        let clearance = 0; // freedom between two gear centers
+        let backlash = 0; // freedom between two gear contact points
+        let pressure_angle = degrees_to_radians(pressureAngle);
+
+        console.log({ mm_per_tooth });
 
         return build_gear(numTeeth);
     }

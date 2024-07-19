@@ -1094,6 +1094,7 @@ class Polygon {
         } else if (this.isClockwise() !== poly.isClockwise()) {
             this.reverse();
         }
+        return this;
     }
 
     /**
@@ -1105,6 +1106,7 @@ class Polygon {
         } else if (this.isClockwise() === poly.isClockwise()) {
             this.reverse();
         }
+        return this;
     }
 
     /**

@@ -401,11 +401,34 @@ let model = {
     },
 
     gen_gear(data, send) {
-        const { teeth, module, angle, z } = data;
-        let points = new mesh.tool().generateGear(teeth, module, angle);
-        let verts = points.map(v => [...v, 0]).flat();
-        let poly = newPolygon().addVerts(verts).extrude(z || 10);
-        send.done(poly);
+        const { teeth, module, angle, twist, shaft, z } = data;
+        let points = new mesh.tool()
+            .generateGear(teeth, module, angle)
+            .map(v => [...v, 0]).flat();
+        let poly = newPolygon().addVerts(points);
+        if (shaft) {
+            poly.addInner(
+                newPolygon().centerCircle({
+                    x:0, y:0, z:0
+                }, shaft, Math.min(20+shaft,100))
+            );
+        }
+        let verts = poly.extrude(z || 15);
+        if (twist) {
+            let rad = base.util.toRadians(twist);
+            for (let i=0; i<verts.length; i += 3) {
+                if (Math.abs(verts[i+2]) < 0.001) {
+                    let [x, y] = base.util.rotate(
+                        verts[i],
+                        verts[i+1],
+                        rad
+                    );
+                    verts[i] = x;
+                    verts[i+1] = y;
+                }
+            }
+        }
+        send.done(verts);
     }
 };
 

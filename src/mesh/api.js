@@ -321,12 +321,14 @@ let add = {
     },
 
     gear(opt = {}) {
-        function gengear(teeth, module, angle) {
+        function gengear(teeth, module, angle, twist, shaft) {
             api.modal.hide();
             worker.model_gen_gear({
                 teeth: parseInt(teeth),
                 module: parseFloat(module),
-                angle: parseFloat(angle)
+                angle: parseFloat(angle),
+                twist: parseFloat(twist),
+                shaft: parseFloat(shaft),
             }).then(gear => {
                 const nmdl = new mesh.model({ file: "gear", mesh: gear.toFloat32() });
                 const ngrp = group.new([ nmdl ]);
@@ -342,11 +344,17 @@ let add = {
                 h.input({ value: opt.module || 3, size: 5, id: "gmodule" }),
                 h.label('pressure angle'),
                 h.input({ value: opt.angle || 20, size: 5, id: "gangle" }),
+                h.label('twist angle'),
+                h.input({ value: opt.twist || 0, size: 5, id: "gtwist" }),
+                h.label('shaft diameter'),
+                h.input({ value: opt.shaft || 10, size: 5, id: "gshaft" }),
                 h.button({ _: "create", onclick() {
                     gengear(
                         api.modal.bound.gteeth.value,
                         api.modal.bound.gmodule.value,
                         api.modal.bound.gangle.value,
+                        api.modal.bound.gtwist.value,
+                        api.modal.bound.gshaft.value,
                     )
                 } })
             ]) ]
