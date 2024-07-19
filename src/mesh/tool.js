@@ -813,6 +813,8 @@ mesh.tool = class MeshTool {
             for (var i = 0; i < numTeeth; i++) {
                 gear.appendAll(rotate(points, -i * 2 * pi / numTeeth));
             }
+
+            mesh.log(`gear pitch radius: ${p.round(3)}`);
         }
 
         return gear;

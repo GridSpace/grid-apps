@@ -410,7 +410,7 @@ let model = {
             poly.addInner(
                 newPolygon().centerCircle({
                     x:0, y:0, z:0
-                }, shaft, Math.min(20+shaft,100))
+                }, shaft / 2, Math.min(20 + shaft,100))
             );
         }
         let verts = poly.extrude(z || 15);

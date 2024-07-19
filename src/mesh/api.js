@@ -347,7 +347,7 @@ let add = {
                 h.label('twist angle'),
                 h.input({ value: opt.twist || 0, size: 5, id: "gtwist" }),
                 h.label('shaft diameter'),
-                h.input({ value: opt.shaft || 10, size: 5, id: "gshaft" }),
+                h.input({ value: opt.shaft || 5, size: 5, id: "gshaft" }),
                 h.button({ _: "create", onclick() {
                     gengear(
                         api.modal.bound.gteeth.value,
