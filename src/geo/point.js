@@ -551,6 +551,13 @@ class Point {
         this.z += delta.z;
         return this;
     }
+
+    // radians rotatition in XY around origin
+    rotate(angle) {
+        const { x, y } = this;
+        this.x = x * Math.cos(angle) - y * Math.sin(angle);
+        this.y = y * Math.cos(angle) + x * Math.sin(angle);
+    }
 }
 
 function dot(u, v) {

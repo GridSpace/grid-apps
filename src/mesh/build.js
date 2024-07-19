@@ -118,7 +118,7 @@ const modal = api.modal = {
 let pinner;
 // transient logging window bottom/left
 const log = api.log = {
-    age: 10000, // age out lines more than 10 seconds old
+    age: 600000, // age out lines more than 10 minutes old
 
     data: [],   // last n messages
 
@@ -187,7 +187,9 @@ const log = api.log = {
 };
 
 // bind endpoint for worker to log in the ui
-gapp.broker.subscribe("mesh.log", log.emit);
+gapp.broker.subscribe("mesh.log", msg => {
+    log.emit(msg);
+});
 
 // welcome dialog
 api.welcome = function(version = "unknown") {
@@ -373,6 +375,7 @@ function ui_build() {
             h.div({ class: "pop"}, [
                 h.button({ _: 'cylinder', onclick: add.cylinder }),
                 h.button({ _: 'cube', onclick: add.cube }),
+                h.button({ _: 'gear', onclick: add.gear }),
                 devel ? h.button({ _: 'input', onclick: add.input }) : undefined
             ])
         ]),

@@ -737,6 +737,89 @@ mesh.tool = class MeshTool {
         }
         return out;
     }
+
+    // returns points array for a polygon
+    // extrusion and twist is handled in work.js
+    generateGear(numTeeth, module, pressureAngle) {
+        // Adapted from: Public Domain Parametric Involute Spur Gear by Leemon Baird, 2011, Leemon@Leemon.com http://www.thingiverse.com/thing:5505
+        // see also http://grabcad.com/questions/tutorial-how-to-model-involute-gears-in-solidworks-and-show-design-intent
+
+        // const pitch_radius = (numTeeth * module) / 2;
+        const pi = Math.PI;
+
+        // degrees to radians
+        function degrees_to_radians(theta) { return theta / 180 * pi; }
+
+        // polar to cartesian
+        function polar(r, theta) { return [r * Math.sin(theta), r * Math.cos(theta)]; }
+
+        // point on involute curve
+        function q6(b, s, t, d) { return polar(d, s * (iang(b, d) + t)); }
+
+        // unwind this many degrees to go from r1 to r2
+        function iang(r1, r2) { return Math.sqrt((r2 / r1) * (r2 / r1) - 1) - Math.acos(r1 / r2); }
+
+        // radius a fraction f up the curved side of the tooth
+        function q7(f, r, b, r2, t, s) { return q6(b, s, t, (1 - f) * Math.max(b, r) + f * r2); }
+
+        // lerp q7 0..1 with a given # steps
+        function qf(steps, r, b, r2, t, s) {
+            let res = [];
+            let step = 1/steps;
+            for (let f=0; f <= 1; f += step) {
+                res.push(q7(f, r, b, r2, t, s));
+            }
+            return res;
+        }
+
+        // rotate an array of 2d points
+        function rotate(points_array, angle) {
+            let answer = [];
+            for (let i = 0; i < points_array.length; i++) {
+                let x = points_array[i][0];
+                let y = points_array[i][1];
+                let xr = x * Math.cos(angle) - y * Math.sin(angle);
+                let yr = y * Math.cos(angle) + x * Math.sin(angle);
+                answer.push([xr, yr]);
+            }
+            return answer;
+        }
+
+        // gear parameter setup
+        let mm_per_tooth = module * pi; // mm size of one gear tooth
+        let clearance = 0.1; // freedom between two gear centers
+        let backlash = 0.1; // freedom between two gear contact points
+        let pressure_angle = degrees_to_radians(pressureAngle);
+        let gear = [];
+
+        // involute gear maker
+        {
+            let p = mm_per_tooth * numTeeth / pi / 2;         // radius of pitch circle
+            let c = p + mm_per_tooth / pi - clearance;        // radius of outer circle
+            let b = p * Math.cos(pressure_angle);             // radius of base circle
+            let r = p - (c - p) - clearance;                  // radius of root circle
+            let t = mm_per_tooth / 2 - backlash / 2;          // tooth thickness at pitch circle
+            let k = -iang(b, p) - t / 2 / p;                  // angle where involute meets base circle on side of tooth
+            let points = [                                    // [x,y] points for a single gear tooth
+                polar(r, -pi / numTeeth),
+                polar(r, r < b ? k : -pi / numTeeth),
+                ...qf(10, r, b, c, k, 1),
+                ...qf(10, r, b, c, k, -1).reverse(),
+                polar(r, r < b ? -k : pi / numTeeth),
+                // polar(r, 3.142 / numTeeth)                 // omit b/c overlaps start when rotated
+            ];
+
+            // create all gear teeth by rotating the first tooth
+            for (var i = 0; i < numTeeth; i++) {
+                gear.appendAll(rotate(points, -i * 2 * pi / numTeeth));
+            }
+
+            mesh.log(`gear pitch radius: ${p.round(3)}`);
+        }
+
+        return gear;
+    }
+
 };
 
 });

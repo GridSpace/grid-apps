@@ -318,6 +318,48 @@ let add = {
             });
             api.modal.bound.gencyl.focus();
         }
+    },
+
+    gear(opt = {}) {
+        function gengear(teeth, module, angle, twist, shaft) {
+            api.modal.hide();
+            worker.model_gen_gear({
+                teeth: parseInt(teeth),
+                module: parseFloat(module),
+                angle: parseFloat(angle),
+                twist: parseFloat(twist),
+                shaft: parseFloat(shaft),
+            }).then(gear => {
+                const nmdl = new mesh.model({ file: "gear", mesh: gear.toFloat32() });
+                const ngrp = group.new([ nmdl ]);
+                ngrp.floor();
+            });
+        }
+        api.modal.dialog({
+            title: "gear generator",
+            body: [ h.div({ class: "addgear" }, [
+                h.label('number of teeth'),
+                h.input({ value: opt.teeth || 20, size: 5, id: "gteeth" }),
+                h.label('module (diam / teeth)'),
+                h.input({ value: opt.module || 3, size: 5, id: "gmodule" }),
+                h.label('pressure angle'),
+                h.input({ value: opt.angle || 20, size: 5, id: "gangle" }),
+                h.label('twist angle'),
+                h.input({ value: opt.twist || 0, size: 5, id: "gtwist" }),
+                h.label('shaft diameter'),
+                h.input({ value: opt.shaft || 5, size: 5, id: "gshaft" }),
+                h.button({ _: "create", onclick() {
+                    gengear(
+                        api.modal.bound.gteeth.value,
+                        api.modal.bound.gmodule.value,
+                        api.modal.bound.gangle.value,
+                        api.modal.bound.gtwist.value,
+                        api.modal.bound.gshaft.value,
+                    )
+                } })
+            ]) ]
+        });
+        api.modal.bound.gteeth.focus();
     }
 };
 
