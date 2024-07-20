@@ -410,19 +410,18 @@ let model = {
             const srad = shaft / 2;
             poly.addInner( newPolygon().centerCircle({ x:0, y:0, z:0 }, srad, nump) );
         }
-        const verts = poly.extrude(height || 15, { chamfer });
+        const zh = height || 15;
+        const verts = poly.extrude(zh, { chamfer });
         if (twist) {
             const rad = base.util.toRadians(twist);
             for (let i=0; i<verts.length; i += 3) {
-                if (Math.abs(verts[i+2]) < 0.001) {
-                    let [x, y] = base.util.rotate(
-                        verts[i],
-                        verts[i+1],
-                        rad
-                    );
-                    verts[i] = x;
-                    verts[i+1] = y;
-                }
+                let [x, y] = base.util.rotate(
+                    verts[i],
+                    verts[i+1],
+                    rad * (verts[i+2] / zh)
+                );
+                verts[i] = x;
+                verts[i+1] = y;
             }
         }
         send.done(verts);
