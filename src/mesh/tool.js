@@ -740,7 +740,7 @@ mesh.tool = class MeshTool {
 
     // returns points array for a polygon
     // extrusion and twist is handled in work.js
-    generateGear(numTeeth, module, pressureAngle) {
+    generateGear(numTeeth, module, pressureAngle, offset) {
         // Adapted from: Public Domain Parametric Involute Spur Gear by Leemon Baird, 2011, Leemon@Leemon.com http://www.thingiverse.com/thing:5505
         // see also http://grabcad.com/questions/tutorial-how-to-model-involute-gears-in-solidworks-and-show-design-intent
 
@@ -787,10 +787,11 @@ mesh.tool = class MeshTool {
 
         // gear parameter setup
         let mm_per_tooth = module * pi; // mm size of one gear tooth
-        let clearance = 0.1; // freedom between two gear centers
-        let backlash = 0.1; // freedom between two gear contact points
+        let clearance = offset/2 || 0; // freedom between two gear centers
+        let backlash = offset || 0; // freedom between two gear contact points
         let pressure_angle = degrees_to_radians(pressureAngle);
         let gear = [];
+        let pitch;
 
         // involute gear maker
         {
@@ -800,11 +801,12 @@ mesh.tool = class MeshTool {
             let r = p - (c - p) - clearance;                  // radius of root circle
             let t = mm_per_tooth / 2 - backlash / 2;          // tooth thickness at pitch circle
             let k = -iang(b, p) - t / 2 / p;                  // angle where involute meets base circle on side of tooth
+            let f = 10 + ((p/5) | 0);                         // increase number of tooth curve points on larger gears
             let points = [                                    // [x,y] points for a single gear tooth
                 polar(r, -pi / numTeeth),
                 polar(r, r < b ? k : -pi / numTeeth),
-                ...qf(10, r, b, c, k, 1),
-                ...qf(10, r, b, c, k, -1).reverse(),
+                ...qf(f, r, b, c, k, 1),
+                ...qf(f, r, b, c, k, -1).reverse(),
                 polar(r, r < b ? -k : pi / numTeeth),
                 // polar(r, 3.142 / numTeeth)                 // omit b/c overlaps start when rotated
             ];
@@ -814,10 +816,11 @@ mesh.tool = class MeshTool {
                 gear.appendAll(rotate(points, -i * 2 * pi / numTeeth));
             }
 
-            mesh.log(`gear pitch radius: ${p.round(3)}`);
+            pitch = p.round(3);
+            mesh.log(`gear pitch radius: ${pitch}`);
         }
 
-        return gear;
+        return { gear, pitch };
     }
 
 };
