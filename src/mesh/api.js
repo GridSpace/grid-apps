@@ -15,6 +15,7 @@ const { Matrix4, Vector3 } = THREE;
 const { base, mesh, moto } = root;
 const { space } = moto;
 const { util } = mesh;
+const { newPolygon } = base;
 
 const worker = moto.client.fn
 const groups = [];
@@ -382,36 +383,57 @@ let add = {
         const vert = box.attributes.position.array;
         const nmdl = new mesh.model({ file: "box", mesh: vert });
         const ngrp = group.new([ nmdl ]);
-        ngrp.scale(5, 5, 5).floor();
+        ngrp.scale(10, 10, 10).floor();
     },
 
-    cylinder(opt = { facets: 30 }) {
-        function gencyl(facets) {
+    cylinder(opt = {}) {
+        function gencyl(opt = {}) {
+            let { diameter, height, facets, chamfer, bore } = opt;
             api.modal.hide();
-            facets = parseInt(facets);
-            if (facets > 3) {
-                api.log.emit(`add cylinder with ${facets} facets`);
-                const cyl = new THREE.CylinderGeometry(5,5,1,facets).toNonIndexed();
-                const vert = cyl.attributes.position.array;
+            if (diameter && height) {
+                const center = { x:0, y:0, z:0 };
+                api.log.emit(`add cylinder faces=${facets} height=${height} diameter=${diameter}`);
+                facets = Math.max(3, facets || diameter * 3)
+                const cyl = newPolygon().centerCircle(center, diameter/2, facets);
+                if (bore && bore < diameter) {
+                    cyl.addInner(newPolygon().centerCircle(center, bore/2, facets));
+                }
+                const vert = cyl.extrude(height, { chamfer }).toFloat32();
                 const nmdl = new mesh.model({ file: "cylinder", mesh: vert });
                 const ngrp = group.new([ nmdl ]);
                 ngrp.floor();
             }
         }
-        if (opt.facets > 2) {
-            gencyl(opt.facets);
+        if (opt.facets && opt.diameter && opt.height) {
+            gencyl(opt.diameter, opt.height, opt.facets);
         } else {
             api.modal.dialog({
                 title: "cylinder",
-                body: [ h.div({ class: "addact" }, [
+                body: [ h.div({ class: "addgear" }, [
+                    h.label('diameter'),
+                    h.input({ value: opt.diameter || 20, size: 5, id: "_diameter" }),
+                    h.label('height'),
+                    h.input({ value: opt.height || 10, size: 5, id: "_height" }),
+                    h.hr(),
+                    h.label('bore'),
+                    h.input({ value: opt.facets || 0, size: 5, id: "_bore" }),
                     h.label('facets'),
-                    h.input({ value: opt.facets || 30, size: 5, id: "gencyl" }),
+                    h.input({ value: opt.facets || 0, size: 5, id: "_facets" }),
+                    h.label('chamfer'),
+                    h.input({ value: opt.chamfer || 0, size: 5, id: "_chamfer" }),
                     h.button({ _: "create", onclick() {
-                        gencyl(api.modal.bound.gencyl.value)
+                        const { _diameter, _facets, _height, _chamfer, _bore } = api.modal.bound;
+                        gencyl({
+                            diameter: parseFloat(_diameter.value),
+                            height: parseFloat(_height.value),
+                            facets: parseInt(_facets.value),
+                            bore: parseFloat(_bore.value),
+                            chamfer: parseFloat(_chamfer.value),
+                        });
                     } })
                 ]) ]
             });
-            api.modal.bound.gencyl.focus();
+            api.modal.bound._diameter.focus();
         }
     },
 

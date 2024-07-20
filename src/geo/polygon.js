@@ -2133,8 +2133,7 @@ class Polygon {
         let z_side_top = z;
         let z_side_bottom = z_bottom;
 
-        console.log({ chamfer });
-
+        // chamfer bottom only on negative chamfer
         if (chamfer < 0) {
             chamfer_top = 0;
             chamfer_bottom = -chamfer;
@@ -2156,7 +2155,6 @@ class Polygon {
 
         if (chamfer_bottom) {
             let inset = this.offset(chamfer_bottom);
-            console.log({ inset });
             if (inset.length === 1) {
                 inset[0].setZ(0);
                 bottom_face = inset[0].earcut();
