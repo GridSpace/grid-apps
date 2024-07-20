@@ -227,6 +227,12 @@ const selection = {
 
     bounds() {
         return util.bounds(selected.map(s => s.object));
+    },
+
+    show() {
+        for (let m of selection.models()) {
+            m.visible(true);
+        }
     }
 };
 

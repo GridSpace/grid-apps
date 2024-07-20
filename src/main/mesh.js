@@ -323,7 +323,7 @@ function space_init(data) {
                 case 'KeyE':
                     return api.tool.clean();
                 case 'KeyV':
-                    return selection.focus();
+                    return shiftKey ? selection.show() : selection.focus();
                 case 'KeyN':
                     return shiftKey ? estop(evt, api.tool.rename()) : api.normals();
                 case 'KeyW':
