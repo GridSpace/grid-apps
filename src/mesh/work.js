@@ -24,7 +24,7 @@ const { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } =
 const { base, mesh, moto } = root;
 const { client, worker } = moto;
 const { util } = mesh;
-const { newPolygon } = base;
+const { CSG, newPolygon } = base;
 const cache = {};
 
 // add scoped access to cache
@@ -146,29 +146,36 @@ let model = {
 
     union(recs) {
         let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
-        let solids = arrays.map(a => base.CSG.fromPositionArray(a));
-        let union = base.CSG.union(...solids);
-        return base.CSG.toPositionArray(union);
+        let solids = arrays.map(a => CSG.fromPositionArray(a));
+        let union = CSG.union(...solids);
+        return CSG.toPositionArray(union);
+    },
+
+    difference(recs) {
+        let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
+        let solids = arrays.map(a => CSG.fromPositionArray(a));
+        let diff = CSG.difference(...solids);
+        return CSG.toPositionArray(diff);
     },
 
     intersect(recs) {
         let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
-        let solids = arrays.map(a => base.CSG.fromPositionArray(a));
-        let union = base.CSG.intersect(...solids);
-        return base.CSG.toPositionArray(union);
+        let solids = arrays.map(a => CSG.fromPositionArray(a));
+        let union = CSG.intersect(...solids);
+        return CSG.toPositionArray(union);
     },
 
     subtract(recs) {
         let bases = recs.filter(rec => !rec.tool)
             .map(rec => translate_encode(rec.id, rec.matrix))
-            .map(a => base.CSG.fromPositionArray(a));
+            .map(a => CSG.fromPositionArray(a));
         let tools = recs.filter(rec => rec.tool)
             .map(rec => translate_encode(rec.id, rec.matrix))
-            .map(a => base.CSG.fromPositionArray(a));
+            .map(a => CSG.fromPositionArray(a));
         let subs = [];
         for (let obj of bases) {
-            let sub = base.CSG.subtract(obj, ...tools);
-            subs.appendAll(base.CSG.toPositionArray(sub));
+            let sub = CSG.subtract(obj, ...tools);
+            subs.appendAll(CSG.toPositionArray(sub));
         }
         return subs.toFloat32();
     },

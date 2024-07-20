@@ -235,10 +235,10 @@ const pattern = {
      * @param {float[]} center [x,y,z]
      */
     circle(count, center) {
-        async function doit(count, center = [0,0,0]) {
+        async function doit(count, center = [0,0]) {
             api.modal.hide();
             let models = selection.models();
-            let [ cx, cy, cz ] = center;
+            let [ cx, cy ] = center;
             for (let model of models) {
                 await api.tool.regroup([ model ]);
                 let pos = model.group.position().clone();
@@ -260,8 +260,8 @@ const pattern = {
                 body: [ h.div({ class: "addgear" }, [
                     h.label('total count'),
                     h.input({ value: 3, size: 5, id: "_count" }),
-                    h.label('center x,y,z'),
-                    h.input({ value: "0,0,0", size: 5, id: "_center" }),
+                    h.label('center x,y'),
+                    h.input({ value: "0,0", size: 5, id: "_center" }),
                     h.button({ _: "create", onclick() {
                         doit(
                             parseInt(api.modal.bound._count.value) || 3,
@@ -489,6 +489,7 @@ const tool = {
                 file: `merged`,
                 mesh: data
             })]).promote();
+            api.selection.visible(false);
             api.selection.set([group]);
             api.log.emit('merge complete').unpin();
         });
@@ -508,6 +509,7 @@ const tool = {
                 file: `union`,
                 mesh: data
             })]).promote();
+            api.selection.visible(false);
             api.selection.set([group]);
         })
         .catch(error => {
@@ -515,6 +517,31 @@ const tool = {
         })
         .finally(() => {
             api.log.emit('union complete').unpin();
+        });
+    },
+
+    difference(models) {
+        models = fallback(models);
+        if (models.length < 2) {
+            return api.log.emit('nothing to diff');
+        }
+        api.log.emit(`diff ${models.length} models`).pin();
+        worker.model_difference(models.map(m => {
+            return { id: m.id, matrix: m.matrix }
+        }))
+        .then(data => {
+            let group = api.group.new([new mesh.model({
+                file: `diff`,
+                mesh: data
+            })]).promote();
+            api.selection.visible(false);
+            api.selection.set([group]);
+        })
+        .catch(error => {
+            api.log.emit(`diff error: ${error}`);
+        })
+        .finally(() => {
+            api.log.emit('diff complete').unpin();
         });
     },
 
@@ -532,6 +559,7 @@ const tool = {
                 file: `intersect`,
                 mesh: data
             })]).promote();
+            api.selection.visible(false);
             api.selection.set([group]);
         })
         .catch(error => {
@@ -556,6 +584,7 @@ const tool = {
                 file: `subtract`,
                 mesh: data
             })]).promote();
+            api.selection.visible(false);
             api.selection.set([group]);
         })
         .catch(error => {

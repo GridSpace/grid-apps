@@ -153,13 +153,17 @@ mesh.model = class MeshModel extends mesh.object {
         return this.duplicate({ mirror: true });
     }
 
-    // return new group containing just this model in world coordinates
+    // return a model containing just this model
+    // translated into world coordinates (rebuilt from rotation matrix)
+    // defaults to returning a new model in a new group
+    // options to mirror, re-use a group, or update model in-place
     duplicate(opt = {}) {
         return worker.model_duplicate({
             matrix: this.matrix,
             id: this.id,
             opt: { mirror: opt.mirror}
         }).then(data => {
+            if (opt.reload) return this.reload(data);
             let model = new mesh.model({ file: `${this.file}`, mesh: data });
             let group = opt.group || mesh.api.group.new();
             group.add(model);

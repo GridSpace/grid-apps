@@ -396,6 +396,7 @@ function ui_build() {
                 h.button({ _: 'union', onclick: tool.union }),
                 h.button({ _: 'subtract', onclick: tool.subtract }),
                 h.button({ _: 'intersect', onclick: tool.intersect }),
+                h.button({ _: 'difference', onclick: tool.difference }),
             ])
         ]),
         h.div([

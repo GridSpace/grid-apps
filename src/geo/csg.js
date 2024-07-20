@@ -8,6 +8,8 @@ gapp.register("geo.csg", [], (root, exports) => {
 
 const { base, ext } = root;
 const debug = true;
+const precision = 0.001;
+const factor = 1/precision;
 
 function log() {
     if (root?.mesh?.log) {
@@ -32,6 +34,11 @@ const CSG = {
     // accepts 2 or more arguments with threejs vertex position arrays
     intersect() {
         return CSG.moduleOp('manifold.intersect', 'intersection', ...arguments);
+    },
+
+    // accepts 2 or more arguments with threejs vertex position arrays
+    difference() {
+        return CSG.moduleOp('manifold.difference', 'difference', ...arguments);
     },
 
     moduleOp(name, op) {
@@ -63,7 +70,7 @@ const CSG = {
                 vertices[p++] = vertPos[vi++];
                 vertices[p++] = vertPos[vi++];
             }
-            return vertices;
+            return vertices.map(v => v/factor);
         }
         throw "mesh missing required fields";
     },
@@ -71,7 +78,7 @@ const CSG = {
     fromPositionArray(pos) {
         const { index, vertices } = indexVertices(pos);
         let mesh = new Instance.Mesh({
-            vertProperties: vertices.toFloat32(),
+            vertProperties: vertices.map(v => (v*factor)|0).toFloat32(),
             triVerts: index.toUint32()
         });
         return mesh;
