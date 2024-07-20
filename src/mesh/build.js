@@ -399,6 +399,14 @@ function ui_build() {
             ])
         ]),
         h.div([
+            h.div({ _: "pattern", class: "head" }),
+            h.div({ class: "back"}),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'circular', onclick() { api.pattern.circle() } }),
+                h.button({ _: 'grid', onclick() { api.pattern.grid } }),
+            ])
+        ]),
+        h.div([
             h.div({ _: "models", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [

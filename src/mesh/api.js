@@ -12,7 +12,7 @@
 gapp.register("mesh.api", [], (root, exports) => {
 
 const { Matrix4, Vector3 } = THREE;
-const { mesh, moto } = root;
+const { base, mesh, moto } = root;
 const { space } = moto;
 const { util } = mesh;
 
@@ -226,6 +226,58 @@ const selection = {
 
     bounds() {
         return util.bounds(selected.map(s => s.object));
+    }
+};
+
+const pattern = {
+    /**
+     * @param {int} count number of entities
+     * @param {float[]} center [x,y,z]
+     */
+    circle(count, center) {
+        async function doit(count, center = [0,0,0]) {
+            api.modal.hide();
+            let models = selection.models();
+            let [ cx, cy, cz ] = center;
+            for (let model of models) {
+                await api.tool.regroup([ model ]);
+                let pos = model.group.position().clone();
+                let stepr = (Math.PI * 2) / count;
+                let modnu = [ model ];
+                for (let i=1; i<count; i++) {
+                    let clone = await model.duplicate();
+                    let [x, y] = base.util.rotate(pos.x - cx, pos.y - cy, stepr * i);
+                    clone.group.rotate(0, 0, stepr * i);
+                    clone.group.position(x + cx, y + cy, pos.z);
+                    modnu.push(clone);
+                }
+                await api.tool.regroup(modnu);
+            }
+        }
+        if (!count) {
+            api.modal.dialog({
+                title: "object pattern",
+                body: [ h.div({ class: "addgear" }, [
+                    h.label('total count'),
+                    h.input({ value: 3, size: 5, id: "_count" }),
+                    h.label('center x,y,z'),
+                    h.input({ value: "0,0,0", size: 5, id: "_center" }),
+                    h.button({ _: "create", onclick() {
+                        doit(
+                            parseInt(api.modal.bound._count.value) || 3,
+                            api.modal.bound._center.value.split(',').map(v => parseFloat(v))
+                        );
+                    } })
+                ]) ]
+            });
+            api.modal.bound._count.focus();
+        } else {
+            doit(count, origin);
+        }
+    },
+
+    grid() {
+
     }
 };
 
@@ -565,8 +617,8 @@ const tool = {
         api.log.emit(`regrouping ${models.length} model(s)`);
         let bounds = util.bounds(models);
         let { mid } = bounds;
-        Promise.all(models.map(m => m.ungroup())).then(() => {
-            mesh.api.group.new(models)
+        return Promise.all(models.map(m => m.ungroup())).then(() => {
+            return mesh.api.group.new(models)
                 .centerModels()
                 .position(mid.x, mid.y, mid.z)
                 .setSelected();
@@ -592,7 +644,7 @@ const tool = {
             });
             promises.push(p);
         }
-        Promise.all(promises).then(() => {
+        return Promise.all(promises).then(() => {
             api.log.emit('analysis complete').unpin();
         });
     },
@@ -613,7 +665,7 @@ const tool = {
             });
             promises.push(p);
         }
-        Promise.all(promises).then(() => {
+        return Promise.all(promises).then(() => {
             api.log.emit('isolation complete').unpin();
             // api.log.emit(`... isolate time = ${Date.now() - mark}`);
         });
@@ -901,6 +953,8 @@ const api = exports({
     modes,
 
     selection,
+
+    pattern,
 
     group,
 

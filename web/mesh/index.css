@@ -230,7 +230,7 @@ button:hover {
 }
 
 .addgear {
-    gap: 5px;
+    gap: 5px 10px;
     display: grid;
     grid-template-columns: 1fr 50px;
 }

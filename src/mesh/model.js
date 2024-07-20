@@ -155,18 +155,19 @@ mesh.model = class MeshModel extends mesh.object {
 
     // return new group containing just this model in world coordinates
     duplicate(opt = {}) {
-        worker.model_duplicate({
+        return worker.model_duplicate({
             matrix: this.matrix,
             id: this.id,
-            opt
+            opt: { mirror: opt.mirror}
         }).then(data => {
-            let group = mesh.api.group.new([new mesh.model({
-                file: `${this.file}`,
-                mesh: data
-            })]).setSelected();
+            let model = new mesh.model({ file: `${this.file}`, mesh: data });
+            let group = opt.group || mesh.api.group.new();
+            group.add(model);
+            group.setSelected();
             if (opt.mirror) {
                 group.move(0, 0, group.bounds.dim.z);
             }
+            return model;
         });
     }
 
@@ -460,9 +461,10 @@ mesh.model = class MeshModel extends mesh.object {
     // release from a group but remain in memory and storage
     // so it can be re-assigned to another group
     ungroup() {
-        this.group.remove(this, { free: false });
-        this.group = undefined;
-
+        if (this.group) {
+            this.group.remove(this, { free: false });
+            this.group = undefined;
+        }
         return worker.model_duplicate({
             matrix: this.matrix,
             id: this.id,
