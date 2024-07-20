@@ -324,7 +324,8 @@ let add = {
         function gengear(bound) {
             const { _teeth, _module, _angle, _twist, _shaft, _offset, _height, _chamfer } = bound;
             api.modal.hide();
-            worker.model_gen_gear({
+            let params;
+            worker.model_gen_gear(params = {
                 teeth: parseInt(_teeth.value),
                 module: parseFloat(_module.value),
                 angle: parseFloat(_angle.value),
@@ -337,31 +338,34 @@ let add = {
                 const nmdl = new mesh.model({ file: "gear", mesh: gear.toFloat32() });
                 const ngrp = group.new([ nmdl ]);
                 ngrp.floor();
+                Object.assign(last, params);
+                api.prefs.save();
             });
         }
+        let last = api.prefs.map.gear = (api.prefs.map.gear || {});
         api.modal.dialog({
             title: "gear generator",
             body: [ h.div({ class: "addgear" }, [
                 h.label('number of teeth'),
-                h.input({ value: opt.teeth || 20, size: 5, id: "_teeth" }),
+                h.input({ value: opt.teeth || last.teeth || 20, size: 5, id: "_teeth" }),
                 h.label('shaft diameter'),
-                h.input({ value: opt.shaft || 5, size: 5, id: "_shaft" }),
+                h.input({ value: opt.shaft || last.shaft || 5, size: 5, id: "_shaft" }),
                 h.label('z height'),
-                h.input({ value: opt.height || 15, size: 5, id: "_height" }),
+                h.input({ value: opt.height || last.height || 15, size: 5, id: "_height" }),
                 h.label('chamfer'),
-                h.input({ value: opt.chamfer || 0, size: 5, id: "_chamfer" }),
+                h.input({ value: opt.chamfer || last.chamfer || 0, size: 5, id: "_chamfer" }),
                 h.hr(),
                 h.code("all other settings must"),
                 h.code("match for gears to mesh"),
                 h.hr(),
                 h.label('module (diam / teeth)'),
-                h.input({ value: opt.module || 3, size: 5, id: "_module" }),
+                h.input({ value: opt.module || last.module || 3, size: 5, id: "_module" }),
                 h.label('pressure angle'),
-                h.input({ value: opt.angle || 20, size: 5, id: "_angle" }),
+                h.input({ value: opt.angle || last.angle || 20, size: 5, id: "_angle" }),
                 h.label('twist angle (helix)'),
-                h.input({ value: opt.twist || 0, size: 5, id: "_twist" }),
+                h.input({ value: opt.twist || last.twist || 0, size: 5, id: "_twist" }),
                 h.label('tooth offset (play)'),
-                h.input({ value: opt.offset || 0.1, size: 5, id: "_offset" }),
+                h.input({ value: opt.offset || last.offset || 0.1, size: 5, id: "_offset" }),
                 h.button({ _: "create", onclick() { gengear(api.modal.bound) } })
             ]) ]
         });

@@ -2050,7 +2050,8 @@ class Polygon {
 
     // for turning a poly with an inner offset into a
     // 3d mesh if and only if the inner has the same
-    // circularity and <= num points. used to make chamfers
+    // circularity and <= num points
+    // primarily used to make chamfers
     ribbonMesh(swap) {
         if (!(this.inner && this.inner.length === 1)) {
             return undefined;
@@ -2064,6 +2065,7 @@ class Polygon {
         let p0 = outer.points.slice();
         let p1 = inner.points.slice();
         let min = { d: Infinity, i:0, j:0 };
+        // find the closests two points inner/outer
         for (let i=0; i<p0.length; i++) {
             for (let j=0; j<p1.length; j++) {
                 let d = p0[i].distTo2D(p1[j]);
@@ -2072,10 +2074,11 @@ class Polygon {
                 }
             }
         }
+        // slide the arrays until the closest points are aligned at index = 0
         p0 = p0.slice(min.i).concat(p0.slice(0, min.i)); p0.push(p0[0]);
         p1 = p1.slice(min.j).concat(p1.slice(0, min.j)); p1.push(p1[0]);
         // walk both arrays moving to the next poly + point that forms
-        // the shortest line segment between the two polys
+        // the shortest line segment between the two points (inner / outer)
         let faces = [];
         let pi0 = 0;
         let pi1 = 0;
