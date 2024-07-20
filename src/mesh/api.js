@@ -276,8 +276,51 @@ const pattern = {
         }
     },
 
-    grid() {
-
+    grid(x, y, xs, ys) {
+        async function doit(x = 3, y = 3, xs = 10, ys = 10) {
+            api.modal.hide();
+            let models = selection.models();
+            for (let model of models) {
+                await api.tool.regroup([ model ]);
+                let pos = model.group.position().clone();
+                let modnu = [ model ];
+                for (let i=0; i<x; i++) {
+                    for (let j=0; j<y; j++) {
+                        if (i === 0 && j === 0) continue;
+                        let clone = await model.duplicate();
+                        clone.group.position(i * xs + pos.x, -j * ys + pos.y, pos.z);
+                        modnu.push(clone);
+                    }
+                }
+                await api.tool.regroup(modnu);
+            }
+        }
+        if (!(x && y)) {
+            api.modal.dialog({
+                title: "grid pattern",
+                body: [ h.div({ class: "addgear" }, [
+                    h.label('x count'),
+                    h.input({ value: 3, size: 5, id: "_x" }),
+                    h.label('y count'),
+                    h.input({ value: 3, size: 5, id: "_y" }),
+                    h.label('x spacing'),
+                    h.input({ value: 20, size: 5, id: "_xs" }),
+                    h.label('y spacing'),
+                    h.input({ value: 20, size: 5, id: "_ys" }),
+                    h.button({ _: "create", onclick() {
+                        doit(
+                            parseInt(api.modal.bound._x.value) || 3,
+                            parseInt(api.modal.bound._y.value) || 3,
+                            parseFloat(api.modal.bound._xs.value) || 3,
+                            parseFloat(api.modal.bound._ys.value) || 3,
+                        );
+                    } })
+                ]) ]
+            });
+            api.modal.bound._x.focus();
+        } else {
+            doit(x, y, xs, ys);
+        }
     }
 };
 
