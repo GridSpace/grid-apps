@@ -2133,6 +2133,13 @@ class Polygon {
         let z_side_top = z;
         let z_side_bottom = z_bottom;
 
+        console.log({ chamfer });
+
+        if (chamfer < 0) {
+            chamfer_top = 0;
+            chamfer_bottom = -chamfer;
+        }
+
         // create chamfers (when defined)
         if (chamfer_top) {
             let inset = this.offset(chamfer_top);
@@ -2149,11 +2156,12 @@ class Polygon {
 
         if (chamfer_bottom) {
             let inset = this.offset(chamfer_bottom);
+            console.log({ inset });
             if (inset.length === 1) {
                 inset[0].setZ(0);
                 bottom_face = inset[0].earcut();
-                z_side_top -= chamfer_top;
-                z_side_bottom += chamfer_top;
+                z_side_top -= chamfer_top || chamfer_bottom;
+                z_side_bottom += chamfer_bottom;
                 let renest = POLY.renest([this.clone(true).setZ(z_side_bottom), inset[0]]);
                 for (let rnpoly of renest) {
                     obj.appendAll(rnpoly.ribbonMesh(false));

@@ -352,7 +352,7 @@ let add = {
                 h.input({ value: opt.shaft || last.shaft || 5, size: 5, id: "_shaft" }),
                 h.label('z height'),
                 h.input({ value: opt.height || last.height || 15, size: 5, id: "_height" }),
-                h.label('chamfer'),
+                h.label({ _:'chamfer', title:"negative values apply chamfer to the bottom only" }),
                 h.input({ value: opt.chamfer || last.chamfer || 0, size: 5, id: "_chamfer" }),
                 h.hr(),
                 h.code("all other settings must"),
