@@ -1957,6 +1957,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             camFirstZMax:        newBoolean(LANG.ou_z1st_s, onBooleanClick, {title:LANG.ou_z1st_l}),
             camForceZMax:        newBoolean(LANG.ou_forz_s, onBooleanClick, {title:LANG.ou_forz_l}),
             separator:           newBlank({ class:"set-sep", driven }),
+            camEaseAngle:        newInput(LANG.ou_eang_s, {title:LANG.ou_eang_l, convert:toFloat, bound:bound(0.1,85), show:() => ui.camEaseDown.checked}),
             camFullEngage:       newInput(LANG.ou_feng_s, {title:LANG.ou_feng_l, convert:toFloat, bound:bound(0.1,1.0)}),
             _____:               newGroup(LANG.co_menu, $('cam-origin'), { modes:CAM, driven, separator }),
             camOriginTop:        newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l}),

@@ -1141,9 +1141,9 @@ class Polygon {
      * 1. Travel from fromPoint to closest point on polygon, to rampZ above that that point,
      * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slope until target Z is hit,
      * 3. then the rest of the path is completed and repeated at target Z until touchdown point is reached.
-     *
+     * 4. this function should probably move to CAM prepare since it's only called from there
      */
-    forEachPointEaseDown(fn, fromPoint) {
+    forEachPointEaseDown(fn, fromPoint, degrees = 45) {
         let index = this.findClosestPointTo(fromPoint).index,
             fromZ = fromPoint.z,
             offset = 0,
@@ -1156,10 +1156,6 @@ class Polygon {
             next,
             done;
 
-        // XXX: These should be UI configurable options.
-
-        // "Slope" of the ease-down path in degrees, or an approximation thereof.
-        const degrees = 1;
         // Slope for computations.
         const slope = Math.tan((degrees * Math.PI) / 180);
         // Z height above polygon Z from which to start the ease-down.

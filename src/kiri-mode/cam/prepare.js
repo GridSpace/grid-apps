@@ -88,6 +88,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         origin = newPoint(originx + wmx, originy + wmy, zmax),
         output = print.output,
         easeDown = process.camEaseDown,
+        easeAngle = process.camEaseAngle,
         depthFirst = process.camDepthFirst,
         engageFactor = process.camFullEngage,
         tolerance = 0,
@@ -581,7 +582,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         if (easeDown && poly.isClosed()) {
             last = poly.forEachPointEaseDown(function(point, offset) {
                 camOut(point.clone(), offset > 0, undefined, scale);
-            }, fromPoint);
+            }, fromPoint, easeAngle);
         } else {
             poly.forEachPoint(function(point, pidx, points, offset) {
                 last = point;
