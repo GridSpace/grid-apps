@@ -351,6 +351,7 @@ function ui_build() {
     ]), h.div([
         h.button({ _: 'surface', id: "mode-surface", onclick() { mode.surface() } }),
         h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
+        h.button({ _: 'edge', id: "mode-edge", onclick() { mode.edge() } }),
     ]) ]);
 
     // create hotkey/action menu (top/left)

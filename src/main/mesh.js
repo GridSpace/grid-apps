@@ -9,13 +9,14 @@
 // dep: moto.space
 // dep: data.index
 // dep: mesh.api
+// dep: mesh.split
 // dep: mesh.model
 // dep: mesh.build
 // dep: load.file
 // use: geo.polygons
 gapp.main("main.mesh", [], (root) => {
 
-const { Quaternion, Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide, Vector3 } = THREE;
+const { Quaternion } = THREE;
 const { broker } = gapp;
 const { moto } = root;
 const { space } = moto;
@@ -170,108 +171,11 @@ async function restore_space() {
     });
 }
 
-// toggle edit/split temporary mode (present plane on hover)
-let temp_mode;
-
-// split functions
-let split = {
-    start() {
-        let space = moto.space;
-        let { api, util } = mesh;
-        // highlight button
-        let button = event.target;
-        button.classList.add('selected');
-        // create split plane visual
-        let geo, mat, obj = new Mesh(
-            geo = new PlaneGeometry(1,1),
-            mat = new MeshPhongMaterial({
-                side: DoubleSide,
-                color: 0x5555aa,
-                transparent: false,
-                opacity: 0.5
-            })
-        );
-        space.scene.add(obj);
-        // hide until first hover
-        obj.visible = false;
-        // enable temp mode
-        let state = split.state = { button, obj };
-        let models = state.models = api.selection.models();
-        let meshes = models.map(m => m.mesh);
-        // for split and lay flat modes
-        space.mouse.onHover((int, event, ints) => {
-            if (!event) {
-                return meshes;
-            }
-            obj.visible = false;
-            let { button, buttons } = event;
-            if (buttons) {
-                return;
-            }
-            let { dim, mid } = util.bounds(meshes);
-            let { point, face, object } = int;
-            let { x, y, z } = point;
-
-            mat.color.set(0x5555aa);
-            obj.visible = true;
-            if (event.shiftKey) {
-                y = split.closestZ(y, object, face).y;
-            }
-            // y is z in model space for the purposes of a split
-            state.plane = { z: y };
-            obj.scale.set(dim.x + 2, dim.y + 2, 1);
-            obj.position.set(mid.x, y, -mid.y);
-        });
-        temp_mode = split;
-    },
-
-    select() {
-        let { log } = mesh.api;
-        let { models, plane } = split.state;
-        log.emit(`splitting ${models.length} model(s) at ${plane.z.round(3)}`).pin();
-        Promise.all(models.map(m => m.split(plane))).then(models => {
-            mesh.api.selection.set(models);
-            log.emit('split complete').unpin();
-            split.end();
-        });
-    },
-
-    end() {
-        let space = moto.space;
-        let { button, obj } = split.state;
-        button.classList.remove('selected');
-        space.scene.remove(obj);
-        space.mouse.onHover(undefined);
-        temp_mode = split.state = undefined;
-        mesh.api.selection.update();
-    },
-
-    closestZ(z, object, face) {
-        let { position } = object.geometry.attributes;
-        let matrix = object.matrixWorld;
-        let v0 = new Vector3(position.getX(face.a), position.getY(face.a), position.getZ(face.a)).applyMatrix4(matrix);
-        let v1 = new Vector3(position.getX(face.b), position.getY(face.b), position.getZ(face.b)).applyMatrix4(matrix);
-        let v2 = new Vector3(position.getX(face.c), position.getY(face.c), position.getZ(face.c)).applyMatrix4(matrix);
-        v0._d = Math.abs(v0.y - z);
-        v1._d = Math.abs(v1.y - z);
-        v2._d = Math.abs(v2.y - z);
-        return [ v0, v1, v2 ].sort((a,b) => a._d - b._d)[0];
-    }
-}
-
-function edit_split(event) {
-    if (temp_mode) {
-        temp_mode.end();
-    } else {
-        split.start();
-    }
-}
-
 // add space event bindings
 function space_init(data) {
-    let { space, platform } = data;
     let platcolor = 0x00ff00;
-    let api = mesh.api;
+    let { space, platform } = data;
+    let { api } = mesh;
     let { selection } = api;
 
     // add file drop handler
@@ -337,7 +241,7 @@ function space_init(data) {
                 case 'KeyB':
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':
-                    return space.view.home();
+                    return shiftKey ? selection.hide() : space.view.home();
                 case 'KeyT':
                     return space.view.top();
                 case 'KeyZ':
@@ -363,7 +267,7 @@ function space_init(data) {
                     break;
                 case 'Escape':
                     selection.clear();
-                    temp_mode && temp_mode.end();
+                    mesh.split.active() && mesh.split.end();
                     estop(evt);
                     break;
                 case 'Backspace':
@@ -417,8 +321,8 @@ function space_init(data) {
     space.mouse.upSelect((int, event) => {
         if (event && event.target.nodeName === "CANVAS") {
             const model = int && int.object.model ? int.object.model : undefined;
-            if (temp_mode) {
-                return temp_mode.select(model);
+            if (mesh.split.active()) {
+                return mesh.split.select(model);
             }
             if (model) {
                 const group = model.group;
@@ -666,7 +570,6 @@ function set_wireframe_fog(fogx) {
 
 // bind functions to topics
 broker.listeners({
-    edit_split,
     load_files,
     object_matrix,
     object_destroy,

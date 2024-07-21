@@ -233,6 +233,12 @@ const selection = {
         for (let m of selection.models()) {
             m.visible(true);
         }
+    },
+
+    hide() {
+        for (let m of selection.models()) {
+            m.visible(false);
+        }
     }
 };
 
@@ -835,10 +841,11 @@ const tool = {
 };
 
 const modes = {
-    object: "object",
-    tool: "tool",
-    face: "face",
-    surface: "surface"
+    object: "object",   // mesh or group
+    tool: "tool",       // mesh or group for subtraction
+    face: "face",       // facet / triangle
+    surface: "surface", // normal aligned & adjacent faces
+    edge: "edge",       // edge of a face
 };
 
 // edit mode
@@ -895,6 +902,13 @@ const mode = {
             selection.clear();
         }
         mode.set(modes.surface);
+    },
+
+    edge() {
+        if (!mode.is([ modes.edge ])) {
+            selection.clear();
+        }
+        mode.set(modes.edge);
     }
 };
 
