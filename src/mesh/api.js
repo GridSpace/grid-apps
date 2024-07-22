@@ -862,7 +862,7 @@ const mode = {
         }
         $(`mode-${mode}`).classList.add('selected');
         api.mode.check();
-        mesh.edges.end();
+        mesh.edges?.end();
     },
 
     get() {
