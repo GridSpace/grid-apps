@@ -731,7 +731,7 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function setDeviceCode(code, devicename) {
-        api.event.emit('device.select', {devicename, code});
+        api.event.emit('device.select', devicename);
         try {
             if (typeof(code) === 'string') code = js2o(code) || {};
 
