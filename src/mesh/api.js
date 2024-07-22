@@ -7,6 +7,7 @@
 // dep: moto.broker
 // dep: moto.space
 // dep: mesh.util
+// dep: mesh.edges
 // dep: add.three
 // use: add.array
 gapp.register("mesh.api", [], (root, exports) => {
@@ -24,6 +25,10 @@ let selected = [];
 let tools = [];
 
 const selection = {
+    count() {
+        return selected.length;
+    },
+
     // @returns {MeshObject[]} or all groups if not strict and no selection
     list(strict = false) {
         return selected.length || strict ? selected.slice() : groups.slice();
@@ -562,11 +567,11 @@ const tool = {
             return { id: m.id, matrix: m.matrix }
         }))
         .then(data => {
+            api.selection.visible(false);
             let group = api.group.new([new mesh.model({
                 file: `merged`,
                 mesh: data
             })]).promote();
-            api.selection.visible(false);
             api.selection.set([group]);
             api.log.emit('merge complete').unpin();
         });
@@ -582,11 +587,11 @@ const tool = {
             return { id: m.id, matrix: m.matrix }
         }))
         .then(data => {
+            api.selection.visible(false);
             let group = api.group.new([new mesh.model({
                 file: `union`,
                 mesh: data
             })]).promote();
-            api.selection.visible(false);
             api.selection.set([group]);
         })
         .catch(error => {
@@ -607,11 +612,11 @@ const tool = {
             return { id: m.id, matrix: m.matrix }
         }))
         .then(data => {
+            api.selection.visible(false);
             let group = api.group.new([new mesh.model({
                 file: `diff`,
                 mesh: data
             })]).promote();
-            api.selection.visible(false);
             api.selection.set([group]);
         })
         .catch(error => {
@@ -857,6 +862,7 @@ const mode = {
         }
         $(`mode-${mode}`).classList.add('selected');
         api.mode.check();
+        mesh.edges.end();
     },
 
     get() {
@@ -909,6 +915,7 @@ const mode = {
             selection.clear();
         }
         mode.set(modes.edge);
+        mesh.edges.start();
     }
 };
 
@@ -1091,6 +1098,8 @@ const api = exports({
 });
 
 const { broker } = gapp;
+const call = broker.send;
+
 // publish messages when api functions are called
 broker.wrapObject(selection, 'selection');
 broker.wrapObject(model, 'model');

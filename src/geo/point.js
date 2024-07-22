@@ -134,6 +134,37 @@ class Point {
         return Math.sqrt(this.distToLineSq(p1, p2));
     }
 
+    distToLine3D(lp1, lp2) {
+        // Convert points to vectors
+        const p0 = [this.x, this.y, this.z];
+        const p1 = [lp1.x, lp1.y, lp1.z];
+        const p2 = [lp2.x, lp2.y, lp2.z];
+
+        // Calculate the direction vector of the line
+        const lineDir = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]];
+
+        // Calculate the vector from p1 to the point
+        const p1ToP = [p0[0] - p1[0], p0[1] - p1[1], p0[2] - p1[2]];
+
+        // Calculate the cross product of lineDir and p1ToP
+        const crossProd = [
+            lineDir[1] * p1ToP[2] - lineDir[2] * p1ToP[1],
+            lineDir[2] * p1ToP[0] - lineDir[0] * p1ToP[2],
+            lineDir[0] * p1ToP[1] - lineDir[1] * p1ToP[0]
+        ];
+
+        // Calculate the magnitude of the cross product
+        const crossProdMag = Math.sqrt(crossProd[0] ** 2 + crossProd[1] ** 2 + crossProd[2] ** 2);
+
+        // Calculate the magnitude of the direction vector of the line
+        const lineDirMag = Math.sqrt(lineDir[0] ** 2 + lineDir[1] ** 2 + lineDir[2] ** 2);
+
+        // Distance from point to line is the magnitude of the cross product divided by the magnitude of the direction vector
+        const distance = crossProdMag / lineDirMag;
+
+        return distance;
+    }
+
     /**
      * used exclusively in new fill code. output does not agree with
      * old distToLine, but is the only method that seems to work for

@@ -157,20 +157,21 @@ mesh.model = class MeshModel extends mesh.object {
     // translated into world coordinates (rebuilt from rotation matrix)
     // defaults to returning a new model in a new group
     // options to mirror, re-use a group, or update model in-place
-    duplicate(opt = {}) {
+    duplicate(opt = { select: true }) {
         return worker.model_duplicate({
             matrix: this.matrix,
             id: this.id,
             opt: { mirror: opt.mirror}
         }).then(data => {
+            if (opt.append) data = [...data, ...opt.append].toFloat32();
             if (opt.reload) return this.reload(data);
             let model = new mesh.model({ file: `${this.file}`, mesh: data });
             let group = opt.group || mesh.api.group.new();
             group.add(model);
-            group.setSelected();
-            if (opt.mirror) {
-                group.move(0, 0, group.bounds.dim.z);
-            }
+            model.wireframe(this.wireframe());
+            model.normals(this.normals());
+            if (opt.select) group.setSelected();
+            if (opt.mirror) group.move(0, 0, group.bounds.dim.z);
             return model;
         });
     }
@@ -209,7 +210,6 @@ mesh.model = class MeshModel extends mesh.object {
             geo.setIndex(new BufferAttribute(indices, 1));
             geo = geo.toNonIndexed();
         }
-
         let meh = this.mesh = new Mesh(geo, [
             this.mats.normal,
             this.mats.face

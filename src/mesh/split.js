@@ -1,25 +1,32 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+/**
+ * toggle edit/split on Z tool
+ * presents a Z plane on hover
+ * click to split the selected mesh(es)
+ */
+
 "use strict";
 
 // dep: moto.space
 gapp.register("mesh.split", [], (root, exports) => {
 
 const { Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide, Vector3 } = THREE;
-const { broker } = gapp;
 const { moto } = root;
 const { space } = moto;
 
-// toggle edit/split temporary mode (present plane on hover)
-let temp_mode;
+let isActive;
 
 // split functions
 let split = {
     active() {
-        return temp_mode ? true : false;
+        return isActive ? true : false;
     },
 
     start() {
+        if (isActive) {
+            return;
+        }
         let { api, util } = mesh;
         // highlight button
         let button = event.target;
@@ -54,7 +61,7 @@ let split = {
             let { dim, mid } = util.bounds(meshes);
             let { point, face, object } = int;
             let { x, y, z } = point;
-
+            // set appearance of split plane
             mat.color.set(0x5555aa);
             obj.visible = true;
             if (event.shiftKey) {
@@ -62,10 +69,11 @@ let split = {
             }
             // y is z in model space for the purposes of a split
             state.plane = { z: y };
+            // ensure split plane exceeds bounds of split target
             obj.scale.set(dim.x + 2, dim.y + 2, 1);
             obj.position.set(mid.x, y, -mid.y);
         });
-        temp_mode = split;
+        isActive = true;
     },
 
     select() {
@@ -73,19 +81,22 @@ let split = {
         let { models, plane } = split.state;
         log.emit(`splitting ${models.length} model(s) at ${plane.z.round(3)}`).pin();
         Promise.all(models.map(m => m.split(plane))).then(models => {
-            mesh.api.selection.set(models);
+            mesh.api.selection.set(models.filter(m => m));
             log.emit('split complete').unpin();
             split.end();
         });
     },
 
     end() {
+        if (!isActive) {
+            return;
+        }
         let space = moto.space;
         let { button, obj } = split.state;
         button.classList.remove('selected');
         space.scene.remove(obj);
         space.mouse.onHover(undefined);
-        temp_mode = split.state = undefined;
+        isActive = split.state = undefined;
         mesh.api.selection.update();
     },
 
@@ -102,19 +113,6 @@ let split = {
     }
 }
 
-function edit_split(event) {
-    if (temp_mode) {
-        temp_mode.end();
-    } else {
-        split.start();
-    }
-}
-
 exports(split);
-
-// bind functions to topics
-broker.listeners({
-    edit_split,
-});
 
 });

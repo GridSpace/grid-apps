@@ -158,7 +158,7 @@ async function restore_space() {
             let tgroup = api.group.list().filter(m => tolist.contains(m.id));
             api.selection.set([...smodel, ...sgroup], [...tmodel, ...tgroup]);
             // restore edit mode
-            api.mode.set(mode);
+            api.mode[mode]();
             // restore dark mode
             set_darkmode(map.space.dark);
         });
@@ -207,7 +207,7 @@ function space_init(data) {
                 case 'KeyQ':
                     return api.settings();
                 case 'KeyI':
-                    return api.file.import();
+                    return shiftKey ? api.tool.invert() : api.file.import();
                 case 'KeyX':
                     return api.file.export();
                 case 'KeyD':
@@ -221,6 +221,7 @@ function space_init(data) {
                 case 'KeyU':
                     return shiftKey && api.tool.union();
                 case 'KeyA':
+                    if (api.mode.is([ api.modes.edge ])) return mesh.edges.add();
                     return shiftKey && api.tool.analyze();
                 case 'KeyR':
                     return shiftKey ? api.tool.rebuild() : api.tool.repair();
@@ -237,7 +238,8 @@ function space_init(data) {
                 case 'KeyL':
                     return api.log.toggle({ spinner: false });
                 case 'KeyS':
-                    return shiftKey ? selection.visible({toggle:true}) : call.edit_split();
+                    if (!api.mode.is([ api.modes.object ])) return;
+                    return shiftKey ? selection.visible({toggle:true}) : mesh.split.start();
                 case 'KeyB':
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':
@@ -261,13 +263,15 @@ function space_init(data) {
             switch (code) {
                 case 'KeyA':
                     if (metaKey || ctrlKey) {
+                        api.mode.object();
                         selection.set(api.group.list());
                         estop(evt);
                     }
                     break;
                 case 'Escape':
                     selection.clear();
-                    mesh.split.active() && mesh.split.end();
+                    mesh.edges.clear();
+                    mesh.split.end();
                     estop(evt);
                     break;
                 case 'Backspace':
@@ -358,6 +362,9 @@ function space_init(data) {
                                 shiftKey ? { clear: true } : { select: true },
                                 opt);
                             break;
+                        case modes.edge:
+                            mesh.edges.select();
+                            break;
                     }
                 }
             }
@@ -369,7 +376,7 @@ function space_init(data) {
     space.mouse.onDrag((delta, offset, up = false) => {
         const { mode, modes } = api;
         if (delta && delta.event.shiftKey) {
-            selection.move(delta.x, delta.y, 0);
+            selection.count() && selection.move(delta.x, delta.y, 0);
         } else if (mode.is([ modes.object, modes.tool ])) {
             return api.objects().length > 0;
         }
