@@ -173,7 +173,7 @@ async function slice(points, options = {}) {
             p1 = points[i++];
             p2 = points[i++];
             p3 = points[i++];
-            let zm = Math.min(p1.z, p2.z, p3.z),
+            let zm = Math.max(0, Math.min(p1.z, p2.z, p3.z)),
                 zM = Math.max(p1.z, p2.z, p3.z),
                 bm = Math.floor(zm * zScale),
                 bM = Math.min(Math.ceil(zM * zScale), bucketCount);
@@ -391,7 +391,8 @@ async function sliceZ(z, points, options = {}) {
             groups = POLY.xor(groups);
         }
         if (options.union) {
-            let points = groups.map(p => p.length).reduce((a,b) => a + b);
+            let points = groups.map(p => p.length);
+            if (points.length > 1) points = points.reduce((a,b) => a + b);
             // simplistic healing of non-manifold meshes
             let opt = { x: 1 };
             let union = POLY.union(POLY.nest(groups), 0.1, true, opt);
