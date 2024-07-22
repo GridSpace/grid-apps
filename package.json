@@ -36,6 +36,7 @@
         "earcut": "^2.2.3",
         "express-useragent": "^1.0.13",
         "jszip": "^3.7.1",
+        "logicjs": "^1.0.0",
         "manifold-3d": "^2.5.1",
         "moment": "^2.29.4",
         "serve-static": "^1.14.1",
