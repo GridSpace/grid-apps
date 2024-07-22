@@ -10,6 +10,7 @@
 // dep: data.index
 // dep: mesh.api
 // dep: mesh.split
+// dep: mesh.edges
 // dep: mesh.model
 // dep: mesh.build
 // dep: load.file
