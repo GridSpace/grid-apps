@@ -23,7 +23,7 @@ const { broker } = gapp;
 const { moto } = root;
 const { space } = moto;
 
-const version = '1.4.2';
+const version = '1.4.3';
 const call = broker.send;
 const dbindex = [ "admin", "space" ];
 
