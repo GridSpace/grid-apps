@@ -1580,6 +1580,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             },
             acct: {
                 help:           $('app-help'),
+                mesh:           $('app-mesh'),
                 export:         $('app-export')
             },
             dev: {
@@ -2694,6 +2695,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };
         ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
+        ui.acct.mesh.onclick = (ev) => { ev.stopPropagation(); WIN.location = "/mesh" };
         ui.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
         ui.acct.export.title = LANG.acct_xpo;
         $('file-recent').onclick = () => { api.modal.show('files') };

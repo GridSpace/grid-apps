@@ -992,6 +992,14 @@ const api = exports({
         window.location = "/choose?back";
     },
 
+    donate() {
+        window.open("https://www.paypal.com/paypalme/gridspace3d");
+    },
+
+    kirimoto() {
+        window.location = "/kiri";
+    },
+
     clear() {
         for (let group of group.list()) {
             group.remove(group);

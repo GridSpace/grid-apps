@@ -1,17 +1,54 @@
 :root {
     --fg-gray: #495057;
-    --bg-gray: rgba(0,0,0,0.25);
+    --bg-top: rgba(255,255,255,0.55);
+    --bg-smoke: rgba(0,0,0,0.25);
+    --dark-bg-smoke: rgba(255,255,255,0.25);
+    --hover-menu: white;
+    --dark-hover-menu: #888;
     --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
-    --holdbar: linear-gradient(to top, rgba(100,100,100,0.1), rgba(255,255,255,1), rgba(100,100,100,0.1));
-    --holdbar-sf: linear-gradient(to top, rgba(200,200,200,0.1), rgba(255,255,255,1), rgba(200,200,200,0.1)) !important;
-    --highlight: rgba(126,153,183,0.4);
-    --main-color: rgba(126,153,183,1);
 }
 
 @font-face {
     font-family: 'Russo One';
     src: url('/moto/russo-one.ttf');
 }
+
+/** dark overrides */
+
+.dark #logger, .dark #modal_frame, .dark #actions > div, .dark #grouplist > div, .dark #actions .pop {
+    border: 1px solid #999;
+}
+
+.dark #actions > div {
+    background-color: rgba(255,255,255,0.6);
+}
+
+.dark #top-right > div {
+    color: black;
+}
+
+.dark #top-right > div:hover {
+    color: white;
+}
+
+.dark #app-info:hover {
+    background-color: var(--dark-hover-menu);
+}
+
+.dark #app-info:hover {
+    background-color: var(--dark-bg-smoke);
+}
+
+.dark #app-menu {
+    background-color: var(--dark-hover-menu);
+    border: 1px solid black;
+}
+
+.dark #app-menu > div:hover {
+    background-color: var(--dark-bg-smoke);
+}
+
+/** defaults */
 
 a, a:hover, a:visited {
     border: none;
@@ -25,6 +62,16 @@ body, div {
     padding: 0;
     border: 0;
     margin: 0;
+}
+
+hr {
+    width: 100%;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    height: 0.5px;
+    max-height: 0.5px;
+    border-top: 0.5px solid rgba(0,0,0,0.5);
 }
 
 input {
@@ -47,33 +94,57 @@ input {
 }
 
 #app-info {
-    z-index: 50;
     top: 50%;
     left: 50%;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
     transform: translateX(-50%) translateY(-50%);
+    flex-direction: column;
+    align-items: center;
     user-select: none;
+}
+
+#app-name {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+#app-info:hover {
+    border-left: 1px solid rgba(0,0,0,0.5);
+    border-right: 1px solid rgba(0,0,0,0.5);
+    background-color: var(--bg-smoke);
+}
+
+#app-info:hover #app-menu {
+    display: flex;
+}
+
+#app-menu {
+    display: none;
+    font-size: smaller;
+    position: absolute;
+    align-items: stretch;
+    flex-direction: column;
+    background-color: var(--hover-menu);
+    white-space: nowrap;
+    border: 1px solid rgba(0,0,0,0.5);
+    border-top: 1px dashed !important;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    padding: 3px;
+    width: calc(100% - 6px);
+    top: 100%;
+    gap: 3px;
+}
+
+#app-menu > div {
     flex-direction: column;
     align-items: center;
 }
 
-#app-info:hover #app-vers {
-    display: flex;
-}
-
-#app-vers {
-    display: none;
-    position: absolute;
-    white-space: nowrap;
-    font-size: smaller;
-    font-family: monospace;
-    transform: translate(5px,-50%);
-    color: var(--fg-gray);
-    margin: 0;
-    padding: 2px 3px 2px 3px;
-    border: 1px solid rgba(0,0,0,0.25);
-    border-radius: 3px;
-    left: 100%;
-    top: 50%;
+#app-menu > div:hover {
+    background-color: var(--bg-smoke);
 }
 
 #app-body {
@@ -111,17 +182,20 @@ input {
 }
 
 #top {
-    z-index: 2;
-    padding: 3px 0 3px 0;
+    z-index: 50;
     flex-direction: row;
     font-family: 'Russo One', sans-serif;
-    background-color: rgba(255,255,255,0.55);
+    background-color: var(--bg-top);
 }
 
 #top-sep {
     z-index: 2;
     height: 1px;
     background-image: var(--gradbar);
+}
+
+#top > div {
+    padding: 3px;
 }
 
 .noselect {
@@ -189,14 +263,6 @@ button:hover {
 
 #top-right > div:hover {
     color: black;
-}
-
-.dark #top-right > div {
-    color: black;
-}
-
-.dark #top-right > div:hover {
-    color: white;
 }
 
 /** specific modal dialogs */
@@ -270,7 +336,7 @@ button:hover {
     justify-content: center;
     align-items: center;
     position: absolute;
-    z-index: 50 !important;
+    z-index: 500 !important;
     bottom: 0;
     right: 0;
     left: 0;
@@ -283,7 +349,7 @@ button:hover {
     background-color: #fff !important;
     flex-direction: column;
     padding: 0 !important; /* override common below */
-    z-index: 51;
+    /* z-index: 51; */
     gap: 2px;
 }
 
@@ -409,14 +475,6 @@ button:hover {
 }
 
 /** common look & feel */
-
-.dark #logger, .dark #modal_frame, .dark #actions > div, .dark #grouplist > div, .dark #actions .pop {
-    border: 1px solid #999;
-}
-
-.dark #actions > div {
-    background-color: rgba(255,255,255,0.6);
-}
 
 #logger, #modal_frame, #actions > div, #grouplist > div {
     border: 1px solid gray;

@@ -293,9 +293,19 @@ function ui_build() {
     const eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
     const eye_closed = FontAwesome.icon({ prefix: "fas", iconName: "eye-slash" }).html[0];
 
-    // set app version
-    $h('app-name', "Mesh:Tool");
-    $h('app-vers', 'beta' /* gapp.version */);
+    // app name and drop menu
+    h.bind($('app-info'), [
+        h.div({ id: "app-name", _: "Mesh:Tool" }),
+        h.div({ id: "app-menu" }, [
+            h.div({ _: "help", onclick: api.help }),
+            h.hr(),
+            // h.div({ _: "version", onclick: api.version }),
+            h.div({ _: "donate", onclick: api.donate }),
+            h.div({ _: "slicer", onclick: api.kirimoto }),
+            h.hr(),
+            h.div({ id: "app-vers", _: mesh.version }),
+        ])
+    ]);
 
     // add a help button
     h.bind($('top-right'), [

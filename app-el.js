@@ -45,14 +45,17 @@ function createWindow() {
 
     // default normal url navigation or page opens to happen outside Electron
     mainWindow.webContents.setWindowOpenHandler((details) => {
-        // console.log('EXTERNAL');
+        // console.log('EXTERNAL', details);
         shell.openExternal(details.url);
         return { action: 'deny' }
     });
 
     // prevent "other" urls from opening inside Electron (alerts are problematic)
     mainWindow.webContents.on('will-navigate', (event, url) => {
-        // console.log('DIVERT');
+        // console.log('DIVERT', url);
+        if (url.endsWith('/mesh') || url.endsWith('/kiri')) {
+            return;
+        }
         event.preventDefault();
         shell.openExternal(url);
     });
