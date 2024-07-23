@@ -620,7 +620,7 @@ button.selected:hover {
 
 #grouplist .models .square > svg {
     aspect-ratio: 1;
-    height: 90%;
+    max-height: 20px;
     color: #666;
 }
 
