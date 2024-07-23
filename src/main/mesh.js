@@ -15,7 +15,6 @@
 // dep: mesh.build
 // dep: load.file
 // use: geo.polygons
-// use: ext.logic
 gapp.main("main.mesh", [], (root) => {
 
 const { Quaternion } = THREE;
