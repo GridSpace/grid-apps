@@ -1131,7 +1131,10 @@ const api = exports({
 
     objects() {
         // return model objects suitable for finding ray intersections
-        return group.list().map(o => o.models).flat().map(o => o.mesh);
+        return [
+            ...group.list().map(o => o.models).flat().map(o => o.mesh),
+            ...sketches.map(s => s.object)
+        ];
     },
 
     isDebug: self.debug === true

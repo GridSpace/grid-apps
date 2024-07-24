@@ -331,13 +331,14 @@ function space_init(data) {
 
     space.mouse.upSelect((int, event) => {
         if (event && event.target.nodeName === "CANVAS") {
-            const model = int && int.object.model ? int.object.model : undefined;
+            const model = int?.object?.model;
+            const sketch = int?.object?.sketch;
+            const { altKey, ctrlKey, metaKey, shiftKey } = event;
             if (mesh.split.active()) {
                 return mesh.split.select(model);
             }
             if (model) {
                 const group = model.group;
-                const { altKey, ctrlKey, metaKey, shiftKey } = event;
                 if (metaKey) {
                     // set focus on intersected face
                     const { x, y, z } = int.point;
@@ -373,6 +374,17 @@ function space_init(data) {
                             mesh.edges.select();
                             break;
                     }
+                }
+            } else if (sketch) {
+                if (metaKey) {
+                    // set focus on intersected face
+                    const { x, y, z } = int.point;
+                    // rotate normal using group's matrix
+                    const normal = shiftKey ? int.face.normal : undefined;
+                    // y,z swap due to world rotation for orbit controls
+                    api.focus({center: { x, y:-z, z:y }, normal});
+                } else {
+                    selection.toggle(sketch);
                 }
             }
         } else {
@@ -509,7 +521,7 @@ function object_destroy(id) {
 
 // listen for changes like dark mode toggle
 function set_darkmode(dark) {
-    let { prefs, selection, model } = mesh.api;
+    let { prefs, model } = mesh.api;
     let { sky, platform } = moto.space;
     prefs.map.space.dark = dark;
     if (dark) {

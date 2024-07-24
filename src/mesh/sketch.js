@@ -46,6 +46,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         const outlineMaterial = material.outline;
         const outline = this.outline = new LineSegments(outlineGeometry, outlineMaterial);
         plane.add(outline);
+        plane.sketch = this;
 
         const handleGeometry = new SphereGeometry(0.05, 16, 16);
         const handleMaterial = material.handle;
