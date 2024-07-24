@@ -129,6 +129,15 @@ gapp.overlay(root, {
         if (del) $(id).classList.remove(del);
     },
 
+    $C: (clazz, add, del) => {
+        let el = [...document.getElementsByClassName(clazz)];
+        for (let e of el) {
+            if (add) e.classList.add(add);
+            if (del) e.classList.remove(del);
+        }
+        return el;
+    },
+
     h,
 
     estop: (evt) => {

@@ -364,6 +364,8 @@ function space_init(data) {
                     const opt = { radians: 0, radius: surface.radius };
                     const mode = api.mode.get();
                     switch(mode) {
+                        case modes.sketch:
+                            api.mode.object();
                         case modes.object:
                         case modes.tool:
                             selection.toggle(shiftKey ? model : model.group, mode === modes.tool);

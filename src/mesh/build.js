@@ -362,6 +362,8 @@ function ui_build() {
         h.button({ _: 'surface', id: "mode-surface", onclick() { mode.surface() } }),
         h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
         h.button({ _: 'edge', id: "mode-edge", onclick() { mode.edge() } }),
+    ]), h.div([
+        h.button({ _: 'sketch', id: "mode-sketch", onclick() { mode.sketch() } }),
     ]) ]);
 
     // create hotkey/action menu (top/left)
@@ -380,7 +382,7 @@ function ui_build() {
                 h.button({ _: 'export', onclick: file.export }),
             ])
         ]),
-        h.div([
+        h.div({ class: "sketch-off" }, [
             h.div({ _: "add", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
@@ -390,6 +392,15 @@ function ui_build() {
                 h.hr(),
                 h.button({ _: 'sketch', onclick() { add.sketch() } }),
                 devel ? h.button({ _: 'input', onclick: add.input }) : undefined
+            ])
+        ]),
+        h.div({ class: "sketch-on" }, [
+            h.div({ _: "add", class: "head" }),
+            h.div({ class: "back"}),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'circle', onclick() { add.cylinder() } }),
+                h.button({ _: 'square', onclick() { add.cube() } }),
+                h.button({ _: 'gear', onclick() { add.gear() } }),
             ])
         ]),
         h.div([
@@ -420,7 +431,7 @@ function ui_build() {
                 h.button({ _: 'grid', onclick() { api.pattern.grid() } }),
             ])
         ]),
-        h.div([
+        h.div({ class: "sketch-off" }, [
             h.div({ _: "models", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
@@ -434,7 +445,7 @@ function ui_build() {
                 h.button({ _: 'delete', onclick: api.selection.delete }),
             ])
         ]),
-        h.div([
+        h.div({ class: "sketch-off" }, [
             h.div({ _: "faces", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
@@ -443,7 +454,7 @@ function ui_build() {
                 h.button({ _: 'delete', onclick: api.selection.delete }),
             ])
         ]),
-        h.div([
+        h.div({ class: "sketch-off" }, [
             h.div({ _: "repair", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [

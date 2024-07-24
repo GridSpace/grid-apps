@@ -83,8 +83,9 @@ const selection = {
         // eject incompatible types from selection
         switch (object.type) {
             case 'sketch':
-                selected = selected.filter(s => s.type === 'sketch');
+                mode.sketch();
                 tools.length = 0;
+                selected.length = 0;
                 mesh.edges?.end();
                 break;
             case 'group':
@@ -897,6 +898,7 @@ const modes = {
     face: "face",       // facet / triangle
     surface: "surface", // normal aligned & adjacent faces
     edge: "edge",       // edge of a face
+    sketch: "sketch",   // 2D sketching
 };
 
 // edit mode
@@ -909,6 +911,13 @@ const mode = {
         $(`mode-${mode}`).classList.add('selected');
         api.mode.check();
         mesh.edges?.end();
+        if (mode === 'sketch') {
+            $C('sketch-on',   null, 'hide');
+            $C('sketch-off', 'hide', null);
+        } else {
+            $C('sketch-off',  null, 'hide');
+            $C('sketch-on',  'hide', null);
+        }
     },
 
     get() {
@@ -962,6 +971,13 @@ const mode = {
         }
         mode.set(modes.edge);
         mesh.edges.start();
+    },
+
+    sketch() {
+        if (!mode.is([ modes.sketch ])) {
+            selection.clear();
+        }
+        mode.set(modes.sketch);
     }
 };
 
