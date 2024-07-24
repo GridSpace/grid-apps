@@ -76,6 +76,17 @@ const selection = {
 
     // @param group {MeshObject}
     add(object, tool = mode.is([ modes.tool ])) {
+        // eject incompatible types from selection
+        switch (object.type) {
+            case 'sketch':
+                selected = selected.filter(s => s.type === 'sketch');
+                tools.length = 0;
+                break;
+            case 'group':
+            case 'model':
+                selected = selected.filter(s => s.type !== 'sketch');
+                break;
+        }
         // when group added, add group models instead
         if (object.models) {
             for (let m of object.models) {
