@@ -13,7 +13,7 @@
 gapp.register("mesh.sketch", [], (root, exports) => {
 
 const { MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide } = THREE;
-const { PlaneGeometry, EdgesGeometry, SphereGeometry, Group, Mesh } = THREE;
+const { PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
 
@@ -30,10 +30,15 @@ const material = {
 
 /** 2D plane containing open and closed polygons which can be extruded **/
 mesh.sketch = class MeshSketch extends mesh.object {
-    constructor(model, face, id) {
-        super(id);
+    constructor(opt = {}) {
+        super(opt.id);
 
-        const planeGeometry = new PlaneGeometry(10, 10);
+        this.file = opt.file || this.id;
+        this.scale = opt.scale || { x: 10, y: 10 };
+        this.center = opt.center || { x: 0, y: 0, z: 0 };
+        this.normal = opt.normal || { x: 0, y: 0, z: 1 };
+
+        const planeGeometry = new PlaneGeometry(1, 1);
         const planeMaterial = material.plane;
         const plane = this.plane = new Mesh(planeGeometry, planeMaterial);
 
@@ -42,11 +47,11 @@ mesh.sketch = class MeshSketch extends mesh.object {
         const outline = this.outline = new LineSegments(outlineGeometry, outlineMaterial);
         plane.add(outline);
 
-        const handleGeometry = new SphereGeometry(0.2, 16, 16);
+        const handleGeometry = new SphereGeometry(0.05, 16, 16);
         const handleMaterial = material.handle;
 
         const handles = [];
-        const corners = [ [-5, 5, 0], [5, 5, 0], [-5, -5, 0], [5, -5, 0] ];
+        const corners = [ [-0.5, 0.5, 0], [0.5, 0.5, 0], [-0.5, -0.5, 0], [0.5, -0.5, 0] ];
 
         for (let corner of corners) {
             const handle = new Mesh(handleGeometry, handleMaterial);
@@ -54,6 +59,31 @@ mesh.sketch = class MeshSketch extends mesh.object {
             plane.add(handle);
             handles.push(handle);
         }
+
+        this.update();
+    }
+
+    update() {
+        const { plane, center, normal, scale, type } = this;
+
+        plane.scale.set(scale.x, scale.y, 1);
+        plane.position.set(center.x, center.y, center.z);
+
+        const normalVector = new Vector3(normal.x, normal.y, normal.z);
+        const targetPoint = new Vector3().addVectors(plane.position, normalVector);
+        plane.lookAt(targetPoint);
+
+        this.#db_save();
+    }
+
+    #db_save() {
+        const { center, normal, scale, type, file } = this;
+        mapp.db.space.put(this.id, { center, normal, scale, type, file });
+    }
+
+    #db_remove() {
+        mapp.api.sketch.remove(this);
+        mapp.db.space.remove(this.id);
     }
 
     get type() {
@@ -66,6 +96,11 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
     rename(newname) {
         this.file = newname;
+        this.#db_save();
+    }
+
+    remove() {
+        this.#db_remove();
     }
 
     highlight() {

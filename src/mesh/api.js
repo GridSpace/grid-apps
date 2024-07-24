@@ -395,7 +395,7 @@ let sketch = {
     remove(sk) {
         sketches.remove(sk);
         space.world.remove(sk.object);
-        space.update();s
+        space.update();
     },
 
     list() {
@@ -404,8 +404,8 @@ let sketch = {
 };
 
 let add = {
-    sketch() {
-        sketch.add(new mesh.sketch());
+    sketch(opt) {
+        sketch.add(new mesh.sketch(opt));
     },
 
     input() {

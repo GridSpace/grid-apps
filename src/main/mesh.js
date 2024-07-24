@@ -106,11 +106,14 @@ async function restore_space() {
         const keys = [];
         const claimed = [];
         for (let [id, data] of Object.entries(cached)) {
+            // console.log({ id, data });
             keys.push(id);
             if (count++ === 0) {
                 mesh.api.log.emit(`restoring workspace`);
             }
-            // restore group
+            // restore object based on type
+            // group arrays load models they contain
+            // sketches are loaded by type since they're not grouped
             if (Array.isArray(data)) {
                 claimed.push(id);
                 let models = data
@@ -127,6 +130,9 @@ async function restore_space() {
                     mesh.api.log.emit(`removed empty group ${id}`);
                     db_space.remove(id);
                 }
+            } else if (data.type === 'sketch') {
+                claimed.push(data);
+                mesh.api.add.sketch(data);
             }
         }
         for (let id of claimed) {
