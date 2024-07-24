@@ -1,5 +1,5 @@
 #!/bin/bash
 tag=${1:-latest}
-./bin/build-upload mac ${tag} && \
 ./bin/build-upload win ${tag} && \
-./bin/build-upload linux ${tag}
+./bin/build-upload linux ${tag} && \
+./bin/build-upload mac ${tag}

@@ -89,6 +89,7 @@ let edges = {
     },
 
     async add() {
+        console.log({ add: selected.slice() });
         if (selected.length === 2 && selected[0].object === selected[1].object) {
             let verts = selected.map(s => [ s.side.p0, s.side.p1 ]).flat();
             // clean up floating point cruft for comparison
@@ -113,7 +114,7 @@ let edges = {
                     point.z !== arr[index - 1].z;
             });
             let model = selected[0].object.model;
-            if (verts.length === 3) {
+            if (sort.length === 3) {
                 await model.duplicate({ append: [
                     sort[0].x, -sort[0].z, sort[0].y,
                     sort[1].x, -sort[1].z, sort[1].y,
@@ -125,8 +126,8 @@ let edges = {
                     verts[0].x, -verts[0].z, verts[0].y,
                     verts[1].x, -verts[1].z, verts[1].y,
                     verts[2].x, -verts[2].z, verts[2].y,
-                    verts[1].x, -verts[1].z, verts[1].y,
                     verts[2].x, -verts[2].z, verts[2].y,
+                    verts[1].x, -verts[1].z, verts[1].y,
                     verts[3].x, -verts[3].z, verts[3].y,
                 ]});
                 model.remove();
@@ -144,6 +145,7 @@ let edges = {
 
     select() {
         space.scene.remove(edges.selected);
+        if (!hovered) return;
 
         const { object, face, side } = hovered;
         let add = true;

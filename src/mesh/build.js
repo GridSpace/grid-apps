@@ -387,6 +387,8 @@ function ui_build() {
                 h.button({ _: 'cylinder', onclick() { add.cylinder() } }),
                 h.button({ _: 'cube', onclick() { add.cube() } }),
                 h.button({ _: 'gear', onclick() { add.gear() } }),
+                h.hr(),
+                h.button({ _: 'sketch', onclick() { add.sketch() } }),
                 devel ? h.button({ _: 'input', onclick: add.input }) : undefined
             ])
         ]),
@@ -488,7 +490,10 @@ function ui_build() {
             .map(g => h.div([
                 h.button({ _: g.name || `group`, title: g.id,
                     class: [ "group", selHas(g) ? 'selected' : undefined ],
-                    onclick(e) { selection.toggle(g) }
+                    onclick(e) {
+                        api.mode.object();
+                        selection.toggle(g);
+                    }
                 }),
                 h.div({ class: "models"},
                     // map models to buttons
@@ -499,18 +504,17 @@ function ui_build() {
                                 if (e.shiftKey) {
                                     tool.rename([ m ]);
                                 } else {
+                                    if (!api.mode.is([ api.modes.object, api.modes.tool ])) {
+                                        api.mode.object();
+                                    }
                                     selection.toggle(m);
                                 }
                             },
                             onmouseover(e) {
-                                if (!m.wireframe().enabled) {
-                                    m.opacity({temp: 0.5});
-                                }
+                                m.highlight();
                             },
                             onmouseleave(e) {
-                                if (!m.wireframe().enabled) {
-                                    m.opacity({restore: true});
-                                }
+                                m.unhighlight();
                             }
                         }),
                         h.button({
@@ -523,6 +527,42 @@ function ui_build() {
                     ])
                 )
             ]));
+        let sketches = api.sketch.list();
+        if (sketches.length) {
+            let sg = h.div([
+                h.button({ _: 'sketch',
+                    class: [ "group" ],
+                }),
+                sketches.map(sketch => h.div({ class: "models"}, [
+                    h.button({ _: sketch.file || sketch.id,
+                        class: [ selHas(sketch) ? 'selected' : undefined ],
+                        onclick(e) {
+                            if (e.shiftKey) {
+                                tool.rename([ sketch ], 'sketch');
+                            } else {
+                                selection.toggle(sketch);
+                            }
+                        },
+                        onmouseover(e) {
+                            sketch.highlight();
+                        },
+                        onmouseleave(e) {
+                            sketch.unhighlight();
+                        }
+                    }),
+                    h.button({
+                        class: [ 'square' ],
+                        onclick(e) {
+                            sketch.visible({ toggle: true });
+                            update_selector();
+                        }
+                    }, [
+                        h.raw(sketch.visible() ? eye_open : eye_closed)
+                    ])
+                ]))
+            ]);
+            groups.push(sg);
+        }
         h.bind(grouplist, groups);
     }
 
@@ -564,8 +604,8 @@ function ui_build() {
     // update model information dashboard (bottom)
     function update_selection() {
         let map = { fixed: 2 };
-        let s_grp = selection.groups();
-        let s_mdl = selection.models();
+        let s_grp = selection.groups(true);
+        let s_mdl = selection.models(true);
         if (s_mdl.length === 0) {
             return h.bind(selectlist, []);
         }

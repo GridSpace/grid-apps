@@ -64,7 +64,11 @@ mesh.object = class MeshObject {
     }
 
     select() {
-        mesh.api.selection.set([this]);
+        throw "select() requires implementation";
+    }
+
+    remove() {
+        throw "remove() requires implementation";
     }
 
     focus() {

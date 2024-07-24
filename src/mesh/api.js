@@ -8,6 +8,9 @@
 // dep: moto.space
 // dep: mesh.util
 // dep: mesh.edges
+// dep: mesh.group
+// dep: mesh.model
+// dep: mesh.sketch
 // dep: add.three
 // use: add.array
 gapp.register("mesh.api", [], (root, exports) => {
@@ -20,6 +23,7 @@ const { newPolygon } = base;
 
 const worker = moto.client.fn
 const groups = [];
+const sketches = [];
 
 let selected = [];
 let tools = [];
@@ -30,7 +34,7 @@ const selection = {
     },
 
     // @returns {MeshObject[]} or all groups if not strict and no selection
-    list(strict = false) {
+    list(strict) {
         return selected.length || strict ? selected.slice() : groups.slice();
     },
 
@@ -155,6 +159,9 @@ const selection = {
             group.wireframe(prefs.map.space.wire || false, {
                 opacity: prefs.map.wireframe.opacity}
             );
+        }
+        for (let sketch of sketches) {
+            sketch.select(false);
         }
         api.updateFog();
         // prevent selection of model and its group
@@ -377,7 +384,30 @@ let model = {
     }
 };
 
+let sketch = {
+    add(sk) {
+        sketches.addOnce(sk);
+        space.world.add(sk.object);
+        api.selection.update();
+        return sk;
+    },
+
+    remove(sk) {
+        sketches.remove(sk);
+        space.world.remove(sk.object);
+        space.update();s
+    },
+
+    list() {
+        return sketches;
+    }
+};
+
 let add = {
+    sketch() {
+        sketch.add(new mesh.sketch());
+    },
+
     input() {
         api.modal.dialog({
             title: "vertices",
@@ -695,7 +725,7 @@ const tool = {
         }
     },
 
-    rename(models) {
+    rename(models, type = 'model') {
         models = fallback(models, true);
         let model = models[0];
         if (!model) {
@@ -712,7 +742,7 @@ const tool = {
             selection.update();
             api.modal.hide();
         };
-        let { tempedit } = api.modal.show(`rename model`, h.div({ class: "rename"}, [
+        let { tempedit } = api.modal.show(`rename ${type}`, h.div({ class: "rename"}, [
             h.input({ id: "tempedit", value: model.file, onkeydown }),
             h.button({ _: 'ok', onclick })
         ]));
@@ -883,28 +913,28 @@ const mode = {
     },
 
     object() {
-        if (mode.is([ modes.face, modes.surface ])) {
+        if (!mode.is([ modes.object, modes.tool ])) {
             selection.clear();
         }
         mode.set(modes.object);
     },
 
     tool() {
-        if (mode.is([ modes.face, modes.surface ])) {
+        if (!mode.is([ modes.object, modes.tool ])) {
             selection.clear();
         }
         mode.set(modes.tool);
     },
 
     face() {
-        if (mode.is([ modes.object, modes.tool ])) {
+        if (!mode.is([ modes.face, modes.surface ])) {
             selection.clear();
         }
         mode.set(modes.face);
     },
 
     surface() {
-        if (mode.is([ modes.object, modes.tool ])) {
+        if (!mode.is([ modes.face, modes.surface ])) {
             selection.clear();
         }
         mode.set(modes.surface);
@@ -1088,6 +1118,8 @@ const api = exports({
     group,
 
     model,
+
+    sketch,
 
     add,
 

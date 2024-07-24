@@ -281,17 +281,6 @@ mesh.model = class MeshModel extends mesh.object {
         return this.vertices / 3;
     }
 
-    // get, set, or toggle visibility of model and wireframe
-    visible(bool) {
-        if (bool === undefined) {
-            return this.mesh.visible;
-        }
-        if (bool.toggle) {
-            return this.visible(!this.mesh.visible);
-        }
-        this.mesh.visible = bool;
-    }
-
     // get, set, or toggle selection of model (coloring)
     select(bool, stool) {
         const cmat = this.mesh.material[0];
@@ -342,6 +331,18 @@ mesh.model = class MeshModel extends mesh.object {
             }
         }
         space.update();
+    }
+
+    highlight() {
+        if (!this.wireframe().enabled) {
+            this.opacity({temp: 0.5});
+        }
+    }
+
+    unhighlight() {
+        if (!this.wireframe().enabled) {
+            this.opacity({restore: true});
+        }
     }
 
     wireframe(bool, opt = {}) {
