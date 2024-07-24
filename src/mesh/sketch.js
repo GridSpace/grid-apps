@@ -8,15 +8,17 @@
 // dep: moto.client
 // dep: mesh.object
 // dep: mesh.api
+// dep: base.polygon
 // use: mesh.util
 // use: mesh.group
 gapp.register("mesh.sketch", [], (root, exports) => {
 
 const { MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide } = THREE;
 const { PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh, Group } = THREE;
-const { mesh, moto } = root;
+const { base, mesh, moto } = root;
 const { space } = moto;
 const { api, util } = mesh;
+const { newPolygon } = base;
 
 const mapp = mesh;
 const worker = moto.client.fn;
@@ -24,7 +26,7 @@ const worker = moto.client.fn;
 const material = {
     normal:    new MeshBasicMaterial({ color: 0x888888, side: DoubleSide, transparent: true, opacity: 0.25 }),
     selected:  new MeshBasicMaterial({ color: 0x889988, side: DoubleSide, transparent: true, opacity: 0.25 }),
-    highlight: new LineBasicMaterial({ color: 0x88ffdd, side: DoubleSide, transparent: true, opacity: 0.50 }),
+    highlight: new LineBasicMaterial({ color: 0x88ff88, side: DoubleSide, transparent: true, opacity: 0.50 }),
 };
 
 function log() {
@@ -40,6 +42,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         this.scale = opt.scale || { x: 10, y: 10, z: 0 };
         this.center = opt.center || { x: 0, y: 0, z: 0 };
         this.normal = opt.normal || { x: 0, y: 0, z: 1 };
+        this.items = opt.items || [];
 
         const group = this.group = new Group();
         group.sketch = this;
@@ -62,13 +65,11 @@ mesh.sketch = class MeshSketch extends mesh.object {
         for (let corner of corners) {
             const handle = new Mesh(handleGeometry, handleMaterial);
             handle.position.set(...corner);
-            handles.push(handle);
-            group.add(handle);
             handle.sketch = this;
+            handles.push(handle);
         }
 
-        group.add(outline);
-        group.add(plane);
+        group.add(...handles, outline, plane);
 
         util.defer(() => this.update());
     }
@@ -76,19 +77,17 @@ mesh.sketch = class MeshSketch extends mesh.object {
     update() {
         const { group, plane, outline, center, handles, corners, normal, scale } = this;
 
-        // group.rotation.x = -Math.PI/2;
         plane.scale.set(scale.x, scale.y, 1);
-        group.position.set(center.x, center.y, center.z);
         outline.scale.set(scale.x, scale.y, 1);
-        // outline.position.set(center.x, center.y, center.z);
+        group.position.set(center.x, center.y, center.z);
 
         for (let i=0; i<4; i++) {
             const handle = handles[i];
             const corner = corners[i];
             handle.position.set(
-                (corner[0] * scale.x),// + center.x,
-                (corner[1] * scale.y),// + center.y,
-                (corner[2] * scale.z),// + center.z
+                (corner[0] * scale.x),
+                (corner[1] * scale.y),
+                (corner[2] * scale.z)
             );
         }
 
@@ -96,7 +95,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         group.lookAt(new Vector3(
             normal.x + position.x,
             normal.z + position.z,
-            normal.y - position.y,
+            normal.y - position.y
         ));
 
         this.#db_save();
@@ -108,8 +107,8 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     #db_save() {
-        const { center, normal, scale, type, file } = this;
-        mapp.db.space.put(this.id, { center, normal, scale, type, file });
+        const { center, normal, scale, type, file, items } = this;
+        mapp.db.space.put(this.id, { center, normal, scale, type, file, items });
     }
 
     #db_remove() {
@@ -200,14 +199,19 @@ mesh.sketch = class MeshSketch extends mesh.object {
         }
     }
 
-    add_circle() {
+    add_circle(opt = {}) {
         log(this.file || this.id, '| add circle');
+        Object.assign(opt, { center: {x:0, y:0, z:0}, radius:15 }, opt);
+        this.items.push({ type: "circle", ...opt });
+        this.update();
     }
 
-    add_rectangle() {
+    add_rectangle(opt = {}) {
         log(this.file || this.id, '| add rectangle');
+        Object.assign(opt, { center: {x:0, y:0, z:0}, width:15, height: 10 }, opt);
+        this.items.push({ type: "rectangle", ...opt });
+        this.update();
     }
-
 }
 
 });
