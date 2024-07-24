@@ -7,7 +7,7 @@
 // dep: moto.license
 // dep: moto.client
 // dep: mesh.object
-// use: mesh.api
+// dep: mesh.api
 // use: mesh.util
 // use: mesh.group
 gapp.register("mesh.sketch", [], (root, exports) => {
@@ -16,6 +16,7 @@ const { MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide } = THREE
 const { PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh, Group } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
+const { api, util } = mesh;
 
 const mapp = mesh;
 const worker = moto.client.fn;
@@ -25,6 +26,10 @@ const material = {
     selected:  new MeshBasicMaterial({ color: 0x889988, side: DoubleSide, transparent: true, opacity: 0.25 }),
     highlight: new LineBasicMaterial({ color: 0x88ffdd, side: DoubleSide, transparent: true, opacity: 0.50 }),
 };
+
+function log() {
+    mesh.api.log.emit(...arguments);
+}
 
 /** 2D plane containing open and closed polygons which can be extruded **/
 mesh.sketch = class MeshSketch extends mesh.object {
@@ -65,33 +70,41 @@ mesh.sketch = class MeshSketch extends mesh.object {
         group.add(outline);
         group.add(plane);
 
-        this.update();
+        util.defer(() => this.update());
     }
 
     update() {
-        const { plane, outline, center, handles, corners, normal, scale } = this;
+        const { group, plane, outline, center, handles, corners, normal, scale } = this;
 
         // group.rotation.x = -Math.PI/2;
         plane.scale.set(scale.x, scale.y, 1);
-        plane.position.set(center.x, center.y, center.z);
+        group.position.set(center.x, center.y, center.z);
         outline.scale.set(scale.x, scale.y, 1);
-        outline.position.set(center.x, center.y, center.z);
+        // outline.position.set(center.x, center.y, center.z);
 
         for (let i=0; i<4; i++) {
             const handle = handles[i];
             const corner = corners[i];
             handle.position.set(
-                (corner[0] * scale.x) + center.x,
-                (corner[1] * scale.y) + center.y,
-                (corner[2] * scale.z) + center.z
+                (corner[0] * scale.x),// + center.x,
+                (corner[1] * scale.y),// + center.y,
+                (corner[2] * scale.z),// + center.z
             );
         }
 
-        // const nv = new Vector3(normal.x, normal.y, normal.z);
-        // const tp = new Vector3().addVectors(group.position, nv);
-        // group.lookAt(tp);
+        const { position } = group;
+        group.lookAt(new Vector3(
+            normal.x + position.x,
+            normal.z + position.z,
+            normal.y - position.y,
+        ));
 
         this.#db_save();
+    }
+
+    lookat(x,y,z) {
+        this.group.lookAt(new Vector3(x,y,z));
+        moto.space.update();
     }
 
     #db_save() {
@@ -149,7 +162,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     move(x, y, z = 0) {
-        const { center, scale, plane, handles, dragging } = this;
+        const { group, center, scale, plane, handles, dragging } = this;
         const handle = handles.indexOf(dragging);
         if (dragging === plane) {
             center.x += x;
@@ -171,20 +184,28 @@ mesh.sketch = class MeshSketch extends mesh.object {
             scale.z += z * sf[2];
             this.update();
         } else {
-            console.log({ sketch_move: [...arguments] });
+            this.center = {x, y, z};
+            this.update();
         }
 }
 
     drag(opt = {}) {
         const { plane, handles, dragging } = this;
         if (opt.start) {
-            // console.log({ drag_start: opt.start, plane, same: opt.start === plane });
             this.dragging = opt.start;
         } else if (opt.end) {
-            console.log({ drag_end: opt.end });
+            this.dragging = undefined;
         } else {
             console.log({ invalid_sketch_drag: opt });
         }
+    }
+
+    add_circle() {
+        log(this.file || this.id, '| add circle');
+    }
+
+    add_rectangle() {
+        log(this.file || this.id, '| add rectangle');
     }
 
 }

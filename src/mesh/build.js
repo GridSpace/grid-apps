@@ -398,9 +398,11 @@ function ui_build() {
             h.div({ _: "add", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
-                h.button({ _: 'circle', onclick() { add.cylinder() } }),
-                h.button({ _: 'square', onclick() { add.cube() } }),
-                h.button({ _: 'gear', onclick() { add.gear() } }),
+                h.button({ _: 'circle', onclick() { add.circle() } }),
+                h.button({ _: 'rectangle', onclick() { add.rectangle() } }),
+                // h.button({ _: 'gear', onclick() { add.gear() } }),
+                h.hr(),
+                h.button({ _: 'sketch', onclick() { add.sketch() } }),
             ])
         ]),
         h.div([

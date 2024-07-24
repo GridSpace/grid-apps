@@ -66,6 +66,10 @@ const selection = {
         return mdl;
     },
 
+    sketches(strict) {
+        return selection.list(strict).filter(s => s.type === 'sketch');
+    },
+
     contains(object) {
         return selected.contains(object);
     },
@@ -193,6 +197,13 @@ const selection = {
         prefs.save( prefs.map.space.tools = tools.map(s => s.id) );
         // force repaint in case of idle
         space.update();
+        return selection;
+    },
+
+    drag(opt = {}) {
+        for (let s of selection.sketches()) {
+            s.drag(opt);
+        }
         return selection;
     },
 
@@ -425,6 +436,26 @@ let add = {
         sketch.add(new mesh.sketch(opt));
     },
 
+    /** add sketch components */
+
+    circle() {
+        let sel = selection.sketches();
+        if (!sel.length) {
+            return log('select a sketch');
+        }
+        return sel[0].add_circle(...arguments);
+    },
+
+    rectangle() {
+        let sel = selection.sketches();
+        if (!sel.length) {
+            return log('select a sketch');
+        }
+        return sel[0].add_rectangle(...arguments);
+    },
+
+    /** add models */
+
     input() {
         api.modal.dialog({
             title: "vertices",
@@ -448,6 +479,7 @@ let add = {
         const nmdl = new mesh.model({ file: "box", mesh: vert });
         const ngrp = group.new([ nmdl ]);
         ngrp.scale(10, 10, 10).floor();
+        return ngrp;
     },
 
     cylinder(opt = {}) {
@@ -456,7 +488,7 @@ let add = {
             api.modal.hide();
             if (diameter && height) {
                 const center = { x:0, y:0, z:0 };
-                api.log.emit(`add cylinder faces=${facets} height=${height} diameter=${diameter}`);
+                log(`add cylinder faces=${facets} height=${height} diameter=${diameter}`);
                 facets = Math.max(3, facets || diameter * 3)
                 const cyl = newPolygon().centerCircle(center, diameter/2, facets);
                 if (bore && bore < diameter) {
@@ -469,7 +501,7 @@ let add = {
             }
         }
         if (opt.facets && opt.diameter && opt.height) {
-            gencyl(opt.diameter, opt.height, opt.facets);
+            return gencyl(opt.diameter, opt.height, opt.facets);
         } else {
             api.modal.dialog({
                 title: "cylinder",
@@ -565,10 +597,10 @@ let file = {
             id: m.id, matrix: m.matrix, file: m.file
         } });
         if (recs.length === 0) {
-            return api.log.emit(`no models to export`);
+            return log(`no models to export`);
         }
         function doit(ext = 'obj') {
-            api.log.emit(`exporting ${recs.length} model(s)`);
+            log(`exporting ${recs.length} model(s)`);
             let file = api.modal.bound.filename.value || "export.obj";
             if (file.toLowerCase().indexOf(`.${ext}`) < 0) {
                 file = `${file}.${ext}`;
@@ -607,9 +639,9 @@ const tool = {
     merge(models) {
         models = fallback(models);
         if (models.length < 2) {
-            return api.log.emit('nothing to merge');
+            return log('nothing to merge');
         }
-        api.log.emit(`merging ${models.length} models`).pin();
+        log(`merging ${models.length} models`).pin();
         worker.model_merge(models.map(m => {
             return { id: m.id, matrix: m.matrix }
         }))
@@ -620,16 +652,16 @@ const tool = {
                 mesh: data
             })]).promote();
             api.selection.set([group]);
-            api.log.emit('merge complete').unpin();
+            log('merge complete').unpin();
         });
     },
 
     union(models) {
         models = fallback(models);
         if (models.length < 2) {
-            return api.log.emit('nothing to union');
+            return log('nothing to union');
         }
-        api.log.emit(`union ${models.length} models`).pin();
+        log(`union ${models.length} models`).pin();
         worker.model_union(models.map(m => {
             return { id: m.id, matrix: m.matrix }
         }))
@@ -642,19 +674,19 @@ const tool = {
             api.selection.set([group]);
         })
         .catch(error => {
-            api.log.emit(`union error: ${error}`);
+            log(`union error: ${error}`);
         })
         .finally(() => {
-            api.log.emit('union complete').unpin();
+            log('union complete').unpin();
         });
     },
 
     difference(models) {
         models = fallback(models);
         if (models.length < 2) {
-            return api.log.emit('nothing to diff');
+            return log('nothing to diff');
         }
-        api.log.emit(`diff ${models.length} models`).pin();
+        log(`diff ${models.length} models`).pin();
         worker.model_difference(models.map(m => {
             return { id: m.id, matrix: m.matrix }
         }))
@@ -667,19 +699,19 @@ const tool = {
             api.selection.set([group]);
         })
         .catch(error => {
-            api.log.emit(`diff error: ${error}`);
+            log(`diff error: ${error}`);
         })
         .finally(() => {
-            api.log.emit('diff complete').unpin();
+            log('diff complete').unpin();
         });
     },
 
     intersect(models) {
         models = fallback(models);
         if (models.length < 2) {
-            return api.log.emit('nothing to intersect');
+            return log('nothing to intersect');
         }
-        api.log.emit(`intersect ${models.length} models`).pin();
+        log(`intersect ${models.length} models`).pin();
         worker.model_intersect(models.map(m => {
             return { id: m.id, matrix: m.matrix }
         }))
@@ -692,19 +724,19 @@ const tool = {
             api.selection.set([group]);
         })
         .catch(error => {
-            api.log.emit(`intersect error: ${error}`);
+            log(`intersect error: ${error}`);
         })
         .finally(() => {
-            api.log.emit('intersect complete').unpin();
+            log('intersect complete').unpin();
         });
     },
 
     subtract(models) {
         models = fallback(models);
         if (models.length < 2) {
-            return api.log.emit('nothing to subtract');
+            return log('nothing to subtract');
         }
-        api.log.emit(`subtract ${models.length} models`).pin();
+        log(`subtract ${models.length} models`).pin();
         worker.model_subtract(models.map(m => {
             return { id: m.id, matrix: m.matrix, tool: m.tool() }
         }))
@@ -717,10 +749,10 @@ const tool = {
             api.selection.set([group]);
         })
         .catch(error => {
-            api.log.emit(`subtract error: ${error}`);
+            log(`subtract error: ${error}`);
         })
         .finally(() => {
-            api.log.emit('subtract complete').unpin();
+            log('subtract complete').unpin();
         });
     },
 
@@ -749,7 +781,7 @@ const tool = {
             return;
         }
         if (models.length > 1) {
-            return api.log.emit('rename requires a single selection');
+            return log('rename requires a single selection');
         }
         let onclick = onkeydown = (ev) => {
             if (ev.code && ev.code !== 'Enter') {
@@ -772,7 +804,7 @@ const tool = {
         if (models.length === 0) {
             return;
         }
-        api.log.emit(`regrouping ${models.length} model(s)`);
+        log(`regrouping ${models.length} model(s)`);
         let bounds = util.bounds(models);
         let { mid } = bounds;
         return Promise.all(models.map(m => m.ungroup())).then(() => {
@@ -785,7 +817,7 @@ const tool = {
 
     analyze(models, opt = { compound: true }) {
         models = fallback(models);
-        api.log.emit('analyzing mesh(es)').pin();
+        log('analyzing mesh(es)').pin();
         let promises = [];
         let mcore = new Matrix4().makeRotationX(Math.PI / 2);
         for (let m of models) {
@@ -803,13 +835,13 @@ const tool = {
             promises.push(p);
         }
         return Promise.all(promises).then(() => {
-            api.log.emit('analysis complete').unpin();
+            log('analysis complete').unpin();
         });
     },
 
     isolate(models) {
         models = fallback(models);
-        api.log.emit('isolating bodies').pin();
+        log('isolating bodies').pin();
         let promises = [];
         let mcore = new Matrix4().makeRotationX(Math.PI / 2);
         let mark = Date.now();
@@ -824,14 +856,14 @@ const tool = {
             promises.push(p);
         }
         return Promise.all(promises).then(() => {
-            api.log.emit('isolation complete').unpin();
-            // api.log.emit(`... isolate time = ${Date.now() - mark}`);
+            log('isolation complete').unpin();
+            // log(`... isolate time = ${Date.now() - mark}`);
         });
     },
 
     indexFaces(models, opt = {}) {
         models = fallback(models);
-        api.log.emit('mapping faces').pin();
+        log('mapping faces').pin();
         let promises = [];
         let mark = Date.now();
         for (let m of models) {
@@ -841,8 +873,8 @@ const tool = {
             promises.push(p);
         }
         Promise.all(promises).then(() => {
-            api.log.emit('mapping complete').unpin();
-            // api.log.emit(`... index time = ${Date.now() - mark}`);
+            log('mapping complete').unpin();
+            // log(`... index time = ${Date.now() - mark}`);
         });
     },
 
@@ -872,9 +904,9 @@ const tool = {
 
     repair(models) {
         models = fallback(models);
-        api.log.emit('repairing mesh(es)').pin();
+        log('repairing mesh(es)').pin();
         tool.heal(models, { merge: true }).then(() => {
-            api.log.emit('repair commplete').unpin();
+            log('repair commplete').unpin();
             api.selection.update();
         });
     },
@@ -882,7 +914,7 @@ const tool = {
     clean(models) {
         models = fallback(models);
         tool.heal(models, { merge: false }).then(() => {
-            api.log.emit('cleaning complete').unpin();
+            log('cleaning complete').unpin();
             api.selection.update();
         });
     },
@@ -1171,6 +1203,10 @@ const api = exports({
 
     isDebug: self.debug === true
 });
+
+function log() {
+    api.log.emit(...arguments);
+}
 
 const { broker } = gapp;
 const call = broker.send;

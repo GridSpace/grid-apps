@@ -285,7 +285,7 @@ function space_init(data) {
                 case 'Backspace':
                 case 'Delete':
                     let mode = api.mode.get();
-                    if ([api.modes.object, api.modes.tool].contains(mode)) {
+                    if ([api.modes.object, api.modes.tool, api.modes.sketch].contains(mode)) {
                         selection.delete();
                     } else {
                         for (let m of selection.models()) {
@@ -334,9 +334,6 @@ function space_init(data) {
     });
 
     space.mouse.upSelect((int, event) => {
-        if (int?.object?.sketch) {
-            int.object.sketch.drag({ end: int.object });
-        }
         if (event && event.target.nodeName === "CANVAS") {
             const model = int?.object?.model;
             const sketch = int?.object?.sketch;
@@ -404,8 +401,14 @@ function space_init(data) {
     space.mouse.onDrag((delta, offset, up = false) => {
         const { mode, modes } = api;
         if (delta && delta.event.shiftKey) {
-            selection.count() && selection.move(delta.x, delta.y, 0);
-        } else if (mode.is([ modes.object, modes.tool ])) {
+            if (selection.count()) {
+                selection.move(delta.x, delta.y, 0);
+            }
+        } else if (up) {
+            if (selection.count()) {
+                selection.drag({ end: true });
+            }
+        } else if (mode.is([ modes.object, modes.tool, modes.sketch ])) {
             return api.objects().length > 0;
         }
     });

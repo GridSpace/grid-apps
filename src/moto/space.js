@@ -963,6 +963,7 @@ gapp.register("moto.space", [], (root, exports) => {
             }
             mouseStart = null;
         } else if (mouseDrag && mouseDragStart) {
+            // fired on mouse drag end
             mouseDrag(null,null,true);
         }
         mouseDragPoint = null;
