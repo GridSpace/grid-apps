@@ -49,6 +49,10 @@ const selection = {
         return grp;
     },
 
+    sketches(strict) {
+        return selection.list(strict).filter(s => s.type === 'sketch');
+    },
+
     // return selected models + models from selected groups
     models(strict) {
         let all = selection.list(strict);
@@ -81,6 +85,7 @@ const selection = {
             case 'sketch':
                 selected = selected.filter(s => s.type === 'sketch');
                 tools.length = 0;
+                mesh.edges?.end();
                 break;
             case 'group':
             case 'model':
@@ -191,7 +196,7 @@ const selection = {
     },
 
     move(dx = 0, dy = 0, dz = 0) {
-        for (let s of selection.groups()) {
+        for (let s of [...selection.groups(), ...selection.sketches()]) {
             s.move(dx, dy, dz);
         }
         return selection;
@@ -1144,7 +1149,7 @@ const api = exports({
         // return model objects suitable for finding ray intersections
         return [
             ...group.list().map(o => o.models).flat().map(o => o.mesh),
-            ...sketches.map(s => s.object)
+            ...sketches.map(s => s.meshes).flat()
         ];
     },
 

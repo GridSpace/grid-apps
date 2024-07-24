@@ -131,8 +131,8 @@ async function restore_space() {
                     db_space.remove(id);
                 }
             } else if (data.type === 'sketch') {
-                claimed.push(data);
-                mesh.api.add.sketch(data);
+                claimed.push(id);
+                mesh.api.add.sketch({ id, ...data });
             }
         }
         for (let id of claimed) {
@@ -163,7 +163,8 @@ async function restore_space() {
             let tolist = space.tools || [];
             let tmodel = api.model.list().filter(m => tolist.contains(m.id));
             let tgroup = api.group.list().filter(m => tolist.contains(m.id));
-            api.selection.set([...smodel, ...sgroup], [...tmodel, ...tgroup]);
+            let sklist = api.sketch.list().filter(s => selist.contains(s.id));
+            api.selection.set([...smodel, ...sgroup, ...sklist], [...tmodel, ...tgroup]);
             // restore edit mode
             api.mode[mode]();
             // restore dark mode
@@ -326,10 +327,16 @@ function space_init(data) {
 
     // mouse hover/click handlers. required to enable model drag in space.js
     space.mouse.downSelect((int, event) => {
+        if (int?.object?.sketch) {
+            int.object.sketch.drag({ start: int.object });
+        }
         return event && event.shiftKey ? api.objects() : undefined;
     });
 
     space.mouse.upSelect((int, event) => {
+        if (int?.object?.sketch) {
+            int.object.sketch.drag({ end: int.object });
+        }
         if (event && event.target.nodeName === "CANVAS") {
             const model = int?.object?.model;
             const sketch = int?.object?.sketch;

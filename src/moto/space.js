@@ -876,6 +876,8 @@ gapp.register("moto.space", [], (root, exports) => {
                 isVis = trackTo.visible;
             if (mouseDownSelect) selection = mouseDownSelect(undefined, event);
             if (selection && selection.length > 0) {
+                // selection = selection.map(o => o.isGroup ? o.children : o).flat();
+                // console.log({ selection });
                 trackTo.visible = true;
                 let int = intersect(selection.slice().append(trackTo), false);
                 trackTo.visible = isVis;
