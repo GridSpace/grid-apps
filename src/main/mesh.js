@@ -336,7 +336,12 @@ function space_init(data) {
         return event && event.shiftKey ? api.objects() : undefined;
     });
 
-    space.mouse.upSelect((int, event) => {
+    space.mouse.upSelect((int, event, ints) => {
+        if (ints?.length > 1) {
+            // ensure sketch items are returned before sketch plane / handles
+            let polys = ints.filter(i => i.object.poly);
+            int = polys.length ? polys[0] : int;
+        }
         if (event && event.target.nodeName === "CANVAS") {
             const model = int?.object?.model;
             const sketch = int?.object?.sketch;
@@ -397,6 +402,11 @@ function space_init(data) {
                 }
             }
         } else {
+            let sketches = api.selection.sketches(true);
+            if (sketches.length) {
+                // when sketch selected, return sketch items, too
+                return sketches[0].object.children;
+            };
             return api.objects().filter(o => o.visible);
         }
     });

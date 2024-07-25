@@ -949,7 +949,7 @@ gapp.register("moto.space", [], (root, exports) => {
                     }
                 }
                 if (int.length > 0) {
-                    mouseUpSelect(int[0], event);
+                    mouseUpSelect(int[0], event, int);
                     refresh = true;
                 } else {
                     mouseUpSelect(null, event);

@@ -235,6 +235,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             let geo = new BufferGeometry();
             geo.setAttribute('position', new BufferAttribute(vrt, 3));
             let meh = new Mesh(geo, mesh.material.normal);
+            meh.renderOrder = -1;
             meh.poly = poly;
             group.add(meh);
         });
