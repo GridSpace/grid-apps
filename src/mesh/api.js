@@ -130,7 +130,11 @@ const selection = {
 
     // remove all
     delete() {
-        for (let s of selection.list(true)) {
+        let list = selection.list(true);
+        if (list[0].type === 'sketch' && list[0].delete_selected()) {
+            return;
+        }
+        for (let s of list) {
             selection.remove(s);
             tools.remove(s);
             s.showBounds(false);

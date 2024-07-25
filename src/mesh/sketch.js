@@ -131,6 +131,22 @@ mesh.sketch = class MeshSketch extends mesh.object {
         }).reverse();
     }
 
+    get selected_items() {
+        return this.items.filter(i => i.selected);
+    }
+
+    // return true if any selections were deleted;
+    delete_selected() {
+        let sel = this.items.filter(i => i.selected);
+        if (sel.length) {
+            this.items = this.items.filter(i => !i.selected);
+            this.render();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     rename(newname) {
         this.file = newname;
         this.#db_save();
@@ -230,10 +246,11 @@ mesh.sketch = class MeshSketch extends mesh.object {
     render() {
         let { group } = this;
         // remove previous item/poly-based children of group
-        group.children.filter(c => c.sketch_item).forEach(c => group.remove(c));
+        group.children.filter(c => c.sketch_item || c.sketch_line).forEach(c => group.remove(c));
         // mapy items into polys into meshes to add to group
-        for (let si of this.items.map(i => new SketchItem(this, i))) {
+        for (let si of this.items.map((i,o) => new SketchItem(this, i, o))) {
             group.add(si.mesh);
+            group.add(si.outs);
         }
         this.update();
     }
@@ -241,7 +258,6 @@ mesh.sketch = class MeshSketch extends mesh.object {
     extrude(opt = {}) {
         let { z } = opt;
         let models = [];
-        console.log({ extrude: this });
         for (let item of this.group.children.filter(c => c.sketch_item)) {
             let vert = item.sketch_item.extrude(z || 10);
             let nmdl = new mesh.model({ file: "item", mesh: vert.toFloat32() });
@@ -252,15 +268,16 @@ mesh.sketch = class MeshSketch extends mesh.object {
             let { center } = this;
             let ngrp = api.group.new(models);
             ngrp.floor();
-            ngrp.move(center.x, center.y, center.z + 0.001);
+            ngrp.move(center.x, center.y, center.z);
         }
     }
 }
 
 class SketchItem {
-    constructor(sketch, item) {
+    constructor(sketch, item, order) {
         this.sketch = sketch;
         this.item = item;
+        this.order = order;
         this.update();
     }
 
@@ -283,7 +300,8 @@ class SketchItem {
     }
 
     update() {
-        let { item, sketch } = this;
+        let bump = 0.0025;
+        let { item, sketch, order } = this;
         let { material } = mesh;
         let { type, center, width, height, radius, spacing, poly, selected } = item;
         if (type === 'circle') {
@@ -296,12 +314,27 @@ class SketchItem {
             throw `invalid sketch type: ${type}`;
         }
         this.poly = poly;
+        let isSelected = selected && sketch.select();
+        // create solid filled area
+        let mat = (isSelected ? material.select : material.normal).clone();
+            mat.transparent = true;
+            mat.opacity = 0.5;
         let vrt = poly.extrude(0).toFloat32();
         let geo = new BufferGeometry();
-        geo.setAttribute('position', new BufferAttribute(vrt, 3));
-        let meh = this.mesh = new Mesh(geo, selected && sketch.select() ? material.select : material.normal);
-        meh.renderOrder = -1;
-        meh.sketch_item = this;
+            geo.setAttribute('position', new BufferAttribute(vrt, 3));
+        let meh = this.mesh = new Mesh(geo, mat);
+            meh.renderOrder = -1;
+            meh.sketch_item = this;
+            // bump z to avoid z order conflict and ensure item ray intersect priority
+            meh.position.z += bump + (order * bump);
+        // create poly outline
+        let lpt = poly.points.map(p => new Vector3(p.x, p.y, p.z));
+            lpt.push(lpt[0]);
+        let lge = new BufferGeometry().setFromPoints(lpt);
+        let out = this.outs = new THREE.Line(lge, material.wireline);
+            out.renderOrder = -1;
+            out.sketch_line = this;
+            out.position.z += bump + (order * bump);
     }
 }
 

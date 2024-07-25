@@ -568,9 +568,11 @@ function set_darkmode(dark) {
     prefs.map.space.dark = dark;
     if (dark) {
         mesh.material.wireframe.color.set(0xaaaaaa);
+        mesh.material.wireline.color.set(0xaaaaaa);
         $('app').classList.add('dark');
     } else {
         mesh.material.wireframe.color.set(0,0,0);
+        mesh.material.wireline.color.set(0,0,0);
         $('app').classList.remove('dark');
     }
     sky.set({

@@ -12,7 +12,7 @@
 // use: mesh.group
 gapp.register("mesh.model", [], (root, exports) => {
 
-const { MeshPhongMaterial, MeshBasicMaterial } = THREE;
+const { MeshPhongMaterial, MeshBasicMaterial, LineBasicMaterial } = THREE;
 const { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
@@ -69,6 +69,12 @@ let materials = mesh.material = {
         transparent: true,
         opacity: 0.5
     }),
+    wireline: new LineBasicMaterial({
+        side: DoubleSide,
+        color: 0x0,
+        transparent: true,
+        opacity: 0.5
+    })
 };
 
 /** 3D model rendered on plaform **/
