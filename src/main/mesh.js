@@ -234,6 +234,9 @@ function space_init(data) {
                 case 'KeyR':
                     return shiftKey ? api.tool.rebuild() : api.tool.repair();
                 case 'KeyE':
+                    if (api.mode.is([ api.modes.sketch ])) {
+                        return api.sketch.extrude();
+                    }
                     return api.tool.clean();
                 case 'KeyV':
                     return shiftKey ? selection.show() : selection.focus();

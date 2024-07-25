@@ -428,6 +428,12 @@ let sketch = {
 
     list() {
         return sketches;
+    },
+
+    extrude() {
+        selection.sketches(true).forEach(sketch => {
+            sketch.extrude();
+        });
     }
 };
 
@@ -1205,7 +1211,7 @@ const api = exports({
 });
 
 function log() {
-    api.log.emit(...arguments);
+    return api.log.emit(...arguments);
 }
 
 const { broker } = gapp;

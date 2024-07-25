@@ -240,6 +240,21 @@ mesh.sketch = class MeshSketch extends mesh.object {
         });
         this.update();
     }
+
+    extrude(opt = {}) {
+        let { z } = opt;
+        let models = [];
+        for (let item of this.group.children.filter(c => c.poly)) {
+            let vert = item.poly.extrude(z || 10);
+            let nmdl = new mesh.model({ file: "poly", mesh: vert.toFloat32() });
+            models.push(nmdl);
+        }
+        if (models.length) {
+            log('extrude', this.file || this.id, 'into', models.length, 'solid(s)');
+            let ngrp = api.group.new(models);
+            ngrp.floor();
+        }
+    }
 }
 
 });

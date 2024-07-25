@@ -368,7 +368,12 @@ mesh.model = class MeshModel extends mesh.object {
             this._wire = undefined;
             this.opacity({restore: true});
         }
-        if (bool) {
+        if (bool === 'edges') {
+            let edges = new THREE.EdgesGeometry(this.mesh.geometry, 5);
+            this._wire = new THREE.LineSegments(edges, materials.wireframe);
+            this.mesh.add(this._wire);
+            this.opacity({temp: opt.opacity || 0.15});
+        } else if (bool) {
             this._wire = new Mesh(this.mesh.geometry.shallowClone(), materials.wireframe);
             this.mesh.add(this._wire);
             this.opacity({temp: opt.opacity || 0.15});
