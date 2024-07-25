@@ -131,7 +131,7 @@ const selection = {
     // remove all
     delete() {
         let list = selection.list(true);
-        if (list[0].type === 'sketch' && list[0].delete_selected()) {
+        if (list[0]?.type === 'sketch' && list[0].selection_delete()) {
             return;
         }
         for (let s of list) {
@@ -160,6 +160,10 @@ const selection = {
     },
 
     clear() {
+        let list = selection.list(true);
+        if (list[0]?.type === 'sketch' && list[0].selection_clear()) {
+            return false;
+        }
         for (let s of selection.list()) {
             selection.remove(s);
             tools.remove(s);
@@ -167,6 +171,7 @@ const selection = {
         for (let m of api.model.list()) {
             m.clearSelections();
         }
+        return true;
     },
 
     visible() {

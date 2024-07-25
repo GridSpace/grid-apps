@@ -280,9 +280,10 @@ function space_init(data) {
                     }
                     break;
                 case 'Escape':
-                    selection.clear();
-                    mesh.edges.clear();
-                    mesh.split.end();
+                    if (selection.clear()) {
+                        mesh.edges.clear();
+                        mesh.split.end();
+                    }
                     estop(evt);
                     break;
                 case 'Backspace':

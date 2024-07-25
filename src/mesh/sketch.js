@@ -135,16 +135,24 @@ mesh.sketch = class MeshSketch extends mesh.object {
         return this.items.filter(i => i.selected);
     }
 
-    // return true if any selections were deleted;
-    delete_selected() {
+    // return true if any selections were cleared
+    selection_clear() {
+        let sel = this.items.filter(i => i.selected);
+        if (sel.length) {
+            sel.forEach(s => s.selected = false);
+            this.render();
+        }
+        return sel.length;
+    }
+
+    // return true if any selections were deleted
+    selection_delete() {
         let sel = this.items.filter(i => i.selected);
         if (sel.length) {
             this.items = this.items.filter(i => !i.selected);
             this.render();
-            return true;
-        } else {
-            return false;
         }
+        return sel.length;
     }
 
     rename(newname) {
