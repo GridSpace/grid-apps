@@ -2151,11 +2151,18 @@ class Polygon {
 
     // extrude poly (with inner voids) into 3d mesh
     extrude(z = 1, opt = {}) {
+        let earcut = this.earcut(); // array of 3-point polygons
+
+        // return just the 2D face when no Z depth specified
+        // used primarily by mesh.sketch render()
+        if (z === 0) {
+            return earcut.map(face => face.points.map(p => [ p.x, p.y, p.z ])).flat().flat();
+        }
+
         let chamfer = opt.chamfer || 0;
         let chamfer_top = opt.chamfer_top || chamfer;
         let chamfer_bottom = opt.chamfer_bottom || chamfer;
         let zadd = (typeof opt === 'number' ? opt : opt.zadd || 0); // z bottom
-        let earcut = this.earcut(); // array of 3-point polygons
         let obj = []; // flat output vertex array (float-x,float-y,float-z,...)
         let top_face = earcut;
         let bottom_face = earcut;

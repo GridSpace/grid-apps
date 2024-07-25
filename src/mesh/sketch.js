@@ -4,15 +4,16 @@
 
 // dep: add.array
 // dep: add.three
+// dep: geo.polygon
 // dep: moto.license
 // dep: moto.client
 // dep: mesh.object
 // dep: mesh.api
-// dep: base.polygon
 // use: mesh.util
 // use: mesh.group
 gapp.register("mesh.sketch", [], (root, exports) => {
 
+const { BufferGeometry, BufferAttribute } = THREE;
 const { MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide } = THREE;
 const { PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh, Group } = THREE;
 const { base, mesh, moto } = root;
@@ -71,7 +72,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
         group.add(...handles, outline, plane);
 
-        util.defer(() => this.update());
+        util.defer(() => this.render());
     }
 
     update() {
@@ -201,15 +202,42 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
     add_circle(opt = {}) {
         log(this.file || this.id, '| add circle');
-        Object.assign(opt, { center: {x:0, y:0, z:0}, radius:15 }, opt);
+        Object.assign(opt, { center: {x:0, y:0, z:0}, radius:5 }, opt);
         this.items.push({ type: "circle", ...opt });
-        this.update();
+        this.render();
     }
 
     add_rectangle(opt = {}) {
         log(this.file || this.id, '| add rectangle');
-        Object.assign(opt, { center: {x:0, y:0, z:0}, width:15, height: 10 }, opt);
+        Object.assign(opt, { center: {x:0, y:0, z:0}, width:15, height:10 }, opt);
         this.items.push({ type: "rectangle", ...opt });
+        this.render();
+    }
+
+    // render items unto the group object
+    render() {
+        let { group } = this;
+        // remove previous item/poly-based children of group
+        group.children.filter(c => c.poly).forEach(c => group.remove(c));
+        // mapy items into polys into meshes to add to group
+        this.items.map(item => {
+            let { type, center, width, height, radius, spacing, poly } = item;
+            if (type === 'circle') {
+                let circumference = 2 * Math.PI * radius;
+                let points = Math.floor(circumference / (spacing || 1));
+                poly = newPolygon().centerCircle(center, radius, points).annotate({ item } );
+            } else if (type === 'rectangle') {
+                poly = newPolygon().centerRectangle(center, width, height).annotate({ item });
+            }
+            return poly;
+        }).filter(o => o).forEach(poly => {
+            let vrt = poly.extrude(0).toFloat32();
+            let geo = new BufferGeometry();
+            geo.setAttribute('position', new BufferAttribute(vrt, 3));
+            let meh = new Mesh(geo, mesh.material.normal);
+            meh.poly = poly;
+            group.add(meh);
+        });
         this.update();
     }
 }
