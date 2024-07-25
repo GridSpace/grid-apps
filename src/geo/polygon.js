@@ -110,6 +110,19 @@ class Polygon {
         return this;
     }
 
+    toObject() {
+        return {
+            points: this.toArray(),
+            inner: this.inner?.map(i => i.toArray())
+        };
+    }
+
+    fromObject(obj) {
+        this.fromArray(obj.points);
+        this.inner = obj.inner?.map(a => newPolygon().fromArray(a))
+        return this;
+    }
+
     matches(poly) {
         let tarr = Array.isArray(poly) ? poly : poly.toArray();
         let parr = this.toArray();

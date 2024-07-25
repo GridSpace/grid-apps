@@ -5,6 +5,7 @@
 // dep: add.array
 // dep: add.three
 // dep: geo.polygon
+// dep: geo.polygons
 // dep: moto.license
 // dep: moto.client
 // dep: mesh.object
@@ -23,6 +24,7 @@ const { newPolygon } = base;
 
 const mapp = mesh;
 const worker = moto.client.fn;
+const POLYS = base.polygons;
 
 const material = {
     normal:    new MeshBasicMaterial({ color: 0x888888, side: DoubleSide, transparent: true, opacity: 0.25 }),
@@ -131,28 +133,62 @@ mesh.sketch = class MeshSketch extends mesh.object {
         }).reverse();
     }
 
-    get selected_items() {
-        return this.items.filter(i => i.selected);
+    get selection() {
+        let sketch = this;
+        return {
+            // for boolean and patterning, we need the polygon artifacts
+            mesh_items() {
+                return sketch.group.children.filter(c => c.sketch_item && c.sketch_item.selected);
+            },
+
+            // return true if any selections were cleared
+            clear() {
+                let sel = sketch.items.filter(i => i.selected);
+                if (sel.length) {
+                    sel.forEach(s => s.selected = false);
+                    sketch.render();
+                }
+                return sel.length;
+            },
+
+            // return true if any selections were deleted
+            delete() {
+                let sel = sketch.items.filter(i => i.selected);
+                if (sel.length) {
+                    sketch.items = sketch.items.filter(i => !i.selected);
+                    sketch.render();
+                }
+                return sel.length;
+            }
+        }
     }
 
-    // return true if any selections were cleared
-    selection_clear() {
-        let sel = this.items.filter(i => i.selected);
-        if (sel.length) {
-            sel.forEach(s => s.selected = false);
-            this.render();
+    get boolean() {
+        let sketch = this;
+        return {
+            union() {
+                let items = sketch.selection.mesh_items();
+                let polys = items.map(i => i.sketch_item.poly);
+                let union = POLYS.union(polys, 0, true);
+                console.log('sketch union', union);
+                sketch.selection.delete();
+                for (let poly of union) {
+                    sketch.add_polygon({ poly });
+                }
+            }
         }
-        return sel.length;
     }
 
-    // return true if any selections were deleted
-    selection_delete() {
-        let sel = this.items.filter(i => i.selected);
-        if (sel.length) {
-            this.items = this.items.filter(i => !i.selected);
-            this.render();
+    get pattern() {
+        return {
+            circle() {
+                console.log('sketch pattern circle');
+            },
+
+            grid() {
+                console.log('sketch pattern grid');
+            }
         }
-        return sel.length;
     }
 
     rename(newname) {
@@ -250,6 +286,13 @@ mesh.sketch = class MeshSketch extends mesh.object {
         this.render();
     }
 
+    add_polygon(opt = {}) {
+        log(this.file || this.id, '| add polygon');
+        Object.assign(opt, { center: {x:0, y:0, z:0} }, opt);
+        this.items.push({ type: "polygon", ...opt, ...opt.poly.toObject() });
+        this.render();
+    }
+
     // render items unto the group object
     render() {
         let { group } = this;
@@ -264,9 +307,12 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     extrude(opt = {}) {
-        let { z } = opt;
+        let { z, selection } = opt;
         let models = [];
-        for (let item of this.group.children.filter(c => c.sketch_item)) {
+        let items = this.group.children
+            .filter(c => c.sketch_item)
+            .filter(c => !selection || c.sketch_item.selected);
+        for (let item of items) {
             let vert = item.sketch_item.extrude(z || 10);
             let nmdl = new mesh.model({ file: "item", mesh: vert.toFloat32() });
             models.push(nmdl);
@@ -318,6 +364,9 @@ class SketchItem {
             poly = newPolygon().centerCircle(center, radius, points).annotate({ item } );
         } else if (type === 'rectangle') {
             poly = newPolygon().centerRectangle(center, width, height).annotate({ item });
+        } else if (type === 'polygon') {
+            poly = newPolygon().fromObject(item);
+            poly.move(center);
         } else {
             throw `invalid sketch type: ${type}`;
         }

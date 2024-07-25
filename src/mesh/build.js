@@ -352,7 +352,7 @@ function ui_build() {
     h.bind(logger, [ h.div({ id: 'logtext' }) ]);
 
     // a few shortcuts to api calls
-    let { file, selection, mode, tool, prefs, add } = api;
+    let { file, selection, mode, tool, sketch, prefs, add } = api;
 
     // top/center mode selector
     h.bind(modes, [ h.div([
@@ -415,7 +415,7 @@ function ui_build() {
                 h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
             ])
         ]),
-        h.div([
+        h.div({ class: "sketch-off" }, [
             h.div({ _: "boolean", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
@@ -425,12 +425,40 @@ function ui_build() {
                 h.button({ _: 'difference', onclick: tool.difference }),
             ])
         ]),
-        h.div([
+        h.div({ class: "sketch-on" }, [
+            h.div({ _: "boolean", class: "head" }),
+            h.div({ class: "back"}),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'union', onclick: sketch.boolean.union }),
+                h.button({ _: 'intersect', onclick: sketch.boolean.intersect }),
+                h.button({ _: 'difference', onclick: sketch.boolean.difference }),
+                h.hr(),
+                h.button({ _: 'group', onclick: sketch.boolean.union }),
+                h.button({ _: 'ungroup', onclick: sketch.boolean.union }),
+            ])
+        ]),
+        h.div({ class: "sketch-off" }, [
             h.div({ _: "pattern", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
                 h.button({ _: 'circular', onclick() { api.pattern.circle() } }),
                 h.button({ _: 'grid', onclick() { api.pattern.grid() } }),
+            ])
+        ]),
+        h.div({ class: "sketch-on" }, [
+            h.div({ _: "pattern", class: "head" }),
+            h.div({ class: "back"}),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'circular', onclick() { sketch.pattern.circle() } }),
+                h.button({ _: 'grid', onclick() { sketch.pattern.grid() } }),
+            ])
+        ]),
+        h.div({ class: "sketch-on" }, [
+            h.div({ _: "extrude", class: "head" }),
+            h.div({ class: "back"}),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'sketch', onclick() { sketch.extrude() } }),
+                h.button({ _: 'selection', onclick() { sketch.extrude({ selection: true }) } }),
             ])
         ]),
         h.div({ class: "sketch-off" }, [

@@ -62,6 +62,10 @@ const selection = {
         return mdl;
     },
 
+    sketch() {
+        return selection.sketches()[0];
+    },
+
     sketches() {
         return selection.list(true).filter(s => s.type === 'sketch');
     },
@@ -130,11 +134,10 @@ const selection = {
 
     // remove all
     delete() {
-        let list = selection.list(true);
-        if (list[0]?.type === 'sketch' && list[0].selection_delete()) {
+        if (sketch.selection.delete()) {
             return;
         }
-        for (let s of list) {
+        for (let s of selection.list()) {
             selection.remove(s);
             tools.remove(s);
             s.showBounds(false);
@@ -160,9 +163,8 @@ const selection = {
     },
 
     clear() {
-        let list = selection.list(true);
-        if (list[0]?.type === 'sketch' && list[0].selection_clear()) {
-            return false;
+        if (sketch.selection.clear()) {
+            return;
         }
         for (let s of selection.list()) {
             selection.remove(s);
@@ -442,8 +444,60 @@ let sketch = {
 
     extrude() {
         selection.sketches(true).forEach(sketch => {
-            sketch.extrude();
+            sketch.extrude(...arguments);
         });
+    },
+
+    selection: {
+        get one() {
+            return selection.sketch();
+        },
+
+        list() {
+            return selection.sketches();
+        },
+
+        clear() {
+            let list = selection.list(true);
+            return list[0]?.type === 'sketch' && list[0].selection.clear();
+        },
+
+        delete() {
+            let list = selection.list(true);
+            return list[0]?.type === 'sketch' && list[0].selection.delete();
+        }
+    },
+
+    boolean: {
+        group() {
+            sketch.selection.one?.boolean.group();
+        },
+
+        ungroup() {
+            sketch.selection.one?.boolean.ungroup();
+        },
+
+        union() {
+            sketch.selection.one?.boolean.union();
+        },
+
+        intersect() {
+            sketch.selection.one?.boolean.intersect();
+        },
+
+        difference() {
+            sketch.selection.one?.boolean.difference();
+        }
+    },
+
+    pattern: {
+        circle() {
+            sketch.selection.one?.pattern.circle();
+        },
+
+        grid() {
+            sketch.selection.one?.pattern.grid();
+        }
     }
 };
 
