@@ -896,7 +896,7 @@ gapp.register("moto.space", [], (root, exports) => {
                         viewControl.enabled = false;
                     }
                     if (selectInt) {
-                        mouseDownSelect(selectInt, event);
+                        mouseDownSelect(selectInt, event, int);
                     }
                     if (mouseDown) mouseDown(event, int);
                 }

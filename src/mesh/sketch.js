@@ -126,7 +126,9 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     get meshes() {
-        return this.group.children.filter(c => c.sketch ? c : undefined);
+        return this.group.children.filter(c => {
+            return c.sketch || (c.sketch_item && c.sketch_item.selected) ? c : undefined
+        }).reverse();
     }
 
     rename(newname) {
@@ -158,6 +160,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         for (let handle of handles) {
             handle.material = bool ? material.highlight : plane.material;
         }
+        this.render();
         return bool;
     }
 
@@ -183,6 +186,14 @@ mesh.sketch = class MeshSketch extends mesh.object {
             scale.y += y * sf[1];
             scale.z += z * sf[2];
             this.update();
+        } else if (Array.isArray(dragging)) {
+            for (let item of dragging) {
+                let { center } = item;
+                center.x += x;
+                center.y += y;
+                center.z += z;
+            }
+            this.render();
         } else {
             this.center = {x, y, z};
             this.update();
@@ -190,9 +201,10 @@ mesh.sketch = class MeshSketch extends mesh.object {
 }
 
     drag(opt = {}) {
-        const { plane, handles, dragging } = this;
+        let { items } = this;
         if (opt.start) {
-            this.dragging = opt.start;
+            let selected = items.filter(i => i.selected);
+            this.dragging = opt.start.sketch_item ? selected : opt.start;
         } else if (opt.end) {
             this.dragging = undefined;
         } else {
@@ -218,43 +230,78 @@ mesh.sketch = class MeshSketch extends mesh.object {
     render() {
         let { group } = this;
         // remove previous item/poly-based children of group
-        group.children.filter(c => c.poly).forEach(c => group.remove(c));
+        group.children.filter(c => c.sketch_item).forEach(c => group.remove(c));
         // mapy items into polys into meshes to add to group
-        this.items.map(item => {
-            let { type, center, width, height, radius, spacing, poly } = item;
-            if (type === 'circle') {
-                let circumference = 2 * Math.PI * radius;
-                let points = Math.floor(circumference / (spacing || 1));
-                poly = newPolygon().centerCircle(center, radius, points).annotate({ item } );
-            } else if (type === 'rectangle') {
-                poly = newPolygon().centerRectangle(center, width, height).annotate({ item });
-            }
-            return poly;
-        }).filter(o => o).forEach(poly => {
-            let vrt = poly.extrude(0).toFloat32();
-            let geo = new BufferGeometry();
-            geo.setAttribute('position', new BufferAttribute(vrt, 3));
-            let meh = new Mesh(geo, mesh.material.normal);
-            meh.renderOrder = -1;
-            meh.poly = poly;
-            group.add(meh);
-        });
+        for (let si of this.items.map(i => new SketchItem(this, i))) {
+            group.add(si.mesh);
+        }
         this.update();
     }
 
     extrude(opt = {}) {
         let { z } = opt;
         let models = [];
-        for (let item of this.group.children.filter(c => c.poly)) {
-            let vert = item.poly.extrude(z || 10);
-            let nmdl = new mesh.model({ file: "poly", mesh: vert.toFloat32() });
+        console.log({ extrude: this });
+        for (let item of this.group.children.filter(c => c.sketch_item)) {
+            let vert = item.sketch_item.extrude(z || 10);
+            let nmdl = new mesh.model({ file: "item", mesh: vert.toFloat32() });
             models.push(nmdl);
         }
         if (models.length) {
             log('extrude', this.file || this.id, 'into', models.length, 'solid(s)');
+            let { center } = this;
             let ngrp = api.group.new(models);
             ngrp.floor();
+            ngrp.move(center.x, center.y, center.z + 0.001);
         }
+    }
+}
+
+class SketchItem {
+    constructor(sketch, item) {
+        this.sketch = sketch;
+        this.item = item;
+        this.update();
+    }
+
+    get type() {
+        return "sketch_item";
+    }
+
+    get selected() {
+        return this.item.selected;
+    }
+
+    toggle() {
+        this.item.selected = !this.item.selected;
+        this.update();
+        this.sketch.render();
+    }
+
+    extrude(opt = {}) {
+        return this.poly.extrude(opt);
+    }
+
+    update() {
+        let { item, sketch } = this;
+        let { material } = mesh;
+        let { type, center, width, height, radius, spacing, poly, selected } = item;
+        if (type === 'circle') {
+            let circumference = 2 * Math.PI * radius;
+            let points = Math.floor(circumference / (spacing || 1));
+            poly = newPolygon().centerCircle(center, radius, points).annotate({ item } );
+        } else if (type === 'rectangle') {
+            poly = newPolygon().centerRectangle(center, width, height).annotate({ item });
+        } else {
+            throw `invalid sketch type: ${type}`;
+        }
+        this.poly = poly;
+        let vrt = poly.extrude(0).toFloat32();
+        let geo = new BufferGeometry();
+        geo.setAttribute('position', new BufferAttribute(vrt, 3));
+        let meh = this.mesh = new Mesh(geo, selected && sketch.select() ? material.select : material.normal);
+        meh.renderOrder = -1;
+        meh.sketch_item = this;
     }
 }
 

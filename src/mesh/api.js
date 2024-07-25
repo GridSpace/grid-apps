@@ -49,10 +49,6 @@ const selection = {
         return grp;
     },
 
-    sketches(strict) {
-        return selection.list(strict).filter(s => s.type === 'sketch');
-    },
-
     // return selected models + models from selected groups
     models(strict) {
         let all = selection.list(strict);
@@ -66,8 +62,12 @@ const selection = {
         return mdl;
     },
 
-    sketches(strict) {
-        return selection.list(strict).filter(s => s.type === 'sketch');
+    sketches() {
+        return selection.list(true).filter(s => s.type === 'sketch');
+    },
+
+    sketch_items() {
+        return selection.list(true).filter(s => s.type === 'sketch_item')
     },
 
     contains(object) {
@@ -174,6 +174,7 @@ const selection = {
 
     // update selection and wireframe for all objects
     update() {
+        // de-select all
         for (let group of groups) {
             group.select(false);
             group.normals(prefs.map.space.norm || false);

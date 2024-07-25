@@ -329,22 +329,34 @@ function space_init(data) {
     ]);
 
     // mouse hover/click handlers. required to enable model drag in space.js
-    space.mouse.downSelect((int, event) => {
+    // called two ways:
+    // without args to return a list of selectable targets
+    // with args when a selection is made
+    space.mouse.downSelect((int, event, ints) => {
         if (int?.object?.sketch) {
             int.object.sketch.drag({ start: int.object });
+        } else if (int?.object?.sketch_item) {
+            int.object.sketch_item.sketch.drag({ start: int.object });
         }
-        return event && event.shiftKey ? api.objects() : undefined;
+        if (event?.shiftKey) {
+            return api.objects();
+        } else {
+            return undefined;
+        }
     });
 
+    // called two ways:
+    // without args to return a list of selectable targets
+    // with args when a selection is made
     space.mouse.upSelect((int, event, ints) => {
         if (ints?.length > 1) {
             // ensure sketch items are returned before sketch plane / handles
-            let polys = ints.filter(i => i.object.poly);
-            int = polys.length ? polys[0] : int;
+            let els = ints.filter(i => i.object.sketch_item);
+            int = els.length ? els[0] : int;
         }
-        if (event && event.target.nodeName === "CANVAS") {
-            const model = int?.object?.model;
-            const sketch = int?.object?.sketch;
+        if (event?.target?.nodeName === "CANVAS") {
+            // a selection was made
+            const { model, sketch, sketch_item } = int?.object || {};
             const { altKey, ctrlKey, metaKey, shiftKey } = event;
             if (mesh.split.active()) {
                 return mesh.split.select(model);
@@ -400,21 +412,25 @@ function space_init(data) {
                 } else {
                     selection.toggle(sketch);
                 }
+            } else if (sketch_item) {
+                sketch_item.toggle();
             }
         } else {
-            let sketches = api.selection.sketches(true);
+            // return objects upSelect can choose from
+            let visible = api.objects().filter(o => o.visible);
+            let sketches = api.selection.sketches();
             if (sketches.length) {
-                // when sketch selected, return sketch items, too
-                return sketches[0].object.children;
+                // when sketch selected, append sketch items, too
+                visible.appendAll(sketches[0].object.children);
             };
-            return api.objects().filter(o => o.visible);
+            return visible;
         }
     });
 
     space.mouse.onDrag((delta, offset, up = false) => {
-        const { mode, modes } = api;
-        if (delta && delta.event.shiftKey) {
-            if (selection.count()) {
+        let { mode, modes } = api;
+        if (delta) {
+            if (delta.event?.shiftKey && selection.count()) {
                 selection.move(delta.x, delta.y, 0);
             }
         } else if (up) {
@@ -422,7 +438,8 @@ function space_init(data) {
                 selection.drag({ end: true });
             }
         } else if (mode.is([ modes.object, modes.tool, modes.sketch ])) {
-            return api.objects().length > 0;
+            // return true if there are draggable elements
+            return api.objects().length > 0 || api.selection.sketches().length;
         }
     });
 }
