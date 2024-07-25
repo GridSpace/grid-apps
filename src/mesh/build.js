@@ -433,8 +433,8 @@ function ui_build() {
                 h.button({ _: 'intersect', onclick: sketch.boolean.intersect }),
                 h.button({ _: 'difference', onclick: sketch.boolean.difference }),
                 h.hr(),
-                h.button({ _: 'group', onclick: sketch.boolean.union }),
-                h.button({ _: 'ungroup', onclick: sketch.boolean.union }),
+                h.button({ _: 'group', onclick: sketch.boolean.group }),
+                h.button({ _: 'ungroup', onclick: sketch.boolean.ungroup }),
             ])
         ]),
         h.div({ class: "sketch-off" }, [

@@ -170,9 +170,28 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let items = sketch.selection.mesh_items();
                 let polys = items.map(i => i.sketch_item.poly);
                 let union = POLYS.union(polys, 0, true);
-                console.log('sketch union', union);
                 sketch.selection.delete();
                 for (let poly of union) {
+                    sketch.add_polygon({ poly });
+                }
+            },
+
+            group() {
+                let items = sketch.selection.mesh_items();
+                let polys = items.map(i => i.sketch_item.poly).clone(true);
+                let union = POLYS.nest(POLYS.flatten(polys, [], true));
+                sketch.selection.delete();
+                for (let poly of union) {
+                    sketch.add_polygon({ poly });
+                }
+            },
+
+            ungroup() {
+                let items = sketch.selection.mesh_items();
+                let polys = items.map(i => i.sketch_item.poly).clone(true);
+                let flat = POLYS.flatten(polys, [], true);
+                sketch.selection.delete();
+                for (let poly of flat) {
                     sketch.add_polygon({ poly });
                 }
             }
@@ -287,7 +306,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     add_polygon(opt = {}) {
-        log(this.file || this.id, '| add polygon');
+        // log(this.file || this.id, '| add polygon');
         Object.assign(opt, { center: {x:0, y:0, z:0} }, opt);
         this.items.push({ type: "polygon", ...opt, ...opt.poly.toObject() });
         this.render();
