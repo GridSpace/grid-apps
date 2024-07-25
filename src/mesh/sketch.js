@@ -141,6 +141,12 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 return sketch.group.children.filter(c => c.sketch_item && c.sketch_item.selected);
             },
 
+            all() {
+                sketch.items.forEach(i => i.selected = true);
+                sketch.render();
+                return sketch.items.length;
+            },
+
             // return true if any selections were cleared
             clear() {
                 let sel = sketch.items.filter(i => i.selected);
@@ -172,6 +178,27 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let union = POLYS.union(polys, 0, true);
                 sketch.selection.delete();
                 for (let poly of union) {
+                    sketch.add_polygon({ poly });
+                }
+            },
+
+            intersect() {
+                let items = sketch.selection.mesh_items();
+                let polys = items.map(i => i.sketch_item.poly);
+                let trim = POLYS.trimTo([polys[0]], [polys[1]]);
+                sketch.selection.delete();
+                for (let poly of trim) {
+                    sketch.add_polygon({ poly });
+                }
+            },
+
+            difference() {
+                let items = sketch.selection.mesh_items();
+                let polys = items.map(i => i.sketch_item.poly);
+                let diff1 = POLYS.diff([polys[0]], [polys[1]]);
+                let diff2 = POLYS.diff([polys[1]], [polys[0]]);
+                sketch.selection.delete();
+                for (let poly of [...diff1, ...diff2]) {
                     sketch.add_polygon({ poly });
                 }
             },

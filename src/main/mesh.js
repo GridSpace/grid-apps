@@ -274,8 +274,10 @@ function space_init(data) {
             switch (code) {
                 case 'KeyA':
                     if (metaKey || ctrlKey) {
-                        api.mode.object();
-                        selection.set(api.group.list());
+                        if (!selection.sketch()?.selection.all()) {
+                            api.mode.object();
+                            selection.set(api.group.list());
+                        }
                         estop(evt);
                     }
                     break;
