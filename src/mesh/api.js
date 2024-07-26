@@ -1176,6 +1176,8 @@ const prefs = {
             scale_group_Z: true
         },
         space: {
+            snap: 1,
+            snapon: false,
             center: true,
             floor: true,
             wire: false,

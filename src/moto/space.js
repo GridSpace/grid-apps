@@ -772,18 +772,18 @@ gapp.register("moto.space", [], (root, exports) => {
         requestRefresh();
     }
 
-    function alignTracking(point, rot, out) {
-        if (point && rot) {
-            alignedTracking = true;
-            trackPlane.position.set(point.x, point.y, point.z);
-            trackPlane.rotation.set(rot.x, rot.y, rot.z);
-            trackDelta = out;
-        } else {
-            alignedTracking = false;
-            trackPlane.position.set(0, 0, 0);
-            trackPlane.rotation.set(PI2, 0, 0);
-        }
-    }
+    // function alignTracking(point, rot, out) {
+    //     if (point && rot) {
+    //         alignedTracking = true;
+    //         trackPlane.position.set(point.x, point.y, point.z);
+    //         trackPlane.rotation.set(rot.x, rot.y, rot.z);
+    //         trackDelta = out;
+    //     } else {
+    //         alignedTracking = false;
+    //         trackPlane.position.set(0, 0, 0);
+    //         trackPlane.rotation.set(PI2, 0, 0);
+    //     }
+    // }
 
     function cca(c) {
         return c.charCodeAt(0);
@@ -1100,7 +1100,7 @@ gapp.register("moto.space", [], (root, exports) => {
         update: requestRefresh,
 
         setAntiAlias(b) { antiAlias = b ? true : false },
-        alignTracking: alignTracking,
+        // alignTracking: alignTracking,
         raycast: intersect,
 
         event: {

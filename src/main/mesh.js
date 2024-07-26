@@ -642,6 +642,12 @@ function set_wireframe_fog(fogx) {
     prefs.save();
 }
 
+function set_snap_value(snap) {
+    let { prefs } = mesh.api;
+    prefs.map.space.snap = parseFloat(snap || 1);
+    prefs.save();
+}
+
 // bind functions to topics
 broker.listeners({
     load_files,
@@ -655,7 +661,8 @@ broker.listeners({
     set_surface_radians,
     set_surface_radius,
     set_wireframe_opacity,
-    set_wireframe_fog
+    set_wireframe_fog,
+    set_snap_value
 });
 
 // remove version cache bust from url

@@ -5,7 +5,7 @@
 // dep: add.three
 // dep: moto.license
 // dep: moto.broker
-// use: mesh.api
+// dep: mesh.api
 // use: mesh.util
 gapp.register("mesh.object", [], (root, exports) => {
 
