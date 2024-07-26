@@ -213,9 +213,7 @@ const selection = {
     },
 
     drag(opt = {}) {
-        for (let s of selection.sketches()) {
-            s.drag(opt);
-        }
+        selected.forEach(s => s.drag(opt));
         return selection;
     },
 

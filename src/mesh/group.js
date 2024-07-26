@@ -156,8 +156,9 @@ mesh.group = class MeshGroup extends mesh.object {
     }
 
     // ok, this is confusing, but necessary for now :/
+    // todo: obsolete?
     setSelected() {
-        super.select();
+        // super.select();
         return this;
     }
 };

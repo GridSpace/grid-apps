@@ -284,18 +284,18 @@ api.settings = function() {
         }),
     ]);
 
-    // const set5 = h.div([
-    //     h.label({ class: "header", _: 'snap'}),
-    //     h.label('value'),
-    //     h.input({ type: "text", size: 5, value: parseFloat(space.snap || 1),
-    //         onchange: ev => call.set_snap_value(ev.target.value)
-    //     }),
-    //     h.label('enabled'),
-    //     h.input({ type: "checkbox",
-    //         onchange: ev => prefs.save( space.snapon = !space.snapon ),
-    //         [ space.snapon === true ? 'checked' : 'unchecked' ] : 1
-    //     }),
-    // ]);
+    const set5 = h.div([
+        h.label({ class: "header", _: 'snap'}),
+        h.label('value'),
+        h.input({ type: "text", size: 5, value: parseFloat(space.snap || 1),
+            onchange: ev => call.set_snap_value(ev.target.value)
+        }),
+        h.label('enabled'),
+        h.input({ type: "checkbox",
+            onchange: ev => prefs.save( space.snapon = !space.snapon ),
+            [ space.snapon === true ? 'checked' : 'unchecked' ] : 1
+        }),
+    ]);
 
     modal.show('settings', h.div({ class: "settings" }, [ set1, set2, set3, set4, set5 ] ));
 }

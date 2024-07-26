@@ -352,10 +352,14 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
     drag(opt = {}) {
         let { items } = this;
-        if (opt.start) {
+        let { start, delta, end } = opt;
+        if (start) {
             let selected = items.filter(i => i.selected);
-            this.dragging = opt.start.sketch_item ? selected : opt.start;
-        } else if (opt.end) {
+            this.dragging = start.sketch_item ? selected : start;
+        // } else if (offset) {
+        } else if (delta) {
+            this.move(delta.x, delta.y, delta.z);
+        } else if (end) {
             this.dragging = undefined;
         } else {
             console.log({ invalid_sketch_drag: opt });

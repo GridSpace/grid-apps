@@ -337,11 +337,9 @@ function space_init(data) {
     // without args to return a list of selectable targets
     // with args when a selection is made
     space.mouse.downSelect((int, event, ints) => {
-        if (int?.object?.sketch) {
-            int.object.sketch.drag({ start: int.object });
-        } else if (int?.object?.sketch_item) {
-            int.object.sketch_item.sketch.drag({ start: int.object });
-        }
+        let obj = int?.object;
+        if (obj) api.selection.drag({ start: int.object });
+        if (obj) obj.sketch_item?.sketch.drag({ start: int.object });
         if (event?.shiftKey) {
             return api.objects();
         } else {
@@ -435,7 +433,7 @@ function space_init(data) {
         let { mode, modes } = api;
         if (delta) {
             if (delta.event?.shiftKey && selection.count()) {
-                selection.move(delta.x, delta.y, 0);
+                selection.drag({ delta, offset });
             }
         } else if (up) {
             if (selection.count()) {

@@ -16,6 +16,7 @@ const { MeshPhongMaterial, MeshBasicMaterial, LineBasicMaterial } = THREE;
 const { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
+const { api } = mesh;
 
 const mapp = mesh;
 const worker = moto.client.fn;
@@ -127,6 +128,43 @@ mesh.model = class MeshModel extends mesh.object {
 
     get matrixWorld() {
         return this.mesh.matrixWorld;
+    }
+
+    drag(opt = {}) {
+        let { start, delta, offset, end } = opt;
+        let { snap, snapon } = api.prefs.map.space;
+        if (start) {
+            let mid = this.bounds.mid;
+            this._save = {
+                pos: Object.assign({},mid),
+                start: Object.assign({},mid),
+            }
+        } else if (end) {
+            delete this._save;
+        } else if (offset) {
+            let { pos, start } = this._save;
+            let target = {
+                x: start.x + offset.x,
+                y: start.y + offset.y,
+                z: start.z + offset.z
+            };
+            if (snapon && snap) {
+                target.x = Math.round(target.x / snap) * snap;
+                target.y = Math.round(target.y / snap) * snap;
+                target.z = Math.round(target.z / snap) * snap;
+            }
+            delta = {
+                x: target.x - pos.x,
+                y: target.y - pos.y,
+                z: target.z - pos.z
+            };
+            pos.x += delta.x;
+            pos.y += delta.y;
+            pos.z += delta.z;
+        }
+        if (delta) {
+            this.move(delta.x, delta.y, delta.z);
+        }
     }
 
     // override and translate mesh
