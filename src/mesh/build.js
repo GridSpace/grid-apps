@@ -426,6 +426,14 @@ function ui_build() {
             ])
         ]),
         h.div({ class: "sketch-on" }, [
+            h.div({ _: "arrange", class: "head" }),
+            h.div({ class: "back"}),
+            h.div({ class: "pop"}, [
+                h.button({ _: 'group', onclick: sketch.arrange.group }),
+                h.button({ _: 'ungroup', onclick: sketch.arrange.ungroup }),
+            ])
+        ]),
+        h.div({ class: "sketch-on" }, [
             h.div({ _: "boolean", class: "head" }),
             h.div({ class: "back"}),
             h.div({ class: "pop"}, [
@@ -433,6 +441,7 @@ function ui_build() {
                 h.button({ _: 'intersect', onclick: sketch.boolean.intersect }),
                 h.button({ _: 'difference', onclick: sketch.boolean.difference }),
                 h.hr(),
+                h.button({ _: 'even/odd', onclick: sketch.boolean.evenodd }),
                 h.button({ _: 'nest', onclick: sketch.boolean.nest }),
                 h.button({ _: 'flatten', onclick: sketch.boolean.flatten }),
             ])

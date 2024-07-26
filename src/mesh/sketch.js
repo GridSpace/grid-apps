@@ -141,6 +141,14 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 return sketch.group.children.filter(c => c.sketch_item && c.sketch_item.selected);
             },
 
+            items() {
+                return sketch.selection.mesh_items().map(i => c.sketch_item.item);
+            },
+
+            count() {
+                return sketch.selection.mesh_items().length;
+            },
+
             all() {
                 sketch.items.forEach(i => i.selected = true);
                 sketch.render();
@@ -225,6 +233,18 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let union = POLYS.nest(POLYS.flatten(polys, [], true));
                 sketch.selection.delete();
                 for (let poly of union) {
+                    sketch.add_polygon({ poly });
+                }
+            },
+
+            evenodd() {
+                let items = sketch.selection.mesh_items();
+                // if (items.length < 2) return log('operation requires at least 2 items');
+                let polys = items.map(i => i.sketch_item.poly);
+                let even = POLYS.nest(POLYS.flatten(polys.clone(true), [], true));
+                let odd = POLYS.nest(POLYS.flatten(even.clone(true), [], true).filter(p => p.depth > 0));
+                sketch.selection.delete();
+                for (let poly of [...even, ...odd]) {
                     sketch.add_polygon({ poly });
                 }
             },
@@ -346,6 +366,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         log(this.file || this.id, '| add circle');
         this.items.push({
             type: "circle",
+            selected: true,
             ...Object.assign({}, { center: {x:0, y:0, z:0}, radius:5 }, opt)
         });
         this.render();
@@ -355,6 +376,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         log(this.file || this.id, '| add rectangle');
         this.items.push({
             type: "rectangle",
+            selected: true,
             ...Object.assign({}, { center: {x:0, y:0, z:0}, width:15, height:10 }, opt)
         });
         this.render();
@@ -366,6 +388,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         delete opt.poly;
         this.items.push({
             type: "polygon",
+            selected: true,
             ...Object.assign({}, { center: {x:0, y:0, z:0} }, opt),
             ...poly.toObject()
         });
@@ -386,6 +409,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     extrude(opt = {}) {
+        console.log('extrude',opt);
         let { selection, height, chamfer, chamfer_top, chamfer_bottom } = opt;
         let models = [];
         let items = this.group.children
@@ -427,9 +451,15 @@ class SketchItem {
     }
 
     toggle() {
-        this.item.selected = !this.item.selected;
+        let { sketch, item } = this;
+        item.selected = !item.selected;
+        if (item.group) {
+            sketch.items
+                .filter(i => i.group === item.group)
+                .forEach(i => i.selected = item.selected);
+        }
         this.update();
-        this.sketch.render();
+        sketch.render();
         broker.publish('sketch_selections');
     }
 

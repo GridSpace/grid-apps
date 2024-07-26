@@ -443,11 +443,12 @@ let sketch = {
     },
 
     extrude(opt = {}) {
-        if (!selection.sketch()) {
+        let sketch = selection.sketch();
+        if (!sketch) {
             return log('select a sketch to extrude');
         }
         api.modal.dialog({
-            title: "gear generator",
+            title: "extrude",
             body: [ h.div({ class: "addgear" }, [
                 h.label('height'),
                 h.input({ value: opt.height || 10, size: 5, id: "_height" }),
@@ -460,7 +461,8 @@ let sketch = {
                 h.input({ value: opt.chamfer_bottom || 0, size: 5, id: "_chambot" }),
                 h.button({ _: "create", onclick() {
                     const { _height, _chamtop, _chambot } = api.modal.bound;
-                    selection.sketch()?.extrude({
+                    sketch.extrude({
+                        selection: sketch.selection.count() > 0,
                         ...opt,
                         height: parseFloat(_height.value),
                         chamfer_top: parseFloat(_chamtop.value),
@@ -471,6 +473,27 @@ let sketch = {
             ]) ]
         });
         api.modal.bound._height.focus();
+    },
+
+    arrange: {
+        group() {
+            let one = sketch.selection.one;
+            let items = one?.items.filter(i => i.selected);
+            if (items.length > 1) {
+                let group = Date.now().toString(36);
+                items.forEach(i => i.group = group);
+                log('grouped', items.length, 'sketch items');
+            }
+        },
+
+        ungroup() {
+            let one = sketch.selection.one;
+            let items = one?.items.filter(i => i.selected)
+            if (items.length > 1) {
+                items.forEach(i => delete i.group);
+                log('ungrouped', items.length, 'sketch items');
+            }
+        }
     },
 
     selection: {
@@ -500,6 +523,10 @@ let sketch = {
 
         flatten() {
             sketch.selection.one?.boolean.flatten();
+        },
+
+        evenodd() {
+            sketch.selection.one?.boolean.evenodd();
         },
 
         union() {
