@@ -25,6 +25,7 @@ const { newPolygon } = base;
 const mapp = mesh;
 const worker = moto.client.fn;
 const POLYS = base.polygons;
+const drag = {};
 
 const material = {
     normal:    new MeshBasicMaterial({ color: 0x888888, side: DoubleSide, transparent: true, opacity: 0.25 }),
@@ -42,7 +43,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         super(opt.id);
 
         this.file = opt.file || this.id;
-        this.scale = opt.scale || { x: 10, y: 10, z: 0 };
+        this.scale = opt.scale || { x: 50, y: 50, z: 0 };
         this.center = opt.center || { x: 0, y: 0, z: 0 };
         this.normal = opt.normal || { x: 0, y: 0, z: 1 };
         this.items = opt.items || [];
@@ -307,13 +308,14 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     move(x, y, z = 0) {
-        const { group, center, scale, plane, handles, dragging } = this;
-        const handle = handles.indexOf(dragging);
-        if (dragging === plane) {
+        const { target } = drag;
+        const { center, scale, plane, handles } = this;
+        const handle = handles.indexOf(target);
+        if (target === plane) {
             center.x += x;
             center.y += y;
             center.z += z;
-            this.update();
+            this.render();
         } else if (handle >= 0) {
             const sf = [
                 [-1, 1, 1],
@@ -327,9 +329,9 @@ mesh.sketch = class MeshSketch extends mesh.object {
             scale.x += x * sf[0];
             scale.y += y * sf[1];
             scale.z += z * sf[2];
-            this.update();
-        } else if (Array.isArray(dragging)) {
-            for (let item of dragging) {
+            this.render();
+        } else if (Array.isArray(target)) {
+            for (let item of target) {
                 let { center } = item;
                 center.x += x;
                 center.y += y;
@@ -338,7 +340,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             this.render();
         } else {
             this.center = {x, y, z};
-            this.update();
+            this.render();
         }
     }
 
@@ -351,16 +353,45 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     drag(opt = {}) {
-        let { items } = this;
-        let { start, delta, end } = opt;
+        let { items, center, handles } = this;
+        let { start, delta, offset, end } = opt;
         if (start) {
             let selected = items.filter(i => i.selected);
-            this.dragging = start.sketch_item ? selected : start;
-        // } else if (offset) {
+            let target = start.sketch_item ? selected : start;
+            let item = Array.isArray(target) ? target[0] : undefined;
+            let handle = this.handles.indexOf(target);
+            drag.handle = handle >= 0 ? handles[handle] : undefined;
+            drag.item = item;
+            drag.target = target;
+            drag.start = Object.assign({}, drag.handle ?
+                util.extract(util.bounds(drag.handle).mid, { map: true }) :
+                item?.center ?? center);
+        } else if (offset) {
+            let { start, item, handle } = drag;
+            let { snap, snapon } = api.prefs.map.space;
+            let pos = handle ?
+                util.extract(util.bounds(handle).mid, { map: true }) :
+                item?.center ?? center;
+            let end = {
+                x: start.x + offset.x,
+                y: start.y + offset.y,
+                z: start.z + offset.z
+            };
+            if (snap && snapon) {
+                end.x = Math.round(end.x / snap) * snap;
+                end.y = Math.round(end.y / snap) * snap;
+                end.z = Math.round(end.z / snap) * snap;
+            }
+            delta = {
+                x: end.x - pos.x,
+                y: end.y - pos.y,
+                z: end.z - pos.z
+            };
+            this.move(delta.x, delta.y, delta.z);
         } else if (delta) {
             this.move(delta.x, delta.y, delta.z);
         } else if (end) {
-            this.dragging = undefined;
+            drag.target = undefined;
         } else {
             console.log({ invalid_sketch_drag: opt });
         }

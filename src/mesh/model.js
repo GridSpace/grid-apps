@@ -136,8 +136,8 @@ mesh.model = class MeshModel extends mesh.object {
         if (start) {
             let mid = this.bounds.mid;
             this._save = {
-                pos: Object.assign({},mid),
-                start: Object.assign({},mid),
+                pos: Object.assign({}, mid),
+                start: Object.assign({}, mid),
             }
         } else if (end) {
             delete this._save;

@@ -564,7 +564,7 @@ let add = {
             return log('select a sketch');
         }
         api.modal.dialog({
-            title: "gear generator",
+            title: "add circle",
             body: [ h.div({ class: "addgear" }, [
                 h.label('radius in mm'),
                 h.input({ value: opt.radius || 10, size: 5, id: "_radius" }),

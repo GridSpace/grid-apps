@@ -158,7 +158,13 @@ const util = exports({
             if (opt.fixed !== undefined) v = v.toFixed(opt.fixed);
             array.push(v);
         }
-        return array;
+        return opt.map ?
+            {
+                [field[0]] : array[0],
+                [field[1]] : array[1],
+                [field[2]] : array[2],
+            } :
+            array;
     },
 
     // for an array of maps, return the average of all named fields in a new map

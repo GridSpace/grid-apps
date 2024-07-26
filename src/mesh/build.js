@@ -1003,6 +1003,7 @@ function ui_build() {
         model_remove: defer_all,
         group_remove: defer_all,
         selection_update: defer_all,
+        selection_drag: defer_selection,
         selection_move: defer_selection,
         selection_scale: defer_selection,
         selection_rotate: defer_selection,
