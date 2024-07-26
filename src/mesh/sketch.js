@@ -209,7 +209,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 }
             },
 
-            group() {
+            nest() {
                 let items = sketch.selection.mesh_items();
                 if (items.length < 2) return log('operation requires at least 2 items');
                 let polys = items.map(i => i.sketch_item.poly).clone(true);
@@ -220,7 +220,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 }
             },
 
-            ungroup() {
+            flatten() {
                 let items = sketch.selection.mesh_items();
                 let polys = items.map(i => i.sketch_item.poly).clone(true);
                 let flat = POLYS.flatten(polys, [], true);

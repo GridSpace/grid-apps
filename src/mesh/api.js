@@ -494,12 +494,12 @@ let sketch = {
     },
 
     boolean: {
-        group() {
-            sketch.selection.one?.boolean.group();
+        nest() {
+            sketch.selection.one?.boolean.nest();
         },
 
-        ungroup() {
-            sketch.selection.one?.boolean.ungroup();
+        flatten() {
+            sketch.selection.one?.boolean.flatten();
         },
 
         union() {
