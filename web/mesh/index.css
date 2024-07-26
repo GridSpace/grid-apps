@@ -756,7 +756,7 @@ button.selected:hover {
     grid: min-content 1fr 1fr / min-content 1fr 1fr 1fr;
 }
 
-#selectlist .grid1 {
+#selectlist .grid0 {
     display: flex;
     flex-grow: 1;
     flex-direction: column;
@@ -765,8 +765,12 @@ button.selected:hover {
     gap: 5px;
 }
 
-#selectlist .grid2 {
+#selectlist .grid1 {
     grid: min-content 1fr / min-content 1fr;
+}
+
+#selectlist .grid2 {
+    grid: min-content 1fr 1fr / min-content 1fr 1fr;
 }
 
 .grid .ungrouped {

@@ -442,10 +442,35 @@ let sketch = {
         return sketches;
     },
 
-    extrude() {
-        selection.sketches(true).forEach(sketch => {
-            sketch.extrude(...arguments);
+    extrude(opt = {}) {
+        if (!selection.sketch()) {
+            return log('select a sketch to extrude');
+        }
+        api.modal.dialog({
+            title: "gear generator",
+            body: [ h.div({ class: "addgear" }, [
+                h.label('height'),
+                h.input({ value: opt.height || 10, size: 5, id: "_height" }),
+                h.hr(),
+                h.code("optional"),
+                h.hr(),
+                h.label('chamfer top'),
+                h.input({ value: opt.chamfer_top || 0, size: 5, id: "_chamtop" }),
+                h.label('chamfer bottom'),
+                h.input({ value: opt.chamfer_bottom || 0, size: 5, id: "_chambot" }),
+                h.button({ _: "create", onclick() {
+                    const { _height, _chamtop, _chambot } = api.modal.bound;
+                    selection.sketch()?.extrude({
+                        ...opt,
+                        height: parseFloat(_height.value),
+                        chamfer_top: parseFloat(_chamtop.value),
+                        chamfer_bottom: parseFloat(_chambot.value),
+                    });
+                    api.modal.hide();
+                } })
+            ]) ]
         });
+        api.modal.bound._height.focus();
     },
 
     selection: {
@@ -508,12 +533,35 @@ let add = {
 
     /** add sketch components */
 
-    circle() {
-        let sel = selection.sketches();
-        if (!sel.length) {
+    circle(opt = {}) {
+        let sketch = selection.sketch();
+        if (!sketch) {
             return log('select a sketch');
         }
-        return sel[0].add_circle(...arguments);
+        api.modal.dialog({
+            title: "gear generator",
+            body: [ h.div({ class: "addgear" }, [
+                h.label('radius in mm'),
+                h.input({ value: opt.radius || 10, size: 5, id: "_radius" }),
+                h.hr(),
+                h.code("optional"),
+                h.hr(),
+                h.label('point spacing'),
+                h.input({ value: opt.spacing || 0, size: 5, id: "_spacing" }),
+                h.label('point count'),
+                h.input({ value: opt.points || 0, size: 5, id: "_points" }),
+                h.button({ _: "create", onclick() {
+                    const { _radius, _points, _spacing } = api.modal.bound;
+                    sketch.add_circle({
+                        radius: parseFloat(_radius.value),
+                        points: parseInt(_points.value),
+                        spacing: parseFloat(_spacing.value),
+                    });
+                    api.modal.hide();
+                } })
+            ]) ]
+        });
+        api.modal.bound._radius.focus();
     },
 
     rectangle() {

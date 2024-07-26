@@ -18,7 +18,7 @@ const { BufferGeometry, BufferAttribute } = THREE;
 const { MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide } = THREE;
 const { PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh, Group } = THREE;
 const { base, mesh, moto } = root;
-const { space } = moto;
+const { space, broker } = moto;
 const { api, util } = mesh;
 const { newPolygon } = base;
 
@@ -144,6 +144,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             all() {
                 sketch.items.forEach(i => i.selected = true);
                 sketch.render();
+                broker.publish('sketch_selections');
                 return sketch.items.length;
             },
 
@@ -153,6 +154,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 if (sel.length) {
                     sel.forEach(s => s.selected = false);
                     sketch.render();
+                    broker.publish('sketch_selections');
                 }
                 return sel.length;
             },
@@ -163,6 +165,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 if (sel.length) {
                     sketch.items = sketch.items.filter(i => !i.selected);
                     sketch.render();
+                    broker.publish('sketch_selections');
                 }
                 return sel.length;
             }
@@ -174,6 +177,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         return {
             union() {
                 let items = sketch.selection.mesh_items();
+                if (items.length < 2) return log('operation requires at least 2 items');
                 let polys = items.map(i => i.sketch_item.poly);
                 let union = POLYS.union(polys, 0, true);
                 sketch.selection.delete();
@@ -184,6 +188,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
             intersect() {
                 let items = sketch.selection.mesh_items();
+                if (items.length !== 2) return log('operation requires 2 items');
                 let polys = items.map(i => i.sketch_item.poly);
                 let trim = POLYS.trimTo([polys[0]], [polys[1]]);
                 sketch.selection.delete();
@@ -194,6 +199,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
             difference() {
                 let items = sketch.selection.mesh_items();
+                if (items.length !== 2) return log('operation requires 2 items');
                 let polys = items.map(i => i.sketch_item.poly);
                 let diff1 = POLYS.diff([polys[0]], [polys[1]]);
                 let diff2 = POLYS.diff([polys[1]], [polys[0]]);
@@ -205,6 +211,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
             group() {
                 let items = sketch.selection.mesh_items();
+                if (items.length < 2) return log('operation requires at least 2 items');
                 let polys = items.map(i => i.sketch_item.poly).clone(true);
                 let union = POLYS.nest(POLYS.flatten(polys, [], true));
                 sketch.selection.delete();
@@ -320,22 +327,31 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
     add_circle(opt = {}) {
         log(this.file || this.id, '| add circle');
-        Object.assign(opt, { center: {x:0, y:0, z:0}, radius:5 }, opt);
-        this.items.push({ type: "circle", ...opt });
+        this.items.push({
+            type: "circle",
+            ...Object.assign({}, { center: {x:0, y:0, z:0}, radius:5 }, opt)
+        });
         this.render();
     }
 
     add_rectangle(opt = {}) {
         log(this.file || this.id, '| add rectangle');
-        Object.assign(opt, { center: {x:0, y:0, z:0}, width:15, height:10 }, opt);
-        this.items.push({ type: "rectangle", ...opt });
+        this.items.push({
+            type: "rectangle",
+            ...Object.assign({}, { center: {x:0, y:0, z:0}, width:15, height:10 }, opt)
+        });
         this.render();
     }
 
     add_polygon(opt = {}) {
         // log(this.file || this.id, '| add polygon');
-        Object.assign(opt, { center: {x:0, y:0, z:0} }, opt);
-        this.items.push({ type: "polygon", ...opt, ...opt.poly.toObject() });
+        let poly = opt.poly;
+        delete opt.poly;
+        this.items.push({
+            type: "polygon",
+            ...Object.assign({}, { center: {x:0, y:0, z:0} }, opt),
+            ...poly.toObject()
+        });
         this.render();
     }
 
@@ -347,19 +363,24 @@ mesh.sketch = class MeshSketch extends mesh.object {
         // mapy items into polys into meshes to add to group
         for (let si of this.items.map((i,o) => new SketchItem(this, i, o))) {
             group.add(si.mesh);
-            group.add(si.outs);
+            group.add(...si.outs);
         }
         this.update();
     }
 
     extrude(opt = {}) {
-        let { z, selection } = opt;
+        console.log({ opt });
+        let { selection, height, chamfer, chamfer_top, chamfer_bottom } = opt;
         let models = [];
         let items = this.group.children
             .filter(c => c.sketch_item)
             .filter(c => !selection || c.sketch_item.selected);
         for (let item of items) {
-            let vert = item.sketch_item.extrude(z || 10);
+            let vert = item.sketch_item.extrude(height, {
+                chamfer,
+                chamfer_top,
+                chamfer_bottom
+            });
             let nmdl = new mesh.model({ file: "item", mesh: vert.toFloat32() });
             models.push(nmdl);
         }
@@ -393,21 +414,22 @@ class SketchItem {
         this.item.selected = !this.item.selected;
         this.update();
         this.sketch.render();
+        broker.publish('sketch_selections');
     }
 
-    extrude(opt = {}) {
-        return this.poly.extrude(opt);
+    extrude(z, opt = {}) {
+        return this.poly.extrude(z, opt);
     }
 
     update() {
         let bump = 0.0025;
         let { item, sketch, order } = this;
         let { material } = mesh;
-        let { type, center, width, height, radius, spacing, poly, selected } = item;
+        let { type, center, width, height, radius, points, spacing, poly, selected } = item;
         if (type === 'circle') {
             let circumference = 2 * Math.PI * radius;
-            let points = Math.floor(circumference / (spacing || 1));
-            poly = newPolygon().centerCircle(center, radius, points).annotate({ item } );
+            points = points || Math.floor(circumference / (spacing || 1));
+            poly = newPolygon().centerCircle(center, radius, points).annotate({ item } ).rotate(item.rotation || 0);
         } else if (type === 'rectangle') {
             poly = newPolygon().centerRectangle(center, width, height).annotate({ item });
         } else if (type === 'polygon') {
@@ -430,14 +452,18 @@ class SketchItem {
             meh.sketch_item = this;
             // bump z to avoid z order conflict and ensure item ray intersect priority
             meh.position.z += bump + (order * bump);
-        // create poly outline
-        let lpt = poly.points.map(p => new Vector3(p.x, p.y, p.z));
-            lpt.push(lpt[0]);
-        let lge = new BufferGeometry().setFromPoints(lpt);
-        let out = this.outs = new THREE.Line(lge, material.wireline);
-            out.renderOrder = -1;
-            out.sketch_line = this;
-            out.position.z += bump + (order * bump);
+        // create poly outline(s)
+        let outs = this.outs = [];
+        for (let p of [poly, ...(poly.inner || [])]) {
+            let lpt = p.points.map(p => new Vector3(p.x, p.y, p.z));
+                lpt.push(lpt[0]);
+            let lge = new BufferGeometry().setFromPoints(lpt);
+            let out = new THREE.Line(lge, material.wireline);
+                out.renderOrder = -1;
+                out.sketch_line = this;
+                out.position.z += bump + (order * bump);
+            outs.push(out);
+        }
     }
 }
 

@@ -850,6 +850,18 @@ class Polygon {
         return this;
     }
 
+    rotate(degrees) {
+        let rad = degrees * DEG2RAD;
+        if (rad)
+        this.points = this.points.map(p => {
+            let [ x, y ] = base.util.rotate(p.x, p.y, rad);
+            p.x = x;
+            p.y = y;
+            return p;
+        });
+        return this;
+    }
+
     /**
      * hint fill angle hinting from longest segment
      */
@@ -2232,10 +2244,11 @@ class Polygon {
         }
 
         // outside wall
-        obj.appendAll(this.ribbonZ(z_side_top, z_side_bottom));
+        let rib = z - chamfer_top - chamfer_bottom;
+        obj.appendAll(this.ribbonZ(rib, z_side_bottom));
         for (let inner of this.inner || []) {
             // inside wall(s)
-            obj.appendAll(inner.ribbonZ(z_side_top, z_side_bottom, true));
+            obj.appendAll(inner.ribbonZ(rib, z_side_bottom, true));
         }
 
         return obj;

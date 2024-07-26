@@ -445,14 +445,14 @@ function ui_build() {
                 h.button({ _: 'grid', onclick() { api.pattern.grid() } }),
             ])
         ]),
-        h.div({ class: "sketch-on" }, [
-            h.div({ _: "pattern", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'circular', onclick() { sketch.pattern.circle() } }),
-                h.button({ _: 'grid', onclick() { sketch.pattern.grid() } }),
-            ])
-        ]),
+        // h.div({ class: "sketch-on" }, [
+        //     h.div({ _: "pattern", class: "head" }),
+        //     h.div({ class: "back"}),
+        //     h.div({ class: "pop"}, [
+        //         h.button({ _: 'circular', onclick() { sketch.pattern.circle() } }),
+        //         h.button({ _: 'grid', onclick() { sketch.pattern.grid() } }),
+        //     ])
+        // ]),
         h.div({ class: "sketch-on" }, [
             h.div({ _: "extrude", class: "head" }),
             h.div({ class: "back"}),
@@ -515,6 +515,38 @@ function ui_build() {
             h.label({ _: v2[0], id: root ? [ root, v, X, rot ] : und }),
             h.label({ _: v2[1], id: root ? [ root, v, Y, rot ] : und }),
             h.label({ _: v2[2], id: root ? [ root, v, Z, rot ] : und }),
+        ]);
+    }
+
+    // for dashboard sketch grids
+    function grid2(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y" ], root) {
+        let v = 'val', l = 'lbl';
+        let [ X, Y ] = top;
+        let [ pos, rot ] = side;
+        return h.div({ class: "grid grid2"}, [
+            h.div({ _: "" }),
+            h.div({ _: X, class: "top noselect", id: root ? [ root, l, X ] : und }),
+            h.div({ _: Y, class: "top noselect", id: root ? [ root, l, Y ] : und }),
+            h.div({ _: side[0], class: "side noselect" }),
+            h.label({ _: v1[0], id: root ? [ root, v, X, pos ] : und }),
+            h.label({ _: v1[1], id: root ? [ root, v, Y, pos ] : und }),
+            h.div({ _: side[1], class: "side noselect" }),
+            h.label({ _: v2[0], id: root ? [ root, v, X, rot ] : und }),
+            h.label({ _: v2[1], id: root ? [ root, v, Y, rot ] : und }),
+        ]);
+    }
+
+    // for other dashboard grids
+    function grid1(vals, side = [ "X", "Y"], top = "center", root, post) {
+        let v = 'val', l = 'lbl';
+        let [ X, Y ] = side;
+        return h.div({ class: "grid grid1"}, [
+            h.div({ _: "" }),
+            h.div({ _: top, class: "top noselect", id: root ? [ root, l ] : und }),
+            h.div({ _: side[0], class: "side noselect" }),
+            h.label({ _: vals[0], id: root ? [ root, v, X, post ] : und }),
+            h.div({ _: side[1], class: "side noselect" }),
+            h.label({ _: vals[1], id: root ? [ root, v, Y, post ] : und }),
         ]);
     }
 
@@ -619,13 +651,17 @@ function ui_build() {
                 if (modal.info.cancelled) {
                     return;
                 }
+                if (opt.sketch) {
+                    defer_selection();
+                    return set(tempval, value);
+                }
                 for (let g of api.selection.groups()) {
                     set(g, tempval, value);
                     if (floor && opt.floor !== false) {
                         g.floor(mesh.group);
                     }
-                    defer_selection(); // update ui
                 }
+                defer_selection();
             };
             let onkeydown = (ev) => {
                 if (ev.key === 'Enter') {
@@ -642,14 +678,9 @@ function ui_build() {
         }
     }
 
-    // update model information dashboard (bottom)
+    // editable model/sketch information dashboard
     function update_selection() {
         let map = { fixed: 2 };
-        let s_grp = selection.groups(true);
-        let s_mdl = selection.models(true);
-        if (s_mdl.length === 0) {
-            return h.bind(selectlist, []);
-        }
 
         // toggle-able stat block generator
         let sdata = {};
@@ -668,6 +699,108 @@ function ui_build() {
             ];
         }
 
+        // possible selections
+        let sketch = selection.sketch();
+        let s_grp = selection.groups(true);
+        let s_mdl = selection.models(true);
+
+        if (!(sketch || s_grp.length)) {
+            return h.bind(selectlist, []);
+        }
+
+        // render sketch options
+        if (sketch) {
+            let bounds = {
+                size: sketch.scale,
+                center: sketch.center
+            };
+            let sel = sketch.selection.mesh_items();
+            let sk_vars = sblock('sketch', sketch.file || sketch.id, grid(
+                util.extract(bounds.center, map),
+                util.extract(bounds.size, map),
+                [ "center", "size" ], und, 'sketch'
+            ));
+            let sel_item;
+            let si_vars = sel.slice(0,1).map(item => item.sketch_item.item).map(item => {
+                sel_item = item;
+                if (item.type === 'rectangle') {
+                    return sblock('rectangle', '', grid2(
+                        util.extract(item.center, map),
+                        [ item.width.toFixed(2), item.height.toFixed(2) ],
+                        [ "center", "size" ], und, 'item'
+                    ));
+                } else if (item.type === 'circle') {
+                    return [
+                        sblock('circle', '', grid1(
+                            [ item.points, item.rotation || 0 ],
+                            [ "points", "rotation" ], "value", 'circle', 'other'
+                        )),
+                        sblock('circle', '', grid2(
+                            util.extract(item.center, map),
+                            [ (item.radius*2).toFixed(2), (item.radius*2).toFixed(2) ],
+                            [ "center", "size" ], und, 'item'
+                        )),
+                    ];
+                } else if (item.type === 'polygon') {
+                    return sblock('poly', '', grid1(
+                        util.extract(item.center, map),
+                        und, und, 'item', 'center'
+                    ));
+                }
+            });
+            let bound = h.bind(selectlist, [
+                ...si_vars,
+                ...sk_vars
+            ]);
+            for (let axis of [ 'x', 'y', 'z' ]) {
+                let el = bound[`sketch_val_${axis.toUpperCase()}_center`];
+                el.classList.add('editable');
+                el.onclick = field_edit(`${axis} center`, (nval, oval) => {
+                    sketch.center[axis] = nval;
+                    sketch.render();
+                }, { sketch: true });
+                let el2 = bound[`sketch_val_${axis.toUpperCase()}_size`];
+                el2.classList.add('editable');
+                el2.onclick = field_edit(`${axis} size`, (nval, oval) => {
+                    sketch.scale[axis] = nval;
+                    sketch.render();
+                }, { sketch: true });
+            }
+            if (sel_item)
+            for (let axis of [ 'x', 'y' ]) {
+                let el = bound[`item_val_${axis.toUpperCase()}_center`];
+                if (!el) continue;
+                el.classList.add('editable');
+                el.onclick = field_edit(`${axis} center`, (nval, oval) => {
+                    sel_item.center[axis] = nval;
+                    sketch.render();
+                }, { sketch: true });
+
+                let el2 = bound[`item_val_${axis.toUpperCase()}_size`];
+                if (!el2) continue;
+                el2.classList.add('editable');
+                el2.onclick = field_edit(`${axis} size`, (nval, oval) => {
+                    if (sel_item.type === 'rectangle') {
+                        sel_item[{ x:'width', y:'height' }[axis]] = nval;
+                    } else if (sel_item.type === 'circle') {
+                        sel_item.radius = nval / 2;
+                    }
+                    sketch.render();
+                }, { sketch: true });
+
+                let lab = { x: 'points', y: 'rotation' }[axis];
+                let el3 = bound[`circle_val_${lab}_other`];
+                if (!el3) continue;
+                el3.classList.add('editable');
+                el3.onclick = field_edit(`${axis} size`, (nval, oval) => {
+                    sel_item[lab] = nval;
+                    sketch.render();
+                }, { sketch: true });
+            }
+
+            return;
+        }
+
         // map selection to divs
         let g_pos = util.average(s_grp.map(g => g.object.position));
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
@@ -678,8 +811,8 @@ function ui_build() {
             und, und, 'group'
         ));
 
-        let m_pos = util.average(s_mdl.map(m => m.object.position));
-        let m_rot = util.average(s_mdl.map(m => m.object.rotation));
+        // let m_pos = util.average(s_mdl.map(m => m.object.position));
+        // let m_rot = util.average(s_mdl.map(m => m.object.rotation));
         let m_id = s_mdl.map(m => m.id).join(' ');
 
         let bounds = util.bounds(s_mdl);
@@ -693,7 +826,7 @@ function ui_build() {
         let t_face = s_mdl.map(m => m.faces).reduce((a,v) => a+v);
         let h_msh = [h.div([
             h.button({ _: `mesh` }),
-            h.div({ class: ["grid","grid2"]}, [
+            h.div({ class: ["grid","grid1"]}, [
                 h.div({ _: "" }),
                 h.div({ _: "count", class: "top" }),
                 h.div({ _: "vertex", class: "side" }),
@@ -706,7 +839,7 @@ function ui_build() {
         let m_viz = !s_mdl.map(m => !m.visible()).reduce((v,b) => v || b);
         let h_ops = [h.div([
             h.button({ _: `ops` }),
-            h.div({ class: ["grid","grid1"]}, [
+            h.div({ class: ["grid","grid0"]}, [
                 h.div({ class: [ 'square' ],
                     onclick(e) {
                         api.selection.visible(!m_viz);
@@ -852,6 +985,7 @@ function ui_build() {
         selection_scale: defer_selection,
         selection_rotate: defer_selection,
         selection_qrotate: defer_selection,
+        sketch_selections: defer_selection
     });
 }
 
