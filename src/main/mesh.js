@@ -223,7 +223,7 @@ function space_init(data) {
                 case 'KeyC':
                     return selection.centerXY().focus();
                 case 'KeyF':
-                    return selection.floor().focus();
+                    return shiftKey ? selection.focus() : selection.floor().focus();
                 case 'KeyM':
                     return shiftKey ? api.tool.merge() : api.tool.mirror();
                 case 'KeyU':

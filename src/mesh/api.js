@@ -256,7 +256,7 @@ const selection = {
     },
 
     centerXY() {
-        for (let s of selection.groups()) {
+        for (let s of [...selection.groups(), ...selection.sketches()]) {
             s.centerXY(...arguments);
         }
         return selection;

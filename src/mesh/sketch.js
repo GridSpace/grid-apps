@@ -168,6 +168,15 @@ mesh.sketch = class MeshSketch extends mesh.object {
                     broker.publish('sketch_selections');
                 }
                 return sel.length;
+            },
+
+            centerXY() {
+                let sel = sketch.items.filter(i => i.selected);
+                for (let s of sel) {
+                    s.center.x = 0;
+                    s.center.y = 0;
+                }
+                return sel.length;
             }
         }
     }
@@ -311,7 +320,15 @@ mesh.sketch = class MeshSketch extends mesh.object {
             this.center = {x, y, z};
             this.update();
         }
-}
+    }
+
+    centerXY() {
+        if (!this.selection.centerXY()) {
+            this.center.x = 0;
+            this.center.y = 0;
+        }
+        this.render();
+    }
 
     drag(opt = {}) {
         let { items } = this;
@@ -369,7 +386,6 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     extrude(opt = {}) {
-        console.log({ opt });
         let { selection, height, chamfer, chamfer_top, chamfer_bottom } = opt;
         let models = [];
         let items = this.group.children
@@ -419,6 +435,12 @@ class SketchItem {
 
     extrude(z, opt = {}) {
         return this.poly.extrude(z, opt);
+    }
+
+    centerXY() {
+        let { center } = this.item;
+        center.x = 0;
+        center.y = 0;
     }
 
     update() {
