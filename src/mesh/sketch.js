@@ -452,6 +452,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             group.add(...si.outs);
         }
         this.update();
+        space.refresh();
     }
 
     extrude(opt = {}) {
