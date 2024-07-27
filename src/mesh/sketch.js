@@ -469,7 +469,6 @@ mesh.sketch = class MeshSketch extends mesh.object {
             log('extrude', this.file || this.id, 'into', models.length, 'solid(s)');
             let { center } = this;
             let ngrp = api.group.new(models);
-            ngrp.floor();
             ngrp.move(center.x, center.y, center.z);
             // align extrusion with sketch plane
             const euler = this.group.rotation;
@@ -560,6 +559,7 @@ class SketchItem {
                 out.renderOrder = -1;
                 out.sketch_line = this;
                 out.position.z += bump + (order * bump);
+                // out.renderOrder = bump * order;
             outs.push(out);
         }
     }

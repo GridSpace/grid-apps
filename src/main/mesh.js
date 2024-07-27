@@ -231,14 +231,15 @@ function space_init(data) {
                 case 'KeyA':
                     if (api.mode.is([ api.modes.edge ])) return mesh.edges.add();
                     return shiftKey && api.tool.analyze();
-                case 'KeyR':
-                    return shiftKey ? api.tool.rebuild() : api.tool.repair();
+                // case 'KeyR':
+                //     return shiftKey ? api.tool.rebuild() : api.tool.repair();
                 case 'KeyE':
                     if (api.mode.is([ api.modes.sketch ])) {
                         estop(evt);
                         return api.sketch.extrude();
                     }
-                    return api.tool.clean();
+                    return;
+                    // return api.tool.clean();
                 case 'KeyV':
                     return shiftKey ? selection.show() : selection.focus();
                 case 'KeyN':

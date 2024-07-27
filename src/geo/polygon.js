@@ -2184,9 +2184,22 @@ class Polygon {
             return earcut.map(face => face.points.map(p => [ p.x, p.y, p.z ])).flat().flat();
         }
 
+        let inv = z < 0;
+
+        if (inv) {
+            z = -z;
+        }
+
         let chamfer = opt.chamfer || 0;
         let chamfer_top = opt.chamfer_top || chamfer;
         let chamfer_bottom = opt.chamfer_bottom || chamfer;
+
+        if (inv) {
+            let tmp = chamfer_top;
+            chamfer_top = chamfer_bottom;
+            chamfer_bottom = tmp;
+        }
+
         let zadd = (typeof opt === 'number' ? opt : opt.zadd || 0); // z bottom
         let obj = []; // flat output vertex array (float-x,float-y,float-z,...)
         let top_face = earcut;
@@ -2249,6 +2262,12 @@ class Polygon {
         for (let inner of this.inner || []) {
             // inside wall(s)
             obj.appendAll(inner.ribbonZ(rib, z_side_bottom, true));
+        }
+
+        if (inv) {
+            for (let i=2; i<obj.length; i+=3) {
+                obj[i] -= z;
+            }
         }
 
         return obj;
