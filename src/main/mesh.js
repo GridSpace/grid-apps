@@ -483,7 +483,7 @@ function load_files(files) {
                 let { circs, closed, open, rects } = layer;
                 open = open.map(poly => {
                     const diam = poly.tool?.shape?.diameter;
-                    return diam ? poly.offset_open(diam, 'round') : null;
+                    return diam ? poly.offset_open(diam / 2, 'round') : null;
                 }).filter(p => p).flat();
                 for (let set of [ closed, open, circs, rects ]) {
                     let group = Date.now().toString(36);

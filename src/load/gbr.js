@@ -87,7 +87,7 @@ function toMesh(text, opt = {}) {
     // copper traces (expand first since open)
     const open_exp = open.map(poly => {
         const diam = poly.tool?.shape?.diameter;
-        return diam ? poly.offset_open(diam, 'round') : null;
+        return diam ? poly.offset_open(diam / 2, 'round') : null;
     }).filter(p => p).flat();
 
     // union open trace expansions
