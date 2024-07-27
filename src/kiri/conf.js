@@ -829,7 +829,7 @@ const conf = exports({
                 number: 4,
                 type: "tapermill",
                 name: "vee 1/8",
-                metric: false,
+                metric: true,
                 shaft_diam: 3.17500,
                 shaft_len:  11,
                 flute_diam: 3.17500,
