@@ -477,9 +477,15 @@ function load_files(files) {
         load.File.load([...files], { flat: true }).then(layers => {
             for (let layer of layers.flat()) {
                 let { circs, closed, open, rects } = layer;
-                let group = Date.now().toString(36);
-                for (let poly of [ ...closed, ...circs, ...rects ]) {
-                    sketch.add_polygon({ poly, group });
+                open = open.map(poly => {
+                    const diam = poly.tool?.shape?.diameter;
+                    return diam ? poly.offset_open(diam, 'round') : null;
+                }).filter(p => p).flat();
+                for (let set of [ closed, open, circs, rects ]) {
+                    let group = Date.now().toString(36);
+                    for (let poly of set) {
+                        sketch.add_polygon({ poly, group });
+                    }
                 }
             }
         });
