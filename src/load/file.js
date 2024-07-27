@@ -39,7 +39,8 @@ const types = {
     },
 
     svg(data, file, resolve, reject, opt = {}) {
-        resolve(load.SVG.parse(data, opt).map(m => { return {mesh: m.toFloat32(), file} }));
+        let out = load.SVG.parse(data, opt);
+        resolve(opt.flat ? out : out.map(m => { return {mesh: m.toFloat32(), file} }));
     },
 
     png(data, file, resolve, reject, opt = {}) {

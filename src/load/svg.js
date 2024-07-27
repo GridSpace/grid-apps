@@ -17,7 +17,8 @@ function parseAsync(text, opt) {
 }
 
 function parse(text, opt = { soup: true }) {
-    const fromSoup = opt.soup || false;
+    const justPoly = opt.flat || false;
+    const fromSoup = opt.soup || justPoly;
     const objs = [];
     const data = new THREE.SVGLoader().parse(text);
     const paths = data.paths;
@@ -34,9 +35,14 @@ function parse(text, opt = { soup: true }) {
             for (let node of shapes) {
                 let { shape, holes } = node.extractPoints();
                 for (let path of [ shape, ...holes ]) {
-                    polys.push(base.newPolygon().addPoints(path.map(p => base.newPoint(p.x, p.y, 0))));
+                    let poly = base.newPolygon().addPoints(path.map(p => base.newPoint(p.x, p.y, 0)));
+                    if (poly.appearsClosed()) poly.points.pop();
+                    polys.push(poly);
                 }
             }
+            continue;
+        }
+        if (justPoly) {
             continue;
         }
         let geom = new THREE.ExtrudeGeometry(shapes, {
@@ -46,8 +52,8 @@ function parse(text, opt = { soup: true }) {
         });
         let array = geom.attributes.position.array;
         // invert y
-        for (let i=0; i<array.length; i+=3) {
-            array[i+1] = -array[i+1];
+        for (let i=1; i<array.length; i+=3) {
+            array[i] = -array[i];
         }
         // invert vertex order to compensate for inverted y
         for (let i=0; i<array.length; i+=9) {
@@ -72,18 +78,18 @@ function parse(text, opt = { soup: true }) {
             }
         }));
 
+        if (justPoly) {
+            return nest;
+        }
+
         let z = parseFloat(depth.value);
         for (let poly of nest) {
             let obj = poly.extrude(z);
             objs.push(obj);
-            // invert y
-            for (let i=1, l=obj.length; i<l; i += 3) {
-                obj[i] = -obj[i];
-            }
         }
     }
 
-    return objs;
+    return justPoly ? polys : objs;
 }
 
 });

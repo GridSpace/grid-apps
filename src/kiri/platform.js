@@ -857,7 +857,7 @@ function platformLoadFiles(files, group) {
                 let svg = load.SVG.parse(data.textDecode('utf-8'));
                 let ind = 0;
                 for (let v of svg) {
-                    platformLoadWidget(group, svg[ind], ind ? `${name}-${ind++}` : name);
+                    platformLoadWidget(group, svg[ind++], ind ? `${name}-${ind}` : name);
                 }
                 load_dec();
             }

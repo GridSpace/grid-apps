@@ -471,6 +471,13 @@ function load_files(files) {
         has_svg = has_svg || file.name.toLowerCase().indexOf(".svg") > 0;
     }
     if (has_svg) {
+        let sketch = api.sketch.selection.one;
+        if (sketch) {
+            return load.File.load([...files], { flat: true })
+                .then(polys => polys.flat().forEach(poly => sketch.add_polygon({ poly })))
+                .catch(error => dbug.error(error))
+                .finally(() => mesh.api.log.hide());
+        }
         api.modal.dialog({
             title: `svg import`,
             body: [ h.div({ class: "image-import" }, [
@@ -540,15 +547,9 @@ function load_files(files) {
 
 function load_files_opt(files, opt) {
     load.File.load([...files], opt)
-        .then(data => {
-            call.space_load(data);
-        })
-        .catch(error => {
-            dbug.error(error);
-        })
-        .finally(() => {
-            mesh.api.log.hide();
-        });
+        .then(data => call.space_load(data))
+        .catch(error => dbug.error(error))
+        .finally(() => mesh.api.log.hide());
 }
 
 // add object loader

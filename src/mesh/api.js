@@ -739,6 +739,8 @@ let file = {
     import() {
         // binding created in mesh.build
         $('import').click();
+        // allow importing the same file twice
+        setTimeout(() => { $('import').value = ''; }, 100);
     },
 
     export() {
