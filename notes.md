@@ -130,6 +130,7 @@
 
 # Mesh:Tool
 
+* font to path with https://github.com/paulzi/svg-text-to-path
 * add undo/redo
 * click to repair normals based on a known good (selected) face
 * send to Kiri:Moto workspace (or update model vertices in place)
