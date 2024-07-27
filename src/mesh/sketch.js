@@ -14,7 +14,7 @@
 // use: mesh.group
 gapp.register("mesh.sketch", [], (root, exports) => {
 
-const { BufferGeometry, BufferAttribute } = THREE;
+const { BufferGeometry, BufferAttribute, Quaternion } = THREE;
 const { MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide } = THREE;
 const { PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh, Group } = THREE;
 const { base, mesh, moto } = root;
@@ -85,7 +85,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     update() {
-        const { group, plane, outline, center, handles, corners, normal, scale } = this;
+        let { group, plane, outline, center, handles, corners, normal, scale } = this;
 
         plane.scale.set(scale.x, scale.y, 1);
         outline.scale.set(scale.x, scale.y, 1);
@@ -101,12 +101,8 @@ mesh.sketch = class MeshSketch extends mesh.object {
             );
         }
 
-        const { position } = group;
-        group.lookAt(new Vector3(
-            normal.x + position.x,
-            normal.z + position.z,
-            normal.y - position.y
-        ));
+        normal = new THREE.Vector3(normal.x, normal.y, normal.z).normalize();
+        group.quaternion.copy(new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), normal));
 
         this.#db_save();
     }
@@ -117,7 +113,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     #db_save() {
-        const { center, normal, scale, type, file, items } = this;
+        let { center, normal, scale, type, file, items } = this;
         mapp.db.space.put(this.id, { center, normal, scale, type, file, items });
     }
 
@@ -456,7 +452,6 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     extrude(opt = {}) {
-        console.log('extrude',opt);
         let { selection, height, chamfer, chamfer_top, chamfer_bottom } = opt;
         let models = [];
         let items = this.group.children
@@ -477,6 +472,11 @@ mesh.sketch = class MeshSketch extends mesh.object {
             let ngrp = api.group.new(models);
             ngrp.floor();
             ngrp.move(center.x, center.y, center.z);
+            // align extrusion with sketch plane
+            const euler = this.group.rotation;
+            const quaternion = new THREE.Quaternion();
+            quaternion.setFromEuler(euler);
+            ngrp.qrotation(quaternion);
         }
     }
 }

@@ -408,9 +408,11 @@ function space_init(data) {
                     // set focus on intersected face
                     const { x, y, z } = int.point;
                     // rotate normal using group's matrix
-                    const normal = shiftKey ? int.face.normal : undefined;
+                    const normal = shiftKey ? int.face.normal.clone(): undefined;
+                    // ransform the normal to align with sketch group
+                    normal?.transformDirection(int.object.sketch.group.matrix);
                     // y,z swap due to world rotation for orbit controls
-                    api.focus({center: { x, y:-z, z:y }, normal});
+                    api.focus({ center: { x, y:-z, z:y }, normal });
                 } else {
                     selection.toggle(sketch);
                 }
