@@ -373,6 +373,18 @@ function space_init(data) {
                     const normal = shiftKey ? int.face.normal.applyQuaternion(q) : undefined;
                     // y,z swap due to world rotation for orbit controls
                     api.focus({center: { x, y:-z, z:y }, normal});
+                    let one = api.sketch.selection.one;
+                    if (one && confirm('attach sketch to face?')) {
+                        one.center = {
+                            x, y: -z, z: y
+                        };
+                        one.normal = {
+                            x: normal.x,
+                            y: normal.y,
+                            z: normal.z
+                        };
+                        one.render();
+                    }
                 } else if (ctrlKey) {
                     // rotate selected face towawrd z "floor"
                     group.faceDown(int.face.normal);
