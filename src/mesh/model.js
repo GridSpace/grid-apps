@@ -151,7 +151,6 @@ mesh.model = class MeshModel extends mesh.object {
             if (snapon && snap) {
                 target.x = Math.round(target.x / snap) * snap;
                 target.y = Math.round(target.y / snap) * snap;
-                target.z = Math.round(target.z / snap) * snap;
             }
             delta = {
                 x: target.x - pos.x,

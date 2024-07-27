@@ -89,7 +89,6 @@ let edges = {
     },
 
     async add() {
-        console.log({ add: selected.slice() });
         if (selected.length === 2 && selected[0].object === selected[1].object) {
             let verts = selected.map(s => [ s.side.p0, s.side.p1 ]).flat();
             // clean up floating point cruft for comparison

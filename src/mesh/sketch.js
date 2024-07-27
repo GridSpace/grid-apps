@@ -387,7 +387,6 @@ mesh.sketch = class MeshSketch extends mesh.object {
             if (snap && snapon) {
                 end.x = Math.round(end.x / snap) * snap;
                 end.y = Math.round(end.y / snap) * snap;
-                end.z = Math.round(end.z / snap) * snap;
             }
             delta = {
                 x: end.x - pos.x,
