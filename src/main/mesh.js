@@ -466,18 +466,34 @@ function load_files(files) {
     let api = mesh.api;
     let has_image = false;
     let has_svg = false;
+    let has_gbr = false;
+    let sketch = api.sketch.selection.one;
     for (let file of files) {
         has_image = has_image || file.type === 'image/png';
         has_svg = has_svg || file.name.toLowerCase().indexOf(".svg") > 0;
+        has_gbr = has_gbr || file.name.toLowerCase().indexOf(".gbr") > 0;
     }
+    if (sketch && has_gbr) {
+        load.File.load([...files], { flat: true }).then(layers => {
+            for (let layer of layers.flat()) {
+                let { circs, closed, open, rects } = layer;
+                let group = Date.now().toString(36);
+                for (let poly of [ ...closed, ...circs, ...rects ]) {
+                    sketch.add_polygon({ poly, group });
+                }
+            }
+        });
+    } else
+    if (sketch && has_svg) {
+        load.File.load([...files], { flat: true })
+            .then(polys => polys.forEach(set => {
+                let group = Date.now().toString(36);
+                set.forEach(poly => sketch.add_polygon({ poly, group }))
+            }))
+            .catch(error => dbug.error(error))
+            .finally(() => mesh.api.log.hide());
+    } else
     if (has_svg) {
-        let sketch = api.sketch.selection.one;
-        if (sketch) {
-            return load.File.load([...files], { flat: true })
-                .then(polys => polys.flat().forEach(poly => sketch.add_polygon({ poly })))
-                .catch(error => dbug.error(error))
-                .finally(() => mesh.api.log.hide());
-        }
         api.modal.dialog({
             title: `svg import`,
             body: [ h.div({ class: "image-import" }, [
@@ -501,7 +517,8 @@ function load_files(files) {
                 ])
             ]) ]
         });
-    } else if (has_image) {
+    } else
+    if (has_image) {
         api.modal.dialog({
             title: `image import`,
             body: [ h.div({ class: "image-import" }, [

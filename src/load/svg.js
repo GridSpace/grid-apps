@@ -35,7 +35,7 @@ function parse(text, opt = { soup: true }) {
             for (let node of shapes) {
                 let { shape, holes } = node.extractPoints();
                 for (let path of [ shape, ...holes ]) {
-                    let poly = base.newPolygon().addPoints(path.map(p => base.newPoint(p.x, p.y, 0)));
+                    let poly = base.newPolygon().addPoints(path.map(p => base.newPoint(p.x, -p.y, 0)));
                     if (poly.appearsClosed()) poly.points.pop();
                     polys.push(poly);
                 }

@@ -40,7 +40,7 @@ const types = {
 
     svg(data, file, resolve, reject, opt = {}) {
         let out = load.SVG.parse(data, opt);
-        resolve(opt.flat ? out : out.map(m => { return {mesh: m.toFloat32(), file} }));
+        resolve(opt.flat ? out : out.map(m => { return { mesh: m.toFloat32(), file } }));
     },
 
     png(data, file, resolve, reject, opt = {}) {
@@ -53,7 +53,11 @@ const types = {
     },
 
     gbr(data, file, resolve, reject, opt = {}) {
-        resolve([{ mesh: load.GBR.toMesh(data).toFloat32(), file }])
+        if (opt.flat) {
+            resolve([ load.GBR.parse(data) ])
+        } else {
+            resolve([{ mesh: load.GBR.toMesh(data).toFloat32(), file }])
+        }
     }
 };
 
