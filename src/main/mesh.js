@@ -26,6 +26,10 @@ const version = mesh.version = '1.4.7';
 const call = broker.send;
 const dbindex = [ "admin", "space" ];
 
+function log() {
+    return mesh.api.log.emit(...arguments);
+}
+
 // set below. called once the DOM readyState = complete
 // this is the main() entrypoint called after all dependents load
 function init() {
@@ -109,7 +113,7 @@ async function restore_space() {
             // console.log({ id, data });
             keys.push(id);
             if (count++ === 0) {
-                mesh.api.log.emit(`restoring workspace`);
+                log(`restoring workspace`);
             }
             // restore object based on type
             // group arrays load models they contain
@@ -124,10 +128,10 @@ async function restore_space() {
                     .filter(r => r.md) // filter cache misses
                     .map(r => new mesh.model(r.md, r.id).applyMatrix(mcache[r.id]));
                 if (models.length) {
-                    mesh.api.log.emit(`restored ${models.length} model(s)`);
+                    log(`restored ${models.length} model(s)`);
                     mesh.api.group.new(models, id).applyMatrix(mcache[id]);
                 } else {
-                    mesh.api.log.emit(`removed empty group ${id}`);
+                    log(`removed empty group ${id}`);
                     db_space.remove(id);
                 }
             } else if (data.type === 'sketch') {
@@ -139,7 +143,7 @@ async function restore_space() {
             keys.remove(id);
         }
         if (keys.length) {
-            mesh.api.log.emit(`removing ${keys.length} unclaimed meshes`);
+            log(`removing ${keys.length} unclaimed meshes`);
         }
         // clear out meshes left in the space db along with their matrices
         for (let id of keys) {
@@ -462,7 +466,7 @@ function space_init(data) {
 }
 
 function load_files(files) {
-    mesh.api.log.emit(`loading file...`);
+    log(`loading file...`);
     let api = mesh.api;
     let has_image = false;
     let has_svg = false;
@@ -470,8 +474,8 @@ function load_files(files) {
     let sketch = api.sketch.selection.one;
     for (let file of files) {
         has_image = has_image || file.type === 'image/png';
-        has_svg = has_svg || file.name.toLowerCase().indexOf(".svg") > 0;
-        has_gbr = has_gbr || file.name.toLowerCase().indexOf(".gbr") > 0;
+        has_svg = has_svg || file.name.toLowerCase().endsWith(".svg") > 0;
+        has_gbr = has_gbr || file.name.toLowerCase().endsWith(".gbr") > 0;
     }
     if (sketch && has_gbr) {
         load.File.load([...files], { flat: true }).then(layers => {
@@ -571,8 +575,8 @@ function load_files(files) {
 function load_files_opt(files, opt) {
     load.File.load([...files], opt)
         .then(data => call.space_load(data))
-        .catch(error => dbug.error(error))
-        .finally(() => mesh.api.log.hide());
+        .catch(error => log(error).pin({}) && dbug.error(error))
+        // .finally(() => mesh.api.log.hide());
 }
 
 // add object loader
