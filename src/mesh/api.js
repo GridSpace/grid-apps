@@ -298,7 +298,7 @@ const pattern = {
      * @param {float[]} center [x,y,z]
      */
     circle(count, center) {
-        async function doit(count, center = [0,0]) {
+        async function doit(count = 3, center = [0,0], zdelta = 0) {
             api.modal.hide();
             let models = selection.models();
             let [ cx, cy ] = center;
@@ -314,22 +314,27 @@ const pattern = {
                     clone.group.rotate(0, 0, stepr * i);
                     clone.group.move(x + cx, y + cy, pos.z);
                     modnu.push(clone);
+                    // pos.z += zdelta;
                 }
                 await api.tool.regroup(modnu);
             }
         }
         if (!count) {
             api.modal.dialog({
-                title: "object pattern",
+                title: "circle pattern",
                 body: [ h.div({ class: "addgear" }, [
                     h.label('total count'),
                     h.input({ value: 3, size: 5, id: "_count" }),
                     h.label('center x,y'),
                     h.input({ value: "0,0", size: 5, id: "_center" }),
+                    // h.label('z delta'),
+                    // h.input({ value: "0", size: 5, id: "_zdelta" }),
                     h.button({ _: "create", onclick() {
+                        let { _count, _center, _zdelta } = api.modal.bound;
                         doit(
-                            parseInt(api.modal.bound._count.value) || 3,
-                            api.modal.bound._center.value.split(',').map(v => parseFloat(v))
+                            parseInt(_count.value),
+                            _center.value.split(',').map(v => parseFloat(v)),
+                            // parseFloat(_zdelta.value)
                         );
                     } })
                 ]) ]
