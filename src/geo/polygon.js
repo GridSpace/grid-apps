@@ -567,6 +567,16 @@ class Polygon {
         return this.points[this.length - 1];
     }
 
+    flip(axis) {
+        for (let p of this.points) {
+            p[axis] = -p[axis];
+        }
+        for (let i of this.inner || []) {
+            i.flip(axis);
+        }
+        return this;
+    }
+
     swap(x, y) {
         this._bounds = undefined;
         if (x) {

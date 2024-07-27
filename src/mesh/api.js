@@ -480,6 +480,12 @@ let sketch = {
     },
 
     arrange: {
+        ifcan(fn, count = 1) {
+            let one = sketch.selection.one;
+            let items = one?.items.filter(i => i.selected);
+            (items.length >= count) && fn(one, items);
+        },
+
         group() {
             let one = sketch.selection.one;
             let items = one?.items.filter(i => i.selected);
@@ -490,6 +496,25 @@ let sketch = {
             }
         },
 
+        center() {
+            sketch.arrange.ifcan((sketch, items) => {
+                let bounds;
+                let recs = [];
+                items.filter(i => i.type === 'polygon').forEach(item => {
+                    let poly = newPolygon().fromObject(item);
+                    let bnds = poly.bounds;
+                    bounds = (bounds ? bounds.merge(bnds) : bnds);
+                    recs.push({ item, poly });
+                });
+                let center = bounds.center(0);
+                for (let rec of recs) {
+                    rec.poly.move({ x: -center.x, y: -center.y, z:0 });
+                    Object.assign(rec.item, rec.poly.toObject());
+                }
+                sketch.render();
+            });
+        },
+
         ungroup() {
             let one = sketch.selection.one;
             let items = one?.items.filter(i => i.selected)
@@ -497,6 +522,24 @@ let sketch = {
                 items.forEach(i => delete i.group);
                 log('ungrouped', items.length, 'sketch items');
             }
+        },
+
+        fliph() {
+            sketch.arrange.ifcan((sketch, items) => {
+                items.filter(i => i.type === 'polygon').forEach(item => {
+                    Object.assign(item, newPolygon().fromObject(item).flip('x').toObject());
+                });
+                sketch.render();
+            });
+        },
+
+        flipv() {
+            sketch.arrange.ifcan((sketch, items) => {
+                items.filter(i => i.type === 'polygon').forEach(item => {
+                    Object.assign(item, newPolygon().fromObject(item).flip('y').toObject());
+                });
+                sketch.render();
+            });
         }
     },
 

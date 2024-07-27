@@ -120,7 +120,7 @@ class Bounds {
         return this.maxy - this.miny;
     }
 
-    center(z) {
+    center(z = 0) {
         return base.newPoint(this.centerx(), this.centery(), z);
     }
 

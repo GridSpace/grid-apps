@@ -460,6 +460,11 @@ function ui_build() {
             h.div({ class: "pop"}, [
                 h.button({ _: 'group', onclick: sketch.arrange.group }),
                 h.button({ _: 'ungroup', onclick: sketch.arrange.ungroup }),
+                h.hr(),
+                h.button({ _: 'center', onclick: sketch.arrange.center }),
+                h.hr(),
+                h.button({ _: 'flip-h', onclick: sketch.arrange.fliph }),
+                h.button({ _: 'flip-v', onclick: sketch.arrange.flipv }),
             ])
         ]),
         h.div({ class: "sketch-on" }, [
