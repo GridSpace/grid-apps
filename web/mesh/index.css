@@ -445,6 +445,7 @@ button:hover {
     font-family: monospace;
     text-align: center;
     background: #fff;
+    justify-self: end;
 }
 
 /** spinner animation **/

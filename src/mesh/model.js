@@ -205,7 +205,7 @@ mesh.model = class MeshModel extends mesh.object {
         return worker.model_duplicate({
             matrix: this.matrix,
             id: this.id,
-            opt: { mirror: opt.mirror}
+            opt: { mirror: opt.mirror }
         }).then(data => {
             if (opt.append) data = [...data, ...opt.append].toFloat32();
             if (opt.reload) return this.reload(data);
@@ -213,9 +213,14 @@ mesh.model = class MeshModel extends mesh.object {
             let group = opt.group || mesh.api.group.new();
             group.add(model);
             model.wireframe(this.wireframe());
-            model.normals(this.normals());
-            if (opt.select) group.setSelected();
-            if (opt.mirror) group.move(0, 0, group.bounds.dim.z);
+            if (opt.select) {
+                api.selection.add(model);
+            }
+            if (opt.mirror) {
+                group.move(0, 0, group.bounds.dim.z);
+            } else if (opt.shift) {
+                group.move(group.bounds.dim.x, 0, 0);
+            }
             return model;
         });
     }

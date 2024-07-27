@@ -262,11 +262,11 @@ api.settings = function() {
     const set3 = h.div([
         h.label({ class: "header", _: 'normal'}),
         h.label('length'),
-        h.input({ type: "text", size: 5, value: parseFloat(normals.length),
+        h.input({ type: "text", size: 6, value: parseFloat(normals.length),
             onchange: ev => call.set_normals_length(ev.target.value)
         }),
         h.label('color'),
-        h.input({ type: "text", size: 5,
+        h.input({ type: "text", size: 6,
             value: util.toHexRGB(dark ? normals.color_dark : normals.color_lite),
             onchange: ev => call.set_normals_color(util.fromHexRGB(ev.target.value))
         }),
@@ -297,7 +297,23 @@ api.settings = function() {
         }),
     ]);
 
-    modal.show('settings', h.div({ class: "settings" }, [ set1, set2, set3, set4, set5 ] ));
+    const set6 = h.div([
+        h.label({ class: "header", _: 'duplicate'}),
+        h.label('select'),
+        h.input({ type: "checkbox",
+            onchange: ev => prefs.save( space.dup_sel = !space.dup_sel ),
+            [ space.dup_sel === true ? 'checked' : 'unchecked' ] : 1
+        }),
+        h.label('shift'),
+        h.input({ type: "checkbox",
+            onchange: ev => prefs.save( space.dup_shift = !space.dup_shift ),
+            [ space.dup_shift === true ? 'checked' : 'unchecked' ] : 1
+        }),
+    ]);
+
+    modal.show('settings', h.div({ class: "settings" }, [
+        set1, set2, set3, set4, set5, set6
+    ] ));
 }
 
 // create html elements

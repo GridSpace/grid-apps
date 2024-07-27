@@ -154,13 +154,6 @@ mesh.group = class MeshGroup extends mesh.object {
             model.select(...arguments);
         }
     }
-
-    // ok, this is confusing, but necessary for now :/
-    // todo: obsolete?
-    setSelected() {
-        // super.select();
-        return this;
-    }
 };
 
 });

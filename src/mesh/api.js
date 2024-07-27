@@ -310,8 +310,9 @@ const pattern = {
                 for (let i=1; i<count; i++) {
                     let clone = await model.duplicate();
                     let [x, y] = base.util.rotate(pos.x - cx, pos.y - cy, stepr * i);
+                    clone.group.centerModels().position(0,0,0);
                     clone.group.rotate(0, 0, stepr * i);
-                    clone.group.position(x + cx, y + cy, pos.z);
+                    clone.group.move(x + cx, y + cy, pos.z);
                     modnu.push(clone);
                 }
                 await api.tool.regroup(modnu);
@@ -351,7 +352,7 @@ const pattern = {
                     for (let j=0; j<y; j++) {
                         if (i === 0 && j === 0) continue;
                         let clone = await model.duplicate();
-                        clone.group.position(i * xs + pos.x, -j * ys + pos.y, pos.z);
+                        clone.group.centerModels().position(i * xs + pos.x, -j * ys + pos.y, pos.z);
                         modnu.push(clone);
                     }
                 }
@@ -402,7 +403,7 @@ const group = {
     add(group) {
         groups.addOnce(group);
         space.world.add(group.object);
-        api.selection.update();
+        util.defer(selection.update);
         space.update();
         return group;
     },
@@ -426,7 +427,7 @@ let sketch = {
     add(sk) {
         sketches.addOnce(sk);
         space.world.add(sk.object);
-        api.selection.update();
+        util.defer(selection.update);
         return sk;
     },
 
@@ -900,8 +901,13 @@ const tool = {
     },
 
     duplicate() {
-        for (let m of selection.models()) {
-            m.duplicate();
+        let { dup_shift, dup_sel } = api.prefs.map.space;
+        let models = selection.models();
+        if (dup_sel) {
+            selection.clear();
+        }
+        for (let m of models) {
+            m.duplicate({ select: dup_sel, shift: dup_shift });
         }
     },
 
@@ -931,7 +937,7 @@ const tool = {
                 return;
             }
             model.rename( $('tempedit').value.trim() );
-            selection.update();
+            util.defer(selection.update);
             api.modal.hide();
         };
         let { tempedit } = api.modal.show(`rename ${type}`, h.div({ class: "rename"}, [
@@ -953,8 +959,7 @@ const tool = {
         return Promise.all(models.map(m => m.ungroup())).then(() => {
             return mesh.api.group.new(models)
                 .centerModels()
-                .position(mid.x, mid.y, mid.z)
-                .setSelected();
+                .position(mid.x, mid.y, mid.z);;
         });
     },
 
@@ -972,7 +977,7 @@ const tool = {
                     mesh: area.toFloat32()
                 })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
                 if (nm.length) {
-                    mesh.api.group.new(nm, undefined, "patch").setSelected();
+                    mesh.api.group.new(nm, undefined, "patch");
                 }
             });
             promises.push(p);
@@ -994,7 +999,7 @@ const tool = {
                     file: m.file,
                     mesh: vert.toFloat32()
                 })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
-                mesh.api.group.new(bodies, undefined, "isolate").setSelected();
+                mesh.api.group.new(bodies, undefined, "isolate");
             });
             promises.push(p);
         }
@@ -1050,7 +1055,7 @@ const tool = {
         log('repairing mesh(es)').pin();
         tool.heal(models, { merge: true }).then(() => {
             log('repair commplete').unpin();
-            api.selection.update();
+            util.defer(selection.update);
         });
     },
 
@@ -1058,7 +1063,7 @@ const tool = {
         models = fallback(models);
         tool.heal(models, { merge: false }).then(() => {
             log('cleaning complete').unpin();
-            api.selection.update();
+            util.defer(selection.update);
         });
     },
 
@@ -1176,8 +1181,8 @@ const prefs = {
         space: {
             snap: 1,
             snapon: false,
-            center: true,
-            floor: true,
+            center: false,
+            floor: false,
             wire: false,
             grid: true,
             dark: false,
