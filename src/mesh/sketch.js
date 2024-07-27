@@ -26,6 +26,12 @@ const mapp = mesh;
 const worker = moto.client.fn;
 const POLYS = base.polygons;
 const drag = {};
+const hpos = [
+    [-1, 1, 1],
+    [ 1, 1, 1],
+    [-1,-1, 1],
+    [ 1,-1, 1],
+];
 
 const material = {
     normal:    new MeshBasicMaterial({ color: 0x888888, side: DoubleSide, transparent: true, opacity: 0.25 }),
@@ -317,12 +323,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             center.z += z;
             this.render();
         } else if (handle >= 0) {
-            const sf = [
-                [-1, 1, 1],
-                [ 1, 1, 1],
-                [-1,-1, 1],
-                [ 1,-1, 1],
-            ][handle];
+            const sf = hpos[handle];
             center.x += x / 2;
             center.y += y / 2;
             center.z += z / 2;
@@ -352,6 +353,17 @@ mesh.sketch = class MeshSketch extends mesh.object {
         this.render();
     }
 
+    handle_pos(handle) {
+        if (handle < 0) return;
+        let { scale, center } = this;
+        let v = hpos[handle];
+        return {
+            x: v[0] * scale.x/2 + center.x,
+            y: v[1] * scale.y/2 + center.y,
+            z: v[2] * scale.z/2 + center.z,
+        };
+    }
+
     drag(opt = {}) {
         let { items, center, handles } = this;
         let { start, delta, offset, end } = opt;
@@ -359,18 +371,17 @@ mesh.sketch = class MeshSketch extends mesh.object {
             let selected = items.filter(i => i.selected);
             let target = start.sketch_item ? selected : start;
             let item = Array.isArray(target) ? target[0] : undefined;
-            let handle = this.handles.indexOf(target);
-            drag.handle = handle >= 0 ? handles[handle] : undefined;
+            drag.handle = handles.indexOf(target);
             drag.item = item;
             drag.target = target;
-            drag.start = Object.assign({}, drag.handle ?
-                util.extract(util.bounds(drag.handle).mid, { map: true }) :
+            drag.start = Object.assign({}, drag.handle >= 0 ?
+                this.handle_pos(drag.handle) :
                 item?.center ?? center);
         } else if (offset) {
             let { start, item, handle } = drag;
             let { snap, snapon } = api.prefs.map.space;
-            let pos = handle ?
-                util.extract(util.bounds(handle).mid, { map: true }) :
+            let pos = handle >= 0 ?
+                this.handle_pos(handle) :
                 item?.center ?? center;
             let end = {
                 x: start.x + offset.x,
