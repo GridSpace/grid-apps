@@ -502,7 +502,7 @@ CAM.init = function(kiri, api) {
             let clock = rec.type === '|';
             let label = clock ? `` : rec.type;
             let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
-            let notable = rec.note?.split(' ').filter(v => v.charAt(0) === '#');
+            let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
             if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
             if (notable?.length) label = notable[0].slice(1);
             html.appendAll([

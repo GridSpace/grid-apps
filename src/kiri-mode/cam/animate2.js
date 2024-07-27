@@ -243,7 +243,7 @@ class Stock {
         this.sends = 0;
         this.newbuf = true;
         this.subtracts = 0;
-        this.mesh = CSG.Instance().cube([x, y, z], true);
+        this.mesh = CSG.Instance().Manifold.cube([x, y, z], true);
     }
 
     send(send) {
@@ -280,7 +280,7 @@ class Stock {
         let mesh = this.mesh.getMesh();
         this.sharedVertexBuffer(mesh.numVert * 3);
         this.sharedIndexBuffer(mesh.numTri * 3);
-        this.vbuf.set(mesh.vertPos);
+        this.vbuf.set(mesh.vertProperties);
         this.ibuf.set(mesh.triVerts);
         let sub = Date.now();
         updates.push(this);
@@ -589,20 +589,21 @@ kiri.load(() => {
         const srad = tool.shaftDiameter() / 2;
         const flen = tool.fluteLength() || 15;
         const frad = toolRadius = tool.fluteDiameter() / 2;
+        let { cylinder, sphere } = Instance.Manifold;
         let mesh;
         if (tool.isBallMill()) {
-            mesh = Instance.cylinder(flen + slen - frad, frad, frad, 20, true)
-                .add(Instance.sphere(frad, 20).translate(0, 0, -(flen + slen - frad)/2));
+            mesh = cylinder(flen + slen - frad, frad, frad, 20, true)
+                .add(sphere(frad, 20).translate(0, 0, -(flen + slen - frad)/2));
         } else if (tool.isTaperMill()) {
             const trad = Math.max(tool.tipDiameter() / 2, 0.001);
-            mesh = Instance.cylinder(slen, srad, srad, 20, true).translate(0, 0, slen/2)
-                .add(Instance.cylinder(flen, trad, frad, 20, true).translate(0, 0, -flen/2));
+            mesh = cylinder(slen, srad, srad, 20, true).translate(0, 0, slen/2)
+                .add(cylinder(flen, trad, frad, 20, true).translate(0, 0, -flen/2));
         } else {
-            mesh = Instance.cylinder(flen + slen, frad, frad, 20, true);
+            mesh = cylinder(flen + slen, frad, frad, 20, true);
         }
         mesh = mesh.translate(0, 0, (flen + slen - stockZ) / 2);
         const raw = mesh.getMesh();
-        const vertex = raw.vertPos;
+        const vertex = raw.vertProperties;
         const index = raw.triVerts;
         toolMesh = { root: mesh, index, vertex, bounds: CSG.toBox3(mesh) };
         send.data({ mesh_add: { id:--toolID, ind: index, pos: vertex }});
