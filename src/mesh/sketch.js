@@ -196,6 +196,51 @@ mesh.sketch = class MeshSketch extends mesh.object {
         }
     }
 
+    get add() {
+        let sketch = this;
+        return {
+            circle(opt = {}) {
+                return sketch.add.item({
+                    type: "circle",
+                    selected: true,
+                    ...Object.assign({}, { center: {x:0, y:0, z:0}, radius:5 }, opt)
+                });
+            },
+
+            rectangle(opt = {}) {
+                return sketch.add.polygon({
+                    ...opt,
+                    poly: newPolygon().centerRectangle(
+                        opt.center || {x:0, y:0, z:0},
+                        opt.height || 15,
+                        opt.width || 10
+                    )
+                })
+            },
+
+            polygon(opt = {}) {
+                let poly = opt.poly;
+                delete opt.poly;
+                let { width, miter } = poly._svg || {};
+                return sketch.add.item({
+                    type: "polygon",
+                    width,
+                    miter,
+                    selected: true,
+                    ...Object.assign({}, { center: { x:0, y:0, z:0 } }, opt),
+                    ...poly.toObject()
+                });
+            },
+
+            item(item, opt = {}) {
+                item.group = item.group || mesh.util.uuid();
+                sketch.items.push(item);
+                sketch.render_defer();
+                return item;
+            }
+        }
+    }
+
     get boolean() {
         let sketch = this;
         return {
@@ -453,51 +498,6 @@ mesh.sketch = class MeshSketch extends mesh.object {
             drag.target = undefined;
         } else {
             console.log({ invalid_sketch_drag: opt });
-        }
-    }
-
-    get add() {
-        let sketch = this;
-        return {
-            circle(opt = {}) {
-                return sketch.add.item({
-                    type: "circle",
-                    selected: true,
-                    ...Object.assign({}, { center: {x:0, y:0, z:0}, radius:5 }, opt)
-                });
-            },
-
-            rectangle(opt = {}) {
-                return sketch.add.polygon({
-                    ...opt,
-                    poly: newPolygon().centerRectangle(
-                        opt.center || {x:0, y:0, z:0},
-                        opt.height || 15,
-                        opt.width || 10
-                    )
-                })
-            },
-
-            polygon(opt = {}) {
-                let poly = opt.poly;
-                delete opt.poly;
-                let { width, miter } = poly._svg || {};
-                return sketch.add.item({
-                    type: "polygon",
-                    width,
-                    miter,
-                    selected: true,
-                    ...Object.assign({}, { center: {x:0, y:0, z:0} }, opt),
-                    ...poly.toObject()
-                });
-            },
-
-            item(item, opt = {}) {
-                item.group = item.group || mesh.util.uuid();
-                sketch.items.push(item);
-                sketch.render_defer();
-                return item;
-            }
         }
     }
 

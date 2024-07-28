@@ -793,12 +793,19 @@ function ui_build() {
                 [ "center", "scale" ], und, 'sketch'
             ));
             let sel_item;
-            let si_vars = sel.slice(0,1).map(item => item.sketch_item.item).map(item => {
+            let sel_size;
+            let sel_sobj;
+            let si_vars = sel.length > 1 ? [] : sel.slice(0,1).map(sel => {
+                let { sketch_item } = sel;
+                let { item } = sketch_item;
                 sel_item = item;
-                if (item.type === 'rectangle') {
-                    return sblock('rectangle', '', grid2(
+                sel_sobj = sketch_item;
+                if (item.type === 'polygon') {
+                    let { bounds } = sketch_item.poly;
+                    sel_size = { x: bounds.width(), y: bounds.height() };
+                    return sblock('polygon', '', grid2(
                         util.extract(item.center, map),
-                        [ item.width.toFixed(2), item.height.toFixed(2) ],
+                        [ sel_size.x.toFixed(2), sel_size.y.toFixed(2) ],
                         [ "center", "size" ], und, 'item'
                     ));
                 } else if (item.type === 'circle') {
@@ -813,11 +820,6 @@ function ui_build() {
                             [ "center", "size" ], und, 'item'
                         )),
                     ];
-                } else if (item.type === 'polygon') {
-                    return sblock('poly', '', grid1(
-                        util.extract(item.center, map),
-                        und, und, 'item', 'center'
-                    ));
                 }
             });
             let bound = h.bind(selectlist, [
@@ -841,25 +843,26 @@ function ui_build() {
             if (sel_item)
             for (let axis of [ 'x', 'y' ]) {
                 let el = bound[`item_val_${axis.toUpperCase()}_center`];
+                // all items have centers
                 if (!el) continue;
                 el.classList.add('editable');
                 el.onclick = field_edit(`${axis} center`, (nval, oval) => {
                     sel_item.center[axis] = nval;
                     sketch.render();
                 }, { sketch: true });
-
+                // polygon scaling, circle radius
                 let el2 = bound[`item_val_${axis.toUpperCase()}_size`];
                 if (!el2) continue;
-                el2.classList.add('editable');
+                sel_item.type !== 'polygon' && el2.classList.add('editable');
                 el2.onclick = field_edit(`${axis} size`, (nval, oval) => {
-                    if (sel_item.type === 'rectangle') {
-                        sel_item[{ x:'width', y:'height' }[axis]] = nval;
+                    if (sel_item.type === 'polygon') {
+                        // todo
                     } else if (sel_item.type === 'circle') {
                         sel_item.radius = nval / 2;
                     }
                     sketch.render();
                 }, { sketch: true });
-
+                // circle points / rotation
                 let lab = { x: 'points', y: 'rotation' }[axis];
                 let el3 = bound[`circle_val_${lab}_other`];
                 if (!el3) continue;
