@@ -226,7 +226,7 @@ api.welcome = function(version = "unknown") {
 api.settings = function() {
     const { util } = mesh;
     const { prefs } = api;
-    const { surface, normals, space, wireframe } = prefs.map;
+    const { surface, normals, space, sketch, wireframe } = prefs.map;
     const { dark } = space;
 
     const set1 = h.div([
@@ -311,8 +311,31 @@ api.settings = function() {
         }),
     ]);
 
+    let ot = sketch.open_type;
+    let srr = () => { api.sketch.list().forEach(s => s.render()) };
+    const set7 = h.div([
+        h.label({ class: "header", _: 'open poly'}),
+        h.label('auto close'),
+        h.input({ type: "checkbox",
+            onchange: ev => prefs.save( (sketch.close_poly = !sketch.close_poly) && srr() ),
+            [ sketch.close_poly === true ? 'checked' : 'unchecked' ] : 1
+        }),
+        h.label('thickness'),
+        h.input({ type: "text", size: 5, value: parseFloat(sketch.open_thick || 1),
+            onchange: ev => prefs.save( (sketch.open_thick = parseFloat(ev.target.value)) && srr() )
+        }),
+        h.label('type'),
+        h.select({ type: "text", value: sketch.open_type,
+            onchange: ev => prefs.save( (sketch.open_type = ev.target.value) && srr() )
+        }, [
+            h.option({ _: 'square', [ot === 'square' ? 'selected' : '']: '' }),
+            h.option({ _: 'miter', [ot === 'miter' ? 'selected' : '']: '' }),
+            h.option({ _: 'round', [ot === 'round' ? 'selected' : '']: ''}),
+        ]),
+    ]);
+
     modal.show('settings', h.div({ class: "settings" }, [
-        set1, set2, set3, set4, set5, set6
+        set1, set2, set3, set4, set5, set6, set7
     ] ));
 }
 

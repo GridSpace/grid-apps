@@ -408,13 +408,10 @@ button:hover {
 
 .settings {
     gap: 5px;
-}
-
-.settings {
-    gap: 5px;
     display: grid;
     background-color: #fff;
     grid: min-content 1fr / min-content 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
 }
 
 .settings > div {

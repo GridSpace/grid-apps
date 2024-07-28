@@ -479,6 +479,7 @@ let sketch = {
         api.modal.bound._height.focus();
     },
 
+    // related to items selections in a selected sketch
     arrange: {
         group() {
             sketch.selection.ifcan((sketch, items) => {
@@ -502,6 +503,7 @@ let sketch = {
                     rec.poly.move({ x: -center.x, y: -center.y, z:0 });
                     Object.assign(rec.item, rec.poly.toObject());
                 }
+                selection.centerXY();
                 sketch.render();
             });
         },
@@ -588,6 +590,7 @@ let sketch = {
         },
     },
 
+    // related to items selections in a selected sketch
     boolean: {
         nest() {
             sketch.selected.one?.boolean.nest();
@@ -614,6 +617,7 @@ let sketch = {
         }
     },
 
+    // related to items selections in a selected sketch
     pattern: {
         circle() {
             sketch.selected.one?.pattern.circle();
@@ -1265,6 +1269,11 @@ const prefs = {
             grid: true,
             dark: false,
             select: []
+        },
+        sketch: {
+            close_poly: false,
+            open_thick: 1,
+            open_type: 'miter'
         },
         normals: {
             length: 0.25,

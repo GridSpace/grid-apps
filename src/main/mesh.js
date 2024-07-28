@@ -573,7 +573,7 @@ function load_files(files) {
 }
 
 function load_files_opt(files, opt) {
-    load.File.load([...files], opt)
+    return load.File.load([...files], opt)
         .then(data => call.space_load(data))
         .catch(error => log(error).pin({}) && dbug.error(error))
         // .finally(() => mesh.api.log.hide());

@@ -31,12 +31,14 @@ function parse(text, opt = { soup: true }) {
     for (let i = 0; i < paths.length; i++) {
         let path = paths[i];
         let shapes = path.toShapes(true);
+        let type = path.userData?.node?.nodeName;
         if (fromSoup) {
             for (let node of shapes) {
                 let { shape, holes } = node.extractPoints();
                 for (let path of [ shape, ...holes ]) {
                     let poly = base.newPolygon().addPoints(path.map(p => base.newPoint(p.x, -p.y, 0)));
                     if (poly.appearsClosed()) poly.points.pop();
+                    if (type === 'polyline') poly.setOpen(true);
                     polys.push(poly);
                 }
             }

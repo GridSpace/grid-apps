@@ -136,6 +136,10 @@ mesh.sketch = class MeshSketch extends mesh.object {
         }).reverse();
     }
 
+    get elements() {
+        return this.group.children.filter(c => c.sketch_item);
+    }
+
     get selection() {
         let sketch = this;
         return {
@@ -434,7 +438,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
     }
 
     add_item(item, opt = {}) {
-        item.selected = opt.select || false;
+        // item.selected = opt.select || false;
         this.items.push(item);
         this.render();
     }
@@ -526,6 +530,7 @@ class SketchItem {
         let { item, sketch, order } = this;
         let { material } = mesh;
         let { type, center, width, height, radius, points, spacing, poly, selected } = item;
+        let { close_poly, open_thick, open_type } = api.prefs.map.sketch;
         if (type === 'circle') {
             let circumference = 2 * Math.PI * radius;
             points = points || Math.floor(circumference / (spacing || 1));
@@ -535,6 +540,7 @@ class SketchItem {
         } else if (type === 'polygon') {
             poly = newPolygon().fromObject(item);
             poly.move(center);
+            if (poly.isOpen() && !close_poly) poly = poly.offset_open(open_thick, open_type)[0];
         } else {
             throw `invalid sketch type: ${type}`;
         }
