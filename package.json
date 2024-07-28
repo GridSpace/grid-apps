@@ -30,6 +30,7 @@
         "@tracespace/parser": "^5.0.0-next.0",
         "@tweenjs/tween.js": "^16.6.0",
         "base64-js": "^1.5.1",
+        "bootstrap-icons": "^1.11.3",
         "buffer-crc32": "^0.2.13",
         "compression": "^1.7.4",
         "connect": "^3.7.0",

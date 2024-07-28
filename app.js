@@ -323,6 +323,7 @@ function init(mod) {
     mod.static("/src/", "src");
     mod.static("/obj/", "web/obj");
     mod.static("/font/", "web/font");
+    mod.static("/fon2/", "web/fon2");
     mod.static("/mesh/", "web/mesh");
     mod.static("/moto/", "web/moto");
     mod.static("/meta/", "web/meta");
