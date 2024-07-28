@@ -584,7 +584,7 @@ let sketch = {
                     item.selected = !select;
                     item2.group += 'D';
                     shift && Object.assign(item2, poly.move({ x, y, z }).toObject());
-                    sketch.add_item(item2, { select });
+                    sketch.add.item(item2, { select });
                 }
             });
         },
@@ -655,7 +655,7 @@ let add = {
                 h.input({ value: opt.points || 0, size: 5, id: "_points" }),
                 h.button({ _: "create", onclick() {
                     const { _radius, _points, _spacing } = api.modal.bound;
-                    sketch.add_circle({
+                    sketch.add.circle({
                         radius: parseFloat(_radius.value),
                         points: parseInt(_points.value),
                         spacing: parseFloat(_spacing.value),
@@ -672,7 +672,7 @@ let add = {
         if (!sel.length) {
             return log('select a sketch');
         }
-        return sel[0].add_rectangle(...arguments);
+        return sel[0].add.rectangle(...arguments);
     },
 
     /** add models */

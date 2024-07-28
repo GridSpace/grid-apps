@@ -206,7 +206,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let union = POLYS.union(polys, 0, true);
                 sketch.selection.delete();
                 for (let poly of union) {
-                    sketch.add_polygon({ poly });
+                    sketch.add.polygon({ poly });
                 }
             },
 
@@ -217,7 +217,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let trim = POLYS.trimTo([polys[0]], [polys[1]]);
                 sketch.selection.delete();
                 for (let poly of trim) {
-                    sketch.add_polygon({ poly });
+                    sketch.add.polygon({ poly });
                 }
             },
 
@@ -229,7 +229,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let diff2 = POLYS.diff([polys[1]], [polys[0]]);
                 sketch.selection.delete();
                 for (let poly of [...diff1, ...diff2]) {
-                    sketch.add_polygon({ poly });
+                    sketch.add.polygon({ poly });
                 }
             },
 
@@ -240,7 +240,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let union = POLYS.nest(POLYS.flatten(polys, [], true));
                 sketch.selection.delete();
                 for (let poly of union) {
-                    sketch.add_polygon({ poly });
+                    sketch.add.polygon({ poly });
                 }
             },
 
@@ -252,7 +252,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let odd = POLYS.nest(POLYS.flatten(even.clone(true), [], true).filter(p => p.depth > 0));
                 sketch.selection.delete();
                 for (let poly of [...even, ...odd]) {
-                    sketch.add_polygon({ poly });
+                    sketch.add.polygon({ poly });
                 }
             },
 
@@ -262,7 +262,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let flat = POLYS.flatten(polys, [], true);
                 sketch.selection.delete();
                 for (let poly of flat) {
-                    sketch.add_polygon({ poly });
+                    sketch.add.polygon({ poly });
                 }
             }
         }
@@ -407,43 +407,47 @@ mesh.sketch = class MeshSketch extends mesh.object {
         }
     }
 
-    add_circle(opt = {}) {
-        log(this.file || this.id, '| add circle');
-        this.add_item({
-            type: "circle",
-            selected: true,
-            ...Object.assign({}, { center: {x:0, y:0, z:0}, radius:5 }, opt)
-        });
-    }
+    get add() {
+        let sketch = this;
+        return {
+            circle(opt = {}) {
+                sketch.add.item({
+                    type: "circle",
+                    selected: true,
+                    ...Object.assign({}, { center: {x:0, y:0, z:0}, radius:5 }, opt)
+                });
+            },
 
-    add_rectangle(opt = {}) {
-        log(this.file || this.id, '| add rectangle');
-        this.add_item({
-            type: "rectangle",
-            selected: true,
-            ...Object.assign({}, { center: {x:0, y:0, z:0}, width:15, height:10 }, opt)
-        });
-    }
+            rectangle(opt = {}) {
+                sketch.add.polygon({
+                    ...opt,
+                    poly: newPolygon().centerRectangle(
+                        opt.center || {x:0, y:0, z:0},
+                        opt.height || 15,
+                        opt.width || 10
+                    )
+                })
+            },
 
-    add_polygon(opt = {}) {
-        // log(this.file || this.id, '| add polygon');
-        let poly = opt.poly;
-        delete opt.poly;
-        let { width, miter } = poly._svg || {};
-        this.add_item({
-            type: "polygon",
-            width,
-            miter,
-            selected: true,
-            ...Object.assign({}, { center: {x:0, y:0, z:0} }, opt),
-            ...poly.toObject()
-        });
-    }
+            polygon(opt = {}) {
+                let poly = opt.poly;
+                delete opt.poly;
+                let { width, miter } = poly._svg || {};
+                sketch.add.item({
+                    type: "polygon",
+                    width,
+                    miter,
+                    selected: true,
+                    ...Object.assign({}, { center: {x:0, y:0, z:0} }, opt),
+                    ...poly.toObject()
+                });
+            },
 
-    add_item(item, opt = {}) {
-        // item.selected = opt.select || false;
-        this.items.push(item);
-        this.render();
+            item(item, opt = {}) {
+                sketch.items.push(item);
+                sketch.render();
+            }
+        }
     }
 
     // render items unto the group object

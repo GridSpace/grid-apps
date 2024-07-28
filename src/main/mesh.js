@@ -488,7 +488,7 @@ function load_files(files) {
                 for (let set of [ closed, open, circs, rects ]) {
                     let group = Date.now().toString(36);
                     for (let poly of set) {
-                        sketch.add_polygon({ poly, group });
+                        sketch.add.polygon({ poly, group });
                     }
                 }
             }
@@ -498,7 +498,7 @@ function load_files(files) {
         load.File.load([...files], { flat: true })
             .then(polys => polys.forEach(set => {
                 let group = Date.now().toString(36);
-                set.forEach(poly => sketch.add_polygon({ poly, group }))
+                set.forEach(poly => sketch.add.polygon({ poly, group }))
             }))
             .catch(error => dbug.error(error))
             .finally(() => mesh.api.log.hide());
