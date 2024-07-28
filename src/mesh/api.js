@@ -134,7 +134,7 @@ const selection = {
 
     // remove all
     delete() {
-        if (sketch.selection.delete()) {
+        if (sketch.selected.delete()) {
             return;
         }
         for (let s of selection.list()) {
@@ -163,7 +163,7 @@ const selection = {
     },
 
     clear() {
-        if (sketch.selection.clear()) {
+        if (sketch.selected.clear()) {
             return;
         }
         for (let s of selection.list()) {
@@ -466,7 +466,7 @@ let sketch = {
                 h.button({ _: "create", onclick() {
                     const { _height, _chamtop, _chambot } = api.modal.bound;
                     sketch.extrude({
-                        selection: sketch.selection.count() > 0,
+                        selection: sketch.selected.count() > 0,
                         ...opt,
                         height: parseFloat(_height.value),
                         chamfer_top: parseFloat(_chamtop.value),
@@ -480,32 +480,23 @@ let sketch = {
     },
 
     arrange: {
-        ifcan(fn, count = 1) {
-            let one = sketch.selection.one;
-            let items = one?.items.filter(i => i.selected);
-            (items.length >= count) && fn(one, items);
-        },
-
         group() {
-            let one = sketch.selection.one;
-            let items = one?.items.filter(i => i.selected);
-            if (items.length > 1) {
+            sketch.selection.ifcan((sketch, items) => {
                 let group = Date.now().toString(36);
                 items.forEach(i => i.group = group);
                 log('grouped', items.length, 'sketch items');
-            }
+            }, 2);
+        },
+
+        ungroup() {
+            sketch.selection.ifcan((sketch, items) => {
+                items.forEach(i => delete i.group);
+                log('ungrouped', items.length, 'sketch items');
+            });
         },
 
         center() {
-            sketch.arrange.ifcan((sketch, items) => {
-                let bounds;
-                let recs = [];
-                items.filter(i => i.type === 'polygon').forEach(item => {
-                    let poly = newPolygon().fromObject(item);
-                    let bnds = poly.bounds;
-                    bounds = (bounds ? bounds.merge(bnds) : bnds);
-                    recs.push({ item, poly });
-                });
+            sketch.selection.bounded_op((sketch, bounds, recs) => {
                 let center = bounds.center(0);
                 for (let rec of recs) {
                     rec.poly.move({ x: -center.x, y: -center.y, z:0 });
@@ -515,17 +506,8 @@ let sketch = {
             });
         },
 
-        ungroup() {
-            let one = sketch.selection.one;
-            let items = one?.items.filter(i => i.selected)
-            if (items.length > 1) {
-                items.forEach(i => delete i.group);
-                log('ungrouped', items.length, 'sketch items');
-            }
-        },
-
         fliph() {
-            sketch.arrange.ifcan((sketch, items) => {
+            sketch.selection.ifcan((sketch, items) => {
                 items.filter(i => i.type === 'polygon').forEach(item => {
                     Object.assign(item, newPolygon().fromObject(item).flip('x').toObject());
                 });
@@ -534,7 +516,7 @@ let sketch = {
         },
 
         flipv() {
-            sketch.arrange.ifcan((sketch, items) => {
+            sketch.selection.ifcan((sketch, items) => {
                 items.filter(i => i.type === 'polygon').forEach(item => {
                     Object.assign(item, newPolygon().fromObject(item).flip('y').toObject());
                 });
@@ -543,7 +525,8 @@ let sketch = {
         }
     },
 
-    selection: {
+    // related to a selected sketch
+    selected: {
         get one() {
             return selection.sketch();
         },
@@ -560,42 +543,84 @@ let sketch = {
         delete() {
             let list = selection.list(true);
             return list[0]?.type === 'sketch' && list[0].selection.delete();
-        }
+        },
+    },
+
+    // related to items selections in a selected sketch
+    selection: {
+        ifcan(fn, count = 1) {
+            let one = sketch.selected.one;
+            let items = one?.items.filter(i => i.selected);
+            if (items?.length >= count) {
+                return fn(one, items) || true;
+            } else {
+                return false;
+            }
+        },
+
+        bounded_op(fn) {
+            return sketch.selection.ifcan((sketch, items) => {
+                let bounds;
+                let recs = [];
+                items.filter(i => i.type === 'polygon').forEach(item => {
+                    let poly = newPolygon().fromObject(item);
+                    let bnds = poly.bounds;
+                    bounds = (bounds ? bounds.merge(bnds) : bnds);
+                    recs.push({ item, poly });
+                });
+                return (bounds && (fn(sketch, bounds, recs) || true)) || false;
+            }) || false;
+        },
+
+        duplicate(opt = {}) {
+            return sketch.selection.bounded_op((sketch, bounds, recs) => {
+                let { shift, select } = opt;
+                let x = bounds.width(), y = 0, z = 0;
+                for (let rec of recs) {
+                    let { item, poly } = rec;
+                    let item2 = structuredClone(item);
+                    item.selected = !select;
+                    item2.group += 'D';
+                    shift && Object.assign(item2, poly.move({ x, y, z }).toObject());
+                    sketch.add_item(item2, { select });
+                }
+            });
+        },
     },
 
     boolean: {
         nest() {
-            sketch.selection.one?.boolean.nest();
+            sketch.selected.one?.boolean.nest();
         },
 
         flatten() {
-            sketch.selection.one?.boolean.flatten();
+            sketch.selected.one?.boolean.flatten();
         },
 
         evenodd() {
-            sketch.selection.one?.boolean.evenodd();
+            sketch.selected.one?.boolean.evenodd();
         },
 
         union() {
-            sketch.selection.one?.boolean.union();
+            sketch.selected.one?.boolean.union();
         },
 
         intersect() {
-            sketch.selection.one?.boolean.intersect();
+            sketch.selected.one?.boolean.intersect();
         },
 
         difference() {
-            sketch.selection.one?.boolean.difference();
+            sketch.selected.one?.boolean.difference();
         }
     },
 
     pattern: {
         circle() {
-            sketch.selection.one?.pattern.circle();
+            sketch.selected.one?.pattern.circle();
         },
 
         grid() {
-            sketch.selection.one?.pattern.grid();
+            sketch.selected.one?.pattern.grid();
         }
     }
 };
@@ -952,6 +977,9 @@ const tool = {
 
     duplicate() {
         let { dup_shift, dup_sel } = api.prefs.map.space;
+        if (sketch.selection.duplicate({ select: dup_sel, shift: dup_shift })) {
+            return;
+        }
         let models = selection.models();
         if (dup_sel) {
             selection.clear();

@@ -405,34 +405,37 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
     add_circle(opt = {}) {
         log(this.file || this.id, '| add circle');
-        this.items.push({
+        this.add_item({
             type: "circle",
             selected: true,
             ...Object.assign({}, { center: {x:0, y:0, z:0}, radius:5 }, opt)
         });
-        this.render();
     }
 
     add_rectangle(opt = {}) {
         log(this.file || this.id, '| add rectangle');
-        this.items.push({
+        this.add_item({
             type: "rectangle",
             selected: true,
             ...Object.assign({}, { center: {x:0, y:0, z:0}, width:15, height:10 }, opt)
         });
-        this.render();
     }
 
     add_polygon(opt = {}) {
         // log(this.file || this.id, '| add polygon');
         let poly = opt.poly;
         delete opt.poly;
-        this.items.push({
+        this.add_item({
             type: "polygon",
             selected: true,
             ...Object.assign({}, { center: {x:0, y:0, z:0} }, opt),
             ...poly.toObject()
         });
+    }
+
+    add_item(item, opt = {}) {
+        item.selected = opt.select || false;
+        this.items.push(item);
         this.render();
     }
 

@@ -378,7 +378,7 @@ function space_init(data) {
                     const normal = shiftKey ? int.face.normal.applyQuaternion(q) : undefined;
                     // y,z swap due to world rotation for orbit controls
                     api.focus({center: { x, y:-z, z:y }, normal});
-                    let one = api.sketch.selection.one;
+                    let one = api.sketch.selected.one;
                     if (one && confirm('attach sketch to face?')) {
                         one.center = {
                             x, y: -z, z: y
@@ -471,7 +471,7 @@ function load_files(files) {
     let has_image = false;
     let has_svg = false;
     let has_gbr = false;
-    let sketch = api.sketch.selection.one;
+    let sketch = api.sketch.selected.one;
     for (let file of files) {
         has_image = has_image || file.type === 'image/png';
         has_svg = has_svg || file.name.toLowerCase().endsWith(".svg") > 0;
