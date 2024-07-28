@@ -466,7 +466,7 @@ let sketch = {
                 h.button({ _: "create", onclick() {
                     const { _height, _chamtop, _chambot } = api.modal.bound;
                     sketch.extrude({
-                        selection: sketch.selected.count() > 0,
+                        selection: sketch.selection.count() > 0,
                         ...opt,
                         height: parseFloat(_height.value),
                         chamfer_top: parseFloat(_chamtop.value),
@@ -1271,7 +1271,7 @@ const prefs = {
             select: []
         },
         sketch: {
-            close_poly: false,
+            open_close: false,
             open_thick: 1,
             open_type: 'miter'
         },

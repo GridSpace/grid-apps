@@ -1701,9 +1701,10 @@ class Polygon {
      * @param {'square'|'round'|'miter'} type
      * @returns {Polygon[]}
      */
-    offset_open(distance, type = 'miter') {
+    offset_open(distance, type = 'miter', miterLimit = 2) {
         if (this.isOpen()) {
             let coff = new ClipperOffset(),
+                dudd = (coff.MiterLimit = miterLimit),
                 tree = new PolyTree(),
                 entt = {
                     'square' : EndType.etOpenSquare,

@@ -153,7 +153,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             },
 
             count() {
-                return sketch.selection.mesh_items().length;
+                return sketch.items.filter(i => i.selected).length;
             },
 
             all() {
@@ -431,6 +431,8 @@ mesh.sketch = class MeshSketch extends mesh.object {
         delete opt.poly;
         this.add_item({
             type: "polygon",
+            width: poly.width,
+            miter: poly.miter,
             selected: true,
             ...Object.assign({}, { center: {x:0, y:0, z:0} }, opt),
             ...poly.toObject()
@@ -529,8 +531,8 @@ class SketchItem {
         let bump = 0.0025;
         let { item, sketch, order } = this;
         let { material } = mesh;
-        let { type, center, width, height, radius, points, spacing, poly, selected } = item;
-        let { close_poly, open_thick, open_type } = api.prefs.map.sketch;
+        let { type, center, width, height, miter, radius, points, spacing, poly, selected } = item;
+        let { open_close, open_width, open_type } = api.prefs.map.sketch;
         if (type === 'circle') {
             let circumference = 2 * Math.PI * radius;
             points = points || Math.floor(circumference / (spacing || 1));
@@ -540,7 +542,9 @@ class SketchItem {
         } else if (type === 'polygon') {
             poly = newPolygon().fromObject(item);
             poly.move(center);
-            if (poly.isOpen() && !close_poly) poly = poly.offset_open(open_thick, open_type)[0];
+            if (poly.isOpen() && open_close !== true) {
+                poly = poly.offset_open(width || open_width || 1, open_type, miter)[0];
+            }
         } else {
             throw `invalid sketch type: ${type}`;
         }

@@ -317,12 +317,12 @@ api.settings = function() {
         h.label({ class: "header", _: 'open poly'}),
         h.label('auto close'),
         h.input({ type: "checkbox",
-            onchange: ev => prefs.save( (sketch.close_poly = !sketch.close_poly) && srr() ),
-            [ sketch.close_poly === true ? 'checked' : 'unchecked' ] : 1
+            onchange: ev => prefs.save( ((sketch.open_close = !sketch.open_close) || true) && srr() ),
+            [ sketch.open_close === true ? 'checked' : 'unchecked' ] : 1
         }),
-        h.label('thickness'),
-        h.input({ type: "text", size: 5, value: parseFloat(sketch.open_thick || 1),
-            onchange: ev => prefs.save( (sketch.open_thick = parseFloat(ev.target.value)) && srr() )
+        h.label('width'),
+        h.input({ type: "text", size: 5, value: parseFloat(sketch.open_width || 1),
+            onchange: ev => prefs.save( (sketch.open_width = parseFloat(ev.target.value)) && srr() )
         }),
         h.label('type'),
         h.select({ type: "text", value: sketch.open_type,
