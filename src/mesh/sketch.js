@@ -81,7 +81,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
 
         group.add(...handles, outline, plane);
 
-        util.defer(() => this.render());
+        this.render_defer();
     }
 
     update() {
@@ -205,9 +205,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let polys = items.map(i => i.sketch_item.poly);
                 let union = POLYS.union(polys, 0, true);
                 sketch.selection.delete();
-                for (let poly of union) {
-                    sketch.add.polygon({ poly });
-                }
+                sketch.arrange.group(union.map(poly => sketch.add.polygon({ poly })));
             },
 
             intersect() {
@@ -264,6 +262,57 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 for (let poly of flat) {
                     sketch.add.polygon({ poly });
                 }
+            }
+        }
+    }
+
+    get arrange() {
+        let sketch = this;
+        let { items } = sketch;
+        return {
+            move(item, target) {
+                let pos = items.indexOf(item);
+                if (pos < 0 || pos >= items.length) {
+                    throw new Error('index out of bounds');
+                }
+                if (target === 'top') {
+                    let x = items.splice(pos,1);
+                    return items.appendAll(x);
+                } else if (target === 'bottom') {
+                    let x = items.splice(pos,1);
+                    return sketch.items = [...x, ...items];
+                }
+                let newPos = { 'down': pos - 1, 'up': pos + 1 }[target];
+                if (newPos >= 0 && newPos < items.length) {
+                    [items[pos], items[newPos]] = [items[newPos], items[pos]];
+                }
+            },
+
+            up(item) {
+                sketch.arrange.move(item, 'up');
+            },
+
+            down(item) {
+                sketch.arrange.move(item, 'down');
+            },
+
+            top(item) {
+                sketch.arrange.move(item, 'top');
+            },
+
+            bottom(item) {
+                sketch.arrange.move(item, 'bottom');
+            },
+
+            group(items) {
+                let group = Date.now().toString(36);
+                items.forEach(i => i.group = group);
+                sketch.render();
+            },
+
+            ungroup(items) {
+                items.forEach(i => i.group = mesh.util.uuid());
+                sketch.render();
             }
         }
     }
@@ -411,7 +460,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
         let sketch = this;
         return {
             circle(opt = {}) {
-                sketch.add.item({
+                return sketch.add.item({
                     type: "circle",
                     selected: true,
                     ...Object.assign({}, { center: {x:0, y:0, z:0}, radius:5 }, opt)
@@ -419,7 +468,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             },
 
             rectangle(opt = {}) {
-                sketch.add.polygon({
+                return sketch.add.polygon({
                     ...opt,
                     poly: newPolygon().centerRectangle(
                         opt.center || {x:0, y:0, z:0},
@@ -433,7 +482,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 let poly = opt.poly;
                 delete opt.poly;
                 let { width, miter } = poly._svg || {};
-                sketch.add.item({
+                return sketch.add.item({
                     type: "polygon",
                     width,
                     miter,
@@ -444,8 +493,10 @@ mesh.sketch = class MeshSketch extends mesh.object {
             },
 
             item(item, opt = {}) {
+                item.group = item.group || mesh.util.uuid();
                 sketch.items.push(item);
-                sketch.render();
+                sketch.render_defer();
+                return item;
             }
         }
     }
@@ -453,15 +504,25 @@ mesh.sketch = class MeshSketch extends mesh.object {
     // render items unto the group object
     render() {
         let { group } = this;
+        let group_order = {};
+        let group_next = 0;
+        let scale = this.scale.z;
         // remove previous item/poly-based children of group
         group.children.filter(c => c.sketch_item || c.sketch_line).forEach(c => group.remove(c));
-        // mapy items into polys into meshes to add to group
-        for (let si of this.items.map((i,o) => new SketchItem(this, i, o))) {
-            group.add(si.mesh);
-            group.add(...si.outs);
+        // map items into polys into meshes to add to group
+        for (let item of this.items) {
+            let order = scale ? (group_order[item.group] ?? group_next++) : group_next++;
+            group_order[item.group] = order;
+            let sketch_item = new SketchItem(this, item, order);
+            group.add(sketch_item.mesh);
+            group.add(...sketch_item.outs);
         }
         this.update();
         space.refresh();
+    }
+
+    render_defer() {
+        util.defer(() => this.render());
     }
 
     extrude(opt = {}) {
@@ -533,11 +594,12 @@ class SketchItem {
     }
 
     update() {
-        let bump = 0.0025;
         let { item, sketch, order } = this;
         let { material } = mesh;
         let { type, center, width, height, miter, radius, points, spacing, poly, selected } = item;
         let { open_close, open_width, open_type } = api.prefs.map.sketch;
+        let base = 0.025;
+        let bump = sketch.scale.z || 0.0001;
         if (type === 'circle') {
             let circumference = 2 * Math.PI * radius;
             points = points || Math.floor(circumference / (spacing || 1));
@@ -566,7 +628,7 @@ class SketchItem {
             meh.renderOrder = -1;
             meh.sketch_item = this;
             // bump z to avoid z order conflict and ensure item ray intersect priority
-            meh.position.z += bump + (order * bump);
+            meh.position.z += base + (order * bump);
         // create poly outline(s)
         let outs = this.outs = [];
         for (let p of [poly, ...(poly.inner || [])]) {
@@ -576,8 +638,8 @@ class SketchItem {
             let out = new THREE.Line(lge, material.wireline);
                 out.renderOrder = -1;
                 out.sketch_line = this;
-                out.position.z += bump + (order * bump);
-                // out.renderOrder = bump * order;
+                out.position.z += base + (order * bump);
+                out.renderOrder = -10 + (bump * order);
             outs.push(out);
         }
     }

@@ -486,7 +486,7 @@ function load_files(files) {
                     return diam ? poly.offset_open(diam / 2, 'round') : null;
                 }).filter(p => p).flat();
                 for (let set of [ closed, open, circs, rects ]) {
-                    let group = Date.now().toString(36);
+                    let group = mesh.util.uuid();
                     for (let poly of set) {
                         sketch.add.polygon({ poly, group });
                     }
@@ -497,7 +497,7 @@ function load_files(files) {
     if (sketch && has_svg) {
         load.File.load([...files], { flat: true })
             .then(polys => polys.forEach(set => {
-                let group = Date.now().toString(36);
+                let group = mesh.util.uuid();
                 set.forEach(poly => sketch.add.polygon({ poly, group }))
             }))
             .catch(error => dbug.error(error))

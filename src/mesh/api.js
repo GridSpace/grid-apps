@@ -483,16 +483,13 @@ let sketch = {
     arrange: {
         group() {
             sketch.selection.ifcan((sketch, items) => {
-                let group = Date.now().toString(36);
-                items.forEach(i => i.group = group);
-                log('grouped', items.length, 'sketch items');
+                sketch.arrange.group(items);
             }, 2);
         },
 
         ungroup() {
             sketch.selection.ifcan((sketch, items) => {
-                items.forEach(i => delete i.group);
-                log('ungrouped', items.length, 'sketch items');
+                sketch.arrange.ungroup(items);
             });
         },
 
@@ -524,7 +521,35 @@ let sketch = {
                 });
                 sketch.render();
             });
-        }
+        },
+
+        down() {
+            sketch.selection.ifcan((sketch, items) => {
+                items.forEach(item => sketch.arrange.down(item));
+                sketch.render();
+            });
+        },
+
+        up() {
+            sketch.selection.ifcan((sketch, items) => {
+                items.forEach(item => sketch.arrange.up(item));
+                sketch.render();
+            });
+        },
+
+        top() {
+            sketch.selection.ifcan((sketch, items) => {
+                items.forEach(item => sketch.arrange.top(item));
+                sketch.render();
+            });
+        },
+
+        bottom() {
+            sketch.selection.ifcan((sketch, items) => {
+                items.forEach(item => sketch.arrange.bottom(item));
+                sketch.render();
+            });
+        },
     },
 
     // related to a selected sketch

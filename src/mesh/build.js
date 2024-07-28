@@ -488,6 +488,12 @@ function ui_build() {
                 h.hr(),
                 h.button({ _: 'flip-h', onclick: sketch.arrange.fliph }),
                 h.button({ _: 'flip-v', onclick: sketch.arrange.flipv }),
+                h.hr(),
+                h.button({ _: 'down', onclick: sketch.arrange.down }),
+                h.button({ _: 'up', onclick: sketch.arrange.up }),
+                h.hr(),
+                h.button({ _: 'top', onclick: sketch.arrange.top }),
+                h.button({ _: 'bottom', onclick: sketch.arrange.bottom }),
             ])
         ]),
         h.div({ class: "sketch-on" }, [
@@ -784,7 +790,7 @@ function ui_build() {
             let sk_vars = sblock('sketch', sketch.file || sketch.id, grid(
                 util.extract(bounds.center, map),
                 util.extract(bounds.size, map),
-                [ "center", "size" ], und, 'sketch'
+                [ "center", "scale" ], und, 'sketch'
             ));
             let sel_item;
             let si_vars = sel.slice(0,1).map(item => item.sketch_item.item).map(item => {
@@ -825,7 +831,7 @@ function ui_build() {
                     sketch.center[axis] = nval;
                     sketch.render();
                 }, { sketch: true });
-                let el2 = bound[`sketch_val_${axis.toUpperCase()}_size`];
+                let el2 = bound[`sketch_val_${axis.toUpperCase()}_scale`];
                 el2.classList.add('editable');
                 el2.onclick = field_edit(`${axis} size`, (nval, oval) => {
                     sketch.scale[axis] = nval;
