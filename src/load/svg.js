@@ -41,8 +41,7 @@ function parse(text, opt = { soup: true }) {
                     let poly = base.newPolygon().addPoints(path.map(p => base.newPoint(p.x, -p.y, 0)));
                     if (poly.appearsClosed()) poly.points.pop();
                     if (type === 'polyline') poly.setOpen(true);
-                    if (width) poly.width = width;
-                    if (miter) poly.miter = miter;
+                    poly._svg = { width, miter };
                     polys.push(poly);
                 }
             }

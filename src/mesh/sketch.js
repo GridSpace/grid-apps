@@ -429,10 +429,11 @@ mesh.sketch = class MeshSketch extends mesh.object {
         // log(this.file || this.id, '| add polygon');
         let poly = opt.poly;
         delete opt.poly;
+        let { width, miter } = poly._svg || {};
         this.add_item({
             type: "polygon",
-            width: poly.width,
-            miter: poly.miter,
+            width,
+            miter,
             selected: true,
             ...Object.assign({}, { center: {x:0, y:0, z:0} }, opt),
             ...poly.toObject()
