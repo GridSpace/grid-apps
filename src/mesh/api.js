@@ -297,7 +297,7 @@ const pattern = {
      * @param {int} count number of entities
      * @param {float[]} center [x,y,z]
      */
-    circle(count, center) {
+    circle() {
         async function doit(count = 3, center = [0,0], zdelta = 0) {
             api.modal.hide();
             let models = selection.models();
@@ -319,33 +319,29 @@ const pattern = {
                 await api.tool.regroup(modnu);
             }
         }
-        if (!count) {
-            api.modal.dialog({
-                title: "circle pattern",
-                body: [ h.div({ class: "addgear" }, [
-                    h.label('total count'),
-                    h.input({ value: 3, size: 5, id: "_count" }),
-                    h.label('center x,y'),
-                    h.input({ value: "0,0", size: 5, id: "_center" }),
-                    // h.label('z delta'),
-                    // h.input({ value: "0", size: 5, id: "_zdelta" }),
-                    h.button({ _: "create", onclick() {
-                        let { _count, _center, _zdelta } = api.modal.bound;
-                        doit(
-                            parseInt(_count.value),
-                            _center.value.split(',').map(v => parseFloat(v)),
-                            // parseFloat(_zdelta.value)
-                        );
-                    } })
-                ]) ]
-            });
-            api.modal.bound._count.focus();
-        } else {
-            doit(count, origin);
-        }
+        api.modal.dialog({
+            title: "circle pattern",
+            body: [ h.div({ class: "addgear" }, [
+                h.label('total count'),
+                h.input({ value: 3, size: 5, id: "_count" }),
+                h.label('center x,y'),
+                h.input({ value: "0,0", size: 5, id: "_center" }),
+                // h.label('z delta'),
+                // h.input({ value: "0", size: 5, id: "_zdelta" }),
+                h.button({ _: "create", onclick() {
+                    let { _count, _center, _zdelta } = api.modal.bound;
+                    doit(
+                        parseInt(_count.value),
+                        _center.value.split(',').map(v => parseFloat(v)),
+                        // parseFloat(_zdelta.value)
+                    );
+                } })
+            ]) ]
+        });
+        api.modal.bound._count.focus();
     },
 
-    grid(x, y, xs, ys) {
+    grid() {
         async function doit(x = 3, y = 3, xs = 10, ys = 10) {
             api.modal.hide();
             let models = selection.models();
@@ -364,32 +360,28 @@ const pattern = {
                 await api.tool.regroup(modnu);
             }
         }
-        if (!(x && y)) {
-            api.modal.dialog({
-                title: "grid pattern",
-                body: [ h.div({ class: "addgear" }, [
-                    h.label('x count'),
-                    h.input({ value: 3, size: 5, id: "_x" }),
-                    h.label('y count'),
-                    h.input({ value: 3, size: 5, id: "_y" }),
-                    h.label('x spacing'),
-                    h.input({ value: 20, size: 5, id: "_xs" }),
-                    h.label('y spacing'),
-                    h.input({ value: 20, size: 5, id: "_ys" }),
-                    h.button({ _: "create", onclick() {
-                        doit(
-                            parseInt(api.modal.bound._x.value) || 3,
-                            parseInt(api.modal.bound._y.value) || 3,
-                            parseFloat(api.modal.bound._xs.value) || 3,
-                            parseFloat(api.modal.bound._ys.value) || 3,
-                        );
-                    } })
-                ]) ]
-            });
-            api.modal.bound._x.focus();
-        } else {
-            doit(x, y, xs, ys);
-        }
+        api.modal.dialog({
+            title: "grid pattern",
+            body: [ h.div({ class: "addgear" }, [
+                h.label('x count'),
+                h.input({ value: 3, size: 5, id: "_x" }),
+                h.label('y count'),
+                h.input({ value: 3, size: 5, id: "_y" }),
+                h.label('x spacing'),
+                h.input({ value: 20, size: 5, id: "_xs" }),
+                h.label('y spacing'),
+                h.input({ value: 20, size: 5, id: "_ys" }),
+                h.button({ _: "create", onclick() {
+                    doit(
+                        parseInt(api.modal.bound._x.value) || 3,
+                        parseInt(api.modal.bound._y.value) || 3,
+                        parseFloat(api.modal.bound._xs.value) || 3,
+                        parseFloat(api.modal.bound._ys.value) || 3,
+                    );
+                } })
+            ]) ]
+        });
+        api.modal.bound._x.focus();
     }
 };
 
@@ -706,7 +698,7 @@ let add = {
         api.modal.dialog({
             title: "vertices",
             body: [ h.div({ class: "addact" }, [
-                h.textarea({ value: '', size: 5, id: "genvrt" }),
+                h.textarea({ value: '', cols:30, rows:4, id: "genvrt" }),
                 h.button({ _: "create", onclick() {
                     const vert = (api.modal.bound.genvrt.value)
                         .split(',').map(v => parseFloat(v)).toFloat32();
@@ -725,10 +717,11 @@ let add = {
         const nmdl = new mesh.model({ file: "box", mesh: vert });
         const ngrp = group.new([ nmdl ]);
         ngrp.scale(10, 10, 10).floor();
+        selection.set([ nmdl ]);
         return ngrp;
     },
 
-    cylinder(opt = {}) {
+    cylinder() {
         function gencyl(opt = {}) {
             let { diameter, height, facets, chamfer, bore } = opt;
             api.modal.hide();
@@ -743,43 +736,40 @@ let add = {
                 const vert = cyl.extrude(height, { chamfer }).toFloat32();
                 const nmdl = new mesh.model({ file: "cylinder", mesh: vert });
                 const ngrp = group.new([ nmdl ]);
+                selection.set([ nmdl ]);
                 ngrp.floor();
             }
         }
-        if (opt.facets && opt.diameter && opt.height) {
-            return gencyl(opt.diameter, opt.height, opt.facets);
-        } else {
-            api.modal.dialog({
-                title: "cylinder",
-                body: [ h.div({ class: "addgear" }, [
-                    h.label('diameter'),
-                    h.input({ value: opt.diameter || 20, size: 5, id: "_diameter" }),
-                    h.label('height'),
-                    h.input({ value: opt.height || 10, size: 5, id: "_height" }),
-                    h.hr(),
-                    h.label('bore'),
-                    h.input({ value: opt.facets || 0, size: 5, id: "_bore" }),
-                    h.label('facets'),
-                    h.input({ value: opt.facets || 0, size: 5, id: "_facets" }),
-                    h.label('chamfer'),
-                    h.input({ value: opt.chamfer || 0, size: 5, id: "_chamfer" }),
-                    h.button({ _: "create", onclick() {
-                        const { _diameter, _facets, _height, _chamfer, _bore } = api.modal.bound;
-                        gencyl({
-                            diameter: parseFloat(_diameter.value),
-                            height: parseFloat(_height.value),
-                            facets: parseInt(_facets.value),
-                            bore: parseFloat(_bore.value),
-                            chamfer: parseFloat(_chamfer.value),
-                        });
-                    } })
-                ]) ]
-            });
-            api.modal.bound._diameter.focus();
-        }
+        api.modal.dialog({
+            title: "cylinder",
+            body: [ h.div({ class: "addgear" }, [
+                h.label('diameter'),
+                h.input({ value: 20, size: 5, id: "_diameter" }),
+                h.label('height'),
+                h.input({ value: 10, size: 5, id: "_height" }),
+                h.hr(),
+                h.label('bore'),
+                h.input({ value: 0, size: 5, id: "_bore" }),
+                h.label('facets'),
+                h.input({ value: 0, size: 5, id: "_facets" }),
+                h.label('chamfer'),
+                h.input({ value: 0, size: 5, id: "_chamfer" }),
+                h.button({ _: "create", onclick() {
+                    const { _diameter, _facets, _height, _chamfer, _bore } = api.modal.bound;
+                    gencyl({
+                        diameter: parseFloat(_diameter.value),
+                        height: parseFloat(_height.value),
+                        facets: parseInt(_facets.value),
+                        bore: parseFloat(_bore.value),
+                        chamfer: parseFloat(_chamfer.value),
+                    });
+                } })
+            ]) ]
+        });
+        api.modal.bound._diameter.focus();
     },
 
-    gear(opt = {}) {
+    gear() {
         function gengear(bound) {
             const { _teeth, _module, _angle, _twist, _shaft, _offset, _height, _chamfer } = bound;
             api.modal.hide();
@@ -796,6 +786,7 @@ let add = {
             }).then(gear => {
                 const nmdl = new mesh.model({ file: "gear", mesh: gear.toFloat32() });
                 const ngrp = group.new([ nmdl ]);
+                selection.set([ nmdl ]);
                 ngrp.floor();
                 Object.assign(last, params);
                 api.prefs.save();
@@ -806,25 +797,25 @@ let add = {
             title: "gear generator",
             body: [ h.div({ class: "addgear" }, [
                 h.label('number of teeth'),
-                h.input({ value: opt.teeth || last.teeth || 20, size: 5, id: "_teeth" }),
+                h.input({ value: last.teeth || 20, size: 5, id: "_teeth" }),
                 h.label('shaft diameter'),
-                h.input({ value: opt.shaft || last.shaft || 5, size: 5, id: "_shaft" }),
+                h.input({ value: last.shaft || 5, size: 5, id: "_shaft" }),
                 h.label('z height'),
-                h.input({ value: opt.height || last.height || 15, size: 5, id: "_height" }),
+                h.input({ value: last.height || 15, size: 5, id: "_height" }),
                 h.label({ _:'chamfer', title:"negative values apply chamfer to the bottom only" }),
-                h.input({ value: opt.chamfer || last.chamfer || 0, size: 5, id: "_chamfer" }),
+                h.input({ value: last.chamfer || 0, size: 5, id: "_chamfer" }),
                 h.hr(),
                 h.code("all other settings must"),
                 h.code("match for gears to mesh"),
                 h.hr(),
                 h.label('module (diam / teeth)'),
-                h.input({ value: opt.module || last.module || 3, size: 5, id: "_module" }),
+                h.input({ value: last.module || 3, size: 5, id: "_module" }),
                 h.label('pressure angle'),
-                h.input({ value: opt.angle || last.angle || 20, size: 5, id: "_angle" }),
+                h.input({ value: last.angle || 20, size: 5, id: "_angle" }),
                 h.label('twist angle (helix)'),
-                h.input({ value: opt.twist || last.twist || 0, size: 5, id: "_twist" }),
+                h.input({ value: last.twist || 0, size: 5, id: "_twist" }),
                 h.label('tooth offset (play)'),
-                h.input({ value: opt.offset || last.offset || 0.1, size: 5, id: "_offset" }),
+                h.input({ value: last.offset || 0.1, size: 5, id: "_offset" }),
                 h.button({ _: "create", onclick() { gengear(api.modal.bound) } })
             ]) ]
         });

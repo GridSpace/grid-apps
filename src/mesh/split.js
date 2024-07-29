@@ -28,9 +28,6 @@ let split = {
             return;
         }
         let { api, util } = mesh;
-        // highlight button
-        let button = event.target;
-        button.classList.add('selected');
         // create split plane visual
         let geo, mat, obj = new Mesh(
             geo = new PlaneGeometry(1,1),
@@ -45,7 +42,7 @@ let split = {
         // hide until first hover
         obj.visible = false;
         // enable temp mode
-        let state = split.state = { button, obj };
+        let state = split.state = { obj };
         let models = state.models = api.selection.models();
         let meshes = models.map(m => m.mesh);
         // for split and lay flat modes
@@ -92,8 +89,7 @@ let split = {
             return;
         }
         let space = moto.space;
-        let { button, obj } = split.state;
-        button.classList.remove('selected');
+        let { obj } = split.state;
         space.scene.remove(obj);
         space.mouse.onHover(undefined);
         isActive = split.state = undefined;

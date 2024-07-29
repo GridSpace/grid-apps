@@ -8,8 +8,9 @@
 gapp.register("mesh.build", [], (root, exports) => {
 
 const { broker } = gapp;
-const { mesh } = root;
+const { mesh, moto } = root;
 const { api, util } = mesh;
+const { space } = moto;
 const devel = api.isDebug;
 
 let call = broker.send;
@@ -339,6 +340,20 @@ api.settings = function() {
     ] ));
 }
 
+function menu_item(text, fn, short) {
+    if (short) {
+        short = Array.isArray(short) ? short : [ short ];
+        short = h.div({ class: "short" }, short.map(s => s.startsWith('bi-') ?
+            h.i({ class: ["bi", s ]}) :
+            h.div(s)
+        ));
+    }
+    return h.div({ onclick: fn }, [
+        h.div({ _: text, class: "grow" }),
+        short
+    ].filter(o => o));
+}
+
 // create html elements
 function ui_build() {
     let { file, selection, mode, tool, sketch, prefs, add } = api;
@@ -351,52 +366,54 @@ function ui_build() {
         h.div({ class: "menu" }, [
             h.div('File'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'Import', onclick: file.import }, [
-                    h.input({
-                        id: "import", type: "file", class: ["hide"], multiple: true,
-                        onchange(evt) { broker.send.load_files(evt.target.files) }
-                    })
-                ]),
-                h.div({ _: 'Export', onclick: file.export }),
+                h.input({
+                    id: "import", type: "file", class: ["hide"], multiple: true,
+                    onchange(evt) { broker.send.load_files(evt.target.files) }
+                }),
+                menu_item('Import', file.import, 'I'),
+                menu_item('Export', file.export, 'X'),
                 h.hr(),
-                h.div({ _: "Slicer", onclick: api.kirimoto }),
+                menu_item('Slicer', api.kirimoto),
                 h.hr(),
-                h.div({ _: 'Close', onclick: window.close }),
+                menu_item('Close', window.close),
             ])
         ]),
         h.div({ class: "menu sketch-on" }, [
             h.div('Edit'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'Add Circle', onclick() { sketch.selected.one?.add.circle() } }),
-                h.div({ _: 'Add Rectangle', onclick() { sketch.selected.one?.add.rectangle() } }),
+                menu_item('Add Circle', () => { sketch.selected.one?.add.circle() }),
+                menu_item('Add Rectangle', () => { sketch.selected.one?.add.rectangle() }),
                 h.hr(),
-                h.div({ _: 'Add Sketch', onclick: add.sketch }),
+                menu_item('Add Sketch', add.sketch),
                 h.hr(),
-                h.div({ _: 'Delete', onclick: api.selection.delete }),
+                menu_item('Delete', api.selection.delete, 'bi-backspace'),
             ])
         ]),
         h.div({ class: "menu sketch-off" }, [
             h.div('Edit'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'Add Cylinder', onclick() { add.cylinder() } }),
-                h.div({ _: 'Add Cube', onclick() { add.cube() } }),
-                h.div({ _: 'Add Gear', onclick() { add.gear() } }),
+                menu_item('Add Cylinder', add.cylinder),
+                menu_item('Add Cube', add.cube),
+                menu_item('Add Gear', add.gear),
                 h.hr(),
-                h.div({ _: 'Add Sketch', onclick: add.sketch }),
-                devel ? h.div({ _: 'Add Vertices', onclick: add.input }) : undefined,
+                menu_item('Add Sketch', add.sketch),
+                devel ? menu_item('Add Vertices', add.input) : undefined,
                 h.hr(),
-                h.div({ _: 'Delete', onclick: api.selection.delete }),
+                menu_item('Delete', api.selection.delete, 'bi-backspace'),
             ])
         ]),
         h.div({ class: "menu" }, [
             h.div('View'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'Bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
-                h.div({ _: 'Normals', onclick() { api.normals() } }),
-                h.div({ _: 'Wireframes', onclick() { api.wireframe() } }),
+                menu_item('Bounds', () => { selection.boundsBox({ toggle: true }) }, 'B'),
+                menu_item('Normals', () => { api.normals() }, 'N'),
+                menu_item('Wireframes', () => { api.wireframe() }, 'W'),
                 h.hr(),
-                h.div({ _: 'Gridlines', onclick() { api.grid() } }),
-                h.div({ _: 'Messages', onclick() { api.log.toggle({ spinner: false }) } }),
+                menu_item('Gridlines', () => { api.grid() }, 'G'),
+                menu_item('Messages', () => { api.log.toggle({ spinner: false }) }, 'L'),
+                h.hr(),
+                menu_item('Home', space.view.home, 'H'),
+                menu_item('Top', space.view.top, 'T'),
             ])
         ]),
         h.div({ class: "menu" }, [
@@ -415,75 +432,75 @@ function ui_build() {
         h.div({ class: "menu sketch-on" }, [
             h.div('Object'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'Group', onclick: sketch.arrange.group }),
-                h.div({ _: 'Ungroup', onclick: sketch.arrange.ungroup }),
+                menu_item('Group', sketch.arrange.group),
+                menu_item('Ungroup', sketch.arrange.ungroup),
                 h.hr(),
-                h.div({ _: 'Center', onclick: sketch.arrange.center }),
+                menu_item('Center', sketch.arrange.center),
                 h.hr(),
-                h.div({ _: 'Flip Horizontal', onclick: sketch.arrange.fliph }),
-                h.div({ _: 'Flip Vertical', onclick: sketch.arrange.flipv }),
+                menu_item('Flip Horizontal', sketch.arrange.fliph),
+                menu_item('Flip Vertical', sketch.arrange.flipv),
                 h.hr(),
-                h.div({ _: 'Raise', onclick: sketch.arrange.up }),
-                h.div({ _: 'Lower', onclick: sketch.arrange.down }),
-                h.div({ _: 'Raise to Top', onclick: sketch.arrange.top }),
-                h.div({ _: 'Lower to Bottom', onclick: sketch.arrange.bottom }),
+                menu_item('Raise', sketch.arrange.up),
+                menu_item('Lower', sketch.arrange.down),
+                menu_item('To Top', sketch.arrange.top),
+                menu_item('To Bottom', sketch.arrange.bottom),
             ])
         ]),
         h.div({ class: "menu sketch-off" }, [
             h.div('Object'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'Regroup', onclick: tool.regroup }),
-                h.div({ _: 'Isolate', onclick: tool.isolate }),
+                menu_item('Regroup', tool.regroup),
+                menu_item('Isolate', tool.isolate),
                 h.hr(),
-                h.div({ _: 'Duplicate', onclick: tool.duplicate }),
-                h.div({ _: 'Mirror', onclick: tool.mirror }),
-                h.div({ _: 'Merge', onclick: tool.merge }),
-                h.div({ _: 'Split', onclick: call.edit_split }),
+                menu_item('Duplicate', tool.duplicate, ['bi-shift','D']),
+                menu_item('Mirror', tool.mirror, 'M'),
+                menu_item('Merge', tool.merge),
+                menu_item('Split', mesh.split.start, 'S'),
                 h.hr(),
-                h.div({ _: 'Union', onclick: tool.union }),
-                h.div({ _: 'Subtract', onclick: tool.subtract }),
-                h.div({ _: 'Intersect', onclick: tool.intersect }),
-                h.div({ _: 'Difference', onclick: tool.difference }),
+                menu_item('Union', tool.union),
+                menu_item('Subtract', tool.subtract),
+                menu_item('Intersect', tool.intersect),
+                menu_item('Difference', tool.difference),
                 h.hr(),
-                h.div({ _: 'Copy Circle', onclick: api.pattern.circle }),
-                h.div({ _: 'Copy Grid', onclick: api.pattern.grid }),
+                menu_item('Copy Circle', api.pattern.circle),
+                menu_item('Copy Grid', api.pattern.grid),
             ])
         ]),
         h.div({ class: "menu sketch-off" }, [
             h.div('Faces'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'Flip Normals', onclick: tool.invert }),
-                h.div({ _: 'Analyze', onclick: tool.analyze }),
+                menu_item('Flip Normals', tool.invert),
+                menu_item('Analyze', tool.analyze),
                 // h.div({ _: 'Patch', onclick: tool.repair }),
                 // h.div({ _: 'rebuild', onclick: tool.rebuild }),
-                h.div({ _: 'Clean', onclick: tool.clean }),
+                menu_item('Clean', tool.clean),
             ])
         ]),
         h.div({ class: "menu sketch-on" }, [
             h.div('Shape'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'Duplicate', onclick: api.tool.duplicate }),
-                h.div({ _: 'Extrude', onclick: sketch.extrude }),
+                menu_item('Duplicate', tool.duplicate, ['bi-shift','D']),
+                menu_item('Extrude', sketch.extrude, ['bi-shift','E']),
                 h.hr(),
-                h.div({ _: 'Union', onclick: sketch.boolean.union }),
-                h.div({ _: 'Intersect', onclick: sketch.boolean.intersect }),
-                h.div({ _: 'Difference', onclick: sketch.boolean.difference }),
+                menu_item('Union', sketch.boolean.union),
+                menu_item('Intersect', sketch.boolean.intersect),
+                menu_item('Difference', sketch.boolean.difference),
                 h.hr(),
-                h.div({ _: 'Nest', onclick: sketch.boolean.nest }),
-                h.div({ _: 'Flatten', onclick: sketch.boolean.flatten }),
-                h.div({ _: 'Even Odd', onclick: sketch.boolean.evenodd }),
+                menu_item('Nest', sketch.boolean.nest),
+                menu_item('Flatten', sketch.boolean.flatten),
+                menu_item('Even Odd', sketch.boolean.evenodd),
             ])
         ]),
         h.div({ class: "menu" }, [
             h.div('Help'),
             h.div({ class: "menu-items" }, [
-                h.div({ _: 'About', onclick() { api.welcome(mesh.version) } }),
+                menu_item('About', () => { api.welcome(mesh.version) }),
                 h.hr(),
-                h.div({ _: 'Documentation', onclick: api.help }),
-                h.div({ _: 'Official Site', onclick: api.gridspace }),
-                h.div({ _: "Donate", onclick: api.donate }),
+                menu_item('Documentation', api.help),
+                menu_item('Official Site', api.gridspace),
+                menu_item('Donate', api.donate),
                 h.hr(),
-                h.div({ _: 'Versions', onclick: api.version }),
+                menu_item('Versions', api.version),
             ])
         ]),
     ]);

@@ -173,11 +173,11 @@ button:hover {
     padding: 0 !important;
 }
 
-.menu {
+.menu, #top-right > div {
     cursor: default;
     align-self: stretch;
     align-items: center;
-    padding: 5px 12px 5px 12px;
+    padding: 6px 12px 6px 12px;
     border-radius: 6px;
     white-space: nowrap;
     user-select: none;
@@ -214,8 +214,17 @@ button:hover {
 }
 
 .menu-items > div {
+    gap: 15px;
     border-radius: 6px;
     padding: 4px 8px 4px 8px;
+}
+
+.menu-items .grow {
+    flex-grow: 1;
+}
+
+.menu-items .short {
+    gap: 1px;
 }
 
 #top-mid {
@@ -230,13 +239,6 @@ button:hover {
 
 #top-right > div {
     gap: 8px;
-    align-self: stretch;
-    align-items: center;
-    padding: 5px 12px 5px 12px;
-    border-radius: 6px;
-    cursor: default;
-    user-select: none;
-    white-space: nowrap;
 }
 
 /** specific modal dialogs */
@@ -357,11 +359,11 @@ button:hover {
 /** welcome dialog **/
 
 .welcome {
+    font-size: smaller;
     flex-direction: column;
     align-items: center;
     padding: 5px;
     gap: 5px;
-    font-size: smaller;
 }
 
 .welcome a {
@@ -469,9 +471,9 @@ button:hover {
     background-color: rgba(0,255,0,0.8);
 }
 
-.dark .head {
+/* .dark .head {
     color: #000 !important;
-}
+} */
 
 /** slide in/out logging window **/
 
