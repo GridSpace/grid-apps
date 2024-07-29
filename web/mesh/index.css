@@ -1,11 +1,6 @@
 :root {
-    --fg-gray: #495057;
-    --bg-top: rgba(255,255,255,0.55);
-    --bg-smoke: rgba(0,0,0,0.25);
-    --dark-bg-smoke: rgba(255,255,255,0.25);
-    --hover-menu: white;
-    --dark-hover-menu: #888;
-    --gradbar: linear-gradient(to right, #ddd, #666, #ddd);
+    --menu-blue: #007aff;
+    --menu-back: #ddd;
 }
 
 @font-face {
@@ -15,37 +10,8 @@
 
 /** dark overrides */
 
-.dark #logger, .dark #modal_frame, .dark #actions > div, .dark #grouplist > div, .dark #actions .pop {
+.dark #logger, .dark #modal_frame, .dark #actions > div, .dark #grouplist > div {
     border: 1px solid #999;
-}
-
-.dark #actions > div {
-    background-color: rgba(255,255,255,0.6);
-}
-
-.dark #top-right > div {
-    color: black;
-}
-
-.dark #top-right > div:hover {
-    color: white;
-}
-
-.dark #app-info:hover {
-    background-color: var(--dark-hover-menu);
-}
-
-.dark #app-info:hover {
-    background-color: var(--dark-bg-smoke);
-}
-
-.dark #app-menu {
-    background-color: var(--dark-hover-menu);
-    border: 1px solid black;
-}
-
-.dark #app-menu > div:hover {
-    background-color: var(--dark-bg-smoke);
 }
 
 /** defaults */
@@ -57,6 +23,7 @@ a, a:hover, a:visited {
 }
 
 body, div {
+    font-family: system-ui, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     position: relative;
     display: flex;
     padding: 0;
@@ -93,60 +60,6 @@ input {
     top: 0;
 }
 
-#app-info {
-    top: 50%;
-    left: 50%;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    transform: translateX(-50%) translateY(-50%);
-    flex-direction: column;
-    align-items: center;
-    user-select: none;
-}
-
-#app-name {
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-#app-info:hover {
-    border-left: 1px solid rgba(0,0,0,0.5);
-    border-right: 1px solid rgba(0,0,0,0.5);
-    background-color: var(--bg-smoke);
-}
-
-#app-info:hover #app-menu {
-    display: flex;
-}
-
-#app-menu {
-    display: none;
-    font-size: smaller;
-    position: absolute;
-    align-items: stretch;
-    flex-direction: column;
-    background-color: var(--hover-menu);
-    white-space: nowrap;
-    border: 1px solid rgba(0,0,0,0.5);
-    border-top: 1px dashed !important;
-    border-bottom-right-radius: 3px;
-    border-bottom-left-radius: 3px;
-    padding: 3px;
-    width: calc(100% - 6px);
-    top: 100%;
-    gap: 3px;
-}
-
-#app-menu > div {
-    flex-direction: column;
-    align-items: center;
-}
-
-#app-menu > div:hover {
-    background-color: var(--bg-smoke);
-}
-
 #app-body {
     flex-grow: 1;
 }
@@ -181,17 +94,27 @@ input {
     overflow: hidden;
 }
 
+.dark #top {
+    color: #eee;
+    background-color: rgba(80,80,80,0.75);
+}
+
 #top {
     z-index: 50;
+    color: #000;
+    font-size: smaller;
     flex-direction: row;
-    font-family: 'Russo One', sans-serif;
-    background-color: var(--bg-top);
+    background-color: rgba(255,255,255,0.55);
+}
+
+.dark #top-sep {
+    background-image: linear-gradient(to right, #666, #aaa, #666);
 }
 
 #top-sep {
     z-index: 2;
     height: 1px;
-    background-image: var(--gradbar);
+    background-image: linear-gradient(to right, #ddd, #666, #ddd);
 }
 
 #top > div {
@@ -244,25 +167,76 @@ button:hover {
     height: 5px;
 }
 
-#top-right {
+#top-left {
+    margin-left: 5px;
+    flex-direction: row;
+    padding: 0 !important;
+}
+
+.menu {
+    cursor: default;
+    align-self: stretch;
+    align-items: center;
+    padding: 5px 12px 5px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.dark .menu hr {
+    border-top: 0.5px solid rgba(255,255,255,0.5);
+}
+
+.menu:hover, .menu-items > div:hover {
+    background-color: var(--menu-blue);
+}
+
+.menu:hover .menu-items {
+    display: flex;
+}
+
+.dark .menu-items {
+    background: #666;
+    border: 1px solid #999;
+}
+
+.menu-items {
+    display: none;
     position: absolute;
-    padding: 3px;
-    bottom: 0;
-    right: 3px;
-    top: 0;
-    gap: 8px;
+    flex-direction: column;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    background: #eee;
+    padding: 4px;
+    top: 100%;
+    left: 0;
+    gap: 6px;
+}
+
+.menu-items > div {
+    border-radius: 6px;
+    padding: 4px 8px 4px 8px;
+}
+
+#top-mid {
+    flex-grow: 1;
+}
+
+#top-right {
+    flex-direction: row;
+    margin-right: 5px;
+    padding: 0 !important;
 }
 
 #top-right > div {
-    flex-direction: column;
-    justify-content: center;
+    gap: 8px;
+    align-self: stretch;
     align-items: center;
-    flex-direction: row;
-    color: #888;
-}
-
-#top-right > div:hover {
-    color: black;
+    padding: 5px 12px 5px 12px;
+    border-radius: 6px;
+    cursor: default;
+    user-select: none;
+    white-space: nowrap;
 }
 
 /** specific modal dialogs */
@@ -301,9 +275,9 @@ button:hover {
     grid-template-columns: 1fr 50px;
 }
 
-.addgear hr {
+/* .addgear hr {
     width: 100%;
-}
+} */
 
 .addgear button, .addgear hr, .addgear code {
     grid-column: span 2;
@@ -487,37 +461,16 @@ button:hover {
     border-bottom: 1px dashed gray;
 }
 
-button.selected {
+.menu .selected {
     background-color: rgba(0,255,0,0.5);
 }
 
-button.selected:hover {
+.menu .selected:hover {
     background-color: rgba(0,255,0,0.8);
 }
 
 .dark .head {
     color: #000 !important;
-}
-
-/** modes menu top/center **/
-
-#modes {
-    position: absolute;
-    gap: 2px;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-#modes > div {
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(255,255,255,0.5);
-    border: 1px solid rgba(0,0,0,0.5);
-    border-radius: 3px;
-    margin-top: 2px;
-    padding: 3px;
-    gap: 2px;
 }
 
 /** slide in/out logging window **/
@@ -555,85 +508,6 @@ button.selected:hover {
   border-radius: 3px;
   background-color: #ddd;
   border: 3px solid rgba(255,255,255,0.1);
-}
-
-/** action and keyboard menu **/
-
-#actions {
-    flex-direction: column;
-    position: absolute;
-    margin: 3px 0 0 3px;
-    left: 0;
-    top: 0;
-    gap: 1px;
-}
-
-#actions .pop {
-    display: none;
-    position: absolute;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    transform: translateX(100%);
-    right: -3px;
-    top: -1px;
-    gap: 3px;
-    margin: 0;
-    padding: 3px;
-    border-radius: 3px;
-    border: 1px solid gray;
-    background-color: rgba(255,255,255,0.5);
-}
-
-#actions .back {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: -4px;
-    bottom: 0;
-}
-
-.pop button {
-    width: 100%;
-}
-
-.pop span {
-    margin: 1px;
-    height: 1px;
-    width: 80%;
-    background-color: rgba(0,0,0,0.5);
-}
-
-.dark #actions > div:hover {
-    background-color: #bbb;
-}
-
-#actions > div:hover {
-    background-color: #eee;
-}
-
-#actions > div:hover .pop {
-    display: flex;
-}
-
-#actions > div {
-    flex-direction: column;
-    padding: 5px;
-    gap: 2px;
-}
-
-#actions .head {
-    color: #444;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Russo One', monospace;
-    font-weight: lighter;
-    font-size: smaller;
-    border-radius: 3px;
-}
-
-#actions .head:hover {
-    user-select: none;
 }
 
 /** group/model buttons top/right of workspace **/

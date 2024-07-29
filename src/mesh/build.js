@@ -341,34 +341,158 @@ api.settings = function() {
 
 // create html elements
 function ui_build() {
-    const trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
-    const eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
-    const eye_closed = FontAwesome.icon({ prefix: "fas", iconName: "eye-slash" }).html[0];
+    let { file, selection, mode, tool, sketch, prefs, add } = api;
+    let trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
+    let eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
+    let eye_closed = FontAwesome.icon({ prefix: "fas", iconName: "eye-slash" }).html[0];
 
-    // app name and drop menu
-    h.bind($('app-info'), [
-        h.div({ id: "app-name", _: "Mesh:Tool" }),
-        h.div({ id: "app-menu" }, [
-            h.div({ _: "help", onclick: api.help }),
-            h.hr(),
-            // h.div({ _: "version", onclick: api.version }),
-            h.div({ _: "donate", onclick: api.donate }),
-            h.div({ _: "slicer", onclick: api.kirimoto }),
-            h.hr(),
-            h.div({ id: "app-vers", _: mesh.version }),
-        ])
+    // top left drop menus
+    h.bind($('top-left'), [
+        h.div({ class: "menu" }, [
+            h.div('File'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Import', onclick: file.import }, [
+                    h.input({
+                        id: "import", type: "file", class: ["hide"], multiple: true,
+                        onchange(evt) { broker.send.load_files(evt.target.files) }
+                    })
+                ]),
+                h.div({ _: 'Export', onclick: file.export }),
+                h.hr(),
+                h.div({ _: "Slicer", onclick: api.kirimoto }),
+                h.hr(),
+                h.div({ _: 'Close', onclick: window.close }),
+            ])
+        ]),
+        h.div({ class: "menu sketch-on" }, [
+            h.div('Edit'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Add Circle', onclick() { sketch.selected.one?.add.circle() } }),
+                h.div({ _: 'Add Rectangle', onclick() { sketch.selected.one?.add.rectangle() } }),
+                h.hr(),
+                h.div({ _: 'Add Sketch', onclick: add.sketch }),
+                h.hr(),
+                h.div({ _: 'Delete', onclick: api.selection.delete }),
+            ])
+        ]),
+        h.div({ class: "menu sketch-off" }, [
+            h.div('Edit'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Add Cylinder', onclick() { add.cylinder() } }),
+                h.div({ _: 'Add Cube', onclick() { add.cube() } }),
+                h.div({ _: 'Add Gear', onclick() { add.gear() } }),
+                h.hr(),
+                h.div({ _: 'Add Sketch', onclick: add.sketch }),
+                devel ? h.div({ _: 'Add Vertices', onclick: add.input }) : undefined,
+                h.hr(),
+                h.div({ _: 'Delete', onclick: api.selection.delete }),
+            ])
+        ]),
+        h.div({ class: "menu" }, [
+            h.div('View'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
+                h.div({ _: 'Normals', onclick() { api.normals() } }),
+                h.div({ _: 'Wireframes', onclick() { api.wireframe() } }),
+                h.hr(),
+                h.div({ _: 'Gridlines', onclick() { api.grid() } }),
+                h.div({ _: 'Messages', onclick() { api.log.toggle({ spinner: false }) } }),
+            ])
+        ]),
+        h.div({ class: "menu" }, [
+            h.div('Mode'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Sketch', id: "mode-sketch", onclick: mode.sketch }),
+                h.hr(),
+                h.div({ _: 'Object', id: "mode-object", onclick: mode.object }),
+                h.div({ _: 'Tool', id: "mode-tool", onclick: mode.tool }),
+                h.hr(),
+                h.div({ _: 'Surface', id: "mode-surface", onclick: mode.surface }),
+                h.div({ _: 'Face', id: "mode-face", onclick: mode.face }),
+                h.div({ _: 'Edge', id: "mode-edge", onclick: mode.edge }),
+            ])
+        ]),
+        h.div({ class: "menu sketch-on" }, [
+            h.div('Object'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Group', onclick: sketch.arrange.group }),
+                h.div({ _: 'Ungroup', onclick: sketch.arrange.ungroup }),
+                h.hr(),
+                h.div({ _: 'Center', onclick: sketch.arrange.center }),
+                h.hr(),
+                h.div({ _: 'Flip Horizontal', onclick: sketch.arrange.fliph }),
+                h.div({ _: 'Flip Vertical', onclick: sketch.arrange.flipv }),
+                h.hr(),
+                h.div({ _: 'Raise', onclick: sketch.arrange.up }),
+                h.div({ _: 'Lower', onclick: sketch.arrange.down }),
+                h.div({ _: 'Raise to Top', onclick: sketch.arrange.top }),
+                h.div({ _: 'Lower to Bottom', onclick: sketch.arrange.bottom }),
+            ])
+        ]),
+        h.div({ class: "menu sketch-off" }, [
+            h.div('Object'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Regroup', onclick: tool.regroup }),
+                h.div({ _: 'Isolate', onclick: tool.isolate }),
+                h.hr(),
+                h.div({ _: 'Duplicate', onclick: tool.duplicate }),
+                h.div({ _: 'Mirror', onclick: tool.mirror }),
+                h.div({ _: 'Merge', onclick: tool.merge }),
+                h.div({ _: 'Split', onclick: call.edit_split }),
+                h.hr(),
+                h.div({ _: 'Union', onclick: tool.union }),
+                h.div({ _: 'Subtract', onclick: tool.subtract }),
+                h.div({ _: 'Intersect', onclick: tool.intersect }),
+                h.div({ _: 'Difference', onclick: tool.difference }),
+                h.hr(),
+                h.div({ _: 'Copy Circle', onclick: api.pattern.circle }),
+                h.div({ _: 'Copy Grid', onclick: api.pattern.grid }),
+            ])
+        ]),
+        h.div({ class: "menu sketch-off" }, [
+            h.div('Faces'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Flip Normals', onclick: tool.invert }),
+                h.div({ _: 'Analyze', onclick: tool.analyze }),
+                // h.div({ _: 'Patch', onclick: tool.repair }),
+                // h.div({ _: 'rebuild', onclick: tool.rebuild }),
+                h.div({ _: 'Clean', onclick: tool.clean }),
+            ])
+        ]),
+        h.div({ class: "menu sketch-on" }, [
+            h.div('Shape'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'Duplicate', onclick: api.tool.duplicate }),
+                h.div({ _: 'Extrude', onclick: sketch.extrude }),
+                h.hr(),
+                h.div({ _: 'Union', onclick: sketch.boolean.union }),
+                h.div({ _: 'Intersect', onclick: sketch.boolean.intersect }),
+                h.div({ _: 'Difference', onclick: sketch.boolean.difference }),
+                h.hr(),
+                h.div({ _: 'Nest', onclick: sketch.boolean.nest }),
+                h.div({ _: 'Flatten', onclick: sketch.boolean.flatten }),
+                h.div({ _: 'Even Odd', onclick: sketch.boolean.evenodd }),
+            ])
+        ]),
+        h.div({ class: "menu" }, [
+            h.div('Help'),
+            h.div({ class: "menu-items" }, [
+                h.div({ _: 'About', onclick() { api.welcome(mesh.version) } }),
+                h.hr(),
+                h.div({ _: 'Documentation', onclick: api.help }),
+                h.div({ _: 'Official Site', onclick: api.gridspace }),
+                h.div({ _: "Donate", onclick: api.donate }),
+                h.hr(),
+                h.div({ _: 'Versions', onclick: api.version }),
+            ])
+        ]),
     ]);
 
-    // add a help button
+    // add help buttons
     h.bind($('top-right'), [
-        h.div({ id: "top-version", onclick: api.version }, [
-            h.div({ class: "fas fa-hashtag" }),
-        ]),
         h.div({ id: "top-settings", onclick: api.settings }, [
-            h.div({ class: "fas fa-sliders-h" }),
-        ]),
-        h.div({ id: "top-help", onclick: api.help }, [
-            h.div({ class: "far fa-question-circle" }),
+            h.div({ class: "fas fa-gear" }),
+            h.div('Settings')
         ]),
     ]);
 
@@ -390,184 +514,16 @@ function ui_build() {
             h.div({ id: 'spinner', class: 'spin' })
         ]),
         // display and action areas
-        h.div({ id: 'modes' }),
-        h.div({ id: 'actions' }),
         h.div({ id: 'grouplist'}),
         h.div({ id: 'selectlist'}),
         h.div({ id: 'logger', onmouseover() { log.show() } }),
         h.div({ id: 'download', class: "hide" })
     ]);
 
-    let { modes, actions, grouplist, selectlist, logger } = bound;
+    let { actions, grouplist, selectlist, logger } = bound;
 
     // create slid in/out logging window
     h.bind(logger, [ h.div({ id: 'logtext' }) ]);
-
-    // a few shortcuts to api calls
-    let { file, selection, mode, tool, sketch, prefs, add } = api;
-
-    // top/center mode selector
-    h.bind(modes, [ h.div([
-        h.button({ _: 'object', id: "mode-object", onclick() { mode.object() } }),
-        h.button({ _: 'tool', id: "mode-tool", onclick() { mode.tool() } }),
-    ]), h.div([
-        h.button({ _: 'surface', id: "mode-surface", onclick() { mode.surface() } }),
-        h.button({ _: 'face', id: "mode-face", onclick() { mode.face() } }),
-        h.button({ _: 'edge', id: "mode-edge", onclick() { mode.edge() } }),
-    ]), h.div([
-        h.button({ _: 'sketch', id: "mode-sketch", onclick() { mode.sketch() } }),
-    ]) ]);
-
-    // create hotkey/action menu (top/left)
-    h.bind(actions, [
-        h.div([
-            // create and bind file loading elements
-            h.div({ _: "file", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'import', onclick: file.import }, [
-                    h.input({
-                        id: "import", type: "file", class: ["hide"], multiple: true,
-                        onchange(evt) { broker.send.load_files(evt.target.files) }
-                    })
-                ]),
-                h.button({ _: 'export', onclick: file.export }),
-            ])
-        ]),
-        h.div({ class: "sketch-off" }, [
-            h.div({ _: "add", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'cylinder', onclick() { add.cylinder() } }),
-                h.button({ _: 'cube', onclick() { add.cube() } }),
-                h.button({ _: 'gear', onclick() { add.gear() } }),
-                h.hr(),
-                h.button({ _: 'sketch', onclick() { add.sketch() } }),
-                devel ? h.button({ _: 'input', onclick: add.input }) : undefined
-            ])
-        ]),
-        h.div({ class: "sketch-on" }, [
-            h.div({ _: "add", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'circle', onclick() { add.circle() } }),
-                h.button({ _: 'rectangle', onclick() { add.rectangle() } }),
-                // h.button({ _: 'gear', onclick() { add.gear() } }),
-                h.hr(),
-                h.button({ _: 'sketch', onclick() { add.sketch() } }),
-            ])
-        ]),
-        h.div([
-            h.div({ _: "view", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'bounds', onclick() { selection.boundsBox({ toggle: true }) } }),
-                h.button({ _: 'normals', onclick() { api.normals() } }),
-                h.button({ _: 'gridlines', onclick() { api.grid() } }),
-                h.button({ _: 'wireframe', onclick() { api.wireframe() } }),
-            ])
-        ]),
-        h.div({ class: "sketch-off" }, [
-            h.div({ _: "boolean", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'union', onclick: tool.union }),
-                h.button({ _: 'subtract', onclick: tool.subtract }),
-                h.button({ _: 'intersect', onclick: tool.intersect }),
-                h.button({ _: 'difference', onclick: tool.difference }),
-            ])
-        ]),
-        h.div({ class: "sketch-on" }, [
-            h.div({ _: "arrange", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'group', onclick: sketch.arrange.group }),
-                h.button({ _: 'ungroup', onclick: sketch.arrange.ungroup }),
-                h.hr(),
-                h.button({ _: 'center', onclick: sketch.arrange.center }),
-                h.hr(),
-                h.button({ _: 'flip-h', onclick: sketch.arrange.fliph }),
-                h.button({ _: 'flip-v', onclick: sketch.arrange.flipv }),
-                h.hr(),
-                h.button({ _: 'down', onclick: sketch.arrange.down }),
-                h.button({ _: 'up', onclick: sketch.arrange.up }),
-                h.hr(),
-                h.button({ _: 'top', onclick: sketch.arrange.top }),
-                h.button({ _: 'bottom', onclick: sketch.arrange.bottom }),
-            ])
-        ]),
-        h.div({ class: "sketch-on" }, [
-            h.div({ _: "boolean", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'union', onclick: sketch.boolean.union }),
-                h.button({ _: 'intersect', onclick: sketch.boolean.intersect }),
-                h.button({ _: 'difference', onclick: sketch.boolean.difference }),
-                h.hr(),
-                h.button({ _: 'even/odd', onclick: sketch.boolean.evenodd }),
-                h.button({ _: 'nest', onclick: sketch.boolean.nest }),
-                h.button({ _: 'flatten', onclick: sketch.boolean.flatten }),
-            ])
-        ]),
-        h.div({ class: "sketch-off" }, [
-            h.div({ _: "pattern", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'circular', onclick() { api.pattern.circle() } }),
-                h.button({ _: 'grid', onclick() { api.pattern.grid() } }),
-            ])
-        ]),
-        // h.div({ class: "sketch-on" }, [
-        //     h.div({ _: "pattern", class: "head" }),
-        //     h.div({ class: "back"}),
-        //     h.div({ class: "pop"}, [
-        //         h.button({ _: 'circular', onclick() { sketch.pattern.circle() } }),
-        //         h.button({ _: 'grid', onclick() { sketch.pattern.grid() } }),
-        //     ])
-        // ]),
-        h.div({ class: "sketch-on" }, [
-            h.div({ _: "extrude", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'sketch', onclick() { sketch.extrude() } }),
-                h.button({ _: 'selection', onclick() { sketch.extrude({ selection: true }) } }),
-            ])
-        ]),
-        h.div({ class: "sketch-off" }, [
-            h.div({ _: "models", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'regroup', onclick: tool.regroup }),
-                h.span(),
-                h.button({ _: 'duplicate', onclick: tool.duplicate }),
-                h.button({ _: 'mirror', onclick: tool.mirror }),
-                h.button({ _: 'merge', onclick: tool.merge }),
-                h.button({ _: 'split', onclick: call.edit_split }),
-                h.span(),
-                h.button({ _: 'delete', onclick: api.selection.delete }),
-            ])
-        ]),
-        h.div({ class: "sketch-off" }, [
-            h.div({ _: "faces", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'invert\nnormals', onclick: tool.invert }),
-                h.span(),
-                h.button({ _: 'delete', onclick: api.selection.delete }),
-            ])
-        ]),
-        h.div({ class: "sketch-off" }, [
-            h.div({ _: "repair", class: "head" }),
-            h.div({ class: "back"}),
-            h.div({ class: "pop"}, [
-                h.button({ _: 'analyze', onclick: tool.analyze }),
-                h.button({ _: 'isolate', onclick: tool.isolate }),
-                h.button({ _: 'patch', onclick: tool.repair }),
-                // h.button({ _: 'rebuild', onclick: tool.rebuild }),
-                h.button({ _: 'clean', onclick: tool.clean }),
-            ])
-        ]),
-    ]);
 
     // for group/model/box/area/mesh dashboard grids
     function grid(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ], root) {

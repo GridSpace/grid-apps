@@ -1352,6 +1352,10 @@ const api = exports({
         window.open("https://www.paypal.com/paypalme/gridspace3d");
     },
 
+    gridspace() {
+        window.open("https://grid.space");
+    },
+
     kirimoto() {
         window.location = "/kiri";
     },
