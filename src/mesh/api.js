@@ -648,7 +648,7 @@ let sketch = {
 
 let add = {
     sketch(opt) {
-        sketch.add(new mesh.sketch(opt));
+        selection.set([ sketch.add(new mesh.sketch(opt)) ]);
     },
 
     /** add sketch components */
@@ -1254,6 +1254,8 @@ const mode = {
     sketch() {
         if (!mode.is([ modes.sketch ])) {
             selection.clear();
+            let first = sketch.list()[0];
+            selection.set(first ? [ first ] : []);
         }
         mode.set(modes.sketch);
     }
