@@ -543,8 +543,7 @@ button:hover {
     grid-template-columns: 1fr;
 }
 
-.tools i, .tools svg {
-    aspect-ratio: 1;
+.tools i {
     padding: 9px;
     border-bottom: 1px solid var(--border);
 }

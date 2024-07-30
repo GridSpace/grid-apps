@@ -24,8 +24,9 @@ function parse(text, opt = { soup: true }) {
     const paths = data.paths;
     const xmlat = data.xml.attributes;
     const polys = fromSoup ? [] : undefined;
-    const depth = opt.depth || xmlat['data-km-extrude']
-        || xmlat['extrude']
+    const scale = xmlat.width?.value.endsWith('in') ? 25.4 : 1;
+    const depth = opt.depth || xmlat['data-km-extrude']?.value
+        || xmlat['extrude']?.value
         || {value: 5};
 
     for (let i = 0; i < paths.length; i++) {
@@ -43,6 +44,9 @@ function parse(text, opt = { soup: true }) {
                     if (type === 'polyline') poly.setOpen(true);
                     poly._svg = { width, miter };
                     polys.push(poly);
+                    if (scale !== 1) {
+                        poly.scale({ x: scale, y: scale, z: 1 });
+                    }
                 }
             }
             continue;
