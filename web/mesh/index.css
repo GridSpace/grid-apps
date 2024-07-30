@@ -699,6 +699,7 @@ button:hover {
     border-radius: 3px;
     padding: 3px;
     display: grid;
+    flex-grow: 1;
     gap: 2px 2px;
     grid: min-content 1fr 1fr / min-content 1fr 1fr 1fr;
 }

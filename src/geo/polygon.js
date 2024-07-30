@@ -913,32 +913,33 @@ class Polygon {
      * @param {Boolean} deep
      * @returns {Polygon}
      */
-    clone(deep) {
+    clone(deep, fields) {
         let np = newPolygon().copyZ(this.getZ()),
             ln = this.length,
             i = 0;
 
         while (i < ln) np.push(this.points[i++]);
 
-        if (this.fillang) np.fillang = this.fillang;
+        fields && fields.forEach(field => np[field] = this[field]);
+        this.fillang && (np.fillang = this.fillang);
         np.depth = this.depth;
         np.open = this.open;
 
         if (deep && this.inner) {
-            np.inner = this.inner.clone();
+            np.inner = this.inner.clone(false, fields);
         }
 
         return np;
     }
 
     // special shallow for-render-or-read-only cloning
-    cloneZ(z, stop) {
+    cloneZ(z, deep = true) {
         let p = newPolygon();
         p.z = z;
         p.open = this.open;
         p.points = this.points;
-        if (this.inner) {
-            p.inner = this.inner.map(p => p.cloneZ(z, true));
+        if (deep && this.inner) {
+            p.inner = this.inner.map(p => p.cloneZ(z, false));
         }
         return p;
     }

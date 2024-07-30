@@ -149,7 +149,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             },
 
             items() {
-                return sketch.selection.mesh_items().map(i => c.sketch_item.item);
+                return sketch.selection.mesh_items().map(c => c.sketch_item);
             },
 
             count() {
@@ -232,10 +232,11 @@ mesh.sketch = class MeshSketch extends mesh.object {
                 });
             },
 
-            item(item, opt = {}) {
+            item(item) {
                 item.group = item.group || mesh.util.uuid();
                 sketch.items.push(item);
                 sketch.render_defer();
+                api.selection.update_defer();
                 return item;
             }
         }
@@ -277,31 +278,30 @@ mesh.sketch = class MeshSketch extends mesh.object {
             },
 
             nest() {
-                let items = sketch.selection.mesh_items();
+                let items = sketch.selection.items();
                 if (items.length < 2) return log('operation requires at least 2 items');
-                let polys = items.map(i => i.sketch_item.poly).clone(true);
+                let polys = items.map(si => si.poly.annotate({group:si.group}).clone(true, ['group']));
                 let union = POLYS.nest(POLYS.flatten(polys, [], true));
                 sketch.selection.delete();
                 for (let poly of union) {
-                    sketch.add.polygon({ poly });
+                    sketch.add.polygon({ poly, group:poly.group });
                 }
             },
 
             evenodd() {
-                let items = sketch.selection.mesh_items();
-                // if (items.length < 2) return log('operation requires at least 2 items');
-                let polys = items.map(i => i.sketch_item.poly);
-                let even = POLYS.nest(POLYS.flatten(polys.clone(true), [], true));
-                let odd = POLYS.nest(POLYS.flatten(even.clone(true), [], true).filter(p => p.depth > 0));
+                let items = sketch.selection.items();
+                let polys = items.map(si => si.poly.annotate({group:si.group}));
+                let even = POLYS.nest(POLYS.flatten(polys.clone(true,['group']), [], true));
+                let odd = POLYS.nest(POLYS.flatten(even.clone(true,['group']), [], true).filter(p => p.depth > 0));
                 sketch.selection.delete();
                 for (let poly of [...even, ...odd]) {
-                    sketch.add.polygon({ poly });
+                    sketch.add.polygon({ poly, group:poly.group });
                 }
             },
 
             flatten() {
-                let items = sketch.selection.mesh_items();
-                let polys = items.map(i => i.sketch_item.poly).clone(true);
+                let items = sketch.selection.items();
+                let polys = items.map(si => si.poly.annotate({group:si.group}).clone(true, ['group']));
                 let flat = POLYS.flatten(polys, [], true);
                 sketch.selection.delete();
                 for (let poly of flat) {
@@ -564,6 +564,10 @@ class SketchItem {
 
     get type() {
         return "sketch_item";
+    }
+
+    get group() {
+        return this.item.group;
     }
 
     get selected() {

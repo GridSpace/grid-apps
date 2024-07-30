@@ -212,6 +212,11 @@ const selection = {
         return selection;
     },
 
+    update_defer() {
+        util.defer(selection.update);
+        return selection;
+    },
+
     drag(opt = {}) {
         selected.forEach(s => s.drag(opt));
         return selection;

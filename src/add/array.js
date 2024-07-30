@@ -90,11 +90,11 @@ AP.addOnce = function(val) {
 /**
  * shallow cloning with clone(arg) call on each new element
  */
-AP.clone = function(arg) {
+AP.clone = function() {
     let na = this.slice(),
         ln = na.length,
         i = 0;
-    while (i < ln) na[i] = na[i++].clone(arg);
+    while (i < ln) na[i] = na[i++].clone(...arguments);
     return na;
 };
 

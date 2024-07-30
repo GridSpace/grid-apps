@@ -11,6 +11,8 @@ const { broker } = gapp;
 const { mesh, moto } = root;
 const { api, util } = mesh;
 const { space } = moto;
+const { bind, div, label, input, hr } = h;
+
 const devel = api.isDebug;
 
 let call = broker.send;
@@ -36,7 +38,7 @@ const modal = api.modal = {
         if (this.info.showing) {
             throw `modal conflict showing "${title}"`;
         }
-        let bound = h.bind($('modal'), contents);
+        let bound = bind($('modal'), contents);
         $('modal_title_text').innerText = title;
         $('modal_page').style.display = 'flex';
         $('modal_frame').style.display = 'flex';
@@ -99,7 +101,7 @@ const modal = api.modal = {
         let { title, body } = opt;
         let contents = [];
         if (typeof body === 'string') {
-            contents.push(h.div(body))
+            contents.push(div(body))
         } else if (Array.isArray(body)) {
             contents.appendAll(body);
         } else {
@@ -181,7 +183,7 @@ const log = api.log = {
     // re-render and show current log messages
     render() {
         let area = $('logtext');
-        h.bind(area, log.data.map(rec => h.div({ _: rec.text })));
+        bind(area, log.data.map(rec => div({ _: rec.text })));
         area.scrollTop = area.scrollHeight;
         return log.show();
     },
@@ -196,7 +198,7 @@ gapp.broker.subscribe("mesh.log", msg => {
 api.welcome = function(version = "unknown") {
     const { prefs } = api;
     const { map } = prefs;
-    modal.show('About Mesh:Tool', h.div({ class:"welcome" }, [
+    modal.show('About Mesh:Tool', div({ class:"welcome" }, [
         h.a({
             target: "docs",
             _: "Guide & Documentation",
@@ -207,10 +209,10 @@ api.welcome = function(version = "unknown") {
             _: "Grid.Space",
             href: "https://grid.space/"
         }),
-        h.div(`Version: ${version}`),
-        h.hr({ width: "100%" }),
-        h.div({ class: "choice" }, [
-            h.input({
+        div(`Version: ${version}`),
+        hr({ width: "100%" }),
+        div({ class: "choice" }, [
+            input({
                 type: "checkbox",
                 [ map.info.welcome !== false ? 'checked' : 'unchecked' ] : 1,
                 onchange: (ev) => {
@@ -218,7 +220,7 @@ api.welcome = function(version = "unknown") {
                     prefs.save();
                 }
             }),
-            h.div("show at startup")
+            div("show at startup")
         ]),
     ]));
 };
@@ -230,83 +232,83 @@ api.settings = function() {
     const { surface, normals, space, sketch, wireframe } = prefs.map;
     const { dark } = space;
 
-    const set1 = h.div([
-        h.label('dark mode'),
-        h.input({ type: "checkbox",
+    const set1 = div([
+        label('dark mode'),
+        input({ type: "checkbox",
             onchange: ev => call.set_darkmode(ev.target.checked),
             [ dark ? 'checked' : 'unchecked' ] : 1
         }),
-        h.label('auto floor'),
-        h.input({ type: "checkbox",
+        label('auto floor'),
+        input({ type: "checkbox",
             onchange: ev => prefs.save( space.floor = !space.floor ),
             [ space.floor !== false ? 'checked' : 'unchecked' ] : 1
         }),
-        h.label('auto center'),
-        h.input({ type: "checkbox",
+        label('auto center'),
+        input({ type: "checkbox",
             onchange: ev => prefs.save( space.center = !space.center ),
             [ space.center !== false ? 'checked' : 'unchecked' ] : 1
         }),
     ]);
 
-    const set2 = h.div([
-        h.label({ class: "header", _: 'wire'}),
-        h.label('opacity'),
-        h.input({ type: "text", size: 5, value: parseFloat(wireframe.opacity),
+    const set2 = div([
+        label({ class: "header", _: 'wire'}),
+        label('opacity'),
+        input({ type: "text", size: 5, value: parseFloat(wireframe.opacity),
             onchange: ev => call.set_wireframe_opacity(ev.target.value)
         }),
-        h.label('fog x'),
-        h.input({ type: "text", size: 5, value: parseFloat(wireframe.fog),
+        label('fog x'),
+        input({ type: "text", size: 5, value: parseFloat(wireframe.fog),
             onchange: ev => call.set_wireframe_fog(ev.target.value)
         }),
     ]);
 
-    const set3 = h.div([
-        h.label({ class: "header", _: 'normal'}),
-        h.label('length'),
-        h.input({ type: "text", size: 6, value: parseFloat(normals.length),
+    const set3 = div([
+        label({ class: "header", _: 'normal'}),
+        label('length'),
+        input({ type: "text", size: 6, value: parseFloat(normals.length),
             onchange: ev => call.set_normals_length(ev.target.value)
         }),
-        h.label('color'),
-        h.input({ type: "text", size: 6,
+        label('color'),
+        input({ type: "text", size: 6,
             value: util.toHexRGB(dark ? normals.color_dark : normals.color_lite),
             onchange: ev => call.set_normals_color(util.fromHexRGB(ev.target.value))
         }),
     ]);
 
-    const set4 = h.div([
-        h.label({ class: "header", _: 'surface'}),
-        h.label('radians'),
-        h.input({ type: "text", size: 5, value: parseFloat(surface.radians),
+    const set4 = div([
+        label({ class: "header", _: 'surface'}),
+        label('radians'),
+        input({ type: "text", size: 5, value: parseFloat(surface.radians),
             onchange: ev => call.set_surface_radians(ev.target.value)
         }),
-        h.label('radius'),
-        h.input({ type: "text", size: 5, value: parseFloat(surface.radius || 0.2),
+        label('radius'),
+        input({ type: "text", size: 5, value: parseFloat(surface.radius || 0.2),
             onchange: ev => call.set_surface_radius(ev.target.value)
         }),
     ]);
 
-    const set5 = h.div([
-        h.label({ class: "header", _: 'snap'}),
-        h.label('value'),
-        h.input({ type: "text", size: 5, value: parseFloat(space.snap || 1),
+    const set5 = div([
+        label({ class: "header", _: 'snap'}),
+        label('value'),
+        input({ type: "text", size: 5, value: parseFloat(space.snap || 1),
             onchange: ev => call.set_snap_value(ev.target.value)
         }),
-        h.label('enabled'),
-        h.input({ type: "checkbox",
+        label('enabled'),
+        input({ type: "checkbox",
             onchange: ev => prefs.save( space.snapon = !space.snapon ),
             [ space.snapon === true ? 'checked' : 'unchecked' ] : 1
         }),
     ]);
 
-    const set6 = h.div([
-        h.label({ class: "header", _: 'duplicate'}),
-        h.label('select'),
-        h.input({ type: "checkbox",
+    const set6 = div([
+        label({ class: "header", _: 'duplicate'}),
+        label('select'),
+        input({ type: "checkbox",
             onchange: ev => prefs.save( space.dup_sel = !space.dup_sel ),
             [ space.dup_sel === true ? 'checked' : 'unchecked' ] : 1
         }),
-        h.label('shift'),
-        h.input({ type: "checkbox",
+        label('shift'),
+        input({ type: "checkbox",
             onchange: ev => prefs.save( space.dup_shift = !space.dup_shift ),
             [ space.dup_shift === true ? 'checked' : 'unchecked' ] : 1
         }),
@@ -314,18 +316,18 @@ api.settings = function() {
 
     let ot = sketch.open_type;
     let srr = () => { api.sketch.list().forEach(s => s.render()) };
-    const set7 = h.div([
-        h.label({ class: "header", _: 'open poly'}),
-        h.label('auto close'),
-        h.input({ type: "checkbox",
+    const set7 = div([
+        label({ class: "header", _: 'open poly'}),
+        label('auto close'),
+        input({ type: "checkbox",
             onchange: ev => prefs.save( ((sketch.open_close = !sketch.open_close) || true) && srr() ),
             [ sketch.open_close === true ? 'checked' : 'unchecked' ] : 1
         }),
-        h.label('width'),
-        h.input({ type: "text", size: 5, value: parseFloat(sketch.open_width || 1),
+        label('width'),
+        input({ type: "text", size: 5, value: parseFloat(sketch.open_width || 1),
             onchange: ev => prefs.save( (sketch.open_width = parseFloat(ev.target.value)) && srr() )
         }),
-        h.label('type'),
+        label('type'),
         h.select({ type: "text", value: sketch.open_type,
             onchange: ev => prefs.save( (sketch.open_type = ev.target.value) && srr() )
         }, [
@@ -335,7 +337,7 @@ api.settings = function() {
         ]),
     ]);
 
-    modal.show('settings', h.div({ class: "settings" }, [
+    modal.show('settings', div({ class: "settings" }, [
         set1, set2, set3, set4, set5, set6, set7
     ] ));
 }
@@ -353,12 +355,12 @@ function facon(name, sub) {
 function menu_item(text, fn, short) {
     if (short) {
         short = Array.isArray(short) ? short : [ short ];
-        short = h.div({ class: "short" }, short.map(s => s.startsWith('bi-') ?
-            bicon(s) : h.div(s)
+        short = div({ class: "short" }, short.map(s => s.startsWith('bi-') ?
+            bicon(s) : div(s)
         ));
     }
-    return h.div({ onclick: fn }, [
-        h.div({ _: text, class: "grow" }),
+    return div({ onclick: fn }, [
+        div({ _: text, class: "grow" }),
         short
     ].filter(o => o));
 }
@@ -371,194 +373,195 @@ function ui_build() {
     let eye_closed = FontAwesome.icon({ prefix: "fas", iconName: "eye-slash" }).html[0];
 
     // top left drop menus
-    h.bind($('top-left'), [
-        h.div({ class: "menu" }, [
-            h.div('File'),
-            h.div({ class: "menu-items" }, [
-                h.input({
+    bind($('top-left'), [
+        div({ class: "menu" }, [
+            div('File'),
+            div({ class: "menu-items" }, [
+                input({
                     id: "import", type: "file", class: ["hide"], multiple: true,
                     onchange(evt) { broker.send.load_files(evt.target.files) }
                 }),
                 menu_item('Import', file.import, 'I'),
                 menu_item('Export', file.export, 'X'),
-                h.hr(),
+                hr(),
                 menu_item('Slicer', api.kirimoto),
-                h.hr(),
+                hr(),
                 menu_item('Close', window.close),
             ])
         ]),
-        h.div({ class: "menu sketch-on" }, [
-            h.div('Edit'),
-            h.div({ class: "menu-items" }, [
+        div({ class: "menu sketch-on" }, [
+            div('Edit'),
+            div({ class: "menu-items" }, [
                 menu_item('Add Circle', () => { sketch.selected.one?.add.circle() }),
                 menu_item('Add Rectangle', () => { sketch.selected.one?.add.rectangle() }),
-                h.hr(),
+                hr(),
                 menu_item('Add Sketch', add.sketch),
-                h.hr(),
+                hr(),
                 menu_item('Delete', api.selection.delete, 'bi-backspace'),
             ])
         ]),
-        h.div({ class: "menu sketch-off" }, [
-            h.div('Edit'),
-            h.div({ class: "menu-items" }, [
+        div({ class: "menu sketch-off" }, [
+            div('Edit'),
+            div({ class: "menu-items" }, [
                 menu_item('Add Cylinder', add.cylinder),
                 menu_item('Add Cube', add.cube),
                 menu_item('Add Gear', add.gear),
-                h.hr(),
+                hr(),
                 menu_item('Add Sketch', add.sketch),
                 devel ? menu_item('Add Vertices', add.input) : undefined,
-                h.hr(),
+                hr(),
                 menu_item('Delete', api.selection.delete, 'bi-backspace'),
             ])
         ]),
-        h.div({ class: "menu" }, [
-            h.div('View'),
-            h.div({ class: "menu-items" }, [
+        div({ class: "menu" }, [
+            div('View'),
+            div({ class: "menu-items" }, [
                 menu_item('Bounds', () => { selection.boundsBox({ toggle: true }) }, 'B'),
                 menu_item('Normals', () => { api.normals() }, 'N'),
                 menu_item('Wireframes', () => { api.wireframe() }, 'W'),
-                h.hr(),
+                hr(),
                 menu_item('Gridlines', () => { api.grid() }, 'G'),
                 menu_item('Messages', () => { api.log.toggle({ spinner: false }) }, 'L'),
-                h.hr(),
+                hr(),
                 menu_item('Home', space.view.home, 'H'),
                 menu_item('Top', space.view.top, 'T'),
+                menu_item('Reset', space.view.reset, 'Z'),
             ])
         ]),
-        h.div({ class: "menu" }, [
-            h.div('Mode'),
-            h.div({ class: "menu-items" }, [
-                h.div({ _: 'Sketch', id: "mode-sketch", onclick: mode.sketch }),
-                h.hr(),
-                h.div({ _: 'Object', id: "mode-object", onclick: mode.object }),
-                h.div({ _: 'Tool', id: "mode-tool", onclick: mode.tool }),
-                h.hr(),
-                h.div({ _: 'Surface', id: "mode-surface", onclick: mode.surface }),
-                h.div({ _: 'Face', id: "mode-face", onclick: mode.face }),
-                h.div({ _: 'Edge', id: "mode-edge", onclick: mode.edge }),
+        div({ class: "menu" }, [
+            div('Mode'),
+            div({ class: "menu-items" }, [
+                div({ _: 'Sketch', id: "mode-sketch", onclick: mode.sketch }),
+                hr(),
+                div({ _: 'Object', id: "mode-object", onclick: mode.object }),
+                div({ _: 'Tool', id: "mode-tool", onclick: mode.tool }),
+                hr(),
+                div({ _: 'Surface', id: "mode-surface", onclick: mode.surface }),
+                div({ _: 'Face', id: "mode-face", onclick: mode.face }),
+                div({ _: 'Edge', id: "mode-edge", onclick: mode.edge }),
             ])
         ]),
-        h.div({ class: "menu sketch-on" }, [
-            h.div('Object'),
-            h.div({ class: "menu-items" }, [
+        div({ class: "menu sketch-on" }, [
+            div('Object'),
+            div({ class: "menu-items" }, [
                 menu_item('Group', sketch.arrange.group),
                 menu_item('Ungroup', sketch.arrange.ungroup),
-                h.hr(),
+                hr(),
                 menu_item('Center', sketch.arrange.center),
-                h.hr(),
+                hr(),
                 menu_item('Flip Horizontal', sketch.arrange.fliph),
                 menu_item('Flip Vertical', sketch.arrange.flipv),
-                h.hr(),
+                hr(),
                 menu_item('Raise', sketch.arrange.up),
                 menu_item('Lower', sketch.arrange.down),
                 menu_item('To Top', sketch.arrange.top),
                 menu_item('To Bottom', sketch.arrange.bottom),
             ])
         ]),
-        h.div({ class: "menu sketch-off" }, [
-            h.div('Object'),
-            h.div({ class: "menu-items" }, [
+        div({ class: "menu sketch-off" }, [
+            div('Object'),
+            div({ class: "menu-items" }, [
                 menu_item('Regroup', tool.regroup),
                 menu_item('Isolate', tool.isolate),
-                h.hr(),
+                hr(),
                 menu_item('Duplicate', tool.duplicate, ['bi-shift','D']),
                 menu_item('Mirror', tool.mirror, 'M'),
                 menu_item('Merge', tool.merge),
                 menu_item('Split', mesh.split.start, 'S'),
-                h.hr(),
+                hr(),
                 menu_item('Union', tool.union),
                 menu_item('Subtract', tool.subtract),
                 menu_item('Intersect', tool.intersect),
                 menu_item('Difference', tool.difference),
-                h.hr(),
+                hr(),
                 menu_item('Copy Circle', api.pattern.circle),
                 menu_item('Copy Grid', api.pattern.grid),
             ])
         ]),
-        h.div({ class: "menu sketch-off" }, [
-            h.div('Faces'),
-            h.div({ class: "menu-items" }, [
+        div({ class: "menu sketch-off" }, [
+            div('Faces'),
+            div({ class: "menu-items" }, [
                 menu_item('Flip Normals', tool.invert),
                 menu_item('Analyze', tool.analyze),
-                // h.div({ _: 'Patch', onclick: tool.repair }),
-                // h.div({ _: 'rebuild', onclick: tool.rebuild }),
+                // div({ _: 'Patch', onclick: tool.repair }),
+                // div({ _: 'rebuild', onclick: tool.rebuild }),
                 menu_item('Clean', tool.clean),
             ])
         ]),
-        h.div({ class: "menu sketch-on" }, [
-            h.div('Shape'),
-            h.div({ class: "menu-items" }, [
+        div({ class: "menu sketch-on" }, [
+            div('Shape'),
+            div({ class: "menu-items" }, [
                 menu_item('Duplicate', tool.duplicate, ['bi-shift','D']),
-                menu_item('Extrude', sketch.extrude, ['bi-shift','E']),
-                h.hr(),
+                menu_item('Extrude', () => sketch.extrude(), ['bi-shift','E']),
+                hr(),
                 menu_item('Union', sketch.boolean.union),
                 menu_item('Intersect', sketch.boolean.intersect),
                 menu_item('Difference', sketch.boolean.difference),
-                h.hr(),
+                hr(),
                 menu_item('Nest', sketch.boolean.nest),
                 menu_item('Flatten', sketch.boolean.flatten),
                 menu_item('Even Odd', sketch.boolean.evenodd),
             ])
         ]),
-        h.div({ class: "menu" }, [
-            h.div('Help'),
-            h.div({ class: "menu-items" }, [
+        div({ class: "menu" }, [
+            div('Help'),
+            div({ class: "menu-items" }, [
                 menu_item('About', () => { api.welcome(mesh.version) }),
-                h.hr(),
+                hr(),
                 menu_item('Documentation', api.help),
                 menu_item('Official Site', api.gridspace),
                 menu_item('Donate', api.donate),
-                h.hr(),
+                hr(),
                 menu_item('Versions', api.version),
             ])
         ]),
     ]);
 
     // add help buttons
-    h.bind($('top-right'), [
-        h.div({ id: "top-settings", onclick: api.settings }, [
-            h.div({ class: "fas fa-gear" }),
-            h.div('Settings')
+    bind($('top-right'), [
+        div({ id: "top-settings", onclick: api.settings }, [
+            div({ class: "fas fa-gear" }),
+            div('Settings')
         ]),
     ]);
 
     // modal dialog and page blocker
-    h.bind($('modal_page'), [
-        h.div({ id: 'modal_frame' }, [
-            h.div({ id: 'modal_title'}, [
-                h.div({ id: 'modal_title_text', _: 'title' }),
-                h.div({ id: 'modal_title_close', onclick: modal.cancel }, [
+    bind($('modal_page'), [
+        div({ id: 'modal_frame' }, [
+            div({ id: 'modal_title'}, [
+                div({ id: 'modal_title_text', _: 'title' }),
+                div({ id: 'modal_title_close', onclick: modal.cancel }, [
                     h.i({ class: "far fa-window-close" })
                 ])
             ]),
-            h.div({ id: 'modal' }, [
-                h.div({ _: 'this is a modal test' })
+            div({ id: 'modal' }, [
+                div({ _: 'this is a modal test' })
             ])
         ]),
-        h.div({ id: 'spinner', class: 'spin' })
+        div({ id: 'spinner', class: 'spin' })
     ]);
 
     // create top level app areas
-    let bound = h.bind($('app-body'), [
+    let bound = bind($('app-body'), [
         // display and action areas
-        h.div({ id: 'tools' }, [
-            h.div({ id: 'sketchtools', class: "tools sketch-on" }),
-            h.div({ id: 'objecttools', class: "tools sketch-off" }),
-            h.div({ id: 'logger', onmouseover() { log.show() } }),
+        div({ id: 'tools' }, [
+            div({ id: 'sketchtools', class: "tools sketch-on" }),
+            div({ id: 'objecttools', class: "tools sketch-off" }),
+            div({ id: 'logger', onmouseover() { log.show() } }),
         ]),
-        h.div({ id: 'grouplist' }),
-        h.div({ id: 'selectlist' }),
-        h.div({ id: 'download', class: "hide" })
+        div({ id: 'grouplist' }),
+        div({ id: 'selectlist' }),
+        div({ id: 'download', class: "hide" })
     ]);
 
     let { sketchtools, grouplist, selectlist, logger } = bound;
 
     function tool_item(icon, help, fn) {
-        return h.div({ onclick: fn, class: "tool" }, [ bicon(icon), h.div([ h.label(help) ]) ]);
+        return div({ onclick: fn, class: "tool" }, [ bicon(icon), div([ label(help) ]) ]);
     }
 
     // bind sketch chiclets
-    h.bind(sketchtools, h.div([
+    bind(sketchtools, div([
         tool_item('bi-plus', 'New Sketch', add.sketch),
         tool_item('bi-circle', 'Add Circle', () => { sketch.selected.one?.add.circle() }),
         tool_item('bi-square', 'Add Rectangle', () => { sketch.selected.one?.add.rectangle() }),
@@ -572,7 +575,7 @@ function ui_build() {
 ]));
 
     // bind object chiclets
-    h.bind(objecttools, h.div([
+    bind(objecttools, div([
         tool_item('bi-pencil', 'New Sketch', add.sketch),
         tool_item('bi-box', 'New Cube', add.cube),
         tool_item('bi-database', 'New Cylinder', add.cylinder),
@@ -584,26 +587,26 @@ function ui_build() {
 ]));
 
     // create slid in/out logging window
-    h.bind(logger, [ h.div({ id: 'logtext' }) ]);
+    bind(logger, [ div({ id: 'logtext' }) ]);
 
     // for group/model/box/area/mesh dashboard grids
     function grid(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ], root) {
         let v = 'val', l = 'lbl';
         let [ X, Y, Z ] = top;
         let [ pos, rot ] = side;
-        return h.div({ class: "grid"}, [
-            h.div({ _: "" }),
-            h.div({ _: X, class: "top noselect", id: root ? [ root, l, X ] : und }),
-            h.div({ _: Y, class: "top noselect", id: root ? [ root, l, Y ] : und }),
-            h.div({ _: Z, class: "top noselect", id: root ? [ root, l, Z ] : und }),
-            h.div({ _: side[0], class: "side noselect" }),
-            h.label({ _: v1[0], id: root ? [ root, v, X, pos ] : und }),
-            h.label({ _: v1[1], id: root ? [ root, v, Y, pos ] : und }),
-            h.label({ _: v1[2], id: root ? [ root, v, Z, pos ] : und }),
-            h.div({ _: side[1], class: "side noselect" }),
-            h.label({ _: v2[0], id: root ? [ root, v, X, rot ] : und }),
-            h.label({ _: v2[1], id: root ? [ root, v, Y, rot ] : und }),
-            h.label({ _: v2[2], id: root ? [ root, v, Z, rot ] : und }),
+        return div({ class: "grid"}, [
+            div({ _: "" }),
+            div({ _: X, class: "top noselect", id: root ? [ root, l, X ] : und }),
+            div({ _: Y, class: "top noselect", id: root ? [ root, l, Y ] : und }),
+            div({ _: Z, class: "top noselect", id: root ? [ root, l, Z ] : und }),
+            div({ _: side[0], class: "side noselect" }),
+            label({ _: v1[0], id: root ? [ root, v, X, pos ] : und }),
+            label({ _: v1[1], id: root ? [ root, v, Y, pos ] : und }),
+            label({ _: v1[2], id: root ? [ root, v, Z, pos ] : und }),
+            div({ _: side[1], class: "side noselect" }),
+            label({ _: v2[0], id: root ? [ root, v, X, rot ] : und }),
+            label({ _: v2[1], id: root ? [ root, v, Y, rot ] : und }),
+            label({ _: v2[2], id: root ? [ root, v, Z, rot ] : und }),
         ]);
     }
 
@@ -612,16 +615,16 @@ function ui_build() {
         let v = 'val', l = 'lbl';
         let [ X, Y ] = top;
         let [ pos, rot ] = side;
-        return h.div({ class: "grid grid2"}, [
-            h.div({ _: "" }),
-            h.div({ _: X, class: "top noselect", id: root ? [ root, l, X ] : und }),
-            h.div({ _: Y, class: "top noselect", id: root ? [ root, l, Y ] : und }),
-            h.div({ _: side[0], class: "side noselect" }),
-            h.label({ _: v1[0], id: root ? [ root, v, X, pos ] : und }),
-            h.label({ _: v1[1], id: root ? [ root, v, Y, pos ] : und }),
-            h.div({ _: side[1], class: "side noselect" }),
-            h.label({ _: v2[0], id: root ? [ root, v, X, rot ] : und }),
-            h.label({ _: v2[1], id: root ? [ root, v, Y, rot ] : und }),
+        return div({ class: "grid grid2"}, [
+            div({ _: "" }),
+            div({ _: X, class: "top noselect", id: root ? [ root, l, X ] : und }),
+            div({ _: Y, class: "top noselect", id: root ? [ root, l, Y ] : und }),
+            div({ _: side[0], class: "side noselect" }),
+            label({ _: v1[0], id: root ? [ root, v, X, pos ] : und }),
+            label({ _: v1[1], id: root ? [ root, v, Y, pos ] : und }),
+            div({ _: side[1], class: "side noselect" }),
+            label({ _: v2[0], id: root ? [ root, v, X, rot ] : und }),
+            label({ _: v2[1], id: root ? [ root, v, Y, rot ] : und }),
         ]);
     }
 
@@ -629,13 +632,13 @@ function ui_build() {
     function grid1(vals, side = [ "X", "Y"], top = "center", root, post) {
         let v = 'val', l = 'lbl';
         let [ X, Y ] = side;
-        return h.div({ class: "grid grid1"}, [
-            h.div({ _: "" }),
-            h.div({ _: top, class: "top noselect", id: root ? [ root, l ] : und }),
-            h.div({ _: side[0], class: "side noselect" }),
-            h.label({ _: vals[0], id: root ? [ root, v, X, post ] : und }),
-            h.div({ _: side[1], class: "side noselect" }),
-            h.label({ _: vals[1], id: root ? [ root, v, Y, post ] : und }),
+        return div({ class: "grid grid1"}, [
+            div({ _: "" }),
+            div({ _: top, class: "top noselect", id: root ? [ root, l ] : und }),
+            div({ _: side[0], class: "side noselect" }),
+            label({ _: vals[0], id: root ? [ root, v, X, post ] : und }),
+            div({ _: side[1], class: "side noselect" }),
+            label({ _: vals[1], id: root ? [ root, v, Y, post ] : und }),
         ]);
     }
 
@@ -649,7 +652,7 @@ function ui_build() {
         let selHas = selection.contains;
         // map groups to divs
         let groups = api.group.list()
-            .map(g => h.div([
+            .map(g => div([
                 h.button({ _: g.name || `group`, title: g.id,
                     class: [ "group", selHas(g) ? 'selected' : undefined ],
                     onclick(e) {
@@ -657,7 +660,7 @@ function ui_build() {
                         selection.toggle(g);
                     }
                 }),
-                h.div({ class: "models"},
+                div({ class: "models"},
                     // map models to buttons
                     g.models.map(m => [
                         h.button({ _: m.file || m.id,
@@ -691,11 +694,11 @@ function ui_build() {
             ]));
         let sketches = api.sketch.list();
         if (sketches.length) {
-            let sg = h.div([
+            let sg = div([
                 h.button({ _: 'sketch',
                     class: [ "group" ],
                 }),
-                sketches.map(sketch => h.div({ class: "models"}, [
+                sketches.map(sketch => div({ class: "models"}, [
                     h.button({ _: sketch.file || sketch.id,
                         class: [ selHas(sketch) ? 'selected' : undefined ],
                         onclick(e) {
@@ -725,7 +728,7 @@ function ui_build() {
             ]);
             groups.push(sg);
         }
-        h.bind(grouplist, groups);
+        bind(grouplist, groups);
     }
 
     // return function bound to field editing clicks
@@ -758,8 +761,8 @@ function ui_build() {
                     onclick();
                 }
             };
-            let { tempval } = api.modal.show(title, h.div({ class: "tempedit" }, [
-                h.input({ id: 'tempval', value, size: 10, onkeydown }),
+            let { tempval } = api.modal.show(title, div({ class: "tempedit" }, [
+                input({ id: 'tempval', value, size: 10, onkeydown }),
                 h.button({ _: 'set', onclick })
             ]));
             tempval.setSelectionRange(0, tempval.value.length);
@@ -780,8 +783,8 @@ function ui_build() {
                 data: `${label}_data`
             };
             return [
-                h.button({ id: map.show, class: "side" }, [ h.div(label)] ),
-                h.div({ id: map.data }, [
+                h.button({ id: map.show, class: "side" }, [ div(label)] ),
+                div({ id: map.data }, [
                     h.button({ id: map.hide, _: label, title }),
                     grid
                 ])
@@ -794,7 +797,7 @@ function ui_build() {
         let s_mdl = selection.models(true);
 
         if (!(sketch || s_grp.length)) {
-            return h.bind(selectlist, []);
+            return bind(selectlist, []);
         }
 
         // render sketch options
@@ -828,8 +831,8 @@ function ui_build() {
                 } else if (item.type === 'circle') {
                     return [
                         sblock('circle', '', grid1(
-                            [ item.points, item.rotation || 0 ],
-                            [ "points", "rotation" ], "value", 'circle', 'other'
+                            [ item.points || sel_sobj.poly.length, item.rotation || 0 ],
+                            [ "points", "rotation" ], "Value", 'circle', 'other'
                         )),
                         sblock('circle', '', grid2(
                             util.extract(item.center, map),
@@ -839,7 +842,7 @@ function ui_build() {
                     ];
                 }
             });
-            let bound = h.bind(selectlist, [
+            let bound = bind(selectlist, [
                 ...si_vars,
                 ...sk_vars
             ]);
@@ -916,36 +919,36 @@ function ui_build() {
 
         let t_vert = s_mdl.map(m => m.vertices).reduce((a,v) => a+v);
         let t_face = s_mdl.map(m => m.faces).reduce((a,v) => a+v);
-        let h_msh = [h.div([
+        let h_msh = [div([
             h.button({ _: `mesh` }),
-            h.div({ class: ["grid","grid1"]}, [
-                h.div({ _: "" }),
-                h.div({ _: "count", class: "top" }),
-                h.div({ _: "vertex", class: "side" }),
-                h.label({ _: util.comma(t_vert) }),
-                h.div({ _: "face", class: "side" }),
-                h.label({ _: util.comma(t_face) }),
+            div({ class: ["grid","grid1"]}, [
+                div({ _: "" }),
+                div({ _: "count", class: "top" }),
+                div({ _: "vertex", class: "side" }),
+                label({ _: util.comma(t_vert) }),
+                div({ _: "face", class: "side" }),
+                label({ _: util.comma(t_face) }),
             ])
         ])];
 
         let m_viz = !s_mdl.map(m => !m.visible()).reduce((v,b) => v || b);
-        let h_ops = [h.div([
+        let h_ops = [div([
             h.button({ _: `ops` }),
-            h.div({ class: ["grid","grid0"]}, [
-                h.div({ class: [ 'square' ],
+            div({ class: ["grid","grid0"]}, [
+                div({ class: [ 'square' ],
                     onclick(e) {
                         api.selection.visible(!m_viz);
                         update_selector();
                     }
                 }, [ h.raw(m_viz ? eye_open : eye_closed) ]),
-                h.div({ class: [ 'square' ],
+                div({ class: [ 'square' ],
                     onclick(e) { api.selection.delete() }
                 }, [ h.raw(trash) ])
             ])
         ])];
 
         // bind elements to selectlist div
-        let bound = h.bind(selectlist, [
+        let bound = bind(selectlist, [
             ...h_grp,
             ...h_ara,
             ...h_msh,

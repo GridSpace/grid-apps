@@ -822,7 +822,7 @@ function platformLoadFiles(files, group) {
                         let wid = platformLoadWidget(group, vertices, name);
                         if (api.mode.is_cam()) {
                             // attach raw illustration
-                            api.event.emit('cam.parse.gerber', { data: text, mesh: wid.mesh });
+                            // api.event.emit('cam.parse.gerber', { data: text, mesh: wid.mesh });
                         }
                     });
             }

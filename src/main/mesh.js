@@ -251,7 +251,9 @@ function space_init(data) {
                 case 'KeyW':
                     return api.wireframe();
                 case 'KeyG':
-                    return shiftKey ? api.tool.regroup() : api.grid();
+                    return shiftKey ?
+                        (api.mode.is([ api.modes.sketch ]) ? api.sketch.arrange.group() : api.tool.regroup()) :
+                        api.grid();
                 case 'KeyL':
                     return api.log.toggle({ spinner: false });
                 case 'KeyS':
