@@ -561,8 +561,15 @@ function ui_build() {
     h.bind(sketchtools, h.div([
         tool_item('bi-plus', 'New Sketch', add.sketch),
         tool_item('bi-circle', 'Add Circle', () => { sketch.selected.one?.add.circle() }),
-        tool_item('bi-box', 'Add Rectangle', () => { sketch.selected.one?.add.rectangle() }),
-    ]));
+        tool_item('bi-square', 'Add Rectangle', () => { sketch.selected.one?.add.rectangle() }),
+        tool_item('bi-union', 'Union', sketch.boolean.union),
+        tool_item('bi-intersect', 'Intersect', sketch.boolean.intersect),
+        tool_item('bi-exclude', 'Difference', sketch.boolean.difference),
+        tool_item('bi-pip', 'Nest', sketch.boolean.nest),
+        tool_item('bi-layers', 'Flatten', sketch.boolean.flatten),
+        tool_item('bi-cookie', 'Even Odd', sketch.boolean.evenodd),
+        tool_item('bi-badge-3d', 'Extrude', () => sketch.extrude()),
+]));
 
     // bind object chiclets
     h.bind(objecttools, h.div([
@@ -570,7 +577,11 @@ function ui_build() {
         tool_item('bi-box', 'New Cube', add.cube),
         tool_item('bi-database', 'New Cylinder', add.cylinder),
         tool_item('bi-gear', 'New Gear', add.gear),
-    ]));
+        tool_item('bi-union', 'Union', tool.union),
+        tool_item('bi-subtract', 'Subtract', tool.subtract),
+        tool_item('bi-intersect', 'Intersect', tool.intersect),
+        tool_item('bi-exclude', 'Difference', tool.difference),
+]));
 
     // create slid in/out logging window
     h.bind(logger, [ h.div({ id: 'logtext' }) ]);
