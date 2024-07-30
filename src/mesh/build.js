@@ -340,12 +340,21 @@ api.settings = function() {
     ] ));
 }
 
+// bootstrap icons
+function bicon(name) {
+    return h.i({ class: [ "bi", name ] });
+}
+
+// fontawesome icons
+function facon(name, sub) {
+    return h.i({ class: [ sub || "fa", name ] });
+}
+
 function menu_item(text, fn, short) {
     if (short) {
         short = Array.isArray(short) ? short : [ short ];
         short = h.div({ class: "short" }, short.map(s => s.startsWith('bi-') ?
-            h.i({ class: ["bi", s ]}) :
-            h.div(s)
+            bicon(s) : h.div(s)
         ));
     }
     return h.div({ onclick: fn }, [
@@ -513,31 +522,55 @@ function ui_build() {
         ]),
     ]);
 
-    // create top level app areas
-    let bound = h.bind($('app-body'), [
-        // modal dialog and page blocker
-        h.div({ id: 'modal_page' }, [
-            h.div({ id: 'modal_frame' }, [
-                h.div({ id: 'modal_title'}, [
-                    h.div({ id: 'modal_title_text', _: 'title' }),
-                    h.div({ id: 'modal_title_close', onclick: modal.cancel }, [
-                        h.i({ class: "far fa-window-close" })
-                    ])
-                ]),
-                h.div({ id: 'modal' }, [
-                    h.div({ _: 'this is a modal test' })
+    // modal dialog and page blocker
+    h.bind($('modal_page'), [
+        h.div({ id: 'modal_frame' }, [
+            h.div({ id: 'modal_title'}, [
+                h.div({ id: 'modal_title_text', _: 'title' }),
+                h.div({ id: 'modal_title_close', onclick: modal.cancel }, [
+                    h.i({ class: "far fa-window-close" })
                 ])
             ]),
-            h.div({ id: 'spinner', class: 'spin' })
+            h.div({ id: 'modal' }, [
+                h.div({ _: 'this is a modal test' })
+            ])
         ]),
+        h.div({ id: 'spinner', class: 'spin' })
+    ]);
+
+    // create top level app areas
+    let bound = h.bind($('app-body'), [
         // display and action areas
-        h.div({ id: 'grouplist'}),
-        h.div({ id: 'selectlist'}),
-        h.div({ id: 'logger', onmouseover() { log.show() } }),
+        h.div({ id: 'tools' }, [
+            h.div({ id: 'sketchtools', class: "tools sketch-on" }),
+            h.div({ id: 'objecttools', class: "tools sketch-off" }),
+            h.div({ id: 'logger', onmouseover() { log.show() } }),
+        ]),
+        h.div({ id: 'grouplist' }),
+        h.div({ id: 'selectlist' }),
         h.div({ id: 'download', class: "hide" })
     ]);
 
-    let { actions, grouplist, selectlist, logger } = bound;
+    let { sketchtools, grouplist, selectlist, logger } = bound;
+
+    function tool_item(icon, help, fn) {
+        return h.div({ onclick: fn, class: "tool" }, [ bicon(icon), h.div([ h.label(help) ]) ]);
+    }
+
+    // bind sketch chiclets
+    h.bind(sketchtools, h.div([
+        tool_item('bi-plus', 'New Sketch', add.sketch),
+        tool_item('bi-circle', 'Add Circle', () => { sketch.selected.one?.add.circle() }),
+        tool_item('bi-box', 'Add Rectangle', () => { sketch.selected.one?.add.rectangle() }),
+    ]));
+
+    // bind object chiclets
+    h.bind(objecttools, h.div([
+        tool_item('bi-pencil', 'New Sketch', add.sketch),
+        tool_item('bi-box', 'New Cube', add.cube),
+        tool_item('bi-database', 'New Cylinder', add.cylinder),
+        tool_item('bi-gear', 'New Gear', add.gear),
+    ]));
 
     // create slid in/out logging window
     h.bind(logger, [ h.div({ id: 'logtext' }) ]);

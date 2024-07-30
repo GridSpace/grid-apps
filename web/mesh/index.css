@@ -1,17 +1,16 @@
 :root {
-    --menu-blue: #007aff;
-    --menu-back: #ddd;
+    --menu-blue: #0079ff;
+    --menu-back: rgba(255,255,255,0.55);
+    --dark-menu-back: rgba(80,80,80,0.75);
+    --border: #888;
+    --dark-border: #888;
+    --selected: rgba(0,255,0,0.5);
+    --selected-hover: rgba(0,255,0,0.8);
 }
 
 @font-face {
     font-family: 'Russo One';
     src: url('/moto/russo-one.ttf');
-}
-
-/** dark overrides */
-
-.dark #logger, .dark #modal_frame, .dark #actions > div, .dark #grouplist > div {
-    border: 1px solid #999;
 }
 
 /** defaults */
@@ -29,6 +28,7 @@ body, div {
     padding: 0;
     border: 0;
     margin: 0;
+    white-space: nowrap;
 }
 
 hr {
@@ -96,29 +96,16 @@ input {
 
 .dark #top {
     color: #eee;
-    background-color: rgba(80,80,80,0.75);
+    background-color: var(--dark-menu-back);
 }
 
 #top {
     z-index: 50;
     color: #000;
-    font-size: smaller;
+    font-size: 14px;
     flex-direction: row;
-    background-color: rgba(255,255,255,0.55);
-}
-
-.dark #top-sep {
-    background-image: linear-gradient(to right, #666, #aaa, #666);
-}
-
-#top-sep {
-    z-index: 2;
-    height: 1px;
-    background-image: linear-gradient(to right, #ddd, #666, #ddd);
-}
-
-#top > div {
-    padding: 3px;
+    background-color: var(--menu-back);
+    border-bottom: 1px solid var(--border);
 }
 
 .noselect {
@@ -177,9 +164,8 @@ button:hover {
     cursor: default;
     align-self: stretch;
     align-items: center;
-    padding: 6px 12px 6px 12px;
+    padding: 8px 12px 8px 12px;
     border-radius: 6px;
-    white-space: nowrap;
     user-select: none;
 }
 
@@ -187,7 +173,7 @@ button:hover {
     border-top: 0.5px solid rgba(255,255,255,0.5);
 }
 
-.menu:hover, .menu-items > div:hover {
+.menu:hover, .menu-items > div:hover, .tools i:hover {
     background-color: var(--menu-blue);
 }
 
@@ -450,7 +436,11 @@ button:hover {
 
 /** common look & feel */
 
-#logger, #modal_frame, #actions > div, #grouplist > div {
+.dark #modal_frame, .dark #actions > div, .dark #grouplist > div {
+    border: 1px solid #999;
+}
+
+#modal_frame, #actions > div, #grouplist > div {
     border: 1px solid gray;
     border-radius: 3px;
     margin: 0 0 2px 0;
@@ -464,11 +454,11 @@ button:hover {
 }
 
 .menu .selected {
-    background-color: rgba(0,255,0,0.5);
+    background-color: var(--selected);
 }
 
 .menu .selected:hover {
-    background-color: rgba(0,255,0,0.8);
+    background-color: var(--selected-hover);
 }
 
 /* .dark .head {
@@ -477,25 +467,37 @@ button:hover {
 
 /** slide in/out logging window **/
 
+.dark #logger {
+    border-color: var(--dark-border);
+    background-color: var(--dark-menu-back);
+    color: #ddd;
+}
+
 #logger {
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    background-color: var(--menu-back);
     display: none;
-    color: #88ff88;
+    color: #555;
     min-width: 300px;
     flex-direction: column;
-    background-color: rgba(0,0,0,0.5);
     position: absolute;
-    margin: 0 0 3px 3px;
+    margin: 0 0 0 1px;
     bottom: 0;
-    left: 0;
+    left: 100%;
+    padding: 5px;
 }
 
 #logtext {
     flex-direction: column;
-    font-family: monospace;
-    font-size: smaller;
     max-height: 8em;
     min-height: 1em;
     overflow-y: auto;
+}
+
+#logtext > div {
+    font-family: monospace;
+    font-size: 12px;
 }
 
 #logtext::-webkit-scrollbar {
@@ -512,6 +514,66 @@ button:hover {
   border: 3px solid rgba(255,255,255,0.1);
 }
 
+/** left menu sketch and object tool menus */
+
+#tools {
+    border-right: 1px solid var(--border);
+}
+
+.dark .tools {
+    border-color: var(--dark-border);
+    background-color: var(--dark-menu-back);
+}
+
+.dark .tools > div {
+    color: #fff;
+}
+
+.tools {
+    align-items: flex-start;
+    background-color: var(--menu-back);
+}
+
+.tools > div {
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.tools i, .tools svg {
+    aspect-ratio: 1;
+    padding: 9px;
+    border-bottom: 1px solid var(--border);
+}
+
+.tool > div {
+    display: none;
+    position: absolute;
+    padding-left: 10px;
+    left: 100%;
+    bottom: 0;
+    top: 0;
+    place-items: center; /* Center the single grid item */
+    height: 100%;
+    width: 100%;
+}
+
+.dark .tool label {
+    background-color: var(--dark-menu-back);
+    border: 1px solid var(--dark-border);
+}
+
+.tool label {
+    font-size: 12px !important;
+    background-color: var(--menu-back);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 6px 4px 6px;
+}
+
+.tool:hover > div {
+    display: grid;
+}
+
 /** group/model buttons top/right of workspace **/
 
 #grouplist {
@@ -519,6 +581,14 @@ button:hover {
     margin: 3px 3px 0 0;
     right: 0;
     top: 0;
+}
+
+#grouplist .selected {
+    background-color: var(--selected);
+}
+
+#grouplist .selected:hover {
+    background-color: var(--selected-hover);
 }
 
 #grouplist, #grouplist div {
