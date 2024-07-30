@@ -81,6 +81,13 @@ class Point {
         return this;
     }
 
+    scale(x = 1,y = 1,z = 1) {
+        this.x *= x;
+        this.y *= y;
+        this.z *= z;
+        return this;
+    }
+
     round(precision) {
         return newPoint(
             this.x.round(precision),

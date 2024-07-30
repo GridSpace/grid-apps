@@ -8,7 +8,7 @@
 gapp.register("mesh.build", [], (root, exports) => {
 
 const { broker } = gapp;
-const { mesh, moto } = root;
+const { base, mesh, moto } = root;
 const { api, util } = mesh;
 const { space } = moto;
 const { bind, div, label, input, hr } = h;
@@ -873,10 +873,17 @@ function ui_build() {
                 // polygon scaling, circle radius
                 let el2 = bound[`item_val_${axis.toUpperCase()}_size`];
                 if (!el2) continue;
-                sel_item.type !== 'polygon' && el2.classList.add('editable');
+                el2.classList.add('editable');
                 el2.onclick = field_edit(`${axis} size`, (nval, oval) => {
                     if (sel_item.type === 'polygon') {
-                        // todo
+                        let scale = {x:1,y:1,z:1};
+                        let poly = base.newPolygon().fromObject(sel_item);
+                        let bounds = poly.bounds;
+                        scale[axis] = nval/oval;
+                        poly.move(bounds.center().scale(-1,-1,-1));
+                        poly.scale(scale);
+                        poly.move(bounds.center());
+                        Object.assign(sel_item, poly.toObject());
                     } else if (sel_item.type === 'circle') {
                         sel_item.radius = nval / 2;
                     }

@@ -615,6 +615,7 @@ class Polygon {
      * @returns {Polygon|Point} a new polygon centered on x=0, y=0, z=0
      */
     center(point) {
+        throw "does not work";
         let ap = newPoint(0, 0, 0, null),
             np = newPolygon(),
             pa = this.points;

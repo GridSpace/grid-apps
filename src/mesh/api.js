@@ -494,11 +494,13 @@ let sketch = {
             sketch.selection.bounded_op((sketch, bounds, recs) => {
                 let center = bounds.center(0);
                 for (let rec of recs) {
-                    rec.poly.move({ x: -center.x, y: -center.y, z:0 });
-                    Object.assign(rec.item, rec.poly.toObject());
+                    let { item } = rec;
+                    let poly = newPolygon().fromObject(item);
+                    poly.move({ x: -center.x, y: -center.y, z:0 });
+                    Object.assign(rec.item, poly.toObject());
                 }
-                selection.centerXY();
                 sketch.render();
+                selection.centerXY();
             });
         },
 
