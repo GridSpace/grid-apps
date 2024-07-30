@@ -134,6 +134,10 @@ button {
     outline: none;
 }
 
+.dark button:hover {
+    background-color: rgba(220,220,220,1);
+}
+
 button:hover {
     background-color: rgba(210,210,210,1);
 }
