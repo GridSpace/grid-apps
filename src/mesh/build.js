@@ -392,8 +392,8 @@ function ui_build() {
         div({ class: "menu sketch-on" }, [
             div('Edit'),
             div({ class: "menu-items" }, [
-                menu_item('Add Circle', () => { sketch.selected.one?.add.circle() }),
-                menu_item('Add Rectangle', () => { sketch.selected.one?.add.rectangle() }),
+                menu_item('Add Circle', api.add.circle),
+                menu_item('Add Rectangle', api.add.rectangle),
                 hr(),
                 menu_item('Add Sketch', add.sketch),
                 hr(),
@@ -563,8 +563,8 @@ function ui_build() {
     // bind sketch chiclets
     bind(sketchtools, div([
         tool_item('bi-plus', 'New Sketch', add.sketch),
-        tool_item('bi-circle', 'Add Circle', () => { sketch.selected.one?.add.circle() }),
-        tool_item('bi-square', 'Add Rectangle', () => { sketch.selected.one?.add.rectangle() }),
+        tool_item('bi-circle', 'Add Circle', api.add.circle),
+        tool_item('bi-square', 'Add Rectangle', api.add.rectangle),
         tool_item('bi-union', 'Union', sketch.boolean.union),
         tool_item('bi-intersect', 'Intersect', sketch.boolean.intersect),
         tool_item('bi-exclude', 'Difference', sketch.boolean.difference),

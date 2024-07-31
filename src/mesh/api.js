@@ -660,7 +660,7 @@ let add = {
 
     /** add sketch components */
 
-    circle(opt = {}) {
+    circle() {
         let sketch = selection.sketch();
         if (!sketch) {
             return log('select a sketch');
@@ -669,14 +669,14 @@ let add = {
             title: "add circle",
             body: [ h.div({ class: "addgear" }, [
                 h.label('radius in mm'),
-                h.input({ value: opt.radius || 10, size: 5, id: "_radius" }),
+                h.input({ value: 10, size: 5, id: "_radius" }),
                 h.hr(),
                 h.code("optional"),
                 h.hr(),
                 h.label('point spacing'),
-                h.input({ value: opt.spacing || 0, size: 5, id: "_spacing" }),
+                h.input({ value: 0, size: 5, id: "_spacing" }),
                 h.label('point count'),
-                h.input({ value: opt.points || 0, size: 5, id: "_points" }),
+                h.input({ value: 0, size: 5, id: "_points" }),
                 h.button({ _: "create", onclick() {
                     const { _radius, _points, _spacing } = api.modal.bound;
                     sketch.add.circle({
@@ -692,11 +692,28 @@ let add = {
     },
 
     rectangle() {
-        let sel = selection.sketches();
-        if (!sel.length) {
+        let sketch = selection.sketch();
+        if (!sketch) {
             return log('select a sketch');
         }
-        return sel[0].add.rectangle(...arguments);
+        api.modal.dialog({
+            title: "add rectangle",
+            body: [ h.div({ class: "addgear" }, [
+                h.label('width'),
+                h.input({ value: 20, size: 5, id: "_width" }),
+                h.label('height'),
+                h.input({ value: 20, size: 5, id: "_height" }),
+                h.button({ _: "create", onclick() {
+                    const { _width, _height } = api.modal.bound;
+                    sketch.add.rectangle({
+                        width: parseFloat(_width.value),
+                        height: parseFloat(_height.value),
+                    });
+                    api.modal.hide();
+                } })
+            ]) ]
+        });
+        api.modal.bound._width.focus();
     },
 
     /** add models */
