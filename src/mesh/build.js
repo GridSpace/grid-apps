@@ -448,6 +448,7 @@ function ui_build() {
                 menu_item('Ungroup', sketch.arrange.ungroup),
                 hr(),
                 menu_item('Center', sketch.arrange.center),
+                menu_item('Rotate', sketch.arrange.rotate),
                 hr(),
                 menu_item('Flip Horizontal', sketch.arrange.fliph),
                 menu_item('Flip Vertical', sketch.arrange.flipv),
@@ -565,13 +566,16 @@ function ui_build() {
         tool_item('bi-plus', 'New Sketch', add.sketch),
         tool_item('bi-circle', 'Add Circle', api.add.circle),
         tool_item('bi-square', 'Add Rectangle', api.add.rectangle),
+        tool_item('bi-symmetry-vertical', 'Offset', api.sketch.arrange.fliph),
+        tool_item('bi-symmetry-horizontal', 'Offset', api.sketch.arrange.flipv),
+        tool_item('bi-arrow-clockwise', 'Offset', api.sketch.arrange.rotate),
         tool_item('bi-union', 'Union', sketch.boolean.union),
         tool_item('bi-intersect', 'Intersect', sketch.boolean.intersect),
         tool_item('bi-exclude', 'Difference', sketch.boolean.difference),
         tool_item('bi-pip', 'Nest', sketch.boolean.nest),
         tool_item('bi-layers', 'Flatten', sketch.boolean.flatten),
         tool_item('bi-cookie', 'Even Odd', sketch.boolean.evenodd),
-        tool_item('bi-badge-3d', 'Extrude', () => sketch.extrude()),
+        tool_item('bi-arrow-bar-up', 'Extrude', () => sketch.extrude()),
 ]));
 
     // bind object chiclets

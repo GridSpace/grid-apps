@@ -522,6 +522,30 @@ let sketch = {
             });
         },
 
+        rotate() {
+            function doit(sketch, items, angle) {
+                items.filter(i => i.type === 'polygon').forEach(item => {
+                    Object.assign(item, newPolygon().fromObject(item).rotate(-angle).toObject());
+                });
+                sketch.render();
+            }
+            sketch.selection.ifcan((sketch, items) => {
+                api.modal.dialog({
+                    title: "rotate",
+                    body: [ h.div({ class: "addgear" }, [
+                        h.label('angle'),
+                        h.input({ value: 90, size: 5, id: "_angle" }),
+                        h.button({ _: "rotate", onclick() {
+                            const { _angle } = api.modal.bound;
+                            doit(sketch, items, parseFloat(_angle.value));
+                            api.modal.hide();
+                        } })
+                    ]) ]
+                });
+                api.modal.bound._angle.focus();
+            });
+        },
+
         down() {
             sketch.selection.ifcan((sketch, items) => {
                 items.forEach(item => sketch.arrange.down(item));
