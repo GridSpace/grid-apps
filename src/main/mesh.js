@@ -104,7 +104,7 @@ async function restore_space() {
                 space.view.setFocus(saved.focus);
             }
         });
-    const mcache = await db_admin.get("matrices") || {};
+    const mcache = await db_admin.get("meta") || {};
     let count = 0;
     await db_space.iterate({ map: true }).then(cached => {
         const keys = [];
@@ -126,10 +126,12 @@ async function restore_space() {
                         return { id, md: cached[id] }
                     })
                     .filter(r => r.md) // filter cache misses
-                    .map(r => new mesh.model(r.md, r.id).applyMatrix(mcache[r.id]));
+                    .map(r => new mesh.model(r.md, r.id)
+                        .applyMatrix(mcache[r.id]?.matrix)
+                        .visible(mcache[r.id]?.visible ?? true));
                 if (models.length) {
                     log(`restored ${models.length} model(s)`);
-                    mesh.api.group.new(models, id).applyMatrix(mcache[id]);
+                    mesh.api.group.new(models, id).applyMatrix(mcache[id]?.matrix)
                 } else {
                     log(`removed empty group ${id}`);
                     db_space.remove(id);
@@ -145,15 +147,15 @@ async function restore_space() {
         if (keys.length) {
             log(`removing ${keys.length} unclaimed meshes`);
         }
-        // clear out meshes left in the space db along with their matrices
+        // clear out meshes left in the space db along with their meta-data
         for (let id of keys) {
             db_space.remove(id);
             delete mcache[id];
         }
         // restore global cache only after objects are restored
         // otherwise their setup will corrupt the cache for other restores
-        matrixCache = mcache;
-        store_matrices();
+        metaCache = mcache;
+        store_meta();
     }).then(() => {
         // restore preferences after models are restored
         return api.prefs.load().then(() => {
@@ -589,23 +591,33 @@ function space_load(data) {
         .focus();
 }
 
-let matrixCache = {};
+let metaCache = {};
 
-// todo deferred with util
-function store_matrices() {
-    mesh.db.admin.put("matrices", matrixCache);
+function store_meta() {
+    mesh.db.admin.put("meta", metaCache);
+}
+
+function update_meta(id, data) {
+    let meta = metaCache[id] = metaCache[id] || {};
+    Object.assign(meta, data);
+    store_meta();
+}
+
+// cache model visibility for page restores
+function object_visible(data) {
+    let { id, visible } = data;
+    update_meta(id, { visible });
 }
 
 // cache model matrices for page restores
 function object_matrix(data) {
     let { id, matrix } = data;
-    matrixCache[id] = matrix.elements;
-    store_matrices();
+    update_meta(id, { matrix: matrix.elements });
 }
 
 function object_destroy(id) {
-    delete matrixCache[id];
-    store_matrices();
+    delete metaCache[id];
+    store_meta();
 }
 
 // listen for changes like dark mode toggle
@@ -696,6 +708,7 @@ broker.listeners({
     load_files,
     object_matrix,
     object_destroy,
+    object_visible,
     space_init,
     space_load,
     set_darkmode,

@@ -19,6 +19,7 @@ const worker = moto.client.fn;
 let publish = {
     matrix: gapp.broker.bind("object_matrix"),
     destroy: gapp.broker.bind("object_destroy"),
+    visible: gapp.broker.bind("object_visible"),
 };
 
 mesh.object = class MeshObject {
@@ -55,8 +56,10 @@ mesh.object = class MeshObject {
     applyMatrix(elements) {
         if (elements) {
             this.object.applyMatrix4(new Matrix4().fromArray(elements));
+            return this.matrixChanged();
+        } else {
+            return this;
         }
-        return this.matrixChanged();
     }
 
     applyMatrix4(matrix) {
@@ -85,6 +88,7 @@ mesh.object = class MeshObject {
         } else {
             this.object.visible = opt;
         }
+        publish.visible({ id: this.id, visible: this.object.visible });
         return this;
     }
 
