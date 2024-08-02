@@ -24,7 +24,7 @@ const { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } =
 const { base, mesh, moto } = root;
 const { client, worker } = moto;
 const { util } = mesh;
-const { CSG, newPolygon } = base;
+const { CSG, newPoint, newPolygon, sliceConnect } = base;
 const cache = {};
 
 // add scoped access to cache
@@ -191,6 +191,7 @@ let model = {
         let on = [];
         let over = [];
         let under = [];
+        let edges = [];
         function sort(v) {
             if (v.z < z) return under.push(v);
             if (v.z > z) return over.push(v);
@@ -265,6 +266,7 @@ let model = {
                     g1.appendAll([ ...p2, ...m2, ...m1 ]);
                     g2.appendAll([ ...m1, ...m2, ...p3 ]);
                 }
+                edges.push({ p1: newPoint().move(m1), p2: newPoint().move(m2) });
             }
             on.length = over.length = under.length = 0;
         }
@@ -273,6 +275,7 @@ let model = {
         let b2 = new BufferAttribute(o2.toFloat32(), 3);
         o1 = b1.applyMatrix4(mi4).array;
         o2 = b2.applyMatrix4(mi4).array;
+        console.log({ edges, split_face: sliceConnect(edges, z), o1, o2 });
         return { o1, o2 };
     },
 

@@ -12,8 +12,9 @@
 gapp.register("mesh.split", [], (root, exports) => {
 
 const { Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide, Vector3 } = THREE;
-const { moto } = root;
+const { mesh, moto } = root;
 const { space } = moto;
+const { api } = mesh;
 
 let isActive;
 
@@ -59,7 +60,7 @@ let split = {
             let { point, face, object } = int;
             let { x, y, z } = point;
             // set appearance of split plane
-            mat.color.set(0x5555aa);
+            mat.color.set(api.prefs.map.space.dark ? 0x0059bb : 0x0079ff);
             obj.visible = true;
             if (event.shiftKey) {
                 y = split.closestZ(y, object, face).y;

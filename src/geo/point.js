@@ -10,10 +10,10 @@ const { util, config, key } = base;
 const { round } = util;
 
 class Point {
-    constructor(x, y, z, key) {
+    constructor(x = 0, y = 0, z = 0, key) {
         this.x = x;
         this.y = y;
-        this.z = z || 0;
+        this.z = z;
         if (key) {
             this._key = key;
         }
@@ -81,7 +81,7 @@ class Point {
         return this;
     }
 
-    scale(x = 1,y = 1,z = 1) {
+    scale(x = 1, y = 1, z = 1) {
         this.x *= x;
         this.y *= y;
         this.z *= z;
