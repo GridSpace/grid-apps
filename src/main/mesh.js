@@ -18,8 +18,8 @@
 gapp.main("main.mesh", [], (root) => {
 
 const { Quaternion } = THREE;
-const { broker } = gapp;
 const { mesh, moto } = root;
+const { broker } = gapp;
 const { space } = moto;
 
 const version = mesh.version = '1.4.9';

@@ -55,6 +55,7 @@ mesh.object = class MeshObject {
 
     applyMatrix(elements) {
         if (elements) {
+            console.log('matrix', this.type, this.id);
             this.object.applyMatrix4(new Matrix4().fromArray(elements));
             return this.matrixChanged();
         } else {

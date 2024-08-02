@@ -1179,20 +1179,12 @@ const tool = {
             let p = worker.model_heal({
                 id: m.id, opt
             }).then(data => {
-                if (data) {
-                    m.reload(
-                        data.vertices,
-                        data.indices,
-                        data.normals
-                    );
-                }
+                data?.length && m.reload(data.vertices);
             });
             promises.push(p);
         }
         return new Promise((resolve, reject) => {
-            Promise.all(promises).then(() => {
-                resolve();
-            });
+            Promise.all(promises).then(resolve).catch(error => reject);
         });
     },
 

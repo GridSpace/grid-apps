@@ -101,7 +101,13 @@ let model = {
         let { vertices, name, id } = data;
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        cacheUpdate(id, { name, geo, xmatrix: core_matrix.clone(), trans: undefined, tool: undefined });
+        cacheUpdate(id, {
+            name,
+            geo,
+            xmatrix: core_matrix.clone(),
+            trans: undefined,
+            tool: undefined
+        });
     },
 
     // return new vertices in world coordinates
@@ -294,9 +300,7 @@ let model = {
         let tool = analyze(id, opt);
         log(`${id} | unrolling...`);
         let unrolled = tool.unrolled();
-        return {
-            vertices: unrolled.toFloat32(),
-        };
+        return { vertices: unrolled.toFloat32() };
     },
 
     indexFaces(data) {

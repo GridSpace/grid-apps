@@ -82,7 +82,7 @@ let materials = mesh.material = {
 mesh.model = class MeshModel extends mesh.object {
     constructor(data, id) {
         super(id);
-        let { file, mesh, vertices, indices } = data;
+        let { file, mesh, vertices } = data;
 
         if (!mesh) {
             dbug.error(`'${file}' missing mesh data`);
@@ -111,7 +111,7 @@ mesh.model = class MeshModel extends mesh.object {
         };
 
         this.file = file || 'unnamed';
-        this.load(mesh || vertices, indices);
+        this.load(mesh || vertices);
     }
 
     get type() {
@@ -250,14 +250,9 @@ mesh.model = class MeshModel extends mesh.object {
         });
     }
 
-    load(vertices, indices) {
+    load(vertices) {
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        if (indices) {
-            // unroll indexed geometries
-            geo.setIndex(new BufferAttribute(indices, 1));
-            geo = geo.toNonIndexed();
-        }
         let meh = this.mesh = new Mesh(geo, [
             this.mats.normal,
             this.mats.face
@@ -276,13 +271,10 @@ mesh.model = class MeshModel extends mesh.object {
         worker.model_load({id: this.id, name: this.file, vertices});
     }
 
-    reload(vertices, indices) {
+    reload(vertices) {
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        if (indices) {
-            geo.setIndex(new BufferAttribute(indices, 1));
-        }
         // signal util.box3expand that geometry changed
         geo._model_invalid = true;
         geo.computeVertexNormals();
