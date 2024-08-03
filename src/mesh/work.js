@@ -21,6 +21,7 @@
 gapp.main("mesh.work", [], (root) => {
 
 const { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
+const { Quaternion } = THREE;
 const { base, mesh, moto } = root;
 const { client, worker } = moto;
 const { util } = mesh;
@@ -97,6 +98,16 @@ function indexFaces(id) {
 }
 
 let model = {
+    rotate(data) {
+        let { id, x, y, z } = data;
+        let rec = cache[id];
+        let { geo } = rec;
+        if (x) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(1,0,0), x));
+        if (y) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(0,1,0), y));
+        if (z) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(0,0,1), z));
+        console.log({ rec, data, geo: geo.attributes.position.array });
+    },
+
     load(data) {
         let { vertices, name, id } = data;
         let geo = new BufferGeometry();

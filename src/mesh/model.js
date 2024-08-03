@@ -166,6 +166,11 @@ mesh.model = class MeshModel extends mesh.object {
         }
     }
 
+    rotate(x = 0, y = 0, z = 0) {
+        console.log('model rotate', ...arguments);
+        super.rotate(...arguments);
+    }
+
     // override and translate mesh
     move(x = 0, y = 0, z = 0) {
         let attr = this.attributes;
@@ -207,7 +212,7 @@ mesh.model = class MeshModel extends mesh.object {
             opt: { mirror: opt.mirror }
         }).then(data => {
             if (opt.append) data = [...data, ...opt.append].toFloat32();
-            if (opt.reload) return this.reload(data);
+            if (opt.x) return this.reload(data);
             let model = new mesh.model({ file: `${this.file}`, mesh: data });
             let group = opt.group || mesh.api.group.new();
             group.add(model);
@@ -251,8 +256,11 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     load(vertices) {
+        let shared = mesh.util.toSharedF32(vertices);
+        let local = mesh.util.toLocal32(vertices);
+        console.log('load', { vertices, local, shared });
         let geo = new BufferGeometry();
-        geo.setAttribute('position', new BufferAttribute(vertices, 3));
+        geo.setAttribute('position', new BufferAttribute(shared, 3));
         let meh = this.mesh = new Mesh(geo, [
             this.mats.normal,
             this.mats.face
@@ -266,24 +274,27 @@ mesh.model = class MeshModel extends mesh.object {
         // this ref allows clicks to be traced to models and groups
         meh.model = this;
         // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, { file: this.file, mesh: vertices });
+        mapp.db.space.put(this.id, { file: this.file, mesh: local });
         // sync data to worker
-        worker.model_load({id: this.id, name: this.file, vertices});
+        worker.model_load({ id: this.id, name: this.file, vertices: shared });
     }
 
     reload(vertices) {
+        let local = mesh.util.toLocal32(vertices);
+        let shared = mesh.util.toSharedF32(vertices);
+        console.log('reload', { vertices, local, shared });
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
-        geo.setAttribute('position', new BufferAttribute(vertices, 3));
+        geo.setAttribute('position', new BufferAttribute(shared, 3));
         // signal util.box3expand that geometry changed
         geo._model_invalid = true;
         geo.computeVertexNormals();
         // allows raycasting to work
         geo.computeBoundingSphere();
         // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, { file: this.file, mesh: vertices });
+        mapp.db.space.put(this.id, { file: this.file, mesh: local });
         // sync data to worker
-        worker.model_load({id: this.id, name: this.name, vertices});
+        worker.model_load({id: this.id, name: this.name, vertices: shared });
         // restore wireframe state
         this.wireframe(was);
         // fixup normals

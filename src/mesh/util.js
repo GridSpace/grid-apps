@@ -300,6 +300,25 @@ const util = exports({
             groups.push({ start: 0, count: Infinity });
         }
         return groups;
+    },
+
+    toSharedF32(float32) {
+        if (float32.buffer instanceof SharedArrayBuffer) {
+            return float32;
+        }
+        let { buffer } = float32;
+        let shared = new Float32Array(new SharedArrayBuffer(buffer.byteLength));
+        shared.set(float32);
+        return shared;
+    },
+
+    toLocal32(shared32) {
+        if (!(shared32.buffer instanceof SharedArrayBuffer)) {
+            return shared32;
+        }
+        let local = new Float32Array(shared32.length);
+        local.set(shared32);
+        return local;
     }
 
 });
