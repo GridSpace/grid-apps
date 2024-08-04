@@ -109,17 +109,11 @@ mesh.group = class MeshGroup extends mesh.object {
         return this;
     }
 
-    xrotate(x = 0, y = 0, z = 0) {
+    rotate(x = 0, y = 0, z = 0) {
         console.log('group rotate', ...arguments);
-        // super.rotate(...arguments);
         for (let model of this.models) {
-            worker.model_rotate({ id: model.id, x, y, z });
+            model.rotate(...arguments);
         }
-        setTimeout(() => {
-            for (let model of this.models) {
-                model.attributes.position.needsUpdate = true;
-            }
-        }, 250);
     }
 
     scale(x = 1, y = 1, z = 1) {

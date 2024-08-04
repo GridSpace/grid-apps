@@ -576,7 +576,7 @@ function ui_build() {
         tool_item('bi-layers', 'Flatten', sketch.boolean.flatten),
         tool_item('bi-cookie', 'Even Odd', sketch.boolean.evenodd),
         tool_item('bi-arrow-bar-up', 'Extrude', () => sketch.extrude()),
-]));
+    ]));
 
     // bind object chiclets
     bind(objecttools, div([
@@ -588,13 +588,13 @@ function ui_build() {
         tool_item('bi-subtract', 'Subtract', tool.subtract),
         tool_item('bi-intersect', 'Intersect', tool.intersect),
         tool_item('bi-exclude', 'Difference', tool.difference),
-]));
+    ]));
 
     // create slid in/out logging window
     bind(logger, [ div({ id: 'logtext' }) ]);
 
     // for group/model/box/area/mesh dashboard grids
-    function grid(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ], root) {
+    function grid3(v1, v2, side = [ "pos", "rot"], top = [ "X", "Y", "Z" ], root) {
         let v = 'val', l = 'lbl';
         let [ X, Y, Z ] = top;
         let [ pos, rot ] = side;
@@ -811,7 +811,7 @@ function ui_build() {
                 center: sketch.center
             };
             let sel = sketch.selection.mesh_items();
-            let sk_vars = sblock('sketch', sketch.file || sketch.id, grid(
+            let sk_vars = sblock('sketch', sketch.file || sketch.id, grid3(
                 util.extract(bounds.center, map),
                 util.extract(bounds.size, map),
                 [ "center", "scale" ], und, 'sketch'
@@ -911,7 +911,7 @@ function ui_build() {
         let g_pos = util.average(s_grp.map(g => g.object.position));
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
         let g_id = s_grp.map(g => g.id).join(' ');
-        let h_grp = sblock('orient', g_id, grid(
+        let h_grp = sblock('orient', g_id, grid3(
             util.extract(g_pos, map),
             util.extract(g_rot).map(r => (r * rad).round(2).toFixed(map.fixed)),
             und, und, 'group'
@@ -922,7 +922,7 @@ function ui_build() {
         let m_id = s_mdl.map(m => m.id).join(' ');
 
         let bounds = util.bounds(s_mdl);
-        let h_ara = sblock('span', m_id, grid(
+        let h_ara = sblock('span', m_id, grid3(
             util.extract(bounds.center, map),
             util.extract(bounds.size, map),
             [ "center", "size" ], und, 'span'
@@ -972,16 +972,13 @@ function ui_build() {
             e.classList.add('editable');
         });
         group_val_X_rot.onclick = field_edit('x rotation', (group, val) => {
-            let r = group.rotation();
-            group.rotation(val/rad, r.y, r.z);
+            group.rotate(val,0,0);
         });
         group_val_Y_rot.onclick = field_edit('y rotation', (group, val) => {
-            let r = group.rotation();
-            group.rotation(r.x, val/rad, r.z);
+            group.rotate(0,val,0);
         });
         group_val_Z_rot.onclick = field_edit('z rotation', (group, val) => {
-            let r = group.rotation();
-            group.rotation(r.x, r.y, val/rad);
+            group.rotate(0,0,val);
         });
 
         // bind position editable fields

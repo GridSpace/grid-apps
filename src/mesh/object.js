@@ -128,7 +128,8 @@ mesh.object = class MeshObject {
     }
 
     rotate(x = 0, y = 0, z = 0) {
-        console.log('rotate', ...arguments);
+        throw "rotate() requires implementation";
+        console.log('object rotate', ...arguments);
         if (x) this.object.rotateOnWorldAxis(new Vector3(1,0,0), x);
         if (y) this.object.rotateOnWorldAxis(new Vector3(0,1,0), y);
         if (z) this.object.rotateOnWorldAxis(new Vector3(0,0,1), z);
@@ -137,6 +138,7 @@ mesh.object = class MeshObject {
     }
 
     rotation() {
+        throw "rotate() requires implementation";
         let rotation = this.object.rotation;
         if (arguments.length === 0) {
             return rotation;

@@ -105,7 +105,6 @@ let model = {
         if (x) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(1,0,0), x));
         if (y) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(0,1,0), y));
         if (z) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(0,0,1), z));
-        console.log({ rec, data, geo: geo.attributes.position.array });
     },
 
     load(data) {

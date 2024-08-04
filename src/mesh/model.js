@@ -168,11 +168,14 @@ mesh.model = class MeshModel extends mesh.object {
 
     rotate(x = 0, y = 0, z = 0) {
         console.log('model rotate', ...arguments);
-        super.rotate(...arguments);
+        worker.model_rotate({ id: this.id, x, y, z }).then(() => {
+            this.attributes.position.needsUpdate = true;
+            moto.space.update();
+        });
     }
 
     // override and translate mesh
-    move(x = 0, y = 0, z = 0) {
+    xmove(x = 0, y = 0, z = 0) {
         let attr = this.attributes;
         let arr = attr.position.array;
         for (let i=0, l=arr.length; i<l; ) {
@@ -185,7 +188,7 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     // override and translate mesh
-    scale(x = 1, y = 1, z = 1) {
+    xscale(x = 1, y = 1, z = 1) {
         let attr = this.attributes;
         let arr = attr.position.array;
         for (let i=0, l=arr.length; i<l; ) {
@@ -282,7 +285,7 @@ mesh.model = class MeshModel extends mesh.object {
     reload(vertices) {
         let local = mesh.util.toLocal32(vertices);
         let shared = mesh.util.toSharedF32(vertices);
-        console.log('reload', { vertices, local, shared });
+        console.trace('reload', { vertices, local, shared });
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
         geo.setAttribute('position', new BufferAttribute(shared, 3));
