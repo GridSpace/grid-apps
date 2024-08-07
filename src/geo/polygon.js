@@ -1200,10 +1200,8 @@ class Polygon {
         // Machine will travel from "fromPoint" to "nearest point x, y, z' => with z' = point z + rampZ",
         // then start the ease down along path.
         const rampZ = 2.0;
-
         while (true) {
             next = points[index % length];
-
             if (last && next.z < fromZ) {
                 // When "in Ease-Down" (ie. while target Z not yet reached) - follow path while slowly decreasing Z.
                 let deltaZ = fromZ - next.z;
@@ -1225,19 +1223,18 @@ class Polygon {
             } else if (offset === 0 && next.z < fromZ) {
                 // First point, move to rampZ height above next.
                 let deltaZ = fromZ - next.z;
-
                 fromZ = next.z + Math.min(deltaZ, rampZ)
                 next = next.clone().setZ(fromZ);
             }
             last = next;
             fn(next, offset++);
             if ((index % length) === touch) {
-              break;
+                break;
             }
             if (touch < 0 && next.z <= targetZ) {
                 // Save touch-down index so as to be able to "complete" the full cut at target Z,
                 // i.e. keep following the path loop until the touch down point is reached again.
-                touch = ((index - 1) % length);
+                touch = ((index + length) % length);
             }
             index++;
         }
