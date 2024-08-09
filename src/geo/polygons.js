@@ -323,12 +323,11 @@ function setContains(setA, poly) {
     return false;
 }
 
-function flatten(polys, to, crush) {
-    to = to || [];
-    polys.forEach(function(poly) {
+function flatten(polys, to = [], crush) {
+    for (let poly of polys) {
         poly.flattenTo(to);
         if (crush) poly.inner = null;
-    });
+    }
     return to;
 }
 
@@ -990,18 +989,36 @@ function rayIntersect(start, slope, polygons, for_fill) {
     return points;
 }
 
+function pd(a,b) {
+    return a > b ? Math.abs(1-b/a) : Math.abs(1-a/b);
+}
+
 function fingerprint(polys) {
-    let finger = [];
-    flatten(polys).sort((a,b) => {
-        return a.area() > b.area();
-    }).forEach(p => {
-        finger.push({
-            c: p.circularityDeep(),
-            p: p.perimeterDeep(),
+    let recs = flatten(polys).map(p => {
+        return {
+            l: p.length,
+            a: p.area(),
+            p: p.perimeter(),
+            c: p.circularity(),
             b: p.bounds
-        });
+        }
     });
-    return finger;
+    recs.sort((a,b) => {
+        if (pd(a.a, b.a) > 0.005) {
+            return b.a - a.a;
+        }
+        if (pd(a.p, b.p) > 0.005) {
+            return b.p - a.p;
+        }
+        if (pd(a.c, b.c) > 0.02) {
+            return b.c - a.c;
+        }
+        if (Math.abs(a.b.minx - b.b.minx) > 0.1) {
+            return b.b.minx - a.b.minx;
+        }
+        return b.b.miny - a.b.miny;
+    })
+    return recs;
 }
 
 // compare fingerprint arrays
@@ -1021,16 +1038,25 @@ function fingerprintCompare(a, b) {
     for (let i=0; i<a.length; i++) {
         let ra = a[i];
         let rb = b[i];
+        // test poly area
+        if (Math.abs(ra.a - rb.a) > 1) {
+            console.log('area', Math.abs(ra.a - rb.a));
+            return false;
+        }
         // test circularity
-        if (Math.abs(ra.c - rb.c) > 0.001) {
+        if (pd(ra.c, rb.c) > 0.02) {
             return false;
         }
         // test perimeter
-        if (Math.abs(ra.p - rb.p) > 0.01) {
+        if (pd(ra.p, rb.p) > 0.005) {
             return false;
         }
         // test bounds
-        if (ra.b.delta(rb.b) > 0.01) {
+        if (ra.b.delta(rb.b) > 0.1) {
+            return false;
+        }
+        // test poly point count
+        if (a.length < 20 && pd(ra.l, rb.l) > 0.05) {
             return false;
         }
     }

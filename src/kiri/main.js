@@ -316,7 +316,15 @@ gapp.register("kiri.main", [], (root, exports) => {
     function setProgress(value = 0, msg) {
         value = (value * 100).round(4);
         UI.progress.width = value+'%';
-        if (msg) UI.prostatus.innerHTML = msg;
+        if (self.debug) {
+            // console.log(msg, value.round(2));
+            UI.prostatus.style.display = 'flex';
+            if (msg) {
+                UI.prostatus.innerHTML = msg;
+            } else {
+                UI.prostatus.innerHTML = '';
+            }
+        }
     }
 
     function bound(v,min,max) {

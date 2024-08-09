@@ -1427,13 +1427,17 @@ th, tr, td, label {
 }
 #progtxt {
     display: none;
-    color: white;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 200%;
+    color: #888;
     margin: 0 5px 0 5px;
     padding: 0 5px 2px 5px;
     white-space: nowrap;
     flex-direction: row;
     align-items: center;
-    vertical-align: middle;
+    justify-content: center;
 }
 
 #modal {
