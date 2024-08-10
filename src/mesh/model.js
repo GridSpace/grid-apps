@@ -128,6 +128,10 @@ mesh.model = class MeshModel extends mesh.object {
         return this.geometry.boundingBox.clone();
     }
 
+    get world_bounds() {
+        return this.bounds.translate(this.position());
+    }
+
     get matrix() {
         return this.mesh.matrixWorld.elements;
     }
@@ -218,19 +222,31 @@ mesh.model = class MeshModel extends mesh.object {
     // moves mesh center to 0,0,0 via translation then
     // moves mesh object to former bounds center
     reCenter() {
-        this.log('model-center');
+        this.log('model-recenter');
         let pos = this.position();
         let { mid } = this.bounds;
-        let moveTo = mid.clone().add(pos);
+        // let moveTo = mid.clone().add(pos);
         this.translate(-mid.x, -mid.y, -mid.z);
-        this.position(moveTo.x, moveTo.y, moveTo.z);
+        // this.position(moveTo.x, moveTo.y, moveTo.z);
+        this.position(mid.x + pos.x, mid.y + pos.y, mid.z + pos.z);
         return this;
     }
 
     // preserves world location while updating mesh for rotation and scaling
-    // moves mesh center to x,y,z via translation then
-    // moves mesh object to former bounds center
-    centerTo(pos) {
+    // moves mesh center to current target offset via translation then
+    // moves mesh object center to target
+    centerTo(to) {
+        this.log('model-centerto', to);
+        let pos = this.position();
+        let { mid } = this.bounds;
+        let abs = this.world_bounds.mid;//mid.clone().add(pos);
+        this.translate(
+            -mid.x + (abs.x - to.x),
+            -mid.y + (abs.y - to.y),
+            -mid.z + (abs.z - to.z),
+        );
+        this.position(to.x, to.y, to.z);
+        return this;
     }
 
     updateBounds() {

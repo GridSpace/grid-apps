@@ -308,18 +308,14 @@ const pattern = {
             let models = selection.models();
             let [ cx, cy ] = center;
             for (let model of models) {
-                await api.tool.regroup([ model ]);
-                let pos = model.group.position().clone();
+                let pos = model.world_bounds.mid;
                 let stepr = (Math.PI * 2) / count;
                 let modnu = [ model ];
                 for (let i=1; i<count; i++) {
-                    let clone = await model.duplicate();
-                    let [x, y] = base.util.rotate(pos.x - cx, pos.y - cy, stepr * i);
-                    clone.group.centerModels().position(0,0,0);
-                    clone.group.rotate(0, 0, stepr * i);
-                    clone.group.move(x + cx, y + cy, pos.z);
+                    let clone = model.duplicate().centerTo({ x:cx, y:cy, z:pos.z });
+                    clone.rotate(0, 0, stepr * i);
+                    clone.reCenter();
                     modnu.push(clone);
-                    // pos.z += zdelta;
                 }
                 await api.tool.regroup(modnu);
             }
@@ -351,14 +347,12 @@ const pattern = {
             api.modal.hide();
             let models = selection.models();
             for (let model of models) {
-                await api.tool.regroup([ model ]);
-                let pos = model.group.position().clone();
                 let modnu = [ model ];
                 for (let i=0; i<x; i++) {
                     for (let j=0; j<y; j++) {
                         if (i === 0 && j === 0) continue;
-                        let clone = await model.duplicate();
-                        clone.group.centerModels().position(i * xs + pos.x, -j * ys + pos.y, pos.z);
+                        let clone = await model.duplicate().reCenter();
+                        clone.move(i * xs, -j * ys, 0);
                         modnu.push(clone);
                     }
                 }

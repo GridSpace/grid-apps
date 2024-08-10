@@ -44,7 +44,7 @@ mesh.group = class MeshGroup extends mesh.object {
     get bounds() {
         let box3 = new Box3();
         for (let model of this.models) {
-            box3.union(model.bounds.translate(model.position()));
+            box3.union(model.world_bounds);
         }
         return box3;
     }
