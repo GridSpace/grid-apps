@@ -126,12 +126,10 @@ async function restore_space() {
                         return { id, md: cached[id] }
                     })
                     .filter(r => r.md) // filter cache misses
-                    .map(r => new mesh.model(r.md, r.id)
-                        .applyMatrix(mcache[r.id]?.matrix)
-                        .visible(mcache[r.id]?.visible ?? true));
+                    .map(r => new mesh.model(r.md, r.id).applyMeta(mcache[r.id]))
                 if (models.length) {
                     log(`restored ${models.length} model(s)`);
-                    mesh.api.group.new(models, id).applyMatrix(mcache[id]?.matrix)
+                    mesh.api.group.new(models, id).applyMeta(mcache[id])
                 } else {
                     log(`removed empty group ${id}`);
                     db_space.remove(id);
@@ -237,15 +235,12 @@ function space_init(data) {
                 case 'KeyA':
                     if (api.mode.is([ api.modes.edge ])) return mesh.edges.add();
                     return shiftKey && api.tool.analyze();
-                // case 'KeyR':
-                //     return shiftKey ? api.tool.rebuild() : api.tool.repair();
                 case 'KeyE':
                     if (api.mode.is([ api.modes.sketch ])) {
                         estop(evt);
                         return api.sketch.extrude();
                     }
                     return;
-                    // return api.tool.clean();
                 case 'KeyV':
                     return shiftKey ? selection.show() : selection.focus();
                 case 'KeyN':
@@ -335,8 +330,7 @@ function space_init(data) {
                     break;
             }
             if (rot && floor) {
-                // todo future pref to auto-floor or not
-                rot.floor(mesh.group);
+                rot.floor();
             }
         }
     ]);
@@ -396,7 +390,7 @@ function space_init(data) {
                     }
                 } else if (ctrlKey) {
                     // rotate selected face towawrd z "floor"
-                    group.faceDown(int.face.normal);
+                    group.rotateTowardZ(int.face.normal);
                     selection.update();
                 } else {
                     const { modes } = api;
@@ -610,9 +604,9 @@ function object_visible(data) {
 }
 
 // cache model matrices for page restores
-function object_matrix(data) {
-    let { id, matrix } = data;
-    update_meta(id, { matrix: matrix.elements });
+function object_meta(data) {
+    let { id, meta } = data;
+    update_meta(id, meta);
 }
 
 function object_destroy(id) {
@@ -706,7 +700,7 @@ function set_snap_value(snap) {
 // bind functions to topics
 broker.listeners({
     load_files,
-    object_matrix,
+    object_meta,
     object_destroy,
     object_visible,
     space_init,

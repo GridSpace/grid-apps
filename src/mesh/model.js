@@ -13,13 +13,15 @@
 gapp.register("mesh.model", [], (root, exports) => {
 
 const { MeshPhongMaterial, MeshBasicMaterial, LineBasicMaterial } = THREE;
-const { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
+const { BufferGeometry, BufferAttribute, DoubleSide, Mesh} = THREE;
+const { Quaternion, Box3, Vector3 } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
 const { api } = mesh;
 
 const mapp = mesh;
 const worker = moto.client.fn;
+const zero = new Vector3(0,0,0);
 
 /** default materials **/
 let materials = mesh.material = {
@@ -122,6 +124,10 @@ mesh.model = class MeshModel extends mesh.object {
         return this.mesh;
     }
 
+    get bounds() {
+        return this.geometry.boundingBox.clone();
+    }
+
     get matrix() {
         return this.mesh.matrixWorld.elements;
     }
@@ -166,38 +172,80 @@ mesh.model = class MeshModel extends mesh.object {
         }
     }
 
-    rotate(x = 0, y = 0, z = 0) {
-        console.log('model rotate', ...arguments);
-        worker.model_rotate({ id: this.id, x, y, z }).then(() => {
-            this.attributes.position.needsUpdate = true;
-            moto.space.update();
-        });
+    qrotate(quaternion) {
+        this.log('model-rotate', quaternion.toArray());
+        this.geometry.applyQuaternion(quaternion);
+        this.updateBounds();
+        this.persist();
+        moto.space.update();
     }
 
-    // override and translate mesh
-    xmove(x = 0, y = 0, z = 0) {
-        let attr = this.attributes;
-        let arr = attr.position.array;
-        for (let i=0, l=arr.length; i<l; ) {
-            arr[i] = arr[i++] + x;
-            arr[i] = arr[i++] + y;
-            arr[i] = arr[i++] + z;
+    scale(x = 1, y = 1, z = 1) {
+        this.log('model-scale', ...arguments, this.bounds);
+        if (x === 1 && y === 1 && z === 1) return;
+        this.geometry.scale(x, y, z);
+        this.updateBounds();
+        this.persist();
+        moto.space.update();
+    }
+
+    translate(x = 0, y = 0, z = 0) {
+        this.log('model-translate', ...arguments);
+        if (!(x || y || z)) return;
+        this.geometry.translate(x, y, z);
+        this.updateBounds();
+        this.persist();
+    }
+
+    move(x = 0, y = 0, z = 0) {
+        this.log('model-move', ...arguments);
+        if (!(x || y || z)) return;
+        let pos = this.position();
+        return this.position(pos.x + x, pos.y + y, pos.z + z);
+    }
+
+    position() {
+        let pos = this.object.position;
+        if (arguments.length === 0) {
+            return pos;
         }
-        this.reload(arr, attr.index ? attr.index.array : undefined);
+        pos.set(...arguments);
+        this.metaChanged();
         return this;
     }
 
-    // override and translate mesh
-    xscale(x = 1, y = 1, z = 1) {
-        let attr = this.attributes;
-        let arr = attr.position.array;
-        for (let i=0, l=arr.length; i<l; ) {
-            arr[i] = arr[i++] *= x;
-            arr[i] = arr[i++] *= y;
-            arr[i] = arr[i++] *= z;
-        }
-        this.reload(arr, attr.index ? attr.index.array : undefined);
+    // preserves world location while updating mesh for rotation and scaling
+    // moves mesh center to 0,0,0 via translation then
+    // moves mesh object to former bounds center
+    reCenter() {
+        this.log('model-center');
+        let pos = this.position();
+        let { mid } = this.bounds;
+        let moveTo = mid.clone().add(pos);
+        this.translate(-mid.x, -mid.y, -mid.z);
+        this.position(moveTo.x, moveTo.y, moveTo.z);
         return this;
+    }
+
+    // preserves world location while updating mesh for rotation and scaling
+    // moves mesh center to x,y,z via translation then
+    // moves mesh object to former bounds center
+    centerTo(pos) {
+    }
+
+    updateBounds() {
+        if (this._wire)
+        this._wire.geometry.attributes.position.needsUpdate = true;
+        this.attributes.position.needsUpdate = true;
+        this.geometry.computeBoundingBox();
+        this.geometry.computeBoundingSphere();
+        this.log('update-bounds', this.geometry.boundingBox);
+        this.updateBoundsBox();
+        moto.space.update();
+    }
+
+    updateBoundsBox() {
+        this.group?.updateBoundsBox();
     }
 
     mirror() {
@@ -209,27 +257,24 @@ mesh.model = class MeshModel extends mesh.object {
     // defaults to returning a new model in a new group
     // options to mirror, re-use a group, or update model in-place
     duplicate(opt = { select: true }) {
-        return worker.model_duplicate({
-            matrix: this.matrix,
-            id: this.id,
-            opt: { mirror: opt.mirror }
-        }).then(data => {
-            if (opt.append) data = [...data, ...opt.append].toFloat32();
-            if (opt.x) return this.reload(data);
-            let model = new mesh.model({ file: `${this.file}`, mesh: data });
-            let group = opt.group || mesh.api.group.new();
-            group.add(model);
-            model.wireframe(this.wireframe());
-            if (opt.select) {
-                api.selection.add(model);
-            }
-            if (opt.mirror) {
-                group.move(0, 0, group.bounds.dim.z);
-            } else if (opt.shift) {
-                group.move(group.bounds.dim.x, 0, 0);
-            }
-            return model;
-        });
+        let pos = this.position();
+        let data = this.attributes.position.clone().array;
+        if (opt.append) data = [...data, ...opt.append].toFloat32();
+        if (opt.x) return this.reload(data);
+        let model = new mesh.model({ file: `${this.file}`, mesh: data });
+        let group = opt.group || mesh.api.group.new();
+        group.add(model);
+        model.position(pos.x, pos.y, pos.z);
+        model.wireframe(this.wireframe());
+        if (opt.select) {
+            api.selection.add(model);
+        }
+        if (opt.mirror) {
+            group.move(0, 0, group.bounds.dim.z);
+        } else if (opt.shift) {
+            group.move(group.bounds.dim.x, 0, 0);
+        }
+        return model;
     }
 
     rebuild(opt = {}) {
@@ -259,11 +304,9 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     load(vertices) {
-        let shared = mesh.util.toSharedF32(vertices);
-        let local = mesh.util.toLocal32(vertices);
-        console.log('load', { vertices, local, shared });
+        this.log('load');
         let geo = new BufferGeometry();
-        geo.setAttribute('position', new BufferAttribute(shared, 3));
+        geo.setAttribute('position', new BufferAttribute(vertices, 3));
         let meh = this.mesh = new Mesh(geo, [
             this.mats.normal,
             this.mats.face
@@ -277,39 +320,49 @@ mesh.model = class MeshModel extends mesh.object {
         // this ref allows clicks to be traced to models and groups
         meh.model = this;
         // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, { file: this.file, mesh: local });
+        this.persist();
         // sync data to worker
-        worker.model_load({ id: this.id, name: this.file, vertices: shared });
+        worker.model_load({ id: this.id, name: this.file, vertices });
+        // update bounds
+        this.updateBounds();
     }
 
     reload(vertices) {
-        let local = mesh.util.toLocal32(vertices);
-        let shared = mesh.util.toSharedF32(vertices);
-        console.trace('reload', { vertices, local, shared });
+        this.log('reload');
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
-        geo.setAttribute('position', new BufferAttribute(shared, 3));
+        geo.setAttribute('position', new BufferAttribute(vertices, 3));
         // signal util.box3expand that geometry changed
         geo._model_invalid = true;
         geo.computeVertexNormals();
         // allows raycasting to work
-        geo.computeBoundingSphere();
+        // geo.computeBoundingSphere();
         // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, { file: this.file, mesh: local });
+        this.persist();
         // sync data to worker
-        worker.model_load({id: this.id, name: this.name, vertices: shared });
+        worker.model_load({id: this.id, name: this.name, vertices });
         // restore wireframe state
         this.wireframe(was);
         // fixup normals
         this.normals({refresh: true});
         // re-gen face index in surface mode
         mesh.api.mode.check();
+        // allows raycasting to work
+        // update bounds
+        this.updateBounds();
     }
 
     rename(file) {
         this.file = file;
+        this.persist();
+    }
+
+    persist() {
         // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, { file, mesh: this.attributes.position.array });
+        mapp.db.space.put(this.id, {
+            file: this.file,
+            mesh: this.attributes.position.array
+        });
     }
 
     get group() {
@@ -323,8 +376,12 @@ mesh.model = class MeshModel extends mesh.object {
         this._group = gv;
     }
 
+    get geometry() {
+        return this.mesh.geometry;
+    }
+
     get attributes() {
-        return this.mesh.geometry.attributes;
+        return this.geometry.attributes;
     }
 
     get vertices() {
@@ -460,6 +517,10 @@ mesh.model = class MeshModel extends mesh.object {
         }
     }
 
+    render() {
+        // TODO
+    }
+
     // invert normals for entire mesh or selected faces depending on mod
     invert(mode) {
         let { modes } = mesh.api;
@@ -529,13 +590,7 @@ mesh.model = class MeshModel extends mesh.object {
             this.group.remove(this, { free: false });
             this.group = undefined;
         }
-        return worker.model_duplicate({
-            matrix: this.matrix,
-            id: this.id,
-            opt: {}
-        }).then(data => {
-            this.reload(data);
-        });
+        return this;
     }
 
     // remove model from group and space
@@ -550,12 +605,6 @@ mesh.model = class MeshModel extends mesh.object {
             this.destroy();
             // tag removed for debugging
             this.removed = 'complete';
-        }
-    }
-
-    updateBoundsBox() {
-        if (this.group) {
-            mesh.util.defer(this.group.deferUBB);
         }
     }
 
@@ -597,13 +646,6 @@ mesh.model = class MeshModel extends mesh.object {
         // clear face selections (since they've been deleted);
         this.sel.faces = [];
         this.updateSelections();
-
-        // let { modes } = mesh.api;
-        // switch (mode) {
-        //     case modes.face:
-        //         console.log('delete selected faces');
-        //         break;
-        // }
     }
 
     updateSelections() {

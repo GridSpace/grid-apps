@@ -253,14 +253,14 @@ const selection = {
 
     floor() {
         for (let s of selection.groups()) {
-            s.floor(...arguments);
+            s.floor();
         }
         return selection;
     },
 
     centerXY() {
         for (let s of [...selection.groups(), ...selection.sketches()]) {
-            s.centerXY(...arguments);
+            s.centerXY();
         }
         return selection;
     },
@@ -1096,17 +1096,10 @@ const tool = {
 
     regroup(models) {
         models = fallback(models, true);
-        if (models.length === 0) {
-            return;
+        if (models.length) {
+            log(`regrouping ${models.length} model(s)`);
+            return mesh.api.group.new(models.map(m => m.ungroup()));
         }
-        log(`regrouping ${models.length} model(s)`);
-        let bounds = util.bounds(models);
-        let { mid } = bounds;
-        return Promise.all(models.map(m => m.ungroup())).then(() => {
-            return mesh.api.group.new(models)
-                .centerModels()
-                .position(mid.x, mid.y, mid.z);;
-        });
     },
 
     analyze(models, opt = { compound: true }) {
@@ -1410,8 +1403,8 @@ const api = exports({
         let left, up;
         if (normal) {
             let { x, y, z } = normal;
-            left = new Vector3(x,y,z).angleTo(new Vector3(0,-1,0));
-            up = new Vector3(x,y,z).angleTo(new Vector3(0,0,1));
+            left = new Vector3(x,y,0).angleTo(new Vector3(0,-1,0));
+            up = new Vector3(0,y,z).angleTo(new Vector3(0,0,1));
             if (x < 0) left = -left;
         }
         // sets "home" views (front, back, home, reset)

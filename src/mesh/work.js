@@ -44,7 +44,7 @@ function log(msg) {
 mesh.log = log;
 
 function cacheUpdate(id, data) {
-    Object.assign(cache[id], data);
+    return Object.assign(cache[id], data);
 }
 
 // translate original mesh vertices into UI world view (PI/2 rotation on X)
@@ -98,15 +98,6 @@ function indexFaces(id) {
 }
 
 let model = {
-    rotate(data) {
-        let { id, x, y, z } = data;
-        let rec = cache[id];
-        let { geo } = rec;
-        if (x) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(1,0,0), x));
-        if (y) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(0,1,0), y));
-        if (z) geo.applyQuaternion(new Quaternion().setFromAxisAngle(new Vector3(0,0,1), z));
-    },
-
     load(data) {
         let { vertices, name, id } = data;
         let geo = new BufferGeometry();
@@ -114,7 +105,6 @@ let model = {
         cacheUpdate(id, {
             name,
             geo,
-            xmatrix: core_matrix.clone(),
             trans: undefined,
             tool: undefined
         });

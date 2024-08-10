@@ -13,13 +13,12 @@
 gapp.register("mesh.group", [], (root, exports) => {
 
 const { mesh, moto } = root;
-const { Quaternion, Group, Vector3 } = THREE;
+const { Group, Box3 } = THREE;
 const { broker } = gapp;
 const { space } = moto;
 
 const call = broker.send;
 const worker = moto.client.fn;
-const lookUp = new Vector3(0,0,-1);
 
 mesh.group = class MeshGroup extends mesh.object {
 
@@ -42,6 +41,14 @@ mesh.group = class MeshGroup extends mesh.object {
         return this.group3;
     }
 
+    get bounds() {
+        let box3 = new Box3();
+        for (let model of this.models) {
+            box3.union(model.bounds.translate(model.position()));
+        }
+        return box3;
+    }
+
     // @param model {MeshModel}
     add(model) {
         model.group = this;
@@ -58,7 +65,6 @@ mesh.group = class MeshGroup extends mesh.object {
     // @param model {MeshModel}
     // @param free {boolean} prevent cleanup of model so it can be re-used
     remove(model, opt = { free: true }) {
-        // console.log('group',this,'remove',model);
         // remove all models and group
         if (arguments.length === 0) {
             for (let m of this.models.slice()) {
@@ -87,13 +93,6 @@ mesh.group = class MeshGroup extends mesh.object {
         return this;
     }
 
-    // rotate model so face normal points toward floor
-    faceDown(normal) {
-        let q = new Quaternion().setFromUnitVectors(normal, lookUp);
-        this.qrotation(q);
-        this.floor();
-    }
-
     promote() {
         this.centerModels();
         let { dim, mid } = this.bounds;
@@ -110,32 +109,46 @@ mesh.group = class MeshGroup extends mesh.object {
     }
 
     rotate(x = 0, y = 0, z = 0) {
-        console.log('group rotate', ...arguments);
+        this.log('group-rotate', ...arguments);
         for (let model of this.models) {
             model.rotate(...arguments);
         }
+        return this;
+    }
+
+    qrotate(quaternion) {
+        this.log('group-rotate', quaternion.toArray());
+        for (let model of this.models) {
+            model.qrotate(quaternion);
+        }
+        return this;
     }
 
     scale(x = 1, y = 1, z = 1) {
+        this.log('group-scale', ...arguments);
         for (let m of this.models) {
             m.scale(x, y, z);
         }
         return this;
     }
 
-    // center objects to group bounds
-    // dependent on first being added to world/scene
-    centerModels() {
-        let bounds = this.bounds;
+    move(x = 0, y = 0, z = 0) {
+        this.log('group-move', ...arguments);
+        if (!(x || y || z)) return;
         for (let model of this.models) {
-            model.center(bounds);
-        }
-        let { center } = mesh.api.prefs.map.space;
-        if (center === false) {
-            let { mid } = bounds;
-            this.move(mid.x, mid.y, mid.z);
+            model.move(x, y, z);
         }
         return this;
+    }
+
+    center() {
+        let b = this.bounds;
+        return this.move(-b.mid.x, -b.mid.y, -b.mid.z);
+    }
+
+    centerXY() {
+        let b = this.bounds;
+        return this.move(-b.mid.x, -b.mid.y, 0);
     }
 
     opacity() {

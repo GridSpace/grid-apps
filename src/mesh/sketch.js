@@ -549,7 +549,7 @@ mesh.sketch = class MeshSketch extends mesh.object {
             const euler = this.group.rotation;
             const quaternion = new THREE.Quaternion();
             quaternion.setFromEuler(euler);
-            ngrp.qrotation(quaternion);
+            ngrp.qrotate(quaternion);
         }
     }
 }
