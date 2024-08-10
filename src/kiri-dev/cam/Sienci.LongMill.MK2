@@ -5,23 +5,23 @@
     "pre":[
         "G21 ; set units to MM (required)",
         "G90 ; absolute position mode (required)",
-        "G0 F1800 ; default rapid move speed",
-        "G1 F800 ; default cutting speed"
+        "G0 F5500 ; default rapid move speed",
+        "G1 F2000 ; default cutting speed"
     ],
     "post":[
         "M5  ; spindle off",
         "M9  ; coolant off",
-	"M30 ; program end"
+        "M30 ; program end"
     ],
     "tool-change":[
         "M6 T{tool} ; change tool to '{tool_name}'"
     ],
     "dwell":[
-	"G4 P{time} ; dwell for {time}ms"
+        "G4 P{time} ; dwell for {time}ms"
     ],
     "settings": {
-	"bed_width": 235,
-	"bed_depth": 185,
-        "build_height": 100
+        "bed_width": 810,
+        "bed_depth": 855,
+        "build_height": 120
     }
 }
