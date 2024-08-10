@@ -19,6 +19,9 @@
     "dwell":[
         "G4 P{time} ; dwell for {time}ms"
     ],
+    "spindle":[
+        "M3 S{speed}"
+    ],
     "settings": {
         "bed_width": 1260,
         "bed_depth": 1248,
