@@ -132,6 +132,14 @@ mesh.model = class MeshModel extends mesh.object {
         return this.bounds.translate(this.position());
     }
 
+    get world_positions() {
+        let pos = this.position();
+        return this.geometry
+            .clone()
+            .translate(pos.x,pos.y,pos.z)
+            .attributes.position.array;
+    }
+
     get matrix() {
         return this.mesh.matrixWorld.elements;
     }
@@ -225,9 +233,7 @@ mesh.model = class MeshModel extends mesh.object {
         this.log('model-recenter');
         let pos = this.position();
         let { mid } = this.bounds;
-        // let moveTo = mid.clone().add(pos);
         this.translate(-mid.x, -mid.y, -mid.z);
-        // this.position(moveTo.x, moveTo.y, moveTo.z);
         this.position(mid.x + pos.x, mid.y + pos.y, mid.z + pos.z);
         return this;
     }
@@ -239,7 +245,7 @@ mesh.model = class MeshModel extends mesh.object {
         this.log('model-centerto', to);
         let pos = this.position();
         let { mid } = this.bounds;
-        let abs = this.world_bounds.mid;//mid.clone().add(pos);
+        let abs = this.world_bounds.mid;
         this.translate(
             -mid.x + (abs.x - to.x),
             -mid.y + (abs.y - to.y),
@@ -291,32 +297,6 @@ mesh.model = class MeshModel extends mesh.object {
             group.move(group.bounds.dim.x, 0, 0);
         }
         return model;
-    }
-
-    rebuild(opt = {}) {
-        if (this.lines) {
-            space.scene.remove(this.lines);
-            this.lines = undefined;
-        }
-        if (opt.clean) {
-            return;
-        }
-        worker.model_rebuild({
-            matrix: this.matrix,
-            id: this.id
-        }).then(data => {
-            let { lines } = data;
-            if (lines) {
-                let points = [];
-                for (let i=0; i<lines.length;) {
-                    points.push(new THREE.Vector3(lines[i++], lines[i++], lines[i++]));
-                }
-                let material = new THREE.LineBasicMaterial( { color: 0xdddddd } );
-                let geometry = new THREE.BufferGeometry().setFromPoints(points);
-                let segments = this.lines = new THREE.LineSegments(geometry, material);
-                space.scene.add(segments);
-            }
-        });
     }
 
     load(vertices) {
@@ -575,26 +555,22 @@ mesh.model = class MeshModel extends mesh.object {
     split(plane) {
         // extract axes from plane and split when present (only z for now)
         let { z } = plane;
-        let m4 = this.mesh.matrix;
         return new Promise((resolve,reject) => {
-            let { id, matrix } = this;
-            worker.model_split({id, matrix, z}).then(data => {
+            worker.model_split({ pos: this.world_positions, z }).then(data => {
                 let { o1, o2 } = data;
                 let model;
-                // new model becomes top
+                if (o1.length)
+                this.group.add(new mesh.model({
+                    file: `${this.file}-top`,
+                    mesh: o1
+                }).reCenter());
                 if (o2.length)
                 this.group.add(model = new mesh.model({
-                    file: `${this.file}`,
+                    file: `${this.file}-bot`,
                     mesh: o2
-                }).applyMatrix4(m4));
-                if (o1.length) {
-                    // o1 becomes bottom
-                    this.reload(o1);
-                    resolve(model);
-                } else {
-                    this.remove();
-                    resolve(model);
-                }
+                }).reCenter());
+                this.remove();
+                resolve(this.group);
             });
         });
     }
@@ -628,7 +604,6 @@ mesh.model = class MeshModel extends mesh.object {
         // clear face selections (since they've been deleted);
         this.sel.faces = [];
         this.updateSelections();
-        this.rebuild({ clean: true });
     }
 
     deleteSelections(mode) {
@@ -742,7 +717,7 @@ mesh.model = class MeshModel extends mesh.object {
         }, 150);
         // let mark = Date.now();
         worker.model_select({
-            id: this.id, x, y:-z, z:y, a, b, c, matrix: this.matrix, surface
+            id: this.id, x, y:-z, z:y, a, b, c, surface
         }).then(data => {
             // mesh.api.log.emit(`... data time = ${Date.now() - mark}`); mark = Date.now();
             if (timer) {

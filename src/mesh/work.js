@@ -110,34 +110,6 @@ let model = {
         });
     },
 
-    // return new vertices in world coordinates
-    duplicate(data) {
-        let { id, matrix, opt } = data;
-        let array = translate_encode(id, matrix);
-        if (opt.mirror) {
-            array = array.slice();
-            // find max z and invert z
-            let maxz = -Infinity;
-            for (let i=2, l=array.length; i<l; i += 3) {
-                maxz = Math.max(maxz, array[i]);
-                array[i] = -array[i];
-            }
-            for (let i=0, l=array.length; i<l; i += 9) {
-                // swap first two vertices in face to invert normals
-                let v1 = array.slice(i, i+3);
-                for (let j=0; j<3; j++) {
-                    array[i+j] = array[i+j+3];
-                    array[i+j+3] = v1[j];
-                }
-                // move part up by maxz to compensate for z inversion
-                array[i+2] += maxz;
-                array[i+5] += maxz;
-                array[i+8] += maxz;
-            }
-        }
-        return array;
-    },
-
     // merge several model vertices into a single array
     merge(recs) {
         let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
@@ -189,11 +161,9 @@ let model = {
     // split a model along an axis at a given point
     // return two arrays of vertices for each resulting object
     split(data) {
-        let { id, matrix, z } = data;
+        let { pos, z } = data;
         let o1 = []; // new bottom
         let o2 = []; // new top
-        let pos = translate_encode(id, matrix);
-        let split = [];
         let on = [];
         let over = [];
         let under = [];
@@ -276,13 +246,13 @@ let model = {
             }
             on.length = over.length = under.length = 0;
         }
-        let mi4 = core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert();
-        let b1 = new BufferAttribute(o1.toFloat32(), 3);
-        let b2 = new BufferAttribute(o2.toFloat32(), 3);
-        o1 = b1.applyMatrix4(mi4).array;
-        o2 = b2.applyMatrix4(mi4).array;
+        // let mi4 = core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert();
+        // let b1 = new BufferAttribute(o1.toFloat32(), 3);
+        // let b2 = new BufferAttribute(o2.toFloat32(), 3);
+        // o1 = b1.applyMatrix4(mi4).array;
+        // o2 = b2.applyMatrix4(mi4).array;
         console.log({ edges, split_face: sliceConnect(edges, z), o1, o2 });
-        return { o1, o2 };
+        return { o1: o1.toFloat32(), o2: o2.toFloat32() };
     },
 
     analyze(data) {
@@ -316,13 +286,8 @@ let model = {
 
     // given model and point, locate matching vertices, lines, and faces
     select(data) {
-        let { id, x, y, z, a, b, c, matrix, surface } = data;
+        let { id, x, y, z, a, b, c, surface } = data;
         let { radians, radius, filterZ } = surface;
-        // translate point into mesh matrix space
-        let v3 = new Vector3(x,y,z).applyMatrix4(
-            core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert()
-        );
-        x = v3.x; y = v3.y; z = v3.z;
         const rec = cache[id];
         const arr = rec.geo.attributes.position.array;
         // distance tolerance for click to vertex (rough distance)
@@ -366,52 +331,6 @@ let model = {
             return { faces: match, edges, verts, point };
         }
         return { faces, edges, verts, point };
-    },
-
-    rebuild(data, send) {
-        let { id, matrix } = data;
-        log(`${id} | rebuilding...`);
-        let points = translate_encode(id, matrix);
-        log(`${id} | ${points.length} points`);
-        send.async();
-        let layers = [];
-        base.slice(points, {
-            autoDim: true,
-            flat: true,
-            both: true,
-            debug: true,
-            minstep: 0.25,
-        }).then(output => {
-            let { points, slices } = output;
-            log(`${id} | ${slices.length} slices Z`);
-            for (let slice of slices) {
-                for (let line of slice.lines) {
-                    layers.appendAll(util.extract(line.p1));
-                    layers.appendAll(util.extract(line.p2));
-                }
-            }
-            for (let p of points) p.swapXZ();
-            return base.slice(points, {
-                autoDim: true,
-                both: true,
-                debug: true,
-                minstep: 0.25,
-            }).then(output => {
-                let { points, slices } = output;
-                log(`${id} | ${slices.length} slices X`);
-                for (let slice of slices) {
-                    for (let line of slice.lines) {
-                        if (!line.p1.swapped) { line.p1.swapXZ().swapped = true }
-                        if (!line.p2.swapped) { line.p2.swapXZ().swapped = true }
-                        layers.appendAll(util.extract(line.p1));
-                        layers.appendAll(util.extract(line.p2));
-                    }
-                }
-            });
-        }).finally(() => {
-            log(`${id} | rebuild complete`);
-            send.done({ lines: layers });
-        });;
     },
 
     gen_gear(data, send) {

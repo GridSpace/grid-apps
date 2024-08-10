@@ -1190,10 +1190,6 @@ const tool = {
             log('cleaning complete').unpin();
             util.defer(selection.update);
         });
-    },
-
-    rebuild(models) {
-        Promise.all(fallback(models).map(m => m.rebuild()));
     }
 };
 

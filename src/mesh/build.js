@@ -484,8 +484,6 @@ function ui_build() {
             div({ class: "menu-items" }, [
                 menu_item('Flip Normals', tool.invert),
                 menu_item('Analyze', tool.analyze),
-                // div({ _: 'Patch', onclick: tool.repair }),
-                // div({ _: 'rebuild', onclick: tool.rebuild }),
                 menu_item('Clean', tool.clean),
             ])
         ]),
