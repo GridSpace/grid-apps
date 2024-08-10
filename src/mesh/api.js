@@ -927,11 +927,11 @@ const tool = {
             return { id: m.id, matrix: m.matrix }
         }))
         .then(data => {
-            api.selection.visible(false);
             let group = api.group.new([new mesh.model({
                 file: `merged`,
                 mesh: data
             })]).promote();
+            api.selection.visible(false);
             api.selection.set([group]);
             log('merge complete').unpin();
         });
@@ -946,11 +946,11 @@ const tool = {
         worker
             .model_union(models.map(m => m.id))
             .then(data => {
-                api.selection.visible(false);
                 let group = api.group.new([new mesh.model({
                     file: `union`,
                     mesh: data
                 })]).promote();
+                api.selection.visible(false);
                 api.selection.set([ group ]);
             })
             .catch(error => {
@@ -969,11 +969,11 @@ const tool = {
         log(`diff ${models.length} models`).pin();
         worker.model_difference(models.map(m => m.id))
         .then(data => {
-            api.selection.visible(false);
             let group = api.group.new([new mesh.model({
                 file: `diff`,
                 mesh: data
             })]).promote();
+            api.selection.visible(false);
             api.selection.set([group]);
         })
         .catch(error => {

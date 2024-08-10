@@ -262,6 +262,7 @@ mesh.model = class MeshModel extends mesh.object {
         this.geometry.computeBoundingBox();
         this.geometry.computeBoundingSphere();
         this.log('update-bounds', this.geometry.boundingBox);
+        this.normals({ refresh: true });
         this.updateBoundsBox();
         moto.space.update();
         this.sync();
@@ -552,14 +553,13 @@ mesh.model = class MeshModel extends mesh.object {
         return new Promise((resolve,reject) => {
             worker.model_split({ id: this.id, z }).then(data => {
                 let { o1, o2 } = data;
-                let model;
-                if (o1.length)
+                if (o1?.length)
                 this.group.add(new mesh.model({
                     file: `${this.file}-top`,
                     mesh: o1
                 }).reCenter());
-                if (o2.length)
-                this.group.add(model = new mesh.model({
+                if (o2?.length)
+                this.group.add(new mesh.model({
                     file: `${this.file}-bot`,
                     mesh: o2
                 }).reCenter());

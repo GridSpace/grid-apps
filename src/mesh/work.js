@@ -21,18 +21,13 @@
 gapp.main("mesh.work", [], (root) => {
 
 const { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
-const { Quaternion, } = THREE;
 const { base, mesh, moto } = root;
 const { client, worker } = moto;
-const { util } = mesh;
 const { CSG, newPoint, newPolygon, sliceConnect } = base;
 const cache = {};
 
 // add scoped access to cache
 mesh.work = { cache };
-
-// compensation for space/world/platform rotation
-const core_matrix = new Matrix4().makeRotationX(Math.PI / 2);
 
 // start worker pool (disabled for now with *0)
 client.start(`/code/mesh_pool?${gapp.version}`, client.max() * 0);
@@ -52,7 +47,7 @@ function translate_encode(id) {
     let rec = cache[id];
     let { pos } = rec;
     let mkey = pos.map(v => v.round(6)).join('-');
-    // re-translate on missing cache or changed matrix
+    // re-translate on missing cache or changed position
     if (!rec || !rec.trans || rec.mkey !== mkey) {
         let geo = rec.geo.clone().translate(new Vector3().fromArray(pos));
         rec.mkey = mkey;
@@ -102,12 +97,7 @@ let model = {
         let { vertices, name, id } = data;
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        cacheUpdate(id, {
-            name,
-            geo,
-            trans: undefined,
-            tool: undefined
-        });
+        cacheUpdate(id, { name, geo, mkey: '' });
     },
 
     // merge several model vertices into a single array
@@ -247,12 +237,15 @@ let model = {
             }
             on.length = over.length = under.length = 0;
         }
-        // let mi4 = core_matrix.clone().multiply(new Matrix4().fromArray(matrix)).invert();
-        // let b1 = new BufferAttribute(o1.toFloat32(), 3);
-        // let b2 = new BufferAttribute(o2.toFloat32(), 3);
-        // o1 = b1.applyMatrix4(mi4).array;
-        // o2 = b2.applyMatrix4(mi4).array;
-        console.log({ edges, split_face: sliceConnect(edges, z), o1, o2 });
+        if (edges.length) {
+            // heal open spaces created by split
+            let heal = sliceConnect(edges, z).map(poly => poly.earcut()).flat();
+            let o1p = heal.map(poly => poly.points.map(p => [ p.x, p.y, p.z ]));
+            let o2p = heal.map(poly => poly.points.reverse().map(p => [ p.x, p.y, p.z ]));
+            o1.appendAll(o1p.flat().flat());
+            o2.appendAll(o2p.flat().flat());
+            // console.log({ edges, heal, o1, o2 });
+        }
         return { o1: o1.toFloat32(), o2: o2.toFloat32() };
     },
 
@@ -394,8 +387,8 @@ let file = {
         let { format, recs } = data;
         let vtot = 0;
         for (let rec of recs) {
-            let { id, matrix, file } = rec;
-            let vs = rec.varr = Array.from(translate_encode(id, matrix)).map(v => v.round(5));
+            let { id } = rec;
+            let vs = rec.varr = Array.from(translate_encode(id)).map(v => v.round(5));
             vtot += (vs.length / 3);
         }
         switch (format) {
@@ -403,7 +396,7 @@ let file = {
                 let p = 1;
                 let obj = [header];
                 for (let rec of recs) {
-                    let { id, matrix, file, varr } = rec;
+                    let { file, varr } = rec;
                     obj.push(`g ${file}`);
                     for (let i=0; i<varr.length; p += 3) {
                         obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
@@ -420,7 +413,7 @@ let file = {
                 header.split('').forEach((c,i) => {
                     dat.setUint8(i, c.charCodeAt(0));
                 });
-                // todo put Kiri:Moto info in header
+                // todo put Mesh:Tool info in header
                 dat.setInt32(80, vtot/3, true);
                 for (let rec of recs) {
                     let { id, matrix, file, varr } = rec;

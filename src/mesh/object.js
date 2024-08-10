@@ -27,14 +27,14 @@ mesh.object = class MeshObject {
 
     constructor(id) {
         this.id = id || mesh.util.uuid();
-        worker.object_create({ id: this.id, type: this.type });
-        // storage location for meta data like position, scale, rotation
         this.meta = { pos: [0,0,0] };
+        worker.object_create({ id: this.id, type: this.type });
+        worker.object_meta({ id: this.id, meta: this.meta });
         this.log('NEW');
     }
 
     log() {
-        mesh.api.log.emit(this.id, this.type, ...arguments);
+        // mesh.api.log.emit(this.id, this.type, ...arguments);
     }
 
     get type() {
