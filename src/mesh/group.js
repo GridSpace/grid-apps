@@ -94,7 +94,6 @@ mesh.group = class MeshGroup extends mesh.object {
     }
 
     promote() {
-        this.centerModels();
         let { dim, mid } = this.bounds;
         let { x, y, z } = dim;
         let max = Math.max(x, y, z);

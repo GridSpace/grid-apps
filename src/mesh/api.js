@@ -943,23 +943,22 @@ const tool = {
             return log('nothing to union');
         }
         log(`union ${models.length} models`).pin();
-        worker.model_union(models.map(m => {
-            return { id: m.id, matrix: m.matrix }
-        }))
-        .then(data => {
-            api.selection.visible(false);
-            let group = api.group.new([new mesh.model({
-                file: `union`,
-                mesh: data
-            })]).promote();
-            api.selection.set([group]);
-        })
-        .catch(error => {
-            log(`union error: ${error}`);
-        })
-        .finally(() => {
-            log('union complete').unpin();
-        });
+        worker
+            .model_union(models.map(m => m.id))
+            .then(data => {
+                api.selection.visible(false);
+                let group = api.group.new([new mesh.model({
+                    file: `union`,
+                    mesh: data
+                })]).promote();
+                api.selection.set([ group ]);
+            })
+            .catch(error => {
+                log(`union error: ${error}`);
+            })
+            .finally(() => {
+                log('union complete').unpin();
+            });
     },
 
     difference(models) {
@@ -968,9 +967,7 @@ const tool = {
             return log('nothing to diff');
         }
         log(`diff ${models.length} models`).pin();
-        worker.model_difference(models.map(m => {
-            return { id: m.id, matrix: m.matrix }
-        }))
+        worker.model_difference(models.map(m => m.id))
         .then(data => {
             api.selection.visible(false);
             let group = api.group.new([new mesh.model({
@@ -993,9 +990,7 @@ const tool = {
             return log('nothing to intersect');
         }
         log(`intersect ${models.length} models`).pin();
-        worker.model_intersect(models.map(m => {
-            return { id: m.id, matrix: m.matrix }
-        }))
+        worker.model_intersect(models.map(m => m.id))
         .then(data => {
             let group = api.group.new([new mesh.model({
                 file: `intersect`,
@@ -1019,7 +1014,7 @@ const tool = {
         }
         log(`subtract ${models.length} models`).pin();
         worker.model_subtract(models.map(m => {
-            return { id: m.id, matrix: m.matrix, tool: m.tool() }
+            return { id: m.id, tool: m.tool() }
         }))
         .then(data => {
             let group = api.group.new([new mesh.model({

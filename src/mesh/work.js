@@ -21,7 +21,7 @@
 gapp.main("mesh.work", [], (root) => {
 
 const { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
-const { Quaternion } = THREE;
+const { Quaternion, } = THREE;
 const { base, mesh, moto } = root;
 const { client, worker } = moto;
 const { util } = mesh;
@@ -48,13 +48,19 @@ function cacheUpdate(id, data) {
 }
 
 // translate original mesh vertices into UI world view (PI/2 rotation on X)
-function translate_encode(id, matrix) {
+function translate_encode(id) {
     let rec = cache[id];
+    let { pos, matrix } = rec;
     let mkey = matrix.map(v => v.round(6)).join('-');
+    // re-translate on missing cache or changed matrix
     if (!rec || !rec.trans || rec.mkey !== mkey) {
         let geo = rec.geo.clone();
-        let mat = core_matrix.clone().multiply(new Matrix4().fromArray(matrix));
-        geo.applyMatrix4(mat);
+        if (pos) {
+            geo.translate(new Vector3().fromArray(pos));
+        } else {
+            let mat = core_matrix.clone().multiply(new Matrix4().fromArray(matrix));
+            geo.applyMatrix4(mat);
+        }
         rec.mkey = mkey;
         rec.trans = geo.attributes.position.array
     }
@@ -122,22 +128,22 @@ let model = {
         return data;
     },
 
-    union(recs) {
-        let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
+    union(ids) {
+        let arrays = ids.map(id => translate_encode(id));
         let solids = arrays.map(a => CSG.fromPositionArray(a));
         let union = CSG.union(...solids);
         return CSG.toPositionArray(union);
     },
 
-    difference(recs) {
-        let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
+    difference(ids) {
+        let arrays = ids.map(id => translate_encode(id));
         let solids = arrays.map(a => CSG.fromPositionArray(a));
         let diff = CSG.difference(...solids);
         return CSG.toPositionArray(diff);
     },
 
-    intersect(recs) {
-        let arrays = recs.map(rec => translate_encode(rec.id, rec.matrix));
+    intersect(ids) {
+        let arrays = ids.map(id => translate_encode(id));
         let solids = arrays.map(a => CSG.fromPositionArray(a));
         let union = CSG.intersect(...solids);
         return CSG.toPositionArray(union);
@@ -145,10 +151,10 @@ let model = {
 
     subtract(recs) {
         let bases = recs.filter(rec => !rec.tool)
-            .map(rec => translate_encode(rec.id, rec.matrix))
+            .map(rec => translate_encode(rec.id))
             .map(a => CSG.fromPositionArray(a));
         let tools = recs.filter(rec => rec.tool)
-            .map(rec => translate_encode(rec.id, rec.matrix))
+            .map(rec => translate_encode(rec.id))
             .map(a => CSG.fromPositionArray(a));
         let subs = [];
         for (let obj of bases) {
@@ -161,7 +167,8 @@ let model = {
     // split a model along an axis at a given point
     // return two arrays of vertices for each resulting object
     split(data) {
-        let { pos, z } = data;
+        let { id, z } = data;
+        let pos = translate_encode(id);
         let o1 = []; // new bottom
         let o2 = []; // new top
         let on = [];
@@ -372,6 +379,12 @@ let group = {
 };
 
 let object = {
+    meta(data) {
+        let { id, meta } = data;
+        cacheUpdate(id, meta);
+        console.log('object_meta', data);
+    },
+
     create(data) {
         let { id, type } = data;
         cache[id] = { id, type };

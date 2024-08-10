@@ -140,6 +140,10 @@ mesh.model = class MeshModel extends mesh.object {
             .attributes.position.array;
     }
 
+    get positions() {
+        return this.geometry.attributes.position.array;
+    }
+
     get matrix() {
         return this.mesh.matrixWorld.elements;
     }
@@ -188,8 +192,6 @@ mesh.model = class MeshModel extends mesh.object {
         this.log('model-rotate', quaternion.toArray());
         this.geometry.applyQuaternion(quaternion);
         this.updateBounds();
-        this.persist();
-        moto.space.update();
     }
 
     scale(x = 1, y = 1, z = 1) {
@@ -197,8 +199,6 @@ mesh.model = class MeshModel extends mesh.object {
         if (x === 1 && y === 1 && z === 1) return;
         this.geometry.scale(x, y, z);
         this.updateBounds();
-        this.persist();
-        moto.space.update();
     }
 
     translate(x = 0, y = 0, z = 0) {
@@ -206,7 +206,6 @@ mesh.model = class MeshModel extends mesh.object {
         if (!(x || y || z)) return;
         this.geometry.translate(x, y, z);
         this.updateBounds();
-        this.persist();
     }
 
     move(x = 0, y = 0, z = 0) {
@@ -222,7 +221,7 @@ mesh.model = class MeshModel extends mesh.object {
             return pos;
         }
         pos.set(...arguments);
-        this.metaChanged();
+        this.metaChanged({ pos: pos.toArray() });
         return this;
     }
 
@@ -264,6 +263,7 @@ mesh.model = class MeshModel extends mesh.object {
         this.log('update-bounds', this.geometry.boundingBox);
         this.updateBoundsBox();
         moto.space.update();
+        this.sync();
     }
 
     updateBoundsBox() {
@@ -315,11 +315,7 @@ mesh.model = class MeshModel extends mesh.object {
         this.opacity(1);
         // this ref allows clicks to be traced to models and groups
         meh.model = this;
-        // persist in db so it can be restored on page load
-        this.persist();
-        // sync data to worker
-        worker.model_load({ id: this.id, name: this.file, vertices });
-        // update bounds
+        // sync worker, allows raycasting to work
         this.updateBounds();
     }
 
@@ -331,29 +327,25 @@ mesh.model = class MeshModel extends mesh.object {
         // signal util.box3expand that geometry changed
         geo._model_invalid = true;
         geo.computeVertexNormals();
-        // allows raycasting to work
-        // geo.computeBoundingSphere();
-        // persist in db so it can be restored on page load
-        this.persist();
-        // sync data to worker
-        worker.model_load({id: this.id, name: this.name, vertices });
         // restore wireframe state
         this.wireframe(was);
         // fixup normals
         this.normals({refresh: true});
+        // sync worker, allows raycasting to work
+        this.updateBounds();
         // re-gen face index in surface mode
         mesh.api.mode.check();
-        // allows raycasting to work
-        // update bounds
-        this.updateBounds();
     }
 
     rename(file) {
         this.file = file;
-        this.persist();
+        this.sync();
     }
 
-    persist() {
+    // sync to worker and indexeddb for page restoration or worker ops
+    sync() {
+        // sync to worker
+        worker.model_load({ id: this.id, name: this.file, vertices: this.positions });
         // persist in db so it can be restored on page load
         mapp.db.space.put(this.id, {
             file: this.file,
@@ -556,7 +548,7 @@ mesh.model = class MeshModel extends mesh.object {
         // extract axes from plane and split when present (only z for now)
         let { z } = plane;
         return new Promise((resolve,reject) => {
-            worker.model_split({ pos: this.world_positions, z }).then(data => {
+            worker.model_split({ id: this.id, z }).then(data => {
                 let { o1, o2 } = data;
                 let model;
                 if (o1.length)

@@ -34,7 +34,7 @@ mesh.object = class MeshObject {
     }
 
     log() {
-        console.log(this.id, this.type, ...arguments);
+        // mesh.api.log.emit(this.id, this.type, ...arguments);
     }
 
     get type() {
@@ -65,6 +65,7 @@ mesh.object = class MeshObject {
         this.log('apply-meta', meta);
         this.applyMatrix(meta.matrix);
         this.visible(meta.visible ?? true);
+        this.metaChanged(meta);
         return this;
     }
 
@@ -73,10 +74,8 @@ mesh.object = class MeshObject {
         if (elements) {
             this.log('apply-matrix');
             this.object.applyMatrix4(new Matrix4().fromArray(elements));
-            return this.metaChanged();
-        } else {
-            return this;
         }
+        return this;
     }
 
     // used during model splitting
@@ -195,11 +194,14 @@ mesh.object = class MeshObject {
         }
     }
 
-    metaChanged() {
+    metaChanged(values = {}) {
         this.object.updateMatrix();
         this.updateBoundsBox();
         space.update();
-        this.meta.matrix = this.object.matrix.elements;
+        Object.assign(this.meta, values, {
+            matrix: this.object.matrix.elements
+        });
+        worker.object_meta({ id: this.id, meta: this.meta });
         publish.meta({ id: this.id, meta: this.meta });
         return this;
     }
