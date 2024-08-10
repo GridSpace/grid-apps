@@ -194,22 +194,22 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     scale(x = 1, y = 1, z = 1) {
-        this.log('model-scale', ...arguments, this.bounds);
         if (x === 1 && y === 1 && z === 1) return;
+        this.log('model-scale', ...arguments, this.bounds);
         this.geometry.scale(x, y, z);
         this.updateBounds();
     }
 
     translate(x = 0, y = 0, z = 0) {
-        this.log('model-translate', ...arguments);
         if (!(x || y || z)) return;
+        this.log('model-translate', ...arguments);
         this.geometry.translate(x, y, z);
         this.updateBounds();
     }
 
     move(x = 0, y = 0, z = 0) {
-        this.log('model-move', ...arguments);
         if (!(x || y || z)) return;
+        this.log('model-move', ...arguments);
         let pos = this.position();
         return this.position(pos.x + x, pos.y + y, pos.z + z);
     }
@@ -253,6 +253,8 @@ mesh.model = class MeshModel extends mesh.object {
         return this;
     }
 
+    // when geometry updates, recompute bounds for ray intersections
+    // and sync data to worker and indexed db
     updateBounds() {
         if (this._wire)
         this._wire.geometry.attributes.position.needsUpdate = true;
@@ -398,6 +400,7 @@ mesh.model = class MeshModel extends mesh.object {
         return this.select();
     }
 
+    // toggle whether this is a boolean subtraction tool or not
     tool(bool) {
         if (bool === undefined) {
             return this.mesh.material[0] === this.mats.tool;

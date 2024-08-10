@@ -30,6 +30,19 @@ let geo, mat, obj = new Line2(
 
 );
 
+// true if values differ by less than 10e-3
+function cmp(v1, v2) {
+    return Math.abs(v1 - v2) < 0.001;
+}
+
+// points equal if all axis values are within tolerance of each other
+function eq(p1, p2) {
+    return
+        cmp(p1.x, p2.x) &&
+        cmp(p1.y, p2.y) &&
+        cmp(p1.z, p2.z);
+}
+
 // split functions
 let edges = {
     active() {
@@ -93,11 +106,11 @@ let edges = {
             let model = selected[0].object.model;
             let pos = new Vector3().fromArray(model.meta.pos);
             let verts = selected.map(s => [ s.side.p0, s.side.p1 ]).flat();
-            // clean up floating point cruft for comparison
+            // translate into mesh space
             for (let v of verts) {
-                v.x = (v.x - pos.x).round(3);
-                v.y = (v.y - pos.z).round(3);
-                v.z = (v.z + pos.y).round(3);
+                v.x = (v.x - pos.x);
+                v.y = (v.y - pos.z);
+                v.z = (v.z + pos.y);
             }
             // sort points so dups show up next to each other
             let sort = verts.sort((a,b) => {
@@ -109,10 +122,8 @@ let edges = {
                     return a.z - b.z;
                   }
             }).filter((point, index, arr) => {
-                return index === 0 ||
-                    point.x !== arr[index - 1].x ||
-                    point.y !== arr[index - 1].y ||
-                    point.z !== arr[index - 1].z;
+                // allow first point then compare others to one before
+                return index === 0 || !eq(point, arr[index - 1]);
             });
             if (sort.length === 3) {
                 await model.duplicate({ append: [

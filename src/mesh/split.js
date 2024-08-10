@@ -77,6 +77,9 @@ let split = {
     select() {
         let { log } = mesh.api;
         let { models, plane } = split.state;
+        if (!(models && plane)) {
+            return split.end();
+        }
         log.emit(`splitting ${models.length} model(s) at ${plane.z.round(3)}`).pin();
         Promise.all(models.map(m => m.split(plane))).then(models => {
             mesh.api.selection.set(models.filter(m => m));
