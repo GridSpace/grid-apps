@@ -13,8 +13,7 @@
 gapp.register("mesh.model", [], (root, exports) => {
 
 const { MeshPhongMaterial, MeshBasicMaterial, LineBasicMaterial } = THREE;
-const { BufferGeometry, BufferAttribute, DoubleSide, Mesh} = THREE;
-const { Quaternion, Box3, Vector3 } = THREE;
+const { BufferGeometry, BufferAttribute, DoubleSide, Mesh, Vector3 } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
 const { api } = mesh;
@@ -132,21 +131,21 @@ mesh.model = class MeshModel extends mesh.object {
         return this.bounds.translate(this.position());
     }
 
-    get world_positions() {
-        let pos = this.position();
-        return this.geometry
-            .clone()
-            .translate(pos.x,pos.y,pos.z)
-            .attributes.position.array;
-    }
+    // get world_positions() {
+    //     let pos = this.position();
+    //     return this.geometry
+    //         .clone()
+    //         .translate(pos.x,pos.y,pos.z)
+    //         .attributes.position.array;
+    // }
 
     get positions() {
         return this.geometry.attributes.position.array;
     }
 
-    get matrix() {
-        return this.mesh.matrixWorld.elements;
-    }
+    // get matrix() {
+    //     return this.matrixWorld.elements;
+    // }
 
     get matrixWorld() {
         return this.mesh.matrixWorld;

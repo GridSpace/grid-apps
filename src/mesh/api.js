@@ -1097,7 +1097,6 @@ const tool = {
         let promises = [];
         let mcore = new Matrix4().makeRotationX(Math.PI / 2);
         for (let m of models) {
-            // todo - translate vertices with source model's matrix
             let p = worker.model_analyze({ id: m.id, opt }).then(data => {
                 let { areas, edges } = data.mapped;
                 let nm = areas.map(area => new mesh.model({
@@ -1161,7 +1160,7 @@ const tool = {
             let p = worker.model_heal({
                 id: m.id, opt
             }).then(data => {
-                data?.length && m.reload(data.vertices);
+                data?.vertices && m.reload(data.vertices);
             });
             promises.push(p);
         }
@@ -1181,7 +1180,12 @@ const tool = {
 
     clean(models) {
         models = fallback(models);
-        tool.heal(models, { merge: false }).then(() => {
+        tool.heal(models, {
+            merge: false,
+            precision: 2,
+            dedup: true,
+            clean: true
+        }).then(() => {
             log('cleaning complete').unpin();
             util.defer(selection.update);
         });

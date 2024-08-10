@@ -90,12 +90,14 @@ let edges = {
 
     async add() {
         if (selected.length === 2 && selected[0].object === selected[1].object) {
+            let model = selected[0].object.model;
+            let pos = new Vector3().fromArray(model.meta.pos);
             let verts = selected.map(s => [ s.side.p0, s.side.p1 ]).flat();
             // clean up floating point cruft for comparison
             for (let v of verts) {
-                v.x = v.x.round(3);
-                v.y = v.y.round(3);
-                v.z = v.z.round(3);
+                v.x = (v.x - pos.x).round(3);
+                v.y = (v.y - pos.z).round(3);
+                v.z = (v.z + pos.y).round(3);
             }
             // sort points so dups show up next to each other
             let sort = verts.sort((a,b) => {
@@ -112,7 +114,6 @@ let edges = {
                     point.y !== arr[index - 1].y ||
                     point.z !== arr[index - 1].z;
             });
-            let model = selected[0].object.model;
             if (sort.length === 3) {
                 await model.duplicate({ append: [
                     sort[0].x, -sort[0].z, sort[0].y,

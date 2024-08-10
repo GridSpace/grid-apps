@@ -50,17 +50,11 @@ function cacheUpdate(id, data) {
 // translate original mesh vertices into UI world view (PI/2 rotation on X)
 function translate_encode(id) {
     let rec = cache[id];
-    let { pos, matrix } = rec;
-    let mkey = matrix.map(v => v.round(6)).join('-');
+    let { pos } = rec;
+    let mkey = pos.map(v => v.round(6)).join('-');
     // re-translate on missing cache or changed matrix
     if (!rec || !rec.trans || rec.mkey !== mkey) {
-        let geo = rec.geo.clone();
-        if (pos) {
-            geo.translate(new Vector3().fromArray(pos));
-        } else {
-            let mat = core_matrix.clone().multiply(new Matrix4().fromArray(matrix));
-            geo.applyMatrix4(mat);
-        }
+        let geo = rec.geo.clone().translate(new Vector3().fromArray(pos));
         rec.mkey = mkey;
         rec.trans = geo.attributes.position.array
     }
@@ -71,13 +65,13 @@ function analyze(id, opt = {}) {
     let rec = cache[id];
     let { geo, tool } = rec;
     if (!tool) {
-        tool = rec.tool = new mesh.tool();
+        tool = rec.tool = new mesh.tool(opt);
     }
     if (tool.faces) {
         log(`${id} | analysis cached`);
     } else {
         log(`${id} | analyzing...`);
-        tool.generateFaces(geo.attributes.position.array);
+        tool.generateFaces(geo.attributes.position.array, opt);
         log(`${id} | patching...`);
         tool.patch(opt);
     }
@@ -382,7 +376,6 @@ let object = {
     meta(data) {
         let { id, meta } = data;
         cacheUpdate(id, meta);
-        console.log('object_meta', data);
     },
 
     create(data) {

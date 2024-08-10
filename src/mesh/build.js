@@ -133,11 +133,12 @@ const log = api.log = {
         let { age, data, lines, render } = log;
         let now = Date.now();
         data.push({
+            objs: [ dbug.since(), '|', ...arguments ],
             text: `${dbug.since()} | ${[...arguments].join(' ')}`,
             time: now
         });
         if (api.isDebug) {
-            console.log(data.peek().text);
+            console.log(...data.peek().objs);
         }
         while (!log.pinned && data.length && (data.length > lines || now - data[0].time > age)) {
             data.shift();

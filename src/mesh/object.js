@@ -9,7 +9,7 @@
 // use: mesh.util
 gapp.register("mesh.object", [], (root, exports) => {
 
-const { Matrix4, Vector3, Box3, Box3Helper, Quaternion, Euler } = THREE;
+const { Matrix4, Vector3, Box3, Box3Helper, Quaternion } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
 
@@ -27,14 +27,14 @@ mesh.object = class MeshObject {
 
     constructor(id) {
         this.id = id || mesh.util.uuid();
-        worker.object_create({id: this.id, type: this.type});
-        this.log('NEW');
+        worker.object_create({ id: this.id, type: this.type });
         // storage location for meta data like position, scale, rotation
-        this.meta = {};
+        this.meta = { pos: [0,0,0] };
+        this.log('NEW');
     }
 
     log() {
-        // mesh.api.log.emit(this.id, this.type, ...arguments);
+        mesh.api.log.emit(this.id, this.type, ...arguments);
     }
 
     get type() {
@@ -63,7 +63,7 @@ mesh.object = class MeshObject {
     // used during state restoration
     applyMeta(meta = {}) {
         this.log('apply-meta', meta);
-        this.applyMatrix(meta.matrix);
+        if (meta.pos) this.position(...meta.pos);
         this.visible(meta.visible ?? true);
         this.metaChanged(meta);
         return this;
@@ -199,7 +199,7 @@ mesh.object = class MeshObject {
         this.updateBoundsBox();
         space.update();
         Object.assign(this.meta, values, {
-            matrix: this.object.matrix.elements
+            // matrix: this.object.matrix.elements
         });
         worker.object_meta({ id: this.id, meta: this.meta });
         publish.meta({ id: this.id, meta: this.meta });
