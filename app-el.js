@@ -1,4 +1,4 @@
-const { app, shell, BrowserWindow } = require('electron');
+const { app, shell, session, BrowserWindow } = require('electron');
 const path = require('path');
 const server = require('@gridspace/app-server');
 
@@ -66,7 +66,9 @@ function createWindow() {
     }
 }
 
-app.on('ready', createWindow);
+app.on('ready', () => {
+    session.defaultSession.clearCache().then(createWindow);
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
