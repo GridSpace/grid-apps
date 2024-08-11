@@ -550,24 +550,25 @@ mesh.model = class MeshModel extends mesh.object {
     split(plane) {
         // extract axes from plane and split when present (only z for now)
         let { z } = plane;
+        let { id, group } = this;
         return new Promise((resolve,reject) => {
-            worker.model_split({ id: this.id, z }).then(data => {
+            worker.model_split({ id, z }).then(data => {
                 let { o1, o2 } = data;
                 if (!(o1 || o2)) {
-                    return resolve(this.group);
+                    return resolve(group);
                 }
                 if (o1?.length)
-                this.group.add(new mesh.model({
+                group.add(new mesh.model({
                     file: `${this.file}-bot`,
                     mesh: o1
                 }).reCenter());
                 if (o2?.length)
-                this.group.add(new mesh.model({
+                group.add(new mesh.model({
                     file: `${this.file}-top`,
                     mesh: o2
                 }).reCenter());
                 this.remove();
-                resolve(this.group);
+                resolve(group);
             });
         });
     }

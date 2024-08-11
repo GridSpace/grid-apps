@@ -152,7 +152,8 @@ let model = {
     // return two arrays of vertices for each resulting object
     split(data) {
         let { id, z } = data;
-        z = z.round(3);
+        let scale = 10000;
+        z = (z * scale) | 0;
         let pos = translate_encode(id);
         let o1 = []; // new bottom
         let o2 = []; // new top
@@ -160,6 +161,7 @@ let model = {
         let over = [];
         let under = [];
         let edges = [];
+        let cache = {}; // vertex dedup cache
         function sort(v) {
             if (v.z < z) return under.push(v);
             if (v.z > z) return over.push(v);
@@ -168,11 +170,20 @@ let model = {
         function lerp(v1, v2) {
             let zd = Math.abs(v1.z - v2.z);
             let z1 = Math.abs(v1.z - z);
-            return v1.clone().lerp(v2, z1/zd);
+            let v3 = v1.clone().lerp(v2, z1/zd);
+            return newV(v3.x/scale, v3.y/scale, v3.z/scale);
         }
-        function newV(x,y,z) {
-            // todo dedup for comparison and edge/face finding later
-            return new Vector3(x.round(3), y.round(3), z.round(3));
+        function newV() {
+            let args = [...arguments].map(v => (v * scale) | 0);
+            let key = args.join(':');
+            let cached = cache[key];
+            if (!cached) {
+                let [ x, y, z ] = args;
+                cache[key] = cached = new Vector3(x,y,z);
+            } else {
+                // console.log('cache hit', cached, key);
+            }
+            return cached;
         }
         // todo put proposed faces into top or bottom arrays
         // check proposed faces that have one point shared on only two edges
@@ -209,7 +220,6 @@ let model = {
                 // all points on or under
                 o1.appendAll([ v1, v2, v3 ]);
             } else {
-                console.log('split');
                 let g1, g2, oa, ua;
                 if (overl === 2) {
                     // two over, one under
@@ -303,7 +313,10 @@ let model = {
             o2.appendAll(o2p.flat().flat());
             // console.log({ edges, heal, o1, o2 });
         }
-        return { o1: o1.toFloat32(), o2: o2.toFloat32() };
+        return {
+            o1: o1.map(v => v/scale).toFloat32(),
+            o2: o2.map(v => v/scale).toFloat32()
+        };
     },
 
     analyze(data) {
