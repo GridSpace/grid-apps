@@ -171,8 +171,12 @@ let model = {
             return v1.clone().lerp(v2, z1/zd);
         }
         function newV(x,y,z) {
+            // todo dedup for comparison and edge/face finding later
             return new Vector3(x.round(3), y.round(3), z.round(3));
         }
+        // todo put proposed faces into top or bottom arrays
+        // check proposed faces that have one point shared on only two edges
+        // and if they're coplanar, merge them. these points cause non-manifold
         for (let i=0, l=pos.length; i<l; ) {
             on.length = over.length = under.length = 0;
             let v1 = newV(pos[i++], pos[i++], pos[i++]);
