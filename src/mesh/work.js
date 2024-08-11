@@ -254,52 +254,51 @@ let model = {
                 }
             }
         }
-        {
-            // find unshared edges on Z plane
-            let faces = o1.group(3);
-            for (let face of faces) {
-                edges.push({ p1: face[0], p2: face[1] });
-                edges.push({ p1: face[1], p2: face[2] });
-                edges.push({ p1: face[2], p2: face[0] });
-            }
-            // eliminate edges that show up twice since it means they're shared
-            outer: for (let i=0, l=edges.length; i<l; i++) {
-                for (let j=i+1; j<l; j++) {
-                    let e1 = edges[i];
-                    let e2 = edges[j];
-                    if (!(e1 && e2)) {
-                        continue;
-                    }
-                    if (e1.p1.equals(e2.p1) && e1.p2.equals(e2.p2)) {
-                        edges[i] = edges[j] = undefined;
-                        continue outer;
-                    }
-                    if (e1.p2.equals(e2.p1) && e1.p1.equals(e2.p2)) {
-                        edges[i] = edges[j] = undefined;
-                        continue outer;
-                    }
-                }
-            }
-            // filter and convert Vector3 to Point for sliceConnect()
-            edges = edges.filter(e => e && e.p1.z === z && e.p2.z === z).map(e => {
-                return {
-                    p1: newPoint().move(e.p1),
-                    p2: newPoint().move(e.p2),
-                }
-            });
-            o1 = o1.map(e => [ ...e ]).flat();
-            o2 = o2.map(e => [ ...e ]).flat();
+        // find unshared edges on Z plane
+        let faces = o1.group(3);
+        for (let face of faces) {
+            edges.push({ p1: face[0], p2: face[1] });
+            edges.push({ p1: face[1], p2: face[2] });
+            edges.push({ p1: face[2], p2: face[0] });
         }
+        // eliminate edges that show up twice since it means they're shared
+        outer: for (let i=0, l=edges.length; i<l; i++) {
+            for (let j=i+1; j<l; j++) {
+                let e1 = edges[i];
+                let e2 = edges[j];
+                if (!(e1 && e2)) {
+                    continue;
+                }
+                if (e1.p1.equals(e2.p1) && e1.p2.equals(e2.p2)) {
+                    edges[i] = edges[j] = undefined;
+                    continue outer;
+                }
+                if (e1.p2.equals(e2.p1) && e1.p1.equals(e2.p2)) {
+                    edges[i] = edges[j] = undefined;
+                    continue outer;
+                }
+            }
+        }
+        // filter and convert Vector3 to Point for sliceConnect()
+        edges = edges.filter(e => e && e.p1.z === z && e.p2.z === z).map(e => {
+            return {
+                p1: newPoint().move(e.p1),
+                p2: newPoint().move(e.p2),
+            }
+        });
+        // flatten output points to arrays
+        o1 = o1.map(e => [ ...e ]).flat();
+        o2 = o2.map(e => [ ...e ]).flat();
         if (edges.length) {
-            // heal open spaces created by split
+            // heal unshared edges created along Z split
+            // normals (from point array) are reversed for the bottom split
             let heal = sliceConnect(edges, z).map(poly => poly.earcut()).flat();
             let o1p = heal.map(poly => poly.points.map(p => [ p.x, p.y, p.z ]));
             let o2p = heal.map(poly => poly.points.reverse().map(p => [ p.x, p.y, p.z ]));
             o1.appendAll(o1p.flat().flat());
             o2.appendAll(o2p.flat().flat());
-            console.log({ edges, heal, o1, o2 });
+            // console.log({ edges, heal, o1, o2 });
         }
-        // return null;
         return { o1: o1.toFloat32(), o2: o2.toFloat32() };
     },
 
