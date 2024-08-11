@@ -229,6 +229,13 @@ const selection = {
         return selection;
     },
 
+    move_models(dx = 0, dy = 0, dz = 0) {
+        for (let s of selection.models()) {
+            s.move(dx, dy, dz);
+        }
+        return selection;
+    },
+
     rotate(dx = 0, dy = 0, dz = 0) {
         for (let s of selection.groups()) {
             s.rotate(dx, dy, dz);

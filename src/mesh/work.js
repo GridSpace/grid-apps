@@ -20,7 +20,7 @@
 // dep: mesh.tool
 gapp.main("mesh.work", [], (root) => {
 
-const { Matrix4, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
+const { Triangle, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
 const { base, mesh, moto } = root;
 const { client, worker } = moto;
 const { CSG, newPoint, newPolygon, sliceConnect } = base;
@@ -152,6 +152,7 @@ let model = {
     // return two arrays of vertices for each resulting object
     split(data) {
         let { id, z } = data;
+        z = z.round(3);
         let pos = translate_encode(id);
         let o1 = []; // new bottom
         let o2 = []; // new top
@@ -169,38 +170,57 @@ let model = {
             let z1 = Math.abs(v1.z - z);
             return v1.clone().lerp(v2, z1/zd);
         }
+        function newV(x,y,z) {
+            return new Vector3(x.round(3), y.round(3), z.round(3));
+        }
         for (let i=0, l=pos.length; i<l; ) {
-            let v1 = new Vector3(pos[i++], pos[i++], pos[i++]);
-            let v2 = new Vector3(pos[i++], pos[i++], pos[i++]);
-            let v3 = new Vector3(pos[i++], pos[i++], pos[i++]);
+            on.length = over.length = under.length = 0;
+            let v1 = newV(pos[i++], pos[i++], pos[i++]);
+            let v2 = newV(pos[i++], pos[i++], pos[i++]);
+            let v3 = newV(pos[i++], pos[i++], pos[i++]);
             sort(v1);
             sort(v2);
             sort(v3);
             let onl = on.length;
             let overl = over.length;
             let underl = under.length;
-            let isover = (overl === 3 || underl === 0);
-            let isunder = (underl === 3 || overl === 0);
-            let split = !(isover || isunder);
+            let isover = (onl + overl === 3);
+            let isunder = (onl + underl === 3);
+            if (onl === 3) {
+                // co-planar
+                let tri = new Triangle(...on);
+                let norm = tri.getNormal(new Vector3());
+                if (norm.z > 0) {
+                    isover = false;
+                    isunder = true;
+                } else {
+                    isover = true;
+                    isunder = false;
+                 }
+            }
             if (isover) {
-                o2.appendAll([...v1, ...v2, ...v3]);
-            }
-            if (isunder) {
-                o1.appendAll([...v1, ...v2, ...v3]);
-            }
-            if (split) {
+                // all points on or over
+                o2.appendAll([ v1, v2, v3 ]);
+            } else if (isunder) {
+                // all points on or under
+                o1.appendAll([ v1, v2, v3 ]);
+            } else {
+                console.log('split');
                 let g1, g2, oa, ua;
                 if (overl === 2) {
+                    // two over, one under
                     g1 = o2;
                     g2 = o1;
                     oa = over;
                     ua = under;
                 } else if (underl === 2) {
+                    // two under, one over
                     g1 = o1;
                     g2 = o2;
                     oa = under;
                     ua = over;
                 } else if (onl === 1) {
+                    // one on, one over, one under
                     let p1 = over[0];
                     let p2 = on[0];
                     let p3 = under[0];
@@ -210,32 +230,65 @@ let model = {
                         || (v1 === p3 && v2 === p1);
                     // clockwise vs counter-clockwise
                     if (cw) {
-                        o1.appendAll([ ...p2, ...p3, ...p4 ]);
-                        o2.appendAll([ ...p1, ...p2, ...p4 ]);
+                        o1.appendAll([ p2, p3, p4 ]);
+                        o2.appendAll([ p1, p2, p4 ]);
                     } else {
-                        o1.appendAll([ ...p3, ...p2, ...p4 ]);
-                        o2.appendAll([ ...p2, ...p1, ...p4 ]);
+                        o1.appendAll([ p3, p2, p4 ]);
+                        o2.appendAll([ p2, p1, p4 ]);
                     }
-                    on.length = over.length = under.length = 0;
                     continue;
                 }
                 let [ p1, p2 ] = oa;
-                let p3 = ua[0] || on[0]; // under or on
+                let p3 = ua[0] || on[0]; // lone point
                 let m1 = lerp(p1, p3);
                 let m2 = lerp(p2, p3);
                 if (v2 === ua[0]) {
                     // reverse when the mid point gap
-                    g1.appendAll([ ...m1, ...p2, ...p1 ]);
-                    g1.appendAll([ ...m1, ...m2, ...p2 ]);
-                    g2.appendAll([ ...p3, ...m2, ...m1 ]);
+                    g1.appendAll([ m1, p2, p1 ]);
+                    g1.appendAll([ m1, m2, p2 ]);
+                    g2.appendAll([ p3, m2, m1 ]);
                 } else {
-                    g1.appendAll([ ...p1, ...p2, ...m1 ]);
-                    g1.appendAll([ ...p2, ...m2, ...m1 ]);
-                    g2.appendAll([ ...m1, ...m2, ...p3 ]);
+                    g1.appendAll([ p1, p2, m1 ]);
+                    g1.appendAll([ p2, m2, m1 ]);
+                    g2.appendAll([ m1, m2, p3 ]);
                 }
-                edges.push({ p1: newPoint().move(m1), p2: newPoint().move(m2) });
             }
-            on.length = over.length = under.length = 0;
+        }
+        {
+            // find unshared edges on Z plane
+            let faces = o1.group(3);
+            for (let face of faces) {
+                edges.push({ p1: face[0], p2: face[1] });
+                edges.push({ p1: face[1], p2: face[2] });
+                edges.push({ p1: face[2], p2: face[0] });
+            }
+            // eliminate edges that show up twice since it means they're shared
+            outer: for (let i=0, l=edges.length; i<l; i++) {
+                for (let j=i+1; j<l; j++) {
+                    let e1 = edges[i];
+                    let e2 = edges[j];
+                    if (!(e1 && e2)) {
+                        continue;
+                    }
+                    if (e1.p1.equals(e2.p1) && e1.p2.equals(e2.p2)) {
+                        edges[i] = edges[j] = undefined;
+                        continue outer;
+                    }
+                    if (e1.p2.equals(e2.p1) && e1.p1.equals(e2.p2)) {
+                        edges[i] = edges[j] = undefined;
+                        continue outer;
+                    }
+                }
+            }
+            // filter and convert Vector3 to Point for sliceConnect()
+            edges = edges.filter(e => e && e.p1.z === z && e.p2.z === z).map(e => {
+                return {
+                    p1: newPoint().move(e.p1),
+                    p2: newPoint().move(e.p2),
+                }
+            });
+            o1 = o1.map(e => [ ...e ]).flat();
+            o2 = o2.map(e => [ ...e ]).flat();
         }
         if (edges.length) {
             // heal open spaces created by split
@@ -244,8 +297,9 @@ let model = {
             let o2p = heal.map(poly => poly.points.reverse().map(p => [ p.x, p.y, p.z ]));
             o1.appendAll(o1p.flat().flat());
             o2.appendAll(o2p.flat().flat());
-            // console.log({ edges, heal, o1, o2 });
+            console.log({ edges, heal, o1, o2 });
         }
+        // return null;
         return { o1: o1.toFloat32(), o2: o2.toFloat32() };
     },
 

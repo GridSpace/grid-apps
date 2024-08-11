@@ -986,16 +986,19 @@ function ui_build() {
             e.classList.add('editable');
         });
         group_val_X_pos.onclick = field_edit('x position', (group, val) => {
-            let r = group.position();
-            group.position(val, r.y, r.z);
+            // let r = group.position();
+            // group.position(val, r.y, r.z);
+            selection.move_models(val,0,0);
         }, { floor: false });
         group_val_Y_pos.onclick = field_edit('y position', (group, val) => {
-            let r = group.position();
-            group.position(r.x, val, r.z);
+            // let r = group.position();
+            // group.position(r.x, val, r.z);
+            selection.move_models(0,val,0);
         }, { floor: false });
         group_val_Z_pos.onclick = field_edit('z position', (group, val) => {
-            let r = group.position();
-            group.position(r.x, r.y, val);
+            // let r = group.position();
+            // group.position(r.x, r.y, val);
+            selection.move_models(0,0,val);
         }, { floor: false });
 
         // bind scale editable fields

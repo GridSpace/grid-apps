@@ -553,14 +553,17 @@ mesh.model = class MeshModel extends mesh.object {
         return new Promise((resolve,reject) => {
             worker.model_split({ id: this.id, z }).then(data => {
                 let { o1, o2 } = data;
+                if (!(o1 || o2)) {
+                    return resolve(this.group);
+                }
                 if (o1?.length)
                 this.group.add(new mesh.model({
-                    file: `${this.file}-top`,
+                    file: `${this.file}-bot`,
                     mesh: o1
                 }).reCenter());
                 if (o2?.length)
                 this.group.add(new mesh.model({
-                    file: `${this.file}-bot`,
+                    file: `${this.file}-top`,
                     mesh: o2
                 }).reCenter());
                 this.remove();
