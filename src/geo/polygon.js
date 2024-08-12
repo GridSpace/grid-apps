@@ -110,6 +110,10 @@ class Polygon {
         return this;
     }
 
+    fromVectors(array) {
+        return this.addVerts(array.map(v => [ ...v ]).flat());
+    }
+
     toObject() {
         return {
             points: this.toArray(),

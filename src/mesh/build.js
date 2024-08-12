@@ -353,14 +353,14 @@ function facon(name, sub) {
     return h.i({ class: [ sub || "fa", name ] });
 }
 
-function menu_item(text, fn, short) {
+function menu_item(text, fn, short, id) {
     if (short) {
         short = Array.isArray(short) ? short : [ short ];
         short = div({ class: "short" }, short.map(s => s.startsWith('bi-') ?
             bicon(s) : div(s)
         ));
     }
-    return div({ onclick: fn }, [
+    return div({ id, onclick: fn }, [
         div({ _: text, class: "grow" }),
         short
     ].filter(o => o));
@@ -432,14 +432,14 @@ function ui_build() {
         div({ class: "menu" }, [
             div('Mode'),
             div({ class: "menu-items" }, [
-                div({ _: 'Sketch', id: "mode-sketch", onclick: mode.sketch }),
+                menu_item('Sketch', mode.sketch, '1', 'mode-sketch'),
                 hr(),
-                div({ _: 'Object', id: "mode-object", onclick: mode.object }),
-                div({ _: 'Tool', id: "mode-tool", onclick: mode.tool }),
+                menu_item('Object', mode.object, '2', 'mode-object'),
+                menu_item('Tool', mode.tool, '3', 'mode-tool'),
                 hr(),
-                div({ _: 'Surface', id: "mode-surface", onclick: mode.surface }),
-                div({ _: 'Face', id: "mode-face", onclick: mode.face }),
-                div({ _: 'Edge', id: "mode-edge", onclick: mode.edge }),
+                menu_item('Surface', mode.surface, '4', 'mode-surface'),
+                menu_item('Face', mode.face, '5', 'mode-face'),
+                menu_item('Edge', mode.edge, '6', 'mode-edge'),
             ])
         ]),
         div({ class: "menu sketch-on" }, [
@@ -484,6 +484,7 @@ function ui_build() {
             div('Faces'),
             div({ class: "menu-items" }, [
                 menu_item('Flip Normals', tool.invert),
+                menu_item('Triangulate', tool.triangulate),
                 menu_item('Analyze', tool.analyze),
                 menu_item('Clean', tool.clean),
             ])

@@ -436,6 +436,7 @@ function orderClosest(array, fn, from) {
 // wrapper for earcut that handles higher order dimensions and finds the
 // two with the greatest delta to pass to the earcut algorith, then returns
 // an unwrapped array in the original dimensions
+// at present, only used by load.obj.parse()
 function triangulate(array, holes, dims, pos) {
     let narray;
     let info;

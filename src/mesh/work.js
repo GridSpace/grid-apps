@@ -164,7 +164,7 @@ let model = {
         let { vertices, name, id } = data;
         let geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        cacheUpdate(id, { name, geo, mkey: '' });
+        cacheUpdate(id, { name, geo, mkey: undefined, tool: undefined });
     },
 
     // merge several model vertices into a single array

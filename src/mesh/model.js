@@ -4,6 +4,8 @@
 
 // dep: add.array
 // dep: add.three
+// dep: geo.polygon
+// dep: geo.polygons
 // dep: moto.license
 // dep: moto.client
 // dep: mesh.object
@@ -13,10 +15,11 @@
 gapp.register("mesh.model", [], (root, exports) => {
 
 const { MeshPhongMaterial, MeshBasicMaterial, LineBasicMaterial } = THREE;
-const { BufferGeometry, BufferAttribute, DoubleSide, Mesh, Vector3 } = THREE;
-const { mesh, moto } = root;
+const { BufferGeometry, BufferAttribute, DoubleSide, Mesh, Vector3, Triangle } = THREE;
+const { base, mesh, moto } = root;
 const { space } = moto;
 const { api } = mesh;
+const { newPolygon, polygons } = base;
 
 const mapp = mesh;
 const worker = moto.client.fn;
@@ -598,19 +601,13 @@ mesh.model = class MeshModel extends mesh.object {
         }
     }
 
-    clearSelections() {
-        // clear face selections (since they've been deleted);
-        this.sel.faces = [];
-        this.updateSelections();
-    }
-
-    deleteSelections(mode) {
+    collectFacesByMaterialIndex(index) {
         let { geometry } = this.mesh;
         let { groups } = geometry;
         let { array } = geometry.attributes.position;
         let newtot = 0;
         // filter to unselected groups
-        groups = groups.filter(g => g.materialIndex === 0);
+        groups = groups.filter(g => g.materialIndex === index);
         for (let group of groups) {
             let start = group.start * 3;
             let count = group.count * 3;
@@ -631,10 +628,54 @@ mesh.model = class MeshModel extends mesh.object {
             newverts.set(slice, pos);
             pos += count;
         }
-        this.reload(newverts);
+        return newverts;
+    }
+
+    clearSelections() {
         // clear face selections (since they've been deleted);
         this.sel.faces = [];
         this.updateSelections();
+    }
+
+    triangulateSelections() {
+        let selverts = this.collectFacesByMaterialIndex(1);
+        if (selverts?.length) {
+            let points = [...selverts].group(3).map(a => new Vector3().fromArray(a));
+            let tris = points.group(3).map(a => new Triangle(...a));
+            let norms = tris.map(t => t.getNormal(new Vector3()));
+            let norm = norms.reduce((a,b) => a.add(b)).normalize();
+            // compute quaternion and rotate triangles to face Z up
+            const targetNorm = new THREE.Vector3(0, 0, 1);
+            const rotato = new THREE.Quaternion().setFromUnitVectors(norm, targetNorm);
+            points.forEach(p => p.applyQuaternion(rotato));
+            // union and earcut the result
+            let polys = tris.map(t => newPolygon().fromVectors([ t.a, t.b, t.c ]));
+            let union = polygons.union(polys,0,true);
+            let ears = union.map(p => p.earcut()).flat();
+            // unrotate using the same quaternion
+            rotato.invert();
+            let nupoints = ears.map(p => p.points).flat().map(p => p.toVector3());
+            nupoints.forEach(p => p.applyQuaternion(rotato));
+            let nuverts = nupoints.map(p => p.toArray()).flat().toFloat32();
+            // remove selection and append nuverts
+            this.deleteSelections(nuverts);
+        }
+    }
+
+    deleteSelections(append) {
+        let newverts = this.collectFacesByMaterialIndex(0);
+        if (newverts) {
+            if (append) {
+                let all = new Float32Array(newverts.length + append.length);
+                all.set(newverts);
+                all.set(append, newverts.length);
+                newverts = all;
+            }
+            this.reload(newverts);
+            // clear face selections (since they've been deleted);
+            this.sel.faces = [];
+            this.updateSelections();
+        }
     }
 
     updateSelections() {

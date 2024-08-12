@@ -1065,6 +1065,12 @@ const tool = {
         }
     },
 
+    triangulate() {
+        for (let m of selection.models()) {
+            m.triangulateSelections();
+        }
+    },
+
     rename(models, type = 'model') {
         models = fallback(models, true);
         let model = models[0];

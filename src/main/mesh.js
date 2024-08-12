@@ -216,6 +216,18 @@ function space_init(data) {
             }
             let { shiftKey, metaKey, ctrlKey, code } = evt;
             switch (code) {
+                case 'Digit1':
+                    return api.mode.sketch();
+                case 'Digit2':
+                    return api.mode.object();
+                case 'Digit3':
+                    return api.mode.tool();
+                case 'Digit4':
+                    return api.mode.surface();
+                case 'Digit5':
+                    return api.mode.face();
+                case 'Digit6':
+                    return api.mode.edge();
                 case 'KeyQ':
                     return api.settings();
                 case 'KeyI':
@@ -261,7 +273,7 @@ function space_init(data) {
                 case 'KeyH':
                     return shiftKey ? selection.hide() : space.view.home();
                 case 'KeyT':
-                    return space.view.top();
+                    return shiftKey ? api.tool.triangulate() : space.view.top();
                 case 'KeyZ':
                     return space.view.reset();
             }
@@ -300,7 +312,7 @@ function space_init(data) {
                         selection.delete();
                     } else {
                         for (let m of selection.models()) {
-                            m.deleteSelections(mode);
+                            m.deleteSelections();
                             space.refresh()
                         }
                     }
