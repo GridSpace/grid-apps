@@ -957,7 +957,7 @@ const tool = {
                     file: `union`,
                     mesh: data
                 })]).promote();
-                api.selection.visible(false);
+                api.selection.delete();
                 api.selection.set([ group ]);
             })
             .catch(error => {
@@ -980,7 +980,7 @@ const tool = {
                 file: `diff`,
                 mesh: data
             })]).promote();
-            api.selection.visible(false);
+            api.selection.delete();
             api.selection.set([group]);
         })
         .catch(error => {
@@ -1003,7 +1003,7 @@ const tool = {
                 file: `intersect`,
                 mesh: data
             })]).promote();
-            api.selection.visible(false);
+            api.selection.delete();
             api.selection.set([group]);
         })
         .catch(error => {
@@ -1028,7 +1028,7 @@ const tool = {
                 file: `subtract`,
                 mesh: data
             })]).promote();
-            api.selection.visible(false);
+            api.selection.delete();
             api.selection.set([group]);
         })
         .catch(error => {

@@ -92,39 +92,9 @@ function indexFaces(id) {
     return tool;
 }
 
-function colinearShared(e1, e2) {
-    // Function to check if two vectors are parallel (co-linear)
-    function isParallel(v1, v2) {
-        return v1.x * v2.y === v1.y * v2.x;
-    }
-    // Calculate the direction vectors for both lines
-    const d1 = new THREE.Vector2().subVectors(e1.p2, e1.p1);
-    const d2 = new THREE.Vector2().subVectors(e2.p2, e2.p1);
-    // Check if they are parallel (co-linear)
-    if (!isParallel(d1, d2)) {
-        return false;
-    }
-    // Check if they share an endpoint
-    if (e1.p1 === e2.p1) return e1.p1;
-    if (e1.p1 === e2.p2) return e1.p1;
-    if (e1.p2 === e2.p1) return e1.p2;
-    if (e1.p2 === e2.p2) return e1.p2;
-    // nope
-    return false;
-}
-
-function uniq(arr) {
-    let ret = [];
-    arr.forEach(el => ret.addOnce(el));
-    return ret;
-}
-
-// post-split, take clean output and proposed output faces
-// find shared, open, co-linear faces and merge them alterning
-// the o1p array and nulling out removals. also return an array
-// of edges on the open spaces left by the split so they can
-// be joined into polys, earcut, and turned into patching faces
-function findEdgesMergeFaces(z, o1, o1p) {
+// return an array of edges on the open spaces left by the split
+// to be joined into polys, earcut, and turned into patching faces
+function splitFindEdges(z, o1, o1p) {
     let edges = [];
     // find unshared edges on Z plane
     o1p.forEach((face, i) => {
@@ -159,42 +129,6 @@ function findEdgesMergeFaces(z, o1, o1p) {
             let m2 = (e1.p2 === e2.p1 && e1.p1 === e2.p2);
             if (m1 || m2) {
                 edges[i] = edges[j] = undefined;
-                continue outer;
-            }
-        }
-    }
-    // merge faces with an edge colinear in Z
-    edges = edges.filter(e => e);
-    // return edges;
-    outer: for (let i = 0, l = edges.length; i < l; i++) {
-        for (let j = i + 1; j < l; j++) {
-            let e1 = edges[i];
-            let e2 = edges[j];
-            if (!(e1 && e2)) {
-                continue;
-            }
-            let shared = colinearShared(e1, e2);
-            if (shared) {
-                let f1 = o1p[e1.i];
-                let f2 = o1p[e2.i];
-                if (!(f1 && f2)) continue;
-                // ensures vertex output normal order is maintained
-                while (f1[0] !== shared) f1.push(f1.shift());
-                while (f2[0] !== shared) f2.push(f2.shift());
-                // remove shared point, re-construct face
-                let allp = uniq([...f1, ...f2].filter(p => p != shared));
-                if (allp.length === 3) {
-                    o1p[e1.i] = allp;
-                    o1p[e2.i] = undefined;
-                    edges[i] = undefined;
-                    allp = allp.filter(p => p.z === z);
-                    edges[j] = {
-                        p1: allp[0],
-                        p2: allp[1],
-                        i: e1.i,
-                        merged: true
-                    };
-                }
                 continue outer;
             }
         }
@@ -402,8 +336,8 @@ let model = {
                 }
             }
         }
-        let e1 = findEdgesMergeFaces(z, o1, o1p);
-        let e2 = findEdgesMergeFaces(z, o2, o2p);
+        let e1 = splitFindEdges(z, o1, o1p);
+        let e2 = splitFindEdges(z, o2, o2p);
         // merge o1p and o2p into o1 and o2
         o1.appendAll(o1p.filter(e => e));
         o2.appendAll(o2p.filter(e => e));
