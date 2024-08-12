@@ -201,16 +201,27 @@ api.welcome = function(version = "unknown") {
     const { map } = prefs;
     modal.show('About Mesh:Tool', div({ class:"welcome" }, [
         h.a({
+            target: "site",
+            _: "Grid.Space",
+            href: "https://grid.space/"
+        }),
+        div(`Version: ${version}`),
+        hr({ width: "100%" }),
+        h.a({
             target: "docs",
             _: "Guide & Documentation",
             href: "https://docs.grid.space/projects/mesh-tool"
         }),
         h.a({
-            target: "docs",
-            _: "Grid.Space",
-            href: "https://grid.space/"
+            target: "help",
+            _: "Discourse Forums",
+            href: "https://forum.grid.space/"
         }),
-        div(`Version: ${version}`),
+        h.a({
+            target: "help",
+            _: "Discord Server",
+            href: "https://discord.gg/suyCCgr"
+        }),
         hr({ width: "100%" }),
         div({ class: "choice" }, [
             input({
@@ -483,8 +494,8 @@ function ui_build() {
         div({ class: "menu sketch-off" }, [
             div('Faces'),
             div({ class: "menu-items" }, [
-                menu_item('Flip Normals', tool.invert),
-                menu_item('Triangulate', tool.triangulate),
+                menu_item('Flip Normals', tool.invert, ['bi-shift','I']),
+                menu_item('Triangulate', tool.triangulate, ['bi-shift','T']),
                 menu_item('Analyze', tool.analyze),
                 menu_item('Clean', tool.clean),
             ])
@@ -510,7 +521,7 @@ function ui_build() {
                 menu_item('About', () => { api.welcome(mesh.version) }),
                 hr(),
                 menu_item('Documentation', api.help),
-                menu_item('Official Site', api.gridspace),
+                menu_item('Report Bugs', api.bugs),
                 menu_item('Donate', api.donate),
                 hr(),
                 menu_item('Versions', api.version),

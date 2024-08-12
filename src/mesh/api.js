@@ -1372,6 +1372,10 @@ const api = exports({
         window.open("https://docs.grid.space/projects/mesh-tool");
     },
 
+    bugs() {
+        window.open("https://github.com/GridSpace/grid-apps/issues");
+    },
+
     version() {
         window.location = "/choose?back";
     },
