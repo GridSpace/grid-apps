@@ -23,7 +23,7 @@ gapp.main("mesh.work", [], (root) => {
 const { Triangle, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
 const { base, mesh, moto } = root;
 const { client, worker } = moto;
-const { CSG, newPoint, newPolygon, sliceConnect } = base;
+const { CSG, newPoint, newPolygon, sliceConnect, polygons } = base;
 const cache = {};
 
 // add scoped access to cache
@@ -92,6 +92,140 @@ function indexFaces(id) {
     return tool;
 }
 
+function colinearShared(e1, e2) {
+    // Function to check if two vectors are parallel (co-linear)
+    function isParallel(v1, v2) {
+        return v1.x * v2.y === v1.y * v2.x;
+    }
+    // Calculate the direction vectors for both lines
+    const d1 = new THREE.Vector2().subVectors(e1.p2, e1.p1);
+    const d2 = new THREE.Vector2().subVectors(e2.p2, e2.p1);
+    // Check if they are parallel (co-linear)
+    if (!isParallel(d1, d2)) {
+        return false;
+    }
+    // Check if they share an endpoint
+    if (e1.p1 === e2.p1) return e1.p1;
+    if (e1.p1 === e2.p2) return e1.p1;
+    if (e1.p2 === e2.p1) return e1.p2;
+    if (e1.p2 === e2.p2) return e1.p2;
+    // nope
+    return false;
+}
+
+function uniq(arr) {
+    let ret = [];
+    arr.forEach(el => ret.addOnce(el));
+    return ret;
+}
+
+// post-split, take clean output and proposed output faces
+// find shared, open, co-linear faces and merge them alterning
+// the o1p array and nulling out removals. also return an array
+// of edges on the open spaces left by the split so they can
+// be joined into polys, earcut, and turned into patching faces
+function findEdgesMergeFaces(z, o1, o1p) {
+    let edges = [];
+    // find unshared edges on Z plane
+    o1p.forEach((face, i) => {
+        face = face.filter(v => v.z === z);
+        if (face.length >= 2) {
+            edges.push({ p1: face[0], p2: face[1], i });
+        }
+        if (face.length > 2) {
+            edges.push({ p1: face[1], p2: face[2], i });
+            edges.push({ p1: face[2], p2: face[0], i });
+        }
+    });
+    o1.forEach((face, i) => {
+        face = face.filter(v => v.z === z);
+        if (face.length >= 2) {
+            edges.push({ p1: face[0], p2: face[1] });
+        }
+        if (face.length > 2) {
+            edges.push({ p1: face[1], p2: face[2] });
+            edges.push({ p1: face[2], p2: face[0] });
+        }
+    });
+    // eliminate edges that show up twice since it means they're shared
+    outer: for (let i = 0, l = edges.length; i < l; i++) {
+        for (let j = i + 1; j < l; j++) {
+            let e1 = edges[i];
+            let e2 = edges[j];
+            if (!(e1 && e2)) {
+                continue;
+            }
+            let m1 = (e1.p1 === e2.p1 && e1.p2 === e2.p2);
+            let m2 = (e1.p2 === e2.p1 && e1.p1 === e2.p2);
+            if (m1 || m2) {
+                edges[i] = edges[j] = undefined;
+                continue outer;
+            }
+        }
+    }
+    // merge faces with an edge colinear in Z
+    edges = edges.filter(e => e);
+    outer: for (let i = 0, l = edges.length; i < l; i++) {
+        for (let j = i + 1; j < l; j++) {
+            let e1 = edges[i];
+            let e2 = edges[j];
+            if (!(e1 && e2)) {
+                continue;
+            }
+            let shared = colinearShared(e1, e2);
+            if (shared) {
+                let f1 = o1p[e1.i];
+                let f2 = o1p[e2.i];
+                if (!(f1 && f2)) continue;
+                // ensures vertex output normal order is maintained
+                while (f1[0] !== shared) f1.push(f1.shift());
+                while (f2[0] !== shared) f2.push(f2.shift());
+                // remove shared point, re-construct face
+                let allp = uniq([...f1, ...f2].filter(p => p != shared));
+                if (allp.length === 3) {
+                    o1p[e1.i] = allp;
+                    o1p[e2.i] = undefined;
+                    edges[i] = undefined;
+                    allp = allp.filter(p => p.z === z);
+                    edges[j] = {
+                        p1: allp[0],
+                        p2: allp[1],
+                        i: e1.i,
+                        merged: true
+                    };
+                } else if (allp.length === 4) {
+                    let sus = o1p.filter(face => face &&
+                        face.includes(shared) &&
+                        face.filter(p => p.z === z).length === 1);
+                    let susi = o1p.indexOf(sus[0]);
+                    if (sus.length === 1 && susi) {
+                        // del three faces, add two
+                        o1p[susi] = undefined;
+                        f1 = o1p[e1.i] = allp.slice(0,3);
+                        f2 = o1p[e2.i] = [
+                            allp[2],
+                            allp[3],
+                            allp[0]
+                        ];
+                        edges[i] = undefined;
+                        // reconstruct edge pointing to new face on Z
+                        f1 = f1.filter(p => p.z === z);
+                        f2 = f2.filter(p => p.z === z);
+                        let fx = f1.length === 2 ? f1 : f2;
+                        edges[j] = {
+                            p1: fx[0],
+                            p2: fx[1],
+                            i: fx === f1 ? e1.i : e2.i
+                        };
+                    }
+                }
+                continue outer;
+            }
+        }
+    }
+    return edges;
+}
+
 let model = {
     load(data) {
         let { vertices, name, id } = data;
@@ -152,15 +286,16 @@ let model = {
     // return two arrays of vertices for each resulting object
     split(data) {
         let { id, z } = data;
-        let scale = 10000;
-        z = (z * scale) | 0;
+        let scale = 100000;
+        z = Math.round(z * scale) | 0;
         let pos = translate_encode(id);
         let o1 = []; // new bottom
         let o2 = []; // new top
+        let o1p = []; // o1 new split faces
+        let o2p = []; // o2 new split faces
         let on = [];
         let over = [];
         let under = [];
-        let edges = [];
         let cache = {}; // vertex dedup cache
         function sort(v) {
             if (v.z < z) return under.push(v);
@@ -174,7 +309,7 @@ let model = {
             return newV(v3.x/scale, v3.y/scale, v3.z/scale);
         }
         function newV() {
-            let args = [...arguments].map(v => (v * scale) | 0);
+            let args = [...arguments].map(v => Math.round(v * scale) | 0);
             let key = args.join(':');
             let cached = cache[key];
             if (!cached) {
@@ -215,22 +350,22 @@ let model = {
             }
             if (isover) {
                 // all points on or over
-                o2.appendAll([ v1, v2, v3 ]);
+                o2.push([ v1, v2, v3 ]);
             } else if (isunder) {
                 // all points on or under
-                o1.appendAll([ v1, v2, v3 ]);
+                o1.push([ v1, v2, v3 ]);
             } else {
                 let g1, g2, oa, ua;
                 if (overl === 2) {
                     // two over, one under
-                    g1 = o2;
-                    g2 = o1;
+                    g1 = o2p;
+                    g2 = o1p;
                     oa = over;
                     ua = under;
                 } else if (underl === 2) {
                     // two under, one over
-                    g1 = o1;
-                    g2 = o2;
+                    g1 = o1p;
+                    g2 = o2p;
                     oa = under;
                     ua = over;
                 } else if (onl === 1) {
@@ -244,11 +379,11 @@ let model = {
                         || (v1 === p3 && v2 === p1);
                     // clockwise vs counter-clockwise
                     if (cw) {
-                        o1.appendAll([ p2, p3, p4 ]);
-                        o2.appendAll([ p1, p2, p4 ]);
+                        o1p.push([ p2, p3, p4 ]);
+                        o2p.push([ p1, p2, p4 ]);
                     } else {
-                        o1.appendAll([ p3, p2, p4 ]);
-                        o2.appendAll([ p2, p1, p4 ]);
+                        o1p.push([ p3, p2, p4 ]);
+                        o2p.push([ p2, p1, p4 ]);
                     }
                     continue;
                 }
@@ -258,60 +393,41 @@ let model = {
                 let m2 = lerp(p2, p3);
                 if (v2 === ua[0]) {
                     // reverse when the mid point gap
-                    g1.appendAll([ m1, p2, p1 ]);
-                    g1.appendAll([ m1, m2, p2 ]);
-                    g2.appendAll([ p3, m2, m1 ]);
+                    g1.push([ m1, p2, p1 ]);
+                    g1.push([ m1, m2, p2 ]);
+                    g2.push([ p3, m2, m1 ]);
                 } else {
-                    g1.appendAll([ p1, p2, m1 ]);
-                    g1.appendAll([ p2, m2, m1 ]);
-                    g2.appendAll([ m1, m2, p3 ]);
+                    g1.push([ p1, p2, m1 ]);
+                    g1.push([ p2, m2, m1 ]);
+                    g2.push([ m1, m2, p3 ]);
                 }
             }
         }
-        // find unshared edges on Z plane
-        let faces = o1.group(3);
-        for (let face of faces) {
-            edges.push({ p1: face[0], p2: face[1] });
-            edges.push({ p1: face[1], p2: face[2] });
-            edges.push({ p1: face[2], p2: face[0] });
-        }
-        // eliminate edges that show up twice since it means they're shared
-        outer: for (let i=0, l=edges.length; i<l; i++) {
-            for (let j=i+1; j<l; j++) {
-                let e1 = edges[i];
-                let e2 = edges[j];
-                if (!(e1 && e2)) {
-                    continue;
-                }
-                if (e1.p1.equals(e2.p1) && e1.p2.equals(e2.p2)) {
-                    edges[i] = edges[j] = undefined;
-                    continue outer;
-                }
-                if (e1.p2.equals(e2.p1) && e1.p1.equals(e2.p2)) {
-                    edges[i] = edges[j] = undefined;
-                    continue outer;
-                }
-            }
-        }
+        let edges = findEdgesMergeFaces(z, o1, o1p);
+                    findEdgesMergeFaces(z, o2, o2p);
+        // merge o1p and o2p into o1 and o2
+        o1.appendAll(o1p.filter(e => e));
+        o2.appendAll(o2p.filter(e => e));
+        // flatten output points to arrays
+        o1 = o1.flat().map(e => [ ...e ]).flat();
+        o2 = o2.flat().map(e => [ ...e ]).flat();
         // filter and convert Vector3 to Point for sliceConnect()
-        edges = edges.filter(e => e && e.p1.z === z && e.p2.z === z).map(e => {
+        edges = edges.filter(e => e).map(e => {
             return {
                 p1: newPoint().move(e.p1),
                 p2: newPoint().move(e.p2),
             }
         });
-        // flatten output points to arrays
-        o1 = o1.map(e => [ ...e ]).flat();
-        o2 = o2.map(e => [ ...e ]).flat();
         if (edges.length) {
             // heal unshared edges created along Z split
             // normals (from point array) are reversed for the bottom split
-            let heal = sliceConnect(edges, z).map(poly => poly.earcut()).flat();
-            let o1p = heal.map(poly => poly.points.map(p => [ p.x, p.y, p.z ]));
-            let o2p = heal.map(poly => poly.points.reverse().map(p => [ p.x, p.y, p.z ]));
+            let heal = polygons.nest(sliceConnect(edges, z));
+            let ear = heal.map(poly => poly.earcut()).flat();
+            let o1p = ear.map(poly => poly.points.map(p => [ p.x, p.y, p.z ]));
+            let o2p = ear.map(poly => poly.points.reverse().map(p => [ p.x, p.y, p.z ]));
             o1.appendAll(o1p.flat().flat());
             o2.appendAll(o2p.flat().flat());
-            // console.log({ edges, heal, o1, o2 });
+            // console.log({ edges, heal, ear, o1, o2 });
         }
         return {
             o1: o1.map(v => v/scale).toFloat32(),
