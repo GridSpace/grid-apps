@@ -1295,6 +1295,17 @@ gapp.register("kiri.init", [], (root, exports) => {
             ui.toolSelect.selectedIndex = editTools.length-1;
             selectTool(editTools[editTools.length-1]);
         };
+        ui.toolCopy.onclick = function() {
+            let clone = Object.assign({}, selectedTool);
+            clone.number = maxTool + 1;
+            clone.name = `${clone.name} copy`;
+            editTools.push(clone);
+            console.log({ editTools, selectedTool });
+            setToolChanged(true);
+            renderTools();
+            ui.toolSelect.selectedIndex = editTools.length-1;
+            selectTool(editTools[editTools.length-1]);
+        };
         ui.toolDelete.onclick = function() {
             editTools.remove(selectedTool);
             setToolChanged(true);
@@ -1640,6 +1651,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             toolsExport:        $('tools-export'),
             toolSelect:         $('tool-select'),
             toolAdd:            $('tool-add'),
+            toolCopy:           $('tool-dup'),
             toolDelete:         $('tool-del'),
             toolType:           $('tool-type'),
             toolName:           $('tool-name'),
