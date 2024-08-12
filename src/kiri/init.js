@@ -1277,19 +1277,25 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.dialog.hide();
         };
         ui.toolAdd.onclick = function() {
-            editTools.push({
+            let metric = settings().controller.units === 'mm';
+            editTools.push(Object.assign({
                 id: Date.now(),
                 number: maxTool + 1,
-                name: "new",
+                name: "new tool",
                 type: "endmill",
+                taper_tip: 0,
+                metric
+            }, metric ? {
+                shaft_diam: 2,
+                shaft_len: 15,
+                flute_diam: 2,
+                flute_len: 20,
+            } : {
                 shaft_diam: 0.25,
-                shaft_len: 1,
+                shaft_len: 1.5,
                 flute_diam: 0.25,
                 flute_len: 2,
-                // taper_angle: 70,
-                taper_tip: 0,
-                metric: false
-            });
+            }));
             setToolChanged(true);
             renderTools();
             ui.toolSelect.selectedIndex = editTools.length-1;
@@ -1300,7 +1306,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             clone.number = maxTool + 1;
             clone.name = `${clone.name} copy`;
             editTools.push(clone);
-            console.log({ editTools, selectedTool });
             setToolChanged(true);
             renderTools();
             ui.toolSelect.selectedIndex = editTools.length-1;
