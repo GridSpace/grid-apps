@@ -165,6 +165,7 @@ function findEdgesMergeFaces(z, o1, o1p) {
     }
     // merge faces with an edge colinear in Z
     edges = edges.filter(e => e);
+    // return edges;
     outer: for (let i = 0, l = edges.length; i < l; i++) {
         for (let j = i + 1; j < l; j++) {
             let e1 = edges[i];
@@ -193,36 +194,34 @@ function findEdgesMergeFaces(z, o1, o1p) {
                         i: e1.i,
                         merged: true
                     };
-                } else if (allp.length === 4) {
-                    let sus = o1p.filter(face => face &&
-                        face.includes(shared) &&
-                        face.filter(p => p.z === z).length === 1);
-                    let susi = o1p.indexOf(sus[0]);
-                    if (sus.length === 1 && susi) {
-                        // del three faces, add two
-                        o1p[susi] = undefined;
-                        f1 = o1p[e1.i] = allp.slice(0,3);
-                        f2 = o1p[e2.i] = [
-                            allp[2],
-                            allp[3],
-                            allp[0]
-                        ];
-                        edges[i] = undefined;
-                        // reconstruct edge pointing to new face on Z
-                        f1 = f1.filter(p => p.z === z);
-                        f2 = f2.filter(p => p.z === z);
-                        let fx = f1.length === 2 ? f1 : f2;
-                        edges[j] = {
-                            p1: fx[0],
-                            p2: fx[1],
-                            i: fx === f1 ? e1.i : e2.i
-                        };
-                    }
                 }
                 continue outer;
             }
         }
     }
+    return edges.filter(e => e);
+}
+
+function splitHeal(z, o1, edges, rev) {
+    // filter and convert Vector3 to Point for sliceConnect()
+    edges = edges.filter(e => e).map(e => {
+        return {
+            p1: newPoint().move(e.p1),
+            p2: newPoint().move(e.p2),
+        }
+    });
+    if (edges.length) {
+        // heal unshared edges created along Z split
+        // normals (from point array) are reversed for the bottom split
+        let heal = polygons.nest(sliceConnect(edges, z, { dirty: true }));
+        let ear = heal.map(poly => poly.earcut()).flat();
+        let o1p = ear.map(poly => {
+            return (rev ? poly.points.reverse() : poly.points).map(p => [ p.x, p.y, p.z ])
+        });
+        o1.appendAll(o1p.flat().flat());
+        // console.log({ edges, heal, ear, o1 });
+    }
+
     return edges;
 }
 
@@ -403,32 +402,17 @@ let model = {
                 }
             }
         }
-        let edges = findEdgesMergeFaces(z, o1, o1p);
-                    findEdgesMergeFaces(z, o2, o2p);
+        let e1 = findEdgesMergeFaces(z, o1, o1p);
+        let e2 = findEdgesMergeFaces(z, o2, o2p);
         // merge o1p and o2p into o1 and o2
         o1.appendAll(o1p.filter(e => e));
         o2.appendAll(o2p.filter(e => e));
         // flatten output points to arrays
         o1 = o1.flat().map(e => [ ...e ]).flat();
         o2 = o2.flat().map(e => [ ...e ]).flat();
-        // filter and convert Vector3 to Point for sliceConnect()
-        edges = edges.filter(e => e).map(e => {
-            return {
-                p1: newPoint().move(e.p1),
-                p2: newPoint().move(e.p2),
-            }
-        });
-        if (edges.length) {
-            // heal unshared edges created along Z split
-            // normals (from point array) are reversed for the bottom split
-            let heal = polygons.nest(sliceConnect(edges, z));
-            let ear = heal.map(poly => poly.earcut()).flat();
-            let o1p = ear.map(poly => poly.points.map(p => [ p.x, p.y, p.z ]));
-            let o2p = ear.map(poly => poly.points.reverse().map(p => [ p.x, p.y, p.z ]));
-            o1.appendAll(o1p.flat().flat());
-            o2.appendAll(o2p.flat().flat());
-            // console.log({ edges, heal, ear, o1, o2 });
-        }
+        // // filter and convert Vector3 to Point for sliceConnect()
+        splitHeal(z, o1, e1);
+        splitHeal(z, o2, e2, true);
         return {
             o1: o1.map(v => v/scale).toFloat32(),
             o2: o2.map(v => v/scale).toFloat32()
