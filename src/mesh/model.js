@@ -637,7 +637,7 @@ mesh.model = class MeshModel extends mesh.object {
         this.updateSelections();
     }
 
-    triangulateSelections() {
+    selectionToRotationPolys() {
         let selverts = this.collectFacesByMaterialIndex(1);
         if (selverts?.length) {
             let points = [...selverts].group(3).map(a => new Vector3().fromArray(a));
@@ -651,11 +651,19 @@ mesh.model = class MeshModel extends mesh.object {
             // union and earcut the result
             let polys = tris.map(t => newPolygon().fromVectors([ t.a, t.b, t.c ]));
             let union = polygons.union(polys,0,true);
-            let ears = union.map(p => p.earcut()).flat();
-            // unrotate using the same quaternion
-            rotato.invert();
+            return { polys: union, normal: targetNorm, quaternion: rotato };
+        } else {
+            return {};
+        }
+    }
+
+    triangulateSelections() {
+        let { polys, quaternion } = this.selectionToRotationPolys();
+        if (polys) {
+            let ears = polys.map(p => p.earcut()).flat();
             let nupoints = ears.map(p => p.points).flat().map(p => p.toVector3());
-            nupoints.forEach(p => p.applyQuaternion(rotato));
+            // invert quaternion to restore points alignment to original face
+            nupoints.forEach(p => p.applyQuaternion(quaternion.invert()));
             let nuverts = nupoints.map(p => p.toArray()).flat().toFloat32();
             // remove selection and append nuverts
             this.deleteSelections(nuverts);
