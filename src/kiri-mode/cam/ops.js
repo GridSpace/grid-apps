@@ -1230,6 +1230,8 @@ class OpPocket extends CamOp {
             }
             if (contour) {
                 expand = engrave ? 0 : expand;
+            } else if (expand) {
+                polys = POLY.offset(polys, expand);
             }
             let zpro = 0, zinc = 1 / (polys.length * zs.length);
             for (let poly of polys) {
@@ -1258,7 +1260,7 @@ class OpPocket extends CamOp {
                     if (toolDiam) {
                         const offs = contour ?
                             [ expand || (-0.02), -toolOver ] :
-                            [ expand || (-toolDiam / 2), -toolOver ];
+                            [ -toolDiam / 2, -toolOver ];
                         POLY.offset(clip, offs, {
                             count, outs: slice.camLines = [], flat:true, z
                         });
