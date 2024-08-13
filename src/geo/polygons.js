@@ -323,7 +323,8 @@ function setContains(setA, poly) {
     return false;
 }
 
-function flatten(polys, to = [], crush) {
+function flatten(polys, to, crush) {
+    to = to || [];
     for (let poly of polys) {
         poly.flattenTo(to);
         if (crush) poly.inner = null;
