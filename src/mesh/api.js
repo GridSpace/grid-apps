@@ -680,7 +680,9 @@ let sketch = {
 
 let add = {
     sketch(opt) {
-        selection.set([ sketch.add(new mesh.sketch(opt)) ]);
+        let nu = new mesh.sketch(opt);
+        selection.set([ sketch.add(nu) ]);
+        return nu;
     },
 
     /** add sketch components */
@@ -1068,6 +1070,12 @@ const tool = {
     triangulate() {
         for (let m of selection.models()) {
             m.triangulateSelections();
+        }
+    },
+
+    toSketch() {
+        for (let m of selection.models()) {
+            m.selectionToSketch();
         }
     },
 

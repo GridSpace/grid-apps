@@ -496,6 +496,7 @@ function ui_build() {
             div({ class: "menu-items" }, [
                 menu_item('Flip Normals', tool.invert, ['bi-shift','I']),
                 menu_item('Triangulate', tool.triangulate, ['bi-shift','T']),
+                menu_item('To Sketch', tool.toSketch, ['bi-shift','S']),
                 menu_item('Analyze', tool.analyze),
                 menu_item('Clean', tool.clean),
             ])

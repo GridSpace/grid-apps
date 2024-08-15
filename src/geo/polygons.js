@@ -1041,7 +1041,6 @@ function fingerprintCompare(a, b) {
         let rb = b[i];
         // test poly area
         if (Math.abs(ra.a - rb.a) > 1) {
-            console.log('area', Math.abs(ra.a - rb.a));
             return false;
         }
         // test circularity

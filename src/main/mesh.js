@@ -272,6 +272,8 @@ function space_init(data) {
                     return selection.boundsBox({toggle:true});
                 case 'KeyH':
                     return shiftKey ? selection.hide() : space.view.home();
+                case 'KeyS':
+                    return shiftKey ? api.tool.toSketch() : undefined;
                 case 'KeyT':
                     return shiftKey ? api.tool.triangulate() : space.view.top();
                 case 'KeyZ':

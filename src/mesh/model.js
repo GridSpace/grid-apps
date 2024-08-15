@@ -19,7 +19,7 @@ const { BufferGeometry, BufferAttribute, DoubleSide, Mesh, Vector3, Triangle } =
 const { base, mesh, moto } = root;
 const { space } = moto;
 const { api } = mesh;
-const { newPolygon, polygons } = base;
+const { newBounds, newPolygon, polygons } = base;
 
 const mapp = mesh;
 const worker = moto.client.fn;
@@ -637,6 +637,31 @@ mesh.model = class MeshModel extends mesh.object {
         this.updateSelections();
     }
 
+    selectionToSketch() {
+        let { polys, quaternion } = this.selectionToRotationPolys();
+        if (!polys) {
+            return;
+        }
+        let bounds = newBounds();
+        let zs = 0;
+        for (let poly of polys) {
+            bounds.merge(poly.bounds);
+            zs += poly.getZ();
+            poly.setZ(0);
+        }
+        quaternion.invert();
+        let normal = new Vector3(0,0,1).applyQuaternion(quaternion);
+        let center = bounds.center(zs / polys.length).toVector3().applyQuaternion(quaternion);
+        let sketch = mesh.api.add.sketch({
+            normal,
+            center
+        });
+        for (let poly of polys) {
+            sketch.add.polygon({ poly });
+        }
+        return sketch;
+    }
+
     selectionToRotationPolys() {
         let selverts = this.collectFacesByMaterialIndex(1);
         if (selverts?.length) {
@@ -651,7 +676,7 @@ mesh.model = class MeshModel extends mesh.object {
             // union and earcut the result
             let polys = tris.map(t => newPolygon().fromVectors([ t.a, t.b, t.c ]));
             let union = polygons.union(polys,0,true);
-            return { polys: union, normal: targetNorm, quaternion: rotato };
+            return { polys: union, quaternion: rotato };
         } else {
             return {};
         }
@@ -663,7 +688,8 @@ mesh.model = class MeshModel extends mesh.object {
             let ears = polys.map(p => p.earcut()).flat();
             let nupoints = ears.map(p => p.points).flat().map(p => p.toVector3());
             // invert quaternion to restore points alignment to original face
-            nupoints.forEach(p => p.applyQuaternion(quaternion.invert()));
+            quaternion.invert();
+            nupoints.forEach(p => p.applyQuaternion(quaternion));
             let nuverts = nupoints.map(p => p.toArray()).flat().toFloat32();
             // remove selection and append nuverts
             this.deleteSelections(nuverts);
