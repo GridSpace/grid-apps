@@ -680,6 +680,7 @@ let sketch = {
 
 let add = {
     sketch(opt) {
+        mode.sketch();
         let nu = new mesh.sketch(opt);
         selection.set([ sketch.add(nu) ]);
         return nu;
