@@ -15,7 +15,8 @@
 gapp.register("mesh.model", [], (root, exports) => {
 
 const { MeshPhongMaterial, MeshBasicMaterial, LineBasicMaterial } = THREE;
-const { BufferGeometry, BufferAttribute, DoubleSide, Mesh, Vector3, Triangle } = THREE;
+const { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
+const { Box3, Vector3, Triangle } = THREE;
 const { base, mesh, moto } = root;
 const { space } = moto;
 const { api } = mesh;
@@ -638,20 +639,16 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     selectionToSketch() {
-        let { polys, quaternion } = this.selectionToRotationPolys();
+        let { polys, center, quaternion } = this.selectionToRotationPolys();
         if (!polys) {
             return;
         }
-        let bounds = newBounds();
-        let zs = 0;
-        for (let poly of polys) {
-            bounds.merge(poly.bounds);
-            zs += poly.getZ();
-            poly.setZ(0);
-        }
         quaternion.invert();
+        // center points, move to Z=0
+        let bounds = new Box3().setFromArray(polys.map(p => p.points.map(p => p.toArray())).flat().flat());
+        let pcenter = bounds.getCenter(new Vector3);
+        polys.forEach(p => p.move({ x: -pcenter.x, y: -pcenter.y, z: -pcenter.z }));
         let normal = new Vector3(0,0,1).applyQuaternion(quaternion);
-        let center = bounds.center(zs / polys.length).toVector3().applyQuaternion(quaternion);
         let sketch = mesh.api.add.sketch({
             normal,
             center
@@ -670,13 +667,18 @@ mesh.model = class MeshModel extends mesh.object {
             let norms = tris.map(t => t.getNormal(new Vector3()));
             let norm = norms.reduce((a,b) => a.add(b)).normalize();
             // compute quaternion and rotate triangles to face Z up
-            const targetNorm = new THREE.Vector3(0, 0, 1);
-            const rotato = new THREE.Quaternion().setFromUnitVectors(norm, targetNorm);
-            points.forEach(p => p.applyQuaternion(rotato));
+            let targetNorm = new THREE.Vector3(0, 0, 1);
+            let rotato = new THREE.Quaternion().setFromUnitVectors(norm, targetNorm);
+            let center = new Vector3();
+            points.forEach(p => {
+                center.add(p);
+                p.applyQuaternion(rotato)
+            });
+            center.divideScalar(points.length).add(this.position());
             // union and earcut the result
             let polys = tris.map(t => newPolygon().fromVectors([ t.a, t.b, t.c ]));
             let union = polygons.union(polys,0,true);
-            return { polys: union, quaternion: rotato };
+            return { polys: union, quaternion: rotato, center };
         } else {
             return {};
         }
