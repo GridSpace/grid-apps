@@ -7,10 +7,12 @@
 
 "use strict";
 
+
 // dep: moto.space
 gapp.register("mesh.edges", [], (root, exports) => {
 
 const { Line2, LineMaterial, LineGeometry, Vector3, Group } = THREE;
+const { LineSegments2, LineSegmentsGeometry } = THREE;
 const { base, mesh, moto } = root;
 const { space } = moto;
 const { newPoint } = base;
@@ -18,6 +20,17 @@ const { newPoint } = base;
 let isActive;
 let hovered;
 let selected = [];
+
+function line2(verts) {
+    let geo = new LineSegmentsGeometry();
+    let segs = new LineSegments2(geo, new LineMaterial({
+        linewidth: 4,
+        color: 0x0088ff,
+        alphaToCoverage: false,
+    }));
+    geo.setPositions(verts);
+    return segs;
+}
 
 // hovered edge object
 let geo, mat, obj = new Line2(
@@ -27,7 +40,6 @@ let geo, mat, obj = new Line2(
         color: 0x88ff00,
         alphaToCoverage: false,
     })
-
 );
 
 // true if values differ by less than 10e-3
@@ -188,17 +200,8 @@ let edges = {
 
         const group = edges.selected = new Group();
         space.scene.add(edges.selected);
-
-        for (let sel of selected) {
-            let geo = new LineGeometry();
-            let line = new Line2( geo, new LineMaterial({
-                linewidth: 4,
-                color: 0x0088ff,
-                alphaToCoverage: false,
-            }) );
-            geo.setPositions(sel.side.verts);
-            group.add(line);
-        }
+        let verts = selected.map(s => s.side.verts).flat();
+        group.add(line2(verts));
     },
 
     closest_edge(point, face, object) {

@@ -5,15 +5,19 @@
 // dep: ext.three
 gapp.register("add.three", [], (root, exports) => {
 
-const { THREE, SVGLoader, BufferGeometryUtils, Line2, LineMaterial, LineGeometry, LineSegments2 } = ThreeBundle;
+const {
+    THREE, SVGLoader, BufferGeometryUtils,
+    LineMaterial, Line2, LineGeometry, LineSegments2, LineSegmentsGeometry
+} = ThreeBundle;
 
 root.THREE = THREE;
 THREE.BufferGeometryUtils = BufferGeometryUtils;
 THREE.SVGLoader = SVGLoader.SVGLoader;
 THREE.LineMaterial = LineMaterial;
+THREE.Line2 = Line2;
 THREE.LineGeometry = LineGeometry;
 THREE.LineSegments2 = LineSegments2;
-THREE.Line2 = Line2;
+THREE.LineSegmentsGeometry = LineSegmentsGeometry;
 
 let MP = THREE.Mesh.prototype,
     XP = THREE.Box3.prototype,

@@ -6,5 +6,11 @@ import { Line2 } from '../node_modules/three/examples/jsm/lines/Line2.js';
 import { LineMaterial } from '../node_modules/three/examples/jsm/lines/LineMaterial.js';
 import { LineGeometry } from '../node_modules/three/examples/jsm/lines/LineGeometry.js';
 import { LineSegments2 } from '../node_modules/three/examples/jsm/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from '../node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js';
 
-export { THREE, SVGLoader, BufferGeometryUtils, Line2, LineMaterial, LineGeometry, LineSegments2 };
+export {
+    THREE, SVGLoader, BufferGeometryUtils,
+    LineMaterial,
+    Line2, LineGeometry,
+    LineSegments2, LineSegmentsGeometry
+};
