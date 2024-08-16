@@ -639,19 +639,19 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     selectionToSketch() {
-        let { polys, center, quaternion } = this.selectionToRotationPolys();
+        let { polys, quaternion } = this.selectionToRotationPolys();
         if (!polys) {
             return;
         }
         quaternion.invert();
         // center points, move to Z=0
         let bounds = new Box3().setFromArray(polys.map(p => p.points.map(p => p.toArray())).flat().flat());
-        let pcenter = bounds.getCenter(new Vector3);
-        polys.forEach(p => p.move({ x: -pcenter.x, y: -pcenter.y, z: -pcenter.z }));
+        let center = bounds.getCenter(new Vector3);
+        polys.forEach(p => p.move({ x: -center.x, y: -center.y, z: -center.z }));
         let normal = new Vector3(0,0,1).applyQuaternion(quaternion);
         let sketch = mesh.api.add.sketch({
             normal,
-            center
+            center: center.applyQuaternion(quaternion).add(this.position())
         });
         for (let poly of polys) {
             sketch.add.polygon({ poly });
@@ -669,16 +669,11 @@ mesh.model = class MeshModel extends mesh.object {
             // compute quaternion and rotate triangles to face Z up
             let targetNorm = new THREE.Vector3(0, 0, 1);
             let rotato = new THREE.Quaternion().setFromUnitVectors(norm, targetNorm);
-            let center = new Vector3();
-            points.forEach(p => {
-                center.add(p);
-                p.applyQuaternion(rotato)
-            });
-            center.divideScalar(points.length).add(this.position());
-            // union and earcut the result
+            points.forEach(p => p.applyQuaternion(rotato));
+            // union / nest result
             let polys = tris.map(t => newPolygon().fromVectors([ t.a, t.b, t.c ]));
             let union = polygons.union(polys,0,true);
-            return { polys: union, quaternion: rotato, center };
+            return { polys: union, quaternion: rotato };
         } else {
             return {};
         }
