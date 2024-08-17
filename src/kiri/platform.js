@@ -684,13 +684,7 @@ function platformLayout() {
         return space.update();
     }
 
-    // in CNC mode with >1 widget, force layout with spacing @ 1.5x largest tool diameter
-    if (MODE === MODES.CAM && api.widgets.count() > 1) {
-        let spacing = gap || 1, CAM = driver.CAM;
-        if (process.camRoughOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, process.camRoughTool));
-        if (process.camOutlineOn) spacing = Math.max(spacing, CAM.getToolDiameter(settings, process.camOutlineTool));
-        gap = spacing * 1.5;
-    }
+    // TODO: in CNC mode with >1 widget, force layout min spacing @ largest tool diameter
 
     // space parts to account for anchor in belt mode
     if (isBelt) {
