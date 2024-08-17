@@ -1800,7 +1800,7 @@ class Polygon {
      * print paths.
      *
      * @param {Point} target
-     * @return {Object} {point:point, distance:distance}
+     * @return {Object} {distance, point, index: point_index}
      */
     findClosestPointTo(target) {
         let dist,

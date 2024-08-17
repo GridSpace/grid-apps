@@ -437,6 +437,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
         );
     }
 
+    /**
+     * output an array of slices that form a pocket
+     *
+     * @param {Slice[]} top-down Z stack of slices
+     * @param {*} opts
+     */
     function sliceOutput(sliceOut, opts = {}) {
         const { cutdir, depthFirst, easeDown, progress } = opts;
 
@@ -518,6 +524,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         setTolerance,
         setPrintPoint,
         setLasering,
+        getPrintPoint() { return printPoint },
         printPoint,
         newLayer,
         addGCode,
