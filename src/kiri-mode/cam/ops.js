@@ -1089,7 +1089,7 @@ class OpTrace extends CamOp {
                     routed.push(poly);
                 });
                 for (let poly of POLY.nest(routed)) {
-                    let offdist = offover;
+                    let offdist = offset !== 'none' ? offover : 0;
                     if (!offdist)
                     switch (offset) {
                         case "outside": offdist = traceOffset; break;

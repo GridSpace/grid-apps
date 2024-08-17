@@ -1005,7 +1005,7 @@ CAM.init = function(kiri, api) {
                 widget.traces.forEach(poly => {
                     let match = areas.filter(arr => poly.matches(arr));
                     let layers = new kiri.Layers();
-                    layers.setLayer("trace", {line: 0xaaaa55}, false).addPoly(poly);
+                    layers.setLayer("trace", {line: 0xaaaa55, fat:4, order:-10}, false).addPoly(poly);
                     stack.addLayers(layers);
                     stack.new_meshes.forEach(mesh => {
                         mesh.trace = {widget, poly};
@@ -1070,7 +1070,7 @@ CAM.init = function(kiri, api) {
     });
     func.traceHover = function(data) {
         if (lastTrace) {
-            let { color, colorSave } = lastTrace.material[0];
+            let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
             color.r = colorSave.r;
             color.g = colorSave.g;
             color.b = colorSave.b;
@@ -1091,7 +1091,7 @@ CAM.init = function(kiri, api) {
             let { clientX, clientY } = event;
             let { offsetWidth, offsetHeight } = target;
         }
-        let material = lastTrace.material[0];
+        let material = lastTrace.material[0] || lastTrace.material;
         let color = material.color;
         let {r, g, b} = color;
         material.colorSave = {r, g, b};
@@ -1114,7 +1114,7 @@ CAM.init = function(kiri, api) {
         }
     };
     func.traceToggle = function(obj, skip) {
-        let material = obj.material[0];
+        let material = obj.material[0] || obj.material;
         if (!material) return;
         let { color, colorSave } = material;
         let { widget, poly } = obj.trace;

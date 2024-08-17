@@ -64,7 +64,7 @@ class Layers {
             rotation: this.rotation,
             position: this.position,
             off: off === true,
-            lines: [],
+            lines: [], // basic line segments
             polys: [], // colors are an attribute on polygons
             faces: [], // triangles for areas and flats
             norms: undefined, // flats vertex normals
@@ -72,7 +72,7 @@ class Layers {
             paths: undefined, // 3d extrusion / tube paths (used to be an array, now merged - FIX)
             cpath: undefined, // path colors indices
             color: colors || {
-                check: 0, // unused?
+                fat: 0, // render polys & lines with thickness
                 line: 0,
                 face: 0,
                 opacity: 1

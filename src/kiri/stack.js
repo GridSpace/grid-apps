@@ -108,7 +108,7 @@ class Stack {
 
         const { polys, lines, faces, cface, paths, cpath } = layer;
         const { color, off, norms, rotation, position } = layer;
-        const { opacity } = color;
+        const { fat, order, opacity } = color;
         const meshes = [];
         const defstate = !off;
         const mats = [];
@@ -118,7 +118,7 @@ class Stack {
             const vert = []; // vertexes
             const mat = []; // materials
             const grp = []; // material groups
-            const geo = new THREE.BufferGeometry();
+            const geo = fat ? new THREE.LineSegmentsGeometry() : new THREE.BufferGeometry();
             // map all the poly and line colors for re-use
             const cmap = {}
             let cidx = 0;
@@ -129,7 +129,10 @@ class Stack {
                 addPoly(vert, poly);
                 const pc = poly.color !== undefined ? { line: poly.color, opacity } : color;
                 const pk = pc.line;
-                const cc = cmap[pk] = cmap[pk] || { idx: cidx++, mat: createLineMaterial(pc, mat) };
+                const cc = cmap[pk] = cmap[pk] || {
+                    idx: cidx++,
+                    mat: createLineMaterial(pc, mat)
+                };
                 if (last !== pk) {
                     if (grp.length) {
                         // rewrite counts for last group
@@ -154,10 +157,19 @@ class Stack {
                 const g = grp[i];
                 geo.addGroup(g[0], g[1], g[2]);
             }
-            geo.setFromPoints(vert);
-            const segs = new THREE.LineSegments(geo, mat);
+            if (fat) {
+                // LineSegmentsGeometry does not support setFromPoints()
+                geo.setPositions(vert.map(v => v.toArray()).flat());
+            } else {
+                geo.setFromPoints(vert);
+            }
+            // LineSegments2 does not support multiple materials
+            const segs = fat ?
+                new THREE.LineSegments2(geo, mat[0]) :
+                new THREE.LineSegments(geo, mat);
             if (rotation) segs.rotation.set(rotation.x, rotation.y, rotation.z);
             if (position) segs.position.set(position.x, position.y, position.z);
+            if (order !== undefined) segs.renderOrder = order;
             meshes.push(segs);
             group.add(segs);
             mats.appendAll(mat);
@@ -244,7 +256,13 @@ let shininess = 15,
 
 function createLineMaterial(color, array) {
     const opacity = color.lopacity || color.opacity || 1;
-    const mat = new THREE.LineBasicMaterial({
+    const mat = color.fat ? new THREE.LineMaterial({
+        // transparent: true,
+        // opacity: opacity,
+        color: color.line,
+        linewidth: color.fat,
+        alphaToCoverage: false
+    }) : new THREE.LineBasicMaterial({
         transparent: true,
         opacity: opacity,
         color: color.line
