@@ -22,7 +22,7 @@ const { mesh, moto } = root;
 const { broker } = gapp;
 const { space } = moto;
 
-const version = mesh.version = '1.5.1';
+const version = mesh.version = '1.5.2';
 const call = broker.send;
 const dbindex = [ "admin", "space" ];
 
