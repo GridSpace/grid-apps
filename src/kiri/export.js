@@ -152,7 +152,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         grid_uuid;
 
     // join gcode array into a string
-    gcode = gcode.join('\r\n');
+    gcode = gcode.join('\r\n') + '\r\n';
 
     // run gcode post processor function (when supplied and valid)
     if (codeproc && self[codeproc]) {
