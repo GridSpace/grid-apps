@@ -217,6 +217,43 @@ button:hover {
     gap: 1px;
 }
 
+#top-left:not(:hover) #mode-label {
+    display: flex;
+}
+
+#mode-label {
+    display: none;
+    position: absolute;
+    text-transform: capitalize;
+    padding: 2px 4px 2px 4px;
+    background-color: rgba(0,200,0,0.35);
+    border: 1px solid rgba(0,0,0,0.25);
+    border-radius: 3px;
+    transform: translateX(-50%);
+    top: calc(100% + 2px);
+    left: 50%;
+}
+
+#mode-label:before {
+    content: '';
+    position: absolute;
+    top: -10px; /* Adjust to position the caret above the menu */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #777 transparent;
+}
+
+.dark #mode-label:before {
+    border-color: transparent transparent #ddd transparent;
+}
+
+.dark #mode-label {
+    background-color: rgba(0,200,0,0.65);
+    border-color: rgba(255,255,255,0.25);
+}
+
 #top-mid {
     flex-grow: 1;
 }

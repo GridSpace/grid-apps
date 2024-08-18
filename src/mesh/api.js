@@ -1231,6 +1231,7 @@ const mode = {
             $(`mode-${key}`).classList.remove('selected');
         }
         $(`mode-${mode}`).classList.add('selected');
+        $('mode-label').innerText = mode;
         api.mode.check();
         mesh.edges?.end();
         if (mode === 'sketch') {

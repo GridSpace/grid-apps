@@ -451,7 +451,8 @@ function ui_build() {
                 menu_item('Surface', mode.surface, '4', 'mode-surface'),
                 menu_item('Face', mode.face, '5', 'mode-face'),
                 menu_item('Edge', mode.edge, '6', 'mode-edge'),
-            ])
+            ]),
+            div({ id: "mode-label" })
         ]),
         div({ class: "menu sketch-on" }, [
             div('Object'),

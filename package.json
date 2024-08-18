@@ -40,8 +40,8 @@
         "manifold-3d": "^2.5.1",
         "moment": "^2.29.4",
         "serve-static": "^1.14.1",
-        "three": "^0.166.0",
-        "three-mesh-bvh": "^0.5.21",
+        "three": "^0.167.1",
+        "three-mesh-bvh": "^0.7.6",
         "uglify-js": "3.14.5",
         "validator": ">=13.7.0",
         "ws": "^7.5.5"
