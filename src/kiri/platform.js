@@ -850,6 +850,10 @@ function platformLoadFiles(files, group) {
                 group = group || [];
                 let svg = load.SVG.parse(data.textDecode('utf-8'));
                 let ind = 0;
+                if (svg.length === 0) {
+                    api.show.alert(`SVG contains no polylines`, 10);
+                    api.show.alert(`Fonts must be converted to paths`, 10);
+                }
                 for (let v of svg) {
                     platformLoadWidget(group, svg[ind++], ind ? `${name}-${ind}` : name);
                 }
