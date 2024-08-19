@@ -192,6 +192,27 @@ function rotate(x, y, z) {
     space.update();
 }
 
+function merge() {
+    let sel = widgets();
+    if (sel.length === 0) {
+        sel = api.widgets.all();
+    }
+    let obj = [];
+    sel.forEach(widget => {
+        let {x, y, z} = widget.track.pos || { x:0, y:0, z:0 };
+        let pos = widget.mesh.geometry.attributes.position;
+        let pvals = pos.array;
+        for (let i=0, il=pos.count; i<il; i += 3) {
+            let pi = i * pos.itemSize;
+            obj.push(pvals[pi++] + x, pvals[pi++] + y, pvals[pi++] + z);
+            obj.push(pvals[pi++] + x, pvals[pi++] + y, pvals[pi++] + z);
+            obj.push(pvals[pi++] + x, pvals[pi++] + y, pvals[pi++] + z);
+        }
+    });
+    let w = api.platform.load_verts([], obj, "merged");
+    api.platform.select(w);
+}
+
 function exportWidgets(format = "stl") {
     let sel = widgets();
     if (sel.length === 0) {
@@ -276,6 +297,7 @@ function setDisabled(bool) {
 // extend API (api.selection)
 const selection = api.selection = {
     move,
+    merge,
     scale,
     rotate,
     mirror,

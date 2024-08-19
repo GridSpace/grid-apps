@@ -743,6 +743,7 @@ function platformLayout() {
 
 function platformLoadWidget(group, vertices, filename) {
     const widget = newWidget(undefined, group).loadVertices(vertices.toFloat32(), true);
+    widget.meta.file = filename;
     if (filename) widget.saveToCatalog(filename);
     platformAdd(widget);
     return widget;
@@ -904,6 +905,7 @@ const platform = api.platform = {
     load_stl: platformLoadSTL,
     load_url: platformLoadURL,
     load_files: platformLoadFiles,
+    load_verts: platformLoadWidget,
     deselect: platformDeselect,
     select: platformSelect,
     select_all: platformSelectAll,
