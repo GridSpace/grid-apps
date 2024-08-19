@@ -602,6 +602,21 @@ button:hover {
     border: 1px solid var(--dark-border);
 }
 
+.tool label:before {
+    content: '';
+    position: absolute;
+    left: -2px; /* Adjust to position the caret */
+    top: 50%;
+    transform: translateY(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent #777 transparent transparent;
+}
+
+.dark .tool label:before {
+    border-color: transparent #ddd transparent transparent;
+}
+
 .tool label {
     font-size: 12px !important;
     background-color: var(--menu-back);

@@ -516,7 +516,7 @@ mesh.model = class MeshModel extends mesh.object {
         // TODO
     }
 
-    // invert normals for entire mesh or selected faces depending on mod
+    // invert normals for entire mesh or selected faces depending on mode
     invert(mode) {
         let { modes } = mesh.api;
         let geo = this.mesh.geometry;
