@@ -1407,6 +1407,7 @@ class OpPocket extends CamOp {
             };
             for (let pocket of pockets.filter(p => !p.used)) {
                 let poly = pocket[0].camLines.slice().sort((a,b) => b.area() - a.area())[0];
+                if (!poly) continue;
                 let find = poly.findClosestPointTo(printPoint);
                 if (find.distance < min.dist) {
                     min.pocket = pocket;
