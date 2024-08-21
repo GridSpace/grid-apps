@@ -36,17 +36,15 @@ function parse(text, opt = { soup: true }) {
         let width = path.userData?.style?.strokeWidth;
         let miter = path.userData?.style?.strokeMiterLimit;
         if (fromSoup) {
-            for (let node of shapes) {
-                let { shape, holes } = node.extractPoints();
-                for (let path of [ shape, ...holes ]) {
-                    let poly = base.newPolygon().addPoints(path.map(p => base.newPoint(p.x, -p.y, 0)));
-                    if (poly.appearsClosed()) poly.points.pop();
-                    if (type === 'polyline') poly.setOpen(true);
-                    poly._svg = { width, miter };
-                    polys.push(poly);
-                    if (scale !== 1) {
-                        poly.scale({ x: scale, y: scale, z: 1 });
-                    }
+            for (let sub of path.subPaths) {
+                let points = sub.getPoints();
+                let poly = base.newPolygon().addPoints(points.map(p => base.newPoint(p.x, -p.y, 0)));
+                if (poly.appearsClosed()) poly.points.pop();
+                if (type === 'polyline') poly.setOpen(true);
+                poly._svg = { width, miter };
+                polys.push(poly);
+                if (scale !== 1) {
+                    poly.scale({ x: scale, y: scale, z: 1 });
                 }
             }
             continue;
