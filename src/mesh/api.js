@@ -875,22 +875,47 @@ let add = {
     },
 
     threads() {
-        worker.model_gen_threads({
-            height: 25,
-            radius: 10,
-            turns: 10,
-            depth: 1,
-            steps: 75,
-            taper: true
-        }).then(verts => {
-            const nmdl = new mesh.model({ file: "gear", mesh: verts.toFloat32() });
-            const ngrp = group.new([ nmdl ]);
-            selection.set([ nmdl ]);
-            ngrp.floor();
-            // Object.assign(last, params);
-            api.prefs.save();
+        function genthreads(bound) {
+            const { _height, _radius, _turns, _depth, _steps, _taper } = bound;
+            api.modal.hide();
+            let params;
+            worker.model_gen_threads(params = {
+                height: parseFloat(_height.value),
+                radius: parseFloat(_radius.value),
+                turns: parseFloat(_turns.value),
+                depth: parseFloat(_depth.value),
+                steps: parseFloat(_steps.value),
+                taper: _taper.checked ? true : false,
+            }).then(verts => {
+                const nmdl = new mesh.model({ file: "threads", mesh: verts.toFloat32() });
+                const ngrp = group.new([ nmdl ]);
+                selection.set([ nmdl ]);
+                ngrp.floor();
+                Object.assign(last, params);
+                api.prefs.save();
+            });
+        }
+        let last = api.prefs.map.threads = (api.prefs.map.threads || {});
+        api.modal.dialog({
+            title: "gear generator",
+            body: [ h.div({ class: "additem" }, [
+                h.label('height'),
+                h.input({ value: last.height || 25, size: 5, id: "_height" }),
+                h.label('radius'),
+                h.input({ value: last.radius || 10, size: 5, id: "_radius" }),
+                h.label('turns'),
+                h.input({ value: last.turns || 10, size: 5, id: "_turns" }),
+                h.label('depth'),
+                h.input({ value: last.depth || 1, size: 5, id: "_depth" }),
+                h.label('steps'),
+                h.input({ value: last.steps || 100, size: 5, id: "_steps" }),
+                h.label('taper'),
+                h.input({ id: "_taper", type: "checkbox" }),
+                h.button({ _: "create", onclick() { genthreads(api.modal.bound) } })
+            ]) ]
         });
-
+        api.modal.bound._height.focus();
+        if (last.taper) api.modal.bound._taper.checked = true;
     }
 };
 

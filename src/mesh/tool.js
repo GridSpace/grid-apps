@@ -839,11 +839,11 @@ mesh.tool = class MeshTool {
                 let itern = iter + steps;
                 let rm = radius - depth;
                 let rx = true &&
-                    // iter < mute_min ? rm + (iter / mute_min) * depth :
+                    taper && iter < mute_min ? rm + (iter / mute_min) * depth :
                     taper && iter > mute_max ? rm + ((iter_max - iter) / mute_min) * depth :
                     radius;
                 let rxt = true &&
-                    // itern < mute_min ? rm + (itern / mute_min) * depth :
+                    taper && itern < mute_min ? rm + (itern / mute_min) * depth :
                     taper && itern > mute_max ? rm + ((iter_max - itern) / mute_min) * depth :
                     radius;
                 let angle0 = rstep * step - Math.PI/2;
