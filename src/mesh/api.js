@@ -876,11 +876,12 @@ let add = {
 
     threads() {
         worker.model_gen_threads({
-            height: 50,
-            radius: 25,
-            turns: 5,
-            depth: 3,
-            steps: 50
+            height: 25,
+            radius: 10,
+            turns: 10,
+            depth: 1,
+            steps: 75,
+            taper: true
         }).then(verts => {
             const nmdl = new mesh.model({ file: "gear", mesh: verts.toFloat32() });
             const ngrp = group.new([ nmdl ]);

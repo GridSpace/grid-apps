@@ -459,7 +459,7 @@ let model = {
     },
 
     gen_threads(data, send) {
-        let { height, radius, turns, depth, steps } = data;
+        let { height, radius, turns, depth, steps, taper } = data;
         let zstep = height / turns;
         height += zstep * 2;
         turns += 2;
@@ -469,6 +469,7 @@ let model = {
             turns,
             depth,
             steps,
+            taper
         );
         // return send.done(verts);
         let s0 = model.split({
