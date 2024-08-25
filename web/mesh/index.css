@@ -294,21 +294,21 @@ button:hover {
     gap: 4px;
 }
 
-.addact input, .addgear input {
+.addact input, .additem input {
     text-align: center;
 }
 
-.addgear {
+.additem {
     gap: 5px 10px;
     display: grid;
     grid-template-columns: 1fr 50px;
 }
 
-/* .addgear hr {
+/* .additem hr {
     width: 100%;
 } */
 
-.addgear button, .addgear hr, .addgear code {
+.additem button, .additem hr, .additem code {
     grid-column: span 2;
     text-align: center;
 }

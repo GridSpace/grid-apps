@@ -34,12 +34,12 @@ const selection = {
     },
 
     // @returns {MeshObject[]} or all groups if not strict and no selection
-    list(strict) {
+    list(strict = false) {
         return selected.length || strict ? selected.slice() : groups.slice();
     },
 
     // return selected groups + groups from selected models
-    groups(strict) {
+    groups(strict = true) {
         let all = selection.list(strict);
         let grp = all.filter(s => s instanceof mesh.group);
         let mdl = all.filter(s => s instanceof mesh.model);
@@ -50,7 +50,7 @@ const selection = {
     },
 
     // return selected models + models from selected groups
-    models(strict) {
+    models(strict = true) {
         let all = selection.list(strict);
         let grp = all.filter(s => s instanceof mesh.group);
         let mdl = all.filter(s => s instanceof mesh.model);
@@ -62,12 +62,12 @@ const selection = {
         return mdl;
     },
 
-    sketch() {
-        return selection.sketches()[0];
-    },
-
     sketches() {
         return selection.list(true).filter(s => s.type === 'sketch');
+    },
+
+    sketch() {
+        return selection.sketches()[0];
     },
 
     sketch_items() {
@@ -329,7 +329,7 @@ const pattern = {
         }
         api.modal.dialog({
             title: "circle pattern",
-            body: [ h.div({ class: "addgear" }, [
+            body: [ h.div({ class: "additem" }, [
                 h.label('total count'),
                 h.input({ value: 3, size: 5, id: "_count" }),
                 h.label('center x,y'),
@@ -368,7 +368,7 @@ const pattern = {
         }
         api.modal.dialog({
             title: "grid pattern",
-            body: [ h.div({ class: "addgear" }, [
+            body: [ h.div({ class: "additem" }, [
                 h.label('x count'),
                 h.input({ value: 3, size: 5, id: "_x" }),
                 h.label('y count'),
@@ -451,7 +451,7 @@ let sketch = {
         }
         api.modal.dialog({
             title: "extrude",
-            body: [ h.div({ class: "addgear" }, [
+            body: [ h.div({ class: "additem" }, [
                 h.label('height'),
                 h.input({ value: opt.height || 10, size: 5, id: "_height" }),
                 h.hr(),
@@ -533,7 +533,7 @@ let sketch = {
             sketch.selection.ifcan((sketch, items) => {
                 api.modal.dialog({
                     title: "rotate",
-                    body: [ h.div({ class: "addgear" }, [
+                    body: [ h.div({ class: "additem" }, [
                         h.label('angle'),
                         h.input({ value: 90, size: 5, id: "_angle" }),
                         h.button({ _: "rotate", onclick() {
@@ -695,7 +695,7 @@ let add = {
         }
         api.modal.dialog({
             title: "add circle",
-            body: [ h.div({ class: "addgear" }, [
+            body: [ h.div({ class: "additem" }, [
                 h.label('radius in mm'),
                 h.input({ value: 10, size: 5, id: "_radius" }),
                 h.hr(),
@@ -726,7 +726,7 @@ let add = {
         }
         api.modal.dialog({
             title: "add rectangle",
-            body: [ h.div({ class: "addgear" }, [
+            body: [ h.div({ class: "additem" }, [
                 h.label('width'),
                 h.input({ value: 20, size: 5, id: "_width" }),
                 h.label('height'),
@@ -794,7 +794,7 @@ let add = {
         }
         api.modal.dialog({
             title: "cylinder",
-            body: [ h.div({ class: "addgear" }, [
+            body: [ h.div({ class: "additem" }, [
                 h.label('diameter'),
                 h.input({ value: 20, size: 5, id: "_diameter" }),
                 h.label('height'),
@@ -847,7 +847,7 @@ let add = {
         let last = api.prefs.map.gear = (api.prefs.map.gear || {});
         api.modal.dialog({
             title: "gear generator",
-            body: [ h.div({ class: "addgear" }, [
+            body: [ h.div({ class: "additem" }, [
                 h.label('number of teeth'),
                 h.input({ value: last.teeth || 20, size: 5, id: "_teeth" }),
                 h.label('shaft diameter'),
@@ -872,6 +872,24 @@ let add = {
             ]) ]
         });
         api.modal.bound._teeth.focus();
+    },
+
+    threads() {
+        worker.model_gen_threads({
+            height: 50,
+            radius: 25,
+            turns: 5,
+            depth: 3,
+            steps: 50
+        }).then(verts => {
+            const nmdl = new mesh.model({ file: "gear", mesh: verts.toFloat32() });
+            const ngrp = group.new([ nmdl ]);
+            selection.set([ nmdl ]);
+            ngrp.floor();
+            // Object.assign(last, params);
+            api.prefs.save();
+        });
+
     }
 };
 
@@ -1159,7 +1177,7 @@ const tool = {
     },
 
     indexFaces(models, opt = {}) {
-        models = fallback(models);
+        models = fallback(models, false);
         log('mapping faces').pin();
         let promises = [];
         let mark = Date.now();

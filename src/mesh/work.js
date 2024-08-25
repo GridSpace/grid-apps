@@ -221,7 +221,7 @@ let model = {
         let { id, z } = data;
         let scale = 100000;
         z = Math.round(z * scale) | 0;
-        let pos = translate_encode(id);
+        let pos = data.pos || translate_encode(id);
         let o1 = []; // new bottom
         let o2 = []; // new top
         let o1p = []; // o1 new split faces
@@ -456,6 +456,30 @@ let model = {
             }
         }
         send.done(verts);
+    },
+
+    gen_threads(data, send) {
+        let { height, radius, turns, depth, steps } = data;
+        let zstep = height / turns;
+        height += zstep * 2;
+        turns += 2;
+        let verts = new mesh.tool().generateThreads(
+            height,
+            radius,
+            turns,
+            depth,
+            steps,
+        );
+        // return send.done(verts);
+        let s0 = model.split({
+            z: zstep,
+            pos: verts
+        })
+        let s1 = model.split({
+            z: height - zstep,
+            pos: s0.o2
+        });
+        send.done(s1.o1);
     }
 };
 

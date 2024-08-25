@@ -418,6 +418,7 @@ function ui_build() {
                 menu_item('Add Cylinder', add.cylinder),
                 menu_item('Add Cube', add.cube),
                 menu_item('Add Gear', add.gear),
+                menu_item('Add Threads', add.threads),
                 hr(),
                 menu_item('Add Sketch', add.sketch),
                 devel ? menu_item('Add Vertices', add.input) : undefined,
