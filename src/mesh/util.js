@@ -319,6 +319,17 @@ const util = exports({
         let local = new Float32Array(shared32.length);
         local.set(shared32);
         return local;
+    },
+
+    diagram(object, depth = 0) {
+        let pre = '|'.padStart(depth * 3, '-');
+        let ent = Object.entries(object).sort((a,b) => a[0] > b[0] ? 1 : -1);
+        for (let [key, v] of ent) {
+            console.log(pre, key);
+            if (v && typeof v === 'object' && !Array.isArray(v)) {
+                util.diagram(v, depth + 1);
+            }
+        }
     }
 
 });
