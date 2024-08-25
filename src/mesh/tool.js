@@ -830,24 +830,31 @@ mesh.tool = class MeshTool {
         let z2step = zstep / steps;
         let points = []
         let iter = 0;
-        let iter_max = turns * steps;
-        let mute_min = Math.round(steps * 1.25);
+        let iter_max = turns * steps + steps;
+        let mute_min = Math.round(steps * 2.5);
         let mute_max = iter_max - mute_min;
         for (let turn=0; turn<turns; turn++) {
             for (let step=0; step<steps; step++) {
                 iter++;
+                let itern = iter + steps;
                 let rm = radius - depth;
-                let rx = radius;
-                    // iter < mute_min ? rm + (iter / mute_min) * depth :
-                    // iter > mute_max ? rm + ((iter_max - iter) / mute_min) * depth :
-                    // radius;
+                let rx = true &&
+                    iter < mute_min ? rm + (iter / mute_min) * depth :
+                    iter > mute_max ? rm + ((iter_max - iter) / mute_min) * depth :
+                    radius;
+                let rxt = true &&
+                    itern < mute_min ? rm + (itern / mute_min) * depth :
+                    itern > mute_max ? rm + ((iter_max - itern) / mute_min) * depth :
+                    radius;
                 let angle0 = rstep * step - Math.PI/2;
                 let z0 = (zstep * turn) + (z2step * step);
                 let x0 = Math.cos(angle0) * (rm);
                 let y0 = Math.sin(angle0) * (rm);
                 let x1 = Math.cos(angle0) * (rx);
                 let y1 = Math.sin(angle0) * (rx);
-                let p0 = [ x1, y1, z0 + zstep/2 ];
+                let x1t = Math.cos(angle0) * (rxt);
+                let y1t = Math.sin(angle0) * (rxt);
+                let p0 = [ x1t, y1t, z0 + zstep/2 ];
                 let p1 = [ x0, y0, z0 ];
                 let p2 = [ x1, y1, z0 - zstep/2 ];
                 let [ pp0, pp1, pp2 ] = points;

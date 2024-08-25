@@ -1081,13 +1081,13 @@ const tool = {
     },
 
     invert() {
-        for (let m of selection.models()) {
+        for (let m of selection.models(false)) {
             m.invert(api.mode.get());
         }
     },
 
     triangulate() {
-        for (let m of selection.models()) {
+        for (let m of selection.models(false)) {
             m.triangulateSelections();
         }
     },
