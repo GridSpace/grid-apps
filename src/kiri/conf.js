@@ -900,6 +900,7 @@ const conf = exports({
         favorites:{},
         // map of device to last process setting (name)
         devproc: {},
+        // application ui and control preferences (Q menu)
         controller:{
             view: null,
             dark: false,
@@ -933,7 +934,7 @@ const conf = exports({
             ortho: false,
             devel: false
         },
-        // hidden ui groups
+        // default hidden ui groups
         hidden: {
             "fdm-base": true,
             "fdm-cool": true,
@@ -941,7 +942,7 @@ const conf = exports({
             "fdm-supp": true,
             "fdm-xprt": true
         },
-        // label state preferences
+        // label state preferences (slice/preview toggles)
         labels: {
             'CAM-3-arrows': false,
             'FDM-3-engage': false,
@@ -953,6 +954,8 @@ const conf = exports({
         synth: {},
         // widget extra info for slicing (extruder mapping)
         widget: {},
+        // legacy localStorage settings (like octo print)
+        local: {},
         mode: 'FDM',
         id: genID(),
         ver: CVER

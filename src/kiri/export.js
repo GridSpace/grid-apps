@@ -20,6 +20,17 @@ kiri.export = exportFile;
 
 let printSeq = parseInt(local['kiri-print-seq'] || local['print-seq'] || "0") + 1;
 
+function localGet(key) {
+    let sloc = api.conf.get().local;
+    return sloc[key] || local[key];
+}
+
+function localSet(key, val) {
+    let sloc = api.conf.get().local;
+    sloc[key] = local[key] = val;
+    return val;
+}
+
 function exportFile(options) {
     let mode = api.mode.get();
     let names = api.widgets.all().map(w => w.meta ? w.meta.file : undefined)
@@ -91,7 +102,7 @@ function callExportSLA(options, names) {
 }
 
 function exportLaserDialog(data, names) {
-    local['kiri-print-seq'] = printSeq++;
+    localSet('kiri-print-seq', printSeq++);
 
     const fileroot = names[0] || "laser";
     const filename = `${fileroot}-${(printSeq.toString().padStart(3,"0"))}`;
@@ -132,8 +143,15 @@ function exportLaserDialog(data, names) {
     });
 }
 
+function bindField(field, varname) {
+    $(field).onblur = function() {
+        console.log('save', field, 'to', varname);
+        localSet(varname, $(field).value.trim());
+    };
+}
+
 function exportGCodeDialog(gcode, sections, info, names) {
-    local['kiri-print-seq'] = printSeq++;
+    localSet('kiri-print-seq', printSeq++);
 
     let settings = api.conf.get(),
         MODE = api.mode.get_id(),
@@ -182,8 +200,8 @@ function exportGCodeDialog(gcode, sections, info, names) {
             return;
         }
 
-        local['octo-host'] = host.trim();
-        local['octo-apik'] = apik.trim();
+        localSet('octo-host', host.trim());
+        localSet('octo-apik', apik.trim());
 
         filename = $('print-filename').value;
         form.append("file", getBlob(), filename+"."+fileext);
@@ -227,7 +245,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
 
         grid_local = devs;
 
-        let gdev = local['grid-local'];
+        let gdev = localGet('grid-local');
         let gloc = $('grid-local');
         let html = [];
         for (let uuid in devs) {
@@ -240,7 +258,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         if (html.length) {
             gloc.innerHTML = html.join('\n');
             gloc.onchange = (ev) => {
-                local['grid-local'] = gloc.options[gloc.selectedIndex].value
+                localSet('grid-local', gloc.options[gloc.selectedIndex].value);
             };
             $('send-to-gridhead').style.display = 'flex';
             $('send-to-gridspool').style.display = 'flex';
@@ -302,8 +320,8 @@ function exportGCodeDialog(gcode, sections, info, names) {
         xhtr.onreadystatechange = function() {
             if (xhtr.readyState === 4) {
                 if (xhtr.status >= 200 && xhtr.status < 300) {
-                    local['grid-host'] = host;
-                    local['grid-apik'] = apik;
+                    localSet('grid-host', host);
+                    localSet('grid-apik', apik);
                     let res = JSON.parse(xhtr.responseText);
                     let sel = false;
                     let match = false;
@@ -312,11 +330,11 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     grid_targets = {};
                     for (let key in res) {
                         first = first || key;
-                        if (!local['grid-target']) {
-                            local['grid-target'] = key;
+                        if (!localGet('grid-target')) {
+                            localSet('grid-target', key);
                             sel = true;
                         } else {
-                            sel = local['grid-target'] === key;
+                            sel = localGet('grid-target') === key;
                         }
                         match = match || sel;
                         grid_targets[html.length] = key;
@@ -329,7 +347,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
                         );
                     }
                     if (!match) {
-                        local['grid-target'] = first;
+                        localSet('grid-target', first);
                     }
                     grid_target.innerHTML = html.join('\n');
                 } else if (xhtr.status === 401) {
@@ -352,7 +370,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         let xhtr = new XMLHttpRequest(),
             host = grid_host.value,
             apik = grid_apik.value,
-            target = local['grid-target'] || '';
+            target = localGet('grid-target') || '';
 
         if (target === '') {
             api.show.alert('invalid or missing target');
@@ -371,8 +389,8 @@ function exportGCodeDialog(gcode, sections, info, names) {
             return;
         }
 
-        local['grid-host'] = host.trim();
-        local['grid-apik'] = apik.trim();
+        localSet('grid-host', host.trim());
+        localSet('grid-apik', apik.trim());
 
         xhtr.onreadystatechange = function() {
             if (xhtr.readyState === 4) {
@@ -470,6 +488,12 @@ function exportGCodeDialog(gcode, sections, info, names) {
         if (fdm) {
             calcWeight();
         }
+
+        // persist fields when changed
+        bindField('octo-host', 'octo-host');
+        bindField('octo-apik', 'octo-apik');
+        bindField('grid-host', 'grid-host');
+        bindField('grid-apik', 'grid-apik');
 
         // in cam mode, show zip file option
         let downloadZip = $('print-zip');
@@ -642,8 +666,8 @@ function exportGCodeDialog(gcode, sections, info, names) {
                 $('oph1nt').style.display = 'none';
                 $('send-to-gridhost').style.display = 'none';
             }
-            octo_host.value = local['octo-host'] || '';
-            octo_apik.value = local['octo-apik'] || '';
+            octo_host.value = localGet('octo-host') || '';
+            octo_apik.value = localGet('octo-apik') || '';
         } catch (e) { console.log(e) }
 
         // grid:host setup
@@ -657,10 +681,10 @@ function exportGCodeDialog(gcode, sections, info, names) {
             grid_apik = $('grid-apik');
             grid_target = $('grid-target');
             grid_target.onchange = function(ev) {
-                local['grid-target'] = grid_targets[grid_target.selectedIndex];
+                localSet('grid-target', grid_targets[grid_target.selectedIndex]);
             };
-            grid_host.value = local['grid-host'] || '';
-            grid_apik.value = local['grid-apik'] || '';
+            grid_host.value = localGet('grid-host') || '';
+            grid_apik.value = localGet('grid-apik') || '';
             gridhost_probe();
         } catch (e) { console.log(e) }
 
