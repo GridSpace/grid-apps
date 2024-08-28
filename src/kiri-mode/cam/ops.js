@@ -124,9 +124,10 @@ class OpLevel extends CamOp {
         updateToolDiams(toolDiam);
 
         let points = [];
-        let clear = POLY.outer(POLY.offset(tshadow, toolDiam * (op.over || 0)));
-        // let tabsub = [];
-        // POLY.subtract(clear, POLY.offset(tabs.map(t => t.poly), toolDiam/2), tabsub, []);
+        let clear = op.stock ?
+            [ newPolygon().centerRectangle({x:0,y:0,z:0}, stock.x, stock.y) ] :
+            POLY.outer(POLY.offset(tshadow, toolDiam * (op.over || 0)));
+
         POLY.fillArea(clear, 90, stepOver, points);
 
         let lines = this.lines = [];

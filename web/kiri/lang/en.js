@@ -493,6 +493,8 @@ self.kiri.lang['en-us'] = {
     cc_loff_l:      ["distance from stock face","in workspace units"],
     cc_lxyo_s:      "xy offset",
     cc_lxyo_l:      ["xy offset from part boundary as a fraction of the tool diameter (0 - 1.0)"],
+    cc_lsto_s:      "stock",
+    cc_lsto_l:      ["use stock area instead of part area"],
 
     // CNC ROUGHING
     cr_menu:        "rough",

@@ -465,6 +465,7 @@ const conf = exports({
                 camLevelSpeed: 1000,
                 camLevelDown: 0,
                 camLevelOver: 0.5,
+                camLevelStock: true,
                 camRoughTool: 1000,
                 camRoughSpindle: 1000,
                 camRoughDown: 2,
