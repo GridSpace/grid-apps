@@ -897,7 +897,7 @@ let add = {
         }
         let last = api.prefs.map.threads = (api.prefs.map.threads || {});
         api.modal.dialog({
-            title: "gear generator",
+            title: "threads generator",
             body: [ h.div({ class: "additem" }, [
                 h.label('height'),
                 h.input({ value: last.height || 25, size: 5, id: "_height" }),

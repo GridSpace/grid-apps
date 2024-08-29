@@ -1482,6 +1482,10 @@ th, tr, td, label {
 #tool-cols {
     max-height: 350px;
 }
+.dark #mod-x {
+    border-color: #555;
+    background-color: rgba(0,0,0,0.15);
+}
 #mod-x {
     border-radius: 5px;
     border: 2px solid rgba(255,255,255,0.5);
@@ -1565,6 +1569,10 @@ th, tr, td, label {
     font-weight: normal;
     padding-top: 5px;
 }
+.dark #mod-print .box {
+    background-color: rgba(0,0,0,0.15);
+    border-color: #555;
+}
 #mod-print .box {
     background-color: rgba(255,255,255,0.5);
     border: 1px solid #bbb;
@@ -1599,6 +1607,10 @@ th, tr, td, label {
     flex-grow: 1;
     font-weight: bold;
     padding-right: 10px;
+}
+.dark #mod-print button {
+    background-color: #555;
+    border-color: #777;
 }
 #mod-print button {
     flex-direction: column;
