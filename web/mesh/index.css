@@ -807,14 +807,21 @@ button:hover {
     transform: translate(-50%, 50%);
 }
 
+.dark #pinner {
+    background-color: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.25);
+    border-top-color: rgba(255,255,255,0.6);
+}
+
 #pinner {
     z-index: 5000;
     display: none;
-    width: 25px;
-    height: 25px;
-    border: 6px solid rgba(0,0,0,0.1);
+    width: 50px;
+    height: 50px;
+    background-color: rgba(0,0,0,0.1);
+    border: 12px solid rgba(0,0,0,0.15);
     border-radius: 50%;
-    border-top-color: rgba(0,0,0,0.5);
+    border-top-color: rgba(0,0,0,0.6);
     animation: spin 1.5s linear infinite;
 }
 
