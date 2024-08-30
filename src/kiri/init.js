@@ -1000,7 +1000,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             let dev = devs[local],
                 fdmCode = dev.cmd,
                 fdmMode = (api.mode.get() === 'FDM');
-
             if (dev.mode ? (dev.mode === api.mode.get()) : (fdmCode ? fdmMode : !fdmMode)) {
                 devices.push(local);
             }
@@ -1080,11 +1079,11 @@ gapp.register("kiri.init", [], (root, exports) => {
             h.option({ _: '-- Stock Devices --', disabled: true }),
             ...list_cdev
         ]);
-        let dev_opts = [...dev_list.options].map(o => o.label);
+        let dev_opts = [...dev_list.options].map(o => o.innerText);
         dev_list.selectedIndex = dev_opts.indexOf(selected);
         dev_list.onchange = ev => {
             const seldev = dev_list.options[dev_list.selectedIndex];
-            selectDevice(seldev.label);
+            selectDevice(seldev.innerText);
             api.platform.layout();
         }
         selectDevice(selected);
