@@ -37,7 +37,8 @@ function parse(text, opt = { soup: true }) {
         let miter = path.userData?.style?.strokeMiterLimit;
         if (fromSoup) {
             for (let sub of path.subPaths) {
-                let points = sub.getPoints();
+                let length = sub.getLength();
+                let points = sub.getPoints(sub.curves ? Math.max(length/2, 12) : undefined);
                 let poly = base.newPolygon().addPoints(points.map(p => base.newPoint(p.x, -p.y, 0)));
                 if (poly.appearsClosed()) poly.points.pop();
                 if (type === 'polyline') poly.setOpen(true);
