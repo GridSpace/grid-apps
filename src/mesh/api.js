@@ -1134,10 +1134,11 @@ const tool = {
             return log('rename requires a single selection');
         }
         let onclick = onkeydown = (ev) => {
-            if (ev.code && ev.code !== 'Enter') {
+            let el = $('tempedit');
+            if (!el || (ev.code && ev.code !== 'Enter')) {
                 return;
             }
-            model.rename( $('tempedit').value.trim() );
+            model.rename( el.value.trim() );
             util.defer(selection.update);
             api.modal.hide();
         };
