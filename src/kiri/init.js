@@ -1032,6 +1032,8 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.uc.prompt(`Rename "${selected}`, selected).then(newname => {
                 if (newname) {
                     updateDeviceName(newname);
+                    api.conf.save();
+                    sync_put();
                     showDevices();
                 } else {
                     showDevices();
