@@ -578,6 +578,8 @@ function settingsImport(data, ask) {
             }
         }
         if (isProcess) {
+            console.log({ data });
+            if (data.name === 'default') data.name = data.device || data.name;
             if (settings.sproc[data.mode][data.name]) {
                 uc.confirm(`Replace process ${data.name}?`).then(yes => {
                     if (yes) procset();
