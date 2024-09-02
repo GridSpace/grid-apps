@@ -245,7 +245,6 @@ mesh.model = class MeshModel extends mesh.object {
     // moves mesh object center to target
     centerTo(to) {
         this.log('model-centerto', to);
-        let pos = this.position();
         let { mid } = this.bounds;
         let abs = this.world_bounds.mid;
         this.translate(
@@ -291,6 +290,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (opt.x) return this.reload(data);
         let model = new mesh.model({ file: `${this.file}`, mesh: data });
         let group = opt.group || mesh.api.group.new();
+        let bounds = this.group.bounds;
         group.add(model);
         model.position(pos.x, pos.y, pos.z);
         model.wireframe(this.wireframe());
@@ -298,9 +298,9 @@ mesh.model = class MeshModel extends mesh.object {
             api.selection.add(model);
         }
         if (opt.mirror) {
-            group.move(0, 0, group.bounds.dim.z);
+            group.move(0, 0, bounds.dim.z);
         } else if (opt.shift) {
-            group.move(group.bounds.dim.x, 0, 0);
+            group.move(bounds.dim.x, 0, 0);
         }
         return model;
     }

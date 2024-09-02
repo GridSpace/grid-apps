@@ -1154,7 +1154,11 @@ const tool = {
         models = fallback(models, true);
         if (models.length) {
             log(`regrouping ${models.length} model(s)`);
-            return mesh.api.group.new(models.map(m => m.ungroup()));
+            let group = mesh.api.group.new(models.map(m => m.ungroup()));
+            let bounds = group.bounds;
+            models.forEach(m => m.centerTo(bounds.mid));
+            console.log({ bounds, group, models });
+            return group;
         }
     },
 

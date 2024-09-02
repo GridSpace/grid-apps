@@ -925,7 +925,7 @@ function ui_build() {
         let g_pos = util.average(s_grp.map(g => g.object.position));
         let g_rot = util.average(s_grp.map(g => g.object.rotation));
         let g_id = s_grp.map(g => g.id).join(' ');
-        let h_grp = sblock('orient', g_id, grid3(
+        let h_grp = sblock('move', g_id, grid3(
             util.extract(g_pos, map),
             util.extract(g_rot).map(r => (r * rad).round(2).toFixed(map.fixed)),
             und, und, 'group'
