@@ -194,6 +194,7 @@ mesh.model = class MeshModel extends mesh.object {
     qrotate(quaternion) {
         this.log('model-rotate', quaternion.toArray());
         this.geometry.applyQuaternion(quaternion);
+        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
@@ -201,6 +202,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (x === 1 && y === 1 && z === 1) return;
         this.log('model-scale', ...arguments, this.bounds);
         this.geometry.scale(x, y, z);
+        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
@@ -208,6 +210,7 @@ mesh.model = class MeshModel extends mesh.object {
         if (!(x || y || z)) return;
         this.log('model-translate', ...arguments);
         this.geometry.translate(x, y, z);
+        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
