@@ -364,6 +364,12 @@ function facon(name, sub) {
     return h.i({ class: [ sub || "fa", name ] });
 }
 
+function editable() {
+    for (let el of [...arguments]) {
+        el.classList.add('editable');
+    }
+}
+
 function menu_item(text, fn, short, id) {
     if (short) {
         short = Array.isArray(short) ? short : [ short ];
@@ -866,24 +872,22 @@ function ui_build() {
             ]);
             for (let axis of [ 'x', 'y', 'z' ]) {
                 let el = bound[`sketch_val_${axis.toUpperCase()}_center`];
-                el.classList.add('editable');
                 el.onclick = field_edit(`${axis} center`, (nval, oval) => {
                     sketch.center[axis] = nval;
                     sketch.render();
                 }, { sketch: true });
                 let el2 = bound[`sketch_val_${axis.toUpperCase()}_scale`];
-                el2.classList.add('editable');
                 el2.onclick = field_edit(`${axis} size`, (nval, oval) => {
                     sketch.scale[axis] = nval;
                     sketch.render();
                 }, { sketch: true });
+                editable(el, el2);
             }
             if (sel_item)
             for (let axis of [ 'x', 'y' ]) {
                 let el = bound[`item_val_${axis.toUpperCase()}_center`];
                 // all items have centers
                 if (!el) continue;
-                el.classList.add('editable');
                 el.onclick = field_edit(`${axis} center`, (nval, oval) => {
                     sel_item.center[axis] = nval;
                     sketch.render();
@@ -891,7 +895,6 @@ function ui_build() {
                 // polygon scaling, circle radius
                 let el2 = bound[`item_val_${axis.toUpperCase()}_size`];
                 if (!el2) continue;
-                el2.classList.add('editable');
                 el2.onclick = field_edit(`${axis} size`, (nval, oval) => {
                     if (sel_item.type === 'polygon') {
                         let scale = {x:1,y:1,z:1};
@@ -911,11 +914,11 @@ function ui_build() {
                 let lab = { x: 'points', y: 'rotation' }[axis];
                 let el3 = bound[`circle_val_${lab}_other`];
                 if (!el3) continue;
-                el3.classList.add('editable');
                 el3.onclick = field_edit(`${axis} size`, (nval, oval) => {
                     sel_item[lab] = nval;
                     sketch.render();
                 }, { sketch: true });
+                editable(el, el2, e3);
             }
 
             return;
@@ -931,10 +934,7 @@ function ui_build() {
             und, und, 'group'
         ));
 
-        // let m_pos = util.average(s_mdl.map(m => m.object.position));
-        // let m_rot = util.average(s_mdl.map(m => m.object.rotation));
         let m_id = s_mdl.map(m => m.id).join(' ');
-
         let bounds = util.bounds(s_mdl);
         let h_ara = sblock('span', m_id, grid3(
             util.extract(bounds.center, map),
@@ -982,9 +982,7 @@ function ui_build() {
 
         // bind rotation editable fields
         let { group_val_X_rot, group_val_Y_rot, group_val_Z_rot } = bound;
-        [ group_val_X_rot, group_val_Y_rot, group_val_Z_rot ].forEach(e => {
-            e.classList.add('editable');
-        });
+        editable(group_val_X_rot, group_val_Y_rot, group_val_Z_rot);
         group_val_X_rot.onclick = field_edit('x rotation', (group, val) => {
             group.rotate(val,0,0);
         });
@@ -997,38 +995,41 @@ function ui_build() {
 
         // bind position editable fields
         let { group_val_X_pos, group_val_Y_pos, group_val_Z_pos } = bound;
-        [ group_val_X_pos, group_val_Y_pos, group_val_Z_pos ].forEach(e => {
-            e.classList.add('editable');
-        });
+        editable(group_val_X_pos, group_val_Y_pos, group_val_Z_pos);
         group_val_X_pos.onclick = field_edit('x position', (group, val) => {
-            // let r = group.position();
-            // group.position(val, r.y, r.z);
             selection.move_models(val,0,0);
         }, { floor: false });
         group_val_Y_pos.onclick = field_edit('y position', (group, val) => {
-            // let r = group.position();
-            // group.position(r.x, val, r.z);
             selection.move_models(0,val,0);
         }, { floor: false });
         group_val_Z_pos.onclick = field_edit('z position', (group, val) => {
-            // let r = group.position();
-            // group.position(r.x, r.y, val);
             selection.move_models(0,0,val);
         }, { floor: false });
 
-        // bind scale editable fields
-        let pedit = prefs.map.edit;
-        let { span_val_X_size, span_val_Y_size, span_val_Z_size } = bound;
-        [ span_val_X_size, span_val_Y_size, span_val_Z_size ].forEach(e => {
-            e.classList.add('editable');
+        // bind center editable fields
+        let { span_val_X_center, span_val_Y_center, span_val_Z_center } = bound;
+        editable(span_val_X_center, span_val_Y_center, span_val_Z_center);
+        span_val_X_center.onclick = field_edit('x center', (group, val, oval) => {
+            selection.move_models(val - parseFloat(oval),0,0);
         });
+        span_val_Y_center.onclick = field_edit('y center', (group, val, oval) => {
+            selection.move_models(0,val - parseFloat(oval),0);
+        });
+        span_val_Z_center.onclick = field_edit('z center', (group, val, oval) => {
+            selection.move_models(0,0,val - parseFloat(oval));
+        });
+
+        // bind size editable fields
+        let { span_val_X_size, span_val_Y_size, span_val_Z_size } = bound;
+        editable(span_val_X_size, span_val_Y_size, span_val_Z_size);
+
+        let pedit = prefs.map.edit;
         let axgrp = {};
         // activate axis grouping toggles
         [ "X", "Y", "Z" ].forEach(axis => {
             let prefkey = `scale_group_${axis}`;
             let agv = axgrp[axis] = pedit[prefkey];
             let lbl = bound[`span_lbl_${axis}`];
-            lbl.classList.add('editable');
             if (agv) {
                 lbl.classList.add('grouped');
             } else {
@@ -1038,6 +1039,7 @@ function ui_build() {
                 pedit[prefkey] = !agv;
                 defer_selection(); // update ui
             };
+            editable(lbl);
         });
         span_val_X_size.onclick = field_edit('x size', (group, val, oval) => {
             let rel = val / parseFloat(oval);

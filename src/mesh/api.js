@@ -262,6 +262,7 @@ const selection = {
         for (let s of selection.groups()) {
             s.floor();
         }
+        call.selection_update();
         return selection;
     },
 
@@ -269,6 +270,7 @@ const selection = {
         for (let s of [...selection.groups(), ...selection.sketches()]) {
             s.centerXY();
         }
+        call.selection_update();
         return selection;
     },
 
@@ -1157,7 +1159,6 @@ const tool = {
             let group = mesh.api.group.new(models.map(m => m.ungroup()));
             let bounds = group.bounds;
             models.forEach(m => m.centerTo(bounds.mid));
-            console.log({ bounds, group, models });
             return group;
         }
     },
