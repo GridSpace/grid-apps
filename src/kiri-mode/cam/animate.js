@@ -69,7 +69,7 @@ kiri.load(() => {
                 speedLabel = UC.newLabel("speed", {class:"speed padleft"}),
                 progress = UC.newLabel('0%', {class:"progress"}),
                 modelButton = UC.newButton(null,toggleModel,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model",class:"padleft"}),
-                shadeButton = UC.newButton(null,toggleShade,{icon:'<i class="fa-solid fa-cube"></i>',title:"shading"}),
+                shadeButton = UC.newButton(null,toggleShade,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
             ]);
             updateSpeed();
             setTimeout(step, delay || 0);
@@ -81,6 +81,8 @@ kiri.load(() => {
             api.event.emit('animate', 'CAM');
             api.alerts.hide(alert);
             moto.space.platform.showGridBelow(false);
+            toggleModel();
+            toggleShade();
         });
     }
 
@@ -176,6 +178,7 @@ kiri.load(() => {
     }
 
     function toggleShade() {
+        return api.event.emit('cam.stock.toggle');
         material.transparent = !material.transparent;
         if (material.transparent) {
             material.color.addScalar(0.07);
@@ -303,7 +306,7 @@ kiri.load(() => {
         const step = rez;
         const stepsX = Math.floor(stock.x / step);
         const stepsY = Math.floor(stock.y / step);
-        const { pos, ind, sab } = createGrid(stepsX, stepsY, stock, step);
+        const { pos, ind, sab } = createGrid(stepsX, stepsY, stock, step, true);
         const offset = {
             x: process.camOriginCenter ? 0 : stock.x / 2,
             y: process.camOriginCenter ? 0 : stock.y / 2,
@@ -345,20 +348,22 @@ kiri.load(() => {
         }
     };
 
-    function createGrid(stepsX, stepsY, size, step) {
+    function createGrid(stepsX, stepsY, size, step, stock) {
         const gridPoints = stepsX * stepsY;
         const sab = new SharedArrayBuffer(gridPoints * 3 * 4)
         const pos = new Float32Array(sab);
         const ind = [];
         const ox = size.x / 2;
         const oy = size.y / 2;
+        let ex = stepsX - 1;
+        let ey = stepsY - 1;
 
         // initialize grid points
         for (let x=0, ai=0; x<stepsX; x++) {
             for (let y=0; y<stepsY; y++) {
                 let px = pos[ai++] = x * step - ox + step / 2;
                 let py = pos[ai++] = y * step - oy + step / 2;
-                pos[ai++] = size.z;
+                pos[ai++] = stock && (x * y === 0 || x === ex || y === ey) ? 0 : size.z;
                 if (asPoints) {
                     continue;
                 }

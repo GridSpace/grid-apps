@@ -234,6 +234,10 @@ CAM.init = function(kiri, api) {
         updateAxisMode();
     });
 
+    api.event.on("cam.stock.toggle", () => {
+        camStock.visible = !camStock.visible;
+    });
+
     api.event.on("boolean.click", api.platform.update_bounds);
 
     api.event.on([
