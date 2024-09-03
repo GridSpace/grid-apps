@@ -60,6 +60,17 @@ const tweak = {
     gcode_decimals(v) { api.work.config({base:{gcode_decimals: v}}) }
 };
 
+function localGet(key) {
+    let sloc = api.conf.get().local;
+    return sloc[key] || api.sdb[key];
+}
+
+function localSet(key, val) {
+    let sloc = api.conf.get().local;
+    sloc[key] = api.sdb[key] = val;
+    return val;
+}
+
 const api = exports({
     clip: (text) => {
         navigator.clipboard
@@ -84,6 +95,18 @@ const api = exports({
     feature,
     devel,
     tweak,
+    local: {
+        get: (key) => localGet(key),
+        getInt: (key) => parseInt(localGet(key)),
+        getFloat: (key) => parseFloat(localGet(key)),
+        getBoolean: (key, def = true) => {
+            let val = localGet(key);
+            return val === true || val === 'true' || val === def;
+        },
+        toggle: (key, val, def) => localSet(key, val ?? !api.local.getBoolean(key, def)),
+        put: (key, val) => localSet(key, val),
+        set: (key, val) => localSet(key, val),
+    }
 });
 
 });

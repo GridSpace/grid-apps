@@ -21,14 +21,11 @@ kiri.export = exportFile;
 let printSeq = parseInt(local['kiri-print-seq'] || local['print-seq'] || "0") + 1;
 
 function localGet(key) {
-    let sloc = api.conf.get().local;
-    return sloc[key] || local[key];
+    return api.local.get(key);
 }
 
 function localSet(key, val) {
-    let sloc = api.conf.get().local;
-    sloc[key] = local[key] = val;
-    return val;
+    return api.local.set(key, val);
 }
 
 function exportFile(options) {

@@ -47,7 +47,7 @@ kiri.load(() => {
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
-        toggleStock(undefined,true);
+        toggleStock(undefined,true,false);
     }
 
     function animate(api, delay) {
@@ -72,6 +72,7 @@ kiri.load(() => {
                 modelButton = UC.newButton(null,toggleModel,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model",class:"padleft"}),
                 shadeButton = UC.newButton(null,toggleStock,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
             ]);
+            speedIndex = api.local.getInt('cam.anim.speed') || 0;
             updateSpeed();
             setTimeout(step, delay || 0);
             const toolpos = $('layer-toolpos');
@@ -82,8 +83,8 @@ kiri.load(() => {
             api.event.emit('animate', 'CAM');
             api.alerts.hide(alert);
             moto.space.platform.showGridBelow(false);
-            toggleModel();
-            toggleStock();
+            toggleModel(0,api.local.getBoolean('cam.anim.model', false));
+            toggleStock(0,api.local.getBoolean('cam.anim.stock', false));
         });
     }
 
@@ -174,11 +175,13 @@ kiri.load(() => {
         delete meshes[id];
     }
 
-    function toggleModel() {
-        api.widgets.all().forEach(w => w.toggleVisibility());
+    function toggleModel(ev,bool) {
+        api.local.toggle('cam.anim.model', bool);
+        api.widgets.all().forEach(w => w.toggleVisibility(bool));
     }
 
-    function toggleStock(ev,bool) {
+    function toggleStock(ev,bool,set) {
+        set !== false && api.local.toggle('cam.anim.stock', bool);
         return api.event.emit('cam.stock.toggle', bool ?? undefined);
     }
 
@@ -232,6 +235,7 @@ kiri.load(() => {
         } else if (inc > 0) {
             speedIndex = (speedIndex + inc) % speedValues.length;
         }
+        api.local.set('cam.anim.speed', speedIndex);
         speed = speedValues[speedIndex];
         speedLabel.innerText = speedNames[speedIndex];
     }

@@ -371,9 +371,9 @@ class Widget {
         }
     }
 
-    toggleVisibility() {
+    toggleVisibility(bool) {
         const mat = this.getMaterial();
-        mat.visible = !mat.visible;
+        mat.visible = bool ?? !mat.visible;
     }
 
     /**

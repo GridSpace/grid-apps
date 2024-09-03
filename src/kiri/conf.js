@@ -955,7 +955,11 @@ const conf = exports({
         // widget extra info for slicing (extruder mapping)
         widget: {},
         // legacy localStorage settings (like octo print)
-        local: {},
+        local: {
+            'cam.anim.model': false,
+            'cam.anim.stock': false,
+            'cam.anim.speed': 3
+        },
         mode: 'FDM',
         id: genID(),
         ver: CVER
