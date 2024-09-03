@@ -30,8 +30,11 @@ kiri.load(() => {
         speedLabel,
         speed,
         color = 0,
+        material,
         pauseButton,
         playButton,
+        modelButton,
+        shadeButton,
         posOffset = { x:0, y:0, z:0 };
 
     const { moto } = root;
@@ -63,8 +66,10 @@ kiri.load(() => {
                 pauseButton = UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
                 UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
                 UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
-                speedLabel = UC.newLabel("speed", {class:"speed"}),
-                progress = UC.newLabel('0%', {class:"progress"})
+                speedLabel = UC.newLabel("speed", {class:"speed padleft"}),
+                progress = UC.newLabel('0%', {class:"progress"}),
+                modelButton = UC.newButton(null,toggleModel,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model",class:"padleft"}),
+                shadeButton = UC.newButton(null,toggleShade,{icon:'<i class="fa-solid fa-cube"></i>',title:"shading"}),
             ]);
             updateSpeed();
             setTimeout(step, delay || 0);
@@ -85,8 +90,24 @@ kiri.load(() => {
         },
 
         animate_setup(settings, ondone) {
-            color = settings.controller.dark ? 0x888888 : 0;
+            color = settings.controller.dark ? 0x48607B : 0x607FA4;
             unitScale = settings.controller.units === 'in' ? 1/25.4 : 1;
+            let shininess = 120,
+                specular = 0x202020,
+                emissive = 0x101010,
+                metalness = 0.2,
+                roughness = 0.8,
+                flatShading = true,
+                transparent = true,
+                opacity = 0.9,
+                side = THREE.DoubleSide;
+            material = new THREE.MeshMatcapMaterial({
+                flatShading,
+                transparent,
+                opacity,
+                color,
+                side
+            });
             kiri.client.send("animate_setup", {settings}, ondone);
         },
 
@@ -127,27 +148,10 @@ kiri.load(() => {
             });
             mesh = new THREE.LineSegments(geo, mat);
         } else {
-            let shininess = 120,
-                specular = 0x202020,
-                emissive = 0x101010,
-                metalness = 0.2,
-                roughness = 0.8,
-                flatShading = true,
-                transparent = true,
-                opacity = 0.9,
-                color = 0x888888,
-                side = THREE.DoubleSide;
-            if (!flatShading) {
+            if (!material.flatShading) {
                 geo.computeVertexNormals();
             }
-            const mat = new THREE.MeshMatcapMaterial({
-                flatShading,
-                transparent,
-                opacity,
-                color,
-                side
-            });
-            mesh = new THREE.Mesh(geo, mat);
+            mesh = new THREE.Mesh(geo, material);
         }
         space.world.add(mesh);
         meshes[id] = mesh;
@@ -165,6 +169,19 @@ kiri.load(() => {
     function deleteMesh(id) {
         space.world.remove(meshes[id]);
         delete meshes[id];
+    }
+
+    function toggleModel() {
+        api.widgets.all().forEach(w => w.toggleVisibility());
+    }
+
+    function toggleShade() {
+        material.transparent = !material.transparent;
+        if (material.transparent) {
+            material.color.addScalar(0.07);
+        } else {
+            material.color.addScalar(-0.07);
+        }
     }
 
     function step() {

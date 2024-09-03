@@ -1918,10 +1918,12 @@ th, tr, td, label {
 }
 #layer-animate .speed {
     width: 30px;
-    margin-left: 5px !important;
 }
 #layer-animate .progress {
     width: 3.5em;
+}
+#layer-animate .padleft {
+    margin-left: 5px !important;
 }
 #layer-animate button {
     width: 45px;

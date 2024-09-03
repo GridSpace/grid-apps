@@ -371,6 +371,11 @@ class Widget {
         }
     }
 
+    toggleVisibility() {
+        const mat = this.getMaterial();
+        mat.visible = !mat.visible;
+    }
+
     /**
      * center geometry bottom (on platform) at 0,0,0
      */
