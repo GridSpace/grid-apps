@@ -47,6 +47,7 @@ kiri.load(() => {
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
+        toggleStock(undefined,true);
     }
 
     function animate(api, delay) {
@@ -69,7 +70,7 @@ kiri.load(() => {
                 speedLabel = UC.newLabel("speed", {class:"speed padleft"}),
                 progress = UC.newLabel('0%', {class:"progress"}),
                 modelButton = UC.newButton(null,toggleModel,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model",class:"padleft"}),
-                shadeButton = UC.newButton(null,toggleShade,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
+                shadeButton = UC.newButton(null,toggleStock,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
             ]);
             updateSpeed();
             setTimeout(step, delay || 0);
@@ -82,7 +83,7 @@ kiri.load(() => {
             api.alerts.hide(alert);
             moto.space.platform.showGridBelow(false);
             toggleModel();
-            toggleShade();
+            toggleStock();
         });
     }
 
@@ -177,14 +178,8 @@ kiri.load(() => {
         api.widgets.all().forEach(w => w.toggleVisibility());
     }
 
-    function toggleShade() {
-        return api.event.emit('cam.stock.toggle');
-        material.transparent = !material.transparent;
-        if (material.transparent) {
-            material.color.addScalar(0.07);
-        } else {
-            material.color.addScalar(-0.07);
-        }
+    function toggleStock(ev,bool) {
+        return api.event.emit('cam.stock.toggle', bool ?? undefined);
     }
 
     function step() {
