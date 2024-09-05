@@ -697,6 +697,9 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     deleteSelections(append) {
+        if (!this.sel.faces.length) {
+            return;
+        }
         let newverts = this.collectFacesByMaterialIndex(0);
         if (newverts) {
             if (append) {
