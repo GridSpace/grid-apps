@@ -71,6 +71,7 @@ async function path(levels, update, opts = {}) {
         opacity: flat ? 0.5 : 1
     };
     const printOpt = {
+        // fat: thin ? 1.5 : 0,
         face: printColor,
         line: flat ? 1 : printColor,
         opacity: flat ? 0.5 : 1

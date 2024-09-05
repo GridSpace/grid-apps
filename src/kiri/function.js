@@ -215,9 +215,9 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         if (scale === 1) {
             view.update_stack_labels();
         }
-        if (!isBelt && controller.lineType === 'line' && !process.xray && !controller.devel) {
-            $('render-ghost').onclick();
-        }
+        // if (!isBelt && controller.lineType === 'line' && !process.xray && !controller.devel) {
+        //     $('render-ghost').onclick();
+        // }
         if (scale === 1) {
             show.progress(0);
         }
@@ -372,9 +372,9 @@ function preparePreview(callback, scale = 1, offset = 0) {
         view.update_stack_labels();
 
         let { controller, process } = settings;
-        if (!isBelt && controller.lineType === 'line' && !process.xray && !controller.devel) {
-            $('render-ghost').onclick();
-        }
+        // if (!isBelt && controller.lineType === 'line' && !process.xray && !controller.devel) {
+        //     $('render-ghost').onclick();
+        // }
 
         // mark preview complete for export
         complete.preview = feature.pmode;
