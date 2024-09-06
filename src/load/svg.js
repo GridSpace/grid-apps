@@ -39,6 +39,10 @@ function parse(text, opt = { soup: true }) {
             for (let sub of path.subPaths) {
                 let length = sub.getLength();
                 let points = sub.getPoints(sub.curves ? Math.max(length/2, 12) : undefined);
+                if (points.length < 3) {
+                    console.log({ sub, length, points });
+                    continue;
+                }
                 let poly = base.newPolygon().addPoints(points.map(p => base.newPoint(p.x, -p.y, 0)));
                 if (poly.appearsClosed()) poly.points.pop();
                 if (type === 'polyline') poly.setOpen(true);

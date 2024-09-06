@@ -14,6 +14,39 @@ const asPoints = false;
 
 // ---( CLIENT FUNCTIONS )---
 
+// tint points below z=0 with red
+function add_red_neg_z(material) {
+    material.onBeforeCompile = (shader) => {
+        console.log({ OBC: shader });
+        shader.vertexShader = shader.vertexShader.replace(
+            `#include <worldpos_vertex>`,
+            `
+            #include <worldpos_vertex>
+            vWorldPosition = vec3(transformed);
+            `
+        );
+
+        shader.vertexShader = `
+            varying vec3 vWorldPosition;
+        ` + shader.vertexShader;
+
+        shader.fragmentShader = `
+            varying vec3 vWorldPosition;
+        ` + shader.fragmentShader;
+
+        shader.fragmentShader = shader.fragmentShader.replace(
+            `#include <dithering_fragment>`,
+            `
+            #include <dithering_fragment>
+            if (vWorldPosition.z < 0.0) {
+                gl_FragColor.rgb += vec3(0.5, 0.0, 0.0); // Add red tint
+            }
+            `
+        );
+    };
+    return material;
+}
+
 kiri.load(() => {
     if (!kiri.client) {
         return;
@@ -105,13 +138,15 @@ kiri.load(() => {
                 transparent = true,
                 opacity = 0.9,
                 side = THREE.DoubleSide;
-            material = new THREE.MeshMatcapMaterial({
+            // material = new THREE.MeshMatcapMaterial({
+            material = new THREE.MeshPhongMaterial({
                 flatShading,
                 transparent,
                 opacity,
                 color,
                 side
             });
+            add_red_neg_z(material);
             kiri.client.send("animate_setup", {settings}, ondone);
         },
 
@@ -156,6 +191,7 @@ kiri.load(() => {
                 geo.computeVertexNormals();
             }
             mesh = new THREE.Mesh(geo, material);
+            mesh.renderOrder = -10;
         }
         space.world.add(mesh);
         meshes[id] = mesh;

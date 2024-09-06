@@ -1097,9 +1097,11 @@ const tool = {
         if (dup_sel) {
             selection.clear();
         }
+        let nm = [];
         for (let m of models) {
-            m.duplicate({ select: dup_sel, shift: dup_shift });
+            nm.push(m.duplicate({ select: dup_sel, shift: dup_shift }));
         }
+        tool.regroup(nm);
     },
 
     mirror() {

@@ -80,7 +80,7 @@ let materials = mesh.material = {
         color: 0x0,
         transparent: true,
         opacity: 0.5
-    })
+    }),
 };
 
 /** 3D model rendered on plaform **/
