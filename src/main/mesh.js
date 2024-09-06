@@ -311,7 +311,7 @@ function space_init(data) {
                     if ([api.modes.object, api.modes.tool, api.modes.sketch].contains(mode)) {
                         selection.delete();
                     } else {
-                        for (let m of selection.models()) {
+                        for (let m of api.model.list()) {
                             m.deleteSelections();
                             space.refresh()
                         }
