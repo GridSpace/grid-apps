@@ -206,6 +206,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             update_speeds: updateSpeeds,
             hide_slices: hideSlices,
             snapshot: null,
+            outline: setOutline,
             unit_scale: unitScale,
             wireframe: setWireframe,
         },
@@ -384,6 +385,11 @@ gapp.register("kiri.main", [], (root, exports) => {
 
     function setWireframe(bool, color, opacity) {
         api.widgets.each(function(w) { w.setWireframe(bool, color, opacity) });
+        SPACE.update();
+    }
+
+    function setOutline(bool) {
+        api.widgets.each(w => w.setOutline(bool));
         SPACE.update();
     }
 
@@ -886,13 +892,16 @@ gapp.register("kiri.main", [], (root, exports) => {
                 updateSpeeds();
                 updateSliderMax();
                 setWidgetVisibility(true);
+                !isCAM && api.view.outline(false);
                 break;
             case VIEWS.PREVIEW:
                 $('act-preview').classList.add('selected');
                 setWidgetVisibility(true);
+                !isCAM && api.view.outline(false);
                 break;
             case VIEWS.ANIMATE:
                 $('act-animate').classList.add('selected');
+                !isCAM && api.view.outline(false);
                 break;
             default:
                 console.log("invalid view mode: "+mode);

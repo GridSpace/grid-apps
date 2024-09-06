@@ -2742,6 +2742,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d * $('rot_z').value) };
         $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d * $('rot_z').value) };
         // rendering options
+        $('render-outline').onclick = () => { api.view.outline({ toggle: true }) };
         $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
         $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
         $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };

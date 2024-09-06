@@ -834,16 +834,19 @@ class Widget {
             return;
         }
         let mesh = this.mesh;
+        if (set && set.toggle) {
+            set = this.outline ? false : true;
+        }
         if (this.outline) {
             mesh.remove(this.outline);
-            this.wioutlinere = null;
+            this.outline = null;
 
         }
         if (set) {
             let dark = api.space.is_dark();
             let angle = api.conf.get().controller.outline || 20;
             let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
-            let material = new THREE.LineBasicMaterial({ color: 0x000000 });
+            let material = new THREE.LineBasicMaterial({ color: 0 });
             this.outline = new THREE.LineSegments(edges, material);
             mesh.add(this.outline);
         }
