@@ -918,7 +918,7 @@ const conf = exports({
             autoLayout: true,
             spaceRandoX: false,
             spaceLayout: 1,
-            outline: 20,
+            edgeangle: 20,
             units: "mm",
             exportOcto: false,
             exportGhost: false,
@@ -955,7 +955,7 @@ const conf = exports({
         widget: {},
         // legacy localStorage settings (like octo print)
         local: {
-            'model.outline': false,
+            'model.edges': false,
             'cam.anim.model': false,
             'cam.anim.stock': false,
             'cam.anim.speed': 3

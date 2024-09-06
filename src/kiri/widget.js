@@ -828,7 +828,7 @@ class Widget {
         return Date.now() - mark;
     }
 
-    setOutline(set) {
+    setEdges(set) {
         if (!(api && api.conf)) {
             // missing api features in engine mode
             return;
@@ -844,7 +844,7 @@ class Widget {
         }
         if (set) {
             let dark = api.space.is_dark();
-            let angle = api.conf.get().controller.outline || 20;
+            let angle = api.conf.get().controller.edgeangle || 20;
             let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
             let material = new THREE.LineBasicMaterial({ color: 0 });
             this.outline = new THREE.LineSegments(edges, material);

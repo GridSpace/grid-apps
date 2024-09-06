@@ -1711,7 +1711,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             lineType:         newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
             animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
             units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM}, "units"),
-            outline:          newInput(LANG.op_spoa_s, {title:LANG.op_spoa_l, convert:toFloat, size:3}),
+            edgeangle:        newInput(LANG.op_spoa_s, {title:LANG.op_spoa_l, convert:toFloat, size:3}),
             _____:            newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
             autoSave:         newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
             autoLayout:       newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
@@ -2657,15 +2657,10 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d * $('rot_z').value) };
         $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d * $('rot_z').value) };
         // rendering options
-        $('render-edges').onclick = () => { api.view.outline({ toggle: true }); api.conf.save() };
+        $('render-edges').onclick = () => { api.view.edges({ toggle: true }); api.conf.save() };
         $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
         $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
         $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
-        // mesh buttons
-        // $('mesh-swap').onclick = () => { api.widgets.replace() };
-        // $('mesh-enable').onclick = () => { api.selection.enable() };
-        // $('mesh-disable').onclick = () => { api.selection.disable() };
-        // $('mesh-rename').onclick = () => { api.widgets.rename() };
         $('mesh-export-stl').onclick = () => { objectsExport('stl') };
         $('mesh-export-obj').onclick = () => { objectsExport('obj') };
         $('mesh-merge').onclick = api.selection.merge;

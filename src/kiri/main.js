@@ -206,7 +206,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             update_speeds: updateSpeeds,
             hide_slices: hideSlices,
             snapshot: null,
-            outline: setOutline,
+            edges: setEdges,
             unit_scale: unitScale,
             wireframe: setWireframe,
         },
@@ -388,14 +388,14 @@ gapp.register("kiri.main", [], (root, exports) => {
         SPACE.update();
     }
 
-    function setOutline(bool) {
+    function setEdges(bool) {
         if (bool && bool.toggle) {
-            api.local.toggle('model.outline');
+            api.local.toggle('model.edges');
         } else {
-            api.local.set('model.outline', bool);
+            api.local.set('model.edges', bool);
         }
-        bool = api.local.getBoolean('model.outline');
-        api.widgets.each(w => w.setOutline(bool));
+        bool = api.local.getBoolean('model.edges');
+        api.widgets.each(w => w.setEdges(bool));
         SPACE.update();
     }
 
@@ -892,23 +892,23 @@ gapp.register("kiri.main", [], (root, exports) => {
                 setVisibleLayer();
                 setWidgetVisibility(true);
                 api.widgets.opacity(1);
-                api.view.outline(api.local.getBoolean('model.outline'));
+                api.view.edges(api.local.getBoolean('model.edges'));
                 break;
             case VIEWS.SLICE:
                 $('act-slice').classList.add('selected');
                 updateSpeeds();
                 updateSliderMax();
                 setWidgetVisibility(true);
-                !isCAM && api.view.outline(false);
+                !isCAM && api.view.edges(false);
                 break;
             case VIEWS.PREVIEW:
                 $('act-preview').classList.add('selected');
                 setWidgetVisibility(true);
-                !isCAM && api.view.outline(false);
+                !isCAM && api.view.edges(false);
                 break;
             case VIEWS.ANIMATE:
                 $('act-animate').classList.add('selected');
-                !isCAM && api.view.outline(false);
+                !isCAM && api.view.edges(false);
                 break;
             default:
                 console.log("invalid view mode: "+mode);
