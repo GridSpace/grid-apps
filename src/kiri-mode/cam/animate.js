@@ -67,6 +67,7 @@ kiri.load(() => {
         playButton,
         modelButton,
         shadeButton,
+        transButton,
         posOffset = { x:0, y:0, z:0 };
 
     const { moto } = root;
@@ -103,6 +104,7 @@ kiri.load(() => {
                 progress = UC.newLabel('0%', {class:"progress"}),
                 modelButton = UC.newButton(null,toggleModel,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model",class:"padleft"}),
                 shadeButton = UC.newButton(null,toggleStock,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
+                transButton = UC.newButton(null,toggleTrans,{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency"}),
             ]);
             speedIndex = api.local.getInt('cam.anim.speed') || 0;
             updateSpeed();
@@ -115,6 +117,7 @@ kiri.load(() => {
             api.event.emit('animate', 'CAM');
             api.alerts.hide(alert);
             moto.space.platform.showGridBelow(false);
+            toggleTrans(0,api.local.getBoolean('cam.anim.trans', true));
             toggleModel(0,api.local.getBoolean('cam.anim.model', false));
             toggleStock(0,api.local.getBoolean('cam.anim.stock', false));
         });
@@ -186,9 +189,7 @@ kiri.load(() => {
             });
             mesh = new THREE.LineSegments(geo, mat);
         } else {
-            if (!material.flatShading) {
-                geo.computeVertexNormals();
-            }
+            geo.computeVertexNormals();
             mesh = new THREE.Mesh(geo, material);
             mesh.renderOrder = -10;
         }
@@ -218,6 +219,12 @@ kiri.load(() => {
     function toggleStock(ev,bool,set) {
         set !== false && api.local.toggle('cam.anim.stock', bool);
         return api.event.emit('cam.stock.toggle', bool ?? undefined);
+    }
+
+    function toggleTrans(ev,bool) {
+        bool = api.local.toggle('cam.anim.trans', bool);
+        material.transparent = bool;
+        material.needsUpdate = true;
     }
 
     function step() {
