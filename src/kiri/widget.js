@@ -848,6 +848,7 @@ class Widget {
             let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
             let material = new THREE.LineBasicMaterial({ color: 0 });
             this.outline = new THREE.LineSegments(edges, material);
+            this.outline.renderOrder = -20;
             mesh.add(this.outline);
         }
     }

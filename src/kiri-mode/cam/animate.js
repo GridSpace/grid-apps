@@ -17,7 +17,6 @@ const asPoints = false;
 // tint points below z=0 with red
 function add_red_neg_z(material) {
     material.onBeforeCompile = (shader) => {
-        console.log({ OBC: shader });
         shader.vertexShader = shader.vertexShader.replace(
             `#include <worldpos_vertex>`,
             `

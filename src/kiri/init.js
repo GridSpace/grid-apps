@@ -43,7 +43,6 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     let currentDevice = null,
         deviceURL = null,
-        deviceTexture = null,
         deviceFilter = null,
         deviceImage = null,
         selectedTool = null,
@@ -179,7 +178,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.show.alert('Page Reload Required to Change Aliasing');
         }
         control.shiny = ui.shiny.checked;
-        control.decals = ui.decals.checked;
         control.drawer = ui.drawer.checked;
         control.scrolls = ui.scrolls.checked;
         control.showOrigin = ui.showOrigin.checked;
@@ -207,12 +205,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.platform.update_size();
         updateStats();
         updateDrawer();
-        if (control.decals && !control.dark) {
-            // disable decals in dark mode
-            loadDeviceTexture(currentDevice, deviceTexture);
-        } else {
-            clearDeviceTexture();
-        }
         api.event.emit('boolean.update');
         if (doAlert) {
             api.show.alert("change requires page refresh");
@@ -882,15 +874,6 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             uc.refresh(1);
             filamentSourceEditUpdate();
-
-            if (dev.imageURL) {
-                if (dev.imageURL !== deviceURL) {
-                    deviceURL = dev.imageURL;
-                    loadDeviceImage(dev);
-                }
-            } else {
-                clearDeviceTexture();
-            }
         } catch (e) {
             console.log({error:e, device:code, devicename});
             api.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
@@ -900,74 +883,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         }
         api.function.clear();
         api.event.settings();
-    }
-
-    function clearDeviceTexture() {
-        if (deviceImage) {
-            space.world.remove(deviceImage);
-            deviceImage = null;
-            deviceURL = null;
-        }
-    }
-
-    function loadDeviceImage(dev, url) {
-        let turl = url || dev.imageURL;
-        if (!turl) return;
-        new THREE.TextureLoader().load(turl, texture => {
-            loadDeviceTexture(dev, texture);
-        }, inc => {
-            console.log({load_inc: inc});
-        }, error => {
-            console.log({load_error: error, turl});
-            clearDeviceTexture();
-        });
-    }
-
-    function loadDeviceTexture(dev, texture) {
-        clearDeviceTexture();
-        deviceTexture = texture;
-        let { decals, dark } = api.conf.get().controller;
-        // disable decals in dark mode
-        if (!(texture && decals && !dark)) {
-            return;
-        }
-        let { width, height } = texture.image;
-        let { bedWidth, bedDepth, bedHeight } = dev;
-        let scale = dev.imageScale || 0.75;
-        let img_ratio = width / height;
-        if (scale <= 1) {
-            let dev_ratio = bedWidth / bedDepth;
-            if (dev_ratio > img_ratio) {
-                scale *= bedDepth / height;
-            } else {
-                scale *= bedWidth / width;
-            }
-        } else if (scale > 1) {
-            scale = (scale / Math.max(width, height));
-        }
-        width *= scale;
-        height *= scale;
-        let pos = null;
-        if (true) switch (dev.imageAnchor) {
-            case 1: pos = { x: -(bedWidth - width)/2, y:  (bedDepth - height)/2 }; break;
-            case 2: pos = { x: 0,                     y:  (bedDepth - height)/2 }; break;
-            case 3: pos = { x:  (bedWidth - width)/2, y:  (bedDepth - height)/2 }; break;
-            case 4: pos = { x: -(bedWidth - width)/2, y:  0                     }; break;
-            case 5: pos = { x:  (bedWidth - width)/2, y:  0                     }; break;
-            case 6: pos = { x: -(bedWidth - width)/2, y: -(bedDepth - height)/2 }; break;
-            case 7: pos = { x: 0,                     y: -(bedDepth - height)/2 }; break;
-            case 8: pos = { x:  (bedWidth - width)/2, y: -(bedDepth - height)/2 }; break;
-        }
-        let geometry = new THREE.PlaneGeometry(width, height, 1),
-            material = new THREE.MeshBasicMaterial({ map: texture, transparent: true }),
-            mesh = new THREE.Mesh(geometry, material);
-        mesh.position.z = -bedHeight;
-        mesh.renderOrder = -1;
-        if (pos) {
-            mesh.position.x = pos.x;
-            mesh.position.y = pos.y;
-        }
-        space.world.add(deviceImage = mesh);
     }
 
     function updateDeviceName(newname) {
@@ -1792,11 +1707,11 @@ gapp.register("kiri.init", [], (root, exports) => {
             showOrigin:       newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
             showRulers:       newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
             showSpeeds:       newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
-            decals:           newBoolean(LANG.op_decl_s, booleanSave, {title:LANG.op_decl_s}),
             shiny:            newBoolean(LANG.op_shny_s, booleanSave, {title:LANG.op_shny_l, modes:FDM}),
             lineType:         newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
             animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
             units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM}, "units"),
+            outline:          newInput(LANG.op_spoa_s, {title:LANG.op_spoa_l, convert:toFloat, size:3}),
             _____:            newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
             autoSave:         newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
             autoLayout:       newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),

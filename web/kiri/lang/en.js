@@ -284,6 +284,8 @@ self.kiri.lang['en-us'] = {
     op_free_l:      ["permit dragable layout","no effect in laser mode"],
     op_spcr_s:      "spacing",
     op_spcr_l:      ["spacing between objects","during auto layout","in workspace units","in belt mode, use 0","to auto-space by height"],
+    op_spoa_s:      "outline",
+    op_spoa_l:      ["surface angle triggering an outline to be rendered"],
     op_spcx_s:      "random X",
     op_spcx_l:      ["in belt mode, randomly","layout the part on X","to even belt wear"],
     op_orth_s:      "orthographic",

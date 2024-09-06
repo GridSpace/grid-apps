@@ -110,7 +110,6 @@ function device_from_code(code,mode) {
         noclone: valueOf(code.no_clone, false),
         mode: mode || code.mode || '',
         internal: 0,
-        imageURL: valueOf(set.image_url, ""),
         imageScale: valueOf(set.image_scale, 0.75),
         imageAnchor: valueOf(set.image_anchor, 0),
         bedHeight: valueOf(set.bed_height, 2.5),
@@ -905,7 +904,6 @@ const conf = exports({
             view: null,
             dark: false,
             shiny: false,
-            decals: false,
             drawer: false,
             scrolls: true,
             zoomSpeed: 1.0,
@@ -920,6 +918,7 @@ const conf = exports({
             autoLayout: true,
             spaceRandoX: false,
             spaceLayout: 1,
+            outline: 20,
             units: "mm",
             exportOcto: false,
             exportGhost: false,
@@ -956,6 +955,7 @@ const conf = exports({
         widget: {},
         // legacy localStorage settings (like octo print)
         local: {
+            'model.outline': false,
             'cam.anim.model': false,
             'cam.anim.stock': false,
             'cam.anim.speed': 3

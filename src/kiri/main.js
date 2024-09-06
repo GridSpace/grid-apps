@@ -389,6 +389,12 @@ gapp.register("kiri.main", [], (root, exports) => {
     }
 
     function setOutline(bool) {
+        if (bool && bool.toggle) {
+            api.local.toggle('model.outline');
+        } else {
+            api.local.set('model.outline', bool);
+        }
+        bool = api.local.getBoolean('model.outline');
         api.widgets.each(w => w.setOutline(bool));
         SPACE.update();
     }
@@ -886,6 +892,7 @@ gapp.register("kiri.main", [], (root, exports) => {
                 setVisibleLayer();
                 setWidgetVisibility(true);
                 api.widgets.opacity(1);
+                api.view.outline(api.local.getBoolean('model.outline'));
                 break;
             case VIEWS.SLICE:
                 $('act-slice').classList.add('selected');
