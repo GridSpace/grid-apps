@@ -208,7 +208,6 @@ class Widget {
         if (this.mesh) {
             let geo = this.mesh.geometry;
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            // geo.setAttribute('normal', undefined);
             geo.attributes.position.needsUpdate = true;
             // geo.computeVertexNormals();
             this.meta.vertices = vertices.length / 3;
@@ -217,7 +216,7 @@ class Widget {
         } else {
             let geo = new THREE.BufferGeometry();
             geo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            // geo.setAttribute('normal', undefined);
+            // geo.computeVertexNormals();
             this.meta.vertices = vertices.length / 3;
             this.points = null;
             return this.loadGeometry(geo);
@@ -827,6 +826,27 @@ class Widget {
             }
         });
         return Date.now() - mark;
+    }
+
+    setOutline(set) {
+        if (!(api && api.conf)) {
+            // missing api features in engine mode
+            return;
+        }
+        let mesh = this.mesh;
+        if (this.outline) {
+            mesh.remove(this.outline);
+            this.wioutlinere = null;
+
+        }
+        if (set) {
+            let dark = api.space.is_dark();
+            let angle = api.conf.get().controller.outline || 20;
+            let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
+            let material = new THREE.LineBasicMaterial({ color: 0x000000 });
+            this.outline = new THREE.LineSegments(edges, material);
+            mesh.add(this.outline);
+        }
     }
 
     setWireframe(set, color, opacity) {
