@@ -102,9 +102,9 @@ kiri.load(() => {
                 UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
                 speedLabel = UC.newLabel("speed", {class:"speed padleft"}),
                 progress = UC.newLabel('0%', {class:"progress"}),
-                modelButton = UC.newButton(null,toggleModel,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model",class:"padleft"}),
+                transButton = UC.newButton(null,toggleTrans,{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency",class:"padleft"}),
+                modelButton = UC.newButton(null,toggleModel,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model"}),
                 shadeButton = UC.newButton(null,toggleStock,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
-                transButton = UC.newButton(null,toggleTrans,{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency"}),
             ]);
             speedIndex = api.local.getInt('cam.anim.speed') || 0;
             updateSpeed();

@@ -956,7 +956,7 @@ const conf = exports({
         // legacy localStorage settings (like octo print)
         local: {
             'model.edges': false,
-            'cam.anim.trans': false,
+            'cam.anim.trans': true,
             'cam.anim.model': false,
             'cam.anim.stock': false,
             'cam.anim.speed': 3
