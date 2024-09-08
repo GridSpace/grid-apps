@@ -834,7 +834,7 @@ function platformLoadFiles(files, group) {
                 load.TMF.parseAsync(data).then(models => {
                     api.hide.alert(msg);
                     if (models.length > 1 && !group) {
-                        UC.confirm(`group ${models.length} objects?`).then(ok => {
+                        api.uc.confirm(`group ${models.length} objects?`).then(ok => {
                             if (ok) {
                                 group = [];
                             }

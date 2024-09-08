@@ -115,17 +115,21 @@ function loadModel(doc) {
                     model = node.getAttribute("name") || undefined;
                     query(node, ["components","+component"], (type, node) => {
                         let objectid = node.getAttribute('objectid');
-                        let mat = node.getAttribute('transform').split(' ').map(v => parseFloat(v));
-                        mat = [
-                            ...mat.slice(0,3), 0,
-                            ...mat.slice(3,6), 0,
-                            ...mat.slice(6,9), 0,
-                            ...mat.slice(9,12), 1
-                        ];
                         let ref = byid[objectid];
                         if (!ref) return;
-                        let m4 = new Matrix4().fromArray(mat);
-                        let pos = new BufferAttribute(ref.faces.toFloat32(), 3).applyMatrix4(m4);
+                        let pos = new BufferAttribute(ref.faces.toFloat32(), 3);
+                        let transform = node.getAttribute('transform');
+                        if (transform) {
+                            let mat = transform.split(' ').map(v => parseFloat(v));
+                            mat = [
+                                ...mat.slice(0,3), 0,
+                                ...mat.slice(3,6), 0,
+                                ...mat.slice(6,9), 0,
+                                ...mat.slice(9,12), 1
+                            ];
+                            let m4 = new Matrix4().fromArray(mat);
+                            pos = pos.applyMatrix4(m4);
+                        }
                         faces.appendAll(pos.array);
                     });
                     break;
