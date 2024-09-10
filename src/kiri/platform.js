@@ -883,6 +883,7 @@ function loadSVGDialog(doit) {
         "  Finer angle settings produce much larger models.",
         "  </p>",
         "  <div class='f-row t-right'><table>",
+        "  <tr><th>z height in mm</th><td><input id='svg-depth' value='5' size='3'></td></tr>",
         "  <tr><th title='higher values results in more points. floating point values like 0.5 are accepted'>arc segments / mm</th><td><input id='svg-arcs' value='1' size='3'></td></tr>",
         "  <tr><th title='minimum number of segments in an arc. helps better represent small arcs'>min arc segments</th><td><input id='svg-marc' value='10' size='3'></td></tr>",
         "  <tr><th>nest shapes</th><td><input id='svg-nest' value='1' type='checkbox' checked></td></tr>",
@@ -890,10 +891,11 @@ function loadSVGDialog(doit) {
         "</div>"
     ]};
     api.uc.confirm(undefined, {convert:true, cancel:false}, undefined, opt).then((ok) => {
+        let depth = Math.max(0.1, parseFloat($('svg-depth').value));
         let arcs = Math.max(0.01, parseFloat($('svg-arcs').value));
         let marc = Math.max(1, parseInt($('svg-marc').value));
         let soup = $('svg-nest').checked;
-        ok && doit({ soup, resolution: arcs, segmin: marc });
+        ok && doit({ soup, resolution: arcs, segmin: marc, depth });
     });
 }
 

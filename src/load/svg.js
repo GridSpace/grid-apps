@@ -27,9 +27,9 @@ function parse(text, opt = { }) {
     const xmlat = data.xml.attributes;
     const polys = fromSoup ? [] : undefined;
     const scale = xmlat.width?.value.endsWith('in') ? 25.4 : 1;
-    const depth = opt.depth || xmlat['data-km-extrude']?.value
+    const depth = parseFloat(opt.depth || xmlat['data-km-extrude']?.value
         || xmlat['extrude']?.value
-        || {value: 5};
+        || 5);
 
     for (let i = 0; i < paths.length; i++) {
         let path = paths[i];
@@ -39,7 +39,6 @@ function parse(text, opt = { }) {
         let miter = path.userData?.style?.strokeMiterLimit;
         if (fromSoup) {
             for (let sub of path.subPaths) {
-                let length = sub.getLength();
                 let points = sub.curves.map(curve => {
                     let length = curve.getLength();
                     let segs = curve.type === 'LineCurve' ?
@@ -65,8 +64,8 @@ function parse(text, opt = { }) {
             continue;
         }
         let geom = new THREE.ExtrudeGeometry(shapes, {
+            depth,
             steps: 1,
-            depth: parseFloat(depth.value),
             bevelEnabled: false
         });
         let array = geom.attributes.position.array;
@@ -101,9 +100,8 @@ function parse(text, opt = { }) {
             return nest;
         }
 
-        let z = parseFloat(depth.value);
         for (let poly of nest) {
-            let obj = poly.extrude(z);
+            let obj = poly.extrude(depth);
             objs.push(obj);
         }
     }
