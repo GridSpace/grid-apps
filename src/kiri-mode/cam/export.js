@@ -173,7 +173,7 @@ CAM.export = function(print, online) {
         newpos.z = util.round(newpos.z, decimals);
 
         // on tool change
-        let changeTool = !(out.tool && pos.t) || out.tool.id !== pos.t.id;
+        let changeTool = !(out.tool && pos.t) || out.tool.getID() !== pos.t.getID();
         if (changeTool) {
             pos.t = out.tool;
             consts.tool = pos.t.getNumber();
