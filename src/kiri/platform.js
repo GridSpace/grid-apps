@@ -848,17 +848,19 @@ function platformLoadFiles(files, group) {
                 api.function.parse(data.textDecode('utf-8'), 'gcode');
                 load_dec();
             } else if (issvg) {
-                group = group || [];
-                let svg = load.SVG.parse(data.textDecode('utf-8'));
-                let ind = 0;
-                if (svg.length === 0) {
-                    api.show.alert(`SVG contains no polylines`, 10);
-                    api.show.alert(`Fonts must be converted to paths`, 10);
-                }
-                for (let v of svg) {
-                    platformLoadWidget(group, svg[ind++], ind ? `${name}-${ind}` : name);
-                }
-                load_dec();
+                loadSVGDialog(opt => {
+                    group = group || [];
+                    let svg = load.SVG.parse(data.textDecode('utf-8'), opt);
+                    let ind = 0;
+                    if (svg.length === 0) {
+                        api.show.alert(`SVG contains no polylines`, 10);
+                        api.show.alert(`Fonts must be converted to paths`, 10);
+                    }
+                    for (let v of svg) {
+                        platformLoadWidget(group, svg[ind++], ind ? `${name}-${ind}` : name);
+                    }
+                    load_dec();
+                });
             }
             else if (iskmz) api.settings.import_zip(data, true);
             else if (isset) api.settings.import(data.textDecode('utf-8'), true);
@@ -869,6 +871,30 @@ function platformLoadFiles(files, group) {
         };
         reader.readAsArrayBuffer(reader.file);
     }
+}
+
+function loadSVGDialog(doit) {
+    const opt = {pre: [
+        "<div class='f-col a-center'>",
+        "  <h3>Import SVG</h3>",
+        "  <p class='t-just' style='width:300px;line-height:1.5em'>",
+        "  This will create a 3D model from 2D SVG vectors.",
+        "  Fonts must be converted to paths in an SVG editor.",
+        "  Finer angle settings produce much larger models.",
+        "  </p>",
+        "  <div class='f-row t-right'><table>",
+        "  <tr><th title='higher values results in more points. floating point values like 0.5 are accepted'>arc segments / mm</th><td><input id='svg-arcs' value='1' size='3'></td></tr>",
+        "  <tr><th title='minimum number of segments in an arc. helps better represent small arcs'>min arc segments</th><td><input id='svg-marc' value='10' size='3'></td></tr>",
+        "  <tr><th>nest shapes</th><td><input id='svg-nest' value='1' type='checkbox' checked></td></tr>",
+        "  </table></div>",
+        "</div>"
+    ]};
+    api.uc.confirm(undefined, {convert:true, cancel:false}, undefined, opt).then((ok) => {
+        let arcs = Math.max(0.01, parseFloat($('svg-arcs').value));
+        let marc = Math.max(1, parseInt($('svg-marc').value));
+        let soup = $('svg-nest').checked;
+        ok && doit({ soup, resolution: arcs, segmin: marc });
+    });
 }
 
 function fitDeviceToWidgets() {

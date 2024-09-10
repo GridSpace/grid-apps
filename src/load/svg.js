@@ -16,9 +16,11 @@ function parseAsync(text, opt) {
     });
 }
 
-function parse(text, opt = { soup: true }) {
+function parse(text, opt = { }) {
     const justPoly = opt.flat || false;
-    const fromSoup = opt.soup || justPoly;
+    const fromSoup = opt.soup !== false || justPoly;
+    const rez = (opt.resolution || 1);
+    const segmin = Math.max(1, opt.segmin || 10);
     const objs = [];
     const data = new THREE.SVGLoader().parse(text);
     const paths = data.paths;
@@ -38,9 +40,14 @@ function parse(text, opt = { soup: true }) {
         if (fromSoup) {
             for (let sub of path.subPaths) {
                 let length = sub.getLength();
-                let points = sub.getPoints(sub.curves ? Math.max(length/2, 12) : undefined);
+                let points = sub.curves.map(curve => {
+                    let length = curve.getLength();
+                    let segs = curve.type === 'LineCurve' ?
+                        1 : Math.max(Math.ceil(length * rez), segmin);
+                    return curve.getPoints(segs);
+                }).flat();
                 if (points.length < 3) {
-                    console.log({ sub, length, points });
+                    // console.log({ sub, length, points });
                     continue;
                 }
                 let poly = base.newPolygon().addPoints(points.map(p => base.newPoint(p.x, -p.y, 0)));

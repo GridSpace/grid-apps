@@ -1468,7 +1468,7 @@ th, tr, td, label {
 
 .mdialog {
     display: none;
-    padding: 10px;
+    padding: 10px 20px 10px 20px;
     min-height: 20px;
     background-color: #fff;
 }
