@@ -143,7 +143,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             is_wedm() { return MODE === MODES.WEDM },
             is_wjet() { return MODE === MODES.WJET },
             is_laser() { return MODE === MODES.LASER },
-            is_2d() { return
+            is_2d() { return false ||
                 api.mode.is_drag() ||
                 api.mode.is_wedm() ||
                 api.mode.is_wjet() ||

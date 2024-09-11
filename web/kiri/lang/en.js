@@ -9,6 +9,7 @@ self.kiri.lang['en-us'] = {
     back:           "back",
     clear:          "clear",        // clear workspace (remove all objects)
     copy:           "copy",
+    clone:          "clone",        // create duplicate
     delete:         "delete",
     detail:         "detail",
     done:           "done",
@@ -74,6 +75,7 @@ self.kiri.lang['en-us'] = {
     rc_xobj:        "export OBJ",
     rc_xstl:        "export STL",
     sb_info:        ["print speed","in mm/s"],
+    rc_merg:        "merge object meshes",
 
     // DEVICE MENU and related dialogs
     dm_sldt:        "select a device type",

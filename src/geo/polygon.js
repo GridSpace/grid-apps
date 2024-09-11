@@ -614,33 +614,9 @@ class Polygon {
         return ap;
     }
 
-    /**
-     * @param {boolean} [point] return just the center point
-     * @returns {Polygon|Point} a new polygon centered on x=0, y=0, z=0
-     */
+    // TODO: review usage
     center(point) {
         return this.bounds.center(this.getZ());
-        // throw "does not work";
-        let ap = newPoint(0, 0, 0, null),
-            np = newPolygon(),
-            pa = this.points;
-        pa.forEach(function(p) {
-            ap.x += p.x;
-            ap.y += p.y;
-            ap.z += p.z;
-        });
-        ap.x /= pa.length;
-        ap.y /= pa.length;
-        ap.z /= pa.length;
-        if (point) return ap;
-        pa.forEach(function(p) {
-            np.push(newPoint(
-                p.x - ap.x,
-                p.y - ap.y,
-                p.z - ap.z
-            ));
-        });
-        return np;
     }
 
     /**

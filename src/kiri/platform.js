@@ -878,14 +878,14 @@ function loadSVGDialog(doit) {
         "<div class='f-col a-center'>",
         "  <h3>Import SVG</h3>",
         "  <p class='t-just' style='width:300px;line-height:1.5em'>",
-        "  This will create a 3D model from 2D SVG vectors.",
+        "  Extrude a 3D model from a 2D SVG.",
         "  Fonts must be converted to paths in an SVG editor.",
-        "  Finer angle settings produce much larger models.",
         "  </p>",
         "  <div class='f-row t-right'><table>",
         "  <tr><th>z height in mm</th><td><input id='svg-depth' value='5' size='3'></td></tr>",
         "  <tr><th title='higher values results in more points. floating point values like 0.5 are accepted'>arc segments / mm</th><td><input id='svg-arcs' value='1' size='3'></td></tr>",
-        "  <tr><th title='minimum number of segments in an arc. helps better represent small arcs'>min arc segments</th><td><input id='svg-marc' value='10' size='3'></td></tr>",
+        "  <tr><th title='minimum number of segments in an arc. helps better represent small arcs'>minimum arc segments</th><td><input id='svg-marc' value='10' size='3'></td></tr>",
+        "  <tr><th title='interpret dimensions as pixels using dpi'>pixel dpi (optional)</th><td><input id='svg-dpi' value='0' size='3'></td></tr>",
         "  <tr><th>nest shapes</th><td><input id='svg-nest' value='1' type='checkbox' checked></td></tr>",
         "  </table></div>",
         "</div>"
@@ -894,8 +894,9 @@ function loadSVGDialog(doit) {
         let depth = Math.max(0.1, parseFloat($('svg-depth').value));
         let arcs = Math.max(0.01, parseFloat($('svg-arcs').value));
         let marc = Math.max(1, parseInt($('svg-marc').value));
+        let sdpi = Math.max(0, parseInt($('svg-dpi').value));
         let soup = $('svg-nest').checked;
-        ok && doit({ soup, resolution: arcs, segmin: marc, depth });
+        ok && doit({ soup, resolution: arcs, segmin: marc, depth, dpi: sdpi });
     });
 }
 

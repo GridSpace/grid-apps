@@ -433,7 +433,7 @@ let overrides = {};
 
 // updates editable fields that are range dependent
 function updateFieldsFromRange() {
-    return;
+    if (true) return;
     if (settings.mode !== 'FDM' || !api.view.is_slice() || !settings.process.ranges) {
         let okeys = Object.keys(overrides);
         if (okeys.length) {

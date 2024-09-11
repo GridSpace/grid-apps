@@ -20,13 +20,15 @@ function parse(text, opt = { }) {
     const justPoly = opt.flat || false;
     const fromSoup = opt.soup !== false || justPoly;
     const rez = (opt.resolution || 1);
+    const dpi = (opt.dpi || 0);
     const segmin = Math.max(1, opt.segmin || 10);
     const objs = [];
     const data = new THREE.SVGLoader().parse(text);
     const paths = data.paths;
     const xmlat = data.xml.attributes;
     const polys = fromSoup ? [] : undefined;
-    const scale = xmlat.width?.value.endsWith('in') ? 25.4 : 1;
+    const isinch = xmlat.width?.value.endsWith('in');
+    const scale = isinch ? 25.4 : (dpi ? 1 / (dpi / 25.4) : 1);
     const depth = parseFloat(opt.depth || xmlat['data-km-extrude']?.value
         || xmlat['extrude']?.value
         || 5);
