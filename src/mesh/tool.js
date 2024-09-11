@@ -39,6 +39,41 @@ mesh.tool = class MeshTool {
         return this.indexed;
     }
 
+    listZ() {
+        let verts = this.checkVertices(this.uvert).group(3);
+        let zs = new Set();
+        for (let vert of verts) {
+            zs.add(vert[2]);
+        }
+        return Array.from(zs).sort((a,b) => a - b);
+    }
+
+    flattenZ(faceIdxs) {
+        let { uvert, faces } = this;
+        let zsum = 0;
+        let zunq = [];
+        for (let faceIdx of faceIdxs) {
+            let fv1 = faces[faceIdx * 3 + 0];
+            let fv2 = faces[faceIdx * 3 + 1];
+            let fv3 = faces[faceIdx * 3 + 2];
+            let z1 = uvert[fv1 + 2];
+            let z2 = uvert[fv2 + 2];
+            let z3 = uvert[fv3 + 2];
+            zunq.push(z1,z2,z3);
+            zsum = zsum + z1 + z2 + z3;
+        }
+        let zavg = ((( zsum / (faceIdxs.length * 3) ) * 10000 ) | 0) / 10000;
+        for (let faceIdx of faceIdxs) {
+            let fv1 = faces[faceIdx * 3 + 0];
+            let fv2 = faces[faceIdx * 3 + 1];
+            let fv3 = faces[faceIdx * 3 + 2];
+            uvert[fv1 + 2] = zavg;
+            uvert[fv2 + 2] = zavg;
+            uvert[fv3 + 2] = zavg;
+        }
+        return { unique: zunq.sort().uniq(), average: zavg };
+    }
+
     /**
      * @param {number[]} vertices non-indexed
      */
@@ -46,6 +81,7 @@ mesh.tool = class MeshTool {
         this.checkVertices(vertices, 3);
         let doClean = opt.clean !== false;
         let doDedup = opt.dedup !== false;
+        let round = Math.pow(10, opt.round || 0);
         let faces = [];
         let fcac = {}; // seen face hash
         let fnew = []; // accumulate vertex triplets
@@ -54,6 +90,11 @@ mesh.tool = class MeshTool {
         let prec = this.precision;
         let dups = 0;
         let cull = 0;
+        if (round > 1) {
+            for (let i=0, l=vertices.length; i<l; i++) {
+                vertices[i] = ((vertices[i] * round) | 0) / round;
+            }
+        }
         for (let i=0, l=vertices.length; i<l; i += 3) {
             let x = vertices[i];
             let y = vertices[i+1];

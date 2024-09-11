@@ -367,6 +367,17 @@ let model = {
         let { id, opt } = data;
         let tool = analyze(id, opt);
         log(`${id} | unrolling...`);
+        let zlist = tool.listZ();
+        let unrolled = tool.unrolled();
+        return { vertices: unrolled.toFloat32(), zlist };
+    },
+
+    flatten(data) {
+        let { id, faces } = data;
+        let tool = analyze(id, { });
+        log(`${id} | flatten...`);
+        let { unique, average } = tool.flattenZ(faces);
+        log(`${id} | average=${average.round(3)} uniques=${unique.length}`);
         let unrolled = tool.unrolled();
         return { vertices: unrolled.toFloat32() };
     },

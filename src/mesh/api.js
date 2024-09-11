@@ -1235,6 +1235,7 @@ const tool = {
                 id: m.id, opt
             }).then(data => {
                 data?.vertices && m.reload(data.vertices);
+                return data;
             });
             promises.push(p);
         }
@@ -1255,14 +1256,24 @@ const tool = {
     clean(models) {
         models = fallback(models);
         tool.heal(models, {
+            round: 3,
+            precision: 3,
             merge: false,
-            precision: 2,
             dedup: true,
             clean: true
-        }).then(() => {
+        }).then((data) => {
+            for (let od of data) {
+                let { vertices, zlist } = od;
+                console.log({ zlist });
+                log(`${vertices.length/3} vertices, ${zlist.length} unique Z`);
+            }
             log('cleaning complete').unpin();
             util.defer(selection.update);
         });
+    },
+
+    flatten(models) {
+        fallback(models, false).map(model => model.selectionFlatten());
     }
 };
 

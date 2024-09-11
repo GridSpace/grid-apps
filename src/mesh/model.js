@@ -682,6 +682,19 @@ mesh.model = class MeshModel extends mesh.object {
         }
     }
 
+    selectionFlatten() {
+        let faces = this.sel.faces;
+        if (faces.length) {
+            worker.model_flatten({ id: this.id, faces }).then(data => {
+                if (data.vertices) {
+                    this.reload(data.vertices);
+                    this.sel.faces = [];
+                    this.updateSelections();
+                }
+            });
+        }
+    }
+
     triangulateSelections() {
         let { polys, quaternion } = this.selectionToRotationPolys();
         if (polys) {
