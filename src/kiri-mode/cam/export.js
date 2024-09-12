@@ -350,7 +350,7 @@ CAM.export = function(print, online) {
             compact_output = true;
             stripComments = true;
             space = '';
-        } if (line.indexOf(";; AXISMAP ") === 0) {
+        } else if (line.indexOf(";; AXISMAP ") === 0) {
             let axmap = JSON.parse(line.substring(11).trim());
             for (let key in axmap) {
                 axis[key] = axmap[key];
@@ -418,7 +418,6 @@ CAM.export = function(print, online) {
             append(`; tool=${tn} flute=${tool.flute_diam} len=${tool.flute_len} metric=${tool.metric}`);
         });
     }
-
     // emit gcode preamble
     filterEmit(gcodePre, consts);
 
