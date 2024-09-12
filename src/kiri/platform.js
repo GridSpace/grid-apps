@@ -93,7 +93,7 @@ function platformUpdateOrigin(update_bounds = true) {
     // CNC origin offsets
     if (MODE === MODES.CAM) {
         origin.x += process.camOriginOffX;
-        origin.y += process.camOriginOffY;
+        origin.y -= process.camOriginOffY;
         origin.z += process.camOriginOffZ;
         if (isIndexed) {
             origin.y = 0;
@@ -105,7 +105,6 @@ function platformUpdateOrigin(update_bounds = true) {
         origin.x -= process.ctOriginOffX;
         origin.y += process.ctOriginOffY;
     }
-
     space.platform.setRulers(ruler, ruler, 1 / api.view.unit_scale(), 'X', isBelt ? 'Z' : 'Y');
 
     let { x, y, z } = origin;
