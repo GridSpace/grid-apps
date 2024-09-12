@@ -31,8 +31,9 @@ function init(kiri, api) {
     const fileroot = names[0] || "print";
     const filename = `${fileroot}-${new Date().getTime().toString(36)}`;
 
-    api.ajax("/kiri/output-sla.html", html => {
-        api.ui.print.innerHTML = html;
+    api.modal.show('xsla');
+    // api.ajax("/kiri/output-sla.html", html => {
+    //     api.ui.print.innerHTML = html;
 
         let settings = api.conf.get(),
             process = settings.process,
@@ -88,8 +89,8 @@ function init(kiri, api) {
                 break;
         }
 
-        api.modal.show('print');
-    });
+    //     api.modal.show('print');
+    // });
 }
 
 function saveFile(api, file, ext) {

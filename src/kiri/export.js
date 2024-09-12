@@ -127,17 +127,18 @@ function exportLaserDialog(data, names) {
         );
     }
 
-    api.ajax("/kiri/output-laser.html", function(html) {
+    // api.ajax("/kiri/output-laser.html", function(html) {
+        api.modal.show('xlaser');
         let segments = 0;
         data.forEach(layer => { segments += layer.length });
-        ui.print.innerHTML = html;
+        // ui.print.innerHTML = html;
         $('print-filename').value = filename;
         $('print-lines').value = util.comma(segments);
         $('print-svg').onclick = download_svg;
         $('print-dxf').onclick = download_dxf;
         $('print-lg').onclick = download_gcode;
-        api.modal.show('print');
-    });
+    //     api.modal.show('print');
+    // });
 }
 
 function bindField(field, varname) {
@@ -465,8 +466,9 @@ function exportGCodeDialog(gcode, sections, info, names) {
         $('output-time').value = [pad(hours),pad(mins),pad(secs)].join(':');
     }
 
-    fetch("/kiri/output-gcode.html").then(r => r.text()).then(html => {
-        ui.print.innerHTML = html;
+    api.modal.show('xany');
+    // fetch("/kiri/output-gcode.html").then(r => r.text()).then(html => {
+    //     ui.print.innerHTML = html;
         let set = api.conf.get();
         let fdm = MODE === MODES.FDM;
         let octo = set.controller.exportOcto && MODE !== MODES.CAM;
@@ -696,8 +698,8 @@ function exportGCodeDialog(gcode, sections, info, names) {
         if (preview && gcode) $('code-preview-textarea').value = gcode.substring(0,65535);
 
         // show dialog
-        api.modal.show('print');
-    });
+    //     api.modal.show('print');
+    // });
 }
 
 });

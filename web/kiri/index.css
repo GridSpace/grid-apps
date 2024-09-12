@@ -276,8 +276,8 @@ th, tr, td, label {
 .dark .mdialog,
 .dark .t-body,
 .dark .cam-pop-op,
-.dark #mod-print,
-.dark #mod-print .header label
+.dark .mod-print,
+.dark .mod-print .header label
 {
     background-color: #282828;
     color: white;
@@ -856,7 +856,7 @@ th, tr, td, label {
     pointer-events: none;
 }
 
-#mod-print button, #catalogList button, #settingsList button {
+.mod-print button, #catalogList button, #settingsList button {
     text-transform: none !important;
 }
 
@@ -1555,13 +1555,13 @@ th, tr, td, label {
     font-family: monospace;
     padding-top: 5px;
 }
-#mod-print {
+.mod-print {
     background-color: rgba(255,255,255,0.85);
 }
-#mod-print .grow button {
+.mod-print .grow button {
     margin-left: 5px;
 }
-#mod-print .hint {
+.mod-print .hint {
     color: #345;
     font-size: 12px;
     font-style: italic;
@@ -1569,50 +1569,50 @@ th, tr, td, label {
     font-weight: normal;
     padding-top: 5px;
 }
-.dark #mod-print .box {
+.dark .mod-print .box {
     background-color: rgba(0,0,0,0.15);
     border-color: #555;
 }
-#mod-print .box {
+.mod-print .box {
     background-color: rgba(255,255,255,0.5);
     border: 1px solid #bbb;
     border-radius: 3px;
     padding: 20px 10px 10px 10px;
 }
-#mod-print .box select {
+.mod-print .box select {
     min-width: 10em;
 }
-#mod-print .header {
+.mod-print .header {
     flex-direction: column;
     justify-content: center;
     align-items: center;
     transform: translateY(50%);
     z-index: 10;
 }
-#mod-print .header label {
+.mod-print .header label {
     background-color: white;
     padding: 0 10px 0 10px;
     border-radius: 5px;
     border-right: 1px solid #bbb;
     border-left: 1px solid #bbb;
 }
-#mod-print a {
+.mod-print a {
     text-decoration: underline;
 }
-#mod-print a:hover {
+.mod-print a:hover {
     color: #567;
     background-color: #ddd;
 }
-#mod-print label {
+.mod-print label {
     flex-grow: 1;
     font-weight: bold;
     padding-right: 10px;
 }
-.dark #mod-print button {
+.dark .mod-print button {
     background-color: #555;
     border-color: #777;
 }
-#mod-print button {
+.mod-print button {
     flex-direction: column;
     justify-content: center;
     align-items: center;

@@ -471,7 +471,6 @@ function initModule(mod, file, dir) {
 const script = {
     kiri : [
         "@devices",
-        "@icons",
         "kiri/ui",
         "&main/kiri",
         "&kiri/lang-en"
@@ -651,16 +650,7 @@ function serveCode(req, res, code) {
     res.end(code.code);
 }
 
-function generateIcons() {
-    let root = PATH.join(dir,"src","kiri-ico");
-    let icos = {};
-    fs.readdirSync(root).forEach(file => {
-        let name = file.split(".")[0]   ;
-        icos[name] = fs.readFileSync(`${root}/${file}`).toString();
-    });
-    synth.icons = `self.icons = ${JSON.stringify(icos)};`;
-}
-
+// pack/concat device script strings to inject into /code/ scripts
 function generateDevices() {
     let root = PATH.join(dir,"src","kiri-dev");
     let devs = {};
@@ -670,12 +660,11 @@ function generateDevices() {
             map[device] = JSON.parse(fs.readFileSync(PATH.join(root,type,device)));
         });
     });
-    // console.log({ devs });
     synth.devices = `self.devices = ${JSON.stringify(devs)};`;
 }
 
+// pack/concat code modules served under "/code/"
 function prepareScripts() {
-    generateIcons();
     generateDevices();
     for (let key of Object.keys(script)) {
         code[key] = concatCode(script[key]);

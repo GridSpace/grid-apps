@@ -670,7 +670,7 @@ gapp.register("kiri.main", [], (root, exports) => {
             visible = modalShowing(),
             info = { pct: 0 };
 
-        ["help","setup","tools","prefs","saves","files","print","local","any"].forEach(function(name) {
+        ["help","setup","tools","prefs","saves","files","xany","xlaser","xsla","local","any"].forEach(name => {
             UI[name].style.display = name === which ? 'flex' : '';
         });
 

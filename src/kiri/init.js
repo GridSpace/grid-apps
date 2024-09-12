@@ -1553,7 +1553,9 @@ gapp.register("kiri.init", [], (root, exports) => {
             files:              $('mod-files'),
             saves:              $('mod-saves'),
             tools:              $('mod-tools'),
-            print:              $('mod-print'),
+            xany:               $('mod-x-any'),
+            xsla:               $('mod-x-sla'),
+            xlaser:             $('mod-x-laser'),
             local:              $('mod-local'),
             any:                $('mod-any'),
 
