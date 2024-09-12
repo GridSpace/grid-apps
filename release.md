@@ -2,6 +2,24 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
+# Release 4.0 (2024-01-21)
+
+* major UI refactor
+* add profile cloud sync
+* add electron desktop binary builds
+* add timelines for all cnc op chains
+* add dragknife, wire-edm, waterjet device types
+* add gerber import file support
+* add SVG import dialog, more options
+* add arbitrary belt slice angle
+* add mesh sketching, new ui, menus, gears, patterns
+* fix 3MF imports lacking mesh translation
+* improve cam animation
+* clean up and normalize dark mode
+* optimize docker image size
+* new machine profiles
+* dozens of bug fixes
+
 
 # Release 3.9 (2023-03-19)
 
