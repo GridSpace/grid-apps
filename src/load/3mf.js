@@ -20,32 +20,14 @@ load.XML = {
 
 let { BufferAttribute, Matrix4 } = THREE;
 
-// simple query api for map structures
-function query_map(node, path, fn) {
-    let collect = {};
-    let match = path[0].split('|').map(key => {
-        if (key[0] === '+') {
-            key = key.slice(1);
-            collect[key] = true;
-        }
-        return key;
-    });
-    for (let [tag, value] of Object.entries(node)) {
-        if (!Array.isArray(value)) {
-            value = [ value ];
-        }
-        if (match.indexOf(tag) >= 0) {
-            for (let node of value) {
-                if (collect[tag]) {
-                    fn(tag, node);
-                }
-                if (path.length > 1) {
-                    query(node, path.slice(1), fn);
-                }
-            }
-        }
-    }
-}
+let scaleMap = {
+    "inch": (1 / 25.4),
+    "foot": (1 / 304.8),
+    "micron": (1 / 1000),
+    "meter": 1000,
+    "millimeter": 1,
+    "centimeter": (1 / 10)
+};
 
 // simple query api for xml structures
 function query(node, path, fn) {
@@ -70,92 +52,111 @@ function query(node, path, fn) {
     }
 }
 
+function transform(def, mesh) {
+    let pos = new BufferAttribute(mesh.toFloat32(), 3);
+    let mat = def.split(' ').map(v => parseFloat(v));
+    mat = [
+        ...mat.slice(0,3), 0,
+        ...mat.slice(3,6), 0,
+        ...mat.slice(6,9), 0,
+        ...mat.slice(9,12), 1
+    ];
+    pos.applyMatrix4(new Matrix4().fromArray(mat));
+    return pos.array;
+}
+
 function loadModel(doc) {
-    let models = [];
-    let byid = {};
+    let items = [];
+    let objects = {};
 
     return new Promise((resolve, reject) => {
-        let id;
-        let model;
-        let faces;
-        let units;
         let scale = 1;
-        let scaleMap = {
-            "inch": (1 / 25.4),
-            "foot": (1 / 304.8),
-            "micron": (1 / 1000),
-            "meter": 1000,
-            "millimeter": 1,
-            "centimeter": (1 / 10)
-        };
-
-        function emitModel() {
-            if (!(faces && faces.length)) {
-                return;
-            }
-            models.push({name: model, faces});
-            if (id) {
-                byid[id] = models.peek();
-            }
-        }
-
-        query(doc, ["+model","resources","+object","+mesh"], (type, node) => {
+        query(doc, ["+model","resources","+object"], (type, node) => {
             switch (type) {
                 case "model":
-                    units = node.getAttribute("unit");
+                    let units = node.getAttribute("unit");
                     if (units) {
                         scale = scaleMap[units] || 1;
                     }
+                    query(node, ["build","+item"], (type, node) => {
+                        items.push({
+                            oid: node.getAttribute('objectid'),
+                            xform: node.getAttribute('transform')
+                        });
+                    });
                     break;
                 case "object":
-                    // emit previous model
-                    emitModel();
-                    faces = [];
-                    id = node.getAttribute("id") || undefined;
-                    model = node.getAttribute("name") || undefined;
+                    let object = {
+                        name: node.getAttribute("name")
+                    };
+                    objects[node.getAttribute("id")] = object;
+                    // object are allowed one mest or one or more components
+                    query(node, ["+mesh"], (type, node) => {
+                        let vertices = [];
+                        query(node, ["vertices","+vertex"], (type, vertex) => {
+                            vertices.push([
+                                parseFloat(vertex.getAttribute("x")) * scale,
+                                parseFloat(vertex.getAttribute("y")) * scale,
+                                parseFloat(vertex.getAttribute("z")) * scale
+                            ]);
+                        });
+                        let mesh = object.mesh = [];
+                        query(node, ["triangles","+triangle"], (type, triangle) => {
+                            let v1 = parseInt(triangle.getAttribute("v1"));
+                            let v2 = parseInt(triangle.getAttribute("v2"));
+                            let v3 = parseInt(triangle.getAttribute("v3"));
+                            mesh.appendAll(vertices[v1]);
+                            mesh.appendAll(vertices[v2]);
+                            mesh.appendAll(vertices[v3]);
+                        });
+                    });
+                    if (object.mesh) {
+                        return;
+                    } else {
+                        object.components = [];
+                    }
                     query(node, ["components","+component"], (type, node) => {
-                        let objectid = node.getAttribute('objectid');
-                        let ref = byid[objectid];
-                        if (!ref) return;
-                        let pos = new BufferAttribute(ref.faces.toFloat32(), 3);
-                        let transform = node.getAttribute('transform');
-                        if (transform) {
-                            let mat = transform.split(' ').map(v => parseFloat(v));
-                            mat = [
-                                ...mat.slice(0,3), 0,
-                                ...mat.slice(3,6), 0,
-                                ...mat.slice(6,9), 0,
-                                ...mat.slice(9,12), 1
-                            ];
-                            let m4 = new Matrix4().fromArray(mat);
-                            pos = pos.applyMatrix4(m4);
-                        }
-                        faces.appendAll(pos.array);
-                    });
-                    break;
-                case "mesh":
-                    let vertices = [];
-                    query(node, ["vertices","+vertex"], (type, vertex) => {
-                        vertices.push([
-                            parseFloat(vertex.getAttribute("x")) * scale,
-                            parseFloat(vertex.getAttribute("y")) * scale,
-                            parseFloat(vertex.getAttribute("z")) * scale
-                        ]);
-                    });
-                    query(node, ["triangles","+triangle"], (type, triangle) => {
-                        let v1 = parseInt(triangle.getAttribute("v1"));
-                        let v2 = parseInt(triangle.getAttribute("v2"));
-                        let v3 = parseInt(triangle.getAttribute("v3"));
-                        faces.appendAll(vertices[v1]);
-                        faces.appendAll(vertices[v2]);
-                        faces.appendAll(vertices[v3]);
+                        object.components.push({
+                            oid: node.getAttribute('objectid'),
+                            xform: node.getAttribute('transform')
+                        });
                     });
                     break;
             }
         });
 
-        emitModel();
-        resolve(models);
+        // create object mesh from components
+        for (let object of Object.values(objects)) {
+            let { mesh, components } = object;
+            if (mesh) {
+                continue;
+            }
+            mesh = object.mesh = [];
+            for (let component of components) {
+                let { oid, xform } = component;
+                let ref = objects[oid];
+                if (xform) {
+                    mesh.appendAll(transform(xform, ref.mesh));
+                } else {
+                    mesh.appendAll(ref.mesh);
+                }
+            }
+        }
+
+        // create export items from object references
+        for (let item of items) {
+            let { oid, xform } = item;
+            let { name, mesh } = objects[oid];
+            item.name = name;
+            if (xform) {
+                item.faces = transform(xform, mesh);
+            } else {
+                item.faces = mesh;
+            }
+        }
+
+        // return array: [{ name, faces }, { name, faces }]
+        resolve(items);
     });
 }
 
