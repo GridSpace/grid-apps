@@ -9,7 +9,7 @@ gapp.register("kiri.conf", [], (root, exports) => {
 const { data } = root;
 const { local } = data;
 const { clone } = Object;
-const CVER = 185;
+const CVER = 410;
 
 function genID() {
     while (true) {
@@ -77,21 +77,6 @@ function valueOf(val, dv) {
 
 function forValues(o, fn) {
     Object.values(o).forEach(v => fn(v));
-}
-
-function device_v1_to_v2(device) {
-    if (device && device.filamentSize) {
-        device.extruders = [{
-            extFilament: device.filamentSize,
-            extNozzle: device.nozzleSize,
-            extSelect: ["T0"],
-            extDeselect: [],
-            extOffsetX: 0,
-            extOffsetY: 0
-        }];
-        delete device.filamentSize;
-        delete device.nozzleSize;
-    }
 }
 
 // convert default filter (from server) into device structure
@@ -175,18 +160,6 @@ function normalize(settings) {
         mode = settings.mode.toLowerCase(),
         default_dev = defaults[mode].d,
         default_pro = defaults[mode].p;
-
-    // v1 to v2 changed FDM extruder / nozzle / filament structure
-    if (settings.ver != CVER) {
-        // backup settings before upgrade
-        local.setItem(`ws-settings-${Date.now()}`, JSON.stringify(settings));
-        device_v1_to_v2(settings.device);
-        device_v1_to_v2(settings.cdev.FDM);
-        objectMap(settings.devices, dev => {
-            return dev ? device_from_code(dev) : dev;
-        });
-        settings.ver = CVER;
-    }
 
     // fixup old/new detail settings
     let detail = settings.controller.detail;
@@ -851,11 +824,11 @@ const conf = exports({
                 taper_tip: 0,
             }
         ],
-        // currently selected device
+        // currently selected device (current mode)
         device:{},
-        // currently selected process
+        // currently selected process (current mode)
         process:{},
-        // current process name by mode
+        // current process (name of last used) by mode
         cproc:{
             FDM: "default",
             SLA: "default",
@@ -865,7 +838,7 @@ const conf = exports({
             WEDM: "default",
             LASER: "default",
         },
-        // stored processes by mode
+        // stored process (copy of last used) by mode
         sproc:{
             FDM: {},
             SLA: {},
@@ -875,7 +848,7 @@ const conf = exports({
             WEDM: {},
             LASER: {},
         },
-        // current device name by mode
+        // current device (name of last used) by mode
         filter:{
             FDM: "Any.Generic.Marlin",
             SLA: "Anycubic.Photon",
@@ -885,7 +858,7 @@ const conf = exports({
             WEDM: "RackRobo.Betta.Wire.V1",
             LASER: "Any.Generic.Laser",
         },
-        // stored device by mode
+        // current (last used) device by mode
         cdev: {
             FDM: null,
             SLA: null,
@@ -895,9 +868,7 @@ const conf = exports({
         },
         // custom devices by name (all modes)
         devices:{},
-        // favorited devices (all modes)
-        favorites:{},
-        // map of device to last process setting (name)
+        // map of device name to last process setting name
         devproc: {},
         // application ui and control preferences (Q menu)
         controller:{

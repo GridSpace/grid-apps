@@ -1,11 +1,10 @@
 ## Grid.Space Applications
 
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fgrid.space%2F)](https://grid.space/kiri/)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/GridSpace/grid-apps)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-3.9)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-4.0)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-4.1)
 
-![GitHub commit activity](https://img.shields.io/github/commit-activity/w/GridSpace/grid-apps)
 ![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
 ![GitHub contributors](https://img.shields.io/github/contributors/GridSpace/grid-apps)
 ![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
@@ -21,6 +20,7 @@
 
 [![Discord](https://img.shields.io/discord/688863523207774209)](https://discord.com/channels/688863523207774209/688863523211968535)
 ![Twitter Follow](https://img.shields.io/twitter/follow/grid_space_3d?label=follow&style=social)
+![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCFxJ2_NriPayIqfhAj-ZcBg)
 
 
 ## Free and Open Source

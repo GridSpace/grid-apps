@@ -14,42 +14,36 @@
 // use: kiri.pack
 gapp.register("kiri.init", [], (root, exports) => {
 
-    const { base, kiri } = root;
-    const { api, catalog, conf, consts, space } = kiri;
-    const { sdb, stats, js2o, o2js, platform, selection, ui, uc } = api;
-    const { VIEWS, MODES, SEED } = consts;
-    const { LANG, LOCAL, SETUP } = api.const;
-
-    const WIN = self.window,
+    let { base, kiri } = root,
+        { api, catalog, conf, consts, space } = kiri,
+        { sdb, stats, js2o, platform, selection, ui, uc } = api,
+        { VIEWS, MODES, SEED } = consts,
+        { LANG, LOCAL, SETUP } = api.const,
+        { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
+        WIN = self.window,
         DOC = self.document,
         DEG2RAD = Math.PI / 180,
         STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
-        { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
         TWOD = [LASER, DRAG, WJET, WEDM],
         TWONED = [LASER, DRAG, WJET],
         THREED = [FDM, CAM, SLA],
         GCODE = [FDM, CAM, ...TWOD],
         CAM_LZR = [CAM, ...TWOD],
-        FDM_LZR = [FDM, ...TWOD],
         FDM_LZN = [FDM, ...TWONED],
         NO_WEDM = [FDM, CAM, SLA, LASER, DRAG, WJET],
         FDM_CAM = [FDM, CAM],
         proto = location.protocol,
-        ver = Date.now().toString(36),
+        selectedTool = null,
+        editTools = null,
+        maxTool = 0,
+        platformColor,
         separator = true,
         hideable = true,
         inline = true,
         driven = true;
 
-    let currentDevice = null,
-        deviceURL = null,
-        deviceFilter = null,
-        deviceImage = null,
-        selectedTool = null,
-        editTools = null,
-        maxTool = 0,
-        platformColor,
-        contextInt;
+    // copy version from grid app
+    kiri.version = gapp.version;
 
     // extend KIRI API with local functions
     api.show.devices = showDevices;
@@ -324,33 +318,33 @@ gapp.register("kiri.init", [], (root, exports) => {
             case 8: // apple: delete/backspace
             case 46: // others: delete
                 if (inputHasFocus()) return false;
-                platform.delete(api.selection.meshes());
+                platform.delete(selection.meshes());
                 evt.preventDefault();
                 break;
             case 37: // left arrow
                 if (inputHasFocus()) return false;
-                if (deg) api.selection.rotate(0, 0, -deg);
-                if (move > 0) api.selection.move(-move, 0, 0);
+                if (deg) selection.rotate(0, 0, -deg);
+                if (move > 0) selection.move(-move, 0, 0);
                 evt.preventDefault();
                 break;
             case 39: // right arrow
                 if (inputHasFocus()) return false;
-                if (deg) api.selection.rotate(0, 0, deg);
-                if (move > 0) api.selection.move(move, 0, 0);
+                if (deg) selection.rotate(0, 0, deg);
+                if (move > 0) selection.move(move, 0, 0);
                 evt.preventDefault();
                 break;
             case 38: // up arrow
                 if (inputHasFocus()) return false;
                 if (evt.metaKey) return api.show.layer(api.var.layer_at+1);
-                if (deg) api.selection.rotate(deg, 0, 0);
-                if (move > 0) api.selection.move(0, move, 0);
+                if (deg) selection.rotate(deg, 0, 0);
+                if (move > 0) selection.move(0, move, 0);
                 evt.preventDefault();
                 break;
             case 40: // down arrow
                 if (inputHasFocus()) return false;
                 if (evt.metaKey) return api.show.layer(api.var.layer_at-1);
-                if (deg) api.selection.rotate(-deg, 0, 0);
-                if (move > 0) api.selection.move(0, -move, 0);
+                if (deg) selection.rotate(-deg, 0, 0);
+                if (move > 0) selection.move(0, -move, 0);
                 evt.preventDefault();
                 break;
             case 65: // 'a' for select all
@@ -413,7 +407,10 @@ gapp.register("kiri.init", [], (root, exports) => {
                 break;
             case cca('Z'): // reset stored state
                 uc.confirm('clear all settings and preferences?').then(yes => {
-                    if (yes) sdb.clear();
+                    if (yes) {
+                        sdb.clear();
+                        WIN.location.reload();
+                    }
                 });
                 break;
             case cca('C'): // refresh catalog
@@ -424,16 +421,10 @@ gapp.register("kiri.init", [], (root, exports) => {
                 break;
             case cca('S'): // slice
             case cca('s'): // slice
-                if (evt.shiftKey) {
-                    api.show.alert('CAPS lock on?');
-                }
                 api.function.slice();
                 break;
             case cca('P'): // prepare
             case cca('p'): // prepare
-                if (evt.shiftKey) {
-                    api.show.alert('CAPS lock on?');
-                }
                 if (api.mode.get() !== 'SLA') {
                     // hidden in SLA mode
                     api.function.print();
@@ -441,9 +432,6 @@ gapp.register("kiri.init", [], (root, exports) => {
                 break;
             case cca('X'): // export
             case cca('x'): // export
-                if (evt.shiftKey) {
-                    api.show.alert('CAPS lock on?');
-                }
                 api.function.export();
                 break;
             case cca('g'): // CAM animate
@@ -464,9 +452,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             case cca('e'): // device
                 showDevices();
                 break;
-            // case cca('w'): // scale
-            //     api.event.emit("tool.next");
-            //     break;
             case cca('o'): // tools
                 showTools();
                 break;
@@ -475,7 +460,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 break;
             case cca('v'): // toggle single slice view mode
                 if (api.view.get() === VIEWS.ARRANGE) {
-                    api.space.set_focus(api.selection.widgets());
+                    api.space.set_focus(selection.widgets());
                 }
                 if (api.var.layer_hi == api.var.layer_lo) {
                     api.var.layer_lo = 0;
@@ -495,7 +480,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                     // auto arrange items on platform
                     platform.layout();
                     if (!api.conf.get().controller.spaceRandoX) {
-                        api.space.set_focus(api.selection.widgets());
+                        api.space.set_focus(selection.widgets());
                     }
                 } else {
                     // go to arrange view
@@ -515,11 +500,11 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function duplicateSelection() {
-        api.selection.duplicate();
+        selection.duplicate();
     }
 
     function mirrorSelection() {
-        api.selection.mirror();
+        selection.mirror();
     }
 
     function keys(o) {
@@ -535,7 +520,7 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function rotateInputSelection() {
-        if (api.selection.meshes().length === 0) {
+        if (selection.meshes().length === 0) {
             api.show.alert("select object to rotate");
             return;
         }
@@ -545,12 +530,12 @@ gapp.register("kiri.init", [], (root, exports) => {
                 x = parseFloat(coord[0] || 0.0) * prod,
                 y = parseFloat(coord[1] || 0.0) * prod,
                 z = parseFloat(coord[2] || 0.0) * prod;
-            api.selection.rotate(x, y, z);
+            selection.rotate(x, y, z);
         });
     }
 
     function positionSelection() {
-        if (api.selection.meshes().length === 0) {
+        if (selection.meshes().length === 0) {
             api.show.alert("select object to position");
             return;
         }
@@ -570,7 +555,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 y = y - device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
             }
 
-            api.selection.move(x, y, z, true);
+            selection.move(x, y, z, true);
         });
     }
 
@@ -587,13 +572,13 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function objectsExport(format = "stl") {
-        // return api.selection.export();
+        // return selection.export();
         uc.confirm("Export Filename", {ok:true, cancel: false}, `selected.${format}`).then(name => {
             if (!name) return;
             if (name.toLowerCase().indexOf(`.${format}`) < 0) {
                 name = `${name}.${format}`;
             }
-            api.util.download(api.selection.export(format), name);
+            api.util.download(selection.export(format), name);
         });
     }
 
@@ -850,7 +835,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             // store current device name for this mode
             current.filter[mode] = devicename;
             // cache device record for this mode (restored in setMode)
-            current.cdev[mode] = currentDevice = dev;
+            current.cdev[mode] = dev;
 
             if (dproc) {
                 // restore last process associated with this device
@@ -2222,7 +2207,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             if (xr * yr * zr === 0) {
                 return;
             }
-            api.selection.scale(xr,yr,zr);
+            selection.scale(xr,yr,zr);
             ui.sizeX.was = ui.sizeX.value = xv * xr;
             ui.sizeY.was = ui.sizeY.value = yv * yr;
             ui.sizeZ.was = ui.sizeZ.value = zv * zr;
@@ -2247,7 +2232,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 yr = ((tl && yc) || (!tl && yt) ? ra : 1),
                 zr = ((tl && zc) || (!tl && zt) ? ra : 1);
 
-            api.selection.scale(xr,yr,zr);
+            selection.scale(xr,yr,zr);
             ui.scaleX.was = ui.scaleX.value = xv * xr;
             ui.scaleY.was = ui.scaleY.value = yv * yr;
             ui.scaleZ.was = ui.scaleZ.value = zv * zr;
@@ -2290,7 +2275,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         };
 
         $('scale-reset').onclick = $('lab-scale').onclick = () => {
-            api.selection.scale(1 / ui.scaleX.was, 1 / ui.scaleY.was, 1 / ui.scaleZ.was);
+            selection.scale(1 / ui.scaleX.was, 1 / ui.scaleY.was, 1 / ui.scaleZ.was);
             ui.scaleX.value = ui.scaleY.value = ui.scaleZ.value =
             ui.scaleX.was = ui.scaleY.was = ui.scaleZ.was = 1;
         };
@@ -2374,7 +2359,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 if (int) {
                     return api.event.emit('mouse.hover.down', {int, point: int.point});
                 } else {
-                    return api.selection.meshes();
+                    return selection.meshes();
                 }
             }
             // lay flat with meta or ctrl clicking a selected face
@@ -2382,14 +2367,14 @@ gapp.register("kiri.init", [], (root, exports) => {
                 let q = new THREE.Quaternion();
                 // find intersecting point, look "up" on Z and rotate to face that
                 q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
-                api.selection.rotate(q);
+                selection.rotate(q);
             }
             if (api.view.get() !== VIEWS.ARRANGE) {
                 // return no selection in modes other than arrange
                 return null;
             } else {
                 // return selected meshes for further mouse processing
-                return api.feature.hovers || api.selection.meshes();
+                return api.feature.hovers || selection.meshes();
             }
         });
 
@@ -2443,10 +2428,10 @@ gapp.register("kiri.init", [], (root, exports) => {
                     if (bound.max.x + delta.x >= width) return;
                     if (bound.max.y + delta.y >= depth) return;
                 }
-                api.selection.move(delta.x, delta.y, 0);
+                selection.move(delta.x, delta.y, 0);
                 api.event.emit('selection.drag', delta);
             } else {
-                return api.selection.meshes().length > 0;
+                return selection.meshes().length > 0;
             }
         });
 
@@ -2585,7 +2570,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.event.emit('init-done', stats);
 
         // show gdpr if it's never been seen and we're not iframed
-        const isLocal = api.const.LOCAL || WIN.location.host.split(':')[0] === 'localhost';
+        const isLocal = LOCAL || WIN.location.host.split(':')[0] === 'localhost';
         if (!sdb.gdpr && WIN.self === WIN.top && !SETUP.debug && !isLocal) {
             $('gdpr').style.display = 'flex';
         }
@@ -2648,16 +2633,16 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('view-right').onclick = space.view.right;
         $('unrotate').onclick = () => {
             api.widgets.for(w => w.unrotate());
-            api.selection.update_info();
+            selection.update_info();
         };
         // rotation buttons
         let d = (Math.PI / 180);
-        $('rot_x_lt').onclick = () => { api.selection.rotate(-d * $('rot_x').value,0,0) };
-        $('rot_x_gt').onclick = () => { api.selection.rotate( d * $('rot_x').value,0,0) };
-        $('rot_y_lt').onclick = () => { api.selection.rotate(0,-d * $('rot_y').value,0) };
-        $('rot_y_gt').onclick = () => { api.selection.rotate(0, d * $('rot_y').value,0) };
-        $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d * $('rot_z').value) };
-        $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d * $('rot_z').value) };
+        $('rot_x_lt').onclick = () => { selection.rotate(-d * $('rot_x').value,0,0) };
+        $('rot_x_gt').onclick = () => { selection.rotate( d * $('rot_x').value,0,0) };
+        $('rot_y_lt').onclick = () => { selection.rotate(0,-d * $('rot_y').value,0) };
+        $('rot_y_gt').onclick = () => { selection.rotate(0, d * $('rot_y').value,0) };
+        $('rot_z_lt').onclick = () => { selection.rotate(0,0, d * $('rot_z').value) };
+        $('rot_z_gt').onclick = () => { selection.rotate(0,0,-d * $('rot_z').value) };
         // rendering options
         $('render-edges').onclick = () => { api.view.edges({ toggle: true }); api.conf.save() };
         $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
@@ -2665,7 +2650,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
         $('mesh-export-stl').onclick = () => { objectsExport('stl') };
         $('mesh-export-obj').onclick = () => { objectsExport('obj') };
-        $('mesh-merge').onclick = api.selection.merge;
+        $('mesh-merge').onclick = selection.merge;
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
         $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };

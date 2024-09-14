@@ -25,17 +25,15 @@
 // use: moto.ajax
 gapp.register("kiri.main", [], (root, exports) => {
 
-    const { base, data, kiri, moto, noop } = root;
-    const { api, consts, lang, Widget, newWidget, utils, stats } = kiri;
-    const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o, ls2o } = utils;
-    const { feature, platform, selection, settings } = api;
-    const { COLOR, MODES, PMODES, VIEWS } = consts;
-
-    const LANG  = lang.current,
+    let { data, kiri, moto, noop } = root,
+        { api, consts, lang, Widget, newWidget, utils, stats } = kiri,
+        { parseOpt, encodeOpt, o2js, js2o, ls2o } = utils,
+        { platform, selection, settings } = api,
+        { COLOR, MODES, VIEWS } = consts,
+        LANG    = lang.current,
         WIN     = self.window,
         DOC     = self.document,
         LOC     = self.location,
-        HOST    = LOC.host.split(':'),
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
@@ -43,31 +41,17 @@ gapp.register("kiri.main", [], (root, exports) => {
         SDB     = data.local,
         SPACE   = kiri.space = moto.space,
         FILES   = kiri.catalog = kiri.openFiles(new data.Index(SETUP.d ? SETUP.d[0] : 'kiri')),
-        CONF    = kiri.conf,
-        clone   = Object.clone;
-
-    let UI = {},
+        clone   = Object.clone,
+        UI = {},
         UC = kiri.ui.prefix('kiri').inputAction(api.conf.update),
         MODE = MODES.FDM,
         STACKS = kiri.stacks,
         DRIVER = undefined,
         viewMode = VIEWS.ARRANGE,
-        local = SETUP.local,
-        busy = 0,
-        showFavorites = SDB.getItem('dev-favorites') === 'true',
-        saveTimer = null,
-        version = kiri.version = gapp.version;
+        autoSaveTimer = null,
+        busy = 0;
 
-    // add show() to catalog for API
-    FILES.show = showCatalog;
-
-    // patch broker for api backward compatibility
-    EVENT.on = (topic, listener) => {
-        EVENT.subscribe(topic, listener);
-        return EVENT;
-    };
-
-    // augment api
+    // extend API
     Object.assign(api, {
         ui: UI,
         uc: UC,
@@ -164,7 +148,6 @@ gapp.register("kiri.main", [], (root, exports) => {
             devices: noop, // set during init
             progress: setProgress,
             controls: setControlsVisible,
-            favorites: getShowFavorites,
             slices: showSlices,
             layer: setVisibleLayer,
             local: showLocal,
@@ -212,6 +195,15 @@ gapp.register("kiri.main", [], (root, exports) => {
         },
         work: kiri.client
     });
+
+    // add show() to catalog for API
+    FILES.show = showCatalog;
+
+    // patch broker for api backward compatibility
+    EVENT.on = (topic, listener) => {
+        EVENT.subscribe(topic, listener);
+        return EVENT;
+    };
 
     function updateStackLabelState() {
         const settings = api.conf.get();
@@ -274,8 +266,8 @@ gapp.register("kiri.main", [], (root, exports) => {
         if (!settings.ctrl().autoSave) {
             return;
         }
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(() => {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
             api.space.save(true);
         }, 1000);
     }
@@ -295,15 +287,6 @@ gapp.register("kiri.main", [], (root, exports) => {
 
     function unitScale() {
         return api.mode.is_cam() && settings.ctrl().units === 'in' ? 25.4 : 1;
-    }
-
-    function getShowFavorites(bool) {
-        if (bool !== undefined) {
-            SDB.setItem('dev-favorites', bool);
-            showFavorites = bool;
-            return bool;
-        }
-        return showFavorites;
     }
 
     function triggerSettingsEvent() {
