@@ -4,7 +4,7 @@
 
 // dep: add.array
 // dep: data.local
-gapp.register("kiri.conf", [], (root, exports) => {
+gapp.register("kiri.conf", (root, exports) => {
 
 const { data } = root;
 const { local } = data;

@@ -5,7 +5,7 @@
 // dep: geo.base
 // dep: geo.polygons
 // dep: kiri-mode.cam.driver
-gapp.register("kiri-mode.cam.export", [], (root, exports) => {
+gapp.register("kiri-mode.cam.export", (root, exports) => {
 
 const { base, kiri } = root;
 const { polygons, util } = base;

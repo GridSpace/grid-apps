@@ -12,7 +12,7 @@
 // dep: kiri.selection
 // use: kiri.tools
 // use: kiri.pack
-gapp.register("kiri.init", [], (root, exports) => {
+gapp.register("kiri.init", (root, exports) => {
 
     let { base, kiri } = root,
         { api, catalog, conf, consts, space } = kiri,

@@ -10,7 +10,7 @@
 // dep: kiri.slice
 // use: kiri-mode.cam.topo
 // use: kiri-mode.cam.topo4
-gapp.register("kiri-mode.cam.ops", [], (root, exports) => {
+gapp.register("kiri-mode.cam.ops", (root, exports) => {
 
 const { base, kiri } = root;
 const { paths, polygons, newPoint, newPolygon, sliceConnect } = base;

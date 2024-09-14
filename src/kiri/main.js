@@ -23,7 +23,7 @@
 // use: kiri.files
 // use: kiri.frame
 // use: moto.ajax
-gapp.register("kiri.main", [], (root, exports) => {
+gapp.register("kiri.main", (root, exports) => {
 
     let { data, kiri, moto, noop } = root,
         { api, consts, lang, Widget, newWidget, utils, stats } = kiri,
@@ -994,9 +994,6 @@ gapp.register("kiri.main", [], (root, exports) => {
 
     // prevent safari from exiting full screen mode
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
-
-    // complete module loading
-    // kiri.load_exec();
 
     // upon restore, seed presets
     api.event.emit('preset', api.conf.dbo());

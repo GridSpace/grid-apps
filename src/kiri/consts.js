@@ -2,7 +2,7 @@
 
 "use strict";
 
-gapp.register("kiri.consts", [], (root, exports) => {
+gapp.register("kiri.consts", (root, exports) => {
 
 const COLOR = {
     wireframe: 0x444444,

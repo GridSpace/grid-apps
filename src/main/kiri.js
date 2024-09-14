@@ -2,37 +2,40 @@
 
 "use strict";
 
-gapp.main("main.kiri", [], (root) => {
+gapp.main({
+    app: "kiri",
 
-    const { kiri } = root;
-    const { api } = kiri;
+    pre(root) {
+        let mods = root.kirimod = ( root.kirimod || [] );
 
-    // complete module loading
-    kiri.load_exec();
+        let kiri = root.kiri = {
+            beta: 4100,
+            driver: {
+                // attached driver modules
+            },
+            load(fn) {
+                // modules register exec() functions
+                mods.push(fn);
+            },
+            load_exec(api) {
+                // process all module exec() functions
+                const saferun = (fn) => {
+                    try {
+                        fn(api || kiri.api);
+                    } catch (error) {
+                        console.log({ module_error: error });
+                    }
+                };
+                // complete module loading
+                mods.forEach(fn => saferun(fn));
+                // rewrite load() to run immediately post-finalize
+                kiri.load = (fn) => saferun(fn);
+            }
+        };
+    },
 
-}, (root) => {
-
-    const modfns = root.kirimod = ( root.kirimod || [] );
-
-    const kiri = root.kiri = {
-        beta: 4100,
-        driver: {}, // driver modules
-        load(fn) {
-            modfns.push(fn);
-        },
-        load_exec(api) {
-            const saferun = (fn) => {
-                try {
-                    fn(api || kiri.api);
-                } catch (error) {
-                    console.log({ module_error: error });
-                }
-            };
-            // complete module loading
-            modfns.forEach(modfn => saferun(modfn));
-            // rewrite load() to be immediate post-finalize
-            kiri.load = (modfn) => saferun(modfn);
-        }
-    };
-
+    post(root) {
+        // complete module loading
+        root.kiri.load_exec();
+    }
 });

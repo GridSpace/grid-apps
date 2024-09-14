@@ -9,7 +9,7 @@
 // dep: data.local
 // use: kiri.widgets
 // use: ext.base64
-gapp.register("kiri.settings", [], (root, exports) => {
+gapp.register("kiri.settings", (root, exports) => {
 
 const { data, kiri, moto, noop } = self;
 const { api, conf, consts, utils } = kiri;

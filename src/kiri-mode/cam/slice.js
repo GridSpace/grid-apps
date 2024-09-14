@@ -9,7 +9,7 @@
 // use: kiri-mode.cam.slicer
 // use: kiri-mode.cam.slicer2
 // use: kiri-mode.cam.ops
-gapp.register("kiri-mode.cam.slice", [], (root, exports) => {
+gapp.register("kiri-mode.cam.slice", (root, exports) => {
 
 const { base, kiri } = root;
 const { driver, newSlice, setSliceTracker } = kiri;

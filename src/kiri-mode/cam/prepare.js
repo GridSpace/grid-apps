@@ -8,7 +8,7 @@
 // dep: kiri.render
 // dep: kiri-mode.cam.driver
 // use: kiri-mode.cam.ops
-gapp.register("kiri-mode.cam.prepare", [], (root, exports) => {
+gapp.register("kiri-mode.cam.prepare", (root, exports) => {
 
 const { base, kiri } = root;
 const { paths, polygons, newPoint } = base;
