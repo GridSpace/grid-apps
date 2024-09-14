@@ -28,8 +28,7 @@ const POLY = polygons;
  * @param {Function} output
  */
 CAM.slice = async function(settings, widget, onupdate, ondone) {
-    let mesh = widget.mesh,
-        proc = settings.process,
+    let proc = settings.process,
         stock = settings.stock || {},
         isIndexed = proc.camStockIndexed,
         camOps = widget.camops = [],

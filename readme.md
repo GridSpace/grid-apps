@@ -1,16 +1,43 @@
-## Grid.Space Web Applications
+## Grid.Space Applications
 
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fgrid.space%2F)](https://grid.space/kiri/)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-3.3)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-3.4)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-3.5)
-![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-3.6)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-3.9)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-4.0)
+![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-4.1)
+
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/GridSpace/grid-apps)
+![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
+![GitHub contributors](https://img.shields.io/github/contributors/GridSpace/grid-apps)
+![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
+
+
+## Community & Documentation
+
+[Discord](https://discord.com/invite/suyCCgr)
+ | [Forums](https://forum.grid.space/)
+ | [YouTube](https://www.youtube.com/c/gridspace)
+ | [Twitter](https://twitter.com/grid_space_3d)
+ | [Documentation](https://docs.grid.space/)
+
+[![Discord](https://img.shields.io/discord/688863523207774209)](https://discord.com/channels/688863523207774209/688863523211968535)
+![Twitter Follow](https://img.shields.io/twitter/follow/grid_space_3d?label=follow&style=social)
+
+
+## Free and Open Source
+
+Kiri:Moto and Mesh:Tool are completely open source and free for use without restriction. Over 12 years in development, this passion project has grown well beyond its original scope. It has consumed most of my free time for many years. Please consider donating to support continued development.
+
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
+
+
+## HTML5 Web Apps (Installable)
 
 [`Grid.Space`](https://grid.space) hosts [several live versions](https://grid.space/choose) of this code
 
 [`Kiri:Moto`](https://grid.space/kiri) is a browser-based Slicer for 3D printers, CNC mills, and Laser cutters
 
 [`Mesh:Tool`](https://grid.space/mesh) is a browser-based mesh repair and editing tool
+
 
 ## Electron Builds (Desktop Binaries)
 
@@ -27,30 +54,6 @@ chmod 755 KiriMoto-linux-x86_64.AppImage
 ```
 
 The Windows and Mac binaries are not signed, so you will need to jump through a few safety hoops to get them to open the first time.
-
-## Primary Documentation
-
-https://docs.grid.space/projects/kiri-moto
-
-https://docs.grid.space/projects/mesh-tool
-
-## Development Activity
-
-![GitHub commit activity](https://img.shields.io/github/commit-activity/w/GridSpace/grid-apps)
-![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
-![GitHub contributors](https://img.shields.io/github/contributors/GridSpace/grid-apps)
-
-## Community Engagement
-
-[Discord](https://discord.com/invite/suyCCgr)
- | [YouTube](https://www.youtube.com/c/gridspace)
- | [Twitter](https://twitter.com/grid_space_3d)
-
-[![Discord](https://img.shields.io/discord/688863523207774209)](https://discord.com/channels/688863523207774209/688863523211968535)
-![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
-![Twitter Follow](https://img.shields.io/twitter/follow/grid_space_3d?label=follow&style=social)
-
 
 ## Testing Locally (with Docker)
 

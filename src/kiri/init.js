@@ -2687,7 +2687,9 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // warn users they are running a beta release
         if (kiri.beta && kiri.beta > 0 && sdb.kiri_beta != kiri.beta) {
-            api.show.alert("this is a beta / development release");
+            api.show.alert("CAUTION");
+            api.show.alert("this is a development release");
+            api.show.alert("and may not function properly");
             sdb.kiri_beta = kiri.beta;
         }
 
