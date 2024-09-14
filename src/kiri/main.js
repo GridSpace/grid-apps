@@ -15,6 +15,7 @@
 // dep: kiri.widget
 // dep: kiri.stats
 // dep: kiri.stacks
+// dep: kiri.devices
 // dep: kiri.function
 // dep: kiri.platform
 // dep: kiri.selection
@@ -70,12 +71,6 @@ gapp.register("kiri.main", (root, exports) => {
             SETUP,
             SECURE,
             STACKS,
-        },
-        device: {
-            code: currentDeviceCode,
-            get: currentDeviceName,
-            set: noop, // set during init
-            clone: noop // set during init
         },
         dialog: {
             show: showModal,
@@ -938,7 +933,7 @@ gapp.register("kiri.main", (root, exports) => {
         // restore cached device profile for this mode
         if (current.cdev[mode]) {
             current.device = clone(current.cdev[mode]);
-            api.event.emit('device.select', currentDeviceName());
+            api.event.emit('device.select', api.device.get());
         }
         // hide/show
         api.uc.setVisible($('set-tools'), mode === 'CAM');
@@ -962,14 +957,6 @@ gapp.register("kiri.main", (root, exports) => {
         if (then) {
             then();
         }
-    }
-
-    function currentDeviceName() {
-        return settings.get().filter[getMode()];
-    }
-
-    function currentDeviceCode() {
-        return settings.get().devices[currentDeviceName()];
     }
 
     function currentProcessName() {

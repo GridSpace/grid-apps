@@ -265,7 +265,7 @@ const conf = exports({
                     extOffsetY: 0
                 }],
                 profiles: [],
-                // other stored info like palette3 config
+                // other stored config info
                 extras: {}
             },
             // process defaults FDM:Process

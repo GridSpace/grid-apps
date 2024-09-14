@@ -120,15 +120,6 @@ FDM.export = function(print, online, ondone, ondebug) {
         minz = { x: Infinity, y: Infinity, z: Infinity },
         // lenghts of each filament (by nozzle) consumed
         segments = [],
-        // palette & ping data
-        isPalette = device.filamentSource === 'palette3',
-        paletteInfo = extras.palette || {},
-        palettePingStart = Math.max(paletteInfo.ping, paletteInfo.feed, paletteInfo.push) || 500,
-        palettePingSpace = paletteInfo.ping || 0,
-        // track purges for palette3 pings
-        purgePos,
-        purgeOn = 0,
-        purgeOff = 0,
         extrudeMM = FDM.extrudeMM,
         extrudePerMM = FDM.extrudePerMM;
 
@@ -615,41 +606,6 @@ FDM.export = function(print, online, ondone, ondebug) {
             out = path[pidx];
             speedMMM = (out.speed || process.outputFeedrate) * 60; // range
 
-            // track purge towers for palette3
-            // do not generate pings before total tube length exhausted
-            // because the palette cannot respond to differences before then
-            if (isPalette && palettePingSpace && emitted >= palettePingStart) {
-                if (purgeOn === 0 && out.point.purgeOn && emitted - purgeOff >= palettePingSpace) {
-                    retract();
-                    pushPos(out.point.purgeOn);
-                    // shorter pause accounts for retract/move
-                    dwell(12750);
-                    popPos();
-                    unretract();
-                    purgeOn = emitted;
-                    purgePos = out.point.purgeOn;
-                    pingRemain = 20;
-                }
-                if (purgeOn && pingRemain <= 0) {
-                    retract();
-                    pushPos(purgePos);
-                    // shorter pause accounts for retract/move
-                    dwell(6750);
-                    popPos();
-                    unretract();
-                    if (!print.purges) {
-                        print.purges = [];
-                    }
-                    print.purges.push({
-                        length: purgeOn,
-                        extrusion: emitted - purgeOn
-                    });
-                    purgeOff = emitted;
-                    purgeOn = 0;
-                    pingRemain = 0;
-                }
-            }
-
             // emit comment on output type chage
             if (last && out.type !== last.type) {
                 lastType = subst.feature = out.type;
@@ -674,10 +630,7 @@ FDM.export = function(print, online, ondone, ondebug) {
                     extruder.extFilament,
                     path.layer === 0 ?
                         (process.firstSliceHeight || process.sliceHeight) : path.height);
-                // do not run extruder swapping code when source is Palette3
-                if (!isPalette) {
-                    appendAllSub(extruder.extSelect);
-                }
+                appendAllSub(extruder.extSelect);
             }
 
             // if no point in output, it's a dwell command
@@ -1002,7 +955,6 @@ FDM.export = function(print, online, ondone, ondebug) {
     // force emit of buffer
     append();
     // console.log({segments, emitted, outputLength});
-    print.segments = isPalette ? segments : undefined;
     print.distance = emitted;
     print.lines = lines;
     print.bytes = bytes + lines - 1;

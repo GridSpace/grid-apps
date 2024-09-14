@@ -8,6 +8,7 @@
 // dep: kiri.lang
 // dep: kiri.stats
 // dep: kiri.consts
+// dep: kiri.devices
 // dep: kiri.platform
 // dep: kiri.selection
 // use: kiri.tools
@@ -15,8 +16,8 @@
 gapp.register("kiri.init", (root, exports) => {
 
     let { base, kiri } = root,
-        { api, catalog, conf, consts, space } = kiri,
-        { sdb, stats, js2o, platform, selection, ui, uc } = api,
+        { api, catalog, consts, space } = kiri,
+        { sdb, stats, platform, selection, ui, uc } = api,
         { VIEWS, MODES, SEED } = consts,
         { LANG, LOCAL, SETUP } = api.const,
         { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
@@ -47,11 +48,15 @@ gapp.register("kiri.init", (root, exports) => {
 
     // extend KIRI API with local functions
     api.show.devices = showDevices;
-    api.device.set = selectDevice;
-    api.device.clone = cloneDevice;
+    // api.device.set = selectDevice;
+    // api.device.clone = cloneDevice;
 
     function settings() {
         return api.conf.get();
+    }
+
+    function showDevices() {
+        api.devices.show();
     }
 
     function checkSeed(then) {
@@ -92,25 +97,6 @@ gapp.register("kiri.init", (root, exports) => {
             settings().controller.lineType = sel.value;
             api.conf.save();
         }
-    }
-
-    function filamentSourceEditUpdate() {
-        if (ui.filamentSource && ui.filamentSourceEdit) {
-            api.event.emit("filament.source");
-            const sel = ui.filamentSource.options[ui.filamentSource.selectedIndex];
-            if (sel) {
-                ui.filamentSourceEdit.style.display = sel.value === 'palette3' ? '' : 'none';
-            }
-        }
-    }
-
-    function filamentSourceSave() {
-        const sel = ui.filamentSource.options[ui.filamentSource.selectedIndex];
-        if (sel) {
-            settings().device.filamentSource = sel.value;
-            api.conf.save();
-        }
-        filamentSourceEditUpdate();
     }
 
     function thinWallSave() {
@@ -656,339 +642,10 @@ gapp.register("kiri.init", (root, exports) => {
         api.conf.show();
     }
 
-    function putLocalDevice(devicename, obj) {
-        settings().devices[devicename] = obj;
-        api.conf.save();
-    }
-
-    function removeLocalDevice(devicename) {
-        delete settings().devices[devicename];
-        api.conf.save();
-        sync_put();
-    }
-
-    function isLocalDevice(devicename) {
-        return settings().devices[devicename] ? true : false;
-    }
-
-    function getSelectedDevice() {
-        return api.device.get();
-    }
-
-    function selectDevice(devicename) {
-        if (isLocalDevice(devicename)) {
-            setDeviceCode(settings().devices[devicename], devicename);
-        } else {
-            let code = devices[api.mode.get_lower()][devicename];
-            if (code) {
-                setDeviceCode(code, devicename);
-            }
-        }
-    }
-
-    // only for local filters
-    function cloneDevice() {
-        let name = `${getSelectedDevice().replace(/\./g,' ')}`;
-        let code = api.clone(settings().device);
-        code.mode = api.mode.get();
-        if (name.toLowerCase().indexOf('my ') >= 0) {
-            name = `${name} copy`;
-        } else {
-            name = `My ${name}`;
-        }
-        putLocalDevice(name, code);
-        setDeviceCode(code, name);
-        sync_put();
-    }
-
-    function updateLaserState() {
-        const dev = settings().device;
-        $('laser-on').style.display = dev.useLaser ? 'flex' : 'none';
-        $('laser-off').style.display = dev.useLaser ? 'flex' : 'none';
-    }
-
-    function setDeviceCode(code, devicename) {
-        api.event.emit('device.select', devicename);
-        try {
-            if (typeof(code) === 'string') code = js2o(code) || {};
-
-            let mode = api.mode.get(),
-                lmode = mode.toLowerCase(),
-                current = settings(),
-                local = isLocalDevice(devicename),
-                dev = current.device = conf.device_from_code(code,mode),
-                dproc = current.devproc[devicename], // last process name for this device
-                newdev = dproc === undefined,   // first time device is selected
-                predev = current.filter[mode],  // previous device selection
-                chgdev = predev !== devicename; // device is changing
-
-            // fill missing device fields
-            conf.fill_cull_once(dev, conf.defaults[lmode].d);
-
-            // first time device use, add any print profiles and set to default if present
-            if (code.profiles) {
-                for (let profile of code.profiles) {
-                    let profname = profile.processName;
-                    // if no saved profile by that name for this mode...
-                    if (!current.sproc[mode][profname]) {
-                        console.log('adding profile', profname, 'to', mode);
-                        current.sproc[mode][profname] = profile;
-                    }
-                    // if it's a new device, seed the new profile name as last profile
-                    if (newdev && !current.devproc[devicename]) {
-                        console.log('setting default profile for new device', devicename, 'to', profname);
-                        current.devproc[devicename] = dproc = profname;
-                    }
-                }
-            }
-
-            dev.new = false;
-            dev.deviceName = devicename;
-
-            // ui.deviceName.value = devicename;
-            ui.deviceBelt.checked = dev.bedBelt;
-            ui.deviceRound.checked = dev.bedRound;
-            ui.deviceOrigin.checked = dev.ctOriginCenter || dev.originCenter || dev.bedRound;
-            ui.fwRetract.checked = dev.fwRetract;
-            if (!dev.filamentSource) ui.filamentSource.selectedIndex = 0;
-
-            // add extruder selection buttons
-            if (dev.extruders) {
-                let ext = api.lists.extruders = [];
-                dev.internal = 0;
-                for (let i=0; i<dev.extruders.length; i++) {
-                    ext.push({id:i, name:i});
-                }
-            }
-
-            // disable editing for non-local devices
-            [
-                // ui.deviceName,
-                ui.gcodePre,
-                ui.gcodePost,
-                ui.bedDepth,
-                ui.bedWidth,
-                ui.maxHeight,
-                ui.useLaser,
-                ui.resolutionX,
-                ui.resolutionY,
-                ui.deviceOrigin,
-                ui.deviceRound,
-                ui.deviceBelt,
-                ui.fwRetract,
-                ui.filamentSource,
-                ui.deviceZMax,
-                ui.gcodeTime,
-                ui.gcodeFan,
-                ui.gcodeFeature,
-                ui.gcodeTrack,
-                ui.gcodeLayer,
-                ui.extFilament,
-                ui.extNozzle,
-                ui.spindleMax,
-                ui.gcodeSpindle,
-                ui.gcodeDwell,
-                ui.gcodeChange,
-                ui.gcodeFExt,
-                ui.gcodeSpace,
-                ui.gcodeStrip,
-                ui.gcodeLaserOn,
-                ui.gcodeLaserOff,
-                ui.extPrev,
-                ui.extNext,
-                ui.extAdd,
-                ui.extDel,
-                ui.extOffsetX,
-                ui.extOffsetY,
-                ui.extSelect,
-                ui.extDeselect
-            ].forEach(function(e) {
-                e.disabled = !local;
-            });
-
-            ui.deviceSave.disabled = !local;
-            ui.deviceDelete.disabled = !local;
-            ui.deviceRename.disabled = !local;
-            ui.deviceExport.disabled = !local;
-            ui.deviceAdd.style.display = mode === 'SLA' ? 'none' : '';
-
-            if (local) {
-                ui.deviceAdd.innerText = "copy";
-                ui.deviceDelete.style.display = '';
-                ui.deviceRename.style.display = '';
-                ui.deviceExport.style.display = '';
-            } else {
-                ui.deviceAdd.innerText = "customize";
-                ui.deviceDelete.style.display = 'none';
-                ui.deviceRename.style.display = 'none';
-                ui.deviceExport.style.display = 'none';
-            }
-            ui.deviceAdd.disabled = dev.noclone;
-
-            api.conf.update_fields();
-            space.platform.setBelt(isBelt());
-            platform.update_size();
-            platform.update_origin();
-            platform.update();
-            updateLaserState();
-
-            // store current device name for this mode
-            current.filter[mode] = devicename;
-            // cache device record for this mode (restored in setMode)
-            current.cdev[mode] = dev;
-
-            if (dproc) {
-                // restore last process associated with this device
-                api.conf.load(null, dproc);
-            } else {
-                api.conf.update();
-            }
-
-            api.conf.save();
-
-            if (isBelt()) {
-                // space.view.setHome(dev.bedBelt ? Math.PI/2 : 0, Math.PI / 2.5);
-                space.view.setHome(0, Math.PI / 2.5);
-            } else {
-                space.view.setHome(0);
-            }
-            // when changing devices, update focus on widgets
-            if (chgdev) {
-                setTimeout(api.space.set_focus, 0);
-            }
-
-            uc.refresh(1);
-            filamentSourceEditUpdate();
-        } catch (e) {
-            console.log({error:e, device:code, devicename});
-            api.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
-            api.show.alert(`please select a new device`, 10);
-            throw e;
-            showDevices();
-        }
-        api.function.clear();
-        api.event.settings();
-    }
-
-    function updateDeviceName(newname) {
-        let selected = api.device.get(),
-            devs = settings().devices;
-        if (newname !== selected) {
-            devs[newname] = devs[selected];
-            delete devs[selected];
-            selectDevice(newname);
-            updateDeviceList();
-        }
-    }
-
     function updateDeviceSize() {
         api.conf.update();
         platform.update_size();
         platform.update_origin();
-    }
-
-    function renderDevices(devices) {
-        let selected = api.device.get() || devices[0],
-            features = api.feature,
-            devs = settings().devices,
-            dfilter = typeof(features.device_filter) === 'function' ? features.device_filter : undefined;
-
-        for (let local in devs) {
-            if (!(devs.hasOwnProperty(local) && devs[local])) {
-                continue;
-            }
-            let dev = devs[local],
-                fdmCode = dev.cmd,
-                fdmMode = (api.mode.get() === 'FDM');
-            if (dev.mode ? (dev.mode === api.mode.get()) : (fdmCode ? fdmMode : !fdmMode)) {
-                devices.push(local);
-            }
-        };
-
-        devices = devices.sort();
-
-        api.event.emit('devices.render', devices);
-
-        ui.deviceSave.onclick = function() {
-            api.event.emit('device.save');
-            api.function.clear();
-            api.conf.save();
-            sync_put();
-            showDevices();
-            api.modal.hide();
-        };
-        ui.deviceAdd.onclick = function() {
-            api.function.clear();
-            cloneDevice();
-            showDevices();
-        };
-        ui.deviceDelete.onclick = function() {
-            api.function.clear();
-            removeLocalDevice(getSelectedDevice());
-            selectDevice(getModeDevices()[0]);
-            showDevices();
-        };
-        ui.deviceRename.onclick = function() {
-            api.uc.prompt(`Rename "${selected}`, selected).then(newname => {
-                if (newname) {
-                    updateDeviceName(newname);
-                    api.conf.save();
-                    sync_put();
-                    showDevices();
-                } else {
-                    showDevices();
-                }
-            });
-        };
-        ui.deviceExport.onclick = function(event) {
-            const record = {
-                version: kiri.version,
-                device: selected,
-                process: api.process.code(),
-                profiles: event.altKey ? api.settings.prof() : undefined,
-                code: devs[selected],
-                time: Date.now()
-            };
-            let exp = api.util.b64enc(record);
-            api.device.export(exp, selected, { event, record });
-        };
-
-        let dedup = {};
-        let list_cdev = [];
-        let list_mdev = [];
-        devices.forEach(function(device, index) {
-            // prevent device from appearing twice
-            // such as local name = standard device name
-            if (dedup[device]) {
-                return;
-            }
-            dedup[device] = device;
-            let loc = isLocalDevice(device);
-            if (dfilter && dfilter(device) === false) {
-                return;
-            }
-            if (loc) {
-                list_mdev.push(h.option(device));
-            } else {
-                list_cdev.push(h.option(device));
-            }
-        });
-
-        let dev_list = $('dev-list');
-        h.bind(dev_list, [
-            h.option({ _: '-- My Devices --', disabled: true }),
-            ...list_mdev,
-            h.option({ _: '-- Stock Devices --', disabled: true }),
-            ...list_cdev
-        ]);
-        let dev_opts = [...dev_list.options].map(o => o.innerText);
-        dev_list.selectedIndex = dev_opts.indexOf(selected);
-        dev_list.onchange = ev => {
-            const seldev = dev_list.options[dev_list.selectedIndex];
-            selectDevice(seldev.innerText);
-            api.platform.layout();
-        }
-        selectDevice(selected);
     }
 
     function renderTools() {
@@ -1161,7 +818,7 @@ gapp.register("kiri.init", (root, exports) => {
 
     function showTools() {
         if (api.mode.get_id() !== MODES.CAM) return;
-        sync_get().then(_showTools);
+        api.settings.sync.get().then(_showTools);
     }
 
     function _showTools() {
@@ -1257,31 +914,8 @@ gapp.register("kiri.init", (root, exports) => {
     // not the best way to do this, but main decl of api.show is broken
     api.show.tools = showTools;
 
-    function getModeDevices() {
-        // devices are injected into self scope by
-        // app.js generateDevices()
-        return Object.keys(devices[api.mode.get_lower()]).sort();
-    }
-
-    function updateDeviceList() {
-        renderDevices(getModeDevices());
-    }
-
-    async function sync_get() {
-        await api.settings.sync.get();
-    }
-
     async function sync_put() {
         await api.settings.sync.put();
-    }
-
-    function showDevices() {
-        sync_get().then(_showDevices);
-    }
-
-    function _showDevices() {
-        updateDeviceList();
-        api.modal.show('setup');
     }
 
     function dragOverHandler(evt) {
@@ -1403,7 +1037,7 @@ gapp.register("kiri.init", (root, exports) => {
     }
 
     function isBelt() {
-        return ui.deviceBelt.checked;
+        return api.device.isBelt;
     }
 
     function isNotBelt() {
@@ -1626,7 +1260,6 @@ gapp.register("kiri.init", (root, exports) => {
             spindleMax:       newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:toInt, size:5, modes:CAM, trigger:1}),
             deviceZMax:       newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:toInt, size:5, modes:FDM}),
             gcodeTime:        newInput(LANG.dv_time_s, {title:LANG.dv_time_l, convert:toFloat, size:5, modes:FDM}),
-            filamentSource:   newSelect(LANG.dv_fsrc_s, {title: LANG.dv_fsrc_l, action: filamentSourceSave, modes:FDM, show:() => false}, "filasrc"),
             _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM }),
             extruder:         newGroup(LANG.dv_gr_ext, null, {group:"dext", inline}),
             extFilament:      newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:toFloat, modes:FDM}),
@@ -1644,17 +1277,6 @@ gapp.register("kiri.init", (root, exports) => {
                 ui.extDel  = newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
                 ui.extNext = newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
             ], {class:"dev-buttons ext-buttons", modes:FDM}),
-            _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM, show: () => false && ui.filamentSource.selectedOptions[0].value === 'palette3' }),
-            palette:          newGroup(LANG.dv_gr_pal, null, {group:"dext2", inline, modes:FDM}),
-            paletteId:        newInput(LANG.dv_paid_s, {title:LANG.dv_paid_l, modes:FDM, size:15, text:true}),
-            palettePing:      newInput(LANG.dv_paps_s, {title:LANG.dv_paps_l, modes:FDM, convert:toInt}),
-            paletteFeed:      newInput(LANG.dv_pafe_s, {title:LANG.dv_pafe_l, modes:FDM, convert:toInt}),
-            palettePush:      newInput(LANG.dv_papl_s, {title:LANG.dv_papl_l, modes:FDM, convert:toInt}),
-            paletteOffset:    newInput(LANG.dv_paof_s, {title:LANG.dv_paof_l, modes:FDM, convert:toInt}),
-            paletteSep:       newBlank({class:"pop-sep", modes:FDM}),
-            paletteHeat:      newInput(LANG.dv_pahe_s, {title:LANG.dv_pahe_l, modes:FDM, convert:toInt}),
-            paletteCool:      newInput(LANG.dv_paco_s, {title:LANG.dv_paco_l, modes:FDM, convert:toInt}),
-            palettePress:     newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:toInt}),
             _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:CAM_LZR }),
             _____:            newGroup(LANG.dv_gr_out, null, {group:"dgco", inline}),
             gcodeStrip:       newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
@@ -2533,7 +2155,7 @@ gapp.register("kiri.init", (root, exports) => {
             api.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
 
             // fill device list
-            updateDeviceList();
+            api.devices.refresh();
 
             // update ui fields from settings
             api.conf.update_fields();
@@ -2676,69 +2298,6 @@ gapp.register("kiri.init", (root, exports) => {
             api.show.alert("this is a development release");
             api.show.alert("and may not function properly");
             sdb.kiri_beta = kiri.beta;
-        }
-
-        // add palette3 edit button after filament source selector
-        {
-            let randomId = Math.round(Math.random() * 0xffffffffffff).toString(16);
-            let fsp = ui.filamentSource.parentNode;
-            let btn = ui.filamentSourceEdit = DOC.createElement('button');
-            btn.setAttribute('id', 'fs-edit');
-            btn.appendChild(DOC.createTextNode('edit'));
-            fsp.insertBefore(btn, ui.filamentSource);
-            let editDone = () => {
-                let device = api.conf.get().device;
-                let extra = device.extras = device.extras || {};
-                btn.onclick = edit;
-                btn.innerText = 'edit';
-                ui.extruder.parentNode.style.display = 'flex';
-                ui.palette.parentNode.style.display = 'none';
-                // save settings
-                extra.palette = {
-                    printer: ui.paletteId.value || randomId,
-                    ping: ui.palettePing.convert(),
-                    feed: ui.paletteFeed.convert(),
-                    push: ui.palettePush.convert(),
-                    offset: ui.paletteOffset.convert(),
-                    heat: ui.paletteHeat.convert(),
-                    cool: ui.paletteCool.convert(),
-                    press: ui.palettePress.convert()
-                };
-            };
-            let edit = btn.onclick = () => {
-                let device = api.conf.get().device;
-                let extra = device.extras = device.extras || {};
-                let pinfo = extra.palette;
-                if (!pinfo) {
-                    pinfo = extra.palette = {
-                        printer: randomId,
-                        feed: 570,
-                        push: 600,
-                        heat: 0,
-                        cool: 0,
-                        press: 0
-                    };
-                }
-                ui.paletteId.value = pinfo.printer;
-                ui.palettePing.value = pinfo.ping || 0;
-                ui.paletteFeed.value = pinfo.feed || 0;
-                ui.palettePush.value = pinfo.push || 0;
-                ui.paletteOffset.value = pinfo.offset || 0;
-                ui.paletteHeat.value = pinfo.heat || 0;
-                ui.paletteCool.value = pinfo.cool || 0;
-                ui.palettePress.value = pinfo.press || 0;
-                ui.extruder.parentNode.style.display = 'none';
-                ui.palette.parentNode.style.display = 'flex';
-                btn.innerText = 'done';
-                btn.onclick = editDone;
-            };
-            api.event.on(["device.select", "filament.source"], () => {
-                ui.extruder.parentNode.style.display = 'flex';
-                ui.palette.parentNode.style.display = 'none';
-                btn.innerText = 'edit';
-                btn.onclick = edit;
-            });
-            api.event.on("device.save", editDone);
         }
     }
 
