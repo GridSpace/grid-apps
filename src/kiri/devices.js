@@ -2,11 +2,14 @@
 
 "use strict";
 
+// dep: kiri.api
 // dep: kiri.settings
 gapp.register("kiri.devices", (root, exports) => {
 
-    let { kiri } = root;
-    let { api, conf } = kiri;
+    let { kiri } = root,
+        { api, conf } = kiri;
+
+    api.show.devices = showDevices;
 
     api.device = {
         clone: cloneDevice,

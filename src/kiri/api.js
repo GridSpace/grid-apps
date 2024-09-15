@@ -72,29 +72,20 @@ function localSet(key, val) {
 }
 
 const api = exports({
+    ajax: ajax,
+    doit: {
+        undo: noop, // set in do.js
+        redo: noop  // set in do.js
+    },
     clip: (text) => {
         navigator.clipboard
             .writeText(text)
             .catch(err => console.error('Clipboard Error:', err));
     },
     clone: Object.clone,
-    sdb: data.local,
-    ajax: ajax,
-    js2o: js2o,
-    o2js: o2js,
-    lists: LISTS,
-    doit: {
-        undo: noop, // set in do.js
-        redo: noop  // set in do.js
-    },
-    var: {
-        layer_lo: 0,
-        layer_hi: 0,
-        layer_max: 0
-    },
-    feature,
     devel,
-    tweak,
+    feature,
+    js2o: js2o,
     local: {
         get: (key) => localGet(key),
         getInt: (key) => parseInt(localGet(key)),
@@ -106,7 +97,19 @@ const api = exports({
         toggle: (key, val, def) => localSet(key, val ?? !api.local.getBoolean(key, def)),
         put: (key, val) => localSet(key, val),
         set: (key, val) => localSet(key, val),
-    }
+    },
+    lists: LISTS,
+    o2js: o2js,
+    sdb: data.local,
+    show: {},
+    uc: {},
+    ui: {},
+    var: {
+        layer_lo: 0,
+        layer_hi: 0,
+        layer_max: 0
+    },
+    tweak,
 });
 
 });

@@ -54,8 +54,8 @@ gapp.register("kiri.main", (root, exports) => {
 
     // extend API
     Object.assign(api, {
-        ui: UI,
-        uc: UC,
+        ui: UI = Object.assign(api.ui, UI),
+        uc: UC = Object.assign(api.uc, UC),
         stats,
         focus: noop,
         catalog: FILES,
@@ -138,17 +138,15 @@ gapp.register("kiri.main", (root, exports) => {
             code: currentProcessCode,
             get: currentProcessName
         },
-        show: {
+        show: Object.assign({
             alert() { return api.alerts.show(...arguments) },
-            devices: noop, // set during init
             progress: setProgress,
             controls: setControlsVisible,
             slices: showSlices,
             layer: setVisibleLayer,
             local: showLocal,
-            tools: noop, // set during init
             import: function() { UI.import.style.display = '' }
-        },
+        }, api.show),
         space: {
             reload,
             auto_save,

@@ -5,11 +5,11 @@
 // dep: kiri-mode.cam.driver
 // use: kiri-mode.cam.animate
 // use: kiri-mode.cam.animate2
+// use: kiri-mode.cam.tools
 // use: load.gbr
 gapp.register("kiri-mode.cam.client", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { newPoint, newPolygon } = base;
 const { driver } = kiri;
 const { CAM } = driver;
 const DEG2RAD = Math.PI / 180;

@@ -77,7 +77,11 @@ function safeFN(fn, name) {
         try {
             return fn(...arguments);
         } catch (error) {
-            console.log({ register_fail: name, error });
+            if (error.stack) {
+                console.log(`[${name}]`, error.stack);
+            } else {
+                console.log({ register_fail: name, error });
+            }
         }
     };
 }
