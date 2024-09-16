@@ -762,7 +762,7 @@ function setEnableWASM(bool) {
 }
 
 // extend API (api.conf)
-api.conf = {
+Object.assign(api.conf, {
     dbo: () => { return ls2o('ws-settings') },
     get: getSettings,
     put: putSettings,
@@ -778,10 +778,10 @@ api.conf = {
     restore: restoreSettings,
     export: settingsExport,
     import: settingsImport,
-};
+});
 
 // extend API (api.settings)
-api.settings = {
+Object.assign(api.settings, {
     get: getSettings,
     import: settingsImport,
     import_zip: settingsImportZip,
@@ -797,6 +797,6 @@ api.settings = {
         async put() {},
         status: false
     }
-};
+});
 
 });

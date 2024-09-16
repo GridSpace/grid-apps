@@ -6,7 +6,7 @@
 // dep: kiri.api
 // dep: kiri.consts
 // dep: kiri.utils
-gapp.register("kiri.selection", [], (root, exports) => {
+gapp.register("kiri.selection", (root, exports) => {
 
 const { kiri, moto, noop } = self;
 const { api, consts, utils } = kiri;
@@ -295,7 +295,7 @@ function setDisabled(bool) {
 }
 
 // extend API (api.selection)
-const selection = api.selection = {
+const selection = Object.assign(api.selection, {
     move,
     merge,
     scale,
@@ -319,6 +319,6 @@ const selection = api.selection = {
     disable()   { setDisabled(true) },
     opacity()   { api.widgets.opacity(...arguments) },
     meshes()    { return selectedMeshes.slice() },
-};
+});
 
 });

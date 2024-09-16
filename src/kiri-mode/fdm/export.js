@@ -432,15 +432,6 @@ FDM.export = function(print, online, ondone, ondebug) {
     }
 
     function moveTo(newpos, rate, comment) {
-        if (pingRemain) {
-            if (newpos.e) {
-                if (pingRemain - newpos.e < -0.4) {
-                    // split move if ping over-extrudes? complicates emitted calc.
-                    // console.log({over_ping: pingRemain - newpos.e});
-                }
-                pingRemain -= newpos.e;
-            }
-        }
         let o = [!rate && !newpos.e ? 'G0' : 'G1'];
         let emit = { x: false, y: false, z: false };
         if (typeof newpos.x === 'number' && newpos.x !== pos.x) {
@@ -517,9 +508,6 @@ FDM.export = function(print, online, ondone, ondebug) {
     allout.forEachPair(function (o1, o2) {
         totaldistance += o1.point.distTo2D(o2.point);
     }, 1);
-
-    // for palette pings, amount of extrusion left
-    let pingRemain = 0;
 
     // retract before first move
     retract();

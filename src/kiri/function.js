@@ -13,7 +13,7 @@
 // dep: kiri-mode.drag.driver
 // dep: kiri-mode.wjet.driver
 // dep: kiri-mode.wedm.driver
-gapp.register("kiri.function", [], (root, exports) => {
+gapp.register("kiri.function", (root, exports) => {
 
 const { kiri } = root;
 const { api, client, consts, utils } = kiri;
@@ -439,7 +439,7 @@ function parseCode(code, type) {
 }
 
 // extend API (api.function)
-const functions = api.function = {
+const functions = Object.assign(api.function, {
     slice: prepareSlices,
     print: preparePreview,
     prepare: preparePreview,
@@ -449,6 +449,6 @@ const functions = api.function = {
     parse: parseCode,
     clear: client.clear,
     clear_progress() { complete = {} }
-};
+});
 
 });

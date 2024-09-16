@@ -772,10 +772,10 @@ gapp.register("kiri.init", (root, exports) => {
 
     // MAIN INITIALIZATION FUNCTION
     function init_one() {
-        let { event, conf, view, show } = api;
-        let { bound, toInt, toFloat } = uc;
-        let { newBlank, newButton, newBoolean, newGroup, newInput } = uc;
-        let { newSelect, newText, newRow, newGCode, newDiv } = uc;
+        let { event, conf, view, show } = api,
+            { bound, toInt, toFloat } = uc,
+            { newBlank, newButton, newBoolean, newGroup, newInput } = uc,
+            { newSelect, newText, newRow, newGCode, newDiv } = uc;
 
         event.emit('init.one');
 
@@ -783,7 +783,6 @@ gapp.register("kiri.init", (root, exports) => {
         conf.restore();
 
         let container = $('container'),
-            welcome = $('welcome'),
             gcode = $('dev-gcode'),
             tracker = $('tracker'),
             controller = settings().controller;

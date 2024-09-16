@@ -239,8 +239,16 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         };
         ui.toolCopy.onclick = function() {
             let clone = Object.assign({}, selectedTool);
+            let { name } = clone;
+            let split = name.split(' ');
+            let endv = parseInt(split.pop());
+            if (endv) {
+                name = split.join(' ') + ' ' + (endv + 1);
+            } else {
+                name = `${name} 2`;
+            }
             clone.number = maxTool + 1;
-            clone.name = `${clone.name} copy`;
+            clone.name = name;
             editTools.push(clone);
             setToolChanged(true);
             renderTools();

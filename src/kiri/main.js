@@ -50,65 +50,65 @@ gapp.register("kiri.main", (root, exports) => {
         DRIVER = undefined,
         viewMode = VIEWS.ARRANGE,
         autoSaveTimer = null,
-        busy = 0;
+        busy = 0,
+        { assign } = Object;
 
     // extend API
-    Object.assign(api, {
-        ui: UI = Object.assign(api.ui, UI),
-        uc: UC = Object.assign(api.uc, UC),
+    assign(api, {
+        ui: UI = assign(api.ui, UI),
+        uc: UC = assign(api.uc, UC),
         stats,
-        focus: noop,
         catalog: FILES,
-        busy: {
+        busy: assign(api.busy, {
             val() { return busy },
             inc() { kiri.api.event.emit("busy", ++busy) },
             dec() { kiri.api.event.emit("busy", --busy) }
-        },
+        }),
         color: COLOR,
-        const: {
+        const: assign(api.const, {
             LANG,
             LOCAL,
             SETUP,
             SECURE,
             STACKS,
-        },
-        dialog: {
+        }),
+        dialog: assign(api.dialog, {
             show: showModal,
             hide: hideModal,
             update_process_list: updateProcessList
-        },
-        help: {
+        }),
+        help: assign(api.help, {
             show: showHelp,
             file: showHelpFile
-        },
-        event: {
+        }),
+        event: assign(api.event, {
             on(t,l) { return EVENT.on(t,l) },
             emit(t,m,o) { return EVENT.publish(t,m,o) },
             bind(t,m,o) { return EVENT.bind(t,m,o) },
             alerts(clr) { api.alerts.update(clr) },
             import: loadFile,
             settings: triggerSettingsEvent
-        },
-        group: {
+        }),
+        group: assign(api.group, {
             merge: groupMerge,
             split: groupSplit,
-        },
-        hide: {
+        }),
+        hide: assign(api.hide, {
             alert(rec, recs) { api.alerts.hide(...arguments) },
             import: noop,
             slider: hideSlider
-        },
-        image: {
+        }),
+        image: assign(api.image, {
             dialog: loadImageDialog,
             convert: loadImageConvert
-        },
+        }),
         language: kiri.lang,
-        modal: {
+        modal: assign(api.modal, {
             show: showModal,
             hide: hideModal,
             visible: modalShowing
-        },
-        mode: {
+        }),
+        mode: assign(api.mode, {
             get_id() { return MODE },
             get_lower: getModeLower,
             get: getMode,
@@ -128,17 +128,17 @@ gapp.register("kiri.main", (root, exports) => {
                 api.mode.is_wjet() ||
                 api.mode.is_laser()
             }
-        },
-        probe: {
+        }),
+        probe: assign(api.probe, {
             live: "https://live.grid.space",
             grid: noop,
             local: noop
-        },
-        process: {
+        }),
+        process: assign(api.process, {
             code: currentProcessCode,
             get: currentProcessName
-        },
-        show: Object.assign({
+        }),
+        show: assign(api.show, {
             alert() { return api.alerts.show(...arguments) },
             progress: setProgress,
             controls: setControlsVisible,
@@ -146,8 +146,8 @@ gapp.register("kiri.main", (root, exports) => {
             layer: setVisibleLayer,
             local: showLocal,
             import: function() { UI.import.style.display = '' }
-        }, api.show),
-        space: {
+        }),
+        space: assign(api.space, {
             reload,
             auto_save,
             restore: restoreWorkspace,
@@ -156,16 +156,16 @@ gapp.register("kiri.main", (root, exports) => {
             set_focus: setFocus,
             update: SPACE.update,
             is_dark() { return settings.ctrl().dark }
-        },
-        util: {
+        }),
+        util: assign(api.util, {
             isSecure,
             download: downloadBlob,
             ui2rec() { api.conf.update_from(...arguments) },
             rec2ui() { api.conf.update_fields(...arguments) },
             b64enc(obj) { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
             b64dec(obj) { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
-        },
-        view: {
+        }),
+        view: assign(api.view, {
             get() { return viewMode },
             set() { setViewMode(...arguments) },
             set_arrange() { api.view.set(VIEWS.ARRANGE) },
@@ -185,7 +185,7 @@ gapp.register("kiri.main", (root, exports) => {
             edges: setEdges,
             unit_scale: unitScale,
             wireframe: setWireframe,
-        },
+        }),
         work: kiri.client
     });
 
@@ -426,11 +426,6 @@ gapp.register("kiri.main", (root, exports) => {
         api.var.layer_hi = layer;
         api.event.emit("slider.label");
 
-        let cam = api.mode.is_cam(),
-            sla = api.mode.is_sla(),
-            hi = cam ? api.var.layer_max - api.var.layer_lo : api.var.layer_hi,
-            lo = cam ? api.var.layer_max - api.var.layer_hi : api.var.layer_lo;
-
         updateSlider();
         STACKS.setRange(api.var.layer_lo, api.var.layer_hi);
 
@@ -489,7 +484,7 @@ gapp.register("kiri.main", (root, exports) => {
     }
 
     function loadImage(image, opt = {}) {
-        const info = Object.assign({settings: settings.get(), png:image}, opt);
+        const info = assign({settings: settings.get(), png:image}, opt);
         kiri.client.image2mesh(info, progress => {
             api.show.progress(progress, "converting");
         }, vertices => {
@@ -844,7 +839,6 @@ gapp.register("kiri.main", (root, exports) => {
     }
 
     function setViewMode(mode) {
-        const oldMode = viewMode;
         const isCAM = settings.mode() === 'CAM';
         viewMode = mode;
         platform.deselect();
