@@ -9,21 +9,25 @@ gapp.register("kiri.devices", (root, exports) => {
     let { kiri } = root,
         { api, conf } = kiri;
 
-    api.show.devices = showDevices;
+    // extend API
+    Object.assign(api.show, {
+        showDevices
+    });
 
-    api.device = {
+    Object.assign(api.device, {
         clone: cloneDevice,
         code: currentDeviceCode,
         get: currentDeviceName,
         set: selectDevice,
         isBelt
-    };
+    });
 
-    api.devices = {
+    Object.assign(api.devices, {
         show: showDevices,
         select: selectDevice,
-        refresh: updateDeviceList
-    };
+        refresh: updateDeviceList,
+        update_laser_state: updateLaserState
+    });
 
     function isBelt() {
         return api.conf.get().device.bedBelt;

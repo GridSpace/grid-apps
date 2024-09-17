@@ -74,6 +74,7 @@ let { data, kiri, moto, noop } = root,
     und = undefined,
     api = exports({
         ajax,           // via utils
+        alerts: {},     // alerts.js
         busy: {},       // main.js
         catalog: und,   // main.js
         clip,           // <--
@@ -81,12 +82,13 @@ let { data, kiri, moto, noop } = root,
         color: und,     // main.js
         conf: {},       // settings.js
         const: {},      // main.js
+        devel,          // <--
+        device: {},     // devices.js
+        devices: {},    // devices.js
         dialog: {},     // main.js
         doit,           // <--
-        devel,          // <--
         event: {},      // main.js
         feature,        // <--
-        focus: noop,
         function: {},   // function.js
         group: {},      // main.js
         help: {},       // main.js
@@ -94,8 +96,8 @@ let { data, kiri, moto, noop } = root,
         image: {},      // main.js
         js2o,           // via utils
         language: und,  // main.js
-        local,          // <--
         lists,          // <--
+        local,          // <--
         modal: {},      // main.js
         mode: {},       // main.js
         o2js,           // via utils
@@ -107,6 +109,8 @@ let { data, kiri, moto, noop } = root,
         settings: {},   // settings.js
         show: {},       // main.js
         space: {},      // main.js
+        tool: {},       // kiri-mode/cam/tools.js
+        tweak,          // <--
         uc: {},         // main.js
         ui: {},         // main.js
         util: {},       // main.js
@@ -116,7 +120,6 @@ let { data, kiri, moto, noop } = root,
             layer_max: 0
         },
         view: {},       // main.js
-        tweak,
         widgets: {},    // widgets.js
         work: und,      // main.js
     });

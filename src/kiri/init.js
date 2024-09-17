@@ -214,16 +214,6 @@ gapp.register("kiri.init", (root, exports) => {
         }, 100);
     }
 
-    function parentWithClass(el, classname) {
-        while (el) {
-            if (el.classList.contains(classname)) {
-                return el;
-            }
-            el = el.parentNode;
-        }
-        return el;
-    }
-
     function onBooleanClick(el) {
         // copy some ui elements to target settings
         let settings = api.conf.get();
@@ -236,7 +226,7 @@ gapp.register("kiri.init", (root, exports) => {
         api.conf.update();
         DOC.activeElement.blur();
         api.event.emit("boolean.click");
-        updateLaserState();
+        api.devices.update_laser_state();
         if (el === ui.camStockIndexed) {
             api.space.set_focus();
         }
@@ -763,7 +753,7 @@ gapp.register("kiri.init", (root, exports) => {
     }
 
     function isBelt() {
-        return api.device.isBelt;
+        return api.device.isBelt();
     }
 
     function isNotBelt() {

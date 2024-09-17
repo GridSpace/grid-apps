@@ -18,9 +18,10 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
 
     api.show.tools = showTools;
 
-    api.tool = {
+    // extend API
+    Object.assign(api.tool, {
         update: updateTool
-    };
+    });
 
     function settings() {
         return api.conf.get();
