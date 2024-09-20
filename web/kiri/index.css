@@ -282,6 +282,9 @@ th, tr, td, label {
     background-color: #282828;
     color: white;
 }
+.dark #dev-list:hover {
+    background-color: var(--blue-1);
+}
 .dark #render-tools .pop,
 .dark #render-tools svg,
 .dark .cam-pop-op {
