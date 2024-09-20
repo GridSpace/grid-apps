@@ -45,14 +45,15 @@ function polyLabel(poly, label) {
 }
 
 function sliceEmitObjects(print, slice, groups, opt = { }) {
-    let process = print.settings.process;
-    let stacked = process.ctOutStack;
-    let grouped = stacked || process.ctOutGroup;
-    let label = false && process.outputLaserLabel;
-    let simple = opt.simple || false;
-    let emit = { in: [], out: [], mark: [] };
-    let lastEmit = opt.lastEmit;
-    let zcolor = print.settings.process.ctOutZColor;
+    let process = print.settings.process,
+        marked = process.ctOutMark,
+        stacked = process.ctOutStack,
+        grouped = marked || process.ctOutGroup,
+        label = false && process.outputLaserLabel,
+        simple = opt.simple || false,
+        emit = { in: [], out: [], mark: [] },
+        lastEmit = opt.lastEmit,
+        zcolor = print.settings.process.ctOutZColor;
 
     function polyOut(poly, group, type, indexed) {
         if (!poly) {
@@ -77,7 +78,7 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
             print.PPP(poly, group, pathOpt);
             // when stacking (top down widget slices), if the last layer is fully contained
             // by the current layer, then it is "marked" onto the current layer in a different color
-            if (stacked && type === "out" && lastEmit) {
+            if (marked && type === "out" && lastEmit) {
                 for (let out of lastEmit.out) {
                     if (out.isInside(poly)) {
                         polyOut(out, group, "mark");
@@ -297,9 +298,10 @@ async function prepare(widgets, settings, update) {
     // emit objects from each slice into output array
     let layers = [];
     for (let widget of widgets) {
-        if (process.ctOutMerged) {
-            // slice stack merging
-            // there is not layout in this mode
+        if (process.ctOutStack) {
+            // 3d stack output, no merging or layout
+        } else if (process.ctOutMerged) {
+            // slice stack merging, no layout
             // there are no inner vs outer polys
             // merged/same polys "increase" color/weight
             let merged = [];
@@ -640,7 +642,7 @@ function exportGCode(settings, data) {
 function exportSVG(settings, data, cut_color) {
     let { process } = settings;
     let zcolor = process.ctOutZColor ? 1 : 0;
-    let zstack = process.ctOutStack;
+    let zstack = process.ctOutMark;
     let lines = [], dx = 0, dy = 0, my, z = 0;
     let colors = [
         "black",

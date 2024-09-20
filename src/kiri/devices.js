@@ -11,7 +11,7 @@ gapp.register("kiri.devices", (root, exports) => {
 
     // extend API
     Object.assign(api.show, {
-        showDevices
+        devices: showDevices
     });
 
     Object.assign(api.device, {
