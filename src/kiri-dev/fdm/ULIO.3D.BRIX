@@ -113,7 +113,7 @@
             "firstLayerBedTemp": 0,
             "firstLayerBrimTrig": 0,
             "firstLayerBrimGap": 0,
-            "outputRaft": false,
+            "outputRaft": true,
             "outputRaftSpacing": 0.2,
             "outputBrimCount": 5,
             "outputBrimOffset": 2,
