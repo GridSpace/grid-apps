@@ -79,7 +79,7 @@ gapp.register("kiri.devices", (root, exports) => {
     function removeLocalDevice(devicename) {
         delete api.conf.get().devices[devicename];
         api.conf.save();
-        sync_put();
+        api.settings.sync.put();
     }
 
     function isLocalDevice(devicename) {
@@ -113,7 +113,7 @@ gapp.register("kiri.devices", (root, exports) => {
         }
         putLocalDevice(name, code);
         setDeviceCode(code, name);
-        sync_put();
+        api.settings.sync.put();
     }
 
     function updateLaserState() {
