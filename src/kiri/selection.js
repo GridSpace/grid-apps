@@ -210,6 +210,7 @@ function merge() {
         }
     });
     let w = api.platform.load_verts([], obj, "merged");
+    api.platform.delete(sel);
     api.platform.select(w);
 }
 
