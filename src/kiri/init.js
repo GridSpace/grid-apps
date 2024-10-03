@@ -1339,7 +1339,7 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         if (files.length === 1) {
             api.platform.load_files(files);
-        } else {
+        } else if (files.length > 1) {
             uc.confirm(`group ${files.length} files?`).then(yes => {
                 api.platform.load_files(files, yes ? [] : undefined);
             });
