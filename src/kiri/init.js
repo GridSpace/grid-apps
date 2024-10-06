@@ -1221,6 +1221,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             let clone = Object.assign({}, selectedTool);
             clone.number = maxTool + 1;
             clone.name = `${clone.name} copy`;
+            clone.id = Date.now();
             editTools.push(clone);
             setToolChanged(true);
             renderTools();
