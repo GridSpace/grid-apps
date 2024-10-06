@@ -248,6 +248,7 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
             } else {
                 name = `${name} 2`;
             }
+            clone.id = Date.now();
             clone.number = maxTool + 1;
             clone.name = name;
             editTools.push(clone);
