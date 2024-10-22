@@ -606,7 +606,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             return start;
         }
         let ltops = tops[depth];
-        let fitted = fit ? ltops.filter(poly => poly.isInside(fit, 0.01)) : ltops;
+        let fitted = fit ? ltops.filter(poly => poly.isInside(fit, 0.05)) : ltops;
         let ftops = fitted.filter(top => !top.level_emit);
         if (ftops.length > 1) {
             ftops = POLY.route(ftops, start);
