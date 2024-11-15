@@ -956,6 +956,7 @@ class Polygon {
             ln = ar.length,
             i = 0;
         while (i < ln) ar[i++].z = z;
+        this.z = z;
         if (this.inner) this.inner.forEach(c => c.setZ(z));
         return this;
     }
