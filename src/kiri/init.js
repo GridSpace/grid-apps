@@ -1072,6 +1072,7 @@ gapp.register("kiri.init", (root, exports) => {
             sliceShellOrder:     newSelect(LANG.sl_ordr_s, { title:LANG.sl_ordr_l}, "shell"),
             sliceDetectThin:     newSelect(LANG.ad_thin_s, { title: LANG.ad_thin_l, action: thinWallSave }, "thin"),
             outputAlternating:   newBoolean(LANG.ad_altr_s, onBooleanClick, {title:LANG.ad_altr_l}),
+            sliceZInterleave:    newBoolean(LANG.ad_zint_s, onBooleanClick, {title:LANG.ad_zint_l, show:zIntShow}),
             _____:               newGroup(LANG.fi_menu, $('fdm-fill'), { modes:FDM, driven, hideable, separator, group:"fdm-fill" }),
             sliceFillType:       newSelect(LANG.fi_type, {trigger:true}, "infill"),
             sliceFillSparse:     newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:toFloat, bound:bound(0.0,1.0)}),
@@ -1323,6 +1324,10 @@ gapp.register("kiri.init", (root, exports) => {
 
         function spindleShow() {
             return settings().device.spindleMax > 0;
+        }
+
+        function zIntShow() {
+            return settings().controller.devel;
         }
 
         // slider setup

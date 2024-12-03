@@ -104,6 +104,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
     let render = settings.render !== false,
         { process, device, controller } = settings,
         isBelt = device.bedBelt,
+        isBrick = controller.devel && process.sliceZInterleave,
         isSynth = widget.track.synth,
         isSupport = widget.track.support,
         useAssembly = controller.assembly,
@@ -385,6 +386,51 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 return found;
             }
         }).reverse();
+
+        if (isBrick) {
+            let indices = slices.map(s => s.index);
+            let first = indices[0];
+            let last = indices.peek();
+            let nu = [];
+            for (let slice of slices) {
+                let nuSlice = slice.clone();
+                nuSlice.z -= slice.height / 2;
+                if (slice.index === first) {
+                    nuSlice.z = slice.z - slice.height / 4;
+                    nuSlice.height = slice.height / 2;
+                } else {
+                    nuSlice.height = slice.height;
+                }
+                nu.push(nuSlice);
+                let ti = 0;
+                for (let top of slice.tops) {
+                    let nuTop = nuSlice.tops[ti++];
+                    nuTop.shells = [];
+                    top.shells = top.shells.filter((s,i) => {
+                        if (i % 2 === 0) {
+                            return true;
+                        } else {
+                            nuTop.shells.push(s);
+                            return false;
+                        }
+                    });
+                }
+                if (slice.index === last) {
+                    let cap = nuSlice.clone();
+                    cap.z += (slice.height * 0.75);
+                    cap.height = (slice.height / 2);
+                    console.log({ cap });
+                    nu.push(cap);
+                    cap.tops.forEach((top, i) => {
+                        top.shells = nuSlice.tops[i].shells.clone();
+                    });
+                }
+            }
+            slices.appendAll(nu);
+            slices.sort((a,b) => a.z - b.z);
+            slices.forEach((s,i) => s.index = i);
+            console.log({ slices });
+        }
 
         // connect slices into linked list for island/bridge projections
         for (let i=1; i<slices.length; i++) {
@@ -1054,6 +1100,7 @@ function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
     }
 
     slice.tops.forEach(function(top) {
+        if (!top.fill_off) return; // missing for inner brick layers
         let lines = fillArea(top.fill_off, angle, spacing, null);
         top.fill_lines.appendAll(lines);
     });
