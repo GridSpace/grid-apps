@@ -419,7 +419,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     let cap = nuSlice.clone();
                     cap.z += (slice.height * 0.75);
                     cap.height = (slice.height / 2);
-                    console.log({ cap });
                     nu.push(cap);
                     cap.tops.forEach((top, i) => {
                         top.shells = nuSlice.tops[i].shells.clone();
@@ -429,7 +428,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             slices.appendAll(nu);
             slices.sort((a,b) => a.z - b.z);
             slices.forEach((s,i) => s.index = i);
-            console.log({ slices });
         }
 
         // connect slices into linked list for island/bridge projections
