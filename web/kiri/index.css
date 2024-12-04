@@ -184,6 +184,30 @@ th, tr, td, span, div, label, button {
 th, tr, td, label {
     white-space: nowrap;
 }
+details > summary {
+    list-style: none;
+}
+details > summary::-webkit-details-marker {
+    display: none;
+}
+details > summary::before {
+    content: "";
+}
+details > summary {
+    position: relative;
+    cursor: pointer;
+}
+details > summary::after {
+    content: "▸";
+    position: absolute;
+    right: 5px;
+    font-size: 1em;
+    transform: rotate(-90deg);
+    transition: transform 0.2s ease;
+}
+details[open] > summary::after {
+    transform: rotate(90deg);
+}
 
 /* container for entire page / app */
 #app {
