@@ -593,6 +593,7 @@ const conf = exports({
                 bedDepth: 200,
                 bedHeight: 2.5,
                 maxHeight: 100,
+                laserMaxPower: 255,
                 gcodePre: [],
                 gcodePost: [],
                 gcodeFExt: "",

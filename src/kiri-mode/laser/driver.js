@@ -559,7 +559,8 @@ function exportGCode(settings, data) {
     let dev = settings.device;
     let proc = settings.process;
     let space = dev.gcodeSpace ? ' ' : '';
-    let power = 255;
+    let max_power = dev.laserMaxPower || 255;
+    let power = max_power;
     let cut_on = dev.gcodeLaserOn || dev.gcodeWaterOn || dev.gcodeKnifeDn || [];
     let cut_off = dev.gcodeLaserOff || dev.gcodeWaterOff || dev.gcodeKnifeUp || [];
     let knifeOn = proc.knifeOn;
@@ -569,14 +570,14 @@ function exportGCode(settings, data) {
     exportElements(
         settings,
         data,
-        function(min, max, power, speed) {
+        function(min, max, pct, speed) {
             let width = (max.x - min.x),
                 height = (max.y - min.y);
 
             dx = min.x;
             dy = min.y;
             feedrate = `${space}F${speed}`;
-            power = (256 * (power / 100)).toFixed(3);
+            power = (max_power * (pct / 100)).toFixed(3);
 
             (dev.gcodePre || []).forEach(line => {
                 lines.push(line);

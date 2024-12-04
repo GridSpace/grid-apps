@@ -109,36 +109,36 @@ function exportLaserDialog(data, names) {
     function download_svg() {
         api.util.download(
             driver.exportSVG(settings, data),
-            $('print-filename').value + ".svg"
+            $('print-filename-laser').value + ".svg"
         );
     }
 
     function download_dxf() {
         api.util.download(
             driver.exportDXF(settings, data),
-            $('print-filename').value + ".dxf"
+            $('print-filename-laser').value + ".dxf"
         );
     }
 
     function download_gcode() {
         api.util.download(
             driver.exportGCode(settings, data),
-            $('print-filename').value + ".gcode"
+            $('print-filename-laser').value + ".gcode"
         );
     }
 
-    // api.ajax("/kiri/output-laser.html", function(html) {
-        api.modal.show('xlaser');
-        let segments = 0;
-        data.forEach(layer => { segments += layer.length });
-        // ui.print.innerHTML = html;
-        $('print-filename').value = filename;
-        $('print-lines').value = util.comma(segments);
-        $('print-svg').onclick = download_svg;
-        $('print-dxf').onclick = download_dxf;
-        $('print-lg').onclick = download_gcode;
-    //     api.modal.show('print');
-    // });
+    api.modal.show('xlaser');
+
+    let segments = 0;
+    data.forEach(layer => { segments += layer.length });
+
+    $('print-filename-laser').value = filename;
+    $('print-lines').value = util.comma(segments);
+    $('print-svg').onclick = download_svg;
+    $('print-dxf').onclick = download_dxf;
+    $('print-lg').onclick = download_gcode;
+
+    console.log('laser export', { fileroot, filename });
 }
 
 function bindField(field, varname) {

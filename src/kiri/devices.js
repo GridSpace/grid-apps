@@ -209,6 +209,7 @@ gapp.register("kiri.devices", (root, exports) => {
                 ui.gcodeStrip,
                 ui.gcodeLaserOn,
                 ui.gcodeLaserOff,
+                ui.laserMaxPower,
                 ui.extPrev,
                 ui.extNext,
                 ui.extAdd,

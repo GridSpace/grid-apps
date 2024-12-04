@@ -166,6 +166,10 @@ function round(v, zeros) {
     return Math.round(v * pow) / pow;
 }
 
+function clamp(val, low, hi) {
+    return Math.max(low, Math.min(hi, val));
+}
+
 /**
  * used by {@link Polygon.trace} and {@link Polygon.intersect}
  */
@@ -590,6 +594,7 @@ base.util = {
     sqr,
     lerp,
     time,
+    clamp,
     comma,
     round,
     area2,

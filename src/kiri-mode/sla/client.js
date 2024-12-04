@@ -68,7 +68,7 @@ function init(kiri, api) {
         print_min = print_min.toString().padStart(2,'0');
         print_hrs = print_hrs.toString().padStart(2,'0');
 
-        $('print-filename').value = filename;
+        $('print-filename-sla').value = filename;
         $('print-volume').value = (volume/1000).round(2);
         $('print-layers').value = layers;
         $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
@@ -94,7 +94,7 @@ function init(kiri, api) {
 }
 
 function saveFile(api, file, ext) {
-    api.util.download(file, $('print-filename').value + ext);
+    api.util.download(file, $('print-filename-sla').value + ext);
     api.modal.hide();
 }
 
