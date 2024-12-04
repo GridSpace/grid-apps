@@ -389,10 +389,13 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
 
         if (isBrick) {
             let indices = slices.map(s => s.index);
-            let first = indices[0];
-            let last = indices.peek();
+            let first = indices[1];
+            let last = indices[indices.length - 2];
             let nu = [];
             for (let slice of slices) {
+                if (slice.index < first || slice.index > last) {
+                    continue;
+                }
                 let nuSlice = slice.clone();
                 nuSlice.z -= slice.height / 2;
                 if (slice.index === first) {
