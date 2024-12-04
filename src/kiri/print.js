@@ -582,7 +582,7 @@ class Print {
         scope.belt = belt;
 
         if (scope.debugE) {
-            console.log({ print_time: time.round(2) });
+            console.log({ bounds, print_time: time.round(2) });
         }
 
         done({ output: scope.output });

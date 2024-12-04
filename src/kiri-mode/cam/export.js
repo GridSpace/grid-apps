@@ -70,7 +70,8 @@ CAM.export = function(print, online) {
         },
         offset = {
             x: -origin.x,
-            y:  origin.y
+            y:  origin.y,
+            z:  spro.camOriginTop ? origin.z - zmax : origin.z
         },
         scale = {
             x: 1,
@@ -88,7 +89,7 @@ CAM.export = function(print, online) {
             time_sec: 0,
             time_ms: 0,
             time: 0
-        }
+        };
 
     function section(section) {
         append();
