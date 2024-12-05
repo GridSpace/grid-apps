@@ -387,52 +387,6 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             }
         }).reverse();
 
-        if (isBrick) {
-            let indices = slices.map(s => s.index);
-            let first = indices[1];
-            let last = indices[indices.length - 2];
-            let nu = [];
-            for (let slice of slices) {
-                if (slice.index < first || slice.index > last) {
-                    continue;
-                }
-                let nuSlice = slice.clone();
-                nuSlice.z -= slice.height / 2;
-                if (slice.index === first) {
-                    nuSlice.z = slice.z - slice.height / 4;
-                    nuSlice.height = slice.height / 2;
-                } else {
-                    nuSlice.height = slice.height;
-                }
-                nu.push(nuSlice);
-                let ti = 0;
-                for (let top of slice.tops) {
-                    let nuTop = nuSlice.tops[ti++];
-                    nuTop.shells = [];
-                    top.shells = top.shells.filter((s,i) => {
-                        if (i % 2 === 0) {
-                            return true;
-                        } else {
-                            nuTop.shells.push(s);
-                            return false;
-                        }
-                    });
-                }
-                if (slice.index === last) {
-                    let cap = nuSlice.clone();
-                    cap.z += (slice.height * 0.75);
-                    cap.height = (slice.height / 2);
-                    nu.push(cap);
-                    cap.tops.forEach((top, i) => {
-                        top.shells = nuSlice.tops[i].shells.clone();
-                    });
-                }
-            }
-            slices.appendAll(nu);
-            slices.sort((a,b) => a.z - b.z);
-            slices.forEach((s,i) => s.index = i);
-        }
-
         // connect slices into linked list for island/bridge projections
         for (let i=1; i<slices.length; i++) {
             slices[i-1].up = slices[i];
@@ -902,6 +856,52 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 });
             }
             profileEnd();
+        }
+
+        if (isBrick) {
+            let indices = slices.map(s => s.index);
+            let first = indices[1];
+            let last = indices[indices.length - 2];
+            let nu = [];
+            for (let slice of slices) {
+                if (slice.index < first || slice.index > last) {
+                    continue;
+                }
+                let nuSlice = slice.clone();
+                nuSlice.z -= slice.height / 2;
+                if (slice.index === first) {
+                    nuSlice.z = slice.z - slice.height / 4;
+                    nuSlice.height = slice.height / 2;
+                } else {
+                    nuSlice.height = slice.height;
+                }
+                nu.push(nuSlice);
+                let ti = 0;
+                for (let top of slice.tops) {
+                    let nuTop = nuSlice.tops[ti++];
+                    nuTop.shells = [];
+                    top.shells = top.shells.filter((s,i) => {
+                        if (i % 2 === 0) {
+                            return true;
+                        } else {
+                            nuTop.shells.push(s);
+                            return false;
+                        }
+                    });
+                }
+                if (slice.index === last) {
+                    let cap = nuSlice.clone();
+                    cap.z += (slice.height * 0.75);
+                    cap.height = (slice.height / 2);
+                    nu.push(cap);
+                    cap.tops.forEach((top, i) => {
+                        top.shells = nuSlice.tops[i].shells.clone();
+                    });
+                }
+            }
+            slices.appendAll(nu);
+            slices.sort((a,b) => a.z - b.z);
+            slices.forEach((s,i) => s.index = i);
         }
 
         // render if not explicitly disabled
