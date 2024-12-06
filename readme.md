@@ -69,8 +69,7 @@ docker-compose -f src/dock/compose.yml up
 git clone git@github.com:GridSpace/grid-apps.git
 cd grid-apps
 npm i
-npm install -g @gridspace/app-server
-gs-app-server --debug
+npm run dev
 ```
 
 to start a local instance of the apps. then use a browser to open
