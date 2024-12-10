@@ -1308,8 +1308,37 @@ gapp.register("moto.space", [], (root, exports) => {
             return {
                 url: ncv.toDataURL(param.format || "image/png", param.options),
                 width: ncv.width,
-                height: ncv.height
+                height: ncv.height,
             };
+        },
+
+        screenshot3(param = {}) {
+            let oco = renderer.domElement;
+            let oWidth = oco.offsetWidth;
+            let oHeight = oco.offsetHeight;
+            let oRatio = oWidth / oHeight;
+            let width = param.width || 512;
+            let height = param.height || width;
+            let nRatio = width / height;
+            let ncv = document.createElement('canvas');
+            ncv.width = width;
+            ncv.height = height;
+            let nco = ncv.getContext('2d');
+            let ox = 0, oy = 0;
+            if (oRatio > nRatio) {
+                let tmp = oWidth;
+                oWidth = oHeight * nRatio;
+                ox = (tmp - oWidth) / 2;
+            } else {
+                let tmp = oHeight;
+                oHeight = oWidth * nRatio;
+                oy = (tmp - oHeight) / 2;
+            }
+            nco.drawImage(oco, ox, oy, oWidth, oHeight, 0, 0, width, height);
+            if (param.out) {
+                ncv.toBlob(blob => blob.arrayBuffer().then(png => param.out({ png, width, height })));
+            }
+            return ncv;
         },
 
         internals: () => {

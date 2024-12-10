@@ -1670,6 +1670,8 @@ details[open] > summary::after {
     height: 12em;
     font-size: smaller;
     font-family: Courier,monospace;
+    white-space: nowrap;
+    resize: none;
 }
 .mod-end {
     height: 10px;
