@@ -230,7 +230,9 @@ FDM.export = function(print, online, ondone, ondebug) {
     // with logic flow IF / ELIF / ELSE / END
     // IF / IF is valid but will not nest
     function appendSub(line, pad) {
-        if (line.indexOf(';; IF ') === 0) {
+        if (line.indexOf(';; DEFINE ') === 0) {
+            // ignore var declarations
+        } else if (line.indexOf(';; IF ') === 0) {
             line = line.substring(6).trim();
             let evil = print.constReplace(line, subst, 0, 666);
             subon = evil;

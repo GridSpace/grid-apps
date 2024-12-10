@@ -13,6 +13,7 @@ const modTmp = path.join('tmp','mod');
 fs.copySync("mod", modTmp, { dereference: true, filter:(src,dst) => {
     const ok =
         src === 'mod' ||
+        src.indexOf('mod/ext-bambu') === 0 ||
         src.indexOf('mod/standalone') === 0 ||
         src.indexOf('mod/node_modules') === 0;
     // console.log(ok, src);

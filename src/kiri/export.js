@@ -635,7 +635,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
                 api.show.progress(progress.percent/100, "generating 3mf");
             }, output => {
                 api.show.progress(0);
-                if (api.bambu) {
+                if (api.bambu && api.bambu.sendok({ gcode, info, settings })) {
                     api.bambu.send(`${$('print-filename').value}.3mf`, output);
                 } else {
                     api.util.download(output, `${$('print-filename').value}.3mf`);

@@ -335,9 +335,10 @@ function init(mod) {
         if (dir.charAt(0) === '.') return;
         const stats = fs.lstatSync(`${mod.dir}/${modpath}`);
         if (!(stats.isDirectory() || stats.isSymbolicLink())) return;
+        const isDebugMod = util.isfile(PATH.join(mod.dir,modpath,".debug"));
         const isElectronMod = util.isfile(PATH.join(mod.dir,modpath,".electron"));
         if (ENV.electron && !isElectronMod) return;
-        if (!ENV.electron && isElectronMod) return;
+        if (!ENV.electron && isElectronMod && !isDebugMod) return;
         try {
             loadModule(mod, modpath);
         } catch (error) {

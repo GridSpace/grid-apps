@@ -70,6 +70,7 @@
     },
     "scripts": {
 	"dev": "gs-app-server --debug",
+	"prod": "gs-app-server",
         "start": "npm run prebuild && electron .",
         "start-dev": "npm run prebuild && electron . --devel",
         "start-dbg": "npm run prebuild && electron . --debugg",
