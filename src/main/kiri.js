@@ -9,7 +9,7 @@ gapp.main({
         let mods = root.kirimod = ( root.kirimod || [] );
 
         let kiri = root.kiri = {
-            beta: 4101,
+            beta: 4102,
             driver: {
                 // attached driver modules
             },
