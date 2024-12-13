@@ -474,7 +474,7 @@ FDM.prepare = async function(widgets, settings, update) {
         return a.z - b.z;
     });
 
-    let firstExt;
+    let firstTool;
     let lastWidget;
     let lastExt;
     let lastOut;
@@ -516,8 +516,8 @@ FDM.prepare = async function(widgets, settings, update) {
                 return a.dst - b.dst;
             });
             let { z, slice, offset } = order[0];
-            if (firstExt === undefined) {
-                firstExt = slice.extruder;
+            if (firstTool === undefined) {
+                firstTool = slice.extruder;
             }
 
             // when layers switch between widgets, force retraction
@@ -644,6 +644,7 @@ FDM.prepare = async function(widgets, settings, update) {
     }
 
     print.output = output;
+    print.firstTool = firstTool;
 
     // post-process for base extrusions (touching the bed)
     if (isBelt) {

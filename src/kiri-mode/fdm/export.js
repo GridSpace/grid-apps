@@ -14,7 +14,7 @@ const { getRangeParameters } = FDM;
 const debug = false;
 
 FDM.export = function(print, online, ondone, ondebug) {
-    const { settings, belty, tools } = print;
+    const { settings, belty, tools, firstTool } = print;
     const { bounds, controller, device, process, filter, mode } = settings;
     const { extruders, fwRetract } = device;
     const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
@@ -72,7 +72,7 @@ FDM.export = function(print, online, ondone, ondebug) {
             y: isBelt ? 0 : bedDepth/2,
             z: 0
         },
-        tool = 0,
+        tool = firstTool || 0,
         extruder = extruders[tool],
         offset_x = extruder.extOffsetX,
         offset_y = extruder.extOffsetY,
@@ -107,8 +107,8 @@ FDM.export = function(print, online, ondone, ondebug) {
             z_max: maxHeight,
             layers: layers.length,
             progress: 0,
-            nozzle: 0,
-            tool: 0
+            nozzle: tool,
+            tool: tool
         },
         pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
         lines = 0,
@@ -353,15 +353,7 @@ FDM.export = function(print, online, ondone, ondebug) {
                 }
             });
         }
-        if (line.indexOf("{tool}") > 0 && extused.length > 0) {
-            for (let i of extused) {
-                subst.tool = i;
-                appendSubPad(line);
-            }
-            subst.tool = 0;
-        } else {
-            appendSubPad(line);
-        }
+        appendSubPad(line);
     }
 
     if (pre === 2) preamble();
@@ -608,8 +600,11 @@ FDM.export = function(print, online, ondone, ondebug) {
 
             // look for extruder change, run scripts, recalc emit factor
             if (out.tool !== undefined && out.tool != tool) {
+                let macro_deselect = extruder.extDeselect.length ? extruder.extDeselect : extruders[0].extDeselect;
+                let macro_select = extruder.extSelect.length ? extruder.extSelect : extruders[0].extSelect;
                 segments.push({emitted, tool});
-                appendAllSub(extruder.extDeselect);
+                appendAllSub(macro_deselect);
+                subst.last_tool = tool;
                 tool = out.tool;
                 subst.nozzle = subst.tool = tool;
                 extruder = extruders[tool];
@@ -620,7 +615,7 @@ FDM.export = function(print, online, ondone, ondebug) {
                     extruder.extFilament,
                     path.layer === 0 ?
                         (process.firstSliceHeight || process.sliceHeight) : path.height);
-                appendAllSub(extruder.extSelect);
+                appendAllSub(macro_select);
             }
 
             // if no point in output, it's a dwell command
