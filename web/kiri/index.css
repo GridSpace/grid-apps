@@ -247,8 +247,12 @@ details[open] > summary::after {
 }
 .dark button {
     color: #fff;
-    background-color: #777;
-    border: 1px solid #999;
+    background-color: #555;
+    border: 1px solid #777;
+}
+button:hover {
+    background-color: var(--blue-2);
+    color: black;
 }
 .dark #progress {
     background-color: #333;

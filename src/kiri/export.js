@@ -521,6 +521,15 @@ function exportGCodeDialog(gcode, sections, info, names) {
         let download3MF = $('print-3mf');
         download3MF.style.display = fdm ? 'flex' : 'none';
         download3MF.onclick = function() {
+            gen3mf(zip => api.util.download(zip, `${$('print-filename').value}.3mf`));
+        };
+        let downloadBambu = $('print-bambu');
+        downloadBambu.style.display = api.bambu && api.bambu.sendok({ gcode, info, settings }) ? 'flex' : 'none';
+        downloadBambu.onclick = function() {
+            gen3mf(zip => api.bambu.send(`${$('print-filename').value}.3mf`, zip));
+        }
+
+        function gen3mf(then) {
             let files = [{
                 name: `[Content_Types].xml`,
                 data: [
@@ -635,11 +644,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
                 api.show.progress(progress.percent/100, "generating 3mf");
             }, output => {
                 api.show.progress(0);
-                if (api.bambu && api.bambu.sendok({ gcode, info, settings })) {
-                    api.bambu.send(`${$('print-filename').value}.3mf`, output);
-                } else {
-                    api.util.download(output, `${$('print-filename').value}.3mf`);
-                }
+                then(output);
             })
         };
 
