@@ -281,7 +281,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     let tabpoly = tabs ? tabs.map(tab => tab.poly) : [];
     let allpoly = POLY.union([...state.shadowTop.tops, ...tabpoly, ...state.shadowTop.slice.shadow], 0, true);
     let shadowOff = maxToolDiam < 0 ? allpoly :
-        POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true });
+        POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true, minArea: 0 });
     state.terrain.forEach(level => level.tops.appendAll(shadowOff));
 
     widget.terrain = state.skipTerrain ? null : state.terrain;

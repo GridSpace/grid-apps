@@ -345,10 +345,10 @@ function flatten(polys, to, crush) {
  * @returns {Polygon[]} out
  */
 function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
-    let min = minArea || 0.1,
+    let min = numOrDefault(minArea, 0.1),
         out = [];
 
-    function filter(from, to = []) {
+        function filter(from, to = []) {
         from.forEach(function(poly) {
             if (poly.area() >= min) {
                 to.push(poly);

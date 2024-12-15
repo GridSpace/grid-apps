@@ -1220,6 +1220,7 @@ class OpPocket extends CamOp {
             return slice;
         }
         function clearZ(polys, z, down) {
+            console.log({ clearZ: polys });
             if (down) {
                 // adjust step down to a value <= down that
                 // ends on the lowest z specified
@@ -1251,7 +1252,7 @@ class OpPocket extends CamOp {
                         if (smooth) {
                             shadow = POLY.setZ(POLY.offset(POLY.offset(shadow, smooth), -smooth), z);
                         }
-                        POLY.subtract([ poly ], shadow, clip);
+                        POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
                     }
                     if (clip.length === 0) {
                         continue;
@@ -1264,7 +1265,7 @@ class OpPocket extends CamOp {
                             [ expand || (-0.02), -toolOver ] :
                             [ -toolDiam / 2, -toolOver ];
                         POLY.offset(clip, offs, {
-                            count, outs: slice.camLines = [], flat:true, z
+                            count, outs: slice.camLines = [], flat:true, z, minArea: 0
                         });
                     } else {
                         // when engraving with a 0 width tip
