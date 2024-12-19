@@ -415,8 +415,8 @@ CAM.export = function(print, online) {
         // emit tools used in comments
         append("; --- tools ---");
         Object.keys(toolz).sort().forEach(tn => {
-            let tool = toolz[tn];
-            append(`; tool=${tn} flute=${tool.flute_diam} len=${tool.flute_len} metric=${tool.metric}`);
+            let { number, flute_diam, flute_len, metric } = toolz[tn].tool;
+            append(`; tool#=${number} flute=${flute_diam} len=${flute_len} unit=${metric ? 'metric' : 'imperial'}`);
         });
     }
     // emit gcode preamble
