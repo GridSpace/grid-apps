@@ -300,6 +300,8 @@ async function prepare(widgets, settings, update) {
     for (let widget of widgets) {
         if (process.ctOutStack) {
             // 3d stack output, no merging or layout
+            for (let slice of widget.slices) {
+            }
         } else if (process.ctOutMerged) {
             // slice stack merging, no layout
             // there are no inner vs outer polys

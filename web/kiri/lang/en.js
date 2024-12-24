@@ -692,7 +692,7 @@ self.kiri.lang['en-us'] = {
     ou_lays_l:      ["mark layers for stacking. the layer above will be output in a different color which the laser can mark with a lower power. turns on layer grouping."],
     ou_drkn_s:      "drag knife",
     ou_drkn_l:      ["enable drag knife","output in gcode","cut radii are added","to corners with","cut down passes"],
-    ou_stak_s:      "3D stack",
+    ou_stak_s:      "fixed",
     ou_stak_l:      ["output is a 3D stack of 2D paths rather than packing layers flat in 2D"],
     ou_maxp_s:      "max power",
     ou_maxp_l:      ["max power value in gcode. power % from settings will scale from 0 to this value"],
