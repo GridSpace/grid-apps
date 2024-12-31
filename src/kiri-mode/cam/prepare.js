@@ -562,7 +562,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         opSum += weight;
         if (tool && lastPoint) {
             newLayer();
-            layerPush(printPoint = lastPoint.clone().setZ(zmax + zadd), 0, 0, tool);
+            layerPush(printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
             newLayer();
         }
     }

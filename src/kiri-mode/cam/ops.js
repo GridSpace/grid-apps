@@ -155,7 +155,7 @@ class OpLevel extends CamOp {
                 poly.reverse();
             }
             poly.forEachPoint((point, pidx) => {
-                camOut(point.clone(), pidx > 0, stepOver);
+                camOut(point.clone(), true, stepOver);
             }, false);
         });
         setPrintPoint(printPoint);
