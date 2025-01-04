@@ -725,6 +725,7 @@ button:hover {
     right: 0;
     bottom: 0;
     position: fixed;
+    color: black;
     background-color: #fff;
     font-family: 'Russo One', sans-serif;
     z-index: 1000;

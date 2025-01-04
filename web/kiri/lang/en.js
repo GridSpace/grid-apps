@@ -607,6 +607,8 @@ self.kiri.lang['en-us'] = {
     ci_abso_l:      "degree rotation is absolute",
     ci_face_s:      "face",
     ci_face_l:      "select face to rotate facing up",
+    ci_line_s:      "linear",
+    ci_line_l:      "make linear passes along X then rotate Y",
 
     // CNC LASER On/Off Operations (Carvera)
     cl_powr_s:      "power",
