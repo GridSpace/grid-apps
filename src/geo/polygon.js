@@ -965,7 +965,7 @@ class Polygon {
      * @returns {number} z value of first point
      */
     getZ(i) {
-        return this.z !== undefined ? this.z : this.points[i || 0].z;
+        return this.z !== undefined ? this.z : this.points[i || 0]?.z || 0;
     }
 
     /**
