@@ -111,22 +111,9 @@ function fillGyroid(target) {
     let tile_z = 1 / tile;
     let gyroid = base.gyroid.slice(target.zValue() * tile_z, (1 - density) * 500);
 
-    // gyroid.polys.forEach(poly => {
-    //     for (let tx=0; tx<=tile_x; tx++) {
-    //         for (let ty=0; ty<=tile_y; ty++) {
-    //             target.newline();
-    //             let bx = tx * tile + bounds.min.x;
-    //             let by = ty * tile + bounds.min.y;
-    //             poly.forEach(point => {
-    //                 target.emit(bx + point.x * tile, by + point.y * tile);
-    //             });
-    //         }
-    //     }
-    // });
     let polys = [];
     if (gyroid.dir == 'lr') {
         for (let ty=0; ty<=tile_y; ty++) {
-            let temp = [];
             for (let tx=0; tx<=tile_x; tx++) {
                 for (let poly of gyroid.polys) {
                     target.newline();
@@ -137,15 +124,13 @@ function fillGyroid(target) {
                             z: 0
                         }
                     });
-                    temp.push(base.newPolygon().setOpen(true).addObj(points));
+                    polys.push(base.newPolygon().setOpen(true).addObj(points));
                 }
             }
-            polys.appendAll(connectOpenPolys(temp));
-            // console.log(gyroid.dir, temp.length);
+            polys = connectOpenPolys(polys);
         }
     } else {
         for (let tx=0; tx<=tile_x; tx++) {
-            let temp = [];
             for (let ty=0; ty<=tile_y; ty++) {
                 for (let poly of gyroid.polys) {
                     target.newline();
@@ -156,13 +141,12 @@ function fillGyroid(target) {
                             z: 0
                         }
                     });
-                    temp.push(base.newPolygon().setOpen(true).addObj(points));
+                    polys.push(base.newPolygon().setOpen(true).addObj(points));
                 }
             }
-            polys.appendAll(connectOpenPolys(temp));
+            polys = connectOpenPolys(polys);
         }
     }
-    polys = connectOpenPolys(polys);
     for (let poly of polys.filter(p => p.perimeter() > 2)) {
         target.newline();
         for (let point of poly.points) {
