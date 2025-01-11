@@ -707,11 +707,7 @@ class OpOutline extends CamOp {
             if (depthFirst) {
                 depthData.push(polys);
             } else {
-                printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
-                    poly.forEachPoint(function(point, pidx, points, offset) {
-                        camOut(point.clone(), offset !== 0);
-                    }, poly.isClosed(), index);
-                }, { swapdir: false });
+                printPoint = poly2polyEmit(polys, printPoint, polyEmit, { swapdir: false });
                 newLayer();
             }
         }
