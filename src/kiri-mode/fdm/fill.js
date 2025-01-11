@@ -123,21 +123,43 @@ function fillGyroid(target) {
     //         }
     //     }
     // });
-
     let polys = [];
-    for (let tx=0; tx<=tile_x; tx++) {
+    if (gyroid.dir == 'lr') {
         for (let ty=0; ty<=tile_y; ty++) {
-            for (let poly of gyroid.polys) {
-                target.newline();
-                let points = poly.map(el => {
-                    return {
-                        x: el.x * tile + tx * tile + bounds.min.x,
-                        y: el.y * tile + ty * tile + bounds.min.y,
-                        z: 0
-                    }
-                });
-                polys.push(base.newPolygon().setOpen(true).addObj(points));
+            let temp = [];
+            for (let tx=0; tx<=tile_x; tx++) {
+                for (let poly of gyroid.polys) {
+                    target.newline();
+                    let points = poly.map(el => {
+                        return {
+                            x: el.x * tile + tx * tile + bounds.min.x,
+                            y: el.y * tile + ty * tile + bounds.min.y,
+                            z: 0
+                        }
+                    });
+                    temp.push(base.newPolygon().setOpen(true).addObj(points));
+                }
             }
+            polys.appendAll(connectOpenPolys(temp));
+            // console.log(gyroid.dir, temp.length);
+        }
+    } else {
+        for (let tx=0; tx<=tile_x; tx++) {
+            let temp = [];
+            for (let ty=0; ty<=tile_y; ty++) {
+                for (let poly of gyroid.polys) {
+                    target.newline();
+                    let points = poly.map(el => {
+                        return {
+                            x: el.x * tile + tx * tile + bounds.min.x,
+                            y: el.y * tile + ty * tile + bounds.min.y,
+                            z: 0
+                        }
+                    });
+                    temp.push(base.newPolygon().setOpen(true).addObj(points));
+                }
+            }
+            polys.appendAll(connectOpenPolys(temp));
         }
     }
     polys = connectOpenPolys(polys);
@@ -180,7 +202,8 @@ function connectOpenPolys(noff, dist = 0.1) {
                     continue outer;
                 }
                 if (s1.last().distTo2D(s2.last()) <= dist) {
-                    s1.addPoints(s2.points.reverse());
+                    s2.reverse();
+                    s1.addPoints(s2.points);
                     ntmp[j] = null;
                     continue outer;
                 }

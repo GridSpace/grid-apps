@@ -22,7 +22,6 @@ function slice(off, res, val) {
     // or the requested resolution or tip values have changed
     let now = Date.now();
     if (res !== lastRes || val !== lastVal || now - lastSlice > 20000) {
-        // console.log({clear_cache: now});
         cache = {};
     }
     lastVal = val;
