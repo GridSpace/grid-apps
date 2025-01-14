@@ -546,7 +546,7 @@ class OpOutline extends CamOp {
         if (op.top) {
             let first = slices[0];
             let zlist = slices.map(s => s.z);
-            for (let z of indices.filter(v => v >= zMax).reverse()) {
+            for (let z of indices.filter(v => v >= zMax)) {
                 if (zlist.contains(z)) {
                     continue;
                 }
