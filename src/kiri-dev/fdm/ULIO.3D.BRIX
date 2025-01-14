@@ -27,6 +27,8 @@
         "G28 W          ; home all without mesh bed level",
         "G92 E0.0",
         "G1 F{600} ",
+        "M425 X0 Y0 Z0  ; Set backlash to specific values for all axis",
+        "M425 F1 S3     ; Enable backlash compensation at 100% for 3 mm",
         "M117 ULIO 3D BRIX Printing"
     ],
     "gcodePost": [
