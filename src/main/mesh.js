@@ -280,6 +280,11 @@ function space_init(data) {
         },
         'keydown', evt => {
             let { shiftKey, metaKey, ctrlKey, code } = evt;
+            let once = keyOnce[code];
+            if (once) {
+                delete keyOnce[code];
+                return once(evt);
+            }
             let rv = (Math.PI / 12);
             if (api.modal.showing) {
                 if (code === 'Escape') {
@@ -598,6 +603,16 @@ function space_load(data) {
 }
 
 let metaCache = {};
+let keyOnce = {};
+
+function key_once(data) {
+    const { code, fn } = data;
+    keyOnce[code] = fn;
+}
+
+function key_once_cancel(code) {
+    delete keyOnce[code];
+}
 
 function store_meta() {
     mesh.db.admin.put("meta", metaCache);
@@ -711,6 +726,8 @@ function set_snap_value(snap) {
 
 // bind functions to topics
 broker.listeners({
+    key_once,
+    key_once_cancel,
     load_files,
     object_meta,
     object_destroy,
