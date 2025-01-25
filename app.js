@@ -302,6 +302,7 @@ function init(mod) {
     mod.add(fixedmap("/api/", api));
     if (debug) {
         mod.static("/mod/", "mod");
+        mod.static("/mods/", "mods");
         mod.sync("/reload", () => {
             mod.reload();
             return "reload";
@@ -329,22 +330,31 @@ function init(mod) {
     mod.static("/meta/", "web/meta");
     mod.static("/kiri/", "web/kiri");
 
-    // load modules
-    lastmod(`${dir}/mod`) && fs.readdirSync(`${dir}/mod`).forEach(dir => {
-        const modpath = `mod/${dir}`;
-        if (dir.charAt(0) === '.') return;
-        const stats = fs.lstatSync(`${mod.dir}/${modpath}`);
-        if (!(stats.isDirectory() || stats.isSymbolicLink())) return;
-        const isDebugMod = util.isfile(PATH.join(mod.dir,modpath,".debug"));
-        const isElectronMod = util.isfile(PATH.join(mod.dir,modpath,".electron"));
-        if (ENV.electron && !isElectronMod) return;
-        if (!ENV.electron && isElectronMod && !isDebugMod) return;
-        try {
-            loadModule(mod, modpath);
-        } catch (error) {
-            console.log({ module: dir, error });
-        }
-    });
+    function load_modules(root, force) {
+        // load modules
+        lastmod(`${dir}/${root}`) && fs.readdirSync(`${dir}/${root}`).forEach(mdir => {
+            const modpath = `${root}/${mdir}`;
+            if (dir.charAt(0) === '.') return;
+            const stats = fs.lstatSync(`${mod.dir}/${modpath}`);
+            if (!(stats.isDirectory() || stats.isSymbolicLink())) return;
+            if (util.isfile(PATH.join(mod.dir,modpath,".disable"))) return;
+            const isDebugMod = util.isfile(PATH.join(mod.dir,modpath,".debug"));
+            const isElectronMod = util.isfile(PATH.join(mod.dir,modpath,".electron"));
+            if (force || (ENV.electron && !isElectronMod)) return;
+            if (force || (!ENV.electron && isElectronMod && !isDebugMod)) return;
+            try {
+                loadModule(mod, modpath);
+            } catch (error) {
+                console.log({ module: mdir, error });
+            }
+        });
+    }
+
+    // load development and 3rd party modules
+    load_modules('mod');
+
+    // load optional local modules
+    load_modules('mods');
 
     // run loads injected by modules
     while (load.length) {
