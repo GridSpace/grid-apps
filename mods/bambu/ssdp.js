@@ -12,7 +12,13 @@
 const [ name, host, serial ] = process.argv.slice(2);
 
 if (!(name && host && serial)) {
-    console.log('usage: ssdp [host] [serial-no]');
+    console.log([
+        'usage: ssdp [name] [host] [serial-no]',
+        'where:',
+        '  name = name of printer to appear in slicer',
+        '  host = host name or IP address of printer',
+        '  serial = printer serial #'
+    ].join('\n'));
     return process.exit(0);
 }
 
@@ -64,7 +70,7 @@ function send(socket, addr, port) {
             if (err) {
                 console.error("Error sending SSDP broadcast:", err);
             } else {
-                console.log(`>>>>>>>>>>>>>>>>> ${addr} : ${port}`);
+                // console.log(`>>>>>>>>>>>>>>>>> ${addr} : ${port}`);
             }
         }
     );
