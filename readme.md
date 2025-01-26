@@ -1,36 +1,33 @@
-## Grid.Space Applications
+# Grid.Space Applications
 
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/GridSpace/grid-apps)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-3.9)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-4.0)
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/GridSpace/grid-apps/rel-4.1)
 
-![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
 ![GitHub contributors](https://img.shields.io/github/contributors/GridSpace/grid-apps)
+![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
 ![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
 
 
-## Community & Documentation
+# Community & Documentation
 
-[Discord](https://discord.com/invite/suyCCgr)
- | [Forums](https://forum.grid.space/)
- | [YouTube](https://www.youtube.com/c/gridspace)
- | [Twitter](https://twitter.com/grid_space_3d)
- | [Documentation](https://docs.grid.space/)
-
-[![Discord](https://img.shields.io/discord/688863523207774209)](https://discord.com/channels/688863523207774209/688863523211968535)
-![Twitter Follow](https://img.shields.io/twitter/follow/grid_space_3d?label=follow&style=social)
-![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCFxJ2_NriPayIqfhAj-ZcBg)
+[Discord](https://discord.com/invite/suyCCgr) -- Live Chat  
+[Forums](https://forum.grid.space/) -- Long Form and Archival Discussion  
+[BlueSky](https://bsky.app/profile/grid.space) -- Like the Good 'Ol Days  
+[YouTube](https://www.youtube.com/c/gridspace) -- Content when I have time  
+[Documentation](https://docs.grid.space/) -- Could really use help with this  
 
 
-## Free and Open Source
+# Free and Open Source
 
-Kiri:Moto and Mesh:Tool are completely open source and free for use without restriction. Over 12 years in development, this passion project has grown well beyond its original scope. It has consumed most of my free time for many years. Please consider donating to support continued development.
+Kiri:Moto and Mesh:Tool are completely open source and free for use without restriction. Over 12 years in development, this passion project has grown well beyond its original scope. It has consumed most of my free time for many years. Please consider donating to support continued development GitHub sponsorship or PayPal.  
 
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/GridSpace)](https://github.com/sponsors/GridSpace)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
 
 
-## HTML5 Web Apps (Installable)
+# HTML5 Web Apps (Installable)
 
 [`Grid.Space`](https://grid.space) hosts [several live versions](https://grid.space/choose) of this code
 
@@ -39,7 +36,7 @@ Kiri:Moto and Mesh:Tool are completely open source and free for use without rest
 [`Mesh:Tool`](https://grid.space/mesh) is a browser-based mesh repair and editing tool
 
 
-## Electron Builds (Desktop Binaries)
+# Electron Builds (Desktop Binaries)
 
 https://github.com/GridSpace/grid-apps/releases/
 
@@ -55,12 +52,25 @@ chmod 755 KiriMoto-linux-x86_64.AppImage
 
 The Windows and Mac binaries are not signed, so you will need to jump through a few safety hoops to get them to open the first time.
 
+
+# Linux / Mac Developers
+
 ## Testing Locally (with Docker)
 
 ```
 git clone git@github.com:GridSpace/grid-apps.git
 cd grid-apps
+npm run setup
 docker-compose -f src/dock/compose.yml up
+```
+
+## Testing Locally (with Electron)
+
+```
+git clone git@github.com:GridSpace/grid-apps.git
+cd grid-apps
+npm run setup
+npm run start
 ```
 
 ## Testing Locally (with NodeJS)
@@ -68,52 +78,17 @@ docker-compose -f src/dock/compose.yml up
 ```
 git clone git@github.com:GridSpace/grid-apps.git
 cd grid-apps
-npm i
+npm run setup
 npm run dev
 ```
 
-to start a local instance of the apps. then use a browser to open
-[localhost:8080/kiri](http://localhost:8080/kiri)
+Then open a browser to [localhost:8080/kiri](http://localhost:8080/kiri)
 
-if installing the app-server fails or gives you permissions errors, then your node installation (on linux/mac) is installed as another user (like root). try instead:
-
-```
-sudo npm install -g @gridspace/app-server
-```
-
-Alternatively, if you are using a packaged version of npm that ships with
-a Linux distribution, but still want to install in your home directory, you
-can use
-
-```
-npm config set prefix ~/.local
-```
-
-If gs-app-server is not found, then perhaps ~/.local/bin is not in
-your path. You can either add it to your path, or you can run:
-
-```
-~/.local/bin/gs-app-server --debug
-```
-
-You can now access your environment of grid-apps by going to
-[localhost:8080/kiri](http://127.0.0.1:8080/kiri)
-
-## Windows Developers
+# Windows Developers
 
 this git repo requires symbolic link support. on Windows, this means you have to clone the repo in a command shell with Administrator privileges.
 
-## Other Start Options
-
-```
-gs-app-server
-```
-serves code as obfuscated, compressed bundles. this is the mode used to run on a public
-web site.
-
-requires node.js 12+
-
-## Javascript Slicing APIs
+# Javascript Slicing APIs
 
 A script include that injects a web worker into the page that will asynchronously perform any of Kiri’s slicing and gcode generation functions. And a frame messaging API for controlling Kiri:Moto inside an IFrame.
 
