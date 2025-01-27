@@ -7,31 +7,88 @@ self.kiri.load(api => {
     }
 
     const { kiri, moto } = self;
-    const { webui } = moto;
     const { ui } = api;
-    const { local } = data;
+    const h = moto.webui;
     const defhost = ";; DEFINE BAMBU-HOST ";
     const defams = ";; DEFINE BAMBU-AMS ";
 
     let init = false;
-    let bound, device;
+    let bound, device, select;
+    let btn = { add:0, del: 0 }
     let host, password, serial, amsmap;
 
+    function printer_add() {
+        console.log('printer add');
+    }
+
+    function printer_del() {
+        console.log('printer del');
+    }
+
     api.event.on("init-done", function() {
-        if (init) return;
+        if (init) {
+            return;
+        }
         init = true;
-        let btn = webui.button({ _: 'Manage', id: "bblman", onclick() { console.log('manage')} });
-        bound = webui.bind($('device-save'), btn, { before: true });
+        bound = h.bind($('device-save'), h.button({
+            _: 'Manage', id: "bblman", onclick() {
+                api.modal.show('bambu');
+            }
+        }), { before: true });
+        let modal = h.bind($('mod-help'), h.div({
+            id: "mod-bambu",
+            class: "mdialog fcol gap3"
+        }, [
+            h.button('bambu printer manager'),
+            h.div({ class: "frow gap3" }, [
+                h.div({ class: "t-body t-inset fcol gap3" }, [
+                    h.select({ id: "bbl_sel", style: "height: auto", size: 5 }, []),
+                    h.div({ class: "grid gap3", style: "grid-template-columns: 1fr 1fr" }, [
+                        h.button({
+                            _: '+',
+                            id: 'bbl_padd',
+                            title: "add printer",
+                            class: "grid",
+                            onclick: printer_add
+                        }),
+                        h.button({
+                            _: '-',
+                            id: 'bbl_pdel',
+                            title: "remove printer",
+                            class: "grid",
+                            onclick: printer_del
+                        })
+                    ])
+                ]),
+                h.div({ class: "t-body t-inset grow" }, [
+
+                ])
+            ])
+        ]), { before: true });
+        btn.add = modal.bbl_padd;
+        btn.del = modal.bbl_pdel;
+        select = modal.bbl_sel;
+        api.ui.modals['bambu'] = modal['mod-bambu'];
+        select.onchange = (ev) => {
+            console.log({ select_change: ev });
+        };
+    });
+
+    api.event.on("modal.show", which => {
+        if (which !== 'bambu' || !device) {
+            return;
+        }
     });
 
     api.event.on("device.selected", devsel => {
-        device = devsel;
         if (!bound) {
             return;
         }
-        if (device.extras?.bbl) {
+        if (devsel.extras?.bbl) {
+            device = devsel;
             bound.bblman.classList.remove('hide');
         } else {
+            device = undefined;
             bound.bblman.classList.add('hide');
         }
     });

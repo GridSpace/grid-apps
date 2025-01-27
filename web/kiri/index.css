@@ -643,10 +643,10 @@ button:hover {
 .grid {
     display: grid;
 }
-.frow {
+.frow, .f-row {
     flex-direction: row;
 }
-.f-col {
+.fcol, .f-col {
     flex-direction: column;
 }
 .auto {

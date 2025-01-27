@@ -641,8 +641,9 @@ gapp.register("kiri.main", (root, exports) => {
             visible = modalShowing(),
             info = { pct: 0 };
 
-        ["help","setup","tools","prefs","saves","files","xany","xlaser","xsla","local","any"].forEach(name => {
-            UI[name].style.display = name === which ? 'flex' : '';
+        // hide all modals befroe showing another
+        Object.keys(UI.modals).forEach(name => {
+            UI.modals[name].style.display = name === which ? 'flex' : '';
         });
 
         function ondone() {
