@@ -7,17 +7,33 @@ self.kiri.load(api => {
     }
 
     const { kiri, moto } = self;
-    const { ui } = kiri;
+    const { webui } = moto;
+    const { ui } = api;
     const { local } = data;
     const defhost = ";; DEFINE BAMBU-HOST ";
     const defams = ";; DEFINE BAMBU-AMS ";
 
     let init = false;
+    let bound, device;
     let host, password, serial, amsmap;
 
     api.event.on("init-done", function() {
         if (init) return;
         init = true;
+        let btn = webui.button({ _: 'Manage', id: "bblman", onclick() { console.log('manage')} });
+        bound = webui.bind($('device-save'), btn, { before: true });
+    });
+
+    api.event.on("device.selected", devsel => {
+        device = devsel;
+        if (!bound) {
+            return;
+        }
+        if (device.extras?.bbl) {
+            bound.bblman.classList.remove('hide');
+        } else {
+            bound.bblman.classList.add('hide');
+        }
     });
 
     function sendok(params = {}) {

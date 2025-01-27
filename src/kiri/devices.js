@@ -274,6 +274,7 @@ gapp.register("kiri.devices", (root, exports) => {
             }
 
             uc.refresh(1);
+            api.event.emit('device.selected', dev);
         } catch (e) {
             console.log({error:e, device:code, devicename});
             api.show.alert(`invalid or deprecated device: "${devicename}"`, 10);

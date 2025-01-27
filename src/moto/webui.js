@@ -76,7 +76,12 @@ let h = exports({
     bind: (el, data, opt = {}) => {
         let ctx = [];
         let html = build(data, ctx).join('');
-        if (opt.append) {
+        if (opt.after || opt.before) {
+            let tmpl = document.createElement('template');
+            tmpl.innerHTML = html;
+            opt.before && el.before(tmpl.content);
+            opt.after && el.after(tmpl.content);
+        } else if (opt.append) {
             el.innerHTML += html;
         } else {
             el.innerHTML = html;

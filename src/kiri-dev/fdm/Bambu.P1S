@@ -383,7 +383,9 @@
     "bedBelt": false,
     "fwRetract": false,
     "filamentSource": "direct",
-    "extras": {},
+    "extras": {
+        "bbl": {}
+    },
     "imageURL": "",
     "deviceZMax": 0,
     "gcodeTime": 1,
