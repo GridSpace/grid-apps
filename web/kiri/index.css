@@ -640,6 +640,12 @@ button:hover {
 .gap10 {
     gap: 10px;
 }
+.pad3 {
+    padding: 3px !important;
+}
+.pad4 {
+    padding: 4px !important;
+}
 .grid {
     display: grid;
 }
@@ -690,6 +696,9 @@ button:hover {
 }
 .center {
     text-align: center;
+}
+.t-left {
+    text-align: left;
 }
 .t-just {
     text-align: justify;

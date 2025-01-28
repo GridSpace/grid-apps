@@ -13,16 +13,51 @@ self.kiri.load(api => {
     const defams = ";; DEFINE BAMBU-AMS ";
 
     let init = false;
-    let bound, device, select;
-    let btn = { add:0, del: 0 }
+    let bound, device, printers, select, selected;
+    let btn_del, in_host, in_code, in_serial;
     let host, password, serial, amsmap;
 
     function printer_add() {
-        console.log('printer add');
+        let name = prompt('printer name');
+        if (!name) {
+            return;
+        }
+        printers[name] = printers[name] || {
+            host:'', code:'', serial:''
+        };
+        render_list();
     }
 
     function printer_del() {
-        console.log('printer del');
+        console.log('printer del', selected.name);
+        if (!selected.name) {
+            return;
+        }
+        delete printers[selected.name];
+        printer_select();
+        render_list();
+    }
+
+    function printer_select(name) {
+        btn_del.disabled = false;
+        let rec = printers[name] || {};
+        selected = { name, rec };
+        in_host.value = rec.host || '';
+        in_code.value = rec.code || '';
+        in_serial.value = rec.serial || '';
+        in_host.onkeypress = in_host.onblur = () => rec.host = in_host.value;
+        in_code.onkeypress = in_code.onblur = () => rec.code = in_code.value;
+        in_serial.onkeypress = in_serial.onblur = () => rec.serial = in_serial.value;
+    }
+
+    function render_list() {
+        h.bind(select, Object.keys(printers).map(name => {
+            return h.option({
+                _: name,
+                value: name,
+                onclick() { printer_select(name) }
+            })
+        }));
     }
 
     api.event.on("init-done", function() {
@@ -41,12 +76,11 @@ self.kiri.load(api => {
         }, [
             h.button('bambu printer manager'),
             h.div({ class: "frow gap3" }, [
-                h.div({ class: "t-body t-inset fcol gap3" }, [
+                h.div({ class: "t-body t-inset fcol gap3 pad4" }, [
                     h.select({ id: "bbl_sel", style: "height: auto", size: 5 }, []),
                     h.div({ class: "grid gap3", style: "grid-template-columns: 1fr 1fr" }, [
                         h.button({
                             _: '+',
-                            id: 'bbl_padd',
                             title: "add printer",
                             class: "grid",
                             onclick: printer_add
@@ -60,24 +94,35 @@ self.kiri.load(api => {
                         })
                     ])
                 ]),
-                h.div({ class: "t-body t-inset grow" }, [
+                h.div({ class: "grow fcol gap3" }, [
+                    h.div({ class: "t-body t-inset frow gap4 pad4 a-center" }, [
+                        h.label('host'),
+                        h.input({ id: "bbl_host", size: 15, class: "t-left" }),
+                        h.label('code'),
+                        h.input({ id: "bbl_code", size: 10, class: "t-left" }),
+                        h.label('sn#'),
+                        h.input({ id: "bbl_serial", size: 20, class: "t-left" })
+                    ]),
+                    h.div({ class: "t-body t-inset frow gap4 pad4 grow" }, [
 
+                    ])
                 ])
             ])
         ]), { before: true });
-        btn.add = modal.bbl_padd;
-        btn.del = modal.bbl_pdel;
         select = modal.bbl_sel;
+        btn_del = modal.bbl_pdel;
+        in_host = modal.bbl_host;
+        in_code = modal.bbl_code;
+        in_serial = modal.bbl_serial;
         api.ui.modals['bambu'] = modal['mod-bambu'];
-        select.onchange = (ev) => {
-            console.log({ select_change: ev });
-        };
+        btn_del.disabled = true;
     });
 
     api.event.on("modal.show", which => {
         if (which !== 'bambu' || !device) {
             return;
         }
+        render_list();
     });
 
     api.event.on("device.selected", devsel => {
@@ -86,9 +131,11 @@ self.kiri.load(api => {
         }
         if (devsel.extras?.bbl) {
             device = devsel;
+            printers = devsel.extras.bbl;
             bound.bblman.classList.remove('hide');
         } else {
             device = undefined;
+            printers = undefined;
             bound.bblman.classList.add('hide');
         }
     });
