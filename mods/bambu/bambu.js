@@ -75,7 +75,21 @@ self.kiri.load(api => {
             }
         });
         return result;
-    };
+    }
+
+    function deepSortObject(obj) {
+        if (Array.isArray(obj)) {
+            obj = obj.map(v => deepSortObject(v));
+        } else if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+          return Object.keys(obj)
+            .sort()
+            .reduce((sorted, key) => {
+              sorted[key] = deepSortObject(obj[key]);
+              return sorted;
+            }, {});
+        }
+        return obj;
+      }
 
     function printer_add() {
         let name = prompt('printer name');
@@ -120,7 +134,7 @@ self.kiri.load(api => {
     }
 
     function printer_render(rec) {
-        $('bbl_rec').value = JSON.stringify(rec, undefined, 2);
+        $('bbl_rec').value = JSON.stringify(deepSortObject(rec), undefined, 2);
     }
 
     function render_list() {
@@ -188,7 +202,7 @@ self.kiri.load(api => {
                         h.input({ id: "bbl_host", size: 15, class: "t-left" }),
                         h.label('code'),
                         h.input({ id: "bbl_code", size: 10, class: "t-left" }),
-                        h.label('sn#'),
+                        h.label('serial'),
                         h.input({ id: "bbl_serial", size: 20, class: "t-left" })
                     ]),
                     h.div({ class: "t-body t-inset frow gap4 pad4 grow" }, [
