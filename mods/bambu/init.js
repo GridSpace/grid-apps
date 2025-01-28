@@ -5,69 +5,90 @@ module.exports = async (server) => {
 
     const { api, env, util } = server;
     const confdir = util.confdir();
-
-    let client, topic_report, topic_request, timer;
-
     const mqtt = require("mqtt");
-    const mqtt_options = {
-        protocol: 'mqtts',
-        port: 8883,
-        username: 'bblp',
-        // ca: fs.readFileSync('ca.crt'),
-        // key: fs.readFileSync('client.key'),
-        // cert: fs.readFileSync('client.crt'),
-        rejectUnauthorized: false
-    };
+    const mcache = {};
 
-    const mqtt_fn = {
+    class MQTT {
+        #timer;
+        #client;
+        #serial;
+        #topic_report;
+        #topic_request;
+        #options = {
+            protocol: 'mqtts',
+            port: 8883,
+            username: 'bblp',
+            // ca: fs.readFileSync('ca.crt'),
+            // key: fs.readFileSync('client.key'),
+            // cert: fs.readFileSync('client.crt'),
+            rejectUnauthorized: false
+        }
+
+        constructor(host, code, serial, onready) {
+            this.#options.host = host;
+            this.#options.password = code;
+            this.#serial = serial;
+            let client = this.#client = mqtt.connect(this.#options);
+
+            client.on("connect", () => {
+                let report = this.#topic_report = `device/${serial}/report`;
+                let request = this.#topic_request = `device/${serial}/request`;
+                util.log({ report, request });
+                client.subscribe(report, (err) => {
+                    util.log('mqtt_subd', err);
+                    onready(this);
+                    this.#uptime();
+                });
+            });
+
+            client.on("message", (topic, message) => {
+                util.log('mqtt_recv', JSON.parse(message.toString()));
+            });
+        }
+
+        #uptime() {
+            clearTimeout(this.#timer);
+            this.#timer = setTimeout(() => { this.end() }, 30000);
+        }
+
         async send(msg) {
-            if (client) {
+            if (this.#client) {
                 util.log('mqtt_send', msg);
-                client.publish(topic_request, JSON.stringify(msg));
-                clearTimeout(timer);
-                timer = setTimeout(() => { mqtt_fn.end() }, 30000);
+                this.#client.publish(this.#topic_request, JSON.stringify(msg));
+                this.#uptime();
                 return true;
             } else {
                 return false;
             }
-        },
+        }
 
         end() {
-            if (client) {
+            if (this.#client) {
                 util.log('mqtt end');
-                client.end();
-                client = undefined;
+                this.#client.end();
+                this.#client = undefined;
             }
-            topic_report = undefined;
-            topic_request = undefined;
+            this.#topic_report = undefined;
+            this.#topic_request = undefined;
+            delete mcache[this.#serial];
         }
-    };
+    }
 
-    function get_mqtt(serial) {
+    function get_mqtt(host, code, serial) {
         const fns = {};
         const promise = new Promise((resolve, reject) => {
             Object.assign(fns, { resolve, reject });
         });
 
-        if (client) {
-            return mqtt_fn;
+        let mqtt = mcache[serial];
+        if (mqtt) {
+            return fns.resolve(mqtt);
+        } else {
+            mqtt = new MQTT(host, code, serial, obj => {
+                mcache[serial] = obj;
+                fns.resolve(obj);
+            })
         }
-
-        client = mqtt.connect(mqtt_options);
-
-        client.on("connect", () => {
-            topic_report = `device/${serial}/report`;
-            topic_request = `device/${serial}/request`;
-            util.log({ topic_report, topic_request });
-            client.subscribe(topic_report, (err) => {
-                util.log('mqtt_subscribed', err);
-                fns.resolve(mqtt_fn);
-            });
-        });
-
-        client.on("message", (topic, message) => {
-            util.log('mqtt_recv', JSON.parse(message.toString()));
-        });
 
         return promise;
     }
@@ -137,11 +158,10 @@ module.exports = async (server) => {
             const data = req.app.post;
             const { host, password, filename, serial, ams } = query;
             const ams_mapping = ams ? ams.split(',').map(v => parseInt(v)) : undefined;
-            const mqtt_conn = serial ? get_mqtt(serial) : undefined;
+            const mqtt_conn = serial ? get_mqtt(host, password, serial) : undefined;
             ftp_send({ host, password, filename, data })
                 .then(() => {
                     if (serial) {
-                        Object.assign(mqtt_options, { host, password });
                         const cmd = {
                             print: {
                                 command: "project_file",
@@ -181,6 +201,9 @@ module.exports = async (server) => {
             console.log(msg);
             switch (msg.cmd) {
                 case "monitor":
+                    get_mqtt(msg.host, msg.code, msg.serial).then(mqtt => {
+                        console.log({ monitor: mqtt });
+                    });
                     break;
             }
         });

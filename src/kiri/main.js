@@ -674,7 +674,10 @@ gapp.register("kiri.main", (root, exports) => {
             easing(TWEEN.Easing.Quadratic.InOut).
             to({pct:0}, 100).
             onUpdate(() => { style.height = `${info.pct}%` }).
-            onComplete(() => { style.display = '' }).
+            onComplete(() => {
+                style.display = '';
+                api.event.emit('modal.hide');
+            }).
             start();
     }
 

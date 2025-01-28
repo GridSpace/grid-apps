@@ -71,6 +71,15 @@ self.kiri.load(api => {
         render_list();
     }
 
+    function printer_update() {
+        Object.assign(selected.rec, {
+            host: in_host.value,
+            code: in_code.value,
+            serial: in_serial.value,
+            modified: true
+        });
+    }
+
     function printer_select(name) {
         btn_del.disabled = false;
         let rec = printers[name] || {};
@@ -78,9 +87,9 @@ self.kiri.load(api => {
         in_host.value = rec.host || '';
         in_code.value = rec.code || '';
         in_serial.value = rec.serial || '';
-        in_host.onkeypress = in_host.onblur = () => rec.host = in_host.value;
-        in_code.onkeypress = in_code.onblur = () => rec.code = in_code.value;
-        in_serial.onkeypress = in_serial.onblur = () => rec.serial = in_serial.value;
+        in_host.onkeypress = in_host.onblur = printer_update;
+        in_code.onkeypress = in_code.onblur = printer_update;
+        in_serial.onkeypress = in_serial.onblur = printer_update;
         monitor_start(rec);
     }
 
@@ -165,6 +174,13 @@ self.kiri.load(api => {
             return;
         }
         render_list();
+    });
+
+    api.event.on("modal.hide", which => {
+        if (selected?.rec.modified) {
+            api.conf.save();
+            selected = undefined;
+        }
     });
 
     api.event.on("device.selected", devsel => {
