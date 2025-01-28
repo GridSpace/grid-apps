@@ -13,6 +13,7 @@ self.kiri.load(api => {
     const defams = ";; DEFINE BAMBU-AMS ";
 
     let init = false;
+    let status = {};
     let bound, device, printers, select, selected;
     let btn_del, in_host, in_code, in_serial;
     let host, password, serial, amsmap, socket = {
@@ -31,7 +32,20 @@ self.kiri.load(api => {
                 socket.open = false;
             };
             ws.onmessage = msg => {
-                console.log({ msg: msg.data });
+                let data = JSON.parse(msg.data);
+                let { serial, message, error } = data;
+                if (error) {
+                    console.log({ serial, error });
+                } else if (serial) {
+                    let rec = status[serial] = deepMerge(status[serial] || {}, message);
+                    if (selected?.rec.serial === serial) {
+                        printer_render(rec);
+                    } else {
+                        console.log('update', serial, rec);
+                    }
+                } else {
+                    console.log('ignored', serial, data);
+                }
             };
         },
         stop() {
@@ -49,6 +63,18 @@ self.kiri.load(api => {
             socket.q.push(msg);
             socket.drain();
         }
+    };
+
+    function deepMerge(target, source) {
+        const result = structuredClone(target);
+        Object.keys(source).forEach((key) => {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                result[key] = deepMerge(result[key] || {}, source[key]);
+            } else {
+                result[key] = source[key];
+            }
+        });
+        return result;
     };
 
     function printer_add() {
@@ -93,6 +119,10 @@ self.kiri.load(api => {
         monitor_start(rec);
     }
 
+    function printer_render(rec) {
+        $('bbl_rec').value = JSON.stringify(rec, undefined, 2);
+    }
+
     function render_list() {
         h.bind(select, Object.keys(printers).map(name => {
             return h.option({
@@ -105,6 +135,13 @@ self.kiri.load(api => {
 
     function monitor_start(rec) {
         socket.send({ cmd: "monitor", ...rec });
+    }
+
+    function monitor_keepalive() {
+        // console.log({ keepalive: selected });
+        if (selected?.rec?.serial) {
+            socket.send({ cmd: "keepalive", serial: selected.rec.serial });
+        }
     }
 
     function monitor_stop() {
@@ -128,7 +165,7 @@ self.kiri.load(api => {
             h.button('bambu printer manager'),
             h.div({ class: "frow gap3" }, [
                 h.div({ class: "t-body t-inset fcol gap3 pad4" }, [
-                    h.select({ id: "bbl_sel", style: "height: auto", size: 5 }, []),
+                    h.select({ id: "bbl_sel", style: "height: 100%", size: 5 }, []),
                     h.div({ class: "grid gap3", style: "grid-template-columns: 1fr 1fr" }, [
                         h.button({
                             _: '+',
@@ -155,7 +192,11 @@ self.kiri.load(api => {
                         h.input({ id: "bbl_serial", size: 20, class: "t-left" })
                     ]),
                     h.div({ class: "t-body t-inset frow gap4 pad4 grow" }, [
-
+                        h.textarea({
+                            id: "bbl_rec",
+                            style: "width: 100%; resize: none",
+                            rows: 30, cols: 65
+                        })
                     ])
                 ])
             ])
@@ -253,6 +294,8 @@ self.kiri.load(api => {
             api.alerts.show('File Send Error', 3);
         });
     };
+
+    setInterval(monitor_keepalive, 5000);
 
     api.bambu = { send, sendok, amsmap };
 });

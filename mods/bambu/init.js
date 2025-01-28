@@ -7,6 +7,7 @@ module.exports = async (server) => {
     const confdir = util.confdir();
     const mqtt = require("mqtt");
     const mcache = {};
+    const wsopen = [];
 
     class MQTT {
         #timer;
@@ -24,7 +25,7 @@ module.exports = async (server) => {
             rejectUnauthorized: false
         }
 
-        constructor(host, code, serial, onready) {
+        constructor(host, code, serial, onready, onerror, onmessage) {
             this.#options.host = host;
             this.#options.password = code;
             this.#serial = serial;
@@ -33,29 +34,36 @@ module.exports = async (server) => {
             client.on("connect", () => {
                 let report = this.#topic_report = `device/${serial}/report`;
                 let request = this.#topic_request = `device/${serial}/request`;
-                util.log({ report, request });
+                // util.log({ report, request });
                 client.subscribe(report, (err) => {
-                    util.log('mqtt_subd', err);
+                    util.log('mqtt_subd', this.#serial, err);
                     onready(this);
-                    this.#uptime();
+                    this.keepalive();
                 });
             });
 
             client.on("message", (topic, message) => {
-                util.log('mqtt_recv', JSON.parse(message.toString()));
+                message = JSON.parse(message.toString());
+                if (onmessage) {
+                    onmessage(message);
+                } else {
+                    util.log('mqtt_recv', this.#serial, message);
+                }
             });
+
+            client.on("error", error => onerror(error));
         }
 
-        #uptime() {
+        keepalive() {
             clearTimeout(this.#timer);
             this.#timer = setTimeout(() => { this.end() }, 30000);
         }
 
         async send(msg) {
             if (this.#client) {
-                util.log('mqtt_send', msg);
+                util.log('mqtt_send', this.#serial, msg);
                 this.#client.publish(this.#topic_request, JSON.stringify(msg));
-                this.#uptime();
+                this.keepalive();
                 return true;
             } else {
                 return false;
@@ -64,7 +72,7 @@ module.exports = async (server) => {
 
         end() {
             if (this.#client) {
-                util.log('mqtt end');
+                util.log('mqtt end', this.#serial);
                 this.#client.end();
                 this.#client = undefined;
             }
@@ -74,7 +82,7 @@ module.exports = async (server) => {
         }
     }
 
-    function get_mqtt(host, code, serial) {
+    function get_mqtt(host, code, serial, onmsg, onconn) {
         const fns = {};
         const promise = new Promise((resolve, reject) => {
             Object.assign(fns, { resolve, reject });
@@ -82,12 +90,15 @@ module.exports = async (server) => {
 
         let mqtt = mcache[serial];
         if (mqtt) {
-            return fns.resolve(mqtt);
+            fns.resolve(mqtt);
         } else {
             mqtt = new MQTT(host, code, serial, obj => {
                 mcache[serial] = obj;
                 fns.resolve(obj);
-            })
+                if (onconn) {
+                    onconn(mqtt);
+                }
+            }, error => fns.reject(error), onmsg);
         }
 
         return promise;
@@ -158,7 +169,9 @@ module.exports = async (server) => {
             const data = req.app.post;
             const { host, password, filename, serial, ams } = query;
             const ams_mapping = ams ? ams.split(',').map(v => parseInt(v)) : undefined;
-            const mqtt_conn = serial ? get_mqtt(host, password, serial) : undefined;
+            const mqtt_conn = serial ? get_mqtt(host, password, serial, message => {
+                util.log('mqtt_recv', JSON.parse(message.toString()));
+            }) : undefined;
             ftp_send({ host, password, filename, data })
                 .then(() => {
                     if (serial) {
@@ -195,20 +208,51 @@ module.exports = async (server) => {
     };
 
     server.ws.register("/bambu", function(ws, req) {
-        console.log('ws open', req.url);
+        wsopen.push(ws);
+        util.log('ws open', wsopen.length, req.url);
         ws.on('message', msg => {
             msg = JSON.parse(msg);
-            console.log(msg);
-            switch (msg.cmd) {
+            let { cmd, host, code, serial } = msg;
+            switch (cmd) {
                 case "monitor":
-                    get_mqtt(msg.host, msg.code, msg.serial).then(mqtt => {
-                        console.log({ monitor: mqtt });
+                    get_mqtt(host, code, serial, message => {
+                        // util.log({ mqtt_msg: serial });
+                        wsopen.forEach(ws => ws.send(JSON.stringify({ serial, message })));
+                    }, mqtt => {
+                        // on open only
+                    }).then(mqtt => {
+                        // util.log({ mqtt_mon: mqtt });
+                        // request all printer state info
+                        mqtt.send({
+                            pushing: {
+                                sequence_id: "0",
+                                command: "pushall"
+                            }
+                        });
+                        // request system info
+                        mqtt.send({
+                            info: {
+                                command: "get_version"
+                            }
+                        });
+                    }).catch(error => {
+                        util.log({ mqtt_err: error });
+                        ws.send(JSON.stringify({
+                            serial,
+                            error: error.message || error.toString()
+                        }));
                     });
+                    break;
+                case "keepalive":
+                    // util.log({ keepalive: serial });
+                    mcache[serial]?.keepalive();
                     break;
             }
         });
         ws.on('close', () => {
-            console.log('WS CLOSE');
+            let io = wsopen.indexOf(ws);
+            if (io >= 0) wsopen.splice(io, 1);
+            util.log('ws close', wsopen.length);
         });
     });
 };
