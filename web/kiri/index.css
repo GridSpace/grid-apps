@@ -622,6 +622,9 @@ button:hover {
 .noshow {
     display: none;
 }
+.mono {
+    font-family: monospace;
+}
 .gap1 {
     gap: 1px;
 }
@@ -645,6 +648,9 @@ button:hover {
 }
 .pad4 {
     padding: 4px !important;
+}
+.h100 {
+    height: 100%;
 }
 .grid {
     display: grid;
@@ -688,13 +694,19 @@ button:hover {
 .j-end {
     justify-content: flex-end;
 }
+.j-stretch {
+    justify-items: stretch;
+}
+.as-stretch {
+    align-self: stretch;
+}
 .space-around {
     justify-content: space-around;
 }
 .space-between {
     justify-content: space-between;
 }
-.center {
+.center, .t-center {
     text-align: center;
 }
 .t-left {
@@ -952,7 +964,7 @@ button:hover {
 #panel-left, #panel-right, #modal {
     pointer-events: visible;
 }
-#panel-left label, #panel-left svg {
+#panel-left label, #panel-left svg, button svg {
     pointer-events: none;
 }
 #ws-widgets button {
@@ -2176,10 +2188,10 @@ button:hover {
 .settings .set-header a {
     font-size: smaller;
 }
-#dev-sel {
-    margin-bottom: 0;
+#dev-sel, .dev-sel {
+    margin-bottom: 0 !important;
 }
-#dev-list {
+#dev-list, .dev-list {
     align-self: stretch;
     padding: 0 5px 0 5px;
 }

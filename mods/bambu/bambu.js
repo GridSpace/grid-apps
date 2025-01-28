@@ -131,19 +131,44 @@ self.kiri.load(api => {
         in_code.onkeypress = in_code.onblur = printer_update;
         in_serial.onkeypress = in_serial.onblur = printer_update;
         monitor_start(rec);
+        $('bbl_name').innerText = name;
     }
 
     function printer_render(rec) {
         $('bbl_rec').value = JSON.stringify(deepSortObject(rec), undefined, 2);
+        let { info, print } = rec;
+        let {
+            ams_status,
+            bet_target_temper,
+            bed_temper,
+            big_fan1_speed,
+            big_fan2_speed,
+            chamber_temper,
+            cooling_fan_speed,
+            gcode_file,
+            heatbreak_fan_speed,
+            layer_num,
+            mc_percent,
+            mc_remaining_time,
+            nozzle_diameter,
+            nozzle_target_temper,
+            nozzle_temper,
+            print_error,
+            print_type,
+            sdcard,
+            total_layer_num,
+            upload
+        } = print || {};
+        if (nozzle_diameter) {
+            $('bbl_noz').value = nozzle_diameter;
+            $('bbl_noz_temp').value = nozzle_temper;
+            $('bbl_noz_target').value = nozzle_target_temper;
+        }
     }
 
     function render_list() {
         h.bind(select, Object.keys(printers).map(name => {
-            return h.option({
-                _: name,
-                value: name,
-                onclick() { printer_select(name) }
-            })
+            return h.option({ _: name, value: name })
         }));
     }
 
@@ -174,44 +199,90 @@ self.kiri.load(api => {
         }), { before: true });
         let modal = h.bind($('mod-help'), h.div({
             id: "mod-bambu",
-            class: "mdialog fcol gap3"
+            class: "mdialog fcol gap4"
         }, [
-            h.button('bambu printer manager'),
+            h.div({ class: "f-row a-center gap4" }, [
+                h.label({ class: "set-header dev-sel" }, [ h.a('bambu manager') ]),
+                h.select({ id: "bbl_sel", class: "dev-list" }, []),
+                h.button({
+                    _: 'monitor',
+                    title: "monitor printer",
+                    class: "grid",
+                    onclick() {
+                        printer_select(select.value)
+                    }
+                }),
+                h.div({ class: "grow gap3 j-end" }, [
+                    h.button({
+                        _: 'new',
+                        title: "add printer",
+                        class: "grid",
+                        onclick: printer_add
+                    }),
+                    h.button({
+                        _: 'rename',
+                        title: "rename printer",
+                        class: "grid",
+                        onclick: printer_add
+                    }),
+                    h.button({
+                        _: 'delete',
+                        id: 'bbl_pdel',
+                        title: "remove printer",
+                        class: "grid",
+                        onclick: printer_del
+                    })
+                ])
+            ]),
+            h.div({ class: "set-sep "}),
             h.div({ class: "frow gap3" }, [
-                h.div({ class: "t-body t-inset fcol gap3 pad4" }, [
-                    h.select({ id: "bbl_sel", style: "height: 100%", size: 5 }, []),
-                    h.div({ class: "grid gap3", style: "grid-template-columns: 1fr 1fr" }, [
-                        h.button({
-                            _: '+',
-                            title: "add printer",
-                            class: "grid",
-                            onclick: printer_add
-                        }),
-                        h.button({
-                            _: '-',
-                            id: 'bbl_pdel',
-                            title: "remove printer",
-                            class: "grid",
-                            onclick: printer_del
+                h.div({ class: "grow fcol gap3" }, [
+                    h.div({ class: "t-body t-inset frow gap4 pad4 a-center" }, [
+                        h.label({ class: "set-header dev-sel" }, [
+                            h.a({ _: 'printer', id: "bbl_name" })
+                        ]),
+                        h.label('host'),
+                        h.input({ id: "bbl_host", size: 15, class: "t-left mono" }),
+                        h.label('code'),
+                        h.input({ id: "bbl_code", size: 10, class: "t-left mono" }),
+                        h.label('serial'),
+                        h.input({ id: "bbl_serial", size: 20, class: "t-left mono" }),
+                        h.button({ id: "bbl_hide", _: '<i class="fa-solid fa-eye"></i>', onclick(ev) {
+                            if (ev.target.hide === true) {
+                                ev.target.hide = false;
+                                $('bbl_code').type = 'text';
+                                $('bbl_serial').type = 'text';
+                                $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye"></i>';
+                            } else {
+                                ev.target.hide = true;
+                                $('bbl_code').type = 'password';
+                                $('bbl_serial').type = 'password';
+                                $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                            }
+                        }})
+                    ]),
+                    h.div({ class: "t-body t-inset fcol gap4 pad3 grow" }, [
+                        h.div({ class: "frow gap4 pad4" }, [
+                            h.label('nozzle'),
+                            h.input({ id: "bbl_noz", size: 5, class: "t-left mono" }),
+                            h.label('temp'),
+                            h.input({ id: "bbl_noz_temp", size: 8, class: "t-left mono" }),
+                            h.label('target'),
+                            h.input({ id: "bbl_noz_target", size: 8, class: "t-left mono" }),
+                        ]),
+                        h.textarea({
+                            id: "bbl_rec",
+                            style: "width: 100%; resize: none; box-sizing: border-box",
+                            rows: 15, cols: 65
                         })
                     ])
                 ]),
-                h.div({ class: "grow fcol gap3" }, [
-                    h.div({ class: "t-body t-inset frow gap4 pad4 a-center" }, [
-                        h.label('host'),
-                        h.input({ id: "bbl_host", size: 15, class: "t-left" }),
-                        h.label('code'),
-                        h.input({ id: "bbl_code", size: 10, class: "t-left" }),
-                        h.label('serial'),
-                        h.input({ id: "bbl_serial", size: 20, class: "t-left" })
-                    ]),
-                    h.div({ class: "t-body t-inset frow gap4 pad4 grow" }, [
-                        h.textarea({
-                            id: "bbl_rec",
-                            style: "width: 100%; resize: none",
-                            rows: 30, cols: 65
-                        })
-                    ])
+                h.div({ class: "t-body t-inset fcol gap3 pad4" }, [
+                    h.div({ class: "set-header" }, [ h.a('files') ]),
+                    h.select({ id: "bbl_sel", style: "height: 100%", size: 5 }, []),
+                    h.button({ _: "refresh", onclick() {
+                        console.log('file list refresh');
+                    }})
                 ])
             ])
         ]), { before: true });
