@@ -174,4 +174,18 @@ module.exports = async (server) => {
         });
     };
 
+    server.ws.register("/bambu", function(ws, req) {
+        console.log('ws open', req.url);
+        ws.on('message', msg => {
+            msg = JSON.parse(msg);
+            console.log(msg);
+            switch (msg.cmd) {
+                case "monitor":
+                    break;
+            }
+        });
+        ws.on('close', () => {
+            console.log('WS CLOSE');
+        });
+    });
 };

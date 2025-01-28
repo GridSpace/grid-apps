@@ -15,7 +15,41 @@ self.kiri.load(api => {
     let init = false;
     let bound, device, printers, select, selected;
     let btn_del, in_host, in_code, in_serial;
-    let host, password, serial, amsmap;
+    let host, password, serial, amsmap, socket = {
+        open: false,
+        q: [],
+        start() {
+            if (socket.ws) {
+                return;
+            }
+            let ws = socket.ws = new WebSocket("/bambu");
+            ws.onopen = () => {
+                socket.open = true;
+                socket.drain();
+            };
+            ws.onclose = () => {
+                socket.open = false;
+            };
+            ws.onmessage = msg => {
+                console.log({ msg: msg.data });
+            };
+        },
+        stop() {
+            if (socket.ws) {
+                socket.ws.close();
+            }
+        },
+        drain() {
+            while (socket.open && socket.q.length) {
+                socket.ws.send(JSON.stringify(socket.q.shift()));
+            }
+        },
+        send(msg) {
+            socket.start();
+            socket.q.push(msg);
+            socket.drain();
+        }
+    };
 
     function printer_add() {
         let name = prompt('printer name');
@@ -29,7 +63,6 @@ self.kiri.load(api => {
     }
 
     function printer_del() {
-        console.log('printer del', selected.name);
         if (!selected.name) {
             return;
         }
@@ -48,6 +81,7 @@ self.kiri.load(api => {
         in_host.onkeypress = in_host.onblur = () => rec.host = in_host.value;
         in_code.onkeypress = in_code.onblur = () => rec.code = in_code.value;
         in_serial.onkeypress = in_serial.onblur = () => rec.serial = in_serial.value;
+        monitor_start(rec);
     }
 
     function render_list() {
@@ -58,6 +92,14 @@ self.kiri.load(api => {
                 onclick() { printer_select(name) }
             })
         }));
+    }
+
+    function monitor_start(rec) {
+        socket.send({ cmd: "monitor", ...rec });
+    }
+
+    function monitor_stop() {
+        socket.stop();
     }
 
     api.event.on("init-done", function() {
