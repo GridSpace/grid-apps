@@ -139,7 +139,7 @@ self.kiri.load(api => {
         let { info, print } = rec;
         let {
             ams_status,
-            bet_target_temper,
+            bed_target_temper,
             bed_temper,
             big_fan1_speed,
             big_fan2_speed,
@@ -163,6 +163,10 @@ self.kiri.load(api => {
             $('bbl_noz').value = nozzle_diameter;
             $('bbl_noz_temp').value = nozzle_temper;
             $('bbl_noz_target').value = nozzle_target_temper;
+        }
+        if (bed_temper) {
+            $('bbl_bed_temp').value = bed_temper;
+            $('bbl_bed_target').value = bed_target_temper;
         }
     }
 
@@ -199,7 +203,7 @@ self.kiri.load(api => {
         }), { before: true });
         let modal = h.bind($('mod-help'), h.div({
             id: "mod-bambu",
-            class: "mdialog fcol gap4"
+            class: "mdialog f-col gap4"
         }, [
             h.div({ class: "f-row a-center gap4" }, [
                 h.label({ class: "set-header dev-sel" }, [ h.a('bambu manager') ]),
@@ -212,6 +216,19 @@ self.kiri.load(api => {
                         printer_select(select.value)
                     }
                 }),
+                h.button({ id: "bbl_hide", _: '<i class="fa-solid fa-eye"></i>', onclick(ev) {
+                    if (ev.target.hide === true) {
+                        ev.target.hide = false;
+                        $('bbl_code').type = 'text';
+                        $('bbl_serial').type = 'text';
+                        $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye"></i>';
+                    } else {
+                        ev.target.hide = true;
+                        $('bbl_code').type = 'password';
+                        $('bbl_serial').type = 'password';
+                        $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                    }
+                }}),
                 h.div({ class: "grow gap3 j-end" }, [
                     h.button({
                         _: 'new',
@@ -236,54 +253,75 @@ self.kiri.load(api => {
             ]),
             h.div({ class: "set-sep "}),
             h.div({ class: "frow gap3" }, [
-                h.div({ class: "grow fcol gap3" }, [
-                    h.div({ class: "t-body t-inset frow gap4 pad4 a-center" }, [
+                h.div({ class: "f-col gap3" }, [
+                    h.div({ class: "t-body t-inset f-col" }, [
                         h.label({ class: "set-header dev-sel" }, [
                             h.a({ _: 'printer', id: "bbl_name" })
                         ]),
-                        h.label('host'),
-                        h.input({ id: "bbl_host", size: 15, class: "t-left mono" }),
-                        h.label('code'),
-                        h.input({ id: "bbl_code", size: 10, class: "t-left mono" }),
-                        h.label('serial'),
-                        h.input({ id: "bbl_serial", size: 20, class: "t-left mono" }),
-                        h.button({ id: "bbl_hide", _: '<i class="fa-solid fa-eye"></i>', onclick(ev) {
-                            if (ev.target.hide === true) {
-                                ev.target.hide = false;
-                                $('bbl_code').type = 'text';
-                                $('bbl_serial').type = 'text';
-                                $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye"></i>';
-                            } else {
-                                ev.target.hide = true;
-                                $('bbl_code').type = 'password';
-                                $('bbl_serial').type = 'password';
-                                $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-                            }
-                        }})
-                    ]),
-                    h.div({ class: "t-body t-inset fcol gap4 pad3 grow" }, [
-                        h.div({ class: "frow gap4 pad4" }, [
-                            h.label('nozzle'),
-                            h.input({ id: "bbl_noz", size: 5, class: "t-left mono" }),
-                            h.label('temp'),
-                            h.input({ id: "bbl_noz_temp", size: 8, class: "t-left mono" }),
-                            h.label('target'),
-                            h.input({ id: "bbl_noz_target", size: 8, class: "t-left mono" }),
+                        h.div({ class: "var-row" }, [
+                            h.label('host'),
+                            h.input({ id: "bbl_host", size: 12 }),
                         ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('code'),
+                            h.input({ id: "bbl_code", size: 12 }),
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('serial'),
+                            h.input({ id: "bbl_serial", size: 17, class: "font-smol" }),
+                        ])
+                    ]),
+                    h.div({ class: "t-body t-inset f-col" }, [
+                        h.label({ class: "set-header dev-sel" }, [
+                            h.a('nozzle')
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('diameter'),
+                            h.input({ id: "bbl_noz", size: 5 })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('temp'),
+                            h.input({ id: "bbl_noz_temp", size: 8 })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('target'),
+                            h.input({ id: "bbl_noz_target", size: 8 })
+                        ])
+                    ]),
+                    h.div({ class: "t-body t-inset f-col" }, [
+                        h.label({ class: "set-header dev-sel" }, [
+                            h.a('bed')
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('temp'),
+                            h.input({ id: "bbl_bed_temp", size: 8 })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('target'),
+                            h.input({ id: "bbl_bed_target", size: 8 })
+                        ])
+                    ])
+                ]),
+                h.div({ class: "t-body t-inset f-col" }, [
+                    h.div({ class: "t-body t-inset f-col gap4 pad3 grow" }, [
                         h.textarea({
                             id: "bbl_rec",
-                            style: "width: 100%; resize: none; box-sizing: border-box",
+                            style: "width: 100%; height: 100%; resize: none; box-sizing: border-box",
+                            wrap: "off",
+                            spellcheck: "false",
                             rows: 15, cols: 65
                         })
                     ])
                 ]),
-                h.div({ class: "t-body t-inset fcol gap3 pad4" }, [
+                h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
                     h.div({ class: "set-header" }, [ h.a('files') ]),
                     h.select({ id: "bbl_sel", style: "height: 100%", size: 5 }, []),
-                    h.button({ _: "refresh", onclick() {
-                        console.log('file list refresh');
-                    }})
                 ])
+            ]),
+            h.div({ class: "set-sep "}),
+            h.div({ class: "gap4" }, [
+                h.label({ class: "set-header dev-sel" }, [ h.a('status') ]),
+                h.input({ id: "bbl_status", class: "grow" }),
             ])
         ]), { before: true });
         select = modal.bbl_sel;

@@ -625,6 +625,9 @@ button:hover {
 .mono {
     font-family: monospace;
 }
+.font-smol {
+    font-size: smaller;
+}
 .gap1 {
     gap: 1px;
 }
