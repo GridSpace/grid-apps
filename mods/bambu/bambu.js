@@ -336,7 +336,7 @@ self.kiri.load(api => {
                     h.div({ class: "set-header", onclick() {
                         console.log('bbl reload files');
                         list_files();
-                    } }, h.a({ class: "f-row" }, [
+                    } }, h.a({ class: "flex f-row grow" }, [
                         h.label('files'),
                         h.span({ class: "fat5 grow" }),
                         h.i({ class: "fa-solid fa-rotate" })
