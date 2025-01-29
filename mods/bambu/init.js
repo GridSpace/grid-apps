@@ -104,14 +104,12 @@ module.exports = async (server) => {
         return promise;
     }
 
-    async function ftp_send(args = {}) {
+    async function ftp_open(args = {}) {
         const client = new Client();
         const port = parseInt(args.port || 990);
         const host = args.host || "localhost";
         const user = args.user || "bblp";
-        const password = args.password || '';
-        const filename = args.filename || "test.3mf";
-        const data = args.data || undefined;
+        const password = args.password || args.code || '';
         // client.ftp.verbose = true;
         try {
             await client.access({
@@ -122,6 +120,17 @@ module.exports = async (server) => {
                 secure: "implicit",
                 secureOptions: { rejectUnauthorized: false }
             });
+        } catch (err) {
+            util.log({ ftp_error: error });
+        }
+        return client;
+    }
+
+    async function ftp_send(args = {}) {
+        const client = await ftp_open(args);
+        const filename = args.filename || "test.3mf";
+        const data = args.data || undefined;
+        try {
             const readableStream = new Readable();
             readableStream._read = () => {};
             readableStream.push(data);
@@ -130,6 +139,18 @@ module.exports = async (server) => {
         } finally {
             client.close();
         }
+    }
+
+    async function ftp_list(args = {}) {
+        const client = await ftp_open(args);
+        const list = [];
+        try {
+            list.push(...(await client.list()));
+            // list.push(...(await client.list("/cache")));
+        } finally {
+            client.close();
+        }
+        return list;
     }
 
     function decode_post(req, res, next) {
@@ -241,6 +262,19 @@ module.exports = async (server) => {
                             serial,
                             error: error.message || error.toString()
                         }));
+                    });
+                    break;
+                case "files":
+                    ftp_list({ host, code }).then(files => {
+                        files = files
+                            .filter(file => file.name.toLowerCase().endsWith(".3mf"))
+                            .map(file => {
+                                return {
+                                    name: file.name,
+                                    size: file.size
+                                };
+                            });
+                        wsopen.forEach(ws => ws.send(JSON.stringify({ serial, message: { files }})));
                     });
                     break;
                 case "keepalive":

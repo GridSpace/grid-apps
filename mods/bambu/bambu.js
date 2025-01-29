@@ -66,6 +66,10 @@ self.kiri.load(api => {
     };
 
     function deepMerge(target, source) {
+        // console.log({ target, source });
+        if (!source) {
+            return target;
+        }
         const result = structuredClone(target);
         Object.keys(source).forEach((key) => {
             if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
@@ -140,7 +144,7 @@ self.kiri.load(api => {
 
     function printer_render(rec = {}) {
         $('bbl_rec').value = JSON.stringify(deepSortObject(rec), undefined, 2);
-        let { info, print } = rec;
+        let { info, print, files } = rec;
         let {
             ams_status,
             bed_target_temper,
@@ -168,6 +172,15 @@ self.kiri.load(api => {
         $('bbl_noz_target').value = nozzle_target_temper ?? '';
         $('bbl_bed_temp').value = bed_temper ?? '';
         $('bbl_bed_target').value = bed_target_temper ?? '';
+        if (files) {
+            h.bind($('bbl_files'), files.map(file => {
+                return h.option({
+                    _: file.name || file,
+                    style: "max-width: 20em"
+                });
+            }));
+            rec.files = undefined;
+        }
     }
 
     function render_list() {
@@ -199,6 +212,12 @@ self.kiri.load(api => {
 
     function monitor_stop() {
         socket.stop();
+    }
+
+    function list_files() {
+        if (selected?.rec?.host) {
+            socket.send({ cmd: "files", ...selected.rec });
+        }
     }
 
     api.event.on("init-done", function() {
@@ -314,14 +333,15 @@ self.kiri.load(api => {
                     })
                 ]),
                 h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
-                    h.div({ id: "bbl_files", class: "set-header", onclick() {
-                        console.log('reload files');
+                    h.div({ class: "set-header", onclick() {
+                        console.log('bbl reload files');
+                        list_files();
                     } }, h.a({ class: "f-row" }, [
                         h.label('files'),
                         h.span({ class: "fat5 grow" }),
                         h.i({ class: "fa-solid fa-rotate" })
                     ])),
-                    h.select({ id: "bbl_sel", style: "height: 100%", size: 5 }, []),
+                    h.select({ id: "bbl_files", style: "height: 100%", size: 5 }, []),
                 ])
             ]),
             h.div({ class: "set-sep "}),
