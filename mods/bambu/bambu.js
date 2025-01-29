@@ -30,12 +30,14 @@ self.kiri.load(api => {
             };
             ws.onclose = () => {
                 socket.open = false;
+                socket.ws = undefined;
             };
             ws.onmessage = msg => {
                 let data = JSON.parse(msg.data);
                 let { serial, message, error } = data;
                 if (error) {
                     console.log({ serial, error });
+                    printer_status(`error: ${error}`);
                 } else if (serial) {
                     let rec = status[serial] = deepMerge(status[serial] || {}, message);
                     if (selected?.rec.serial === serial) {
@@ -109,7 +111,7 @@ self.kiri.load(api => {
     }
 
     function printer_del() {
-        if (!selected.name) {
+        if (!selected?.name) {
             return;
         }
         delete printers[selected.name];
@@ -183,6 +185,10 @@ self.kiri.load(api => {
         }
     }
 
+    function printer_status(msg) {
+        $('bbl_status').value = msg;
+    }
+
     function render_list() {
         let list = Object.keys(printers).map(name => {
             return h.option({ _: name, value: name })
@@ -238,7 +244,11 @@ self.kiri.load(api => {
                 h.label({ class: "set-header dev-sel" }, [ h.a('bambu manager') ]),
                 h.select({ id: "bbl_sel", class: "dev-list" }, []),
                 h.div({ class: "grow gap3 j-end" }, [
-                    h.button({ id: "bbl_hide", _: '<i class="fa-solid fa-eye"></i>', onclick(ev) {
+                    h.button({
+                        id: "bbl_hide",
+                        _: '<i class="fa-solid fa-eye"></i>',
+                        class: "a-center",
+                    onclick(ev) {
                         if (ev.target.hide === true) {
                             ev.target.hide = false;
                             $('bbl_code').type = 'text';
@@ -334,7 +344,7 @@ self.kiri.load(api => {
                 ]),
                 h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
                     h.div({ class: "set-header", onclick() {
-                        console.log('bbl reload files');
+                        // console.log('bbl reload files');
                         list_files();
                     } }, h.a({ class: "flex f-row grow" }, [
                         h.label('files'),
@@ -347,7 +357,7 @@ self.kiri.load(api => {
             h.div({ class: "set-sep "}),
             h.div({ class: "gap4" }, [
                 h.label({ class: "set-header dev-sel" }, [ h.a('status') ]),
-                h.input({ id: "bbl_status", class: "grow" }),
+                h.input({ id: "bbl_status", class: "t-left mono grow" }),
             ])
         ]), { before: true });
         select = modal.bbl_sel;
@@ -370,8 +380,9 @@ self.kiri.load(api => {
     api.event.on("modal.hide", which => {
         if (selected?.rec.modified) {
             api.conf.save();
-            selected = undefined;
         }
+        selected = undefined;
+        status = {};
     });
 
     api.event.on("device.selected", devsel => {

@@ -120,8 +120,9 @@ module.exports = async (server) => {
                 secure: "implicit",
                 secureOptions: { rejectUnauthorized: false }
             });
-        } catch (err) {
+        } catch (error) {
             util.log({ ftp_error: error });
+            throw error;
         }
         return client;
     }
@@ -172,6 +173,10 @@ module.exports = async (server) => {
 
     function o2s(obj) {
         return JSON.stringify(obj);
+    }
+
+    function wsend(msg) {
+        wsopen.forEach(ws => ws.send(JSON.stringify(msg)));
     }
 
     if (!(env.debug || env.electron)) {
@@ -238,7 +243,7 @@ module.exports = async (server) => {
                 case "monitor":
                     get_mqtt(host, code, serial, message => {
                         // util.log({ mqtt_msg: serial });
-                        wsopen.forEach(ws => ws.send(JSON.stringify({ serial, message })));
+                        wsend({ serial, message });
                     }, mqtt => {
                         // on open only
                     }).then(mqtt => {
@@ -258,10 +263,7 @@ module.exports = async (server) => {
                         });
                     }).catch(error => {
                         util.log({ mqtt_err: error });
-                        ws.send(JSON.stringify({
-                            serial,
-                            error: error.message || error.toString()
-                        }));
+                        wsend({ serial, error: error.message || error.toString() });
                     });
                     break;
                 case "files":
@@ -274,7 +276,9 @@ module.exports = async (server) => {
                                     size: file.size
                                 };
                             });
-                        wsopen.forEach(ws => ws.send(JSON.stringify({ serial, message: { files }})));
+                        wsend({ serial, message: { files }});
+                    }).catch(error => {
+                        wsend({ serial, error: error.message || error.toString() });
                     });
                     break;
                 case "keepalive":
