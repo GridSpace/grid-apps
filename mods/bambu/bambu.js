@@ -100,6 +100,8 @@ self.kiri.load(api => {
             host:'', code:'', serial:''
         };
         render_list();
+        select.value = name;
+        printer_select(name);
     }
 
     function printer_del() {
@@ -107,8 +109,9 @@ self.kiri.load(api => {
             return;
         }
         delete printers[selected.name];
-        printer_select();
         render_list();
+        select.value = '';
+        printer_select();
     }
 
     function printer_update() {
@@ -120,7 +123,7 @@ self.kiri.load(api => {
         });
     }
 
-    function printer_select(name) {
+    function printer_select(name = '') {
         btn_del.disabled = false;
         let rec = printers[name] || {};
         selected = { name, rec };
@@ -131,10 +134,11 @@ self.kiri.load(api => {
         in_code.onkeypress = in_code.onblur = printer_update;
         in_serial.onkeypress = in_serial.onblur = printer_update;
         monitor_start(rec);
+        printer_render();
         $('bbl_name').innerText = name;
     }
 
-    function printer_render(rec) {
+    function printer_render(rec = {}) {
         $('bbl_rec').value = JSON.stringify(deepSortObject(rec), undefined, 2);
         let { info, print } = rec;
         let {
@@ -159,25 +163,31 @@ self.kiri.load(api => {
             total_layer_num,
             upload
         } = print || {};
-        if (nozzle_diameter) {
-            $('bbl_noz').value = nozzle_diameter;
-            $('bbl_noz_temp').value = nozzle_temper;
-            $('bbl_noz_target').value = nozzle_target_temper;
-        }
-        if (bed_temper) {
-            $('bbl_bed_temp').value = bed_temper;
-            $('bbl_bed_target').value = bed_target_temper;
-        }
+        $('bbl_noz').value = nozzle_diameter || '';
+        $('bbl_noz_temp').value = nozzle_temper ?? '';
+        $('bbl_noz_target').value = nozzle_target_temper ?? '';
+        $('bbl_bed_temp').value = bed_temper ?? '';
+        $('bbl_bed_target').value = bed_target_temper ?? '';
     }
 
     function render_list() {
-        h.bind(select, Object.keys(printers).map(name => {
+        let list = Object.keys(printers).map(name => {
             return h.option({ _: name, value: name })
-        }));
+        });
+        list = [
+            h.option({ _: '', value: '' }),
+            ...list
+        ]
+        h.bind(select, list);
     }
 
     function monitor_start(rec) {
-        socket.send({ cmd: "monitor", ...rec });
+        let { host, code, serial } = rec;
+        if (!(host && code && serial)) {
+            // monitor_stop();
+        } else {
+            socket.send({ cmd: "monitor", ...rec });
+        }
     }
 
     function monitor_keepalive() {
@@ -208,28 +218,20 @@ self.kiri.load(api => {
             h.div({ class: "f-row a-center gap4" }, [
                 h.label({ class: "set-header dev-sel" }, [ h.a('bambu manager') ]),
                 h.select({ id: "bbl_sel", class: "dev-list" }, []),
-                h.button({
-                    _: 'monitor',
-                    title: "monitor printer",
-                    class: "grid",
-                    onclick() {
-                        printer_select(select.value)
-                    }
-                }),
-                h.button({ id: "bbl_hide", _: '<i class="fa-solid fa-eye"></i>', onclick(ev) {
-                    if (ev.target.hide === true) {
-                        ev.target.hide = false;
-                        $('bbl_code').type = 'text';
-                        $('bbl_serial').type = 'text';
-                        $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye"></i>';
-                    } else {
-                        ev.target.hide = true;
-                        $('bbl_code').type = 'password';
-                        $('bbl_serial').type = 'password';
-                        $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-                    }
-                }}),
                 h.div({ class: "grow gap3 j-end" }, [
+                    h.button({ id: "bbl_hide", _: '<i class="fa-solid fa-eye"></i>', onclick(ev) {
+                        if (ev.target.hide === true) {
+                            ev.target.hide = false;
+                            $('bbl_code').type = 'text';
+                            $('bbl_serial').type = 'text';
+                            $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye"></i>';
+                        } else {
+                            ev.target.hide = true;
+                            $('bbl_code').type = 'password';
+                            $('bbl_serial').type = 'password';
+                            $('bbl_hide').innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                        }
+                    }}),
                     h.button({
                         _: 'new',
                         title: "add printer",
@@ -252,7 +254,7 @@ self.kiri.load(api => {
                 ])
             ]),
             h.div({ class: "set-sep "}),
-            h.div({ class: "frow gap3" }, [
+            h.div({ class: "frow gap4" }, [
                 h.div({ class: "f-col gap3" }, [
                     h.div({ class: "t-body t-inset f-col" }, [
                         h.label({ class: "set-header dev-sel" }, [
@@ -302,16 +304,14 @@ self.kiri.load(api => {
                         ])
                     ])
                 ]),
-                h.div({ class: "t-body t-inset f-col" }, [
-                    h.div({ class: "t-body t-inset f-col gap4 pad3 grow" }, [
-                        h.textarea({
-                            id: "bbl_rec",
-                            style: "width: 100%; height: 100%; resize: none; box-sizing: border-box",
-                            wrap: "off",
-                            spellcheck: "false",
-                            rows: 15, cols: 65
-                        })
-                    ])
+                h.div({ class: "f-col gap4 grow" }, [
+                    h.textarea({
+                        id: "bbl_rec",
+                        style: "width: 100%; height: 100%; resize: none; box-sizing: border-box",
+                        wrap: "off",
+                        spellcheck: "false",
+                        rows: 15, cols: 65
+                    })
                 ]),
                 h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
                     h.div({ class: "set-header" }, [ h.a('files') ]),
@@ -331,6 +331,7 @@ self.kiri.load(api => {
         in_serial = modal.bbl_serial;
         api.ui.modals['bambu'] = modal['mod-bambu'];
         btn_del.disabled = true;
+        select.onchange = (ev => printer_select(select.value));
     });
 
     api.event.on("modal.show", which => {
