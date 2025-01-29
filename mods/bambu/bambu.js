@@ -314,7 +314,13 @@ self.kiri.load(api => {
                     })
                 ]),
                 h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
-                    h.div({ class: "set-header" }, [ h.a('files') ]),
+                    h.div({ id: "bbl_files", class: "set-header", onclick() {
+                        console.log('reload files');
+                    } }, h.a({ class: "f-row" }, [
+                        h.label('files'),
+                        h.span({ class: "fat5 grow" }),
+                        h.i({ class: "fa-solid fa-rotate" })
+                    ])),
                     h.select({ id: "bbl_sel", style: "height: 100%", size: 5 }, []),
                 ])
             ]),

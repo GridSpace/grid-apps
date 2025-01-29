@@ -1910,6 +1910,11 @@ button:hover {
 .t-33 {
     width: 33%;
 }
+.fat5 {
+    display: inline-block;
+    min-width: 5px !important;
+    width: 5px !important;
+}
 .t-group {
     background-image: var(--gradbar);
     white-space: nowrap;
