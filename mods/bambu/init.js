@@ -1,4 +1,4 @@
-const { Client } = require('basic-ftp');
+const { Client } = require('@gridspace/basic-ftp');
 const { Readable } = require('stream');
 
 module.exports = async (server) => {
