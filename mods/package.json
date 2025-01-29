@@ -9,7 +9,7 @@
         "url": "https://github.com/gridspace/apps.git"
     },
     "dependencies": {
-        "basic-ftp": "^5.0.5",
+        "@gridspace/basic-ftp": "^5.0.5",
         "mqtt": "^5.10.3"
     }
 }

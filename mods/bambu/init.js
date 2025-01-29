@@ -36,7 +36,7 @@ module.exports = async (server) => {
                 let request = this.#topic_request = `device/${serial}/request`;
                 // util.log({ report, request });
                 client.subscribe(report, (err) => {
-                    util.log('mqtt_subd', this.#serial, err);
+                    util.log('mqtt sub', this.#serial, err || "ok");
                     onready(this);
                     this.keepalive();
                 });
@@ -61,7 +61,7 @@ module.exports = async (server) => {
 
         async send(msg) {
             if (this.#client) {
-                util.log('mqtt_send', this.#serial, msg);
+                util.log('mqtt send', this.#serial, msg);
                 this.#client.publish(this.#topic_request, JSON.stringify(msg));
                 this.keepalive();
                 return true;
@@ -146,7 +146,7 @@ module.exports = async (server) => {
         const list = [];
         try {
             list.push(...(await client.list()));
-            // list.push(...(await client.list("/cache")));
+            list.push(...(await client.list("/cache")));
         } finally {
             client.close();
         }
@@ -230,7 +230,7 @@ module.exports = async (server) => {
 
     server.ws.register("/bambu", function(ws, req) {
         wsopen.push(ws);
-        util.log('ws open', wsopen.length, req.url);
+        util.log('ws open', req.url, wsopen.length);
         ws.on('message', msg => {
             msg = JSON.parse(msg);
             let { cmd, host, code, serial } = msg;
