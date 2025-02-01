@@ -477,8 +477,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         $('code-preview-head').style.display = preview ? '' : 'none';
         $('code-preview').style.display = preview ? '' : 'none';
         $('print-download').onclick = download;
-        $('print-filament-head').style.display = fdm ? '' : 'none';
-        $('print-filament-info').style.display = fdm ? '' : 'none';
+        $('print-filament').style.display = fdm ? '' : 'none';
         $('print-filename').value = filename;
         $('print-filesize').value = util.comma(info.bytes);
         $('print-filament').value = Math.round(info.distance);
@@ -523,10 +522,10 @@ function exportGCodeDialog(gcode, sections, info, names) {
         download3MF.onclick = function() {
             gen3mf(zip => api.util.download(zip, `${$('print-filename').value}.3mf`));
         };
-        let downloadBambu = $('print-bambu');
-        downloadBambu.style.display = api.bambu && api.bambu.sendok({ gcode, info, settings }) ? 'flex' : 'none';
-        downloadBambu.onclick = function() {
-            gen3mf(zip => api.bambu.send(`${$('print-filename').value}.3mf`, zip));
+
+        // present bambu print options when selected device is bambu
+        if (api.bambu) {
+            api.bambu.prep_export(gen3mf, gcode, info, settings);
         }
 
         function gen3mf(then) {

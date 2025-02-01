@@ -583,19 +583,25 @@
         <div id="mod-local" class="mdialog f-col"></div>
         <!-- export dialogs -->
         <div id="mod-x-any" class="mod-print mdialog f-col">
-            <div class="header"><label>export</label></div>
-            <div id="print-info" class="f-col box">
-                <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
-                <div><label>file size (bytes)</label><input id="print-filesize" size="12" disabled="true" /></div>
-                <div><label>time estimate (h:m:s)</label><input id="output-time" size="12" disabled="true" /></div>
+            <div class="f-row gap4">
+                <div class="f-col grow">
+                    <div class="header"><label>job</label></div>
+                    <div id="print-info" class="f-col box">
+                        <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
+                        <div><label>file size (bytes)</label><input id="print-filesize" size="12" disabled="true" /></div>
+                        <div><label>time estimate (h:m:s)</label><input id="output-time" size="12" disabled="true" /></div>
+                    </div>
+                </div>
+                <div id="print-filament" class="f-col">
+                    <div class="header"><label>material</label></div>
+                    <div class="f-col box">
+                        <div><label>filament density (g/cm^3)</label><input id="print-density" size="12" value="1.25" /></div>
+                        <div><label>filament used (mm)</label><input id="print-filament" size="12" disabled="true" /></div>
+                        <div><label>printed weight (g)</label><input id="print-weight" size="12" disabled="true" /></div>
+                    </div>
+                </div>
             </div>
-            <div id="print-filament-head" class="header"><label>filament</label></div>
-            <div id="print-filament-info" class="f-col box">
-                <div><label>filament density (g/cm^3)</label><input id="print-density" size="12" value="1.25" /></div>
-                <div><label>filament used (mm)</label><input id="print-filament" size="12" disabled="true" /></div>
-                <div><label>printed weight (g)</label><input id="print-weight" size="12" disabled="true" /></div>
-            </div>
-            <div id="code-preview-head" class="header"><label>preview</label></div>
+            <div id="code-preview-head" class="header"><label>gcode preview</label></div>
             <div id="code-preview" class="f-col box">
                 <div><textarea id="code-preview-textarea"></textarea></div>
             </div>
@@ -605,7 +611,14 @@
                 <button id="print-palette" class="grow">palette</button>
                 <button id="print-zip" class="grow">zip</button>
                 <button id="print-3mf" class="grow">3mf</button>
-                <button id="print-bambu" class="grow">bambu</button>
+            </div>
+            <div id="bambu-output" class="f-col">
+                <div class="header"><label>send to bambu</label></div>
+                <div class="f-row box gap4 a-center">
+                    <label class="grow0">printer</label>
+                    <select id="print-bambu-device"></select>
+                    <button id="print-bambu" class="grow" disabled>send job</button>
+                </div>
             </div>
             <div id="send-to-octohead" class="header"><label>octoprint</label></div>
             <div id="send-to-octoprint" class="f-col box">

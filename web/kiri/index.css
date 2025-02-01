@@ -107,7 +107,7 @@ button {
     cursor: pointer;
     text-transform: capitalize;
 }
-button:hover {
+button:not([disabled]):hover {
     background-color: var(--main-color);
     color: white;
 }
@@ -117,6 +117,9 @@ button[load] {
 }
 button[del] {
     margin-left: 5px;
+}
+button[disabled] {
+    color: #999;
 }
 input {
     background-color: #f8f8ff;
@@ -225,6 +228,9 @@ details[open] > summary::after {
 }
 
 /** dark conversion */
+.dark button[disabled] {
+    color: #888;
+}
 .dark input[disabled] {
     border-color: #666;
     background-color: #444;
@@ -250,7 +256,7 @@ details[open] > summary::after {
     background-color: #555;
     border: 1px solid #777;
 }
-button:hover {
+.dark button:not([disabled]):hover {
     background-color: var(--blue-2);
     color: black;
 }
@@ -669,6 +675,9 @@ button:hover {
 }
 .basis-50 {
     flex-basis: 50%;
+}
+.grow0 {
+    flex-grow: 0 !important;
 }
 .grow {
     flex-grow: 1;
@@ -1633,7 +1642,7 @@ button:hover {
     background-color: rgba(255,255,255,0.5);
     border: 1px solid #bbb;
     border-radius: 3px;
-    padding: 20px 10px 10px 10px;
+    padding: 12px 10px 10px 10px;
 }
 .mod-print .box select {
     min-width: 10em;
@@ -1695,9 +1704,10 @@ button:hover {
     display: none;
 }
 #code-preview-textarea {
-    width: 40em;
-    height: 12em;
-    font-size: smaller;
+    min-width: 50em;
+    width: 100%;
+    height: 7em;
+    font-size: x-small;
     font-family: Courier,monospace;
     white-space: nowrap;
     resize: none;

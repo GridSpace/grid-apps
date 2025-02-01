@@ -145,8 +145,16 @@ module.exports = async (server) => {
     async function ftp_list(args = {}) {
         const client = await ftp_open(args);
         const list = [];
-        try { list.push(...(await client.list())) } catch (e) { }
-        try { list.push(...(await client.list("/cache"))) } catch (e) { }
+        try {
+            let files = await client.list();
+            files.forEach(file => file.path = "/");
+            list.push(...files);
+         } catch (e) { }
+        try {
+            let files = await client.list("/cache");
+            files.forEach(file => file.path = "/cache/");
+            list.push(...files);
+        } catch (e) { }
         client.close();
         return list;
     }
@@ -193,7 +201,8 @@ module.exports = async (server) => {
             const { host, password, filename, serial, ams } = query;
             const ams_mapping = ams ? ams.split(',').map(v => parseInt(v)) : undefined;
             const mqtt_conn = serial ? get_mqtt(host, password, serial, message => {
-                util.log('mqtt_recv', JSON.parse(message.toString()));
+                util.log('mqtt_recv', message);
+                // util.log('mqtt_recv', JSON.parse(message.toString()));
             }) : undefined;
             ftp_send({ host, password, filename, data })
                 .then(() => {
@@ -271,6 +280,7 @@ module.exports = async (server) => {
                             .filter(file => file.name.toLowerCase().endsWith(".3mf"))
                             .map(file => {
                                 return {
+                                    path: file.path,
                                     name: file.name,
                                     size: file.size,
                                     date: file.rawModifiedAt

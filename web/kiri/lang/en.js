@@ -521,6 +521,8 @@ self.kiri.lang['en-us'] = {
 
     // CNC OUTLINE
     co_menu:        "outline",
+    co_merg_s:      "merge overlap",
+    co_merg_l:      ["merge overlapping lines to prevent overcutting into adjacent solids"],
     co_dogb_s:      "dogbones",
     co_dogb_l:      ["insert dogbone cuts","into inside corners"],
     co_dogr_s:      "reverse bones",

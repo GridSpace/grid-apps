@@ -2037,7 +2037,7 @@ class Polygon {
             tree = new PolyTree(),
             sp1 = this.toClipper(),
             sp2 = poly.toClipper(),
-            minarea = min >= 0 ? min : 0.1;
+            minarea = min ?? 0.1;
 
         clip.AddPaths(sp1, PathSubject, true);
         clip.AddPaths(sp2, PathClip, true);

@@ -37,7 +37,8 @@ self.kiri.load(api => {
                 let { serial, message, error } = data;
                 if (error) {
                     console.log({ serial, error });
-                    printer_status(`error: ${error}`);
+                    api.alerts.show(`Bambu Error: ${error}`, 3);
+                    // printer_status(`error: ${error}`);
                 } else if (serial) {
                     let rec = status[serial] = deepMerge(status[serial] || {}, message);
                     if (selected?.rec.serial === serial) {
@@ -176,9 +177,14 @@ self.kiri.load(api => {
         $('bbl_bed_target').value = bed_target_temper?.toFixed(1) ?? '';
         if (files) {
             h.bind($('bbl_files'), files.map(file => {
+                let name = file.name
+                    .toLowerCase()
+                    .replace('.gcode','')
+                    .replace('.3mf','');
                 return h.option({
-                    _: file.name || file,
-                    style: "max-width: 20em"
+                    _: name,
+                    style: "max-width: 20em",
+                    value:`${file.path}${file.name}`
                 });
             }));
             rec.files = undefined;
@@ -196,7 +202,7 @@ self.kiri.load(api => {
         $('bbl_status').value = msg;
     }
 
-    function render_list() {
+    function render_list(to) {
         let list = Object.keys(printers).map(name => {
             return h.option({ _: name, value: name })
         });
@@ -204,7 +210,7 @@ self.kiri.load(api => {
             h.option({ _: '', value: '' }),
             ...list
         ]
-        h.bind(select, list);
+        h.bind(to || select, list);
     }
 
     function monitor_start(rec) {
@@ -421,26 +427,35 @@ self.kiri.load(api => {
         }
     });
 
-    function sendok(params = {}) {
-        host = password = serial = amsmap = undefined;
-        const { settings } = params;
-        const ams = settings.device?.gcodePre.filter(line => line.indexOf(defams) === 0)[0];
-        if (ams) {
-            try {
-                amsmap = ams.substring(defams.length).trim().replaceAll(' ','');
-            } catch (e) {
-                console.log({ invalid_ams_map: ams });
-            }
+    function prep_export(gen3mf, gcode, info, settings) {
+        if (!settings.device.extras?.bbl) {
+            $('bambu-output').style.display = 'none';
+            return;
         }
-        const feature = settings.device?.gcodePre.filter(line => line.indexOf(defhost) === 0)[0];
-        if (feature) {
-            [ host, password, serial ] = feature.substring(defhost.length).split(' ').map(v => v.trim());
-            console.log('BAMBU', { host , password, serial });
-            if (host && password) {
-                return true;
-            }
+        printers = settings.device.extras.bbl;
+        let devlist = $('print-bambu-device');
+        render_list(devlist);
+        $('bambu-output').style.display = 'flex';
+        $('print-bambu').onclick = function() {
+            gen3mf(zip => send(`${$('print-filename').value}.3mf`, zip));
         }
-        return false;
+        devlist.onchange = () => {
+            let info = printers[devlist.value];
+            console.log({ selected: devlist.value, info });
+            host = info.host;
+            serial = info.serial;
+            password = info.code;
+            $('print-bambu').disabled = (host && serial && password) ? false : true;
+            const ams = settings.device?.gcodePre.filter(line => line.indexOf(defams) === 0)[0];
+            if (ams) {
+                try {
+                    amsmap = ams.substring(defams.length).trim().replaceAll(' ','');
+                } catch (e) {
+                    console.log({ invalid_ams_map: ams });
+                }
+            }
+            console.log({ bambu: host, serial, amsmap });
+        };
     }
 
     function send(filename, gcode) {
@@ -479,5 +494,5 @@ self.kiri.load(api => {
 
     setInterval(monitor_keepalive, 5000);
 
-    api.bambu = { send, sendok, amsmap };
+    api.bambu = { send, amsmap, prep_export };
 });

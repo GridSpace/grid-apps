@@ -1090,6 +1090,7 @@ class OpTrace extends CamOp {
                 poly2polyEmit(polys, newPoint(0,0,0), (poly, index, count, spoint) => {
                     routed.push(poly);
                 });
+                let output = [];
                 for (let poly of POLY.nest(routed)) {
                     let offdist = offset !== 'none' ? offover : 0;
                     if (!offdist)
@@ -1116,14 +1117,23 @@ class OpTrace extends CamOp {
                             zto -= zThru;
                         }
                         for (let z of base.util.lerp(zTop, zto, down)) {
-                            followZ(pi.clone().setZ(z));
+                            output.push(pi.clone().setZ(z));
                         }
                     } else {
                         if (thru) {
                             pi.setZ(pi.getZ() - thru);
                         }
-                        followZ(pi);
+                        output.push(pi);
                     }
+                }
+                // merge overlapping output to prevent overcuts
+                if (op.merge) {
+                    let nest = POLY.nest(output);
+                    let union = POLY.union(nest, 0, true);
+                    output = POLY.flatten(union, [], true);
+                }
+                for (let poly of output) {
+                    followZ(poly);
                 }
                 break;
             case "clear":

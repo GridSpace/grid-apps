@@ -365,7 +365,7 @@ CAM.traces = async function(settings, widget, single) {
                 let trace = traces[i];
                 let dz = Math.abs(z - trace.getZ());
                 // only compare polys farther apart in Z
-                if (dz < 0.01) {
+                if (dz > 0.01) {
                     continue;
                 }
                 // do not add duplicates
