@@ -145,12 +145,9 @@ module.exports = async (server) => {
     async function ftp_list(args = {}) {
         const client = await ftp_open(args);
         const list = [];
-        try {
-            list.push(...(await client.list()));
-            list.push(...(await client.list("/cache")));
-        } finally {
-            client.close();
-        }
+        try { list.push(...(await client.list())) } catch (e) { }
+        try { list.push(...(await client.list("/cache"))) } catch (e) { }
+        client.close();
         return list;
     }
 
@@ -268,18 +265,31 @@ module.exports = async (server) => {
                     break;
                 case "files":
                     ftp_list({ host, code }).then(files => {
+                        util.log({ ftp_files: files.length });
+                        // console.log(JSON.stringify(files,undefined,4));
                         files = files
                             .filter(file => file.name.toLowerCase().endsWith(".3mf"))
                             .map(file => {
                                 return {
                                     name: file.name,
-                                    size: file.size
+                                    size: file.size,
+                                    date: file.rawModifiedAt
                                 };
                             });
                         wsend({ serial, message: { files }});
                     }).catch(error => {
+                        util.log({ ftp_error: error });
                         wsend({ serial, error: error.message || error.toString() });
                     });
+                    break;
+                case "pause":
+                    wsend({ print: { command: "pause", sequence_id: "0" } });
+                    break;
+                case "resume":
+                    wsend({ print: { command: "resume", sequence_id: "0" } });
+                    break;
+                case "cancel":
+                    wsend({ print: { command: "stop", sequence_id: "0", param: "" } });
                     break;
                 case "keepalive":
                     // util.log({ keepalive: serial });

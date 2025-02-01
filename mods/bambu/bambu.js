@@ -170,10 +170,10 @@ self.kiri.load(api => {
             upload
         } = print || {};
         $('bbl_noz').value = nozzle_diameter || '';
-        $('bbl_noz_temp').value = nozzle_temper ?? '';
-        $('bbl_noz_target').value = nozzle_target_temper ?? '';
-        $('bbl_bed_temp').value = bed_temper ?? '';
-        $('bbl_bed_target').value = bed_target_temper ?? '';
+        $('bbl_noz_temp').value = nozzle_temper?.toFixed(1) ?? '';
+        $('bbl_noz_target').value = nozzle_target_temper?.toFixed(1) ?? '';
+        $('bbl_bed_temp').value = bed_temper?.toFixed(1) ?? '';
+        $('bbl_bed_target').value = bed_target_temper?.toFixed(1) ?? '';
         if (files) {
             h.bind($('bbl_files'), files.map(file => {
                 return h.option({
@@ -182,6 +182,13 @@ self.kiri.load(api => {
                 });
             }));
             rec.files = undefined;
+        }
+        if (print_error) {
+            bbl_status.value = `print error ${print_error}`
+        } else if (mc_remaining_time) {
+            bbl_status.value = `printing layer ${layer_num} of ${total_layer_num} | ${mc_percent}% complete | ${mc_remaining_time} minutes left`
+        } else {
+            bbl_status.value = `printer idle`;
         }
     }
 
@@ -211,13 +218,24 @@ self.kiri.load(api => {
 
     function monitor_keepalive() {
         // console.log({ keepalive: selected });
-        if (selected?.rec?.serial) {
-            socket.send({ cmd: "keepalive", serial: selected.rec.serial });
-        }
+        // if (monitoring()) {
+        //     socket.send({ cmd: "keepalive", serial: selected.rec.serial });
+        // }
+        cmd_if("keepalive");
     }
 
     function monitor_stop() {
         socket.stop();
+    }
+
+    function monitoring() {
+        return selected?.rec?.serial ? true : false;
+    }
+
+    function cmd_if(cmd) {
+        if (monitoring()) {
+            socket.send({ cmd, serial: selected.rec.serial });
+        }
     }
 
     function list_files() {
@@ -312,11 +330,11 @@ self.kiri.load(api => {
                         ]),
                         h.div({ class: "var-row" }, [
                             h.label('temp'),
-                            h.input({ id: "bbl_noz_temp", size: 8 })
+                            h.input({ id: "bbl_noz_temp", size: 5 })
                         ]),
                         h.div({ class: "var-row" }, [
                             h.label('target'),
-                            h.input({ id: "bbl_noz_target", size: 8 })
+                            h.input({ id: "bbl_noz_target", size: 5 })
                         ])
                     ]),
                     h.div({ class: "t-body t-inset f-col" }, [
@@ -325,11 +343,11 @@ self.kiri.load(api => {
                         ]),
                         h.div({ class: "var-row" }, [
                             h.label('temp'),
-                            h.input({ id: "bbl_bed_temp", size: 8 })
+                            h.input({ id: "bbl_bed_temp", size: 5 })
                         ]),
                         h.div({ class: "var-row" }, [
                             h.label('target'),
-                            h.input({ id: "bbl_bed_target", size: 8 })
+                            h.input({ id: "bbl_bed_target", size: 5 })
                         ])
                     ])
                 ]),
@@ -358,6 +376,9 @@ self.kiri.load(api => {
             h.div({ class: "gap4" }, [
                 h.label({ class: "set-header dev-sel" }, [ h.a('status') ]),
                 h.input({ id: "bbl_status", class: "t-left mono grow" }),
+                h.button({ _: "pause", class: "a-center", onclick() { cmd_if("pause") } }),
+                h.button({ _: "resume", class: "a-center", onclick() { cmd_if("resume") } }),
+                h.button({ _: "cancel", class: "a-center", onclick() { cmd_if("cancel") } }),
             ])
         ]), { before: true });
         select = modal.bbl_sel;
