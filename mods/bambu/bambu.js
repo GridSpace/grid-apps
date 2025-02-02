@@ -183,8 +183,7 @@ self.kiri.load(api => {
         $('bbl_bed_temp').value = bed_temper?.toFixed(1) ?? '';
         $('bbl_bed_target').value = bed_target_temper?.toFixed(1) ?? '';
         $('bbl_pause').disabled = (gcode_state !== 'RUNNING');
-        $('bbl_resume').disabled = (gcode_state !== 'PAUSE');
-        $('bbl_resume').disabled = (gcode_state !== 'FAILED');
+        $('bbl_resume').disabled = (gcode_state !== 'PAUSE' || gcode_state === 'FAILED');
         $('bbl_fan_part').value = cooling_fan_speed || 0;
         $('bbl_fan_1').value = big_fan1_speed || 0;
         $('bbl_fan_2').value = big_fan2_speed || 0;
@@ -464,7 +463,7 @@ self.kiri.load(api => {
                             h.a('active file')
                         ]),
                         h.div({ class: "var-row" }, [
-                            h.input({ id: "bbl_file_active", disabled: true })
+                            h.input({ id: "bbl_file_active", class: "t-left", disabled: true })
                         ]),
                     ])
                 ])

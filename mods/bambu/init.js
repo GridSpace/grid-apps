@@ -63,11 +63,12 @@ module.exports = async (server) => {
 
         keepconn() {
             clearTimeout(this.#timer2);
-            this.#timer2 = setTimeout(() => { this.end() }, 60000);
+            this.#timer2 = setTimeout(() => { this.keepconn() }, 120000);
             if_mqtt(this.#serial, {
-                pushing: {
+                print: {
                     sequence_id: "0",
-                    command: "push_status"
+                    command: "push_status",
+                    msg: 1
                 }
             });
         }
@@ -188,7 +189,7 @@ module.exports = async (server) => {
 
     function file_print(opts = {}) {
         const { host, code, serial, filename, amsmap } = opts;
-        console.log({ file_print: opts });
+        util.log({ file_print: opts });
         const cmd = {
             print: {
                 command: "project_file",
