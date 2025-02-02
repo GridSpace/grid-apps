@@ -86,7 +86,8 @@
         "build-mac-intel": "npm run build -- --mac --x64",
         "mklinks": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > links.csv",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
-        "prebuild": "node bin/electron-pre.js",
+        "clear-cache": "rm -rf tmp/* data/cache/*",
+        "prebuild": "npm run clear-cache; node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
         "preinstall": "node bin/install-pre.js; npx webpack --config bin/webpack-three.js"
     },

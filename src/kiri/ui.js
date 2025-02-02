@@ -101,19 +101,26 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function prompt(message, value) {
-        return confirm(message, {ok:true, cancel:false}, value);
+        return confirm(message, {ok:true, cancel:undefined}, value);
     }
 
     function confirm(message, buttons, input, opt = {}) {
         return new Promise((resolve, reject) => {
+            let { api } = kiri;
+            let { feature } = api;
+            let onkey_save = feature.on_key;
+            feature.on_key = key => {
+                // console.log({ eat_key: key });
+                return true;
+            };
+            let dialog = $('dialog');
             let btns = buttons || {
                 "yes": true,
                 "no": false
             };
             let rnd = Date.now().toString(36);
-            let any = $('mod-any');
             let html = [
-                `<div class="confirm f-col a-stretch">`
+                `<div class="confirm f-col a-stretch" style="padding:5px !important">`
             ];
             if (message) {
                 html.push(`<label style="user-select:text">${message}</label>`);
@@ -122,12 +129,12 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 html = opt.pre.appendAll(html);
             }
             let iid;
-            if (typeof(input) === 'string') {
-                iid = `confirm-input-${rnd}`;
-                html.append(`<div><input class="grow" type="text" spellcheck="false" id="${iid}"/></div>`);
-            } else if (Array.isArray(input)) {
+            if (Array.isArray(input)) {
                 iid = `confirm-input-${rnd}`;
                 html.append(`<div><textarea rows="15" cols="40" class="grow" type="text" spellcheck="false" id="${iid}"></textarea></div>`);
+            } else {
+                iid = `confirm-input-${rnd}`;
+                html.append(`<div><input class="grow" type="text" spellcheck="false" id="${iid}"/></div>`);
             }
             html.append(`<div class="f-row j-end">`);
             Object.entries(btns).forEach((row,i) => {
@@ -137,10 +144,13 @@ gapp.register("kiri.ui", [], (root, exports) => {
             if (opt.post) {
                 html.appendAll(opt.post);
             }
-            $('mod-any').innerHTML = html.join('');
+            dialog.innerHTML = html.join('');
             function done(value) {
-                kiri.api.modal.hide();
-                setTimeout(() => { resolve(value) }, 150);
+                dialog.close();
+                feature.on_key = onkey_save;
+                if (value !== undefined) {
+                    setTimeout(() => { resolve(value) }, 150);
+                }
             }
             if (iid) {
                 let array = Array.isArray(input);
@@ -162,10 +172,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 }
             });
             setTimeout(() => {
-                kiri.api.modal.show('any');
+                dialog.showModal();
                 if (iid) {
                     iid.focus();
-                    iid.selectionStart = iid.value.length;
+                    iid.selectionStart = 0;
+                    iid.selectionEnd = iid.value.length;
                 }
             }, 150);
         });

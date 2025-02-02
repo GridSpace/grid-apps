@@ -66,7 +66,7 @@
     .pop-lcol svg {
         font-size: 20px !important;
     }
-    #mod-x {
+    .mod-x {
         position: absolute;
         font-size: 30px;
         top: 8px;
@@ -329,10 +329,13 @@ details[open] > summary::after {
     /* color: #fff; */
     background-color: var(--blue-1);
 }
-.dark #modal {
+.dark #dialog {
+    background-color: rgba(150,100,100,0.85);
+}
+.dark #modal, .dark #dialog {
     color: #fff !important;
 }
-.dark #modal select {
+.dark #modal select, .dark #dialog select {
     color: #fff !important;
 }
 .dark .t-body,
@@ -1505,6 +1508,23 @@ details[open] > summary::after {
     justify-content: center;
 }
 
+#dialog {
+    position: fixed;
+    outline: none;
+    color: black;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255,200,200,0.75);
+    border: 0;
+    border-top: 5px solid white;
+    border-bottom: 5px solid white;
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 0;
+    padding: 5px;
+}
+
 #modal {
     display: none;
     position: fixed;
@@ -1547,11 +1567,11 @@ details[open] > summary::after {
 #tool-cols {
     max-height: 350px;
 }
-.dark #mod-x {
+.dark .mod-x {
     border-color: #555;
     background-color: rgba(0,0,0,0.15);
 }
-#mod-x {
+.mod-x {
     border-radius: 5px;
     border: 2px solid rgba(255,255,255,0.5);
     background-color: rgba(255,255,255,0.5);
@@ -1560,7 +1580,7 @@ details[open] > summary::after {
     bottom: -20px;
     right: 0;
 }
-#mod-x svg {
+.mod-x svg {
     aspect-ratio: 1 / 1 !important;
 }
 #mod-setup {

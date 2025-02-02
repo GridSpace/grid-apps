@@ -9,13 +9,12 @@ self.kiri.load(api => {
     const { kiri, moto } = self;
     const { ui } = kiri;
     const h = moto.webui;
-    const defhost = ";; DEFINE BAMBU-HOST ";
     const defams = ";; DEFINE BAMBU-AMS ";
     const readonly = true;
 
     let init = false;
     let status = {};
-    let bound, device, printers, select, selected;
+    let bound, device, printers, select, selected, conn_alert;
     let btn_del, in_host, in_code, in_serial, filelist;
     let host, password, serial, amsmap, socket = {
         open: false,
@@ -105,10 +104,10 @@ self.kiri.load(api => {
       }
 
     function printer_add() {
-        let name = prompt('printer name');
-        if (!name) {
-            return;
-        }
+        ui.prompt('printer name', "new printer").then(name => printer_add_named(name));
+    }
+
+    function printer_add_named(name) {
         printers[name] = printers[name] || {
             host:'', code:'', serial:''
         };
@@ -234,6 +233,9 @@ self.kiri.load(api => {
         } else {
             bbl_status.value = `printer ${print_type || ""} | ${state}`;
         }
+        if (gcode_state && conn_alert) {
+            api.alerts.hide(conn_alert);
+        }
     }
 
     function render_list(to) {
@@ -271,7 +273,9 @@ self.kiri.load(api => {
     }
 
     function monitoring() {
-        return selected?.rec?.serial ? true : false;
+        let active = selected?.rec?.serial ? true : false;
+        ui.setVisible($('bbl_connect'), !active && select.value !== '');
+        return active;
     }
 
     function cmd_if(cmd, obj = {}) {
@@ -317,6 +321,7 @@ self.kiri.load(api => {
     }
 
     api.event.on("init-done", function() {
+        console.log({ init_done: init });
         if (init) {
             return;
         }
@@ -333,6 +338,10 @@ self.kiri.load(api => {
             h.div({ class: "f-row a-center gap4" }, [
                 h.label({ class: "set-header dev-sel" }, [ h.a('bambu manager') ]),
                 h.select({ id: "bbl_sel", class: "dev-list" }, []),
+                h.button({ _: "connect", class: "hide", id: "bbl_connect", onclick() {
+                    conn_alert = api.alerts.show(`connecting to ${select.value}`);
+                    printer_select(select.value);
+                } }),
                 h.div({ class: "grow gap3 j-end" }, [
                     h.button({
                         id: "bbl_hide",
@@ -405,15 +414,16 @@ self.kiri.load(api => {
                             h.input({ id: "bbl_noz_temp", size: 5, readonly })
                         ]),
                         h.div({ class: "var-row", ondblclick() {
-                            let value = prompt('new nozzle temp', $('bbl_noz_target').value);
-                            if (value !== null) {
-                                cmd_gcode(`M104 S${value}`)
-                            }
+                            ui.prompt('new nozzle temp', $('bbl_noz_target').value).then(value => {
+                                cmd_gcode(`M104 S${value}`);
+                                api.alerts.show(`set nozzle temp ${value}`);
+                            })
                         } }, [
                             h.label('target'),
                             h.input({ id: "bbl_noz_on", type: "checkbox", onclick() {
                                 let value = $('bbl_noz_on').checked ? '220' : '0';
                                 cmd_gcode(`M104 S${value}`)
+                                api.alerts.show(`set nozzle temp ${value}`);
                             } }),
                             h.input({ id: "bbl_noz_target", size: 5, readonly })
                         ])
@@ -427,15 +437,16 @@ self.kiri.load(api => {
                             h.input({ id: "bbl_bed_temp", size: 5, readonly })
                         ]),
                         h.div({ class: "var-row", ondblclick() {
-                            let value = prompt('new bed temp', $('bbl_bed_target').value);
-                            if (value !== null) {
+                            ui.prompt('new bed temp', $('bbl_bed_target').value).then(value => {
                                 cmd_gcode(`M140 S${value}`)
-                            }
+                                api.alerts.show(`set bed temp ${value}`);
+                            })
                         } }, [
                             h.label('target'),
                             h.input({ id: "bbl_bed_on", type: "checkbox", onclick() {
                                 let value = $('bbl_bed_on').checked ? '60' : '0';
                                 cmd_gcode(`M140 S${value}`);
+                                api.alerts.show(`set bed temp ${value}`);
                             } }),
                             h.input({ id: "bbl_bed_target", size: 5, readonly })
                         ])
@@ -445,41 +456,44 @@ self.kiri.load(api => {
                             h.a('chamber')
                         ]),
                         h.div({ class: "var-row", ondblclick() {
-                            let value = prompt('new part fan value', $('bbl_fan_part').value);
-                            if (value !== null) {
-                                cmd_gcode(`M106 P1 S${value}`)
-                            }
+                            ui.prompt('new part fan value', $('bbl_fan_part').value).then(value => {
+                                cmd_gcode(`M106 P1 S${value}`);
+                                api.alerts.show(`set part fan ${value}`);
+                            })
                         } }, [
                             h.label('part fan'),
                             h.input({ id: "bbl_fan_part_on", type: "checkbox", onclick() {
                                 let value = $('bbl_fan_part_on').checked ? '255' : '0';
                                 cmd_gcode(`M106 P1 S${value}`)
+                                api.alerts.show(`set part fan ${value}`);
                             } }),
                             h.input({ id: "bbl_fan_part", size: 5, readonly })
                         ]),
                         h.div({ class: "var-row", ondblclick() {
-                            let value = prompt('new aux fan value', $('bbl_fan_1').value);
-                            if (value !== null) {
-                                cmd_gcode(`M106 P2 S${value}`)
-                            }
+                            ui.prompt('new aux fan value', $('bbl_fan_1').value).then(value => {
+                                cmd_gcode(`M106 P2 S${value}`);
+                                api.alerts.show(`set aux fan ${value}`);
+                            })
                         } }, [
                             h.label('aux fan'),
                             h.input({ id: "bbl_fan_1_on", type: "checkbox", onclick() {
                                 let value = $('bbl_fan_1_on').checked ? '255' : '0';
                                 cmd_gcode(`M106 P2 S${value}`)
+                                api.alerts.show(`set aux fan ${value}`);
                             } }),
                             h.input({ id: "bbl_fan_1", size: 5, readonly })
                         ]),
                         h.div({ class: "var-row", ondblclick() {
-                            let value = prompt('new chamber fan value', $('bbl_fan_2').value);
-                            if (value !== null) {
-                                cmd_gcode(`M106 P3 S${value}`)
-                            }
+                            ui.prompt('new chamber fan value', $('bbl_fan_2').value).then(value => {
+                                cmd_gcode(`M106 P3 S${value}`);
+                                api.alerts.show(`set chamber fan ${value}`);
+                            })
                         } }, [
                             h.label('chamber fan'),
                             h.input({ id: "bbl_fan_2_on", type: "checkbox", onclick() {
                                 let value = $('bbl_fan_2_on').checked ? '255' : '0';
                                 cmd_gcode(`M106 P3 S${value}`)
+                                api.alerts.show(`set chamber fan ${value}`);
                             } }),
                             h.input({ id: "bbl_fan_2", size: 5, readonly })
                         ]),
@@ -497,6 +511,7 @@ self.kiri.load(api => {
                                         led_mode: $('bbl_chamber_light').checked ? "on" : "off"
                                     }
                                 })
+                                api.alerts.show(`set chamber light`);
                             } })
                         ]),
                     ])
@@ -605,7 +620,7 @@ self.kiri.load(api => {
                 h.input({ id: "bbl_status", class: "t-left mono grow" }),
                 h.button({ _: "pause", id: "bbl_pause", class: "a-center", onclick() { cmd_if("pause") } }),
                 h.button({ _: "resume", id: "bbl_resume", class: "a-center", onclick() { cmd_if("resume") } }),
-                h.button({ _: "cancel", class: "a-center", onclick() { cmd_if("cancel") } }),
+                h.button({ _: "stop", class: "a-center", onclick() { cmd_if("cancel") } }),
             ])
         ]), { before: true });
         select = modal.bbl_sel;
