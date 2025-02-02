@@ -82,6 +82,10 @@ module.exports = async (server) => {
         }
     }
 
+    function if_mqtt(serial, msg) {
+        mcache[serial]?.send(msg);
+    }
+
     function get_mqtt(host, code, serial, onmsg, onconn) {
         const fns = {};
         const promise = new Promise((resolve, reject) => {
@@ -147,16 +151,56 @@ module.exports = async (server) => {
         const list = [];
         try {
             let files = await client.list();
-            files.forEach(file => file.path = "/");
+            files.forEach(file => file.root = "");
             list.push(...files);
          } catch (e) { }
         try {
             let files = await client.list("/cache");
-            files.forEach(file => file.path = "/cache/");
+            files.forEach(file => file.root = "cache/");
             list.push(...files);
         } catch (e) { }
         client.close();
         return list;
+    }
+
+    async function ftp_delete(args = {}) {
+        const client = await ftp_open(args);
+        try {
+            await client.remove(args.path);
+        } catch (error) {
+            util.log({ ftp_delete_error: error });
+        }
+        client.close();
+    }
+
+    function file_print(opts = {}) {
+        const { host, code, serial, filename, amsmap } = opts;
+        console.log({ file_print: opts });
+        const cmd = {
+            print: {
+                command: "project_file",
+                url: `file:///sdcard/${filename}`,
+                param: "Metadata/plate_1.gcode",
+                subtask_id: "0",
+                use_ams: amsmap ? true : false,
+                timelapse: false,
+                flow_cali: false,
+                bed_leveling: false,
+                layer_inspect: false,
+                vibration_cali: false
+            }
+        };
+        if (amsmap) {
+            cmd.print.ams_mapping = amsmap;
+        }
+        get_mqtt(host, code, serial, message => {
+            util.log('mqtt_recv', message);
+            wsend({ serial, message });
+        })
+            .then(mqtt => mqtt.send(cmd))
+            .catch(err => {
+                util.log({ mqtt_err: err });
+            });
     }
 
     function decode_post(req, res, next) {
@@ -198,37 +242,12 @@ module.exports = async (server) => {
             res.setHeader("Content-Type", "application/octet-stream");
             res.setHeader('Cache-Control', 'no-cache, no-store, private');
             const data = req.app.post;
-            const { host, password, filename, serial, ams } = query;
-            const ams_mapping = ams ? ams.split(',').map(v => parseInt(v)) : undefined;
-            const mqtt_conn = serial ? get_mqtt(host, password, serial, message => {
-                util.log('mqtt_recv', message);
-                // util.log('mqtt_recv', JSON.parse(message.toString()));
-            }) : undefined;
-            ftp_send({ host, password, filename, data })
+            const { host, code, filename, serial, ams, start } = query;
+            const amsmap = ams ? ams.split(',').map(v => parseInt(v)) : undefined;
+            ftp_send({ host, code, filename, data })
                 .then(() => {
-                    if (serial) {
-                        const cmd = {
-                            print: {
-                                command: "project_file",
-                                url: `file:///sdcard/${filename}`,
-                                param: "Metadata/plate_1.gcode",
-                                subtask_id: "0",
-                                use_ams: ams_mapping ? true : false,
-                                timelapse: false,
-                                flow_cali: false,
-                                bed_leveling: false,
-                                layer_inspect: false,
-                                vibration_cali: false
-                            }
-                        };
-                        if (ams_mapping) {
-                            cmd.print.ams_mapping = ams_mapping;
-                        }
-                        mqtt_conn
-                            .then(mqtt => mqtt.send(cmd))
-                            .catch(err => {
-                                util.log({ mqtt_err: err });
-                            });
+                    if (serial && start ==='true') {
+                        file_print({ host, code, serial, filename, amsmap });
                     }
                     res.end(o2s({ sent: true }));
                 })
@@ -244,7 +263,7 @@ module.exports = async (server) => {
         util.log('ws open', req.url, wsopen.length);
         ws.on('message', msg => {
             msg = JSON.parse(msg);
-            let { cmd, host, code, serial } = msg;
+            let { cmd, host, code, serial, path, amsmap } = msg;
             switch (cmd) {
                 case "monitor":
                     get_mqtt(host, code, serial, message => {
@@ -280,26 +299,36 @@ module.exports = async (server) => {
                             .filter(file => file.name.toLowerCase().endsWith(".3mf"))
                             .map(file => {
                                 return {
-                                    path: file.path,
+                                    root: file.root,
                                     name: file.name,
+                                    path: file.root + file.name,
                                     size: file.size,
                                     date: file.rawModifiedAt
                                 };
                             });
-                        wsend({ serial, message: { files }});
+                        wsend({ serial, files });
                     }).catch(error => {
                         util.log({ ftp_error: error });
                         wsend({ serial, error: error.message || error.toString() });
                     });
                     break;
+                case "file-delete":
+                    ftp_delete({ host, code, path }).then(() => {
+                        util.log({ ftp_delete: path });
+                        wsend({ serial, deleted: path });
+                    });
+                    break;
+                case "file-print":
+                    file_print({ host, code, serial, filename: path, amsmap });
+                    break;
                 case "pause":
-                    wsend({ print: { command: "pause", sequence_id: "0" } });
+                    if_mqtt(serial, { print: { command: "pause", sequence_id: "0" } });
                     break;
                 case "resume":
-                    wsend({ print: { command: "resume", sequence_id: "0" } });
+                    if_mqtt(serial, { print: { command: "resume", sequence_id: "0" } });
                     break;
                 case "cancel":
-                    wsend({ print: { command: "stop", sequence_id: "0", param: "" } });
+                    if_mqtt(serial, { print: { command: "stop", sequence_id: "0", param: "" } });
                     break;
                 case "keepalive":
                     // util.log({ keepalive: serial });

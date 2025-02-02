@@ -15,7 +15,7 @@ self.kiri.load(api => {
     let init = false;
     let status = {};
     let bound, device, printers, select, selected;
-    let btn_del, in_host, in_code, in_serial;
+    let btn_del, in_host, in_code, in_serial, filelist;
     let host, password, serial, amsmap, socket = {
         open: false,
         q: [],
@@ -34,17 +34,22 @@ self.kiri.load(api => {
             };
             ws.onmessage = msg => {
                 let data = JSON.parse(msg.data);
-                let { serial, message, error } = data;
+                let { serial, message, files, deleted, error } = data;
                 if (error) {
                     console.log({ serial, error });
                     api.alerts.show(`Bambu Error: ${error}`, 3);
                     // printer_status(`error: ${error}`);
+                } else if (deleted) {
+                    console.log('file deleted', deleted);
+                    file_list();
                 } else if (serial) {
                     let rec = status[serial] = deepMerge(status[serial] || {}, message);
+                    if (files) {
+                        rec.files = files;
+                    }
                     if (selected?.rec.serial === serial) {
+                        selected.status = rec;
                         printer_render(rec);
-                    } else {
-                        console.log('update', serial, rec);
                     }
                 } else {
                     console.log('ignored', serial, data);
@@ -142,11 +147,11 @@ self.kiri.load(api => {
         in_serial.onkeypress = in_serial.onblur = printer_update;
         monitor_start(rec);
         printer_render();
+        file_list();
         $('bbl_name').innerText = name;
     }
 
     function printer_render(rec = {}) {
-        $('bbl_rec').value = JSON.stringify(deepSortObject(rec), undefined, 2);
         let { info, print, files } = rec;
         let {
             ams_status,
@@ -157,6 +162,7 @@ self.kiri.load(api => {
             chamber_temper,
             cooling_fan_speed,
             gcode_file,
+            gcode_state, // PAUSE, RUNNING, FAILED
             heatbreak_fan_speed,
             layer_num,
             mc_percent,
@@ -170,41 +176,45 @@ self.kiri.load(api => {
             total_layer_num,
             upload
         } = print || {};
+        let state = (gcode_state || 'unknown').toLowerCase();
         $('bbl_noz').value = nozzle_diameter || '';
         $('bbl_noz_temp').value = nozzle_temper?.toFixed(1) ?? '';
         $('bbl_noz_target').value = nozzle_target_temper?.toFixed(1) ?? '';
         $('bbl_bed_temp').value = bed_temper?.toFixed(1) ?? '';
         $('bbl_bed_target').value = bed_target_temper?.toFixed(1) ?? '';
-        if (files) {
-            h.bind($('bbl_files'), files.map(file => {
+        $('bbl_pause').disabled = (gcode_state !== 'RUNNING');
+        $('bbl_resume').disabled = (gcode_state !== 'PAUSE');
+        $('bbl_resume').disabled = (gcode_state !== 'FAILED');
+        if (files && filelist.selectedIndex === -1) {
+            h.bind(filelist, files.map(file => {
                 let name = file.name
                     .toLowerCase()
                     .replace('.gcode','')
                     .replace('.3mf','');
                 return h.option({
                     _: name,
-                    style: "max-width: 20em",
-                    value:`${file.path}${file.name}`
+                    style: "max-width: 20em"
                 });
             }));
-            rec.files = undefined;
+            filelist.selectedIndex = 0;
+            filelist.onchange();
         }
+        // provide only the print info from the serial recorld
+        $('bbl_rec').value = JSON.stringify(deepSortObject({ ...rec.print }), undefined, 2);
         if (print_error) {
             bbl_status.value = `print error ${print_error}`
-        } else if (mc_remaining_time) {
-            bbl_status.value = `printing layer ${layer_num} of ${total_layer_num} | ${mc_percent}% complete | ${mc_remaining_time} minutes left`
+        } else if (mc_remaining_time && gcode_state !== 'FAILED') {
+            bbl_status.value = `layer ${layer_num} of ${total_layer_num} | ${mc_percent}% complete | ${mc_remaining_time} minutes left | ${state}`
         } else {
-            bbl_status.value = `printer idle`;
+            bbl_status.value = `printer ${print_type || ""} | ${state}`;
         }
-    }
-
-    function printer_status(msg) {
-        $('bbl_status').value = msg;
     }
 
     function render_list(to) {
         let list = Object.keys(printers).map(name => {
-            return h.option({ _: name, value: name })
+            return selected?.name === name ?
+                h.option({ _: name, value: name, selected: true }) :
+                h.option({ _: name, value: name });
         });
         list = [
             h.option({ _: '', value: '' }),
@@ -244,9 +254,28 @@ self.kiri.load(api => {
         }
     }
 
-    function list_files() {
+    function file_list() {
         if (selected?.rec?.host) {
+            filelist.selectedIndex = -1;
+            $('bbl_file_size').value =
+            $('bbl_file_date').value = '';
+            $('bbl_file_delete').disabled =
+            $('bbl_file_print').disabled = true;
             socket.send({ cmd: "files", ...selected.rec });
+        }
+    }
+
+    function file_delete(path) {
+        if (selected?.rec?.host && path) {
+            let { host, code } = selected.rec
+            socket.send({ cmd: "file-delete", path, host, code });
+        }
+    }
+
+    function file_print(path) {
+        if (selected?.rec?.host && path) {
+            let { host, code, serial } = selected.rec;
+            socket.send({ cmd: "file-print", path, host, code, serial, amsmap });
         }
     }
 
@@ -366,28 +395,57 @@ self.kiri.load(api => {
                         rows: 15, cols: 65
                     })
                 ]),
-                h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
-                    h.div({ class: "set-header", onclick() {
-                        // console.log('bbl reload files');
-                        list_files();
-                    } }, h.a({ class: "flex f-row grow" }, [
-                        h.label('files'),
-                        h.span({ class: "fat5 grow" }),
-                        h.i({ class: "fa-solid fa-rotate" })
-                    ])),
-                    h.select({ id: "bbl_files", style: "height: 100%", size: 5 }, []),
+                h.div({ class: "f-col gap3" }, [
+                    h.div({ class: "t-body t-inset f-col gap3 pad4 grow" }, [
+                        h.div({ class: "set-header", onclick() {
+                            file_list();
+                        } }, h.a({ class: "flex f-row grow" }, [
+                            h.label('file'),
+                            h.span({ class: "fat5 grow" }),
+                            h.i({ class: "fa-solid fa-rotate" })
+                        ])),
+                        h.select({ id: "bbl_files" }, []),
+                        h.div({ class: "var-row" }, [
+                            h.label('size'),
+                            h.input({ id: "bbl_file_size", size: 12 })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('date'),
+                            h.input({ id: "bbl_file_date", size: 12 })
+                        ]),
+                        h.div({ class: "grow" }),
+                        h.button({
+                            _: 'delete',
+                            id: "bbl_file_delete",
+                            class: "f-col a-center t-center",
+                            disabled: true,
+                        onclick() {
+                            console.log({ deleting: selected.file.path });
+                            file_delete(selected.file.path);
+                        }}),
+                        h.button({
+                            _: 'print',
+                            id: "bbl_file_print",
+                            class: "f-col a-center t-center",
+                            disabled: true,
+                        onclick() {
+                            console.log({ printing: selected.file.path });
+                            file_print(selected.file.path);
+                        }}),
+                    ])
                 ])
             ]),
             h.div({ class: "set-sep "}),
             h.div({ class: "gap4" }, [
                 h.label({ class: "set-header dev-sel" }, [ h.a('status') ]),
                 h.input({ id: "bbl_status", class: "t-left mono grow" }),
-                h.button({ _: "pause", class: "a-center", onclick() { cmd_if("pause") } }),
-                h.button({ _: "resume", class: "a-center", onclick() { cmd_if("resume") } }),
+                h.button({ _: "pause", id: "bbl_pause", class: "a-center", onclick() { cmd_if("pause") } }),
+                h.button({ _: "resume", id: "bbl_resume", class: "a-center", onclick() { cmd_if("resume") } }),
                 h.button({ _: "cancel", class: "a-center", onclick() { cmd_if("cancel") } }),
             ])
         ]), { before: true });
         select = modal.bbl_sel;
+        filelist = modal.bbl_files;
         btn_del = modal.bbl_pdel;
         in_host = modal.bbl_host;
         in_code = modal.bbl_code;
@@ -395,6 +453,13 @@ self.kiri.load(api => {
         api.ui.modals['bambu'] = modal['mod-bambu'];
         btn_del.disabled = true;
         select.onchange = (ev => printer_select(select.value));
+        filelist.onchange = (ev => {
+            let file = selected.file = selected.status.files[filelist.selectedIndex];
+            $('bbl_file_size').value = file.size;
+            $('bbl_file_date').value = file.date;
+            $('bbl_file_delete').disabled =
+            $('bbl_file_print').disabled = false;
+        });
     });
 
     api.event.on("modal.show", which => {
@@ -402,6 +467,7 @@ self.kiri.load(api => {
             return;
         }
         render_list();
+        get_ams_map(api.conf.get());
     });
 
     api.event.on("modal.hide", which => {
@@ -427,6 +493,17 @@ self.kiri.load(api => {
         }
     });
 
+    function get_ams_map(settings) {
+        const ams = settings.device?.gcodePre.filter(line => line.indexOf(defams) === 0)[0];
+        if (ams) {
+            try {
+                amsmap = ams.substring(defams.length).trim().replaceAll(' ','');
+            } catch (e) {
+                console.log({ invalid_ams_map: ams });
+            }
+        }
+    }
+
     function prep_export(gen3mf, gcode, info, settings) {
         if (!settings.device.extras?.bbl) {
             $('bambu-output').style.display = 'none';
@@ -436,8 +513,12 @@ self.kiri.load(api => {
         let devlist = $('print-bambu-device');
         render_list(devlist);
         $('bambu-output').style.display = 'flex';
-        $('print-bambu').onclick = function() {
-            gen3mf(zip => send(`${$('print-filename').value}.3mf`, zip));
+        $('print-bambu-1').onclick = function() {
+            gen3mf(zip => send(`${$('print-filename').value}.3mf`, zip, false));
+        }
+        $('print-bambu-2').onclick = function() {
+            gen3mf(zip => send(`${$('print-filename').value}.3mf`, zip, true));
+            api.modal.show('bambu');
         }
         devlist.onchange = () => {
             let info = printers[devlist.value];
@@ -445,27 +526,23 @@ self.kiri.load(api => {
             host = info.host;
             serial = info.serial;
             password = info.code;
-            $('print-bambu').disabled = (host && serial && password) ? false : true;
-            const ams = settings.device?.gcodePre.filter(line => line.indexOf(defams) === 0)[0];
-            if (ams) {
-                try {
-                    amsmap = ams.substring(defams.length).trim().replaceAll(' ','');
-                } catch (e) {
-                    console.log({ invalid_ams_map: ams });
-                }
-            }
+            $('print-bambu-1').disabled =
+            $('print-bambu-2').disabled =
+                (host && serial && password) ? false : true;
+            get_ams_map(settings);
             console.log({ bambu: host, serial, amsmap });
         };
     }
 
-    function send(filename, gcode) {
+    function send(filename, gcode, start) {
         const baseUrl = '/api/bambu_send';
         const url = new URL(baseUrl, window.location.origin);
         url.searchParams.append('host', host);
-        url.searchParams.append('password', password);
+        url.searchParams.append('code', password);
         url.searchParams.append('filename', filename);
         url.searchParams.append('serial', serial);
         url.searchParams.append('ams', amsmap);
+        url.searchParams.append('start', start ?? false);
 
         const alert = api.alerts.show('Sending to Bambu Printer');
 
@@ -494,5 +571,5 @@ self.kiri.load(api => {
 
     setInterval(monitor_keepalive, 5000);
 
-    api.bambu = { send, amsmap, prep_export };
+    api.bambu = { send, prep_export };
 });

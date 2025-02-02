@@ -28,7 +28,7 @@
         ";; END"
     ],
     "gcodePre": [
-        ";; XDEFINE BAMBU-HOST x.x.x.x nnnnnnnn sssssssssssssss ; ip code ser-no",
+        ";; DEFINE BAMBU-AMS 0,1,2,3",
         "; ===== HEADER =====================================================================",
         "M73 P0 R14                                         ; Initial progress and time remaining",
         "M201 X20000 Y20000 Z500 E5000                      ; Set max acceleration",
