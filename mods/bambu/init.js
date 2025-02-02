@@ -40,7 +40,7 @@ module.exports = async (server) => {
                     util.log('mqtt sub', this.#serial, err || "ok");
                     onready(this);
                     this.keepalive();
-                    this.keepconn();
+                    // this.keepconn();
                 });
             });
 
@@ -277,7 +277,7 @@ module.exports = async (server) => {
         util.log('ws open', req.url, wsopen.length);
         ws.on('message', msg => {
             msg = JSON.parse(msg);
-            let { cmd, host, code, serial, path, amsmap } = msg;
+            let { cmd, host, code, serial, path, amsmap, direct } = msg;
             switch (cmd) {
                 case "monitor":
                     get_mqtt(host, code, serial, message => {
@@ -343,6 +343,9 @@ module.exports = async (server) => {
                     break;
                 case "cancel":
                     if_mqtt(serial, { print: { command: "stop", sequence_id: "0", param: "" } });
+                    break;
+                case "direct":
+                    if_mqtt(serial, direct);
                     break;
                 case "keepalive":
                     // util.log({ keepalive: serial });

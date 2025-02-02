@@ -2317,6 +2317,7 @@ details[open] > summary::after {
 .var-row {
     white-space: nowrap;
     align-items: center;
+    gap: 4px;
 }
 .var-row label {
     padding: 2px 4px 2px 0;
