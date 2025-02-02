@@ -32,7 +32,7 @@ rl.on('line', (line) => {
             break;
         default:
             if (line.startsWith('M') || line.startsWith('G') || line.startsWith('T')) {
-                line = line.split(';').map(l => l.trim()).join('\n');
+                line = line.split(';').map(l => l.trimStart()).join('\n');
                 sendGcode(line);
             } else if (line.startsWith('ams ')) {
                 amsmap = JSON.parse(line.substring(4));

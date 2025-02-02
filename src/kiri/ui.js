@@ -267,7 +267,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 row,
                 arr,
                 update() {
-                    if (hidden[group]) {
+                    if (!hidden[group]) {
                         arr.innerHTML = '<i class="fa-solid fa-caret-down"></i>';
                         row.classList.add('hidden');
                     } else {

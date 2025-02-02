@@ -162,7 +162,7 @@ self.kiri.load(api => {
             chamber_temper,
             cooling_fan_speed,
             gcode_file,
-            gcode_state, // PAUSE, RUNNING, FAILED
+            gcode_state, // PREPARE, PAUSE, RUNNING, FAILED
             heatbreak_fan_speed,
             layer_num,
             mc_percent,
@@ -185,6 +185,11 @@ self.kiri.load(api => {
         $('bbl_pause').disabled = (gcode_state !== 'RUNNING');
         $('bbl_resume').disabled = (gcode_state !== 'PAUSE');
         $('bbl_resume').disabled = (gcode_state !== 'FAILED');
+        $('bbl_fan_part').value = cooling_fan_speed || 0;
+        $('bbl_fan_1').value = big_fan1_speed || 0;
+        $('bbl_fan_2').value = big_fan2_speed || 0;
+        $('bbl_fan_heatbreak').value = heatbreak_fan_speed || 0;
+        $('bbl_file_active').value = gcode_file || '';
         if (files && filelist.selectedIndex === -1) {
             h.bind(filelist, files.map(file => {
                 let name = file.name
@@ -384,6 +389,27 @@ self.kiri.load(api => {
                             h.label('target'),
                             h.input({ id: "bbl_bed_target", size: 5 })
                         ])
+                    ]),
+                    h.div({ class: "t-body t-inset f-col" }, [
+                        h.label({ class: "set-header dev-sel" }, [
+                            h.a('fans')
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('part'),
+                            h.input({ id: "bbl_fan_part", size: 5 })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('fan1'),
+                            h.input({ id: "bbl_fan_1", size: 5 })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('fan2'),
+                            h.input({ id: "bbl_fan_2", size: 5 })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('heatbreak'),
+                            h.input({ id: "bbl_fan_heatbreak", size: 5 })
+                        ])
                     ])
                 ]),
                 h.div({ class: "f-col gap4 grow" }, [
@@ -432,6 +458,14 @@ self.kiri.load(api => {
                             console.log({ printing: selected.file.path });
                             file_print(selected.file.path);
                         }}),
+                    ]),
+                    h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
+                        h.label({ class: "set-header dev-sel" }, [
+                            h.a('active file')
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.input({ id: "bbl_file_active", disabled: true })
+                        ]),
                     ])
                 ])
             ]),

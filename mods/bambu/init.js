@@ -11,6 +11,7 @@ module.exports = async (server) => {
 
     class MQTT {
         #timer;
+        #timer2;
         #client;
         #serial;
         #topic_report;
@@ -39,6 +40,7 @@ module.exports = async (server) => {
                     util.log('mqtt sub', this.#serial, err || "ok");
                     onready(this);
                     this.keepalive();
+                    this.keepconn();
                 });
             });
 
@@ -57,6 +59,17 @@ module.exports = async (server) => {
         keepalive() {
             clearTimeout(this.#timer);
             this.#timer = setTimeout(() => { this.end() }, 30000);
+        }
+
+        keepconn() {
+            clearTimeout(this.#timer2);
+            this.#timer2 = setTimeout(() => { this.end() }, 60000);
+            if_mqtt(this.#serial, {
+                pushing: {
+                    sequence_id: "0",
+                    command: "push_status"
+                }
+            });
         }
 
         async send(msg) {
