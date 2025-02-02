@@ -661,7 +661,7 @@ self.kiri.load(api => {
         if (!bound) {
             return;
         }
-        if (devsel.extras?.bbl) {
+        if (devsel.extras?.bbl && !api.ui.deviceSave.disabled) {
             device = devsel;
             printers = devsel.extras.bbl;
             bound.bblman.classList.remove('hide');
@@ -684,7 +684,7 @@ self.kiri.load(api => {
     }
 
     function prep_export(gen3mf, gcode, info, settings) {
-        if (!settings.device.extras?.bbl) {
+        if (!settings.device.extras?.bbl || api.ui.deviceSave.disabled) {
             $('bambu-output').style.display = 'none';
             return;
         }

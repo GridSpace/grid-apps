@@ -1,5 +1,6 @@
 #!/bin/bash
 tag=${1:-latest}
+npm run clear-cache
 ./bin/build-upload win ${tag} && \
 ./bin/build-upload linux ${tag} && \
 ./bin/build-upload mac ${tag}
