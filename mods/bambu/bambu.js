@@ -734,6 +734,7 @@ self.kiri.load(api => {
         if (selected?.rec.modified) {
             api.conf.save();
         }
+        printer_video_set(false);
         selected = undefined;
         status = {};
     });
