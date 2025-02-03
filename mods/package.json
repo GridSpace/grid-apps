@@ -1,4 +1,3 @@
-
 {
     "name": "grid-apps-mods",
     "version": "4.1.0",
@@ -10,6 +9,7 @@
     },
     "dependencies": {
         "@gridspace/basic-ftp": "^5.0.5",
+        "aedes": "^0.51.3",
         "mqtt": "^5.10.3"
     }
 }

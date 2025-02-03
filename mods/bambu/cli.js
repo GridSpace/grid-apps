@@ -162,6 +162,10 @@ client.on("connect", () => {
     });
 });
 
+client.on("error", (error) => {
+    log("mqtt error", error);
+});
+
 client.on("message", (topic, message) => {
     log(JSON.parse(message.toString()));
 });
