@@ -53,7 +53,10 @@ function createWindow() {
     // prevent "other" urls from opening inside Electron (alerts are problematic)
     mainWindow.webContents.on('will-navigate', (event, url) => {
         // console.log('DIVERT', url);
-        if (url.endsWith('/mesh') || url.endsWith('/kiri')) {
+        if (url.endsWith('/kiri')  || url.endsWith('/kiri/')) {
+            return;
+        }
+        if (url.endsWith('/mesh') || url.endsWith('/mesh/')) {
             return;
         }
         event.preventDefault();
