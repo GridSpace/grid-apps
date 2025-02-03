@@ -8,6 +8,7 @@ module.exports = async (server) => {
     const mqtt = require("mqtt");
     const mcache = {};
     const wsopen = [];
+    const found = {};
 
     class MQTT {
         #timer;
@@ -247,6 +248,44 @@ module.exports = async (server) => {
         return;
     }
 
+    // start SSDP listener for local Bambu printer broadcasts
+    {
+        const dgram = require("dgram");
+        const SSDP_ADDRESS = "239.255.255.250";
+        const SSDP_PORT = 1990;
+        const socket = dgram.createSocket("udp4");
+
+        socket.on("message", msg => {
+            msg = msg.toString();
+            if (msg.indexOf('.bambu.com') > 0) {
+                let rec = {};
+                map = msg.split('\n')
+                    .filter(l => l.indexOf(': ') > 0)
+                    .map(l => l.trim().replace('.bambu.com','').split(': '));
+                map.forEach(line => rec[line[0]] = line[1]);
+                // console.log({ ssdp: rec, map })
+                if (rec.DevName && rec.Location) {
+                    let nurec = {
+                        host: rec.Location,
+                        name: rec.DevName,
+                        type: rec.DevModel,
+                        firm: rec.DevVersion,
+                        srno: rec.USN
+                    }
+                    if (!found[rec.DevName]) {
+                        found[rec.DevName] = nurec;
+                        util.log(`found Bambu ${nurec.name} ${nurec.srno} @ ${nurec.host}`);
+                    }
+                    wsend({ found });
+                }
+            }
+        });
+
+        socket.bind(SSDP_PORT, () => {
+            socket.addMembership(SSDP_ADDRESS);
+        });
+    }
+
     api.bambu_send = (req, res, next) => {
         const { app, url, headers } = req;
         const { host } = headers;
@@ -275,6 +314,7 @@ module.exports = async (server) => {
     server.ws.register("/bambu", function(ws, req) {
         wsopen.push(ws);
         util.log('ws open', req.url, wsopen.length);
+        wsend({ found });
         ws.on('message', msg => {
             msg = JSON.parse(msg);
             let { cmd, host, code, serial, path, amsmap, direct } = msg;

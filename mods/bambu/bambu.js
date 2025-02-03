@@ -34,7 +34,7 @@ self.kiri.load(api => {
             };
             ws.onmessage = msg => {
                 let data = JSON.parse(msg.data);
-                let { serial, message, files, deleted, error } = data;
+                let { serial, message, files, found, deleted, error } = data;
                 if (error) {
                     console.log({ serial, error });
                     api.alerts.show(`Bambu Error: ${error}`, 3);
@@ -42,6 +42,16 @@ self.kiri.load(api => {
                 } else if (deleted) {
                     console.log('file deleted', deleted);
                     file_list();
+                } else if (found) {
+                    for (let bblp of Object.entries(found)) {
+                        let [ name, rec ] = bblp;
+                        let { host, srno } = rec;
+                        if (printers && name && !printers[name]) {
+                            console.log({ discovered: name, host });
+                            printers[name] = { host, serial: srno };
+                            render_list();
+                        }
+                    }
                 } else if (serial) {
                     let rec = status[serial] = deepMerge(status[serial] || {}, message);
                     if (files) {
@@ -263,10 +273,6 @@ self.kiri.load(api => {
     }
 
     function monitor_keepalive() {
-        // console.log({ keepalive: selected });
-        // if (monitoring()) {
-        //     socket.send({ cmd: "keepalive", serial: selected.rec.serial });
-        // }
         cmd_if("keepalive");
     }
 
@@ -668,6 +674,7 @@ self.kiri.load(api => {
         if (which !== 'bambu' || !device) {
             return;
         }
+        socket.start();
         render_list();
         get_ams_map(api.conf.get());
     });
