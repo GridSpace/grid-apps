@@ -212,6 +212,11 @@ details[open] > summary::after {
     transform: rotate(90deg);
 }
 
+.video {
+    border: 1px solid #888;
+    border-radius: 3px;
+}
+
 /* container for entire page / app */
 #app {
     position: fixed;

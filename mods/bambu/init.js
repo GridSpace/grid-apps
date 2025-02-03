@@ -17,6 +17,7 @@ module.exports = async (server) => {
         #timer2;
         #client;
         #serial;
+        #frames;
         #topic_report;
         #topic_request;
         #options = {
@@ -57,6 +58,18 @@ module.exports = async (server) => {
             });
 
             client.on("error", error => onerror(error));
+        }
+
+        set_frames(bool) {
+            if (this.#frames && !bool) {
+                this.#frames.end();
+                this.#frames = undefined;
+            } else if (!this.#frames && bool) {
+                this.#frames = new FrameStream(this.#options.host, this.#options.password)
+                    .on("frame", jpg => {
+                        wsend({ serial: this.#serial, frame: jpg.toString('base64') });
+                    })
+            }
         }
 
         keepalive() {
@@ -319,7 +332,7 @@ module.exports = async (server) => {
         wsend({ found });
         ws.on('message', msg => {
             msg = JSON.parse(msg);
-            let { cmd, host, code, serial, path, amsmap, direct } = msg;
+            let { cmd, host, code, serial, path, amsmap, direct, frames } = msg;
             switch (cmd) {
                 case "monitor":
                     get_mqtt(host, code, serial, message => {
@@ -390,6 +403,10 @@ module.exports = async (server) => {
                     break;
                 case "direct":
                     if_mqtt(serial, direct);
+                    break;
+                case "frames":
+                    util.log('request frames', serial, frames);
+                    mcache[serial]?.set_frames(frames);
                     break;
                 case "keepalive":
                     // util.log({ keepalive: serial });

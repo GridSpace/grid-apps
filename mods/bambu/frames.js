@@ -56,7 +56,7 @@ class FrameStream extends EventEmitter {
         })
     }
 
-    close() {
+    end() {
         this.#remoteSocket.end();
     }
 }

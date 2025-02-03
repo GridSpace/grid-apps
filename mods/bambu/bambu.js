@@ -15,6 +15,7 @@ self.kiri.load(api => {
     let init = false;
     let status = {};
     let monitors = [];
+    let video_on = false;
     let bound, device, printers, select, selected, conn_alert;
     let btn_del, in_host, in_code, in_serial, filelist;
     let host, password, serial, amsmap, socket = {
@@ -35,11 +36,28 @@ self.kiri.load(api => {
             };
             ws.onmessage = msg => {
                 let data = JSON.parse(msg.data);
-                let { serial, message, monitoring, files, found, deleted, error } = data;
+                let { serial, message, monitoring, files, found, deleted, frame, error } = data;
                 if (error) {
                     console.log({ serial, error });
                     api.alerts.show(`Bambu Error: ${error}`, 3);
                     // printer_status(`error: ${error}`);
+                } else if (frame) {
+                    if (selected?.rec?.serial !== serial) {
+                        console.log({
+                            frame_serial_mismatch: serial,
+                            current: selected?.rec?.serial
+                        });
+                        return;
+                    }
+                    const img = new Image();
+                    img.src = `data:image/jpeg;base64,${frame}`;
+                    img.onload = () => {
+                        const canvas = $('bbl_video');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0);
+                    };
                 } else if (deleted) {
                     console.log('file deleted', deleted);
                     file_list();
@@ -149,7 +167,21 @@ self.kiri.load(api => {
         });
     }
 
+    function printer_video_toggle() {
+        printer_video_set(video_on = !video_on);
+    }
+
+    function printer_video_set(bool) {
+        set_frames(selected?.rec?.serial, bool);
+        ui.setVisible($('bbl_rec'), !bool);
+        ui.setVisible($('bbl_video'), bool);
+        const canvas = $('bbl_video');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
     function printer_select(name = '') {
+        printer_video_set(false);
         btn_del.disabled = false;
         let rec = printers[name] || {};
         selected = { name, rec };
@@ -288,6 +320,12 @@ self.kiri.load(api => {
         let mon = selected?.rec?.serial ?? '';
         ui.setVisible($('bbl_connect'), select.value !== '' && monitors.indexOf(mon) < 0);
         return mon ? true : false;
+    }
+
+    function set_frames(serial, bool) {
+        if (serial) {
+            socket.send({ cmd: "frames", frames: bool, serial });
+        }
     }
 
     function cmd_if(cmd, obj = {}) {
@@ -535,6 +573,15 @@ self.kiri.load(api => {
                         wrap: "off",
                         spellcheck: "false",
                         rows: 15, cols: 65
+                    }),
+                    h.button({
+                        style: "position: absolute; top: 5px; right: 5px",
+                        onclick: printer_video_toggle
+                    }, [ h.i({ class: "fa-solid fa-video" }) ]),
+                    h.canvas({
+                        id: "bbl_video",
+                        class: "video hide",
+                        style: "width: 100%; height: 100%; box-sizing: border-box",
                     })
                 ]),
                 h.div({ class: "f-col gap3" }, [
