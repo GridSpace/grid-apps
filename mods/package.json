@@ -10,6 +10,7 @@
     "dependencies": {
         "@gridspace/basic-ftp": "^5.0.5",
         "aedes": "^0.51.3",
+        "hexer": "^1.5.0",
         "mqtt": "^5.10.3"
     }
 }

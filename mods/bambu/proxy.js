@@ -55,7 +55,6 @@ socket.bind(1900, () => {
 });
 
 const [local, name, host, code, serial] = args;
-args = args.slice(3);
 
 console.log([
     `Broadcasting Bambu Printer Proxy`,
@@ -210,4 +209,51 @@ aedes.on('unsubscribe', (subscriptions, client) => {
         log({ unsubscribe: sub.topic });
         remoteClient.unsubscribe(sub);
     });
+});
+
+// pipe the camera feed, too
+const camera = tls.createServer(options, (clientSocket) => {
+    log('Camera Connected', { address: clientSocket.remoteAddress });
+
+    const hexer = require('hexer');
+
+    const remoteSocket = tls.connect({
+        host,
+        port: 6000,
+        rejectUnauthorized: false
+    }, () => {
+        // clientSocket.pipe(remoteSocket).pipe(clientSocket);
+    });
+
+    clientSocket.on('data', (data) => {
+        remoteSocket.write(data);
+        // console.log({ client: data, type: typeof data });
+        // console.log('-- cam client --', data.length);
+        // console.log(hexer(data));
+    });
+
+    remoteSocket.on('data', (data) => {
+        clientSocket.write(data);
+        // console.log({ remote: data, type: typeof data });
+        // console.log('-- cam remote --', data.length);
+        // console.log(hexer(data));
+    });
+
+    clientSocket.on('close', () => {
+        remoteSocket.end();
+    });
+
+    remoteSocket.on('error', (err) => {
+        console.error('Remote connection error:', err.message);
+        clientSocket.destroy();
+    });
+
+    clientSocket.on('error', (err) => {
+        console.error('Client connection error:', err.message);
+        remoteSocket.destroy();
+    });
+});
+
+camera.listen(6000, () => {
+    console.log(`TLS Proxy Server listening on port 6000`);
 });
