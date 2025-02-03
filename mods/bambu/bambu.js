@@ -14,6 +14,7 @@ self.kiri.load(api => {
 
     let init = false;
     let status = {};
+    let monitors = [];
     let bound, device, printers, select, selected, conn_alert;
     let btn_del, in_host, in_code, in_serial, filelist;
     let host, password, serial, amsmap, socket = {
@@ -34,7 +35,7 @@ self.kiri.load(api => {
             };
             ws.onmessage = msg => {
                 let data = JSON.parse(msg.data);
-                let { serial, message, files, found, deleted, error } = data;
+                let { serial, message, monitoring, files, found, deleted, error } = data;
                 if (error) {
                     console.log({ serial, error });
                     api.alerts.show(`Bambu Error: ${error}`, 3);
@@ -42,6 +43,9 @@ self.kiri.load(api => {
                 } else if (deleted) {
                     console.log('file deleted', deleted);
                     file_list();
+                } else if (monitoring) {
+                    // console.log({ monitoring });
+                    monitors = monitoring;
                 } else if (found) {
                     for (let bblp of Object.entries(found)) {
                         let [ name, rec ] = bblp;
@@ -281,9 +285,9 @@ self.kiri.load(api => {
     }
 
     function monitoring() {
-        let active = selected?.rec?.serial ? true : false;
-        ui.setVisible($('bbl_connect'), !active && select.value !== '');
-        return active;
+        let mon = selected?.rec?.serial ?? '';
+        ui.setVisible($('bbl_connect'), select.value !== '' && monitors.indexOf(mon) < 0);
+        return mon ? true : false;
     }
 
     function cmd_if(cmd, obj = {}) {

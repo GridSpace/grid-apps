@@ -9,6 +9,7 @@ module.exports = async (server) => {
     const mcache = {};
     const wsopen = [];
     const found = {};
+    const debug = false;
 
     class MQTT {
         #timer;
@@ -38,7 +39,7 @@ module.exports = async (server) => {
                 let request = this.#topic_request = `device/${serial}/request`;
                 // util.log({ report, request });
                 client.subscribe(report, (err) => {
-                    util.log('mqtt sub', this.#serial, err || "ok");
+                    debug && util.log('mqtt sub', this.#serial, err || "ok");
                     onready(this);
                     this.keepalive();
                     // this.keepconn();
@@ -50,7 +51,7 @@ module.exports = async (server) => {
                 if (onmessage) {
                     onmessage(message);
                 } else {
-                    util.log('mqtt_recv', this.#serial, message);
+                    debug && util.log('mqtt_recv', this.#serial, message);
                 }
             });
 
@@ -76,7 +77,7 @@ module.exports = async (server) => {
 
         async send(msg) {
             if (this.#client) {
-                util.log('mqtt send', this.#serial, msg);
+                debug && util.log('mqtt send', this.#serial, msg);
                 this.#client.publish(this.#topic_request, JSON.stringify(msg));
                 this.keepalive();
                 return true;
@@ -87,7 +88,7 @@ module.exports = async (server) => {
 
         end() {
             if (this.#client) {
-                util.log('mqtt end', this.#serial);
+                debug && util.log('mqtt end', this.#serial);
                 this.#client.end();
                 this.#client = undefined;
             }
@@ -190,7 +191,7 @@ module.exports = async (server) => {
 
     function file_print(opts = {}) {
         const { host, code, serial, filename, amsmap } = opts;
-        util.log({ file_print: opts });
+        debug && util.log({ file_print: opts });
         const cmd = {
             print: {
                 command: "project_file",
@@ -209,7 +210,7 @@ module.exports = async (server) => {
             cmd.print.ams_mapping = amsmap;
         }
         get_mqtt(host, code, serial, message => {
-            util.log('mqtt_recv', message);
+            debug && util.log('mqtt_recv', message);
             wsend({ serial, message });
         })
             .then(mqtt => mqtt.send(cmd))
@@ -313,7 +314,7 @@ module.exports = async (server) => {
 
     server.ws.register("/bambu", function(ws, req) {
         wsopen.push(ws);
-        util.log('ws open', req.url, wsopen.length);
+        debug && util.log('ws open', req.url, wsopen.length);
         wsend({ found });
         ws.on('message', msg => {
             msg = JSON.parse(msg);
@@ -340,6 +341,8 @@ module.exports = async (server) => {
                                 command: "get_version"
                             }
                         });
+                        // announce all current monitor hosts
+                        wsend({ monitoring: Object.keys(mcache) });
                     }).catch(error => {
                         util.log({ mqtt_err: error });
                         wsend({ serial, error: error.message || error.toString() });
@@ -347,7 +350,7 @@ module.exports = async (server) => {
                     break;
                 case "files":
                     ftp_list({ host, code }).then(files => {
-                        util.log({ ftp_files: files.length });
+                        debug && util.log({ ftp_files: files.length });
                         // console.log(JSON.stringify(files,undefined,4));
                         files = files
                             .filter(file => file.name.toLowerCase().endsWith(".3mf"))
@@ -396,7 +399,7 @@ module.exports = async (server) => {
         ws.on('close', () => {
             let io = wsopen.indexOf(ws);
             if (io >= 0) wsopen.splice(io, 1);
-            util.log('ws close', wsopen.length);
+            debug && util.log('ws close', wsopen.length);
         });
     });
 };
