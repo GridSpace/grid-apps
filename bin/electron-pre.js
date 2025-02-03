@@ -10,7 +10,7 @@ const webTmp = path.join('tmp','web');
 fs.copySync("web", webTmp, { dereference: true });
 
 const modTmp = path.join('tmp','mod');
-fs.copySync("mod", modTmp, { dereference: true, filter:(src,dst) => {
+fs.existsSync("mod") && fs.copySync("mod", modTmp, { dereference: true, filter:(src,dst) => {
     const ok =
         src === 'mod' ||
         src.indexOf('mod/standalone') === 0 ||
