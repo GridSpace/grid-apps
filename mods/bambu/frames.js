@@ -3,61 +3,85 @@
  * and stores the resulting jpeg stream into frame files
  */
 
-const hexer = require('hexer');
-const util = require('util');
-const args = process.argv.slice(2);
+const EventEmitter = require('events');
 const tls = require('tls');
-const fs = require('fs');
-const [host, code, prefix] = args;
 
-if (!(host && code)) {
-    console.log('usage: frames [host] [code] (file-prefix)');
-    return;
+class FrameStream extends EventEmitter {
+    #remoteSocket;
+
+    constructor(host, code) {
+        super();
+
+        const abuf = new ArrayBuffer(80);
+        const view = new DataView(abuf);
+        const encoder = new TextEncoder();
+        const userBytes = encoder.encode('bblp');
+        const codeBytes = encoder.encode(code);
+
+        view.setInt32(0, 0x0040, true);
+        view.setInt32(4, 0x3000, true);
+        new Uint8Array(abuf, 0x10, userBytes.length).set(userBytes);
+        new Uint8Array(abuf, 0x30, codeBytes.length).set(codeBytes);
+
+        let frame;
+
+        const remoteSocket = this.#remoteSocket = tls.connect({
+            host,
+            port: 6000,
+            rejectUnauthorized: false
+        }, () => {
+            // send authentication to start jpeg frame stream
+            remoteSocket.write(Buffer.from(abuf));
+            this.emit('connect', host);
+        });
+
+        remoteSocket.on('data', (data) => {
+            if (data.length === 16) {
+                if (frame) {
+                    this.emit('frame', frame);
+                    frame = undefined;
+                }
+            } else {
+                frame = frame ? Buffer.concat([frame, data]) : data;
+            }
+        });
+
+        remoteSocket.on('error', (error) => {
+            clientSocket.destroy();
+            this.emit('error', error);
+        });
+
+        remoteSocket.on('close', () => {
+            this.emit('close');
+        })
+    }
+
+    close() {
+        this.#remoteSocket.end();
+    }
 }
 
-const abuf = new ArrayBuffer(80);
-const view = new DataView(abuf);
-const encoder = new TextEncoder();
-const userBytes = encoder.encode('bblp');
-const codeBytes = encoder.encode(code);
+if (require.main === module) {
+    const fs = require('fs');
+    const args = process.argv.slice(2);
+    const [host, code, prefix] = args;
 
-view.setInt32(0, 0x0040, true);
-view.setInt32(4, 0x3000, true);
-new Uint8Array(abuf, 0x10, userBytes.length).set(userBytes);
-new Uint8Array(abuf, 0x30, codeBytes.length).set(codeBytes);
-
-const bufr = Buffer.from(abuf);
-// console.log(hexer(bufr));
-
-let pic;
-let ind = 0;
-
-const remoteSocket = tls.connect({
-    host,
-    port: 6000,
-    rejectUnauthorized: false
-}, () => {
-    // send authentication to start jpeg frame stream
-    remoteSocket.write(bufr);
-});
-
-remoteSocket.on('data', (data) => {
-    // console.log('-- cam said --', data.length);
-    // console.log(hexer(data));
-    if (data.length === 16) {
-        // start of frame
-        if (pic) {
-            // dump last completed frame
-            fs.writeFileSync(`${prefix || "frame"}-${(++ind).toString().padStart(5,0)}.jpg`, pic);
-            console.log('received frame', ind);
-            pic = undefined;
-        }
-    } else {
-        pic = pic ? Buffer.concat([pic,data]) : data;
+    if (!(host && code)) {
+        console.log('usage: frames [host] [code] (file-prefix)');
+        return;
     }
-});
 
-remoteSocket.on('error', (err) => {
-    console.error('Remote connection error:', err.message);
-    clientSocket.destroy();
-});
+    console.log('frames extraction from', host);
+
+    let ind = 0;
+    new FrameStream(host, code)
+        .on('connect', host => {
+            console.log('connected to', host);
+        })
+        .on('frame', jpeg => {
+            fs.writeFileSync(`${prefix || "frame"}-${(++ind).toString().padStart(5, 0)}.jpg`, jpeg);
+            console.log('received frame', ind);
+        });
+}
+
+module.exports = { FrameStream };
