@@ -1,10 +1,6 @@
 self.kiri.load(api => {
 
-    if (api.electron || api.const.LOCAL) {
-        console.log('BAMBU MODULE RUNNING');
-    } else {
-        return;
-    }
+    console.log('BAMBU MODULE RUNNING');
 
     const { kiri, moto } = self;
     const { ui } = kiri;
