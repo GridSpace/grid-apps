@@ -269,7 +269,7 @@ gapp.register("kiri.main", (root, exports) => {
     let inits = parseInt(SDB.getItem('kiri-init') || stats.get('init') || 0) + 1;
     SDB.setItem('kiri-init', inits);
     stats.set('init', inits);
-    stats.set('kiri', kiri.version);
+    stats.set('kiri', kiri.version || gapp.version);
 
     // remove version from url, preserve other settings
     WIN.history.replaceState({},'','/kiri/' + encodeOpt(SETUP) + LOC.hash);
