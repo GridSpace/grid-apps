@@ -14,6 +14,7 @@
  */
 
 let util = require('util');
+const { bblCA } = require('./certificates');
 let args = process.argv.slice(2);
 
 if (args.length !== 5) {
@@ -130,7 +131,8 @@ const remoteMqttOptions = {
     username: 'bblp',
     password: code,
     protocol: 'mqtts',
-    rejectUnauthorized: false
+    ca: bblCA,
+    servername: serial
 };
 
 // Start local MQTTS broker
@@ -220,7 +222,8 @@ const camera = tls.createServer(options, (clientSocket) => {
     const remoteSocket = tls.connect({
         host,
         port: 6000,
-        rejectUnauthorized: false
+        ca: bblCA,
+        servername: serial
     }, () => {
         // clientSocket.pipe(remoteSocket).pipe(clientSocket);
     });
