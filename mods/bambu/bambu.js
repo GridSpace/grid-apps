@@ -342,7 +342,8 @@ self.kiri.load(api => {
     }
 
     function file_list() {
-        if (selected?.rec?.host) {
+        let { host, code, serial } = selected?.rec || {};
+        if (host && code && serial) {
             filelist.selectedIndex = -1;
             $('bbl_file_size').value =
             $('bbl_file_date').value = '';

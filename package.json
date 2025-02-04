@@ -86,13 +86,14 @@
         "build-mac-intel": "npm run build -- --mac --x64",
         "mklinks": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > links.csv",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
-        "clear-cache": "rm -rf tmp/* data/cache/*",
+        "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
         "preinstall": "node bin/install-pre.js; npx webpack --config bin/webpack-three.js"
     },
     "main": "app-el.js",
     "build": {
+        "npmRebuild": false,
         "appId": "space.grid.kiri",
         "productName": "KiriMoto",
         "artifactName": "KiriMoto-${os}-${arch}.${ext}",
@@ -118,10 +119,30 @@
                     "**/*"
                 ]
             },
+            {
+                "from": "tmp/mod/node_modules",
+                "to": "mod/node_modules",
+                "filter": [
+                    "**/*"
+                ]
+            },
+            {
+                "from": "tmp/mods",
+                "to": "mods",
+                "filter": [
+                    "**/*"
+                ]
+            },
+            {
+                "from": "tmp/mods/node_modules",
+                "to": "mods/node_modules",
+                "filter": [
+                    "**/*"
+                ]
+            },
             "bin/*",
             "conf/**/*",
-            "data/**/*",
-            "dist/**/*",
+            "data/cache/**/*",
             "app-el.js",
             "app.js",
             "package.json"

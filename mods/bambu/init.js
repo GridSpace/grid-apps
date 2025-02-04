@@ -259,7 +259,7 @@ module.exports = async (server) => {
     }
 
     if (!(env.debug || env.electron)) {
-        util.log('no valid context for bambu');
+        util.log('not a valid context for bambu');
         return;
     }
 

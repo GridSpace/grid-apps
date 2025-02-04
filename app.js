@@ -334,7 +334,7 @@ function init(mod) {
         // load modules
         lastmod(`${dir}/${root}`) && fs.readdirSync(`${dir}/${root}`).forEach(mdir => {
             const modpath = `${root}/${mdir}`;
-            if (dir.charAt(0) === '.') return;
+            if (dir.charAt(0) === '.' && !ENV.single) return;
             const stats = fs.lstatSync(`${mod.dir}/${modpath}`);
             if (!(stats.isDirectory() || stats.isSymbolicLink())) return;
             if (util.isfile(PATH.join(mod.dir,modpath,".disable"))) return;
@@ -771,6 +771,7 @@ function getCachedFile(file, fn) {
         } else {
             logger.log({update_cache:filePath});
             cacheData = fn(filePath);
+            // console.log(`NEW_CACHE_FILE: ${cachePath}`);
             fs.writeFileSync(cachePath, cacheData);
         }
 
