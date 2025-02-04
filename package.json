@@ -36,6 +36,7 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^6.1.1",
+        "@gridspace/app-server": "^0.0.15",
         "@gridspace/net-level-client": "^0.2.3",
         "@tracespace/parser": "^5.0.0-next.0",
         "@tweenjs/tween.js": "^16.6.0",
@@ -62,7 +63,6 @@
         "electron": "latest",
         "electron-builder": "latest",
         "fs-extra": "^11.2.0",
-        "@gridspace/app-server": "^0.0.15",
         "node-fetch": "^3.3.2",
         "terser-webpack-plugin": "^5.3.10",
         "webpack": "^5.92.1",
