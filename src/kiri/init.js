@@ -1948,7 +1948,6 @@ gapp.register("kiri.init", (root, exports) => {
         $('curtain').style.display = 'none';
 
         // bind interface action elements
-        // $('app-name').onclick = api.help.show;
         $('mode-device').onclick = api.show.devices;
         $('mode-profile').onclick = settingsLoad;
         $('mode-fdm').onclick = () => api.mode.set('FDM');
@@ -1984,6 +1983,12 @@ gapp.register("kiri.init", (root, exports) => {
             api.widgets.for(w => w.unrotate());
             selection.update_info();
         };
+        // attach button handlers to support targets
+        for (let btn of ["don8pt","don8gh","don8pp"]) {
+            $(btn).onclick = (ev) => {
+                window.open(ev.target.children[0].href);
+            }
+        }
         // rotation buttons
         let d = (Math.PI / 180);
         $('rot_x_lt').onclick = () => { selection.rotate(-d * $('rot_x').value,0,0) };
