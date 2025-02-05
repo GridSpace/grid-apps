@@ -178,8 +178,7 @@
         "linux": {
             "icon": "bin/GS.png",
             "target": [
-                "AppImage",
-                "zip"
+                "AppImage"
             ]
         },
         "afterSign": "bin/electron-notarize.js"
