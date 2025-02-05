@@ -67,6 +67,10 @@
                         <div id="app-help">
                             <label lk="help">help</label>
                         </div>
+                        <hr width="100%">
+                        <div id="app-don8">
+                            <label lk="donate">donate</label>
+                        </div>
                         <div>
                             <label id="app-mesh">mesh edit</label>
                         </div>
@@ -445,6 +449,20 @@
         <!-- title bar and closer -->
         <div class="mod-top f-row"><div id="mod-x" class="mod-x"><i class="fas fa-times"></i></div></div>
 
+        <!-- donate menu -->
+        <div id="mod-don8" class="mdialog f-col">
+            <div class="f-col gap4" style="gap:5px">
+                <div class="t-pad2"></div>
+                <div style="padding:20px;font-size:larger;font-weight:bold">Your contribution is appreciated!</div>
+                <div style="padding:5px 0 5px 0;justify-content:center">And supports ongoing development,</div>
+                <div style="padding:5px 0 20px 0;justify-content:center">servers, forums, and related costs</div>
+                <button id="don8pt" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_paypal" href="https://paypal.me/gridspace3d?locale.x=en_US">Become a Patreon Patron</a></button>
+                <button id="don8gh" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_github" href="https://github.com/sponsors/GridSpace">Sponsor on GitHub</a></button>
+                <button id="don8pp" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_paypal" href="https://paypal.me/gridspace3d?locale.x=en_US">Donate with PayPal</a></button>
+                <div class="t-pad2"></div>
+            </div>
+        </div>
+
         <!-- help menu -->
         <div id="mod-help" class="mdialog f-col">
             <div class="f-row j-center title">
@@ -457,7 +475,7 @@
                 <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Discord Server</a>
                 <a target="_rsc" href="https://github.com/gridspace/grid-apps/issues"><i class="fas fa-bug"></i> Bug Reports</a>
                 <a target="_rsc" href="https://github.com/gridspace/grid-apps/releases"><i class="fab fa-github"></i> Releases & Binaries</a>
-                <a target="_rsc" href="https://paypal.me/gridspace3d?locale.x=en_US"><i class="fab fa-paypal"></i> Support Development</a>
+                <a target="_rsc" onclick="kiri.api.modal.show('don8')"><i class="fa-solid fa-sack-dollar"></i> Support Development</a>
                 <a href="https://youtu.be/08795Sj22QE" target="youtube"><i class="fab fa-youtube"></i>Video Guide (from v2.5)</a>
             </div>
             <hr width="100%">

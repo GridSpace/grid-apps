@@ -16,6 +16,7 @@ self.kiri.lang['en-us'] = {
     edit:           "edit",
     enable:         "enable",
     disable:        "disable",
+    donate:         "donate",
     export:         "export",
     files:          "files",
     filter:         "filter",

@@ -1632,6 +1632,9 @@ details[open] > summary::after {
     align-items: center;
     justify-content: flex-start;
 }
+.dark #mod-help a:hover {
+    color: #333;
+}
 #mod-help a:hover {
     background-color: #eee;
 }

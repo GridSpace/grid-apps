@@ -846,6 +846,7 @@ gapp.register("kiri.init", (root, exports) => {
             },
             acct: {
                 help:           $('app-help'),
+                don8:           $('app-don8'),
                 mesh:           $('app-mesh'),
                 export:         $('app-export')
             },
@@ -892,6 +893,7 @@ gapp.register("kiri.init", (root, exports) => {
                 xsla:               $('mod-x-sla'),
                 xlaser:             $('mod-x-laser'),
                 local:              $('mod-local'),
+                don8:               $('mod-don8'),
                 any:                $('mod-any'),
             },
 
@@ -1946,7 +1948,7 @@ gapp.register("kiri.init", (root, exports) => {
         $('curtain').style.display = 'none';
 
         // bind interface action elements
-        $('app-name').onclick = api.help.show;
+        // $('app-name').onclick = api.help.show;
         $('mode-device').onclick = api.show.devices;
         $('mode-profile').onclick = settingsLoad;
         $('mode-fdm').onclick = () => api.mode.set('FDM');
@@ -1961,6 +1963,7 @@ gapp.register("kiri.init", (root, exports) => {
         $('set-tools').onclick = (ev) => { ev.stopPropagation(); api.show.tools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };
         ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
+        ui.acct.don8.onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
         ui.acct.mesh.onclick = (ev) => { ev.stopPropagation(); WIN.location = "/mesh" };
         ui.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
         ui.acct.export.title = LANG.acct_xpo;
