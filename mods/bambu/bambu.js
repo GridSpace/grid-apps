@@ -368,7 +368,6 @@ self.kiri.load(api => {
     }
 
     api.event.on("init-done", function() {
-        console.log({ init_done: init });
         if (init) {
             return;
         }

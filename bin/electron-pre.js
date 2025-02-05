@@ -24,6 +24,7 @@ fs.copySync("mods", modsTmp, { dereference: true, filter:(src,dst) => {
     const ok =
         src === 'mods' ||
         src.indexOf('mods/bambu') === 0 ||
+        src.indexOf('mods/electron') === 0 ||
         src.indexOf('mods/node_modules') === 0;
     return ok;
 } });
