@@ -23,6 +23,7 @@ let isAnimate,
     isIndexed,
     isParsed,
     camStock,
+    camZTop,
     camZBottom,
     current,
     currentIndex,
@@ -1281,6 +1282,10 @@ CAM.init = function(kiri, api) {
         return current.device.spindleMax > 0;
     }
 
+    function zTop() {
+        return API.conf.get().process.camZTop > 0;
+    }
+
     function zBottom() {
         return API.conf.get().process.camZBottom > 0;
     }
@@ -1318,7 +1323,6 @@ CAM.init = function(kiri, api) {
         voids:   'camRoughVoid',
         flats:   'camRoughFlat',
         inside:  'camRoughIn',
-        top:     'camRoughTop'
     }).inputs = {
         tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:     UC.newBlank({class:"pop-sep"}),
@@ -1334,7 +1338,6 @@ CAM.init = function(kiri, api) {
         all:     UC.newBoolean(LANG.cr_clst_s, undefined, {title:LANG.cr_clst_l, show:hasIndexing}),
         voids:   UC.newBoolean(LANG.cr_clrp_s, undefined, {title:LANG.cr_clrp_l}),
         flats:   UC.newBoolean(LANG.cr_clrf_s, undefined, {title:LANG.cr_clrf_l}),
-        top:     UC.newBoolean(LANG.cr_clrt_s, undefined, {title:LANG.cr_clrt_l}),
         inside:  UC.newBoolean(LANG.cr_olin_s, undefined, {title:LANG.cr_olin_l})
     };
 
@@ -1876,9 +1879,11 @@ function updateStock() {
     }
 
     if (!isCamMode) {
+        SPACE.world.remove(camZTop);
         SPACE.world.remove(camZBottom);
         SPACE.world.remove(camStock);
         camStock = null;
+        camZTop = null;
         camZBottom = null;
         return;
     }
@@ -1939,6 +1944,32 @@ function updateStock() {
     } else if (camStock) {
         SPACE.world.remove(camStock);
         camStock = null;
+    }
+
+    SPACE.world.remove(camZTop);
+    if (process.camZTop && widgets.length) {
+        let max = { x, y, z };
+        for (let w of widgets) {
+            max.x = Math.max(max.x, w.track.box.w);
+            max.y = Math.max(max.y, w.track.box.h);
+            max.z = Math.max(max.z, w.track.box.d);
+        }
+        let geo = new THREE.PlaneGeometry(max.x, max.y);
+        let mat = new THREE.MeshBasicMaterial({
+            color: 0x777777,
+            opacity: 0.55,
+            transparent: true,
+            side:THREE.DoubleSide
+        });
+        camZTop = new THREE.Mesh(geo, mat);
+        camZTop._max = max;
+        camZTop.renderOrder = 1;
+        camZTop.position.x = center.x;
+        camZTop.position.y = center.y;
+        camZTop.position.z = process.camZTop;
+        SPACE.world.add(camZTop);
+    } else {
+        camZTop = undefined;
     }
 
     SPACE.world.remove(camZBottom);

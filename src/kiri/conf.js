@@ -547,6 +547,7 @@ const conf = exports({
                 camOriginTop: true,
                 camZAnchor: "middle",
                 camZOffset: 0,
+                camZTop: 0,
                 camZBottom: 0,
                 camZClearance: 1,
                 camZThru: 0,

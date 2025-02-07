@@ -171,17 +171,19 @@ class OpRough extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, widget, slicer, addSlices, unsafe, color } = state;
+        let { settings, slicer, addSlices, unsafe, color } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
-        let { tshadow, shadowTop, ztOff, zBottom, zThru, zMax, shadowAt, isIndexed } = state;
+        let { ztOff, zBottom, zThru, zMax, shadowAt, isIndexed} = state;
+        let { workarea } = state;
         let { process, stock } = settings;
 
         if (op.down <= 0) {
             throw `invalid step down "${op.down}"`;
         }
 
+        console.log({ rough: workarea, shadow: state.shadow });
+
         let roughIn = op.inside;
-        let roughTop = op.top;
         let roughDown = op.down;
         let roughLeave = op.leave || 0;
         let roughLeaveZ = op.leavez || 0;
@@ -189,9 +191,11 @@ class OpRough extends CamOp {
         let toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
         let trueShadow = process.camTrueShadow === true;
 
-        // create facing slices
-        if (roughTop) {
-            let shadow = tshadow.clone();
+        updateToolDiams(toolDiam);
+
+        // clear the stock above the area to be roughed out
+        {
+            let shadow = state.shadow.base.clone();
             let step = toolDiam * op.step;
             let inset = roughStock ?
                 POLY.offset([ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ], step) :
@@ -210,7 +214,7 @@ class OpRough extends CamOp {
             let camFaces = this.camFaces = [];
             let zstart = zMax + ztOff - zstep;
             for (let z = zstart; zsteps > 0; zsteps--) {
-                let slice = shadowTop.slice.clone(false);
+                let slice = newSlice();
                 slice.z = z;
                 slice.camLines = POLY.setZ(facing.clone(true), slice.z + roughLeaveZ);
                 slice.output()
@@ -223,16 +227,17 @@ class OpRough extends CamOp {
         }
 
         // create roughing slices
-        updateToolDiams(toolDiam);
-
         let flats = [];
         let shadow = [];
         let slices = [];
         let indices = slicer.interval(roughDown, {
             down: true, min: 0, fit: true, off: 0.01
         });
+
         // shift out first (top-most) slice
         indices.shift();
+
+        // find flats and add to indices for slicing
         if (op.flats) {
             let flatArea = (Math.PI * (toolDiam/2) * (toolDiam/2)) / 2;
             let flats = Object.entries(slicer.zFlat)
@@ -278,11 +283,8 @@ class OpRough extends CamOp {
                 // exclude flats injected to complete shadow
                 return;
             }
-            // data.shadow = trueShadow ? CAM.shadowAt(widget, data.z) : shadow.clone(true);
             data.shadow = trueShadow ? shadowAt(data.z) : shadow.clone(true);
             data.slice.shadow = data.shadow;
-            // data.slice.tops[0].inner = data.shadow;
-            // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
             slices.push(data.slice);
             progress(0.25 + 0.25 * (++cnt / tot));
         }, progress: (index, total) => {
@@ -291,9 +293,9 @@ class OpRough extends CamOp {
         } });
 
         if (trueShadow) {
-            shadow = tshadow.clone(true);
+            shadow = state.shadow.base.clone(true);
         } else {
-            shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
+            shadow = POLY.union(shadow.appendAll(state.shadow.base), 0.01, true);
         }
 
         // inset or eliminate thru holes from shadow
@@ -301,10 +303,6 @@ class OpRough extends CamOp {
         thruHoles.forEach(hole => {
             shadow = shadow.map(p => {
                 if (p.isEquivalent(hole)) {
-                    // eliminate thru holes when roughing voids enabled
-                    // if (op.voids) {
-                    //     return undefined;
-                    // }
                     let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.01));
                     return po ? po[0] : undefined;
                 } else {
@@ -314,6 +312,7 @@ class OpRough extends CamOp {
         });
         shadow = POLY.nest(shadow);
         if (op.voids) {
+            // eliminate voids from shadow when "clear voids" enables
             for (let s of shadow) s.inner = undefined;
         }
 
@@ -442,6 +441,7 @@ class OpRough extends CamOp {
         setTool(op.tool, op.rate, op.plunge);
         setSpindle(op.spindle);
 
+        // output the clearing of stock above roughing
         for (let slice of (camFaces || [])) {
             const level = [];
             for (let poly of slice.camLines) {
@@ -463,6 +463,7 @@ class OpRough extends CamOp {
             newLayer();
         }
 
+        // output the roughing passes
         setPrintPoint(printPoint);
         sliceOutput(sliceOut, {
             cutdir,
@@ -481,7 +482,7 @@ class OpOutline extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { settings, widget, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
-        let { updateToolDiams, zThru, zBottom, shadowTop, tabs, cutTabs, cutPolys } = state;
+        let { updateToolDiams, zThru, zBottom, tabs, cutTabs, cutPolys } = state;
         let { zMax, ztOff } = state;
         let { process, stock } = settings;
 
@@ -540,7 +541,7 @@ class OpOutline extends CamOp {
             tot = total;
             progress((index / total) * 0.5);
         } });
-        shadow = POLY.union(shadow.appendAll(shadowTop.tops), 0.01, true);
+        shadow = POLY.union(shadow.appendAll(state.shadow.base), 0.01, true);
 
         // start slices at top of stock when `clear top` enabled
         if (op.top) {
@@ -948,7 +949,7 @@ class OpTrace extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { tool, rate, down, plunge, offset, offover, thru } = op;
-        let { settings, widget, addSlices, zMax, zTop, zThru, tabs } = state;
+        let { settings, widget, addSlices, zThru, tabs, workarea } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
         let { camStockClipTo, camZBottom } = process;
@@ -956,6 +957,7 @@ class OpTrace extends CamOp {
             throw 'trace op not supported with indexed stock';
         }
         // generate tracing offsets from chosen features
+        let zTop = workarea.top_z;
         let sliceOut = this.sliceOut = [];
         let areas = op.areas[widget.id] || [];
         let camTool = new CAM.Tool(settings, tool);
@@ -1002,7 +1004,7 @@ class OpTrace extends CamOp {
                 slice.camLines = cutPolys([stockRect], slice.camLines, z, true);
             }
             slice.output()
-                .setLayer("follow", {line: color}, false)
+                .setLayer("trace follow", {line: color}, false)
                 .addPolys(slice.camLines)
         }
         function clearZ(polys, z, down) {
@@ -1023,7 +1025,7 @@ class OpTrace extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     slice.output()
-                        .setLayer("clear", {line: color}, false)
+                        .setLayer("trace clear", {line: color}, false)
                         .addPolys(slice.camLines)
                 }
             }
@@ -1185,8 +1187,8 @@ class OpPocket extends CamOp {
         const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
-        let { settings, widget, addSlices, zTop, zBottom, zThru, tabs, color } = state;
-        let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt } = state;
+        let { settings, widget, addSlices, zBottom, zThru, tabs, color } = state;
+        let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt, workarea } = state;
         let { process, stock } = settings;
         // generate tracing offsets from chosen features
         let sliceOut;
@@ -1196,6 +1198,7 @@ class OpPocket extends CamOp {
         let toolOver = toolDiam * op.step;
         let cutdir = process.camConventional;
         let engrave = contour && op.engrave;
+        let zTop = workarea.top_z;
         if (contour) {
             down = 0;
             this.topo = await CAM.Topo({
@@ -1230,7 +1233,7 @@ class OpPocket extends CamOp {
             return slice;
         }
         function clearZ(polys, z, down) {
-            console.log({ clearZ: polys });
+            // console.log({ clearZ: polys });
             if (down) {
                 // adjust step down to a value <= down that
                 // ends on the lowest z specified
@@ -1720,6 +1723,18 @@ class OpXRay extends CamOp {
     }
 }
 
+/**
+ * Computes the Part "shadow" and attaches relevant data to the "state" object
+ *
+ * The part shadow consists of top-cown layers at which the polygon shadow changes
+ * shape. For curved or sloped surfaces, this is approximated and paths that clip
+ * to it should use the next lower layer from current Z to ensure no part collisions.
+ *
+ * The shadow at each layer is computed by top-down unioning the part outline with
+ * the shadow from the layer above.
+ *
+ * This operation is injected at the start of the operation chain before processing.
+ */
 class OpShadow extends CamOp {
     constructor(state, op) {
         super(state, op);
@@ -1738,7 +1753,9 @@ class OpShadow extends CamOp {
 
         let tslices = [];
         let tshadow = [];
-        let tzindex = slicer.interval(minStepDown, { fit: true, off: 0.01, down: true, flats: true });
+        let tzindex = slicer.interval(minStepDown, {
+            fit: true, off: 0.01, down: true, flats: true
+        });
         let skipTerrain = unsafe;
 
         if (skipTerrain) {
@@ -1749,10 +1766,14 @@ class OpShadow extends CamOp {
         let lsz; // only shadow up to bottom of last shadow for progressive union
         let cnt = 0;
         let tot = 0;
+
+        // terrain is the "shadow stack" where index 0 = top of part
+        // thus array.length -1 = bottom of part
         let terrain = await slicer.slice(tzindex, { each: data => {
             let shadow = trueShadow ? shadowAt(data.z, lsz) : [];
             tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadow), 0.01, true);
             tslices.push(data.slice);
+            // capture current shadow for this slice
             data.slice.shadow = tshadow;
             if (false) {
                 const slice = data.slice;
@@ -1787,14 +1808,23 @@ class OpShadow extends CamOp {
             throw `invalid widget shadow`;
         }
 
-        state.shadowTop = terrain[terrain.length - 1];
+        // TODO: deprecate use of separate shadow vars in state
         state.center = tshadow[0].bounds.center();
-        state.tshadow = tshadow; // true shadow (bottom of part)
-        state.terrain = terrain; // stack of shadow slices with tops
-        state.tslices = tslices;
+        state.tshadow = tshadow;    // true shadow (base of part)
+        state.terrain = terrain;    // stack of shadow slices stored in tops
+        state.tslices = tslices;    // raw slicer 'data' layer outputs
         state.skipTerrain = skipTerrain;
 
-        // identify through holes
+        // TODO: refactor ops to use a unified shadow object
+        state.shadow = {
+            base: tshadow,          // computed shadow union at base of part
+            stack: terrain,         // stack of shadow slices
+            slices: tslices,        // raw slicer 'data' objects
+            skip: skipTerrain
+        };
+
+        // identify through holes which are inner/child polygons
+        // on the bottom-most layer of the shadow stack (tshadow, index == 0)
         state.thruHoles = tshadow.map(p => p.inner || []).flat();
     }
 }
