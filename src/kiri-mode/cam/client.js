@@ -611,6 +611,10 @@ CAM.init = function(kiri, api) {
                 }, 250);
             }
             function onDown(ev) {
+                if (!ev.target.rec) {
+                    // only trigger on operation buttons bound to recs
+                    return;
+                }
                 let mobile = ev.touches;
                 func.surfaceDone();
                 func.traceDone();
@@ -931,6 +935,9 @@ CAM.init = function(kiri, api) {
     // SURFACE FUNCS
     let surfaceOn = false, lastWidget;
     func.surfaceAdd = (ev) => {
+        if (surfaceOn) {
+            return func.surfaceDone();
+        }
         func.clearPops();
         alert = api.show.alert("analyzing surfaces...", 1000);
         let surfaces = poppedRec.surfaces;
@@ -982,6 +989,9 @@ CAM.init = function(kiri, api) {
     // TRACE FUNCS
     let traceOn = false, lastTrace;
     func.traceAdd = (ev) => {
+        if (traceOn) {
+            return func.traceDone();
+        }
         func.clearPops();
         alert = api.show.alert("analyzing parts...", 1000);
         traceOn = hoveredOp;
@@ -1492,10 +1502,7 @@ CAM.init = function(kiri, api) {
         dogbone:  UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:canDogBones}),
         revbone:  UC.newBoolean(LANG.co_dogr_s, undefined, {title:LANG.co_dogr_l, show:canDogBonesRev}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        menu: UC.newRow([
-            UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
-            UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),
-        ], {class:"ext-buttons f-row"}),
+        menu:     UC.newRow([ UC.newButton("select", func.traceAdd) ], {class:"ext-buttons f-row"}),
     };
 
     createPopOp('pocket', {
@@ -1533,10 +1540,7 @@ CAM.init = function(kiri, api) {
         outline:   UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l, show:() => !poppedRec.contour}),
         engrave:   UC.newBoolean(LANG.cp_engr_s, undefined, {title:LANG.cp_engr_l, show:() => poppedRec.contour}),
         sep:       UC.newBlank({class:"pop-sep"}),
-        menu: UC.newRow([
-            UC.newButton(undefined, func.surfaceAdd, {icon:'<i class="fas fa-plus"></i>'}),
-            UC.newButton(undefined, func.surfaceDone, {icon:'<i class="fas fa-check"></i>'}),
-        ], {class:"ext-buttons f-row"}),
+        menu:      UC.newRow([ UC.newButton("select", func.surfaceAdd) ], {class:"ext-buttons f-row"}),
     };
 
     createPopOp('drill', {
@@ -1591,9 +1595,7 @@ CAM.init = function(kiri, api) {
         sep:      UC.newBlank({class:"pop-sep", modes:MCAM, show:zBottom}),
         invert:   UC.newBoolean(LANG.cf_nvrt_s, undefined, {title:LANG.cf_nvrt_l, show:zBottom}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        action:   UC.newRow([
-            UC.newButton(LANG.cf_menu, func.opFlip)
-        ], {class:"ext-buttons f-row"})
+        action:   UC.newRow([ UC.newButton(LANG.cf_menu, func.opFlip) ], {class:"ext-buttons f-row"})
     };
 
     createPopOp('gcode', {

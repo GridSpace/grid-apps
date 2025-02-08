@@ -69,7 +69,6 @@ kiri.load(api => {
             kiri.client.send("cam_traces", { settings, single }, output => {
                 const ids = [];
                 kiri.codec.decode(output).forEach(rec => {
-console.log({ rec });
                     ids.push(rec.id);
                     widgets[rec.id].traces = rec.traces;
                 });
