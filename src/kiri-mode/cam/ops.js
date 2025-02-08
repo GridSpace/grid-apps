@@ -181,8 +181,6 @@ class OpRough extends CamOp {
             throw `invalid step down "${op.down}"`;
         }
 
-        console.log({ rough: workarea, shadow: state.shadow });
-
         let roughIn = op.inside;
         let roughDown = op.down;
         let roughLeave = op.leave || 0;

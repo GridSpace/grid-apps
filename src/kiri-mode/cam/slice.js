@@ -85,7 +85,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
             bottom_cut
         }, 3);
 
-    console.table({ workarea });
+    // console.table({ workarea });
     // console.table({ part_size });
     // console.table({ stock });
 

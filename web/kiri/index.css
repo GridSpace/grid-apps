@@ -937,15 +937,21 @@ details[open] > summary::after {
 
 .slideshow #panel-left .settings {
     transform: translateX(-100%);
-    transition: transform 0.15s ease-in-out;
+    transition: transform 0.1s ease-in-out;
+    transition-delay: 0.3s;
 }
 .slideshow #panel-left:hover .settings {
     transform: translateX(0);
+    transition-delay: 0.0s;
 }
 .slideshow #panel-left:hover #slide-show {
-    left: -100%;
+    transform: translateX(-100%);
+    transition-delay: 0.0s;
 }
 .slideshow #slide-show {
+    transition-delay: 0.5s;
+    transform: translateX(-80%);
+    /* transform: translateX(0); */
     position: absolute;
     top: 5px;
     left: 0;
@@ -979,6 +985,9 @@ details[open] > summary::after {
 #panel-right * {
     direction: ltr;
 } */
+#panel-left {
+    padding-right: 5px;
+}
 #panel-left, #panel-right {
     max-height: 100%;
     background-color: var(--work-area);
