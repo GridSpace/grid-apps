@@ -173,7 +173,7 @@ class OpRough extends CamOp {
         let { op, state } = this;
         let { settings, slicer, addSlices, unsafe, color } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
-        let { ztOff, zBottom, zThru, zMax, shadowAt, isIndexed} = state;
+        let { ztOff, zBottom, zMax, shadowAt, isIndexed} = state;
         let { workarea } = state;
         let { process, stock } = settings;
 
@@ -194,7 +194,7 @@ class OpRough extends CamOp {
         updateToolDiams(toolDiam);
 
         // clear the stock above the area to be roughed out
-        {
+        if (workarea.top_z > workarea.top_part) {
             let shadow = state.shadow.base.clone();
             let step = toolDiam * op.step;
             let inset = roughStock ?
@@ -281,6 +281,9 @@ class OpRough extends CamOp {
             shadow = unsafe ? data.tops : POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
             if (flats.indexOf(data.z) >= 0) {
                 // exclude flats injected to complete shadow
+                return;
+            }
+            if (data.z > workarea.top_z) {
                 return;
             }
             data.shadow = trueShadow ? shadowAt(data.z) : shadow.clone(true);
@@ -405,7 +408,9 @@ class OpRough extends CamOp {
         });
 
         let last = slices[slices.length-1];
-        for (let zneg of base.util.lerp(0, zThru, op.down)) {
+
+        if (workarea.bottom_z < 0)
+        for (let zneg of base.util.lerp(0, -workarea.bottom_cut, op.down)) {
             if (!last) continue;
             let add = last.clone(true);
             add.z -= zneg;
@@ -482,8 +487,8 @@ class OpOutline extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { settings, widget, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
-        let { updateToolDiams, zThru, zBottom, tabs, cutTabs, cutPolys } = state;
-        let { zMax, ztOff } = state;
+        let { updateToolDiams, tabs, cutTabs, cutPolys, workarea } = state;
+        let { zMax } = state;
         let { process, stock } = settings;
 
         if (op.down <= 0) {
@@ -495,8 +500,11 @@ class OpOutline extends CamOp {
         let shadow = [];
         let slices = [];
         let intopt = {
-            down: true, min: zBottom, fit: true, off: 0.01,
-            max: op.top ? zMax + ztOff : undefined
+            off: 0.01,
+            fit: true,
+            down: true,
+            min: Math.max(0, workarea.bottom_z),
+            max: workarea.top_z
         };
         let indices = slicer.interval(op.down, intopt);
         let trueShadow = process.camTrueShadow === true;
@@ -507,12 +515,11 @@ class OpOutline extends CamOp {
             .map(v => (parseFloat(v) - 0.01).round(5))
             .filter(v => v > 0 && indices.indexOf(v) < 0);
         indices = indices.appendAll(flats).sort((a,b) => b-a);
-        indices = indices.filter(v => v - zBottom >= -0.001);
-        // console.log('indices', ...indices, {zBottom, slicer});
+
         let cnt = 0;
         let tot = 0;
         if (op.outside && !op.inside) {
-            // console.log({outline_bypass: indices, down: op.down});
+            console.log({outline_bypass: indices, down: op.down});
             indices.forEach((ind,i) => {
                 if (flats.indexOf(ind) >= 0) {
                     // exclude flats
@@ -560,9 +567,9 @@ class OpOutline extends CamOp {
         }
 
         // extend cut thru (only when z bottom is 0)
-        if (zThru) {
+        if (workarea.bottom_z < 0) {
             let last = slices[slices.length-1];
-            for (let zneg of base.util.lerp(0, zThru, op.down)) {
+            for (let zneg of base.util.lerp(0, -workarea.bottom_cut, op.down)) {
                 if (!last) continue;
                 let add = last.clone(true);
                 add.tops.forEach(top => top.poly.setZ(add.z));

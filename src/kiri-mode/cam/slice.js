@@ -49,7 +49,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         // greater of widget bottom and z bottom
         zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom),
         zMax = bounds.max.z,
-        zThru = camZBottom ? 0 : (camZThru || 0),
+        zThru = camZThru,
         zTop = zMax + ztOff,
         minToolDiam = Infinity,
         maxToolDiam = -Infinity,
@@ -66,7 +66,11 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         bottom_part = 0,
         bottom_stock = -bottom_gap,
         bottom_thru = zThru,
-        bottom_z = (camZBottom ? bottom_stock + proc.camZBottom : bottom_part) - bottom_thru,
+        bottom_z = Math.max(
+            (camZBottom ? bottom_stock + proc.camZBottom : bottom_part) - bottom_thru,
+            (camZBottom ? bottom_stock + camZBottom : bottom_stock - bottom_thru)
+        ),
+        bottom_cut = Math.max(bottom_z, -zThru),
         top_stock = zTop,
         top_part = zMax,
         top_gap = ztOff,
@@ -77,7 +81,8 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
             top_z,
             bottom_stock,
             bottom_part,
-            bottom_z
+            bottom_z,
+            bottom_cut
         }, 3);
 
     console.table({ workarea });
