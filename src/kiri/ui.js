@@ -132,7 +132,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
             if (Array.isArray(input)) {
                 iid = `confirm-input-${rnd}`;
                 html.append(`<div><textarea rows="15" cols="40" class="grow" type="text" spellcheck="false" id="${iid}"></textarea></div>`);
-            } else if (input) {
+            } else if (input !== undefined) {
                 iid = `confirm-input-${rnd}`;
                 html.append(`<div><input class="grow" type="text" spellcheck="false" id="${iid}"/></div>`);
             }

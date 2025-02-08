@@ -963,6 +963,7 @@ class OpTrace extends CamOp {
         }
         // generate tracing offsets from chosen features
         let zTop = workarea.top_z;
+        let zBottom = workarea.bottom_z;
         let sliceOut = this.sliceOut = [];
         let areas = op.areas[widget.id] || [];
         let camTool = new CAM.Tool(settings, tool);
@@ -992,6 +993,9 @@ class OpTrace extends CamOp {
             addSlices(slice);
             sliceOut.push(slice);
             return slice;
+        }
+        function minZ(z) {
+            return op.bottom && zBottom ? Math.max(zBottom, z - thru) : z - thru;
         }
         function followZ(poly) {
             if (op.dogbone) {
@@ -1119,7 +1123,7 @@ class OpTrace extends CamOp {
                     }
                     for (let pi of POLY.flatten(poly, [], true))
                     if (down) {
-                        let zto = pi.getZ() - thru;
+                        let zto = minZ(pi.getZ());
                         if (zThru && similar(zto,0)) {
                             zto -= zThru;
                         }
@@ -1147,10 +1151,7 @@ class OpTrace extends CamOp {
                 const zbo = widget.track.top - widget.track.box.d;
                 let zmap = {};
                 for (let poly of polys) {
-                    let z = poly.getZ() - thru;
-                    if (op.bottom && camZBottom) {
-                        z = Math.max(z, camZBottom) - zbo;
-                    }
+                    let z = minZ(poly.getZ());
                     if (offover) {
                         let pnew = POLY.offset([poly], -offover, { minArea: 0, open: true });
                         if (pnew) {

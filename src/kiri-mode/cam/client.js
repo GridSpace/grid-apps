@@ -509,7 +509,7 @@ CAM.init = function(kiri, api) {
             let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
             let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
             if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
-            if (notable?.length) label = notable[0].slice(1);
+            if (notable?.length) label += ` (${notable[0].slice(1)})`;
             html.appendAll([
                 `<div id="${mark+i}" class="${clazz.join(' ')}"${title}>`,
                 `<label class="label">${label}</label>`,
