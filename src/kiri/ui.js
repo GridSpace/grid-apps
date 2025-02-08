@@ -10,6 +10,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
 
     let DOC = self.document,
         inputAction = null,
+        lastAddTo = null,
         lastGroup = null,
         lastDiv = null,
         addTo = null,
@@ -46,11 +47,13 @@ gapp.register("kiri.ui", [], (root, exports) => {
         toFloat,
         isSticky,
         setSticky,
-        newElement,
         newBoolean,
         newButton,
         newBlank,
         newDiv,
+        newElement,
+        newExpand,
+        endExpand,
         newGCode,
         newGroup,
         newLabel,
@@ -58,8 +61,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         newRange,
         newRow,
         newSelect,
-        newTable,
-        newTableRow,
         newText,
         setGroup,
         addUnits,
@@ -297,8 +298,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return row;
     }
 
-    function addCollapsableElement(parent) {
-        let row = newDiv();
+    function addCollapsableElement(parent, options = {}) {
+        let row = newDiv(options);
         if (parent) parent.appendChild(row);
         if (lastGroup) lastGroup.push(row);
         return row;
@@ -404,14 +405,40 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function newDiv(opt = {}) {
-        let div = DOC.createElement('div');
+        let div = DOC.createElement(opt.tag || 'div');
         addModeControls(div, opt);
         (opt.addto || addTo).appendChild(div);
         if (opt.addto) lastDiv = addTo = div;
-        if (opt.addto && opt.class) div.setAttribute('class', opt.class);
+        if (opt.class) div.setAttribute('class', opt.class);
         lastGroup?.push(div);
         div._group = groupName;
         return div;
+    }
+
+    function newExpand(label, opt = {}, opteach = {}) {
+        let div = DOC.createElement('details');
+        div.setAttribute('class', opt.class || 'f-col');
+        addModeControls(div, opt);
+
+        let summary = DOC.createElement('summary');
+        summary.setAttribute('class', opt.class || 'var-row');
+        summary.innerHTML = `<label>${label}</label>`;
+
+        div.appendChild( summary );
+        div.collapse = () => {
+            div.removeAttribute('open');
+        };
+
+        lastAddTo = addTo;
+        addTo.appendChild(div);
+        addTo = div;
+
+        return div;
+    }
+
+    function endExpand() {
+        addTo = lastAddTo;
+        return addTo;
     }
 
     function isSticky() {
@@ -432,10 +459,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
         txt.setAttribute("spellcheck", "false");
         txt.setAttribute("style", "resize: none");
         txt.onblur = bindTo || inputAction;
+        txt.button = btn;
 
         btn.setAttribute("class", "basis-50");
         btn.appendChild(DOC.createTextNode(label));
-
+        btn.setAttribute("title", opt.title || undefined);
         btn.onclick = function(ev) {
             ev.stopPropagation();
             if (ev.target === txt) {
@@ -470,11 +498,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 }
             }
         };
+
         addModeControls(btn, opt);
-        if (opt.title) {
-            btn.setAttribute("title", options.title);
-        }
-        txt.button = btn;
 
         return txt;
     }
@@ -800,27 +825,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
             });
         }
         return row;
-    }
-
-    function newRowTable(array) {
-        let div = newDiv();
-        div.setAttribute("class", "table-row");
-        array.forEach(function(c) {
-            div.appendChild(c);
-        });
-        return div;
-    }
-
-    function newTableRow(arrayOfArrays, options) {
-        return newRow(newTable(arrayOfArrays), options);
-    }
-
-    function newTable(arrayOfArrays) {
-        let array = [];
-        for (let i=0; i<arrayOfArrays.length; i++) {
-            array.push(newRowTable(arrayOfArrays[i]));
-        }
-        return array;
     }
 
 });

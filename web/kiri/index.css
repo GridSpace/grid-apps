@@ -187,20 +187,20 @@ th, tr, td, span, div, label, button {
 th, tr, td, label {
     white-space: nowrap;
 }
-details > summary {
+details summary {
     list-style: none;
 }
-details > summary::-webkit-details-marker {
+details summary::-webkit-details-marker {
     display: none;
 }
-details > summary::before {
+details summary::before {
     content: "";
 }
-details > summary {
+details summary {
     position: relative;
     cursor: pointer;
 }
-details > summary::after {
+details summary::after {
     content: "▸";
     position: absolute;
     right: 5px;
@@ -208,7 +208,7 @@ details > summary::after {
     transform: rotate(-90deg);
     transition: transform 0.2s ease;
 }
-details[open] > summary::after {
+details[open] summary::after {
     transform: rotate(90deg);
 }
 

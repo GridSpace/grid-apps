@@ -1498,9 +1498,12 @@ CAM.init = function(kiri, api) {
         offover:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, show:() => poppedRec.offset !== "none"}),
         sep:      UC.newBlank({class:"pop-sep", modes:MCAM, xshow:zDogSep}),
         merge:    UC.newBoolean(LANG.co_merg_s, undefined, {title:LANG.co_merg_l}),
-        bottom:   UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom}),
         dogbone:  UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:canDogBones}),
         revbone:  UC.newBoolean(LANG.co_dogr_s, undefined, {title:LANG.co_dogr_l, show:canDogBonesRev}),
+        expand:   UC.newExpand("overrides"),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        bottom:   UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom}),
+        end:      UC.endExpand(),
         sep:      UC.newBlank({class:"pop-sep"}),
         menu:     UC.newRow([ UC.newButton("select", func.traceAdd) ], {class:"ext-buttons f-row"}),
     };
@@ -1706,10 +1709,10 @@ function createPopOp(type, map) {
             }
             return rec;
         },
-        hideshow: (abc) => {
+        hideshow: () => {
             for (let inp of Object.values(op.inputs)) {
                 let parent = inp.parentElement;
-                if (parent.setVisible && parent.__opt.show) {
+                if (parent && parent.setVisible && parent.__opt.show) {
                     parent.setVisible(parent.__opt.show(op, API.conf.get()));
                 }
             }
