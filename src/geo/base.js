@@ -162,7 +162,9 @@ function inRange(value, min, max) {
 function round(v, zeros) {
     if (typeof v === 'object') {
         for (let [key,val] of Object.entries(v)) {
-            v[key] = round(val);
+            if (typeof val === 'number') {
+                v[key] = round(val, zeros);
+            }
         }
         return v;
     }

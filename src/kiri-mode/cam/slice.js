@@ -78,11 +78,18 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         workarea = util.round({
             top_stock,
             top_part,
+            top_gap,
             top_z,
             bottom_stock,
             bottom_part,
+            bottom_gap,
             bottom_z,
-            bottom_cut
+            bottom_cut,
+            recalc(val) {
+                if (val.top_z) workarea.top_z = bottom_stock + val.top_z;
+                if (val.bottom_z) workarea.bottom_z = bottom_stock + val.bottom_z;
+                if (val.bottom_z) workarea.bottom_cut = Math.max(workarea.bottom_z, -zThru)
+            }
         }, 3);
 
     // console.table({ workarea });

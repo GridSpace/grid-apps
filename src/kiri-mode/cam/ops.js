@@ -953,14 +953,19 @@ class OpTrace extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, rate, down, plunge, offset, offover, thru } = op;
+        let { tool, rate, down, plunge, offset, offover, thru, ov_topz, ov_botz } = op;
         let { settings, widget, addSlices, zThru, tabs, workarea } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
-        let { camStockClipTo, camZBottom } = process;
+        let { camStockClipTo } = process;
         if (state.isIndexed) {
             throw 'trace op not supported with indexed stock';
         }
+        // apply overrides
+        workarea.recalc({
+            top_z: ov_topz,
+            bottom_z: ov_botz
+        });
         // generate tracing offsets from chosen features
         let zTop = workarea.top_z;
         let zBottom = workarea.bottom_z;
@@ -995,7 +1000,7 @@ class OpTrace extends CamOp {
             return slice;
         }
         function minZ(z) {
-            return op.bottom && zBottom ? Math.max(zBottom, z - thru) : z - thru;
+            return zBottom ? Math.max(zBottom, z - thru) : z - thru;
         }
         function followZ(poly) {
             if (op.dogbone) {
@@ -1193,9 +1198,16 @@ class OpPocket extends CamOp {
         const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
+        let { ov_topz, ov_botz } = op;
         let { settings, widget, addSlices, zBottom, zThru, tabs, color } = state;
-        let { updateToolDiams, cutTabs, cutPolys, healPolys, shadowAt, workarea } = state;
-        let { process, stock } = settings;
+        let { updateToolDiams, cutTabs, healPolys, shadowAt, workarea } = state;
+        let { process } = settings;
+        // apply overrides
+        workarea.recalc({
+            top_z: ov_topz,
+            bottom_z: ov_botz
+        });
+        zBottom = ov_botz ? workarea.bottom_stock + ov_botz : zBottom;
         // generate tracing offsets from chosen features
         let sliceOut;
         let pockets = this.pockets = [];
