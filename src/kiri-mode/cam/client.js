@@ -1481,8 +1481,8 @@ CAM.init = function(kiri, api) {
         revbone: 'camTraceDogbone',
         merge:   'camTraceMerge',
         select:  'camTraceMode',
-        ov_topz: 'camTraceZTop',
-        ov_botz: 'camTraceZBottom',
+        ov_topz: 0,
+        ov_botz: 0,
         ov_conv: '~camConventional',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1526,8 +1526,8 @@ CAM.init = function(kiri, api) {
         contour:   'camPocketContour',
         engrave:   'camPocketEngrave',
         outline:   'camPocketOutline',
-        ov_topz:   'camPocketZTop',
-        ov_botz:   'camPocketZBottom',
+        ov_topz:   0,
+        ov_botz:   0,
         ov_conv:   '~camConventional',
         tolerance: 'camTolerance',
     }).inputs = {
@@ -1708,7 +1708,7 @@ function createPopOp(type, map) {
             API.util.ui2rec(op.rec, op.inputs);
             for (let [key, val] of Object.entries(op.rec)) {
                 let saveTo = map[key];
-                if (saveTo && !key.startsWith("~")) {
+                if (saveTo && typeof(key) === 'string' && !key.startsWith("~")) {
                     current.process[saveTo] = val;
                 }
             }
@@ -1718,7 +1718,9 @@ function createPopOp(type, map) {
         new: () => {
             let rec = { type };
             for (let [key, src] of Object.entries(map)) {
-                rec[key] = current.process[src.replace('~','')];
+                rec[key] = typeof(src) === 'string'
+                    ? current.process[src.replace('~','')]
+                    : src;
             }
             return rec;
         },
