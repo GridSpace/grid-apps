@@ -1483,6 +1483,7 @@ CAM.init = function(kiri, api) {
         select:  'camTraceMode',
         ov_topz: 'camTraceZTop',
         ov_botz: 'camTraceZBottom',
+        ov_conv: '~camConventional',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
@@ -1505,6 +1506,7 @@ CAM.init = function(kiri, api) {
         sep:      UC.newBlank({class:"pop-sep"}),
         ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
         ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
+        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
         exp_end:  UC.endExpand(),
         sep:      UC.newBlank({class:"pop-sep"}),
         menu:     UC.newRow([ UC.newButton("select", func.traceAdd) ], {class:"ext-buttons f-row"}),
@@ -1526,6 +1528,7 @@ CAM.init = function(kiri, api) {
         outline:   'camPocketOutline',
         ov_topz:   'camPocketZTop',
         ov_botz:   'camPocketZBottom',
+        ov_conv:   '~camConventional',
         tolerance: 'camTolerance',
     }).inputs = {
         tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1546,11 +1549,12 @@ CAM.init = function(kiri, api) {
         contour:   UC.newBoolean(LANG.cp_cont_s, undefined, {title:LANG.cp_cont_s}),
         outline:   UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l, show:() => !poppedRec.contour}),
         engrave:   UC.newBoolean(LANG.cp_engr_s, undefined, {title:LANG.cp_engr_l, show:() => poppedRec.contour}),
-        exp:      UC.newExpand("overrides"),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
-        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
-        exp_end:  UC.endExpand(),
+        exp:       UC.newExpand("overrides"),
+        sep:       UC.newBlank({class:"pop-sep"}),
+        ov_topz:   UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
+        ov_botz:   UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
+        ov_conv:   UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
+        exp_end:   UC.endExpand(),
         sep:       UC.newBlank({class:"pop-sep"}),
         menu:      UC.newRow([ UC.newButton("select", func.surfaceAdd) ], {class:"ext-buttons f-row"}),
     };
@@ -1704,7 +1708,7 @@ function createPopOp(type, map) {
             API.util.ui2rec(op.rec, op.inputs);
             for (let [key, val] of Object.entries(op.rec)) {
                 let saveTo = map[key];
-                if (saveTo) {
+                if (saveTo && !key.startsWith("~")) {
                     current.process[saveTo] = val;
                 }
             }
@@ -1713,8 +1717,8 @@ function createPopOp(type, map) {
         },
         new: () => {
             let rec = { type };
-            for (let [key, val] of Object.entries(map)) {
-                rec[key] = current.process[val];
+            for (let [key, src] of Object.entries(map)) {
+                rec[key] = current.process[src.replace('~','')];
             }
             return rec;
         },

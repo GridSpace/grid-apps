@@ -953,7 +953,8 @@ class OpTrace extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, rate, down, plunge, offset, offover, thru, ov_topz, ov_botz } = op;
+        let { tool, rate, down, plunge, offset, offover, thru } = op;
+        let { ov_topz, ov_botz, ov_conv } = op;
         let { settings, widget, addSlices, zThru, tabs, workarea } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
@@ -975,7 +976,7 @@ class OpTrace extends CamOp {
         let toolDiam = camTool.fluteDiameter();
         let toolOver = toolDiam * op.step;
         let traceOffset = camTool.traceOffset()
-        let cutdir = process.camConventional;
+        let cutdir = ov_conv;
         let polys = [];
         let stockRect = stock.center && stock.x && stock.y ?
             newPolygon().centerRectangle(stock.center, stock.x, stock.y) : undefined;
@@ -1198,7 +1199,7 @@ class OpPocket extends CamOp {
         const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
-        let { ov_topz, ov_botz } = op;
+        let { ov_topz, ov_botz, ov_conv } = op;
         let { settings, widget, addSlices, zBottom, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, healPolys, shadowAt, workarea } = state;
         let { process } = settings;
@@ -1214,7 +1215,7 @@ class OpPocket extends CamOp {
         let camTool = new CAM.Tool(settings, tool);
         let toolDiam = camTool.fluteDiameter();
         let toolOver = toolDiam * op.step;
-        let cutdir = process.camConventional;
+        let cutdir = ov_conv;
         let engrave = contour && op.engrave;
         let zTop = workarea.top_z;
         if (contour) {
@@ -1451,7 +1452,7 @@ class OpPocket extends CamOp {
             if (min.pocket) {
                 min.pocket.used = true;
                 sliceOutput(min.pocket, {
-                    cutdir: process.camConventional,
+                    cutdir: op.ov_conv,
                     depthFirst: process.camDepthFirst && !state.isIndexed,
                     easeDown: op.down && process.easeDown ? op.down : 0,
                     progress: (n,m) => progress(n/m, "pocket")
