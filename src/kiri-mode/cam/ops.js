@@ -173,7 +173,7 @@ class OpRough extends CamOp {
         let { op, state } = this;
         let { settings, slicer, addSlices, unsafe, color } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
-        let { ztOff, zBottom, zMax, shadowAt, isIndexed} = state;
+        let { ztOff, zMax, shadowAt, isIndexed} = state;
         let { workarea } = state;
         let { process, stock } = settings;
 
@@ -242,7 +242,7 @@ class OpRough extends CamOp {
                 .filter(row => row[1] > flatArea)
                 .map(row => row[0])
                 .map(v => parseFloat(v).round(5))
-                .filter(v => v >= zBottom);
+                .filter(v => v >= workarea.bottom_z);
             flats.forEach(v => {
                 if (!indices.contains(v)) {
                     indices.push(v);
@@ -270,7 +270,7 @@ class OpRough extends CamOp {
             indices = indices.appendAll(flats).sort((a,b) => b-a);
         }
 
-        indices = indices.filter(v => v >= zBottom);
+        indices = indices.filter(v => v >= workarea.bottom_z);
         // console.log('indices', ...indices, {zBottom});
 
         let cnt = 0;
@@ -437,7 +437,7 @@ class OpRough extends CamOp {
         let { process } = settings;
 
         let easeDown = process.camEaseDown;
-        let cutdir = process.camConventional;
+        let cutdir = op.ov_conv;
         let depthFirst = process.camDepthFirst && !state.isIndexed;
         let depthData = [];
 
@@ -684,7 +684,7 @@ class OpOutline extends CamOp {
 
         let easeDown = process.camEaseDown;
         let toolDiam = this.toolDiam;
-        let cutdir = process.camConventional;
+        let cutdir = op.ov_conv;//process.camConventional;
         let depthFirst = process.camDepthFirst;
         let depthData = [];
 
@@ -962,11 +962,6 @@ class OpTrace extends CamOp {
         if (state.isIndexed) {
             throw 'trace op not supported with indexed stock';
         }
-        // apply overrides
-        workarea.recalc({
-            top_z: ov_topz,
-            bottom_z: ov_botz
-        });
         // generate tracing offsets from chosen features
         let zTop = workarea.top_z;
         let zBottom = workarea.bottom_z;
@@ -1203,11 +1198,6 @@ class OpPocket extends CamOp {
         let { settings, widget, addSlices, zBottom, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, healPolys, shadowAt, workarea } = state;
         let { process } = settings;
-        // apply overrides
-        workarea.recalc({
-            top_z: ov_topz,
-            bottom_z: ov_botz
-        });
         zBottom = ov_botz ? workarea.bottom_stock + ov_botz : zBottom;
         // generate tracing offsets from chosen features
         let sliceOut;

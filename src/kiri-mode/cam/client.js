@@ -1333,6 +1333,9 @@ CAM.init = function(kiri, api) {
         voids:   'camRoughVoid',
         flats:   'camRoughFlat',
         inside:  'camRoughIn',
+        ov_topz: 0,
+        ov_botz: 0,
+        ov_conv: '~camConventional',
     }).inputs = {
         tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:     UC.newBlank({class:"pop-sep"}),
@@ -1348,7 +1351,13 @@ CAM.init = function(kiri, api) {
         all:     UC.newBoolean(LANG.cr_clst_s, undefined, {title:LANG.cr_clst_l, show:hasIndexing}),
         voids:   UC.newBoolean(LANG.cr_clrp_s, undefined, {title:LANG.cr_clrp_l}),
         flats:   UC.newBoolean(LANG.cr_clrf_s, undefined, {title:LANG.cr_clrf_l}),
-        inside:  UC.newBoolean(LANG.cr_olin_s, undefined, {title:LANG.cr_olin_l})
+        inside:  UC.newBoolean(LANG.cr_olin_s, undefined, {title:LANG.cr_olin_l}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        exp:      UC.newExpand("overrides"),
+        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
+        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
+        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
+        exp_end:  UC.endExpand(),
     };
 
     createPopOp('outline', {
@@ -1365,7 +1374,10 @@ CAM.init = function(kiri, api) {
         outside:  'camOutlineOut',
         inside:   'camOutlineIn',
         wide:     'camOutlineWide',
-        top:      'camOutlineTop'
+        top:      'camOutlineTop',
+        ov_topz:   0,
+        ov_botz:   0,
+        ov_conv:   '~camConventional',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
@@ -1384,6 +1396,12 @@ CAM.init = function(kiri, api) {
         omitvoid: UC.newBoolean(LANG.co_omvd_s, undefined, {title:LANG.co_omvd_l, xshow:(op) => { return op.inputs.outside.checked }}),
         wide:     UC.newBoolean(LANG.co_wide_s, undefined, {title:LANG.co_wide_l, show:(op) => { return !op.inputs.inside.checked }}),
         dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:(op) => { return !op.inputs.wide.checked }}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        exp:      UC.newExpand("overrides"),
+        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
+        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
+        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
+        exp_end:  UC.endExpand(),
     };
 
     const contourFilter = gcodeEditor('Layer Filter', 'filter');

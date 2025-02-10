@@ -350,7 +350,7 @@ module.exports = async (server) => {
                             }
                         });
                         // request system info
-                        false && mqtt.send({
+                        mqtt.send({
                             info: {
                                 command: "get_version"
                             }

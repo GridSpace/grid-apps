@@ -67,7 +67,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         bottom_stock = -bottom_gap,
         bottom_thru = zThru,
         bottom_z = Math.max(
-            (camZBottom ? bottom_stock + proc.camZBottom : bottom_part) - bottom_thru,
+            (camZBottom ? bottom_stock + camZBottom : bottom_part) - bottom_thru,
             (camZBottom ? bottom_stock + camZBottom : bottom_stock - bottom_thru)
         ),
         bottom_cut = Math.max(bottom_z, -zThru),
@@ -84,12 +84,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
             bottom_part,
             bottom_gap,
             bottom_z,
-            bottom_cut,
-            recalc(val) {
-                if (val.top_z) workarea.top_z = bottom_stock + val.top_z;
-                if (val.bottom_z) workarea.bottom_z = bottom_stock + val.bottom_z;
-                if (val.bottom_z) workarea.bottom_cut = Math.max(workarea.bottom_z, -zThru)
-            }
+            bottom_cut
         }, 3);
 
     // console.table({ workarea });
@@ -240,7 +235,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         unsafe,
         color,
         dark,
-        workarea
+        // workarea
     };
 
     let opList = [
@@ -273,9 +268,19 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
 
     // call slice() function on all ops in order
     let tracker = setSliceTracker({ rotation: 0 });
+    let workarea_orig = structuredClone(workarea);
     setAxisIndex();
     for (let op of opList) {
         let weight = op.weight();
+        // apply operation override vars
+        let workover = structuredClone(workarea_orig);
+        let valz = op.op;
+        if (valz.ov_topz) workover.top_z = bottom_stock + valz.ov_topz;
+        if (valz.ov_botz) {
+            workover.bottom_z = bottom_stock + valz.ov_botz;
+            workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
+        }
+        state.workarea = workover;
         await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
