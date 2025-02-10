@@ -1694,8 +1694,16 @@ function createPopOp(type, map) {
             for (let [key, val] of Object.entries(op.inputs)) {
                 let type = val.type;
                 let from = map[key];
-                if (rec[key] === undefined && type && from) {
-                    rec[key] = current.process[from];
+                let rval = rec[key];
+                // fill undef entries older defines
+                if (type && (rval === null || rval === undefined)) {
+                    if (typeof(from) === 'string') {
+                        rec[key] = current.process[from];
+                    } else if (from !== undefined) {
+                        rec[key] = from;
+                    } else {
+                        console.log('error', { key, val, type, from });
+                    }
                 }
             }
             API.util.rec2ui(rec, op.inputs);
