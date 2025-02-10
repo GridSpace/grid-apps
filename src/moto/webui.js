@@ -33,9 +33,14 @@ function build(data, context) {
     html.push(`<${type}`);
     let func = {};
     for (let [key, val] of Object.entries(attr || {})) {
+        if (val === undefined) {
+            continue;
+        }
         let tov = typeof val;
         if (key === '_') {
             text = val;
+        } else if (key.startsWith('_')) {
+            if (val) html.push(` ${key.substring(1)}`);
         } else if (key === 'id') {
             elid = val ? (tov === 'object' ? val.join('_') : val) : undefined;
         } else if (tov === 'function') {

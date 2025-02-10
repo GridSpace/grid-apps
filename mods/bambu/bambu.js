@@ -223,6 +223,23 @@ self.kiri.load(api => {
             total_layer_num,
             upload
         } = print || {};
+        let { tray_pre, tray_now, tray_tar } = ams || {};
+        let trays = ams?.ams?.map((ams, unit) => {
+            return ams.tray.map(tray => {
+                return { unit, wet: ams.humidity, ...tray };
+            });
+        }).flat();
+        if (trays && trays.length) {
+            let options = trays.map(tray => h.option({
+                _: tray.id,
+                _selected: tray_now === tray.id,
+                value: tray.id,
+            }));
+            h.bind($('bbl_ams_tray'), [
+                h.option({ _: 'none', value: '255' }),
+                ...options
+            ]);
+        }
         let state = (gcode_state || 'unknown').toLowerCase();
         $('bbl_noz').value = nozzle_diameter || '';
         $('bbl_noz_temp').value = nozzle_temper?.toFixed(1) ?? '';
@@ -271,11 +288,12 @@ self.kiri.load(api => {
         }), undefined, 2);
         $('bbl_accel').selectedIndex = (spd_lvl ?? 2) - 1;
         if (print_error) {
-            bbl_status.value = `print error ${print_error}`
+            bbl_status.value = `${state} | print error ${print_error}`
         } else if (mc_remaining_time && gcode_state !== 'FAILED') {
             bbl_status.value = `layer ${layer_num} of ${total_layer_num} | ${mc_percent}% complete | ${mc_remaining_time} minutes left | ${state}`
         } else {
-            bbl_status.value = `printer ${print_type || ""} | ${state}`;
+            let ams_tray = tray_now !== tray_tar ? ` | ams loading spool ${tray_tar}` : '';
+            bbl_status.value = `printer ${print_type || ""} | ${state}${ams_tray}`;
         }
         if (gcode_state && conn_alert) {
             api.alerts.hide(conn_alert);
@@ -285,7 +303,7 @@ self.kiri.load(api => {
     function render_list(to) {
         let list = Object.keys(printers).map(name => {
             return selected?.name === name ?
-                h.option({ _: name, value: name, selected: true }) :
+                h.option({ _: name, value: name, _selected: true }) :
                 h.option({ _: name, value: name });
         });
         list = [
@@ -363,6 +381,7 @@ self.kiri.load(api => {
     function file_print(path) {
         if (selected?.rec?.host && path) {
             let { host, code, serial } = selected.rec;
+            console.log({ file_print: path, host, code, serial, amsmap });
             socket.send({ cmd: "file-print", path, host, code, serial, amsmap });
         }
     }
@@ -577,7 +596,7 @@ self.kiri.load(api => {
                     h.canvas({
                         id: "bbl_video",
                         class: "video hide",
-                        style: "width: 100%; height: 100%; box-sizing: border-box",
+                        style: "width: 100%; height: auto; box-sizing: border-box; aspect-ratio: 16 / 9",
                     })
                 ]),
                 h.div({ class: "f-col gap3" }, [
@@ -585,7 +604,6 @@ self.kiri.load(api => {
                         h.label({ class: "set-header dev-sel" }, [
                             h.a('ams')
                         ]),
-                        // { print: { auto_recovery: true, command: 'print_option', option: 1, reason: 'success', result: 'success', sequence_id: '20005' } }
                         h.div({ class: "var-row" }, [
                             // home_flag bit 11 (0x400)
                             h.label('auto spool advance'),
@@ -599,6 +617,21 @@ self.kiri.load(api => {
                                         option: $('bbl_ams_spool').checked ? 1 : 0
                                     }
                                 })
+                            } })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('tray select'),
+                            h.select({ id: "bbl_ams_tray", onchange() {
+                                let new_tray = $('bbl_ams_tray').value
+                                api.alerts.show(`select tray ${new_tray}`,2);
+                                cmd_direct({
+                                    print: {
+                                        command: 'ams_change_filament',
+                                        curr_temp: 220, // current filament heat to
+                                        tar_temp: 220,  // new filament heat to
+                                        target: parseInt(new_tray)
+                                    }
+                                });
                             } })
                         ]),
                     ]),
@@ -676,6 +709,7 @@ self.kiri.load(api => {
                         onclick() {
                             console.log({ printing: selected.file.path });
                             file_print(selected.file.path);
+                            api.alerts.show(`printing: ${selected.file.path}`,2);
                         }}),
                     ]),
                     h.div({ class: "t-body t-inset f-col gap3 pad4" }, [

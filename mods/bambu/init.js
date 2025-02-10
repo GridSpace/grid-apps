@@ -10,7 +10,7 @@ module.exports = async (server) => {
     const mcache = {};
     const wsopen = [];
     const found = {};
-    const debug = false;
+    const debug = true;
 
     class MQTT {
         #timer;
@@ -205,7 +205,6 @@ module.exports = async (server) => {
 
     function file_print(opts = {}) {
         const { host, code, serial, filename, amsmap } = opts;
-        debug && util.log({ file_print: opts });
         const cmd = {
             print: {
                 command: "project_file",
@@ -221,8 +220,9 @@ module.exports = async (server) => {
             }
         };
         if (amsmap) {
-            cmd.print.ams_mapping = amsmap;
+            cmd.print.ams_mapping = amsmap.split(',').map(v => parseInt(v));
         }
+        debug && util.log({ file_print: cmd });
         get_mqtt(host, code, serial, message => {
             debug && util.log('mqtt_recv', message);
             wsend({ serial, message });
@@ -311,11 +311,10 @@ module.exports = async (server) => {
             res.setHeader('Cache-Control', 'no-cache, no-store, private');
             const data = req.app.post;
             const { host, code, filename, serial, ams, start } = query;
-            const amsmap = ams ? ams.split(',').map(v => parseInt(v)) : undefined;
             ftp_send({ host, code, filename, data })
                 .then(() => {
                     if (serial && start ==='true') {
-                        file_print({ host, code, serial, filename, amsmap });
+                        file_print({ host, code, serial, filename, amsmap: ams });
                     }
                     res.end(o2s({ sent: true }));
                 })
