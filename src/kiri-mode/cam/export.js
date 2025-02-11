@@ -198,10 +198,14 @@ CAM.export = function(print, online) {
             }
         }
 
+        // enforce XY origin at start of print
+        if (points === 0 || changeTool) {
+            pos.x = pos.y = pos.z = 0;
+        }
+
         // split first move to X,Y then Z for that new location
         // safety to prevent tool crashing
-        if (points === 0) {
-            pos.x = pos.y = pos.z = 0;
+        if (points === 0 || changeTool) {
             points++;
             if (spro.camFirstZMax) {
                 moveTo({

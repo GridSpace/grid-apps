@@ -10,7 +10,7 @@ module.exports = async (server) => {
     const mcache = {};
     const wsopen = [];
     const found = {};
-    const debug = true;
+    const debug = false;
 
     class MQTT {
         #timer;
