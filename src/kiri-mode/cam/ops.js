@@ -954,7 +954,7 @@ class OpTrace extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { tool, rate, down, plunge, offset, offover, thru } = op;
-        let { ov_topz, ov_botz, ov_conv } = op;
+        let { ov_conv } = op;
         let { settings, widget, addSlices, zThru, tabs, workarea } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
         let { process, stock } = settings;
@@ -976,6 +976,7 @@ class OpTrace extends CamOp {
         let stockRect = stock.center && stock.x && stock.y ?
             newPolygon().centerRectangle(stock.center, stock.x, stock.y) : undefined;
         updateToolDiams(toolDiam);
+
         if (tabs) {
             tabs.forEach(tab => {
                 tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
@@ -1137,12 +1138,11 @@ class OpTrace extends CamOp {
                         }
                         output.push(pi);
                     }
-                }
-                // merge overlapping output to prevent overcuts
-                if (op.merge) {
-                    let nest = POLY.nest(output);
-                    let union = POLY.union(nest, 0, true);
-                    output = POLY.flatten(union, [], true);
+                    if (!down && op.merge) {
+                        let nest = POLY.nest(output);
+                        let union = POLY.union(nest, 0, true);
+                        output = POLY.flatten(union, [], true);
+                    }
                 }
                 for (let poly of output) {
                     followZ(poly);
@@ -1194,7 +1194,7 @@ class OpPocket extends CamOp {
         const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
-        let { ov_topz, ov_botz, ov_conv } = op;
+        let { ov_botz, ov_conv } = op;
         let { settings, widget, addSlices, zBottom, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, healPolys, shadowAt, workarea } = state;
         let { process } = settings;

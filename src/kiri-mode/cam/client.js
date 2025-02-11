@@ -1517,7 +1517,7 @@ CAM.init = function(kiri, api) {
         thru:     UC.newInput(LANG.cc_thru_s, {title:LANG.cc_thru_l, convert:UC.toFloat, units:true}),
         offover:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, show:() => poppedRec.offset !== "none"}),
         sep:      UC.newBlank({class:"pop-sep", modes:MCAM, xshow:zDogSep}),
-        merge:    UC.newBoolean(LANG.co_merg_s, undefined, {title:LANG.co_merg_l}),
+        merge:    UC.newBoolean(LANG.co_merg_s, undefined, {title:LANG.co_merg_l, show:() => !popOp.trace.rec.down}),
         dogbone:  UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:canDogBones}),
         revbone:  UC.newBoolean(LANG.co_dogr_s, undefined, {title:LANG.co_dogr_l, show:canDogBonesRev}),
         exp:      UC.newExpand("overrides"),
