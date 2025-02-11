@@ -12,7 +12,7 @@ self.kiri.load(api => {
     let status = {};
     let monitors = [];
     let video_on = false;
-    let bound, device, printers, select, selected, conn_alert;
+    let bound, device, printers, select, selected, conn_alert, export_select;
     let btn_del, in_host, in_code, in_serial, filelist;
     let host, password, serial, amsmap, socket = {
         open: false,
@@ -303,13 +303,17 @@ self.kiri.load(api => {
     function render_list(to) {
         let list = Object.keys(printers).map(name => {
             return selected?.name === name ?
-                h.option({ _: name, value: name, _selected: true }) :
-                h.option({ _: name, value: name });
+                h.option({ _: name, value: name, _selected: !export_select }) :
+                h.option({ _: name, value: name, _selected: export_select === name });
         });
         list = [
             h.option({ _: '', value: '' }),
             ...list
-        ]
+        ];
+        if (export_select) {
+            printer_select(export_select);
+            export_select = undefined;
+        }
         h.bind(to || select, list);
     }
 
@@ -620,7 +624,7 @@ self.kiri.load(api => {
                             } })
                         ]),
                         h.div({ class: "var-row" }, [
-                            h.label('tray select'),
+                            h.label('spool select'),
                             h.select({ id: "bbl_ams_tray", onchange() {
                                 let new_tray = $('bbl_ams_tray').value
                                 api.alerts.show(`select tray ${new_tray}`,2);
@@ -817,6 +821,7 @@ self.kiri.load(api => {
             host = info.host;
             serial = info.serial;
             password = info.code;
+            export_select = devlist.value;
             $('print-bambu-1').disabled =
             $('print-bambu-2').disabled =
                 (host && serial && password) ? false : true;

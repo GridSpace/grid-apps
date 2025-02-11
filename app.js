@@ -85,7 +85,7 @@ function init(mod) {
     logger = mod.log;
     debug = ENV.debug || mod.meta.debug;
     oversion = ENV.over || mod.meta.over;
-    crossOrigin = ENV.xorigin || mod.meta.xorigin || false;
+    crossOrigin = ENV.xorigin || mod.meta.xorigin || debug;
     serviceWorker = (ENV.service || mod.meta.service) !== false;
     http = mod.http;
     util = mod.util;
@@ -828,6 +828,9 @@ function addCorsHeaders(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Headers', 'X-Moto-Ajax, Content-Type');
     res.setHeader('Access-Control-Allow-Origin', req.headers['origin'] || '*');
+    if (req.headers['access-control-request-private-network'] === 'true') {
+        res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    }
     if (!crossOrigin) {
         res.setHeader("Cross-Origin-Opener-Policy", 'same-origin');
         res.setHeader("Cross-Origin-Embedder-Policy", 'require-corp');
