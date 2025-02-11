@@ -85,7 +85,7 @@ function init(mod) {
     logger = mod.log;
     debug = ENV.debug || mod.meta.debug;
     oversion = ENV.over || mod.meta.over;
-    crossOrigin = ENV.xorigin || mod.meta.xorigin || debug;
+    crossOrigin = ENV.xorigin || mod.meta.xorigin || false;
     serviceWorker = (ENV.service || mod.meta.service) !== false;
     http = mod.http;
     util = mod.util;
