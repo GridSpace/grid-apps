@@ -220,7 +220,7 @@ self.kiri.load(api => {
             print_error,
             print_type,
             sdcard,
-            spd_lvl, // 1,2,3,4 (2 = default)
+            spd_lvl, // speed 1,2,3,4 (2 = default)
             total_layer_num,
             upload
         } = print || {};
@@ -231,6 +231,7 @@ self.kiri.load(api => {
             });
         }).flat();
         if (trays && trays.length) {
+            console.log(trays);
             let options = trays.map(tray => h.option({
                 _: tray.id,
                 _selected: tray_now === tray.id,
@@ -240,6 +241,24 @@ self.kiri.load(api => {
                 h.option({ _: 'none', value: '255' }),
                 ...options
             ]);
+            let tdiv = $('bbl_ams_trays');
+            tdiv.setAttribute("style",[
+                "gap: 5px;",
+                "display:grid",
+                `grid-template-columns:repeat(4,1fr)`,
+                `grid-template-rows:repeat(${ams.ams.length},auto)`
+            ].join(';'))
+            h.bind(tdiv, trays.map(tray => h.button({
+                _: tray.tray_type,
+                class:"a-center",
+                style: [
+                    tray_now === tray.id ? `border-color: red` : undefined,
+                    tray.tray_color ? undefined : `border-style: dashed`,
+                    `background-color:#${tray.tray_color||'000'}`,
+                    `min-height:10px`,
+                    `aspect-ratio:1`
+                ].filter(v => v).join(';')
+            })))
         } else {
             $('bbl_ams_tray').innerHTML = '';
         }
@@ -645,8 +664,9 @@ self.kiri.load(api => {
                                         target: parseInt(new_tray)
                                     }
                                 });
-                            } })
+                            } }),
                         ]),
+                        h.div({ id: "bbl_ams_trays" })
                     ]),
                     h.div({ class: "t-body t-inset f-col gap3 pad4 grow" }, [
                         h.label({ class: "set-header dev-sel" }, [
