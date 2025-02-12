@@ -39,7 +39,7 @@ self.kiri.load(api => {
                     // printer_status(`error: ${error}`);
                 } else if (frame) {
                     if (selected?.rec?.serial !== serial) {
-                        console.log({
+                        false && console.log({
                             frame_serial_mismatch: serial,
                             current: selected?.rec?.serial
                         });
@@ -231,7 +231,6 @@ self.kiri.load(api => {
             });
         }).flat();
         if (trays && trays.length) {
-            console.log(trays);
             let options = trays.map(tray => h.option({
                 _: tray.id,
                 _selected: tray_now === tray.id,
@@ -250,7 +249,7 @@ self.kiri.load(api => {
             ].join(';'))
             h.bind(tdiv, trays.map(tray => h.button({
                 _: tray.tray_type,
-                class:"a-center",
+                class:`a-center${tray.tray_color?'':' checker'}`,
                 style: [
                     tray_now === tray.id ? `border-color: red` : undefined,
                     tray.tray_color ? undefined : `border-style: dashed`,
@@ -280,6 +279,13 @@ self.kiri.load(api => {
         $('bbl_fan_2_on').checked = big_fan2_speed > 0 ? true : false;
         $('bbl_fan_heatbreak').value = heatbreak_fan_speed || 0;
         $('bbl_file_active').value = gcode_file || '';
+        ui.setClass($('bbl_noz_target'), 'bred', nozzle_target_temper > 0);
+        ui.setClass($('bbl_bed_target'), 'bred', bed_target_temper > 0);
+        ui.setClass($('bbl_fan_part'), 'bred', cooling_fan_speed > 0);
+        ui.setClass($('bbl_fan_1'), 'bred', big_fan1_speed > 0);
+        ui.setClass($('bbl_fan_2'), 'bred', big_fan2_speed > 0);
+        ui.setClass($('bbl_fan_heatbreak'), 'bred', heatbreak_fan_speed > 0);
+        ui.setClass($('bbl_file_active'), 'bred', gcode_file);
         if (selected && files && filelist.selectedIndex === -1) {
             h.bind(filelist, files.map(file => {
                 let name = file.name

@@ -629,6 +629,15 @@ details[open] summary::after {
 .bt2 {
     border: 2px solid transparent;
 }
+.bred {
+    border-color: red !important;
+}
+.checker {
+    background:
+      linear-gradient(135deg, transparent 45%, #555 45%, #555 55%, transparent 55%) !important;
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+}
 .contents {
     display: contents;
 }
