@@ -1,6 +1,7 @@
 const { Client } = require('@gridspace/basic-ftp');
 const { Readable } = require('stream');
 const { FrameStream } = require('./frames');
+const { bblCA } = require('./certificates');
 
 module.exports = async (server) => {
 
@@ -24,15 +25,13 @@ module.exports = async (server) => {
             protocol: 'mqtts',
             port: 8883,
             username: 'bblp',
-            // ca: fs.readFileSync('ca.crt'),
-            // key: fs.readFileSync('client.key'),
-            // cert: fs.readFileSync('client.crt'),
-            rejectUnauthorized: false
+            ca: bblCA
         }
 
         constructor(host, code, serial, onready, onerror, onmessage) {
             this.#options.host = host;
             this.#options.password = code;
+            this.#options.servername = serial;
             this.#serial = serial;
             let client = this.#client = mqtt.connect(this.#options);
 
@@ -152,7 +151,7 @@ module.exports = async (server) => {
                 user,
                 password,
                 secure: "implicit",
-                secureOptions: { rejectUnauthorized: false }
+                secureOptions: { ca: bblCA, servername: args.serial }
             });
         } catch (error) {
             util.log({ ftp_error: error });
@@ -311,7 +310,7 @@ module.exports = async (server) => {
             res.setHeader('Cache-Control', 'no-cache, no-store, private');
             const data = req.app.post;
             const { host, code, filename, serial, ams, start } = query;
-            ftp_send({ host, code, filename, data })
+            ftp_send({ host, code, filename, data, serial })
                 .then(() => {
                     if (serial && start ==='true') {
                         file_print({ host, code, serial, filename, amsmap: ams });
@@ -362,7 +361,7 @@ module.exports = async (server) => {
                     });
                     break;
                 case "files":
-                    ftp_list({ host, code }).then(files => {
+                    ftp_list({ host, code, serial }).then(files => {
                         debug && util.log({ ftp_files: files.length });
                         // console.log(JSON.stringify(files,undefined,4));
                         files = files
@@ -383,7 +382,7 @@ module.exports = async (server) => {
                     });
                     break;
                 case "file-delete":
-                    ftp_delete({ host, code, path }).then(() => {
+                    ftp_delete({ host, code, path, serial }).then(() => {
                         util.log({ ftp_delete: path });
                         wsend({ serial, deleted: path });
                     });

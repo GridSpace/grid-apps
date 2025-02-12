@@ -2,6 +2,7 @@ const [ host, pass, sn ] = process.argv.slice(2);
 const util = require('util');
 const mqtt = require("mqtt");
 const readline = require('readline');
+const { bblCA } = require("./certificates");
 const reportTopic = `device/${sn}/report`;
 const requestTopic = `device/${sn}/request`;
 
@@ -65,10 +66,8 @@ const options = {
     port: 8883,
     username: 'bblp',
     password: pass,
-    // ca: fs.readFileSync('ca.crt'),
-    // cert: fs.readFileSync('client.crt'),
-    // key: fs.readFileSync('client.key'),
-    rejectUnauthorized: false
+    ca: bblCA,
+    servername: sn
 };
 
 function log() {
