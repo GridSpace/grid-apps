@@ -18,6 +18,7 @@ class FrameStream extends EventEmitter {
         const encoder = new TextEncoder();
         const userBytes = encoder.encode('bblp');
         const codeBytes = encoder.encode(code);
+        const useCA = false;
 
         view.setInt32(0, 0x0040, true);
         view.setInt32(4, 0x3000, true);
@@ -25,12 +26,16 @@ class FrameStream extends EventEmitter {
         new Uint8Array(abuf, 0x30, codeBytes.length).set(codeBytes);
 
         let frame;
-        const remoteSocket = this.#remoteSocket = tls.connect({
+        const remoteSocket = this.#remoteSocket = tls.connect(Object.assign({}, {
             host,
-            port: 6000,
+            port: 6000
+        }, useCA ? {
             ca: bblCA,
             servername: serial
-        }, () => {
+        } : {
+            rejectUnauthorized: false,
+            checkServerIdentity: () => {}
+        }), () => {
             // send authentication to start jpeg frame stream
             remoteSocket.write(Buffer.from(abuf));
             this.emit('connect', host);

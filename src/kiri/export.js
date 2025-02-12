@@ -529,7 +529,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         }
 
         function gen3mf(then, ptype = 'unknown') {
-            console.log({ gen3mf_target: ptype });
+            console.log({ gen3mf_printer_type: ptype });
             let now = new Date();
             let ymd = [
                 now.getFullYear(),
@@ -583,6 +583,27 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     '</Relationships>'
                 ].join('\n')
             },{
+            //     name: `Metadata/plate_1.json`,
+            //     data: JSON.toString({
+            //         "bbox_all": [ 115.199992, 115.199992, 140.799992, 140.799992 ],
+            //         "bbox_objects": [
+            //             {
+            //                 "area": 655.3599853515625,
+            //                 "bbox": [ 115.199992, 115.199992, 140.799992, 140.799992 ],
+            //                 "id": 42,
+            //                 "layer_height": 0.25,
+            //                 "name": "Cube"
+            //             }
+            //         ],
+            //         "bed_type": "textured_plate",
+            //         "filament_colors": ["#FFFFFF"],
+            //         "filament_ids": [0],
+            //         "first_extruder": 0,
+            //         "is_seq_print": false,
+            //         "nozzle_diameter": 0.6,
+            //         "version": 2
+            //     })
+            // },{
                 name: `Metadata/model_settings.config`,
                 data: [
                     '<?xml version="1.0" encoding="UTF-8"?>',

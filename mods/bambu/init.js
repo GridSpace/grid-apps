@@ -11,6 +11,7 @@ module.exports = async (server) => {
     const mcache = {};
     const wsopen = [];
     const found = {};
+    const useCA = false;
     const debug = false;
 
     class MQTT {
@@ -21,12 +22,15 @@ module.exports = async (server) => {
         #frames;
         #topic_report;
         #topic_request;
-        #options = {
+        #options = Object.assign({}, {
             protocol: 'mqtts',
             port: 8883,
             username: 'bblp',
+        }, useCA ? {
             ca: bblCA
-        }
+        } : {
+            rejectUnauthorized: false
+        });
 
         constructor(host, code, serial, onready, onerror, onmessage) {
             this.#options.host = host;
@@ -74,7 +78,10 @@ module.exports = async (server) => {
 
         keepalive() {
             clearTimeout(this.#timer);
-            this.#timer = setTimeout(() => { this.end() }, 30000);
+            this.#timer = setTimeout(() => {
+                util.log('keepalive expired', this.#serial);
+                this.end();
+            }, 300000);
         }
 
         keepconn() {
@@ -102,7 +109,7 @@ module.exports = async (server) => {
 
         end() {
             if (this.#client) {
-                debug && util.log('mqtt end', this.#serial);
+                util.log('mqtt end', this.#serial);
                 this.#client.end();
                 this.#client = undefined;
             }
@@ -144,7 +151,7 @@ module.exports = async (server) => {
         const host = args.host || "localhost";
         const user = args.user || "bblp";
         const password = args.password || args.code || '';
-        // client.ftp.verbose = true;
+        client.ftp.verbose = debug;
         try {
             await client.access({
                 port,
@@ -152,7 +159,12 @@ module.exports = async (server) => {
                 user,
                 password,
                 secure: "implicit",
-                secureOptions: { ca: bblCA, servername: args.serial }
+                secureOptions: useCA ? {
+                    ca: bblCA,
+                    servername: args.serial
+                } : {
+                    rejectUnauthorized: false
+                }
             });
         } catch (error) {
             util.log({ ftp_error: error });
@@ -219,10 +231,10 @@ module.exports = async (server) => {
                 vibration_cali: false
             }
         };
-        if (amsmap) {
+        if (amsmap && amsmap !== 'auto') {
             cmd.print.ams_mapping = amsmap.split(',').map(v => parseInt(v));
         }
-        debug && util.log({ file_print: cmd });
+        util.log({ file_print: cmd });
         get_mqtt(host, code, serial, message => {
             debug && util.log('mqtt_recv', message);
             wsend({ serial, message });
@@ -404,7 +416,7 @@ module.exports = async (server) => {
                     if_mqtt(serial, direct);
                     break;
                 case "frames":
-                    util.log('request frames', serial, frames);
+                    debug && util.log('request frames', serial, frames);
                     mcache[serial]?.set_frames(frames);
                     break;
                 case "keepalive":

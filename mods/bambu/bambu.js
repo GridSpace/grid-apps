@@ -13,7 +13,7 @@ self.kiri.load(api => {
     let monitors = [];
     let video_on = false;
     let bound, device, printers, select, selected, conn_alert, export_select;
-    let btn_del, in_host, in_code, in_serial, filelist;
+    let btn_del, in_host, in_code, in_serial, filelist, print_ams_select = 'auto';
     let ptype, host, password, serial, amsmap, socket = {
         open: false,
         q: [],
@@ -243,6 +243,22 @@ self.kiri.load(api => {
                 h.option({ _: 'none', value: '255' }),
                 ...options
             ]);
+            [ "print-bambu-spool", "bbl_file_spool" ].forEach(dropdown => {
+                h.bind($(dropdown),[
+                    h.option({ _: 'external', value: '', _selected: print_ams_select === '' }),
+                    h.option({ _: 'ams auto', value: 'auto', _selected: print_ams_select === 'auto' }),
+                    ...trays.map(tray => {
+                        return h.option({
+                            _: `ams tray ${tray.id}`,
+                            _selected: print_ams_select === tray.id,
+                            value: tray.id,
+                        });
+                    })
+                ]);
+                $(dropdown).onchange = (ev) => {
+                    print_ams_select = ev.target.value;
+                };
+            });
             let tdiv = $('bbl_ams_trays');
             tdiv.setAttribute("style",[
                 "gap: 5px;",
@@ -263,6 +279,9 @@ self.kiri.load(api => {
             })))
         } else {
             $('bbl_ams_tray').innerHTML = '';
+            $('bbl_file_spool').innerHTML = '';
+            $('print-bambu-spool').innerHTML = '';
+            print_ams_select = 'auto';
         }
         let state = (gcode_state || 'unknown').toLowerCase();
         $('bbl_noz').value = nozzle_diameter || '';
@@ -431,9 +450,17 @@ self.kiri.load(api => {
 
     function file_print(path) {
         if (selected?.rec?.host && path) {
+            let spool = print_ams_select;
             let { host, code, serial } = selected.rec;
-            console.log({ file_print: path, host, code, serial, amsmap });
-            socket.send({ cmd: "file-print", path, host, code, serial, amsmap });
+            console.log({ file_print: path, host, code, serial, spool, amsmap });
+            socket.send({
+                cmd: "file-print",
+                path,
+                host,
+                code,
+                serial,
+                amsmap: spool === 'auto' && amsmap ? amsmap : spool
+            });
         }
     }
 
@@ -743,16 +770,11 @@ self.kiri.load(api => {
                             h.label('date'),
                             h.input({ id: "bbl_file_date", size: 12, readonly })
                         ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('spool'),
+                            h.select({ id: "bbl_file_spool" })
+                        ]),
                         h.div({ class: "grow" }),
-                        h.button({
-                            _: 'delete',
-                            id: "bbl_file_delete",
-                            class: "f-col a-center t-center",
-                            disabled: true,
-                        onclick() {
-                            console.log({ deleting: selected.file.path });
-                            file_delete(selected.file.path);
-                        }}),
                         h.button({
                             _: 'print',
                             id: "bbl_file_print",
@@ -762,6 +784,15 @@ self.kiri.load(api => {
                             console.log({ printing: selected.file.path });
                             file_print(selected.file.path);
                             api.alerts.show(`printing: ${selected.file.path}`,2);
+                        }}),
+                        h.button({
+                            _: 'delete',
+                            id: "bbl_file_delete",
+                            class: "f-col a-center t-center",
+                            disabled: true,
+                        onclick() {
+                            console.log({ deleting: selected.file.path });
+                            file_delete(selected.file.path);
                         }}),
                     ]),
                     h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
@@ -796,8 +827,8 @@ self.kiri.load(api => {
         select.onchange = (ev => printer_select(select.value));
         filelist.onchange = (ev => {
             let file = selected.file = selected.status.files[filelist.selectedIndex];
-            $('bbl_file_size').value = file.size;
-            $('bbl_file_date').value = file.date;
+            $('bbl_file_size').value = file?.size ?? '';
+            $('bbl_file_date').value = file?.date ?? '';
             $('bbl_file_delete').disabled =
             $('bbl_file_print').disabled = false;
         });
@@ -876,29 +907,32 @@ self.kiri.load(api => {
             api.modal.show('bambu');
         }
         devlist.onchange = () => {
-            let info = printers[devlist.value];
+            let info = printers[devlist.value] || {};
             host = info.host;
             ptype = info.type;
             serial = info.serial;
             password = info.code;
             export_select = devlist.value;
+            $('print-bambu-spool').innerHMTL = '<option>loading...</option>';
             $('print-bambu-1').disabled =
             $('print-bambu-2').disabled =
                 (host && serial && password) ? false : true;
             get_ams_map(settings);
+            printer_select(export_select);
             console.log({ bambu: serial, ptype, host, amsmap });
         };
     }
 
     function send(filename, gcode, start) {
+        const spool = print_ams_select;
         const baseUrl = '/api/bambu_send';
         const url = new URL(baseUrl, window.location.origin);
         url.searchParams.append('host', host);
         url.searchParams.append('code', password);
         url.searchParams.append('filename', filename);
         url.searchParams.append('serial', serial);
-        url.searchParams.append('ams', amsmap);
         url.searchParams.append('start', start ?? false);
+        url.searchParams.append('ams', spool === 'auto' && amsmap ? amsmap : spool);
 
         const alert = api.alerts.show('Sending to Bambu Printer');
 
