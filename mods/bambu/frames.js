@@ -47,7 +47,7 @@ class FrameStream extends EventEmitter {
         });
 
         remoteSocket.on('error', (error) => {
-            clientSocket.destroy();
+            remoteSocket.destroy();
             this.emit('error', error);
         });
 

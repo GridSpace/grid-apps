@@ -164,10 +164,11 @@ self.kiri.load(api => {
     }
 
     function printer_video_toggle() {
-        printer_video_set(video_on = !video_on);
+        printer_video_set(!video_on);
     }
 
     function printer_video_set(bool) {
+        video_on = bool;
         set_frames(selected?.rec?.serial, bool);
         ui.setVisible($('bbl_rec'), !bool);
         ui.setVisible($('bbl_video'), bool);
@@ -239,6 +240,8 @@ self.kiri.load(api => {
                 h.option({ _: 'none', value: '255' }),
                 ...options
             ]);
+        } else {
+            $('bbl_ams_tray').innerHTML = '';
         }
         let state = (gcode_state || 'unknown').toLowerCase();
         $('bbl_noz').value = nozzle_diameter || '';
@@ -258,7 +261,7 @@ self.kiri.load(api => {
         $('bbl_fan_2_on').checked = big_fan2_speed > 0 ? true : false;
         $('bbl_fan_heatbreak').value = heatbreak_fan_speed || 0;
         $('bbl_file_active').value = gcode_file || '';
-        if (files && filelist.selectedIndex === -1) {
+        if (selected && files && filelist.selectedIndex === -1) {
             h.bind(filelist, files.map(file => {
                 let name = file.name
                     .toLowerCase()
@@ -271,6 +274,12 @@ self.kiri.load(api => {
             }));
             filelist.selectedIndex = 0;
             filelist.onchange();
+        } else if (files && files.length === 0) {
+            filelist.innerHTML = '';
+            $('bbl_file_size').value = '';
+            $('bbl_file_date').value = '';
+            $('bbl_file_delete').disabled =
+            $('bbl_file_print').disabled = true;
         }
         (lights_report || []).forEach(rec => {
             if (rec.node === 'chamber_light') {
@@ -759,6 +768,8 @@ self.kiri.load(api => {
         if (which !== 'bambu' || !device) {
             return;
         }
+        printer_render({ files: [] });
+        printer_select();
         socket.start();
         render_list();
         get_ams_map(api.conf.get());
