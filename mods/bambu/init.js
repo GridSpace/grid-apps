@@ -64,7 +64,8 @@ module.exports = async (server) => {
                 this.#frames.end();
                 this.#frames = undefined;
             } else if (!this.#frames && bool) {
-                this.#frames = new FrameStream(this.#options.host, this.#options.password)
+                let { host, password } = this.#options;
+                this.#frames = new FrameStream(host, password, this.#serial)
                     .on("frame", jpg => {
                         wsend({ serial: this.#serial, frame: jpg.toString('base64') });
                     })

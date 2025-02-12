@@ -10,7 +10,7 @@ const { bblCA } = require('./certificates');
 class FrameStream extends EventEmitter {
     #remoteSocket;
 
-    constructor(host, code) {
+    constructor(host, code, serial) {
         super();
 
         const abuf = new ArrayBuffer(80);
@@ -25,12 +25,11 @@ class FrameStream extends EventEmitter {
         new Uint8Array(abuf, 0x30, codeBytes.length).set(codeBytes);
 
         let frame;
-
         const remoteSocket = this.#remoteSocket = tls.connect({
             host,
             port: 6000,
             ca: bblCA,
-            checkServerIdentity: () => {} // TODO: use `servername: serial` instead
+            servername: serial
         }, () => {
             // send authentication to start jpeg frame stream
             remoteSocket.write(Buffer.from(abuf));
