@@ -528,7 +528,14 @@ function exportGCodeDialog(gcode, sections, info, names) {
             api.bambu.prep_export(gen3mf, gcode, info, settings);
         }
 
-        function gen3mf(then) {
+        function gen3mf(then, ptype = 'unknown') {
+            console.log({ gen3mf_target: ptype });
+            let now = new Date();
+            let ymd = [
+                now.getFullYear(),
+                (now.getMonth() + 1).toString().padStart(2,0),
+                now.getDate().toString().padStart(2,0),
+            ].join('-');
             let files = [{
                 name: `[Content_Types].xml`,
                 data: [
@@ -554,12 +561,12 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021">',
                     ' <metadata name="Application">Kiri:Moto</metadata>',
                     ' <metadata name="Copyright"></metadata>',
-                    ' <metadata name="CreationDate">2024-12-06</metadata>',
+                    ` <metadata name="CreationDate">${ymd}</metadata>`,
                     ' <metadata name="Description"></metadata>',
                     ' <metadata name="Designer"></metadata>',
                     ' <metadata name="DesignerCover"></metadata>',
                     ' <metadata name="License"></metadata>',
-                    ' <metadata name="ModificationDate">2024-12-06</metadata>',
+                    ` <metadata name="ModificationDate">${ymd}</metadata>`,
                     ' <metadata name="Origin"></metadata>',
                     ' <metadata name="Title"></metadata>',
                     ' <resources>',
@@ -603,7 +610,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     '  </header>',
                     '  <plate>',
                     '    <metadata key="index" value="1"/>',
-                    '    <metadata key="printer_model_id" value="C11"/>',
+                    // `    <metadata key="printer_model_id" value="${ptype}"/>`,
                     `    <metadata key="nozzle_diameters" value="${nozzle0}"/>`,
                     '    <metadata key="timelapse_type" value="0"/>',
                     `    <metadata key="prediction" value="${Math.round(info.time)}"/>`,

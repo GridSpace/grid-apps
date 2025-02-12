@@ -14,7 +14,7 @@ self.kiri.load(api => {
     let video_on = false;
     let bound, device, printers, select, selected, conn_alert, export_select;
     let btn_del, in_host, in_code, in_serial, filelist;
-    let host, password, serial, amsmap, socket = {
+    let ptype, host, password, serial, amsmap, socket = {
         open: false,
         q: [],
         start() {
@@ -178,6 +178,9 @@ self.kiri.load(api => {
     }
 
     function printer_select(name = '') {
+        for (let [ printer, rec ] of Object.entries(printers)) {
+            rec.selected = printer === name;
+        }
         printer_video_set(false);
         btn_del.disabled = false;
         let rec = printers[name] || {};
@@ -331,6 +334,16 @@ self.kiri.load(api => {
         }
         if (gcode_state && conn_alert) {
             api.alerts.hide(conn_alert);
+        }
+        // extract printer "type" from module info so that the 3MF
+        // will be accepted by the target printer
+        let serial = selected?.rec?.serial;
+        if (serial && info?.module) {
+            for (let mod of info.module) {
+                if (mod.sn === serial) {
+                    selected.rec.type = mod.project_name;
+                }
+            }
         }
     }
 
@@ -794,6 +807,16 @@ self.kiri.load(api => {
         if (which !== 'bambu' || !device) {
             return;
         }
+        // determine default printer from last selection
+        // if no export dialog selection override present
+        if (!export_select) {
+            for (let [ printer, rec ] of Object.entries(printers)) {
+                if (rec.selected) {
+                    export_select = printer;
+                    break;
+                }
+            }
+        }
         printer_render({ files: [] });
         printer_select();
         socket.start();
@@ -846,16 +869,16 @@ self.kiri.load(api => {
         render_list(devlist);
         $('bambu-output').style.display = 'flex';
         $('print-bambu-1').onclick = function() {
-            gen3mf(zip => send(`${$('print-filename').value}.3mf`, zip, false));
+            gen3mf(zip => send(`${$('print-filename').value}.3mf`, zip, false), ptype);
         }
         $('print-bambu-2').onclick = function() {
-            gen3mf(zip => send(`${$('print-filename').value}.3mf`, zip, true));
+            gen3mf(zip => send(`${$('print-filename').value}.3mf`, zip, true), ptype);
             api.modal.show('bambu');
         }
         devlist.onchange = () => {
             let info = printers[devlist.value];
-            console.log({ selected: devlist.value, info });
             host = info.host;
+            ptype = info.type;
             serial = info.serial;
             password = info.code;
             export_select = devlist.value;
@@ -863,7 +886,7 @@ self.kiri.load(api => {
             $('print-bambu-2').disabled =
                 (host && serial && password) ? false : true;
             get_ams_map(settings);
-            console.log({ bambu: host, serial, amsmap });
+            console.log({ bambu: serial, ptype, host, amsmap });
         };
     }
 

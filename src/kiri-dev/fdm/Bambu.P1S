@@ -2,10 +2,10 @@
     "mode": "FDM",
     "internal": 0,
     "bedHeight": 2.5,
-    "bedWidth": 250,
-    "bedDepth": 250,
+    "bedWidth": 256,
+    "bedDepth": 256,
     "bedRound": false,
-    "maxHeight": 250,
+    "maxHeight": 256,
     "originCenter": false,
     "gcodeFan": [
         "M106 S{fan_speed}"
