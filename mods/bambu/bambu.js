@@ -275,6 +275,7 @@ self.kiri.load(api => {
                     tray_now === tray.id ? `border-color: red` : undefined,
                     tray.tray_color ? undefined : `border-style: dashed`,
                     `background-color:#${tray.tray_color||'000'}`,
+                    `color:#${calcFG(tray.tray_color||'000')}`,
                     `min-height:10px`,
                     `aspect-ratio:1`
                 ].filter(v => v).join(';')
@@ -467,6 +468,14 @@ self.kiri.load(api => {
                 amsmap: spool === 'auto' && amsmap ? amsmap : spool
             });
         }
+    }
+
+    function calcFG(bg) {
+        let r = parseInt(bg.substring(0, 2), 16);
+        let g = parseInt(bg.substring(2, 4), 16);
+        let b = parseInt(bg.substring(4, 6), 16);
+        let luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+        return luminance > 0.5 ? "000000" : "FFFFFF";
     }
 
     api.event.on("init-done", function() {
