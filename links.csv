@@ -1,13 +1,13 @@
-src/ext/three-svg.js,../../node_modules/three/examples/js/loaders/SVGLoader.js
-src/ext/three.js,../../node_modules/three/build/three.min.js
+src/ext/gerber.js,../../node_modules/@tracespace/parser/umd/parser.js
+src/ext/manifold.js,../../node_modules/manifold-3d/manifold.js
 src/ext/base64.js,../../node_modules/base64-js/base64js.min.js
 src/ext/earcut.js,../../node_modules/earcut/src/earcut.js
-src/ext/three-bvh.js,../../node_modules/three-mesh-bvh/build/index.umd.cjs
 src/ext/tween.js,../../node_modules/@tweenjs/tween.js/src/Tween.js
-src/ext/three-bgu.js,../../node_modules/three/examples/js/utils/BufferGeometryUtils.js
 src/ext/jszip.js,../../node_modules/jszip/dist/jszip.js
+src/wasm/manifold.wasm,../../node_modules/manifold-3d/manifold.wasm
 src/kiri-dev/fdm/GridBot.Two,GridBot.One
 src/kiri/lang-en.js,../../web/kiri/lang/en.js
+web/fon2,../node_modules/bootstrap-icons/font/
 web/kiri/lang/pl.js,pl-pl.js
 web/kiri/lang/pt-pt.js,pt.js
 web/kiri/lang/da-dk.js,da.js
