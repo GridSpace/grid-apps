@@ -334,7 +334,8 @@ self.kiri.load(api => {
                 $('bbl_chamber_light').checked = (rec.mode === 'on');
             }
         });
-        ui.setVisible($('bbl_ams'), ams?.version ? true : false);
+        ui.setEnabled($('bbl_ams_spool'), ams?.version ? true : false);
+        ui.setEnabled($('bbl_ams_tray'), ams?.version ? true : false);
         $('bbl_ams_spool').checked = ((home_flag ?? 0) & 0x400) ? true : false;
         $('bbl_step_recover').checked = ((home_flag ?? 0) & 0x10) ? true : false;
         // provide only the print info from the serial recorld
@@ -658,7 +659,7 @@ self.kiri.load(api => {
                                 api.alerts.show(`set chamber light`,2);
                             } })
                         ]),
-                    ])
+                    ]),
                 ]),
                 h.div({ class: "f-col gap4 grow" }, [
                     h.textarea({
@@ -679,7 +680,7 @@ self.kiri.load(api => {
                     })
                 ]),
                 h.div({ class: "f-col gap3" }, [
-                    h.div({ id: "bbl_ams", class: "hide t-body t-inset f-col gap3 pad4" }, [
+                    h.div({ id: "bbl_ams", class: "t-body t-inset f-col gap3 pad4" }, [
                         h.label({ class: "set-header dev-sel" }, [
                             h.a('ams')
                         ]),
@@ -715,45 +716,6 @@ self.kiri.load(api => {
                         ]),
                         h.div({ id: "bbl_ams_trays" })
                     ]),
-                    h.div({ class: "t-body t-inset f-col gap3 pad4 grow" }, [
-                        h.label({ class: "set-header dev-sel" }, [
-                            h.a('print options')
-                        ]),
-                        h.div({ class: "var-row" }, [
-                            // home_flag bit 5 (0x10)
-                            h.label('auto step recovery'),
-                            h.input({ id: "bbl_step_recover", type: "checkbox", onclick() {
-                                api.alerts.show(`changing step recovery`,2);
-                                cmd_direct({
-                                    print: {
-                                        auto_recovery: $('bbl_step_recover').checked,
-                                        command: 'print_option',
-                                        sequence_id: '124',
-                                        option: $('bbl_step_recover').checked ? 1 : 0
-                                    }
-                                })
-                            } })
-                        ]),
-
-                        h.div({ class: "var-row" }, [
-                            h.label('acceleration'),
-                            h.select({ id: "bbl_accel", onchange() {
-                                api.alerts.show(`changing acceleration`,2);
-                                cmd_direct({ print: {
-                                    command: 'print_speed',
-                                    param: ($('bbl_accel').selectedIndex + 1).toString()
-                                } })
-                            } }, [
-                                h.option({ _: "silent", value: 1 }),
-                                h.option({ _: "normal", value: 2, selected: true }),
-                                h.option({ _: "sport", value: 3 }),
-                                h.option({ _: "insane", value: 4 }),
-                            ])
-                        ]),
-
-                    ]),
-                // ]),
-                // h.div({ class: "f-col gap3" }, [
                     h.div({ class: "t-body t-inset f-col gap3 pad4 grow" }, [
                         h.div({ class: "set-header", onclick() {
                             file_list();
@@ -800,9 +762,40 @@ self.kiri.load(api => {
                     ]),
                     h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
                         h.label({ class: "set-header dev-sel" }, [
-                            h.a('active file')
+                            h.a('printing')
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            // home_flag bit 5 (0x10)
+                            h.label('auto step recovery'),
+                            h.input({ id: "bbl_step_recover", type: "checkbox", onclick() {
+                                api.alerts.show(`changing step recovery`,2);
+                                cmd_direct({
+                                    print: {
+                                        auto_recovery: $('bbl_step_recover').checked,
+                                        command: 'print_option',
+                                        sequence_id: '124',
+                                        option: $('bbl_step_recover').checked ? 1 : 0
+                                    }
+                                })
+                            } })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('acceleration'),
+                            h.select({ id: "bbl_accel", onchange() {
+                                api.alerts.show(`changing acceleration`,2);
+                                cmd_direct({ print: {
+                                    command: 'print_speed',
+                                    param: ($('bbl_accel').selectedIndex + 1).toString()
+                                } })
+                            } }, [
+                                h.option({ _: "silent", value: 1 }),
+                                h.option({ _: "normal", value: 2, selected: true }),
+                                h.option({ _: "sport", value: 3 }),
+                                h.option({ _: "insane", value: 4 }),
+                            ])
                         ]),
                         h.div({ class: "var-row f-grow" }, [
+                            h.label('active'),
                             h.input({ id: "bbl_file_active", class: "t-left", readonly })
                         ]),
                         h.div({ class: "f-row gap3 f-grow" }, [

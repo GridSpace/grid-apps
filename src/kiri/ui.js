@@ -69,6 +69,13 @@ gapp.register("kiri.ui", [], (root, exports) => {
         prompt,
         alert,
         onBlur,
+        setEnabled(el, bool) {
+            if (bool) {
+                el.removeAttribute('disabled');
+            } else {
+                el.setAttribute('disabled','');
+            }
+        },
         setVisible(el, bool) {
             kiri.ui.setClass(el, 'hide', !bool);
         },
