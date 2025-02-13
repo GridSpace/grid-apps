@@ -160,6 +160,8 @@ module.exports = async (server) => {
                 password,
                 secure: "implicit",
                 secureOptions: useCA ? {
+                    // this appears to break some
+                    // operations like file deletion
                     ca: bblCA,
                     servername: args.serial
                 } : {

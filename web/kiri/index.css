@@ -689,6 +689,9 @@ details[open] summary::after {
 .fcol, .f-col {
     flex-direction: column;
 }
+.f-grow > * {
+    flex: 1;
+}
 .auto {
     flex-basis: auto;
 }

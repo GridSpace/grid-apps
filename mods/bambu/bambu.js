@@ -293,6 +293,7 @@ self.kiri.load(api => {
         $('bbl_bed_on').checked = bed_target_temper > 0;
         $('bbl_pause').disabled = (gcode_state !== 'RUNNING');
         $('bbl_resume').disabled = (gcode_state !== 'PAUSE' || gcode_state === 'FAILED');
+        $('bbl_stop').disabled = (!gcode_file);
         $('bbl_fan_part').value = cooling_fan_speed || 0;
         $('bbl_fan_part_on').checked = cooling_fan_speed > 0 ? true : false;
         $('bbl_fan_1').value = big_fan1_speed || 0;
@@ -775,37 +776,39 @@ self.kiri.load(api => {
                             h.select({ id: "bbl_file_spool" })
                         ]),
                         h.div({ class: "grow" }),
-                        h.button({
-                            _: 'print',
-                            id: "bbl_file_print",
-                            class: "f-col a-center t-center",
-                            disabled: true,
-                        onclick() {
-                            console.log({ printing: selected.file.path });
-                            file_print(selected.file.path);
-                            api.alerts.show(`printing: ${selected.file.path}`,2);
-                        }}),
-                        h.button({
-                            _: 'delete',
-                            id: "bbl_file_delete",
-                            class: "f-col a-center t-center",
-                            disabled: true,
-                        onclick() {
-                            console.log({ deleting: selected.file.path });
-                            file_delete(selected.file.path);
-                        }}),
+                        h.div({ class: "f-row gap3 f-grow" }, [
+                            h.button({
+                                _: 'print',
+                                id: "bbl_file_print",
+                                class: "f-col a-center t-center",
+                                disabled: true,
+                            onclick() {
+                                console.log({ printing: selected.file.path });
+                                file_print(selected.file.path);
+                                api.alerts.show(`printing: ${selected.file.path}`,2);
+                            }}),
+                            h.button({
+                                _: 'delete',
+                                id: "bbl_file_delete",
+                                class: "f-col a-center t-center",
+                                disabled: true,
+                            onclick() {
+                                console.log({ deleting: selected.file.path });
+                                file_delete(selected.file.path);
+                            }}),
+                        ])
                     ]),
                     h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
                         h.label({ class: "set-header dev-sel" }, [
                             h.a('active file')
                         ]),
-                        h.div({ class: "var-row" }, [
+                        h.div({ class: "var-row f-grow" }, [
                             h.input({ id: "bbl_file_active", class: "t-left", readonly })
                         ]),
-                        h.div([
-                            h.button({ _: "pause", id: "bbl_pause", class: "a-center", onclick() { cmd_if("pause") } }),
-                            h.button({ _: "resume", id: "bbl_resume", class: "a-center", onclick() { cmd_if("resume") } }),
-                            h.button({ _: "stop", class: "a-center", onclick() { cmd_if("cancel") } }),
+                        h.div({ class: "f-row gap3 f-grow" }, [
+                            h.button({ _: "pause", id: "bbl_pause", class: "f-col t-center a-center", onclick() { cmd_if("pause") } }),
+                            h.button({ _: "resume", id: "bbl_resume", class: "f-col t-center a-center", onclick() { cmd_if("resume") } }),
+                            h.button({ _: "stop", id: "bbl_stop", class: "f-col t-center a-center", onclick() { cmd_if("cancel") } }),
                         ])
                     ])
                 ])

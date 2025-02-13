@@ -639,9 +639,9 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     '    <metadata key="outside" value="false"/>',
                     '    <metadata key="support_used" value="false"/>',
                     '    <metadata key="label_object_enabled" value="false"/>',
-                    '    <object identify_id="560" name="Cube" skipped="false" />',
-                    '    <filament id="1" tray_info_idx="GFL96" type="PLA" color="#FFFFFF" used_m="0.17" used_g="0.50" />',
-                    '    <warning msg="bed_temperature_too_high_than_filament" level="1" error_code ="1000C001"  />',
+                    // '    <object identify_id="560" name="Cube" skipped="false" />',
+                    // '    <filament id="1" tray_info_idx="GFL96" type="PLA" color="#FFFFFF" used_m="0.17" used_g="0.50" />',
+                    // '    <warning msg="bed_temperature_too_high_than_filament" level="1" error_code ="1000C001"  />',
                     '  </plate>',
                     '</config>'
                 ].join('\n')
