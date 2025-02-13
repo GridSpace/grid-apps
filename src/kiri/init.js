@@ -2016,7 +2016,7 @@ gapp.register("kiri.init", (root, exports) => {
             );
         };
 
-        ui.modal.onclick = api.modal.hide;
+        // ui.modal.onclick = api.modal.hide;
         ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
 
         // add app name hover info

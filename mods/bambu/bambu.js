@@ -50,6 +50,8 @@ self.kiri.load(api => {
                     img.onload = () => {
                         const canvas = $('bbl_video');
                         const ctx = canvas.getContext('2d');
+                        const cpn = canvas.parentNode;
+                        canvas.style = `width:${cpn.clientWidth}px;height:${cpn.clientHeight}px`;
                         canvas.width = img.width;
                         canvas.height = img.height;
                         ctx.drawImage(img, 0, 0);
@@ -170,7 +172,6 @@ self.kiri.load(api => {
     function printer_video_set(bool) {
         video_on = bool;
         set_frames(selected?.rec?.serial, bool);
-        // ui.setVisible($('bbl_rec'), !bool);
         ui.setVisible($('bbl_video_frame'), bool);
         ui.setClass($('bbl_vid_toggle'), 'bred', bool);
         const canvas = $('bbl_video');
@@ -665,17 +666,17 @@ self.kiri.load(api => {
                 h.div({ class: "f-col gap4 grow" }, [
                     h.div({
                         id: "bbl_video_frame",
-                        class: "video hide",
-                        style: "width: 100%; xheight: auto; box-sizing: border-box; aspect-ratio: 16 / 9",
+                        class: "video hide f-row",
+                        style: "width: 100%; box-sizing: border-box; aspect-ratio: 16 / 9",
                     },[
                         h.canvas({
                             id: "bbl_video",
-                            style: "width: 100%; xheight: auto; box-sizing: border-box; aspect-ratio: 16 / 9",
+                            style: "max-width: 100%; box-sizing: border-box; grow",
                         })
                     ]),
                     h.textarea({
                         id: "bbl_rec",
-                        style: "flex-grow: 1; width: 100%; xheight: auto; resize: none; box-sizing: border-box",
+                        style: "flex-grow: 1; width: 100%; resize: none; box-sizing: border-box",
                         wrap: "off",
                         spellcheck: "false",
                         xrows: 15, cols: 65
