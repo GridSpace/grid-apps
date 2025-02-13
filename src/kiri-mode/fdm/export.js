@@ -294,15 +294,16 @@ FDM.export = function(print, online, ondone, ondebug) {
         append("; --- startup ---");
     }
 
-    // lookg for ";; PREAMBLE <MODE>" comment
+    // looking for ";; PREAMBLE <MODE>" comment
     let pre = 0;
     let gcpre = [];
     for (let line of device.gcodePre) {
         line = line.trim();
-        if (line.indexOf(";; PREAMBLE ") === 0) {
+        if (line.indexOf(";; PREAMBLE") === 0) {
             if (line === ';; PREAMBLE OFF') pre = 1;
-            if (line === ';; PREAMBLE END') pre = 2;
-        } if (line.indexOf(";; AXISMAP ") === 0) {
+            else if (line === ';; PREAMBLE END') pre = 2;
+            else gcpre.push(pre = 123);
+        } else if (line.indexOf(";; AXISMAP ") === 0) {
             let axmap = JSON.parse(line.substring(11).trim());
             for (let key in axmap) {
                 axis[key] = ` ${axmap[key]}`;
@@ -317,6 +318,10 @@ FDM.export = function(print, online, ondone, ondebug) {
     let t0 = false;
     let t1 = false;
     for (let line of gcpre) {
+        if (line === pre) {
+            preamble();
+            continue;
+        }
         if (line.indexOf('T0') === 0) t0 = true; else
         if (line.indexOf('T1') === 0) t1 = true; else
         if (line.indexOf('M82') === 0) {

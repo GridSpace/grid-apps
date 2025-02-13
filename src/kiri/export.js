@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: ext.md5
 // dep: geo.base
 // dep: data.local
 // dep: kiri.consts
@@ -529,7 +530,6 @@ function exportGCodeDialog(gcode, sections, info, names) {
         }
 
         function gen3mf(then, ptype = 'unknown') {
-            console.log({ gen3mf_printer_type: ptype });
             let now = new Date();
             let ymd = [
                 now.getFullYear(),
@@ -651,6 +651,9 @@ function exportGCodeDialog(gcode, sections, info, names) {
             },{
                 name: `Metadata/plate_1.gcode`,
                 data: gcode
+            },{
+                name: `Metadata/plate_1.gcode.md5`,
+                data: ext.md5.hash(gcode)
             },{
                 name: `Metadata/plate_1_small.png`,
                 data: api.view.bambu.s128.png
