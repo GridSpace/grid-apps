@@ -30,6 +30,9 @@
         ";; END"
     ],
     "gcodePre": [
+        "; total layer number: {layers}",
+        ";; PREAMBLE",
+        ";; DEFINE BAMBU-AMS 0,1,2,3",
         "; ===== HEADER ====================================",
         "M73 P0 R24                                         ; Initial progress and time remaining",
         "M201 X12000 Y12000 Z1500 E5000                     ; Set max acceleration",

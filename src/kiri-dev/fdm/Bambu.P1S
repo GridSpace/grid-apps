@@ -30,6 +30,8 @@
         ";; END"
     ],
     "gcodePre": [
+        "; total layer number: {layers}",
+        ";; PREAMBLE",
         ";; DEFINE BAMBU-AMS 0,1,2,3",
         "; ===== HEADER ====================================",
         "M73 P0 R14                                         ; Initial progress and time remaining",
