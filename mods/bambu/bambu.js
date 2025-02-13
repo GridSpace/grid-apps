@@ -170,8 +170,9 @@ self.kiri.load(api => {
     function printer_video_set(bool) {
         video_on = bool;
         set_frames(selected?.rec?.serial, bool);
-        ui.setVisible($('bbl_rec'), !bool);
-        ui.setVisible($('bbl_video'), bool);
+        // ui.setVisible($('bbl_rec'), !bool);
+        ui.setVisible($('bbl_video_frame'), bool);
+        ui.setClass($('bbl_vid_toggle'), 'bred', bool);
         const canvas = $('bbl_video');
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -662,22 +663,28 @@ self.kiri.load(api => {
                     ]),
                 ]),
                 h.div({ class: "f-col gap4 grow" }, [
+                    h.div({
+                        id: "bbl_video_frame",
+                        class: "video hide",
+                        style: "width: 100%; xheight: auto; box-sizing: border-box; aspect-ratio: 16 / 9",
+                    },[
+                        h.canvas({
+                            id: "bbl_video",
+                            style: "width: 100%; xheight: auto; box-sizing: border-box; aspect-ratio: 16 / 9",
+                        })
+                    ]),
                     h.textarea({
                         id: "bbl_rec",
-                        style: "width: 100%; height: 100%; resize: none; box-sizing: border-box",
+                        style: "flex-grow: 1; width: 100%; xheight: auto; resize: none; box-sizing: border-box",
                         wrap: "off",
                         spellcheck: "false",
-                        rows: 15, cols: 65
+                        xrows: 15, cols: 65
                     }),
                     h.button({
+                        id: "bbl_vid_toggle",
                         style: "position: absolute; top: 5px; right: 5px",
                         onclick: printer_video_toggle
                     }, [ h.i({ class: "fa-solid fa-video" }) ]),
-                    h.canvas({
-                        id: "bbl_video",
-                        class: "video hide",
-                        style: "width: 100%; height: auto; box-sizing: border-box; aspect-ratio: 16 / 9",
-                    })
                 ]),
                 h.div({ class: "f-col gap3" }, [
                     h.div({ id: "bbl_ams", class: "t-body t-inset f-col gap3 pad4" }, [
