@@ -136,6 +136,19 @@ FDM.export = function(print, online, ondone, ondebug) {
     }
     subst.tool_count = tools_used.length;
 
+    // encodes an array offset as a single "on" bit in an
+    // 8 byte array then converts the array to base64 which
+    // is what Bambu's M624 uses to flag an object as currently
+    // being printed. the array is presented at the top of the
+    // gcode as a comment: "; model label id: {model_labels}"
+    function encodeBitOffset(index) {
+        let bytes = new Uint8Array(8);
+        let byteIndex = Math.floor(index / 8);
+        let bitPosition = index % 8;
+        bytes[byteIndex] |= (1 << bitPosition);
+        return btoa(String.fromCharCode(...bytes));
+    }
+
     function setTempFanSpeed(tempSpeed) {
         if (tempSpeed > 0) {
             fanSpeedSave = fanSpeedSave >= 0 ? fanSpeedSave : fanSpeed;
@@ -595,14 +608,6 @@ FDM.export = function(print, online, ondone, ondebug) {
             moveTo({z:zpos}, seekMMM);
         }
 
-        function encodeOffset(index) {
-            let bytes = new Uint8Array(8);
-            let byteIndex = Math.floor(index / 8);
-            let bitPosition = index % 8;
-            bytes[byteIndex] |= (1 << bitPosition);
-            return btoa(String.fromCharCode(...bytes));
-        }
-
         let cwidget;
         // iterate through layer outputs
         for (pidx=0; pidx<path.length; pidx++) {
@@ -618,7 +623,7 @@ FDM.export = function(print, online, ondone, ondebug) {
                 }
                 if (out.widget) {
                     let off = model_labels.indexOf(out.widget.track.grid_id);
-                    let b64 = encodeOffset(off);
+                    let b64 = encodeBitOffset(off);
                     append(`; start object id: ${out.widget.track.grid_id}`);
                     isBambu && append(`M624 ${b64}`);
                 }

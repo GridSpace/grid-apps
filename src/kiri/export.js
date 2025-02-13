@@ -635,6 +635,9 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     '  </header>',
                     '  <plate>',
                     '    <metadata key="index" value="1"/>',
+                    // setting this value allows for the printer to error out if
+                    // the gcode / 3mf was intended for a different target type.
+                    // leaving it blank bypasses the check
                     // `    <metadata key="printer_model_id" value="${ptype}"/>`,
                     `    <metadata key="nozzle_diameters" value="${nozzle0}"/>`,
                     '    <metadata key="timelapse_type" value="0"/>',
