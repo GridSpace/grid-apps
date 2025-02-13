@@ -295,7 +295,8 @@ self.kiri.load(api => {
         $('bbl_bed_on').checked = bed_target_temper > 0;
         $('bbl_pause').disabled = (gcode_state !== 'RUNNING');
         $('bbl_resume').disabled = (gcode_state !== 'PAUSE' || gcode_state === 'FAILED');
-        $('bbl_stop').disabled = (!gcode_file);
+        $('bbl_stop').disabled = gcode_file ? false : true;
+        $('bbl_file_print').disabled = gcode_file ? true : false;
         $('bbl_fan_part').value = cooling_fan_speed || 0;
         $('bbl_fan_part_on').checked = cooling_fan_speed > 0 ? true : false;
         $('bbl_fan_1').value = big_fan1_speed || 0;
@@ -679,7 +680,7 @@ self.kiri.load(api => {
                         style: "flex-grow: 1; width: 100%; resize: none; box-sizing: border-box",
                         wrap: "off",
                         spellcheck: "false",
-                        xrows: 15, cols: 65
+                        cols: 65
                     }),
                     h.button({
                         id: "bbl_vid_toggle",
@@ -748,6 +749,15 @@ self.kiri.load(api => {
                         h.div({ class: "grow" }),
                         h.div({ class: "f-row gap3 f-grow" }, [
                             h.button({
+                                _: 'delete',
+                                id: "bbl_file_delete",
+                                class: "f-col a-center t-center",
+                                disabled: true,
+                            onclick() {
+                                console.log({ deleting: selected.file.path });
+                                file_delete(selected.file.path);
+                            }}),
+                            h.button({
                                 _: 'print',
                                 id: "bbl_file_print",
                                 class: "f-col a-center t-center",
@@ -756,15 +766,6 @@ self.kiri.load(api => {
                                 console.log({ printing: selected.file.path });
                                 file_print(selected.file.path);
                                 api.alerts.show(`printing: ${selected.file.path}`,2);
-                            }}),
-                            h.button({
-                                _: 'delete',
-                                id: "bbl_file_delete",
-                                class: "f-col a-center t-center",
-                                disabled: true,
-                            onclick() {
-                                console.log({ deleting: selected.file.path });
-                                file_delete(selected.file.path);
                             }}),
                         ])
                     ]),
