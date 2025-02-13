@@ -529,7 +529,11 @@ function exportGCodeDialog(gcode, sections, info, names) {
             api.bambu.prep_export(gen3mf, gcode, info, settings);
         }
 
-        function gen3mf(then, ptype = 'unknown') {
+        // let wids = api.widgets.all();
+        // let bnds = settings.bounds;
+        // console.log({ wids, bnds });
+
+        function gen3mf(then, ptype = 'unknown', ams = [0]) {
             let now = new Date();
             let ymd = [
                 now.getFullYear(),
@@ -582,28 +586,28 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     ' <Relationship Target="/Metadata/plate_1.gcode" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/gcode"/>',
                     '</Relationships>'
                 ].join('\n')
-            },{
+            // },{
             //     name: `Metadata/plate_1.json`,
-            //     data: JSON.toString({
-            //         "bbox_all": [ 115.199992, 115.199992, 140.799992, 140.799992 ],
-            //         "bbox_objects": [
-            //             {
-            //                 "area": 655.3599853515625,
-            //                 "bbox": [ 115.199992, 115.199992, 140.799992, 140.799992 ],
-            //                 "id": 42,
-            //                 "layer_height": 0.25,
-            //                 "name": "Cube"
+            //     data: JSON.stringify({
+            //         "bbox_all": [ 100, 100, 200, 200 ],
+            //         "bbox_objects": (info.labels || []).map(label => {
+            //             return {
+            //                 area: 600,
+            //                 bbox: [ 100, 100, 200, 200 ],
+            //                 id: label,
+            //                 layer_height: 0.2,
+            //                 name: "Object"
             //             }
-            //         ],
+            //         }),
             //         "bed_type": "textured_plate",
             //         "filament_colors": ["#FFFFFF"],
-            //         "filament_ids": [0],
-            //         "first_extruder": 0,
+            //         "filament_ids": ams,
+            //         "first_extruder": ams[0],
             //         "is_seq_print": false,
             //         "nozzle_diameter": 0.6,
             //         "version": 2
             //     })
-            // },{
+            },{
                 name: `Metadata/model_settings.config`,
                 data: [
                     '<?xml version="1.0" encoding="UTF-8"?>',
@@ -639,12 +643,13 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     '    <metadata key="outside" value="false"/>',
                     '    <metadata key="support_used" value="false"/>',
                     '    <metadata key="label_object_enabled" value="false"/>',
-                    // '    <object identify_id="560" name="Cube" skipped="false" />',
+                    (info.labels || []).map(label =>
+                    `    <object identify_id="${label}" name="Object" skipped="false" />`),
                     // '    <filament id="1" tray_info_idx="GFL96" type="PLA" color="#FFFFFF" used_m="0.17" used_g="0.50" />',
                     // '    <warning msg="bed_temperature_too_high_than_filament" level="1" error_code ="1000C001"  />',
                     '  </plate>',
                     '</config>'
-                ].join('\n')
+                ].filter(v => v).flat().join('\n')
             },{
                 name: `Metadata/project_settings.config`,
                 data: JSON.stringify({},undefined,4)

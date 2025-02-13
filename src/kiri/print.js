@@ -35,6 +35,12 @@ class Print {
         this.nextType = type;
     }
 
+    // allows for gcode object id annotations enabling
+    // discrete object cancellation during print (bambu)
+    setWidget(widget) {
+        this.widget = widget;
+    }
+
     addOutput(array, point, emit, speed, tool, type) {
         let { lastPoint, lastEmit, lastOut } = this;
         // drop duplicates (usually intruced by FDM bisections)
@@ -52,6 +58,7 @@ class Print {
         if (tool !== undefined) {
             this.tools[tool] = true;
         }
+        lastOut.widget = this.widget;
         array.push(lastOut);
         this.nextType = undefined;
         return lastOut;

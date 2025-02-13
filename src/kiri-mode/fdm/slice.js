@@ -63,6 +63,19 @@ FDM.sliceAll = function(settings, onupdate) {
         .sort((a,b) => {
             return a.slices[0].z - b.slices[0].z
         });
+    // assign grid_id which can be embedded in gcode and
+    // used by the controller to cancel objects during print
+    let { bounds } = settings;
+    for (let widget of widgets) {
+        let { pos, box } = widget.track;
+        // calculate top/left coordinate for widget
+        // relative to bounding box for all widgets
+        let tl = {
+            x: Math.round((pos.x - box.w/2 - bounds.min.x) / 10) + 1,
+            y: Math.round((pos.y - box.h/2 - bounds.min.y) / 10) + 1
+        };
+        widget.track.grid_id = tl.x * 100 + tl.y;
+    }
     // count extruders used
     let ext = [];
     for (let w of widgets) {

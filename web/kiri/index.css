@@ -212,6 +212,7 @@ details[open] summary::after {
     transform: rotate(90deg);
 }
 
+/* for bambu mgr dialog */
 .video {
     border: 1px solid #888;
     border-radius: 3px;

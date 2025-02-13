@@ -549,6 +549,7 @@ FDM.prepare = async function(widgets, settings, update) {
             let beltStart = slice.belt && slice.belt.touch;// && (widgets.length === 1);
             // output seek to start point between mesh slices if previous data
             print.setType('layer');
+            print.setWidget(lastWidget);
             printPoint = slicePrintPath(
                 print,
                 slice,
@@ -579,6 +580,7 @@ FDM.prepare = async function(widgets, settings, update) {
                     }
                 }
             );
+            print.setWidget(null);
 
             lastOut = slice;
             lastExt = lastOut.extruder;

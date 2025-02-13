@@ -14,14 +14,20 @@ const { getRangeParameters } = FDM;
 const debug = false;
 
 FDM.export = function(print, online, ondone, ondebug) {
-    const { settings, belty, tools, firstTool } = print;
+    const { widgets, settings, belty, tools, firstTool } = print;
     const { bounds, controller, device, process, filter, mode } = settings;
     const { extruders, fwRetract } = device;
     const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
     const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature } = device;
 
+    let model_labels = [];
+    for (let widget of widgets) {
+        model_labels.push(widget.track.grid_id);
+    }
+
     let layers = print.output,
         extras = device.extras || {},
+        isBambu = extras.bbl,
         { extrudeAbs } = device,
         { exportThumb } = controller,
         extused = Object.keys(print.extruders).map(v => parseInt(v)),
@@ -108,7 +114,8 @@ FDM.export = function(print, online, ondone, ondebug) {
             layers: layers.length,
             progress: 0,
             nozzle: tool,
-            tool: tool
+            tool: tool,
+            model_labels: model_labels.sort().join(',')
         },
         pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
         lines = 0,
@@ -588,10 +595,35 @@ FDM.export = function(print, online, ondone, ondebug) {
             moveTo({z:zpos}, seekMMM);
         }
 
+        function encodeOffset(index) {
+            let bytes = new Uint8Array(8);
+            let byteIndex = Math.floor(index / 8);
+            let bitPosition = index % 8;
+            bytes[byteIndex] |= (1 << bitPosition);
+            return btoa(String.fromCharCode(...bytes));
+        }
+
+        let cwidget;
         // iterate through layer outputs
         for (pidx=0; pidx<path.length; pidx++) {
             out = path[pidx];
             speedMMM = (out.speed || process.outputFeedrate) * 60; // range
+
+            // hint to controller that we're working on a specific object
+            // so that gcode between start/stop comments can be cancelled
+            if (out.widget !== cwidget) {
+                if (cwidget) {
+                    append(`; end object id: ${cwidget.track.grid_id}`);
+                    isBambu && append('M625');
+                }
+                if (out.widget) {
+                    let off = model_labels.indexOf(out.widget.track.grid_id);
+                    let b64 = encodeOffset(off);
+                    append(`; start object id: ${out.widget.track.grid_id}`);
+                    isBambu && append(`M624 ${b64}`);
+                }
+                cwidget = out.widget;
+            }
 
             // emit comment on output type chage
             if (last && out.type !== last.type) {
@@ -791,6 +823,11 @@ FDM.export = function(print, online, ondone, ondebug) {
             laste = out.emit;
         }
         layer++;
+        if (cwidget) {
+            append(`; end object id: ${cwidget.track.grid_id}`);
+            isBambu && append('M625');
+            cwidget = undefined;
+        }
 
         // end open loop when detected
         while (endloop-- > 0) {
@@ -949,6 +986,7 @@ FDM.export = function(print, online, ondone, ondebug) {
     print.lines = lines;
     print.bytes = bytes + lines - 1;
     print.time = time;
+    print.labels = model_labels;
 
     if (debug) {
         console.log('segments', segments);
