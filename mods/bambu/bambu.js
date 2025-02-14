@@ -478,6 +478,20 @@ self.kiri.load(api => {
         return luminance > 0.5 ? "000000" : "FFFFFF";
     }
 
+    api.onkey(ev => {
+        if (ev.key && ev.key.code === 'KeyE' && ev.key.shiftKey) {
+            let cdev = api.conf.get().device;
+            if (!printers) {
+                printers = cdev.extras?.bbl;
+            }
+            if (printers) {
+                device = device || cdev;
+                api.modal.show('bambu');
+            }
+            return true;
+        }
+    });
+
     api.event.on("init-done", function() {
         if (init) {
             return;

@@ -253,6 +253,9 @@ gapp.register("kiri.init", (root, exports) => {
         if (api.feature.on_key) {
             if (api.feature.on_key({up:evt})) return;
         }
+        for (let handler of api.feature.on_key2) {
+            if (handler({up:evt})) return;
+        }
         switch (evt.keyCode) {
             // escape
             case 27:
@@ -279,6 +282,9 @@ gapp.register("kiri.init", (root, exports) => {
         }
         if (api.feature.on_key) {
             if (api.feature.on_key({down:evt})) return;
+        }
+        for (let handler of api.feature.on_key2) {
+            if (handler({down:evt})) return;
         }
         let move = evt.altKey ? 5 : 0,
             deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
@@ -351,6 +357,9 @@ gapp.register("kiri.init", (root, exports) => {
         }
         if (api.feature.on_key) {
             if (api.feature.on_key({key:evt})) return;
+        }
+        for (let handler of api.feature.on_key2) {
+            if (handler({key:evt})) return;
         }
         if (evt.ctrlKey) {
             switch (evt.key) {

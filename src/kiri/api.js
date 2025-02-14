@@ -25,6 +25,7 @@ let { data, kiri, moto, noop } = root,
         drop_layout: true, // layout on new drop
         hoverAdds: false, // when true only searches widget additions
         on_key: undefined, // function override default key handlers
+        on_key2: [], // allows for multiple key handlers
         on_load: undefined, // function override file drop loads
         on_add_stl: undefined, // legacy override stl drop loads
         on_mouse_up: undefined, // function intercepts mouse up select
@@ -39,6 +40,9 @@ let { data, kiri, moto, noop } = root,
             isHover = b;
             moto.broker.publish("feature.hover", b);
         }
+    },
+    onkey = (fn) => {
+        api.feature.on_key2.push(fn);
     },
     doit = {
         undo: noop, // do.js
@@ -101,6 +105,7 @@ let { data, kiri, moto, noop } = root,
         modal: {},      // main.js
         mode: {},       // main.js
         o2js,           // via utils
+        onkey,          // <--
         platform: {},   // platform.js
         probe: {},      // main.js
         process: {},    // main.js
