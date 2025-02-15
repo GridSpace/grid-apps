@@ -14,7 +14,7 @@
  */
 
 let util = require('util');
-const { bblCA } = require('./certificates');
+const { bblCA } = require('./certs');
 let args = process.argv.slice(2);
 
 if (args.length !== 5) {

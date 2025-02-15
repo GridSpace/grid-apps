@@ -1,7 +1,7 @@
 const { Client } = require('@gridspace/basic-ftp');
 const { Readable } = require('stream');
 const { FrameStream } = require('./frames');
-const { bblCA } = require('./certificates');
+const { bblCA } = require('./certs');
 
 module.exports = async (server) => {
 

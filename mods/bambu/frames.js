@@ -3,7 +3,7 @@
  * and stores the resulting jpeg stream into frame files
  */
 
-const { bblCA } = require('./certificates');
+const { bblCA } = require('./certs');
 const EventEmitter = require('events');
 const tls = require('tls');
 const debug = false;

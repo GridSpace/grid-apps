@@ -8,13 +8,16 @@ self.kiri.load(api => {
     const defams = ";; DEFINE BAMBU-AMS ";
     const readonly = true;
 
+    let sequence_id = (Math.random() * 0xfff) | 0;
+    let user_id = ((Math.random() * 0xfffffff) | 0).toString();
     let init = false;
     let status = {};
     let monitors = [];
     let showing = false;
     let video_on = false;
     let video_auto = false;
-    let bound, device, printers, select, selected, conn_alert, export_select, tray_info;
+    let tray_hover, tray_info;
+    let bound, device, printers, select, selected, conn_alert, export_select;
     let btn_del, in_host, in_code, in_serial, filelist, print_ams_select = 'auto';
     let ptype, host, password, serial, amsmap, socket = {
         open: false,
@@ -107,6 +110,10 @@ self.kiri.load(api => {
         }
     };
 
+    function next_sid() {
+        return (sequence_id = (sequence_id + 1) % 65534).toString();
+    }
+
     function range(length, start = 0) {
         return Array.from({ length }, (_, i) => i + start);
     }
@@ -139,7 +146,57 @@ self.kiri.load(api => {
             }, {});
         }
         return obj;
-      }
+    }
+
+    function ams_tray_show(bool) {
+        ui.setVisible(tray_info, bool);
+        if (!bool) {
+            tray_hover = undefined;
+            // clearTimeout(tray_hover?.__timer);
+        }
+    }
+
+    function ams_tray_update() {
+        let type_select = $('bbl_tray_type').value;
+        let type_desc = bblapi.filament.map[type_select];
+        let type_short = type_desc.split(' ')[1];
+        let { nozzle_diameter } = selected.status.print;
+        let { id, unit, tray_color, nozzle_temp_min, nozzle_temp_max } = tray_hover.bambu;
+        // console.log({ type_select, type_short, type_desc, tray_hover, nozzle_diameter });
+
+        let custom = $('bbl_tray_rgba').value;
+        if (parseInt(custom,16) >= 0) {
+            tray_color = custom;
+        }
+
+        // set AMS attention on a tray
+        cmd_gcode(`M620 P${id}`);
+        cmd_direct({
+            print: {
+                ams_id: unit,
+                command: 'ams_filament_setting',
+                nozzle_temp_max: parseInt(nozzle_temp_max),
+                nozzle_temp_min: parseInt(nozzle_temp_min),
+                sequence_id: next_sid(),
+                setting_id: 'GFSL01_02',
+                tray_color,
+                tray_id: parseInt(id),
+                tray_info_idx: type_select,
+                tray_type: type_short,
+            }
+        });
+        cmd_direct({
+            print: {
+                cali_idx: -1,
+                command: 'extrusion_cali_sel',
+                filament_id: type_select,
+                nozzle_diameter,
+                sequence_id: next_sid(),
+                tray_id: unit
+            }
+        });
+
+    }
 
     function printer_add() {
         ui.prompt('printer name', "new printer").then(name => printer_add_named(name));
@@ -275,13 +332,14 @@ self.kiri.load(api => {
                     print_ams_select = ev.target.value;
                 };
             });
+            // update AMS buttons based on current reported state
             range(16).map(id => {
                 let btn = $(`bbl_tray_${id}`);
                 ui.setVisible(btn, id < trays.length);
                 $('bbl_ams_trays').style.gridTemplateRows = `repeat(${trays.length / 4},auto)`;
                 if (id < trays.length) {
                     let { style } = btn;
-                    let { tray_color, tray_type } = trays[id];
+                    let { tray_color, tray_type } = btn.bambu = trays[id];
                     if (tray_color) {
                         style.color = `#${calcFG(tray_color)}`;
                         style.backgroundColor = `#${tray_color}`;
@@ -302,6 +360,8 @@ self.kiri.load(api => {
                         style.borderColor = '';
                         style.borderStyle = '';
                     }
+                } else {
+                    btn.bambu = undefined;
                 }
             });
         } else {
@@ -455,7 +515,9 @@ self.kiri.load(api => {
     function cmd_gcode(code) {
         cmd_direct({ print: {
             command: "gcode_line",
-            param: `${code} \n`
+            param: `${code} \n`,
+            sequence_id: next_sid(),
+            user_id
         } });
     }
 
@@ -770,6 +832,7 @@ self.kiri.load(api => {
                                 });
                             } }),
                         ]),
+                        h.div({ class: "pop-sep" }),
                         h.div({
                             id: "bbl_ams_trays",
                             "style": [
@@ -781,68 +844,89 @@ self.kiri.load(api => {
                         }, range(16).map(id => h.button({
                             _: id,
                             id: `bbl_tray_${id}`,
-                            class:`a-center hide`,
+                            class:`a-center hide f-col`,
                             style: [
                                 `min-height:10px`,
-                                `aspect-ratio:1`,
+                                `padding: 5px`,
                                 `position:relative`
                             ].join(';'),
                             onclick(ev) {
                                 let { target } = ev;
-                                if (target.nodeName === 'BUTTON') {
-                                    target.appendChild(tray_info);
-                                    ui.setVisible(tray_info, true);
+                                if (target.id === `bbl_tray_${id}`) {
+                                    if (tray_hover === target) {
+                                        ams_tray_show(false);
+                                    } else {
+                                        target.appendChild(tray_info);
+                                        ams_tray_show(true);
+                                        tray_hover = target;
+                                        let { bambu } = target;
+                                        $('bbl_tray_type').value = bambu.tray_info_idx;
+                                        $('bbl_tray_rgba').value = bambu.tray_color;
+                                    }
                                 }
                             },
-                            onmouseleave() {
-                                ui.setVisible(tray_info, false);
+                            onmouseenter(ev) {
+                                clearTimeout(ev.target.__timer);
+                            },
+                            onmouseleave(ev) {
+                                ev.target.__timer = setTimeout(() => {
+                                    if (ev.target === tray_hover) {
+                                        // ams_tray_show(false);
+                                    }
+                                }, 5000);
                             }
                         })))
                     ]),
-
                     h.div({ id: "bbl_tray_info",
-                            class: "t-body f-col gap3 pad5 hide",
-                            style: [
-                                "position:absolute",
-                                "top:100%",
-                                "right:0",
-                                "transform:translateX(30%)",
-                                "padding:10px !important",
-                                "z-index:1000",
-                            ].join(';')
-                        }, [
+                        class: "t-body f-col gap3 pad5 hide",
+                        style: [
+                            "z-index:1000",
+                            "position:absolute",
+                            "top:calc(100% + 4px)",
+                            "right:0",
+                            "transform:translateX(30%)",
+                            "padding:10px !important",
+                            "opacity:0.95 !important",
+                            "border-width: 4px !important"
+                        ].join(';')
+                    }, [
                         h.div({ class: "var-row" }, [
-                            // h.label('filament'),
-                            h.select({ id: "bbl_tray_type", onchange() {
-                                cmd_direct({
-                                    print: {
-                                        command: 'ams_change_filament',
-                                        curr_temp: 220,
-                                        tar_temp: 220,
-                                        target: parseInt(new_tray)
-                                    }
-                                });
-                            }}, api.bambu.filament.map(row => h.option({
-                                _: row[1],
-                                value: row[0]
-                            }))),
-                        ]),
-                        h.div({ class: "var-row" }, [
-                            // home_flag bit 11 (0x400)
-                            h.label(''),
-                            h.span('#'),
-                            h.input({ value: "001122", size: 6 }),
-                            h.select({ id: "bbl_tray_color", onchange() {
-                                cmd_direct({
-                                    print: {
-                                        auto_switch_filament: $('bbl_ams_spool').checked,
-                                        command: 'print_option',
-                                        sequence_id: '123',
-                                        option: $('bbl_ams_spool').checked ? 1 : 0
-                                    }
+                            h.select({ id: "bbl_tray_type" },
+                                bblapi.filament.list.map(row => h.option({
+                                    _: row[1],
+                                    value: row[0]
                                 })
-                            }})
+                            )),
                         ]),
+                        h.div({ class: "pop-sep" }),
+                        h.div({ class: "var-row" }, [
+                            h.label('use ams color'),
+                            h.select({ id: "bbl_tray_acolor" })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('use quick color'),
+                            h.select({ id: "bbl_tray_color" })
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            h.label('use rgb color'),
+                            h.input({ id: "bbl_tray_rgba", class: "mono", value: "00112233", size: 8 }),
+                        ]),
+                        h.div({ class: "pop-sep" }),
+                        h.div({ class: "j-center", }, [
+                            h.button({
+                                _: 'save tray settings',
+                                onclick() {
+                                    ams_tray_update();
+                                    ams_tray_show(false);
+                                }
+                            }),
+                            h.button({
+                                _: 'cancel',
+                                onclick() {
+                                    ams_tray_show(false);
+                                }
+                            })
+                        ])
                     ]),
 
                     h.div({ class: "t-body t-inset f-col gap3 pad4 grow" }, [
@@ -867,6 +951,7 @@ self.kiri.load(api => {
                             h.select({ id: "bbl_file_spool" })
                         ]),
                         h.div({ class: "grow" }),
+                        h.div({ class: "pop-sep" }),
                         h.div({ class: "f-row gap3 f-grow" }, [
                             h.button({
                                 _: 'delete',
@@ -927,6 +1012,7 @@ self.kiri.load(api => {
                             h.label('active'),
                             h.input({ id: "bbl_file_active", class: "t-left", readonly })
                         ]),
+                        h.div({ class: "pop-sep" }),
                         h.div({ class: "f-row gap3 f-grow" }, [
                             h.button({ _: "pause", id: "bbl_pause", class: "f-col t-center a-center", onclick() { cmd_if("pause") } }),
                             h.button({ _: "resume", id: "bbl_resume", class: "f-col t-center a-center", onclick() { cmd_if("resume") } }),
@@ -990,6 +1076,7 @@ self.kiri.load(api => {
         if (showing) {
             video_auto = video_on;
             printer_video_set(false);
+            ams_tray_show(false);
             selected = undefined;
             showing = false;
             status = {};
@@ -1093,5 +1180,5 @@ self.kiri.load(api => {
 
     setInterval(monitor_keepalive, 5000);
 
-    api.bambu = { send, prep_export };
+    let bblapi = api.bambu = { send, prep_export };
 });

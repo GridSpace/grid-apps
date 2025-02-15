@@ -1,6 +1,6 @@
 self.kiri.load(api => {
 
-api.bambu.filament = [
+let list = [
     ["GFB00", "Bambu ABS"],
     ["GFB50", "Bambu ABS-GF"],
     ["GFB01", "Bambu ASA"],
@@ -88,5 +88,15 @@ api.bambu.filament = [
     ["GFL01", "PolyTerra PLA"],
     ["GFL03", "eSUN PLA+"]
 ];
+
+let map = {};
+
+for (let row of list) {
+    map[row[0]] = row[1];
+}
+
+api.bambu.filament = {
+    list, map
+};
 
 });

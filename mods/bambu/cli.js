@@ -2,7 +2,7 @@ const [ host, pass, sn ] = process.argv.slice(2);
 const util = require('util');
 const mqtt = require("mqtt");
 const readline = require('readline');
-const { bblCA } = require("./certificates");
+const { bblCA } = require("./certs");
 const reportTopic = `device/${sn}/report`;
 const requestTopic = `device/${sn}/request`;
 

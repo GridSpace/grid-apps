@@ -186,6 +186,7 @@ th, tr, td, span, div, label, button {
 }
 th, tr, td, label {
     white-space: nowrap;
+    display: flex;
 }
 details summary {
     list-style: none;
@@ -1996,7 +1997,7 @@ details[open] summary::after {
     color: white;
 }
 .t-body {
-    background-color: rgba(255,255,255,0.5);
+    background-color: rgba(255,255,255,1);
     border: 1px solid #bbb;
     border-radius: 3px;
 }
