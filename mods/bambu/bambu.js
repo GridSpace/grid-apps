@@ -9,22 +9,32 @@ self.kiri.load(api => {
     const readonly = true;
 
     let stock_colors = Object.values({
-        "Black":        "#000000",
-        "Dark Gray":    "#404040",
-        "Light Gray":   "#C0C0C0",
-        "White":        "#FFFFFF",
-        "Red":          "#FF0000",
-        "Orange":       "#FF8000",
-        "Yellow":       "#FFFF00",
-        "Green":        "#00FF00",
-        "Cyan":         "#00FFFF",
-        "Blue":         "#0000FF",
-        "Indigo":       "#4B0082",
-        "Violet":       "#9400D3",
-        "Pink":         "#FF00FF",
-        "Teal":         "#008080",
-        "Brown":        "#8B4513",
-        "Gold":         "#FFD700"
+        "Vivid Red":     "#FF0000",
+        "Vivid Orange":  "#FF6600",
+        "Vivid Yellow":  "#FFFF00",
+        "Vivid Green":   "#00FF00",
+        "Vivid Cyan":    "#0099FF",
+        "Vivid Blue":    "#1111FF",
+        "Vivid Violet":  "#8B00FF",
+        "Vivid Indigo":  "#4B0082",
+
+        "Medium Red":    "#FF6666",
+        "Medium Orange": "#FFA033",
+        "Medium Yellow": "#FFFF80",
+        "Medium Green":  "#66FF66",
+        "Medium Cyan":   "#66FFFF",
+        "Medium Blue":   "#4444FF",
+        "Medium Violet": "#B266FF",
+        "Medium Indigo": "#7A3F99",
+
+        "Black":         "#000000",
+        "Dark Gray 2":   "#404040",
+        "Dark Gray 1":   "#606060",
+        "Medium Gray 2": "#808080",
+        "Medium Gray 1": "#A0A0A0",
+        "Light Gray 2":  "#C0C0C0",
+        "Light Gray 1":  "#E0E0E0",
+        "White":         "#FFFFFF"
     }).map(v => `${v.substring(1)}FF`);
 
     let sequence_id = (Math.random() * 0xfff) | 0;
@@ -167,20 +177,31 @@ self.kiri.load(api => {
         return obj;
     }
 
-    function ams_tray_show(bool) {
-        ui.setVisible(tray_info, bool);
-        if (bool) {
+    function ams_tray_show(target) {
+        ui.setVisible(tray_info, target ? true : false);
+        if (target) {
+            tray_hover = target;
+            let { bambu } = target;
+            $('bbl_tray_type').value = bambu.tray_info_idx;
+            $('bbl_tray_rgba').value = bambu.tray_color;
+            $('bbl_tray_demo').style.backgroundColor = `#${bambu.tray_color.substring(0,6)}`;
             let ams_colors = [];
             for (let tray of ams_trays) {
                 ams_colors.addOnce(tray.tray_color);
             }
             h.bind($('bbl_tray_acolor'), ams_colors.map(color => h.button({
                 style: `background-color: #${color.substring(0,6)};aspect-ratio:1`,
-                onclick() { $('bbl_tray_rgba').value = color }
+                onclick() {
+                    $('bbl_tray_rgba').value = color;
+                    $('bbl_tray_demo').style.backgroundColor = `#${color.substring(0,6)}`;
+                }
             }) ));
             h.bind($('bbl_tray_scolor'), stock_colors.map(color => h.button({
                 style: `background-color: #${color};aspect-ratio:1`,
-                onclick() { $('bbl_tray_rgba').value = color }
+                onclick() {
+                    $('bbl_tray_rgba').value = color;
+                    $('bbl_tray_demo').style.backgroundColor = `#${color.substring(0,6)}`;
+                }
             }) ));
         } else {
             tray_hover = undefined;
@@ -333,11 +354,12 @@ self.kiri.load(api => {
             upload
         } = print || {};
         let { tray_pre, tray_now, tray_tar } = ams || {};
-        let trays = ams_trays = ams?.ams?.map((ams, unit) => {
+        let trays = ams?.ams?.map((ams, unit) => {
             return ams.tray.map(tray => {
                 return { unit, wet: ams.humidity, ...tray };
             });
         }).flat();
+        ams_trays = trays || [];
         if (trays && trays.length) {
             let options = trays.map(tray => h.option({
                 _: tray.id,
@@ -886,14 +908,10 @@ self.kiri.load(api => {
                                 let { target } = ev;
                                 if (target.id === `bbl_tray_${id}`) {
                                     if (tray_hover === target) {
-                                        ams_tray_show(false);
+                                        ams_tray_show();
                                     } else {
                                         target.appendChild(tray_info);
-                                        ams_tray_show(true);
-                                        tray_hover = target;
-                                        let { bambu } = target;
-                                        $('bbl_tray_type').value = bambu.tray_info_idx;
-                                        $('bbl_tray_rgba').value = bambu.tray_color;
+                                        ams_tray_show(target);
                                     }
                                 }
                                 ev.stopPropagation();
@@ -904,7 +922,7 @@ self.kiri.load(api => {
                             onmouseleave(ev) {
                                 ev.target.__timer = setTimeout(() => {
                                     if (ev.target === tray_hover) {
-                                        // ams_tray_show(false);
+                                        // ams_tray_show();
                                     }
                                 }, 5000);
                             }
@@ -944,11 +962,12 @@ self.kiri.load(api => {
                             })
                         ]),
                         h.div({ class: "var-row" }, [
-                            h.label('ams color'),
+                            h.label('ams colors'),
                             h.div({ id: "bbl_tray_acolor", class: "f-row" })
                         ]),
                         h.div({ class: "var-row" }, [
                             h.label('selected'),
+                            h.button({ id: "bbl_tray_demo", style:"aspect-ratio:1" }),
                             h.input({ id: "bbl_tray_rgba", class: "mono", value: "00112233", size: 8 }),
                         ]),
                         h.div({ class: "pop-sep" }),
@@ -957,13 +976,13 @@ self.kiri.load(api => {
                                 _: 'save tray settings',
                                 onclick() {
                                     ams_tray_update();
-                                    ams_tray_show(false);
+                                    ams_tray_show();
                                 }
                             }),
                             h.button({
                                 _: 'cancel',
                                 onclick() {
-                                    ams_tray_show(false);
+                                    ams_tray_show();
                                 }
                             })
                         ])
@@ -1092,7 +1111,7 @@ self.kiri.load(api => {
         }
         // another way to close tray info selector pop up
         $('mod-bambu').onclick = (ev) => {
-            ams_tray_show(false);
+            ams_tray_show();
         };
         // determine default printer from last selection
         // if no export dialog selection override present
@@ -1120,7 +1139,7 @@ self.kiri.load(api => {
         if (showing) {
             video_auto = video_on;
             printer_video_set(false);
-            ams_tray_show(false);
+            ams_tray_show();
             selected = undefined;
             showing = false;
             status = {};
