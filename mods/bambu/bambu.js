@@ -934,13 +934,25 @@ self.kiri.load(api => {
                             "z-index:1000",
                             "position:absolute",
                             "top:calc(100% + 4px)",
-                            "right:0",
-                            "transform:translateX(30%)",
+                            "right:50%",
+                            "transform:translateX(50%)",
                             "padding:10px !important",
                             "opacity:0.95 !important",
                             "border-width: 4px !important"
                         ].join(';')
                     }, [
+                        h.div({
+                            style: [
+                                "z-index:1000",
+                                "position:absolute",
+                                "bottom:100%",
+                                "right:50%",
+                                "transform:translateX(50%)",
+                                "opacity:0.95 !important",
+                                "border: 8px solid transparent",
+                                "border-bottom: 8px solid #888"
+                            ].join(';')
+                        }),
                         h.div({ class: "var-row" }, [
                             h.select({ id: "bbl_tray_type" },
                                 bblapi.filament.list.map(row => h.option({
