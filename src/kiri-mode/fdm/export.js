@@ -137,7 +137,7 @@ FDM.export = function(print, online, ondone, ondebug) {
     subst.tool_count = tools_used.length;
 
     // encodes an array offset as a single "on" bit in an
-    // 8 byte array then converts the array to base64 which
+    // 8 byte array, then converts the array to base64 which
     // is what Bambu's M624 uses to flag an object as currently
     // being printed. the array is presented at the top of the
     // gcode as a comment: "; model label id: {model_labels}"

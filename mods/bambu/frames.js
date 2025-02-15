@@ -3,9 +3,10 @@
  * and stores the resulting jpeg stream into frame files
  */
 
+const { bblCA } = require('./certificates');
 const EventEmitter = require('events');
 const tls = require('tls');
-const { bblCA } = require('./certificates');
+const debug = false;
 
 class FrameStream extends EventEmitter {
     #remoteSocket;
@@ -40,11 +41,13 @@ class FrameStream extends EventEmitter {
             remoteSocket.write(Buffer.from(abuf));
             this.emit('connect', host);
         });
+        debug && console.log('start frames', serial);
 
         remoteSocket.on('data', (data) => {
             if (data.length === 16) {
                 if (frame) {
                     this.emit('frame', frame);
+                    debug && console.log('frame', serial);
                     frame = undefined;
                 }
             } else {
@@ -58,6 +61,7 @@ class FrameStream extends EventEmitter {
         });
 
         remoteSocket.on('close', () => {
+            debug && console.log('close frames', serial);
             this.emit('close');
         })
     }

@@ -11,6 +11,7 @@ module.exports = async (server) => {
     const mcache = {};
     const wsopen = [];
     const found = {};
+    const video = {};
     const useCA = false;
     const debug = false;
 
@@ -64,6 +65,7 @@ module.exports = async (server) => {
         }
 
         set_frames(bool) {
+            video[this.#serial] = bool;
             if (this.#frames && !bool) {
                 this.#frames.end();
                 this.#frames = undefined;
@@ -112,6 +114,7 @@ module.exports = async (server) => {
                 util.log('mqtt end', this.#serial);
                 this.#client.end();
                 this.#client = undefined;
+                this.set_frames(false);
             }
             this.#topic_report = undefined;
             this.#topic_request = undefined;
@@ -139,6 +142,7 @@ module.exports = async (server) => {
                 if (onconn) {
                     onconn(mqtt);
                 }
+                mcache[serial]?.set_frames(video[serial]);
             }, error => fns.reject(error), onmsg);
         }
 
@@ -261,8 +265,9 @@ module.exports = async (server) => {
         }
     }
 
-    // insert script before all others in kiri client
+    // insert scripts before all others in kiri client
     server.inject("kiri", "bambu.js");
+    server.inject("kiri", "filament.js");
 
     function o2s(obj) {
         return JSON.stringify(obj);
@@ -420,6 +425,7 @@ module.exports = async (server) => {
                 case "frames":
                     debug && util.log('request frames', serial, frames);
                     mcache[serial]?.set_frames(frames);
+                    video[serial] = frames;
                     break;
                 case "keepalive":
                     // util.log({ keepalive: serial });

@@ -654,6 +654,9 @@ details[open] summary::after {
 .font-smol {
     font-size: smaller;
 }
+.font-tiny {
+    font-size: x-small;
+}
 .gap1 {
     gap: 1px;
 }
@@ -677,6 +680,9 @@ details[open] summary::after {
 }
 .pad4 {
     padding: 4px !important;
+}
+.pad5 {
+    padding: 5px !important;
 }
 .h100 {
     height: 100%;

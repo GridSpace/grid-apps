@@ -11,8 +11,10 @@ self.kiri.load(api => {
     let init = false;
     let status = {};
     let monitors = [];
+    let showing = false;
     let video_on = false;
-    let bound, device, printers, select, selected, conn_alert, export_select;
+    let video_auto = false;
+    let bound, device, printers, select, selected, conn_alert, export_select, tray_info;
     let btn_del, in_host, in_code, in_serial, filelist, print_ams_select = 'auto';
     let ptype, host, password, serial, amsmap, socket = {
         open: false,
@@ -45,6 +47,8 @@ self.kiri.load(api => {
                         });
                         return;
                     }
+                    // receiving a frame will show the video feed (for debugging)
+                    set_video_visible(true);
                     const img = new Image();
                     img.src = `data:image/jpeg;base64,${frame}`;
                     img.onload = () => {
@@ -102,6 +106,10 @@ self.kiri.load(api => {
             socket.drain();
         }
     };
+
+    function range(length, start = 0) {
+        return Array.from({ length }, (_, i) => i + start);
+    }
 
     function deepMerge(target, source) {
         // console.log({ target, source });
@@ -172,6 +180,10 @@ self.kiri.load(api => {
     function printer_video_set(bool) {
         video_on = bool;
         set_frames(selected?.rec?.serial, bool);
+        set_video_visible(bool);
+    }
+
+    function set_video_visible(bool) {
         ui.setVisible($('bbl_video_frame'), bool);
         ui.setClass($('bbl_vid_toggle'), 'bred', bool);
         const canvas = $('bbl_video');
@@ -180,10 +192,11 @@ self.kiri.load(api => {
     }
 
     function printer_select(name = '') {
+        let isvid = video_on;
+        printer_video_set(false);
         for (let [ printer, rec ] of Object.entries(printers)) {
             rec.selected = printer === name;
         }
-        printer_video_set(false);
         btn_del.disabled = false;
         let rec = printers[name] || {};
         selected = { name, rec };
@@ -193,6 +206,7 @@ self.kiri.load(api => {
         in_host.onkeypress = in_host.onblur = printer_update;
         in_code.onkeypress = in_code.onblur = printer_update;
         in_serial.onkeypress = in_serial.onblur = printer_update;
+        printer_video_set(isvid);
         monitor_start(rec);
         printer_render();
         file_list();
@@ -261,25 +275,35 @@ self.kiri.load(api => {
                     print_ams_select = ev.target.value;
                 };
             });
-            let tdiv = $('bbl_ams_trays');
-            tdiv.setAttribute("style",[
-                "gap: 5px;",
-                "display:grid",
-                `grid-template-columns:repeat(4,1fr)`,
-                `grid-template-rows:repeat(${ams.ams.length},auto)`
-            ].join(';'))
-            h.bind(tdiv, trays.map(tray => h.button({
-                _: tray.tray_type,
-                class:`a-center${tray.tray_color?'':' checker'}`,
-                style: [
-                    tray_now === tray.id ? `border-color: red` : undefined,
-                    tray.tray_color ? undefined : `border-style: dashed`,
-                    `background-color:#${tray.tray_color||'000'}`,
-                    `color:#${calcFG(tray.tray_color||'000')}`,
-                    `min-height:10px`,
-                    `aspect-ratio:1`
-                ].filter(v => v).join(';')
-            })))
+            range(16).map(id => {
+                let btn = $(`bbl_tray_${id}`);
+                ui.setVisible(btn, id < trays.length);
+                $('bbl_ams_trays').style.gridTemplateRows = `repeat(${trays.length / 4},auto)`;
+                if (id < trays.length) {
+                    let { style } = btn;
+                    let { tray_color, tray_type } = trays[id];
+                    if (tray_color) {
+                        style.color = `#${calcFG(tray_color)}`;
+                        style.backgroundColor = `#${tray_color}`;
+                        btn.classList.remove('checker');
+                    } else {
+                        style.color = '';
+                        style.backgroundColor = '';
+                        btn.classList.add('checker');
+                    }
+                    if (btn.tray_type !== tray_type) {
+                        // otherwise rewriting the text kills the popup
+                        btn.tray_type = btn.innerText = tray_type || '';
+                    }
+                    if (tray_now == id) {
+                        style.borderColor = 'red';
+                        style.borderStyle = 'dashed';
+                    } else {
+                        style.borderColor = '';
+                        style.borderStyle = '';
+                    }
+                }
+            });
         } else {
             $('bbl_ams_tray').innerHTML = '';
             $('bbl_file_spool').innerHTML = '';
@@ -746,8 +770,81 @@ self.kiri.load(api => {
                                 });
                             } }),
                         ]),
-                        h.div({ id: "bbl_ams_trays" })
+                        h.div({
+                            id: "bbl_ams_trays",
+                            "style": [
+                                "gap: 5px;",
+                                "display:grid",
+                                `grid-template-columns:repeat(4,1fr)`,
+                                `grid-template-rows:repeat(4,auto)`
+                            ].join(';')
+                        }, range(16).map(id => h.button({
+                            _: id,
+                            id: `bbl_tray_${id}`,
+                            class:`a-center hide`,
+                            style: [
+                                `min-height:10px`,
+                                `aspect-ratio:1`,
+                                `position:relative`
+                            ].join(';'),
+                            onclick(ev) {
+                                let { target } = ev;
+                                if (target.nodeName === 'BUTTON') {
+                                    target.appendChild(tray_info);
+                                    ui.setVisible(tray_info, true);
+                                }
+                            },
+                            onmouseleave() {
+                                ui.setVisible(tray_info, false);
+                            }
+                        })))
                     ]),
+
+                    h.div({ id: "bbl_tray_info",
+                            class: "t-body f-col gap3 pad5 hide",
+                            style: [
+                                "position:absolute",
+                                "top:100%",
+                                "right:0",
+                                "transform:translateX(30%)",
+                                "padding:10px !important",
+                                "z-index:1000",
+                            ].join(';')
+                        }, [
+                        h.div({ class: "var-row" }, [
+                            // h.label('filament'),
+                            h.select({ id: "bbl_tray_type", onchange() {
+                                cmd_direct({
+                                    print: {
+                                        command: 'ams_change_filament',
+                                        curr_temp: 220,
+                                        tar_temp: 220,
+                                        target: parseInt(new_tray)
+                                    }
+                                });
+                            }}, api.bambu.filament.map(row => h.option({
+                                _: row[1],
+                                value: row[0]
+                            }))),
+                        ]),
+                        h.div({ class: "var-row" }, [
+                            // home_flag bit 11 (0x400)
+                            h.label(''),
+                            h.span('#'),
+                            h.input({ value: "001122", size: 6 }),
+                            h.select({ id: "bbl_tray_color", onchange() {
+                                cmd_direct({
+                                    print: {
+                                        auto_switch_filament: $('bbl_ams_spool').checked,
+                                        command: 'print_option',
+                                        sequence_id: '123',
+                                        option: $('bbl_ams_spool').checked ? 1 : 0
+                                    }
+                                })
+                            }})
+                        ]),
+                    ]),
+
                     h.div({ class: "t-body t-inset f-col gap3 pad4 grow" }, [
                         h.div({ class: "set-header", onclick() {
                             file_list();
@@ -850,6 +947,7 @@ self.kiri.load(api => {
         in_host = modal.bbl_host;
         in_code = modal.bbl_code;
         in_serial = modal.bbl_serial;
+        tray_info = modal.bbl_tray_info;
         api.ui.modals['bambu'] = modal['mod-bambu'];
         btn_del.disabled = true;
         select.onchange = (ev => printer_select(select.value));
@@ -877,19 +975,25 @@ self.kiri.load(api => {
             }
         }
         printer_render({ files: [] });
+        printer_video_set(video_auto);
         printer_select();
         socket.start();
         render_list();
         get_ams_map(api.conf.get());
+        showing = true;
     });
 
-    api.event.on("modal.hide", which => {
+    api.event.on("modal.hide", () => {
         if (selected?.rec.modified) {
             api.conf.save();
         }
-        printer_video_set(false);
-        selected = undefined;
-        status = {};
+        if (showing) {
+            video_auto = video_on;
+            printer_video_set(false);
+            selected = undefined;
+            showing = false;
+            status = {};
+        }
     });
 
     api.event.on("device.selected", devsel => {
