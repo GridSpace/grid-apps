@@ -8,6 +8,25 @@ self.kiri.load(api => {
     const defams = ";; DEFINE BAMBU-AMS ";
     const readonly = true;
 
+    let stock_colors = Object.values({
+        "Black":        "#000000",
+        "Dark Gray":    "#404040",
+        "Light Gray":   "#C0C0C0",
+        "White":        "#FFFFFF",
+        "Red":          "#FF0000",
+        "Orange":       "#FF8000",
+        "Yellow":       "#FFFF00",
+        "Green":        "#00FF00",
+        "Cyan":         "#00FFFF",
+        "Blue":         "#0000FF",
+        "Indigo":       "#4B0082",
+        "Violet":       "#9400D3",
+        "Pink":         "#FF00FF",
+        "Teal":         "#008080",
+        "Brown":        "#8B4513",
+        "Gold":         "#FFD700"
+    }).map(v => `${v.substring(1)}FF`);
+
     let sequence_id = (Math.random() * 0xfff) | 0;
     let user_id = ((Math.random() * 0xfffffff) | 0).toString();
     let init = false;
@@ -16,7 +35,7 @@ self.kiri.load(api => {
     let showing = false;
     let video_on = false;
     let video_auto = false;
-    let tray_hover, tray_info;
+    let tray_hover, tray_info, ams_trays = [];
     let bound, device, printers, select, selected, conn_alert, export_select;
     let btn_del, in_host, in_code, in_serial, filelist, print_ams_select = 'auto';
     let ptype, host, password, serial, amsmap, socket = {
@@ -150,7 +169,20 @@ self.kiri.load(api => {
 
     function ams_tray_show(bool) {
         ui.setVisible(tray_info, bool);
-        if (!bool) {
+        if (bool) {
+            let ams_colors = [];
+            for (let tray of ams_trays) {
+                ams_colors.addOnce(tray.tray_color);
+            }
+            h.bind($('bbl_tray_acolor'), ams_colors.map(color => h.button({
+                style: `background-color: #${color.substring(0,6)};aspect-ratio:1`,
+                onclick() { $('bbl_tray_rgba').value = color }
+            }) ));
+            h.bind($('bbl_tray_scolor'), stock_colors.map(color => h.button({
+                style: `background-color: #${color};aspect-ratio:1`,
+                onclick() { $('bbl_tray_rgba').value = color }
+            }) ));
+        } else {
             tray_hover = undefined;
             // clearTimeout(tray_hover?.__timer);
         }
@@ -301,7 +333,7 @@ self.kiri.load(api => {
             upload
         } = print || {};
         let { tray_pre, tray_now, tray_tar } = ams || {};
-        let trays = ams?.ams?.map((ams, unit) => {
+        let trays = ams_trays = ams?.ams?.map((ams, unit) => {
             return ams.tray.map(tray => {
                 return { unit, wet: ams.humidity, ...tray };
             });
@@ -864,6 +896,7 @@ self.kiri.load(api => {
                                         $('bbl_tray_rgba').value = bambu.tray_color;
                                     }
                                 }
+                                ev.stopPropagation();
                             },
                             onmouseenter(ev) {
                                 clearTimeout(ev.target.__timer);
@@ -900,15 +933,22 @@ self.kiri.load(api => {
                         ]),
                         h.div({ class: "pop-sep" }),
                         h.div({ class: "var-row" }, [
-                            h.label('use ams color'),
-                            h.select({ id: "bbl_tray_acolor" })
+                            h.label('stock color'),
+                            h.div({
+                                id: "bbl_tray_scolor",
+                                class: "grid",
+                                style: [
+                                    "grid-template-rows: repeat(2, 1fr)",
+                                    "grid-template-columns: repeat(8, 1fr)"
+                                ].join(';')
+                            })
                         ]),
                         h.div({ class: "var-row" }, [
-                            h.label('use quick color'),
-                            h.select({ id: "bbl_tray_color" })
+                            h.label('ams color'),
+                            h.div({ id: "bbl_tray_acolor", class: "f-row" })
                         ]),
                         h.div({ class: "var-row" }, [
-                            h.label('use rgb color'),
+                            h.label('selected'),
                             h.input({ id: "bbl_tray_rgba", class: "mono", value: "00112233", size: 8 }),
                         ]),
                         h.div({ class: "pop-sep" }),
@@ -1050,6 +1090,10 @@ self.kiri.load(api => {
         if (which !== 'bambu' || !device) {
             return;
         }
+        // another way to close tray info selector pop up
+        $('mod-bambu').onclick = (ev) => {
+            ams_tray_show(false);
+        };
         // determine default printer from last selection
         // if no export dialog selection override present
         if (!export_select) {
