@@ -44,7 +44,7 @@ class Print {
     addOutput(array, point, emit, speed, tool, type) {
         let { lastPoint, lastEmit, lastOut } = this;
         // drop duplicates (usually intruced by FDM bisections)
-        if (lastPoint && point) {
+        if (lastPoint && point && type !== 'lerp') {
             // nested due to uglify confusing browser
             const { x, y, z } = lastPoint;
             if (point.x == x && point.y == y && point.z == z && lastEmit == emit) {

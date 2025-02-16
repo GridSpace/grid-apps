@@ -259,7 +259,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} [speed] speed
      * @param {number} [tool] tool
      */
-    function layerPush(point, emit, speed, tool) {
+    function layerPush(point, emit, speed, tool, type) {
         const dz = (point && lastPush && lastPush.point) ? point.z - lastPush.point.z : 0;
         if (dz < 0 && speed > plungeRate) {
             speed = plungeRate;
@@ -291,7 +291,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             }
             print.addOutput(layerOut, point, power, speed, tool, 'laser');
         } else {
-            print.addOutput(layerOut, point, emit, speed, tool);
+            print.addOutput(layerOut, point, emit, speed, tool, type);
         }
         lastPush = { point, emit, speed, tool };
         return point;
@@ -319,11 +319,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
         point.y += wmy;
         point.z += zadd;
 
-        // carry rotation forward when not overridden
-        if (point.a === undefined && lastPoint) {
-            point.a = lastPoint.a;
-        }
-
         // console.log(point.z);
         if (nextIsMove) {
             cut = 0;
@@ -331,6 +326,32 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         let rate = feedRate * factor;
+
+        // carry rotation forward when not overridden
+        if (point.a === undefined && lastPoint) {
+            point.a = lastPoint.a;
+        } else if (lastPoint && point.a !== undefined && lastPoint.a !== undefined) {
+            let DA = lastPoint.a - point.a;
+            let MZ = Math.max(lastPoint.z, point.z)
+            // find arc length
+            let AL = (Math.abs(DA) / 360) * (2 * Math.PI * MZ);
+            if (AL >= 1) {
+                let lerp = base.util.lerp(lastPoint.a, point.a, 1);
+                // create interpolated point set for rendering and animation
+                // console.log({ DA, MZ, AL }, lerp.length);
+                for (let a of lerp) {
+                    let lp = point.clone().setA(a);
+                    // console.log(lp.a, lp.x, lp.y, lp.z);
+                    lastPoint = layerPush(
+                        lp,
+                        cut ? 1 : 0,
+                        rate,
+                        tool,
+                        "lerp"
+                    );
+                }
+            }
+        }
 
         // before first point, move cutting head to point above it
         // then set that new point as the lastPoint

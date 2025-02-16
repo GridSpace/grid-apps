@@ -159,10 +159,12 @@ async function path(levels, update, opts = {}) {
             let outPoint = out.point;
             // rotate 4th axis indexed points
             // todo -- add spark lines
-            if (outPoint && outPoint.a) {
+            if (outPoint && outPoint.a !== undefined) {
                 let { point } = out;
+                // calculate rotated point
                 let p2 = new THREE.Vector3(point.x, point.y, point.z)
                     .applyAxisAngle(XAXIS, point.a * DEG2RAD);
+                // reconstruct point point for display without A axis
                 outPoint = base.newPoint(p2.x, p2.y, p2.z);
                 // let sp = base.newPoint(outPoint.x * 1.1, outPoint.y * 1.1, outPoint.z * 1.1);
                 // sparks.push(outPoint, sp);

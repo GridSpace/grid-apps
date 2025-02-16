@@ -389,7 +389,7 @@ CAM.export = function(print, online) {
             return;
         }
         layer.forEach(out => {
-            if (out.gcode) {
+            if (out.gcode || out.type === 'lerp') {
                 return;
             }
             if (out.tool && out.tool !== ctool) {

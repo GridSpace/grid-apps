@@ -478,20 +478,26 @@ kiri.load(() => {
             if (!np || !lp) {
                 return renderPath(send);
             }
-            const dx = np.x - lp.x, dy = np.y - lp.y, dz = np.z - lp.z;
-            const dist = Math.sqrt(dx*dx  + dy*dy + dz*dz);
+            let dx = np.x - lp.x,
+                dy = np.y - lp.y,
+                dz = np.z - lp.z,
+                da = Math.abs((np.a || 0) - (lp.a || 0)),
+                dr = (da / 360) * (2 * Math.PI * Math.max(np.z, lp.z)),
+                dist = Math.sqrt(dx*dx  + dy*dy + dz*dz + dr*dr);
+
             moveDist += dist;
 
             // skip moves that are less than grid resolution
             if (moveDist < rezstep) {
+                // console.log('skip', moveDist, rezstep, next);
                 renderPath(send);
                 return;
             }
 
-            const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
+            const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz), dr);
             const st = Math.ceil(md / rezstep);
             const mx = dx / st, my = dy / st, mz = dz / st;
-            const sd = Math.sqrt(mx*mx + my*my + mz*mz);
+            const sd = Math.sqrt(mx*mx + my*my + mz*mz + dr*dr);
             const moves = [];
             for (let i=0, x=lp.x, y=lp.y, z=lp.z; i<st; i++) {
                 moves.push({x,y,z,a:lp.a,md:sd});
