@@ -418,8 +418,7 @@ class Topo4 {
             recs.forEach((rec,i) => {
                 const { degrees, heights } = rec;
                 [...heights].group(3).forEach((a) => {
-                    // progress each path 360 degrees to prevent A rolling backwards
-                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees) );
                 });
                 if (i % 2 === 1) {
                     paths[i].camLines[0].reverse();

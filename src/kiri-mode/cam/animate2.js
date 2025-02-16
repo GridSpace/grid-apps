@@ -497,7 +497,8 @@ kiri.load(() => {
             const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz), dr);
             const st = Math.ceil(md / rezstep);
             const mx = dx / st, my = dy / st, mz = dz / st;
-            const sd = Math.sqrt(mx*mx + my*my + mz*mz + dr*dr);
+            // const sd = Math.sqrt(mx*mx + my*my + mz*mz + dr*dr);
+            const sd = Math.sqrt(mx*mx + my*my + Math.min(1,mz*mz) + dr*dr);
             const moves = [];
             for (let i=0, x=lp.x, y=lp.y, z=lp.z; i<st; i++) {
                 moves.push({x,y,z,a:lp.a,md:sd});
