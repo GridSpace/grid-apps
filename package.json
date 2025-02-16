@@ -1,7 +1,7 @@
 {
     "name": "grid-apps",
-    "version": "4.0.31",
-    "description": "grid.space 3d slice & modeling tools",
+    "version": "4.1.0",
+    "description": "grid.space 3d slicing & modeling tools",
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
     "private": false,
@@ -11,12 +11,23 @@
     },
     "keywords": [
         "grid.space",
+        "mesh:tool",
         "kiri:moto",
         "kirimoto",
         "kiri",
-        "3d",
+        "mesh",
+        "editor",
+        "3D",
+        "FDM",
         "CAM",
+        "CNC",
+        "mSLA",
         "laser",
+        "waterjet",
+        "wire edm",
+        "wire-edm",
+        "dragknife",
+        "drag knife",
         "gcode",
         "slicer"
     ],
@@ -58,6 +69,9 @@
         "webpack-cli": "^5.1.4"
     },
     "scripts": {
+        "setup": "npm i; cd mods && npm i",
+        "dev": "gs-app-server --debug",
+        "prod": "gs-app-server",
         "start": "npm run prebuild && electron .",
         "start-dev": "npm run prebuild && electron . --devel",
         "start-dbg": "npm run prebuild && electron . --debugg",
@@ -72,12 +86,14 @@
         "build-mac-intel": "npm run build -- --mac --x64",
         "mklinks": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > links.csv",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
+        "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
         "preinstall": "node bin/install-pre.js; npx webpack --config bin/webpack-three.js"
     },
     "main": "app-el.js",
     "build": {
+        "npmRebuild": false,
         "appId": "space.grid.kiri",
         "productName": "KiriMoto",
         "artifactName": "KiriMoto-${os}-${arch}.${ext}",
@@ -103,10 +119,30 @@
                     "**/*"
                 ]
             },
+            {
+                "from": "tmp/mod/node_modules",
+                "to": "mod/node_modules",
+                "filter": [
+                    "**/*"
+                ]
+            },
+            {
+                "from": "tmp/mods",
+                "to": "mods",
+                "filter": [
+                    "**/*"
+                ]
+            },
+            {
+                "from": "tmp/mods/node_modules",
+                "to": "mods/node_modules",
+                "filter": [
+                    "**/*"
+                ]
+            },
             "bin/*",
             "conf/**/*",
-            "data/**/*",
-            "dist/**/*",
+            "data/cache/**/*",
             "app-el.js",
             "app.js",
             "package.json"
@@ -142,8 +178,7 @@
         "linux": {
             "icon": "bin/GS.png",
             "target": [
-                "AppImage",
-                "zip"
+                "AppImage"
             ]
         },
         "afterSign": "bin/electron-notarize.js"

@@ -345,10 +345,10 @@ function flatten(polys, to, crush) {
  * @returns {Polygon[]} out
  */
 function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
-    let min = minArea || 0.1,
+    let min = numOrDefault(minArea, 0.1),
         out = [];
 
-    function filter(from, to = []) {
+        function filter(from, to = []) {
         from.forEach(function(poly) {
             if (poly.area() >= min) {
                 to.push(poly);
@@ -431,7 +431,7 @@ function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
      let lpre = length(polys);
 
      if (opt.wasm && geo.wasm) {
-         let min = minarea || 0.01;
+         let min = minarea ?? 0.01;
          // let deepLength = polys.map(p => p.deepLength).reduce((a,v) => a+v);
          // if (deepLength < 15000)
          try {
@@ -632,7 +632,7 @@ function offset(polys, dist, opts = {}) {
         let coff = new ClipperOffset(opts.miter, opts.arc),
             tree = new PolyTree();
 
-        // setup offset
+            // setup offset
         for (let poly of polys) {
             // convert to clipper format
             poly = poly.toClipper();

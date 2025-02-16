@@ -61,6 +61,7 @@ let mods = [];
 
 gapp.overlay = Object.assign;
 
+// extract function arguments grouped by type
 function exargs(args) {
     return {
         funcs: args.filter(a => typeof a === 'function'),
@@ -70,34 +71,38 @@ function exargs(args) {
     };
 }
 
-// register module without a load function
-gapp.register = function() {
-// console.log(1, { mods });
-    const args = exargs([...arguments]);
-    const name = args.strings[0];
-    const fn = args.funcs[0];
-    const mod = { fn, name };
-// console.log(2, { mods });
-// console.log('reg', { mod, mods });
-    mods.push(mod);
-};
-
+// prevent module load from terminating main/init chain
 function safeFN(fn, name) {
     return function() {
         try {
             return fn(...arguments);
         } catch (error) {
-            console.log({ register_fail: name, error });
+            if (error.stack) {
+                console.log(`[${name}]`, error.stack);
+            } else {
+                console.log({ register_fail: name, error });
+            }
         }
     };
 }
 
+// register module without a load function
+gapp.register = function() {
+    const args = exargs([...arguments]);
+    const objs = args.objects || {};
+    const name = objs.name || objs.module || args.strings[0];
+    const fn   = objs.exec || args.funcs[0];
+    const mod  = { fn, name };
+    mods.push(mod);
+};
+
 // perform dependency checks and run module load functions
 gapp.main = function() {
     const args = exargs([...arguments]);
-    const app = args.strings[0];
-    const post = args.funcs[0];
-    const pre = args.funcs[1];
+    const objs = args.objects[0] || {};
+    const app  = objs.app  || args.strings[0];
+    const post = objs.post || args.funcs[0];
+    const pre  = objs.pre  || args.funcs[1];
     const root = self;
     // optional fn to run before loading
     if (pre) {
@@ -129,6 +134,7 @@ gapp.main = function() {
         }
         let tmp = path[map] || {};
         safeFN(fn, name)(root, exports => {
+            // map exports into module namespace when called
             if (exports) {
                 return path[map] = Object.assign(tmp, exports);
             }

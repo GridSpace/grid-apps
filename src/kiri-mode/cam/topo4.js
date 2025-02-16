@@ -73,6 +73,7 @@ class Topo4 {
         this.diam = tool.fluteDiameter();
         this.zoff = widget.track.top || 0;
         this.leave = op.leave || 0;
+        this.linear = op.linear || false;
         this.lineColor = state.settings.controller.dark ? 0xffff00 : 0x555500;
 
         onupdate(0, "lathe");
@@ -363,7 +364,7 @@ class Topo4 {
     }
 
     async latheMinions(onupdate) {
-        const { sliced, tool, zoff, leave, maxo, zBottom, step, resolution } = this;
+        const { sliced, tool, zoff, leave, maxo, zBottom, step, resolution, linear } = this;
         const { putCache, clearCache, queue } = this;
 
         const rota = this.angle * DEG2RAD;
@@ -404,19 +405,34 @@ class Topo4 {
         await Promise.all(promises);
         recs.sort((a, b) => { return b.angle - a.angle });
 
-        count = recs[0].heights.length / 3;
+        // let linear = true;
+
+        count = linear ? recs.length : recs[0].heights.length / 3;
         while (count-- > 0) {
             let slice = newSlice(count);
             slice.camLines = [ newPolygon().setOpen() ];
             paths.push(slice);
         }
 
-        for (let rec of recs) {
-            const { degrees, heights } = rec;
-            [...heights].group(3).forEach((a,i) => {
-                // progress each path 360 degrees to prevent A rolling backwards
-                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+        if (linear) {
+            recs.forEach((rec,i) => {
+                const { degrees, heights } = rec;
+                [...heights].group(3).forEach((a) => {
+                    // progress each path 360 degrees to prevent A rolling backwards
+                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+                });
+                if (i % 2 === 1) {
+                    paths[i].camLines[0].reverse();
+                }
             });
+        } else {
+            for (let rec of recs) {
+                const { degrees, heights } = rec;
+                [...heights].group(3).forEach((a,i) => {
+                    // progress each path 360 degrees to prevent A rolling backwards
+                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+                });
+            }
         }
 
         for (let slice of paths) {
@@ -425,9 +441,11 @@ class Topo4 {
                 console.log('empty', slice);
                 continue;
             }
-            // repeat first point 360 degrees progressed
-            const repeat = poly.points[0];
-            slice.camLines[0].push(repeat.clone().setA(repeat.a - 360));
+            if (!linear) {
+                // repeat first point 360 degrees progressed
+                const repeat = poly.points[0];
+                slice.camLines[0].push(repeat.clone().setA(repeat.a - 360));
+            }
             slice.output()
                 .setLayer("lathe", { line: this.lineColor })
                 .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));

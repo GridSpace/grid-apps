@@ -67,10 +67,11 @@ function update(clear) {
     }
 }
 
-api.alerts = {
+// extend API
+Object.assign(api.alerts, {
     hide,
     show,
     update
-};
+});
 
 });

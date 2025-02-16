@@ -66,7 +66,7 @@
     .pop-lcol svg {
         font-size: 20px !important;
     }
-    #mod-x {
+    .mod-x {
         position: absolute;
         font-size: 30px;
         top: 8px;
@@ -107,7 +107,7 @@ button {
     cursor: pointer;
     text-transform: capitalize;
 }
-button:hover {
+button:not([disabled]):hover {
     background-color: var(--main-color);
     color: white;
 }
@@ -117,6 +117,9 @@ button[load] {
 }
 button[del] {
     margin-left: 5px;
+}
+button[disabled] {
+    color: #999;
 }
 input {
     background-color: #f8f8ff;
@@ -183,6 +186,37 @@ th, tr, td, span, div, label, button {
 }
 th, tr, td, label {
     white-space: nowrap;
+    display: flex;
+}
+details summary {
+    list-style: none;
+}
+details summary::-webkit-details-marker {
+    display: none;
+}
+details summary::before {
+    content: "";
+}
+details summary {
+    position: relative;
+    cursor: pointer;
+}
+details summary::after {
+    content: "▸";
+    position: absolute;
+    right: 5px;
+    font-size: 1em;
+    transform: rotate(-90deg);
+    transition: transform 0.2s ease;
+}
+details[open] summary::after {
+    transform: rotate(90deg);
+}
+
+/* for bambu mgr dialog */
+.video {
+    border: 1px solid #888;
+    border-radius: 3px;
 }
 
 /* container for entire page / app */
@@ -201,6 +235,9 @@ th, tr, td, label {
 }
 
 /** dark conversion */
+.dark button[disabled] {
+    color: #888;
+}
 .dark input[disabled] {
     border-color: #666;
     background-color: #444;
@@ -223,8 +260,12 @@ th, tr, td, label {
 }
 .dark button {
     color: #fff;
-    background-color: #777;
-    border: 1px solid #999;
+    background-color: #555;
+    border: 1px solid #777;
+}
+.dark button:not([disabled]):hover {
+    background-color: var(--blue-2);
+    color: black;
 }
 .dark #progress {
     background-color: #333;
@@ -295,10 +336,15 @@ th, tr, td, label {
     /* color: #fff; */
     background-color: var(--blue-1);
 }
-.dark #modal {
+.dark #dialog {
+    background-color: rgba(60,60,60,0.85);
+    border-top: 8px solid rgba(100,100,100,1);
+    border-bottom: 7px solid rgba(100,100,100,1);
+}
+.dark #modal, .dark #dialog {
     color: #fff !important;
 }
-.dark #modal select {
+.dark #modal select, .dark #dialog select {
     color: #fff !important;
 }
 .dark .t-body,
@@ -585,6 +631,15 @@ th, tr, td, label {
 .bt2 {
     border: 2px solid transparent;
 }
+.bred {
+    border-color: red !important;
+}
+.checker {
+    background:
+      linear-gradient(135deg, transparent 45%, #555 45%, #555 55%, transparent 55%) !important;
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+}
 .contents {
     display: contents;
 }
@@ -593,6 +648,15 @@ th, tr, td, label {
 }
 .noshow {
     display: none;
+}
+.mono {
+    font-family: monospace;
+}
+.font-smol {
+    font-size: smaller;
+}
+.font-tiny {
+    font-size: x-small;
 }
 .gap1 {
     gap: 1px;
@@ -612,20 +676,38 @@ th, tr, td, label {
 .gap10 {
     gap: 10px;
 }
+.pad3 {
+    padding: 3px !important;
+}
+.pad4 {
+    padding: 4px !important;
+}
+.pad5 {
+    padding: 5px !important;
+}
+.h100 {
+    height: 100%;
+}
 .grid {
     display: grid;
 }
-.frow {
+.frow, .f-row {
     flex-direction: row;
 }
-.f-col {
+.fcol, .f-col {
     flex-direction: column;
+}
+.f-grow > * {
+    flex: 1;
 }
 .auto {
     flex-basis: auto;
 }
 .basis-50 {
     flex-basis: 50%;
+}
+.grow0 {
+    flex-grow: 0 !important;
 }
 .grow {
     flex-grow: 1;
@@ -654,14 +736,23 @@ th, tr, td, label {
 .j-end {
     justify-content: flex-end;
 }
+.j-stretch {
+    justify-items: stretch;
+}
+.as-stretch {
+    align-self: stretch;
+}
 .space-around {
     justify-content: space-around;
 }
 .space-between {
     justify-content: space-between;
 }
-.center {
+.center, .t-center {
     text-align: center;
+}
+.t-left {
+    text-align: left;
 }
 .t-just {
     text-align: justify;
@@ -697,6 +788,7 @@ th, tr, td, label {
     right: 0;
     bottom: 0;
     position: fixed;
+    color: black;
     background-color: #fff;
     font-family: 'Russo One', sans-serif;
     z-index: 1000;
@@ -865,15 +957,21 @@ th, tr, td, label {
 
 .slideshow #panel-left .settings {
     transform: translateX(-100%);
-    transition: transform 0.15s ease-in-out;
+    transition: transform 0.1s ease-in-out;
+    transition-delay: 0.3s;
 }
 .slideshow #panel-left:hover .settings {
     transform: translateX(0);
+    transition-delay: 0.0s;
 }
 .slideshow #panel-left:hover #slide-show {
-    left: -100%;
+    transform: translateX(-100%);
+    transition-delay: 0.0s;
 }
 .slideshow #slide-show {
+    transition-delay: 0.5s;
+    transform: translateX(-80%);
+    /* transform: translateX(0); */
     position: absolute;
     top: 5px;
     left: 0;
@@ -907,6 +1005,9 @@ th, tr, td, label {
 #panel-right * {
     direction: ltr;
 } */
+#panel-left {
+    padding-right: 5px;
+}
 #panel-left, #panel-right {
     max-height: 100%;
     background-color: var(--work-area);
@@ -914,7 +1015,7 @@ th, tr, td, label {
 #panel-left, #panel-right, #modal {
     pointer-events: visible;
 }
-#panel-left label, #panel-left svg {
+#panel-left label, #panel-left svg, button svg {
     pointer-events: none;
 }
 #ws-widgets button {
@@ -1443,6 +1544,23 @@ th, tr, td, label {
     justify-content: center;
 }
 
+#dialog {
+    position: fixed;
+    outline: none;
+    color: black;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255,255,255,0.85);
+    border: 0;
+    border-top: 8px solid rgba(180,180,180,1);
+    border-bottom: 7px solid rgba(180,180,180,1);
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 0;
+    padding: 5px;
+}
+
 #modal {
     display: none;
     position: fixed;
@@ -1485,11 +1603,11 @@ th, tr, td, label {
 #tool-cols {
     max-height: 350px;
 }
-.dark #mod-x {
+.dark .mod-x {
     border-color: #555;
     background-color: rgba(0,0,0,0.15);
 }
-#mod-x {
+.mod-x {
     border-radius: 5px;
     border: 2px solid rgba(255,255,255,0.5);
     background-color: rgba(255,255,255,0.5);
@@ -1498,7 +1616,7 @@ th, tr, td, label {
     bottom: -20px;
     right: 0;
 }
-#mod-x svg {
+.mod-x svg {
     aspect-ratio: 1 / 1 !important;
 }
 #mod-setup {
@@ -1543,6 +1661,9 @@ th, tr, td, label {
     align-items: center;
     justify-content: flex-start;
 }
+.dark #mod-help a:hover {
+    color: #333;
+}
 #mod-help a:hover {
     background-color: #eee;
 }
@@ -1580,7 +1701,7 @@ th, tr, td, label {
     background-color: rgba(255,255,255,0.5);
     border: 1px solid #bbb;
     border-radius: 3px;
-    padding: 20px 10px 10px 10px;
+    padding: 12px 10px 10px 10px;
 }
 .mod-print .box select {
     min-width: 10em;
@@ -1642,10 +1763,13 @@ th, tr, td, label {
     display: none;
 }
 #code-preview-textarea {
-    width: 40em;
-    height: 12em;
-    font-size: smaller;
+    min-width: 50em;
+    width: 100%;
+    height: 7em;
+    font-size: x-small;
     font-family: Courier,monospace;
+    white-space: nowrap;
+    resize: none;
 }
 .mod-end {
     height: 10px;
@@ -1855,6 +1979,13 @@ th, tr, td, label {
 .t-33 {
     width: 33%;
 }
+.flex {
+    display: flex;
+}
+.fat5 {
+    display: inline-block;
+    min-width: 5px !important;
+}
 .t-group {
     background-image: var(--gradbar);
     white-space: nowrap;
@@ -1866,7 +1997,7 @@ th, tr, td, label {
     color: white;
 }
 .t-body {
-    background-color: rgba(255,255,255,0.5);
+    background-color: rgba(255,255,255,1);
     border: 1px solid #bbb;
     border-radius: 3px;
 }
@@ -2136,10 +2267,10 @@ th, tr, td, label {
 .settings .set-header a {
     font-size: smaller;
 }
-#dev-sel {
-    margin-bottom: 0;
+#dev-sel, .dev-sel {
+    margin-bottom: 0 !important;
 }
-#dev-list {
+#dev-list, .dev-list {
     align-self: stretch;
     padding: 0 5px 0 5px;
 }
@@ -2245,6 +2376,7 @@ th, tr, td, label {
 .var-row {
     white-space: nowrap;
     align-items: center;
+    gap: 4px;
 }
 .var-row label {
     padding: 2px 4px 2px 0;

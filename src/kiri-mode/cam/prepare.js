@@ -8,7 +8,7 @@
 // dep: kiri.render
 // dep: kiri-mode.cam.driver
 // use: kiri-mode.cam.ops
-gapp.register("kiri-mode.cam.prepare", [], (root, exports) => {
+gapp.register("kiri-mode.cam.prepare", (root, exports) => {
 
 const { base, kiri } = root;
 const { paths, polygons, newPoint } = base;
@@ -562,7 +562,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         opSum += weight;
         if (tool && lastPoint) {
             newLayer();
-            layerPush(printPoint = lastPoint.clone().setZ(zmax + zadd), 0, 0, tool);
+            layerPush(printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
             newLayer();
         }
     }
@@ -606,7 +606,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             return start;
         }
         let ltops = tops[depth];
-        let fitted = fit ? ltops.filter(poly => poly.isInside(fit, 0.01)) : ltops;
+        let fitted = fit ? ltops.filter(poly => poly.isInside(fit, 0.05)) : ltops;
         let ftops = fitted.filter(top => !top.level_emit);
         if (ftops.length > 1) {
             ftops = POLY.route(ftops, start);

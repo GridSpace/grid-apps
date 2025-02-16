@@ -4,12 +4,12 @@
 
 // dep: add.array
 // dep: data.local
-gapp.register("kiri.conf", [], (root, exports) => {
+gapp.register("kiri.conf", (root, exports) => {
 
 const { data } = root;
 const { local } = data;
 const { clone } = Object;
-const CVER = 185;
+const CVER = 410;
 
 function genID() {
     while (true) {
@@ -77,21 +77,6 @@ function valueOf(val, dv) {
 
 function forValues(o, fn) {
     Object.values(o).forEach(v => fn(v));
-}
-
-function device_v1_to_v2(device) {
-    if (device && device.filamentSize) {
-        device.extruders = [{
-            extFilament: device.filamentSize,
-            extNozzle: device.nozzleSize,
-            extSelect: ["T0"],
-            extDeselect: [],
-            extOffsetX: 0,
-            extOffsetY: 0
-        }];
-        delete device.filamentSize;
-        delete device.nozzleSize;
-    }
 }
 
 // convert default filter (from server) into device structure
@@ -175,18 +160,6 @@ function normalize(settings) {
         mode = settings.mode.toLowerCase(),
         default_dev = defaults[mode].d,
         default_pro = defaults[mode].p;
-
-    // v1 to v2 changed FDM extruder / nozzle / filament structure
-    if (settings.ver != CVER) {
-        // backup settings before upgrade
-        local.setItem(`ws-settings-${Date.now()}`, JSON.stringify(settings));
-        device_v1_to_v2(settings.device);
-        device_v1_to_v2(settings.cdev.FDM);
-        objectMap(settings.devices, dev => {
-            return dev ? device_from_code(dev) : dev;
-        });
-        settings.ver = CVER;
-    }
 
     // fixup old/new detail settings
     let detail = settings.controller.detail;
@@ -292,7 +265,7 @@ const conf = exports({
                     extOffsetY: 0
                 }],
                 profiles: [],
-                // other stored info like palette3 config
+                // other stored config info
                 extras: {}
             },
             // process defaults FDM:Process
@@ -327,6 +300,7 @@ const conf = exports({
                 sliceSupportNozzle: 0,
                 sliceSupportEnable: false,
                 sliceSupportOutline: true,
+                sliceZInterleave: false,
                 sliceSolidMinArea: 1,
                 sliceBottomLayers: 3,
                 sliceTopLayers: 3,
@@ -522,8 +496,11 @@ const conf = exports({
                 camTraceSpeed: 250,
                 camTracePlunge: 200,
                 camTraceOffOver: 0,
+                camTraceDogbone: false,
+                camTraceMerge: true,
                 camTraceLines: false,
-                camTraceBottom: false,
+                camTraceZTop: 0,
+                camTraceZBottom: 0,
                 camPocketSpindle: 1000,
                 camPocketTool: 1000,
                 camPocketOver: 0.25,
@@ -537,6 +514,8 @@ const conf = exports({
                 camPocketContour: false,
                 camPocketEngrave: false,
                 camPocketOutline: false,
+                camPocketZTop: 0,
+                camPocketZBottom: 0,
                 camDrillTool: 1000,
                 camDrillSpindle: 1000,
                 camDrillDownSpeed: 250,
@@ -573,6 +552,7 @@ const conf = exports({
                 camOriginTop: true,
                 camZAnchor: "middle",
                 camZOffset: 0,
+                camZTop: 0,
                 camZBottom: 0,
                 camZClearance: 1,
                 camZThru: 0,
@@ -619,6 +599,7 @@ const conf = exports({
                 bedDepth: 200,
                 bedHeight: 2.5,
                 maxHeight: 100,
+                laserMaxPower: 255,
                 gcodePre: [],
                 gcodePost: [],
                 gcodeFExt: "",
@@ -639,6 +620,7 @@ const conf = exports({
                 ctOutGroup: true,
                 ctOutZColor: false,
                 ctOutLayer: false,
+                ctOutMark: false,
                 ctOutStack: false,
                 ctOutMerged: false,
                 ctOriginCenter: true,
@@ -682,7 +664,7 @@ const conf = exports({
                 ctOutGroup: true,
                 ctOutZColor: false,
                 ctOutLayer: false,
-                ctOutStack: false,
+                ctOutMark: false,
                 ctOutMerged: false,
                 ctOriginCenter: true,
                 ctOriginBounds: false,
@@ -690,7 +672,8 @@ const conf = exports({
                 outputInvertY: false,
                 ctOutKnifeDepth: 1,
                 ctOutKnifePasses: 1,
-                ctOutKnifeTip: 2
+                ctOutKnifeTip: 2,
+                ctOutStack: true,
             },
         },
         wjet: {
@@ -725,7 +708,7 @@ const conf = exports({
                 ctOutGroup: true,
                 ctOutZColor: false,
                 ctOutLayer: false,
-                ctOutStack: false,
+                ctOutMark: false,
                 ctOutMerged: false,
                 ctOriginCenter: true,
                 ctOriginBounds: false,
@@ -733,7 +716,8 @@ const conf = exports({
                 outputInvertY: false,
                 ctOutKnifeDepth: 1,
                 ctOutKnifePasses: 1,
-                ctOutKnifeTip: 2
+                ctOutKnifeTip: 2,
+                ctOutStack: false,
             },
         },
         wedm: {
@@ -767,14 +751,15 @@ const conf = exports({
                 ctOutGroup: true,
                 ctOutZColor: false,
                 ctOutLayer: false,
-                ctOutStack: false,
+                ctOutMark: false,
                 ctOutMerged: false,
                 ctOriginCenter: false,
                 ctOriginBounds: true,
                 ctOriginOffX: 0,
                 ctOriginOffY: 0,
                 outputInvertX: false,
-                outputInvertY: false
+                outputInvertY: false,
+                ctOutStack: false,
             }
         }
     },
@@ -851,11 +836,11 @@ const conf = exports({
                 taper_tip: 0,
             }
         ],
-        // currently selected device
+        // currently selected device (current mode)
         device:{},
-        // currently selected process
+        // currently selected process (current mode)
         process:{},
-        // current process name by mode
+        // current process (name of last used) by mode
         cproc:{
             FDM: "default",
             SLA: "default",
@@ -865,7 +850,7 @@ const conf = exports({
             WEDM: "default",
             LASER: "default",
         },
-        // stored processes by mode
+        // stored process (copy of last used) by mode
         sproc:{
             FDM: {},
             SLA: {},
@@ -875,7 +860,7 @@ const conf = exports({
             WEDM: {},
             LASER: {},
         },
-        // current device name by mode
+        // current device (name of last used) by mode
         filter:{
             FDM: "Any.Generic.Marlin",
             SLA: "Anycubic.Photon",
@@ -885,7 +870,7 @@ const conf = exports({
             WEDM: "RackRobo.Betta.Wire.V1",
             LASER: "Any.Generic.Laser",
         },
-        // stored device by mode
+        // current (last used) device by mode
         cdev: {
             FDM: null,
             SLA: null,
@@ -895,9 +880,7 @@ const conf = exports({
         },
         // custom devices by name (all modes)
         devices:{},
-        // favorited devices (all modes)
-        favorites:{},
-        // map of device to last process setting (name)
+        // map of device name to last process setting name
         devproc: {},
         // application ui and control preferences (Q menu)
         controller:{

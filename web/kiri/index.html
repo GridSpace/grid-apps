@@ -14,7 +14,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta http-equiv="origin-trial" content="Ahn06WzHCdvTPdfl/C5eFBmA8rzzgUqWvppp+iV8SDp0jvr5DLgf8XMeAajujwLCs/6LgRoEImoJncgvG9ox8AsAAAB0eyJvcmlnaW4iOiJodHRwczovL2dyaWQuc3BhY2U6NDQzIiwiZmVhdHVyZSI6IlVucmVzdHJpY3RlZFNoYXJlZEFycmF5QnVmZmVyIiwiZXhwaXJ5IjoxNzM5OTIzMTk5LCJpc1N1YmRvbWFpbiI6dHJ1ZX0=">
+    <meta http-equiv="origin-trial" content="Aixo1di7jfA+ystPFy70vGYyODYVAju1y8EQWwdkdtl5sB7i990oDCnqLQntpfl7NsW74wz99Og7xgQqeLKiBQsAAAB0eyJvcmlnaW4iOiJodHRwczovL2dyaWQuc3BhY2U6NDQzIiwiZmVhdHVyZSI6IlVucmVzdHJpY3RlZFNoYXJlZEFycmF5QnVmZmVyIiwiZXhwaXJ5IjoxNzUzMTQyNDAwLCJpc1N1YmRvbWFpbiI6dHJ1ZX0=">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Kiri:Moto</title>
     <link rel="icon" href="/kiri/favicon.ico">
@@ -61,11 +61,15 @@
         <div class="grow"></div>
         <div id="app-name" class="f-col a-center top-menu">
             <span class="grow">
-                <span class="km-font">Kiri:Moto</span>
+                <span id="app-name-text" class="km-font">Kiri:Moto</span>
                 <div id="app-name-pop" class="top-menu-drop top-menu-center">
                     <div class="content">
                         <div id="app-help">
                             <label lk="help">help</label>
+                        </div>
+                        <hr width="100%">
+                        <div id="app-don8">
+                            <label lk="donate">donate</label>
                         </div>
                         <div>
                             <label id="app-mesh">mesh edit</label>
@@ -392,8 +396,10 @@
                     <div><label>Profile</label><span id="mode-profile"></span></div>
                 </div>
                 <div class="set2-group f-col">
-                    <div class="set-header"><a>objects</a></div>
-                    <div id="ws-widgets" class="f-col"></div>
+                    <details open>
+                        <summary class="set-header"><a>objects</a></summary>
+                        <div id="ws-widgets" class="f-col"></div>
+                    </details>
                 </div>
                 <div class="set2-group f-col mode-fdm">
                     <div class="set-header"><a>ranges</a></div>
@@ -441,7 +447,21 @@
         <div id="modal-box" class="f-col">
 
         <!-- title bar and closer -->
-        <div class="mod-top f-row"><div id="mod-x"><i class="fas fa-times"></i></div></div>
+        <div class="mod-top f-row"><div id="mod-x" class="mod-x"><i class="fas fa-times"></i></div></div>
+
+        <!-- donate menu -->
+        <div id="mod-don8" class="mdialog f-col">
+            <div class="f-col gap4" style="gap:5px">
+                <div class="t-pad2"></div>
+                <div style="padding:20px;font-size:larger;font-weight:bold">Your contribution is appreciated!</div>
+                <div style="padding:5px 0 5px 0;justify-content:center">And supports ongoing development,</div>
+                <div style="padding:5px 0 20px 0;justify-content:center">servers, forums, and related costs</div>
+                <button id="don8pt" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_paypal" href="https://www.patreon.com/c/gridspace3d">Become a Patreon Patron</a></button>
+                <button id="don8gh" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_github" href="https://github.com/sponsors/GridSpace">Sponsor on GitHub</a></button>
+                <button id="don8pp" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_paypal" href="https://paypal.me/gridspace3d">Donate with PayPal</a></button>
+                <div class="t-pad2"></div>
+            </div>
+        </div>
 
         <!-- help menu -->
         <div id="mod-help" class="mdialog f-col">
@@ -455,7 +475,7 @@
                 <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Discord Server</a>
                 <a target="_rsc" href="https://github.com/gridspace/grid-apps/issues"><i class="fas fa-bug"></i> Bug Reports</a>
                 <a target="_rsc" href="https://github.com/gridspace/grid-apps/releases"><i class="fab fa-github"></i> Releases & Binaries</a>
-                <a target="_rsc" href="https://paypal.me/gridspace3d?locale.x=en_US"><i class="fab fa-paypal"></i> Support Development</a>
+                <a target="_rsc" onclick="kiri.api.modal.show('don8')"><i class="fa-solid fa-sack-dollar"></i> Support Development</a>
                 <a href="https://youtu.be/08795Sj22QE" target="youtube"><i class="fab fa-youtube"></i>Video Guide (from v2.5)</a>
             </div>
             <hr width="100%">
@@ -581,27 +601,45 @@
         <div id="mod-local" class="mdialog f-col"></div>
         <!-- export dialogs -->
         <div id="mod-x-any" class="mod-print mdialog f-col">
-            <div class="header"><label>export</label></div>
-            <div id="print-info" class="f-col box">
-                <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
-                <div><label>file size (bytes)</label><input id="print-filesize" size="12" disabled="true" /></div>
-                <div><label>time estimate (h:m:s)</label><input id="output-time" size="12" disabled="true" /></div>
+            <div class="f-row gap4">
+                <div class="f-col grow">
+                    <div class="header"><label>job</label></div>
+                    <div id="print-info" class="f-col box">
+                        <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
+                        <div><label>file size (bytes)</label><input id="print-filesize" size="12" disabled="true" /></div>
+                        <div><label>time estimate (h:m:s)</label><input id="output-time" size="12" disabled="true" /></div>
+                    </div>
+                </div>
+                <div id="print-filament" class="f-col">
+                    <div class="header"><label>material</label></div>
+                    <div class="f-col box">
+                        <div><label>filament density (g/cm^3)</label><input id="print-density" size="12" value="1.25" /></div>
+                        <div><label>filament used (mm)</label><input id="print-filament" size="12" disabled="true" /></div>
+                        <div><label>printed weight (g)</label><input id="print-weight" size="12" disabled="true" /></div>
+                    </div>
+                </div>
             </div>
-            <div id="print-filament-head" class="header"><label>filament</label></div>
-            <div id="print-filament-info" class="f-col box">
-                <div><label>filament density (g/cm^3)</label><input id="print-density" size="12" value="1.25" /></div>
-                <div><label>filament used (mm)</label><input id="print-filament" size="12" disabled="true" /></div>
-                <div><label>printed weight (g)</label><input id="print-weight" size="12" disabled="true" /></div>
-            </div>
-            <div id="code-preview-head" class="header"><label>code preview</label></div>
+            <div id="code-preview-head" class="header"><label>gcode preview</label></div>
             <div id="code-preview" class="f-col box">
                 <div><textarea id="code-preview-textarea"></textarea></div>
             </div>
-            <div class="header"><label>gcode</label></div>
+            <div class="header"><label>download</label></div>
             <div class="f-row box">
-                <button id="print-download" class="grow">download</button>
+                <button id="print-download" class="grow">gcode</button>
                 <button id="print-palette" class="grow">palette</button>
-                <button id="print-zip" class="grow">zip file</button>
+                <button id="print-zip" class="grow">zip</button>
+                <button id="print-3mf" class="grow">3mf</button>
+            </div>
+            <div id="bambu-output" class="f-col">
+                <div class="header"><label>send to bambu</label></div>
+                <div class="f-row box gap4 a-center">
+                    <label class="grow0 pad3">printer</label>
+                    <select id="print-bambu-device"></select>
+                    <label class="grow0 pad3">spool</label>
+                    <select id="print-bambu-spool"></select>
+                    <button id="print-bambu-1" class="grow" disabled>send</button>
+                    <button id="print-bambu-2" class="grow" disabled>send + print</button>
+                </div>
             </div>
             <div id="send-to-octohead" class="header"><label>octoprint</label></div>
             <div id="send-to-octoprint" class="f-col box">
@@ -643,7 +681,7 @@
         <div id="mod-x-sla" class="mod-print mdialog f-col">
             <div class="header"><label>export</label></div>
             <div id="print-info" class="f-col box">
-                <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
+                <div><label>file name</label><input id="print-filename-sla" size="20" spellcheck="false" /></div>
                 <div><label>resin used ML</label><input id="print-volume" size="10" spellcheck="false" /></div>
                 <div><label>layers</label><input id="print-layers" size="10" spellcheck="false" /></div>
                 <div><label>print time</label><input id="print-time" size="10" spellcheck="false" /></div>
@@ -656,7 +694,7 @@
         <div id="mod-x-laser" class="mod-print mdialog f-col">
             <div class="header"><label>export</label></div>
             <div id="print-info" class="f-col box">
-                <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
+                <div><label>file name</label><input id="print-filename-laser" size="20" spellcheck="false" /></div>
                 <div><label>segments</label><input id="print-lines" size="12" disabled="true" /></div>
             </div>
             <div class="header"><label>download</label></div>
@@ -670,6 +708,9 @@
         <div id="mod-any" class="mdialog f-col"></div>
         <div class="mod-end"></div></div>
     </div>
+
+    <!-- prompts and other modals needed in electron -->
+    <dialog id="dialog"></dialog>
 
     <!-- click + drag mouse tracking  -->
     <div id="tracker"></div>

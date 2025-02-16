@@ -10,6 +10,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
 
     let DOC = self.document,
         inputAction = null,
+        lastAddTo = null,
         lastGroup = null,
         lastDiv = null,
         addTo = null,
@@ -46,11 +47,13 @@ gapp.register("kiri.ui", [], (root, exports) => {
         toFloat,
         isSticky,
         setSticky,
-        newElement,
         newBoolean,
         newButton,
         newBlank,
         newDiv,
+        newElement,
+        newExpand,
+        endExpand,
         newGCode,
         newGroup,
         newLabel,
@@ -58,8 +61,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
         newRange,
         newRow,
         newSelect,
-        newTable,
-        newTableRow,
         newText,
         setGroup,
         addUnits,
@@ -68,6 +69,13 @@ gapp.register("kiri.ui", [], (root, exports) => {
         prompt,
         alert,
         onBlur,
+        setEnabled(el, bool) {
+            if (bool) {
+                el.removeAttribute('disabled');
+            } else {
+                el.setAttribute('disabled','');
+            }
+        },
         setVisible(el, bool) {
             kiri.ui.setClass(el, 'hide', !bool);
         },
@@ -101,19 +109,26 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function prompt(message, value) {
-        return confirm(message, {ok:true, cancel:false}, value);
+        return confirm(message, {ok:true, cancel:undefined}, value);
     }
 
     function confirm(message, buttons, input, opt = {}) {
         return new Promise((resolve, reject) => {
+            let { api } = kiri;
+            let { feature } = api;
+            let onkey_save = feature.on_key;
+            feature.on_key = key => {
+                // console.log({ eat_key: key });
+                return true;
+            };
+            let dialog = $('dialog');
             let btns = buttons || {
                 "yes": true,
                 "no": false
             };
             let rnd = Date.now().toString(36);
-            let any = $('mod-any');
             let html = [
-                `<div class="confirm f-col a-stretch">`
+                `<div class="confirm f-col a-stretch" style="padding:5px !important">`
             ];
             if (message) {
                 html.push(`<label style="user-select:text">${message}</label>`);
@@ -122,12 +137,12 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 html = opt.pre.appendAll(html);
             }
             let iid;
-            if (typeof(input) === 'string') {
-                iid = `confirm-input-${rnd}`;
-                html.append(`<div><input class="grow" type="text" spellcheck="false" id="${iid}"/></div>`);
-            } else if (Array.isArray(input)) {
+            if (Array.isArray(input)) {
                 iid = `confirm-input-${rnd}`;
                 html.append(`<div><textarea rows="15" cols="40" class="grow" type="text" spellcheck="false" id="${iid}"></textarea></div>`);
+            } else if (input !== undefined) {
+                iid = `confirm-input-${rnd}`;
+                html.append(`<div><input class="grow" type="text" spellcheck="false" id="${iid}"/></div>`);
             }
             html.append(`<div class="f-row j-end">`);
             Object.entries(btns).forEach((row,i) => {
@@ -137,10 +152,13 @@ gapp.register("kiri.ui", [], (root, exports) => {
             if (opt.post) {
                 html.appendAll(opt.post);
             }
-            $('mod-any').innerHTML = html.join('');
+            dialog.innerHTML = html.join('');
             function done(value) {
-                kiri.api.modal.hide();
-                setTimeout(() => { resolve(value) }, 150);
+                dialog.close();
+                feature.on_key = onkey_save;
+                if (value !== undefined) {
+                    setTimeout(() => { resolve(value) }, 150);
+                }
             }
             if (iid) {
                 let array = Array.isArray(input);
@@ -162,10 +180,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 }
             });
             setTimeout(() => {
-                kiri.api.modal.show('any');
+                dialog.showModal();
                 if (iid) {
                     iid.focus();
-                    iid.selectionStart = iid.value.length;
+                    iid.selectionStart = 0;
+                    iid.selectionEnd = iid.value.length;
                 }
             }, 150);
         });
@@ -267,7 +286,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 row,
                 arr,
                 update() {
-                    if (hidden[group]) {
+                    if (!hidden[group]) {
                         arr.innerHTML = '<i class="fa-solid fa-caret-down"></i>';
                         row.classList.add('hidden');
                     } else {
@@ -286,8 +305,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return row;
     }
 
-    function addCollapsableElement(parent) {
-        let row = newDiv();
+    function addCollapsableElement(parent, options = {}) {
+        let row = newDiv(options);
         if (parent) parent.appendChild(row);
         if (lastGroup) lastGroup.push(row);
         return row;
@@ -393,14 +412,40 @@ gapp.register("kiri.ui", [], (root, exports) => {
     }
 
     function newDiv(opt = {}) {
-        let div = DOC.createElement('div');
+        let div = DOC.createElement(opt.tag || 'div');
         addModeControls(div, opt);
         (opt.addto || addTo).appendChild(div);
         if (opt.addto) lastDiv = addTo = div;
-        if (opt.addto && opt.class) div.setAttribute('class', opt.class);
+        if (opt.class) div.setAttribute('class', opt.class);
         lastGroup?.push(div);
         div._group = groupName;
         return div;
+    }
+
+    function newExpand(label, opt = {}, opteach = {}) {
+        let div = DOC.createElement('details');
+        div.setAttribute('class', opt.class || 'f-col');
+        addModeControls(div, opt);
+
+        let summary = DOC.createElement('summary');
+        summary.setAttribute('class', opt.class || 'var-row');
+        summary.innerHTML = `<label>${label}</label>`;
+
+        div.appendChild( summary );
+        div.collapse = () => {
+            div.removeAttribute('open');
+        };
+
+        lastAddTo = addTo;
+        addTo.appendChild(div);
+        addTo = div;
+
+        return div;
+    }
+
+    function endExpand() {
+        addTo = lastAddTo;
+        return addTo;
     }
 
     function isSticky() {
@@ -421,10 +466,11 @@ gapp.register("kiri.ui", [], (root, exports) => {
         txt.setAttribute("spellcheck", "false");
         txt.setAttribute("style", "resize: none");
         txt.onblur = bindTo || inputAction;
+        txt.button = btn;
 
         btn.setAttribute("class", "basis-50");
         btn.appendChild(DOC.createTextNode(label));
-
+        btn.setAttribute("title", opt.title || undefined);
         btn.onclick = function(ev) {
             ev.stopPropagation();
             if (ev.target === txt) {
@@ -442,9 +488,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 rows.forEach(row => {
                     cols = Math.max(cols, row.length);
                 });
-                txt.setAttribute("cols", Math.max(30, cols + 1));
-                txt.setAttribute("rows", 6);
-
                 let showing = btn === lastBtn;
                 if (lastTxt) {
                     lastTxt.classList.remove('txt-sel');
@@ -462,11 +505,8 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 }
             }
         };
+
         addModeControls(btn, opt);
-        if (opt.title) {
-            btn.setAttribute("title", options.title);
-        }
-        txt.button = btn;
 
         return txt;
     }
@@ -792,27 +832,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
             });
         }
         return row;
-    }
-
-    function newRowTable(array) {
-        let div = newDiv();
-        div.setAttribute("class", "table-row");
-        array.forEach(function(c) {
-            div.appendChild(c);
-        });
-        return div;
-    }
-
-    function newTableRow(arrayOfArrays, options) {
-        return newRow(newTable(arrayOfArrays), options);
-    }
-
-    function newTable(arrayOfArrays) {
-        let array = [];
-        for (let i=0; i<arrayOfArrays.length; i++) {
-            array.push(newRowTable(arrayOfArrays[i]));
-        }
-        return array;
     }
 
 });

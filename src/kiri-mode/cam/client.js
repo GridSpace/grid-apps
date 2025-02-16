@@ -5,11 +5,11 @@
 // dep: kiri-mode.cam.driver
 // use: kiri-mode.cam.animate
 // use: kiri-mode.cam.animate2
+// use: kiri-mode.cam.tools
 // use: load.gbr
 gapp.register("kiri-mode.cam.client", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { newPoint, newPolygon } = base;
 const { driver } = kiri;
 const { CAM } = driver;
 const DEG2RAD = Math.PI / 180;
@@ -23,6 +23,7 @@ let isAnimate,
     isIndexed,
     isParsed,
     camStock,
+    camZTop,
     camZBottom,
     current,
     currentIndex,
@@ -508,7 +509,7 @@ CAM.init = function(kiri, api) {
             let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
             let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
             if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
-            if (notable?.length) label = notable[0].slice(1);
+            if (notable?.length) label += ` (${notable[0].slice(1)})`;
             html.appendAll([
                 `<div id="${mark+i}" class="${clazz.join(' ')}"${title}>`,
                 `<label class="label">${label}</label>`,
@@ -610,6 +611,10 @@ CAM.init = function(kiri, api) {
                 }, 250);
             }
             function onDown(ev) {
+                if (!ev.target.rec) {
+                    // only trigger on operation buttons bound to recs
+                    return;
+                }
                 let mobile = ev.touches;
                 func.surfaceDone();
                 func.traceDone();
@@ -930,6 +935,9 @@ CAM.init = function(kiri, api) {
     // SURFACE FUNCS
     let surfaceOn = false, lastWidget;
     func.surfaceAdd = (ev) => {
+        if (surfaceOn) {
+            return func.surfaceDone();
+        }
         func.clearPops();
         alert = api.show.alert("analyzing surfaces...", 1000);
         let surfaces = poppedRec.surfaces;
@@ -981,6 +989,9 @@ CAM.init = function(kiri, api) {
     // TRACE FUNCS
     let traceOn = false, lastTrace;
     func.traceAdd = (ev) => {
+        if (traceOn) {
+            return func.traceDone();
+        }
         func.clearPops();
         alert = api.show.alert("analyzing parts...", 1000);
         traceOn = hoveredOp;
@@ -1281,6 +1292,10 @@ CAM.init = function(kiri, api) {
         return current.device.spindleMax > 0;
     }
 
+    function zTop() {
+        return API.conf.get().process.camZTop > 0;
+    }
+
     function zBottom() {
         return API.conf.get().process.camZBottom > 0;
     }
@@ -1318,7 +1333,9 @@ CAM.init = function(kiri, api) {
         voids:   'camRoughVoid',
         flats:   'camRoughFlat',
         inside:  'camRoughIn',
-        top:     'camRoughTop'
+        ov_topz: 0,
+        ov_botz: 0,
+        ov_conv: '~camConventional',
     }).inputs = {
         tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:     UC.newBlank({class:"pop-sep"}),
@@ -1334,8 +1351,13 @@ CAM.init = function(kiri, api) {
         all:     UC.newBoolean(LANG.cr_clst_s, undefined, {title:LANG.cr_clst_l, show:hasIndexing}),
         voids:   UC.newBoolean(LANG.cr_clrp_s, undefined, {title:LANG.cr_clrp_l}),
         flats:   UC.newBoolean(LANG.cr_clrf_s, undefined, {title:LANG.cr_clrf_l}),
-        top:     UC.newBoolean(LANG.cr_clrt_s, undefined, {title:LANG.cr_clrt_l}),
-        inside:  UC.newBoolean(LANG.cr_olin_s, undefined, {title:LANG.cr_olin_l})
+        inside:  UC.newBoolean(LANG.cr_olin_s, undefined, {title:LANG.cr_olin_l}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        exp:      UC.newExpand("overrides"),
+        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
+        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
+        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
+        exp_end:  UC.endExpand(),
     };
 
     createPopOp('outline', {
@@ -1352,7 +1374,10 @@ CAM.init = function(kiri, api) {
         outside:  'camOutlineOut',
         inside:   'camOutlineIn',
         wide:     'camOutlineWide',
-        top:      'camOutlineTop'
+        top:      'camOutlineTop',
+        ov_topz:   0,
+        ov_botz:   0,
+        ov_conv:   '~camConventional',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
@@ -1371,6 +1396,12 @@ CAM.init = function(kiri, api) {
         omitvoid: UC.newBoolean(LANG.co_omvd_s, undefined, {title:LANG.co_omvd_l, xshow:(op) => { return op.inputs.outside.checked }}),
         wide:     UC.newBoolean(LANG.co_wide_s, undefined, {title:LANG.co_wide_l, show:(op) => { return !op.inputs.inside.checked }}),
         dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:(op) => { return !op.inputs.wide.checked }}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        exp:      UC.newExpand("overrides"),
+        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
+        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
+        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
+        exp_end:  UC.endExpand(),
     };
 
     const contourFilter = gcodeEditor('Layer Filter', 'filter');
@@ -1422,7 +1453,7 @@ CAM.init = function(kiri, api) {
         tolerance: 'camTolerance',
         filter:    'camContourFilter',
         leave:     'camContourLeave',
-        axis:      'X'
+        linear:    'camLatheLinear'
     }).inputs = {
         tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
         // axis:      UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
@@ -1435,6 +1466,8 @@ CAM.init = function(kiri, api) {
         sep:       UC.newBlank({class:"pop-sep"}),
         tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
         leave:     UC.newInput(LANG.cf_leav_s, {title:LANG.cf_leav_l, convert:UC.toFloat, bound:UC.bound(0,100)}),
+        sep:       UC.newBlank({class:"pop-sep"}),
+        linear:    UC.newBoolean(LANG.ci_line_s, undefined, {title:LANG.ci_line_l}),
         // filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
     };
 
@@ -1461,11 +1494,14 @@ CAM.init = function(kiri, api) {
         thru:    'camTraceThru',
         rate:    'camTraceSpeed',
         plunge:  'camTracePlunge',
-        bottom:  'camTraceBottom',
         offover: 'camTraceOffOver',
         dogbone: 'camTraceDogbone',
         revbone: 'camTraceDogbone',
-        select:  'camTraceMode'
+        merge:   'camTraceMerge',
+        select:  'camTraceMode',
+        ov_topz: 0,
+        ov_botz: 0,
+        ov_conv: '~camConventional',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
@@ -1481,14 +1517,17 @@ CAM.init = function(kiri, api) {
         thru:     UC.newInput(LANG.cc_thru_s, {title:LANG.cc_thru_l, convert:UC.toFloat, units:true}),
         offover:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, show:() => poppedRec.offset !== "none"}),
         sep:      UC.newBlank({class:"pop-sep", modes:MCAM, xshow:zDogSep}),
-        bottom:   UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf.process.camZBottom}),
+        merge:    UC.newBoolean(LANG.co_merg_s, undefined, {title:LANG.co_merg_l, show:() => !popOp.trace.rec.down}),
         dogbone:  UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:canDogBones}),
         revbone:  UC.newBoolean(LANG.co_dogr_s, undefined, {title:LANG.co_dogr_l, show:canDogBonesRev}),
+        exp:      UC.newExpand("overrides"),
         sep:      UC.newBlank({class:"pop-sep"}),
-        menu: UC.newRow([
-            UC.newButton(undefined, func.traceAdd, {icon:'<i class="fas fa-plus"></i>'}),
-            UC.newButton(undefined, func.traceDone, {icon:'<i class="fas fa-check"></i>'}),
-        ], {class:"ext-buttons f-row"}),
+        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
+        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
+        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
+        exp_end:  UC.endExpand(),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        menu:     UC.newRow([ UC.newButton("select", func.traceAdd) ], {class:"ext-buttons f-row"}),
     };
 
     createPopOp('pocket', {
@@ -1505,6 +1544,9 @@ CAM.init = function(kiri, api) {
         contour:   'camPocketContour',
         engrave:   'camPocketEngrave',
         outline:   'camPocketOutline',
+        ov_topz:   0,
+        ov_botz:   0,
+        ov_conv:   '~camConventional',
         tolerance: 'camTolerance',
     }).inputs = {
         tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
@@ -1525,11 +1567,14 @@ CAM.init = function(kiri, api) {
         contour:   UC.newBoolean(LANG.cp_cont_s, undefined, {title:LANG.cp_cont_s}),
         outline:   UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l, show:() => !poppedRec.contour}),
         engrave:   UC.newBoolean(LANG.cp_engr_s, undefined, {title:LANG.cp_engr_l, show:() => poppedRec.contour}),
+        exp:       UC.newExpand("overrides"),
         sep:       UC.newBlank({class:"pop-sep"}),
-        menu: UC.newRow([
-            UC.newButton(undefined, func.surfaceAdd, {icon:'<i class="fas fa-plus"></i>'}),
-            UC.newButton(undefined, func.surfaceDone, {icon:'<i class="fas fa-check"></i>'}),
-        ], {class:"ext-buttons f-row"}),
+        ov_topz:   UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
+        ov_botz:   UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
+        ov_conv:   UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
+        exp_end:   UC.endExpand(),
+        sep:       UC.newBlank({class:"pop-sep"}),
+        menu:      UC.newRow([ UC.newButton("select", func.surfaceAdd) ], {class:"ext-buttons f-row"}),
     };
 
     createPopOp('drill', {
@@ -1584,9 +1629,7 @@ CAM.init = function(kiri, api) {
         sep:      UC.newBlank({class:"pop-sep", modes:MCAM, show:zBottom}),
         invert:   UC.newBoolean(LANG.cf_nvrt_s, undefined, {title:LANG.cf_nvrt_l, show:zBottom}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        action:   UC.newRow([
-            UC.newButton(LANG.cf_menu, func.opFlip)
-        ], {class:"ext-buttons f-row"})
+        action:   UC.newRow([ UC.newButton(LANG.cf_menu, func.opFlip) ], {class:"ext-buttons f-row"})
     };
 
     createPopOp('gcode', {
@@ -1669,8 +1712,16 @@ function createPopOp(type, map) {
             for (let [key, val] of Object.entries(op.inputs)) {
                 let type = val.type;
                 let from = map[key];
-                if (rec[key] === undefined && type && from) {
-                    rec[key] = current.process[from];
+                let rval = rec[key];
+                // fill undef entries older defines
+                if (type && (rval === null || rval === undefined)) {
+                    if (typeof(from) === 'string') {
+                        rec[key] = current.process[from];
+                    } else if (from !== undefined) {
+                        rec[key] = from;
+                    } else {
+                        console.log('error', { key, val, type, from });
+                    }
                 }
             }
             API.util.rec2ui(rec, op.inputs);
@@ -1683,7 +1734,7 @@ function createPopOp(type, map) {
             API.util.ui2rec(op.rec, op.inputs);
             for (let [key, val] of Object.entries(op.rec)) {
                 let saveTo = map[key];
-                if (saveTo) {
+                if (saveTo && typeof(key) === 'string' && !key.startsWith("~")) {
                     current.process[saveTo] = val;
                 }
             }
@@ -1692,15 +1743,17 @@ function createPopOp(type, map) {
         },
         new: () => {
             let rec = { type };
-            for (let [key, val] of Object.entries(map)) {
-                rec[key] = current.process[val];
+            for (let [key, src] of Object.entries(map)) {
+                rec[key] = typeof(src) === 'string'
+                    ? current.process[src.replace('~','')]
+                    : src;
             }
             return rec;
         },
-        hideshow: (abc) => {
+        hideshow: () => {
             for (let inp of Object.values(op.inputs)) {
                 let parent = inp.parentElement;
-                if (parent.setVisible && parent.__opt.show) {
+                if (parent && parent.setVisible && parent.__opt.show) {
                     parent.setVisible(parent.__opt.show(op, API.conf.get()));
                 }
             }
@@ -1872,9 +1925,11 @@ function updateStock() {
     }
 
     if (!isCamMode) {
+        SPACE.world.remove(camZTop);
         SPACE.world.remove(camZBottom);
         SPACE.world.remove(camStock);
         camStock = null;
+        camZTop = null;
         camZBottom = null;
         return;
     }
@@ -1935,6 +1990,32 @@ function updateStock() {
     } else if (camStock) {
         SPACE.world.remove(camStock);
         camStock = null;
+    }
+
+    SPACE.world.remove(camZTop);
+    if (process.camZTop && widgets.length) {
+        let max = { x, y, z };
+        for (let w of widgets) {
+            max.x = Math.max(max.x, w.track.box.w);
+            max.y = Math.max(max.y, w.track.box.h);
+            max.z = Math.max(max.z, w.track.box.d);
+        }
+        let geo = new THREE.PlaneGeometry(max.x, max.y);
+        let mat = new THREE.MeshBasicMaterial({
+            color: 0x777777,
+            opacity: 0.55,
+            transparent: true,
+            side:THREE.DoubleSide
+        });
+        camZTop = new THREE.Mesh(geo, mat);
+        camZTop._max = max;
+        camZTop.renderOrder = 1;
+        camZTop.position.x = center.x;
+        camZTop.position.y = center.y;
+        camZTop.position.z = process.camZTop;
+        SPACE.world.add(camZTop);
+    } else {
+        camZTop = undefined;
     }
 
     SPACE.world.remove(camZBottom);

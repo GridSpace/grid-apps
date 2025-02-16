@@ -65,6 +65,16 @@ function transform(def, mesh) {
     return pos.array;
 }
 
+/** find matching attribute regardless of namespace */
+function getLocalAttribute(node, name) {
+    for (let attr of node.attributes) {
+        if (attr.localName === name) {
+            return attr.value;
+        }
+    }
+    return undefined;
+}
+
 function loadModel(doc) {
     let items = [];
     let objects = {};
@@ -118,12 +128,15 @@ function loadModel(doc) {
                     query(node, ["components","+component"], (type, node) => {
                         object.components.push({
                             oid: node.getAttribute('objectid'),
-                            xform: node.getAttribute('transform')
+                            path: getLocalAttribute(node, "path"),
+                            xform: node.getAttribute('transform'),
                         });
                     });
                     break;
             }
         });
+
+        return resolve({ objects, items });
 
         // create object mesh from components
         for (let object of Object.values(objects)) {
@@ -135,7 +148,9 @@ function loadModel(doc) {
             for (let component of components) {
                 let { oid, xform } = component;
                 let ref = objects[oid];
-                if (xform) {
+                if (!ref) {
+                    console.log({ missing_ref: oid, objects, components, doc });
+                } else if (xform) {
                     mesh.appendAll(transform(xform, ref.mesh));
                 } else {
                     mesh.appendAll(ref.mesh);
@@ -160,21 +175,73 @@ function loadModel(doc) {
     });
 }
 
+function extractItems(records) {
+    let outItems = [];
+    let models = Object.values(records);
+
+    // create object mesh from components
+    for (let model of models) {
+        let { objects } = model;
+        for (let object of Object.values(objects)) {
+            let { mesh, components } = object;
+            if (mesh) {
+                continue;
+            }
+            mesh = object.mesh = [];
+            for (let component of components) {
+                let { oid, path, xform } = component;
+                let omap = objects;
+                if (path) {
+                    omap = records[path.substring(1)].objects;
+                    // console.log({ component_from_ob_path: path, using: omap });
+                }
+                let ref = omap[oid];
+                if (!ref) {
+                    console.log({ missing_ref: oid, objects, components });
+                } else if (xform) {
+                    mesh.appendAll(transform(xform, ref.mesh));
+                } else {
+                    mesh.appendAll(ref.mesh);
+                }
+            }
+        }
+    }
+
+    // create export items from object references
+    for (let model of models) {
+        let { items, objects } = model;
+        for (let item of items || []) {
+            let { oid, xform } = item;
+            let { name, mesh } = objects[oid];
+            item.name = name;
+            if (xform) {
+                item.faces = transform(xform, mesh);
+            } else {
+                item.faces = mesh;
+            }
+        }
+        outItems.push(...items);
+    }
+
+    return outItems;
+}
+
 /**
  * @param {Object} data binary file
  * @returns {Array} vertex face array
  */
 function parseAsync(data) {
-    return new Promise((resolve, reject) => {
-        JSZip.loadAsync(data).then(zip => {
-            for (let [key,value] of Object.entries(zip.files)) {
-                if (key.indexOf(".model") > 0) {
-                    value.async("string").then(xml => {
-                        resolve(loadModel(new DOMParser().parseFromString(xml, "text/xml")));
-                    });
-                }
+    return new Promise(async (resolve, reject) => {
+        let zip = await JSZip.loadAsync(data);
+        let models = {};
+        for (let [key, value] of Object.entries(zip.files)) {
+            if (key.endsWith(".model")) {
+                let xml = await value.async("string");
+                let { objects, items } = await loadModel(new DOMParser().parseFromString(xml, "text/xml"));
+                models[key] = { objects, items };
             }
-        });
+        }
+        resolve(extractItems(models));
     });
 }
 

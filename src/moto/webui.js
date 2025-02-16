@@ -33,9 +33,14 @@ function build(data, context) {
     html.push(`<${type}`);
     let func = {};
     for (let [key, val] of Object.entries(attr || {})) {
+        if (val === undefined) {
+            continue;
+        }
         let tov = typeof val;
         if (key === '_') {
             text = val;
+        } else if (key.startsWith('_')) {
+            if (val) html.push(` ${key.substring(1)}`);
         } else if (key === 'id') {
             elid = val ? (tov === 'object' ? val.join('_') : val) : undefined;
         } else if (tov === 'function') {
@@ -76,7 +81,12 @@ let h = exports({
     bind: (el, data, opt = {}) => {
         let ctx = [];
         let html = build(data, ctx).join('');
-        if (opt.append) {
+        if (opt.after || opt.before) {
+            let tmpl = document.createElement('template');
+            tmpl.innerHTML = html;
+            opt.before && el.before(tmpl.content);
+            opt.after && el.after(tmpl.content);
+        } else if (opt.append) {
             el.innerHTML += html;
         } else {
             el.innerHTML = html;
@@ -149,7 +159,7 @@ gapp.overlay(root, {
 // add common element types
 [
     "a", "i", "hr", "div", "pre", "code", "span", "label", "input",
-    "button", "svg", "textarea", "select", "option"
+    "button", "svg", "textarea", "select", "option", "img", "canvas"
 ].forEach(type => {
     h[type] = (attr, innr) => {
         return h.el(type, attr, innr);

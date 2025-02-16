@@ -8,56 +8,47 @@
 // dep: kiri.lang
 // dep: kiri.stats
 // dep: kiri.consts
+// dep: kiri.devices
 // dep: kiri.platform
 // dep: kiri.selection
 // use: kiri.tools
 // use: kiri.pack
-gapp.register("kiri.init", [], (root, exports) => {
+gapp.register("kiri.init", (root, exports) => {
 
-    const { base, kiri } = root;
-    const { api, catalog, conf, consts, space } = kiri;
-    const { sdb, stats, js2o, o2js, platform, selection, ui, uc } = api;
-    const { VIEWS, MODES, SEED } = consts;
-    const { LANG, LOCAL, SETUP } = api.const;
-
-    const WIN = self.window,
-        DOC = self.document,
-        DEG2RAD = Math.PI / 180,
-        STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
+    // builds and wires up the UI
+    let { base, kiri } = root,
+        { api, catalog, consts, space } = kiri,
+        { sdb, stats, platform, selection, ui, uc } = api,
+        { VIEWS, MODES, SEED } = consts,
+        { LANG, LOCAL, SETUP } = api.const,
         { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
+        WIN = self.window,
+        DOC = self.document,
+        STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
         TWOD = [LASER, DRAG, WJET, WEDM],
         TWONED = [LASER, DRAG, WJET],
         THREED = [FDM, CAM, SLA],
         GCODE = [FDM, CAM, ...TWOD],
         CAM_LZR = [CAM, ...TWOD],
-        FDM_LZR = [FDM, ...TWOD],
         FDM_LZN = [FDM, ...TWONED],
         NO_WEDM = [FDM, CAM, SLA, LASER, DRAG, WJET],
         FDM_CAM = [FDM, CAM],
         proto = location.protocol,
-        ver = Date.now().toString(36),
+        platformColor,
         separator = true,
         hideable = true,
         inline = true,
         driven = true;
 
-    let currentDevice = null,
-        deviceURL = null,
-        deviceFilter = null,
-        deviceImage = null,
-        selectedTool = null,
-        editTools = null,
-        maxTool = 0,
-        platformColor,
-        contextInt;
-
-    // extend KIRI API with local functions
-    api.show.devices = showDevices;
-    api.device.set = selectDevice;
-    api.device.clone = cloneDevice;
+    // copy version from grid app
+    kiri.version = gapp.version;
 
     function settings() {
         return api.conf.get();
+    }
+
+    function updateTool() {
+        api.tool.update();
     }
 
     function checkSeed(then) {
@@ -98,25 +89,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             settings().controller.lineType = sel.value;
             api.conf.save();
         }
-    }
-
-    function filamentSourceEditUpdate() {
-        if (ui.filamentSource && ui.filamentSourceEdit) {
-            api.event.emit("filament.source");
-            const sel = ui.filamentSource.options[ui.filamentSource.selectedIndex];
-            if (sel) {
-                ui.filamentSourceEdit.style.display = sel.value === 'palette3' ? '' : 'none';
-            }
-        }
-    }
-
-    function filamentSourceSave() {
-        const sel = ui.filamentSource.options[ui.filamentSource.selectedIndex];
-        if (sel) {
-            settings().device.filamentSource = sel.value;
-            api.conf.save();
-        }
-        filamentSourceEditUpdate();
     }
 
     function thinWallSave() {
@@ -242,16 +214,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         }, 100);
     }
 
-    function parentWithClass(el, classname) {
-        while (el) {
-            if (el.classList.contains(classname)) {
-                return el;
-            }
-            el = el.parentNode;
-        }
-        return el;
-    }
-
     function onBooleanClick(el) {
         // copy some ui elements to target settings
         let settings = api.conf.get();
@@ -264,7 +226,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.conf.update();
         DOC.activeElement.blur();
         api.event.emit("boolean.click");
-        updateLaserState();
+        api.devices.update_laser_state();
         if (el === ui.camStockIndexed) {
             api.space.set_focus();
         }
@@ -290,6 +252,9 @@ gapp.register("kiri.init", [], (root, exports) => {
     function keyUpHandler(evt) {
         if (api.feature.on_key) {
             if (api.feature.on_key({up:evt})) return;
+        }
+        for (let handler of api.feature.on_key2) {
+            if (handler({up:evt})) return;
         }
         switch (evt.keyCode) {
             // escape
@@ -318,39 +283,42 @@ gapp.register("kiri.init", [], (root, exports) => {
         if (api.feature.on_key) {
             if (api.feature.on_key({down:evt})) return;
         }
+        for (let handler of api.feature.on_key2) {
+            if (handler({down:evt})) return;
+        }
         let move = evt.altKey ? 5 : 0,
             deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
         switch (evt.keyCode) {
             case 8: // apple: delete/backspace
             case 46: // others: delete
                 if (inputHasFocus()) return false;
-                platform.delete(api.selection.meshes());
+                platform.delete(selection.meshes());
                 evt.preventDefault();
                 break;
             case 37: // left arrow
                 if (inputHasFocus()) return false;
-                if (deg) api.selection.rotate(0, 0, -deg);
-                if (move > 0) api.selection.move(-move, 0, 0);
+                if (deg) selection.rotate(0, 0, -deg);
+                if (move > 0) selection.move(-move, 0, 0);
                 evt.preventDefault();
                 break;
             case 39: // right arrow
                 if (inputHasFocus()) return false;
-                if (deg) api.selection.rotate(0, 0, deg);
-                if (move > 0) api.selection.move(move, 0, 0);
+                if (deg) selection.rotate(0, 0, deg);
+                if (move > 0) selection.move(move, 0, 0);
                 evt.preventDefault();
                 break;
             case 38: // up arrow
                 if (inputHasFocus()) return false;
                 if (evt.metaKey) return api.show.layer(api.var.layer_at+1);
-                if (deg) api.selection.rotate(deg, 0, 0);
-                if (move > 0) api.selection.move(0, move, 0);
+                if (deg) selection.rotate(deg, 0, 0);
+                if (move > 0) selection.move(0, move, 0);
                 evt.preventDefault();
                 break;
             case 40: // down arrow
                 if (inputHasFocus()) return false;
                 if (evt.metaKey) return api.show.layer(api.var.layer_at-1);
-                if (deg) api.selection.rotate(-deg, 0, 0);
-                if (move > 0) api.selection.move(0, -move, 0);
+                if (deg) selection.rotate(-deg, 0, 0);
+                if (move > 0) selection.move(0, -move, 0);
                 evt.preventDefault();
                 break;
             case 65: // 'a' for select all
@@ -390,6 +358,9 @@ gapp.register("kiri.init", [], (root, exports) => {
         if (api.feature.on_key) {
             if (api.feature.on_key({key:evt})) return;
         }
+        for (let handler of api.feature.on_key2) {
+            if (handler({key:evt})) return;
+        }
         if (evt.ctrlKey) {
             switch (evt.key) {
                 case 'g': return api.group.merge();
@@ -413,7 +384,10 @@ gapp.register("kiri.init", [], (root, exports) => {
                 break;
             case cca('Z'): // reset stored state
                 uc.confirm('clear all settings and preferences?').then(yes => {
-                    if (yes) sdb.clear();
+                    if (yes) {
+                        sdb.clear();
+                        WIN.location.reload();
+                    }
                 });
                 break;
             case cca('C'): // refresh catalog
@@ -424,16 +398,10 @@ gapp.register("kiri.init", [], (root, exports) => {
                 break;
             case cca('S'): // slice
             case cca('s'): // slice
-                if (evt.shiftKey) {
-                    api.show.alert('CAPS lock on?');
-                }
                 api.function.slice();
                 break;
             case cca('P'): // prepare
             case cca('p'): // prepare
-                if (evt.shiftKey) {
-                    api.show.alert('CAPS lock on?');
-                }
                 if (api.mode.get() !== 'SLA') {
                     // hidden in SLA mode
                     api.function.print();
@@ -441,9 +409,6 @@ gapp.register("kiri.init", [], (root, exports) => {
                 break;
             case cca('X'): // export
             case cca('x'): // export
-                if (evt.shiftKey) {
-                    api.show.alert('CAPS lock on?');
-                }
                 api.function.export();
                 break;
             case cca('g'): // CAM animate
@@ -462,20 +427,17 @@ gapp.register("kiri.init", [], (root, exports) => {
                 settingsLoad();
                 break;
             case cca('e'): // device
-                showDevices();
+                api.show.devices();
                 break;
-            // case cca('w'): // scale
-            //     api.event.emit("tool.next");
-            //     break;
             case cca('o'): // tools
-                showTools();
+                api.show.tools();
                 break;
             case cca('c'): // local devices
                 api.show.local();
                 break;
             case cca('v'): // toggle single slice view mode
                 if (api.view.get() === VIEWS.ARRANGE) {
-                    api.space.set_focus(api.selection.widgets());
+                    api.space.set_focus(selection.widgets());
                 }
                 if (api.var.layer_hi == api.var.layer_lo) {
                     api.var.layer_lo = 0;
@@ -495,7 +457,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                     // auto arrange items on platform
                     platform.layout();
                     if (!api.conf.get().controller.spaceRandoX) {
-                        api.space.set_focus(api.selection.widgets());
+                        api.space.set_focus(selection.widgets());
                     }
                 } else {
                     // go to arrange view
@@ -515,11 +477,11 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function duplicateSelection() {
-        api.selection.duplicate();
+        selection.duplicate();
     }
 
     function mirrorSelection() {
-        api.selection.mirror();
+        selection.mirror();
     }
 
     function keys(o) {
@@ -535,7 +497,7 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function rotateInputSelection() {
-        if (api.selection.meshes().length === 0) {
+        if (selection.meshes().length === 0) {
             api.show.alert("select object to rotate");
             return;
         }
@@ -545,12 +507,12 @@ gapp.register("kiri.init", [], (root, exports) => {
                 x = parseFloat(coord[0] || 0.0) * prod,
                 y = parseFloat(coord[1] || 0.0) * prod,
                 z = parseFloat(coord[2] || 0.0) * prod;
-            api.selection.rotate(x, y, z);
+            selection.rotate(x, y, z);
         });
     }
 
     function positionSelection() {
-        if (api.selection.meshes().length === 0) {
+        if (selection.meshes().length === 0) {
             api.show.alert("select object to position");
             return;
         }
@@ -570,7 +532,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 y = y - device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
             }
 
-            api.selection.move(x, y, z, true);
+            selection.move(x, y, z, true);
         });
     }
 
@@ -587,13 +549,13 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function objectsExport(format = "stl") {
-        // return api.selection.export();
+        // return selection.export();
         uc.confirm("Export Filename", {ok:true, cancel: false}, `selected.${format}`).then(name => {
             if (!name) return;
             if (name.toLowerCase().indexOf(`.${format}`) < 0) {
                 name = `${name}.${format}`;
             }
-            api.util.download(api.selection.export(format), name);
+            api.util.download(selection.export(format), name);
         });
     }
 
@@ -671,633 +633,14 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.conf.show();
     }
 
-    function putLocalDevice(devicename, obj) {
-        settings().devices[devicename] = obj;
-        api.conf.save();
-    }
-
-    function removeLocalDevice(devicename) {
-        delete settings().devices[devicename];
-        api.conf.save();
-        sync_put();
-    }
-
-    function isLocalDevice(devicename) {
-        return settings().devices[devicename] ? true : false;
-    }
-
-    function getSelectedDevice() {
-        return api.device.get();
-    }
-
-    function selectDevice(devicename) {
-        if (isLocalDevice(devicename)) {
-            setDeviceCode(settings().devices[devicename], devicename);
-        } else {
-            let code = devices[api.mode.get_lower()][devicename];
-            if (code) {
-                setDeviceCode(code, devicename);
-            }
-        }
-    }
-
-    // only for local filters
-    function cloneDevice() {
-        let name = `${getSelectedDevice().replace(/\./g,' ')}`;
-        let code = api.clone(settings().device);
-        code.mode = api.mode.get();
-        if (name.toLowerCase().indexOf('my ') >= 0) {
-            name = `${name} copy`;
-        } else {
-            name = `My ${name}`;
-        }
-        putLocalDevice(name, code);
-        setDeviceCode(code, name);
-        sync_put();
-    }
-
-    function updateLaserState() {
-        const dev = settings().device;
-        $('laser-on').style.display = dev.useLaser ? 'flex' : 'none';
-        $('laser-off').style.display = dev.useLaser ? 'flex' : 'none';
-    }
-
-    function setDeviceCode(code, devicename) {
-        api.event.emit('device.select', devicename);
-        try {
-            if (typeof(code) === 'string') code = js2o(code) || {};
-
-            let mode = api.mode.get(),
-                lmode = mode.toLowerCase(),
-                current = settings(),
-                local = isLocalDevice(devicename),
-                dev = current.device = conf.device_from_code(code,mode),
-                dproc = current.devproc[devicename], // last process name for this device
-                newdev = dproc === undefined,   // first time device is selected
-                predev = current.filter[mode],  // previous device selection
-                chgdev = predev !== devicename; // device is changing
-
-            // fill missing device fields
-            conf.fill_cull_once(dev, conf.defaults[lmode].d);
-
-            // first time device use, add any print profiles and set to default if present
-            if (code.profiles) {
-                for (let profile of code.profiles) {
-                    let profname = profile.processName;
-                    // if no saved profile by that name for this mode...
-                    if (!current.sproc[mode][profname]) {
-                        console.log('adding profile', profname, 'to', mode);
-                        current.sproc[mode][profname] = profile;
-                    }
-                    // if it's a new device, seed the new profile name as last profile
-                    if (newdev && !current.devproc[devicename]) {
-                        console.log('setting default profile for new device', devicename, 'to', profname);
-                        current.devproc[devicename] = dproc = profname;
-                    }
-                }
-            }
-
-            dev.new = false;
-            dev.deviceName = devicename;
-
-            // ui.deviceName.value = devicename;
-            ui.deviceBelt.checked = dev.bedBelt;
-            ui.deviceRound.checked = dev.bedRound;
-            ui.deviceOrigin.checked = dev.ctOriginCenter || dev.originCenter || dev.bedRound;
-            ui.fwRetract.checked = dev.fwRetract;
-            if (!dev.filamentSource) ui.filamentSource.selectedIndex = 0;
-
-            // add extruder selection buttons
-            if (dev.extruders) {
-                let ext = api.lists.extruders = [];
-                dev.internal = 0;
-                for (let i=0; i<dev.extruders.length; i++) {
-                    ext.push({id:i, name:i});
-                }
-            }
-
-            // disable editing for non-local devices
-            [
-                // ui.deviceName,
-                ui.gcodePre,
-                ui.gcodePost,
-                ui.bedDepth,
-                ui.bedWidth,
-                ui.maxHeight,
-                ui.useLaser,
-                ui.resolutionX,
-                ui.resolutionY,
-                ui.deviceOrigin,
-                ui.deviceRound,
-                ui.deviceBelt,
-                ui.fwRetract,
-                ui.filamentSource,
-                ui.deviceZMax,
-                ui.gcodeTime,
-                ui.gcodeFan,
-                ui.gcodeFeature,
-                ui.gcodeTrack,
-                ui.gcodeLayer,
-                ui.extFilament,
-                ui.extNozzle,
-                ui.spindleMax,
-                ui.gcodeSpindle,
-                ui.gcodeDwell,
-                ui.gcodeChange,
-                ui.gcodeFExt,
-                ui.gcodeSpace,
-                ui.gcodeStrip,
-                ui.gcodeLaserOn,
-                ui.gcodeLaserOff,
-                ui.extPrev,
-                ui.extNext,
-                ui.extAdd,
-                ui.extDel,
-                ui.extOffsetX,
-                ui.extOffsetY,
-                ui.extSelect,
-                ui.extDeselect
-            ].forEach(function(e) {
-                e.disabled = !local;
-            });
-
-            ui.deviceSave.disabled = !local;
-            ui.deviceDelete.disabled = !local;
-            ui.deviceRename.disabled = !local;
-            ui.deviceExport.disabled = !local;
-            ui.deviceAdd.style.display = mode === 'SLA' ? 'none' : '';
-
-            if (local) {
-                ui.deviceAdd.innerText = "copy";
-                ui.deviceDelete.style.display = '';
-                ui.deviceRename.style.display = '';
-                ui.deviceExport.style.display = '';
-            } else {
-                ui.deviceAdd.innerText = "customize";
-                ui.deviceDelete.style.display = 'none';
-                ui.deviceRename.style.display = 'none';
-                ui.deviceExport.style.display = 'none';
-            }
-            ui.deviceAdd.disabled = dev.noclone;
-
-            api.conf.update_fields();
-            space.platform.setBelt(isBelt());
-            platform.update_size();
-            platform.update_origin();
-            platform.update();
-            updateLaserState();
-
-            // store current device name for this mode
-            current.filter[mode] = devicename;
-            // cache device record for this mode (restored in setMode)
-            current.cdev[mode] = currentDevice = dev;
-
-            if (dproc) {
-                // restore last process associated with this device
-                api.conf.load(null, dproc);
-            } else {
-                api.conf.update();
-            }
-
-            api.conf.save();
-
-            if (isBelt()) {
-                // space.view.setHome(dev.bedBelt ? Math.PI/2 : 0, Math.PI / 2.5);
-                space.view.setHome(0, Math.PI / 2.5);
-            } else {
-                space.view.setHome(0);
-            }
-            // when changing devices, update focus on widgets
-            if (chgdev) {
-                setTimeout(api.space.set_focus, 0);
-            }
-
-            uc.refresh(1);
-            filamentSourceEditUpdate();
-        } catch (e) {
-            console.log({error:e, device:code, devicename});
-            api.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
-            api.show.alert(`please select a new device`, 10);
-            throw e;
-            showDevices();
-        }
-        api.function.clear();
-        api.event.settings();
-    }
-
-    function updateDeviceName(newname) {
-        let selected = api.device.get(),
-            devs = settings().devices;
-        if (newname !== selected) {
-            devs[newname] = devs[selected];
-            delete devs[selected];
-            selectDevice(newname);
-            updateDeviceList();
-        }
-    }
-
     function updateDeviceSize() {
         api.conf.update();
         platform.update_size();
         platform.update_origin();
     }
 
-    function renderDevices(devices) {
-        let selected = api.device.get() || devices[0],
-            features = api.feature,
-            devs = settings().devices,
-            dfilter = typeof(features.device_filter) === 'function' ? features.device_filter : undefined;
-
-        for (let local in devs) {
-            if (!(devs.hasOwnProperty(local) && devs[local])) {
-                continue;
-            }
-            let dev = devs[local],
-                fdmCode = dev.cmd,
-                fdmMode = (api.mode.get() === 'FDM');
-            if (dev.mode ? (dev.mode === api.mode.get()) : (fdmCode ? fdmMode : !fdmMode)) {
-                devices.push(local);
-            }
-        };
-
-        devices = devices.sort();
-
-        api.event.emit('devices.render', devices);
-
-        ui.deviceSave.onclick = function() {
-            api.event.emit('device.save');
-            api.function.clear();
-            api.conf.save();
-            sync_put();
-            showDevices();
-            api.modal.hide();
-        };
-        ui.deviceAdd.onclick = function() {
-            api.function.clear();
-            cloneDevice();
-            showDevices();
-        };
-        ui.deviceDelete.onclick = function() {
-            api.function.clear();
-            removeLocalDevice(getSelectedDevice());
-            selectDevice(getModeDevices()[0]);
-            showDevices();
-        };
-        ui.deviceRename.onclick = function() {
-            api.uc.prompt(`Rename "${selected}`, selected).then(newname => {
-                if (newname) {
-                    updateDeviceName(newname);
-                    api.conf.save();
-                    sync_put();
-                    showDevices();
-                } else {
-                    showDevices();
-                }
-            });
-        };
-        ui.deviceExport.onclick = function(event) {
-            const record = {
-                version: kiri.version,
-                device: selected,
-                process: api.process.code(),
-                profiles: event.altKey ? api.settings.prof() : undefined,
-                code: devs[selected],
-                time: Date.now()
-            };
-            let exp = api.util.b64enc(record);
-            api.device.export(exp, selected, { event, record });
-        };
-
-        let dedup = {};
-        let list_cdev = [];
-        let list_mdev = [];
-        devices.forEach(function(device, index) {
-            // prevent device from appearing twice
-            // such as local name = standard device name
-            if (dedup[device]) {
-                return;
-            }
-            dedup[device] = device;
-            let loc = isLocalDevice(device);
-            if (dfilter && dfilter(device) === false) {
-                return;
-            }
-            if (loc) {
-                list_mdev.push(h.option(device));
-            } else {
-                list_cdev.push(h.option(device));
-            }
-        });
-
-        let dev_list = $('dev-list');
-        h.bind(dev_list, [
-            h.option({ _: '-- My Devices --', disabled: true }),
-            ...list_mdev,
-            h.option({ _: '-- Stock Devices --', disabled: true }),
-            ...list_cdev
-        ]);
-        let dev_opts = [...dev_list.options].map(o => o.innerText);
-        dev_list.selectedIndex = dev_opts.indexOf(selected);
-        dev_list.onchange = ev => {
-            const seldev = dev_list.options[dev_list.selectedIndex];
-            selectDevice(seldev.innerText);
-            api.platform.layout();
-        }
-        selectDevice(selected);
-    }
-
-    function renderTools() {
-        ui.toolSelect.innerHTML = '';
-        maxTool = 0;
-        editTools.forEach(function(tool, index) {
-            maxTool = Math.max(maxTool, tool.number);
-            tool.order = index;
-            let opt = DOC.createElement('option');
-            opt.appendChild(DOC.createTextNode(tool.name));
-            opt.onclick = function() { selectTool(tool) };
-            ui.toolSelect.appendChild(opt);
-        });
-    }
-
-    function selectTool(tool) {
-        selectedTool = tool;
-        ui.toolName.value = tool.name;
-        ui.toolNum.value = tool.number;
-        ui.toolFluteDiam.value = tool.flute_diam;
-        ui.toolFluteLen.value = tool.flute_len;
-        ui.toolShaftDiam.value = tool.shaft_diam;
-        ui.toolShaftLen.value = tool.shaft_len;
-        ui.toolTaperTip.value = tool.taper_tip || 0;
-        ui.toolMetric.checked = tool.metric;
-        ui.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
-        if (tool.type === 'tapermill') {
-            ui.toolTaperAngle.value = kiri.driver.CAM.calcTaperAngle(
-                (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
-            ).round(1);
-        } else {
-            ui.toolTaperAngle.value = 0;
-        }
-        renderTool(tool);
-    }
-
-    function otag(o) {
-        if (Array.isArray(o)) {
-            let out = []
-            o.forEach(oe => out.push(otag(oe)));
-            return out.join('');
-        }
-        let tags = [];
-        Object.keys(o).forEach(key => {
-            let val = o[key];
-            let att = [];
-            Object.keys(val).forEach(tk => {
-                let tv = val[tk];
-                att.push(`${tk.replace(/_/g,'-')}="${tv}"`);
-            });
-            tags.push(`<${key} ${att.join(' ')}></${key}>`);
-        });
-        return tags.join('');
-    }
-
-    function renderTool(tool) {
-        let type = selectedTool.type;
-        let taper = type === 'tapermill';
-        ui.toolTaperAngle.disabled = taper ? undefined : 'true';
-        ui.toolTaperTip.disabled = taper ? undefined : 'true';
-        $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
-        setTimeout(() => {
-            let svg = $('tool-svg');
-            let pad = 10;
-            let dim = { w: svg.clientWidth, h: svg.clientHeight }
-            let max = { w: dim.w - pad * 2, h: dim.h - pad * 2};
-            let off = { x: pad, y: pad };
-            let shaft_fill = "#cccccc";
-            let flute_fill = "#dddddd";
-            let stroke = "#777777";
-            let stroke_width = 3;
-            let stroke_thin = stroke_width / 2;
-            let shaft = tool.shaft_len || 1;
-            let flute = tool.flute_len || 1;
-            let tip_len = type === "ballmill" ? tool.flute_diam / 2 : 0;
-            let total_len = shaft + flute + tip_len;
-            let units = dim.h / total_len;
-            let shaft_len = (shaft / total_len) * max.h;
-            let flute_len = (flute / total_len) * max.h;
-            let total_wid = Math.max(tool.flute_diam, tool.shaft_diam);
-            let shaft_off = (max.w - tool.shaft_diam * units) / 2;
-            let flute_off = (max.w - tool.flute_diam * units) / 2;
-            let taper_off = (max.w - (tool.taper_tip || 0) * units) / 2;
-            let parts = [
-                { rect: {
-                    x:off.x + shaft_off, y:off.y,
-                    width:max.w - shaft_off * 2, height:shaft_len,
-                    stroke, fill: shaft_fill, stroke_width
-                } }
-            ];
-            if (type === "tapermill") {
-                let yoff = off.y + shaft_len;
-                let mid = dim.w / 2;
-                parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
-                    `M ${off.x + flute_off} ${yoff}`,
-                    `L ${off.x + taper_off} ${yoff + flute_len}`,
-                    `L ${dim.w - off.x - taper_off} ${yoff + flute_len}`,
-                    `L ${dim.w - off.x - flute_off} ${yoff}`,
-                    `z`
-                ].join('\n')}});
-            } else {
-                let x1 = off.x + flute_off;
-                let y1 = off.y + shaft_len;
-                let x2 = x1 + max.w - flute_off * 2;
-                let y2 = y1 + flute_len;
-                parts.push({ rect: {
-                    x:off.x + flute_off, y:off.y + shaft_len,
-                    width:max.w - flute_off * 2, height:flute_len,
-                    stroke, fill: flute_fill, stroke_width
-                } });
-                parts.push({ line: { x1, y1, x2, y2, stroke, stroke_width: stroke_thin } });
-                parts.push({ line: {
-                    x1: (x1 + x2) / 2, y1, x2, y2: (y1 + y2) / 2,
-                    stroke, stroke_width: stroke_thin
-                } });
-                parts.push({ line: {
-                    x1, y1: (y1 + y2) / 2, x2: (x1 + x2) / 2, y2,
-                    stroke, stroke_width: stroke_thin
-                } });
-            }
-            if (type === "ballmill") {
-                let rad = (max.w - flute_off * 2) / 2;
-                let xend = dim.w - off.x - flute_off;
-                let yoff = off.y + shaft_len + flute_len + stroke_width/2;
-                parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
-                    `M ${off.x + flute_off} ${yoff}`,
-                    `A ${rad} ${rad} 0 0 0 ${xend} ${yoff}`,
-                    // `L ${off.x + flute_off} ${yoff}`
-                ].join('\n')}})
-            }
-            svg.innerHTML = otag(parts);
-        }, 10);
-    }
-
-    function updateTool(ev) {
-        selectedTool.name = ui.toolName.value;
-        selectedTool.number = parseInt(ui.toolNum.value);
-        selectedTool.flute_diam = parseFloat(ui.toolFluteDiam.value);
-        selectedTool.flute_len = parseFloat(ui.toolFluteLen.value);
-        selectedTool.shaft_diam = parseFloat(ui.toolShaftDiam.value);
-        selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value);
-        selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value);
-        selectedTool.metric = ui.toolMetric.checked;
-        selectedTool.type = ['endmill','ballmill','tapermill'][ui.toolType.selectedIndex];
-        if (selectedTool.type === 'tapermill') {
-            const CAM = kiri.driver.CAM;
-            const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
-            if (ev && ev.target === ui.toolTaperAngle) {
-                const angle = parseFloat(ev.target.value);
-                const len = CAM.calcTaperLength(rad, angle * DEG2RAD);
-                selectedTool.flute_len = len;
-                ui.toolTaperAngle.value = angle.round(1);
-                ui.toolFluteLen.value = selectedTool.flute_len.round(4);
-            } else {
-                ui.toolTaperAngle.value = CAM.calcTaperAngle(rad, selectedTool.flute_len).round(1);
-            }
-        } else {
-            ui.toolTaperAngle.value = 0;
-        }
-        renderTools();
-        ui.toolSelect.selectedIndex = selectedTool.order;
-        setToolChanged(true);
-        renderTool(selectedTool);
-    }
-
-    function setToolChanged(changed) {
-        editTools.changed = changed;
-        ui.toolsSave.disabled = !changed;
-    }
-
-    function showTools() {
-        if (api.mode.get_id() !== MODES.CAM) return;
-        sync_get().then(_showTools);
-    }
-
-    function _showTools() {
-        let selectedIndex = null;
-
-        editTools = settings().tools.slice().sort((a,b) => {
-            return a.name > b.name ? 1 : -1;
-        });
-
-        setToolChanged(false);
-
-        ui.toolsClose.onclick = function() {
-            if (editTools.changed && !confirm("abandon changes?")) return;
-            api.dialog.hide();
-        };
-        ui.toolAdd.onclick = function() {
-            let metric = settings().controller.units === 'mm';
-            editTools.push(Object.assign({
-                id: Date.now(),
-                number: maxTool + 1,
-                name: "new tool",
-                type: "endmill",
-                taper_tip: 0,
-                metric
-            }, metric ? {
-                shaft_diam: 2,
-                shaft_len: 15,
-                flute_diam: 2,
-                flute_len: 20,
-            } : {
-                shaft_diam: 0.25,
-                shaft_len: 1.5,
-                flute_diam: 0.25,
-                flute_len: 2,
-            }));
-            setToolChanged(true);
-            renderTools();
-            ui.toolSelect.selectedIndex = editTools.length-1;
-            selectTool(editTools[editTools.length-1]);
-        };
-        ui.toolCopy.onclick = function() {
-            let clone = Object.assign({}, selectedTool);
-            clone.number = maxTool + 1;
-            clone.name = `${clone.name} copy`;
-            clone.id = Date.now();
-            editTools.push(clone);
-            setToolChanged(true);
-            renderTools();
-            ui.toolSelect.selectedIndex = editTools.length-1;
-            selectTool(editTools[editTools.length-1]);
-        };
-        ui.toolDelete.onclick = function() {
-            editTools.remove(selectedTool);
-            setToolChanged(true);
-            renderTools();
-        };
-        ui.toolsSave.onclick = function() {
-            if (selectedTool) updateTool();
-            settings().tools = editTools.sort((a,b) => {
-                return a.name < b.name ? -1 : 1;
-            });
-            setToolChanged(false);
-            api.conf.save();
-            api.conf.update_fields();
-            api.event.settings();
-            sync_put();
-        };
-        ui.toolsExport.onclick = () => {
-            uc.prompt("Export Tools Filename", "tools").then(name => {
-                if (!name) {
-                    return;
-                }
-                const record = {
-                    version: kiri.version,
-                    tools: api.conf.get().tools,
-                    time: Date.now()
-                };
-                api.util.download(api.util.b64enc(record), `${name}.km`);
-            });
-        };
-
-        renderTools();
-        if (editTools.length > 0) {
-            selectTool(editTools[0]);
-            ui.toolSelect.selectedIndex = 0;
-        } else {
-            ui.toolAdd.onclick();
-        }
-
-        api.dialog.show('tools');
-        ui.toolSelect.focus();
-    }
-
-    // not the best way to do this, but main decl of api.show is broken
-    api.show.tools = showTools;
-
-    function getModeDevices() {
-        // devices are injected into self scope by
-        // app.js generateDevices()
-        return Object.keys(devices[api.mode.get_lower()]).sort();
-    }
-
-    function updateDeviceList() {
-        renderDevices(getModeDevices());
-    }
-
-    async function sync_get() {
-        await api.settings.sync.get();
-    }
-
     async function sync_put() {
         await api.settings.sync.put();
-    }
-
-    function showDevices() {
-        sync_get().then(_showDevices);
-    }
-
-    function _showDevices() {
-        updateDeviceList();
-        api.modal.show('setup');
     }
 
     function dragOverHandler(evt) {
@@ -1419,7 +762,7 @@ gapp.register("kiri.init", [], (root, exports) => {
     }
 
     function isBelt() {
-        return ui.deviceBelt.checked;
+        return api.device.isBelt();
     }
 
     function isNotBelt() {
@@ -1428,10 +771,10 @@ gapp.register("kiri.init", [], (root, exports) => {
 
     // MAIN INITIALIZATION FUNCTION
     function init_one() {
-        let { event, conf, view, show } = api;
-        let { bound, toInt, toFloat } = uc;
-        let { newBlank, newButton, newBoolean, newGroup, newInput } = uc;
-        let { newSelect, newText, newRow, newGCode, newDiv } = uc;
+        let { event, conf, view, show } = api,
+            { bound, toInt, toFloat } = uc,
+            { newBlank, newButton, newBoolean, newGroup, newInput } = uc,
+            { newSelect, newText, newRow, newGCode, newDiv } = uc;
 
         event.emit('init.one');
 
@@ -1439,7 +782,6 @@ gapp.register("kiri.init", [], (root, exports) => {
         conf.restore();
 
         let container = $('container'),
-            welcome = $('welcome'),
             gcode = $('dev-gcode'),
             tracker = $('tracker'),
             controller = settings().controller;
@@ -1513,6 +855,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             },
             acct: {
                 help:           $('app-help'),
+                don8:           $('app-don8'),
                 mesh:           $('app-mesh'),
                 export:         $('app-export')
             },
@@ -1548,17 +891,20 @@ gapp.register("kiri.init", [], (root, exports) => {
 
             modal:              $('modal'),
             modalBox:           $('modal-box'),
-            help:               $('mod-help'),
-            setup:              $('mod-setup'),
-            prefs:              $('mod-prefs'),
-            files:              $('mod-files'),
-            saves:              $('mod-saves'),
-            tools:              $('mod-tools'),
-            xany:               $('mod-x-any'),
-            xsla:               $('mod-x-sla'),
-            xlaser:             $('mod-x-laser'),
-            local:              $('mod-local'),
-            any:                $('mod-any'),
+            modals: {
+                help:               $('mod-help'),
+                setup:              $('mod-setup'),
+                prefs:              $('mod-prefs'),
+                files:              $('mod-files'),
+                saves:              $('mod-saves'),
+                tools:              $('mod-tools'),
+                xany:               $('mod-x-any'),
+                xsla:               $('mod-x-sla'),
+                xlaser:             $('mod-x-laser'),
+                local:              $('mod-local'),
+                don8:               $('mod-don8'),
+                any:                $('mod-any'),
+            },
 
             catalogBody:        $('catalogBody'),
             catalogList:        $('catalogList'),
@@ -1642,7 +988,6 @@ gapp.register("kiri.init", [], (root, exports) => {
             spindleMax:       newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:toInt, size:5, modes:CAM, trigger:1}),
             deviceZMax:       newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:toInt, size:5, modes:FDM}),
             gcodeTime:        newInput(LANG.dv_time_s, {title:LANG.dv_time_l, convert:toFloat, size:5, modes:FDM}),
-            filamentSource:   newSelect(LANG.dv_fsrc_s, {title: LANG.dv_fsrc_l, action: filamentSourceSave, modes:FDM, show:() => false}, "filasrc"),
             _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM }),
             extruder:         newGroup(LANG.dv_gr_ext, null, {group:"dext", inline}),
             extFilament:      newInput(LANG.dv_fila_s, {title:LANG.dv_fila_l, convert:toFloat, modes:FDM}),
@@ -1660,21 +1005,11 @@ gapp.register("kiri.init", [], (root, exports) => {
                 ui.extDel  = newButton(undefined, undefined, {icon:'<i class="fas fa-minus"></i>'}),
                 ui.extNext = newButton(undefined, undefined, {icon:'<i class="fas fa-greater-than"></i>'})
             ], {class:"dev-buttons ext-buttons", modes:FDM}),
-            _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM, show: () => false && ui.filamentSource.selectedOptions[0].value === 'palette3' }),
-            palette:          newGroup(LANG.dv_gr_pal, null, {group:"dext2", inline, modes:FDM}),
-            paletteId:        newInput(LANG.dv_paid_s, {title:LANG.dv_paid_l, modes:FDM, size:15, text:true}),
-            palettePing:      newInput(LANG.dv_paps_s, {title:LANG.dv_paps_l, modes:FDM, convert:toInt}),
-            paletteFeed:      newInput(LANG.dv_pafe_s, {title:LANG.dv_pafe_l, modes:FDM, convert:toInt}),
-            palettePush:      newInput(LANG.dv_papl_s, {title:LANG.dv_papl_l, modes:FDM, convert:toInt}),
-            paletteOffset:    newInput(LANG.dv_paof_s, {title:LANG.dv_paof_l, modes:FDM, convert:toInt}),
-            paletteSep:       newBlank({class:"pop-sep", modes:FDM}),
-            paletteHeat:      newInput(LANG.dv_pahe_s, {title:LANG.dv_pahe_l, modes:FDM, convert:toInt}),
-            paletteCool:      newInput(LANG.dv_paco_s, {title:LANG.dv_paco_l, modes:FDM, convert:toInt}),
-            palettePress:     newInput(LANG.dv_pacm_s, {title:LANG.dv_pacm_l, modes:FDM, convert:toInt}),
             _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:CAM_LZR }),
             _____:            newGroup(LANG.dv_gr_out, null, {group:"dgco", inline}),
             gcodeStrip:       newBoolean(LANG.dv_strc_s, onBooleanClick, {title:LANG.dv_strc_l, modes:CAM}),
             gcodeSpace:       newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LZR}),
+            laserMaxPower:    newInput(LANG.ou_maxp_s, {title:LANG.ou_maxp_l, modes:LASER, size:7, text:true}),
             useLaser:         newBoolean(LANG.dv_lazr_s, onBooleanClick, {title:LANG.dv_lazr_l, modes:CAM}),
             gcodeFExt:        newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LZR, size:7, text:true}),
             gcodeEd:          newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline, modes:GCODE}),
@@ -1751,6 +1086,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             sliceShellOrder:     newSelect(LANG.sl_ordr_s, { title:LANG.sl_ordr_l}, "shell"),
             sliceDetectThin:     newSelect(LANG.ad_thin_s, { title: LANG.ad_thin_l, action: thinWallSave }, "thin"),
             outputAlternating:   newBoolean(LANG.ad_altr_s, onBooleanClick, {title:LANG.ad_altr_l}),
+            sliceZInterleave:    newBoolean(LANG.ad_zint_s, onBooleanClick, {title:LANG.ad_zint_l, show:zIntShow}),
             _____:               newGroup(LANG.fi_menu, $('fdm-fill'), { modes:FDM, driven, hideable, separator, group:"fdm-fill" }),
             sliceFillType:       newSelect(LANG.fi_type, {trigger:true}, "infill"),
             sliceFillSparse:     newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:toFloat, bound:bound(0.0,1.0)}),
@@ -1880,9 +1216,10 @@ gapp.register("kiri.init", [], (root, exports) => {
             _____:               newGroup(LANG.cc_menu, $('cam-limits'), { modes:CAM, driven, separator }),
             camZAnchor:          newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, show:() => !ui.camStockIndexed.checked}, "zanchor"),
             camZOffset:          newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:toFloat, units:true}),
+            camZTop:             newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:toFloat, units:true, trigger: true}),
             camZBottom:          newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:toFloat, units:true, trigger: true}),
-            camZThru:            newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:toFloat, bound:bound(0.0,100), units:true, show:() => { return ui.camZBottom.value == 0 }}),
-            camZClearance:       newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:toFloat, bound:bound(0.01,100), units:true}),
+            camZThru:            newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:toFloat, bound:bound(0.0,100), units:true }),
+            camZClearance:       newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:toFloat, bound:bound(0.01,100), units:true }),
             camFastFeedZ:        newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:toFloat, units:true}),
             camFastFeed:         newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:toFloat, units:true}),
             _____:               newGroup(LANG.ou_menu, $('cam-output'), { modes:CAM, driven, separator, group:"cam-output" }),
@@ -1923,27 +1260,29 @@ gapp.register("kiri.init", [], (root, exports) => {
                 (ui.faceClr = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {class:"ext-buttons f-row", modes:WEDM}),
             _____:               newGroup(LANG.dk_menu, $('lzr-knife'), { modes:DRAG, marker:true, driven, separator }),
-            ctOutKnifeDepth:     newInput(LANG.dk_dpth_s, {title:LANG.dk_dpth_l, convert:toFloat, bound:bound(0.0,5.0) }),
-            ctOutKnifePasses:    newInput(LANG.dk_pass_s, {title:LANG.dk_pass_l, convert:toInt,   bound:bound(0,5) }),
-            ctOutKnifeTip:       newInput(LANG.dk_offs_s, {title:LANG.dk_offs_l, convert:toFloat, bound:bound(0.0,10.0) }),
+            ctOutKnifeDepth:     newInput(LANG.dk_dpth_s, { title:LANG.dk_dpth_l, convert:toFloat, bound:bound(0.0,5.0) }),
+            ctOutKnifePasses:    newInput(LANG.dk_pass_s, { title:LANG.dk_pass_l, convert:toInt,   bound:bound(0,5) }),
+            ctOutKnifeTip:       newInput(LANG.dk_offs_s, { title:LANG.dk_offs_l, convert:toFloat, bound:bound(0.0,10.0) }),
             _____:               newGroup(LANG.lo_menu, $('lzr-layout'), { modes:TWOD, driven, separator }),
-            ctOutTileSpacing:    newInput(LANG.ou_spac_s, {title:LANG.ou_spac_l, convert:toInt}),
-            ctOutMerged:         newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l, modes:TWONED}),
-            ctOutGroup:          newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, show:() => !ui.ctOutStack.checked}),
+            ctOutTileSpacing:    newInput(LANG.ou_spac_s, { title:LANG.ou_spac_l, convert:toInt }),
+            ctOutMerged:         newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l, modes:TWONED, show:() => !ui.ctOutStack.checked }),
+            ctOutGroup:          newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, show:() => !(ui.ctOutMark.checked || ui.ctOutStack.checked) }),
             _____:               newGroup(LANG.ou_menu, $('lzr-output'), { modes:TWOD, driven, separator, group:"lzr-output" }),
-            ctOutPower:          newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:toInt, bound:bound(1,100), modes:TWONED}),
-            ctOutSpeed:          newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:toInt}),
+            ctOutPower:          newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:toInt, bound:bound(1,100), modes:TWONED }),
+            ctOutSpeed:          newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:toInt }),
             ctAdaptive:          newBoolean('adaptive speed', onBooleanClick, {modes:WEDM, title:'controller determines best cutting speed based on material feedback at runtime'}),
             separator:           newBlank({ class:"set-sep", driven }),
-            ctOriginBounds:      newBoolean(LANG.or_bnds_s, onBooleanClick, {title:LANG.or_bnds_l, show:() => !ui.ctOriginCenter.checked}),
-            ctOriginCenter:      newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l, show:() => !ui.ctOriginBounds.checked}),
+            ctOriginBounds:      newBoolean(LANG.or_bnds_s, onBooleanClick, { title:LANG.or_bnds_l, show:() => !ui.ctOriginCenter.checked }),
+            ctOriginCenter:      newBoolean(LANG.or_cntr_s, onBooleanClick, { title:LANG.or_cntr_l, show:() => !ui.ctOriginBounds.checked }),
             separator:           newBlank({ class:"set-sep", driven, modes:WEDM, show:() => ui.ctOriginBounds.checked }),
-            ctOriginOffX:        newInput(LANG.or_offx_s, {title:LANG.or_offx_l, convert:toFloat, modes:WEDM, show:() => ui.ctOriginBounds.checked}),
-            ctOriginOffY:        newInput(LANG.or_offy_s, {title:LANG.or_offy_l, convert:toFloat, modes:WEDM, show:() => ui.ctOriginBounds.checked}),
+            ctOriginOffX:        newInput(LANG.or_offx_s, { title:LANG.or_offx_l, convert:toFloat, modes:WEDM, show:() => ui.ctOriginBounds.checked }),
+            ctOriginOffY:        newInput(LANG.or_offy_s, { title:LANG.or_offy_l, convert:toFloat, modes:WEDM, show:() => ui.ctOriginBounds.checked }),
             separator:           newBlank({ class:"set-sep", driven, modes:TWONED }),
-            ctOutZColor:         newBoolean(LANG.ou_layo_s, onBooleanClick, {title:LANG.ou_layo_l, modes:TWONED, show:() => { return ui.ctOutMerged.checked === false }}),
-            ctOutLayer:          newBoolean(LANG.ou_layr_s, onBooleanClick, {title:LANG.ou_layr_l, modes:TWONED}),
-            ctOutStack:          newBoolean(LANG.ou_lays_s, onBooleanClick, {title:LANG.ou_lays_l, modes:TWONED}),
+            ctOutZColor:         newBoolean(LANG.ou_layo_s, onBooleanClick, { title:LANG.ou_layo_l, modes:TWONED, show:() => !ui.ctOutMerged.checked }),
+            ctOutLayer:          newBoolean(LANG.ou_layr_s, onBooleanClick, { title:LANG.ou_layr_l, modes:TWONED, show:() => !ui.ctOutStack.checked }),
+            ctOutMark:           newBoolean(LANG.ou_lays_s, onBooleanClick, { title:LANG.ou_lays_l, modes:TWONED, show:() => !ui.ctOutStack.checked }),
+            separator:           newBlank({ class:"set-sep", driven, modes:TWOD }),
+            ctOutStack:          newBoolean(LANG.ou_stak_s, onBooleanClick, { title:LANG.ou_stak_l, modes:TWOD }),
 
             /** SLA SETTINGS */
 
@@ -2000,6 +1339,10 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         function spindleShow() {
             return settings().device.spindleMax > 0;
+        }
+
+        function zIntShow() {
+            return settings().controller.devel;
         }
 
         // slider setup
@@ -2223,7 +1566,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             if (xr * yr * zr === 0) {
                 return;
             }
-            api.selection.scale(xr,yr,zr);
+            selection.scale(xr,yr,zr);
             ui.sizeX.was = ui.sizeX.value = xv * xr;
             ui.sizeY.was = ui.sizeY.value = yv * yr;
             ui.sizeZ.was = ui.sizeZ.value = zv * zr;
@@ -2248,7 +1591,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 yr = ((tl && yc) || (!tl && yt) ? ra : 1),
                 zr = ((tl && zc) || (!tl && zt) ? ra : 1);
 
-            api.selection.scale(xr,yr,zr);
+            selection.scale(xr,yr,zr);
             ui.scaleX.was = ui.scaleX.value = xv * xr;
             ui.scaleY.was = ui.scaleY.value = yv * yr;
             ui.scaleZ.was = ui.scaleZ.value = zv * zr;
@@ -2256,7 +1599,6 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         function selectionRotate(e) {
             let val = parseFloat(e.target.value) || 0;
-            // let deg = val * DEG2RAD;
             e.target.value = val;
         }
 
@@ -2291,7 +1633,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         };
 
         $('scale-reset').onclick = $('lab-scale').onclick = () => {
-            api.selection.scale(1 / ui.scaleX.was, 1 / ui.scaleY.was, 1 / ui.scaleZ.was);
+            selection.scale(1 / ui.scaleX.was, 1 / ui.scaleY.was, 1 / ui.scaleZ.was);
             ui.scaleX.value = ui.scaleY.value = ui.scaleZ.value =
             ui.scaleX.was = ui.scaleY.was = ui.scaleZ.was = 1;
         };
@@ -2375,7 +1717,7 @@ gapp.register("kiri.init", [], (root, exports) => {
                 if (int) {
                     return api.event.emit('mouse.hover.down', {int, point: int.point});
                 } else {
-                    return api.selection.meshes();
+                    return selection.meshes();
                 }
             }
             // lay flat with meta or ctrl clicking a selected face
@@ -2383,14 +1725,14 @@ gapp.register("kiri.init", [], (root, exports) => {
                 let q = new THREE.Quaternion();
                 // find intersecting point, look "up" on Z and rotate to face that
                 q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
-                api.selection.rotate(q);
+                selection.rotate(q);
             }
             if (api.view.get() !== VIEWS.ARRANGE) {
                 // return no selection in modes other than arrange
                 return null;
             } else {
                 // return selected meshes for further mouse processing
-                return api.feature.hovers || api.selection.meshes();
+                return api.feature.hovers || selection.meshes();
             }
         });
 
@@ -2444,10 +1786,10 @@ gapp.register("kiri.init", [], (root, exports) => {
                     if (bound.max.x + delta.x >= width) return;
                     if (bound.max.y + delta.y >= depth) return;
                 }
-                api.selection.move(delta.x, delta.y, 0);
+                selection.move(delta.x, delta.y, 0);
                 api.event.emit('selection.drag', delta);
             } else {
-                return api.selection.meshes().length > 0;
+                return selection.meshes().length > 0;
             }
         });
 
@@ -2549,7 +1891,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             api.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
 
             // fill device list
-            updateDeviceList();
+            api.devices.refresh();
 
             // update ui fields from settings
             api.conf.update_fields();
@@ -2586,7 +1928,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         api.event.emit('init-done', stats);
 
         // show gdpr if it's never been seen and we're not iframed
-        const isLocal = api.const.LOCAL || WIN.location.host.split(':')[0] === 'localhost';
+        const isLocal = LOCAL || WIN.location.host.split(':')[0] === 'localhost';
         if (!sdb.gdpr && WIN.self === WIN.top && !SETUP.debug && !isLocal) {
             $('gdpr').style.display = 'flex';
         }
@@ -2616,8 +1958,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('curtain').style.display = 'none';
 
         // bind interface action elements
-        $('app-name').onclick = api.help.show;
-        $('mode-device').onclick = showDevices;
+        $('mode-device').onclick = api.show.devices;
         $('mode-profile').onclick = settingsLoad;
         $('mode-fdm').onclick = () => api.mode.set('FDM');
         $('mode-cam').onclick = () => api.mode.set('CAM');
@@ -2626,11 +1967,12 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('mode-drag').onclick = () => api.mode.set('DRAG');
         $('mode-wjet').onclick = () => api.mode.set('WJET');
         $('mode-wedm').onclick = () => api.mode.set('WEDM');
-        $('set-device').onclick = (ev) => { ev.stopPropagation(); showDevices() };
+        $('set-device').onclick = (ev) => { ev.stopPropagation(); api.show.devices() };
         $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
-        $('set-tools').onclick = (ev) => { ev.stopPropagation(); showTools() };
+        $('set-tools').onclick = (ev) => { ev.stopPropagation(); api.show.tools() };
         $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };
         ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
+        ui.acct.don8.onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
         ui.acct.mesh.onclick = (ev) => { ev.stopPropagation(); WIN.location = "/mesh" };
         ui.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
         ui.acct.export.title = LANG.acct_xpo;
@@ -2649,16 +1991,22 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('view-right').onclick = space.view.right;
         $('unrotate').onclick = () => {
             api.widgets.for(w => w.unrotate());
-            api.selection.update_info();
+            selection.update_info();
         };
+        // attach button handlers to support targets
+        for (let btn of ["don8pt","don8gh","don8pp"]) {
+            $(btn).onclick = (ev) => {
+                window.open(ev.target.children[0].href);
+            }
+        }
         // rotation buttons
         let d = (Math.PI / 180);
-        $('rot_x_lt').onclick = () => { api.selection.rotate(-d * $('rot_x').value,0,0) };
-        $('rot_x_gt').onclick = () => { api.selection.rotate( d * $('rot_x').value,0,0) };
-        $('rot_y_lt').onclick = () => { api.selection.rotate(0,-d * $('rot_y').value,0) };
-        $('rot_y_gt').onclick = () => { api.selection.rotate(0, d * $('rot_y').value,0) };
-        $('rot_z_lt').onclick = () => { api.selection.rotate(0,0, d * $('rot_z').value) };
-        $('rot_z_gt').onclick = () => { api.selection.rotate(0,0,-d * $('rot_z').value) };
+        $('rot_x_lt').onclick = () => { selection.rotate(-d * $('rot_x').value,0,0) };
+        $('rot_x_gt').onclick = () => { selection.rotate( d * $('rot_x').value,0,0) };
+        $('rot_y_lt').onclick = () => { selection.rotate(0,-d * $('rot_y').value,0) };
+        $('rot_y_gt').onclick = () => { selection.rotate(0, d * $('rot_y').value,0) };
+        $('rot_z_lt').onclick = () => { selection.rotate(0,0, d * $('rot_z').value) };
+        $('rot_z_gt').onclick = () => { selection.rotate(0,0,-d * $('rot_z').value) };
         // rendering options
         $('render-edges').onclick = () => { api.view.edges({ toggle: true }); api.conf.save() };
         $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
@@ -2666,7 +2014,7 @@ gapp.register("kiri.init", [], (root, exports) => {
         $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
         $('mesh-export-stl').onclick = () => { objectsExport('stl') };
         $('mesh-export-obj').onclick = () => { objectsExport('obj') };
-        $('mesh-merge').onclick = api.selection.merge;
+        $('mesh-merge').onclick = selection.merge;
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
         $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
@@ -2677,7 +2025,7 @@ gapp.register("kiri.init", [], (root, exports) => {
             );
         };
 
-        ui.modal.onclick = api.modal.hide;
+        // ui.modal.onclick = api.modal.hide;
         ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
 
         // add app name hover info
@@ -2688,71 +2036,10 @@ gapp.register("kiri.init", [], (root, exports) => {
 
         // warn users they are running a beta release
         if (kiri.beta && kiri.beta > 0 && sdb.kiri_beta != kiri.beta) {
-            api.show.alert("this is a beta / development release");
+            api.show.alert("CAUTION");
+            api.show.alert("this is a development release");
+            api.show.alert("and may not function properly");
             sdb.kiri_beta = kiri.beta;
-        }
-
-        // add palette3 edit button after filament source selector
-        {
-            let randomId = Math.round(Math.random() * 0xffffffffffff).toString(16);
-            let fsp = ui.filamentSource.parentNode;
-            let btn = ui.filamentSourceEdit = DOC.createElement('button');
-            btn.setAttribute('id', 'fs-edit');
-            btn.appendChild(DOC.createTextNode('edit'));
-            fsp.insertBefore(btn, ui.filamentSource);
-            let editDone = () => {
-                let device = api.conf.get().device;
-                let extra = device.extras = device.extras || {};
-                btn.onclick = edit;
-                btn.innerText = 'edit';
-                ui.extruder.parentNode.style.display = 'flex';
-                ui.palette.parentNode.style.display = 'none';
-                // save settings
-                extra.palette = {
-                    printer: ui.paletteId.value || randomId,
-                    ping: ui.palettePing.convert(),
-                    feed: ui.paletteFeed.convert(),
-                    push: ui.palettePush.convert(),
-                    offset: ui.paletteOffset.convert(),
-                    heat: ui.paletteHeat.convert(),
-                    cool: ui.paletteCool.convert(),
-                    press: ui.palettePress.convert()
-                };
-            };
-            let edit = btn.onclick = () => {
-                let device = api.conf.get().device;
-                let extra = device.extras = device.extras || {};
-                let pinfo = extra.palette;
-                if (!pinfo) {
-                    pinfo = extra.palette = {
-                        printer: randomId,
-                        feed: 570,
-                        push: 600,
-                        heat: 0,
-                        cool: 0,
-                        press: 0
-                    };
-                }
-                ui.paletteId.value = pinfo.printer;
-                ui.palettePing.value = pinfo.ping || 0;
-                ui.paletteFeed.value = pinfo.feed || 0;
-                ui.palettePush.value = pinfo.push || 0;
-                ui.paletteOffset.value = pinfo.offset || 0;
-                ui.paletteHeat.value = pinfo.heat || 0;
-                ui.paletteCool.value = pinfo.cool || 0;
-                ui.palettePress.value = pinfo.press || 0;
-                ui.extruder.parentNode.style.display = 'none';
-                ui.palette.parentNode.style.display = 'flex';
-                btn.innerText = 'done';
-                btn.onclick = editDone;
-            };
-            api.event.on(["device.select", "filament.source"], () => {
-                ui.extruder.parentNode.style.display = 'flex';
-                ui.palette.parentNode.style.display = 'none';
-                btn.innerText = 'edit';
-                btn.onclick = edit;
-            });
-            api.event.on("device.save", editDone);
         }
     }
 

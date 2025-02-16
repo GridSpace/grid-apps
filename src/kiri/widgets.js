@@ -5,7 +5,7 @@
 // use: load.file
 // use: kiri.selection
 // use: kiri.platform
-gapp.register("kiri.widgets", [], (root, exports) => {
+gapp.register("kiri.widgets", (root, exports) => {
 
 const { data, kiri, moto, noop } = root;
 const { api, consts, utils, newWidget, Widget } = kiri;
@@ -93,7 +93,7 @@ function opacity(value) {
 }
 
 // extend API (api.widgets)
-const widgets = api.widgets = {
+const widgets = Object.assign(api.widgets, {
     load:       Widget.loadFromCatalog,
     new:        newWidget,
     map,
@@ -110,6 +110,6 @@ const widgets = api.widgets = {
     each(fn)    { WIDGETS.slice().forEach(widget => fn(widget)) },
     for(fn)     { widgets.each(fn) },
     forid(id)   { return WIDGETS.filter(w => w.id === id)[0] }
-};
+});
 
 });

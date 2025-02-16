@@ -13,7 +13,7 @@
 // dep: kiri-mode.drag.driver
 // dep: kiri-mode.wjet.driver
 // dep: kiri-mode.wedm.driver
-gapp.register("kiri.function", [], (root, exports) => {
+gapp.register("kiri.function", (root, exports) => {
 
 const { kiri } = root;
 const { api, client, consts, utils } = kiri;
@@ -31,7 +31,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         // this can be used later by exports and rendered on some devices
         let snap = space.screenshot();
         view.snapshot = snap.substring(snap.indexOf(",") + 1);
-        client.snap(space.screenshot2({width: 640}));
+        client.snap(space.screenshot2({ width: 640 }));
+        let bambu = view.bambu = { };
+        space.screenshot3({ width: 512, out(png) { bambu.s512 = png } });
+        space.screenshot3({ width: 128, out(png) { bambu.s128 = png } });
     }
 
     if (mode.is_sla() && !callback) {
@@ -439,7 +442,7 @@ function parseCode(code, type) {
 }
 
 // extend API (api.function)
-const functions = api.function = {
+const functions = Object.assign(api.function, {
     slice: prepareSlices,
     print: preparePreview,
     prepare: preparePreview,
@@ -449,6 +452,6 @@ const functions = api.function = {
     parse: parseCode,
     clear: client.clear,
     clear_progress() { complete = {} }
-};
+});
 
 });

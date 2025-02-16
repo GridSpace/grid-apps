@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: ext.md5
 // dep: geo.base
 // dep: data.local
 // dep: kiri.consts
@@ -109,36 +110,36 @@ function exportLaserDialog(data, names) {
     function download_svg() {
         api.util.download(
             driver.exportSVG(settings, data),
-            $('print-filename').value + ".svg"
+            $('print-filename-laser').value + ".svg"
         );
     }
 
     function download_dxf() {
         api.util.download(
             driver.exportDXF(settings, data),
-            $('print-filename').value + ".dxf"
+            $('print-filename-laser').value + ".dxf"
         );
     }
 
     function download_gcode() {
         api.util.download(
             driver.exportGCode(settings, data),
-            $('print-filename').value + ".gcode"
+            $('print-filename-laser').value + ".gcode"
         );
     }
 
-    // api.ajax("/kiri/output-laser.html", function(html) {
-        api.modal.show('xlaser');
-        let segments = 0;
-        data.forEach(layer => { segments += layer.length });
-        // ui.print.innerHTML = html;
-        $('print-filename').value = filename;
-        $('print-lines').value = util.comma(segments);
-        $('print-svg').onclick = download_svg;
-        $('print-dxf').onclick = download_dxf;
-        $('print-lg').onclick = download_gcode;
-    //     api.modal.show('print');
-    // });
+    api.modal.show('xlaser');
+
+    let segments = 0;
+    data.forEach(layer => { segments += layer.length });
+
+    $('print-filename-laser').value = filename;
+    $('print-lines').value = util.comma(segments);
+    $('print-svg').onclick = download_svg;
+    $('print-dxf').onclick = download_dxf;
+    $('print-lg').onclick = download_gcode;
+
+    console.log('laser export', { fileroot, filename });
 }
 
 function bindField(field, varname) {
@@ -441,14 +442,15 @@ function exportGCodeDialog(gcode, sections, info, names) {
     function calcWeight() {
         try {
         let density = $('print-density');
-        $('print-weight').value = (
+        info.weight = (
             (Math.PI * util.sqr(
                 info.settings.device.extruders[0].extFilament / 2
             )) *
             info.distance *
             (parseFloat(density.value) || 1.25) /
             1000
-        ).toFixed(2);
+        ).round(2);
+        $('print-weight').value = info.weight.toFixed(2);
         density.onkeyup = (ev) => {
             if (ev.key === 'Enter') calcWeight();
         };
@@ -467,8 +469,6 @@ function exportGCodeDialog(gcode, sections, info, names) {
     }
 
     api.modal.show('xany');
-    // fetch("/kiri/output-gcode.html").then(r => r.text()).then(html => {
-    //     ui.print.innerHTML = html;
         let set = api.conf.get();
         let fdm = MODE === MODES.FDM;
         let octo = set.controller.exportOcto && MODE !== MODES.CAM;
@@ -478,8 +478,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         $('code-preview-head').style.display = preview ? '' : 'none';
         $('code-preview').style.display = preview ? '' : 'none';
         $('print-download').onclick = download;
-        $('print-filament-head').style.display = fdm ? '' : 'none';
-        $('print-filament-info').style.display = fdm ? '' : 'none';
+        $('print-filament').style.display = fdm ? '' : 'none';
         $('print-filename').value = filename;
         $('print-filesize').value = util.comma(info.bytes);
         $('print-filament').value = Math.round(info.distance);
@@ -517,132 +516,175 @@ function exportGCodeDialog(gcode, sections, info, names) {
             })
         };
 
-        // in palette mode, show download button
-        let downloadPalette = $('print-palette');
-        downloadPalette.style.display = info.segments ? 'flex' : 'none';
-        // generate MAFX downloadble file
-        if (info.segments) {
-            // todo: reduce segments to eliminate 0 lenghts and transitions before 150mm
-            let { settings, segments } = info;
-            let { device, bounds } = settings;
-            let { min, max } = bounds;
-            let extras = device.extras || {};
-            let pinfo = extras.palette || {};
-            // filter pings to those occuring after all tubes combined
-            let pings = info.purges || [];
-            let driveInfo = {};
-            let volume = {};
-            let length = {};
-            // clean up and round pings
-            pings.forEach(p => {
-                p.length = p.length.round(3);
-                // p.length = (p.length - pinfo.offset).round(2);
-                // p.length = (p.length + pinfo.offset).round(2);
-                p.extrusion = p.extrusion.round(3);
-            });
-            // add length of push filament to the last segment
-            segments.peek().emitted += pinfo.push;
-            let lastEmit = 0;
-            let ratioVolume = (0.4 * 0.4) / (1.75 * 1.75);
-            for (let seg of segments) {
-                let seginfo = driveInfo[seg.tool] = driveInfo[seg.tool] || { length: 0, volume: 0 };
-                seg.emitted += pinfo.offset;
-                seginfo.length += seg.emitted - lastEmit;
-                seginfo.volume = seginfo.length * ratioVolume;
-                volume[seg.tool+1] = seginfo.volume.round(2);
-                length[seg.tool+1] = seginfo.length.round(2);
-                lastEmit = seg.emitted;
-            }
-            let totalLength = Object.values(length).reduce((a,v) => a+v).round(2);
-            let totalVolume = Object.values(volume).reduce((a,v) => a+v).round(2);
-            // console.log({info, device, pinfo, segments, volume, length, totalLength});
-            let meta = {
-                version: "3.2",
-                printerProfile: {
-                    id: pinfo.printer,
-                    name: device.deviceName || "My Printer"
-                },
-                preheatTemperature: { nozzle: [0], bed: 0 },
-                paletteNozzle: 0,
-                time: info.time.round(1),
-                volume,
-                length,
-                totalLength,
-                totalVolume,
-                inputsUsed: Object.keys(driveInfo).length,
-                splices: segments.length,
-                pings: pings.length,
-                boundingBox: {
-                    min: [ min.x, min.y, min.z ],
-                    max: [ max.x, max.y, max.z ]
-                },
-                filaments: Object.keys(driveInfo).map(v => { return {
-                    name: `Color${v}`,
-                    type: "Filament",
-                    color: `#${v}0${v}0${v}0`,
-                    materialId: parseInt(v) + 1,
-                    filamentId: parseInt(v) + 1
-                }}),
-            };
-            let lastDrive;
-            let algokeys = {};
-            let algorithms = [];
-            let defaultSplice = {
-                compression: pinfo.press,
-                cooling: pinfo.cool,
-                heat: pinfo.heat
-            };
-            for (let key of Object.keys(driveInfo)) {
-                key = parseInt(key) + 1;
-                algorithms.push({
-                    ingoingId: key,
-                    outgoingId: key,
-                    ...defaultSplice
-                });
-            }
-            let palette = {
-                version: "3.0",
-                drives: [0, 0, 0, 0, 0, 0, 0, 0].map((v,i) => {
-                    return driveInfo[i] ? i+1 : 0
-                }),
-                splices: segments.filter(r => {
-                    return r.emitted >= 150;
-                }).map(r => {
-                    if (lastDrive >= 0 && lastDrive !== r.tool) {
-                        let key = `${lastDrive}+${r.tool}`;
-                        if (!algokeys[key]) {
-                            let rec = algokeys[key] = {
-                                ingoingId: lastDrive + 1,
-                                outgoingId: r.tool + 1,
-                                ...defaultSplice
-                            };
-                            algorithms.push(rec);
-                        }
-                    }
-                    lastDrive = r.tool;
-                    return { id: r.tool + 1, length: r.emitted.round(2) }
-                }),
-                pings,
-                algorithms
-            };
-            let png;
-            kiri.client.png({}, data => {
-                png = data.png;
-            });
-            console.log({meta,palette});
-            downloadPalette.onclick = function() {
-                kiri.client.zip([
-                    {name:"meta.json", data:JSON.stringify(meta,undefined,4)},
-                    {name:"palette.json", data:JSON.stringify(palette,undefined,4)},
-                    {name:"thumbnail.png", data:png.buffer}
-                ], progress => {
-                    api.show.progress(progress.percent/100, "generating palette files");
-                }, output => {
-                    api.show.progress(0);
-                    api.util.download(output, `${$('print-filename').value}.mafx`);
-                })
-            };
+        // in fdm mode, show 3mf file option
+        let nozzle0 = set.device?.extruders?.[0]?.extNozzle || 0.4;
+        let download3MF = $('print-3mf');
+        download3MF.style.display = fdm ? 'flex' : 'none';
+        download3MF.onclick = function() {
+            gen3mf(zip => api.util.download(zip, `${$('print-filename').value}.3mf`));
+        };
+
+        // present bambu print options when selected device is bambu
+        if (api.bambu) {
+            api.bambu.prep_export(gen3mf, gcode, info, settings);
         }
+
+        // let wids = api.widgets.all();
+        // let bnds = settings.bounds;
+        // console.log({ wids, bnds });
+
+        function gen3mf(then, ptype = 'unknown', ams = [0]) {
+            let now = new Date();
+            let ymd = [
+                now.getFullYear(),
+                (now.getMonth() + 1).toString().padStart(2,0),
+                now.getDate().toString().padStart(2,0),
+            ].join('-');
+            let files = [{
+                name: `[Content_Types].xml`,
+                data: [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">',
+                    ' <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>',
+                    ' <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>',
+                    ' <Default Extension="gcode" ContentType="application/octet-stream"/>',
+                    '</Types>'
+                ].join('\n')
+            },{
+                name: `_rels/.rels`,
+                data: [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">',
+                    ' <Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>',
+                    '</Relationships>'
+                ].join('\n')
+            },{
+                name: `3D/3dmodel.model`,
+                data: [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021">',
+                    ' <metadata name="Application">Kiri:Moto</metadata>',
+                    ' <metadata name="Copyright"></metadata>',
+                    ` <metadata name="CreationDate">${ymd}</metadata>`,
+                    ' <metadata name="Description"></metadata>',
+                    ' <metadata name="Designer"></metadata>',
+                    ' <metadata name="DesignerCover"></metadata>',
+                    ' <metadata name="License"></metadata>',
+                    ` <metadata name="ModificationDate">${ymd}</metadata>`,
+                    ' <metadata name="Origin"></metadata>',
+                    ' <metadata name="Title"></metadata>',
+                    ' <resources>',
+                    ' </resources>',
+                    ' <build/>',
+                    '</model>'
+                ].join('\n')
+            },{
+                name: `Metadata/_rels/model_settings.config.rels`,
+                data: [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">',
+                    ' <Relationship Target="/Metadata/plate_1.gcode" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/gcode"/>',
+                    '</Relationships>'
+                ].join('\n')
+            // },{
+            //     name: `Metadata/plate_1.json`,
+            //     data: JSON.stringify({
+            //         "bbox_all": [ 100, 100, 200, 200 ],
+            //         "bbox_objects": (info.labels || []).map(label => {
+            //             return {
+            //                 area: 600,
+            //                 bbox: [ 100, 100, 200, 200 ],
+            //                 id: label,
+            //                 layer_height: 0.2,
+            //                 name: "Object"
+            //             }
+            //         }),
+            //         "bed_type": "textured_plate",
+            //         "filament_colors": ["#FFFFFF"],
+            //         "filament_ids": ams,
+            //         "first_extruder": ams[0],
+            //         "is_seq_print": false,
+            //         "nozzle_diameter": 0.6,
+            //         "version": 2
+            //     })
+            },{
+                name: `Metadata/model_settings.config`,
+                data: [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<config>',
+                    '  <plate>',
+                    '    <metadata key="plater_id" value="1"/>',
+                    '    <metadata key="plater_name" value=""/>',
+                    '    <metadata key="locked" value="false"/>',
+                    '    <metadata key="gcode_file" value="Metadata/plate_1.gcode"/>',
+                    '    <metadata key="thumbnail_file" value="Metadata/plate_1.png"/>',
+                    '    <metadata key="thumbnail_no_light_file" value="Metadata/plate_no_light_1.png"/>',
+                    '    <metadata key="top_file" value="Metadata/top_1.png"/>',
+                    '    <metadata key="pick_file" value="Metadata/pick_1.png"/>',
+                    '  </plate>',
+                    '</config>'
+                ].join('\n')
+            },{
+                name: `Metadata/slice_info.config`,
+                data: [
+                    '<?xml version="1.0" encoding="UTF-8"?>',
+                    '<config>',
+                    '  <header>',
+                    '    <header_item key="X-BBL-Client-Type" value="slicer"/>',
+                    '    <header_item key="X-BBL-Client-Version" value="01.10.01.50"/>',
+                    '  </header>',
+                    '  <plate>',
+                    '    <metadata key="index" value="1"/>',
+                    // setting this value allows for the printer to error out if
+                    // the gcode / 3mf was intended for a different target type.
+                    // leaving it blank bypasses the check
+                    // `    <metadata key="printer_model_id" value="${ptype}"/>`,
+                    `    <metadata key="nozzle_diameters" value="${nozzle0}"/>`,
+                    '    <metadata key="timelapse_type" value="0"/>',
+                    `    <metadata key="prediction" value="${Math.round(info.time)}"/>`,
+                    `    <metadata key="weight" value="${info.weight}"/>`,
+                    '    <metadata key="outside" value="false"/>',
+                    '    <metadata key="support_used" value="false"/>',
+                    '    <metadata key="label_object_enabled" value="false"/>',
+                    // (info.labels || []).map(label =>
+                    // `    <object identify_id="${label}" name="Object" skipped="false" />`),
+                    // '    <filament id="1" tray_info_idx="GFL96" type="PLA" color="#FFFFFF" used_m="0.17" used_g="0.50" />',
+                    // '    <warning msg="bed_temperature_too_high_than_filament" level="1" error_code ="1000C001"  />',
+                    '  </plate>',
+                    '</config>'
+                ].filter(v => v).flat().join('\n')
+            },{
+                name: `Metadata/project_settings.config`,
+                data: JSON.stringify({},undefined,4)
+            },{
+                name: `Metadata/plate_1.gcode`,
+                data: gcode
+            },{
+                name: `Metadata/plate_1.gcode.md5`,
+                data: ext.md5.hash(gcode)
+            },{
+                name: `Metadata/plate_1_small.png`,
+                data: api.view.bambu.s128.png
+            },{
+                name: `Metadata/plate_no_light_1.png`,
+                data: api.view.bambu.s512.png
+            },{
+                name: `Metadata/plate_1.png`,
+                data: api.view.bambu.s512.png
+            },{
+                name: `Metadata/pick_1.png`,
+                data: api.view.bambu.s512.png
+            },{
+                name: `Metadata/top_1.png`,
+                data: api.view.bambu.s512.png
+            }];
+            kiri.client.zip(files, progress => {
+                api.show.progress(progress.percent/100, "generating 3mf");
+            }, output => {
+                api.show.progress(0);
+                then(output);
+            })
+        };
 
         // octoprint setup
         $('send-to-octohead').style.display = octo ? '' : 'none';
@@ -696,10 +738,6 @@ function exportGCodeDialog(gcode, sections, info, names) {
 
         // preview of the generated GCODE (first 64k max)
         if (preview && gcode) $('code-preview-textarea').value = gcode.substring(0,65535);
-
-        // show dialog
-    //     api.modal.show('print');
-    // });
 }
 
 });

@@ -956,6 +956,7 @@ class Polygon {
             ln = ar.length,
             i = 0;
         while (i < ln) ar[i++].z = z;
+        this.z = z;
         if (this.inner) this.inner.forEach(c => c.setZ(z));
         return this;
     }
@@ -964,7 +965,7 @@ class Polygon {
      * @returns {number} z value of first point
      */
     getZ(i) {
-        return this.z !== undefined ? this.z : this.points[i || 0].z;
+        return this.z !== undefined ? this.z : this.points[i || 0]?.z || 0;
     }
 
     /**
@@ -2036,7 +2037,7 @@ class Polygon {
             tree = new PolyTree(),
             sp1 = this.toClipper(),
             sp2 = poly.toClipper(),
-            minarea = min >= 0 ? min : 0.1;
+            minarea = min ?? 0.1;
 
         clip.AddPaths(sp1, PathSubject, true);
         clip.AddPaths(sp2, PathClip, true);

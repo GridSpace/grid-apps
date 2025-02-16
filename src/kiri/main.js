@@ -15,6 +15,7 @@
 // dep: kiri.widget
 // dep: kiri.stats
 // dep: kiri.stacks
+// dep: kiri.devices
 // dep: kiri.function
 // dep: kiri.platform
 // dep: kiri.selection
@@ -23,19 +24,17 @@
 // use: kiri.files
 // use: kiri.frame
 // use: moto.ajax
-gapp.register("kiri.main", [], (root, exports) => {
+gapp.register("kiri.main", (root, exports) => {
 
-    const { base, data, kiri, moto, noop } = root;
-    const { api, consts, lang, Widget, newWidget, utils, stats } = kiri;
-    const { areEqual, parseOpt, encodeOpt, ajax, o2js, js2o, ls2o } = utils;
-    const { feature, platform, selection, settings } = api;
-    const { COLOR, MODES, PMODES, VIEWS } = consts;
-
-    const LANG  = lang.current,
+    let { data, kiri, moto, noop } = root,
+        { api, consts, lang, Widget, newWidget, utils, stats } = kiri,
+        { parseOpt, encodeOpt, o2js, js2o, ls2o } = utils,
+        { platform, selection, settings } = api,
+        { COLOR, MODES, VIEWS } = consts,
+        LANG    = lang.current,
         WIN     = self.window,
         DOC     = self.document,
         LOC     = self.location,
-        HOST    = LOC.host.split(':'),
         SETUP   = parseOpt(LOC.search.substring(1)),
         SECURE  = isSecure(LOC.protocol),
         LOCAL   = self.debug && !SETUP.remote,
@@ -43,93 +42,73 @@ gapp.register("kiri.main", [], (root, exports) => {
         SDB     = data.local,
         SPACE   = kiri.space = moto.space,
         FILES   = kiri.catalog = kiri.openFiles(new data.Index(SETUP.d ? SETUP.d[0] : 'kiri')),
-        CONF    = kiri.conf,
-        clone   = Object.clone;
-
-    let UI = {},
+        clone   = Object.clone,
+        UI = {},
         UC = kiri.ui.prefix('kiri').inputAction(api.conf.update),
         MODE = MODES.FDM,
         STACKS = kiri.stacks,
         DRIVER = undefined,
         viewMode = VIEWS.ARRANGE,
-        local = SETUP.local,
+        autoSaveTimer = null,
         busy = 0,
-        showFavorites = SDB.getItem('dev-favorites') === 'true',
-        saveTimer = null,
-        version = kiri.version = gapp.version;
+        { assign } = Object;
 
-    // add show() to catalog for API
-    FILES.show = showCatalog;
-
-    // patch broker for api backward compatibility
-    EVENT.on = (topic, listener) => {
-        EVENT.subscribe(topic, listener);
-        return EVENT;
-    };
-
-    // augment api
-    Object.assign(api, {
-        ui: UI,
-        uc: UC,
+    // extend API
+    assign(api, {
+        ui: UI = assign(api.ui, UI),
+        uc: UC = assign(api.uc, UC),
         stats,
-        focus: noop,
         catalog: FILES,
-        busy: {
+        busy: assign(api.busy, {
             val() { return busy },
             inc() { kiri.api.event.emit("busy", ++busy) },
             dec() { kiri.api.event.emit("busy", --busy) }
-        },
+        }),
         color: COLOR,
-        const: {
+        const: assign(api.const, {
             LANG,
             LOCAL,
             SETUP,
             SECURE,
             STACKS,
-        },
-        device: {
-            code: currentDeviceCode,
-            get: currentDeviceName,
-            set: noop, // set during init
-            clone: noop // set during init
-        },
-        dialog: {
+        }),
+        dialog: assign(api.dialog, {
             show: showModal,
             hide: hideModal,
             update_process_list: updateProcessList
-        },
-        help: {
+        }),
+        help: assign(api.help, {
             show: showHelp,
             file: showHelpFile
-        },
-        event: {
+        }),
+        event: assign(api.event, {
             on(t,l) { return EVENT.on(t,l) },
             emit(t,m,o) { return EVENT.publish(t,m,o) },
             bind(t,m,o) { return EVENT.bind(t,m,o) },
             alerts(clr) { api.alerts.update(clr) },
             import: loadFile,
             settings: triggerSettingsEvent
-        },
-        group: {
+        }),
+        group: assign(api.group, {
             merge: groupMerge,
             split: groupSplit,
-        },
-        hide: {
+        }),
+        hide: assign(api.hide, {
             alert(rec, recs) { api.alerts.hide(...arguments) },
             import: noop,
             slider: hideSlider
-        },
-        image: {
+        }),
+        image: assign(api.image, {
             dialog: loadImageDialog,
             convert: loadImageConvert
-        },
+        }),
         language: kiri.lang,
-        modal: {
+        modal: assign(api.modal, {
             show: showModal,
             hide: hideModal,
             visible: modalShowing
-        },
-        mode: {
+        }),
+        mode: assign(api.mode, {
             get_id() { return MODE },
             get_lower: getModeLower,
             get: getMode,
@@ -149,29 +128,26 @@ gapp.register("kiri.main", [], (root, exports) => {
                 api.mode.is_wjet() ||
                 api.mode.is_laser()
             }
-        },
-        probe: {
+        }),
+        probe: assign(api.probe, {
             live: "https://live.grid.space",
             grid: noop,
             local: noop
-        },
-        process: {
+        }),
+        process: assign(api.process, {
             code: currentProcessCode,
             get: currentProcessName
-        },
-        show: {
+        }),
+        show: assign(api.show, {
             alert() { return api.alerts.show(...arguments) },
-            devices: noop, // set during init
             progress: setProgress,
             controls: setControlsVisible,
-            favorites: getShowFavorites,
             slices: showSlices,
             layer: setVisibleLayer,
             local: showLocal,
-            tools: noop, // set during init
             import: function() { UI.import.style.display = '' }
-        },
-        space: {
+        }),
+        space: assign(api.space, {
             reload,
             auto_save,
             restore: restoreWorkspace,
@@ -180,16 +156,16 @@ gapp.register("kiri.main", [], (root, exports) => {
             set_focus: setFocus,
             update: SPACE.update,
             is_dark() { return settings.ctrl().dark }
-        },
-        util: {
+        }),
+        util: assign(api.util, {
             isSecure,
             download: downloadBlob,
             ui2rec() { api.conf.update_from(...arguments) },
             rec2ui() { api.conf.update_fields(...arguments) },
             b64enc(obj) { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
             b64dec(obj) { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
-        },
-        view: {
+        }),
+        view: assign(api.view, {
             get() { return viewMode },
             set() { setViewMode(...arguments) },
             set_arrange() { api.view.set(VIEWS.ARRANGE) },
@@ -209,9 +185,18 @@ gapp.register("kiri.main", [], (root, exports) => {
             edges: setEdges,
             unit_scale: unitScale,
             wireframe: setWireframe,
-        },
+        }),
         work: kiri.client
     });
+
+    // add show() to catalog for API
+    FILES.show = showCatalog;
+
+    // patch broker for api backward compatibility
+    EVENT.on = (topic, listener) => {
+        EVENT.subscribe(topic, listener);
+        return EVENT;
+    };
 
     function updateStackLabelState() {
         const settings = api.conf.get();
@@ -274,8 +259,8 @@ gapp.register("kiri.main", [], (root, exports) => {
         if (!settings.ctrl().autoSave) {
             return;
         }
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(() => {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
             api.space.save(true);
         }, 1000);
     }
@@ -284,7 +269,7 @@ gapp.register("kiri.main", [], (root, exports) => {
     let inits = parseInt(SDB.getItem('kiri-init') || stats.get('init') || 0) + 1;
     SDB.setItem('kiri-init', inits);
     stats.set('init', inits);
-    stats.set('kiri', kiri.version);
+    stats.set('kiri', kiri.version || gapp.version);
 
     // remove version from url, preserve other settings
     WIN.history.replaceState({},'','/kiri/' + encodeOpt(SETUP) + LOC.hash);
@@ -295,15 +280,6 @@ gapp.register("kiri.main", [], (root, exports) => {
 
     function unitScale() {
         return api.mode.is_cam() && settings.ctrl().units === 'in' ? 25.4 : 1;
-    }
-
-    function getShowFavorites(bool) {
-        if (bool !== undefined) {
-            SDB.setItem('dev-favorites', bool);
-            showFavorites = bool;
-            return bool;
-        }
-        return showFavorites;
     }
 
     function triggerSettingsEvent() {
@@ -450,11 +426,6 @@ gapp.register("kiri.main", [], (root, exports) => {
         api.var.layer_hi = layer;
         api.event.emit("slider.label");
 
-        let cam = api.mode.is_cam(),
-            sla = api.mode.is_sla(),
-            hi = cam ? api.var.layer_max - api.var.layer_lo : api.var.layer_hi,
-            lo = cam ? api.var.layer_max - api.var.layer_hi : api.var.layer_lo;
-
         updateSlider();
         STACKS.setRange(api.var.layer_lo, api.var.layer_hi);
 
@@ -513,7 +484,7 @@ gapp.register("kiri.main", [], (root, exports) => {
     }
 
     function loadImage(image, opt = {}) {
-        const info = Object.assign({settings: settings.get(), png:image}, opt);
+        const info = assign({settings: settings.get(), png:image}, opt);
         kiri.client.image2mesh(info, progress => {
             api.show.progress(progress, "converting");
         }, vertices => {
@@ -670,8 +641,9 @@ gapp.register("kiri.main", [], (root, exports) => {
             visible = modalShowing(),
             info = { pct: 0 };
 
-        ["help","setup","tools","prefs","saves","files","xany","xlaser","xsla","local","any"].forEach(name => {
-            UI[name].style.display = name === which ? 'flex' : '';
+        // hide all modals befroe showing another
+        Object.keys(UI.modals).forEach(name => {
+            UI.modals[name].style.display = name === which ? 'flex' : '';
         });
 
         function ondone() {
@@ -702,7 +674,10 @@ gapp.register("kiri.main", [], (root, exports) => {
             easing(TWEEN.Easing.Quadratic.InOut).
             to({pct:0}, 100).
             onUpdate(() => { style.height = `${info.pct}%` }).
-            onComplete(() => { style.display = '' }).
+            onComplete(() => {
+                style.display = '';
+                api.event.emit('modal.hide');
+            }).
             start();
     }
 
@@ -868,7 +843,6 @@ gapp.register("kiri.main", [], (root, exports) => {
     }
 
     function setViewMode(mode) {
-        const oldMode = viewMode;
         const isCAM = settings.mode() === 'CAM';
         viewMode = mode;
         platform.deselect();
@@ -955,7 +929,7 @@ gapp.register("kiri.main", [], (root, exports) => {
         // restore cached device profile for this mode
         if (current.cdev[mode]) {
             current.device = clone(current.cdev[mode]);
-            api.event.emit('device.select', currentDeviceName());
+            api.event.emit('device.select', api.device.get());
         }
         // hide/show
         api.uc.setVisible($('set-tools'), mode === 'CAM');
@@ -981,14 +955,6 @@ gapp.register("kiri.main", [], (root, exports) => {
         }
     }
 
-    function currentDeviceName() {
-        return settings.get().filter[getMode()];
-    }
-
-    function currentDeviceCode() {
-        return settings.get().devices[currentDeviceName()];
-    }
-
     function currentProcessName() {
         return settings.get().cproc[getMode()];
     }
@@ -1011,9 +977,6 @@ gapp.register("kiri.main", [], (root, exports) => {
 
     // prevent safari from exiting full screen mode
     DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
-
-    // complete module loading
-    // kiri.load_exec();
 
     // upon restore, seed presets
     api.event.emit('preset', api.conf.dbo());

@@ -9,14 +9,18 @@
 "use strict";
 
 // dep: moto.space
+// dep: moto.broker
 gapp.register("mesh.split", [], (root, exports) => {
 
+const { broker } = gapp;
 const { Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide, Vector3 } = THREE;
 const { mesh, moto } = root;
 const { space } = moto;
-const { api } = mesh;
 
 let isActive;
+
+const key_once = broker.bind('key_once');
+const key_cancel = broker.bind('key_once_cancel');
 
 // split functions
 let split = {
@@ -29,6 +33,11 @@ let split = {
             return;
         }
         let { api, util } = mesh;
+        let { log } = api;
+        if (api.selection.models().length === 0) {
+            log.emit('no models selected for splitting');
+            return;
+        }
         // create split plane visual
         let geo, mat, obj = new Mesh(
             geo = new PlaneGeometry(1,1),
@@ -72,11 +81,36 @@ let split = {
             obj.position.set(mid.x, y, -mid.y);
         });
         isActive = true;
+        key_once({ code: 'KeyS', fn(evt) {
+            split.select();
+        }});
+        key_once({ code: 'KeyV', fn(evt) {
+            evt.preventDefault();
+            let state = split.state;
+            split.end();
+            function doit(z) {
+                state.plane = { z };
+                split.select(state);
+            }
+            api.modal.dialog({
+                title: "split object Z",
+                body: [ h.div({ class: "additem" }, [
+                    h.label('Z value'),
+                    h.input({ value: 0, size: 5, id: "_value" }),
+                    h.button({ _: "split", onclick() {
+                        const { _value } = api.modal.bound;
+                        doit(parseFloat(_value.value));
+                        api.modal.hide();
+                    } })
+                ]) ]
+            });
+            api.modal.bound._value.focus();
+        } });
     },
 
-    select() {
+    select(state) {
         let { log } = mesh.api;
-        let { models, plane } = split.state;
+        let { models, plane } = split.state || state;
         if (!(models && plane)) {
             return split.end();
         }
@@ -92,6 +126,8 @@ let split = {
         if (!isActive) {
             return;
         }
+        key_cancel('KeyS');
+        key_cancel('KeyV');
         let space = moto.space;
         let { obj } = split.state;
         space.scene.remove(obj);

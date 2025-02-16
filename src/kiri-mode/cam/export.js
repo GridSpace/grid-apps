@@ -5,7 +5,7 @@
 // dep: geo.base
 // dep: geo.polygons
 // dep: kiri-mode.cam.driver
-gapp.register("kiri-mode.cam.export", [], (root, exports) => {
+gapp.register("kiri-mode.cam.export", (root, exports) => {
 
 const { base, kiri } = root;
 const { polygons, util } = base;
@@ -70,7 +70,8 @@ CAM.export = function(print, online) {
         },
         offset = {
             x: -origin.x,
-            y:  origin.y
+            y:  origin.y,
+            z:  spro.camOriginTop ? origin.z - zmax : origin.z
         },
         scale = {
             x: 1,
@@ -88,7 +89,7 @@ CAM.export = function(print, online) {
             time_sec: 0,
             time_ms: 0,
             time: 0
-        }
+        };
 
     function section(section) {
         append();
@@ -197,10 +198,14 @@ CAM.export = function(print, online) {
             }
         }
 
+        // enforce XY origin at start of print
+        if (points === 0 || changeTool) {
+            pos.x = pos.y = pos.z = 0;
+        }
+
         // split first move to X,Y then Z for that new location
         // safety to prevent tool crashing
-        if (points === 0) {
-            pos.x = pos.y = pos.z = 0;
+        if (points === 0 || changeTool) {
             points++;
             if (spro.camFirstZMax) {
                 moveTo({

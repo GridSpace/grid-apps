@@ -34,7 +34,7 @@ server({
 
 function createWindow() {
     const mainWindow = new BrowserWindow({
-        width: 1200,
+        width: 1600,
         height: 900,
         webPreferences: {
             // preload: path.join(__dirname, 'preload.js')
@@ -53,7 +53,10 @@ function createWindow() {
     // prevent "other" urls from opening inside Electron (alerts are problematic)
     mainWindow.webContents.on('will-navigate', (event, url) => {
         // console.log('DIVERT', url);
-        if (url.endsWith('/mesh') || url.endsWith('/kiri')) {
+        if (url.endsWith('/kiri')  || url.endsWith('/kiri/')) {
+            return;
+        }
+        if (url.endsWith('/mesh') || url.endsWith('/mesh/')) {
             return;
         }
         event.preventDefault();

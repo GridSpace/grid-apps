@@ -111,36 +111,42 @@ function fillGyroid(target) {
     let tile_z = 1 / tile;
     let gyroid = base.gyroid.slice(target.zValue() * tile_z, (1 - density) * 500);
 
-    // gyroid.polys.forEach(poly => {
-    //     for (let tx=0; tx<=tile_x; tx++) {
-    //         for (let ty=0; ty<=tile_y; ty++) {
-    //             target.newline();
-    //             let bx = tx * tile + bounds.min.x;
-    //             let by = ty * tile + bounds.min.y;
-    //             poly.forEach(point => {
-    //                 target.emit(bx + point.x * tile, by + point.y * tile);
-    //             });
-    //         }
-    //     }
-    // });
-
     let polys = [];
-    for (let tx=0; tx<=tile_x; tx++) {
+    if (gyroid.dir == 'lr') {
         for (let ty=0; ty<=tile_y; ty++) {
-            for (let poly of gyroid.polys) {
-                target.newline();
-                let points = poly.map(el => {
-                    return {
-                        x: el.x * tile + tx * tile + bounds.min.x,
-                        y: el.y * tile + ty * tile + bounds.min.y,
-                        z: 0
-                    }
-                });
-                polys.push(base.newPolygon().setOpen(true).addObj(points));
+            for (let tx=0; tx<=tile_x; tx++) {
+                for (let poly of gyroid.polys) {
+                    target.newline();
+                    let points = poly.map(el => {
+                        return {
+                            x: el.x * tile + tx * tile + bounds.min.x,
+                            y: el.y * tile + ty * tile + bounds.min.y,
+                            z: 0
+                        }
+                    });
+                    polys.push(base.newPolygon().setOpen(true).addObj(points));
+                }
             }
+            polys = connectOpenPolys(polys);
+        }
+    } else {
+        for (let tx=0; tx<=tile_x; tx++) {
+            for (let ty=0; ty<=tile_y; ty++) {
+                for (let poly of gyroid.polys) {
+                    target.newline();
+                    let points = poly.map(el => {
+                        return {
+                            x: el.x * tile + tx * tile + bounds.min.x,
+                            y: el.y * tile + ty * tile + bounds.min.y,
+                            z: 0
+                        }
+                    });
+                    polys.push(base.newPolygon().setOpen(true).addObj(points));
+                }
+            }
+            polys = connectOpenPolys(polys);
         }
     }
-    polys = connectOpenPolys(polys);
     for (let poly of polys.filter(p => p.perimeter() > 2)) {
         target.newline();
         for (let point of poly.points) {
@@ -180,7 +186,8 @@ function connectOpenPolys(noff, dist = 0.1) {
                     continue outer;
                 }
                 if (s1.last().distTo2D(s2.last()) <= dist) {
-                    s1.addPoints(s2.points.reverse());
+                    s2.reverse();
+                    s1.addPoints(s2.points);
                     ntmp[j] = null;
                     continue outer;
                 }

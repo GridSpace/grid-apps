@@ -494,15 +494,29 @@ kiri.worker = {
             send.data({debug});
         });
         const {
-            bounds, time, lines, bytes, distance,
-            settings, segments, purges
+            bounds,
+            time,
+            lines,
+            bytes,
+            distance,
+            settings,
+            segments,
+            purges,
+            labels
         } = current.print;
 
         send.done({
             done: true,
             output: output ? output : {
-                bounds, time, lines, bytes, distance,
-                settings, segments, purges
+                bounds,
+                time,
+                lines,
+                bytes,
+                distance,
+                settings,
+                segments,
+                purges,
+                labels
             }
         });
     },

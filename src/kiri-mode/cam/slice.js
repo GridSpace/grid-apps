@@ -9,9 +9,10 @@
 // use: kiri-mode.cam.slicer
 // use: kiri-mode.cam.slicer2
 // use: kiri-mode.cam.ops
-gapp.register("kiri-mode.cam.slice", [], (root, exports) => {
+gapp.register("kiri-mode.cam.slice", (root, exports) => {
 
 const { base, kiri } = root;
+const { util } = base;
 const { driver, newSlice, setSliceTracker } = kiri;
 const { polygons, newPoint, newPolygon } = base;
 const { CAM } = driver;
@@ -28,14 +29,14 @@ const POLY = polygons;
  * @param {Function} output
  */
 CAM.slice = async function(settings, widget, onupdate, ondone) {
-    let mesh = widget.mesh,
-        proc = settings.process,
+    let proc = settings.process,
         stock = settings.stock || {},
         isIndexed = proc.camStockIndexed,
         camOps = widget.camops = [],
         sliceAll = widget.slices = [],
         bounds = widget.getBoundingBox(),
         track = widget.track,
+        { camZTop, camZBottom, camZThru } = proc,
         // widget top z as defined by setTopz()
         wztop = track.top,
         // distance between top of part and top of stock
@@ -44,11 +45,11 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         zbOff = isIndexed ? 0 : (wztop - track.box.d),
         // defined z bottom offset by distance to stock bottom
         // keeps the z bottom relative to the part when z align changes
-        zBottom = isIndexed ? proc.camZBottom : proc.camZBottom - zbOff,
+        zBottom = isIndexed ? camZBottom : camZBottom - zbOff,
         // greater of widget bottom and z bottom
         zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom),
         zMax = bounds.max.z,
-        zThru = proc.camZBottom ? 0 : (proc.camZThru || 0),
+        zThru = camZThru,
         zTop = zMax + ztOff,
         minToolDiam = Infinity,
         maxToolDiam = -Infinity,
@@ -58,7 +59,37 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         unsafe = proc.camExpertFast,
         units = settings.controller.units === 'in' ? 25.4 : 1,
         axisRotation,
-        axisIndex;
+        axisIndex,
+        // new work area tracking
+        part_size = bounds.dim,
+        bottom_gap = zbOff,
+        bottom_part = 0,
+        bottom_stock = -bottom_gap,
+        bottom_thru = zThru,
+        bottom_z = Math.max(
+            (camZBottom ? bottom_stock + camZBottom : bottom_part) - bottom_thru,
+            (camZBottom ? bottom_stock + camZBottom : bottom_stock - bottom_thru)
+        ),
+        bottom_cut = Math.max(bottom_z, -zThru),
+        top_stock = zTop,
+        top_part = zMax,
+        top_gap = ztOff,
+        top_z = camZTop ? bottom_stock + camZTop : top_stock,
+        workarea = util.round({
+            top_stock,
+            top_part,
+            top_gap,
+            top_z,
+            bottom_stock,
+            bottom_part,
+            bottom_gap,
+            bottom_z,
+            bottom_cut
+        }, 3);
+
+    // console.table({ workarea });
+    // console.table({ part_size });
+    // console.table({ stock });
 
     if (tabs) {
         // make tab polygons
@@ -66,7 +97,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
             let zero = newPoint(0,0,0);
             let point = newPoint(tab.pos.x, tab.pos.y, tab.pos.z);
             let poly = newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y);
-            let tslice = newSlice(0);
+            // let tslice = newSlice(0);
             let m4 = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion(tab.rot._x, tab.rot._y, tab.rot._z, tab.rot._w)
             );
@@ -203,7 +234,8 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         zTop,
         unsafe,
         color,
-        dark
+        dark,
+        // workarea
     };
 
     let opList = [
@@ -236,9 +268,19 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
 
     // call slice() function on all ops in order
     let tracker = setSliceTracker({ rotation: 0 });
+    let workarea_orig = structuredClone(workarea);
     setAxisIndex();
     for (let op of opList) {
         let weight = op.weight();
+        // apply operation override vars
+        let workover = structuredClone(workarea_orig);
+        let valz = op.op;
+        if (valz.ov_topz) workover.top_z = bottom_stock + valz.ov_topz;
+        if (valz.ov_botz) {
+            workover.bottom_z = bottom_stock + valz.ov_botz;
+            workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
+        }
+        state.workarea = workover;
         await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
@@ -280,9 +322,9 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
 
     // add shadow perimeter to terrain to catch outside moves off part
     let tabpoly = tabs ? tabs.map(tab => tab.poly) : [];
-    let allpoly = POLY.union([...state.shadowTop.tops, ...tabpoly, ...state.shadowTop.slice.shadow], 0, true);
+    let allpoly = POLY.union([...state.shadow.base, ...tabpoly], 0, true);
     let shadowOff = maxToolDiam < 0 ? allpoly :
-        POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true });
+        POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true, minArea: 0 });
     state.terrain.forEach(level => level.tops.appendAll(shadowOff));
 
     widget.terrain = state.skipTerrain ? null : state.terrain;
@@ -366,7 +408,7 @@ CAM.traces = async function(settings, widget, single) {
                 let trace = traces[i];
                 let dz = Math.abs(z - trace.getZ());
                 // only compare polys farther apart in Z
-                if (dz < 0.01) {
+                if (dz > 0.01) {
                     continue;
                 }
                 // do not add duplicates

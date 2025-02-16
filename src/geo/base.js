@@ -160,10 +160,22 @@ function inRange(value, min, max) {
 }
 
 function round(v, zeros) {
+    if (typeof v === 'object') {
+        for (let [key,val] of Object.entries(v)) {
+            if (typeof val === 'number') {
+                v[key] = round(val, zeros);
+            }
+        }
+        return v;
+    }
     const prec = zeros !== undefined ? zeros : round_decimal_precision;
     if (prec === 0) return v | 0;
     let pow = Math.pow(10, prec);
     return Math.round(v * pow) / pow;
+}
+
+function clamp(val, low, hi) {
+    return Math.max(low, Math.min(hi, val));
 }
 
 /**
@@ -590,6 +602,7 @@ base.util = {
     sqr,
     lerp,
     time,
+    clamp,
     comma,
     round,
     area2,

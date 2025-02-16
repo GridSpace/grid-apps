@@ -16,6 +16,7 @@ self.kiri.lang['en-us'] = {
     edit:           "edit",
     enable:         "enable",
     disable:        "disable",
+    donate:         "donate",
     export:         "export",
     files:          "files",
     filter:         "filter",
@@ -521,6 +522,8 @@ self.kiri.lang['en-us'] = {
 
     // CNC OUTLINE
     co_menu:        "outline",
+    co_merg_s:      "merge overlap",
+    co_merg_l:      ["merge overlapping lines to prevent overcutting into adjacent solids"],
     co_dogb_s:      "dogbones",
     co_dogb_l:      ["insert dogbone cuts","into inside corners"],
     co_dogr_s:      "reverse bones",
@@ -607,6 +610,8 @@ self.kiri.lang['en-us'] = {
     ci_abso_l:      "degree rotation is absolute",
     ci_face_s:      "face",
     ci_face_l:      "select face to rotate facing up",
+    ci_line_s:      "linear",
+    ci_line_l:      "make linear passes along X then rotate Y",
 
     // CNC LASER On/Off Operations (Carvera)
     cl_powr_s:      "power",
@@ -692,6 +697,10 @@ self.kiri.lang['en-us'] = {
     ou_lays_l:      ["mark layers for stacking. the layer above will be output in a different color which the laser can mark with a lower power. turns on layer grouping."],
     ou_drkn_s:      "drag knife",
     ou_drkn_l:      ["enable drag knife","output in gcode","cut radii are added","to corners with","cut down passes"],
+    ou_stak_s:      "fixed",
+    ou_stak_l:      ["output is a 3D stack of 2D paths rather than packing layers flat in 2D"],
+    ou_maxp_s:      "max power",
+    ou_maxp_l:      ["max power value in gcode. power % from settings will scale from 0 to this value"],
 
     // OUTPUT FDM
     ou_nozl_s:      "nozzle temp",
@@ -726,8 +735,10 @@ self.kiri.lang['en-us'] = {
     ou_zanc_l:      ["controls the position of the part","when stock Z exceeds part Z"],
     ou_ztof_s:      "z offset",
     ou_ztof_l:      ["offset z anchor","in workspace units"],
+    ou_ztop_s:      "z top",
+    ou_ztop_l:      ["offset from stock bottom","to set start of cutting depth","in workspace units","* drill/contour ignore this *"],
     ou_zbot_s:      "z bottom",
-    ou_zbot_l:      ["offset from part bottom","to limit cutting depth","in workspace units"],
+    ou_zbot_l:      ["offset from stock bottom","to limit cutting depth","in workspace units"],
     ou_zclr_s:      "z clearance",
     ou_zclr_l:      ["safe travel offset","from top of part","in workspace units"],
     ou_ztru_s:      "z thru",
@@ -815,6 +826,8 @@ self.kiri.lang['en-us'] = {
     ad_lbir_l:      ["always print shells touching the belt before any other shells. this is no longer a recommended setting based on extensive testing."],
     ad_altr_s:      "alternating",
     ad_altr_l:      ["alternate shell winding order","clockwise / counter-clockwise","may reduce warping in thin areas","and help with belt edge adhesion"],
+    ad_zint_s:      "interleave z",
+    ad_zint_l:      ["interleave Z heights with odd number shells"],
     ad_lret_s:      "layer retract",
     ad_lret_l:      ["force filament retraction","between layers"],
     ad_agap_s:      "avoid gaps",

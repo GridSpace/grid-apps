@@ -2,7 +2,7 @@
 
 // dep: add.three
 // dep: kiri.api
-gapp.register("kiri.tools", [], (root, exports) => {
+gapp.register("kiri.tools", (root, exports) => {
 
 const { Vector3, Quaternion } = THREE;
 const { kiri, moto } = root;

@@ -921,7 +921,7 @@ function fitDeviceToWidgets() {
 }
 
 // extend API (api.platform)
-const platform = api.platform = {
+const platform = Object.assign(api.platform, {
     fit: fitDeviceToWidgets,
     add: platformAdd,
     changed: platformChanged,
@@ -950,6 +950,6 @@ const platform = api.platform = {
     show_volume: space.platform.showVolume,
     top_z() { return topZ },
     clear() { api.space.clear(); api.space.save(true)  }
-};
+});
 
 });

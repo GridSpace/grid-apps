@@ -14,14 +14,20 @@ const { getRangeParameters } = FDM;
 const debug = false;
 
 FDM.export = function(print, online, ondone, ondebug) {
-    const { settings, belty, tools } = print;
+    const { widgets, settings, belty, tools, firstTool } = print;
     const { bounds, controller, device, process, filter, mode } = settings;
     const { extruders, fwRetract } = device;
     const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
     const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature } = device;
 
+    let model_labels = [];
+    for (let widget of widgets) {
+        model_labels.push(widget.track.grid_id);
+    }
+
     let layers = print.output,
         extras = device.extras || {},
+        isBambu = extras.bbl,
         { extrudeAbs } = device,
         { exportThumb } = controller,
         extused = Object.keys(print.extruders).map(v => parseInt(v)),
@@ -72,7 +78,7 @@ FDM.export = function(print, online, ondone, ondebug) {
             y: isBelt ? 0 : bedDepth/2,
             z: 0
         },
-        tool = 0,
+        tool = firstTool || 0,
         extruder = extruders[tool],
         offset_x = extruder.extOffsetX,
         offset_y = extruder.extOffsetY,
@@ -107,8 +113,9 @@ FDM.export = function(print, online, ondone, ondebug) {
             z_max: maxHeight,
             layers: layers.length,
             progress: 0,
-            nozzle: 0,
-            tool: 0
+            nozzle: tool,
+            tool: tool,
+            model_labels: model_labels.sort().join(',')
         },
         pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
         lines = 0,
@@ -120,15 +127,6 @@ FDM.export = function(print, online, ondone, ondebug) {
         minz = { x: Infinity, y: Infinity, z: Infinity },
         // lenghts of each filament (by nozzle) consumed
         segments = [],
-        // palette & ping data
-        isPalette = device.filamentSource === 'palette3',
-        paletteInfo = extras.palette || {},
-        palettePingStart = Math.max(paletteInfo.ping, paletteInfo.feed, paletteInfo.push) || 500,
-        palettePingSpace = paletteInfo.ping || 0,
-        // track purges for palette3 pings
-        purgePos,
-        purgeOn = 0,
-        purgeOff = 0,
         extrudeMM = FDM.extrudeMM,
         extrudePerMM = FDM.extrudePerMM;
 
@@ -137,6 +135,19 @@ FDM.export = function(print, online, ondone, ondebug) {
         subst[`tool_used_${tool}`] = true;
     }
     subst.tool_count = tools_used.length;
+
+    // encodes an array offset as a single "on" bit in an
+    // 8 byte array, then converts the array to base64 which
+    // is what Bambu's M624 uses to flag an object as currently
+    // being printed. the array is presented at the top of the
+    // gcode as a comment: "; model label id: {model_labels}"
+    function encodeBitOffset(index) {
+        let bytes = new Uint8Array(8);
+        let byteIndex = Math.floor(index / 8);
+        let bitPosition = index % 8;
+        bytes[byteIndex] |= (1 << bitPosition);
+        return btoa(String.fromCharCode(...bytes));
+    }
 
     function setTempFanSpeed(tempSpeed) {
         if (tempSpeed > 0) {
@@ -239,7 +250,9 @@ FDM.export = function(print, online, ondone, ondebug) {
     // with logic flow IF / ELIF / ELSE / END
     // IF / IF is valid but will not nest
     function appendSub(line, pad) {
-        if (line.indexOf(';; IF ') === 0) {
+        if (line.indexOf(';; DEFINE ') === 0) {
+            // ignore var declarations
+        } else if (line.indexOf(';; IF ') === 0) {
             line = line.substring(6).trim();
             let evil = print.constReplace(line, subst, 0, 666);
             subon = evil;
@@ -301,15 +314,16 @@ FDM.export = function(print, online, ondone, ondebug) {
         append("; --- startup ---");
     }
 
-    // lookg for ";; PREAMBLE <MODE>" comment
+    // looking for ";; PREAMBLE <MODE>" comment
     let pre = 0;
     let gcpre = [];
     for (let line of device.gcodePre) {
         line = line.trim();
-        if (line.indexOf(";; PREAMBLE ") === 0) {
+        if (line.indexOf(";; PREAMBLE") === 0) {
             if (line === ';; PREAMBLE OFF') pre = 1;
-            if (line === ';; PREAMBLE END') pre = 2;
-        } if (line.indexOf(";; AXISMAP ") === 0) {
+            else if (line === ';; PREAMBLE END') pre = 2;
+            else gcpre.push(pre = 123);
+        } else if (line.indexOf(";; AXISMAP ") === 0) {
             let axmap = JSON.parse(line.substring(11).trim());
             for (let key in axmap) {
                 axis[key] = ` ${axmap[key]}`;
@@ -324,6 +338,10 @@ FDM.export = function(print, online, ondone, ondebug) {
     let t0 = false;
     let t1 = false;
     for (let line of gcpre) {
+        if (line === pre) {
+            preamble();
+            continue;
+        }
         if (line.indexOf('T0') === 0) t0 = true; else
         if (line.indexOf('T1') === 0) t1 = true; else
         if (line.indexOf('M82') === 0) {
@@ -360,15 +378,7 @@ FDM.export = function(print, online, ondone, ondebug) {
                 }
             });
         }
-        if (line.indexOf("{tool}") > 0 && extused.length > 0) {
-            for (let i of extused) {
-                subst.tool = i;
-                appendSubPad(line);
-            }
-            subst.tool = 0;
-        } else {
-            appendSubPad(line);
-        }
+        appendSubPad(line);
     }
 
     if (pre === 2) preamble();
@@ -441,15 +451,6 @@ FDM.export = function(print, online, ondone, ondebug) {
     }
 
     function moveTo(newpos, rate, comment) {
-        if (pingRemain) {
-            if (newpos.e) {
-                if (pingRemain - newpos.e < -0.4) {
-                    // split move if ping over-extrudes? complicates emitted calc.
-                    // console.log({over_ping: pingRemain - newpos.e});
-                }
-                pingRemain -= newpos.e;
-            }
-        }
         let o = [!rate && !newpos.e ? 'G0' : 'G1'];
         let emit = { x: false, y: false, z: false };
         if (typeof newpos.x === 'number' && newpos.x !== pos.x) {
@@ -526,9 +527,6 @@ FDM.export = function(print, online, ondone, ondebug) {
     allout.forEachPair(function (o1, o2) {
         totaldistance += o1.point.distTo2D(o2.point);
     }, 1);
-
-    // for palette pings, amount of extrusion left
-    let pingRemain = 0;
 
     // retract before first move
     retract();
@@ -610,44 +608,26 @@ FDM.export = function(print, online, ondone, ondebug) {
             moveTo({z:zpos}, seekMMM);
         }
 
+        let cwidget;
         // iterate through layer outputs
         for (pidx=0; pidx<path.length; pidx++) {
             out = path[pidx];
             speedMMM = (out.speed || process.outputFeedrate) * 60; // range
 
-            // track purge towers for palette3
-            // do not generate pings before total tube length exhausted
-            // because the palette cannot respond to differences before then
-            if (isPalette && palettePingSpace && emitted >= palettePingStart) {
-                if (purgeOn === 0 && out.point.purgeOn && emitted - purgeOff >= palettePingSpace) {
-                    retract();
-                    pushPos(out.point.purgeOn);
-                    // shorter pause accounts for retract/move
-                    dwell(12750);
-                    popPos();
-                    unretract();
-                    purgeOn = emitted;
-                    purgePos = out.point.purgeOn;
-                    pingRemain = 20;
+            // hint to controller that we're working on a specific object
+            // so that gcode between start/stop comments can be cancelled
+            if (out.widget !== cwidget) {
+                if (cwidget) {
+                    append(`; end object id: ${cwidget.track.grid_id}`);
+                    isBambu && append('M625');
                 }
-                if (purgeOn && pingRemain <= 0) {
-                    retract();
-                    pushPos(purgePos);
-                    // shorter pause accounts for retract/move
-                    dwell(6750);
-                    popPos();
-                    unretract();
-                    if (!print.purges) {
-                        print.purges = [];
-                    }
-                    print.purges.push({
-                        length: purgeOn,
-                        extrusion: emitted - purgeOn
-                    });
-                    purgeOff = emitted;
-                    purgeOn = 0;
-                    pingRemain = 0;
+                if (out.widget) {
+                    let off = model_labels.indexOf(out.widget.track.grid_id);
+                    let b64 = encodeBitOffset(off);
+                    append(`; start object id: ${out.widget.track.grid_id}`);
+                    isBambu && append(`M624 ${b64}`);
                 }
+                cwidget = out.widget;
             }
 
             // emit comment on output type chage
@@ -662,8 +642,11 @@ FDM.export = function(print, online, ondone, ondebug) {
 
             // look for extruder change, run scripts, recalc emit factor
             if (out.tool !== undefined && out.tool != tool) {
+                let macro_deselect = extruder.extDeselect.length ? extruder.extDeselect : extruders[0].extDeselect;
+                let macro_select = extruder.extSelect.length ? extruder.extSelect : extruders[0].extSelect;
                 segments.push({emitted, tool});
-                appendAllSub(extruder.extDeselect);
+                appendAllSub(macro_deselect);
+                subst.last_tool = tool;
                 tool = out.tool;
                 subst.nozzle = subst.tool = tool;
                 extruder = extruders[tool];
@@ -674,10 +657,7 @@ FDM.export = function(print, online, ondone, ondebug) {
                     extruder.extFilament,
                     path.layer === 0 ?
                         (process.firstSliceHeight || process.sliceHeight) : path.height);
-                // do not run extruder swapping code when source is Palette3
-                if (!isPalette) {
-                    appendAllSub(extruder.extSelect);
-                }
+                appendAllSub(macro_select);
             }
 
             // if no point in output, it's a dwell command
@@ -848,6 +828,11 @@ FDM.export = function(print, online, ondone, ondebug) {
             laste = out.emit;
         }
         layer++;
+        if (cwidget) {
+            append(`; end object id: ${cwidget.track.grid_id}`);
+            isBambu && append('M625');
+            cwidget = undefined;
+        }
 
         // end open loop when detected
         while (endloop-- > 0) {
@@ -1002,11 +987,11 @@ FDM.export = function(print, online, ondone, ondebug) {
     // force emit of buffer
     append();
     // console.log({segments, emitted, outputLength});
-    print.segments = isPalette ? segments : undefined;
     print.distance = emitted;
     print.lines = lines;
     print.bytes = bytes + lines - 1;
     print.time = time;
+    print.labels = model_labels;
 
     if (debug) {
         console.log('segments', segments);

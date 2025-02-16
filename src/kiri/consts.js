@@ -2,7 +2,7 @@
 
 "use strict";
 
-gapp.register("kiri.consts", [], (root, exports) => {
+gapp.register("kiri.consts", (root, exports) => {
 
 const COLOR = {
     wireframe: 0x444444,
@@ -61,10 +61,6 @@ const LISTS = {
         { name: "path" },
         { name: "flat" },
         { name: "line" }
-    ],
-    filasrc: [
-        { name: "direct" },
-        { name: "palette3" }
     ],
     animesh: [
         { name: "100" },

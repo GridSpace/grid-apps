@@ -63,6 +63,19 @@ FDM.sliceAll = function(settings, onupdate) {
         .sort((a,b) => {
             return a.slices[0].z - b.slices[0].z
         });
+    // assign grid_id which can be embedded in gcode and
+    // used by the controller to cancel objects during print
+    let { bounds } = settings;
+    for (let widget of widgets) {
+        let { pos, box } = widget.track;
+        // calculate top/left coordinate for widget
+        // relative to bounding box for all widgets
+        let tl = {
+            x: Math.round((pos.x - box.w/2 - bounds.min.x) / 10) + 1,
+            y: Math.round((pos.y - box.h/2 - bounds.min.y) / 10) + 1
+        };
+        widget.track.grid_id = tl.x * 100 + tl.y;
+    }
     // count extruders used
     let ext = [];
     for (let w of widgets) {
@@ -104,6 +117,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
     let render = settings.render !== false,
         { process, device, controller } = settings,
         isBelt = device.bedBelt,
+        isBrick = controller.devel && process.sliceZInterleave,
         isSynth = widget.track.synth,
         isSupport = widget.track.support,
         useAssembly = controller.assembly,
@@ -857,6 +871,52 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             profileEnd();
         }
 
+        if (isBrick) {
+            let indices = slices.map(s => s.index);
+            let first = indices[1];
+            let last = indices[indices.length - 2];
+            let nu = [];
+            for (let slice of slices) {
+                if (slice.index < first || slice.index > last) {
+                    continue;
+                }
+                let nuSlice = slice.clone();
+                nuSlice.z -= slice.height / 2;
+                if (slice.index === first) {
+                    nuSlice.z = slice.z - slice.height / 4;
+                    nuSlice.height = slice.height / 2;
+                } else {
+                    nuSlice.height = slice.height;
+                }
+                nu.push(nuSlice);
+                let ti = 0;
+                for (let top of slice.tops) {
+                    let nuTop = nuSlice.tops[ti++];
+                    nuTop.shells = [];
+                    top.shells = top.shells.filter((s,i) => {
+                        if (i % 2 === 0) {
+                            return true;
+                        } else {
+                            nuTop.shells.push(s);
+                            return false;
+                        }
+                    });
+                }
+                if (slice.index === last) {
+                    let cap = nuSlice.clone();
+                    cap.z += (slice.height * 0.75);
+                    cap.height = (slice.height / 2);
+                    nu.push(cap);
+                    cap.tops.forEach((top, i) => {
+                        top.shells = nuSlice.tops[i].shells.clone();
+                    });
+                }
+            }
+            slices.appendAll(nu);
+            slices.sort((a,b) => a.z - b.z);
+            slices.forEach((s,i) => s.index = i);
+        }
+
         // render if not explicitly disabled
         if (render) {
             forSlices(0.9, 1.0, slice => {
@@ -1054,6 +1114,7 @@ function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
     }
 
     slice.tops.forEach(function(top) {
+        if (!top.fill_off) return; // missing for inner brick layers
         let lines = fillArea(top.fill_off, angle, spacing, null);
         top.fill_lines.appendAll(lines);
     });
