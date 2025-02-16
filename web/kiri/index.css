@@ -186,7 +186,6 @@ th, tr, td, span, div, label, button {
 }
 th, tr, td, label {
     white-space: nowrap;
-    display: flex;
 }
 details summary {
     list-style: none;

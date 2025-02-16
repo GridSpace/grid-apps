@@ -640,8 +640,9 @@ class Widget {
             for (let tab of this.anno.tab) {
                 const { pos, dim, rot } = tab;
                 const box = new THREE.BoxGeometry(dim.x, dim.y, dim.z).toNonIndexed();
+                const quat = new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w);
                 box.applyMatrix4(
-                    new THREE.Matrix4().makeRotationFromQuaternion(rot)
+                    new THREE.Matrix4().makeRotationFromQuaternion(quat)
                 );
                 box.translate(pos.x, pos.y, pos.z);
                 vert.appendAll(box.attributes.position.array);

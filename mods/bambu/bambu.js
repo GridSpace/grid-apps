@@ -1000,7 +1000,7 @@ self.kiri.load(api => {
                     h.div({ class: "t-body t-inset f-col gap3 pad4 grow" }, [
                         h.div({ class: "set-header", onclick() {
                             file_list();
-                        } }, h.a({ class: "flex f-row grow" }, [
+                        } }, h.a({ class: "flex f-row grow a-center" }, [
                             h.label('file'),
                             h.span({ class: "fat5 grow" }),
                             h.i({ class: "fa-solid fa-rotate" })
