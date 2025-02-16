@@ -7,8 +7,7 @@ self.kiri.load(api => {
     const h = moto.webui;
     const defams = ";; DEFINE BAMBU-AMS ";
     const readonly = true;
-
-    let stock_colors = Object.values({
+    const stock_colors = Object.values({
         "Vivid Red":     "#FF0000",
         "Vivid Orange":  "#FF6600",
         "Vivid Yellow":  "#FFFF00",
@@ -17,16 +16,14 @@ self.kiri.load(api => {
         "Vivid Blue":    "#1111FF",
         "Vivid Violet":  "#8B00FF",
         "Vivid Indigo":  "#4B0082",
-
         "Medium Red":    "#FF6666",
         "Medium Orange": "#FFA033",
-        "Medium Yellow": "#FFFF80",
-        "Medium Green":  "#66FF66",
+        "Medium Yellow": "#FFFF99",
+        "Medium Green":  "#99FF99",
         "Medium Cyan":   "#66FFFF",
-        "Medium Blue":   "#4444FF",
+        "Medium Blue":   "#5555FF",
         "Medium Violet": "#B266FF",
         "Medium Indigo": "#7A3F99",
-
         "Black":         "#000000",
         "Dark Gray 2":   "#404040",
         "Dark Gray 1":   "#606060",
