@@ -517,7 +517,7 @@ class OpOutline extends CamOp {
         let cnt = 0;
         let tot = 0;
         if (op.outside && !op.inside) {
-            console.log({outline_bypass: indices, down: op.down});
+            // console.log({outline_bypass: indices, down: op.down});
             indices.forEach((ind,i) => {
                 if (flats.indexOf(ind) >= 0) {
                     // exclude flats

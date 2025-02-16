@@ -30,7 +30,8 @@ let isAnimate,
     flipping,
     poppedRec,
     hoveredOp,
-    API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG, MCAM;
+    lastMode,
+    API, FDM, SPACE, STACKS, MODES, VIEWS, UI, UC, LANG, MCAM, WIDGETS;
 
 let zaxis = { x: 0, y: 0, z: 1 },
     popOp = {},
@@ -57,6 +58,7 @@ CAM.init = function(kiri, api) {
     FDM = kiri.driver.FDM;
 
     // console.log({kiri,api})
+    WIDGETS = api.widgets;
     SPACE = kiri.space;
     MODES = kiri.consts.MODES;
     VIEWS = kiri.consts.VIEWS;
@@ -73,9 +75,7 @@ CAM.init = function(kiri, api) {
         let changed = refresh || isIndexed !== newIndexed;
         isIndexed = newIndexed;
         if (!isIndexed || !isCamMode) {
-            for (let widget of API.widgets.all()) {
-                widget.setAxisIndex(0);
-            }
+            WIDGETS.setAxisIndex(0);
         }
         if (!isCamMode) {
             return;
@@ -95,9 +95,7 @@ CAM.init = function(kiri, api) {
         if (!changed) {
             return;
         }
-        for (let widget of api.widgets.all()) {
-            widget.setIndexed(isIndexed ? true : false);
-        }
+        WIDGETS.setIndexed(isIndexed ? true : false);
         api.platform.update_bounds();
         // add or remove clock op depending on indexing
         const cp = current.process;
@@ -189,15 +187,14 @@ CAM.init = function(kiri, api) {
     });
 
     api.event.on("view.set", (mode) => {
+        lastMode = mode;
         isArrange = (mode === VIEWS.ARRANGE);
         isPreview = (mode === VIEWS.PREVIEW);
-        isAnimate = false;
+        isAnimate = (mode === VIEWS.ANIMATE);
         animFn().animate_clear(api);
         func.clearPops();
         if (isCamMode && isPreview) {
-            for (let widget of API.widgets.all()) {
-                widget.setAxisIndex(0);
-            }
+            WIDGETS.setAxisIndex(0);
         }
         updateStock();
         func.opRender();
@@ -466,7 +463,7 @@ CAM.init = function(kiri, api) {
 
     function updateIndex() {
         let oplist = current.process.ops;
-        if (!(isCamMode && oplist)) {
+        if (!(isCamMode && oplist) || lastMode === VIEWS.ANIMATE) {
             return;
         }
         let index = 0;
@@ -484,9 +481,7 @@ CAM.init = function(kiri, api) {
                 }
             }
         }
-        for (let widget of API.widgets.all()) {
-            widget.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
-        }
+        WIDGETS.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
         currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
     }
 
@@ -728,9 +723,9 @@ CAM.init = function(kiri, api) {
                 el.onmouseleave = onLeave;
             }
         }
-        // update widget rotations from timeline marker
-        for (let widget of API.widgets.all()) {
-            widget.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
+        if (lastMode !== VIEWS.ANIMATE) {
+            // update widget rotations from timeline marker
+            WIDGETS.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
         }
         currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
         updateStock();

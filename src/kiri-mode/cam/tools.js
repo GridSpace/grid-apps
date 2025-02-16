@@ -87,37 +87,44 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         ui.toolTaperTip.disabled = taper ? undefined : 'true';
         $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
         setTimeout(() => {
-            let svg = $('tool-svg');
-            let pad = 10;
-            let dim = { w: svg.clientWidth, h: svg.clientHeight }
-            let max = { w: dim.w - pad * 2, h: dim.h - pad * 2};
-            let off = { x: pad, y: pad };
-            let shaft_fill = "#cccccc";
-            let flute_fill = "#dddddd";
-            let stroke = "#777777";
-            let stroke_width = 3;
-            let stroke_thin = stroke_width / 2;
-            let shaft = tool.shaft_len || 1;
-            let flute = tool.flute_len || 1;
-            let tip_len = type === "ballmill" ? tool.flute_diam / 2 : 0;
-            let total_len = shaft + flute + tip_len;
-            let units = dim.h / total_len;
-            let shaft_len = (shaft / total_len) * max.h;
-            let flute_len = (flute / total_len) * max.h;
-            let total_wid = Math.max(tool.flute_diam, tool.shaft_diam);
-            let shaft_off = (max.w - tool.shaft_diam * units) / 2;
-            let flute_off = (max.w - tool.flute_diam * units) / 2;
-            let taper_off = (max.w - (tool.taper_tip || 0) * units) / 2;
-            let parts = [
-                { rect: {
-                    x:off.x + shaft_off, y:off.y,
-                    width:max.w - shaft_off * 2, height:shaft_len,
-                    stroke, fill: shaft_fill, stroke_width
-                } }
-            ];
+            let svg = $('tool-svg'),
+                pad = 10,
+                dim = { w: svg.clientWidth, h: svg.clientHeight },
+                max = { w: dim.w - pad * 2, h: dim.h - pad * 2},
+                off = { x: pad, y: pad },
+                isBall = type === "ballmill",
+                shaft_fill = "#cccccc",
+                flute_fill = "#dddddd",
+                stroke = "#777777",
+                stroke_width = 3,
+                stroke_thin = stroke_width / 2,
+                shaft = tool.shaft_len || 1,
+                flute = tool.flute_len || 1,
+                total_len = shaft + flute,
+                units = dim.h / total_len,
+                shaft_len = (shaft / total_len) * max.h,
+                flute_len = ((flute / total_len) * max.h),
+                shaft_diam = tool.shaft_diam * units,
+                flute_diam = tool.flute_diam * units,
+                // total_wid = Math.max(flute_diam, shaft_diam),
+                shaft_off = (max.w - shaft_diam) / 2,
+                flute_off = (max.w - flute_diam) / 2,
+                taper_off = (max.w - (tool.taper_tip || 0) * units) / 2,
+                parts = [
+                    // shaft rectangle
+                    { rect: {
+                        x: off.x + shaft_off,
+                        y: off.y,
+                        width: max.w - shaft_off * 2,
+                        height: shaft_len,
+                        fill: shaft_fill,
+                        stroke_width,
+                        stroke
+                    } }
+                ];
             if (type === "tapermill") {
                 let yoff = off.y + shaft_len;
-                let mid = dim.w / 2;
+                // let mid = dim.w / 2;
                 parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
                     `M ${off.x + flute_off} ${yoff}`,
                     `L ${off.x + taper_off} ${yoff + flute_len}`,
@@ -126,15 +133,22 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
                     `z`
                 ].join('\n')}});
             } else {
+                let fl = isBall ? flute_len - flute_diam/2 : flute_len;
                 let x1 = off.x + flute_off;
                 let y1 = off.y + shaft_len;
                 let x2 = x1 + max.w - flute_off * 2;
-                let y2 = y1 + flute_len;
+                let y2 = y1 + fl;
+                // flute rectangle
                 parts.push({ rect: {
-                    x:off.x + flute_off, y:off.y + shaft_len,
-                    width:max.w - flute_off * 2, height:flute_len,
-                    stroke, fill: flute_fill, stroke_width
+                    x: off.x + flute_off,
+                    y: off.y + shaft_len,
+                    width: max.w - flute_off * 2,
+                    height: fl,
+                    fill: flute_fill,
+                    stroke_width,
+                    stroke,
                 } });
+                // hatch "fill" flute
                 parts.push({ line: { x1, y1, x2, y2, stroke, stroke_width: stroke_thin } });
                 parts.push({ line: {
                     x1: (x1 + x2) / 2, y1, x2, y2: (y1 + y2) / 2,
@@ -145,10 +159,10 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
                     stroke, stroke_width: stroke_thin
                 } });
             }
-            if (type === "ballmill") {
+            if (isBall) {
                 let rad = (max.w - flute_off * 2) / 2;
                 let xend = dim.w - off.x - flute_off;
-                let yoff = off.y + shaft_len + flute_len + stroke_width/2;
+                let yoff = off.y + shaft_len + flute_len + stroke_width/2 - flute_diam/2;
                 parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
                     `M ${off.x + flute_off} ${yoff}`,
                     `A ${rad} ${rad} 0 0 0 ${xend} ${yoff}`,

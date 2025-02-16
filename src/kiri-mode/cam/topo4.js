@@ -517,7 +517,7 @@ moto.broker.subscribe("minion.started", msg => {
         const { slices, tool } = cache.lathe;
 
         const axis = new THREE.Vector3(1, 0, 0);
-        const mrot = new THREE.Matrix4().makeRotationAxis(axis, angle);
+        const mrot = new THREE.Matrix4().makeRotationAxis(axis, -angle);
         const stmp = slices.map(s => {
             const lines = s.lines.slice();
             rotatePoints(lines, mrot);

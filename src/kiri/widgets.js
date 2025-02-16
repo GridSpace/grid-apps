@@ -92,6 +92,14 @@ function opacity(value) {
     moto.space.update();
 }
 
+function setIndexed(value) {
+    api.widgets.each(w => w.setIndexed(value));
+}
+
+function setAxisIndex(value) {
+    api.widgets.each(w => w.setAxisIndex(value));
+}
+
 // extend API (api.widgets)
 const widgets = Object.assign(api.widgets, {
     load:       Widget.loadFromCatalog,
@@ -102,6 +110,8 @@ const widgets = Object.assign(api.widgets, {
     replace,
     opacity,
     annotate,
+    setIndexed,
+    setAxisIndex,
     all()       { return WIDGETS.slice() },
     add(w)      { return WIDGETS.push(w) },
     remove(w)   { return WIDGETS.remove(w) },

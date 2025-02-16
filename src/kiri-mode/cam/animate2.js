@@ -40,6 +40,7 @@ kiri.load(() => {
         $('layer-animate').innerHTML = '';
         $('layer-toolpos').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
+        api.widgets.setAxisIndex(0);
     }
 
     function animate2(api, delay) {
@@ -193,6 +194,9 @@ kiri.load(() => {
                 mesh.position.z = pos.z;
                 space.refresh();
             }
+        }
+        if (data.stock_index !== undefined) {
+            api.widgets.setAxisIndex(data.stock_index);
         }
         if (data.mesh_index) {
             const { id, index } = data.mesh_index;
@@ -550,6 +554,7 @@ kiri.load(() => {
             send.data(toolUpdateMsg);
         }
         if (stockIndexMsg) {
+            send.data({ stock_index: stockIndex });
             for (let slice of stockSlices) {
                 send.data({ mesh_index: { id: slice.id, index: -stockIndex } });
             }
@@ -592,8 +597,8 @@ kiri.load(() => {
         let { cylinder, sphere } = Instance.Manifold;
         let mesh;
         if (tool.isBallMill()) {
-            mesh = cylinder(flen + slen - frad, frad, frad, 20, true)
-                .add(sphere(frad, 20).translate(0, 0, -(flen + slen - frad)/2));
+            mesh = cylinder(flen + slen - frad * 2, frad, frad, 20, true)
+                .add(sphere(frad, 20).translate(0, 0, -(flen + slen - frad * 2)/2));
         } else if (tool.isTaperMill()) {
             const trad = Math.max(tool.tipDiameter() / 2, 0.001);
             mesh = cylinder(slen, srad, srad, 20, true).translate(0, 0, slen/2)
