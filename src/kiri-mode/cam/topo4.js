@@ -268,7 +268,9 @@ class Topo4 {
                 // get slice index corresponding with offset
                 const ts = si + xo;
                 // outside of slice array, skip
-                if (ts < 0 || ts >= slen - 1) continue;
+                if (ts < 0 || ts >= slen - 1) {
+                    continue;
+                }
                 const slice = oslices[ts];
                 const lines = slice.lines;
                 const plen = lines.length;
@@ -291,7 +293,7 @@ class Topo4 {
                 }
                 if (mz === -Infinity && xo === 0 && yo === 0) {
                     // tool tip is off the model
-                    break;
+                    continue;
                 }
             }
             if (mz === -Infinity) {
