@@ -184,7 +184,9 @@ self.kiri.load(api => {
             $('bbl_tray_demo').style.backgroundColor = `#${bambu.tray_color.substring(0,6)}`;
             let ams_colors = [];
             for (let tray of ams_trays) {
-                ams_colors.addOnce(tray.tray_color);
+                if (tray.tray_color) {
+                    ams_colors.addOnce(tray.tray_color);
+                }
             }
             h.bind($('bbl_tray_acolor'), ams_colors.map(color => h.button({
                 style: `background-color: #${color.substring(0,6)};aspect-ratio:1`,
