@@ -56,7 +56,7 @@ class Slice {
      */
     clone(deep) {
         const from = this, slice = newSlice(from.z, from.view);
-        from.tops.forEach(function(top) {
+        from.tops?.forEach(function(top) {
             slice.addTop(top.poly.clone(deep));
         });
         return slice;

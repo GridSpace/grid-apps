@@ -890,7 +890,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 }
                 nu.push(nuSlice);
                 let ti = 0;
-                for (let top of slice.tops) {
+                for (let top of slice.tops || []) {
                     let nuTop = nuSlice.tops[ti++];
                     nuTop.shells = [];
                     top.shells = top.shells.filter((s,i) => {
@@ -907,7 +907,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                     cap.z += (slice.height * 0.75);
                     cap.height = (slice.height / 2);
                     nu.push(cap);
-                    cap.tops.forEach((top, i) => {
+                    cap.tops?.forEach((top, i) => {
                         top.shells = nuSlice.tops[i].shells.clone();
                     });
                 }

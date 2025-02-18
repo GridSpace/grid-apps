@@ -106,6 +106,7 @@ button {
     margin: 1px 1px 2px;
     cursor: pointer;
     text-transform: capitalize;
+    white-space: nowrap;
 }
 button:not([disabled]):hover {
     background-color: var(--main-color);

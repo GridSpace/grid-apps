@@ -264,7 +264,7 @@ FDM.prepare = async function(widgets, settings, update) {
     // find max layers (for updates)
     // generate list of used extruders for purge blocks
     for (let widget of widgets) {
-        let extruder = widget.anno.extruder || 0;
+        let extruder = widget.anno.extruder ?? 0;
         if (!extruders[extruder]) {
             extruders[extruder] = {};
             extcount++;

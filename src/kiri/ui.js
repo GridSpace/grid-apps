@@ -546,7 +546,6 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 rows.forEach(row => {
                     cols = Math.max(cols, row.length);
                 });
-                txt.setAttribute("cols", Math.max(30, cols + 1));
 
                 let showing = pop === lastPop;
                 if (lastBtn) {

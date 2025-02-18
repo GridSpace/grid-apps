@@ -284,7 +284,8 @@ function updateExtruderFields(device) {
     const { LANG } = api.const;
     if (device.extruders && device.extruders[device.internal]) {
         updateFieldsFromSettings(device.extruders[device.internal]);
-        ui.extruder.firstChild.innerText = `${LANG.dv_gr_ext} [${device.internal+1}/${device.extruders.length}]`;
+        ui.extruder.innerHTML =
+            `${LANG.dv_gr_ext}<label class='grow'></label>${device.internal+1} of ${device.extruders.length}`;
         ui.extPrev.disabled = device.internal === 0;
         ui.extPrev.onclick = function() {
             device.internal--;
@@ -303,8 +304,6 @@ function updateExtruderFields(device) {
         };
         ui.extAdd.onclick = function() {
             let copy = clone(device.extruders[device.internal]);
-            copy.extSelect = [`T${device.extruders.length}`];
-            copy.extDeselect = [];
             device.extruders.push(copy);
             device.internal = device.extruders.length - 1;
             updateExtruderFields(device);

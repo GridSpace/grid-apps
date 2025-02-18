@@ -215,9 +215,7 @@ gapp.register("kiri.devices", (root, exports) => {
                 ui.extAdd,
                 ui.extDel,
                 ui.extOffsetX,
-                ui.extOffsetY,
-                ui.extSelect,
-                ui.extDeselect
+                ui.extOffsetY
             ].forEach(function(e) {
                 e.disabled = !local;
             });

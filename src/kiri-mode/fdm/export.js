@@ -18,7 +18,7 @@ FDM.export = function(print, online, ondone, ondebug) {
     const { bounds, controller, device, process, filter, mode } = settings;
     const { extruders, fwRetract } = device;
     const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
-    const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature } = device;
+    const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature, gcodeChange } = device;
 
     let model_labels = [];
     for (let widget of widgets) {
@@ -642,10 +642,7 @@ FDM.export = function(print, online, ondone, ondebug) {
 
             // look for extruder change, run scripts, recalc emit factor
             if (out.tool !== undefined && out.tool != tool) {
-                let macro_deselect = extruder.extDeselect.length ? extruder.extDeselect : extruders[0].extDeselect;
-                let macro_select = extruder.extSelect.length ? extruder.extSelect : extruders[0].extSelect;
                 segments.push({emitted, tool});
-                appendAllSub(macro_deselect);
                 subst.last_tool = tool;
                 tool = out.tool;
                 subst.nozzle = subst.tool = tool;
@@ -657,7 +654,7 @@ FDM.export = function(print, online, ondone, ondebug) {
                     extruder.extFilament,
                     path.layer === 0 ?
                         (process.firstSliceHeight || process.sliceHeight) : path.height);
-                appendAllSub(macro_select);
+                appendAllSub(gcodeChange ?? [ "T{tool}" ]);
             }
 
             // if no point in output, it's a dwell command

@@ -139,8 +139,6 @@ function device_from_code(code,mode) {
             if (rec.filament) e.extFilament = rec.filament;
             if (rec.offset_x) e.extOffsetX = rec.offset_x;
             if (rec.offset_y) e.extOffsetY = rec.offset_y;
-            if (rec.select) e.extSelect = rec.select;
-            if (rec.deselect) e.extDeselect = rec.deselect;
             device.extruders.push(e);
         });
     } else {
@@ -248,6 +246,7 @@ const conf = exports({
                 deviceZMax: 0,
                 maxHeight: 150,
                 gcodeTime: 1,
+                gcodeChange: ["T{tool}"],
                 gcodePre: [],
                 gcodePost: [],
                 gcodeProc: "",
@@ -259,8 +258,6 @@ const conf = exports({
                 extruders:[{
                     extFilament: 1.75,
                     extNozzle: 0.4,
-                    extSelect: ["T0"],
-                    extDeselect: [],
                     extOffsetX: 0,
                     extOffsetY: 0
                 }],
@@ -347,7 +344,6 @@ const conf = exports({
                 outputAvoidGaps: true,
                 outputAlternating: false,
                 outputLayerRetract: false,
-                outputNozzle: 0,
                 outputLoops: 0,
                 outputInvertX: false,
                 outputInvertY: false,

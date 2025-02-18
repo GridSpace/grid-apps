@@ -34,6 +34,7 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` add scarf seams
 * `F` add 'random' and 'seam' start point options
 * `F` convert ranges to z offsets while continuing to show layer #
 * `F` support pillar top/bottom should conform to part
@@ -46,7 +47,7 @@
 * `F` calculate filament use per extruder per print
 * `F` expand internal supporting flats / solids before projection (threshold)
 
-* `P` reduce fan speed and extrusion factor for bridges
+* `P` reduce fan speed, feed rate, and extrusion factor for bridges
 * `P` auto purge pillars when quick layers are detected for extra cooling
 * `P` extruder + filament max flow rate cap in planner
 * `P` solid fill the tops of supports for down facing flats
@@ -70,15 +71,13 @@
 
 * `B` roughing leave stock should also increase Z slightly (sqrt(2) * leave)
 * `B` rapid moves should be max of terrain zmax and last cut layer height (roughing)
-* `B` in indexed stock mode, stock should rotate with indexing
 * `B` feed rate for next tool set before tool change (push/pop feed rates?)
 * `B` tab cuts cause loss of direction, parenting, depth, and it's hard to fix
 * `B` tabs do not properly track widget mirror events
 * `B` tabs are not cut to exact height
-* `B` first rough step too far down in certain circumstances?
-* `B` need to force cut line at synthetic z bottom (midlines, etc)
 * `B` contour does not honor clip to stock
 
+* `F` add lathe step down to eliminate the need for roughing
 * `F` allow import, rotation, scaling of stock
 * `F` get gcode coordinates off a part with point/click or hover?
 * `F` include tools in default devices (Carvera)
@@ -86,17 +85,13 @@
 * `F` add {progress} substitution and maybe {time-remaining} if can be calc'd
 * `F` import and follow 2D paths (conformed like pocket contours)
 * `F` add user-defined origin (issue #28)
-* `F` add custom gcode operation for things like injecting pauses
-* `F` all ops should allow limit and milling direction / ease down overrides
 * `F` drill op should allow selecting holes >= current tool
 * `F` intelligently turn circle hole pocket clear into spiral down
-* `F` add option for op-major ordering (instead of part major)
 * `F` add `plunge max` to contouring that can override z feed limit
 * `F` add lead-in milling (requires adding clamp / no go areas)
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
 * `F` add ease-down support to trace op
-* `F` add climb/conventional into each operation
 * `F` add support for tapered ball mills
 * `F` change color of line selection in trace op when not a closed poly
 * `F` limit cut depth to flute length of selected tool (or warn)
