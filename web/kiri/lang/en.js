@@ -99,8 +99,6 @@ self.kiri.lang['en-us'] = {
     // DEVICE dialog groups
     dv_gr_dev:      "device",
     dv_gr_ext:      "extruder",
-    dv_gr_too:      "tool macros",
-    dv_gr_pal:      "palette",
     dv_gr_out:      "output",
     dv_gr_gco:      "gcode macros",
 
@@ -160,9 +158,9 @@ self.kiri.lang['en-us'] = {
 
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "gcode dwell script",
-    dv_tool_s:      "tool change",
+    dv_tool_s:      "tool",
     dv_tool_l:      "tool change script",
-    dv_sspd_s:      "spindle speed",
+    dv_sspd_s:      "spindle",
     dv_sspd_l:      "set spindle speed",
     dv_paus_s:      "pause",
     dv_paus_l:      "gcode pause script",
