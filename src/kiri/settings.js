@@ -199,7 +199,7 @@ function updateSettingsFromFields(setrec, uirec = api.ui, changes) {
             if (uie.selectedIndex >= 0) {
                 nval = uie.options[uie.selectedIndex].value;
                 let src = uie.parentNode.getAttribute('source');
-                if (src === 'tools') {
+                if (src === 'tools' || src == 'extruders') {
                     nval = parseInt(nval);
                 }
             } else {
