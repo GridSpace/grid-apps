@@ -74,7 +74,7 @@ base.slicePost.FDM = function(data, options) {
 };
 
 /**
- * may run in minion or worker context. performes shell offsetting
+ * may run in minion or worker context. performs shell offsetting
  * including thin wall detection when enabled
  */
 FDM.doTopShells = function(z, top, count, offset1, offsetN, fillOffset, opt = {}) {

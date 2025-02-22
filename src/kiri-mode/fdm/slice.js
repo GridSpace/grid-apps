@@ -28,12 +28,22 @@ const POLY = polygons,
     fat = 1.5,
     COLOR = {
         anchor: { check: 0x999933, face: 0x999933, line: 0x999933, opacity, lopacity, fat },
-        shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity, lopacity, fat },
         fill: { check: 0x00bb77, face: 0x00bb77, line: 0x00bb77, opacity, lopacity, fat },
+        gaps: { check: 0xaa3366, face: 0xaa3366, line: 0xaa3366, opacity, lopacity, fat },
         infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity, lopacity, fat },
+        inset: { line: 0xaaaaaa, check: 0xaaaaaa, face: 0 },
+        shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity, lopacity, fat },
         support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity, lopacity, fat },
-        gaps: { check: 0xaa3366, face: 0xaa3366, line: 0xaa3366, opacity, lopacity, fat }
+        part: { line: 0x333333, check: 0x333333 },
+        thin: { check: 0xbb8800, face: 0xbb8800, line: 0xbb8800, opacity, lopacity, fat },
     },
+    COLOR_DARK = Object.assign({}, COLOR, {
+        fill: { check: 0x008855, face: 0x008855, line: 0x008855, opacity, lopacity, fat },
+        infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity, lopacity, fat },
+        inset: { line: 0x555555, check: 0x555555 },
+        part: { line: 0x999999, check: 0x999999, face: 0  },
+        thin: { check: 0xbb8800, face: 0xbb8800, line: 0xbb8800, opacity, lopacity, fat },
+    }),
     PROTO = Object.clone(COLOR),
     profile = false,
     profileStart = profile ? console.profile : noop,
@@ -921,7 +931,10 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         if (render) {
             forSlices(0.9, 1.0, slice => {
                 let params = slice.params || process;
-                doRender(slice, isSynth, params, controller.devel);
+                doRender(slice, isSynth, params, {
+                    dark: controller.dark,
+                    devel: controller.devel
+                });
             }, "render");
         }
 
@@ -978,7 +991,9 @@ function bound(v,min,max) {
     return Math.max(min,Math.min(max,v));
 }
 
-function doRender(slice, isSynth, params, devel) {
+function doRender(slice, isSynth, params, opt = {}) {
+    const { dark, devel } = opt;
+    const Color = dark ? COLOR_DARK : COLOR;
     const output = slice.output();
     const height = slice.height / 2;
     const solidWidth = params.sliceFillWidth || 1;
@@ -986,36 +1001,36 @@ function doRender(slice, isSynth, params, devel) {
     if (slice.tops) // missing for supports
     slice.tops.forEach(top => {
         if (isThin) output
-            .setLayer('part', { line: 0x333333, check: 0x333333 })
+            .setLayer('part', Color.part)
             .addPolys([top.poly]);
 
         output
-            .setLayer(isSynth ? "support" : "shells", isSynth ? COLOR.support : COLOR.shell)
+            .setLayer(isSynth ? "support" : "shells", isSynth ? Color.support : Color.shell)
             .addPolys(top.shells || [], vopt({ offset, height, clean: true }));
 
         output
-            .setLayer("solid fill", isSynth ? COLOR.support : COLOR.fill)
+            .setLayer("solid fill", isSynth ? Color.support : Color.fill)
             .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height, z:slice.z }));
 
         if (!(slice.belt && slice.belt.anchor)) output
-            .setLayer("sparse fill", COLOR.infill)
+            .setLayer("sparse fill", Color.infill)
             .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
 
         if (slice.belt && slice.belt.anchor) output
-            .setLayer("anchor", COLOR.anchor)
+            .setLayer("anchor", Color.anchor)
             .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
 
         if (top.thin_fill) output
-            .setLayer("thin fill", COLOR.fill)
+            .setLayer("thin fill", Color.thin)
             .addLines(top.thin_fill, vopt({ offset, height }));
 
         if (top.gaps) output
-            .setLayer("gaps", COLOR.gaps)
+            .setLayer("gaps", Color.gaps)
             .addPolys(top.gaps, vopt({ offset, height, thin: true }));
 
         if (isThin && devel && top.fill_off && top.fill_off.length) {
             slice.output()
-                .setLayer('fill inset', { face: 0, line: 0xaaaaaa, check: 0xaaaaaa })
+                .setLayer('fill inset', Color.inset)
                 .addPolys(top.fill_off);
                 // .setLayer('last', { face: 0, line: 0x008888, check: 0x008888 })
                 // .addPolys(top.last);
@@ -1037,12 +1052,12 @@ function doRender(slice, isSynth, params, devel) {
     }
 
     if (slice.supports && params.sliceSupportOutline) output
-        .setLayer("support", COLOR.support)
+        .setLayer("support", Color.support)
         .addPolys(slice.supports, vopt({ offset, height }));
 
     if (slice.supports) slice.supports.forEach(poly => {
         if (poly.fill) output
-            .setLayer("support", COLOR.support)
+            .setLayer("support", Color.support)
             .addLines(poly.fill, vopt({ offset, height }));
     });
 
