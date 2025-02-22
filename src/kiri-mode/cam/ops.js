@@ -1342,7 +1342,7 @@ class OpPocket extends CamOp {
         }
         if (outline.length) {
             // option to skip interior features (holes, pillars)
-            if (!contour && op.outline) {
+            if (op.outline) {
                 for (let p of outline) {
                     p.inner = undefined;
                 }

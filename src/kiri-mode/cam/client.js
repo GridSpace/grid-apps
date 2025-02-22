@@ -1560,7 +1560,7 @@ CAM.init = function(kiri, api) {
         follow:    UC.newInput(LANG.cp_foll_s, {title:LANG.cp_foll_l, convert:UC.toFloat}),
         sep:       UC.newBlank({class:"pop-sep"}),
         contour:   UC.newBoolean(LANG.cp_cont_s, undefined, {title:LANG.cp_cont_s}),
-        outline:   UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l, show:() => !poppedRec.contour}),
+        outline:   UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l}),
         engrave:   UC.newBoolean(LANG.cp_engr_s, undefined, {title:LANG.cp_engr_l, show:() => poppedRec.contour}),
         exp:       UC.newExpand("overrides"),
         sep:       UC.newBlank({class:"pop-sep"}),
