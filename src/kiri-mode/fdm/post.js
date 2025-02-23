@@ -111,17 +111,21 @@ function thin_type_1(params) {
     let { z, top, count, top_poly, offsetN, last, gaps } = params;
     top.thin_fill = [];
     top.fill_sparse = [];
+
     let layers = POLY.inset(top_poly, offsetN, count, z, true);
     last = layers.last().mid;
     top.shells = layers.map(r => r.mid).flat();
     top.gaps = layers.map(r => r.gap).flat();
+
     let off = offsetN;
     let min = off * 0.75;
     let max = off * 4;
+
     for (let poly of layers.map(r => r.gap).flat()) {
         let centers = poly.centers(off/2, z, min, max, {lines:false});
         top.fill_sparse.appendAll(centers);
     }
+
     return { last, gaps };
 }
 

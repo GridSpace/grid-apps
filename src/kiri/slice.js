@@ -155,6 +155,7 @@ class Slice {
             let top = new Top(data.poly);
             top.thin_fill = data.thin_fill ? data.thin_fill.map(p => base.newPoint(p.x,p.y,p.z)) : undefined;
             top.fill_lines = data.fill_lines;
+            top.fill_sparse = data.fill_sparse;
             top.fill_off = data.fill_off;
             top.last = data.last;
             top.gaps = data.gaps;

@@ -1000,7 +1000,6 @@ function doRender(slice, isSynth, params, opt = {}) {
 
     if (slice.tops) // missing for supports
     slice.tops.forEach(top => {
-        console.log({ render: top });
         if (isThin) output
             .setLayer('part', Color.part)
             .addPolys([top.poly]);
