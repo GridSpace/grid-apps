@@ -559,6 +559,17 @@ gapp.register("kiri.init", (root, exports) => {
         });
     }
 
+    function workspaceNew() {
+        uc.confirm("Clear Workspace?", {ok:true, cancel: false}).then(value => {
+            if (value === true) {
+                let proc = api.settings.proc();
+                proc.ops && (proc.ops.length = 0);
+                proc.op2 && (proc.op2.length = 0);
+                api.platform.clear();
+            }
+        });
+    }
+
     function profileExport() {
         const opt = {pre: [
             "<div class='f-col a-center gap5 mlr10'>",
@@ -1972,6 +1983,7 @@ gapp.register("kiri.init", (root, exports) => {
         ui.acct.mesh.onclick = (ev) => { ev.stopPropagation(); WIN.location = "/mesh" };
         ui.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
         ui.acct.export.title = LANG.acct_xpo;
+        $('file-new').onclick = (ev) => { ev.stopPropagation(); workspaceNew() };
         $('file-recent').onclick = () => { api.modal.show('files') };
         $('file-import').onclick = (ev) => { api.event.import(ev); };
         ui.func.slice.onclick = (ev) => { ev.stopPropagation(); api.function.slice() };

@@ -29,10 +29,11 @@ self.kiri.lang['en-us'] = {
     import:         "import",
     language:       "language",
     left:           "left",
-    machines:       "machines",      // device or machine
+    machines:       "machines",     // device or machine
     mesh:           "mesh",         // mesh editing
     metric:         "metric",
     name:           "name",
+    new:            "new",          // file new
     off:            "off",          // turn something off (like a lightbulb)
     on:             "on",           // turn something on (like a lightbulb)
     profs:          "profiles",     // right menu "profiles"
