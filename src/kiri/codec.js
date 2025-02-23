@@ -296,6 +296,7 @@ kiri.Top.prototype.encode = function(state) {
     };
 
     if (state.full) {
+        // obj.gaps = encode(this.gaps, state);
         obj.last = encode(this.last, state);
         obj.shells = encode(this.shells, state);
         obj.fill_off = encode(this.fill_off, state);
@@ -308,6 +309,7 @@ kiri.Top.prototype.encode = function(state) {
 registerDecoder(TYPE.TOP, function(v, state) {
     let top = kiri.newTop(decode(v.poly, state));
     if (state.full) {
+        // top.gaps = decode(v.gaps, state);
         top.last = decode(v.last, state);
         top.shells = decode(v.shells, state);
         top.fill_off = decode(v.fill_off, state);

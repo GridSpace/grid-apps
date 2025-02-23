@@ -1000,6 +1000,7 @@ function doRender(slice, isSynth, params, opt = {}) {
 
     if (slice.tops) // missing for supports
     slice.tops.forEach(top => {
+        console.log({ render: top });
         if (isThin) output
             .setLayer('part', Color.part)
             .addPolys([top.poly]);
@@ -1024,7 +1025,7 @@ function doRender(slice, isSynth, params, opt = {}) {
             .setLayer("thin fill", Color.thin)
             .addLines(top.thin_fill, vopt({ offset, height }));
 
-        if (top.gaps) output
+        if (top.gaps && devel) output
             .setLayer("gaps", Color.gaps)
             .addPolys(top.gaps, vopt({ offset, height, thin: true }));
 

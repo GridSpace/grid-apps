@@ -139,22 +139,27 @@ class Slice {
         return this;
     }
 
-    addTop(poly) {
-        if (poly.length) {
+    /**
+     * @param {Object | Polygon} data
+     * @returns Slice.Top
+     */
+    addTop(data) {
+        if (data.length) {
             // standard legacy polygon
-            let top = new Top(poly);
-            this.tops.push(top);
-            top.simple = poly;
+            let top = new Top(data);
+            this.tops.push(data);
+            top.simple = data;
             return top;
         } else {
-            // frop top object passed back by slicePost()
-            let top = new Top(poly.poly);
-            top.thin_fill = poly.thin_fill ? poly.thin_fill.map(p => base.newPoint(p.x,p.y,p.z)) : undefined;
-            top.fill_lines = poly.fill_lines;
-            top.fill_off = poly.fill_off;
-            top.last = poly.last;
-            top.shells = poly.shells;
-            top.simple = poly.simple;
+            // create top object from object bundle passed back by slicePost()
+            let top = new Top(data.poly);
+            top.thin_fill = data.thin_fill ? data.thin_fill.map(p => base.newPoint(p.x,p.y,p.z)) : undefined;
+            top.fill_lines = data.fill_lines;
+            top.fill_off = data.fill_off;
+            top.last = data.last;
+            top.gaps = data.gaps;
+            top.shells = data.shells;
+            top.simple = data.simple;
             this.tops.push(top);
             return top;
         }

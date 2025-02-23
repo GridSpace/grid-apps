@@ -73,6 +73,96 @@ base.slicePost.FDM = function(data, options) {
     delete data.groups;
 };
 
+function offset_default(params) {
+    let { z, top, count, top_poly, offset1, offsetN, wasm, last, gaps } = params;
+    // standard wall offsetting strategy
+    POLY.offset(
+        top_poly,
+        [-offset1, -offsetN],
+        {
+            z,
+            wasm,
+            count,
+            outs: top.shells,
+            flat: true,
+            call: (polys, onCount) => {
+                last = polys;
+                // mark each poly with depth (offset #) starting at 0
+                for (let p of polys) {
+                    p.depth = count - onCount;
+                    if (p.fill_off) p.fill_off.forEach(function(pi) {
+                        // use negative offset for inners
+                        pi.depth = -(count - onCount);
+                    });
+                    // mark inner depth to match parent
+                    if (p.inner) {
+                        for (let pi of p.inner) {
+                            pi.depth = p.depth;
+                        }
+                    }
+                }
+            }
+        }
+    );
+    return { last, gaps };
+}
+
+function thin_type_1(params) {
+    let { z, top, count, top_poly, offsetN, last, gaps } = params;
+    top.thin_fill = [];
+    top.fill_sparse = [];
+    let layers = POLY.inset(top_poly, offsetN, count, z, true);
+    last = layers.last().mid;
+    top.shells = layers.map(r => r.mid).flat();
+    top.gaps = layers.map(r => r.gap).flat();
+    let off = offsetN;
+    let min = off * 0.75;
+    let max = off * 4;
+    for (let poly of layers.map(r => r.gap).flat()) {
+        let centers = poly.centers(off/2, z, min, max, {lines:false});
+        top.fill_sparse.appendAll(centers);
+    }
+    return { last, gaps };
+}
+
+function thin_type_2(params) {
+    let { z, top, count, top_poly, offset1, offsetN, last, gaps, wasm } = params;
+
+    top.gaps = gaps;
+    top.thin_fill = [];
+    let oso = {z, count, gaps: [], outs: [], minArea: 0.05, wasm};
+    POLY.offset(top_poly, [-offset1, -offsetN], oso);
+
+    oso.outs.forEach((polys, i) => {
+        polys.forEach(p => {
+            p.depth = i;
+            if (p.fill_off) {
+                p.fill_off.forEach(pi => pi.depth = i);
+            }
+            if (p.inner) {
+                for (let pi of p.inner) {
+                    pi.depth = p.depth;
+                }
+            }
+            top.shells.push(p);
+        });
+        last = polys;
+    });
+
+    // slice.solids.trimmed = slice.solids.trimmed || [];
+    oso.gaps.forEach((polys, i) => {
+        let off = (i == 0 ? offset1 : offsetN);
+        polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0, wasm});
+        top.thin_fill.appendAll(cullIntersections(
+            fillArea(polys, 45, off/2, [], 0.01, off*2),
+            fillArea(polys, 135, off/2, [], 0.01, off*2),
+        ));
+        gaps.push(...polys);
+    });
+
+    return { last, gaps };
+}
+
 /**
  * may run in minion or worker context. performs shell offsetting
  * including thin wall detection when enabled
@@ -112,87 +202,20 @@ FDM.doTopShells = function(z, top, count, offset1, offsetN, fillOffset, opt = {}
                 let dist = p.first().distTo2D(p.last());
                 if (dist < 1) p.open = false;
             } });
+            let ret = { last, gaps };
             switch (opt.thinType) {
                 case "type 1":
-                    top.thin_fill = [];
-                    top.fill_sparse = [];
-                    let layers = POLY.inset(top_poly, offsetN, count, z, true);
-                    last = layers.last().mid;
-                    top.shells = layers.map(r => r.mid).flat();
-                    top.gaps = layers.map(r => r.gap).flat();
-                    let off = offsetN;
-                    let min = off * 0.75;
-                    let max = off * 4;
-                    for (let poly of layers.map(r => r.gap).flat()) {
-                        let centers = poly.centers(off/2, z, min, max, {lines:false});
-                        top.fill_sparse.appendAll(centers);
-                        // top.fill_lines.appendAll(centers);
-                    }
+                    ret = thin_type_1({ z, top, count, top_poly, offsetN, fillOffset });
                     break;
                 case "type 2":
-                    top.thin_fill = [];
-                    let oso = {z, count, gaps: [], outs: [], minArea: 0.05, wasm};
-                    POLY.offset(top_poly, [-offset1, -offsetN], oso);
-
-                    oso.outs.forEach((polys, i) => {
-                        polys.forEach(p => {
-                            p.depth = i;
-                            if (p.fill_off) {
-                                p.fill_off.forEach(pi => pi.depth = i);
-                            }
-                            if (p.inner) {
-                                for (let pi of p.inner) {
-                                    pi.depth = p.depth;
-                                }
-                            }
-                            top.shells.push(p);
-                        });
-                        last = polys;
-                    });
-
-                    // slice.solids.trimmed = slice.solids.trimmed || [];
-                    oso.gaps.forEach((polys, i) => {
-                        let off = (i == 0 ? offset1 : offsetN);
-                        polys = POLY.offset(polys, -off * 0.8, {z, minArea: 0, wasm});
-                        top.thin_fill.appendAll(cullIntersections(
-                            fillArea(polys, 45, off/2, [], 0.01, off*2),
-                            fillArea(polys, 135, off/2, [], 0.01, off*2),
-                        ));
-                        gaps = polys;
-                    });
+                    ret = thin_type_2({ z, top, count, top_poly, offset1, offsetN, fillOffset, gaps, wasm });
                     break;
                 default:
-                    // standard wall offsetting strategy
-                    POLY.offset(
-                        top_poly,
-                        [-offset1, -offsetN],
-                        {
-                            z,
-                            wasm,
-                            count,
-                            outs: top.shells,
-                            flat: true,
-                            call: (polys, onCount) => {
-                                last = polys;
-                                // mark each poly with depth (offset #) starting at 0
-                                for (let p of polys) {
-                                    p.depth = count - onCount;
-                                    if (p.fill_off) p.fill_off.forEach(function(pi) {
-                                        // use negative offset for inners
-                                        pi.depth = -(count - onCount);
-                                    });
-                                    // mark inner depth to match parent
-                                    if (p.inner) {
-                                        for (let pi of p.inner) {
-                                            pi.depth = p.depth;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    );
+                    ret = offset_default({ z, top, count, top_poly, offset1, offsetN, wasm });
                     break;
             }
+            last = ret.last || last;
+            gaps = ret.gaps || gaps;
         }
     } else {
         // no shells, just infill, is permitted
