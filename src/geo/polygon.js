@@ -253,6 +253,40 @@ class Polygon {
         return ret;
     }
 
+    setInner(inner) {
+        this.inner = inner;
+        return this;
+    }
+
+    // generate a trace path around the inside of a polygon
+    // including inner polys. return the noodle and the remainder
+    // of the polygon with the noodle removed (for the next pass)
+    noodle(width) {
+        // inset outer polygon
+        let inner = this.inner;
+        let inset = this.clone().offset(width);
+        let noodle = [ this.clone().setInner(inset) ];
+        let noodin = [];
+        // subtract inners from the inset
+        if (inner) {
+            noodle = POLY.subtract(noodle, inner, []);
+            // for each inner, offset and subtract noodle + itself
+            let nood = [];
+            for (let innie of inner) {
+                let inexp = innie.clone().offset(-width);
+                let intrm = POLY.trimTo(inexp, [ this ]);
+                let inood = POLY.subtract(intrm, [ ...noodle, innie ], []);
+                nood.push(...inood);
+            }
+            noodin = POLY.union(nood, 0, true);
+        }
+        // unify inner noodles and outer noodle
+        noodle = POLY.union([ ...noodle, ...noodin ], 0, true);
+        // subtract noodle from poly for next noodle calc
+        let remain = POLY.subtract([ this ], noodle, []);
+        return { noodle, remain };
+    }
+
     // generate center crossing point cloud
     centers(step, z, min, max, opt = {}) {
         let cloud = [],

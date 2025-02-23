@@ -114,7 +114,8 @@ const LISTS = {
     thin: [
         { name: "off" },
         { name: "type 1" },
-        { name: "type 2" }
+        { name: "type 2" },
+        { name: "type 3" }
     ]
 };
 

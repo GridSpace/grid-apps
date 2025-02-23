@@ -167,6 +167,28 @@ function thin_type_2(params) {
     return { last, gaps };
 }
 
+function thin_type_3(params) {
+    let { z, top, count, offsetN, last, gaps } = params;
+    top.thin_fill = [];
+    top.fill_sparse = [];
+
+    let { noodle, remain } = top.poly.noodle(offsetN);
+    top.shells = noodle;
+    top.gaps = remain;
+    // top.fill_off = noodle;
+
+    // if (remain.length) {
+    //     top.gaps = [];
+    //     for (let poly of remain) {
+    //         let { noodle } = poly.noodle(offsetN);
+    //         console.log({ next_noodle: noodle });
+    //         top.gaps.push(...noodle);
+    //     }
+    // }
+
+    return { last, gaps };
+}
+
 /**
  * may run in minion or worker context. performs shell offsetting
  * including thin wall detection when enabled
@@ -213,6 +235,10 @@ FDM.doTopShells = function(z, top, count, offset1, offsetN, fillOffset, opt = {}
                     break;
                 case "type 2":
                     ret = thin_type_2({ z, top, count, top_poly, offset1, offsetN, fillOffset, gaps, wasm });
+                    break;
+                case "type 3":
+                    ret = thin_type_3({ z, top, count, top_poly, offsetN });
+                    fillOffset = 0;
                     break;
                 default:
                     ret = offset_default({ z, top, count, top_poly, offset1, offsetN, wasm });

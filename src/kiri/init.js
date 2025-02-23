@@ -1863,6 +1863,11 @@ gapp.register("kiri.init", (root, exports) => {
             const current = settings();
             const control = current.controller;
 
+            if (!control.devel) {
+                // TODO: hide thin type 3 during development
+                kiri.consts.LISTS.thin.length = 3;
+            }
+
             platform.deselect();
             catalog.addFileListener(updateCatalog);
             space.view.setZoom(control.reverseZoom, control.zoomSpeed);

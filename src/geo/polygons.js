@@ -348,7 +348,7 @@ function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
     let min = numOrDefault(minArea, 0.1),
         out = [];
 
-        function filter(from, to = []) {
+    function filter(from, to = []) {
         from.forEach(function(poly) {
             if (poly.area() >= min) {
                 to.push(poly);
@@ -541,7 +541,7 @@ function diff(setA, setB, z) {
 /**
  * Slice.doProjectedFills()
  *
- * @param {Polygon[]} setA source set
+ * @param {Polygon[]} setA target set
  * @param {Polygon[]} setB mask set
  * @returns {Polygon[]}
  */
