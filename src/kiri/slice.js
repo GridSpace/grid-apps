@@ -147,7 +147,7 @@ class Slice {
         if (data.length) {
             // standard legacy polygon
             let top = new Top(data);
-            this.tops.push(data);
+            this.tops.push(top);
             top.simple = data;
             return top;
         } else {

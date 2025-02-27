@@ -91,11 +91,7 @@ AP.addOnce = function(val) {
  * shallow cloning with clone(arg) call on each new element
  */
 AP.clone = function() {
-    let na = this.slice(),
-        ln = na.length,
-        i = 0;
-    while (i < ln) na[i] = na[i++].clone(...arguments);
-    return na;
+    return this.map(v => v.clone(...arguments));
 };
 
 AP.xray = function(arg) {
