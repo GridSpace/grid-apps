@@ -223,13 +223,13 @@ gapp.register("kiri.init", (root, exports) => {
         settings.device.fwRetract = ui.fwRetract.checked;
         // refresh vars and other ui elements
         uc.refresh();
+        if (el === ui.camStockIndexed) {
+            api.view.set_arrange();
+        }
         api.conf.update();
         DOC.activeElement.blur();
         api.event.emit("boolean.click");
         api.devices.update_laser_state();
-        if (el === ui.camStockIndexed) {
-            api.space.set_focus();
-        }
     }
 
     function onButtonClick(ev) {
@@ -991,9 +991,9 @@ gapp.register("kiri.init", (root, exports) => {
                     anim.speed    = newButton(null,"anim.fast",{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
                     anim.labspd   = newValue(3, {class:"center padleft"}),
                     anim.labx     = newLabel("X", {class:"padleft"}),
-                    anim.valx     = newValue(6, {class:"center"}),
+                    anim.valx     = newValue(7, {class:"center"}),
                     anim.laby     = newLabel("Y", {class:"padleft"}),
-                    anim.valy     = newValue(6, {class:"center"}),
+                    anim.valy     = newValue(7, {class:"center"}),
                     anim.labz     = newLabel("Z", {class:"padleft"}),
                     anim.valz     = newValue(6, {class:"center"}),
                     anim.laba     = newLabel("A", {class:"padleft hide"}),
