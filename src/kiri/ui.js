@@ -58,6 +58,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
         newGroup,
         newLabel,
         newInput,
+        newValue,
         newRange,
         newRow,
         newSelect,
@@ -360,6 +361,17 @@ gapp.register("kiri.ui", [], (root, exports) => {
             label.classList.add(cl);
         })
         return label;
+    }
+
+    function newValue(size = 6, opt = {}) {
+        let value = DOC.createElement('input');
+        value.setAttribute("size", size);
+        value.setAttribute("readonly", '');
+        value.setAttribute("class", "nooutline noselect");
+        if (opt.class) opt.class.split(' ').forEach(cl => {
+            value.classList.add(cl);
+        })
+        return value;
     }
 
     function addId(el, opt = {}) {
@@ -793,9 +805,17 @@ gapp.register("kiri.ui", [], (root, exports) => {
     // unlike other elements, does not auto-add to a row
     function newButton(label, action, opt = {}) {
         let b = DOC.createElement('button');
+        let { api } = kiri;
 
         b.onclick = function() {
-            if (action) action(...arguments);
+            switch (typeof action) {
+                case "string":
+                    api.event.emit(action);
+                    break;
+                case "function":
+                    action(...arguments);
+                    break;
+            }
         };
 
         if (opt.class) {

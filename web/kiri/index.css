@@ -609,6 +609,9 @@ details[open] summary::after {
 .hide-scroll {
     scrollbar-color: transparent transparent !important;
 }
+.nooutline {
+    outline: none;
+}
 .noselect {
     -khtml-user-select: none;
     -moz-user-select: none;
@@ -2039,25 +2042,38 @@ details[open] summary::after {
     color: #335;
 }
 
+.dark #layer-animate button {
+    border: 1px solid #555;
+    background-color: #444;
+}
+.dark #layer-animate button:hover {
+    background-color: var(--main-color);
+}
+.dark #layer-animate button svg {
+    color: #ddd;
+}
+.dark #layer-animate label {
+    border: 1px solid #555;
+    background-color: #444;
+}
+.dark #layer-animate input {
+    border: 1px solid #444;
+}
 #layer-animate {
+    pointer-events: all;
     position: absolute;
-    z-index: 2;
-    left: 15px;
-    right: 15px;
-    bottom: 3px;
+    z-index: 200;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 4px;
 }
 #layer-animate svg {
     color: #333;
     font-size: 30px;
 }
-#layer-animate .speed {
-    width: 30px;
-}
-#layer-animate .progress {
-    width: 3.5em;
-}
 #layer-animate .padleft {
-    margin-left: 5px !important;
+    margin-left: 8px !important;
 }
 #layer-animate button {
     width: 45px;
@@ -2067,20 +2083,23 @@ details[open] summary::after {
 #layer-animate label {
     display: inline-flex;
     border-radius: 3px;
-    border: 1px solid #aaa;
     margin: 1px 2px 2px 1px;
     padding: 2px;
     justify-content: center;
     align-items: center;
     font-weight: bold;
-    background-color: #ddd;
+    border: 1px solid #ddd;
+    background-color: #eee;
+}
+#layer-animate input {
+    border-radius: 4px;
 }
 
-#layer-toolpos {
+/* #layer-toolpos {
     position: absolute;
-    display: none;
     right: 3px;
     bottom: 3px;
+    z-index: 201;
 }
 #layer-toolpos label, #layer-toolpos input {
     display: inline-flex;
@@ -2102,7 +2121,7 @@ details[open] summary::after {
     font-family: monospace;
     padding: 1px 4px 1px 4px;
     margin: 1px 1px 2px 1px;
-}
+} */
 
 #layer-slider {
     position: absolute;

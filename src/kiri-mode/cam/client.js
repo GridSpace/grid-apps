@@ -198,6 +198,8 @@ CAM.init = function(kiri, api) {
         }
         updateStock();
         func.opRender();
+        api.uc.setVisible($('layer-animate'), isAnimate && isCamMode);
+        // api.uc.setVisible($('layer-toolpos'), isAnimate && isCamMode);
     });
 
     api.event.on("settings.saved", (settings) => {

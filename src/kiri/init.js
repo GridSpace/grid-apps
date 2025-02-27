@@ -785,7 +785,7 @@ gapp.register("kiri.init", (root, exports) => {
         let { event, conf, view, show } = api,
             { bound, toInt, toFloat } = uc,
             { newBlank, newButton, newBoolean, newGroup, newInput } = uc,
-            { newSelect, newText, newRow, newGCode, newDiv } = uc;
+            { newSelect, newLabel, newValue, newRow, newGCode, newDiv } = uc;
 
         event.emit('init.one');
 
@@ -843,6 +843,7 @@ gapp.register("kiri.init", (root, exports) => {
 
         // api augmentation with local functions
         api.device.export = deviceExport;
+        let anim = ui.anim = {};
 
         Object.assign(ui, {
             tracker:            tracker,
@@ -978,6 +979,33 @@ gapp.register("kiri.init", (root, exports) => {
             stockDepth:         $('stock-width'),
             stockHeight:        $('stock-width'),
 
+            /** CAM Animation Bar */
+
+            _____: {
+                _____: newDiv({ addto: $('layer-animate'), set:true }),
+                row: newRow([
+                    anim.replay   = newButton(null,"anim.replay",{icon:'<i class="fas fa-fast-backward"></i>',title:"restart"}),
+                    anim.play     = newButton(null,"anim.play",{icon:'<i class="fas fa-play"></i>',title:"play"}),
+                    anim.pause    = newButton(null,"anim.pause",{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
+                    anim.step     = newButton(null,"anim.step",{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
+                    anim.speed    = newButton(null,"anim.fast",{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
+                    anim.labspd   = newValue(3, {class:"center padleft"}),
+                    anim.labx     = newLabel("X", {class:"padleft"}),
+                    anim.valx     = newValue(6, {class:"center"}),
+                    anim.laby     = newLabel("Y", {class:"padleft"}),
+                    anim.valy     = newValue(6, {class:"center"}),
+                    anim.labz     = newLabel("Z", {class:"padleft"}),
+                    anim.valz     = newValue(6, {class:"center"}),
+                    anim.laba     = newLabel("A", {class:"padleft hide"}),
+                    anim.vala     = newValue(6, {class:"center hide"}),
+                    anim.labpro   = newLabel("%", {class:"padleft"}),
+                    anim.progress = newValue(5, {class:"center"}),
+                    anim.trans    = newButton(null,"anim.trans",{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency",class:"padleft"}),
+                    anim.model    = newButton(null,"anim.model",{icon:'<i class="fa-solid fa-eye"></i>',title:"show model"}),
+                    anim.shade    = newButton(null,"anim.stock",{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
+                ])
+            },
+
             /** Device Browser / Editor */
 
             _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true }),
@@ -1041,7 +1069,7 @@ gapp.register("kiri.init", (root, exports) => {
 
             /** Preferences Menu */
 
-            _____:            newGroup(LANG.op_menu, $('prefs-gen1'), {inline: true}),
+            _____:            newGroup(LANG.op_menu, $('prefs-gen1'), {inline}),
             antiAlias:        newBoolean(LANG.op_anta_s, booleanSave, {title:LANG.op_anta_l}),
             reverseZoom:      newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
             ortho:            newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
@@ -1049,7 +1077,7 @@ gapp.register("kiri.init", (root, exports) => {
             drawer:           newBoolean('slide out', booleanSave, {title:'slide out settings drawer'}),
             scrolls:          newBoolean('scrollbars', booleanSave, {title:'show scrollbars'}),
             devel:            newBoolean(LANG.op_devl_s, booleanSave, {title:LANG.op_devl_l}),
-            _____:            newGroup(LANG.op_disp, $('prefs-gen2'), {inline: true}),
+            _____:            newGroup(LANG.op_disp, $('prefs-gen2'), {inline}),
             showOrigin:       newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
             showRulers:       newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
             showSpeeds:       newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
@@ -1058,7 +1086,7 @@ gapp.register("kiri.init", (root, exports) => {
             animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
             units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM}, "units"),
             edgeangle:        newInput(LANG.op_spoa_s, {title:LANG.op_spoa_l, convert:toFloat, size:3}),
-            _____:            newGroup(LANG.lo_menu, $('prefs-lay'), {inline: true}),
+            _____:            newGroup(LANG.lo_menu, $('prefs-lay'), {inline}),
             autoSave:         newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
             autoLayout:       newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
@@ -1070,7 +1098,7 @@ gapp.register("kiri.init", (root, exports) => {
             exportOcto:       newBoolean(`OctoPrint`, booleanSave, {title:LANG.op_exop_l}),
             exportThumb:      newBoolean(`Thumbnail`, booleanSave, {modes:FDM}),
             exportPreview:    newBoolean(`Code Preview`, booleanSave),
-            _____:            newGroup(LANG.pt_menu, $('prefs-prt'), {inline: true}),
+            _____:            newGroup(LANG.pt_menu, $('prefs-prt'), {inline}),
             detail:           newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
             healMesh:         newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
             threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:THREED}),

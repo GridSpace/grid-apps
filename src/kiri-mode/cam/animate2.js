@@ -18,61 +18,79 @@ kiri.load(() => {
     }
 
     let meshes = {},
-        progress,
+        button = {},
+        label = {},
+        material,
         speedPauses = [ 0, 0, 0, 0, 0 ],
         speedValues = [ 1, 2, 4, 8, 32 ],
         speedNames = [ "1x", "2x", "4x", "8x", "!!" ],
         speedMax = speedValues.length - 1,
         speedIndex = 0,
-        speedLabel,
         speed,
-        color = 0,
-        pauseButton,
-        playButton;
+        origin,
+        color = 0;
 
     const { moto } = root;
     const { space } = moto;
     const { api } = kiri;
 
     function animate_clear2(api) {
-        // moto.space.platform.showGridBelow(true);
+        let { anim } = api.ui;
         kiri.client.animate_cleanup2();
-        $('layer-animate').innerHTML = '';
-        $('layer-toolpos').innerHTML = '';
         Object.keys(meshes).forEach(id => deleteMesh(id));
         api.widgets.setAxisIndex(0);
-    }
+        api.uc.setVisible(anim.laba, true);
+        api.uc.setVisible(anim.vala, true);
+        anim.vala.value = "0.0";
+}
 
     function animate2(api, delay) {
         let alert = api.alerts.show("building animation");
-        kiri.client.animate_setup2(api.conf.get(), data => {
+        let settings = api.conf.get();
+        kiri.client.animate_setup2(settings, data => {
             handleUpdate(data);
             if (data) {
                 return;
             }
-            const UC = api.uc;
-            const layer = $('layer-animate');
-            layer.innerHTML = '';
-            UC.setGroup(layer);
-            UC.newRow([
-                UC.newButton(null,replay,{icon:'<i class="fas fa-fast-backward"></i>',title:"restart"}),
-                playButton = UC.newButton(null,play,{icon:'<i class="fas fa-play"></i>',title:"play"}),
-                pauseButton = UC.newButton(null,pause,{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
-                UC.newButton(null,step,{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
-                UC.newButton(null,fast,{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
-                speedLabel = UC.newLabel("speed", {class:"speed"}),
-                progress = UC.newLabel('0%', {class:"progress"})
-            ]);
-            updateSpeed();
+
+            let { anim } = api.ui;
+            Object.assign(button, {
+                replay: anim.replay,
+                play: anim.play,
+                step: anim.step,
+                pause: anim.pause,
+                speed: anim.speed,
+                trans: anim.trans,
+                model: anim.model,
+                shade: anim.shade
+            });
+            Object.assign(label, {
+                progress: anim.progress,
+                speed: anim.labspd,
+                x: anim.valx,
+                y: anim.valy,
+                z: anim.valz,
+                a: anim.vala
+            });
+
+            updateSpeed(0);
             setTimeout(step, delay || 0);
-            const toolpos = $('layer-toolpos');
-            toolpos.innerHTML = '';
-            UC.setGroup(toolpos);
-            playButton.style.display = '';
-            pauseButton.style.display = 'none';
+            toggleTrans(undefined, false);
+            origin = settings.origin;
+
+            button.replay.onclick = replay;
+            button.play.onclick = play;
+            button.step.onclick = step;
+            button.pause.onclick = pause;
+            button.speed.onclick = fast;
+            button.trans.onclick = toggleTrans;
+            button.model.onclick = toggleModel;
+            button.shade.onclick = toggleStock;
+            button.play.style.display = '';
+            button.pause.style.display = 'none';
+
             api.event.emit('animate', 'CAM');
             api.alerts.hide(alert);
-            // moto.space.platform.showGridBelow(false);
         });
     }
 
@@ -83,6 +101,13 @@ kiri.load(() => {
 
         animate_setup2(settings, ondone) {
             color = settings.controller.dark ? 0x888888 : 0;
+            material = new THREE.MeshMatcapMaterial({
+                flatShading: true,
+                transparent: false,
+                opacity: 0.9,
+                color: 0x888888,
+                side: THREE.DoubleSide
+            });
             kiri.client.send("animate_setup2", {settings}, ondone);
         },
 
@@ -102,14 +127,7 @@ kiri.load(() => {
         const ia = ilen ? ind.subarray(0, ilen) : ind;
         geo.setAttribute('position', new THREE.BufferAttribute(pa, 3));
         geo.setIndex(new THREE.BufferAttribute(ia, 1));
-        const mat = new THREE.MeshMatcapMaterial({
-            flatShading: true,
-            transparent: false,
-            opacity: 1,
-            color: 0x888888,
-            side: THREE.DoubleSide
-        });
-        const mesh = new THREE.Mesh(geo, mat);
+        const mesh = new THREE.Mesh(geo, material);
         mesh.pos = pos;
         mesh.ind = ind;
         space.world.add(mesh);
@@ -136,6 +154,22 @@ kiri.load(() => {
         delete meshes[id];
     }
 
+    function toggleModel(ev,bool) {
+        api.local.toggle('cam.anim.model', bool);
+        api.widgets.all().forEach(w => w.toggleVisibility(bool));
+    }
+
+    function toggleStock(ev,bool,set) {
+        set !== false && api.local.toggle('cam.anim.stock', bool);
+        return api.event.emit('cam.stock.toggle', bool ?? undefined);
+    }
+
+    function toggleTrans(ev,bool) {
+        bool = api.local.toggle('cam.anim.trans', bool);
+        material.transparent = bool;
+        material.needsUpdate = true;
+    }
+
     function step() {
         updateSpeed();
         kiri.client.animate2({speed, steps: 1}, handleUpdate);
@@ -145,8 +179,8 @@ kiri.load(() => {
         const { steps } = opts;
         updateSpeed();
         if (steps !== 1) {
-            playButton.style.display = 'none';
-            pauseButton.style.display = '';
+            button.play.style.display = 'none';
+            button.pause.style.display = '';
         }
         kiri.client.animate2({
             speed,
@@ -158,8 +192,8 @@ kiri.load(() => {
     function fast(opts) {
         const { steps } = opts;
         updateSpeed(1);
-        playButton.style.display = 'none';
-        pauseButton.style.display = '';
+        button.play.style.display = 'none';
+        button.pause.style.display = '';
         kiri.client.animate2({
             speed,
             steps: steps || Infinity,
@@ -168,8 +202,8 @@ kiri.load(() => {
     }
 
     function pause() {
-        playButton.style.display = '';
-        pauseButton.style.display = 'none';
+        button.play.style.display = '';
+        button.pause.style.display = 'none';
         kiri.client.animate2({speed: 0}, handleUpdate);
     }
 
@@ -194,9 +228,13 @@ kiri.load(() => {
                 mesh.position.z = pos.z;
                 space.refresh();
             }
+            label.x.value = (pos.x - origin.x).toFixed(2);
+            label.y.value = (pos.y + origin.y).toFixed(2);
+            label.z.value = (pos.z - origin.z).toFixed(2);
         }
         if (data.stock_index !== undefined) {
             api.widgets.setAxisIndex(data.stock_index);
+            label.a.value = -data.stock_index.toFixed(1);
         }
         if (data.mesh_index) {
             const { id, index } = data.mesh_index;
@@ -211,7 +249,7 @@ kiri.load(() => {
             meshUpdate(id, ind, pos, ilen, plen);
         }
         if (data && data.progress) {
-            progress.innerText = (data.progress * 100).toFixed(1) + '%'
+            label.progress.value = (data.progress * 100).toFixed(1);
         }
     }
 
@@ -221,8 +259,9 @@ kiri.load(() => {
         } else if (inc > 0) {
             speedIndex = (speedIndex + inc) % speedValues.length;
         }
+        api.local.set('cam.anim.speed', speedIndex);
         speed = speedValues[speedIndex];
-        speedLabel.innerText = speedNames[speedIndex];
+        label.speed.value = speedNames[speedIndex];
     }
 
     function replay() {
