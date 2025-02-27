@@ -640,19 +640,22 @@ kiri.load(() => {
         const srad = tool.shaftDiameter() / 2;
         const flen = tool.fluteLength() || 15;
         const frad = toolRadius = tool.fluteDiameter() / 2;
+        const tlen = slen + flen; // total tool length
         let { cylinder, sphere } = Instance.Manifold;
         let mesh;
         if (tool.isBallMill()) {
-            mesh = cylinder(flen + slen - frad * 2, frad, frad, 20, true)
-                .add(sphere(frad, 20).translate(0, 0, -(flen + slen - frad * 2)/2));
+            mesh = cylinder(tlen - frad * 2, frad, frad, 20, true)
+                .add(sphere(frad, 20).translate(0, 0, -(tlen - frad * 2)/2))
+                .add(cylinder(slen, srad, srad, 20, true).translate(0, 0, flen/2));
         } else if (tool.isTaperMill()) {
             const trad = Math.max(tool.tipDiameter() / 2, 0.001);
             mesh = cylinder(slen, srad, srad, 20, true).translate(0, 0, slen/2)
                 .add(cylinder(flen, trad, frad, 20, true).translate(0, 0, -flen/2));
         } else {
-            mesh = cylinder(flen + slen, frad, frad, 20, true);
+            mesh = cylinder(tlen, frad, frad, 20, true)
+                .add(cylinder(slen, srad, srad, 20, true).translate(0, 0, flen/2));
         }
-        mesh = mesh.translate(0, 0, (flen + slen - stockZ) / 2);
+        mesh = mesh.translate(0, 0, (tlen - stockZ) / 2);
         const raw = mesh.getMesh();
         const vertex = raw.vertProperties;
         const index = raw.triVerts;

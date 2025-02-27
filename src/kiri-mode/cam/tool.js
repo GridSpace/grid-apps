@@ -102,8 +102,7 @@ class Tool {
 
     generateProfile(resolution) {
         // generate tool profile
-        let type = this.getType(),
-            ball = this.isBallMill(),
+        let ball = this.isBallMill(),
             taper = this.isTaperMill(),
             tip_diameter = this.tipDiameter(),
             shaft_offset = this.fluteLength(),
@@ -134,7 +133,6 @@ class Tool {
                     dist_from_center = Math.sqrt(dx * dx + dy * dy);
                 if (dist_from_center <= flute_radius_pix_float) {
                     maxo = Math.max(maxo, dx, dy);
-                    // console.log({x,y,dx,dy,dist:dist_from_center,ln:dbl.length})
                     // flute offset points
                     let z_offset = 0;
                     if (ball) {
@@ -147,7 +145,7 @@ class Tool {
                     toolOffset.push(dx, dy, z_offset);
                 } else if (shaft_offset && larger_shaft && dist_from_center <= shaft_radius_pix_float) {
                     // shaft offset points
-                    // toolOffset.push(dx, dy, -shaft_offset);
+                    toolOffset.push(dx, dy, -shaft_offset);
                 }
             }
         }
