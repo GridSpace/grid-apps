@@ -210,9 +210,9 @@ FDM.doTopShells = function(z, top, count, offset1, offsetN, fillOffset, opt = {}
         top.poly = top.poly.clone(false);
     }
 
-    top.shells = [];
-    top.fill_off = [];
-    top.fill_lines = [];
+    top.shells = [];        // strategies output shells here
+    top.fill_off = [];      // offset from innermost shell for infill
+    top.fill_lines = [];    // fill lines inside fill_off
 
     let last = [],
         gaps = [];
