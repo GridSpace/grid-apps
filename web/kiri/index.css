@@ -2382,6 +2382,7 @@ details[open] summary::after {
     padding: 2px 4px 2px 0;
     flex-grow: 1;
     font-size: smaller;
+    text-align: left;
 }
 .var-row .dim {
     text-align: right;

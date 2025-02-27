@@ -916,7 +916,10 @@ self.kiri.load(api => {
                                 ev.stopPropagation();
                             },
                             onmouseenter(ev) {
-                                clearTimeout(ev.target.__timer);
+                                let { target } = ev;
+                                let { bambu } = target;
+                                target.title = bblapi.filament.map[bambu.tray_info_idx];
+                                clearTimeout(target.__timer);
                             },
                             onmouseleave(ev) {
                                 ev.target.__timer = setTimeout(() => {
