@@ -38,7 +38,9 @@ gapp.register("kiri.init", (root, exports) => {
         separator = true,
         hideable = true,
         inline = true,
-        driven = true;
+        driven = true,
+        trigger = true,
+        units = true;
 
     // copy version from grid app
     kiri.version = gapp.version;
@@ -1012,19 +1014,19 @@ gapp.register("kiri.init", (root, exports) => {
             device:           newGroup(LANG.dv_gr_dev, null, {group:"ddev", inline, class:"noshow"}),
 
             _____:            newGroup("workspace", null, {group:"dext", inline}),
-            bedWidth:         newInput('X (width)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
-            bedDepth:         newInput('Y (depth)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
-            maxHeight:        newInput('Z (height)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units:true, round:2, action:updateDeviceSize}),
+            bedWidth:         newInput('X (width)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:updateDeviceSize}),
+            bedDepth:         newInput('Y (depth)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:updateDeviceSize}),
+            maxHeight:        newInput('Z (height)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:updateDeviceSize}),
             resolutionX:      newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:toInt, size:6, modes:SLA}),
             resolutionY:      newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:toInt, size:6, modes:SLA}),
             _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:NO_WEDM }),
             _____:            newGroup("firmware", null, {group:"dext", inline, modes:NO_WEDM}),
             fwRetract:        newBoolean(LANG.dv_retr_s, onBooleanClick, {title:LANG.dv_retr_l, modes:FDM}),
             deviceOrigin:     newBoolean(LANG.dv_orgc_s, onBooleanClick, {title:LANG.dv_orgc_l, modes:FDM_LZN, show:() => !ui.deviceRound.checked}),
-            deviceRound:      newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger:true, show:isNotBelt}),
-            deviceBelt:       newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger:true, show:() => !ui.deviceRound.checked}),
+            deviceRound:      newBoolean(LANG.dv_bedc_s, onBooleanClick, {title:LANG.dv_bedc_l, modes:FDM, trigger, show:isNotBelt}),
+            deviceBelt:       newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger, show:() => !ui.deviceRound.checked}),
             separator:        newBlank({class:"pop-sep", modes:FDM, driven}),
-            spindleMax:       newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:toInt, size:5, modes:CAM, trigger:1}),
+            spindleMax:       newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:toInt, size:5, modes:CAM, trigger}),
             deviceZMax:       newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:toInt, size:5, modes:FDM}),
             gcodeTime:        newInput(LANG.dv_time_s, {title:LANG.dv_time_l, convert:toFloat, size:5, modes:FDM}),
             _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM }),
@@ -1091,7 +1093,7 @@ gapp.register("kiri.init", (root, exports) => {
             autoLayout:       newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
             freeLayout:       newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
             spaceRandoX:      newBoolean(LANG.op_spcx_s, booleanSave, {title:LANG.op_spcx_l, show:isBelt}),
-            spaceLayout:      newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:toFloat, size:3, units:true}),
+            spaceLayout:      newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:toFloat, size:3, units}),
             _____:            newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
             exportLocal:      newBoolean(`Grid:Local`, booleanSave, {title:LANG.op_exgl_l}),
             exportGhost:      newBoolean(`Grid:Host`, booleanSave, {title:LANG.op_exgh_l}),
@@ -1124,10 +1126,10 @@ gapp.register("kiri.init", (root, exports) => {
             outputAlternating:   newBoolean(LANG.ad_altr_s, onBooleanClick, {title:LANG.ad_altr_l}),
             sliceZInterleave:    newBoolean(LANG.ad_zint_s, onBooleanClick, {title:LANG.ad_zint_l, show:zIntShow}),
             _____:               newGroup(LANG.fi_menu, $('fdm-fill'), { modes:FDM, driven, hideable, separator, group:"fdm-fill" }),
-            sliceFillType:       newSelect(LANG.fi_type, {trigger:true}, "infill"),
-            sliceFillSparse:     newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:toFloat, bound:bound(0.0,1.0)}),
-            sliceFillRepeat:     newInput(LANG.fi_rept_s, {title:LANG.fi_rept_l, convert:toInt,   bound:bound(1,10), show: fillShow}),
-            sliceFillOverlap:    newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:toFloat, bound:bound(0.0,2.0)}),
+            sliceFillType:       newSelect(LANG.fi_type, {trigger}, "infill"),
+            sliceFillSparse:     newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:toFloat, bound:bound(0.0,1.0), show:hasInfill}),
+            sliceFillRepeat:     newInput(LANG.fi_rept_s, {title:LANG.fi_rept_l, convert:toInt,   bound:bound(1,10),    show:fillIsLinear}),
+            sliceFillOverlap:    newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:toFloat, bound:bound(0.0,2.0), show:hasInfill}),
             separator:           newBlank({ class:"set-sep", driven }),
             sliceFillRate:       newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:toInt,   bound:bound(0,500)}),
             sliceSolidRate:      newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:toInt,   bound:bound(0,500)}),
@@ -1190,8 +1192,8 @@ gapp.register("kiri.init", (root, exports) => {
             outputBrimOffset:    newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:toFloat, show:isNotBelt}),
             outputRaftSpacing:   newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:toFloat, bound:bound(0.0,3.0), show: () => ui.outputRaft.checked && isNotBelt() }),
             separator:           newBlank({ class:"set-sep", driven, show:isNotBelt }),
-            outputRaft:          newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, trigger: true, show:() => isNotBelt()}),
-            outputDraftShield:   newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, trigger: true, show:() => isNotBelt()}),
+            outputRaft:          newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, trigger, show:() => isNotBelt()}),
+            outputDraftShield:   newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, trigger, show:() => isNotBelt()}),
             _____:               newGroup(LANG.ou_menu, $('fdm-output'), { modes:FDM, driven, hideable, separator, group:"fdm-out" }),
             outputFeedrate:      newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:toInt}),
             outputFinishrate:    newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:toInt}),
@@ -1228,9 +1230,9 @@ gapp.register("kiri.init", (root, exports) => {
             /** CAM Settings */
 
             _____:               newGroup(LANG.ct_menu, $('cam-tabs'), { modes:CAM, marker:true, driven, separator }),
-            camTabsWidth:        newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:toFloat, bound:bound(0.005,100), units:true}),
-            camTabsHeight:       newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:toFloat, bound:bound(0.005,100), units:true}),
-            camTabsDepth:        newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:toFloat, bound:bound(0.005,100), units:true}),
+            camTabsWidth:        newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:toFloat, bound:bound(0.005,100), units}),
+            camTabsHeight:       newInput(LANG.ct_hght_s, {title:LANG.ct_hght_l, convert:toFloat, bound:bound(0.005,100), units}),
+            camTabsDepth:        newInput(LANG.ct_dpth_s, {title:LANG.ct_dpth_l, convert:toFloat, bound:bound(0.005,100), units}),
             separator:           newBlank({ class:"set-sep", driven }),
             camTabsMidline:      newBoolean(LANG.ct_midl_s, onBooleanClick, {title:LANG.ct_midl_l}),
             separator:           newBlank({ class:"set-sep", driven }),
@@ -1240,9 +1242,9 @@ gapp.register("kiri.init", (root, exports) => {
                 (ui.tabClr = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
             ], {class:"ext-buttons f-row"}),
             _____:               newGroup(LANG.cs_menu, $('cam-stock'), { modes:CAM, driven, separator }),
-            camStockX:           newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:toFloat, bound:bound(0,9999), units:true}),
-            camStockY:           newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:toFloat, bound:bound(0,9999), units:true}),
-            camStockZ:           newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:toFloat, bound:bound(0,9999), units:true}),
+            camStockX:           newInput(LANG.cs_wdth_s, {title:LANG.cs_wdth_l, convert:toFloat, bound:bound(0,9999), units}),
+            camStockY:           newInput(LANG.cs_dpth_s, {title:LANG.cs_dpth_l, convert:toFloat, bound:bound(0,9999), units}),
+            camStockZ:           newInput(LANG.cs_hght_s, {title:LANG.cs_hght_l, convert:toFloat, bound:bound(0,9999), units}),
             separator:           newBlank({ class:"set-sep", driven }),
             camStockOffset:      newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l}),
             camStockClipTo:      newBoolean(LANG.cs_clip_s, onBooleanClick, {title:LANG.cs_clip_l}),
@@ -1250,13 +1252,13 @@ gapp.register("kiri.init", (root, exports) => {
             camStockIndexGrid:   newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, show:() => ui.camStockIndexed.checked}),
             _____:               newGroup(LANG.cc_menu, $('cam-limits'), { modes:CAM, driven, separator }),
             camZAnchor:          newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, show:() => !ui.camStockIndexed.checked}, "zanchor"),
-            camZOffset:          newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:toFloat, units:true}),
-            camZTop:             newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:toFloat, units:true, trigger: true}),
-            camZBottom:          newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:toFloat, units:true, trigger: true}),
-            camZThru:            newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:toFloat, bound:bound(0.0,100), units:true }),
-            camZClearance:       newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:toFloat, bound:bound(0.01,100), units:true }),
-            camFastFeedZ:        newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:toFloat, units:true}),
-            camFastFeed:         newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:toFloat, units:true}),
+            camZOffset:          newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:toFloat, units}),
+            camZTop:             newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:toFloat, units, trigger}),
+            camZBottom:          newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:toFloat, units, trigger}),
+            camZThru:            newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:toFloat, bound:bound(0.0,100), units }),
+            camZClearance:       newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:toFloat, bound:bound(0.01,100), units }),
+            camFastFeedZ:        newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:toFloat, units}),
+            camFastFeed:         newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:toFloat, units}),
             _____:               newGroup(LANG.ou_menu, $('cam-output'), { modes:CAM, driven, separator, group:"cam-output" }),
             camConventional:     newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l}),
             camEaseDown:         newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l}),
@@ -1272,9 +1274,9 @@ gapp.register("kiri.init", (root, exports) => {
             camOriginTop:        newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l}),
             camOriginCenter:     newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
             separator:           newBlank({ class:"set-sep", driven }),
-            camOriginOffX:       newInput(LANG.co_offx_s, {title:LANG.co_offx_l, convert:toFloat, units:true}),
-            camOriginOffY:       newInput(LANG.co_offy_s, {title:LANG.co_offy_l, convert:toFloat, units:true}),
-            camOriginOffZ:       newInput(LANG.co_offz_s, {title:LANG.co_offz_l, convert:toFloat, units:true}),
+            camOriginOffX:       newInput(LANG.co_offx_s, {title:LANG.co_offx_l, convert:toFloat, units}),
+            camOriginOffY:       newInput(LANG.co_offy_s, {title:LANG.co_offy_l, convert:toFloat, units}),
+            camOriginOffZ:       newInput(LANG.co_offz_s, {title:LANG.co_offz_l, convert:toFloat, units}),
             _____:               newGroup(LANG.op_xprt_s, $('cam-expert'), { group:"cam_expert", modes:CAM, marker: false, driven, separator }),
             camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, show: () => !ui.camTrueShadow.checked }),
             camTrueShadow:       newBoolean(LANG.cx_true_s, onBooleanClick, {title:LANG.cx_true_l, show: () => !ui.camExpertFast.checked }),
@@ -1283,7 +1285,7 @@ gapp.register("kiri.init", (root, exports) => {
 
             _____:               newGroup(LANG.sl_menu, $('lzr-slice'), { modes:TWOD, driven, separator }),
             ctSliceKerf:         newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:toFloat}),
-            ctSliceHeight:       newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:toFloat, trigger: true}),
+            ctSliceHeight:       newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:toFloat, trigger}),
             ctSliceHeightMin:    newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:toFloat, show:() => ui.ctSliceHeight.value == 0 && !ui.ctSliceSingle.checked }),
             separator:           newBlank({ class:"set-sep", driven }),
             ctSliceSingle:       newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l}),
@@ -1368,8 +1370,12 @@ gapp.register("kiri.init", (root, exports) => {
             return opt ? opt.value : undefined;
         }
 
-        function fillShow() {
-            return optSelected(ui.sliceFillType) === 'linear';
+        function hasInfill() {
+            return optSelected(ui.sliceFillType) !== 'none'
+        }
+
+        function fillIsLinear() {
+            return hasInfill() && optSelected(ui.sliceFillType) === 'linear';
         }
 
         function spindleShow() {

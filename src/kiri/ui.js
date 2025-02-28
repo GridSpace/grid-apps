@@ -658,7 +658,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
                 lastChange = ip;
                 action(event);
                 if (opt.trigger) {
-                    refresh(opt.trigger === 1);
+                    refresh(opt.trigger === 1 || opt.trigger === true);
                 }
             });
             if (opt.units) {
@@ -711,7 +711,7 @@ gapp.register("kiri.ui", [], (root, exports) => {
         return ip;
     }
 
-    function newSelect(label, options, source) {
+    function newSelect(label, options = {}, source) {
         let row = newDiv(options),
             ip = DOC.createElement('select'),
             hide = options && options.hide,
@@ -726,16 +726,17 @@ gapp.register("kiri.ui", [], (root, exports) => {
         }
         row.setAttribute("class", "var-row");
         row.style.display = hide ? 'none' : '';
-        if (options) {
-            if (options.convert) ip.convert = options.convert.bind(ip);
-            if (options.disabled) ip.setAttribute("disabled", "true");
-            if (options.title) row.setAttribute("title", options.title);
-            if (options.action) action = options.action;
-        }
+        if (options.convert) ip.convert = options.convert.bind(ip);
+        if (options.disabled) ip.setAttribute("disabled", "true");
+        if (options.title) row.setAttribute("title", options.title);
+        if (options.action) action = options.action;
         ip.setVisible = row.setVisible;
         ip.onchange = function(ev) {
             lastChange = ip;
             action();
+            if (options.trigger) {
+                refresh();
+            }
         };
         ip.onclick = (ev) => {
             groupSticky = true;

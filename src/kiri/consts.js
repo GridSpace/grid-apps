@@ -33,6 +33,7 @@ const LISTS = {
         { name: "random" },
     ],
     infill: [
+        { name: "none" },
         { name: "hex" },
         { name: "grid" },
         // { name: "cubic" },

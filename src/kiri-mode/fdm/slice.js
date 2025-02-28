@@ -1142,7 +1142,7 @@ function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
  * the bounds of the top polygons and their inner solid areas.
  */
 function doSparseLayerFill(slice, options = {}) {
-    if (slice.xray) {
+    if (slice.xray || options.type === 'none') {
         return;
     }
 
