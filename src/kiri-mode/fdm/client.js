@@ -643,7 +643,6 @@ function delbox(name) {
 
 function addbox(point, color, name, dim = {x:1,y:1,z:1,rz:0}, opt = {}) {
     delbox(name);
-
     const box = boxes[name] = new Mesh(
         new BoxGeometry(dim.x, dim.y, dim.z),
         new MeshPhongMaterial({

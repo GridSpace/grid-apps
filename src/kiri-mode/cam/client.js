@@ -1258,16 +1258,20 @@ CAM.init = function(kiri, api) {
         let tabs = API.widgets.annotate(widget.id).tab || [];
         tabs.forEach(rec => {
             let { id, pos, rot } = rec;
+            if (!Array.isArray(rot)) {
+                rot = rot.toArray();
+            }
             let coff = widget.track.center;
             let tab = widget.tabs[id];
             let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
             // update position vector
             let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
             // update rotation quaternion
+            let [ rx, ry, rz, rw ] = rot;
             rec.rot = new THREE.Quaternion().multiplyQuaternions(
-                new THREE.Quaternion(rot._x, rot._y, rot._z, rot._w),
+                new THREE.Quaternion(rx, ry, rz, rw),
                 new THREE.Quaternion().setFromRotationMatrix(m4)
-            );
+            ).toArray();
             tab.box.geometry.applyMatrix4(m4);
             tab.box.position.x = pos.x = vc.x - coff.dx;
             tab.box.position.y = pos.y = vc.y - coff.dy;
@@ -1829,8 +1833,9 @@ function restoreTabs(widgets) {
     widgets.forEach(widget => {
         const tabs = API.widgets.annotate(widget.id).tab || [];
         tabs.forEach(rec => {
+            let [ x, y, z, w ] = rec.rot;
             rec = Object.clone(rec);
-            rec.rot = new THREE.Quaternion(rec.rot._x ,rec.rot._y, rec.rot._z, rec.rot._w);
+            rec.rot = new THREE.Quaternion(x, y, z, w);
             addWidgetTab(widget, rec);
         });
     });
