@@ -41,6 +41,7 @@ const ClipperLib = self.ClipperLib,
     ;
 
 const POLYS = base.polygons = {
+    clearInner,
     rayIntersect,
     alignWindings,
     setWinding,
@@ -102,6 +103,12 @@ function setZ(polys, z) {
         poly.setZ(z);
     }
     return polys;
+}
+
+function clearInner(polys) {
+    for (let p of polys) {
+        p.clearInner();
+    }
 }
 
 function toClipper(polys = []) {

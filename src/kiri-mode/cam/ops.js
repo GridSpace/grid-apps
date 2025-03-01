@@ -1242,7 +1242,6 @@ class OpPocket extends CamOp {
             return slice;
         }
         function clearZ(polys, z, down) {
-            // console.log({ clearZ: polys });
             if (down) {
                 // adjust step down to a value <= down that
                 // ends on the lowest z specified
@@ -1275,6 +1274,9 @@ class OpPocket extends CamOp {
                             shadow = POLY.setZ(POLY.offset(POLY.offset(shadow, smooth), -smooth), z);
                         }
                         POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
+                        if (op.outline) {
+                            POLY.clearInner(clip);
+                        }
                     }
                     if (clip.length === 0) {
                         continue;
@@ -1343,9 +1345,7 @@ class OpPocket extends CamOp {
         if (outline.length) {
             // option to skip interior features (holes, pillars)
             if (op.outline) {
-                for (let p of outline) {
-                    p.inner = undefined;
-                }
+                POLY.clearInner(outline);
             }
             if (debug) newSliceOut(zmin).output()
                 .setLayer("pocket area", {line: 0x1188ff}, false)
