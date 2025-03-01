@@ -94,13 +94,13 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     if (tabs) {
         // make tab polygons
         tabs.forEach(tab => {
-            let zero = newPoint(0,0,0);
-            let point = newPoint(tab.pos.x, tab.pos.y, tab.pos.z);
-            let poly = newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y);
-            // let tslice = newSlice(0);
-            let m4 = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion(tab.rot._x, tab.rot._y, tab.rot._z, tab.rot._w)
-            );
+            let zero = newPoint(0,0,0),
+                point = newPoint(tab.pos.x, tab.pos.y, tab.pos.z),
+                poly = newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y),
+                [ rx, ry, rz, rw ] = tab.rot,
+                m4 = new THREE.Matrix4().makeRotationFromQuaternion(
+                    new THREE.Quaternion(rx, ry, rz, rw)
+                );
             poly.points = poly.points
                 .map(p => new THREE.Vector3(p.x,p.y,p.z).applyMatrix4(m4))
                 .map(v => newPoint(v.x, v.y, v.z));
