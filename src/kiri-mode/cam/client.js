@@ -789,8 +789,8 @@ CAM.init = function(kiri, api) {
                     yr = Math.PI / 2;
                 }
                 tab.pos.z = bpo.z = flz;
-                let { rot } = tab;
-                let qat = new THREE.Quaternion(rot._x, rot._y, rot._z, rot._w);
+                let [ rx, ry, rz, rw ] = tab.rot;
+                let qat = new THREE.Quaternion(rx, ry, rz, rw);
                 let eul = new THREE.Euler().setFromQuaternion(qat);
                 eul._z = -eul._z;
                 tab.rot = new THREE.Quaternion().setFromEuler(eul);
