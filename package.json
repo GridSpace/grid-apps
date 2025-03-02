@@ -69,7 +69,7 @@
         "webpack-cli": "^5.1.4"
     },
     "scripts": {
-        "setup": "npm i; cd mods && npm i",
+        "setup": "npm i && cd mods && npm i",
         "dev": "gs-app-server --debug",
         "prod": "gs-app-server",
         "start": "npm run prebuild && electron .",
@@ -89,7 +89,7 @@
         "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
-        "preinstall": "node bin/install-pre.js; npx webpack --config bin/webpack-three.js"
+        "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js"
     },
     "main": "app-el.js",
     "build": {
