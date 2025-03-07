@@ -932,6 +932,7 @@ gapp.register("kiri.init", (root, exports) => {
 
             toolsSave:          $('tools-save'),
             toolsClose:         $('tools-close'),
+            toolsImport:        $('tools-import'),
             toolsExport:        $('tools-export'),
             toolSelect:         $('tool-select'),
             toolAdd:            $('tool-add'),

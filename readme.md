@@ -86,7 +86,7 @@ Then open a browser to [localhost:8080/kiri](http://localhost:8080/kiri)
 
 # Windows Developers
 
-this git repo requires symbolic link support. on Windows, this means you have to clone the repo in a command shell with Administrator privileges.
+Follow the instructions in [this issue comment](https://github.com/GridSpace/grid-apps/issues/331#issuecomment-2692492302).
 
 # Javascript Slicing APIs
 

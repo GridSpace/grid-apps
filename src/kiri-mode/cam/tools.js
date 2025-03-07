@@ -287,6 +287,7 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
             api.event.settings();
             api.settings.sync.put();
         };
+        ui.toolsImport.onclick = (ev) => api.event.import(ev);
         ui.toolsExport.onclick = () => {
             uc.prompt("Export Tools Filename", "tools").then(name => {
                 if (!name) {
