@@ -7,6 +7,7 @@
 // dep: kiri.settings
 gapp.register("kiri-mode.cam.tools", (root, exports) => {
 
+    const DEG2RAD = Math.PI / 180;
     let { kiri } = root,
         { api, consts } = kiri,
         { uc, ui } = api,

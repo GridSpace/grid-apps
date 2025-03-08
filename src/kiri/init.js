@@ -49,8 +49,8 @@ gapp.register("kiri.init", (root, exports) => {
         return api.conf.get();
     }
 
-    function updateTool() {
-        api.tool.update();
+    function updateTool(ev) {
+        api.tool.update(ev);
     }
 
     function checkSeed(then) {
