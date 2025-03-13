@@ -76,7 +76,8 @@ CAM.export = function(print, online) {
         scale = {
             x: 1,
             y: 1,
-            z: 1
+            z: 1,
+            a: 1
         },
         consts = {
             box: runbox,
@@ -281,7 +282,7 @@ CAM.export = function(print, online) {
         }
         if (da) {
             pos.a = newpos.a;
-            nl.append(space).append(axis.A).append(add0(consts.pos_a = pos.a * factor));
+            nl.append(space).append(axis.A).append(add0(consts.pos_a = pos.a * -factor));
         }
         if (newFeed) {
             pos.f = feed;
@@ -342,6 +343,7 @@ CAM.export = function(print, online) {
                 if (map.X) scale.x = map.X;
                 if (map.Y) scale.y = map.Y;
                 if (map.Z) scale.z = map.Z;
+                if (map.A) scale.a = map.A;
                 if (map.DEC !== undefined) decimals = parseInt(map.DEC);
                 console.log('export scaling applied', map);
             } catch (e) {
@@ -408,6 +410,7 @@ CAM.export = function(print, online) {
                 point.x *= scale.x;
                 point.y *= scale.y;
                 point.z *= scale.z;
+                point.a *= scale.a;
             }
             if (spro.outputInvertX) point.x = -point.x;
             if (spro.outputInvertY) point.y = -point.y;
@@ -455,6 +458,10 @@ CAM.export = function(print, online) {
         newSpindle = layerout.spindle;
         // iterate over layer output records
         layerout.forEach((out, ind) => {
+            if (out.type === 'lerp') {
+                // suppress display only lerp points
+                return;
+            }
             if (out.gcode && Array.isArray(out.gcode)) {
                 filterEmit(out.gcode, consts);
             } else {

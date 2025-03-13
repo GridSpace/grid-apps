@@ -482,6 +482,9 @@ function exportGCodeDialog(gcode, sections, info, names) {
         $('print-filename').value = filename;
         $('print-filesize').value = util.comma(info.bytes);
         $('print-filament').value = Math.round(info.distance);
+        if (set.controller.devel) {
+            $('code-preview-textarea').style.height = "30em";
+        }
         calcTime();
         if (fdm) {
             calcWeight();

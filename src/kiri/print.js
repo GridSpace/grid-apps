@@ -404,7 +404,7 @@ class Print {
 
             if (pos.A) {
                 let ip = new THREE.Vector3(pos.X, pos.Y, pos.Z)
-                    .applyAxisAngle(XAXIS, pos.A * DEG2RAD);
+                    .applyAxisAngle(XAXIS, -pos.A * DEG2RAD);
                 point.x = ip.x;
                 point.y = ip.y;
                 point.z = ip.z;
@@ -603,6 +603,7 @@ class Output {
         this.speed = speed;
         this.tool = tool;
         this.type = type;
+        // this.where = new Error().stack.split("\n");
     }
 
     clone(z) {
