@@ -38,7 +38,7 @@ CAM.export = function(print, online) {
         spindleMax = device.spindleMax,
         origin = settings.origin || { x: 0, y: 0, z: 0 },
         space = device.gcodeSpace ? ' ' : '',
-        isRML = device.gcodeFExt.toLowerCase() === 'rml',
+        isRML = device.gcodeFExt?.toLowerCase() === 'rml',
         stripComments = device.gcodeStrip || false,
         cmdToolChange = device.gcodeChange || [ "M6 T{tool}" ],
         cmdSpindle = device.gcodeSpindle || [ "M3 S{speed}" ],
