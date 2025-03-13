@@ -76,8 +76,7 @@ CAM.export = function(print, online) {
         scale = {
             x: 1,
             y: 1,
-            z: 1,
-            a: 1
+            z: 1
         },
         consts = {
             box: runbox,
@@ -410,6 +409,8 @@ CAM.export = function(print, online) {
                 point.x *= scale.x;
                 point.y *= scale.y;
                 point.z *= scale.z;
+            }
+            if (scale.a) {
                 point.a *= scale.a;
             }
             if (spro.outputInvertX) point.x = -point.x;
