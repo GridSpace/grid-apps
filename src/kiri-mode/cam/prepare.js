@@ -105,6 +105,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         isContour,
         isRough,
         isLathe,
+        isIndex,
         tool,
         toolType,
         toolDiam,
@@ -571,6 +572,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         setTolerance(0);
         nextIsMove = true;
         currentOp = op.op;
+        isIndex = currentOp.type === 'index';
         isLathe = currentOp.type === 'lathe';
         isRough = currentOp.type === 'rough';
         isPocket = currentOp.type === 'pocket';
@@ -583,8 +585,10 @@ function prepEach(widget, settings, print, firstPoint, update) {
         opSum += weight;
         if (tool && lastPoint) {
             newLayer();
-            layerPush(printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
-            newLayer();
+            if (!isIndex) {
+                layerPush(printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
+                newLayer();
+            }
         }
     }
 
