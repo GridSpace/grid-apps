@@ -1,6 +1,6 @@
 {
     "name": "grid-apps",
-    "version": "4.1.3",
+    "version": "4.1.4",
     "description": "grid.space 3d slicing & modeling tools",
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
