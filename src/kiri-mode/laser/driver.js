@@ -309,7 +309,14 @@ async function prepare(widgets, settings, update) {
             // 3d stack output, no merging or layout
             for (let slice of widget.slices) {
                 let group = [];
+                let polys = [];
                 for (let poly of slice.offset) {
+                    if (poly.inner) {
+                        polys.push(...poly.inner);
+                    }
+                    polys.push(poly);
+                }
+                for (let poly of polys) {
                     print.PPP(poly, group, {
                         extrude: 1,
                         rate: 1,
