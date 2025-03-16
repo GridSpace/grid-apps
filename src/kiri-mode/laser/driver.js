@@ -701,13 +701,18 @@ function exportSVG(settings, data, cut_color) {
             my = max.y;
             lines.push('<?xml version="1.0" standalone="no"?>');
             lines.push('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">');
+            let svg = ['<svg xmlns="http://www.w3.org/2000/svg"'];
+            if (ctOutShaper) {
+                svg.push('xmlns:shaper="http://www.shapertools.com/namespaces/shaper"');
+            }
             if (ctOutInches) {
                 width = (width / 25.4).round(2);
                 height = (height / 25.4).round(2);
-                lines.push(`<svg width="${width}in" height="${height}in" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
+                svg.push(`width="${width}in" height="${height}in" viewBox="0 0 ${width} ${height}"`);
             } else {
-                lines.push(`<svg width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
+                svg.push(`width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}"`);
             }
+            lines.push(svg.join(' ') + ' version="1.1">');
         },
         function(poly, color, thick) {
             let cout = zcolor || colors[((color-1) % colors.length)];
@@ -726,7 +731,7 @@ function exportSVG(settings, data, cut_color) {
                     def.push(`z="${z}"`);
                 }
                 let path = poly.map((xy, i) => i > 0 ? `L${xy}` : `M${xy}`);
-                lines.push(`<${def.join(' ')} B="${path.join(' ')}" fill="none" stroke="${cout}" stroke-width="${swidth}" />`);
+                lines.push(`<${def.join(' ')} d="${path.join(' ')}" fill="none" stroke="${cout}" stroke-width="${swidth}" />`);
             } else {
                 let def = ["polyline"];
                 if (z !== undefined) def.push(`z="${z}"`);
@@ -738,7 +743,7 @@ function exportSVG(settings, data, cut_color) {
             lines.push("</svg>");
         },
         function(point) {
-            z = point.zi ?? point.z;
+            z = ctOutStack ? (point.zi ?? point.z) : undefined;
             let px = point.x - dx;
             let py = my - point.y - dy;
             // convert to imperial for stacked
