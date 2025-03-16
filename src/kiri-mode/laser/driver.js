@@ -421,7 +421,7 @@ async function prepare(widgets, settings, update) {
     // output tiles starting with closest to origin
     let remain = tiles.slice();
     while (remain.length) {
-        let closest = ctOutShaper ?
+        let closest = ctOutStack ?
             { dist: 0, tile: remain[0] } :
             { dist: Infinity };
         for (let tile of remain) {
