@@ -1319,8 +1319,10 @@ gapp.register("kiri.init", (root, exports) => {
             ctOutZColor:         newBoolean(LANG.ou_layo_s, onBooleanClick, { title:LANG.ou_layo_l, modes:TWONED, show:() => !ui.ctOutMerged.checked }),
             ctOutLayer:          newBoolean(LANG.ou_layr_s, onBooleanClick, { title:LANG.ou_layr_l, modes:TWONED, show:() => !ui.ctOutStack.checked }),
             ctOutMark:           newBoolean(LANG.ou_lays_s, onBooleanClick, { title:LANG.ou_lays_l, modes:TWONED, show:() => !ui.ctOutStack.checked }),
-            separator:           newBlank({ class:"set-sep", driven, modes:TWOD }),
-            ctOutStack:          newBoolean(LANG.ou_stak_s, onBooleanClick, { title:LANG.ou_stak_l, modes:TWOD }),
+            separator:           newBlank({ class:"set-sep", driven, modes:LASER }),
+            ctOutInches:         newBoolean(LANG.ou_inch_s, onBooleanClick, { title:LANG.ou_inch_l, modes:LASER }),
+            ctOutStack:          newBoolean(LANG.ou_stak_s, onBooleanClick, { title:LANG.ou_stak_l, modes:LASER }),
+            ctOutShaper:         newBoolean(LANG.ou_shap_s, onBooleanClick, { title:LANG.ou_shap_l, modes:LASER, show:() => ui.ctOutStack.checked }),
 
             /** SLA SETTINGS */
 

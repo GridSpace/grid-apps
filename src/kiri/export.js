@@ -138,8 +138,6 @@ function exportLaserDialog(data, names) {
     $('print-svg').onclick = download_svg;
     $('print-dxf').onclick = download_dxf;
     $('print-lg').onclick = download_gcode;
-
-    console.log('laser export', { fileroot, filename });
 }
 
 function bindField(field, varname) {

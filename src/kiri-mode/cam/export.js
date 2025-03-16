@@ -410,7 +410,7 @@ CAM.export = function(print, online) {
                 point.y *= scale.y;
                 point.z *= scale.z;
             }
-            if (scale.a) {
+            if (point.a && scale.a) {
                 point.a *= scale.a;
             }
             if (spro.outputInvertX) point.x = -point.x;

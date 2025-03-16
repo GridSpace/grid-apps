@@ -46,10 +46,9 @@ function polyLabel(poly, label) {
 
 function sliceEmitObjects(print, slice, groups, opt = { }) {
     let process = print.settings.process,
-        marked = process.ctOutMark,
-        stacked = process.ctOutStack,
-        grouped = marked || process.ctOutGroup,
-        label = false && process.outputLaserLabel,
+        { ctOutMark, ctOutStack, ctOutGroup, ctOutShaper, outputLaserLabel } = process,
+        grouped = ctOutMark || ctOutGroup,
+        label = false && outputLaserLabel,
         simple = opt.simple || false,
         emit = { in: [], out: [], mark: [] },
         lastEmit = opt.lastEmit,
@@ -72,13 +71,17 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
                 let lbl = index !== undefined ? `${slice.index}-${index}` : `${slice.index}`;
                 polyLabel(poly, lbl);
             }
-            if (simple) pathOpt.simple = true;
-            if (poly.open) pathOpt.open = true;
+            if (simple) {
+                pathOpt.simple = true;
+            }
+            if (poly.open) {
+                pathOpt.open = true;
+            }
             emit[type].push(poly);
             print.PPP(poly, group, pathOpt);
             // when stacking (top down widget slices), if the last layer is fully contained
             // by the current layer, then it is "marked" onto the current layer in a different color
-            if (marked && type === "out" && lastEmit) {
+            if (ctOutMark && type === "out" && lastEmit) {
                 for (let out of lastEmit.out) {
                     if (out.isInside(poly)) {
                         polyOut(out, group, "mark");
@@ -90,9 +93,10 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
 
     if (grouped) {
         let group = [];
-        group.thick = slice.thick;
         let outer = slice.offset;
         let inner = outer.map(poly => poly.inner || []).flat();
+        // preserve slice thickness in group
+        group.thick = slice.thick;
         // cut inside before outside
         polyOut(inner, group, "in", outer.length > 1);
         polyOut(outer, group, "out", outer.length > 1);
@@ -264,16 +268,18 @@ async function prepare(widgets, settings, update) {
         print = self.worker.print = kiri.newPrint(settings, widgets),
         isWire = self.worker.mode === 'WEDM',
         knifeOn = self.worker.mode === 'DRAG',
-        knifeTipOff = process.ctOutKnifeTip,
         output = print.output = [],
         totalSlices = 0,
         slices = 0,
+        maxZ = 0,
         { bedWidth, bedDepth } = device,
+        { ctOutLayer, ctOutTileSpacing } = process,
         { ctOriginCenter, ctOriginBounds } = process,
-        { ctOriginOffX, ctOriginOffY } = process;
+        { ctOriginOffX, ctOriginOffY } = process,
+        { ctOutStack, ctOutMerged, ctOutKnifeTip, ctOutShaper } = process;
 
     // shim to adapt older code -- should be refactored
-    let pppo = [];
+    // let pppo = [];
     let pppg = [];
     let tile = [];
     let tiles = [];
@@ -283,54 +289,62 @@ async function prepare(widgets, settings, update) {
             tiles.push(tile = []);
             tile.num = tiles.length;
         }
-        pppo.push({ poly, group, options });
+        // pppo.push({ poly, group, options });
         tile.push({ poly, group, options });
     };
 
     // filter ignored widgets
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
-    // find max layers (for updates)
+    // find max layers (for updates) and Z (for shaper)
     for (let widget of widgets) {
         totalSlices += widget.slices.length;
+        maxZ = Math.max(maxZ, widget.bounds.max.z);
     }
 
     // emit objects from each slice into output array
     let layers = [];
     for (let widget of widgets) {
-        if (process.ctOutStack) {
+        if (ctOutStack) {
             // 3d stack output, no merging or layout
             for (let slice of widget.slices) {
+                let group = [];
+                for (let poly of slice.offset) {
+                    print.PPP(poly, group, {
+                        extrude: 1,
+                        rate: 1,
+                    });
+                }
             }
-        } else if (process.ctOutMerged) {
+        } else if (ctOutMerged) {
             // slice stack merging, no layout
             // there are no inner vs outer polys
-            // merged/same polys "increase" color/weight
+            // merged polys "increase" their color / weight
             let merged = [];
             for (let slice of widget.slices) {
                 let polys = [];
                 slice.offset.clone(true).forEach(p => p.flattenTo(polys));
-                polys.forEach(p => {
+                for (let poly of polys) {
                     let match = false;
                     for (let i=0; i<merged.length; i++) {
                         let mp = merged[i];
-                        if (p.isEquivalent(mp)) {
+                        if (poly.isEquivalent(mp)) {
                             // increase weight
                             match = true;
                             mp.depth++;
                         }
                     }
                     if (!match) {
-                        p.depth = 1;
-                        merged.push(p);
+                        poly.depth = 1;
+                        merged.push(poly);
                     }
-                });
+                }
                 update((slices++ / totalSlices) * 0.5, "prepare");
             }
             let gather = [];
             for (let poly of merged) {
                 if (knifeOn) {
-                    addKnifeRadii(poly, knifeTipOff);
+                    addKnifeRadii(poly, ctOutKnifeTip);
                 }
                 print.PPP(poly, gather, {
                     extrude: poly.depth,
@@ -342,12 +356,12 @@ async function prepare(widgets, settings, update) {
             // output a layer for each slice
             if (knifeOn) {
                 for (let slice of widget.slices) {
-                    slice.offset.forEach(poly => {
-                        addKnifeRadii(poly, knifeTipOff);
+                    for (let poly of slice.offset) {
+                        addKnifeRadii(poly, ctOutKnifeTip);
                         if (poly.inner) poly.inner.forEach(ip => {
-                            addKnifeRadii(ip, knifeTipOff);
+                            addKnifeRadii(ip, ctOutKnifeTip);
                         });
-                    });
+                    }
                 }
             }
             let lastEmit;
@@ -361,8 +375,8 @@ async function prepare(widgets, settings, update) {
     // for tile layout packing
     let dw = device.bedWidth / 2,
         dh = device.bedDepth / 2,
-        sort = !process.ctOutLayer,
-        spacing = process.ctOutTileSpacing;
+        sort = !ctOutLayer,
+        spacing = ctOutTileSpacing;
 
     // compute tile bounds
     for (let tile of tiles) {
@@ -378,7 +392,8 @@ async function prepare(widgets, settings, update) {
         return packer.rescale(1.1, 1.1);
     });
 
-    // reposition tiles into their packed locations
+    // reposition tiles into their packed locations (unless 3d stack)
+    if (!ctOutStack)
     for (let tile of tiles) {
         let { fit, bounds } = tile;
         for (let { poly } of tile) {
@@ -397,13 +412,18 @@ async function prepare(widgets, settings, update) {
     // set starting point based on origin type
     let currentPos =
         ctOriginCenter ? newPoint(0,0,0) :
-        ctOriginBounds ? newPoint(- tp.max.w/2 - ctOriginOffX, - tp.max.h/2 - ctOriginOffY, 0) :
+        ctOriginBounds ? newPoint(
+            - tp.max.w/2 - (ctOriginOffX || 0),
+            - tp.max.h/2 - (ctOriginOffY || 0), 0
+        ) :
         newPoint(-dw, -dh, 0);
 
     // output tiles starting with closest to origin
     let remain = tiles.slice();
     while (remain.length) {
-        let closest = { dist: Infinity };
+        let closest = ctOutShaper ?
+            { dist: 0, tile: remain[0] } :
+            { dist: Infinity };
         for (let tile of remain) {
             for (let { poly } of tile) {
                 for (let p of poly.points) {
@@ -418,7 +438,9 @@ async function prepare(widgets, settings, update) {
         if (!closest.tile) throw "no closest found";
         for (let { poly, group, options } of closest.tile) {
             currentPos = print.polyPrintPath(poly, currentPos, group, options);
-            if (!output.contains(group)) output.push(group);
+            if (!output.contains(group)) {
+                output.push(group);
+            }
         }
         remain.remove(closest.tile);
     }
@@ -431,8 +453,15 @@ async function prepare(widgets, settings, update) {
     }
 
     return kiri.render.path(output, (progress, layer) => {
+        if (ctOutShaper) {
+            for (let layer of output) {
+                for (let out of layer) {
+                    out.point.zi = maxZ - out.point.z;
+                }
+            }
+        }
         update(0.5 + progress * 0.5, "render", layer);
-    }, { thin: true, z: 0, action: "cut", moves: process.knifeOn });
+    }, { thin: true, z: ctOutStack ? undefined : 0, action: "cut", moves: process.knifeOn });
 };
 
 function exportLaser(print, online, ondone) {
@@ -448,6 +477,7 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
         { ctOriginCenter, ctOriginBounds } = process,
         { outputInvertX, outputInvertY } = process,
         { ctOriginOffX, ctOriginOffY } = process,
+        { ctOutPower, ctOutSpeed, maxZ } = process,
         last,
         point,
         poly = [],
@@ -492,8 +522,8 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
         for (let layer of output) {
             for (let out of layer) {
                 point = out.point;
-                point.x = point.x - min.x + ctOriginOffX;
-                point.y = point.y - min.y + ctOriginOffY;
+                point.x = point.x - min.x + off.x;
+                point.y = point.y - min.y + off.y;
                 bounds.update(point);
             }
         }
@@ -520,7 +550,7 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
         min.y = 0;
     }
 
-    onpre(min, max, process.ctOutPower, process.ctOutSpeed);
+    onpre(min, max, ctOutPower, ctOutSpeed);
 
     // output each layer with moves between them
     output.forEach((layer, index) => {
@@ -644,8 +674,9 @@ function exportGCode(settings, data) {
  */
 function exportSVG(settings, data, cut_color) {
     let { process } = settings;
+    let { ctOutInches, ctOutStack, ctOutShaper } = process;
+    let swidth = "0.1mm";
     let zcolor = process.ctOutZColor ? 1 : 0;
-    let zstack = process.ctOutMark;
     let lines = [], dx = 0, dy = 0, my, z = 0;
     let colors = [
         "black",
@@ -670,21 +701,52 @@ function exportSVG(settings, data, cut_color) {
             my = max.y;
             lines.push('<?xml version="1.0" standalone="no"?>');
             lines.push('<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">');
-            lines.push(`<svg width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
+            if (ctOutInches) {
+                width = (width / 25.4).round(2);
+                height = (height / 25.4).round(2);
+                lines.push(`<svg width="${width}in" height="${height}in" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
+            } else {
+                lines.push(`<svg width="${width}mm" height="${height}mm" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" version="1.1">`);
+            }
         },
         function(poly, color, thick) {
             let cout = zcolor || colors[((color-1) % colors.length)];
-            let def = ["polyline"];
-            if (z !== undefined) def.push(`z="${z}"`);
-            if (thick !== undefined) def.push(`h="${thick}"`);
-            lines.push(`<${def.join(' ')} points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="0.1mm" />`);
+            if (ctOutStack) {
+                let def = ["path"];
+                if (z !== undefined && ctOutShaper) {
+                    if (ctOutInches) {
+                        def.push(`shaper:cutDepth="${(z / 25.4).toFixed(2)}in"`);
+                    } else {
+                        def.push(`shaper:cutDepth="${(z).toFixed(2)}mm"`);
+                    }
+                    def.push(`shaper:cutType="online"`);
+                    // def.push(`shaper:cutOffset="0in"`);
+                    // def.push(`shaper:toolDia="0in"`);
+                } else if (z !== undefined) {
+                    def.push(`z="${z}"`);
+                }
+                let path = poly.map((xy, i) => i > 0 ? `L${xy}` : `M${xy}`);
+                lines.push(`<${def.join(' ')} B="${path.join(' ')}" fill="none" stroke="${cout}" stroke-width="${swidth}" />`);
+            } else {
+                let def = ["polyline"];
+                if (z !== undefined) def.push(`z="${z}"`);
+                if (thick !== undefined) def.push(`h="${thick}"`);
+                lines.push(`<${def.join(' ')} points="${poly.join(' ')}" fill="none" stroke="${cout}" stroke-width="${swidth}" />`);
+            }
         },
         function() {
             lines.push("</svg>");
         },
         function(point) {
-            z = point.z;
-            return base.util.round(point.x - dx, 3) + "," + base.util.round(my - point.y - dy, 3);
+            z = point.zi ?? point.z;
+            let px = point.x - dx;
+            let py = my - point.y - dy;
+            // convert to imperial for stacked
+            if (ctOutInches) {
+                px /= 25.4;
+                py /= 25.4;
+            }
+            return base.util.round(px, 3) + "," + base.util.round(py, 3);
         },
         function(layer, z, thick, layers) {
             if (zcolor) {

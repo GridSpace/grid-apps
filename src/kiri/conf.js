@@ -626,7 +626,9 @@ const conf = exports({
                 outputInvertY: false,
                 ctOutKnifeDepth: 1,
                 ctOutKnifePasses: 1,
-                ctOutKnifeTip: 2
+                ctOutKnifeTip: 2,
+                ctOutInches: false,
+                ctOutShaper: false
             }
         },
         drag: {
