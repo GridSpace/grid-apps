@@ -58,10 +58,10 @@
         "ws": "^7.5.5"
     },
     "devDependencies": {
-        "@electron/notarize": "latest",
+        "@electron/notarize": "^3.0.0",
         "dotenv": "latest",
-        "electron": "latest",
-        "electron-builder": "latest",
+        "electron": "^35.0.1",
+        "electron-builder": "^25.1.8",
         "fs-extra": "^11.2.0",
         "node-fetch": "^3.3.2",
         "terser-webpack-plugin": "^5.3.10",
