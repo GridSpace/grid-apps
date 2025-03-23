@@ -738,7 +738,8 @@ function exportSVG(settings, data, cut_color) {
                     def.push(`z="${z}"`);
                 }
                 let path = poly.map((xy, i) => i > 0 ? `L${xy}` : `M${xy}`);
-                lines.push(`<${def.join(' ')} d="${path.join(' ')}" fill="none" stroke="${cout}" stroke-width="${swidth}" />`);
+                let std = ctOutShaper ? '' : `fill="none" stroke="${cout}" stroke-width="${swidth}" `;
+                lines.push(`<${def.join(' ')} d="${path.join(' ')}" ${std}/>`);
             } else {
                 let def = ["polyline"];
                 if (z !== undefined) def.push(`z="${z}"`);
