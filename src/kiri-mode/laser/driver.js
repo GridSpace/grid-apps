@@ -267,7 +267,8 @@ async function prepare(widgets, settings, update) {
         process = settings.process,
         print = self.worker.print = kiri.newPrint(settings, widgets),
         isWire = self.worker.mode === 'WEDM',
-        knifeOn = self.worker.mode === 'DRAG',
+        isKnife = self.worker.mode === 'DRAG',
+        isLaser = self.worker.mode === 'LASER',
         output = print.output = [],
         totalSlices = 0,
         slices = 0,
@@ -277,6 +278,8 @@ async function prepare(widgets, settings, update) {
         { ctOriginCenter, ctOriginBounds } = process,
         { ctOriginOffX, ctOriginOffY } = process,
         { ctOutStack, ctOutMerged, ctOutKnifeTip, ctOutShaper } = process;
+
+    ctOutStack = ctOutStack && isLaser;
 
     // shim to adapt older code -- should be refactored
     // let pppo = [];
@@ -350,7 +353,7 @@ async function prepare(widgets, settings, update) {
             }
             let gather = [];
             for (let poly of merged) {
-                if (knifeOn) {
+                if (isKnife) {
                     addKnifeRadii(poly, ctOutKnifeTip);
                 }
                 print.PPP(poly, gather, {
@@ -361,7 +364,7 @@ async function prepare(widgets, settings, update) {
             layers.push(gather);
         } else {
             // output a layer for each slice
-            if (knifeOn) {
+            if (isKnife) {
                 for (let slice of widget.slices) {
                     for (let poly of slice.offset) {
                         addKnifeRadii(poly, ctOutKnifeTip);
@@ -373,7 +376,7 @@ async function prepare(widgets, settings, update) {
             }
             let lastEmit;
             for (let slice of widget.slices.reverse()) {
-                lastEmit = sliceEmitObjects(print, slice, layers, {simple: knifeOn, lastEmit});
+                lastEmit = sliceEmitObjects(print, slice, layers, {simple: isKnife, lastEmit});
                 update((slices++ / totalSlices) * 0.5, "prepare");
             }
         }
@@ -468,7 +471,7 @@ async function prepare(widgets, settings, update) {
             }
         }
         update(0.5 + progress * 0.5, "render", layer);
-    }, { thin: true, z: ctOutStack ? undefined : 0, action: "cut", moves: process.knifeOn });
+    }, { thin: true, z: ctOutStack ? undefined : 0, action: "cut", moves: process.isKnife });
 };
 
 function exportLaser(print, online, ondone) {
@@ -602,9 +605,9 @@ function exportGCode(settings, data) {
     let power = max_power;
     let cut_on = dev.gcodeLaserOn || dev.gcodeWaterOn || dev.gcodeKnifeDn || [];
     let cut_off = dev.gcodeLaserOff || dev.gcodeWaterOff || dev.gcodeKnifeUp || [];
-    let knifeOn = proc.knifeOn;
+    let isKnife = proc.isKnife;
     let knifeDepth = proc.ctOutKnifeDepth;
-    let passes = knifeOn ? proc.ctOutKnifePasses : 1;
+    let passes = isKnife ? proc.ctOutKnifePasses : 1;
 
     exportElements(
         settings,
@@ -623,18 +626,18 @@ function exportGCode(settings, data) {
             });
         },
         function(poly, color, thick) {
-            if (knifeOn) {
+            if (isKnife) {
                 lines.push(`; start new poly id=${poly.id} len=${poly.length}`);
             }
             for (let i=1; i<passes + 1; i++) {
                 poly.forEach(function(point, index) {
                     if (index === 0) {
-                        if (knifeOn) {
+                        if (isKnife) {
                             // lift
                             lines.appendAll(['; drag-knife lift', `G0${space}Z5`]);
                         }
                         lines.push(`G0${space}${point}`);
-                        if (knifeOn) {
+                        if (isKnife) {
                             // drop
                             lines.appendAll(['; drag-knife down', `G0${space}Z${-i * knifeDepth}`]);
                         }
@@ -655,7 +658,7 @@ function exportGCode(settings, data) {
                     lines.push(line);
                 });
             }
-            if (knifeOn) {
+            if (isKnife) {
                 lines.appendAll([`G0${space}Z5`]);
             }
         },
