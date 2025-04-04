@@ -1895,6 +1895,12 @@ gapp.register("kiri.init", (root, exports) => {
             api.settings.import_url(`${proto}//${SETUP.wrk[0]}`, false);
         }
 
+        // load an object from url
+        if (SETUP.load) {
+            console.log({load:SETUP});
+            api.platform.load_url(`${proto}//${SETUP.load[0]}`);
+        }
+
         // bind this to UI so main can call it on settings import
         ui.sync = function() {
             const current = settings();
