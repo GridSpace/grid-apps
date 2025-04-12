@@ -68,7 +68,7 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
                 pathOpt.rate = 0.001;
                 pathOpt.extrude = 2;
             } else if (label && type === "out") {
-                let lbl = index !== undefined ? `${slice.index}-${index}` : `${slice.index}`;
+                let lbl = indexed !== undefined ? `${slice.index}-${indexed}` : `${slice.index}`;
                 polyLabel(poly, lbl);
             }
             if (simple) {
@@ -84,7 +84,7 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
             if (ctOutMark && type === "out" && lastEmit) {
                 for (let out of lastEmit.out) {
                     if (out.isInside(poly)) {
-                        polyOut(out, group, "mark");
+                        polyOut(out.clone().setZ(poly.getZ()), group, "mark");
                     }
                 }
             }
@@ -375,7 +375,8 @@ async function prepare(widgets, settings, update) {
                 }
             }
             let lastEmit;
-            for (let slice of widget.slices.reverse()) {
+            let slices = ctOutStack ? widget.slices.reverse() : widget.slices;
+            for (let slice of slices) {
                 lastEmit = sliceEmitObjects(print, slice, layers, {simple: isKnife, lastEmit});
                 update((slices++ / totalSlices) * 0.5, "prepare");
             }

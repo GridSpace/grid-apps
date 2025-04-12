@@ -235,7 +235,6 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         unsafe,
         color,
         dark,
-        // workarea
     };
 
     let opList = [
@@ -275,7 +274,9 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         // apply operation override vars
         let workover = structuredClone(workarea_orig);
         let valz = op.op;
-        if (valz.ov_topz) workover.top_z = bottom_stock + valz.ov_topz;
+        if (valz.ov_topz) {
+            workover.top_z = bottom_stock + valz.ov_topz;
+        }
         if (valz.ov_botz) {
             workover.bottom_z = bottom_stock + valz.ov_botz;
             workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
