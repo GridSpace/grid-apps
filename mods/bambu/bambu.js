@@ -432,7 +432,7 @@ self.kiri.load(api => {
         $('bbl_bed_target').value = bed_target_temper?.toFixed(1) ?? '';
         $('bbl_bed_on').checked = bed_target_temper > 0;
         $('bbl_pause').disabled = (gcode_state !== 'RUNNING');
-        $('bbl_resume').disabled = (gcode_state !== 'PAUSE' || gcode_state === 'FAILED');
+        $('bbl_resume').disabled = (gcode_state !== 'PAUSE' || gcode_state === 'FAILED' || print_error);
         $('bbl_stop').disabled = gcode_file ? false : true;
         $('bbl_file_print').disabled = gcode_file ? true : false;
         $('bbl_fan_part').value = cooling_fan_speed || 0;
@@ -488,6 +488,13 @@ self.kiri.load(api => {
         $('bbl_accel').selectedIndex = (spd_lvl ?? 2) - 1;
         if (print_error) {
             bbl_status.value = `${state} | print error ${print_error}`
+            try {
+                let errkey = parseInt(print_error).toString(16).padStart(8,0);
+                let errmsg = bblapi.errors[errkey];
+                console.log('BAMBU |', errmsg);
+            } catch (e) {
+                console.log({ bambu_parse_error: e });
+            }
         } else if (mc_remaining_time && gcode_state !== 'FAILED') {
             bbl_status.value = `layer ${layer_num} of ${total_layer_num} | ${mc_percent}% complete | ${mc_remaining_time} minutes left | ${state}`
         } else {

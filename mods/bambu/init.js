@@ -267,6 +267,7 @@ module.exports = async (server) => {
 
     // insert scripts before all others in kiri client
     server.inject("kiri", "bambu.js");
+    server.inject("kiri", "errors.js");
     server.inject("kiri", "filament.js");
 
     function o2s(obj) {
