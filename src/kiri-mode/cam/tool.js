@@ -111,7 +111,7 @@ class Tool {
     generateProfile(resolution) {
         // generate tool profile
         let ball = this.isBallMill(),
-            taper = this.isTaperMill() || this.isDrill(),
+            taper = this.hasTaper(),
             tip_diameter = this.tipDiameter(),
             shaft_offset = this.fluteLength(),
             flute_diameter = this.fluteDiameter(),
