@@ -15,7 +15,8 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         DOC = document,
         selectedTool = null,
         editTools = null,
-        maxTool = 0;
+        maxTool = 0,
+        toolNames = ['endmill','ballmill','tapermill','drill'];
 
     api.show.tools = showTools;
 
@@ -41,6 +42,15 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         });
     }
 
+    /**
+     * Check if a tool is a tapermill or drill (i.e. has a taper angle)
+     * @param {String} tool - a string representing the tool type
+     * @return {boolean} true if the tool has a taper angle, false if not
+     */
+    function hasTaper(tool) {
+        return tool === 'tapermill' || tool === 'drill';
+    }
+
     function selectTool(tool) {
         selectedTool = tool;
         ui.toolName.value = tool.name;
@@ -51,8 +61,8 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         ui.toolShaftLen.value = tool.shaft_len;
         ui.toolTaperTip.value = tool.taper_tip || 0;
         ui.toolMetric.checked = tool.metric;
-        ui.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
-        if (tool.type === 'tapermill') {
+        ui.toolType.selectedIndex = toolNames.indexOf(tool.type);
+        if (hasTaper(tool)) {
             ui.toolTaperAngle.value = kiri.driver.CAM.calcTaperAngle(
                 (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
             ).round(1);
@@ -83,7 +93,7 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
 
     function renderTool(tool) {
         let type = selectedTool.type;
-        let taper = type === 'tapermill';
+        let taper = hasTaper(type)
         ui.toolTaperAngle.disabled = taper ? undefined : 'true';
         ui.toolTaperTip.disabled = taper ? undefined : 'true';
         $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
@@ -123,7 +133,7 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
                         stroke
                     } }
                 ];
-            if (type === "tapermill") {
+            if (taper) {
                 let yoff = off.y + shaft_len;
                 // let mid = dim.w / 2;
                 parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
@@ -183,8 +193,8 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value);
         selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value);
         selectedTool.metric = ui.toolMetric.checked;
-        selectedTool.type = ['endmill','ballmill','tapermill'][ui.toolType.selectedIndex];
-        if (selectedTool.type === 'tapermill') {
+        selectedTool.type = toolNames[ui.toolType.selectedIndex];
+        if (hasTaper(selectedTool.type)) {
             const CAM = kiri.driver.CAM;
             const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
             if (ev && ev.target === ui.toolTaperAngle) {

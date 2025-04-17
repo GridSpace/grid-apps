@@ -67,11 +67,11 @@ class Tool {
     }
 
     traceOffset() {
-        return (this.isTaperMill() ? this.tipDiameter() : this.fluteDiameter()) / 2;
+        return (this.hasTaper() ? this.tipDiameter() : this.fluteDiameter()) / 2;
     }
 
     contourOffset(step) {
-        const diam = Math.min(this.isTaperMill() ? this.tipDiameter() : this.fluteDiameter());
+        const diam = Math.min(this.hasTaper() ? this.tipDiameter() : this.fluteDiameter());
         return diam ? diam * step : step;
     }
 
@@ -100,10 +100,18 @@ class Tool {
         return this.tool.type === "tapermill";
     }
 
+    isDrill(){
+        return this.tool.type === "drill";
+    }
+
+    hasTaper() {
+        return this.isTaperMill() || this.isDrill();
+    }
+
     generateProfile(resolution) {
         // generate tool profile
         let ball = this.isBallMill(),
-            taper = this.isTaperMill(),
+            taper = this.isTaperMill() || this.isDrill(),
             tip_diameter = this.tipDiameter(),
             shaft_offset = this.fluteLength(),
             flute_diameter = this.fluteDiameter(),
