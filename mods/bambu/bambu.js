@@ -456,10 +456,7 @@ self.kiri.load(api => {
                     .toLowerCase()
                     .replace('.gcode','')
                     .replace('.3mf','');
-                return h.option({
-                    _: name,
-                    style: "max-width: 20em"
-                });
+                return h.option(name);
             }));
             filelist.selectedIndex = 0;
             filelist.onchange();
@@ -1017,7 +1014,7 @@ self.kiri.load(api => {
                             h.span({ class: "fat5 grow" }),
                             h.i({ class: "fa-solid fa-rotate" })
                         ])),
-                        h.select({ id: "bbl_files" }, []),
+                        h.select({ id: "bbl_files", style: "max-width: 15em" }, []),
                         h.div({ class: "var-row" }, [
                             h.label('size'),
                             h.input({ id: "bbl_file_size", size: 12, readonly })
