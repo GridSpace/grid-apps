@@ -92,6 +92,7 @@ self.kiri.lang['en-us'] = {
     td_tyem:        "end",          // end mill
     td_tybm:        "ball",         // ball mill
     td_tytm:        "taper",        // taper mill
+    td_tydr:        "drill",        // drill
     td_tonm:        "tool #",
     td_shft:        "shaft",        // endmill shaft specs
     td_flut:        "flute",        // endmill flute specs
