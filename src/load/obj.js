@@ -27,7 +27,7 @@ function parseAsync(text) {
 
 function parse(text) {
 
-    let lines = text.split('\n').map(l => l.trim());
+    let lines = text.replaceAll(/ +/g,' ').split('\n').map(l => l.trim());
     let verts = [];
     let faces = [];
     let objs = [ faces ];
