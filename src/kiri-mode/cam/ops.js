@@ -1484,9 +1484,9 @@ class OpDrill extends CamOp {
             for (let poly of inner) {
                 if (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta) {
                     let center = poly.calcCircleCenter(),
-                        merged = false,
-                        closest = Infinity,
-                        dist;
+                    merged = false,
+                    closest = Infinity,
+                    dist;
                     // TODO reject if inside camShellPolys (means there is material above)
                     if (center.isInPolygon(slice.shadow)) {
                         continue;
@@ -1532,7 +1532,9 @@ class OpDrill extends CamOp {
                 point.y = center.y;
             });
             // for thru holes, follow z thru when set
-            if (zThru && center.isInPolygon(thruHoles)) {
+            if ((op.thru>0) && center.isInPolygon(thruHoles)) {
+                drill.points.push(drill.points.last().sub({x:0,y:0,z:op.thru}));
+            }else if(zThru && center.isInPolygon(thruHoles)){
                 drill.points.push(drill.points.last().sub({x:0,y:0,z:zThru}));
             }
             slice.camLines = [ drill ];

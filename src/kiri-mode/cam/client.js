@@ -1157,6 +1157,16 @@ CAM.init = function(kiri, api) {
         API.conf.save();
     };
 
+
+    func.selectIndividualHoles = function(){
+        console.log("func.selectIndividualHoles not implemented");
+    }
+
+    func.selectAllHoles= function(){
+        console.log("func.selectAllHoles not implemented");
+    }
+
+
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
         if (isCamMode) {
@@ -1598,8 +1608,8 @@ CAM.init = function(kiri, api) {
         thru:     UC.newInput(LANG.cd_drlthru_s, {title:LANG.cd_drlthru_l, convert:UC.toFloat, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
         actions: UC.newRow([
-            UC.newButton(LANG.cd_select_s, func.selectIndividual, {title:LANG.cd_select_l}),
-            UC.newButton(LANG.cd_selall_s, func.selectAll, {title:LANG.cd_selall_l})
+            UC.newButton(LANG.cd_select_s, func.selectIndividualHoles, {title:LANG.cd_select_l}),
+            UC.newButton(LANG.cd_selall_s, func.selectAllHoles, {title:LANG.cd_selall_l})
         ], {class:"ext-buttons f-row"})
     };
 
