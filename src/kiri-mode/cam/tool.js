@@ -105,7 +105,7 @@ class Tool {
     }
 
     hasTaper() {
-        return this.isTaperMill() || this.isDrill();
+        return this.isTaperMill();
     }
 
     generateProfile(resolution) {
