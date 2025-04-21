@@ -88,6 +88,17 @@ class Tool {
         return this.unitScale() * this.tool.shaft_len;
     }
 
+    /**
+     * returns the length of the drill tip as a function of the flute diameter,
+     * given a 118 deg point angle. the result is in workspace units.
+     *
+     * @return {number} length of the drill tip.
+     */
+    drillTipLength() {
+        const drillAngleRad = 140 * Math.PI / 180;
+        return 0.5 * this.fluteDiameter() * Math.sin(drillAngleRad);
+    }
+
     shaftDiameter() {
         return this.unitScale() * this.tool.shaft_diam;
     }
@@ -108,11 +119,22 @@ class Tool {
         return this.isTaperMill();
     }
 
+    /**
+     * generate tool profile with resolution number of pixels. the result is a
+     * Float32Array stored in `this.profile` and `this.profileDim` containing
+     * dimensions of the profile in pixels and shared array buffer size.
+     *
+     * @param {number} resolution - number of pixels for the tool profile
+     *
+     * @return {Tool} this
+     */
     generateProfile(resolution) {
         // generate tool profile
         let ball = this.isBallMill(),
             taper = this.hasTaper(),
+            drill = this.isDrill(),
             tip_diameter = this.tipDiameter(),
+            drill_tip_length = this.drillTipLength(),
             shaft_offset = this.fluteLength(),
             flute_diameter = this.fluteDiameter(),
             shaft_diameter = this.shaftDiameter(),
@@ -139,7 +161,7 @@ class Tool {
                 let dx = x - toolCenter,
                     dy = y - toolCenter,
                     dist_from_center = Math.sqrt(dx * dx + dy * dy);
-                if (dist_from_center <= flute_radius_pix_float) {
+                if (dist_from_center <= flute_radius_pix_float) { // if xy point inside flute radius
                     maxo = Math.max(maxo, dx, dy);
                     // flute offset points
                     let z_offset = 0;
@@ -147,8 +169,10 @@ class Tool {
                         let rd = dist_from_center * dist_from_center;
                         z_offset = Math.sqrt(rpixsq - rd) * resolution - flute_radius;
                         // z_offset = (1 - Math.cos((dist_from_center / flute_radius_pix_float) * HPI)) * -flute_radius;
-                    } else if (taper && dist_from_center >= tip_radius_pix_float) {
+                    } else if (taper && dist_from_center >= tip_radius_pix_float) {// if tapered and not in the flat tip radius
                         z_offset = ((dist_from_center - tip_radius_pix_float) / tip_max_radius_offset) * -shaft_offset;
+                    }else if(drill){
+                        z_offset = -dist_from_center /45;
                     }
                     toolOffset.push(dx, dy, z_offset);
                 } else if (shaft_offset && larger_shaft && dist_from_center <= shaft_radius_pix_float) {

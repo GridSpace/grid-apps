@@ -10,7 +10,8 @@
         "flute_len": 2,
         "taper_tip": 0,
         "metric": false
-    }, {
+    },
+    {
         "id": 2001,
         "number": 6,
         "name": "ball 1/8",
@@ -21,7 +22,8 @@
         "flute_len": 2,
         "taper_tip": 0,
         "metric": false
-    }, {
+    },
+    {
         "id": 2002,
         "number": 4,
         "name": "ball 1/4",
@@ -32,7 +34,8 @@
         "flute_len": 2,
         "taper_tip": 0,
         "metric": false
-    }, {
+    },
+    {
         "id": 1000,
         "number": 3,
         "type": "endmill",
@@ -43,7 +46,8 @@
         "flute_diam": 0.0625,
         "flute_len": 1.5,
         "taper_tip": 0
-    }, {
+    },
+    {
         "id": 1001,
         "number": 2,
         "type": "endmill",
@@ -54,11 +58,36 @@
         "flute_diam": 0.125,
         "flute_len": 1.5,
         "taper_tip": 0
-    }, {
+    },
+    {
         "id": 1002,
         "number": 1,
         "type": "endmill",
         "name": "end 1/4",
+        "metric": false,
+        "shaft_diam": 0.25,
+        "shaft_len": 1,
+        "flute_diam": 0.25,
+        "flute_len": 2,
+        "taper_tip": 0
+    },
+    {
+        "id": 1005,
+        "number": 6,
+        "type": "drill",
+        "name": "drill 1/8",
+        "metric": false,
+        "shaft_diam": 0.125,
+        "shaft_len": 1,
+        "flute_diam": 0.125,
+        "flute_len": 1.5,
+        "taper_tip": 0
+    },
+    {
+        "id": 1006,
+        "number": 7,
+        "type": "drill",
+        "name": "drill 1/4",
         "metric": false,
         "shaft_diam": 0.25,
         "shaft_len": 1,
