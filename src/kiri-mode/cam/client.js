@@ -1583,7 +1583,8 @@ CAM.init = function(kiri, api) {
         rate:    'camDrillDownSpeed',
         dwell:   'camDrillDwell',
         lift:    'camDrillLift',
-        mark:    'camDrillMark'
+        mark:    'camDrillMark',
+        thru:    'camDrillThru',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
@@ -1593,6 +1594,13 @@ CAM.init = function(kiri, api) {
         dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat}),
         lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => !poppedRec.mark}),
         mark:     UC.newBoolean(LANG.cd_mark_s, undefined, {title:LANG.cd_mark_l}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        thru:     UC.newInput(LANG.cd_drlthru_s, {title:LANG.cd_drlthru_l, convert:UC.toFloat, units:true}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        actions: UC.newRow([
+            UC.newButton(LANG.cd_select_s, func.selectIndividual, {title:LANG.cd_select_l}),
+            UC.newButton(LANG.cd_selall_s, func.selectAll, {title:LANG.cd_selall_l})
+        ], {class:"ext-buttons f-row"})
     };
 
     createPopOp('register', {
@@ -1703,6 +1711,13 @@ CAM.init = function(kiri, api) {
     createPopOp('|', {}).inputs = {};
 };
 
+/**
+ * Create a new popup operation (popOp) for a given type.
+ * @param {string} type - the name of the popOp to create
+ * @param {object} map - an object mapping popOp keys to either a string
+ * (representing a key in current.process) or a value (to be used as the default).
+ * @returns {object} the newly created popOp.
+ */
 function createPopOp(type, map) {
     let op = popOp[type] = {
         div: UC.newElement('div', { id:`${type}-op`, class:"cam-pop-op" }),

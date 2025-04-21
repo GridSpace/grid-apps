@@ -595,8 +595,15 @@ self.kiri.lang['en-us'] = {
     cd_regi_l:      ["drill registration holes","for double-sided parts","independent of enable","drilling but uses same","tool and settings"],
     cd_thru_s:      "z extend",
     cd_thru_l:      ["extend downward cut through stock","in workspace units"],
+    cd_drlthru_s:   "drill through",
+    cd_drlthru_l:   ["additional drill depth below part bottom"],
     cd_mark_s:      "marking",
     cd_mark_l:      ["only mark holes, do not drill out","the step down setting is used","to determine how deep to mark"],
+
+    cd_select_s:    "select individual",
+    cd_select_l:    ["individually select holes","to drill"],
+    cd_selall_s:    "select all",
+    cd_selall_l:    ["select all holes that", "match selected tool diameter"],
 
     // CNC FLIP
     cf_menu:        "flip",
