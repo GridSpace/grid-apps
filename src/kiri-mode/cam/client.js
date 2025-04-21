@@ -3,6 +3,8 @@
 "use strict";
 
 // dep: kiri-mode.cam.driver
+// dep: kiri.api
+// dep: kiri.alerts
 // use: kiri-mode.cam.animate
 // use: kiri-mode.cam.animate2
 // use: kiri-mode.cam.tools
@@ -10,7 +12,8 @@
 gapp.register("kiri-mode.cam.client", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { driver } = kiri;
+const { driver, api } = kiri;
+const {alerts, conf} = api;
 const { CAM } = driver;
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
@@ -1728,6 +1731,17 @@ function createPopOp(type, map) {
         },
         bind: (ev) => {
             API.util.ui2rec(op.rec, op.inputs);
+
+            const settings  = conf.get();
+            const {tool} = new CAM.Tool(settings,op.rec.tool); //get tool by id
+            const opType = op.rec.type
+            if( opType != "drill" && tool.type == "drill"){
+                alerts.show(`Warning: Drills should not be used for ${opType} operations.`)
+            }
+            if( opType == "drill" && tool.type != "drill"){
+                alerts.show(`Warning: Only drills should be used for drilling operations.`)
+            }
+
             for (let [key, val] of Object.entries(op.rec)) {
                 let saveTo = map[key];
                 if (saveTo && typeof(key) === 'string' && !key.startsWith("~")) {

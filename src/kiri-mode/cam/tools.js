@@ -15,7 +15,8 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         DOC = document,
         selectedTool = null,
         editTools = null,
-        maxTool = 0;
+        maxTool = 0,
+        toolNames = ['endmill','ballmill','tapermill','drill'];
 
     api.show.tools = showTools;
 
@@ -41,6 +42,8 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         });
     }
 
+
+
     function selectTool(tool) {
         selectedTool = tool;
         ui.toolName.value = tool.name;
@@ -51,11 +54,14 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         ui.toolShaftLen.value = tool.shaft_len;
         ui.toolTaperTip.value = tool.taper_tip || 0;
         ui.toolMetric.checked = tool.metric;
-        ui.toolType.selectedIndex = ['endmill','ballmill','tapermill'].indexOf(tool.type);
-        if (tool.type === 'tapermill') {
+        ui.toolType.selectedIndex = toolNames.indexOf(tool.type);
+        if (tool === 'tapermill') {
             ui.toolTaperAngle.value = kiri.driver.CAM.calcTaperAngle(
                 (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
             ).round(1);
+        } else if(tool === 'drill'){
+            ui.toolTaperAngle.value = 118;
+        
         } else {
             ui.toolTaperAngle.value = 0;
         }
@@ -83,7 +89,9 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
 
     function renderTool(tool) {
         let type = selectedTool.type;
-        let taper = type === 'tapermill';
+        let taper = type=== 'tapermill'
+        let drill = type === 'drill'
+        const drillAngleRad = 140 * Math.PI / 180
         ui.toolTaperAngle.disabled = taper ? undefined : 'true';
         ui.toolTaperTip.disabled = taper ? undefined : 'true';
         $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
@@ -101,10 +109,12 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
                 stroke_thin = stroke_width / 2,
                 shaft = tool.shaft_len || 1,
                 flute = tool.flute_len || 1,
-                total_len = shaft + flute,
+                drillTip = drill ?  0.5 * tool.flute_diam * Math.sin(drillAngleRad) : 0,
+                total_len = shaft + flute+drillTip,
                 units = dim.h / total_len,
                 shaft_len = (shaft / total_len) * max.h,
-                flute_len = ((flute / total_len) * max.h),
+                flute_len = (flute / total_len) * max.h,
+                drill_tip_len = (drillTip / total_len) * max.h,
                 shaft_diam = tool.shaft_diam * units,
                 flute_diam = tool.flute_diam * units,
                 // total_wid = Math.max(flute_diam, shaft_diam),
@@ -123,7 +133,7 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
                         stroke
                     } }
                 ];
-            if (type === "tapermill") {
+            if (taper) {
                 let yoff = off.y + shaft_len;
                 // let mid = dim.w / 2;
                 parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
@@ -133,6 +143,31 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
                     `L ${dim.w - off.x - flute_off} ${yoff}`,
                     `z`
                 ].join('\n')}});
+            } else if(drill){
+                
+                const x1 = off.x + flute_off,
+                y1 = off.y + shaft_len,
+                x2 = dim.w - off.x - flute_off,
+                y2 = y1 + flute_len,
+                xMid = dim.w / 2
+
+                parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
+                    `M ${x1} ${y1}`, //move to top left
+                    `L ${x1} ${y2}`, //line to bottom left
+                    `L ${xMid} ${y2+drill_tip_len}`, //line to bottom mid point
+                    `L ${x2} ${y2}`, //line to bottom right
+                    `L ${x2} ${y1}`, //line to top right
+                    `z`
+                ].join('\n')}});
+                //add drill flute lines
+                parts.push({ line: {
+                    x1, y1, x2, y2: (y1 + y2) / 2,
+                    stroke, stroke_width: stroke_thin
+                } });
+                parts.push({ line: {
+                    x1, y1: (y1 + y2) / 2, x2, y2,
+                    stroke, stroke_width: stroke_thin
+                } });
             } else {
                 let fl = isBall ? flute_len - flute_diam/2 : flute_len;
                 let x1 = off.x + flute_off;
@@ -183,7 +218,7 @@ gapp.register("kiri-mode.cam.tools", (root, exports) => {
         selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value);
         selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value);
         selectedTool.metric = ui.toolMetric.checked;
-        selectedTool.type = ['endmill','ballmill','tapermill'][ui.toolType.selectedIndex];
+        selectedTool.type = toolNames[ui.toolType.selectedIndex];
         if (selectedTool.type === 'tapermill') {
             const CAM = kiri.driver.CAM;
             const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
