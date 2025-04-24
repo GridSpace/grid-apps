@@ -1158,20 +1158,26 @@ CAM.init = function(kiri, api) {
     };
 
 
-    func.selectIndividualHoles = function(){
+    func.selectIndividualHoles = function(ev){
         console.log("func.selectIndividualHoles not implemented");
+
+        let holes = CAM.holes((centers)=>{ //cam holes takes <=0 diameter to mean select all holes
+
+            console.log("all centers",centers)
+
+        },0);
+
     }
 
-    func.selectAllHoles= function(data, getRec){
+    func.selectAllHoles= function(ev, getRec){
         let settings = API.conf.get();
         const {tool,mark} = getRec();
 
         const diam = new CAM.Tool(settings,tool).fluteDiameter()
 
-        console.log("func.selectAllHoles not implemented");
         let holes = CAM.holes((centers)=>{ //cam holes takes <=0 diameter to mean select all holes
 
-            console.log("client received centers",centers)
+            console.log("tool specified centers",centers)
 
         },diam);
     }

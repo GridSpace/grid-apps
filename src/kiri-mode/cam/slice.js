@@ -460,13 +460,12 @@ CAM.holes = async function(settings, widget, diam) {
         .filter(z => z !== null)
     )]
 
-
     let centerDiff = diam * 0.1,
         area = (diam/2) * (diam/2) * Math.PI,
         areaDelta =  area * 0.05,
-        drills = [];
-
-    let slices = [];
+        drills = [],
+        slices = [],
+        selectall = diam <= 0;
 
     function onEach(slice) {
         slices.push(slice);
@@ -474,39 +473,37 @@ CAM.holes = async function(settings, widget, diam) {
 
     let opts = { each: onEach, over: false, flatoff: 0, edges: true, openok: false, lines: false };
     await slicer.slice(indices, opts);
-
     const tslices = slices.map(s=>s.tops).flat()
-
     for (let slice of tslices) {
         
         slice.shadow = CAM.shadowAt(widget,slice.z, 0)
-        console.log("looking at slice",slice)
+        // console.log("looking at slice",slice)
 
         let inner = slice.inner;
         for (let poly of inner) {
-            if (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta) {
-                let center = poly.calcCircleCenter();
+            let center = poly.calcCircleCenter();
+            
+            center.isSelected = (selectall || (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta ));
+            
                 
-                if (center.isInPolygon(slice.shadow)) {
+            if (center.isInPolygon(slice.shadow)) {
+                //TODO: test if this is working
+                continue;
+            }
+            let overlap = false;
+            for (let [i,drill] of drills.entries()) {
+                let dist = drill.distTo2D(center)
+                if (dist <= centerDiff) { // too close
+                    // console.log("overlap",center,drill);
+                    if(center.z > drill.z) { //if current is higher than old
+                        drills[i] = center;
+                    }
+                    // otherwise, don't add and continue
+                    overlap = true;
                     continue;
                 }
-                let overlap = false;
-                for (let [i,drill] of drills.entries()) {
-                    let dist = drill.distTo2D(center)
-                    if (dist <= centerDiff) { // too close
-
-                        console.log("overlap",center,drill);
-                        if(center.z > drill.z) { //if current is higher than old
-                            
-                            drills[i] = center;
-                        }
-                        // otherwise, don't add and continue
-                        overlap = true;
-                        continue;
-                    }
-                }
-                if(!overlap) drills.push(center);
             }
+            if(!overlap) drills.push(center);
         }
     }
 
