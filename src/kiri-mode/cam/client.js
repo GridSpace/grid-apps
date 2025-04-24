@@ -1162,8 +1162,18 @@ CAM.init = function(kiri, api) {
         console.log("func.selectIndividualHoles not implemented");
     }
 
-    func.selectAllHoles= function(){
+    func.selectAllHoles= function(data, getRec){
+        let settings = API.conf.get();
+        const {tool,mark} = getRec();
+
+        const diam = new CAM.Tool(settings,tool).fluteDiameter()
+
         console.log("func.selectAllHoles not implemented");
+        let holes = CAM.holes((centers)=>{ //cam holes takes <=0 diameter to mean select all holes
+
+            console.log("client received centers",centers)
+
+        },diam);
     }
 
 
@@ -1586,7 +1596,7 @@ CAM.init = function(kiri, api) {
         menu:      UC.newRow([ UC.newButton("select", func.surfaceAdd) ], {class:"ext-buttons f-row"}),
     };
 
-    createPopOp('drill', {
+    const drillOp =createPopOp('drill', {
         tool:    'camDrillTool',
         spindle: 'camDrillSpindle',
         down:    'camDrillDown',
@@ -1595,7 +1605,9 @@ CAM.init = function(kiri, api) {
         lift:    'camDrillLift',
         mark:    'camDrillMark',
         thru:    'camDrillThru',
-    }).inputs = {
+    })
+    
+    drillOp.inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
         spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
@@ -1609,8 +1621,8 @@ CAM.init = function(kiri, api) {
         sep:      UC.newBlank({class:"pop-sep"}),
         actions: UC.newRow([
             UC.newButton(LANG.cd_select_s, func.selectIndividualHoles, {title:LANG.cd_select_l}),
-            UC.newButton(LANG.cd_selall_s, func.selectAllHoles, {title:LANG.cd_selall_l})
-        ], {class:"ext-buttons f-row"})
+            UC.newButton(LANG.cd_selall_s, (ev)=>func.selectAllHoles(ev, drillOp.createRecordGetter()), {title:LANG.cd_selall_l})
+        ], {class:"ext-buttons f-col"})
     };
 
     createPopOp('register', {
@@ -1763,7 +1775,7 @@ function createPopOp(type, map) {
             if( opType != "drill" && tool.type == "drill"){
                 alerts.show(`Warning: Drills should not be used for ${opType} operations.`)
             }
-            if( opType == "drill" && tool.type != "drill"){
+            else if( opType == "drill" && tool.type != "drill"){
                 alerts.show(`Warning: Only drills should be used for drilling operations.`)
             }
 
@@ -1824,6 +1836,20 @@ function createPopOp(type, map) {
         },
         group: [],
     };
+
+    /**
+     * @function createRecordGetter
+     * @description Creates a getter function for the current record.
+     *              The getter will bind the current record to the op before returning it.
+     *              This is useful for passing a record to a pre-slice function
+     * @returns {function} A getter function for the current record.
+     */
+    op.createRecordGetter =  () => {
+        return () => {
+            op.bind();
+            return op.rec;
+        }
+    }
 
     UC.restore({
         addTo: op.div,

@@ -332,8 +332,10 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     widget.minToolDiam = minToolDiam;
     widget.maxToolDiam = maxToolDiam;
 
-    ondone();
+    ondone(state);
 };
+
+
 
 CAM.addDogbones = function(poly, dist, reverse) {
     if (Array.isArray(poly)) {
@@ -421,6 +423,8 @@ CAM.traces = async function(settings, widget, single) {
             traces.push(poly);
         });
     };
+
+
     let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true, lines: true };
     await slicer.slice(indices, opts);
     // pick up bottom features
@@ -430,6 +434,86 @@ CAM.traces = async function(settings, widget, single) {
     widget.trace_single = single;
     return true;
 };
+
+CAM.holes = async function(settings, widget, diam) {
+
+    let proc = settings.process,
+        stock = settings.stock || {},
+        isIndexed = proc.camStockIndexed,
+        track = widget.track,
+        { camZTop, camZBottom, camZThru } = proc,
+        // widget top z as defined by setTopz()
+        wztop = track.top,
+        // distance between top of part and top of stock
+        ztOff = isIndexed ? 0 : (stock.z - wztop),
+        // distance between bottom of part and bottom of stock
+        zbOff = isIndexed ? 0 : (wztop - track.box.d),
+        // defined z bottom offset by distance to stock bottom
+        // keeps the z bottom relative to the part when z align changes
+        zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
+
+    let slicer = new kiri.cam_slicer(widget);
+
+    let zees = Object.assign({}, slicer.zFlat);
+    let indices = [...new Set(Object.keys(zees)
+        .map(kv => parseFloat(kv).round(5))
+        .filter(z => z !== null)
+    )]
+
+
+    let centerDiff = diam * 0.1,
+        area = (diam/2) * (diam/2) * Math.PI,
+        areaDelta =  area * 0.05,
+        drills = [];
+
+    let slices = [];
+
+    function onEach(slice) {
+        slices.push(slice);
+    }
+
+    let opts = { each: onEach, over: false, flatoff: 0, edges: true, openok: false, lines: false };
+    await slicer.slice(indices, opts);
+
+    const tslices = slices.map(s=>s.tops).flat()
+
+    for (let slice of tslices) {
+        
+        slice.shadow = CAM.shadowAt(widget,slice.z, 0)
+        console.log("looking at slice",slice)
+
+        let inner = slice.inner;
+        for (let poly of inner) {
+            if (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta) {
+                let center = poly.calcCircleCenter();
+                
+                if (center.isInPolygon(slice.shadow)) {
+                    continue;
+                }
+                let overlap = false;
+                for (let [i,drill] of drills.entries()) {
+                    let dist = drill.distTo2D(center)
+                    if (dist <= centerDiff) { // too close
+
+                        console.log("overlap",center,drill);
+                        if(center.z > drill.z) { //if current is higher than old
+                            
+                            drills[i] = center;
+                        }
+                        // otherwise, don't add and continue
+                        overlap = true;
+                        continue;
+                    }
+                }
+                if(!overlap) drills.push(center);
+            }
+        }
+    }
+
+    console.log("drills returned",drills)
+    widget.holes = drills;
+    return drills;
+}
 
 function cutTabs(tabs, offset, z, inter) {
     tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();

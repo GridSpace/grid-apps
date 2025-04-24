@@ -600,9 +600,9 @@ self.kiri.lang['en-us'] = {
     cd_mark_s:      "marking",
     cd_mark_l:      ["only mark holes, do not drill out","the step down setting is used","to determine how deep to mark"],
 
-    cd_select_s:    "select individual",
+    cd_select_s:    "Select Individual",
     cd_select_l:    ["individually select holes","to drill"],
-    cd_selall_s:    "select all",
+    cd_selall_s:    "Select Matching Diameter",
     cd_selall_l:    ["select all holes that", "match selected tool diameter"],
 
     // CNC FLIP
