@@ -89,9 +89,6 @@ kiri.load(api => {
             const widgets = api.widgets.map();
             kiri.client.send("cam_holes", { settings, diam }, output => {
                 let res = kiri.codec.decode(output)
-                    
-                console.log("output from driver",res)
-
                 ondone(res);
             });
         

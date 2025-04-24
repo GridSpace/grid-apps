@@ -506,8 +506,6 @@ CAM.holes = async function(settings, widget, diam) {
             if(!overlap) drills.push(center);
         }
     }
-
-    console.log("drills returned",drills)
     widget.holes = drills;
     return drills;
 }
