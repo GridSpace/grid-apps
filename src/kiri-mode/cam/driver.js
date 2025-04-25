@@ -83,13 +83,14 @@ kiri.load(api => {
         };
 
         //0 or less diameter means select all holes
-        CAM.holes = function(ondone, diam) {
+        CAM.holes = function(diam,onDone) {
             kiri.client.sync();
             const settings = api.conf.get();
             const widgets = api.widgets.map();
             kiri.client.send("cam_holes", { settings, diam }, output => {
                 let res = kiri.codec.decode(output)
-                ondone(res);
+                console.log("driver gets",res)
+                onDone(res)
             });
         
         }

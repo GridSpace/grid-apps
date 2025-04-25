@@ -145,7 +145,7 @@ class Layers {
     }
 
     // add an enclosed 3D polygon earcut into faces
-    // used for FDM solids, bridges, flats debug & SLA slice visualization
+    // used for FDM solids, bridges, flats debug, CAM hole generation & SLA slice visualization
     addAreas(polys, options) {
         const faces = this.current.faces;
         polys = Array.isArray(polys) ? polys : [ polys ];

@@ -5,6 +5,7 @@
 // dep: kiri-mode.cam.driver
 // dep: kiri.api
 // dep: kiri.alerts
+// dep: geo.polygon
 // use: kiri-mode.cam.animate
 // use: kiri-mode.cam.animate2
 // use: kiri-mode.cam.tools
@@ -12,6 +13,7 @@
 gapp.register("kiri-mode.cam.client", [], (root, exports) => {
 
 const { base, kiri } = root;
+const { Polygon } = base
 const { driver, api } = kiri;
 const {alerts, conf} = api;
 const { CAM } = driver;
@@ -983,7 +985,7 @@ CAM.init = function(kiri, api) {
 
     // TRACE FUNCS
     let traceOn = false, lastTrace;
-    func.traceAdd = (ev) => {
+    func.traceAdd = (ev) => { 
         if (traceOn) {
             return func.traceDone();
         }
@@ -1158,30 +1160,152 @@ CAM.init = function(kiri, api) {
     };
 
 
-    func.selectIndividualHoles = function(ev){
-        console.log("func.selectIndividualHoles not implemented");
+    let holeSelOn = false, lastSelHoles;
+    func.selectHoles = async function(all){
+        console.log("client all selected",all)
+        if (holeSelOn) {
+            return func.selectHolesDone();
+        }
+        func.clearPops();
+        alert = api.show.alert("analyzing parts...", 1000);
+        holeSelOn = hoveredOp;
+        holeSelOn.classList.add("editing");
+        api.feature.hover = true;
+        api.feature.hoverAdds = true;
+        func.hover = func.selectHolesHover;
+        func.hoverUp = func.selectHolesHoverUp;
 
-        let holes = CAM.holes((centers)=>{ //cam holes takes <=0 diameter to mean select all holes
-
-            console.log("all centers",centers)
-
-        },0);
-
-    }
-
-    func.selectAllHoles= function(ev, getRec){
         let settings = API.conf.get();
-        const {tool,mark} = getRec();
+        const {tool,mark} = poppedRec
+        let diam = new CAM.Tool(settings,tool).fluteDiameter()
 
-        const diam = new CAM.Tool(settings,tool).fluteDiameter()
+        await CAM.holes(all?0:diam,(centers)=>{
+            console.log("centers",centers)
 
-        let holes = CAM.holes((centers)=>{ //cam holes takes <=0 diameter to mean select all holes
+            //flattened list of all hole centers and if they are selected
+            
+            kiri.api.widgets.for(widget => {
+                console.log(widget)
+                const {holes} = centers.find(center=>center.id = widget.id)
+                widget.holes = holes;
+                // console.log("holes",holes)
+            
+                api.hide.alert(alert);
+                alert = api.show.alert("[esc] cancels trace editing");
+                kiri.api.widgets.opacity(0.8);
+                
+                if (!holes.length) {
+                    unselectHoles(holes);
+                }
 
-            console.log("tool specified centers",centers)
+                let layers = new kiri.Layers();
 
-        },diam);
+                holes.forEach(hole => {
+
+                    let circlePoly = new Polygon().centerCircle(hole,diam/2,20,true)
+                    let mesh = circlePoly.extrude(500)
+
+                    let meshPolys = []
+
+                    for(let i =0;i<mesh.length;){
+                        meshPolys.push(new Polygon(
+                            {
+                                x: mesh[i++],
+                                y: mesh[i++],
+                                z: mesh[i++]
+                            },
+                            {
+                                x: mesh[i++],
+                                y: mesh[i++],
+                                z: mesh[i++]
+                            },
+                            {
+                                x: mesh[i++],
+                                y: mesh[i++],
+                                z: mesh[i++]
+                            }
+                        ))
+                    }
+                    hole.meshPolys = meshPolys
+
+                    // console.log(meshPolys)
+                    
+                    layers.setLayer("holes", {line: 0x000055, fat:4, order:-10}, false).addAreas(meshPolys);
+                    // mesh.position.copy(hole);
+                })
+                
+
+                let stack = new kiri.Stack(widget.mesh);
+                widget.hole_stack = stack;
+                widget.holes.forEach(poly => {
+                    stack.addLayers(layers);
+                    stack.new_meshes.forEach(mesh => {
+                        mesh.trace = {widget, poly};
+                        // ensure trace poly singleton from matches
+                        if (match.length > 0) {
+                            poly._trace = match[0];
+                        } else {
+                            poly._trace = poly.toArray();
+                        }
+                    });
+                    widget.adds.appendAll(stack.new_meshes);
+                });
+
+            })
+
+            //START COPYPASTA
+
+            
+            
+            // ensure appropriate traces are toggled matching current record
+            // kiri.api.widgets.for(widget => {
+            //     let areas = (poppedRec.areas[widget.id] || []);
+            //     let stack = widget.trace_stack;
+            //     stack.meshes.forEach(mesh => {
+            //         let { poly } = mesh.trace;
+            //         let match = areas.filter(arr => poly.matches(arr));
+            //         if (match.length > 0) {
+            //             if (!mesh.selected) {
+            //                 func.traceToggle(mesh, true);
+            //             }
+            //         } else if (mesh.selected) {
+            //             func.traceToggle(mesh, true);
+            //         }
+            //     });
+            // });
+
+
+            //END COPYPASTA
+
+
+        });
     }
 
+
+    func.selectHolesHover = function(data) {
+    }
+
+    func.selectHolesHoverUp = function(int, ev) {
+    }
+
+    func.selectHolesDone = () => {
+        if (!holeSelOn) {
+            return;
+        }
+        func.unpop();
+        holeSelOn.classList.remove("editing");
+        holeSelOn = false;
+        kiri.api.widgets.opacity(1);
+        api.hide.alert(alert);
+        api.feature.hover = false;
+        api.feature.hoverAdds = false;
+        kiri.api.widgets.for(widget => {
+            if (widget.trace_stack) {
+                widget.trace_stack.hide();
+                widget.adds.removeAll(widget.trace_stack.meshes);
+            }
+        });
+    };
 
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
@@ -1626,8 +1750,8 @@ CAM.init = function(kiri, api) {
         thru:     UC.newInput(LANG.cd_drlthru_s, {title:LANG.cd_drlthru_l, convert:UC.toFloat, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
         actions: UC.newRow([
-            UC.newButton(LANG.cd_select_s, func.selectIndividualHoles, {title:LANG.cd_select_l}),
-            UC.newButton(LANG.cd_selall_s, (ev)=>func.selectAllHoles(ev, drillOp.createRecordGetter()), {title:LANG.cd_selall_l})
+            UC.newButton(LANG.cd_select_s, ()=>func.selectHoles(false), {title:LANG.cd_select_l}),
+            UC.newButton(LANG.cd_selall_s, ()=>func.selectHoles(true), {title:LANG.cd_selall_l})
         ], {class:"ext-buttons f-col"})
     };
 
@@ -1943,6 +2067,12 @@ function unselectTraces(widget, skip) {
             }
         });
     }
+}
+
+function unselectHoles(widget) {
+    widget.holes.forEach(hole => {
+        hole.selected = false
+    })
 }
 
 function validateTools(tools) {

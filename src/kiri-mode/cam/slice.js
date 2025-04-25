@@ -465,7 +465,7 @@ CAM.holes = async function(settings, widget, diam) {
         areaDelta =  area * 0.05,
         drills = [],
         slices = [],
-        selectall = diam <= 0;
+        selectall = (diam <= 0);
 
     function onEach(slice) {
         slices.push(slice);
@@ -483,9 +483,9 @@ CAM.holes = async function(settings, widget, diam) {
         for (let poly of inner) {
             let center = poly.calcCircleCenter();
             
-            center.isSelected = (selectall || (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta ));
-            
-                
+            center.selected = (selectall || (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta ));
+            // center.points = poly.points;    
+
             if (center.isInPolygon(slice.shadow)) {
                 //TODO: test if this is working
                 continue;
