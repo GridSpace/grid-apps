@@ -332,7 +332,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     widget.minToolDiam = minToolDiam;
     widget.maxToolDiam = maxToolDiam;
 
-    ondone(state);
+    ondone();
 };
 
 
