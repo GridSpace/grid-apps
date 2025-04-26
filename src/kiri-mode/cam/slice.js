@@ -465,7 +465,7 @@ CAM.holes = async function(settings, widget, diam) {
         areaDelta =  area * 0.05,
         drills = [],
         slices = [],
-        selectall = (diam <= 0);
+        individual = (diam <= 0);
 
     function onEach(slice) {
         slices.push(slice);
@@ -483,8 +483,8 @@ CAM.holes = async function(settings, widget, diam) {
         for (let poly of inner) {
             let center = poly.calcCircleCenter();
             
-            center.selected = (selectall || (poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta ));
-            // center.points = poly.points;    
+            center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta );
+            // center.points = poly.points;
 
             if (center.isInPolygon(slice.shadow)) {
                 //TODO: test if this is working
@@ -496,16 +496,24 @@ CAM.holes = async function(settings, widget, diam) {
                 if (dist <= centerDiff) { // too close
                     // console.log("overlap",center,drill);
                     if(center.z > drill.z) { //if current is higher than old
-                        drills[i] = center;
+                        drills[i] = center; //replace with top point
+                        drills[i].depth = center.z-drill.z
+                    }else if(center.z <= drill.z-drill.depth){// if current is lower or same as old
+                        drills[i].depth = drill.z-center.z
                     }
-                    // otherwise, don't add and continue
+                    // if overlapping, don't add and continue
                     overlap = true;
                     continue;
                 }
             }
+            center.depth = 0;
             if(!overlap) drills.push(center);
         }
     }
+
+    drills = drills.filter(drill => drill.depth > 0)
+    .sort((a,b) => a.z - b.z)
+
     widget.holes = drills;
     return drills;
 }

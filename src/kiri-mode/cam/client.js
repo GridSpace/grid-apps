@@ -1029,6 +1029,7 @@ CAM.init = function(kiri, api) {
                         }
                     });
                     widget.adds.appendAll(stack.new_meshes);
+                    console.log(widget)
                 });
             });
             // ensure appropriate traces are toggled matching current record
@@ -1072,6 +1073,7 @@ CAM.init = function(kiri, api) {
         func.tabDone();
         func.traceDone();
         func.surfaceDone();
+        func.selectHolesDone();
     };
     api.event.on("cam.trace.clear", func.traceClear = () => {
         func.traceDone();
@@ -1161,8 +1163,8 @@ CAM.init = function(kiri, api) {
 
 
     let holeSelOn = false, lastSelHoles;
-    func.selectHoles = async function(all){
-        console.log("client all selected",all)
+    func.selectHoles = async function(individual){
+        console.log("client individual selected",individual)
         if (holeSelOn) {
             return func.selectHolesDone();
         }
@@ -1179,17 +1181,12 @@ CAM.init = function(kiri, api) {
         const {tool,mark} = poppedRec
         let diam = new CAM.Tool(settings,tool).fluteDiameter()
 
-        await CAM.holes(all?0:diam,(centers)=>{
+        await CAM.holes(individual?0:diam,(centers)=>{
             console.log("centers",centers)
-
             //flattened list of all hole centers and if they are selected
-            
             kiri.api.widgets.for(widget => {
-                console.log(widget)
                 const {holes} = centers.find(center=>center.id = widget.id)
                 widget.holes = holes;
-                // console.log("holes",holes)
-            
                 api.hide.alert(alert);
                 alert = api.show.alert("[esc] cancels trace editing");
                 kiri.api.widgets.opacity(0.8);
@@ -1197,90 +1194,32 @@ CAM.init = function(kiri, api) {
                 if (!holes.length) {
                     unselectHoles(holes);
                 }
-
-                let layers = new kiri.Layers();
-
                 holes.forEach(hole => {
+                    if(!hole.mesh){
+                        let {depth,selected} = hole
+                        let color = selected ? 0xFF0000:0x39e366
+                        let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
+                        const material = new THREE.MeshBasicMaterial( { color  } );
+                        let mesh = new THREE.Mesh(geo, material);
+                        mesh.position.copy(hole)
+                        mesh.position.z -= depth/2
+                        mesh.rotation.x = Math.PI/2
 
-                    let circlePoly = new Polygon().centerCircle(hole,diam/2,20,true)
-                    let mesh = circlePoly.extrude(500)
-
-                    let meshPolys = []
-
-                    for(let i =0;i<mesh.length;){
-                        meshPolys.push(new Polygon(
-                            {
-                                x: mesh[i++],
-                                y: mesh[i++],
-                                z: mesh[i++]
-                            },
-                            {
-                                x: mesh[i++],
-                                y: mesh[i++],
-                                z: mesh[i++]
-                            },
-                            {
-                                x: mesh[i++],
-                                y: mesh[i++],
-                                z: mesh[i++]
-                            }
-                        ))
-                    }
-                    hole.meshPolys = meshPolys
-
-                    // console.log(meshPolys)
-                    
-                    layers.setLayer("holes", {line: 0x000055, fat:4, order:-10}, false).addAreas(meshPolys);
-                    // mesh.position.copy(hole);
-                })
-                
-
-                let stack = new kiri.Stack(widget.mesh);
-                widget.hole_stack = stack;
-                widget.holes.forEach(poly => {
-                    stack.addLayers(layers);
-                    stack.new_meshes.forEach(mesh => {
-                        mesh.trace = {widget, poly};
-                        // ensure trace poly singleton from matches
-                        if (match.length > 0) {
-                            poly._trace = match[0];
-                        } else {
-                            poly._trace = poly.toArray();
+                        hole.mesh = mesh;
+                        hole.updateColor = ()=>{
+                            hole.mesh.material.color.set(hole.selected?0xFF0000:0x39e366)
                         }
-                    });
-                    widget.adds.appendAll(stack.new_meshes);
+                    }else{
+                        hole.updateColor()
+                    }
+                })
+                widget.holes.forEach(hole => {
+                    widget.mesh.add(hole.mesh);
                 });
-
+                console.log("hole widget:",widget)
             })
-
-            //START COPYPASTA
-
-            
-            
-            // ensure appropriate traces are toggled matching current record
-            // kiri.api.widgets.for(widget => {
-            //     let areas = (poppedRec.areas[widget.id] || []);
-            //     let stack = widget.trace_stack;
-            //     stack.meshes.forEach(mesh => {
-            //         let { poly } = mesh.trace;
-            //         let match = areas.filter(arr => poly.matches(arr));
-            //         if (match.length > 0) {
-            //             if (!mesh.selected) {
-            //                 func.traceToggle(mesh, true);
-            //             }
-            //         } else if (mesh.selected) {
-            //             func.traceToggle(mesh, true);
-            //         }
-            //     });
-            // });
-
-
-            //END COPYPASTA
-
-
         });
     }
-
 
     func.selectHolesHover = function(data) {
     }
@@ -1300,9 +1239,10 @@ CAM.init = function(kiri, api) {
         api.feature.hover = false;
         api.feature.hoverAdds = false;
         kiri.api.widgets.for(widget => {
-            if (widget.trace_stack) {
-                widget.trace_stack.hide();
-                widget.adds.removeAll(widget.trace_stack.meshes);
+            if (widget.holes) {
+                widget.holes.forEach(hole => {
+                    widget.mesh.remove(hole.mesh);
+                })
             }
         });
     };
@@ -1750,8 +1690,8 @@ CAM.init = function(kiri, api) {
         thru:     UC.newInput(LANG.cd_drlthru_s, {title:LANG.cd_drlthru_l, convert:UC.toFloat, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
         actions: UC.newRow([
-            UC.newButton(LANG.cd_select_s, ()=>func.selectHoles(false), {title:LANG.cd_select_l}),
-            UC.newButton(LANG.cd_selall_s, ()=>func.selectHoles(true), {title:LANG.cd_selall_l})
+            UC.newButton(LANG.cd_select_s, ()=>func.selectHoles(true), {title:LANG.cd_select_l}),
+            UC.newButton(LANG.cd_selall_s, ()=>func.selectHoles(false), {title:LANG.cd_selall_l})
         ], {class:"ext-buttons f-col"})
     };
 
