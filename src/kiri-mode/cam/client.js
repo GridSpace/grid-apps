@@ -1205,7 +1205,8 @@ CAM.init = function(kiri, api) {
                         mesh.position.z -= depth/2
                         mesh.rotation.x = Math.PI/2
 
-                        hole.mesh = mesh;
+                        hole.mesh = mesh; //add pointers to both objects
+                        mesh.hole = hole;
                         hole.updateColor = ()=>{
                             hole.mesh.material.color.set(hole.selected?0xFF0000:0x39e366)
                         }
@@ -1215,6 +1216,7 @@ CAM.init = function(kiri, api) {
                 })
                 widget.holes.forEach(hole => {
                     widget.mesh.add(hole.mesh);
+                    widget.adds.push(hole.mesh);
                 });
                 console.log("hole widget:",widget)
             })
@@ -1222,9 +1224,52 @@ CAM.init = function(kiri, api) {
     }
 
     func.selectHolesHover = function(data) {
+
+        
+        if (lastTrace) {
+            let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
+            color.r = colorSave.r;
+            color.g = colorSave.g;
+            color.b = colorSave.b;
+            lastTrace.position.z -= 0.01;
+        }
+        if (data.type === 'platform') {
+            lastTrace = null;
+            return;
+        }
+        // console.log("selectHolesHover",data)
+        // if (!data.int.object.trace) {
+        //     return;
+        // }
+        // lastTrace = data.int.object;
+        // lastTrace.position.z += 0.01;
+        // if (lastTrace.selected) {
+        //     let event = data.event;
+        //     let target = event.target;
+        //     let { clientX, clientY } = event;
+        //     let { offsetWidth, offsetHeight } = target;
+        // }
+        // let material = lastTrace.material[0] || lastTrace.material;
+        // let color = material.color;
+        // let {r, g, b} = color;
+        // material.colorSave = {r, g, b};
+        // color.r = 0;
+        // color.g = 0;
+        // color.b = 1;
+            
     }
 
     func.selectHolesHoverUp = function(int, ev) {
+        console.log("selectHolesHoverUp",int)
+        if (!int) return; //if not a hole mesh return
+            let { object } = int;
+            func.selectHoleToggle(object.hole);
+            
+    }
+
+    func.selectHoleToggle = function(hole) {
+        hole.selected = !hole.selected;
+        hole.updateColor();
     }
 
     func.selectHolesDone = () => {

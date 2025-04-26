@@ -1461,18 +1461,17 @@ class OpDrill extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, addSlices, tslices, updateToolDiams } = state;
+        let { settings, addSlices, widget, updateToolDiams } = state;
         let { zBottom, zThru, thruHoles, color } = state;
 
         let drills = [],
             drillTool = new CAM.Tool(settings, op.tool),
             drillToolDiam = drillTool.fluteDiameter(),
-            centerDiff = drillToolDiam * 0.1,
-            area = (drillToolDiam/2) * (drillToolDiam/2) * Math.PI,
-            areaDelta = op.mark ? Infinity : area * 0.05,
             sliceOut = this.sliceOut = [];
 
         updateToolDiams(drillToolDiam);
+
+        console.log(widget)
 
         // for each slice, look for polygons with 98.5% circularity whose
         // area is within the tolerance of a circle matching the tool diameter
