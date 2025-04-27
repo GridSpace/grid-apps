@@ -1183,57 +1183,78 @@ CAM.init = function(kiri, api) {
         const {tool,mark} = poppedRec
         let diam = new CAM.Tool(settings,tool).fluteDiameter()
 
-        await CAM.holes(individual?0:diam,(centers)=>{
-            console.log("centers",centers)
-            //flattened list of all hole centers and if they are selected
-            kiri.api.widgets.for(widget => {
-                const {holes} = centers.find(center=>center.id = widget.id)
-                widget.holes = holes;
-                api.hide.alert(alert);
-                alert = api.show.alert("[esc] cancels trace editing");
-                kiri.api.widgets.opacity(0.8);
+        api.hide.alert(alert);
+        alert = api.show.alert("[esc] cancels trace editing");
+        kiri.api.widgets.opacity(0.8);
 
-                holes.toRecord = () => {
-                    return holes.map(hole => {
-                        let {x,y,z,depth,selected} = hole
-                        return {x,y,z,depth,selected}
-                    })
-                }
-                
-                if (!holes.length) {
-                    unselectHoles(holes);
-                }
-                holes.forEach(hole => {
-                    if(!hole.mesh){
-                        let {depth,selected} = hole
-                        let color = selected ? 0xFF0000:0x39e366
-                        let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
-                        const material = new THREE.MeshBasicMaterial( { color  } );
-                        let mesh = new THREE.Mesh(geo, material);
-                        mesh.position.copy(hole)
-                        mesh.position.z -= depth/2
-                        mesh.rotation.x = Math.PI/2
+        // console.log(kiri.api.widgets.all())
+        const widgets = kiri.api.widgets.all()
 
-                        hole.mesh = mesh; //add pointers to both objects
-                        mesh.hole = hole;
-                        hole.updateColor = ()=>{
-                            hole.mesh.material.color.set(hole.selected?0xFF0000:0x39e366)
-                        }
-                    }else{
-                        hole.updateColor()
-                    }
-                })
-                //add hole data to record
+        if(individual && widgets.some(w=>w.holes!= undefined) ){ // if any widget already has cached holes
+            // console.log("already has cached holes",widgets)
 
-                poppedRec.drills[widget.id] = holes.toRecord();
-
+            widgets.forEach(widget => {
                 widget.holes.forEach(hole => {
+                    hole.mesh.parent = widget.mesh;
                     widget.mesh.add(hole.mesh);
                     widget.adds.push(hole.mesh);
                 });
-                console.log("hole widget:",widget)
             })
-        });
+
+        }else{ // if no widget has cached holes
+            console.log("no cached holes, must slice")
+            await CAM.holes(individual?0:diam,(centers)=>{
+                console.log("centers",centers)
+                //flattened list of all hole centers and if they are selected
+                kiri.api.widgets.for(widget => {
+                    const {holes} = centers.find(center=>center.id = widget.id)
+                    widget.holes = holes;
+    
+                    holes.toRecord = () => {
+                        return holes.map(hole => {
+                            let {x,y,z,depth,selected} = hole
+                            return {x,y,z,depth,selected}
+                        })
+                    }
+                    
+                    if (!holes.length) {
+                        unselectHoles(holes);
+                    }
+                    holes.forEach(hole => {
+                        if(!hole.mesh){
+                            let {depth,selected} = hole
+                            let color = selected ? 0xFF0000:0x39e366
+                            let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
+                            const material = new THREE.MeshBasicMaterial( { color  } );
+                            let mesh = new THREE.Mesh(geo, material);
+                            mesh.position.copy(hole)
+                            mesh.position.z -= depth/2
+                            mesh.rotation.x = Math.PI/2
+    
+                            hole.mesh = mesh; //add pointers to both objects
+                            mesh.hole = hole;
+                            hole.updateColor = ()=>{
+                                hole.mesh.material.color.set(hole.selected?0xFF0000:0x39e366)
+                            }
+                        }else{
+                            hole.updateColor()
+                        }
+                    })
+                    //add hole data to record
+                    poppedRec.drills[widget.id] = holes.toRecord();
+                    // console.log("hole widget:",widget)
+
+
+                    widget.holes.forEach(hole => {
+                        hole.mesh.parent = widget.mesh;
+                        widget.mesh.add(hole.mesh);
+                        widget.adds.push(hole.mesh);
+                    });
+
+                })
+            });
+            // console.log(" widgets sliced",kiri.api.widgets.all())
+        }
     }
 
     func.selectHolesHover = function(data) {
@@ -1279,6 +1300,7 @@ CAM.init = function(kiri, api) {
             func.selectHoleToggle(object.hole);
 
             let widget = object.parent.widget; //only update the parent widget
+            console.log(poppedRec,poppedRec.drills)
             poppedRec.drills[widget.id]  = widget.holes.toRecord();
             
     }
@@ -1305,6 +1327,7 @@ CAM.init = function(kiri, api) {
                     widget.mesh.remove(hole.mesh);
                 })
             }
+            widget.adds = []
         });
     };
 
