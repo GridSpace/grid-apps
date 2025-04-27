@@ -475,17 +475,12 @@ CAM.holes = async function(settings, widget, diam) {
     await slicer.slice(indices, opts);
     const tslices = slices.map(s=>s.tops).flat()
     for (let slice of tslices) {
-        
         slice.shadow = CAM.shadowAt(widget,slice.z, 0)
-        // console.log("looking at slice",slice)
-
         let inner = slice.inner;
         for (let poly of inner) {
             let center = poly.calcCircleCenter();
-            
             center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta );
             // center.points = poly.points;
-
             if (center.isInPolygon(slice.shadow)) {
                 //TODO: test if this is working
                 continue;
@@ -510,10 +505,7 @@ CAM.holes = async function(settings, widget, diam) {
             if(!overlap) drills.push(center);
         }
     }
-
     drills = drills.filter(drill => drill.depth > 0)
-    .sort((a,b) => a.z - b.z)
-
     widget.holes = drills;
     return drills;
 }
