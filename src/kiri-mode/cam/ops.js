@@ -1483,6 +1483,9 @@ class OpDrill extends CamOp {
 
         // drill points to use center (average of all points) of the polygon
         allDrills.forEach((drill)=> {
+            if(!drill.selected){
+                return
+            }
             let slice = newSlice(0);            
             if (op.mark) {
                 // replace depth with single down peck
@@ -1495,11 +1498,10 @@ class OpDrill extends CamOp {
             if ((op.thru>0) ) {
                 drill.zBottom -= op.thru;
             }
-            console.log(slice)
             
             const poly  = newPolygon()
-            poly.points.push({x:drill.x, y:drill.y, z:drill.z})
-            poly.points.push({x:drill.x, y:drill.y, z:drill.zBottom})
+            poly.points.push(newPoint(drill.x, drill.y, drill.z))
+            poly.points.push(newPoint(drill.x, drill.y, drill.zBottom))
                 
             // poly.points.pop();
             slice.camTrace = { tool: op.tool, rate: op.feed, plunge: op.rate };
@@ -1515,11 +1517,12 @@ class OpDrill extends CamOp {
     }
 
     prepare(ops, progress) {
+        console.log("prepare drill",ops)
         let { op, state } = this;
         let { settings, widget, addSlices, updateToolDiams } = state;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
         setTool(op.tool, undefined, op.rate);
-        setDrill(op.down, op.lift, op.dwell);
+        setDrill(op.down, op.lift, op.dwell,op.thru);
         setSpindle(op.spindle);
         emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
     }
