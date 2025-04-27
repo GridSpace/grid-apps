@@ -400,7 +400,9 @@ CAM.init = function(kiri, api) {
     };
 
     func.opAddDrill = () => {
-        func.opAdd(popOp.drill.new());
+        let rec = popOp.drill.new();
+        rec.drills = { /* widget.id: [ drills... ] */ };
+        func.opAdd(rec);
     };
 
     func.opAddRegister = (axis, points) => {
@@ -1190,6 +1192,13 @@ CAM.init = function(kiri, api) {
                 api.hide.alert(alert);
                 alert = api.show.alert("[esc] cancels trace editing");
                 kiri.api.widgets.opacity(0.8);
+
+                holes.toRecord = () => {
+                    return holes.map(hole => {
+                        let {x,y,z,depth,selected} = hole
+                        return {x,y,z,depth,selected}
+                    })
+                }
                 
                 if (!holes.length) {
                     unselectHoles(holes);
@@ -1214,6 +1223,10 @@ CAM.init = function(kiri, api) {
                         hole.updateColor()
                     }
                 })
+                //add hole data to record
+
+                poppedRec.drills[widget.id] = holes.toRecord();
+
                 widget.holes.forEach(hole => {
                     widget.mesh.add(hole.mesh);
                     widget.adds.push(hole.mesh);
@@ -1264,6 +1277,9 @@ CAM.init = function(kiri, api) {
         if (!int) return; //if not a hole mesh return
             let { object } = int;
             func.selectHoleToggle(object.hole);
+
+            let widget = object.parent.widget; //only update the parent widget
+            poppedRec.drills[widget.id]  = widget.holes.toRecord();
             
     }
 

@@ -1463,47 +1463,52 @@ class OpDrill extends CamOp {
         let { op, state } = this;
         let { settings, addSlices, widget, updateToolDiams } = state;
         let { zBottom, zThru, thruHoles, color } = state;
+        let { drills, drillThrough} = op
 
-        let drills = [],
-            drillTool = new CAM.Tool(settings, op.tool),
+        let drillTool = new CAM.Tool(settings, op.tool),
             drillToolDiam = drillTool.fluteDiameter(),
             sliceOut = this.sliceOut = [];
 
         updateToolDiams(drillToolDiam);
 
-        console.log(widget)
+        
+        const allDrills = Object.values(drills).flat();
+        
+        console.log("drills",allDrills)
+        console.log("op",op)
 
         // for each slice, look for polygons with 98.5% circularity whose
         // area is within the tolerance of a circle matching the tool diameter
         
 
         // drill points to use center (average of all points) of the polygon
-        drills.forEach(function(drill) {
-            let center = drill.center(true),
-                slice = newSlice(0,null);
+        allDrills.forEach((drill)=> {
+            let slice = newSlice(0);            
             if (op.mark) {
-                // replace points with single mark
-                let points = drill.points;
-                points = [
-                    points[0],
-                    points[0].clone().sub({x:0, y:0, z:op.down})
-                ];
-                drill.points = points;
+                // replace depth with single down peck
+                drill.depth = op.down
+                
             }
-            drill.points.forEach(function(point) {
-                point.x = center.x;
-                point.y = center.y;
-            });
+            drill.zBottom = drill.z - drill.depth;
+            
             // for thru holes, follow z thru when set
-            if ((op.thru>0) && center.isInPolygon(thruHoles)) {
-                drill.points.push(drill.points.last().sub({x:0,y:0,z:op.thru}));
-            }else if(zThru && center.isInPolygon(thruHoles)){
-                drill.points.push(drill.points.last().sub({x:0,y:0,z:zThru}));
+            if ((op.thru>0) ) {
+                drill.zBottom -= op.thru;
             }
-            slice.camLines = [ drill ];
+            console.log(slice)
+            
+            const poly  = newPolygon()
+            poly.points.push({x:drill.x, y:drill.y, z:drill.z})
+            poly.points.push({x:drill.x, y:drill.y, z:drill.zBottom})
+                
+            // poly.points.pop();
+            slice.camTrace = { tool: op.tool, rate: op.feed, plunge: op.rate };
+            slice.camLines = [poly];
+
+            console.log("cam line",slice.camLines)
             slice.output()
                 .setLayer("drill", {face: color, line: color})
-                .addPolys(drill);
+                .addPolys(slice.camLines);
             addSlices(slice);
             sliceOut.push(slice);
         });
