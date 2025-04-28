@@ -1187,8 +1187,8 @@ CAM.init = function(kiri, api) {
         alert = api.show.alert("[esc] cancels trace editing");
         kiri.api.widgets.opacity(0.8);
 
-        // console.log(kiri.api.widgets.all())
         const widgets = kiri.api.widgets.all()
+        console.log(widgets)
 
         if(individual && widgets.some(w=>w.holes!= undefined) ){ // if any widget already has cached holes
             // console.log("already has cached holes",widgets)
@@ -1208,52 +1208,48 @@ CAM.init = function(kiri, api) {
                 //flattened list of all hole centers and if they are selected
                 kiri.api.widgets.for(widget => {
                     const {holes} = centers.find(center=>center.id = widget.id)
-                    widget.holes = holes;
     
-                    holes.toRecord = () => {
-                        return holes.map(hole => {
-                            let {x,y,z,depth,selected} = hole
-                            return {x,y,z,depth,selected}
-                        })
-                    }
-                    
                     if (!holes.length) {
                         unselectHoles(holes);
                     }
+
+                    let meshes=[];
+
                     holes.forEach(hole => {
-                        if(!hole.mesh){
                             let {depth,selected} = hole
                             let color = selected ? 0xFF0000:0x39e366
                             let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
                             const material = new THREE.MeshBasicMaterial( { color  } );
                             let mesh = new THREE.Mesh(geo, material);
+                            meshes.push(mesh)
                             mesh.position.copy(hole)
                             mesh.position.z -= depth/2
                             mesh.rotation.x = Math.PI/2
     
-                            hole.mesh = mesh; //add pointers to both objects
+                            hole.meshId = mesh.id; //add pointers to both objects
                             mesh.hole = hole;
-                            hole.updateColor = ()=>{
-                                hole.mesh.material.color.set(hole.selected?0xFF0000:0x39e366)
-                            }
-                        }else{
-                            hole.updateColor()
-                        }
+
+                            mesh.parent = widget.mesh;
+                            widget.mesh.add(mesh);
+                            widget.adds.push(mesh);
+                        
                     })
                     //add hole data to record
-                    poppedRec.drills[widget.id] = holes.toRecord();
+                    poppedRec.drills = poppedRec.drills || {}
+                    poppedRec.drills[widget.id] = holes
                     // console.log("hole widget:",widget)
 
+                    console.log(poppedRec)
 
-                    widget.holes.forEach(hole => {
-                        hole.mesh.parent = widget.mesh;
-                        widget.mesh.add(hole.mesh);
-                        widget.adds.push(hole.mesh);
-                    });
+                    if(!widget.drills){widget.drills = []}
+
+                    let drills = poppedRec.drills[widget.id]
+                    
+                    widget.drills.push(drills)
 
                 })
             });
-            // console.log(" widgets sliced",kiri.api.widgets.all())
+            console.log(" widgets sliced",kiri.api.widgets.all())
         }
     }
 
@@ -1297,11 +1293,10 @@ CAM.init = function(kiri, api) {
         console.log("selectHolesHoverUp",int)
         if (!int) return; //if not a hole mesh return
             let { object } = int;
+
             func.selectHoleToggle(object.hole);
 
-            let widget = object.parent.widget; //only update the parent widget
             console.log(poppedRec,poppedRec.drills)
-            poppedRec.drills[widget.id]  = widget.holes.toRecord();
             
     }
 
@@ -1321,12 +1316,12 @@ CAM.init = function(kiri, api) {
         api.hide.alert(alert);
         api.feature.hover = false;
         api.feature.hoverAdds = false;
+        
         kiri.api.widgets.for(widget => {
-            if (widget.holes) {
-                widget.holes.forEach(hole => {
-                    widget.mesh.remove(hole.mesh);
-                })
-            }
+            poppedRec.drills[widget.id].forEach(hole => {
+                hole.mesh.parent = null;
+                widget.mesh.remove(hole.mesh);
+            })
             widget.adds = []
         });
     };
@@ -1456,6 +1451,33 @@ CAM.init = function(kiri, api) {
         });
         SPACE.update();
     }
+
+    function rotateDrills(){
+        let tabs = API.widgets.annotate(widget.id).tab || [];
+        tabs.forEach(rec => {
+            let { id, pos, rot } = rec;
+            if (!Array.isArray(rot)) {
+                rot = rot.toArray();
+            }
+            let coff = widget.track.center;
+            let tab = widget.tabs[id];
+            let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+            // update position vector
+            let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
+            // update rotation quaternion
+            let [ rx, ry, rz, rw ] = rot;
+            rec.rot = new THREE.Quaternion().multiplyQuaternions(
+                new THREE.Quaternion(rx, ry, rz, rw),
+                new THREE.Quaternion().setFromRotationMatrix(m4)
+            ).toArray();
+            tab.box.geometry.applyMatrix4(m4);
+            tab.box.position.x = pos.x = vc.x - coff.dx;
+            tab.box.position.y = pos.y = vc.y - coff.dy;
+            tab.box.position.z = pos.z = vc.z;
+        });
+        SPACE.update();
+    }
+
 
     function hasIndexing() {
         return isIndexed;
@@ -2094,6 +2116,7 @@ function unselectTraces(widget, skip) {
 }
 
 function unselectHoles(widget) {
+    if (!widget.holes) return
     widget.holes.forEach(hole => {
         hole.selected = false
     })

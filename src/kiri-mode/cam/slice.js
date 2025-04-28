@@ -477,10 +477,16 @@ CAM.holes = async function(settings, widget, diam) {
     for (let slice of tslices) {
         slice.shadow = CAM.shadowAt(widget,slice.z, 0)
         let inner = slice.inner;
+
+        slice.shadow = CAM.shadowAt(widget,slice.z, 0)
+        // console.log("looking at slice",slice)
+
         for (let poly of inner) {
             let center = poly.calcCircleCenter();
+            
             center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta );
             // center.points = poly.points;
+
             if (center.isInPolygon(slice.shadow)) {
                 //TODO: test if this is working
                 continue;
