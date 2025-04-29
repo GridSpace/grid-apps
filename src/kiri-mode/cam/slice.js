@@ -471,9 +471,12 @@ CAM.holes = async function(settings, widget, diam) {
         slices.push(slice);
     }
 
+    console.log(indices)
+
     let opts = { each: onEach, over: false, flatoff: 0, edges: true, openok: false, lines: false };
     await slicer.slice(indices, opts);
     const tslices = slices.map(s=>s.tops).flat()
+    console.log("tslices",tslices)
     for (let slice of tslices) {
         slice.shadow = CAM.shadowAt(widget,slice.z, 0)
         let inner = slice.inner;

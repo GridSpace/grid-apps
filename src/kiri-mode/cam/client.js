@@ -1190,21 +1190,68 @@ CAM.init = function(kiri, api) {
         const widgets = kiri.api.widgets.all()
         console.log(widgets)
 
-        if(individual && widgets.some(w=>w.holes!= undefined) ){ // if any widget already has cached holes
-            // console.log("already has cached holes",widgets)
+        function createHoleMesh(widget,drill){
+            let {depth,selected} = drill
+            let color = selected ? 0xFF0000:0x39e366
+            let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
+            const material = new THREE.MeshPhongMaterial( { color  } );
+            let mesh = new THREE.Mesh(geo, material);
+            mesh.position.copy(drill)
+            mesh.position.z -= depth/2
+            mesh.rotation.x = Math.PI/2
 
-            widgets.forEach(widget => {
-                widget.holes.forEach(hole => {
-                    hole.mesh.parent = widget.mesh;
-                    widget.mesh.add(hole.mesh);
-                    widget.adds.push(hole.mesh);
-                });
+            drill.widgetID = widget.id
+            drill.meshId = mesh.id; //add pointers to both objects
+            mesh.hole = drill;
+
+            mesh.parent = widget.mesh;
+
+            widget.mesh.add(mesh);
+            widget.adds.push(mesh);
+
+            return mesh
+        }
+
+        if( individual && Object.values(poppedRec.drills) ){ // if any widget already has cached holes
+            console.log("already has cached holes",poppedRec.drills)
+
+            
+
+            kiri.api.widgets.for(widget => {
+                if(widget.adds){
+                    console.log("individual",widget)
+                    let drills =  poppedRec.drills[widget.id]
+
+                    let ids = drills
+                    .map(hole => hole.meshId)
+    
+                    if(widget.adds.includes(mesh)){
+                        widget.adds.forEach(add=>{
+                            // console.log("add",add,ids)
+                            if(ids.includes(add.id)){
+                                add.visible = true
+                                widget.mesh.add(add)
+                                console.log("visible",add)
+                            }
+                        })
+
+                    }else{
+                        drills.forEach(drill => {
+                            createHoleMesh(widget, drill)
+                        })
+                    }
+
+                }
             })
+
+            console.log("done",widgets)
+
+
 
         }else{ // if no widget has cached holes
             console.log("no cached holes, must slice")
             await CAM.holes(individual?0:diam,(centers)=>{
-                console.log("centers",centers)
+                centers = centers ?? []
                 //flattened list of all hole centers and if they are selected
                 kiri.api.widgets.for(widget => {
                     const {holes} = centers.find(center=>center.id = widget.id)
@@ -1213,29 +1260,29 @@ CAM.init = function(kiri, api) {
                         unselectHoles(holes);
                     }
 
-                    let meshes=[];
 
                     holes.forEach(hole => {
-                            let {depth,selected} = hole
-                            let color = selected ? 0xFF0000:0x39e366
-                            let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
-                            const material = new THREE.MeshBasicMaterial( { color  } );
-                            let mesh = new THREE.Mesh(geo, material);
-                            meshes.push(mesh)
-                            mesh.position.copy(hole)
-                            mesh.position.z -= depth/2
-                            mesh.rotation.x = Math.PI/2
+                        createHoleMesh(widget, hole)
+                            // let {depth,selected} = hole
+                            // let color = selected ? 0xFF0000:0x39e366
+                            // let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
+                            // const material = new THREE.MeshPhongMaterial( { color  } );
+                            // let mesh = new THREE.Mesh(geo, material);
+                            // mesh.position.copy(hole)
+                            // mesh.position.z -= depth/2
+                            // mesh.rotation.x = Math.PI/2
     
-                            hole.meshId = mesh.id; //add pointers to both objects
-                            mesh.hole = hole;
+                            // hole.widgetID = widget.id
+                            // hole.meshId = mesh.id; //add pointers to both objects
+                            // mesh.hole = hole;
 
-                            mesh.parent = widget.mesh;
-                            widget.mesh.add(mesh);
-                            widget.adds.push(mesh);
+                            // mesh.parent = widget.mesh;
+                            // widget.mesh.add(mesh);
+                            // widget.adds.push(mesh);
                         
                     })
                     //add hole data to record
-                    poppedRec.drills = poppedRec.drills || {}
+                    poppedRec.drills = poppedRec.drills ?? {}
                     poppedRec.drills[widget.id] = holes
                     // console.log("hole widget:",widget)
 
@@ -1249,7 +1296,7 @@ CAM.init = function(kiri, api) {
 
                 })
             });
-            console.log(" widgets sliced",kiri.api.widgets.all())
+            console.log("slice result",poppedRec.drills)
         }
     }
 
@@ -1290,19 +1337,26 @@ CAM.init = function(kiri, api) {
     }
 
     func.selectHolesHoverUp = function(int, ev) {
-        console.log("selectHolesHoverUp",int)
         if (!int) return; //if not a hole mesh return
             let { object } = int;
-
-            func.selectHoleToggle(object.hole);
-
-            console.log(poppedRec,poppedRec.drills)
+            func.selectHoleToggle(object);
             
     }
 
-    func.selectHoleToggle = function(hole) {
+    func.selectHoleToggle = function(mesh) {
+        let {hole} = mesh
+        console.log("current rec drills",poppedRec.drills)
+        console.log("selectHoleToggle pre",mesh)
         hole.selected = !hole.selected;
-        hole.updateColor();
+        // console.log("selected",hole.selected)
+        mesh.material.color.setHex( hole.selected ? 0xFF0000:0x39e366 );
+        console.log("selectHoleToggle post",mesh)
+    }
+
+    func.clearHolesRec = (widget)=>{
+        if(poppedRec.drills){
+            poppedRec.drills[widget.id] = undefined
+        }
     }
 
     func.selectHolesDone = () => {
@@ -1318,11 +1372,10 @@ CAM.init = function(kiri, api) {
         api.feature.hoverAdds = false;
         
         kiri.api.widgets.for(widget => {
-            poppedRec.drills[widget.id].forEach(hole => {
-                hole.mesh.parent = null;
-                widget.mesh.remove(hole.mesh);
-            })
-            widget.adds = []
+            for(let add of widget.adds){
+                add.visible = false
+                widget.mesh.remove(add);
+            }
         });
     };
 
@@ -1368,6 +1421,10 @@ CAM.init = function(kiri, api) {
         if (traceOn) {
             func.traceDone();
         }
+        if (holeSelOn) {
+            func.holeSelDone();
+        }
+        func.clearHolesRec(widget)
         unselectTraces(widget);
         if (flipping) {
             return;
@@ -1388,8 +1445,13 @@ CAM.init = function(kiri, api) {
         }
         if (x || y) {
             clearTabs(widget);
+            if (holeSelOn) {
+                func.holeSelDone();
+            }
+            func.clearHolesRec(widget)
         } else {
             rotateTabs(widget, x, y, z);
+            rotateDrills(widget, z);
         }
     });
     api.event.on("mouse.hover.up", rec => {
@@ -1452,29 +1514,33 @@ CAM.init = function(kiri, api) {
         SPACE.update();
     }
 
-    function rotateDrills(){
-        let tabs = API.widgets.annotate(widget.id).tab || [];
-        tabs.forEach(rec => {
-            let { id, pos, rot } = rec;
-            if (!Array.isArray(rot)) {
-                rot = rot.toArray();
-            }
-            let coff = widget.track.center;
-            let tab = widget.tabs[id];
-            let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
+    function rotateDrills(widget, z) {
+        let drills = poppedRec.drills[widget.id] 
+
+        if (!drills) {
+            return;
+        }
+
+        let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler( 0, 0, z ?? 0));
+        let coff = widget.track.center;
+
+        drills.forEach(drill => {
+            
             // update position vector
-            let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
+            let vc = new THREE.Vector3(drill.x, drill.y, drill.z).applyMatrix4(m4);
             // update rotation quaternion
-            let [ rx, ry, rz, rw ] = rot;
-            rec.rot = new THREE.Quaternion().multiplyQuaternions(
-                new THREE.Quaternion(rx, ry, rz, rw),
-                new THREE.Quaternion().setFromRotationMatrix(m4)
-            ).toArray();
-            tab.box.geometry.applyMatrix4(m4);
-            tab.box.position.x = pos.x = vc.x - coff.dx;
-            tab.box.position.y = pos.y = vc.y - coff.dy;
-            tab.box.position.z = pos.z = vc.z;
+            
+            drill.x = vc.x - coff.dx;
+            drill.y = vc.y - coff.dy;
+
+            mesh = widget.adds.find(m=>m.id == drill.meshId)
+
+            mesh.position.x = drill.x;
+            mesh.position.y = drill.y;
+
         });
+
+
         SPACE.update();
     }
 

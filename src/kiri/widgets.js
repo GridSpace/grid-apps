@@ -82,7 +82,7 @@ function meshes() {
         if (!api.feature.hoverAdds) {
             out.push(widget.mesh);
         }
-        out.appendAll(widget.adds);
+        out.appendAll(widget.adds.filter(m=>m.visible));
     });
     return out;
 }
