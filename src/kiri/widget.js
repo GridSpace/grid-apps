@@ -230,7 +230,7 @@ class Widget {
 
     setModified() {
         this.modified = true;
-        this.boundingBoxNeedsUpdate
+        this.boundingBoxNeedsUpdate = true;
         if (this.mesh && this.mesh.geometry) {
             // this fixes ray intersections after the mesh is modified
             this.mesh.geometry.boundingSphere = null;
