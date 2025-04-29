@@ -1212,7 +1212,9 @@ CAM.init = function(kiri, api) {
             return mesh
         }
 
-        if( individual && Object.values(poppedRec.drills) ){ // if any widget already has cached holes
+        let meshesCached = widgets.every(widget=>poppedRec.drills[widget.id] != undefined)
+
+        if( individual && meshesCached ){ // if any widget already has cached holes
             console.log("already has cached holes",poppedRec.drills)
 
             
@@ -1228,7 +1230,6 @@ CAM.init = function(kiri, api) {
                         widget.adds.forEach(add=>{
                             if(ids.includes(add.id)){
                                 add.visible = true
-                                widget.mesh.add(add)
                             }
                         })
 
@@ -1431,15 +1432,14 @@ CAM.init = function(kiri, api) {
         if (flipping) {
             return;
         }
+        if (holeSelOn) {
+            func.holeSelDone();
+        }
+        func.clearHolesRec(widget)
         if (x || y) {
             clearTabs(widget);
-            if (holeSelOn) {
-                func.holeSelDone();
-            }
-            func.clearHolesRec(widget)
         } else {
             rotateTabs(widget, x, y, z);
-            rotateDrills(widget, z);
         }
     });
     api.event.on("mouse.hover.up", rec => {
@@ -1501,37 +1501,6 @@ CAM.init = function(kiri, api) {
         });
         SPACE.update();
     }
-
-    function rotateDrills(widget, z) {
-        let drills = poppedRec.drills[widget.id] 
-
-        if (!drills) {
-            return;
-        }
-
-        let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler( 0, 0, z ?? 0));
-        let coff = widget.track.center;
-
-        drills.forEach(drill => {
-            
-            // update position vector
-            let vc = new THREE.Vector3(drill.x, drill.y, drill.z).applyMatrix4(m4);
-            // update rotation quaternion
-            
-            drill.x = vc.x - coff.dx;
-            drill.y = vc.y - coff.dy;
-
-            mesh = widget.adds.find(m=>m.id == drill.meshId)
-
-            mesh.position.x = drill.x;
-            mesh.position.y = drill.y;
-
-        });
-
-
-        SPACE.update();
-    }
-
 
     function hasIndexing() {
         return isIndexed;
