@@ -1,0 +1,12 @@
+{
+    "file-ext": "svg",
+    "token-space": " ",
+    "pre":[],
+    "post":[],
+    "laser-on":[],
+    "laser-off":[],
+	"settings": {
+		"bed_width": 680,
+		"bed_depth": 360
+	}
+}

@@ -60,6 +60,7 @@ class Widget {
         this.slices = null;
         this.settings = null; // used??
         this.modified = true;
+        this.boundingBoxNeedsUpdate = true
         this.track = {
             // box size for packer
             box: {
@@ -229,6 +230,7 @@ class Widget {
 
     setModified() {
         this.modified = true;
+        this.boundingBoxNeedsUpdate = true;
         if (this.mesh && this.mesh.geometry) {
             // this fixes ray intersections after the mesh is modified
             this.mesh.geometry.boundingSphere = null;
@@ -695,9 +697,9 @@ class Widget {
     }
 
     getBoundingBox(refresh) {
-        if (!this.bounds || refresh || this.modified) {
+        if (!this.bounds || refresh || this.boundingBoxNeedsUpdate) {
             this.bounds = new THREE.Box3().setFromArray(this.getGeoVertices());
-            // this.modified = false;
+            this.boundingBoxNeedsUpdate = false;
         }
         return this.bounds;
     }
