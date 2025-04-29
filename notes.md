@@ -85,7 +85,6 @@
 * `F` add {progress} substitution and maybe {time-remaining} if can be calc'd
 * `F` import and follow 2D paths (conformed like pocket contours)
 * `F` add user-defined origin (issue #28)
-* `F` drill op should allow selecting holes >= current tool
 * `F` intelligently turn circle hole pocket clear into spiral down
 * `F` add `plunge max` to contouring that can override z feed limit
 * `F` add lead-in milling (requires adding clamp / no go areas)
