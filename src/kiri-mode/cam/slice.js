@@ -435,6 +435,14 @@ CAM.traces = async function(settings, widget, single) {
     return true;
 };
 
+    /**
+     * Generate a list of holes in the model based on the given diameter.
+     *
+     * @param {Object} settings - settings object
+     * @param {Object} widget - widget object
+     * @param {number} diam - diameter of the drill bit
+     * @returns {Array} list of hole centers as objects with `x`, `y`, `z`, `depth`, and `selected` properties.
+     */
 CAM.holes = async function(settings, widget, diam) {
 
     let proc = settings.process,
@@ -471,27 +479,21 @@ CAM.holes = async function(settings, widget, diam) {
         slices.push(slice);
     }
 
-    console.log(indices)
-
     let opts = { each: onEach, over: false, flatoff: 0, edges: true, openok: false, lines: false };
     await slicer.slice(indices, opts);
     const tslices = slices.map(s=>s.tops).flat()
-    console.log("tslices",tslices)
+    // console.log("tslices",tslices)
     for (let slice of tslices) {
         slice.shadow = CAM.shadowAt(widget,slice.z, 0)
         let inner = slice.inner;
-
-        slice.shadow = CAM.shadowAt(widget,slice.z, 0)
-        // console.log("looking at slice",slice)
-
+        if (!inner) { //no holes
+            continue;
+        }
         for (let poly of inner) {
             let center = poly.calcCircleCenter();
-            
             center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta );
-            // center.points = poly.points;
-
             if (center.isInPolygon(slice.shadow)) {
-                //TODO: test if this is working
+                //TODO: this does not work yet. needs to be implemented
                 continue;
             }
             let overlap = false;
