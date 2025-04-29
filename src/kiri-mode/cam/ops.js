@@ -1471,8 +1471,7 @@ class OpDrill extends CamOp {
 
         updateToolDiams(drillToolDiam);
 
-        
-        const allDrills = Object.values(drills).flat();
+        const allDrills = drills[widget.id] ?? []
         
         console.log("drills",allDrills)
         console.log("op",op)
@@ -1507,7 +1506,6 @@ class OpDrill extends CamOp {
             slice.camTrace = { tool: op.tool, rate: op.feed, plunge: op.rate };
             slice.camLines = [poly];
 
-            console.log("cam line",slice.camLines)
             slice.output()
                 .setLayer("drill", {face: color, line: color})
                 .addPolys(slice.camLines);
