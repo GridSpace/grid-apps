@@ -1219,7 +1219,6 @@ CAM.init = function(kiri, api) {
 
             kiri.api.widgets.for(widget => {
                 if(widget.adds){
-                    console.log("individual",widget)
                     let drills =  poppedRec.drills[widget.id]
 
                     let ids = drills
@@ -1227,11 +1226,9 @@ CAM.init = function(kiri, api) {
     
                     if(widget.adds.includes(mesh)){
                         widget.adds.forEach(add=>{
-                            // console.log("add",add,ids)
                             if(ids.includes(add.id)){
                                 add.visible = true
                                 widget.mesh.add(add)
-                                console.log("visible",add)
                             }
                         })
 
@@ -1244,12 +1241,10 @@ CAM.init = function(kiri, api) {
                 }
             })
 
-            console.log("done",widgets)
 
 
 
         }else{ // if no widget has cached holes
-            console.log("no cached holes, must slice")
             await CAM.holes(individual?0:diam,(centers)=>{
                 centers = centers ?? []
                 //flattened list of all hole centers and if they are selected
@@ -1284,9 +1279,7 @@ CAM.init = function(kiri, api) {
                     //add hole data to record
                     poppedRec.drills = poppedRec.drills ?? {}
                     poppedRec.drills[widget.id] = holes
-                    // console.log("hole widget:",widget)
 
-                    console.log(poppedRec)
 
                     if(!widget.drills){widget.drills = []}
 
@@ -1296,7 +1289,6 @@ CAM.init = function(kiri, api) {
 
                 })
             });
-            console.log("slice result",poppedRec.drills)
         }
     }
 
@@ -1345,12 +1337,8 @@ CAM.init = function(kiri, api) {
 
     func.selectHoleToggle = function(mesh) {
         let {hole} = mesh
-        console.log("current rec drills",poppedRec.drills)
-        console.log("selectHoleToggle pre",mesh)
         hole.selected = !hole.selected;
-        // console.log("selected",hole.selected)
         mesh.material.color.setHex( hole.selected ? 0xFF0000:0x39e366 );
-        console.log("selectHoleToggle post",mesh)
     }
 
     func.clearHolesRec = (widget)=>{
