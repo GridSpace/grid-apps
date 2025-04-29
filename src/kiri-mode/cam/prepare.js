@@ -195,7 +195,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
     }
 
     function emitDrills(polys) {
-        console.log("emitDrills", polys);
         polys = polys.slice();
         for (;;) {
             let closestDist = Infinity,

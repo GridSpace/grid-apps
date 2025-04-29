@@ -1472,14 +1472,6 @@ class OpDrill extends CamOp {
         updateToolDiams(drillToolDiam);
 
         const allDrills = drills[widget.id] ?? []
-        
-        console.log("drills",allDrills)
-        console.log("op",op)
-
-        // for each slice, look for polygons with 98.5% circularity whose
-        // area is within the tolerance of a circle matching the tool diameter
-        
-
         // drill points to use center (average of all points) of the polygon
         allDrills.forEach((drill)=> {
             if(!drill.selected){
@@ -1489,7 +1481,6 @@ class OpDrill extends CamOp {
             if (op.mark) {
                 // replace depth with single down peck
                 drill.depth = op.down
-                
             }
             drill.zBottom = drill.z - drill.depth;
             
@@ -1515,7 +1506,6 @@ class OpDrill extends CamOp {
     }
 
     prepare(ops, progress) {
-        console.log("prepare drill",ops)
         let { op, state } = this;
         let { settings, widget, addSlices, updateToolDiams } = state;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;

@@ -1194,12 +1194,12 @@ CAM.init = function(kiri, api) {
         alert = api.show.alert("[esc] cancels drill editing");
         kiri.api.widgets.opacity(0.8);
         const widgets = kiri.api.widgets.all()
-    /**
-     * creates a mesh for a hole and adds it to a widget
-     * @param {Object3D} widget - widget to add the hole mesh to
-     * @param {Object} drill - {depth,selected} object of the hole
-     * @returns {Mesh} the created mesh
-     */
+        /**
+         * creates a mesh for a hole and adds it to a widget
+         * @param {Object3D} widget - widget to add the hole mesh to
+         * @param {Object} drill - {depth,selected} object of the hole
+         * @returns {Mesh} the created mesh
+         */
         function createHoleMesh(widget,drill){
             let {depth,selected} = drill
             let color = selected ? 0xFF0000:0x39e366
@@ -1281,7 +1281,6 @@ CAM.init = function(kiri, api) {
         if (!int) return; //if not a hole mesh return
             let { object } = int;
             func.selectHoleToggle(object);
-            
     }
 
     /**
@@ -1295,13 +1294,11 @@ CAM.init = function(kiri, api) {
         mesh.material.color.setHex( hole.selected ? 0xFF0000:0x39e366 );
     }
 
-/*************  ✨ Codeium Command ⭐  *************/
     /**
      * Clears the recorded holes in the widget (widget.drills array)
      * and also clears the widget.adds array.
      * @param {Object} widget - the widget with the drills array to clear
      */
-/******  cda042f9-e5b8-4c32-acee-0ec915ea6a0a  *******/
     func.clearHolesRec = (widget)=>{
         if(widget.drills){
             widget.drills.forEach(rec=>{
@@ -1312,13 +1309,11 @@ CAM.init = function(kiri, api) {
         }
     }
 
-/*************  ✨ Codeium Command ⭐  *************/
     /**
      * Cleanup function for selectHoles.
      * Removes all adds from the scene, hides the alert, and resets the opacity of the widgets.
      * Also resets the hover features and the editing class on the holeSelOn html element.
      */
-/******  3ea6c195-e4a5-434f-98cf-4a587d441305  *******/
     func.selectHolesDone = () => {
         if (!holeSelOn) {
             return;
