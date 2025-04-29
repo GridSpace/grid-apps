@@ -1256,38 +1256,17 @@ CAM.init = function(kiri, api) {
                         unselectHoles(holes);
                     }
 
-
                     holes.forEach(hole => {
                         createHoleMesh(widget, hole)
-                            // let {depth,selected} = hole
-                            // let color = selected ? 0xFF0000:0x39e366
-                            // let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
-                            // const material = new THREE.MeshPhongMaterial( { color  } );
-                            // let mesh = new THREE.Mesh(geo, material);
-                            // mesh.position.copy(hole)
-                            // mesh.position.z -= depth/2
-                            // mesh.rotation.x = Math.PI/2
-    
-                            // hole.widgetID = widget.id
-                            // hole.meshId = mesh.id; //add pointers to both objects
-                            // mesh.hole = hole;
-
-                            // mesh.parent = widget.mesh;
-                            // widget.mesh.add(mesh);
-                            // widget.adds.push(mesh);
-                        
                     })
                     //add hole data to record
                     poppedRec.drills = poppedRec.drills ?? {}
                     poppedRec.drills[widget.id] = holes
 
-
+                    //give widget access to an array of drill records that refrence it
+                    //so that it can be cleared when widget is rotated or mirrored etc.
                     if(!widget.drills){widget.drills = []}
-
-                    let drills = poppedRec.drills[widget.id]
-                    
-                    widget.drills.push(drills)
-
+                    widget.drills.push(holes)
                 })
             });
         }
@@ -1343,9 +1322,16 @@ CAM.init = function(kiri, api) {
     }
 
     func.clearHolesRec = (widget)=>{
-        if(poppedRec.drills){
-            poppedRec.drills[widget.id] = undefined
+        console.log("clearHolesRec pre",widget)
+        if(widget.drills){
+            widget.drills.forEach(rec=>{
+                console.log("rec",rec)
+            })
         }
+        if(widget.adds){
+            widget.adds.length = 0 //clear adds array
+        }
+        console.log("clearHolesRec post",widget)
     }
 
     func.selectHolesDone = () => {
@@ -1411,7 +1397,7 @@ CAM.init = function(kiri, api) {
             func.traceDone();
         }
         if (holeSelOn) {
-            func.holeSelDone();
+            func.selectHolesDone();
         }
         func.clearHolesRec(widget)
         unselectTraces(widget);
@@ -1433,7 +1419,7 @@ CAM.init = function(kiri, api) {
             return;
         }
         if (holeSelOn) {
-            func.holeSelDone();
+            func.selectHolesDone();
         }
         func.clearHolesRec(widget)
         if (x || y) {
