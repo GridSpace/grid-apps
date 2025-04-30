@@ -1782,7 +1782,7 @@ CAM.init = function(kiri, api) {
         lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => !poppedRec.mark}),
         mark:     UC.newBoolean(LANG.cd_mark_s, undefined, {title:LANG.cd_mark_l}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        thru:     UC.newInput(LANG.cd_drlthru_s, {title:LANG.cd_drlthru_l, convert:UC.toFloat, units:true}),
+        thru:     UC.newInput(LANG.cd_dtru_s, {title:LANG.cd_dtru_l, convert:UC.toFloat, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
         actions: UC.newRow([
             UC.newButton(LANG.select, ()=>func.selectHoles(true), {title:LANG.cd_seli_l}),
