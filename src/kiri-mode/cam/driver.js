@@ -81,6 +81,17 @@ kiri.load(api => {
                 // console.log({clear_traces: true});
             });
         };
+
+        //0 or less diameter means select all holes
+        CAM.holes = function(diam,onDone) {
+            kiri.client.sync();
+            const settings = api.conf.get();
+            const widgets = api.widgets.map();
+            kiri.client.send("cam_holes", { settings, diam }, output => {
+                let res = kiri.codec.decode(output)
+                onDone(res)
+            });
+        }
     }
 
     if (kiri.worker) {
@@ -143,6 +154,22 @@ kiri.load(api => {
             }
             send.done({});
         };
+
+        kiri.worker.cam_holes = async function(data, send) {
+            const { settings, diam } = data;
+            const widgets = Object.values(kiri.worker.cache);
+            const fresh = [];
+            for (let widget of widgets) {
+                if (await CAM.holes(settings, widget, diam)) {
+                    fresh.push(widget);
+                }
+            }
+            // const fresh = widgets.filter(widget => CAM.traces(settings, widget, single));
+            send.done(kiri.codec.encode(fresh.map(widget => { return {
+                id: widget.id,
+                holes: widget.holes,
+            } } )));
+        }
     }
 
 });

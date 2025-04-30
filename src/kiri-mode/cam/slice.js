@@ -335,6 +335,8 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     ondone();
 };
 
+
+
 CAM.addDogbones = function(poly, dist, reverse) {
     if (Array.isArray(poly)) {
         return poly.forEach(p => CAM.addDogbones(p, dist));
@@ -421,6 +423,8 @@ CAM.traces = async function(settings, widget, single) {
             traces.push(poly);
         });
     };
+
+
     let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true, lines: true };
     await slicer.slice(indices, opts);
     // pick up bottom features
@@ -430,6 +434,92 @@ CAM.traces = async function(settings, widget, single) {
     widget.trace_single = single;
     return true;
 };
+
+    /**
+     * Generate a list of holes in the model based on the given diameter.
+     *
+     * @param {Object} settings - settings object
+     * @param {Object} widget - widget object
+     * @param {number} diam - diameter of the drill bit
+     * @returns {Array} list of hole centers as objects with `x`, `y`, `z`, `depth`, and `selected` properties.
+     */
+CAM.holes = async function(settings, widget, diam) {
+
+    let proc = settings.process,
+        stock = settings.stock || {},
+        isIndexed = proc.camStockIndexed,
+        track = widget.track,
+        { camZTop, camZBottom, camZThru } = proc,
+        // widget top z as defined by setTopz()
+        wztop = track.top,
+        // distance between top of part and top of stock
+        ztOff = isIndexed ? 0 : (stock.z - wztop),
+        // distance between bottom of part and bottom of stock
+        zbOff = isIndexed ? 0 : (wztop - track.box.d),
+        // defined z bottom offset by distance to stock bottom
+        // keeps the z bottom relative to the part when z align changes
+        zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
+
+    let slicer = new kiri.cam_slicer(widget);
+
+    let zees = Object.assign({}, slicer.zFlat);
+    let indices = [...new Set(Object.keys(zees)
+        .map(kv => parseFloat(kv).round(5))
+        .filter(z => z !== null)
+    )]
+
+    let centerDiff = diam * 0.1,
+        area = (diam/2) * (diam/2) * Math.PI,
+        areaDelta =  area * 0.05,
+        drills = [],
+        slices = [],
+        individual = (diam <= 0);
+
+    function onEach(slice) {
+        slices.push(slice);
+    }
+
+    let opts = { each: onEach, over: false, flatoff: 0, edges: true, openok: false, lines: false };
+    await slicer.slice(indices, opts);
+    const tslices = slices.map(s=>s.tops).flat()
+    // console.log("tslices",tslices)
+    for (let slice of tslices) {
+        slice.shadow = CAM.shadowAt(widget,slice.z, 0)
+        let inner = slice.inner;
+        if (!inner) { //no holes
+            continue;
+        }
+        for (let poly of inner) {
+            let center = poly.calcCircleCenter();
+            center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta );
+            if (center.isInPolygon(slice.shadow)) {
+                //TODO: this does not work yet. needs to be implemented
+                continue;
+            }
+            let overlap = false;
+            for (let [i,drill] of drills.entries()) {
+                let dist = drill.distTo2D(center)
+                if (dist <= centerDiff) { // too close
+                    // console.log("overlap",center,drill);
+                    if(center.z > drill.z) { //if current is higher than old
+                        drills[i] = center; //replace with top point
+                        drills[i].depth = center.z-drill.z
+                    }else if(center.z <= drill.z-drill.depth){// if current is lower or same as old
+                        drills[i].depth = drill.z-center.z
+                    }
+                    // if overlapping, don't add and continue
+                    overlap = true;
+                    continue;
+                }
+            }
+            center.depth = 0;
+            if(!overlap) drills.push(center);
+        }
+    }
+    drills = drills.filter(drill => drill.depth > 0)
+    widget.holes = drills;
+    return drills;
+}
 
 function cutTabs(tabs, offset, z, inter) {
     tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();

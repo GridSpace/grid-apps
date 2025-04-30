@@ -5,6 +5,7 @@
 // dep: kiri-mode.cam.driver
 // dep: kiri.api
 // dep: kiri.alerts
+// dep: geo.polygon
 // use: kiri-mode.cam.animate
 // use: kiri-mode.cam.animate2
 // use: kiri-mode.cam.tools
@@ -12,6 +13,7 @@
 gapp.register("kiri-mode.cam.client", [], (root, exports) => {
 
 const { base, kiri } = root;
+const { Polygon } = base
 const { driver, api } = kiri;
 const {alerts, conf} = api;
 const { CAM } = driver;
@@ -398,7 +400,9 @@ CAM.init = function(kiri, api) {
     };
 
     func.opAddDrill = () => {
-        func.opAdd(popOp.drill.new());
+        let rec = popOp.drill.new();
+        rec.drills = { /* widget.id: [ drills... ] */ };
+        func.opAdd(rec);
     };
 
     func.opAddRegister = (axis, points) => {
@@ -983,7 +987,7 @@ CAM.init = function(kiri, api) {
 
     // TRACE FUNCS
     let traceOn = false, lastTrace;
-    func.traceAdd = (ev) => {
+    func.traceAdd = (ev) => { 
         if (traceOn) {
             return func.traceDone();
         }
@@ -1027,6 +1031,7 @@ CAM.init = function(kiri, api) {
                         }
                     });
                     widget.adds.appendAll(stack.new_meshes);
+                    // console.log(widget)
                 });
             });
             // ensure appropriate traces are toggled matching current record
@@ -1070,6 +1075,7 @@ CAM.init = function(kiri, api) {
         func.tabDone();
         func.traceDone();
         func.surfaceDone();
+        func.selectHolesDone();
     };
     api.event.on("cam.trace.clear", func.traceClear = () => {
         func.traceDone();
@@ -1157,6 +1163,177 @@ CAM.init = function(kiri, api) {
         API.conf.save();
     };
 
+
+    let holeSelOn = false, lastSelHoles;
+    /**
+     * Client side function to select holes in widgets for CAM operations.
+     * If holes have already been analyzed, they are displayed immediately.
+     * Otherwise, the CAM server is queried and the results are cached.
+     * @param {boolean} individual - select all holes, false to only select
+     *  holes of tool diameter.
+     */
+    func.selectHoles = async function(individual){
+        // console.log("client individual selected",individual)
+        if (holeSelOn) {
+            return func.selectHolesDone();
+        }
+        func.clearPops();
+        alert = api.show.alert("analyzing parts...", 1000);
+        holeSelOn = hoveredOp;
+        holeSelOn.classList.add("editing");
+        api.feature.hover = true;
+        api.feature.hoverAdds = true;
+        func.hover = func.selectHolesHover;
+        func.hoverUp = func.selectHolesHoverUp;
+
+        let settings = API.conf.get();
+        const {tool,mark} = poppedRec //TODO: display some visual difference if mark is selected
+        let diam = new CAM.Tool(settings,tool).fluteDiameter()
+
+        api.hide.alert(alert);
+        alert = api.show.alert("[esc] cancels drill editing");
+        kiri.api.widgets.opacity(0.8);
+        const widgets = kiri.api.widgets.all()
+        /**
+         * creates a mesh for a hole and adds it to a widget
+         * @param {Object3D} widget - widget to add the hole mesh to
+         * @param {Object} drill - {depth,selected} object of the hole
+         * @returns {Mesh} the created mesh
+         */
+        function createHoleMesh(widget,drill){
+            let {depth,selected} = drill
+            let color = selected ? 0xFF0000:0x39e366
+            let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
+            const material = new THREE.MeshPhongMaterial( { color  } );
+            let mesh = new THREE.Mesh(geo, material);
+            mesh.position.copy(drill)
+            mesh.position.z -= depth/2
+            mesh.rotation.x = Math.PI/2
+            drill.widgetID = widget.id
+            drill.meshId = mesh.id; //add pointers to both objects
+            mesh.hole = drill;
+            mesh.parent = widget.mesh;
+            widget.mesh.add(mesh); 
+            widget.adds.push(mesh); //for click detection
+            return mesh
+        }
+
+        let meshesCached = widgets.every(widget=>poppedRec.drills[widget.id] != undefined)
+        if( individual && meshesCached ){ // if any widget already has cached holes
+            // console.log("already has cached holes",poppedRec.drills)
+            kiri.api.widgets.for(widget => {
+                if(widget.adds){
+                    let drills =  poppedRec.drills[widget.id]
+                    let ids = drills
+                    .map(hole => hole.meshId)
+                    if(widget.adds.includes(mesh)){
+                        widget.adds.forEach(add=>{
+                            if(ids.includes(add.id)){
+                                add.visible = true
+                            }
+                        })
+                    }else{
+                        drills.forEach(drill => {
+                            createHoleMesh(widget, drill)
+                        })
+                    }
+                }
+            })
+
+        }else{ // if no widget has cached holes
+            await CAM.holes(individual?0:diam,(centers)=>{
+                centers = centers ?? []
+                //flattened list of all hole centers and if they are selected
+                kiri.api.widgets.for(widget => {
+                    const {holes} = centers.find(center=>center.id = widget.id)
+                    if (!holes.length) unselectHoles(holes);
+                    holes.forEach(hole => {
+                        createHoleMesh(widget, hole)
+                    })
+                    //add hole data to record
+                    poppedRec.drills = poppedRec.drills ?? {}
+                    poppedRec.drills[widget.id] = holes
+                    //give widget access to an array of drill records that refrence it
+                    //so that it can be cleared when widget is rotated or mirrored etc.
+                    if(!widget.drills){widget.drills = []}
+                    widget.drills.push(holes)
+                })
+            });
+        }
+    }
+
+    func.selectHolesHover = function(data) {
+        //not used right now. may be useful in the future
+        if (lastTrace) {
+            let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
+            color.r = colorSave.r;
+            color.g = colorSave.g;
+            color.b = colorSave.b;
+            lastTrace.position.z -= 0.01;
+        }
+        if (data.type === 'platform') {
+            lastTrace = null;
+            return;
+        }
+    }
+
+    func.selectHolesHoverUp = function(int, ev) {
+        if (!int) return; //if not a hole mesh return
+            let { object } = int;
+            func.selectHoleToggle(object);
+    }
+
+    /**
+     * Toggle the selection of a hole mesh and update its color
+     * @param {Object3D} mesh - the hole mesh to toggle
+     */
+    func.selectHoleToggle = function(mesh) {
+        let {hole} = mesh
+        if(!hole) return
+        hole.selected = !hole.selected;
+        mesh.material.color.setHex( hole.selected ? 0xFF0000:0x39e366 );
+    }
+
+    /**
+     * Clears the recorded holes in the widget (widget.drills array)
+     * and also clears the widget.adds array.
+     * @param {Object} widget - the widget with the drills array to clear
+     */
+    func.clearHolesRec = (widget)=>{
+        if(widget.drills){
+            widget.drills.forEach(rec=>{
+            })
+        }
+        if(widget.adds){
+            widget.adds.length = 0 //clear adds array
+        }
+    }
+
+    /**
+     * Cleanup function for selectHoles.
+     * Removes all adds from the scene, hides the alert, and resets the opacity of the widgets.
+     * Also resets the hover features and the editing class on the holeSelOn html element.
+     */
+    func.selectHolesDone = () => {
+        if (!holeSelOn) {
+            return;
+        }
+        func.unpop();
+        holeSelOn.classList.remove("editing");
+        holeSelOn = false;
+        kiri.api.widgets.opacity(1);
+        api.hide.alert(alert);
+        api.feature.hover = false;
+        api.feature.hoverAdds = false;
+        
+        kiri.api.widgets.for(widget => {
+            for(let add of widget.adds){
+                add.visible = false
+                widget.mesh.remove(add);
+            }
+        });
+    };
+
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
         if (isCamMode) {
@@ -1199,6 +1376,10 @@ CAM.init = function(kiri, api) {
         if (traceOn) {
             func.traceDone();
         }
+        if (holeSelOn) {
+            func.selectHolesDone();
+        }
+        func.clearHolesRec(widget)
         unselectTraces(widget);
         if (flipping) {
             return;
@@ -1217,6 +1398,10 @@ CAM.init = function(kiri, api) {
         if (flipping) {
             return;
         }
+        if (holeSelOn) {
+            func.selectHolesDone();
+        }
+        func.clearHolesRec(widget)
         if (x || y) {
             clearTabs(widget);
         } else {
@@ -1248,7 +1433,7 @@ CAM.init = function(kiri, api) {
         let or = new THREE.Quaternion(_x, _y, _z, _w);
             let nr = new THREE.Quaternion().setFromEuler(e);
         let ra = or.angleTo(nr);
-        console.log({or, nr, ra});
+        // console.log({or, nr, ra});
             rec.rot = nr;
             // let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,0,e._z));
             // tab.box.geometry.applyMatrix4(m4);
@@ -1576,15 +1761,18 @@ CAM.init = function(kiri, api) {
         menu:      UC.newRow([ UC.newButton("select", func.surfaceAdd) ], {class:"ext-buttons f-row"}),
     };
 
-    createPopOp('drill', {
+    const drillOp =createPopOp('drill', {
         tool:    'camDrillTool',
         spindle: 'camDrillSpindle',
         down:    'camDrillDown',
         rate:    'camDrillDownSpeed',
         dwell:   'camDrillDwell',
         lift:    'camDrillLift',
-        mark:    'camDrillMark'
-    }).inputs = {
+        mark:    'camDrillMark',
+        thru:    'camDrillThru',
+    })
+    
+    drillOp.inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
         spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
@@ -1593,6 +1781,13 @@ CAM.init = function(kiri, api) {
         dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat}),
         lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => !poppedRec.mark}),
         mark:     UC.newBoolean(LANG.cd_mark_s, undefined, {title:LANG.cd_mark_l}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        thru:     UC.newInput(LANG.cd_drlthru_s, {title:LANG.cd_drlthru_l, convert:UC.toFloat, units:true}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        actions: UC.newRow([
+            UC.newButton(LANG.select, ()=>func.selectHoles(true), {title:LANG.cd_seli_l}),
+            UC.newButton(LANG.cd_sela_s, ()=>func.selectHoles(false), {title:LANG.cd_sela_l})
+        ], {class:"ext-buttons f-col"})
     };
 
     createPopOp('register', {
@@ -1642,7 +1837,7 @@ CAM.init = function(kiri, api) {
     }
 
     api.event.on('tool.mesh.face-normal', normal => {
-        console.log({ poppedRec });
+        // console.log({ poppedRec });
         poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
         poppedRec.absolute = true;
         func.opRender();
@@ -1703,6 +1898,13 @@ CAM.init = function(kiri, api) {
     createPopOp('|', {}).inputs = {};
 };
 
+/**
+ * Create a new popup operation (popOp) for a given type.
+ * @param {string} type - the name of the popOp to create
+ * @param {object} map - an object mapping popOp keys to either a string
+ * (representing a key in current.process) or a value (to be used as the default).
+ * @returns {object} the newly created popOp.
+ */
 function createPopOp(type, map) {
     let op = popOp[type] = {
         div: UC.newElement('div', { id:`${type}-op`, class:"cam-pop-op" }),
@@ -1738,7 +1940,7 @@ function createPopOp(type, map) {
             if( opType != "drill" && tool.type == "drill"){
                 alerts.show(`Warning: Drills should not be used for ${opType} operations.`)
             }
-            if( opType == "drill" && tool.type != "drill"){
+            else if( opType == "drill" && tool.type != "drill"){
                 alerts.show(`Warning: Only drills should be used for drilling operations.`)
             }
 
@@ -1799,6 +2001,20 @@ function createPopOp(type, map) {
         },
         group: [],
     };
+
+    /**
+     * @function createRecordGetter
+     * @description Creates a getter function for the current record.
+     *              The getter will bind the current record to the op before returning it.
+     *              This is useful for passing a record to a pre-slice function
+     * @returns {function} A getter function for the current record.
+     */
+    op.createRecordGetter =  () => {
+        return () => {
+            op.bind();
+            return op.rec;
+        }
+    }
 
     UC.restore({
         addTo: op.div,
@@ -1886,6 +2102,13 @@ function unselectTraces(widget, skip) {
             }
         });
     }
+}
+
+function unselectHoles(widget) {
+    if (!widget.holes) return
+    widget.holes.forEach(hole => {
+        hole.selected = false
+    })
 }
 
 function validateTools(tools) {

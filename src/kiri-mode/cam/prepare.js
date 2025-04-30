@@ -95,6 +95,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         drillDown = 0,
         drillLift = 0,
         drillDwell = 0,
+        drillThru = 0,
         lasering = false,
         laserPower = 0,
         newOutput = print.output || [],
@@ -186,10 +187,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
         laserPower = power;
     }
 
-    function setDrill(down, lift, dwell) {
+    function setDrill(down, lift, dwell, thru) {
         drillDown = down;
         drillLift = lift;
         drillDwell = dwell;
+        drillThru = thru;
     }
 
     function emitDrills(polys) {
