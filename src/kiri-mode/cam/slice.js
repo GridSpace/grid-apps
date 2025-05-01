@@ -461,18 +461,9 @@ CAM.holes = async function(settings, widget, diam) {
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
 
 
-    let slicerOpts = {
-        flatoff: 0.01,
-    }
-
+    let slicerOpts = {flatoff: 0.01}
     let slicer = new kiri.cam_slicer(widget,slicerOpts);
-
-    
-    // console.log("zFlats",slicer.zFlat)
-    
     let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z]).flat()
-    
-    
     
     let intervals = slicer.interval(1,{
         fit: false, off: -0.01, flats: true
