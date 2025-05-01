@@ -507,8 +507,9 @@ CAM.holes = async function(settings, widget, diam) {
             }
             for (let poly of inner) {
                 let center = poly.calcCircleCenter();
+                center.area = poly.area();
                 // console.log("center",center)
-                center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta );
+                center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(center.area - area) <= areaDelta );
                 if (center.isInPolygon(slice.shadow)) {
                     // if shadowed, don't add, and inform client
                     shadowedDrills = true;
@@ -517,7 +518,8 @@ CAM.holes = async function(settings, widget, diam) {
                 let overlap = false;
                 for (let [i,drill] of drills.entries()) {
                     let dist = drill.distTo2D(center)
-                    if (dist <= centerDiff) { // too close
+                    //if on the same xy point, and both have the same selection value
+                    if (dist <= centerDiff && drill.selected == center.selected) {  
                         // console.log("overlap",center,drill);
                         if(center.z > drill.z) { //if current is higher than old
                             drills[i] = center; //replace with top point
