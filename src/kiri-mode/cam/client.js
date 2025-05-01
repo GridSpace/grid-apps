@@ -1244,7 +1244,6 @@ CAM.init = function(kiri, api) {
                 if(shadow){
                     alert = api.show.alert("Some holes are shadowed by part and are not shown.");
                 }
-                console.log("holes centers",centers)
                 centers = centers ?? []
                 //flattened list of all hole centers and if they are selected
                 kiri.api.widgets.for(widget => {

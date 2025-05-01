@@ -535,7 +535,6 @@ CAM.holes = async function(settings, widget, diam) {
             }
         }
     }
-    console.log("drills",drills)
     drills = drills.filter(drill => drill.depth > 0)
     widget.shadowedDrills = shadowedDrills
     widget.holes = drills;
