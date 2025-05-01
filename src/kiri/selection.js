@@ -210,8 +210,23 @@ function merge() {
         }
     });
     let w = api.platform.load_verts([], obj, "merged");
+    w.mergedFrom = sel.map(widget => widget.mesh.geometry.attributes.position.array);
     api.platform.delete(sel);
     api.platform.select(w);
+}
+
+function split(){
+    let sel = widgets();
+    if (sel.length === 0) {
+        sel = api.widgets.all();
+    }
+    sel.forEach(widget => {
+        if(widget.mergedFrom && Array.isArray(widget.mergedFrom)){
+            widget.mergedFrom.forEach((verts,i) => {
+                api.platform.load_verts([],verts,`split ${i}`);
+            });        }
+        api.platform.delete(widget);
+    })
 }
 
 function exportWidgets(format = "stl") {
@@ -299,6 +314,7 @@ function setDisabled(bool) {
 const selection = Object.assign(api.selection, {
     move,
     merge,
+    split,
     scale,
     rotate,
     mirror,
