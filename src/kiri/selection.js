@@ -220,13 +220,19 @@ function split(){
     if (sel.length === 0) {
         sel = api.widgets.all();
     }
+    let anySplits = false
     sel.forEach(widget => {
         if(widget.mergedFrom && Array.isArray(widget.mergedFrom)){
             widget.mergedFrom.forEach((verts,i) => {
                 api.platform.load_verts([],verts,`split ${i}`);
-            });        }
-        api.platform.delete(widget);
+                anySplits = true
+            });        
+            api.platform.delete(widget);
+        }
     })
+    if(!anySplits){
+        kiri.api.alerts.show("Nothing to split in selection",3000)
+    }
 }
 
 function exportWidgets(format = "stl") {
