@@ -6,11 +6,14 @@
 // dep: kiri.api
 // dep: kiri.consts
 // dep: kiri.utils
+// dep: mesh.tool
 gapp.register("kiri.selection", (root, exports) => {
 
-const { kiri, moto, noop } = self;
+
+const { kiri, moto, noop, mesh } = self;
 const { api, consts, utils } = kiri;
 const { space } = moto;
+
 
 const selectedMeshes = [];
 
@@ -210,23 +213,36 @@ function merge() {
         }
     });
     let w = api.platform.load_verts([], obj, "merged");
-    w.mergedFrom = sel.map(widget => widget.mesh.geometry.attributes.position.array);
     api.platform.delete(sel);
     api.platform.select(w);
 }
 
-function split(){
+function isolate(){
+    
+    let mTool = new self.mesh.tool();
+
+    console.log(mTool)
     let sel = widgets();
     if (sel.length === 0) {
         sel = api.widgets.all();
     }
     let anySplits = false
     sel.forEach(widget => {
-        if(widget.mergedFrom && Array.isArray(widget.mergedFrom)){
-            widget.mergedFrom.forEach((verts,i) => {
-                api.platform.load_verts([],verts,`split ${i}`);
+        let verts = widget.mesh.geometry.attributes.position.array
+        if( verts ){
+            
+
+            mTool.index(verts);
+
+            let isolated = mTool.isolateBodies();
+
+            // console.log(isolated)
+            for(let [v,i] of isolated.entries()){
+                api.platform.load_verts([],v,`split ${i}`);
                 anySplits = true
-            });        
+            }
+
+
             api.platform.delete(widget);
         }
     })
@@ -320,7 +336,7 @@ function setDisabled(bool) {
 const selection = Object.assign(api.selection, {
     move,
     merge,
-    split,
+    isolate,
     scale,
     rotate,
     mirror,
