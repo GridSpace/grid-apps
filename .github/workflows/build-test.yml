@@ -1,4 +1,4 @@
-name: Test Production Build
+name: Test Electron App Production Build
 
 on:
   # Runs on pushes targeting the default branch
@@ -9,16 +9,26 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
     steps:
-      - name: Set up bun
-        uses: oven-sh/setup-bun@v1
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup and Install dependencies
-        run: bun run setup
-      - name: run production mode
-        run: bun  run prod
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Electron app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm run build
+
 
