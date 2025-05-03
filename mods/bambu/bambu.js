@@ -1144,6 +1144,9 @@ self.kiri.load(api => {
         let drop_zone = modal.bbl_drop_zone;
         let drop_timer;
         drop.ondragenter = (ev) => {
+            if (!selected?.rec?.serial) {
+                return;
+            }
             drop.classList.add('nope');
             drop_zone.classList.remove('hide');
             clearTimeout(drop_timer);
