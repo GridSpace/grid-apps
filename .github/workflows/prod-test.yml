@@ -1,4 +1,4 @@
-name: Test Electron App Production Build
+name: Test NPM Production Build
 
 on:
   # Runs on pushes targeting the default branch
