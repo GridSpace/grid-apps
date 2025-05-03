@@ -8,11 +8,8 @@ on:
 
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+  build-ubuntu:
+    runs-on: "ubuntu-latest"
 
     steps:
       - name: Checkout code
@@ -30,5 +27,47 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: npm run build
+
+
+  build-macos:
+    runs-on: "macos-latest"
+  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Electron app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm run build
+        
+  build-windows:
+    runs-on: "windows-latest"
+  
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Electron app
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npm run build
+
 
 
