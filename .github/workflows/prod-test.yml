@@ -21,7 +21,7 @@ jobs:
           node-version: '20'
 
       - name: Setup And Install dependencies
-        run: npm setup
+        run: npm run setup
 
       - name: dry run production build
         run: npm run prod --dryrun
