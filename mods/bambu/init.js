@@ -349,9 +349,13 @@ module.exports = async (server) => {
         wsopen.push(ws);
         debug && util.log('ws open', req.url, wsopen.length);
         wsend({ found });
-        ws.on('message', msg => {
-            msg = JSON.parse(msg);
-            let { cmd, host, code, serial, path, amsmap, direct, frames } = msg;
+        let binaryData;
+        ws.on('message', (msg, isBinary) => {
+            if (isBinary) {
+                return binaryData = msg;
+            }
+            msg = isBinary ? msg : JSON.parse(msg.toString());
+            let { cmd, host, code, serial, path, amsmap, direct, frames, file, data } = msg;
             switch (cmd) {
                 case "monitor":
                     get_mqtt(host, code, serial, message => {
