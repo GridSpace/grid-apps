@@ -460,14 +460,20 @@ CAM.holes = async function(settings, widget, diam) {
         // keeps the z bottom relative to the part when z align changes
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
 
-    let slicer = new kiri.cam_slicer(widget);
 
-    let zees = Object.assign({}, slicer.zFlat);
-    let indices = [...new Set(Object.keys(zees)
+    let slicerOpts = {flatoff: 0.01}
+    let slicer = new kiri.cam_slicer(widget,slicerOpts);
+    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z]).flat()
+    
+    let intervals = slicer.interval(1,{
+        fit: false, off: -0.01, flats: true
+    })
+
+    let zees = [...zFlats,...intervals]
+    let indices = [...new Set(zees
         .map(kv => parseFloat(kv).round(5))
         .filter(z => z !== null)
     )]
-
     let centerDiff = diam * 0.1,
         area = (diam/2) * (diam/2) * Math.PI,
         areaDelta =  area * 0.05,
@@ -478,45 +484,52 @@ CAM.holes = async function(settings, widget, diam) {
     function onEach(slice) {
         slices.push(slice);
     }
-
-    let opts = { each: onEach, over: false, flatoff: 0, edges: true, openok: false, lines: false };
+    let opts = { each: onEach  };
     await slicer.slice(indices, opts);
-    const tslices = slices.map(s=>s.tops).flat()
-    // console.log("tslices",tslices)
-    for (let slice of tslices) {
-        slice.shadow = CAM.shadowAt(widget,slice.z, 0)
-        let inner = slice.inner;
-        if (!inner) { //no holes
-            continue;
-        }
-        for (let poly of inner) {
-            let center = poly.calcCircleCenter();
-            center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(poly.area() - area) <= areaDelta );
-            if (center.isInPolygon(slice.shadow)) {
-                //TODO: this does not work yet. needs to be implemented
+    let shadowedDrills = false;
+    // console.log("slices",slices)
+    for (let slice of slices) {
+        for(let top of slice.tops){
+            // console.log("slicing",slice.z,top)
+            slice.shadow = CAM.shadowAt(widget,slice.z, 0)
+            let inner = top.inner;
+            if (!inner) { //no holes
                 continue;
             }
-            let overlap = false;
-            for (let [i,drill] of drills.entries()) {
-                let dist = drill.distTo2D(center)
-                if (dist <= centerDiff) { // too close
-                    // console.log("overlap",center,drill);
-                    if(center.z > drill.z) { //if current is higher than old
-                        drills[i] = center; //replace with top point
-                        drills[i].depth = center.z-drill.z
-                    }else if(center.z <= drill.z-drill.depth){// if current is lower or same as old
-                        drills[i].depth = drill.z-center.z
-                    }
-                    // if overlapping, don't add and continue
-                    overlap = true;
+            for (let poly of inner) {
+                let center = poly.calcCircleCenter();
+                center.area = poly.area();
+                // console.log("center",center)
+                center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(center.area - area) <= areaDelta );
+                if (center.isInPolygon(slice.shadow)) {
+                    // if shadowed, don't add, and inform client
+                    shadowedDrills = true;
                     continue;
                 }
+                let overlap = false;
+                for (let [i,drill] of drills.entries()) {
+                    let dist = drill.distTo2D(center)
+                    //if on the same xy point, and both have the same selection value
+                    if (dist <= centerDiff && drill.selected == center.selected) {  
+                        // console.log("overlap",center,drill);
+                        if(center.z > drill.z) { //if current is higher than old
+                            drills[i] = center; //replace with top point
+                            drills[i].depth = center.z-drill.z
+                        }else if(center.z <= drill.z-drill.depth){// if current is lower or same as old
+                            drills[i].depth = drill.z-center.z
+                        }
+                        // if overlapping, don't add and continue
+                        overlap = true;
+                        continue;
+                    }
+                }
+                center.depth = 0;
+                if(!overlap) drills.push(center);
             }
-            center.depth = 0;
-            if(!overlap) drills.push(center);
         }
     }
     drills = drills.filter(drill => drill.depth > 0)
+    widget.shadowedDrills = shadowedDrills
     widget.holes = drills;
     return drills;
 }

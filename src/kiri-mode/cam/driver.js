@@ -168,6 +168,7 @@ kiri.load(api => {
             send.done(kiri.codec.encode(fresh.map(widget => { return {
                 id: widget.id,
                 holes: widget.holes,
+                shadowed:widget.shadowedDrills
             } } )));
         }
     }
