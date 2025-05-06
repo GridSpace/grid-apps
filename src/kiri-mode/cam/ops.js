@@ -706,7 +706,7 @@ class OpOutline extends CamOp {
         for (let slice of sliceOut) {
             let polys = [], t = [], c = [];
             let lines =POLY.flatten(slice.camLines)
-            console.log(lines);
+            // console.log(lines);
             lines.forEach(l =>{ if(l.order == undefined) l.order = 0; });
             lines.forEach(function (poly) {
                 let child = poly.parent;
@@ -732,7 +732,7 @@ class OpOutline extends CamOp {
                 Object.entries(orderSplit) //split the polys by order
                 .sort((a,b) => -(a[0] - b[0] )) //sort by order (highest first)
                 .forEach(([order, orderPolys]) => { // emit based on closest for each order
-                    console.log({order, orderPolys});
+                    // console.log({order, orderPolys});
                     printPoint = poly2polyEmit(orderPolys, printPoint, function(poly, index, count) {
                         poly.forEachPoint(function(point, pidx, points, offset) {
                             camOut(point.clone(), offset !== 0);
