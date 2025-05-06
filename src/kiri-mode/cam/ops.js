@@ -628,18 +628,20 @@ class OpOutline extends CamOp {
             } else {
                 if (op.wide) {
                     let stepover = toolDiam * op.step;
+                    let wideCuts = [] //accumulator for wide cuts
                     for (let c = (op.steps || 1); c > 0; c--){
                         offset.slice().forEach(op => {
                             // clone removes inners but the real solution is
                             // to limit expanded shells to through holes
-                            let wideCut = POLY.expand([op.clone(true)], stepover, slice.z, [], 1);
+                            let wideCut = POLY.expand([op.clone(true)], stepover*c, slice.z, [], 1);
                             wideCut.forEach(cut =>{ //set order of cuts when wide
                                 cut.order = c 
-                                cut.inner.forEach(inn =>{ inn.order = c })
+                                if(cut.inner) cut.inner.forEach(inn =>{ inn.order = c })
                             });
-                            offset.push(...wideCut)
+                            wideCuts.push(...wideCut)
                         });
                     }
+                    offset.appendAll(wideCuts);
                 }
             }
 
@@ -704,6 +706,7 @@ class OpOutline extends CamOp {
         for (let slice of sliceOut) {
             let polys = [], t = [], c = [];
             let lines =POLY.flatten(slice.camLines)
+            console.log(lines);
             lines.forEach(l =>{ if(l.order == undefined) l.order = 0; });
             lines.forEach(function (poly) {
                 let child = poly.parent;
@@ -729,7 +732,7 @@ class OpOutline extends CamOp {
                 Object.entries(orderSplit) //split the polys by order
                 .sort((a,b) => -(a[0] - b[0] )) //sort by order (highest first)
                 .forEach(([order, orderPolys]) => { // emit based on closest for each order
-                    // console.log({order, orderPolys});
+                    console.log({order, orderPolys});
                     printPoint = poly2polyEmit(orderPolys, printPoint, function(poly, index, count) {
                         poly.forEachPoint(function(point, pidx, points, offset) {
                             camOut(point.clone(), offset !== 0);
