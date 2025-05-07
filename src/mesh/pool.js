@@ -1,9 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+'use strict'
 
 // dep: moto.license
 // dep: moto.worker
-gapp.main("mesh.pool", [], (root) => {
-    // todo
-});
+gapp.main('mesh.pool', [], (root) => {
+  // todo
+})
