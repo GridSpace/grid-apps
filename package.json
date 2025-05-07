@@ -64,6 +64,7 @@
         "electron-builder": "^24.9.1",
         "fs-extra": "^11.2.0",
         "node-fetch": "^3.3.2",
+        "prettier": "^3.5.3",
         "terser-webpack-plugin": "^5.3.10",
         "webpack": "^5.92.1",
         "webpack-cli": "^5.1.4"
@@ -90,7 +91,8 @@
         "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
-        "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js"
+        "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js",
+        "prettier": "prettier --write src web mods sample "
     },
     "main": "app-el.js",
     "build": {
