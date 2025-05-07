@@ -1,6 +1,6 @@
 {
     "name": "grid-apps",
-    "version": "4.1.6",
+    "version": "4.1.7",
     "description": "grid.space 3d slicing & modeling tools",
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
@@ -36,7 +36,7 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^6.1.1",
-        "@gridspace/app-server": "^0.0.15",
+        "@gridspace/app-server": "^0.0.16",
         "@gridspace/net-level-client": "^0.2.3",
         "@tracespace/parser": "^5.0.0-next.0",
         "@tweenjs/tween.js": "^16.6.0",
@@ -55,7 +55,7 @@
         "three-mesh-bvh": "^0.7.6",
         "uglify-js": "3.14.5",
         "validator": ">=13.7.0",
-        "ws": "^7.5.5"
+        "ws": "^8.18.2"
     },
     "devDependencies": {
         "@electron/notarize": "^3.0.0",
@@ -72,6 +72,7 @@
         "setup": "npm i && cd mods && npm i",
         "dev": "gs-app-server --debug",
         "prod": "gs-app-server",
+        "prod-dryrun": "gs-app-server --dryrun",
         "start": "npm run prebuild && electron .",
         "start-dev": "npm run prebuild && electron . --devel",
         "start-dbg": "npm run prebuild && electron . --debugg",

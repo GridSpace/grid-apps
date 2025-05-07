@@ -126,7 +126,12 @@ self.kiri.load(api => {
         },
         drain() {
             while (socket.open && socket.q.length) {
-                socket.ws.send(JSON.stringify(socket.q.shift()));
+                let data = socket.q.shift();
+                if (data instanceof ArrayBuffer) {
+                    socket.ws.send(data);
+                } else {
+                    socket.ws.send(JSON.stringify(data));
+                }
             }
         },
         send(msg) {
@@ -614,6 +619,16 @@ self.kiri.load(api => {
         }
     }
 
+    function file_send(file, data) {
+        if (selected?.rec?.host) {
+            let { rec } = selected;
+            host = rec.host;
+            serial = rec.serial;
+            password = rec.code;
+            send(file.name, data, false);
+        }
+    }
+
     function calcFG(bg) {
         let r = parseInt(bg.substring(0, 2), 16);
         let g = parseInt(bg.substring(2, 4), 16);
@@ -1007,7 +1022,7 @@ self.kiri.load(api => {
                         ])
                     ]),
 
-                    h.div({ class: "t-body t-inset f-col gap3 pad4 grow" }, [
+                    h.div({ id: "bbl_drop", class: "t-body t-inset f-col gap3 pad4 grow" }, [
                         h.div({ class: "set-header", onclick() {
                             file_list();
                         } }, h.a({ class: "flex f-row grow a-center" }, [
@@ -1050,7 +1065,10 @@ self.kiri.load(api => {
                                 file_print(selected.file.path);
                                 api.alerts.show(`printing: ${selected.file.path}`,2);
                             }}),
-                        ])
+                        ]),
+                        h.div({ id: "bbl_drop_zone", class: "full hide allpe", style: "background-color: rgba(0,255,0,0.75); font-weight: bold" }, [
+                            h.label('drop to upload')
+                        ]),
                     ]),
                     h.div({ class: "t-body t-inset f-col gap3 pad4" }, [
                         h.label({ class: "set-header dev-sel" }, [
@@ -1122,6 +1140,41 @@ self.kiri.load(api => {
             $('bbl_file_delete').disabled =
             $('bbl_file_print').disabled = false;
         });
+        let drop = modal.bbl_drop;
+        let drop_zone = modal.bbl_drop_zone;
+        let drop_timer;
+        drop.ondragenter = (ev) => {
+            if (!selected?.rec?.serial) {
+                return;
+            }
+            drop.classList.add('nope');
+            drop_zone.classList.remove('hide');
+            clearTimeout(drop_timer);
+        };
+        drop_zone.ondragleave = (ev) => {
+            clearTimeout(drop_timer);
+            drop_timer = setTimeout(() => {
+                drop.classList.remove('nope');
+                drop_zone.classList.add('hide');
+            }, 50);
+        };
+        drop_zone.ondrop = (ev) => {
+            drop.classList.remove('nope');
+            drop_zone.classList.add('hide');
+            ev.preventDefault();
+            ev.stopPropagation();
+            let files = ev.dataTransfer.files;
+            console.log('filedrop', files);
+            for (let file of files) {
+                let reader = new FileReader();
+                // reader.file = file;
+                reader.onloadend = (ev) => {
+                    let data = ev.target.result;
+                    file_send(file, data);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        };
     });
 
     api.event.on("modal.show", which => {
@@ -1251,6 +1304,7 @@ self.kiri.load(api => {
             console.log('Bambu Send', res);
             if (res.sent) {
                 api.alerts.show('File Sent', 3);
+                file_list();
             } else {
                 api.alerts.show('File Send Error', 3);
             }

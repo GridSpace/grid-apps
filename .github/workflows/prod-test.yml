@@ -1,0 +1,27 @@
+name: Test NPM Production Build
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup And Install dependencies
+        run: npm run setup
+
+      - name: dry run production build
+        run: npm run prod-dryrun

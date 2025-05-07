@@ -1190,9 +1190,7 @@ CAM.init = function(kiri, api) {
         const {tool,mark} = poppedRec //TODO: display some visual difference if mark is selected
         let diam = new CAM.Tool(settings,tool).fluteDiameter()
 
-        api.hide.alert(alert);
-        alert = api.show.alert("[esc] cancels drill editing");
-        kiri.api.widgets.opacity(0.8);
+        
         const widgets = kiri.api.widgets.all()
         /**
          * creates a mesh for a hole and adds it to a widget
@@ -1242,10 +1240,16 @@ CAM.init = function(kiri, api) {
 
         }else{ // if no widget has cached holes
             await CAM.holes(individual?0:diam,(centers)=>{
+                let shadow = centers.some(c=>c.shadowed)
+                if(shadow){
+                    alert = api.show.alert("Some holes are shadowed by part and are not shown.");
+                }
                 centers = centers ?? []
                 //flattened list of all hole centers and if they are selected
                 kiri.api.widgets.for(widget => {
                     const {holes} = centers.find(center=>center.id = widget.id)
+
+                    console.log(holes)
                     if (!holes.length) unselectHoles(holes);
                     holes.forEach(hole => {
                         createHoleMesh(widget, hole)
@@ -1260,6 +1264,10 @@ CAM.init = function(kiri, api) {
                 })
             });
         }
+        //hide the alert once hole meshes are calculated on the worker, and then added to the scene
+        api.hide.alert(alert);
+        alert = api.show.alert("[esc] cancels drill editing");
+        kiri.api.widgets.opacity(0.8);
     }
 
     func.selectHolesHover = function(data) {
