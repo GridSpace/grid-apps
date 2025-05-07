@@ -707,8 +707,8 @@ class OpOutline extends CamOp {
             let polys = [], t = [], c = [];
             let lines =POLY.flatten(slice.camLines)
             // console.log(lines);
-            lines.forEach(l =>{ if(l.order == undefined) l.order = 0; });
-            lines.forEach(function (poly) {
+            lines.forEach((poly)=> {
+                poly.order = poly.order ?? 0;
                 let child = poly.parent;
                 if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
                 if (child) c.push(poly); else t.push(poly);
