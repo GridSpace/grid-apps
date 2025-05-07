@@ -2071,6 +2071,7 @@ gapp.register("kiri.init", (root, exports) => {
         $('mesh-export-stl').onclick = () => { objectsExport('stl') };
         $('mesh-export-obj').onclick = () => { objectsExport('obj') };
         $('mesh-merge').onclick = selection.merge;
+        $('mesh-isolate').onclick = selection.isolate;
         $('context-duplicate').onclick = duplicateSelection;
         $('context-mirror').onclick = mirrorSelection;
         $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
