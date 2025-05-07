@@ -1,77 +1,77 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+'use strict'
 
 // dep: kiri.api
-gapp.register("kiri.alerts", [], (root, exports) => {
+gapp.register('kiri.alerts', [], (root, exports) => {
+  const { kiri } = root
+  const { api } = kiri
 
-const { kiri } = root;
-const { api } = kiri;
+  let alerts = []
 
-let alerts = [];
-
-function show(message, time) {
+  function show(message, time) {
     if (message === undefined || message === null) {
-        return update(true);
+      return update(true)
     }
-    let rec = [message, Date.now(), time, true];
+    let rec = [message, Date.now(), time, true]
     if (api.feature.alert_event) {
-        api.event.emit('alert', rec);
+      api.event.emit('alert', rec)
     } else {
-        alerts.push(rec);
-        update();
+      alerts.push(rec)
+      update()
     }
-    return rec;
-}
+    return rec
+  }
 
-function hide(rec, recs) {
+  function hide(rec, recs) {
     if (Array.isArray(recs)) {
-        for (let r of recs) {
-            hide(r);
-        }
-        return;
+      for (let r of recs) {
+        hide(r)
+      }
+      return
     }
     if (api.feature.alert_event) {
-        api.event.emit('alert.cancel', rec);
-        return;
+      api.event.emit('alert.cancel', rec)
+      return
     }
     if (Array.isArray(rec)) {
-        rec[3] = false;
-        update();
+      rec[3] = false
+      update()
     }
-}
+  }
 
-function update(clear) {
+  function update(clear) {
     if (clear) {
-        alerts = [];
+      alerts = []
     }
-    const now = Date.now();
-    const { ui } = api;
+    const now = Date.now()
+    const { ui } = api
     // filter out by age and active flag
-    alerts = alerts.filter(alert => {
-        return alert[3] && (now - alert[1]) < ((alert[2] || 5) * 1000);
-    });
+    alerts = alerts.filter((alert) => {
+      return alert[3] && now - alert[1] < (alert[2] || 5) * 1000
+    })
     // limit to 5 showing
     while (alerts.length > 5) {
-        alerts.shift();
+      alerts.shift()
     }
     // return if called before UI configured
     if (!ui.alert) {
-        return;
+      return
     }
     if (alerts.length > 0) {
-        ui.alert.text.innerHTML = alerts.map(v => ['<p>',v[0],'</p>'].join('')).join('');
-        ui.alert.dialog.style.display = 'flex';
+      ui.alert.text.innerHTML = alerts
+        .map((v) => ['<p>', v[0], '</p>'].join(''))
+        .join('')
+      ui.alert.dialog.style.display = 'flex'
     } else {
-        ui.alert.dialog.style.display = 'none';
+      ui.alert.dialog.style.display = 'none'
     }
-}
+  }
 
-// extend API
-Object.assign(api.alerts, {
+  // extend API
+  Object.assign(api.alerts, {
     hide,
     show,
-    update
-});
-
-});
+    update,
+  })
+})

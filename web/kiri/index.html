@@ -1,750 +1,1060 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="author" content="Stewart Allen">
-    <meta name="keywords" content="3d slicer,chromebook,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode,cura,simplify 3d,prusaslicer,fdm,sla">
-    <meta name="copyright" content="stewart allen [sa@grid.space]">
-    <meta name="description" content="Browser-based 3D slicer, gcode and CNC toolpath generator">
-    <meta property="og:description" content="Kiri:Moto is a unique 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters.">
-    <meta property="og:title" content="Browser-based 3D Slicer">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://grid.space/kiri/">
-    <meta property="og:image" content="https://static.grid.space/img/logo_km_og.png">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta http-equiv="origin-trial" content="Aixo1di7jfA+ystPFy70vGYyODYVAju1y8EQWwdkdtl5sB7i990oDCnqLQntpfl7NsW74wz99Og7xgQqeLKiBQsAAAB0eyJvcmlnaW4iOiJodHRwczovL2dyaWQuc3BhY2U6NDQzIiwiZmVhdHVyZSI6IlVucmVzdHJpY3RlZFNoYXJlZEFycmF5QnVmZmVyIiwiZXhwaXJ5IjoxNzUzMTQyNDAwLCJpc1N1YmRvbWFpbiI6dHJ1ZX0=">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="author" content="Stewart Allen" />
+    <meta
+      name="keywords"
+      content="3d slicer,chromebook,slicer,3d slicing,cnc,cam,toolpaths,toolpath generation,kiri,kirimoto,kiri:moto,gcode,cura,simplify 3d,prusaslicer,fdm,sla"
+    />
+    <meta name="copyright" content="stewart allen [sa@grid.space]" />
+    <meta
+      name="description"
+      content="Browser-based 3D slicer, gcode and CNC toolpath generator"
+    />
+    <meta
+      property="og:description"
+      content="Kiri:Moto is a unique 3D slicer that runs entirely in browser and creates output for your favorite maker tools: 3D Printers, CNC Mills and Laser Cutters."
+    />
+    <meta property="og:title" content="Browser-based 3D Slicer" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://grid.space/kiri/" />
+    <meta
+      property="og:image"
+      content="https://static.grid.space/img/logo_km_og.png"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta
+      http-equiv="origin-trial"
+      content="Aixo1di7jfA+ystPFy70vGYyODYVAju1y8EQWwdkdtl5sB7i990oDCnqLQntpfl7NsW74wz99Og7xgQqeLKiBQsAAAB0eyJvcmlnaW4iOiJodHRwczovL2dyaWQuc3BhY2U6NDQzIiwiZmVhdHVyZSI6IlVucmVzdHJpY3RlZFNoYXJlZEFycmF5QnVmZmVyIiwiZXhwaXJ5IjoxNzUzMTQyNDAwLCJpc1N1YmRvbWFpbiI6dHJ1ZX0="
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <title>Kiri:Moto</title>
-    <link rel="icon" href="/kiri/favicon.ico">
-    <link rel="apple-touch-icon" href="/kiri/favicon-mobile.png">
-    <link rel="stylesheet" type="text/css" href="/kiri/index.css?{{version}}">
-    <link href="/font/css/all.min.css" rel="stylesheet">
-    <link href="/kiri/manifest.json" rel="manifest">
+    <link rel="icon" href="/kiri/favicon.ico" />
+    <link rel="apple-touch-icon" href="/kiri/favicon-mobile.png" />
+    <link rel="stylesheet" type="text/css" href="/kiri/index.css?{{version}}" />
+    <link href="/font/css/all.min.css" rel="stylesheet" />
+    <link href="/kiri/manifest.json" rel="manifest" />
     <script src="/code/cache.js?{{version}}" defer></script>
     <script src="/font/js/all.min.js" crossorigin="anonymous" defer></script>
     <script src="/code/kiri.js?{{version}}"></script>
-</head>
-<body>
-<div id="app" class="f-col">
-    <!-- hide page contents and provide loading message during initialization -->
-    <div id="curtain" class="j-center a-center"><img id="loading">Kiri:Moto is Loading</div>
+  </head>
+  <body>
+    <div id="app" class="f-col">
+      <!-- hide page contents and provide loading message during initialization -->
+      <div id="curtain" class="j-center a-center">
+        <img id="loading" />Kiri:Moto is Loading
+      </div>
 
-    <!-- when running iframed, provide a separator between the menu bar and enclosing page -->
-    <div id="top-sep"></div>
+      <!-- when running iframed, provide a separator between the menu bar and enclosing page -->
+      <div id="top-sep"></div>
 
-    <!-- top menu bar -->
-    <div id="top" class="f-row">
+      <!-- top menu bar -->
+      <div id="top" class="f-row">
         <div class="f-row top-menu">
-            <span id="view-arrange">
-                <span><i class="fas fa-shapes"></i></span>
-                <label lk="arrange">arrange</label>
-            </span>
-            <span id="act-slice">
-                <span><i class="fas fa-bars"></i></span>
-                <label id="label-slice" title="generate layer slices" lk="slice">preview</label>
-            </span>
-            <span id="act-preview">
-                <span><i class="fas fa-layer-group"></i></span>
-                <label id="label-preview" title="show routing and paths" lk="preview">preview</label>
-            </span>
-            <span id="act-animate">
-                <span><i class="fas fa-film"></i></span>
-                <label id="label-animate" title="render routing on a mesh" lk="animate">animate</label>
-            </span>
-            <span id="act-export">
-                <span><i class="fas fa-file-download"></i></span>
-                <label id="label-export" title="generate gcode" lk="export">export</label>
-            </span>
+          <span id="view-arrange">
+            <span><i class="fas fa-shapes"></i></span>
+            <label lk="arrange">arrange</label>
+          </span>
+          <span id="act-slice">
+            <span><i class="fas fa-bars"></i></span>
+            <label id="label-slice" title="generate layer slices" lk="slice"
+              >preview</label
+            >
+          </span>
+          <span id="act-preview">
+            <span><i class="fas fa-layer-group"></i></span>
+            <label
+              id="label-preview"
+              title="show routing and paths"
+              lk="preview"
+              >preview</label
+            >
+          </span>
+          <span id="act-animate">
+            <span><i class="fas fa-film"></i></span>
+            <label
+              id="label-animate"
+              title="render routing on a mesh"
+              lk="animate"
+              >animate</label
+            >
+          </span>
+          <span id="act-export">
+            <span><i class="fas fa-file-download"></i></span>
+            <label id="label-export" title="generate gcode" lk="export"
+              >export</label
+            >
+          </span>
         </div>
         <div class="grow"></div>
         <div id="app-name" class="f-col a-center top-menu">
-            <span class="grow">
-                <span id="app-name-text" class="km-font">Kiri:Moto</span>
-                <div id="app-name-pop" class="top-menu-drop top-menu-center">
-                    <div class="content">
-                        <div id="app-help">
-                            <label lk="help">help</label>
-                        </div>
-                        <hr width="100%">
-                        <div id="app-don8">
-                            <label lk="donate">donate</label>
-                        </div>
-                        <div>
-                            <label id="app-mesh">mesh edit</label>
-                        </div>
-                        <hr width="100%">
-                        <div>
-                            <label id="app-info">version</label>
-                        </div>
-                    </div>
+          <span class="grow">
+            <span id="app-name-text" class="km-font">Kiri:Moto</span>
+            <div id="app-name-pop" class="top-menu-drop top-menu-center">
+              <div class="content">
+                <div id="app-help">
+                  <label lk="help">help</label>
                 </div>
-            </span>
+                <hr width="100%" />
+                <div id="app-don8">
+                  <label lk="donate">donate</label>
+                </div>
+                <div>
+                  <label id="app-mesh">mesh edit</label>
+                </div>
+                <hr width="100%" />
+                <div>
+                  <label id="app-info">version</label>
+                </div>
+              </div>
+            </div>
+          </span>
         </div>
         <div id="doit" class="f-row a-center">
-            <button id="undo"><i class="fas fa-undo-alt"></i></button>
-            <button id="redo"><i class="fas fa-redo-alt"></i></button>
+          <button id="undo"><i class="fas fa-undo-alt"></i></button>
+          <button id="redo"><i class="fas fa-redo-alt"></i></button>
         </div>
         <div class="grow"></div>
         <div class="f-row top-menu">
-            <span>
-                <i class="fas fa-folder"></i>
-                <label>files</label>
-                <div class="top-menu-drop top-menu-right">
-                    <div class="content">
-                        <div id="file-new">
-                            <label lk="new">new</label>
-                            <span><i class="fas fa-file"></i></span>
-                        </div>
-                        <hr>
-                        <div id="file-recent">
-                            <label lk="recent">recent</label>
-                            <span><i class="fas fa-list"></i></span>
-                        </div>
-                        <div id="file-import">
-                            <label lk="import">import</label>
-                            <span><i class="fas fa-file-upload"></i></span>
-                            <!-- required file input loader -->
-                            <input id="load-file" type="file" name="loadme" style="display:none"></input>
-                        </div>
-                        <hr>
-                        <div id="app-export">
-                            <label lk="export">export</label>
-                            <span><i class="fas fa-download"></i></span>
-                        </div>
-                    </div>
+          <span>
+            <i class="fas fa-folder"></i>
+            <label>files</label>
+            <div class="top-menu-drop top-menu-right">
+              <div class="content">
+                <div id="file-new">
+                  <label lk="new">new</label>
+                  <span><i class="fas fa-file"></i></span>
                 </div>
-            </span>
-            <span>
-                <i class="fas fa-eye"></i>
-                <label>view</label>
-                <div class="top-menu-drop top-menu-right">
-                    <div class="content">
-                        <div id="view-home">
-                            <label lk="home">home</label>
-                            <span><i class="fas fa-home"></i></span>
-                        </div>
-                        <hr>
-                        <div id="view-top">
-                            <label lk="top">top</label>
-                            <span><i class="fas fa-square"></i></span>
-                        </div>
-                        <div id="view-front">
-                            <label lk="front">top</label>
-                            <span><i class="fas fa-square"></i></span>
-                        </div>
-                        <div id="view-back">
-                            <label lk="back">top</label>
-                            <span><i class="fas fa-square"></i></span>
-                        </div>
-                        <div id="view-left">
-                            <label lk="left">top</label>
-                            <span><i class="fas fa-square"></i></span>
-                        </div>
-                        <div id="view-right">
-                            <label lk="right">top</label>
-                            <span><i class="fas fa-square"></i></span>
-                        </div>
-                        <hr>
-                        <div id="app-xpnd">
-                            <label lk="fullscreen">fullscreen</label>
-                            <span><i class="fas fa-maximize"></i></span>
-                        </div>
-                    </div>
+                <hr />
+                <div id="file-recent">
+                  <label lk="recent">recent</label>
+                  <span><i class="fas fa-list"></i></span>
                 </div>
-            </span>
-            <span>
-                <i class="fas fa-code-branch"></i>
-                <label>mode</label>
-                <div class="top-menu-drop top-menu-right">
-                    <div class="content">
-                        <div id="mode-fdm">
-                            <label title="3D Additive Printing Processes">FDM</label>
-                            <span><i class="fas fa-layer-group"></i></span>
-                        </div>
-                        <div id="mode-cam">
-                            <label title="CNC Mills and Subtractive Processes">CNC</label>
-                            <span><i class="fas fa-bore-hole"></i></span>
-                        </div>
-                        <div id="mode-sla">
-                            <label title="mSLA Resin Printing">SLA</label>
-                            <span><i class="fas fa-cube"></i></span>
-                        </div>
-                        <hr>
-                        <div id="mode-laser">
-                            <label title="Laser Cutting and Engraving">Laser</label>
-                            <span><i class="fas fa-bolt"></i></span>
-                        </div>
-                        <div id="mode-wjet">
-                            <label title="WaterJet Cutting">Water</label>
-                            <span><i class="fas fa-location-pin"></i></span>
-                        </div>
-                        <div id="mode-wedm">
-                            <label title="Wire EDM Cutting">Wire</label>
-                            <span><i class="fas fa-ellipsis-vertical"></i></span>
-                        </div>
-                        <div id="mode-drag">
-                            <label title="Drag Knife Cutting">Drag</label>
-                            <span><i class="fas fa-caret-left"></i></span>
-                        </div>
-                    </div>
+                <div id="file-import">
+                  <label lk="import">import</label>
+                  <span><i class="fas fa-file-upload"></i></span>
+                  <!-- required file input loader -->
+                  <input
+                    id="load-file"
+                    type="file"
+                    name="loadme"
+                    style="display: none"
+                  />
                 </div>
-            </span>
-            <span>
-                <i class="fas fa-cog"></i>
-                <label>setup</label>
-                <div class="top-menu-drop top-menu-right">
-                    <div class="content">
-                        <div id="set-device">
-                            <label lk="machines">machines</label>
-                            <span><i class="fas fa-cube"></i></span>
-                        </div>
-                        <div id="set-profs">
-                            <label lk="profs">profiles</label>
-                            <span><i class="fas fa-sliders-h"></i></span>
-                        </div>
-                        <div id="set-tools">
-                            <label lk="tools">tools</label>
-                            <span><i class="fas fa-tools"></i></span>
-                        </div>
-                        <div id="app-lang">
-                            <label lk="language">language</label>
-                            <span><i class="fas fa-language"></i></span>
-                            <div id="lang-pop">
-                                <span id="lang-hold"></span>
-                                <div id="lset-zh">简体中文</div>
-                                <div id="lset-da">dansk</div>
-                                <div id="lset-de">deutsch</div>
-                                <div id="lset-en">english</div>
-                                <div id="lset-es">español</div>
-                                <div id="lset-fr">français</div>
-                                <div id="lset-pl">polskie</div>
-                                <div id="lset-pt">português</div>
-                            </div>
-                        </div>
-                        <div id="set-prefs">
-                            <label lk="prefs">prefs</label>
-                            <span><i class="fa-solid fa-square-check"></i></span>
-                        </div>
-                    </div>
+                <hr />
+                <div id="app-export">
+                  <label lk="export">export</label>
+                  <span><i class="fas fa-download"></i></span>
                 </div>
-            </span>
+              </div>
+            </div>
+          </span>
+          <span>
+            <i class="fas fa-eye"></i>
+            <label>view</label>
+            <div class="top-menu-drop top-menu-right">
+              <div class="content">
+                <div id="view-home">
+                  <label lk="home">home</label>
+                  <span><i class="fas fa-home"></i></span>
+                </div>
+                <hr />
+                <div id="view-top">
+                  <label lk="top">top</label>
+                  <span><i class="fas fa-square"></i></span>
+                </div>
+                <div id="view-front">
+                  <label lk="front">top</label>
+                  <span><i class="fas fa-square"></i></span>
+                </div>
+                <div id="view-back">
+                  <label lk="back">top</label>
+                  <span><i class="fas fa-square"></i></span>
+                </div>
+                <div id="view-left">
+                  <label lk="left">top</label>
+                  <span><i class="fas fa-square"></i></span>
+                </div>
+                <div id="view-right">
+                  <label lk="right">top</label>
+                  <span><i class="fas fa-square"></i></span>
+                </div>
+                <hr />
+                <div id="app-xpnd">
+                  <label lk="fullscreen">fullscreen</label>
+                  <span><i class="fas fa-maximize"></i></span>
+                </div>
+              </div>
+            </div>
+          </span>
+          <span>
+            <i class="fas fa-code-branch"></i>
+            <label>mode</label>
+            <div class="top-menu-drop top-menu-right">
+              <div class="content">
+                <div id="mode-fdm">
+                  <label title="3D Additive Printing Processes">FDM</label>
+                  <span><i class="fas fa-layer-group"></i></span>
+                </div>
+                <div id="mode-cam">
+                  <label title="CNC Mills and Subtractive Processes">CNC</label>
+                  <span><i class="fas fa-bore-hole"></i></span>
+                </div>
+                <div id="mode-sla">
+                  <label title="mSLA Resin Printing">SLA</label>
+                  <span><i class="fas fa-cube"></i></span>
+                </div>
+                <hr />
+                <div id="mode-laser">
+                  <label title="Laser Cutting and Engraving">Laser</label>
+                  <span><i class="fas fa-bolt"></i></span>
+                </div>
+                <div id="mode-wjet">
+                  <label title="WaterJet Cutting">Water</label>
+                  <span><i class="fas fa-location-pin"></i></span>
+                </div>
+                <div id="mode-wedm">
+                  <label title="Wire EDM Cutting">Wire</label>
+                  <span><i class="fas fa-ellipsis-vertical"></i></span>
+                </div>
+                <div id="mode-drag">
+                  <label title="Drag Knife Cutting">Drag</label>
+                  <span><i class="fas fa-caret-left"></i></span>
+                </div>
+              </div>
+            </div>
+          </span>
+          <span>
+            <i class="fas fa-cog"></i>
+            <label>setup</label>
+            <div class="top-menu-drop top-menu-right">
+              <div class="content">
+                <div id="set-device">
+                  <label lk="machines">machines</label>
+                  <span><i class="fas fa-cube"></i></span>
+                </div>
+                <div id="set-profs">
+                  <label lk="profs">profiles</label>
+                  <span><i class="fas fa-sliders-h"></i></span>
+                </div>
+                <div id="set-tools">
+                  <label lk="tools">tools</label>
+                  <span><i class="fas fa-tools"></i></span>
+                </div>
+                <div id="app-lang">
+                  <label lk="language">language</label>
+                  <span><i class="fas fa-language"></i></span>
+                  <div id="lang-pop">
+                    <span id="lang-hold"></span>
+                    <div id="lset-zh">简体中文</div>
+                    <div id="lset-da">dansk</div>
+                    <div id="lset-de">deutsch</div>
+                    <div id="lset-en">english</div>
+                    <div id="lset-es">español</div>
+                    <div id="lset-fr">français</div>
+                    <div id="lset-pl">polskie</div>
+                    <div id="lset-pt">português</div>
+                  </div>
+                </div>
+                <div id="set-prefs">
+                  <label lk="prefs">prefs</label>
+                  <span><i class="fa-solid fa-square-check"></i></span>
+                </div>
+              </div>
+            </div>
+          </span>
         </div>
-    </div>
+      </div>
 
-    <!-- line betwwen menu bar and main application windows -->
-    <div id="progress"><div id="progbar"></div><div id="progtxt">loading</div></div>
+      <!-- line betwwen menu bar and main application windows -->
+      <div id="progress">
+        <div id="progbar"></div>
+        <div id="progtxt">loading</div>
+      </div>
 
-    <!-- toolbar with mesh and rendering options -->
-    <div>
+      <!-- toolbar with mesh and rendering options -->
+      <div>
         <div id="render-tools">
-            <span id="tool-nozzle"><i class="fas fa-location-pin" title="extruder"></i>
-                <div id="ft-nozzle" class="f-col pop"></div>
-            </span>
-            <span id="tool-rotate"><i class="fas fa-rotate-right" title="rotate selection"></i>
-                <div id="ft-rotate" class="grid pop">
-                    <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
-                    <label>X</label>
-                    <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
-                    <input id="rot_x" class="value center" size="6" value="5">
-                    <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
-                    <label>Y</label>
-                    <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
-                    <input id="rot_y" class="value center" size="6" value="5">
-                    <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
-                    <label>Z</label>
-                    <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
-                    <input id="rot_z" class="value center" size="6" value="5">
-                    <div class="buttons f-row">
-                        <button id="unrotate" class="grow" lk="reset">reset</button>
-                    </div>
+          <span id="tool-nozzle"
+            ><i class="fas fa-location-pin" title="extruder"></i>
+            <div id="ft-nozzle" class="f-col pop"></div>
+          </span>
+          <span id="tool-rotate"
+            ><i class="fas fa-rotate-right" title="rotate selection"></i>
+            <div id="ft-rotate" class="grid pop">
+              <div id="rot_x_lt"><i class="fas fa-chevron-left"></i></div>
+              <label>X</label>
+              <div id="rot_x_gt"><i class="fas fa-chevron-right"></i></div>
+              <input id="rot_x" class="value center" size="6" value="5" />
+              <div id="rot_y_lt"><i class="fas fa-chevron-left"></i></div>
+              <label>Y</label>
+              <div id="rot_y_gt"><i class="fas fa-chevron-right"></i></div>
+              <input id="rot_y" class="value center" size="6" value="5" />
+              <div id="rot_z_lt"><i class="fas fa-chevron-left"></i></div>
+              <label>Z</label>
+              <div id="rot_z_gt"><i class="fas fa-chevron-right"></i></div>
+              <input id="rot_z" class="value center" size="6" value="5" />
+              <div class="buttons f-row">
+                <button id="unrotate" class="grow" lk="reset">reset</button>
+              </div>
+            </div>
+          </span>
+          <span id="tool-scale"
+            ><i class="fas fa-expand" title="scale or resize selection"></i>
+            <div id="ft-scale" class="grid pop">
+              <div>
+                <label>X</label><input id="lock_x" type="checkbox" checked />
+              </div>
+              <div>
+                <label>Y</label><input id="lock_y" type="checkbox" checked />
+              </div>
+              <div>
+                <label>Z</label><input id="lock_z" type="checkbox" checked />
+              </div>
+              <label id="lab-axis" lk="axis">axis</label>
+              <input id="size_x" size="8" class="value" />
+              <input id="size_y" size="8" class="value" />
+              <input id="size_z" size="8" class="value" />
+              <label id="lab-size" lk="size">size</label>
+              <input id="scale_x" size="8" class="value" value="1" />
+              <input id="scale_y" size="8" class="value" value="1" />
+              <input id="scale_z" size="8" class="value" value="1" />
+              <label id="lab-scale" lk="scale">scale</label>
+              <div class="buttons f-row">
+                <button id="scale-reset" class="grow j-center">reset</button>
+              </div>
+            </div>
+          </span>
+          <span id="tool-mesh"
+            ><i class="fas fa-dice-d20"></i>
+            <div id="ft-mesh" class="grow f-col pop">
+              <div id="ft-mesh-btn">
+                <div><button id="mesh-merge" lk="rc_merg">Merge</button></div>
+                <div>
+                  <button id="mesh-export-obj" lk="rc_xobj">export OBJ</button>
                 </div>
-            </span>
-            <span id="tool-scale"><i class="fas fa-expand" title="scale or resize selection"></i>
-                <div id="ft-scale" class="grid pop">
-                    <div><label>X</label><input id="lock_x" type="checkbox" checked></div>
-                    <div><label>Y</label><input id="lock_y" type="checkbox" checked></div>
-                    <div><label>Z</label><input id="lock_z" type="checkbox" checked></div>
-                    <label id="lab-axis" lk="axis">axis</label>
-                    <input id="size_x" size="8" class="value">
-                    <input id="size_y" size="8" class="value">
-                    <input id="size_z" size="8" class="value">
-                    <label id="lab-size" lk="size">size</label>
-                    <input id="scale_x" size="8" class="value" value="1">
-                    <input id="scale_y" size="8" class="value" value="1">
-                    <input id="scale_z" size="8" class="value" value="1">
-                    <label id="lab-scale" lk="scale">scale</label>
-                    <div class="buttons f-row">
-                        <button id="scale-reset" class="grow j-center">reset</button>
-                    </div>
+                <div>
+                  <button id="mesh-export-stl" lk="rc_xstl">export STL</button>
                 </div>
-            </span>
-            <span id="tool-mesh"><i class="fas fa-dice-d20"></i>
-                <div id="ft-mesh" class="grow f-col pop">
-                    <div id="ft-mesh-btn">
-                        <div><button id="mesh-merge" lk="rc_merg">Merge</button></div>
-                        <div><button id="mesh-export-obj" lk="rc_xobj">export OBJ</button></div>
-                        <div><button id="mesh-export-stl" lk="rc_xstl">export STL</button></div>
-                    </div>
-                </div>
-            </span>
-            <span id="context-mirror" xlk="rc_mirr">
-                <i class="fas fa-arrows-left-right-to-line"></i>
-                <div class="pop">mirror selection</div>
-            </span>
-            <span id="context-duplicate" xlk="rc_dupl">
-                <i class="fas fa-copy"></i>
-                <div class="pop">duplicate selection</div>
-            </span>
-            <span id="context-layflat" xlk="rc_lafl">
-                <i class="fas fa-arrows-down-to-line"></i>
-                <div class="pop">choose a face to place<br>on the work surface</div>
-            </span>
-            <span id="context-setfocus" xlk="rc_focs">
-                <i class="fas fa-eye"></i>
-                <div class="pop">choose focal point<br>camera orbit center</div>
-            </span>
-            <span id="render-solid" class="j-center">
-                <i class="fas fa-square"></i>
-                <div class="pop">render objects solid</div>
-            </span>
-            <span id="render-wire" class="j-center">
-                <i class="fas fa-border-all"></i>
-                <div class="pop">render objects wireframe</div>
-            </span>
-            <span id="render-ghost" class="a-center">
-                <i class="fas fa-border-none"></i>
-                <div class="pop">render objects transparent</div>
-            </span>
-            <span id="render-edges" class="a-center">
-                <i class="fa-regular fa-square"></i>
-                <div class="pop">trace edges</div>
-            </span>
+              </div>
+            </div>
+          </span>
+          <span id="context-mirror" xlk="rc_mirr">
+            <i class="fas fa-arrows-left-right-to-line"></i>
+            <div class="pop">mirror selection</div>
+          </span>
+          <span id="context-duplicate" xlk="rc_dupl">
+            <i class="fas fa-copy"></i>
+            <div class="pop">duplicate selection</div>
+          </span>
+          <span id="context-layflat" xlk="rc_lafl">
+            <i class="fas fa-arrows-down-to-line"></i>
+            <div class="pop">
+              choose a face to place<br />on the work surface
+            </div>
+          </span>
+          <span id="context-setfocus" xlk="rc_focs">
+            <i class="fas fa-eye"></i>
+            <div class="pop">choose focal point<br />camera orbit center</div>
+          </span>
+          <span id="render-solid" class="j-center">
+            <i class="fas fa-square"></i>
+            <div class="pop">render objects solid</div>
+          </span>
+          <span id="render-wire" class="j-center">
+            <i class="fas fa-border-all"></i>
+            <div class="pop">render objects wireframe</div>
+          </span>
+          <span id="render-ghost" class="a-center">
+            <i class="fas fa-border-none"></i>
+            <div class="pop">render objects transparent</div>
+          </span>
+          <span id="render-edges" class="a-center">
+            <i class="fa-regular fa-square"></i>
+            <div class="pop">trace edges</div>
+          </span>
         </div>
-    </div>
+      </div>
 
-    <div id="mid" class="grow f-row">
-
+      <div id="mid" class="grow f-row">
         <!-- left settings menu -->
         <div id="panel-left" class="f-col j-left">
-            <!-- <div class="line-sep2"></div> -->
-            <div id="slide-show"><span><i class="fa-solid fa-arrow-right"></i></span></div>
-            <div class="f-col grow settings">
-                <!-- FDM -->
-                <div id="fdm-layers" class="set2-group mode-fdm"></div>
-                <div id="fdm-walls" class="set2-group mode-fdm"></div>
-                <div id="fdm-fill" class="set2-group mode-fdm"></div>
-                <div id="fdm-heat" class="set2-group mode-fdm"></div>
-                <div id="fdm-cool" class="set2-group mode-fdm"></div>
-                <div id="fdm-base" class="set2-group mode-fdm"></div>
-                <div id="fdm-support" class="set2-group mode-fdm"></div>
-                <div id="fdm-output" class="set2-group mode-fdm"></div>
-                <div id="fdm-expert" class="set2-group mode-fdm"></div>
-                <!-- CAM -->
-                <div id="cam-tabs" class="set2-group mode-cam"></div>
-                <div id="cam-stock" class="set2-group mode-cam"></div>
-                <div id="cam-limits" class="set2-group mode-cam"></div>
-                <div id="cam-output" class="set2-group mode-cam"></div>
-                <div id="cam-origin" class="set2-group mode-cam"></div>
-                <div id="cam-expert" class="set2-group mode-cam"></div>
-                <!-- LASER / 2D Cut Tools -->
-                <div id="lzr-slice" class="set2-group mode-laser"></div>
-                <div id="lzr-surface" class="set2-group mode-laser"></div>
-                <div id="lzr-knife" class="set2-group mode-laser"></div>
-                <div id="lzr-layout" class="set2-group mode-laser"></div>
-                <div id="lzr-output" class="set2-group mode-laser"></div>
-                <!-- SLA -->
-                <div id="sla-slice" class="set2-group mode-sla"></div>
-                <div id="sla-layers" class="set2-group mode-sla"></div>
-                <div id="sla-base" class="set2-group mode-sla"></div>
-                <div id="sla-fill" class="set2-group mode-sla"></div>
-                <div id="sla-support" class="set2-group mode-sla"></div>
-                <div id="sla-output" class="set2-group mode-sla"></div>
-            </div>
-            <div class="line-sep2"></div>
-            <div class="chonk"></div>
+          <!-- <div class="line-sep2"></div> -->
+          <div id="slide-show">
+            <span><i class="fa-solid fa-arrow-right"></i></span>
+          </div>
+          <div class="f-col grow settings">
+            <!-- FDM -->
+            <div id="fdm-layers" class="set2-group mode-fdm"></div>
+            <div id="fdm-walls" class="set2-group mode-fdm"></div>
+            <div id="fdm-fill" class="set2-group mode-fdm"></div>
+            <div id="fdm-heat" class="set2-group mode-fdm"></div>
+            <div id="fdm-cool" class="set2-group mode-fdm"></div>
+            <div id="fdm-base" class="set2-group mode-fdm"></div>
+            <div id="fdm-support" class="set2-group mode-fdm"></div>
+            <div id="fdm-output" class="set2-group mode-fdm"></div>
+            <div id="fdm-expert" class="set2-group mode-fdm"></div>
+            <!-- CAM -->
+            <div id="cam-tabs" class="set2-group mode-cam"></div>
+            <div id="cam-stock" class="set2-group mode-cam"></div>
+            <div id="cam-limits" class="set2-group mode-cam"></div>
+            <div id="cam-output" class="set2-group mode-cam"></div>
+            <div id="cam-origin" class="set2-group mode-cam"></div>
+            <div id="cam-expert" class="set2-group mode-cam"></div>
+            <!-- LASER / 2D Cut Tools -->
+            <div id="lzr-slice" class="set2-group mode-laser"></div>
+            <div id="lzr-surface" class="set2-group mode-laser"></div>
+            <div id="lzr-knife" class="set2-group mode-laser"></div>
+            <div id="lzr-layout" class="set2-group mode-laser"></div>
+            <div id="lzr-output" class="set2-group mode-laser"></div>
+            <!-- SLA -->
+            <div id="sla-slice" class="set2-group mode-sla"></div>
+            <div id="sla-layers" class="set2-group mode-sla"></div>
+            <div id="sla-base" class="set2-group mode-sla"></div>
+            <div id="sla-fill" class="set2-group mode-sla"></div>
+            <div id="sla-support" class="set2-group mode-sla"></div>
+            <div id="sla-output" class="set2-group mode-sla"></div>
+          </div>
+          <div class="line-sep2"></div>
+          <div class="chonk"></div>
         </div>
 
         <!-- main workspace -->
         <div id="mid-mid" class="grow">
-            <div id="layer-slider" class="f-col a-stretch">
-                <div id="layers" class="f-row j-center gap2"></div>
-                <div id="slider" class="f-row russo">
-                    <div id="slider-zero">0</div>
-                    <div id="slider-center" class="grow">
-                        <div id="slider-line"></div>
-                        <div id="slider-hold" class="f-row">
-                            <div id="slider-lo" class="handle"><div id="slider-lo-val"></div></div>
-                            <div id="slider-mid">&nbsp;</div>
-                            <div id="slider-hi" class="handle"><div id="slider-hi-val"></div></div>
-                        </div>
-                    </div>
-                    <div id="slider-max">&infin;</div>
+          <div id="layer-slider" class="f-col a-stretch">
+            <div id="layers" class="f-row j-center gap2"></div>
+            <div id="slider" class="f-row russo">
+              <div id="slider-zero">0</div>
+              <div id="slider-center" class="grow">
+                <div id="slider-line"></div>
+                <div id="slider-hold" class="f-row">
+                  <div id="slider-lo" class="handle">
+                    <div id="slider-lo-val"></div>
+                  </div>
+                  <div id="slider-mid">&nbsp;</div>
+                  <div id="slider-hi" class="handle">
+                    <div id="slider-hi-val"></div>
+                  </div>
                 </div>
+              </div>
+              <div id="slider-max">&infin;</div>
             </div>
-            <!-- slice/preview layer slider -->
-            <div id="top-slider" class="f-col grow">
-                <input id="anim-slider" type="range" min="0" max="1000" value="0"></input>
-            </div>
-            <!-- CAM animation controls and readout -->
-            <div id="layer-animate" class="f-col a-center set2-group hide"></div>
-            <!-- <div id="layer-toolpos" class="f-row a-center hide"></div> -->
+          </div>
+          <!-- slice/preview layer slider -->
+          <div id="top-slider" class="f-col grow">
+            <input id="anim-slider" type="range" min="0" max="1000" value="0" />
+          </div>
+          <!-- CAM animation controls and readout -->
+          <div id="layer-animate" class="f-col a-center set2-group hide"></div>
+          <!-- <div id="layer-toolpos" class="f-row a-center hide"></div> -->
         </div>
 
         <!-- allows right tray to slide/hide but still show speeds menu -->
         <div class="f-row j-center">
-            <div id="set-menu" class="f-col">
-                <div id="speeds"><div id="speedbar" class="f-col a-stretch j-center" lkt="sb_info"></div></div>
+          <div id="set-menu" class="f-col">
+            <div id="speeds">
+              <div
+                id="speedbar"
+                class="f-col a-stretch j-center"
+                lkt="sb_info"
+              ></div>
             </div>
-            <!-- vertical separation between workspace and right tray -->
-            <div id="panel-right" class="f-col j-start settings">
-                <div id="mode-info">
-                    <div><label>Device</label><span id="mode-device"></span></div>
-                    <div><label>Profile</label><span id="mode-profile"></span></div>
-                </div>
-                <div class="set2-group f-col">
-                    <details open>
-                        <summary class="set-header"><a>objects</a></summary>
-                        <div id="ws-widgets" class="f-col"></div>
-                    </details>
-                </div>
-                <div class="set2-group f-col mode-fdm">
-                    <div class="set-header"><a>ranges</a></div>
-                    <div id="fdm-ranges" class="f-col"></div>
-                </div>
-                <div class="set2-group f-col mode-cam">
-                    <div class="set-header mode-cam"><a>operation list</a></div>
-                    <div id="camops" class="f-col a-stretch grow">
-                        <div id="oplist" class="f-col j-center"></div>
-                        <div id="op-add" class="opdiv">
-                            <i class="fas fa-plus"></i>
-                            <div id="op-add-pop" class="f-col">
-                                <div id="op-add-list" class="opdiv op-grid">
-                                    <div id="cam-index" title="rotate index axis">index</div>
-                                    <div id="cam-lathe" title="lathe operation">lathe</div>
-                                    <div id="laser-on" title="turn on laser mode">laser on</div>
-                                    <div id="laser-off"  title="turn off laser mode">laser off</div>
-                                    <div id="cam-flip" title="flip part and load&#13;profile for other side&#13;for double-sided work">flip</div>
-                                    <div id="cam-reg" title="drill registration holes&#13;along the X or Y axis&#13;for double-sided work">register</div>
-                                    <div title="drill any holes matching&#13;selected tool diameter">drill</div>
-                                    <div title="clear stock face&#13;or top of part&#13;when no stock">level</div>
-                                    <div title="follow selected features with&#13;a specified tool. often used&#13;for lettering and engraving">trace</div>
-                                    <div title="insert custom gcode">gcode</div>
-                                    <div title="remove an area of material&#13;inside a defined boundary&#13;sometimes called pocketing">rough</div>
-                                    <div title="clean up after roughing&#13;or perform a part cutout">outline</div>
-                                    <div title="2.5D tracing along X or Y axis&#13;used for complex part features">contour</div>
-                                    <div title="clear areas above&#13;selected surfaces">pocket</div>
-                                </div>
-                            </div>
-                        </div>
+          </div>
+          <!-- vertical separation between workspace and right tray -->
+          <div id="panel-right" class="f-col j-start settings">
+            <div id="mode-info">
+              <div><label>Device</label><span id="mode-device"></span></div>
+              <div><label>Profile</label><span id="mode-profile"></span></div>
+            </div>
+            <div class="set2-group f-col">
+              <details open>
+                <summary class="set-header"><a>objects</a></summary>
+                <div id="ws-widgets" class="f-col"></div>
+              </details>
+            </div>
+            <div class="set2-group f-col mode-fdm">
+              <div class="set-header"><a>ranges</a></div>
+              <div id="fdm-ranges" class="f-col"></div>
+            </div>
+            <div class="set2-group f-col mode-cam">
+              <div class="set-header mode-cam"><a>operation list</a></div>
+              <div id="camops" class="f-col a-stretch grow">
+                <div id="oplist" class="f-col j-center"></div>
+                <div id="op-add" class="opdiv">
+                  <i class="fas fa-plus"></i>
+                  <div id="op-add-pop" class="f-col">
+                    <div id="op-add-list" class="opdiv op-grid">
+                      <div id="cam-index" title="rotate index axis">index</div>
+                      <div id="cam-lathe" title="lathe operation">lathe</div>
+                      <div id="laser-on" title="turn on laser mode">
+                        laser on
+                      </div>
+                      <div id="laser-off" title="turn off laser mode">
+                        laser off
+                      </div>
+                      <div
+                        id="cam-flip"
+                        title="flip part and load&#13;profile for other side&#13;for double-sided work"
+                      >
+                        flip
+                      </div>
+                      <div
+                        id="cam-reg"
+                        title="drill registration holes&#13;along the X or Y axis&#13;for double-sided work"
+                      >
+                        register
+                      </div>
+                      <div
+                        title="drill any holes matching&#13;selected tool diameter"
+                      >
+                        drill
+                      </div>
+                      <div
+                        title="clear stock face&#13;or top of part&#13;when no stock"
+                      >
+                        level
+                      </div>
+                      <div
+                        title="follow selected features with&#13;a specified tool. often used&#13;for lettering and engraving"
+                      >
+                        trace
+                      </div>
+                      <div title="insert custom gcode">gcode</div>
+                      <div
+                        title="remove an area of material&#13;inside a defined boundary&#13;sometimes called pocketing"
+                      >
+                        rough
+                      </div>
+                      <div
+                        title="clean up after roughing&#13;or perform a part cutout"
+                      >
+                        outline
+                      </div>
+                      <div
+                        title="2.5D tracing along X or Y axis&#13;used for complex part features"
+                      >
+                        contour
+                      </div>
+                      <div title="clear areas above&#13;selected surfaces">
+                        pocket
+                      </div>
                     </div>
+                  </div>
                 </div>
-                <div class="grow"></div>
-                <div class="line-sep2"></div>
-                <div class="chonk"></div>
+              </div>
             </div>
+            <div class="grow"></div>
+            <div class="line-sep2"></div>
+            <div class="chonk"></div>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <!-- ThreeJS container -->
-    <div id="container"></div>
+      <!-- ThreeJS container -->
+      <div id="container"></div>
 
-    <!-- modal dialogs-->
-    <div id="modal">
+      <!-- modal dialogs-->
+      <div id="modal">
         <div id="modal-box" class="f-col">
+          <!-- title bar and closer -->
+          <div class="mod-top f-row">
+            <div id="mod-x" class="mod-x"><i class="fas fa-times"></i></div>
+          </div>
 
-        <!-- title bar and closer -->
-        <div class="mod-top f-row"><div id="mod-x" class="mod-x"><i class="fas fa-times"></i></div></div>
-
-        <!-- donate menu -->
-        <div id="mod-don8" class="mdialog f-col">
-            <div class="f-col gap4" style="gap:5px">
-                <div class="t-pad2"></div>
-                <div style="padding:20px;font-size:larger;font-weight:bold">Your contribution is appreciated!</div>
-                <div style="padding:5px 0 5px 0;justify-content:center">And supports ongoing development,</div>
-                <div style="padding:5px 0 20px 0;justify-content:center">servers, forums, and related costs</div>
-                <button id="don8pt" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_paypal" href="https://www.patreon.com/c/gridspace3d">Become a Patreon Patron</a></button>
-                <button id="don8gh" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_github" href="https://github.com/sponsors/GridSpace">Sponsor on GitHub</a></button>
-                <button id="don8pp" class="yellow" style="justify-content:center;padding:25px;font-size:larger"><a target="_paypal" href="https://paypal.me/gridspace3d">Donate with PayPal</a></button>
-                <div class="t-pad2"></div>
+          <!-- donate menu -->
+          <div id="mod-don8" class="mdialog f-col">
+            <div class="f-col gap4" style="gap: 5px">
+              <div class="t-pad2"></div>
+              <div style="padding: 20px; font-size: larger; font-weight: bold">
+                Your contribution is appreciated!
+              </div>
+              <div style="padding: 5px 0 5px 0; justify-content: center">
+                And supports ongoing development,
+              </div>
+              <div style="padding: 5px 0 20px 0; justify-content: center">
+                servers, forums, and related costs
+              </div>
+              <button
+                id="don8pt"
+                class="yellow"
+                style="
+                  justify-content: center;
+                  padding: 25px;
+                  font-size: larger;
+                "
+              >
+                <a target="_paypal" href="https://www.patreon.com/c/gridspace3d"
+                  >Become a Patreon Patron</a
+                >
+              </button>
+              <button
+                id="don8gh"
+                class="yellow"
+                style="
+                  justify-content: center;
+                  padding: 25px;
+                  font-size: larger;
+                "
+              >
+                <a target="_github" href="https://github.com/sponsors/GridSpace"
+                  >Sponsor on GitHub</a
+                >
+              </button>
+              <button
+                id="don8pp"
+                class="yellow"
+                style="
+                  justify-content: center;
+                  padding: 25px;
+                  font-size: larger;
+                "
+              >
+                <a target="_paypal" href="https://paypal.me/gridspace3d"
+                  >Donate with PayPal</a
+                >
+              </button>
+              <div class="t-pad2"></div>
             </div>
-        </div>
+          </div>
 
-        <!-- help menu -->
-        <div id="mod-help" class="mdialog f-col">
+          <!-- help menu -->
+          <div id="mod-help" class="mdialog f-col">
             <div class="f-row j-center title">
-                <label>Kiri:Moto Help</label>
+              <label>Kiri:Moto Help</label>
             </div>
-            <hr width="100%">
+            <hr width="100%" />
             <div class="f-col">
-                <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"><i class="fas fa-question-circle"></i>Documentation & APIs</a>
-                <a target="_rsc" href="https://forum.grid.space"><i class="fab fa-discourse"></i> Discourse Forums</a>
-                <a target="_rsc" href="https://discord.gg/suyCCgr"><i class="fab fa-discord"></i> Discord Server</a>
-                <a target="_rsc" href="https://github.com/gridspace/grid-apps/issues"><i class="fas fa-bug"></i> Bug Reports</a>
-                <a target="_rsc" href="https://github.com/gridspace/grid-apps/releases"><i class="fab fa-github"></i> Releases & Binaries</a>
-                <a target="_rsc" onclick="kiri.api.modal.show('don8')"><i class="fa-solid fa-sack-dollar"></i> Support Development</a>
-                <a href="https://youtu.be/08795Sj22QE" target="youtube"><i class="fab fa-youtube"></i>Video Guide (from v2.5)</a>
+              <a target="_rsc" href="https://docs.grid.space/projects/kiri-moto"
+                ><i class="fas fa-question-circle"></i>Documentation & APIs</a
+              >
+              <a target="_rsc" href="https://forum.grid.space"
+                ><i class="fab fa-discourse"></i> Discourse Forums</a
+              >
+              <a target="_rsc" href="https://discord.gg/suyCCgr"
+                ><i class="fab fa-discord"></i> Discord Server</a
+              >
+              <a
+                target="_rsc"
+                href="https://github.com/gridspace/grid-apps/issues"
+                ><i class="fas fa-bug"></i> Bug Reports</a
+              >
+              <a
+                target="_rsc"
+                href="https://github.com/gridspace/grid-apps/releases"
+                ><i class="fab fa-github"></i> Releases & Binaries</a
+              >
+              <a target="_rsc" onclick="kiri.api.modal.show('don8')"
+                ><i class="fa-solid fa-sack-dollar"></i> Support Development</a
+              >
+              <a href="https://youtu.be/08795Sj22QE" target="youtube"
+                ><i class="fab fa-youtube"></i>Video Guide (from v2.5)</a
+              >
             </div>
-            <hr width="100%">
+            <hr width="100%" />
             <div class="f-row j-center">
-                <label id="kiri-version"></label>
+              <label id="kiri-version"></label>
             </div>
-        </div>
+          </div>
 
-        <!-- device selector / editor -->
-        <div id="mod-setup" class="mdialog f-col gap3">
+          <!-- device selector / editor -->
+          <div id="mod-setup" class="mdialog f-col gap3">
             <div class="f-row gap4 a-center">
-                <label id="dev-sel" class="set-header">select device</label>
-                <select id="dev-list"></select>
-                <div class="f-row grow j-end">
-                    <button id="device-add" lk="copy">copy</button>
-                    <button id="device-ren" lk="rename">rename</button>
-                    <button id="device-del" lk="delete">delete</button>
-                    <button id="device-exp" lk="export">export</button>
-                </div>
+              <label id="dev-sel" class="set-header">select device</label>
+              <select id="dev-list"></select>
+              <div class="f-row grow j-end">
+                <button id="device-add" lk="copy">copy</button>
+                <button id="device-ren" lk="rename">rename</button>
+                <button id="device-del" lk="delete">delete</button>
+                <button id="device-exp" lk="export">export</button>
+              </div>
             </div>
             <div class="set-sep"></div>
             <div class="f-row grow gap4">
-                <div id="dev-config" class="f-col gap4 overy shrink0"></div>
-                <div class="f-col grow">
-                    <div id="gcode-edit" class="f-col grow gap4">
-                        <div id="dg" class="f-col t-body t-inset"></div>
-                        <div id="dev-gcode" class="grow"></div>
-                    </div>
+              <div id="dev-config" class="f-col gap4 overy shrink0"></div>
+              <div class="f-col grow">
+                <div id="gcode-edit" class="f-col grow gap4">
+                  <div id="dg" class="f-col t-body t-inset"></div>
+                  <div id="dev-gcode" class="grow"></div>
                 </div>
+              </div>
             </div>
             <div class="set-sep"></div>
             <div id="device-action" class="f-row">
-                <div class="grow"></div>
-                <button id="device-save" lk="save">save</button>
-                <div class="grow"></div>
+              <div class="grow"></div>
+              <button id="device-save" lk="save">save</button>
+              <div class="grow"></div>
             </div>
-        </div>
+          </div>
 
-        <!-- recent file menu -->
-        <div id="mod-files" class="mdialog f-col">
-            <label class="set-header menu-title" lk="dm_rcnt">recent files</label>
+          <!-- recent file menu -->
+          <div id="mod-files" class="mdialog f-col">
+            <label class="set-header menu-title" lk="dm_rcnt"
+              >recent files</label
+            >
             <div id="catalogList" class="f-col"></div>
-        </div>
+          </div>
 
-        <!-- settings list and editor -->
-        <div id="mod-saves" class="mdialog f-col">
+          <!-- settings list and editor -->
+          <div id="mod-saves" class="mdialog f-col">
             <label class="set-header menu-title" lk="dm_savs">settings</label>
             <div id="settingsList" class="f-col"></div>
             <div id="settingsNew">
-                <input id="settingsName" class="grow"></input>
-                <button id="settingsSave" lk="save">Save</button>
+              <input id="settingsName" class="grow" />
+              <button id="settingsSave" lk="save">Save</button>
             </div>
-        </div>
+          </div>
 
-        <!-- cnc tool menu -->
-        <div id="mod-tools" class="mdialog">
+          <!-- cnc tool menu -->
+          <div id="mod-tools" class="mdialog">
             <div class="f-col gap3">
-                <div class="f-row t-head gap3">
-                    <label class="t-33 set-header" lk="tool">tool</label>
-                    <label class="t-33 set-header" lk="detail">detail</label>
-                    <label class="t-33 set-header" lk="view">view</label>
+              <div class="f-row t-head gap3">
+                <label class="t-33 set-header" lk="tool">tool</label>
+                <label class="t-33 set-header" lk="detail">detail</label>
+                <label class="t-33 set-header" lk="view">view</label>
+              </div>
+              <div id="tool-cols" class="f-row gap3">
+                <div class="f-col t-33">
+                  <select id="tool-select" size="10" class="grow"></select>
                 </div>
-                <div id="tool-cols" class="f-row gap3">
-                    <div class="f-col t-33">
-                        <select id="tool-select" size="10" class="grow"></select>
-                    </div>
-                    <div class="f-col t-33 t-body t-inset">
-                        <div class="f-row var-row"><label lk="name">name</label><input id="tool-name" size="15"></input></div>
-                        <div class="f-row var-row"><label lk="type">type</label>
-                            <select id="tool-type">
-                                <option value="endmill" lk="td_tyem" selected>end</option>
-                                <option value="ballmill" lk="td_tybm">ball</option>
-                                <option value="tapermill" lk="td_tytm">taper</option>
-                                <option value="drill" lk="td_tydr">drill</option>
-                            </select>
-                        </div>
-                        <div class="f-row var-row" title="tool number to use&#010;in gcode commands"><label lk="td_tonm">tool #</label><input id="tool-num" size="7"></input></div>
-                        <div class="f-row var-row"><label lk="metric">metric</label><input id="tool-metric" type="checkbox"></input></div>
-                        <div class="set-header f-col" lk="td_shft">shaft</div>
-                        <div class="f-row var-row" title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-sdiam" size="7"></input></div>
-                        <div class="f-row var-row" title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-slen" size="7"></input></div>
-                        <div class="set-header f-col" lk="td_flut">flute</div>
-                        <div class="f-row var-row" title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"><label>diameter</label><input id="tool-fdiam" size="7"></input></div>
-                        <div class="f-row var-row" title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"><label>length</label><input id="tool-flen" size="7"></input></div>
-                        <div class="set-header f-col" ln="td_tapr">taper</div>
-                        <div class="f-row var-row" title="taper angle is measured from the center of the tool"><label>angle</label><input id="tool-tangle" size=7></input></div>
-                        <div class="f-row var-row" title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"><label>tip</label><input id="tool-ttip" size="7"></input></div>
-                    </div>
-                    <div id="tool-view" class="f-col t-33 t-body"></div>
+                <div class="f-col t-33 t-body t-inset">
+                  <div class="f-row var-row">
+                    <label lk="name">name</label
+                    ><input id="tool-name" size="15" />
+                  </div>
+                  <div class="f-row var-row">
+                    <label lk="type">type</label>
+                    <select id="tool-type">
+                      <option value="endmill" lk="td_tyem" selected>end</option>
+                      <option value="ballmill" lk="td_tybm">ball</option>
+                      <option value="tapermill" lk="td_tytm">taper</option>
+                      <option value="drill" lk="td_tydr">drill</option>
+                    </select>
+                  </div>
+                  <div
+                    class="f-row var-row"
+                    title="tool number to use&#010;in gcode commands"
+                  >
+                    <label lk="td_tonm">tool #</label
+                    ><input id="tool-num" size="7" />
+                  </div>
+                  <div class="f-row var-row">
+                    <label lk="metric">metric</label
+                    ><input id="tool-metric" type="checkbox" />
+                  </div>
+                  <div class="set-header f-col" lk="td_shft">shaft</div>
+                  <div
+                    class="f-row var-row"
+                    title="shaft diameter in inches&#010;unless metric is checked&#010;then in millimeters"
+                  >
+                    <label>diameter</label><input id="tool-sdiam" size="7" />
+                  </div>
+                  <div
+                    class="f-row var-row"
+                    title="shaft length in inches&#010;unless metric is checked&#010;then in millimeters"
+                  >
+                    <label>length</label><input id="tool-slen" size="7" />
+                  </div>
+                  <div class="set-header f-col" lk="td_flut">flute</div>
+                  <div
+                    class="f-row var-row"
+                    title="flute diameter in inches&#010;unless metric is checked&#010;then in millimeters"
+                  >
+                    <label>diameter</label><input id="tool-fdiam" size="7" />
+                  </div>
+                  <div
+                    class="f-row var-row"
+                    title="flute length in inches&#010;unless metric is checked&#010;then in millimeters"
+                  >
+                    <label>length</label><input id="tool-flen" size="7" />
+                  </div>
+                  <div class="set-header f-col" ln="td_tapr">taper</div>
+                  <div
+                    class="f-row var-row"
+                    title="taper angle is measured from the center of the tool"
+                  >
+                    <label>angle</label><input id="tool-tangle" size="7" />
+                  </div>
+                  <div
+                    class="f-row var-row"
+                    title="tip width in inches&#010;unless metric is checked&#010;then in millimeters"
+                  >
+                    <label>tip</label><input id="tool-ttip" size="7" />
+                  </div>
                 </div>
-                <div class="set-sep"></div>
-                <div id="tool-action" class="f-row j-center gap10">
-                    <div class="f-row">
-                        <button id="tool-add"><i class="fas fa-plus"></i></button>
-                        <button id="tool-dup" lk="clone">copy</button>
-                        <button id="tool-del"><i class="fas fa-minus"></i></button>
-                    </div>
-                    <div class="f-row">
-                        <button id="tools-save" lk="save">save</button>
-                        <button id="tools-close" lk="done">done</button>
-                    </div>
-                    <div class="f-row">
-                        <button id="tools-import" lk="import">import</button>
-                        <button id="tools-export" lk="export">export</button>
-                    </div>
+                <div id="tool-view" class="f-col t-33 t-body"></div>
+              </div>
+              <div class="set-sep"></div>
+              <div id="tool-action" class="f-row j-center gap10">
+                <div class="f-row">
+                  <button id="tool-add"><i class="fas fa-plus"></i></button>
+                  <button id="tool-dup" lk="clone">copy</button>
+                  <button id="tool-del"><i class="fas fa-minus"></i></button>
                 </div>
+                <div class="f-row">
+                  <button id="tools-save" lk="save">save</button>
+                  <button id="tools-close" lk="done">done</button>
+                </div>
+                <div class="f-row">
+                  <button id="tools-import" lk="import">import</button>
+                  <button id="tools-export" lk="export">export</button>
+                </div>
+              </div>
             </div>
-        </div>
+          </div>
 
-        <!-- system preferences -->
-        <div id="mod-prefs" class="mdialog f-col a-center">
-            <label lk="dm_appp" class="menu-title">Application Preferences</label>
-            <hr width="80%">
+          <!-- system preferences -->
+          <div id="mod-prefs" class="mdialog f-col a-center">
+            <label lk="dm_appp" class="menu-title"
+              >Application Preferences</label
+            >
+            <hr width="80%" />
             <div class="f-row gap10">
-                <div id="prefs-gen1" class="f-col"></div>
-                <div id="prefs-gen2" class="f-col"></div>
-                <div id="prefs-lay" class="f-col"></div>
-                <div id="prefs-xpo" class="f-col"></div>
-                <div id="prefs-prt" class="f-col"></div>
-                <div id="prefs-add" class="f-col"></div>
+              <div id="prefs-gen1" class="f-col"></div>
+              <div id="prefs-gen2" class="f-col"></div>
+              <div id="prefs-lay" class="f-col"></div>
+              <div id="prefs-xpo" class="f-col"></div>
+              <div id="prefs-prt" class="f-col"></div>
+              <div id="prefs-add" class="f-col"></div>
             </div>
-        </div>
+          </div>
 
-        <!-- grid local list -->
-        <div id="mod-local" class="mdialog f-col"></div>
-        <!-- export dialogs -->
-        <div id="mod-x-any" class="mod-print mdialog f-col">
+          <!-- grid local list -->
+          <div id="mod-local" class="mdialog f-col"></div>
+          <!-- export dialogs -->
+          <div id="mod-x-any" class="mod-print mdialog f-col">
             <div class="f-row gap4">
-                <div class="f-col grow">
-                    <div class="header"><label>job</label></div>
-                    <div id="print-info" class="f-col box">
-                        <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
-                        <div><label>file size (bytes)</label><input id="print-filesize" size="12" disabled="true" /></div>
-                        <div><label>time estimate (h:m:s)</label><input id="output-time" size="12" disabled="true" /></div>
-                    </div>
+              <div class="f-col grow">
+                <div class="header"><label>job</label></div>
+                <div id="print-info" class="f-col box">
+                  <div>
+                    <label>file name</label
+                    ><input id="print-filename" size="20" spellcheck="false" />
+                  </div>
+                  <div>
+                    <label>file size (bytes)</label
+                    ><input id="print-filesize" size="12" disabled="true" />
+                  </div>
+                  <div>
+                    <label>time estimate (h:m:s)</label
+                    ><input id="output-time" size="12" disabled="true" />
+                  </div>
                 </div>
-                <div id="print-filament" class="f-col">
-                    <div class="header"><label>material</label></div>
-                    <div class="f-col box">
-                        <div><label>filament density (g/cm^3)</label><input id="print-density" size="12" value="1.25" /></div>
-                        <div><label>filament used (mm)</label><input id="print-filament" size="12" disabled="true" /></div>
-                        <div><label>printed weight (g)</label><input id="print-weight" size="12" disabled="true" /></div>
-                    </div>
+              </div>
+              <div id="print-filament" class="f-col">
+                <div class="header"><label>material</label></div>
+                <div class="f-col box">
+                  <div>
+                    <label>filament density (g/cm^3)</label
+                    ><input id="print-density" size="12" value="1.25" />
+                  </div>
+                  <div>
+                    <label>filament used (mm)</label
+                    ><input id="print-filament" size="12" disabled="true" />
+                  </div>
+                  <div>
+                    <label>printed weight (g)</label
+                    ><input id="print-weight" size="12" disabled="true" />
+                  </div>
                 </div>
+              </div>
             </div>
-            <div id="code-preview-head" class="header"><label>gcode preview</label></div>
+            <div id="code-preview-head" class="header">
+              <label>gcode preview</label>
+            </div>
             <div id="code-preview" class="f-col box">
-                <div><textarea id="code-preview-textarea"></textarea></div>
+              <div><textarea id="code-preview-textarea"></textarea></div>
             </div>
             <div class="header"><label>download</label></div>
             <div class="f-row box">
-                <button id="print-download" class="grow">gcode</button>
-                <button id="print-palette" class="grow">palette</button>
-                <button id="print-zip" class="grow">zip</button>
-                <button id="print-3mf" class="grow">3mf</button>
+              <button id="print-download" class="grow">gcode</button>
+              <button id="print-palette" class="grow">palette</button>
+              <button id="print-zip" class="grow">zip</button>
+              <button id="print-3mf" class="grow">3mf</button>
             </div>
             <div id="bambu-output" class="f-col">
-                <div class="header"><label>send to bambu</label></div>
-                <div class="f-row box gap4 a-center">
-                    <label class="grow0 pad3">printer</label>
-                    <select id="print-bambu-device"></select>
-                    <label class="grow0 pad3">spool</label>
-                    <select id="print-bambu-spool"></select>
-                    <button id="print-bambu-1" class="grow" disabled>send</button>
-                    <button id="print-bambu-2" class="grow" disabled>send + print</button>
-                </div>
+              <div class="header"><label>send to bambu</label></div>
+              <div class="f-row box gap4 a-center">
+                <label class="grow0 pad3">printer</label>
+                <select id="print-bambu-device"></select>
+                <label class="grow0 pad3">spool</label>
+                <select id="print-bambu-spool"></select>
+                <button id="print-bambu-1" class="grow" disabled>send</button>
+                <button id="print-bambu-2" class="grow" disabled>
+                  send + print
+                </button>
+              </div>
             </div>
-            <div id="send-to-octohead" class="header"><label>octoprint</label></div>
+            <div id="send-to-octohead" class="header">
+              <label>octoprint</label>
+            </div>
             <div id="send-to-octoprint" class="f-col box">
-                <div class="grow f-row">
-                    <div class="f-col grow">
-                        <div id="ophost"><label>host</label><input id="octo-host" size="20" placeholder="http(s)://host:port" /></div>
-                        <div id="opapik"><label>key</label><input id="octo-apik" size="20" /></div>
-                    </div>
-                    <button id="print-octoprint">send</button>
+              <div class="grow f-row">
+                <div class="f-col grow">
+                  <div id="ophost">
+                    <label>host</label
+                    ><input
+                      id="octo-host"
+                      size="20"
+                      placeholder="http(s)://host:port"
+                    />
+                  </div>
+                  <div id="opapik">
+                    <label>key</label><input id="octo-apik" size="20" />
+                  </div>
                 </div>
-                <div id="oph1nt"><label class="hint"><a href="http://docs.octoprint.org/en/master/api/general.html?highlight=cors#cross-origin-requests" target="_help">CORS support</a> must be enabled in API settings</label></div>
+                <button id="print-octoprint">send</button>
+              </div>
+              <div id="oph1nt">
+                <label class="hint"
+                  ><a
+                    href="http://docs.octoprint.org/en/master/api/general.html?highlight=cors#cross-origin-requests"
+                    target="_help"
+                    >CORS support</a
+                  >
+                  must be enabled in API settings</label
+                >
+              </div>
             </div>
-            <div id="send-to-hosthead" class="header"><label>grid:host</label></div>
+            <div id="send-to-hosthead" class="header">
+              <label>grid:host</label>
+            </div>
             <div id="send-to-gridhost" class="f-col box">
-                <div class="grow f-row">
-                    <div class="f-col grow">
-                        <div><label>host</label><input id="grid-host" size="20" placeholder="http(s)://host:port" /></div>
-                        <div id="gpapik"><label>api key</label><input id="grid-apik" size="20" /></div>
-                        <div><label>target</label><select id="grid-target"></select></div>
-                    </div>
-                    <button id="print-gridhost">send</button>
+              <div class="grow f-row">
+                <div class="f-col grow">
+                  <div>
+                    <label>host</label
+                    ><input
+                      id="grid-host"
+                      size="20"
+                      placeholder="http(s)://host:port"
+                    />
+                  </div>
+                  <div id="gpapik">
+                    <label>api key</label><input id="grid-apik" size="20" />
+                  </div>
+                  <div>
+                    <label>target</label
+                    ><select id="grid-target"></select>
+                  </div>
                 </div>
-                <div><label class="hint">setup <a href="https://github.com/GridSpace/grid-host" target="_help">grid:host</a> for your network</label></div>
+                <button id="print-gridhost">send</button>
+              </div>
+              <div>
+                <label class="hint"
+                  >setup
+                  <a
+                    href="https://github.com/GridSpace/grid-host"
+                    target="_help"
+                    >grid:host</a
+                  >
+                  for your network</label
+                >
+              </div>
             </div>
-            <div id="send-to-gridhead" class="header noshow"><label>grid:local</label></div>
+            <div id="send-to-gridhead" class="header noshow">
+              <label>grid:local</label>
+            </div>
             <div id="send-to-gridspool" class="f-row box noshow">
-                <div class="grow f-row">
-                    <div class="grow a-center j-center">
-                        <label>target</label>
-                        <select id="grid-local"></select>
-                    </div>
-                    <div class="f-col">
-                        <button id="print-gridlocal">send</button>
-                        <button id="admin-gridlocal">admin</button>
-                    </div>
+              <div class="grow f-row">
+                <div class="grow a-center j-center">
+                  <label>target</label>
+                  <select id="grid-local"></select>
                 </div>
+                <div class="f-col">
+                  <button id="print-gridlocal">send</button>
+                  <button id="admin-gridlocal">admin</button>
+                </div>
+              </div>
             </div>
-        </div>
-        <div id="mod-x-sla" class="mod-print mdialog f-col">
+          </div>
+          <div id="mod-x-sla" class="mod-print mdialog f-col">
             <div class="header"><label>export</label></div>
             <div id="print-info" class="f-col box">
-                <div><label>file name</label><input id="print-filename-sla" size="20" spellcheck="false" /></div>
-                <div><label>resin used ML</label><input id="print-volume" size="10" spellcheck="false" /></div>
-                <div><label>layers</label><input id="print-layers" size="10" spellcheck="false" /></div>
-                <div><label>print time</label><input id="print-time" size="10" spellcheck="false" /></div>
+              <div>
+                <label>file name</label
+                ><input id="print-filename-sla" size="20" spellcheck="false" />
+              </div>
+              <div>
+                <label>resin used ML</label
+                ><input id="print-volume" size="10" spellcheck="false" />
+              </div>
+              <div>
+                <label>layers</label
+                ><input id="print-layers" size="10" spellcheck="false" />
+              </div>
+              <div>
+                <label>print time</label
+                ><input id="print-time" size="10" spellcheck="false" />
+              </div>
             </div>
             <div class="header"><label>download</label></div>
             <div class="f-row box">
-                <button id="print-sla" class="grow">download</button>
+              <button id="print-sla" class="grow">download</button>
             </div>
-        </div>
-        <div id="mod-x-laser" class="mod-print mdialog f-col">
+          </div>
+          <div id="mod-x-laser" class="mod-print mdialog f-col">
             <div class="header"><label>export</label></div>
             <div id="print-info" class="f-col box">
-                <div><label>file name</label><input id="print-filename-laser" size="20" spellcheck="false" /></div>
-                <div><label>segments</label><input id="print-lines" size="12" disabled="true" /></div>
+              <div>
+                <label>file name</label
+                ><input
+                  id="print-filename-laser"
+                  size="20"
+                  spellcheck="false"
+                />
+              </div>
+              <div>
+                <label>segments</label
+                ><input id="print-lines" size="12" disabled="true" />
+              </div>
             </div>
             <div class="header"><label>download</label></div>
             <div class="f-row box">
-                <button id="print-svg" class="grow">svg</button>
-                <button id="print-dxf" class="grow">dxf</button>
-                <button id="print-lg" class="grow">gcode</button>
+              <button id="print-svg" class="grow">svg</button>
+              <button id="print-dxf" class="grow">dxf</button>
+              <button id="print-lg" class="grow">gcode</button>
             </div>
+          </div>
+          <!-- dynamic dialogs -->
+          <div id="mod-any" class="mdialog f-col"></div>
+          <div class="mod-end"></div>
         </div>
-        <!-- dynamic dialogs -->
-        <div id="mod-any" class="mdialog f-col"></div>
-        <div class="mod-end"></div></div>
-    </div>
+      </div>
 
-    <!-- prompts and other modals needed in electron -->
-    <dialog id="dialog"></dialog>
+      <!-- prompts and other modals needed in electron -->
+      <dialog id="dialog"></dialog>
 
-    <!-- click + drag mouse tracking  -->
-    <div id="tracker"></div>
+      <!-- click + drag mouse tracking  -->
+      <div id="tracker"></div>
 
-    <!-- EU compliance -->
-    <div id="gdpr" class="noshow">
-        <p>this site uses <A href="/privacy.html" target="privacy">cookies</a> to preserve application preferences</p>
+      <!-- EU compliance -->
+      <div id="gdpr" class="noshow">
+        <p>
+          this site uses <a href="/privacy.html" target="privacy">cookies</a> to
+          preserve application preferences
+        </p>
         <button id="gotit" class="f-col j-center">got it</button>
-    </div>
+      </div>
 
-    <!-- developer debugging -->
-    <div id="stats">
+      <!-- developer debugging -->
+      <div id="stats">
         <div id="rms"></div>
         <div id="fps"></div>
         <div id="rnfo"></div>
-    </div>
+      </div>
 
-    <!-- ephemeral non-modal alerts -->
-    <div id="alert-area">
+      <!-- ephemeral non-modal alerts -->
+      <div id="alert-area">
         <div id="alert-border">
-            <div id="alert-text">alerts<br>alerts<br>alerts</div>
+          <div id="alert-text">alerts<br />alerts<br />alerts</div>
         </div>
+      </div>
     </div>
-
-</div>
-</body>
+  </body>
 </html>
