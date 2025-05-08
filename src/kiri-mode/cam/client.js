@@ -258,7 +258,7 @@ CAM.init = function(kiri, api) {
         "selection.rotate"
     ], updateStock);
 
-    // invalidate trace ops on scale or rotate
+    // invalidate trace and drill ops on scale or rotate
     api.event.on([
         "selection.scale",
         "selection.rotate"
@@ -267,6 +267,9 @@ CAM.init = function(kiri, api) {
         for (let op of current.process.ops) {
             if (op.type === 'trace' && !flipping) {
                 op.areas = {};
+            }
+            else if( op.type === 'drill' && !flipping){
+                op.drills = {};
             }
         }
     });
@@ -401,7 +404,6 @@ CAM.init = function(kiri, api) {
 
     func.opAddDrill = () => {
         let rec = popOp.drill.new();
-        console.log("drill created",rec)
         rec.drills = {  };
         func.opAdd(rec);
     };
@@ -1403,11 +1405,11 @@ CAM.init = function(kiri, api) {
             func.traceDone();
         }
         unselectTraces(widget);
-        if (flipping) {
-            return;
-        }
         if (holeSelOn) {
             func.selectHolesDone();
+        }
+        if (flipping) {
+            return;
         }
         func.clearHolesRec(widget)
         if (x || y) {
