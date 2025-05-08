@@ -167,7 +167,7 @@ kiri.load(api => {
             // const fresh = widgets.filter(widget => CAM.traces(settings, widget, single));
             send.done(kiri.codec.encode(fresh.map(widget => { return {
                 id: widget.id,
-                holes: widget.holes,
+                holes: widget.drills,
                 shadowed:widget.shadowedDrills
             } } )));
         }

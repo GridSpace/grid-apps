@@ -474,12 +474,14 @@ CAM.holes = async function(settings, widget, diam) {
         .map(kv => parseFloat(kv).round(5))
         .filter(z => z !== null)
     )]
+    let individual = (diam <= 0);
+
+    diam = individual ? 1 : diam; // sets default diameter when select individual used
+
     let centerDiff = diam * 0.1,
         area = (diam/2) * (diam/2) * Math.PI,
-        areaDelta =  area * 0.05,
-        drills = [],
-        slices = [],
-        individual = (diam <= 0);
+        circles = [],
+        slices = [];
 
     function onEach(slice) {
         slices.push(slice);
@@ -499,38 +501,71 @@ CAM.holes = async function(settings, widget, diam) {
             for (let poly of inner) {
                 let center = poly.calcCircleCenter();
                 center.area = poly.area();
+                center.overlapping = [center]
+                center.depth = 0;
                 // console.log("center",center)
-                center.selected = (!individual && poly.circularity() >= 0.985 && Math.abs(center.area - area) <= areaDelta );
+                if ( poly.circularity() < 0.985 ){
+                    // if not circular, don't add to holes
+                    continue;
+                }
                 if (center.isInPolygon(slice.shadow)) {
                     // if shadowed, don't add, and inform client
                     shadowedDrills = true;
                     continue;
                 }
                 let overlap = false;
-                for (let [i,drill] of drills.entries()) {
-                    let dist = drill.distTo2D(center)
-                    //if on the same xy point, and both have the same selection value
-                    if (dist <= centerDiff && drill.selected == center.selected) {  
-                        // console.log("overlap",center,drill);
-                        if(center.z > drill.z) { //if current is higher than old
-                            drills[i] = center; //replace with top point
-                            drills[i].depth = center.z-drill.z
-                        }else if(center.z <= drill.z-drill.depth){// if current is lower or same as old
-                            drills[i].depth = drill.z-center.z
-                        }
+                for (let [i,circle] of circles.entries()) {
+                    let dist = circle.distTo2D(center)
+
+                    // //if on the same xy point, 
+                    if (dist <= centerDiff ) {
+                        
+                        // console.log("overlap",center,circle);
+                        circle.overlapping.push(center);
                         // if overlapping, don't add and continue
                         overlap = true;
                         continue;
                     }
                 }
-                center.depth = 0;
-                if(!overlap) drills.push(center);
+                if (!overlap) circles.push(center);
             }
         }
     }
+
+    let drills = []
+
+    for (let c of circles) {
+        let overlapping = c.overlapping
+        .sort((a,b) => b.z - a.z)
+
+        console.log("overlapping",structuredClone(overlapping))
+        let last = overlapping.shift();
+        while (overlapping.length) {
+            let circ = overlapping.shift();
+            let aveArea = (circ.area + last.area) / 2;
+            let areaDelta = Math.abs(circ.area -last.area)
+            if (areaDelta < aveArea * 0.05){ // if area delta less than 5% of average area
+              //keep top circle selected
+              last.depth = last.z - circ.z;
+            }else{ // if not the same area
+              //push and move on
+              drills.push(last);
+              last = circ;
+            }
+        }
+        if (last.depth != 0) drills.push(last) //add last circle
+    }
+
+    drills.forEach( h=>{
+        delete h.overlapping //for encoding
+        h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05 ); //for same size selection
+    }) 
+
+    // console.log("unfiltered circles",circles)
+    console.log("drills",drills)
     drills = drills.filter(drill => drill.depth > 0)
     widget.shadowedDrills = shadowedDrills
-    widget.holes = drills;
+    widget.drills = drills;
     return drills;
 }
 
