@@ -258,7 +258,7 @@ CAM.init = function(kiri, api) {
         "selection.rotate"
     ], updateStock);
 
-    // invalidate trace ops on scale or rotate
+    // invalidate trace and drill ops on scale or rotate
     api.event.on([
         "selection.scale",
         "selection.rotate"
@@ -267,6 +267,9 @@ CAM.init = function(kiri, api) {
         for (let op of current.process.ops) {
             if (op.type === 'trace' && !flipping) {
                 op.areas = {};
+            }
+            else if( op.type === 'drill' && !flipping){
+                op.drills = {};
             }
         }
     });
@@ -401,7 +404,7 @@ CAM.init = function(kiri, api) {
 
     func.opAddDrill = () => {
         let rec = popOp.drill.new();
-        rec.drills = { /* widget.id: [ drills... ] */ };
+        rec.drills = {  };
         func.opAdd(rec);
     };
 
@@ -1245,11 +1248,10 @@ CAM.init = function(kiri, api) {
                     alert = api.show.alert("Some holes are shadowed by part and are not shown.");
                 }
                 centers = centers ?? []
-                //flattened list of all hole centers and if they are selected
+                // list of all hole centers and if they are selected
                 kiri.api.widgets.for(widget => {
                     const {holes} = centers.find(center=>center.id = widget.id)
-
-                    console.log(holes)
+                    // console.log(holes)
                     if (!holes.length) unselectHoles(holes);
                     holes.forEach(hole => {
                         createHoleMesh(widget, hole)
@@ -1403,11 +1405,11 @@ CAM.init = function(kiri, api) {
             func.traceDone();
         }
         unselectTraces(widget);
-        if (flipping) {
-            return;
-        }
         if (holeSelOn) {
             func.selectHolesDone();
+        }
+        if (flipping) {
+            return;
         }
         func.clearHolesRec(widget)
         if (x || y) {
@@ -1778,8 +1780,8 @@ CAM.init = function(kiri, api) {
         lift:    'camDrillLift',
         mark:    'camDrillMark',
         thru:    'camDrillThru',
+
     })
-    
     drillOp.inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
