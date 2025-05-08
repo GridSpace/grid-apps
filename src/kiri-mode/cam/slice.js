@@ -538,7 +538,6 @@ CAM.holes = async function(settings, widget, diam) {
         let overlapping = c.overlapping
         .sort((a,b) => b.z - a.z)
 
-        console.log("overlapping",structuredClone(overlapping))
         let last = overlapping.shift();
         while (overlapping.length) {
             let circ = overlapping.shift();
@@ -562,7 +561,7 @@ CAM.holes = async function(settings, widget, diam) {
     }) 
 
     // console.log("unfiltered circles",circles)
-    console.log("drills",drills)
+    // console.log("drills",drills)
     drills = drills.filter(drill => drill.depth > 0)
     widget.shadowedDrills = shadowedDrills
     widget.drills = drills;
