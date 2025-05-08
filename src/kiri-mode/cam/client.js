@@ -401,7 +401,8 @@ CAM.init = function(kiri, api) {
 
     func.opAddDrill = () => {
         let rec = popOp.drill.new();
-        rec.drills = { /* widget.id: [ drills... ] */ };
+        console.log("drill created",rec)
+        rec.drills = {  };
         func.opAdd(rec);
     };
 
@@ -1245,11 +1246,10 @@ CAM.init = function(kiri, api) {
                     alert = api.show.alert("Some holes are shadowed by part and are not shown.");
                 }
                 centers = centers ?? []
-                //flattened list of all hole centers and if they are selected
+                // list of all hole centers and if they are selected
                 kiri.api.widgets.for(widget => {
                     const {holes} = centers.find(center=>center.id = widget.id)
-
-                    console.log(holes)
+                    // console.log(holes)
                     if (!holes.length) unselectHoles(holes);
                     holes.forEach(hole => {
                         createHoleMesh(widget, hole)
@@ -1778,8 +1778,8 @@ CAM.init = function(kiri, api) {
         lift:    'camDrillLift',
         mark:    'camDrillMark',
         thru:    'camDrillThru',
+
     })
-    
     drillOp.inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
