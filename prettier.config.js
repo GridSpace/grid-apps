@@ -8,7 +8,7 @@ const config = {
   bracketSpacing: true,
   objectWrap: 'preserve',
   tabWidth: 2,
-  semi: false,
+  semi: true,
   singleQuote: true,
   bracketSameLine: false,
   arrowParens: 'always',
