@@ -86,16 +86,16 @@ self.kiri.load((api) => {
     ['GFL00', 'PolyLite PLA'],
     ['GFL01', 'PolyTerra PLA'],
     ['GFL03', 'eSUN PLA+'],
-  ]
+  ];
 
-  let map = {}
+  let map = {};
 
   for (let row of list) {
-    map[row[0]] = row[1]
+    map[row[0]] = row[1];
   }
 
   api.bambu.filament = {
     list,
     map,
-  }
-})
+  };
+});

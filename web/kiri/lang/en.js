@@ -1383,4 +1383,4 @@ self.kiri.lang['en'] = self.kiri.lang['en-us'] = {
     'produces larger files',
     'can blur details',
   ],
-}
+};

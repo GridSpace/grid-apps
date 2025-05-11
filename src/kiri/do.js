@@ -4,105 +4,105 @@
 // use: kiri.selection
 // use: moto.space
 gapp.register('kiri.do', [], (root, events) => {
-  const { kiri, moto } = root
-  const { api } = kiri
-  const { space } = moto
-  const { event } = api
+  const { kiri, moto } = root;
+  const { api } = kiri;
+  const { space } = moto;
+  const { event } = api;
 
-  let stack = []
-  let stpos = 0
-  let moved = { x: 0, y: 0 }
-  let msgid
+  let stack = [];
+  let stpos = 0;
+  let moved = { x: 0, y: 0 };
+  let msgid;
 
   event.on('init-done', () => {
-    $('undo').onclick = undo
-    $('redo').onclick = redo
-  })
+    $('undo').onclick = undo;
+    $('redo').onclick = redo;
+  });
 
   let undo = (api.doit.undo = function () {
     if (stpos) {
-      action(stack[--stpos].undo)
+      action(stack[--stpos].undo);
     } else {
-      message('nothing to undo')
+      message('nothing to undo');
     }
-  })
+  });
 
   let redo = (api.doit.redo = function () {
     if (stpos < stack.length) {
-      action(stack[stpos++].redo)
+      action(stack[stpos++].redo);
     } else {
-      message('nothing to redo')
+      message('nothing to redo');
     }
-  })
+  });
 
   let clear = (api.doit.clear = function () {
-    stack = []
-    stpos = 0
-    moved = { x: 0, y: 0 }
-    updateButtons()
-  })
+    stack = [];
+    stpos = 0;
+    moved = { x: 0, y: 0 };
+    updateButtons();
+  });
 
   function updateButtons() {
-    let isArrange = api.view.get() === kiri.consts.VIEWS.ARRANGE
-    $('doit').style.display = isArrange && stack.length ? 'flex' : 'none'
-    $('undo').disabled = stpos === 0
-    $('redo').disabled = stpos == stack.length
+    let isArrange = api.view.get() === kiri.consts.VIEWS.ARRANGE;
+    $('doit').style.display = isArrange && stack.length ? 'flex' : 'none';
+    $('undo').disabled = stpos === 0;
+    $('redo').disabled = stpos == stack.length;
   }
 
   function message(txt) {
     if (msgid) {
-      api.hide.alert(msgid)
+      api.hide.alert(msgid);
     }
-    msgid = api.show.alert(txt)
+    msgid = api.show.alert(txt);
   }
 
   function action(rec) {
     switch (rec.type) {
       case 'move':
         for (let w of rec.widgets) {
-          w._move(rec.dist.x, rec.dist.y, 0)
+          w._move(rec.dist.x, rec.dist.y, 0);
         }
-        break
+        break;
       case 'rotate':
         for (let w of rec.widgets) {
-          w.rotate(rec.x, rec.y, rec.z)
+          w.rotate(rec.x, rec.y, rec.z);
         }
-        break
+        break;
       case 'scale':
         for (let w of rec.widgets) {
-          w._scale(rec.x, rec.y, rec.z)
+          w._scale(rec.x, rec.y, rec.z);
         }
-        api.selection.update_info()
-        break
+        api.selection.update_info();
+        break;
     }
-    space.update()
-    updateButtons()
+    space.update();
+    updateButtons();
   }
 
   function pushActions(ur) {
-    stack.length = stpos++
-    stack.push(ur)
-    updateButtons()
+    stack.length = stpos++;
+    stack.push(ur);
+    updateButtons();
   }
 
   event.on(['platform.layout', 'widget.add', 'widget.delete'], (widget) => {
-    clear()
-  })
+    clear();
+  });
 
   event.on('view.set', (mode) => {
-    updateButtons()
-  })
+    updateButtons();
+  });
 
   // selection event (store position)
   event.on('selection.rotate', (rec) => {
-    let type = 'rotate'
-    let widgets = api.selection.widgets(true)
+    let type = 'rotate';
+    let widgets = api.selection.widgets(true);
     if (!widgets.length) {
-      return
+      return;
     }
-    let { x, y, z } = rec
+    let { x, y, z } = rec;
     if (!(x || y || z)) {
-      return
+      return;
     }
     pushActions({
       redo: {
@@ -119,20 +119,20 @@ gapp.register('kiri.do', [], (root, events) => {
         y: -y,
         z: -z,
       },
-    })
-  })
+    });
+  });
 
   event.on('selection.scale', (rec) => {
-    let [x, y, z] = rec
+    let [x, y, z] = rec;
     // ignore scale close to 1
     if (Math.abs(1 - x * y * z) < 0.0001) {
-      return
+      return;
     }
-    let widgets = api.selection.widgets(true)
+    let widgets = api.selection.widgets(true);
     if (!widgets.length) {
-      return
+      return;
     }
-    let type = 'scale'
+    let type = 'scale';
     pushActions({
       redo: {
         type,
@@ -148,22 +148,22 @@ gapp.register('kiri.do', [], (root, events) => {
         y: 1 / y,
         z: 1 / z,
       },
-    })
-  })
+    });
+  });
 
   // selection moved (accumulator)
   event.on('selection.drag', (delta) => {
-    moved.x += delta.x
-    moved.y += delta.y
-  })
+    moved.x += delta.x;
+    moved.y += delta.y;
+  });
 
   // move complete (store updated position)
   event.on('mouse.drag.done', () => {
-    let widgets = api.selection.widgets(true)
+    let widgets = api.selection.widgets(true);
     if (!widgets.length) {
-      return
+      return;
     }
-    let type = 'move'
+    let type = 'move';
     pushActions({
       redo: {
         type,
@@ -175,7 +175,7 @@ gapp.register('kiri.do', [], (root, events) => {
         widgets,
         dist: { x: -moved.x, y: -moved.y },
       },
-    })
-    moved = { x: 0, y: 0 }
-  })
-})
+    });
+    moved = { x: 0, y: 0 };
+  });
+});

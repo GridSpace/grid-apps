@@ -511,5 +511,5 @@ self.kiri.load((api) => {
       'Please pull out the filament on the spool holder. If this message persists, please check to see if there is filament broken in the extruder or PTFE Tube. (Connect PTFE tube if you are about to use AMS)',
     '12FFC006':
       'Please feed filament into the PTFE tube until it can not be pushed any farther.',
-  }
-})
+  };
+});

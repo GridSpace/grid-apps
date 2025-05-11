@@ -938,4 +938,4 @@ kiri.lang['pl'] = kiri.lang['pl-pl'] = {
     'tworzy większe pliki',
     'ale pokazuje przejścia tonalne',
   ],
-}
+};

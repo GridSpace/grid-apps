@@ -1,12 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 // dep: kiri.api
 // dep: kiri.consts
 // dep: kiri.settings
 gapp.register('kiri-mode.cam.tools', (root, exports) => {
-  const DEG2RAD = Math.PI / 180
+  const DEG2RAD = Math.PI / 180;
   let { kiri } = root,
     { api, consts } = kiri,
     { uc, ui } = api,
@@ -15,86 +15,86 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
     selectedTool = null,
     editTools = null,
     maxTool = 0,
-    toolNames = ['endmill', 'ballmill', 'tapermill', 'drill']
+    toolNames = ['endmill', 'ballmill', 'tapermill', 'drill'];
 
-  api.show.tools = showTools
+  api.show.tools = showTools;
 
   // extend API
   Object.assign(api.tool, {
     update: updateTool,
-  })
+  });
 
   function settings() {
-    return api.conf.get()
+    return api.conf.get();
   }
 
   function renderTools() {
-    ui.toolSelect.innerHTML = ''
-    maxTool = 0
+    ui.toolSelect.innerHTML = '';
+    maxTool = 0;
     editTools.forEach(function (tool, index) {
-      maxTool = Math.max(maxTool, tool.number)
-      tool.order = index
-      let opt = DOC.createElement('option')
-      opt.appendChild(DOC.createTextNode(tool.name))
+      maxTool = Math.max(maxTool, tool.number);
+      tool.order = index;
+      let opt = DOC.createElement('option');
+      opt.appendChild(DOC.createTextNode(tool.name));
       opt.onclick = function () {
-        selectTool(tool)
-      }
-      ui.toolSelect.appendChild(opt)
-    })
+        selectTool(tool);
+      };
+      ui.toolSelect.appendChild(opt);
+    });
   }
 
   function selectTool(tool) {
-    selectedTool = tool
-    ui.toolName.value = tool.name
-    ui.toolNum.value = tool.number
-    ui.toolFluteDiam.value = tool.flute_diam
-    ui.toolFluteLen.value = tool.flute_len
-    ui.toolShaftDiam.value = tool.shaft_diam
-    ui.toolShaftLen.value = tool.shaft_len
-    ui.toolTaperTip.value = tool.taper_tip || 0
-    ui.toolMetric.checked = tool.metric
-    ui.toolType.selectedIndex = toolNames.indexOf(tool.type)
+    selectedTool = tool;
+    ui.toolName.value = tool.name;
+    ui.toolNum.value = tool.number;
+    ui.toolFluteDiam.value = tool.flute_diam;
+    ui.toolFluteLen.value = tool.flute_len;
+    ui.toolShaftDiam.value = tool.shaft_diam;
+    ui.toolShaftLen.value = tool.shaft_len;
+    ui.toolTaperTip.value = tool.taper_tip || 0;
+    ui.toolMetric.checked = tool.metric;
+    ui.toolType.selectedIndex = toolNames.indexOf(tool.type);
     if (tool === 'tapermill') {
       ui.toolTaperAngle.value = kiri.driver.CAM.calcTaperAngle(
         (tool.flute_diam - tool.taper_tip) / 2,
         tool.flute_len
-      ).round(1)
+      ).round(1);
     } else if (tool === 'drill') {
-      ui.toolTaperAngle.value = 118
+      ui.toolTaperAngle.value = 118;
     } else {
-      ui.toolTaperAngle.value = 0
+      ui.toolTaperAngle.value = 0;
     }
-    renderTool(tool)
+    renderTool(tool);
   }
 
   function otag(o) {
     if (Array.isArray(o)) {
-      let out = []
-      o.forEach((oe) => out.push(otag(oe)))
-      return out.join('')
+      let out = [];
+      o.forEach((oe) => out.push(otag(oe)));
+      return out.join('');
     }
-    let tags = []
+    let tags = [];
     Object.keys(o).forEach((key) => {
-      let val = o[key]
-      let att = []
+      let val = o[key];
+      let att = [];
       Object.keys(val).forEach((tk) => {
-        let tv = val[tk]
-        att.push(`${tk.replace(/_/g, '-')}="${tv}"`)
-      })
-      tags.push(`<${key} ${att.join(' ')}></${key}>`)
-    })
-    return tags.join('')
+        let tv = val[tk];
+        att.push(`${tk.replace(/_/g, '-')}="${tv}"`);
+      });
+      tags.push(`<${key} ${att.join(' ')}></${key}>`);
+    });
+    return tags.join('');
   }
 
   function renderTool(tool) {
-    let type = selectedTool.type
-    let taper = type === 'tapermill'
-    let drill = type === 'drill'
-    const drillAngleRad = (140 * Math.PI) / 180
-    ui.toolTaperAngle.disabled = taper ? undefined : 'true'
-    ui.toolTaperTip.disabled = taper ? undefined : 'true'
+    let type = selectedTool.type;
+    let taper = type === 'tapermill';
+    let drill = type === 'drill';
+    const drillAngleRad = (140 * Math.PI) / 180;
+    ui.toolTaperAngle.disabled = taper ? undefined : 'true';
+    ui.toolTaperTip.disabled = taper ? undefined : 'true';
     $('tool-view').innerHTML =
-      '<svg id="tool-svg" width="100%" height="100%"></svg>'
+      '<svg id="tool-svg" width="100%" height="100%"></svg>';
     setTimeout(() => {
       let svg = $('tool-svg'),
         pad = 10,
@@ -134,9 +134,9 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
               stroke,
             },
           },
-        ]
+        ];
       if (taper) {
-        let yoff = off.y + shaft_len
+        let yoff = off.y + shaft_len;
         // let mid = dim.w / 2;
         parts.push({
           path: {
@@ -151,13 +151,13 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
               `z`,
             ].join('\n'),
           },
-        })
+        });
       } else if (drill) {
         const x1 = off.x + flute_off,
           y1 = off.y + shaft_len,
           x2 = dim.w - off.x - flute_off,
           y2 = y1 + flute_len,
-          xMid = dim.w / 2
+          xMid = dim.w / 2;
 
         parts.push({
           path: {
@@ -173,7 +173,7 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
               `z`,
             ].join('\n'),
           },
-        })
+        });
         //add drill flute lines
         parts.push({
           line: {
@@ -184,7 +184,7 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
             stroke,
             stroke_width: stroke_thin,
           },
-        })
+        });
         parts.push({
           line: {
             x1,
@@ -194,13 +194,13 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
             stroke,
             stroke_width: stroke_thin,
           },
-        })
+        });
       } else {
-        let fl = isBall ? flute_len - flute_diam / 2 : flute_len
-        let x1 = off.x + flute_off
-        let y1 = off.y + shaft_len
-        let x2 = x1 + max.w - flute_off * 2
-        let y2 = y1 + fl
+        let fl = isBall ? flute_len - flute_diam / 2 : flute_len;
+        let x1 = off.x + flute_off;
+        let y1 = off.y + shaft_len;
+        let x2 = x1 + max.w - flute_off * 2;
+        let y2 = y1 + fl;
         // flute rectangle
         parts.push({
           rect: {
@@ -212,11 +212,11 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
             stroke_width,
             stroke,
           },
-        })
+        });
         // hatch "fill" flute
         parts.push({
           line: { x1, y1, x2, y2, stroke, stroke_width: stroke_thin },
-        })
+        });
         parts.push({
           line: {
             x1: (x1 + x2) / 2,
@@ -226,7 +226,7 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
             stroke,
             stroke_width: stroke_thin,
           },
-        })
+        });
         parts.push({
           line: {
             x1,
@@ -236,13 +236,13 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
             stroke,
             stroke_width: stroke_thin,
           },
-        })
+        });
       }
       if (isBall) {
-        let rad = (max.w - flute_off * 2) / 2
-        let xend = dim.w - off.x - flute_off
+        let rad = (max.w - flute_off * 2) / 2;
+        let xend = dim.w - off.x - flute_off;
         let yoff =
-          off.y + shaft_len + flute_len + stroke_width / 2 - flute_diam / 2
+          off.y + shaft_len + flute_len + stroke_width / 2 - flute_diam / 2;
         parts.push({
           path: {
             stroke_width,
@@ -254,73 +254,73 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
               // `L ${off.x + flute_off} ${yoff}`
             ].join('\n'),
           },
-        })
+        });
       }
-      svg.innerHTML = otag(parts)
-    }, 10)
+      svg.innerHTML = otag(parts);
+    }, 10);
   }
 
   function updateTool(ev) {
-    selectedTool.name = ui.toolName.value
-    selectedTool.number = parseInt(ui.toolNum.value)
-    selectedTool.flute_diam = parseFloat(ui.toolFluteDiam.value)
-    selectedTool.flute_len = parseFloat(ui.toolFluteLen.value)
-    selectedTool.shaft_diam = parseFloat(ui.toolShaftDiam.value)
-    selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value)
-    selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value)
-    selectedTool.metric = ui.toolMetric.checked
-    selectedTool.type = toolNames[ui.toolType.selectedIndex]
+    selectedTool.name = ui.toolName.value;
+    selectedTool.number = parseInt(ui.toolNum.value);
+    selectedTool.flute_diam = parseFloat(ui.toolFluteDiam.value);
+    selectedTool.flute_len = parseFloat(ui.toolFluteLen.value);
+    selectedTool.shaft_diam = parseFloat(ui.toolShaftDiam.value);
+    selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value);
+    selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value);
+    selectedTool.metric = ui.toolMetric.checked;
+    selectedTool.type = toolNames[ui.toolType.selectedIndex];
     if (selectedTool.type === 'tapermill') {
-      const CAM = kiri.driver.CAM
-      const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2
+      const CAM = kiri.driver.CAM;
+      const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
       if (ev && ev.target === ui.toolTaperAngle) {
-        const angle = parseFloat(ev.target.value)
-        const len = CAM.calcTaperLength(rad, angle * DEG2RAD)
-        selectedTool.flute_len = len
-        ui.toolTaperAngle.value = angle.round(1)
-        ui.toolFluteLen.value = selectedTool.flute_len.round(4)
+        const angle = parseFloat(ev.target.value);
+        const len = CAM.calcTaperLength(rad, angle * DEG2RAD);
+        selectedTool.flute_len = len;
+        ui.toolTaperAngle.value = angle.round(1);
+        ui.toolFluteLen.value = selectedTool.flute_len.round(4);
       } else {
         ui.toolTaperAngle.value = CAM.calcTaperAngle(
           rad,
           selectedTool.flute_len
-        ).round(1)
+        ).round(1);
       }
     } else {
-      ui.toolTaperAngle.value = 0
+      ui.toolTaperAngle.value = 0;
     }
-    renderTools()
-    ui.toolSelect.selectedIndex = selectedTool.order
-    setToolChanged(true)
-    renderTool(selectedTool)
+    renderTools();
+    ui.toolSelect.selectedIndex = selectedTool.order;
+    setToolChanged(true);
+    renderTool(selectedTool);
   }
 
   function setToolChanged(changed) {
-    editTools.changed = changed
-    ui.toolsSave.disabled = !changed
+    editTools.changed = changed;
+    ui.toolsSave.disabled = !changed;
   }
 
   function showTools() {
-    if (api.mode.get_id() !== MODES.CAM) return
-    api.settings.sync.get().then(_showTools)
+    if (api.mode.get_id() !== MODES.CAM) return;
+    api.settings.sync.get().then(_showTools);
   }
 
   function _showTools() {
-    let selectedIndex = null
+    let selectedIndex = null;
 
     editTools = settings()
       .tools.slice()
       .sort((a, b) => {
-        return a.name > b.name ? 1 : -1
-      })
+        return a.name > b.name ? 1 : -1;
+      });
 
-    setToolChanged(false)
+    setToolChanged(false);
 
     ui.toolsClose.onclick = function () {
-      if (editTools.changed && !confirm('abandon changes?')) return
-      api.dialog.hide()
-    }
+      if (editTools.changed && !confirm('abandon changes?')) return;
+      api.dialog.hide();
+    };
     ui.toolAdd.onclick = function () {
-      let metric = settings().controller.units === 'mm'
+      let metric = settings().controller.units === 'mm';
       editTools.push(
         Object.assign(
           {
@@ -345,71 +345,71 @@ gapp.register('kiri-mode.cam.tools', (root, exports) => {
                 flute_len: 2,
               }
         )
-      )
-      setToolChanged(true)
-      renderTools()
-      ui.toolSelect.selectedIndex = editTools.length - 1
-      selectTool(editTools[editTools.length - 1])
-    }
+      );
+      setToolChanged(true);
+      renderTools();
+      ui.toolSelect.selectedIndex = editTools.length - 1;
+      selectTool(editTools[editTools.length - 1]);
+    };
     ui.toolCopy.onclick = function () {
-      let clone = Object.assign({}, selectedTool)
-      let { name } = clone
-      let split = name.split(' ')
-      let endv = parseInt(split.pop())
+      let clone = Object.assign({}, selectedTool);
+      let { name } = clone;
+      let split = name.split(' ');
+      let endv = parseInt(split.pop());
       if (endv) {
-        name = split.join(' ') + ' ' + (endv + 1)
+        name = split.join(' ') + ' ' + (endv + 1);
       } else {
-        name = `${name} 2`
+        name = `${name} 2`;
       }
-      clone.id = Date.now()
-      clone.number = maxTool + 1
-      clone.name = name
-      editTools.push(clone)
-      setToolChanged(true)
-      renderTools()
-      ui.toolSelect.selectedIndex = editTools.length - 1
-      selectTool(editTools[editTools.length - 1])
-    }
+      clone.id = Date.now();
+      clone.number = maxTool + 1;
+      clone.name = name;
+      editTools.push(clone);
+      setToolChanged(true);
+      renderTools();
+      ui.toolSelect.selectedIndex = editTools.length - 1;
+      selectTool(editTools[editTools.length - 1]);
+    };
     ui.toolDelete.onclick = function () {
-      editTools.remove(selectedTool)
-      setToolChanged(true)
-      renderTools()
-    }
+      editTools.remove(selectedTool);
+      setToolChanged(true);
+      renderTools();
+    };
     ui.toolsSave.onclick = function () {
-      if (selectedTool) updateTool()
+      if (selectedTool) updateTool();
       settings().tools = editTools.sort((a, b) => {
-        return a.name < b.name ? -1 : 1
-      })
-      setToolChanged(false)
-      api.conf.save()
-      api.conf.update_fields()
-      api.event.settings()
-      api.settings.sync.put()
-    }
-    ui.toolsImport.onclick = (ev) => api.event.import(ev)
+        return a.name < b.name ? -1 : 1;
+      });
+      setToolChanged(false);
+      api.conf.save();
+      api.conf.update_fields();
+      api.event.settings();
+      api.settings.sync.put();
+    };
+    ui.toolsImport.onclick = (ev) => api.event.import(ev);
     ui.toolsExport.onclick = () => {
       uc.prompt('Export Tools Filename', 'tools').then((name) => {
         if (!name) {
-          return
+          return;
         }
         const record = {
           version: kiri.version,
           tools: api.conf.get().tools,
           time: Date.now(),
-        }
-        api.util.download(api.util.b64enc(record), `${name}.km`)
-      })
-    }
+        };
+        api.util.download(api.util.b64enc(record), `${name}.km`);
+      });
+    };
 
-    renderTools()
+    renderTools();
     if (editTools.length > 0) {
-      selectTool(editTools[0])
-      ui.toolSelect.selectedIndex = 0
+      selectTool(editTools[0]);
+      ui.toolSelect.selectedIndex = 0;
     } else {
-      ui.toolAdd.onclick()
+      ui.toolAdd.onclick();
     }
 
-    api.dialog.show('tools')
-    ui.toolSelect.focus()
+    api.dialog.show('tools');
+    ui.toolSelect.focus();
   }
-})
+});

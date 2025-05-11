@@ -100,40 +100,40 @@
     <script src="/code/engine.js"></script>
     <script>
       let edit,
-        saveit = ''
+        saveit = '';
       function $(id) {
-        return document.getElementById(id)
+        return document.getElementById(id);
       }
       function onload() {
-        let fnstr = demo.toString().split('\n')
+        let fnstr = demo.toString().split('\n');
         edit = ace.edit($('jbody'), {
           mode: 'ace/mode/javascript',
           theme: 'ace/theme/chrome',
           selectionStyle: 'text',
-        })
-        edit.session.setTabSize(4)
-        edit.session.setUseSoftTabs(true)
+        });
+        edit.session.setTabSize(4);
+        edit.session.setUseSoftTabs(true);
         edit.session.setValue(
           fnstr
             .slice(1, fnstr.length - 1)
             .map((l) => l.replace('            ', ''))
             .join('\n')
-        )
+        );
       }
       function display_message(msg) {
-        $('gfoot').innerText = msg ? Object.keys(msg).join(' - ') : ''
+        $('gfoot').innerText = msg ? Object.keys(msg).join(' - ') : '';
       }
       function display_gcode(gcode) {
-        $('gbody').innerText = saveit = gcode
-        display_message()
-        $('dfoot').style.display = 'block'
-        $('gfoot').style.display = ''
+        $('gbody').innerText = saveit = gcode;
+        display_message();
+        $('dfoot').style.display = 'block';
+        $('gfoot').style.display = '';
       }
       function run_code() {
-        $('dfoot').style.display = 'none'
-        $('gfoot').style.display = 'block'
-        let code = edit.session.getValue()
-        eval(`(function(){${code}})()`)
+        $('dfoot').style.display = 'none';
+        $('gfoot').style.display = 'block';
+        let code = edit.session.getValue();
+        eval(`(function(){${code}})()`);
       }
       function demo() {
         kiri
@@ -157,14 +157,14 @@
           .then((eng) => eng.slice())
           .then((eng) => eng.prepare())
           .then((eng) => eng.export())
-          .then(display_gcode)
+          .then(display_gcode);
       }
       function download() {
-        let blob = new Blob([saveit], { type: 'octet/stream' })
-        let url = window.URL.createObjectURL(blob)
+        let blob = new Blob([saveit], { type: 'octet/stream' });
+        let url = window.URL.createObjectURL(blob);
         $('download').innerHTML =
-          `<a id="xo" href="${url}" download="sample.gcode"></a>`
-        $('xo').click()
+          `<a id="xo" href="${url}" download="sample.gcode"></a>`;
+        $('xo').click();
       }
     </script>
   </head>

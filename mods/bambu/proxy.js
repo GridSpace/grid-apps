@@ -13,9 +13,9 @@
  * after the private key into the server-cert.pem
  */
 
-let util = require('util')
-const { bblCA } = require('./certs')
-let args = process.argv.slice(2)
+let util = require('util');
+const { bblCA } = require('./certs');
+let args = process.argv.slice(2);
 
 if (args.length !== 5) {
   console.log(
@@ -28,8 +28,8 @@ if (args.length !== 5) {
       '  code   = LAN mode code of proxied printer',
       '  serial = proxied printer serial #',
     ].join('\n')
-  )
-  return process.exit(0)
+  );
+  return process.exit(0);
 }
 
 function log() {
@@ -51,20 +51,20 @@ function log() {
         })
       )
       .join(' ')
-  )
+  );
 }
 
-const dgram = require('dgram')
-const SSDP_ADDRESS = '239.255.255.250'
-const SSDP_PORT = 1900
-const socket = dgram.createSocket('udp4')
+const dgram = require('dgram');
+const SSDP_ADDRESS = '239.255.255.250';
+const SSDP_PORT = 1900;
+const socket = dgram.createSocket('udp4');
 
-socket.on('error', (error) => log({ error }))
+socket.on('error', (error) => log({ error }));
 socket.bind(1900, () => {
-  socket.addMembership(SSDP_ADDRESS)
-})
+  socket.addMembership(SSDP_ADDRESS);
+});
 
-const [local, name, host, code, serial] = args
+const [local, name, host, code, serial] = args;
 
 console.log(
   [
@@ -73,7 +73,7 @@ console.log(
     `Host: ${host}`,
     `Serial: ${serial}`,
   ].join('\n')
-)
+);
 
 const ssdpMessage =
   `
@@ -94,9 +94,9 @@ DevVersion.bambu.com: 01.07.00.00
 DevCap.bambu.com: 1`
     .trim()
     .split('\n')
-    .join('\r\n') + '\r\n\r\n'
+    .join('\r\n') + '\r\n\r\n';
 
-console.log({ ssdpMessage })
+console.log({ ssdpMessage });
 
 // start broadcaster
 setInterval(() => {
@@ -107,23 +107,23 @@ setInterval(() => {
     2021,
     SSDP_ADDRESS,
     (err, data) => err && console.error('SSDP broadcast error:', err, data)
-  )
-}, 1000)
+  );
+}, 1000);
 
 // const { execSync } = require('child_process');
-const aedes = require('aedes')()
-const tls = require('tls')
-const fs = require('fs')
-const mqtt = require('mqtt')
-const path = require('path')
+const aedes = require('aedes')();
+const tls = require('tls');
+const fs = require('fs');
+const mqtt = require('mqtt');
+const path = require('path');
 
-const CERT_DIR = './certs'
-const CERT_KEY_PATH = path.join(CERT_DIR, 'server-key.pem')
-const CERT_PATH = path.join(CERT_DIR, 'server-cert.pem')
-const CA_CERT_PATH = path.join(CERT_DIR, 'ca-cert.pem')
+const CERT_DIR = './certs';
+const CERT_KEY_PATH = path.join(CERT_DIR, 'server-key.pem');
+const CERT_PATH = path.join(CERT_DIR, 'server-cert.pem');
+const CA_CERT_PATH = path.join(CERT_DIR, 'ca-cert.pem');
 
 if (!fs.existsSync(CERT_DIR)) {
-  fs.mkdirSync(CERT_DIR)
+  fs.mkdirSync(CERT_DIR);
 }
 
 // Generate self-signed certificate if it does not exist (local cli testing only)
@@ -132,15 +132,15 @@ if (!fs.existsSync(CERT_DIR)) {
 //     execSync(`openssl req -x509 -newkey rsa:4096 -keyout ${CERT_KEY_PATH} -out ${CERT_PATH} -days 365 -nodes -subj "/CN=localhost"`);
 // }
 if (!fs.existsSync(CERT_KEY_PATH) || !fs.existsSync(CERT_PATH)) {
-  console.log('missing required key and cert')
-  return
+  console.log('missing required key and cert');
+  return;
 }
 
 const options = {
   key: fs.readFileSync(CERT_KEY_PATH),
   cert: fs.readFileSync(CERT_PATH),
   ca: fs.existsSync(CA_CERT_PATH) ? fs.readFileSync(CA_CERT_PATH) : undefined,
-}
+};
 
 const remoteMqttOptions = {
   host,
@@ -150,28 +150,28 @@ const remoteMqttOptions = {
   protocol: 'mqtts',
   ca: bblCA,
   servername: serial,
-}
+};
 
 // Start local MQTTS broker
 const server = tls.createServer(options, (socket) => {
-  log(`MQTTS server connection`, socket.remoteAddress, socket.remotePort)
-  aedes.handle(socket)
-})
+  log(`MQTTS server connection`, socket.remoteAddress, socket.remotePort);
+  aedes.handle(socket);
+});
 
 server.listen(8883, () => {
-  log('MQTTS server running on port 8883')
-})
+  log('MQTTS server running on port 8883');
+});
 
 // Connect to remote MQTTS broker
-const remoteClient = mqtt.connect(remoteMqttOptions)
+const remoteClient = mqtt.connect(remoteMqttOptions);
 
 remoteClient.on('connect', () => {
-  log('Connected to remote MQTTS broker')
-})
+  log('Connected to remote MQTTS broker');
+});
 
 aedes.preConnect = (client, packet, callback) => {
-  let { id, version } = client
-  let { cmd, username, password, clientId, protocolId } = packet
+  let { id, version } = client;
+  let { cmd, username, password, clientId, protocolId } = packet;
   log(`mqtts preconnect`, {
     id,
     version,
@@ -180,15 +180,15 @@ aedes.preConnect = (client, packet, callback) => {
     password: password ? password.toString() : undefined,
     clientId,
     protocolId,
-  })
-  callback(null, true)
-}
+  });
+  callback(null, true);
+};
 
 aedes.authenticate = (client, username, password, callback) => {
-  log(`mqtts auth`, { username, password: password.toString() })
-  const isValid = true
-  callback(null, isValid)
-}
+  log(`mqtts auth`, { username, password: password.toString() });
+  const isValid = true;
+  callback(null, isValid);
+};
 
 // Proxy messages to remote broker
 aedes.on('publish', (packet, client) => {
@@ -196,48 +196,48 @@ aedes.on('publish', (packet, client) => {
     remoteClient.publish(packet.topic, packet.payload, {
       qos: packet.qos,
       retain: packet.retain,
-    })
+    });
     try {
-      let { topic, payload } = packet
-      let json = JSON.parse(payload.toString().replace('\x00', ''))
-      log('send', topic, json)
+      let { topic, payload } = packet;
+      let json = JSON.parse(payload.toString().replace('\x00', ''));
+      log('send', topic, json);
     } catch (err) {
-      log({ err, packet, payload: packet.payload.toString() })
+      log({ err, packet, payload: packet.payload.toString() });
     }
   }
-})
+});
 
 // Subscribe to remote messages and forward to local clients
 remoteClient.on('message', (topic, payload) => {
-  aedes.publish({ topic, payload })
+  aedes.publish({ topic, payload });
   try {
-    let json = JSON.parse(payload.toString())
-    log('recv', topic, json)
+    let json = JSON.parse(payload.toString());
+    log('recv', topic, json);
   } catch (err) {
-    log({ topic, payload: payload.toString() })
+    log({ topic, payload: payload.toString() });
   }
-})
+});
 
 // Sync subscriptions
 aedes.on('subscribe', (subscriptions, client) => {
   subscriptions.forEach((sub) => {
-    log({ subscribe: sub.topic })
-    remoteClient.subscribe(sub.topic)
-  })
-})
+    log({ subscribe: sub.topic });
+    remoteClient.subscribe(sub.topic);
+  });
+});
 
 aedes.on('unsubscribe', (subscriptions, client) => {
   subscriptions.forEach((sub) => {
-    log({ unsubscribe: sub.topic })
-    remoteClient.unsubscribe(sub)
-  })
-})
+    log({ unsubscribe: sub.topic });
+    remoteClient.unsubscribe(sub);
+  });
+});
 
 // pipe the camera feed, too
 const camera = tls.createServer(options, (clientSocket) => {
-  log('Camera Connected', { address: clientSocket.remoteAddress })
+  log('Camera Connected', { address: clientSocket.remoteAddress });
 
-  const hexer = require('hexer')
+  const hexer = require('hexer');
 
   const remoteSocket = tls.connect(
     {
@@ -249,37 +249,37 @@ const camera = tls.createServer(options, (clientSocket) => {
     () => {
       // clientSocket.pipe(remoteSocket).pipe(clientSocket);
     }
-  )
+  );
 
   clientSocket.on('data', (data) => {
-    remoteSocket.write(data)
+    remoteSocket.write(data);
     // console.log({ client: data, type: typeof data });
     // console.log('-- cam client --', data.length);
     // console.log(hexer(data));
-  })
+  });
 
   remoteSocket.on('data', (data) => {
-    clientSocket.write(data)
+    clientSocket.write(data);
     // console.log({ remote: data, type: typeof data });
     // console.log('-- cam remote --', data.length);
     // console.log(hexer(data));
-  })
+  });
 
   clientSocket.on('close', () => {
-    remoteSocket.end()
-  })
+    remoteSocket.end();
+  });
 
   remoteSocket.on('error', (err) => {
-    console.error('Remote connection error:', err.message)
-    clientSocket.destroy()
-  })
+    console.error('Remote connection error:', err.message);
+    clientSocket.destroy();
+  });
 
   clientSocket.on('error', (err) => {
-    console.error('Client connection error:', err.message)
-    remoteSocket.destroy()
-  })
-})
+    console.error('Client connection error:', err.message);
+    remoteSocket.destroy();
+  });
+});
 
 camera.listen(6000, () => {
-  console.log(`TLS Proxy Server listening on port 6000`)
-})
+  console.log(`TLS Proxy Server listening on port 6000`);
+});

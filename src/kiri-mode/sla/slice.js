@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 // dep: geo.base
 // dep: geo.point
@@ -10,16 +10,16 @@
 // dep: kiri-mode.sla.driver
 // use: ext.pngjs
 gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
-  const { base, kiri } = root
-  const { driver, newSlice, newTop } = kiri
-  const { util, newPoint, newPolygon, polygons } = base
-  const { SLA } = driver
+  const { base, kiri } = root;
+  const { driver, newSlice, newTop } = kiri;
+  const { util, newPoint, newPolygon, polygons } = base;
+  const { SLA } = driver;
 
-  const POLY = polygons
-  const FDM = driver.FDM.share
-  const tracker = util.pwait
+  const POLY = polygons;
+  const FDM = driver.FDM.share;
+  const tracker = util.pwait;
 
-  let fill_cache
+  let fill_cache;
 
   /**
    * DRIVER CONTRACT - runs in worker
@@ -32,61 +32,61 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
     let { process, device, controller } = settings,
       isConcurrent = controller.threaded && kiri.minions.concurrent,
       work_total,
-      work_remain
+      work_remain;
 
     if (SLA.legacy && !self.OffscreenCanvas) {
-      return ondone('browser lacks support for OffscreenCanvas', true)
+      return ondone('browser lacks support for OffscreenCanvas', true);
     }
 
     // calculate % complete and call onupdate()
     function doupdate(work, msg) {
-      onupdate(0.25 + ((work_total - work_remain) / work_total) * 0.75, msg)
-      work_remain -= work
+      onupdate(0.25 + ((work_total - work_remain) / work_total) * 0.75, msg);
+      work_remain -= work;
     }
 
     // for each slice, perform a function and call doupdate()
     function forSlices(slices, work, fn, msg) {
       slices.forEach(function (slice, index) {
-        fn(slice, index)
-        doupdate(work / slices.length, msg)
-      })
+        fn(slice, index);
+        doupdate(work / slices.length, msg);
+      });
     }
 
-    let smallDims = { x: 200, y: 125 }
-    let largeDims = { x: 400, y: 300 }
+    let smallDims = { x: 200, y: 125 };
+    let largeDims = { x: 400, y: 300 };
 
     switch (device.deviceName) {
       case 'Anycubic.Photon':
       case 'Anycubic.Photon.S':
         // defaults above
-        break
+        break;
       case 'Creality.Halot.One':
       case 'Creality.Halot.Max':
       case 'Creality.Halot.Sky':
-        smallDims = { x: 116, y: 116 }
-        largeDims = { x: 290, y: 290 }
-        break
+        smallDims = { x: 116, y: 116 };
+        largeDims = { x: 290, y: 290 };
+        break;
     }
 
-    let sws = self.worker.snap.url
-    let b64 = atob(sws.substring(sws.indexOf(',') + 1))
-    let bin = Uint8Array.from(b64, (c) => c.charCodeAt(0))
-    let img = new png.PNG()
+    let sws = self.worker.snap.url;
+    let b64 = atob(sws.substring(sws.indexOf(',') + 1));
+    let bin = Uint8Array.from(b64, (c) => c.charCodeAt(0));
+    let img = new png.PNG();
     img.parse(bin, (err, data) => {
-      SLA.preview = img
-      SLA.previewSmall = samplePNG(img, smallDims.x, smallDims.y)
-      SLA.previewLarge = samplePNG(img, largeDims.x, largeDims.y)
-    })
-    let height = process.slaSlice || 0.05
+      SLA.preview = img;
+      SLA.previewSmall = samplePNG(img, smallDims.x, smallDims.y);
+      SLA.previewLarge = samplePNG(img, largeDims.x, largeDims.y);
+    });
+    let height = process.slaSlice || 0.05;
 
     async function onSliceDone(slices) {
       // remove empty slices
-      slices = widget.slices = slices.filter((slice) => slice.tops.length)
+      slices = widget.slices = slices.filter((slice) => slice.tops.length);
       if (!process.slaOpenTop && !process.xray) {
         // re-add last empty slice for closed top
-        let cap = newSlice(bounds.max.z + height)
-        cap.index = slices.last().index + 1
-        slices.push(cap)
+        let cap = newSlice(bounds.max.z + height);
+        cap.index = slices.last().index + 1;
+        slices.push(cap);
       }
       // prepend raft layers to slices array
       if (process.slaSupportEnable && process.slaSupportLayers) {
@@ -96,55 +96,55 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
           polys = [],
           gap = process.slaSupportGap, // gap layers above raft
           grow = height, // union per layer expand
-          off = 1 - layers * grow // starting union offset from part
+          off = 1 - layers * grow; // starting union offset from part
         let outer = slices.forEach((slice) => {
           // poly.clone prevents inner voids from forming
-          polys.appendAll(slice.tops.map((t) => t.poly.clone()))
-        })
+          polys.appendAll(slice.tops.map((t) => t.poly.clone()));
+        });
         // p.clone prevents inner voids from forming
-        let union = POLY.union(polys, undefined, true).map((p) => p.clone())
-        let expand = POLY.expand(union, off, zoff, [], 1)
-        let lastraft
+        let union = POLY.union(polys, undefined, true).map((p) => p.clone());
+        let expand = POLY.expand(union, off, zoff, [], 1);
+        let lastraft;
         for (let s = 0; s < layers + gap; s++) {
-          let slice = newSlice(zoff)
-          slice.height = height
-          slice.index = snew.length
+          let slice = newSlice(zoff);
+          slice.height = height;
+          slice.index = snew.length;
           if (s < layers) {
-            slice.synth = true
+            slice.synth = true;
             expand.forEach((u) => {
-              slice.tops.push(newTop(u.clone(true).setZ(zoff)))
-            })
-            expand = POLY.expand(expand, grow, zoff, [], 1)
-            lastraft = slice
+              slice.tops.push(newTop(u.clone(true).setZ(zoff)));
+            });
+            expand = POLY.expand(expand, grow, zoff, [], 1);
+            lastraft = slice;
           }
-          snew.push(slice)
-          zoff += height
+          snew.push(slice);
+          zoff += height;
         }
         // compensate for midline start
-        zoff -= height / 2
+        zoff -= height / 2;
         // replace slices with new appended array
         slices = widget.slices = snew.concat(
           slices.map((s) => {
-            s.tops.forEach((t) => t.poly.setZ(s.z + zoff))
-            s.index += snew.length
-            s.z += zoff
-            return s
+            s.tops.forEach((t) => t.poly.setZ(s.z + zoff));
+            s.index += snew.length;
+            s.z += zoff;
+            return s;
           })
-        )
+        );
         // annotate widget for support generation
-        widget.union = union
-        widget.lastraft = lastraft
+        widget.union = union;
+        widget.lastraft = lastraft;
       }
       // re-connect slices into linked list for island/bridge projections
       for (let i = 1; i < slices.length; i++) {
-        slices[i - 1].up = slices[i]
-        slices[i].down = slices[i - 1]
+        slices[i - 1].up = slices[i];
+        slices[i].down = slices[i - 1];
       }
-      let solidLayers = Math.round(process.slaShell / process.slaSlice)
+      let solidLayers = Math.round(process.slaShell / process.slaSlice);
       // setup solid fill
       slices.forEach(function (slice) {
-        slice.solids = []
-      })
+        slice.solids = [];
+      });
       // compute total work for progress bar
       work_total = [
         5, // shell
@@ -159,82 +159,85 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
           ? 100
           : 0,
       ].reduce((t, v) => {
-        return t + v
-      })
-      work_remain = work_total
+        return t + v;
+      });
+      work_remain = work_total;
       forSlices(
         slices,
         5,
         (slice, index) => {
           if (process.slaShell) {
-            FDM.doShells(slice, 2, 0, process.slaShell)
+            FDM.doShells(slice, 2, 0, process.slaShell);
           } else {
-            FDM.doShells(slice, 1, 0)
+            FDM.doShells(slice, 1, 0);
           }
         },
         'shells'
-      )
+      );
       forSlices(
         slices,
         10,
         (slice) => {
-          if (slice.synth) return
+          if (slice.synth) return;
           FDM.doDiff(slice, 0.000001, {
             sla: true,
             fakedown: !process.slaOpenBase,
-          })
+          });
         },
         'delta'
-      )
+      );
       if (solidLayers) {
         forSlices(
           slices,
           10,
           (slice) => {
-            if (slice.synth) return
-            FDM.projectFlats(slice, solidLayers)
-            FDM.projectBridges(slice, solidLayers)
+            if (slice.synth) return;
+            FDM.projectFlats(slice, solidLayers);
+            FDM.projectBridges(slice, solidLayers);
           },
           'project'
-        )
+        );
         async function doUnionSolid(slice) {
-          if (slice.synth) return
-          let traces = POLY.nest(POLY.flatten(slice.topShells()))
+          if (slice.synth) return;
+          let traces = POLY.nest(POLY.flatten(slice.topShells()));
           if (slice.solids) {
-            let trims = slice.solids || []
-            traces.appendAll(trims)
+            let trims = slice.solids || [];
+            traces.appendAll(trims);
             // slice.unioned = POLY.setZ(POLY.union(traces, undefined, true), slice.z);
-            slice.unioned = POLY.setZ(await kiri.minions.union(traces), slice.z)
+            slice.unioned = POLY.setZ(
+              await kiri.minions.union(traces),
+              slice.z
+            );
           } else {
-            slice.unioned = traces
+            slice.unioned = traces;
           }
         }
-        let promises = slices.map((slice) => doUnionSolid(slice))
+        let promises = slices.map((slice) => doUnionSolid(slice));
         await tracker(promises, (i, t) => {
-          doupdate(10 / promises.length, 'solid')
-        })
+          doupdate(10 / promises.length, 'solid');
+        });
       } else {
         forSlices(
           slices,
           10,
           (slice) => {
-            if (slice.synth) return
-            slice.unioned = slice.topPolys()
+            if (slice.synth) return;
+            slice.unioned = slice.topPolys();
           },
           'solid'
-        )
+        );
       }
       if (process.slaFillDensity && process.slaShell) {
-        fill_cache = []
+        fill_cache = [];
         forSlices(
           slices,
           60,
           (slice) => {
-            if (slice.synth) return
-            fillPolys(slice, settings)
+            if (slice.synth) return;
+            fillPolys(slice, settings);
           },
           'infill'
-        )
+        );
       }
       if (
         process.slaSupportEnable &&
@@ -242,14 +245,14 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
         process.slaSupportDensity
       ) {
         computeSupports(widget, process, (progress) => {
-          doupdate(100 * progress, 'support')
-        })
+          doupdate(100 * progress, 'support');
+        });
       }
-      doRender(widget)
+      doRender(widget);
     }
 
-    let bounds = widget.getBoundingBox()
-    let points = widget.getPoints()
+    let bounds = widget.getBoundingBox();
+    let points = widget.getPoints();
 
     base
       .slice(points, {
@@ -266,157 +269,157 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
             z,
             points,
             opts
-          )
+          );
         },
         onupdate(v) {
-          return onupdate(0.0 + v * 0.25)
+          return onupdate(0.0 + v * 0.25);
         },
       })
       .then((output) => {
         let slices = (widget.slices = output.slices.map((data) => {
-          let { z, lines, groups } = data
-          let tops = POLY.nest(groups)
-          return newSlice(z).addTops(tops)
-        }))
-        onSliceDone(slices).then(ondone)
-      })
-  }
+          let { z, lines, groups } = data;
+          let tops = POLY.nest(groups);
+          return newSlice(z).addTops(tops);
+        }));
+        onSliceDone(slices).then(ondone);
+      });
+  };
 
   function doRender(widget) {
     widget.slices.forEach((slice) => {
       const render = slice.output(),
         lopacity = 0.6,
-        line = 0x010101
+        line = 0x010101;
 
       if (slice.unioned) {
         slice.unioned.forEach((poly) => {
-          poly = poly.clone(true) //.move(widget.track.pos);
+          poly = poly.clone(true); //.move(widget.track.pos);
           render
             .setLayer('layers', { line, face: 0x0099cc, lopacity })
-            .addAreas([poly], { outline: true })
-        })
+            .addAreas([poly], { outline: true });
+        });
       } else if (slice.tops) {
         slice.tops.forEach((top) => {
-          let poly = top.poly //.clone(true).move(widget.track.pos);
+          let poly = top.poly; //.clone(true).move(widget.track.pos);
           render
             .setLayer('layers', { line, face: 0xfcba03, lopacity })
-            .addAreas([poly], { outline: true })
-        })
+            .addAreas([poly], { outline: true });
+        });
       }
 
       if (slice.supports) {
         slice.supports.forEach((poly) => {
           render
             .setLayer('support', { line, face: 0xfcba03, lopacity })
-            .addAreas([poly], { outline: true })
-        })
+            .addAreas([poly], { outline: true });
+        });
       }
-    })
+    });
   }
 
   function computeSupports(widget, process, progress) {
     let area = widget.union.reduce((t, p) => {
-        return t + p.areaDeep()
+        return t + p.areaDeep();
       }, 0),
       perim = widget.union.reduce((t, p) => {
-        return t + p.perimeter()
+        return t + p.perimeter();
       }, 0),
       slices = widget.slices,
       length = slices.length,
       tot_mass = 0, // total widget "mass"
-      tot_bear = 0 // total "mass-bearing" area
+      tot_bear = 0; // total "mass-bearing" area
 
-    let ops = slices.filter((slice) => !slice.synth)
+    let ops = slices.filter((slice) => !slice.synth);
 
     // compute total "mass" by slice
     ops.forEach((slice) => {
       slice.mass = slice.unioned.reduce((t, p) => {
-        return t + p.areaDeep()
-      }, 0)
+        return t + p.areaDeep();
+      }, 0);
       if (slice.up && slice.up.bridges) {
         slice.bear = slice.up.bridges.reduce((t, p) => {
-          return t + p.areaDeep()
-        }, 0)
-        slice.bear_up = slice.up.bridges
-        tot_bear += slice.bear
+          return t + p.areaDeep();
+        }, 0);
+        slice.bear_up = slice.up.bridges;
+        tot_bear += slice.bear;
       } else {
-        slice.bear = 0
+        slice.bear = 0;
       }
-      tot_mass += slice.mass
-    })
+      tot_mass += slice.mass;
+    });
 
-    let mass_per_bear = (tot_mass / tot_bear) * (1 / process.slaSupportDensity)
+    let mass_per_bear = (tot_mass / tot_bear) * (1 / process.slaSupportDensity);
 
     // console.log({tot_mass, tot_bear, ratio: tot_mass / tot_bear, mass_per_bear});
 
-    let first
+    let first;
     ops
       .slice()
       .map((s, i) => {
         if (!first && s.bear) {
-          s.ord_first = first = true
+          s.ord_first = first = true;
         }
         // 30x lowest to 1x highest
-        s.ord_weight = Math.pow(30, (ops.length - i) / ops.length)
-        return s
+        s.ord_weight = Math.pow(30, (ops.length - i) / ops.length);
+        return s;
       })
       .sort((a, b) => {
-        if (a.ord_first) return -1
-        if (b.ord_first) return 1
-        return b.bear * b.ord_weight - a.bear * a.ord_weight
+        if (a.ord_first) return -1;
+        if (b.ord_first) return 1;
+        return b.bear * b.ord_weight - a.bear * a.ord_weight;
       })
       .forEach((slice, index) => {
-        slice.ord_bear = index
-      })
+        slice.ord_bear = index;
+      });
 
     let rem_mass = tot_mass,
-      rem_bear = tot_bear
+      rem_bear = tot_bear;
 
     // compute remaining mass, bearing surface, for each slice
     let run,
       runLast,
       runCount = 0,
-      runList = []
+      runList = [];
     ops.forEach((slice) => {
-      slice.rem_mass = rem_mass
-      slice.rem_bear = rem_bear
+      slice.rem_mass = rem_mass;
+      slice.rem_bear = rem_bear;
       // slice.can_bear = slice.mass * mass_per_bear;
-      slice.can_bear = slice.bear * mass_per_bear
-      rem_mass -= slice.mass
-      rem_bear -= slice.bear
-    })
+      slice.can_bear = slice.bear * mass_per_bear;
+      rem_mass -= slice.mass;
+      rem_bear -= slice.bear;
+    });
 
     let ord = ops.sort((a, b) => {
-      return a.ord_bear - b.ord_bear
-    })
+      return a.ord_bear - b.ord_bear;
+    });
 
-    rem_mass = tot_mass
-    rem_bear = tot_bear
+    rem_mass = tot_mass;
+    rem_bear = tot_bear;
 
     // in order of load bearing capability, select layer
     // and recompute the requirements on the slices below
     for (let i = 0; i < ord.length; i++) {
       let slice = ord[i],
-        bearing = Math.min(slice.can_bear, slice.rem_mass)
+        bearing = Math.min(slice.can_bear, slice.rem_mass);
 
       // remove from slices below the amount of mass they have to bear
       for (let j = slice.index - 1; j > ops[0].index; j--) {
-        slices[j].rem_mass -= bearing
+        slices[j].rem_mass -= bearing;
       }
 
       // remove total mass left to bear
-      rem_mass -= bearing
-      slice.can_emit = true
+      rem_mass -= bearing;
+      slice.can_emit = true;
       if (rem_mass <= 0) {
         // console.log({break: i, of: ord.length});
-        break
+        break;
       }
     }
 
     let seq = 0,
       seqLast = 0,
       spacing = (1 - process.slaSupportDensity) * 10,
-      size = Math.bound(process.slaSupportSize / 2, 0.25, 1)
+      size = Math.bound(process.slaSupportSize / 2, 0.25, 1);
 
     // compute and project support pillars
     slices.forEach((slice, index) => {
@@ -424,71 +427,71 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
         if (seq === 0 || slice.index - seqLast > 5) {
           slice.bear_up
             .map((p) => {
-              return p.clone(true).setZ(slice.z)
+              return p.clone(true).setZ(slice.z);
             })
             .forEach((p) => {
-              projectSupport(process, slice, p, size, spacing)
-            })
-          seq++
+              projectSupport(process, slice, p, size, spacing);
+            });
+          seq++;
         } else if (seq > 5) {
-          seq = 0
+          seq = 0;
         } else {
-          seq++
+          seq++;
         }
-        seqLast = slice.index
+        seqLast = slice.index;
       }
-      progress(1 / slices.length)
-    })
+      progress(1 / slices.length);
+    });
 
     // union support pillars
     slices.forEach((slice) => {
       if (slice.supports) {
-        slice.supports = POLY.union(slice.supports, 0, true)
+        slice.supports = POLY.union(slice.supports, 0, true);
       }
-    })
+    });
   }
 
   function projectSupport(process, slice, poly, size, spacing) {
     let flat = poly.circularityDeep() > 0.1,
-      arr = [poly]
+      arr = [poly];
 
     // insetting polys produces arrays. consume til gone
     while (arr.length) {
-      poly = arr.shift()
+      poly = arr.shift();
       let out = [],
         seg = [],
         per = poly.perimeter(),
         crit = 0,
-        polys = poly.clone(true).flattenTo([])
+        polys = poly.clone(true).flattenTo([]);
 
       polys.forEach((p) =>
         p.forEachSegment((p1, p2) => {
-          let rec = { dist: p1.distTo2D(p2), p1, p2 }
-          if (rec.dist >= spacing || slice.ord_first) crit++
-          seg.push(rec)
+          let rec = { dist: p1.distTo2D(p2), p1, p2 };
+          if (rec.dist >= spacing || slice.ord_first) crit++;
+          seg.push(rec);
         })
-      )
+      );
 
       seg.sort((a, b) => {
-        return b.dist - a.dist
-      })
+        return b.dist - a.dist;
+      });
 
       // emit all critical (long) segments. min 3
       while (seg.length && (crit > 0 || out.length < 3)) {
-        let { dist, p1, p2 } = seg.shift()
+        let { dist, p1, p2 } = seg.shift();
         if (dist >= spacing) {
           // spaced along line
           let num = Math.ceil(dist / spacing) + 1,
             step = dist / num,
-            pt = p1
+            pt = p1;
           while (num-- >= 0) {
-            out.push(pt)
-            pt = pt.offsetPointTo(p2, step)
+            out.push(pt);
+            pt = pt.offsetPointTo(p2, step);
           }
-          crit--
+          crit--;
         } else {
           // line midpoint
-          out.push(p1.offsetPointTo(p2, dist / 2))
+          out.push(p1.offsetPointTo(p2, dist / 2));
         }
       }
 
@@ -497,42 +500,42 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
         drop: for (let i = 0; i < out.length; i++) {
           for (let j = i + 1; j < out.length; j++) {
             if (out[i].distTo2D(out[j]) <= size) {
-              out[i] = null
-              continue drop
+              out[i] = null;
+              continue drop;
             }
           }
           if (slice.pillars)
             slice.pillars.forEach((rec) => {
               if (out[i] && out[i].distTo2D(rec.point) <= size) {
-                out[i] = null
+                out[i] = null;
               }
-            })
+            });
         }
 
       // mark support pillar for each point
       out
         .filter((p) => p !== null)
         .forEach((p) => {
-          let track = projectPillar(process, slice, p, size, [])
+          let track = projectPillar(process, slice, p, size, []);
           // find stunted pillars terminating on a face (not raft or merged)
           if (track.length && !(track.max || track.synth || track.merged)) {
             // remove stunted pillar
             track.forEach((rec) => {
-              let sp = rec.slice.supports
-              let rp = sp.indexOf(rec.pillar)
-              if (rp >= 0) sp.splice(rp, 1)
-            })
+              let sp = rec.slice.supports;
+              let rp = sp.indexOf(rec.pillar);
+              if (rp >= 0) sp.splice(rp, 1);
+            });
           }
-        })
+        });
 
       // inset polygon for flat area support
-      if (flat) poly.offset(Math.max(0.2, 1 - process.slaSupportDensity), arr)
+      if (flat) poly.offset(Math.max(0.2, 1 - process.slaSupportDensity), arr);
     }
   }
 
   function projectPillar(process, slice, point, size, track) {
-    if (!slice.supports) slice.supports = []
-    if (!slice.pillars) slice.pillars = []
+    if (!slice.supports) slice.supports = [];
+    if (!slice.pillars) slice.pillars = [];
 
     let points = process.slaSupportPoints,
       pillar = newPolygon()
@@ -543,76 +546,76 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
       end = false, // center intersects
       over = [], // overlapping points
       safe = [], // non-overlapping points
-      low = slice.index < process.slaSupportGap + process.slaSupportLayers
+      low = slice.index < process.slaSupportGap + process.slaSupportLayers;
 
-    track.min = track.min ? Math.min(track.min, size) : size
-    track.max = (track.max ? true : false) || size >= max
-    track.synth = track.synth || slice.synth
+    track.min = track.min ? Math.min(track.min, size) : size;
+    track.max = (track.max ? true : false) || size >= max;
+    track.synth = track.synth || slice.synth;
 
     slice.tops.forEach((t) => {
       if (track.length > 3 && point.isInPolygon(t.poly)) {
-        end = true
+        end = true;
       }
       pillar.points.forEach((p) => {
-        let isin = p.isInPolygon(t.poly) // || p.nearPolygon(t.poly, 0.001);
+        let isin = p.isInPolygon(t.poly); // || p.nearPolygon(t.poly, 0.001);
         if (isin) {
-          over.push(p)
+          over.push(p);
         } else {
-          safe.push(p)
+          safe.push(p);
         }
-      })
-    })
+      });
+    });
 
     if (end) {
       // backtrack shrinking pillars to point if
       // not landing on the base and size is max'd
       if (!slice.synth && track.max) {
-        let nusize = track.min
+        let nusize = track.min;
         while (track.length) {
           let prec = track.pop(),
             npil = newPolygon()
               .centerCircle(prec.point, nusize / 2, points, true)
               .setZ(prec.slice.z),
-            spos = prec.slice.supports.indexOf(prec.pillar)
+            spos = prec.slice.supports.indexOf(prec.pillar);
           // if we find our old pillar, replace
           if (spos >= 0) {
-            prec.slice.supports[spos] = npil
-            nusize += inc
+            prec.slice.supports[spos] = npil;
+            nusize += inc;
           }
           if (nusize > prec.size) {
-            break
+            break;
           }
         }
       }
-      return track
+      return track;
     }
 
-    let nextpoint = point
+    let nextpoint = point;
 
     if (over.length) {
       // move toward average of safe (non-overlapping) points
       if (safe.length) {
         let x = 0,
-          y = 0
+          y = 0;
         safe.forEach((p) => {
-          x += p.x
-          y += p.y
-        })
-        x /= safe.length
-        y /= safe.length
-        nextpoint = point.offsetPointTo({ x, y, z: slice.z }, inc)
+          x += p.x;
+          y += p.y;
+        });
+        x /= safe.length;
+        y /= safe.length;
+        nextpoint = point.offsetPointTo({ x, y, z: slice.z }, inc);
       }
       // once max'ed out, can only shrink in size
       if (track.max) {
-        size -= inc
+        size -= inc;
       }
     } else if (!track.max || low) {
-      size += inc
-      if (low) max += process.slaSupportGap * process.slaSlice * 2
+      size += inc;
+      if (low) max += process.slaSupportGap * process.slaSlice * 2;
     }
 
     if (size < track.min) {
-      return track
+      return track;
     }
 
     // let close = [];
@@ -639,13 +642,13 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
     //     nextpoint = point.offsetPointTo(newp, inc);
     // }
 
-    slice.supports.push(pillar)
-    slice.pillars.push({ point, pillar, size })
-    track.push({ slice, point, pillar, size })
+    slice.supports.push(pillar);
+    slice.pillars.push({ point, pillar, size });
+    track.push({ slice, point, pillar, size });
     if (slice.down) {
-      projectPillar(process, slice.down, nextpoint, Math.min(size, max), track)
+      projectPillar(process, slice.down, nextpoint, Math.min(size, max), track);
     }
-    return track
+    return track;
   }
 
   function fillPolys(slice, settings) {
@@ -666,11 +669,11 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
       start_y = -(depth / 2),
       end_x = width / 2,
       end_y = depth / 2,
-      fill = []
+      fill = [];
 
     let seq_i = Math.floor(slice.index / seq),
       seq_c = seq_i % 4,
-      cached = fill_cache[seq_c]
+      cached = fill_cache[seq_c];
 
     if (!cached && seq_c !== 1)
       for (let x = start_x; x < end_x; x += step_x) {
@@ -684,7 +687,7 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
             linew,
             depth
           )
-        )
+        );
       }
 
     if (!cached && seq_c !== 3)
@@ -699,29 +702,29 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
             width,
             linew
           )
-        )
+        );
       }
 
     if (!cached) {
-      fill = POLY.union(fill, 0, true)
-      fill_cache[seq_c] = fill
+      fill = POLY.union(fill, 0, true);
+      fill_cache[seq_c] = fill;
     } else {
-      fill = cached.slice().map((p) => p.clone(true).setZ(slice.z))
+      fill = cached.slice().map((p) => p.clone(true).setZ(slice.z));
     }
 
     fill = POLY.trimTo(
       fill,
       slice.tops.map((t) => t.poly)
-    )
-    fill = POLY.union(slice.unioned.appendAll(fill), 0, true)
+    );
+    fill = POLY.union(slice.unioned.appendAll(fill), 0, true);
 
-    slice.unioned = fill
+    slice.unioned = fill;
   }
 
   function pixAt(png, x, y) {
-    let idx = (x + png.width * y) * 4
-    let dat = png.data
-    return [dat[idx++], dat[idx++], dat[idx++], dat[idx++]]
+    let idx = (x + png.width * y) * 4;
+    let dat = png.data;
+    return [dat[idx++], dat[idx++], dat[idx++], dat[idx++]];
   }
 
   function averageBlock(png, x1, y1, x2, y2) {
@@ -730,20 +733,20 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
       x,
       y,
       z,
-      v2
+      v2;
     for (x = x1; x < x2; x++) {
       for (y = y1; y < y2; y++) {
-        v2 = pixAt(png, x, y)
+        v2 = pixAt(png, x, y);
         for (z = 0; z < 4; z++) {
-          val[z] += v2[z]
+          val[z] += v2[z];
         }
-        count++
+        count++;
       }
     }
     for (z = 0; z < 4; z++) {
-      val[z] = Math.abs(val[z] / count)
+      val[z] = Math.abs(val[z] / count);
     }
-    return val
+    return val;
   }
 
   function samplePNG(png, width, height) {
@@ -760,35 +763,35 @@ gapp.register('kiri-mode.sla.slice', [], (root, exports) => {
       dy,
       ey,
       bidx,
-      pixval
+      pixval;
 
     if (ratio >= aspect) {
-      div = png.height / tw
-      xoff = Math.round((png.width - th * div) / 2)
-      yoff = 0
+      div = png.height / tw;
+      xoff = Math.round((png.width - th * div) / 2);
+      yoff = 0;
     } else {
-      div = png.width / th
-      xoff = 0
-      yoff = Math.round((png.height - tw * div) / 2)
+      div = png.width / th;
+      xoff = 0;
+      yoff = Math.round((png.height - tw * div) / 2);
     }
 
     for (let y = 0; y < tw; y++) {
-      dy = Math.round(y * div + yoff)
-      if (dy < 0 || dy > png.height) continue
-      ey = Math.round((y + 1) * div + yoff)
+      dy = Math.round(y * div + yoff);
+      if (dy < 0 || dy > png.height) continue;
+      ey = Math.round((y + 1) * div + yoff);
       for (let x = 0; x < th; x++) {
-        dx = Math.round(x * div + xoff)
-        if (dx < 0 || dx > png.width) continue
-        ex = Math.round((x + 1) * div + xoff)
-        bidx = (y * th + x) * 4
-        pixval = averageBlock(png, dx, dy, ex, ey)
-        buf[bidx + 0] = pixval[0]
-        buf[bidx + 1] = pixval[1]
-        buf[bidx + 2] = pixval[2]
-        buf[bidx + 3] = pixval[3]
+        dx = Math.round(x * div + xoff);
+        if (dx < 0 || dx > png.width) continue;
+        ex = Math.round((x + 1) * div + xoff);
+        bidx = (y * th + x) * 4;
+        pixval = averageBlock(png, dx, dy, ex, ey);
+        buf[bidx + 0] = pixval[0];
+        buf[bidx + 1] = pixval[1];
+        buf[bidx + 2] = pixval[2];
+        buf[bidx + 3] = pixval[3];
       }
     }
 
-    return { width, height, data: buf, png }
+    return { width, height, data: buf, png };
   }
-})
+});

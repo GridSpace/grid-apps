@@ -1,73 +1,73 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 // dep: moto.broker
 // dep: mesh.util
 // dep: mesh.api
 gapp.register('mesh.build', [], (root, exports) => {
-  const { broker } = gapp
-  const { base, mesh, moto } = root
-  const { api, util } = mesh
-  const { space } = moto
-  const { bind, div, label, input, hr } = h
+  const { broker } = gapp;
+  const { base, mesh, moto } = root;
+  const { api, util } = mesh;
+  const { space } = moto;
+  const { bind, div, label, input, hr } = h;
 
-  const devel = api.isDebug
+  const devel = api.isDebug;
 
-  let call = broker.send
-  let rad = 180 / Math.PI
-  let und = undefined
+  let call = broker.send;
+  let rad = 180 / Math.PI;
+  let und = undefined;
 
   broker.listeners({
     ui_build,
-  })
+  });
 
-  let spin_timer
+  let spin_timer;
 
   // add download / blob export to util
   util.download = (data, filename = 'mesh-data') => {
     let url = window.URL.createObjectURL(
       new Blob([data], { type: 'octet/stream' })
-    )
+    );
     $('download').innerHTML =
-      `<a id="_data_export_" href="${url}" download="${filename}">x</a>`
-    $('_data_export_').click()
-  }
+      `<a id="_data_export_" href="${url}" download="${filename}">x</a>`;
+    $('_data_export_').click();
+  };
 
   // add modal dialog functions to api
   const modal = (api.modal = {
     show(title, contents) {
       if (this.info.showing) {
-        throw `modal conflict showing "${title}"`
+        throw `modal conflict showing "${title}"`;
       }
-      let bound = bind($('modal'), contents)
-      $('modal_title_text').innerText = title
-      $('modal_page').style.display = 'flex'
-      $('modal_frame').style.display = 'flex'
-      $('spinner').style.display = 'none'
-      modal.info = { title, contents, showing: true }
-      broker.publish('modal_show')
-      return bound
+      let bound = bind($('modal'), contents);
+      $('modal_title_text').innerText = title;
+      $('modal_page').style.display = 'flex';
+      $('modal_frame').style.display = 'flex';
+      $('spinner').style.display = 'none';
+      modal.info = { title, contents, showing: true };
+      broker.publish('modal_show');
+      return bound;
     },
 
     hide(cancel = false) {
       if (!modal.info.showing) {
-        return
+        return;
       }
-      clearTimeout(spin_timer)
-      $('modal_page').style.display = 'none'
-      modal.info.showing = false
-      modal.info.cancelled = cancel
-      broker.publish('modal_hide')
+      clearTimeout(spin_timer);
+      $('modal_page').style.display = 'none';
+      modal.info.showing = false;
+      modal.info.cancelled = cancel;
+      broker.publish('modal_hide');
       if (modal._dialog) {
-        modal._dialog.resolve(modal._dialog.bound)
-        modal._dialog = undefined
+        modal._dialog.resolve(modal._dialog.bound);
+        modal._dialog = undefined;
       }
     },
 
     cancel() {
       // hide but set a flag denoting cancellation
-      modal.hide(true)
+      modal.hide(true);
     },
 
     info: {
@@ -75,52 +75,52 @@ gapp.register('mesh.build', [], (root, exports) => {
     },
 
     get title() {
-      return modal.info.title
+      return modal.info.title;
     },
 
     get showing() {
-      return modal.info.showing
+      return modal.info.showing;
     },
 
     spin(bool, delay) {
       if (bool) {
         if (delay) {
           spin_timer = setTimeout(() => {
-            modal.spin(true)
-          }, delay)
-          return
+            modal.spin(true);
+          }, delay);
+          return;
         }
-        $('modal_page').style.display = 'flex'
-        $('modal_frame').style.display = 'none'
-        $('spinner').style.display = 'block'
-        broker.publish('modal_show', 'spinner')
+        $('modal_page').style.display = 'flex';
+        $('modal_frame').style.display = 'none';
+        $('spinner').style.display = 'block';
+        broker.publish('modal_show', 'spinner');
       } else {
-        modal.hide()
+        modal.hide();
       }
     },
 
     dialog(opt = {}) {
-      let { title, body } = opt
-      let contents = []
+      let { title, body } = opt;
+      let contents = [];
       if (typeof body === 'string') {
-        contents.push(div(body))
+        contents.push(div(body));
       } else if (Array.isArray(body)) {
-        contents.appendAll(body)
+        contents.appendAll(body);
       } else {
-        throw 'invalid dialog contents'
+        throw 'invalid dialog contents';
       }
       return new Promise((resolve, reject) => {
-        let bound = this.show(title, contents)
-        modal._dialog = { resolve, reject, bound }
-      })
+        let bound = this.show(title, contents);
+        modal._dialog = { resolve, reject, bound };
+      });
     },
 
     get bound() {
-      return modal._dialog ? modal._dialog.bound : undefined
+      return modal._dialog ? modal._dialog.bound : undefined;
     },
-  })
+  });
 
-  let pinner
+  let pinner;
   // transient logging window bottom/left
   const log = (api.log = {
     age: 600000, // age out lines more than 10 minutes old
@@ -132,82 +132,82 @@ gapp.register('mesh.build', [], (root, exports) => {
     lines: 20, // max log lines before forced-age out
 
     emit() {
-      let { age, data, lines, render } = log
-      let now = Date.now()
+      let { age, data, lines, render } = log;
+      let now = Date.now();
       data.push({
         objs: [dbug.since(), '|', ...arguments],
         text: `${dbug.since()} | ${[...arguments].join(' ')}`,
         time: now,
-      })
+      });
       if (api.isDebug) {
-        console.log(...data.peek().objs)
+        console.log(...data.peek().objs);
       }
       while (
         !log.pinned &&
         data.length &&
         (data.length > lines || now - data[0].time > age)
       ) {
-        data.shift()
+        data.shift();
       }
-      return render()
+      return render();
     },
 
     hide() {
-      $('logger').style.display = 'none'
-      return log
+      $('logger').style.display = 'none';
+      return log;
     },
 
     toggle(opt) {
-      return log.pinned ? log.unpin() && log.hide() : log.pin(opt)
+      return log.pinned ? log.unpin() && log.hide() : log.pin(opt);
     },
 
     pin(opt = { spinner: 100 }) {
-      log.pinned = true
+      log.pinned = true;
       if (opt.spinner > 0) {
-        clearTimeout(pinner)
+        clearTimeout(pinner);
         pinner = setTimeout(() => {
-          $('pinner').style.display = 'inline-block'
-        }, opt.spinner)
+          $('pinner').style.display = 'inline-block';
+        }, opt.spinner);
       }
-      return log.show()
+      return log.show();
     },
 
     unpin() {
-      log.pinned = false
-      clearTimeout(pinner)
-      $('pinner').style.display = 'none'
-      return log.show()
+      log.pinned = false;
+      clearTimeout(pinner);
+      $('pinner').style.display = 'none';
+      return log.show();
     },
 
     // show log window for `time` milliseconds or default
     show(time) {
-      clearTimeout(log.timer)
-      log.timer = log.pinned ? null : setTimeout(log.hide, time || log.wait)
-      $('logger').style.display = 'flex'
-      return log
+      clearTimeout(log.timer);
+      log.timer = log.pinned ? null : setTimeout(log.hide, time || log.wait);
+      $('logger').style.display = 'flex';
+      return log;
     },
 
     // re-render and show current log messages
     render() {
-      let area = $('logtext')
+      let area = $('logtext');
       bind(
         area,
         log.data.map((rec) => div({ _: rec.text }))
-      )
-      area.scrollTop = area.scrollHeight
-      return log.show()
+      );
+      area.scrollTop = area.scrollHeight;
+      return log.show();
     },
-  })
+  });
 
   // bind endpoint for worker to log in the ui
   gapp.broker.subscribe('mesh.log', (msg) => {
-    log.emit(msg)
-  })
+    log.emit(msg);
+  });
 
   // welcome dialog
   api.welcome = function (version = 'unknown') {
-    const { prefs } = api
-    const { map } = prefs
+    const { prefs } = api;
+    const { map } = prefs;
     modal.show(
       'About Mesh:Tool',
       div({ class: 'welcome' }, [
@@ -239,22 +239,22 @@ gapp.register('mesh.build', [], (root, exports) => {
             type: 'checkbox',
             [map.info.welcome !== false ? 'checked' : 'unchecked']: 1,
             onchange: (ev) => {
-              map.info.welcome = ev.target.checked
-              prefs.save()
+              map.info.welcome = ev.target.checked;
+              prefs.save();
             },
           }),
           div('show at startup'),
         ]),
       ])
-    )
-  }
+    );
+  };
 
   // bind settings endpoint to api
   api.settings = function () {
-    const { util } = mesh
-    const { prefs } = api
-    const { surface, normals, space, sketch, wireframe } = prefs.map
-    const { dark } = space
+    const { util } = mesh;
+    const { prefs } = api;
+    const { surface, normals, space, sketch, wireframe } = prefs.map;
+    const { dark } = space;
 
     const set1 = div([
       label('dark mode'),
@@ -275,7 +275,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         onchange: (ev) => prefs.save((space.center = !space.center)),
         [space.center !== false ? 'checked' : 'unchecked']: 1,
       }),
-    ])
+    ]);
 
     const set2 = div([
       label({ class: 'header', _: 'wire' }),
@@ -293,7 +293,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         value: parseFloat(wireframe.fog),
         onchange: (ev) => call.set_wireframe_fog(ev.target.value),
       }),
-    ])
+    ]);
 
     const set3 = div([
       label({ class: 'header', _: 'normal' }),
@@ -312,7 +312,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         onchange: (ev) =>
           call.set_normals_color(util.fromHexRGB(ev.target.value)),
       }),
-    ])
+    ]);
 
     const set4 = div([
       label({ class: 'header', _: 'surface' }),
@@ -330,7 +330,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         value: parseFloat(surface.radius || 0.2),
         onchange: (ev) => call.set_surface_radius(ev.target.value),
       }),
-    ])
+    ]);
 
     const set5 = div([
       label({ class: 'header', _: 'snap' }),
@@ -347,7 +347,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         onchange: (ev) => prefs.save((space.snapon = !space.snapon)),
         [space.snapon === true ? 'checked' : 'unchecked']: 1,
       }),
-    ])
+    ]);
 
     const set6 = div([
       label({ class: 'header', _: 'duplicate' }),
@@ -363,12 +363,12 @@ gapp.register('mesh.build', [], (root, exports) => {
         onchange: (ev) => prefs.save((space.dup_shift = !space.dup_shift)),
         [space.dup_shift === true ? 'checked' : 'unchecked']: 1,
       }),
-    ])
+    ]);
 
-    let ot = sketch.open_type
+    let ot = sketch.open_type;
     let srr = () => {
-      api.sketch.list().forEach((s) => s.render())
-    }
+      api.sketch.list().forEach((s) => s.render());
+    };
     const set7 = div([
       label({ class: 'header', _: 'open poly' }),
       label('auto close'),
@@ -413,53 +413,53 @@ gapp.register('mesh.build', [], (root, exports) => {
           }),
         ]
       ),
-    ])
+    ]);
 
     modal.show(
       'settings',
       div({ class: 'settings' }, [set1, set2, set3, set4, set5, set6, set7])
-    )
-  }
+    );
+  };
 
   // bootstrap icons
   function bicon(name) {
-    return h.i({ class: ['bi', name] })
+    return h.i({ class: ['bi', name] });
   }
 
   // fontawesome icons
   function facon(name, sub) {
-    return h.i({ class: [sub || 'fa', name] })
+    return h.i({ class: [sub || 'fa', name] });
   }
 
   function editable() {
     for (let el of [...arguments]) {
-      el.classList.add('editable')
+      el.classList.add('editable');
     }
   }
 
   function menu_item(text, fn, short, id) {
     if (short) {
-      short = Array.isArray(short) ? short : [short]
+      short = Array.isArray(short) ? short : [short];
       short = div(
         { class: 'short' },
         short.map((s) => (s.startsWith('bi-') ? bicon(s) : div(s)))
-      )
+      );
     }
     return div(
       { id, onclick: fn },
       [div({ _: text, class: 'grow' }), short].filter((o) => o)
-    )
+    );
   }
 
   // create html elements
   function ui_build() {
-    let { file, selection, mode, tool, sketch, prefs, add } = api
-    let trash = FontAwesome.icon({ prefix: 'fas', iconName: 'trash' }).html[0]
-    let eye_open = FontAwesome.icon({ prefix: 'fas', iconName: 'eye' }).html[0]
+    let { file, selection, mode, tool, sketch, prefs, add } = api;
+    let trash = FontAwesome.icon({ prefix: 'fas', iconName: 'trash' }).html[0];
+    let eye_open = FontAwesome.icon({ prefix: 'fas', iconName: 'eye' }).html[0];
     let eye_closed = FontAwesome.icon({
       prefix: 'fas',
       iconName: 'eye-slash',
-    }).html[0]
+    }).html[0];
 
     // top left drop menus
     bind($('top-left'), [
@@ -472,7 +472,7 @@ gapp.register('mesh.build', [], (root, exports) => {
             class: ['hide'],
             multiple: true,
             onchange(evt) {
-              broker.send.load_files(evt.target.files)
+              broker.send.load_files(evt.target.files);
             },
           }),
           menu_item('Import', file.import, 'I'),
@@ -514,21 +514,21 @@ gapp.register('mesh.build', [], (root, exports) => {
           menu_item(
             'Bounds',
             () => {
-              selection.boundsBox({ toggle: true })
+              selection.boundsBox({ toggle: true });
             },
             'B'
           ),
           menu_item(
             'Normals',
             () => {
-              api.normals()
+              api.normals();
             },
             'N'
           ),
           menu_item(
             'Wireframes',
             () => {
-              api.wireframe()
+              api.wireframe();
             },
             'W'
           ),
@@ -536,14 +536,14 @@ gapp.register('mesh.build', [], (root, exports) => {
           menu_item(
             'Gridlines',
             () => {
-              api.grid()
+              api.grid();
             },
             'G'
           ),
           menu_item(
             'Messages',
             () => {
-              api.log.toggle({ spinner: false })
+              api.log.toggle({ spinner: false });
             },
             'L'
           ),
@@ -635,7 +635,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         div('Help'),
         div({ class: 'menu-items' }, [
           menu_item('About', () => {
-            api.welcome(mesh.version)
+            api.welcome(mesh.version);
           }),
           hr(),
           menu_item('Documentation', api.help),
@@ -645,7 +645,7 @@ gapp.register('mesh.build', [], (root, exports) => {
           menu_item('Versions', api.version),
         ]),
       ]),
-    ])
+    ]);
 
     // add help buttons
     bind($('top-right'), [
@@ -653,7 +653,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         div({ class: 'fas fa-gear' }),
         div('Settings'),
       ]),
-    ])
+    ]);
 
     // modal dialog and page blocker
     bind($('modal_page'), [
@@ -667,7 +667,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         div({ id: 'modal' }, [div({ _: 'this is a modal test' })]),
       ]),
       div({ id: 'spinner', class: 'spin' }),
-    ])
+    ]);
 
     // create top level app areas
     let bound = bind($('app-body'), [
@@ -678,22 +678,22 @@ gapp.register('mesh.build', [], (root, exports) => {
         div({
           id: 'logger',
           onmouseover() {
-            log.show()
+            log.show();
           },
         }),
       ]),
       div({ id: 'grouplist' }),
       div({ id: 'selectlist' }),
       div({ id: 'download', class: 'hide' }),
-    ])
+    ]);
 
-    let { sketchtools, grouplist, selectlist, logger } = bound
+    let { sketchtools, grouplist, selectlist, logger } = bound;
 
     function tool_item(icon, help, fn) {
       return div({ onclick: fn, class: 'tool' }, [
         bicon(icon),
         div([label(help)]),
-      ])
+      ]);
     }
 
     // bind sketch chiclets
@@ -722,7 +722,7 @@ gapp.register('mesh.build', [], (root, exports) => {
         tool_item('bi-cookie', 'Even Odd', sketch.boolean.evenodd),
         tool_item('bi-arrow-bar-up', 'Extrude', () => sketch.extrude()),
       ])
-    )
+    );
 
     // bind object chiclets
     bind(
@@ -737,17 +737,17 @@ gapp.register('mesh.build', [], (root, exports) => {
         tool_item('bi-intersect', 'Intersect', tool.intersect),
         tool_item('bi-exclude', 'Difference', tool.difference),
       ])
-    )
+    );
 
     // create slid in/out logging window
-    bind(logger, [div({ id: 'logtext' })])
+    bind(logger, [div({ id: 'logtext' })]);
 
     // for group/model/box/area/mesh dashboard grids
     function grid3(v1, v2, side = ['pos', 'rot'], top = ['X', 'Y', 'Z'], root) {
       let v = 'val',
-        l = 'lbl'
-      let [X, Y, Z] = top
-      let [pos, rot] = side
+        l = 'lbl';
+      let [X, Y, Z] = top;
+      let [pos, rot] = side;
       return div({ class: 'grid' }, [
         div({ _: '' }),
         div({
@@ -773,15 +773,15 @@ gapp.register('mesh.build', [], (root, exports) => {
         label({ _: v2[0], id: root ? [root, v, X, rot] : und }),
         label({ _: v2[1], id: root ? [root, v, Y, rot] : und }),
         label({ _: v2[2], id: root ? [root, v, Z, rot] : und }),
-      ])
+      ]);
     }
 
     // for dashboard sketch grids
     function grid2(v1, v2, side = ['pos', 'rot'], top = ['X', 'Y'], root) {
       let v = 'val',
-        l = 'lbl'
-      let [X, Y] = top
-      let [pos, rot] = side
+        l = 'lbl';
+      let [X, Y] = top;
+      let [pos, rot] = side;
       return div({ class: 'grid grid2' }, [
         div({ _: '' }),
         div({
@@ -800,14 +800,14 @@ gapp.register('mesh.build', [], (root, exports) => {
         div({ _: side[1], class: 'side noselect' }),
         label({ _: v2[0], id: root ? [root, v, X, rot] : und }),
         label({ _: v2[1], id: root ? [root, v, Y, rot] : und }),
-      ])
+      ]);
     }
 
     // for other dashboard grids
     function grid1(vals, side = ['X', 'Y'], top = 'center', root, post) {
       let v = 'val',
-        l = 'lbl'
-      let [X, Y] = side
+        l = 'lbl';
+      let [X, Y] = side;
       return div({ class: 'grid grid1' }, [
         div({ _: '' }),
         div({
@@ -819,17 +819,17 @@ gapp.register('mesh.build', [], (root, exports) => {
         label({ _: vals[0], id: root ? [root, v, X, post] : und }),
         div({ _: side[1], class: 'side noselect' }),
         label({ _: vals[1], id: root ? [root, v, Y, post] : und }),
-      ])
+      ]);
     }
 
     function update_all() {
-      update_selector()
-      update_selection()
+      update_selector();
+      update_selection();
     }
 
     // update model selector list (top/right)
     function update_selector() {
-      let selHas = selection.contains
+      let selHas = selection.contains;
       // map groups to divs
       let groups = api.group.list().map((g) =>
         div([
@@ -838,8 +838,8 @@ gapp.register('mesh.build', [], (root, exports) => {
             title: g.id,
             class: ['group', selHas(g) ? 'selected' : undefined],
             onclick(e) {
-              api.mode.object()
-              selection.toggle(g)
+              api.mode.object();
+              selection.toggle(g);
             },
           }),
           div(
@@ -851,27 +851,27 @@ gapp.register('mesh.build', [], (root, exports) => {
                 class: [selHas(m) ? 'selected' : undefined],
                 onclick(e) {
                   if (e.shiftKey) {
-                    tool.rename([m])
+                    tool.rename([m]);
                   } else {
                     if (!api.mode.is([api.modes.object, api.modes.tool])) {
-                      api.mode.object()
+                      api.mode.object();
                     }
-                    selection.toggle(m)
+                    selection.toggle(m);
                   }
                 },
                 onmouseover(e) {
-                  m.highlight()
+                  m.highlight();
                 },
                 onmouseleave(e) {
-                  m.unhighlight()
+                  m.unhighlight();
                 },
               }),
               h.button(
                 {
                   class: ['square'],
                   onclick(e) {
-                    m.visible({ toggle: true })
-                    update_selector()
+                    m.visible({ toggle: true });
+                    update_selector();
                   },
                 },
                 [h.raw(m.visible() ? eye_open : eye_closed)]
@@ -879,8 +879,8 @@ gapp.register('mesh.build', [], (root, exports) => {
             ])
           ),
         ])
-      )
-      let sketches = api.sketch.list()
+      );
+      let sketches = api.sketch.list();
       if (sketches.length) {
         let sg = div([
           h.button({ _: 'sketch', class: ['group'] }),
@@ -891,106 +891,106 @@ gapp.register('mesh.build', [], (root, exports) => {
                 class: [selHas(sketch) ? 'selected' : undefined],
                 onclick(e) {
                   if (e.shiftKey) {
-                    tool.rename([sketch], 'sketch')
+                    tool.rename([sketch], 'sketch');
                   } else {
-                    selection.toggle(sketch)
+                    selection.toggle(sketch);
                   }
                 },
                 onmouseover(e) {
-                  sketch.highlight()
+                  sketch.highlight();
                 },
                 onmouseleave(e) {
-                  sketch.unhighlight()
+                  sketch.unhighlight();
                 },
               }),
               h.button(
                 {
                   class: ['square'],
                   onclick(e) {
-                    sketch.visible({ toggle: true })
-                    update_selector()
+                    sketch.visible({ toggle: true });
+                    update_selector();
                   },
                 },
                 [h.raw(sketch.visible() ? eye_open : eye_closed)]
               ),
             ])
           ),
-        ])
-        groups.push(sg)
+        ]);
+        groups.push(sg);
       }
-      bind(grouplist, groups)
+      bind(grouplist, groups);
     }
 
     // return function bound to field editing clicks
     // builds a modal dialog that updates the object and field
     function field_edit(title, set, opt = {}) {
       return function (ev) {
-        let floor = api.prefs.map.space.floor !== false
-        let value = ev.target.innerText
+        let floor = api.prefs.map.space.floor !== false;
+        let value = ev.target.innerText;
         let onclick = (ev) => {
-          let tempval = parseFloat($('tempval').value)
-          api.modal.hide(modal.info.cancelled)
+          let tempval = parseFloat($('tempval').value);
+          api.modal.hide(modal.info.cancelled);
           if (modal.info.cancelled) {
-            return
+            return;
           }
           if (opt.sketch) {
-            defer_selection()
-            return set(tempval, value)
+            defer_selection();
+            return set(tempval, value);
           }
           for (let g of api.selection.groups()) {
-            set(g, tempval, value)
+            set(g, tempval, value);
             if (floor && opt.floor !== false) {
-              g.floor(mesh.group)
+              g.floor(mesh.group);
             }
           }
-          defer_selection()
-        }
+          defer_selection();
+        };
         let onkeydown = (ev) => {
           if (ev.key === 'Enter') {
-            estop(ev)
-            onclick()
+            estop(ev);
+            onclick();
           }
-        }
+        };
         let { tempval } = api.modal.show(
           title,
           div({ class: 'tempedit' }, [
             input({ id: 'tempval', value, size: 10, onkeydown }),
             h.button({ _: 'set', onclick }),
           ])
-        )
-        tempval.setSelectionRange(0, tempval.value.length)
-        tempval.focus()
-      }
+        );
+        tempval.setSelectionRange(0, tempval.value.length);
+        tempval.focus();
+      };
     }
 
     // editable model/sketch information dashboard
     function update_selection() {
-      let map = { fixed: 2 }
+      let map = { fixed: 2 };
 
       // toggle-able stat block generator
-      let sdata = {}
+      let sdata = {};
       function sblock(label, title, grid) {
         let map = (sdata[label] = {
           hide: `${label}_hide`,
           show: `${label}_show`,
           data: `${label}_data`,
-        })
+        });
         return [
           h.button({ id: map.show, class: 'side' }, [div(label)]),
           div({ id: map.data }, [
             h.button({ id: map.hide, _: label, title }),
             grid,
           ]),
-        ]
+        ];
       }
 
       // possible selections
-      let sketch = selection.sketch()
-      let s_grp = selection.groups(true)
-      let s_mdl = selection.models(true)
+      let sketch = selection.sketch();
+      let s_grp = selection.groups(true);
+      let s_mdl = selection.models(true);
 
       if (!(sketch || s_grp.length)) {
-        return bind(selectlist, [])
+        return bind(selectlist, []);
       }
 
       // render sketch options
@@ -998,8 +998,8 @@ gapp.register('mesh.build', [], (root, exports) => {
         let bounds = {
           size: sketch.scale,
           center: sketch.center,
-        }
-        let sel = sketch.selection.mesh_items()
+        };
+        let sel = sketch.selection.mesh_items();
         let sk_vars = sblock(
           'sketch',
           sketch.file || sketch.id,
@@ -1010,24 +1010,24 @@ gapp.register('mesh.build', [], (root, exports) => {
             und,
             'sketch'
           )
-        )
-        let sel_item
-        let sel_size
-        let sel_sobj
+        );
+        let sel_item;
+        let sel_size;
+        let sel_sobj;
         let si_vars =
           sel.length > 1
             ? []
             : sel.slice(0, 1).map((sel) => {
-                let { sketch_item } = sel
-                let { item } = sketch_item
-                sel_item = item
-                sel_sobj = sketch_item
+                let { sketch_item } = sel;
+                let { item } = sketch_item;
+                sel_item = item;
+                sel_sobj = sketch_item;
                 if (item.type === 'polygon') {
-                  let { bounds } = sketch_item.poly
+                  let { bounds } = sketch_item.poly;
                   sel_size = {
                     x: bounds.width(),
                     y: bounds.height(),
-                  }
+                  };
                   return sblock(
                     'polygon',
                     '',
@@ -1038,7 +1038,7 @@ gapp.register('mesh.build', [], (root, exports) => {
                       und,
                       'item'
                     )
-                  )
+                  );
                 } else if (item.type === 'circle') {
                   return [
                     sblock(
@@ -1069,88 +1069,88 @@ gapp.register('mesh.build', [], (root, exports) => {
                         'item'
                       )
                     ),
-                  ]
+                  ];
                 }
-              })
-        let bound = bind(selectlist, [...si_vars, ...sk_vars])
+              });
+        let bound = bind(selectlist, [...si_vars, ...sk_vars]);
         for (let axis of ['x', 'y', 'z']) {
-          let el = bound[`sketch_val_${axis.toUpperCase()}_center`]
+          let el = bound[`sketch_val_${axis.toUpperCase()}_center`];
           el.onclick = field_edit(
             `${axis} center`,
             (nval, oval) => {
-              sketch.center[axis] = nval
-              sketch.render()
+              sketch.center[axis] = nval;
+              sketch.render();
             },
             { sketch: true }
-          )
-          let el2 = bound[`sketch_val_${axis.toUpperCase()}_scale`]
+          );
+          let el2 = bound[`sketch_val_${axis.toUpperCase()}_scale`];
           el2.onclick = field_edit(
             `${axis} size`,
             (nval, oval) => {
-              sketch.scale[axis] = nval
-              sketch.render()
+              sketch.scale[axis] = nval;
+              sketch.render();
             },
             { sketch: true }
-          )
-          editable(el, el2)
+          );
+          editable(el, el2);
         }
         if (sel_item)
           for (let axis of ['x', 'y']) {
-            let el = bound[`item_val_${axis.toUpperCase()}_center`]
+            let el = bound[`item_val_${axis.toUpperCase()}_center`];
             // all items have centers
-            if (!el) continue
+            if (!el) continue;
             el.onclick = field_edit(
               `${axis} center`,
               (nval, oval) => {
-                sel_item.center[axis] = nval
-                sketch.render()
+                sel_item.center[axis] = nval;
+                sketch.render();
               },
               { sketch: true }
-            )
+            );
             // polygon scaling, circle radius
-            let el2 = bound[`item_val_${axis.toUpperCase()}_size`]
-            if (!el2) continue
+            let el2 = bound[`item_val_${axis.toUpperCase()}_size`];
+            if (!el2) continue;
             el2.onclick = field_edit(
               `${axis} size`,
               (nval, oval) => {
                 if (sel_item.type === 'polygon') {
-                  let scale = { x: 1, y: 1, z: 1 }
-                  let poly = base.newPolygon().fromObject(sel_item)
-                  let bounds = poly.bounds
-                  scale[axis] = nval / oval
-                  poly.move(bounds.center().scale(-1, -1, -1))
-                  poly.scale(scale)
-                  poly.move(bounds.center())
-                  Object.assign(sel_item, poly.toObject())
+                  let scale = { x: 1, y: 1, z: 1 };
+                  let poly = base.newPolygon().fromObject(sel_item);
+                  let bounds = poly.bounds;
+                  scale[axis] = nval / oval;
+                  poly.move(bounds.center().scale(-1, -1, -1));
+                  poly.scale(scale);
+                  poly.move(bounds.center());
+                  Object.assign(sel_item, poly.toObject());
                 } else if (sel_item.type === 'circle') {
-                  sel_item.radius = nval / 2
+                  sel_item.radius = nval / 2;
                 }
-                sketch.render()
+                sketch.render();
               },
               { sketch: true }
-            )
+            );
             // circle points / rotation
-            let lab = { x: 'points', y: 'rotation' }[axis]
-            let el3 = bound[`circle_val_${lab}_other`]
-            if (!el3) continue
+            let lab = { x: 'points', y: 'rotation' }[axis];
+            let el3 = bound[`circle_val_${lab}_other`];
+            if (!el3) continue;
             el3.onclick = field_edit(
               `${axis} size`,
               (nval, oval) => {
-                sel_item[lab] = nval
-                sketch.render()
+                sel_item[lab] = nval;
+                sketch.render();
               },
               { sketch: true }
-            )
-            editable(el, el2, e3)
+            );
+            editable(el, el2, e3);
           }
 
-        return
+        return;
       }
 
       // map selection to divs
-      let g_pos = util.average(s_grp.map((g) => g.object.position))
-      let g_rot = util.average(s_grp.map((g) => g.object.rotation))
-      let g_id = s_grp.map((g) => g.id).join(' ')
+      let g_pos = util.average(s_grp.map((g) => g.object.position));
+      let g_rot = util.average(s_grp.map((g) => g.object.rotation));
+      let g_id = s_grp.map((g) => g.id).join(' ');
       let h_grp = sblock(
         'move',
         g_id,
@@ -1161,10 +1161,10 @@ gapp.register('mesh.build', [], (root, exports) => {
           und,
           'group'
         )
-      )
+      );
 
-      let m_id = s_mdl.map((m) => m.id).join(' ')
-      let bounds = util.bounds(s_mdl)
+      let m_id = s_mdl.map((m) => m.id).join(' ');
+      let bounds = util.bounds(s_mdl);
       let h_ara = sblock(
         'span',
         m_id,
@@ -1175,10 +1175,10 @@ gapp.register('mesh.build', [], (root, exports) => {
           und,
           'span'
         )
-      )
+      );
 
-      let t_vert = s_mdl.map((m) => m.vertices).reduce((a, v) => a + v)
-      let t_face = s_mdl.map((m) => m.faces).reduce((a, v) => a + v)
+      let t_vert = s_mdl.map((m) => m.vertices).reduce((a, v) => a + v);
+      let t_face = s_mdl.map((m) => m.faces).reduce((a, v) => a + v);
       let h_msh = [
         div([
           h.button({ _: `mesh` }),
@@ -1191,9 +1191,9 @@ gapp.register('mesh.build', [], (root, exports) => {
             label({ _: util.comma(t_face) }),
           ]),
         ]),
-      ]
+      ];
 
-      let m_viz = !s_mdl.map((m) => !m.visible()).reduce((v, b) => v || b)
+      let m_viz = !s_mdl.map((m) => !m.visible()).reduce((v, b) => v || b);
       let h_ops = [
         div([
           h.button({ _: `ops` }),
@@ -1202,8 +1202,8 @@ gapp.register('mesh.build', [], (root, exports) => {
               {
                 class: ['square'],
                 onclick(e) {
-                  api.selection.visible(!m_viz)
-                  update_selector()
+                  api.selection.visible(!m_viz);
+                  update_selector();
                 },
               },
               [h.raw(m_viz ? eye_open : eye_closed)]
@@ -1212,146 +1212,146 @@ gapp.register('mesh.build', [], (root, exports) => {
               {
                 class: ['square'],
                 onclick(e) {
-                  api.selection.delete()
+                  api.selection.delete();
                 },
               },
               [h.raw(trash)]
             ),
           ]),
         ]),
-      ]
+      ];
 
       // bind elements to selectlist div
-      let bound = bind(selectlist, [...h_grp, ...h_ara, ...h_msh, ...h_ops])
+      let bound = bind(selectlist, [...h_grp, ...h_ara, ...h_msh, ...h_ops]);
 
       // bind rotation editable fields
-      let { group_val_X_rot, group_val_Y_rot, group_val_Z_rot } = bound
-      editable(group_val_X_rot, group_val_Y_rot, group_val_Z_rot)
+      let { group_val_X_rot, group_val_Y_rot, group_val_Z_rot } = bound;
+      editable(group_val_X_rot, group_val_Y_rot, group_val_Z_rot);
       group_val_X_rot.onclick = field_edit('x rotation', (group, val) => {
-        group.rotate(val, 0, 0)
-      })
+        group.rotate(val, 0, 0);
+      });
       group_val_Y_rot.onclick = field_edit('y rotation', (group, val) => {
-        group.rotate(0, val, 0)
-      })
+        group.rotate(0, val, 0);
+      });
       group_val_Z_rot.onclick = field_edit('z rotation', (group, val) => {
-        group.rotate(0, 0, val)
-      })
+        group.rotate(0, 0, val);
+      });
 
       // bind position editable fields
-      let { group_val_X_pos, group_val_Y_pos, group_val_Z_pos } = bound
-      editable(group_val_X_pos, group_val_Y_pos, group_val_Z_pos)
+      let { group_val_X_pos, group_val_Y_pos, group_val_Z_pos } = bound;
+      editable(group_val_X_pos, group_val_Y_pos, group_val_Z_pos);
       group_val_X_pos.onclick = field_edit(
         'x position',
         (group, val) => {
-          selection.move_models(val, 0, 0)
+          selection.move_models(val, 0, 0);
         },
         { floor: false }
-      )
+      );
       group_val_Y_pos.onclick = field_edit(
         'y position',
         (group, val) => {
-          selection.move_models(0, val, 0)
+          selection.move_models(0, val, 0);
         },
         { floor: false }
-      )
+      );
       group_val_Z_pos.onclick = field_edit(
         'z position',
         (group, val) => {
-          selection.move_models(0, 0, val)
+          selection.move_models(0, 0, val);
         },
         { floor: false }
-      )
+      );
 
       // bind center editable fields
-      let { span_val_X_center, span_val_Y_center, span_val_Z_center } = bound
-      editable(span_val_X_center, span_val_Y_center, span_val_Z_center)
+      let { span_val_X_center, span_val_Y_center, span_val_Z_center } = bound;
+      editable(span_val_X_center, span_val_Y_center, span_val_Z_center);
       span_val_X_center.onclick = field_edit('x center', (group, val, oval) => {
-        selection.move_models(val - parseFloat(oval), 0, 0)
-      })
+        selection.move_models(val - parseFloat(oval), 0, 0);
+      });
       span_val_Y_center.onclick = field_edit('y center', (group, val, oval) => {
-        selection.move_models(0, val - parseFloat(oval), 0)
-      })
+        selection.move_models(0, val - parseFloat(oval), 0);
+      });
       span_val_Z_center.onclick = field_edit('z center', (group, val, oval) => {
-        selection.move_models(0, 0, val - parseFloat(oval))
-      })
+        selection.move_models(0, 0, val - parseFloat(oval));
+      });
 
       // bind size editable fields
-      let { span_val_X_size, span_val_Y_size, span_val_Z_size } = bound
-      editable(span_val_X_size, span_val_Y_size, span_val_Z_size)
+      let { span_val_X_size, span_val_Y_size, span_val_Z_size } = bound;
+      editable(span_val_X_size, span_val_Y_size, span_val_Z_size);
 
-      let pedit = prefs.map.edit
-      let axgrp = {}
+      let pedit = prefs.map.edit;
+      let axgrp = {};
       // activate axis grouping toggles
-      ;['X', 'Y', 'Z'].forEach((axis) => {
-        let prefkey = `scale_group_${axis}`
-        let agv = (axgrp[axis] = pedit[prefkey])
-        let lbl = bound[`span_lbl_${axis}`]
+      ['X', 'Y', 'Z'].forEach((axis) => {
+        let prefkey = `scale_group_${axis}`;
+        let agv = (axgrp[axis] = pedit[prefkey]);
+        let lbl = bound[`span_lbl_${axis}`];
         if (agv) {
-          lbl.classList.add('grouped')
+          lbl.classList.add('grouped');
         } else {
-          bound[`span_lbl_${axis}`].classList.add('ungrouped')
+          bound[`span_lbl_${axis}`].classList.add('ungrouped');
         }
         lbl.onclick = () => {
-          pedit[prefkey] = !agv
-          defer_selection() // update ui
-        }
-        editable(lbl)
-      })
+          pedit[prefkey] = !agv;
+          defer_selection(); // update ui
+        };
+        editable(lbl);
+      });
       span_val_X_size.onclick = field_edit('x size', (group, val, oval) => {
-        let rel = val / parseFloat(oval)
+        let rel = val / parseFloat(oval);
         if (axgrp.X) {
-          group.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1)
+          group.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1);
         } else {
-          group.scale(rel, 1, 1)
+          group.scale(rel, 1, 1);
         }
-      })
+      });
       span_val_Y_size.onclick = field_edit('y size', (group, val, oval) => {
-        let rel = val / parseFloat(oval)
+        let rel = val / parseFloat(oval);
         if (axgrp.Y) {
-          group.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1)
+          group.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1);
         } else {
-          group.scale(1, rel, 1)
+          group.scale(1, rel, 1);
         }
-      })
+      });
       span_val_Z_size.onclick = field_edit('z size', (group, val, oval) => {
-        let rel = val / parseFloat(oval)
+        let rel = val / parseFloat(oval);
         if (axgrp.Z) {
-          group.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel)
+          group.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel);
         } else {
-          group.scale(1, 1, rel)
+          group.scale(1, 1, rel);
         }
-      })
+      });
 
-      let pmap = prefs.map.info
+      let pmap = prefs.map.info;
       // map buttons to show/hide selection info
       function toggle(label, h, s, d) {
         s.onclick = () => {
-          s.style.display = 'none'
-          d.style.display = 'flex'
-          prefs.save((pmap[label] = 'show')) // <- :)
-        }
+          s.style.display = 'none';
+          d.style.display = 'flex';
+          prefs.save((pmap[label] = 'show')); // <- :)
+        };
         h.onclick = () => {
-          d.style.display = 'none'
-          s.style.display = 'flex'
-          prefs.save((pmap[label] = 'hide'))
-        }
+          d.style.display = 'none';
+          s.style.display = 'flex';
+          prefs.save((pmap[label] = 'hide'));
+        };
         if (pmap[label] === 'show') {
-          s.onclick()
+          s.onclick();
         } else {
-          h.onclick()
+          h.onclick();
         }
       }
       for (let [label, map] of Object.entries(sdata)) {
-        let { data, hide, show } = map
-        toggle(label, bound[hide], bound[show], bound[data])
+        let { data, hide, show } = map;
+        toggle(label, bound[hide], bound[show], bound[data]);
       }
     }
 
     // listen for api calls
     // create a deferred wrapper to merge multiple rapid events
-    let defer_all = util.deferWrap(update_all)
-    let defer_selector = util.deferWrap(update_selector)
-    let defer_selection = util.deferWrap(update_selection)
+    let defer_all = util.deferWrap(update_all);
+    let defer_selector = util.deferWrap(update_selector);
+    let defer_selection = util.deferWrap(update_selection);
 
     broker.listeners({
       model_add: defer_all,
@@ -1365,6 +1365,6 @@ gapp.register('mesh.build', [], (root, exports) => {
       selection_rotate: defer_selection,
       selection_qrotate: defer_selection,
       sketch_selections: defer_selection,
-    })
+    });
   }
-})
+});

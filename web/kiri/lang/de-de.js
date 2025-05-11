@@ -972,4 +972,4 @@ kiri.lang['de'] = kiri.lang['de-de'] = {
     'produces larger files',
     'can blur details',
   ],
-}
+};

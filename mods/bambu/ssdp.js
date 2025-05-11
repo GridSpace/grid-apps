@@ -9,7 +9,7 @@
  * under the slicer Devices tab when "+" is selected.
  */
 
-let args = process.argv.slice(2)
+let args = process.argv.slice(2);
 
 if (args.length % 3 !== 0) {
   console.log(
@@ -20,29 +20,29 @@ if (args.length % 3 !== 0) {
       '  host = host name or IP address of printer',
       '  serial = printer serial #',
     ].join('\n')
-  )
-  return process.exit(0)
+  );
+  return process.exit(0);
 }
 
-const dgram = require('dgram')
+const dgram = require('dgram');
 
 // SSDP parameters
-const SSDP_ADDRESS = '239.255.255.250'
-const SSDP_PORT = 1900
+const SSDP_ADDRESS = '239.255.255.250';
+const SSDP_PORT = 1900;
 
 // Create a UDP socket
-const socket = dgram.createSocket('udp4')
+const socket = dgram.createSocket('udp4');
 
-socket.on('error', (error) => console.log({ error }))
+socket.on('error', (error) => console.log({ error }));
 
 // Bind the socket and join the multicast group
 socket.bind(1900, () => {
-  socket.addMembership(SSDP_ADDRESS) // Join the SSDP multicast group
-})
+  socket.addMembership(SSDP_ADDRESS); // Join the SSDP multicast group
+});
 
 while (args.length) {
-  const [name, host, serial] = args
-  args = args.slice(3)
+  const [name, host, serial] = args;
+  args = args.slice(3);
 
   console.log(
     [
@@ -51,7 +51,7 @@ while (args.length) {
       `Host: ${host}`,
       `Serial: ${serial}`,
     ].join('\n')
-  )
+  );
 
   // SSDP discovery message
   const ssdpMessage =
@@ -73,18 +73,18 @@ while (args.length) {
     DevCap.bambu.com: 1`
       .trim()
       .split('\n')
-      .join('\r\n') + '\r\n\r\n'
+      .join('\r\n') + '\r\n\r\n';
 
   // Send the SSDP broadcast
   function send(socket, addr, port) {
     socket.send(ssdpMessage, 0, ssdpMessage.length, port, addr, (err) => {
       if (err) {
-        console.error('Error sending SSDP broadcast:', err)
+        console.error('Error sending SSDP broadcast:', err);
       } else {
         // console.log(`>>>>>>>>>>>>>>>>> ${addr} : ${port}`);
       }
-    })
+    });
   }
 
-  setInterval(() => send(socket, '239.255.255.250', 2021), 1000)
+  setInterval(() => send(socket, '239.255.255.250', 2021), 1000);
 }

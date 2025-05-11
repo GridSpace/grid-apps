@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 // dep: geo.base
 // dep: kiri.api
@@ -39,183 +39,183 @@ gapp.register('kiri.init', (root, exports) => {
     inline = true,
     driven = true,
     trigger = true,
-    units = true
+    units = true;
 
   // copy version from grid app
-  kiri.version = gapp.version
+  kiri.version = gapp.version;
 
   function settings() {
-    return api.conf.get()
+    return api.conf.get();
   }
 
   function updateTool(ev) {
-    api.tool.update(ev)
+    api.tool.update(ev);
   }
 
   function checkSeed(then) {
     // skip sample object load in onshape (or any script postload)
     if (!sdb[SEED]) {
-      sdb[SEED] = new Date().getTime()
+      sdb[SEED] = new Date().getTime();
       if (!SETUP.s && api.feature.seed) {
         if (SETUP.debug) {
-          return then()
+          return then();
         }
         platform.load_stl('/obj/cube.stl', function (vert) {
-          catalog.putFile('sample cube.stl', vert)
-          platform.update_bounds()
-          space.view.home()
+          catalog.putFile('sample cube.stl', vert);
+          platform.update_bounds();
+          space.view.home();
           setTimeout(() => {
-            api.space.save(true)
-          }, 500)
-          then()
-          api.help.show()
-        })
-        return true
+            api.space.save(true);
+          }, 500);
+          then();
+          api.help.show();
+        });
+        return true;
       }
     }
-    return false
+    return false;
   }
 
   function unitsSave() {
-    api.conf.update({ controller: true })
-    platform.update_size()
+    api.conf.update({ controller: true });
+    platform.update_size();
   }
 
   function aniMeshSave() {
-    api.conf.update({ controller: true })
-    api.conf.save()
+    api.conf.update({ controller: true });
+    api.conf.save();
   }
 
   function lineTypeSave() {
-    const sel = ui.lineType.options[ui.lineType.selectedIndex]
+    const sel = ui.lineType.options[ui.lineType.selectedIndex];
     if (sel) {
-      settings().controller.lineType = sel.value
-      api.conf.save()
+      settings().controller.lineType = sel.value;
+      api.conf.save();
     }
   }
 
   function thinWallSave() {
-    let opt = ui.sliceDetectThin
-    let level = opt.options[opt.selectedIndex]
+    let opt = ui.sliceDetectThin;
+    let level = opt.options[opt.selectedIndex];
     if (level) {
-      settings().process.sliceDetectThin = level.value
-      api.conf.save()
+      settings().process.sliceDetectThin = level.value;
+      api.conf.save();
     }
   }
 
   function detailSave() {
-    let level = ui.detail.options[ui.detail.selectedIndex]
+    let level = ui.detail.options[ui.detail.selectedIndex];
     if (level) {
-      level = level.value
-      let rez = base.config.clipperClean
+      level = level.value;
+      let rez = base.config.clipperClean;
       switch (level) {
         case '100':
-          rez = 50
-          break
+          rez = 50;
+          break;
         case '75':
-          rez = base.config.clipperClean
-          break
+          rez = base.config.clipperClean;
+          break;
         case '50':
-          rez = 500
-          break
+          rez = 500;
+          break;
         case '25':
-          rez = 1000
-          break
+          rez = 1000;
+          break;
       }
       kiri.client.config({
         base: { clipperClean: rez },
-      })
-      settings().controller.detail = level
-      api.conf.save()
+      });
+      settings().controller.detail = level;
+      api.conf.save();
     }
   }
 
   function speedSave() {
-    settings().controller.showSpeeds = ui.showSpeeds.checked
-    api.view.update_speeds()
+    settings().controller.showSpeeds = ui.showSpeeds.checked;
+    api.view.update_speeds();
   }
 
   function zAnchorSave() {
-    api.conf.update()
-    api.platform.update_top_z()
+    api.conf.update();
+    api.platform.update_top_z();
   }
 
   function setThreaded(bool) {
     if (bool) {
-      kiri.client.pool.start()
+      kiri.client.pool.start();
     } else {
-      kiri.client.pool.stop()
+      kiri.client.pool.stop();
     }
-    return bool
+    return bool;
   }
 
-  api.event.on('set.threaded', (bool) => setThreaded(bool))
+  api.event.on('set.threaded', (bool) => setThreaded(bool));
 
   function booleanSave() {
-    let control = settings().controller
-    let doAlert = ui.ortho.checked !== control.ortho
+    let control = settings().controller;
+    let doAlert = ui.ortho.checked !== control.ortho;
     if (control.assembly != ui.assembly.checked) {
-      kiri.client.wasm(ui.assembly.checked)
+      kiri.client.wasm(ui.assembly.checked);
     }
     if (control.antiAlias != ui.antiAlias.checked) {
-      api.show.alert('Page Reload Required to Change Aliasing')
+      api.show.alert('Page Reload Required to Change Aliasing');
     }
-    control.shiny = ui.shiny.checked
-    control.drawer = ui.drawer.checked
-    control.scrolls = ui.scrolls.checked
-    control.showOrigin = ui.showOrigin.checked
-    control.showRulers = ui.showRulers.checked
-    control.autoLayout = ui.autoLayout.checked
-    control.freeLayout = ui.freeLayout.checked
-    control.spaceRandoX = ui.spaceRandoX.checked
-    control.autoSave = ui.autoSave.checked
-    control.antiAlias = ui.antiAlias.checked
-    control.reverseZoom = ui.reverseZoom.checked
-    control.dark = ui.dark.checked
-    control.exportOcto = ui.exportOcto.checked
-    control.exportGhost = ui.exportGhost.checked
-    control.exportLocal = ui.exportLocal.checked
-    control.exportThumb = ui.exportThumb.checked
-    control.exportPreview = ui.exportPreview.checked
-    control.healMesh = ui.healMesh.checked
-    control.threaded = setThreaded(ui.threaded.checked)
-    control.assembly = ui.assembly.checked
-    control.ortho = ui.ortho.checked
-    control.devel = ui.devel.checked
-    space.view.setZoom(control.reverseZoom, control.zoomSpeed)
+    control.shiny = ui.shiny.checked;
+    control.drawer = ui.drawer.checked;
+    control.scrolls = ui.scrolls.checked;
+    control.showOrigin = ui.showOrigin.checked;
+    control.showRulers = ui.showRulers.checked;
+    control.autoLayout = ui.autoLayout.checked;
+    control.freeLayout = ui.freeLayout.checked;
+    control.spaceRandoX = ui.spaceRandoX.checked;
+    control.autoSave = ui.autoSave.checked;
+    control.antiAlias = ui.antiAlias.checked;
+    control.reverseZoom = ui.reverseZoom.checked;
+    control.dark = ui.dark.checked;
+    control.exportOcto = ui.exportOcto.checked;
+    control.exportGhost = ui.exportGhost.checked;
+    control.exportLocal = ui.exportLocal.checked;
+    control.exportThumb = ui.exportThumb.checked;
+    control.exportPreview = ui.exportPreview.checked;
+    control.healMesh = ui.healMesh.checked;
+    control.threaded = setThreaded(ui.threaded.checked);
+    control.assembly = ui.assembly.checked;
+    control.ortho = ui.ortho.checked;
+    control.devel = ui.devel.checked;
+    space.view.setZoom(control.reverseZoom, control.zoomSpeed);
     // platform.layout();
-    api.conf.save()
-    api.platform.update_size()
-    updateStats()
-    updateDrawer()
-    api.event.emit('boolean.update')
+    api.conf.save();
+    api.platform.update_size();
+    updateStats();
+    updateDrawer();
+    api.event.emit('boolean.update');
     if (doAlert) {
-      api.show.alert('change requires page refresh')
+      api.show.alert('change requires page refresh');
     }
   }
 
   function updateDrawer() {
-    const { drawer, scrolls } = settings().controller
-    $c('app', drawer ? 'slideshow' : '', drawer ? '' : 'slideshow')
-    $c('app', scrolls ? '' : 'hide-scroll', scrolls ? 'hide-scroll' : '')
+    const { drawer, scrolls } = settings().controller;
+    $c('app', drawer ? 'slideshow' : '', drawer ? '' : 'slideshow');
+    $c('app', scrolls ? '' : 'hide-scroll', scrolls ? 'hide-scroll' : '');
   }
 
   function updateStats() {
     if (self.debug !== true) {
-      return
+      return;
     }
-    let { div, fps, rms, rnfo } = ui.stats
-    div.style.display = 'flex'
+    let { div, fps, rms, rnfo } = ui.stats;
+    div.style.display = 'flex';
     setInterval(() => {
-      const nrms = space.view.getRMS().toFixed(1)
-      const nfps = space.view.getFPS().toFixed(1)
-      const rend = space.renderInfo()
-      const { memory, render } = rend
+      const nrms = space.view.getRMS().toFixed(1);
+      const nfps = space.view.getFPS().toFixed(1);
+      const rend = space.renderInfo();
+      const { memory, render } = rend;
       if (nfps !== fps.innerText) {
-        fps.innerText = nfps
+        fps.innerText = nfps;
       }
       if (nrms !== rms.innerText) {
-        rms.innerText = nrms
+        rms.innerText = nrms;
       }
       if (rnfo.offsetParent !== null) {
         rnfo.innerHTML = Object.entries({
@@ -225,343 +225,343 @@ gapp.register('kiri.init', (root, exports) => {
           frames_sec: nfps,
         })
           .map((row) => {
-            return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`
+            return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`;
           })
-          .join('')
+          .join('');
       }
-    }, 100)
+    }, 100);
   }
 
   function onBooleanClick(el) {
     // copy some ui elements to target settings
-    let settings = api.conf.get()
-    settings.device.bedBelt = ui.deviceBelt.checked && api.mode.is_fdm()
-    settings.device.bedRound = ui.deviceRound.checked && api.mode.is_fdm()
+    let settings = api.conf.get();
+    settings.device.bedBelt = ui.deviceBelt.checked && api.mode.is_fdm();
+    settings.device.bedRound = ui.deviceRound.checked && api.mode.is_fdm();
     settings.device.originCenter =
-      ui.deviceOrigin.checked || ui.deviceRound.checked
-    settings.device.fwRetract = ui.fwRetract.checked
+      ui.deviceOrigin.checked || ui.deviceRound.checked;
+    settings.device.fwRetract = ui.fwRetract.checked;
     // refresh vars and other ui elements
-    uc.refresh()
+    uc.refresh();
     if (el === ui.camStockIndexed) {
-      api.view.set_arrange()
+      api.view.set_arrange();
     }
-    api.conf.update()
-    DOC.activeElement.blur()
-    api.event.emit('boolean.click')
-    api.devices.update_laser_state()
+    api.conf.update();
+    DOC.activeElement.blur();
+    api.event.emit('boolean.click');
+    api.devices.update_laser_state();
   }
 
   function onButtonClick(ev) {
-    let target = ev.target
+    let target = ev.target;
     while (target && target.tagName !== 'BUTTON') {
-      target = target.parentNode
+      target = target.parentNode;
     }
-    api.event.emit('button.click', target)
+    api.event.emit('button.click', target);
   }
 
   function inputHasFocus() {
-    let active = DOC.activeElement
+    let active = DOC.activeElement;
     return (
       active && (active.nodeName === 'INPUT' || active.nodeName === 'TEXTAREA')
-    )
+    );
   }
 
   function cca(c) {
-    return c.charCodeAt(0)
+    return c.charCodeAt(0);
   }
 
   function keyUpHandler(evt) {
     if (api.feature.on_key) {
-      if (api.feature.on_key({ up: evt })) return
+      if (api.feature.on_key({ up: evt })) return;
     }
     for (let handler of api.feature.on_key2) {
-      if (handler({ up: evt })) return
+      if (handler({ up: evt })) return;
     }
     switch (evt.keyCode) {
       // escape
       case 27:
         // blur text input focus
-        DOC.activeElement.blur()
+        DOC.activeElement.blur();
         // dismiss modals
-        api.modal.hide()
+        api.modal.hide();
         // deselect widgets
-        platform.deselect()
+        platform.deselect();
         // hide all dialogs
-        api.dialog.hide()
+        api.dialog.hide();
         // cancel slicing
-        api.function.cancel()
+        api.function.cancel();
         // and send an event (used by FDM client)
-        api.event.emit('key.esc')
-        break
+        api.event.emit('key.esc');
+        break;
     }
-    return false
+    return false;
   }
 
   function keyDownHandler(evt) {
     if (api.modal.visible()) {
-      return false
+      return false;
     }
     if (api.feature.on_key) {
-      if (api.feature.on_key({ down: evt })) return
+      if (api.feature.on_key({ down: evt })) return;
     }
     for (let handler of api.feature.on_key2) {
-      if (handler({ down: evt })) return
+      if (handler({ down: evt })) return;
     }
     let move = evt.altKey ? 5 : 0,
-      deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2)
+      deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
     switch (evt.keyCode) {
       case 8: // apple: delete/backspace
       case 46: // others: delete
-        if (inputHasFocus()) return false
-        platform.delete(selection.meshes())
-        evt.preventDefault()
-        break
+        if (inputHasFocus()) return false;
+        platform.delete(selection.meshes());
+        evt.preventDefault();
+        break;
       case 37: // left arrow
-        if (inputHasFocus()) return false
-        if (deg) selection.rotate(0, 0, -deg)
-        if (move > 0) selection.move(-move, 0, 0)
-        evt.preventDefault()
-        break
+        if (inputHasFocus()) return false;
+        if (deg) selection.rotate(0, 0, -deg);
+        if (move > 0) selection.move(-move, 0, 0);
+        evt.preventDefault();
+        break;
       case 39: // right arrow
-        if (inputHasFocus()) return false
-        if (deg) selection.rotate(0, 0, deg)
-        if (move > 0) selection.move(move, 0, 0)
-        evt.preventDefault()
-        break
+        if (inputHasFocus()) return false;
+        if (deg) selection.rotate(0, 0, deg);
+        if (move > 0) selection.move(move, 0, 0);
+        evt.preventDefault();
+        break;
       case 38: // up arrow
-        if (inputHasFocus()) return false
-        if (evt.metaKey) return api.show.layer(api.var.layer_at + 1)
-        if (deg) selection.rotate(deg, 0, 0)
-        if (move > 0) selection.move(0, move, 0)
-        evt.preventDefault()
-        break
+        if (inputHasFocus()) return false;
+        if (evt.metaKey) return api.show.layer(api.var.layer_at + 1);
+        if (deg) selection.rotate(deg, 0, 0);
+        if (move > 0) selection.move(0, move, 0);
+        evt.preventDefault();
+        break;
       case 40: // down arrow
-        if (inputHasFocus()) return false
-        if (evt.metaKey) return api.show.layer(api.var.layer_at - 1)
-        if (deg) selection.rotate(-deg, 0, 0)
-        if (move > 0) selection.move(0, -move, 0)
-        evt.preventDefault()
-        break
+        if (inputHasFocus()) return false;
+        if (evt.metaKey) return api.show.layer(api.var.layer_at - 1);
+        if (deg) selection.rotate(-deg, 0, 0);
+        if (move > 0) selection.move(0, -move, 0);
+        evt.preventDefault();
+        break;
       case 65: // 'a' for select all
         if (evt.metaKey || evt.ctrlKey) {
-          if (inputHasFocus()) return false
-          evt.preventDefault()
-          platform.deselect()
-          platform.select_all()
+          if (inputHasFocus()) return false;
+          evt.preventDefault();
+          platform.deselect();
+          platform.select_all();
         }
-        break
+        break;
       case 83: // 's' for save workspace
         if (evt.ctrlKey) {
-          evt.preventDefault()
-          api.conf.save()
-          console.log('settings saved')
+          evt.preventDefault();
+          api.conf.save();
+          console.log('settings saved');
         } else if (evt.metaKey) {
-          evt.preventDefault()
-          api.space.save()
-          api.settings.sync.put()
+          evt.preventDefault();
+          api.space.save();
+          api.settings.sync.put();
         }
-        break
+        break;
       case 76: // 'l' for restore workspace
         if (evt.metaKey) {
-          evt.preventDefault()
-          api.space.restore()
+          evt.preventDefault();
+          api.space.restore();
         }
-        break
+        break;
     }
   }
 
   function keyHandler(evt) {
-    let handled = true
+    let handled = true;
     if (api.modal.visible() || inputHasFocus()) {
-      return false
+      return false;
     }
     if (api.feature.on_key) {
-      if (api.feature.on_key({ key: evt })) return
+      if (api.feature.on_key({ key: evt })) return;
     }
     for (let handler of api.feature.on_key2) {
-      if (handler({ key: evt })) return
+      if (handler({ key: evt })) return;
     }
     if (evt.ctrlKey) {
       switch (evt.key) {
         case 'g':
-          return api.group.merge()
+          return api.group.merge();
         case 'u':
-          return api.group.split()
+          return api.group.split();
       }
     }
     switch (evt.charCode) {
       case cca('`'):
-        api.show.slices(0)
-        break
+        api.show.slices(0);
+        break;
       case cca('0'):
-        api.show.slices(api.var.layer_max)
-        break
+        api.show.slices(api.var.layer_max);
+        break;
       case cca('1'):
-        api.show.slices(api.var.layer_max / 10)
-        break
+        api.show.slices(api.var.layer_max / 10);
+        break;
       case cca('2'):
-        api.show.slices((api.var.layer_max * 2) / 10)
-        break
+        api.show.slices((api.var.layer_max * 2) / 10);
+        break;
       case cca('3'):
-        api.show.slices((api.var.layer_max * 3) / 10)
-        break
+        api.show.slices((api.var.layer_max * 3) / 10);
+        break;
       case cca('4'):
-        api.show.slices((api.var.layer_max * 4) / 10)
-        break
+        api.show.slices((api.var.layer_max * 4) / 10);
+        break;
       case cca('5'):
-        api.show.slices((api.var.layer_max * 5) / 10)
-        break
+        api.show.slices((api.var.layer_max * 5) / 10);
+        break;
       case cca('6'):
-        api.show.slices((api.var.layer_max * 6) / 10)
-        break
+        api.show.slices((api.var.layer_max * 6) / 10);
+        break;
       case cca('7'):
-        api.show.slices((api.var.layer_max * 7) / 10)
-        break
+        api.show.slices((api.var.layer_max * 7) / 10);
+        break;
       case cca('8'):
-        api.show.slices((api.var.layer_max * 8) / 10)
-        break
+        api.show.slices((api.var.layer_max * 8) / 10);
+        break;
       case cca('9'):
-        api.show.slices((api.var.layer_max * 9) / 10)
-        break
+        api.show.slices((api.var.layer_max * 9) / 10);
+        break;
       case cca('?'):
-        api.help.show()
-        break
+        api.help.show();
+        break;
       case cca('Z'): // reset stored state
         uc.confirm('clear all settings and preferences?').then((yes) => {
           if (yes) {
-            sdb.clear()
-            WIN.location.reload()
+            sdb.clear();
+            WIN.location.reload();
           }
-        })
-        break
+        });
+        break;
       case cca('C'): // refresh catalog
-        catalog.refresh()
-        break
+        catalog.refresh();
+        break;
       case cca('i'): // file import
-        api.event.import()
-        break
+        api.event.import();
+        break;
       case cca('S'): // slice
       case cca('s'): // slice
-        api.function.slice()
-        break
+        api.function.slice();
+        break;
       case cca('P'): // prepare
       case cca('p'): // prepare
         if (api.mode.get() !== 'SLA') {
           // hidden in SLA mode
-          api.function.print()
+          api.function.print();
         }
-        break
+        break;
       case cca('X'): // export
       case cca('x'): // export
-        api.function.export()
-        break
+        api.function.export();
+        break;
       case cca('g'): // CAM animate
-        api.function.animate()
-        break
+        api.function.animate();
+        break;
       case cca('O'): // manual rotation
-        rotateInputSelection()
-        break
+        rotateInputSelection();
+        break;
       case cca('r'): // recent files
-        api.modal.show('files')
-        break
+        api.modal.show('files');
+        break;
       case cca('q'): // preferences
-        api.modal.show('prefs')
-        break
+        api.modal.show('prefs');
+        break;
       case cca('l'): // device
-        settingsLoad()
-        break
+        settingsLoad();
+        break;
       case cca('e'): // device
-        api.show.devices()
-        break
+        api.show.devices();
+        break;
       case cca('o'): // tools
-        api.show.tools()
-        break
+        api.show.tools();
+        break;
       case cca('c'): // local devices
-        api.show.local()
-        break
+        api.show.local();
+        break;
       case cca('v'): // toggle single slice view mode
         if (api.view.get() === VIEWS.ARRANGE) {
-          api.space.set_focus(selection.widgets())
+          api.space.set_focus(selection.widgets());
         }
         if (api.var.layer_hi == api.var.layer_lo) {
-          api.var.layer_lo = 0
+          api.var.layer_lo = 0;
         } else {
-          api.var.layer_lo = api.var.layer_hi
+          api.var.layer_lo = api.var.layer_hi;
         }
-        api.show.slices()
-        break
+        api.show.slices();
+        break;
       case cca('d'): // duplicate object
-        duplicateSelection()
-        break
+        duplicateSelection();
+        break;
       case cca('m'): // mirror object
-        mirrorSelection()
-        break
+        mirrorSelection();
+        break;
       case cca('a'):
         if (api.view.get() === VIEWS.ARRANGE) {
           // auto arrange items on platform
-          platform.layout()
+          platform.layout();
           if (!api.conf.get().controller.spaceRandoX) {
-            api.space.set_focus(selection.widgets())
+            api.space.set_focus(selection.widgets());
           }
         } else {
           // go to arrange view
-          api.view.set(VIEWS.ARRANGE)
+          api.view.set(VIEWS.ARRANGE);
         }
-        break
+        break;
       default:
-        api.event.emit('keypress', evt)
-        handled = false
-        break
+        api.event.emit('keypress', evt);
+        handled = false;
+        break;
     }
     if (handled) {
-      evt.preventDefault()
-      evt.stopPropagation()
+      evt.preventDefault();
+      evt.stopPropagation();
     }
-    return false
+    return false;
   }
 
   function duplicateSelection() {
-    selection.duplicate()
+    selection.duplicate();
   }
 
   function mirrorSelection() {
-    selection.mirror()
+    selection.mirror();
   }
 
   function keys(o) {
     let key,
-      list = []
+      list = [];
     for (key in o) {
-      if (o.hasOwnProperty(key)) list.push(key)
+      if (o.hasOwnProperty(key)) list.push(key);
     }
-    return list.sort()
+    return list.sort();
   }
 
   function clearSelected(children) {
     for (let i = 0; i < children.length; i++) {
-      children[i].setAttribute('class', '')
+      children[i].setAttribute('class', '');
     }
   }
 
   function rotateInputSelection() {
     if (selection.meshes().length === 0) {
-      api.show.alert('select object to rotate')
-      return
+      api.show.alert('select object to rotate');
+      return;
     }
     api.uc.prompt('Enter X,Y,Z degrees of rotation', '').then((coord) => {
-      coord = (coord || '').split(',')
+      coord = (coord || '').split(',');
       let prod = Math.PI / 180,
         x = parseFloat(coord[0] || 0.0) * prod,
         y = parseFloat(coord[1] || 0.0) * prod,
-        z = parseFloat(coord[2] || 0.0) * prod
-      selection.rotate(x, y, z)
-    })
+        z = parseFloat(coord[2] || 0.0) * prod;
+      selection.rotate(x, y, z);
+    });
   }
 
   function positionSelection() {
     if (selection.meshes().length === 0) {
-      api.show.alert('select object to position')
-      return
+      api.show.alert('select object to position');
+      return;
     }
     let current = settings(),
       { device, process } = current,
@@ -570,33 +570,33 @@ gapp.register('kiri.init', (root, exports) => {
         process.camOriginCenter ||
         device.bedRound ||
         device.originCenter,
-      bounds = boundsSelection()
+      bounds = boundsSelection();
 
     api.uc.prompt('Enter X,Y coordinates for selection', '').then((coord) => {
-      coord = (coord || '').split(',')
+      coord = (coord || '').split(',');
       let x = parseFloat(coord[0] || 0.0),
         y = parseFloat(coord[1] || 0.0),
-        z = parseFloat(coord[2] || 0.0)
+        z = parseFloat(coord[2] || 0.0);
 
       if (!center) {
-        x = x - device.bedWidth / 2 + (bounds.max.x - bounds.min.x) / 2
-        y = y - device.bedDepth / 2 + (bounds.max.y - bounds.min.y) / 2
+        x = x - device.bedWidth / 2 + (bounds.max.x - bounds.min.x) / 2;
+        y = y - device.bedDepth / 2 + (bounds.max.y - bounds.min.y) / 2;
       }
 
-      selection.move(x, y, z, true)
-    })
+      selection.move(x, y, z, true);
+    });
   }
 
   function deviceExport(exp, name) {
     name = (name || 'device')
       .toLowerCase()
       .replace(/ /g, '_')
-      .replace(/\./g, '_')
+      .replace(/\./g, '_');
     uc.prompt('Export Device Filename', name).then((name) => {
       if (name) {
-        api.util.download(exp, `${name}.km`)
+        api.util.download(exp, `${name}.km`);
       }
-    })
+    });
   }
 
   function objectsExport(format = 'stl') {
@@ -606,25 +606,25 @@ gapp.register('kiri.init', (root, exports) => {
       { ok: true, cancel: false },
       `selected.${format}`
     ).then((name) => {
-      if (!name) return
+      if (!name) return;
       if (name.toLowerCase().indexOf(`.${format}`) < 0) {
-        name = `${name}.${format}`
+        name = `${name}.${format}`;
       }
-      api.util.download(selection.export(format), name)
-    })
+      api.util.download(selection.export(format), name);
+    });
   }
 
   function workspaceNew() {
     uc.confirm('Clear Workspace?', { ok: true, cancel: false }).then(
       (value) => {
         if (value === true) {
-          let proc = api.settings.proc()
-          proc.ops && (proc.ops.length = 0)
-          proc.op2 && (proc.op2.length = 0)
-          api.platform.clear()
+          let proc = api.settings.proc();
+          proc.ops && (proc.ops.length = 0);
+          proc.op2 && (proc.op2.length = 0);
+          api.platform.clear();
         }
       }
-    )
+    );
   }
 
   function profileExport() {
@@ -637,40 +637,40 @@ gapp.register('kiri.init', (root, exports) => {
         "  <span class='mt10'><input id='excwork' type='checkbox'>&nbsp;Exclude meshes</span>",
         '</div>',
       ],
-    }
-    let suggestion = 'workspace'
-    let file = api.widgets.all()[0]?.meta.file || ''
+    };
+    let suggestion = 'workspace';
+    let file = api.widgets.all()[0]?.meta.file || '';
     if (file) {
-      suggestion = `${suggestion}_${file.split('.')[0]}`.replaceAll(' ', '_')
+      suggestion = `${suggestion}_${file.split('.')[0]}`.replaceAll(' ', '_');
     }
     uc.confirm('Filename', { ok: true, cancel: false }, suggestion, opt).then(
       (name) => {
-        if (!name) return
+        if (!name) return;
 
-        let work = !$('excwork').checked
-        let json = api.conf.export({ work, clear: true })
+        let work = !$('excwork').checked;
+        let json = api.conf.export({ work, clear: true });
 
         kiri.client.zip(
           [{ name: 'workspace.json', data: JSON.stringify(json) }],
           (progress) => {
-            api.show.progress(progress.percent / 100, 'compressing workspace')
+            api.show.progress(progress.percent / 100, 'compressing workspace');
           },
           (output) => {
-            api.show.progress(0)
-            api.util.download(output, `${name}.kmz`)
+            api.show.progress(0);
+            api.util.download(output, `${name}.kmz`);
           }
-        )
+        );
       }
-    )
+    );
   }
 
   function settingsSave(ev, name) {
     if (ev) {
-      ev.stopPropagation()
-      ev.preventDefault()
+      ev.stopPropagation();
+      ev.preventDefault();
     }
 
-    api.dialog.hide()
+    api.dialog.hide();
     let mode = api.mode.get(),
       s = settings(),
       def = 'default',
@@ -679,113 +679,113 @@ gapp.register('kiri.init', (root, exports) => {
       lp = s.cproc[mode],
       saveAs = (name) => {
         if (!name) {
-          return
+          return;
         }
-        let np = (pl[name] = {})
-        cp.processName = name
-        pl[name] = Object.clone(cp)
+        let np = (pl[name] = {});
+        cp.processName = name;
+        pl[name] = Object.clone(cp);
         for (let k in cp) {
-          if (!cp.hasOwnProperty(k)) continue
-          np[k] = cp[k]
+          if (!cp.hasOwnProperty(k)) continue;
+          np[k] = cp[k];
         }
-        s.cproc[mode] = name
-        s.devproc[s.device.deviceName] = name
-        api.conf.save()
-        api.conf.update()
-        api.event.settings()
-        sync_put()
-      }
+        s.cproc[mode] = name;
+        s.devproc[s.device.deviceName] = name;
+        api.conf.save();
+        api.conf.update();
+        api.event.settings();
+        sync_put();
+      };
 
     if (name) {
-      saveAs(name)
+      saveAs(name);
     } else {
-      uc.prompt('Save Settings As', cp ? lp || def : def).then(saveAs)
+      uc.prompt('Save Settings As', cp ? lp || def : def).then(saveAs);
     }
   }
 
   function settingsLoad() {
-    api.conf.show()
+    api.conf.show();
   }
 
   function updateDeviceSize() {
-    api.conf.update()
-    platform.update_size()
-    platform.update_origin()
+    api.conf.update();
+    platform.update_size();
+    platform.update_origin();
   }
 
   async function sync_put() {
-    await api.settings.sync.put()
+    await api.settings.sync.put();
   }
 
   function dragOverHandler(evt) {
-    evt.stopPropagation()
-    evt.preventDefault()
+    evt.stopPropagation();
+    evt.preventDefault();
 
     // prevent drop actions when a dialog is open
     if (api.modal.visible()) {
-      return
+      return;
     }
 
-    evt.dataTransfer.dropEffect = 'copy'
-    let oldcolor = space.platform.setColor(0x00ff00)
-    if (oldcolor !== 0x00ff00) platformColor = oldcolor
+    evt.dataTransfer.dropEffect = 'copy';
+    let oldcolor = space.platform.setColor(0x00ff00);
+    if (oldcolor !== 0x00ff00) platformColor = oldcolor;
   }
 
   function dragLeave() {
-    space.platform.setColor(platformColor)
+    space.platform.setColor(platformColor);
   }
 
   function dropHandler(evt) {
-    evt.stopPropagation()
-    evt.preventDefault()
+    evt.stopPropagation();
+    evt.preventDefault();
 
     // prevent drop actions when a dialog is open
     if (api.modal.visible()) {
-      return
+      return;
     }
 
-    space.platform.setColor(platformColor)
+    space.platform.setColor(platformColor);
 
-    let files = evt.dataTransfer.files
+    let files = evt.dataTransfer.files;
 
     switch (api.feature.drop_group) {
       case true:
-        return api.platform.load_files(files, [])
+        return api.platform.load_files(files, []);
       case false:
-        return api.platform.load_files(files, undefined)
+        return api.platform.load_files(files, undefined);
     }
 
     if (files.length === 1) {
-      api.platform.load_files(files)
+      api.platform.load_files(files);
     } else if (files.length > 1) {
       uc.confirm(`group ${files.length} files?`).then((yes) => {
-        api.platform.load_files(files, yes ? [] : undefined)
-      })
+        api.platform.load_files(files, yes ? [] : undefined);
+      });
     }
   }
 
   function loadCatalogFile(e) {
     api.widgets.load(e.target.getAttribute('load'), function (widget) {
-      platform.add(widget)
-      api.dialog.hide()
-    })
+      platform.add(widget);
+      api.dialog.hide();
+    });
   }
 
   function updateCatalog(files) {
     let table = ui.catalogList,
-      list = []
-    table.innerHTML = ''
+      list = [];
+    table.innerHTML = '';
     for (let name in files) {
       list.push({
         n: name,
         ln: name.toLowerCase(),
         v: files[name].vertices,
         t: files[name].updated,
-      })
+      });
     }
     list.sort(function (a, b) {
-      return a.ln < b.ln ? -1 : 1
-    })
+      return a.ln < b.ln ? -1 : 1;
+    });
     for (let i = 0; i < list.length; i++) {
       let row = DOC.createElement('div'),
         renm = DOC.createElement('button'),
@@ -797,60 +797,60 @@ gapp.register('kiri.init', (root, exports) => {
         date = new Date(file.t),
         split = name.split('.'),
         short = split[0],
-        ext = split[1] ? `.${split[1]}` : ''
+        ext = split[1] ? `.${split[1]}` : '';
 
-      renm.setAttribute('class', 'rename')
-      renm.setAttribute('title', 'rename file')
-      renm.innerHTML = '<i class="far fa-edit"></i>'
+      renm.setAttribute('class', 'rename');
+      renm.setAttribute('title', 'rename file');
+      renm.innerHTML = '<i class="far fa-edit"></i>';
       renm.onclick = () => {
         api.uc.prompt(`rename file`, short).then((newname) => {
           if (newname && newname !== short) {
             catalog.rename(name, `${newname}${ext}`, (then) => {
-              api.modal.show('files')
-            })
+              api.modal.show('files');
+            });
           }
-        })
-      }
+        });
+      };
 
-      load.setAttribute('load', name)
+      load.setAttribute('load', name);
       load.setAttribute(
         'title',
         `file: ${name}\nvertices: ${file.v}\ndate: ${date}`
-      )
-      load.onclick = loadCatalogFile
-      load.appendChild(DOC.createTextNode(short))
+      );
+      load.onclick = loadCatalogFile;
+      load.appendChild(DOC.createTextNode(short));
 
-      del.setAttribute('del', name)
-      del.setAttribute('title', "remove '" + name + "'")
+      del.setAttribute('del', name);
+      del.setAttribute('title', "remove '" + name + "'");
       del.onclick = () => {
-        catalog.deleteFile(name)
-      }
-      del.innerHTML = '<i class="far fa-trash-alt"></i>'
+        catalog.deleteFile(name);
+      };
+      del.innerHTML = '<i class="far fa-trash-alt"></i>';
 
-      size.setAttribute('disabled', true)
-      size.setAttribute('class', 'label')
-      size.appendChild(DOC.createTextNode(base.util.comma(file.v)))
+      size.setAttribute('disabled', true);
+      size.setAttribute('class', 'label');
+      size.appendChild(DOC.createTextNode(base.util.comma(file.v)));
 
-      row.setAttribute('class', 'f-row a-center')
-      row.appendChild(renm)
-      row.appendChild(load)
-      row.appendChild(size)
-      row.appendChild(del)
-      table.appendChild(row)
+      row.setAttribute('class', 'f-row a-center');
+      row.appendChild(renm);
+      row.appendChild(load);
+      row.appendChild(size);
+      row.appendChild(del);
+      table.appendChild(row);
     }
   }
 
   function isMultiHead() {
-    let dev = api.conf.get().device
-    return isNotBelt() && dev.extruders && dev.extruders.length > 1
+    let dev = api.conf.get().device;
+    return isNotBelt() && dev.extruders && dev.extruders.length > 1;
   }
 
   function isBelt() {
-    return api.device.isBelt()
+    return api.device.isBelt();
   }
 
   function isNotBelt() {
-    return !isBelt()
+    return !isBelt();
   }
 
   // MAIN INITIALIZATION FUNCTION
@@ -858,71 +858,71 @@ gapp.register('kiri.init', (root, exports) => {
     let { event, conf, view, show } = api,
       { bound, toInt, toFloat } = uc,
       { newBlank, newButton, newBoolean, newGroup, newInput } = uc,
-      { newSelect, newLabel, newValue, newRow, newGCode, newDiv } = uc
+      { newSelect, newLabel, newValue, newRow, newGCode, newDiv } = uc;
 
-    event.emit('init.one')
+    event.emit('init.one');
 
     // ensure we have settings from last session
-    conf.restore()
+    conf.restore();
 
     let container = $('container'),
       gcode = $('dev-gcode'),
       tracker = $('tracker'),
-      controller = settings().controller
+      controller = settings().controller;
 
     WIN.addEventListener('resize', () => {
-      event.emit('resize')
-    })
+      event.emit('resize');
+    });
 
     event.on('resize', () => {
       if (WIN.innerHeight < 800) {
-        ui.modalBox.classList.add('mh85')
+        ui.modalBox.classList.add('mh85');
       } else {
-        ui.modalBox.classList.remove('mh85')
+        ui.modalBox.classList.remove('mh85');
       }
-      view.update_slider()
-    })
+      view.update_slider();
+    });
 
-    space.sky.showGrid(false)
-    space.sky.setColor(controller.dark ? 0 : 0xffffff)
-    space.setAntiAlias(controller.antiAlias)
+    space.sky.showGrid(false);
+    space.sky.setColor(controller.dark ? 0 : 0xffffff);
+    space.setAntiAlias(controller.antiAlias);
     space.init(
       container,
       function (delta) {
-        let vars = api.var
-        if (vars.layer_max === 0 || !delta) return
-        if (controller.reverseZoom) delta = -delta
-        let same = vars.layer_hi === vars.layer_lo
-        let track = vars.layer_lo > 0
+        let vars = api.var;
+        if (vars.layer_max === 0 || !delta) return;
+        if (controller.reverseZoom) delta = -delta;
+        let same = vars.layer_hi === vars.layer_lo;
+        let track = vars.layer_lo > 0;
         if (delta > 0) {
-          vars.layer_hi = Math.max(same ? 0 : vars.layer_lo, vars.layer_hi - 1)
+          vars.layer_hi = Math.max(same ? 0 : vars.layer_lo, vars.layer_hi - 1);
           if (track) {
-            vars.layer_lo = Math.max(0, vars.layer_lo - 1)
+            vars.layer_lo = Math.max(0, vars.layer_lo - 1);
           }
         } else if (delta < 0) {
-          vars.layer_hi = Math.min(vars.layer_max, vars.layer_hi + 1)
+          vars.layer_hi = Math.min(vars.layer_max, vars.layer_hi + 1);
           if (track) {
-            vars.layer_lo = Math.min(vars.layer_hi, vars.layer_lo + 1)
+            vars.layer_lo = Math.min(vars.layer_hi, vars.layer_lo + 1);
           }
         }
         if (same) {
-          vars.layer_lo = vars.layer_hi
+          vars.layer_lo = vars.layer_hi;
         }
-        view.update_slider()
-        show.slices()
+        view.update_slider();
+        show.slices();
       },
       controller.ortho
-    )
-    space.platform.onMove(conf.save)
-    space.platform.setRound(true)
+    );
+    space.platform.onMove(conf.save);
+    space.platform.setRound(true);
     space.useDefaultKeys(
       api.feature.on_key === undefined || api.feature.on_key_defaults
-    )
-    updateDrawer()
+    );
+    updateDrawer();
 
     // api augmentation with local functions
-    api.device.export = deviceExport
-    let anim = (ui.anim = {})
+    api.device.export = deviceExport;
+    let anim = (ui.anim = {});
 
     Object.assign(ui, {
       tracker: tracker,
@@ -1951,7 +1951,7 @@ gapp.register('kiri.init', (root, exports) => {
         convert: toFloat,
         bound: bound(0, 1.0),
         show: () => {
-          return isNotBelt()
+          return isNotBelt();
         },
       }),
       antiBacklash: newInput(LANG.ad_abkl_s, {
@@ -2499,228 +2499,228 @@ gapp.register('kiri.init', (root, exports) => {
 
       settingsName: $('settingsName'),
       settingsSave: $('settingsSave'),
-    })
+    });
 
     // override old style settings two-button menu
     ui.settingsSave.onclick = () => {
-      settingsSave(undefined, ui.settingsName.value)
-    }
+      settingsSave(undefined, ui.settingsName.value);
+    };
 
     function optSelected(sel) {
-      let opt = sel.options[sel.selectedIndex]
-      return opt ? opt.value : undefined
+      let opt = sel.options[sel.selectedIndex];
+      return opt ? opt.value : undefined;
     }
 
     function hasInfill() {
-      return optSelected(ui.sliceFillType) !== 'none'
+      return optSelected(ui.sliceFillType) !== 'none';
     }
 
     function fillIsLinear() {
-      return hasInfill() && optSelected(ui.sliceFillType) === 'linear'
+      return hasInfill() && optSelected(ui.sliceFillType) === 'linear';
     }
 
     function spindleShow() {
-      return settings().device.spindleMax > 0
+      return settings().device.spindleMax > 0;
     }
 
     function zIntShow() {
-      return settings().controller.devel
+      return settings().controller.devel;
     }
 
     // slider setup
-    const mobile = moto.space.info.mob
-    const slbar = mobile ? 80 : 30
-    const slbar2 = slbar * 2
-    const slider = ui.sliderRange
-    const drag = {}
+    const mobile = moto.space.info.mob;
+    const slbar = mobile ? 80 : 30;
+    const slbar2 = slbar * 2;
+    const slider = ui.sliderRange;
+    const drag = {};
 
     if (mobile) {
-      ui.slider.classList.add('slider-mobile')
-      ui.sliderLo.classList.add('slider-mobile')
-      ui.sliderHi.classList.add('slider-mobile')
+      ui.slider.classList.add('slider-mobile');
+      ui.sliderLo.classList.add('slider-mobile');
+      ui.sliderHi.classList.add('slider-mobile');
       // add css style for mobile devices
-      DOC.body.classList.add('mobile')
+      DOC.body.classList.add('mobile');
     }
 
     function pxToInt(txt) {
-      return txt ? parseInt(txt.substring(0, txt.length - 2)) : 0
+      return txt ? parseInt(txt.substring(0, txt.length - 2)) : 0;
     }
 
     function sliderUpdate() {
-      let start = drag.low / drag.maxval
-      let end = (drag.low + drag.mid - slbar) / drag.maxval
-      api.event.emit('slider.pos', { start, end })
-      api.var.layer_lo = Math.round(start * api.var.layer_max)
-      api.var.layer_hi = Math.round(end * api.var.layer_max)
-      api.show.layer()
-      space.scene.active()
+      let start = drag.low / drag.maxval;
+      let end = (drag.low + drag.mid - slbar) / drag.maxval;
+      api.event.emit('slider.pos', { start, end });
+      api.var.layer_lo = Math.round(start * api.var.layer_max);
+      api.var.layer_hi = Math.round(end * api.var.layer_max);
+      api.show.layer();
+      space.scene.active();
     }
 
     function dragit(el, delta) {
       el.ontouchstart = el.onmousedown = (ev) => {
         // el.classList.add('sli-drag-el');
-        tracker.style.display = 'block'
-        ev.stopPropagation()
-        let obj = ev.touches ? ev.touches[0] : ev
-        drag.width = slider.clientWidth
-        drag.maxval = drag.width - slbar2
-        drag.start = obj.screenX
-        drag.loat = drag.low = pxToInt(ui.sliderHold.style.marginLeft)
-        drag.mdat = drag.mid = ui.sliderMid.clientWidth
-        drag.hiat = pxToInt(ui.sliderHold.style.marginRight)
-        drag.mdmax = drag.width - slbar - drag.loat
-        drag.himax = drag.width - slbar - drag.mdat
+        tracker.style.display = 'block';
+        ev.stopPropagation();
+        let obj = ev.touches ? ev.touches[0] : ev;
+        drag.width = slider.clientWidth;
+        drag.maxval = drag.width - slbar2;
+        drag.start = obj.screenX;
+        drag.loat = drag.low = pxToInt(ui.sliderHold.style.marginLeft);
+        drag.mdat = drag.mid = ui.sliderMid.clientWidth;
+        drag.hiat = pxToInt(ui.sliderHold.style.marginRight);
+        drag.mdmax = drag.width - slbar - drag.loat;
+        drag.himax = drag.width - slbar - drag.mdat;
         let cancel_drag =
           (tracker.ontouchend =
           tracker.onmouseup =
             (ev) => {
               // el.classList.remove('sli-drag-el');
               if (ev) {
-                ev.stopPropagation()
-                ev.preventDefault()
+                ev.stopPropagation();
+                ev.preventDefault();
               }
-              slider.onmousemove = undefined
-              tracker.style.display = 'none'
-            })
-        el.ontouchend = cancel_drag
+              slider.onmousemove = undefined;
+              tracker.style.display = 'none';
+            });
+        el.ontouchend = cancel_drag;
         el.ontouchmove =
           tracker.ontouchmove =
           tracker.onmousemove =
             (ev) => {
-              ev.stopPropagation()
-              ev.preventDefault()
+              ev.stopPropagation();
+              ev.preventDefault();
               if (ev.buttons === 0) {
-                return cancel_drag()
+                return cancel_drag();
               }
               if (delta) {
-                let obj = ev.touches ? ev.touches[0] : ev
-                delta(obj.screenX - drag.start)
+                let obj = ev.touches ? ev.touches[0] : ev;
+                delta(obj.screenX - drag.start);
               }
-            }
-      }
+            };
+      };
     }
 
     dragit(ui.sliderLo, (delta) => {
-      let midval = drag.mdat - delta
-      let lowval = drag.loat + delta
+      let midval = drag.mdat - delta;
+      let lowval = drag.loat + delta;
       if (midval < slbar || lowval < 0) {
-        return
+        return;
       }
-      ui.sliderHold.style.marginLeft = `${lowval}px`
-      ui.sliderMid.style.width = `${midval}px`
-      drag.low = lowval
-      drag.mid = midval
-      sliderUpdate()
-    })
+      ui.sliderHold.style.marginLeft = `${lowval}px`;
+      ui.sliderMid.style.width = `${midval}px`;
+      drag.low = lowval;
+      drag.mid = midval;
+      sliderUpdate();
+    });
     dragit(ui.sliderMid, (delta) => {
-      let loval = drag.loat + delta
-      let hival = drag.hiat - delta
-      if (loval < 0 || hival < 0) return
-      ui.sliderHold.style.marginLeft = `${loval}px`
-      ui.sliderHold.style.marginRight = `${hival}px`
-      drag.low = loval
-      sliderUpdate()
-    })
+      let loval = drag.loat + delta;
+      let hival = drag.hiat - delta;
+      if (loval < 0 || hival < 0) return;
+      ui.sliderHold.style.marginLeft = `${loval}px`;
+      ui.sliderHold.style.marginRight = `${hival}px`;
+      drag.low = loval;
+      sliderUpdate();
+    });
     dragit(ui.sliderHi, (delta) => {
-      let midval = drag.mdat + delta
-      let hival = drag.hiat - delta
-      if (midval < slbar || midval > drag.mdmax || hival < 0) return
-      ui.sliderMid.style.width = `${midval}px`
-      ui.sliderHold.style.marginRight = `${hival}px`
-      drag.mid = midval
-      sliderUpdate()
-    })
+      let midval = drag.mdat + delta;
+      let hival = drag.hiat - delta;
+      if (midval < slbar || midval > drag.mdmax || hival < 0) return;
+      ui.sliderMid.style.width = `${midval}px`;
+      ui.sliderHold.style.marginRight = `${hival}px`;
+      drag.mid = midval;
+      sliderUpdate();
+    });
 
     ui.load.onchange = function (event) {
-      api.platform.load_files(event.target.files)
-      ui.load.value = '' // reset so you can re-import the same filee
-    }
+      api.platform.load_files(event.target.files);
+      ui.load.value = ''; // reset so you can re-import the same filee
+    };
 
     ui.sliderMin.onclick = () => {
-      api.show.layer(0, 0)
-    }
+      api.show.layer(0, 0);
+    };
 
     ui.sliderMax.onclick = () => {
-      api.show.layer(api.var.layer_max, 0)
-    }
+      api.show.layer(api.var.layer_max, 0);
+    };
 
     ui.slider.onmouseover = (ev) => {
-      api.event.emit('slider.label')
-    }
+      api.event.emit('slider.label');
+    };
 
     ui.slider.onmouseleave = (ev) => {
-      if (!ev.buttons) api.event.emit('slider.unlabel')
-    }
+      if (!ev.buttons) api.event.emit('slider.unlabel');
+    };
 
-    api.event.on('slider.unlabel', (values) => {})
+    api.event.on('slider.unlabel', (values) => {});
 
     api.event.on('slider.label', (values) => {
-      let digits = api.var.layer_max.toString().length
-      $('slider-zero').style.width = `${digits}em`
-      $('slider-max').style.width = `${digits}em`
-      $('slider-zero').innerText = api.var.layer_lo
-      $('slider-max').innerText = api.var.layer_hi
-    })
+      let digits = api.var.layer_max.toString().length;
+      $('slider-zero').style.width = `${digits}em`;
+      $('slider-max').style.width = `${digits}em`;
+      $('slider-zero').innerText = api.var.layer_lo;
+      $('slider-max').innerText = api.var.layer_hi;
+    });
 
     api.event.on('slider.set', (values) => {
-      let width = slider.clientWidth
-      let maxval = width - slbar2
-      let start = Math.max(0, Math.min(1, values.start))
-      let end = Math.max(start, Math.min(1, values.end))
-      let lowval = start * maxval
-      let midval = (end - start) * maxval + slbar
-      let hival = maxval - end * maxval
-      ui.sliderHold.style.marginLeft = `${lowval}px`
-      ui.sliderMid.style.width = `${midval}px`
-      ui.sliderHold.style.marginRight = `${hival}px`
-    })
+      let width = slider.clientWidth;
+      let maxval = width - slbar2;
+      let start = Math.max(0, Math.min(1, values.start));
+      let end = Math.max(start, Math.min(1, values.end));
+      let lowval = start * maxval;
+      let midval = (end - start) * maxval + slbar;
+      let hival = maxval - end * maxval;
+      ui.sliderHold.style.marginLeft = `${lowval}px`;
+      ui.sliderMid.style.width = `${midval}px`;
+      ui.sliderHold.style.marginRight = `${hival}px`;
+    });
 
     // store layer preferences
     api.event.on('stack.show', (label) => {
-      let mode = api.mode.get()
-      let view = api.view.get()
-      api.conf.get().labels[`${mode}-${view}-${label}`] = true
-    })
+      let mode = api.mode.get();
+      let view = api.view.get();
+      api.conf.get().labels[`${mode}-${view}-${label}`] = true;
+    });
 
     api.event.on('stack.hide', (label) => {
-      let mode = api.mode.get()
-      let view = api.view.get()
-      api.conf.get().labels[`${mode}-${view}-${label}`] = false
-    })
+      let mode = api.mode.get();
+      let view = api.view.get();
+      api.conf.get().labels[`${mode}-${view}-${label}`] = false;
+    });
 
     // bind language choices
     $('lset-en').onclick = function () {
-      sdb.setItem('kiri-lang', 'en-us')
-      api.space.reload()
-    }
+      sdb.setItem('kiri-lang', 'en-us');
+      api.space.reload();
+    };
     $('lset-da').onclick = function () {
-      sdb.setItem('kiri-lang', 'da-dk')
-      api.space.reload()
-    }
+      sdb.setItem('kiri-lang', 'da-dk');
+      api.space.reload();
+    };
     $('lset-de').onclick = function () {
-      sdb.setItem('kiri-lang', 'de-de')
-      api.space.reload()
-    }
+      sdb.setItem('kiri-lang', 'de-de');
+      api.space.reload();
+    };
     $('lset-fr').onclick = function () {
-      sdb.setItem('kiri-lang', 'fr-fr')
-      api.space.reload()
-    }
+      sdb.setItem('kiri-lang', 'fr-fr');
+      api.space.reload();
+    };
     $('lset-pl').onclick = function () {
-      sdb.setItem('kiri-lang', 'pl-pl')
-      api.space.reload()
-    }
+      sdb.setItem('kiri-lang', 'pl-pl');
+      api.space.reload();
+    };
     $('lset-pt').onclick = function () {
-      sdb.setItem('kiri-lang', 'pt-pt')
-      api.space.reload()
-    }
+      sdb.setItem('kiri-lang', 'pt-pt');
+      api.space.reload();
+    };
     $('lset-es').onclick = function () {
-      sdb.setItem('kiri-lang', 'es-es')
-      api.space.reload()
-    }
+      sdb.setItem('kiri-lang', 'es-es');
+      api.space.reload();
+    };
     $('lset-zh').onclick = function () {
-      sdb.setItem('kiri-lang', 'zh')
-      api.space.reload()
-    }
+      sdb.setItem('kiri-lang', 'zh');
+      api.space.reload();
+    };
 
     space.event.addHandlers(self, [
       'keyup',
@@ -2735,7 +2735,7 @@ gapp.register('kiri.init', (root, exports) => {
       dragLeave,
       'drop',
       dropHandler,
-    ])
+    ]);
 
     function selectionSize(e) {
       let dv = parseFloat(e.target.value || 1),
@@ -2754,15 +2754,15 @@ gapp.register('kiri.init', (root, exports) => {
         tl = (xt && xc) || (yt && yc) || (zt && zc),
         xr = (tl && xc) || (!tl && xt) ? ra : 1,
         yr = (tl && yc) || (!tl && yt) ? ra : 1,
-        zr = (tl && zc) || (!tl && zt) ? ra : 1
+        zr = (tl && zc) || (!tl && zt) ? ra : 1;
       // prevent null scale
       if (xr * yr * zr === 0) {
-        return
+        return;
       }
-      selection.scale(xr, yr, zr)
-      ui.sizeX.was = ui.sizeX.value = xv * xr
-      ui.sizeY.was = ui.sizeY.value = yv * yr
-      ui.sizeZ.was = ui.sizeZ.value = zv * zr
+      selection.scale(xr, yr, zr);
+      ui.sizeX.was = ui.sizeX.value = xv * xr;
+      ui.sizeY.was = ui.sizeY.value = yv * yr;
+      ui.sizeZ.was = ui.sizeZ.value = zv * zr;
     }
 
     function selectionScale(e) {
@@ -2782,17 +2782,17 @@ gapp.register('kiri.init', (root, exports) => {
         tl = (xt && xc) || (yt && yc) || (zt && zc),
         xr = (tl && xc) || (!tl && xt) ? ra : 1,
         yr = (tl && yc) || (!tl && yt) ? ra : 1,
-        zr = (tl && zc) || (!tl && zt) ? ra : 1
+        zr = (tl && zc) || (!tl && zt) ? ra : 1;
 
-      selection.scale(xr, yr, zr)
-      ui.scaleX.was = ui.scaleX.value = xv * xr
-      ui.scaleY.was = ui.scaleY.value = yv * yr
-      ui.scaleZ.was = ui.scaleZ.value = zv * zr
+      selection.scale(xr, yr, zr);
+      ui.scaleX.was = ui.scaleX.value = xv * xr;
+      ui.scaleY.was = ui.scaleY.value = yv * yr;
+      ui.scaleZ.was = ui.scaleZ.value = zv * zr;
     }
 
     function selectionRotate(e) {
-      let val = parseFloat(e.target.value) || 0
-      e.target.value = val
+      let val = parseFloat(e.target.value) || 0;
+      e.target.value = val;
     }
 
     space.event.onEnterKey(
@@ -2833,37 +2833,37 @@ gapp.register('kiri.init', (root, exports) => {
         selectionRotate,
       ],
       true
-    )
+    );
 
     $('lab-axis').onclick = () => {
       ui.lockX.checked =
         ui.lockY.checked =
         ui.lockZ.checked =
-          !(ui.lockX.checked || ui.lockY.checked || ui.lockZ.checked)
-    }
+          !(ui.lockX.checked || ui.lockY.checked || ui.lockZ.checked);
+    };
 
     $('scale-reset').onclick = $('lab-scale').onclick = () => {
-      selection.scale(1 / ui.scaleX.was, 1 / ui.scaleY.was, 1 / ui.scaleZ.was)
+      selection.scale(1 / ui.scaleX.was, 1 / ui.scaleY.was, 1 / ui.scaleZ.was);
       ui.scaleX.value =
         ui.scaleY.value =
         ui.scaleZ.value =
         ui.scaleX.was =
         ui.scaleY.was =
         ui.scaleZ.was =
-          1
-    }
+          1;
+    };
 
     $('app-xpnd').onclick = () => {
       try {
-        DOC.body.requestFullscreen()
+        DOC.body.requestFullscreen();
       } catch (e) {
-        event.emit('resize')
-        moto.space.event.onResize()
+        event.emit('resize');
+        moto.space.event.onResize();
       }
-    }
+    };
 
     if (!DOC.body.requestFullscreen) {
-      $('app-xpnd').style.display = 'none'
+      $('app-xpnd').style.display = 'none';
     }
 
     uc.onBlur(
@@ -2877,73 +2877,73 @@ gapp.register('kiri.init', (root, exports) => {
         ui.toolTaperTip,
       ],
       updateTool
-    )
+    );
 
-    ui.toolMetric.onclick = updateTool
-    ui.toolType.onchange = updateTool
+    ui.toolMetric.onclick = updateTool;
+    ui.toolType.onchange = updateTool;
     // default show gcode pre
-    ui.gcodePre.button.click()
+    ui.gcodePre.button.click();
 
     function mksvg(src) {
-      let svg = DOC.createElement('svg')
-      svg.innerHTML = src
-      return svg
+      let svg = DOC.createElement('svg');
+      svg.innerHTML = src;
+      return svg;
     }
 
     function mklbl(src) {
-      let lbl = DOC.createElement('label')
-      lbl.innerText = src
-      return lbl
+      let lbl = DOC.createElement('label');
+      lbl.innerText = src;
+      return lbl;
     }
 
-    api.platform.update_size()
+    api.platform.update_size();
 
     function mouseOnHover(int, event, ints) {
-      if (!api.feature.hover) return
-      if (!int) return api.feature.hovers || api.widgets.meshes()
+      if (!api.feature.hover) return;
+      if (!int) return api.feature.hovers || api.widgets.meshes();
       api.event.emit('mouse.hover', {
         int,
         ints,
         event,
         point: int.point,
         type: 'widget',
-      })
+      });
     }
 
     function platformOnHover(int, event) {
-      if (!api.feature.hover) return
+      if (!api.feature.hover) return;
       if (int)
         api.event.emit('mouse.hover', {
           point: int,
           event,
           type: 'platform',
-        })
+        });
     }
 
     api.event.on('feature.hover', (enable) => {
-      space.mouse.onHover(enable ? mouseOnHover : undefined)
-      space.platform.onHover(enable ? platformOnHover : undefined)
-    })
+      space.mouse.onHover(enable ? mouseOnHover : undefined);
+      space.platform.onHover(enable ? platformOnHover : undefined);
+    });
 
     // block standard browser context menu
     DOC.oncontextmenu = (event) => {
-      let et = event.target
+      let et = event.target;
       if (
         et.tagName === 'CANVAS' ||
         et.id === 'context-menu' ||
         et.classList.contains('draggable')
       ) {
-        event.preventDefault()
-        event.stopPropagation()
-        return false
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
       }
-    }
+    };
 
     space.mouse.downSelect((int, event) => {
       if (api.feature.on_mouse_down) {
         if (int) {
-          api.feature.on_mouse_down(int, event)
-          return
+          api.feature.on_mouse_down(int, event);
+          return;
         }
       }
       if (api.feature.hover) {
@@ -2951,9 +2951,9 @@ gapp.register('kiri.init', (root, exports) => {
           return api.event.emit('mouse.hover.down', {
             int,
             point: int.point,
-          })
+          });
         } else {
-          return selection.meshes()
+          return selection.meshes();
         }
       }
       // lay flat with meta or ctrl clicking a selected face
@@ -2961,418 +2961,418 @@ gapp.register('kiri.init', (root, exports) => {
         int &&
         (event.ctrlKey || event.metaKey || api.feature.on_face_select)
       ) {
-        let q = new THREE.Quaternion()
+        let q = new THREE.Quaternion();
         // find intersecting point, look "up" on Z and rotate to face that
-        q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0, 0, -1))
-        selection.rotate(q)
+        q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0, 0, -1));
+        selection.rotate(q);
       }
       if (api.view.get() !== VIEWS.ARRANGE) {
         // return no selection in modes other than arrange
-        return null
+        return null;
       } else {
         // return selected meshes for further mouse processing
-        return api.feature.hovers || selection.meshes()
+        return api.feature.hovers || selection.meshes();
       }
-    })
+    });
 
     space.mouse.upSelect((object, event) => {
       if (api.feature.on_mouse_up) {
         if (event && object) {
-          return api.feature.on_mouse_up(object, event)
+          return api.feature.on_mouse_up(object, event);
         } else {
-          return api.widgets.meshes()
+          return api.widgets.meshes();
         }
       }
       if (event && api.feature.hover) {
-        api.event.emit('mouse.hover.up', { object, event })
-        return
+        api.event.emit('mouse.hover.up', { object, event });
+        return;
       }
       if (event && event.target.nodeName === 'CANVAS') {
         if (object && object.object) {
           if (object.object.widget) {
-            platform.select(object.object.widget, event.shiftKey, false)
+            platform.select(object.object.widget, event.shiftKey, false);
           }
         } else {
-          platform.deselect()
+          platform.deselect();
         }
       } else {
-        return api.feature.hovers || api.widgets.meshes()
+        return api.feature.hovers || api.widgets.meshes();
       }
-    })
+    });
 
     space.mouse.onDrag(function (delta, offset, up = false) {
       if (api.feature.hover) {
-        return
+        return;
       }
       if (up) {
-        api.event.emit('mouse.drag.done', offset)
+        api.event.emit('mouse.drag.done', offset);
       }
       if (delta && ui.freeLayout.checked) {
-        let set = settings()
-        let dev = set.device
-        let bound = set.bounds_sel
-        let width = dev.bedWidth / 2
-        let depth = dev.bedDepth / 2
+        let set = settings();
+        let dev = set.device;
+        let bound = set.bounds_sel;
+        let width = dev.bedWidth / 2;
+        let depth = dev.bedDepth / 2;
         let isout =
           bound.min.x <= -width ||
           bound.min.y <= -depth ||
           bound.max.x >= width ||
-          bound.max.y >= depth
+          bound.max.y >= depth;
         if (!isout) {
-          if (bound.min.x + delta.x <= -width) return
-          if (bound.min.y + delta.y <= -depth) return
-          if (bound.max.x + delta.x >= width) return
-          if (bound.max.y + delta.y >= depth) return
+          if (bound.min.x + delta.x <= -width) return;
+          if (bound.min.y + delta.y <= -depth) return;
+          if (bound.max.x + delta.x >= width) return;
+          if (bound.max.y + delta.y >= depth) return;
         }
-        selection.move(delta.x, delta.y, 0)
-        api.event.emit('selection.drag', delta)
+        selection.move(delta.x, delta.y, 0);
+        api.event.emit('selection.drag', delta);
       } else {
-        return selection.meshes().length > 0
+        return selection.meshes().length > 0;
       }
-    })
+    });
 
-    api.space.restore(init_two) || checkSeed(init_two) || init_two()
+    api.space.restore(init_two) || checkSeed(init_two) || init_two();
   }
 
   // SECOND STAGE INIT AFTER UI RESTORED
   function init_two() {
-    api.event.emit('init.two')
+    api.event.emit('init.two');
 
     // call driver initializations, if present
     Object.values(kiri.driver).forEach((driver) => {
       if (driver.init)
         try {
-          driver.init(kiri, api, driver)
+          driver.init(kiri, api, driver);
         } catch (error) {
-          console.log({ driver_init_fail: driver, error })
+          console.log({ driver_init_fail: driver, error });
         }
-    })
+    });
 
     // load script extensions
     if (SETUP.s)
       SETUP.s.forEach(function (lib) {
-        let scr = DOC.createElement('script')
-        scr.setAttribute('defer', true)
-        scr.setAttribute('src', `/code/${lib}.js?${kiri.version}`)
-        DOC.body.appendChild(scr)
-        stats.add('load_' + lib)
-        api.event.emit('load.lib', lib)
-      })
+        let scr = DOC.createElement('script');
+        scr.setAttribute('defer', true);
+        scr.setAttribute('src', `/code/${lib}.js?${kiri.version}`);
+        DOC.body.appendChild(scr);
+        stats.add('load_' + lib);
+        api.event.emit('load.lib', lib);
+      });
 
     // load CSS extensions
     if (SETUP.ss)
       SETUP.ss.forEach(function (style) {
-        style = style.charAt(0) === '/' ? style : `/kiri/style-${style}`
-        let ss = DOC.createElement('link')
-        ss.setAttribute('type', 'text/css')
-        ss.setAttribute('rel', 'stylesheet')
-        ss.setAttribute('href', `${style}.css?${kiri.version}`)
-        DOC.body.appendChild(ss)
-      })
+        style = style.charAt(0) === '/' ? style : `/kiri/style-${style}`;
+        let ss = DOC.createElement('link');
+        ss.setAttribute('type', 'text/css');
+        ss.setAttribute('rel', 'stylesheet');
+        ss.setAttribute('href', `${style}.css?${kiri.version}`);
+        DOC.body.appendChild(ss);
+      });
 
     // override stored settings
     if (SETUP.v)
       SETUP.v.forEach(function (kv) {
-        kv = kv.split('=')
-        sdb.setItem(kv[0], kv[1])
-      })
+        kv = kv.split('=');
+        sdb.setItem(kv[0], kv[1]);
+      });
 
     // import octoprint settings
     if (SETUP.ophost) {
       let ohost = (api.const.OCTO = {
         host: SETUP.ophost[0],
         apik: SETUP.opkey ? SETUP.opkey[0] : '',
-      })
-      sdb['octo-host'] = ohost.host
-      sdb['octo-apik'] = ohost.apik
-      console.log({ octoprint: ohost })
+      });
+      sdb['octo-host'] = ohost.host;
+      sdb['octo-apik'] = ohost.apik;
+      console.log({ octoprint: ohost });
     }
 
     // load workspace from url
     if (SETUP.wrk) {
-      api.settings.import_url(`${proto}//${SETUP.wrk[0]}`, false)
+      api.settings.import_url(`${proto}//${SETUP.wrk[0]}`, false);
     }
 
     // load an object from url
     if (SETUP.load) {
-      console.log({ load: SETUP })
-      api.platform.load_url(`${proto}//${SETUP.load[0]}`)
+      console.log({ load: SETUP });
+      api.platform.load_url(`${proto}//${SETUP.load[0]}`);
     }
 
     // bind this to UI so main can call it on settings import
     ui.sync = function () {
-      const current = settings()
-      const control = current.controller
+      const current = settings();
+      const control = current.controller;
 
       if (!control.devel) {
         // TODO: hide thin type 3 during development
-        kiri.consts.LISTS.thin.length = 3
+        kiri.consts.LISTS.thin.length = 3;
       }
 
-      platform.deselect()
-      catalog.addFileListener(updateCatalog)
-      space.view.setZoom(control.reverseZoom, control.zoomSpeed)
-      space.platform.setGridZOff(undefined)
-      space.platform.setZOff(0.05)
+      platform.deselect();
+      catalog.addFileListener(updateCatalog);
+      space.view.setZoom(control.reverseZoom, control.zoomSpeed);
+      space.platform.setGridZOff(undefined);
+      space.platform.setZOff(0.05);
 
       // restore UI state from settings
-      ui.showOrigin.checked = control.showOrigin
-      ui.showRulers.checked = control.showRulers
-      ui.showSpeeds.checked = control.showSpeeds
-      ui.freeLayout.checked = control.freeLayout
-      ui.autoLayout.checked = control.autoLayout
-      ui.spaceRandoX.checked = control.spaceRandoX
-      ui.antiAlias.checked = control.antiAlias
-      ui.reverseZoom.checked = control.reverseZoom
-      ui.autoSave.checked = control.autoSave
-      ui.healMesh.checked = control.healMesh
-      ui.threaded.checked = setThreaded(control.threaded)
-      ui.assembly.checked = control.assembly
-      ui.ortho.checked = control.ortho
-      ui.devel.checked = control.devel
-      lineTypeSave()
-      detailSave()
-      updateStats()
+      ui.showOrigin.checked = control.showOrigin;
+      ui.showRulers.checked = control.showRulers;
+      ui.showSpeeds.checked = control.showSpeeds;
+      ui.freeLayout.checked = control.freeLayout;
+      ui.autoLayout.checked = control.autoLayout;
+      ui.spaceRandoX.checked = control.spaceRandoX;
+      ui.antiAlias.checked = control.antiAlias;
+      ui.reverseZoom.checked = control.reverseZoom;
+      ui.autoSave.checked = control.autoSave;
+      ui.healMesh.checked = control.healMesh;
+      ui.threaded.checked = setThreaded(control.threaded);
+      ui.assembly.checked = control.assembly;
+      ui.ortho.checked = control.ortho;
+      ui.devel.checked = control.devel;
+      lineTypeSave();
+      detailSave();
+      updateStats();
 
       // optional set-and-lock mode (hides mode menu)
-      let SETMODE = SETUP.mode ? SETUP.mode[0] : null
+      let SETMODE = SETUP.mode ? SETUP.mode[0] : null;
 
       // optional set-and-lock device (hides device menu)
-      let DEVNAME = SETUP.dev ? SETUP.dev[0] : null
+      let DEVNAME = SETUP.dev ? SETUP.dev[0] : null;
 
       // setup default mode and enable mode locking, if set
-      api.mode.set(SETMODE || STARTMODE || current.mode, SETMODE)
+      api.mode.set(SETMODE || STARTMODE || current.mode, SETMODE);
 
       // fill device list
-      api.devices.refresh()
+      api.devices.refresh();
 
       // update ui fields from settings
-      api.conf.update_fields()
+      api.conf.update_fields();
 
       // default to ARRANGE view mode
-      api.view.set(VIEWS.ARRANGE)
+      api.view.set(VIEWS.ARRANGE);
 
       // add ability to override
-      api.show.controls(api.feature.controls)
+      api.show.controls(api.feature.controls);
 
       // update everything dependent on the platform size
-      platform.update_size()
+      platform.update_size();
 
       // load wasm if indicated
-      kiri.client.wasm(control.assembly === true)
-    }
+      kiri.client.wasm(control.assembly === true);
+    };
 
-    ui.sync()
+    ui.sync();
 
     // clear alerts as they build up
-    setInterval(api.event.alerts, 1000)
+    setInterval(api.event.alerts, 1000);
 
     // add hide-alerts-on-alert-click
     ui.alert.dialog.onclick = function () {
-      api.event.alerts(true)
-    }
+      api.event.alerts(true);
+    };
 
     // enable modal hiding
-    $('mod-x').onclick = api.modal.hide
+    $('mod-x').onclick = api.modal.hide;
 
-    if (!SETUP.s) console.log(`kiri | init main | ${kiri.version}`)
+    if (!SETUP.s) console.log(`kiri | init main | ${kiri.version}`);
 
     // send init-done event
-    api.event.emit('init-done', stats)
+    api.event.emit('init-done', stats);
 
     // show gdpr if it's never been seen and we're not iframed
-    const isLocal = LOCAL || WIN.location.host.split(':')[0] === 'localhost'
+    const isLocal = LOCAL || WIN.location.host.split(':')[0] === 'localhost';
     if (!sdb.gdpr && WIN.self === WIN.top && !SETUP.debug && !isLocal) {
-      $('gdpr').style.display = 'flex'
+      $('gdpr').style.display = 'flex';
     }
 
     // warn of degraded functionality when SharedArrayBuffers are missing
     if (api.feature.work_alerts && !window.SharedArrayBuffer) {
-      api.alerts.show('The security context of this', 10)
-      api.alerts.show('Window blocks important functionality.', 10)
-      api.alerts.show('Try a Chromium-base Browser instead', 10)
+      api.alerts.show('The security context of this', 10);
+      api.alerts.show('Window blocks important functionality.', 10);
+      api.alerts.show('Try a Chromium-base Browser instead', 10);
     }
 
     // add keyboard focus handler (must use for iframes)
     WIN.addEventListener('load', function () {
-      WIN.focus()
+      WIN.focus();
       DOC.body.addEventListener(
         'click',
         function () {
-          WIN.focus()
+          WIN.focus();
         },
         false
-      )
-    })
+      );
+    });
 
     // dismiss gdpr alert
     $('gotit').onclick = () => {
-      $('gdpr').style.display = 'none'
-      sdb.gdpr = Date.now()
-    }
+      $('gdpr').style.display = 'none';
+      sdb.gdpr = Date.now();
+    };
 
     // lift curtain
-    $('curtain').style.display = 'none'
+    $('curtain').style.display = 'none';
 
     // bind interface action elements
-    $('mode-device').onclick = api.show.devices
-    $('mode-profile').onclick = settingsLoad
-    $('mode-fdm').onclick = () => api.mode.set('FDM')
-    $('mode-cam').onclick = () => api.mode.set('CAM')
-    $('mode-sla').onclick = () => api.mode.set('SLA')
-    $('mode-laser').onclick = () => api.mode.set('LASER')
-    $('mode-drag').onclick = () => api.mode.set('DRAG')
-    $('mode-wjet').onclick = () => api.mode.set('WJET')
-    $('mode-wedm').onclick = () => api.mode.set('WEDM')
+    $('mode-device').onclick = api.show.devices;
+    $('mode-profile').onclick = settingsLoad;
+    $('mode-fdm').onclick = () => api.mode.set('FDM');
+    $('mode-cam').onclick = () => api.mode.set('CAM');
+    $('mode-sla').onclick = () => api.mode.set('SLA');
+    $('mode-laser').onclick = () => api.mode.set('LASER');
+    $('mode-drag').onclick = () => api.mode.set('DRAG');
+    $('mode-wjet').onclick = () => api.mode.set('WJET');
+    $('mode-wedm').onclick = () => api.mode.set('WEDM');
     $('set-device').onclick = (ev) => {
-      ev.stopPropagation()
-      api.show.devices()
-    }
+      ev.stopPropagation();
+      api.show.devices();
+    };
     $('set-profs').onclick = (ev) => {
-      ev.stopPropagation()
-      api.conf.show()
-    }
+      ev.stopPropagation();
+      api.conf.show();
+    };
     $('set-tools').onclick = (ev) => {
-      ev.stopPropagation()
-      api.show.tools()
-    }
+      ev.stopPropagation();
+      api.show.tools();
+    };
     $('set-prefs').onclick = (ev) => {
-      ev.stopPropagation()
-      api.modal.show('prefs')
-    }
+      ev.stopPropagation();
+      api.modal.show('prefs');
+    };
     ui.acct.help.onclick = (ev) => {
-      ev.stopPropagation()
-      api.help.show()
-    }
+      ev.stopPropagation();
+      api.help.show();
+    };
     ui.acct.don8.onclick = (ev) => {
-      ev.stopPropagation()
-      api.modal.show('don8')
-    }
+      ev.stopPropagation();
+      api.modal.show('don8');
+    };
     ui.acct.mesh.onclick = (ev) => {
-      ev.stopPropagation()
-      WIN.location = '/mesh'
-    }
+      ev.stopPropagation();
+      WIN.location = '/mesh';
+    };
     ui.acct.export.onclick = (ev) => {
-      ev.stopPropagation()
-      profileExport()
-    }
-    ui.acct.export.title = LANG.acct_xpo
+      ev.stopPropagation();
+      profileExport();
+    };
+    ui.acct.export.title = LANG.acct_xpo;
     $('file-new').onclick = (ev) => {
-      ev.stopPropagation()
-      workspaceNew()
-    }
+      ev.stopPropagation();
+      workspaceNew();
+    };
     $('file-recent').onclick = () => {
-      api.modal.show('files')
-    }
+      api.modal.show('files');
+    };
     $('file-import').onclick = (ev) => {
-      api.event.import(ev)
-    }
+      api.event.import(ev);
+    };
     ui.func.slice.onclick = (ev) => {
-      ev.stopPropagation()
-      api.function.slice()
-    }
+      ev.stopPropagation();
+      api.function.slice();
+    };
     ui.func.preview.onclick = (ev) => {
-      ev.stopPropagation()
-      api.function.print()
-    }
+      ev.stopPropagation();
+      api.function.print();
+    };
     ui.func.animate.onclick = (ev) => {
-      ev.stopPropagation()
-      api.function.animate()
-    }
+      ev.stopPropagation();
+      api.function.animate();
+    };
     ui.func.export.onclick = (ev) => {
-      ev.stopPropagation()
-      api.function.export()
-    }
-    $('view-arrange').onclick = api.platform.layout
-    $('view-top').onclick = space.view.top
-    $('view-home').onclick = space.view.home
-    $('view-front').onclick = space.view.front
-    $('view-back').onclick = space.view.back
-    $('view-left').onclick = space.view.left
-    $('view-right').onclick = space.view.right
+      ev.stopPropagation();
+      api.function.export();
+    };
+    $('view-arrange').onclick = api.platform.layout;
+    $('view-top').onclick = space.view.top;
+    $('view-home').onclick = space.view.home;
+    $('view-front').onclick = space.view.front;
+    $('view-back').onclick = space.view.back;
+    $('view-left').onclick = space.view.left;
+    $('view-right').onclick = space.view.right;
     $('unrotate').onclick = () => {
-      api.widgets.for((w) => w.unrotate())
-      selection.update_info()
-    }
+      api.widgets.for((w) => w.unrotate());
+      selection.update_info();
+    };
     // attach button handlers to support targets
     for (let btn of ['don8pt', 'don8gh', 'don8pp']) {
       $(btn).onclick = (ev) => {
-        window.open(ev.target.children[0].href)
-      }
+        window.open(ev.target.children[0].href);
+      };
     }
     // rotation buttons
-    let d = Math.PI / 180
+    let d = Math.PI / 180;
     $('rot_x_lt').onclick = () => {
-      selection.rotate(-d * $('rot_x').value, 0, 0)
-    }
+      selection.rotate(-d * $('rot_x').value, 0, 0);
+    };
     $('rot_x_gt').onclick = () => {
-      selection.rotate(d * $('rot_x').value, 0, 0)
-    }
+      selection.rotate(d * $('rot_x').value, 0, 0);
+    };
     $('rot_y_lt').onclick = () => {
-      selection.rotate(0, -d * $('rot_y').value, 0)
-    }
+      selection.rotate(0, -d * $('rot_y').value, 0);
+    };
     $('rot_y_gt').onclick = () => {
-      selection.rotate(0, d * $('rot_y').value, 0)
-    }
+      selection.rotate(0, d * $('rot_y').value, 0);
+    };
     $('rot_z_lt').onclick = () => {
-      selection.rotate(0, 0, d * $('rot_z').value)
-    }
+      selection.rotate(0, 0, d * $('rot_z').value);
+    };
     $('rot_z_gt').onclick = () => {
-      selection.rotate(0, 0, -d * $('rot_z').value)
-    }
+      selection.rotate(0, 0, -d * $('rot_z').value);
+    };
     // rendering options
     $('render-edges').onclick = () => {
-      api.view.edges({ toggle: true })
-      api.conf.save()
-    }
+      api.view.edges({ toggle: true });
+      api.conf.save();
+    };
     $('render-ghost').onclick = () => {
-      api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25)
-    }
+      api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25);
+    };
     $('render-wire').onclick = () => {
-      api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5)
-    }
+      api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5);
+    };
     $('render-solid').onclick = () => {
-      api.view.wireframe(false, 0, 1)
-    }
+      api.view.wireframe(false, 0, 1);
+    };
     $('mesh-export-stl').onclick = () => {
-      objectsExport('stl')
-    }
+      objectsExport('stl');
+    };
     $('mesh-export-obj').onclick = () => {
-      objectsExport('obj')
-    }
-    $('mesh-merge').onclick = selection.merge
-    $('context-duplicate').onclick = duplicateSelection
-    $('context-mirror').onclick = mirrorSelection
+      objectsExport('obj');
+    };
+    $('mesh-merge').onclick = selection.merge;
+    $('context-duplicate').onclick = duplicateSelection;
+    $('context-mirror').onclick = mirrorSelection;
     $('context-layflat').onclick = () => {
-      api.event.emit('tool.mesh.lay-flat')
-    }
+      api.event.emit('tool.mesh.lay-flat');
+    };
     $('context-setfocus').onclick = () => {
       api.event.emit('tool.camera.focus', (ev) =>
         api.space.set_focus(undefined, ev.object.point)
-      )
-    }
+      );
+    };
 
     // ui.modal.onclick = api.modal.hide;
     ui.modalBox.onclick = (ev) => {
-      ev.stopPropagation()
-    }
+      ev.stopPropagation();
+    };
 
     // add app name hover info
-    $('app-info').innerText = kiri.version
+    $('app-info').innerText = kiri.version;
 
     // show topline separator when iframed
     try {
-      if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex'
+      if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex';
     } catch (e) {
-      console.log(e)
+      console.log(e);
     }
 
     // warn users they are running a beta release
     if (kiri.beta && kiri.beta > 0 && sdb.kiri_beta != kiri.beta) {
-      api.show.alert('CAUTION')
-      api.show.alert('this is a development release')
-      api.show.alert('and may not function properly')
-      sdb.kiri_beta = kiri.beta
+      api.show.alert('CAUTION');
+      api.show.alert('this is a development release');
+      api.show.alert('and may not function properly');
+      sdb.kiri_beta = kiri.beta;
     }
   }
 
@@ -3380,25 +3380,25 @@ gapp.register('kiri.init', (root, exports) => {
   ui.lang = function () {
     // lk attribute causes inner text to be replaced with lang value
     for (let el of [...DOC.querySelectorAll('[lk]')]) {
-      let key = el.getAttribute('lk')
-      let val = LANG[key]
+      let key = el.getAttribute('lk');
+      let val = LANG[key];
       if (val) {
-        el.innerText = val
+        el.innerText = val;
       } else {
-        console.log({ missing_ln: key })
+        console.log({ missing_ln: key });
       }
     }
     // lkt attribute causes a title attribute to be set from lang value
     for (let el of [...DOC.querySelectorAll('[lkt]')]) {
-      let key = el.getAttribute('lkt')
-      let val = LANG[key]
+      let key = el.getAttribute('lkt');
+      let val = LANG[key];
       if (val) {
-        el.setAttribute('title', val)
+        el.setAttribute('title', val);
       } else {
-        console.log({ missing_ln: key })
+        console.log({ missing_ln: key });
       }
     }
-  }
+  };
 
   // init lang must happen before all other init functions
   function init_lang() {
@@ -3406,39 +3406,39 @@ gapp.register('kiri.init', (root, exports) => {
     // first.  once this loads, or doesn't, the initialization begins
     let lang = SETUP.ln
       ? SETUP.ln[0]
-      : sdb.getItem('kiri-lang') || kiri.lang.get()
+      : sdb.getItem('kiri-lang') || kiri.lang.get();
     // inject language script if not english
     if (lang && lang !== 'en' && lang !== 'en-us') {
-      let map = kiri.lang.map(lang)
-      let scr = DOC.createElement('script')
+      let map = kiri.lang.map(lang);
+      let scr = DOC.createElement('script');
       // scr.setAttribute('defer',true);
-      scr.setAttribute('src', `/kiri/lang/${map}.js?${kiri.version}`)
-      ;(DOC.body || DOC.head).appendChild(scr)
-      stats.set('ll', lang)
+      scr.setAttribute('src', `/kiri/lang/${map}.js?${kiri.version}`);
+      (DOC.body || DOC.head).appendChild(scr);
+      stats.set('ll', lang);
       scr.onload = function () {
-        kiri.lang.set(map)
-        ui.lang()
-        init_one()
-      }
+        kiri.lang.set(map);
+        ui.lang();
+        init_one();
+      };
       scr.onerror = function (err) {
-        console.log({ language_load_error: err, lang })
-        kiri.lang.set()
-        ui.lang()
-        init_one()
-      }
+        console.log({ language_load_error: err, lang });
+        kiri.lang.set();
+        ui.lang();
+        init_one();
+      };
     } else {
       // set to browser default which will be overridden
       // by any future script loads (above)
-      kiri.lang.set()
-      ui.lang()
-      init_one()
+      kiri.lang.set();
+      ui.lang();
+      init_one();
     }
   }
 
   // setup init() trigger when dom + scripts complete
   DOC.onreadystatechange = function () {
     if (DOC.readyState === 'complete') {
-      init_lang()
+      init_lang();
     }
-  }
-})
+  };
+});

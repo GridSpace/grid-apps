@@ -1,5 +1,5 @@
-const TerserPlugin = require('terser-webpack-plugin')
-const path = require('path')
+const TerserPlugin = require('terser-webpack-plugin');
+const path = require('path');
 
 module.exports = {
   mode: 'production',
@@ -42,4 +42,4 @@ module.exports = {
     maxAssetSize: 2 * 1024 * 1024,
     maxEntrypointSize: 2 * 1024 * 1024,
   },
-}
+};

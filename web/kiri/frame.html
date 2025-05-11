@@ -116,34 +116,34 @@
         "api.on('prepare.done', () => {",
         '    api.export();',
         '});',
-      ].join('\n')
-      let msgs = []
-      let edit
+      ].join('\n');
+      let msgs = [];
+      let edit;
       function $(id) {
-        return document.getElementById(id)
+        return document.getElementById(id);
       }
       function onload() {
-        let fnstr = demo.toString().split('\n')
+        let fnstr = demo.toString().split('\n');
         edit = ace.edit($('mbody'), {
           mode: 'ace/mode/javascript',
           theme: 'ace/theme/chrome',
           selectionStyle: 'text',
-        })
-        edit.session.setTabSize(4)
-        edit.session.setUseSoftTabs(true)
-        edit.session.setValue(localStorage.kiri_frame_code || defc)
-        kiri.frame.setFrame('fbody')
-        kiri.frame.onmessage = receive_message
+        });
+        edit.session.setTabSize(4);
+        edit.session.setUseSoftTabs(true);
+        edit.session.setValue(localStorage.kiri_frame_code || defc);
+        kiri.frame.setFrame('fbody');
+        kiri.frame.onmessage = receive_message;
       }
       function receive_message(data, msg) {
-        msgs.push(JSON.stringify(data))
-        $('rbody').innerText = msgs.join('\n-----\n')
-        $('rbody').scrollTop = 1000000
+        msgs.push(JSON.stringify(data));
+        $('rbody').innerText = msgs.join('\n-----\n');
+        $('rbody').scrollTop = 1000000;
       }
       function run_code() {
-        let code = edit.session.getValue()
-        eval(`(function(){${code}})()`)
-        localStorage.kiri_frame_code = code
+        let code = edit.session.getValue();
+        eval(`(function(){${code}})()`);
+        localStorage.kiri_frame_code = code;
       }
     </script>
   </head>

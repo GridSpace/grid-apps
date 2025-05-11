@@ -1,27 +1,27 @@
-const { Client } = require('@gridspace/basic-ftp')
-const { Readable } = require('stream')
-const { FrameStream } = require('./frames')
-const { bblCA } = require('./certs')
+const { Client } = require('@gridspace/basic-ftp');
+const { Readable } = require('stream');
+const { FrameStream } = require('./frames');
+const { bblCA } = require('./certs');
 
 module.exports = async (server) => {
-  const { api, env, util } = server
-  const confdir = util.confdir()
-  const mqtt = require('mqtt')
-  const mcache = {}
-  const wsopen = []
-  const found = {}
-  const video = {}
-  const useCA = false
-  const debug = false
+  const { api, env, util } = server;
+  const confdir = util.confdir();
+  const mqtt = require('mqtt');
+  const mcache = {};
+  const wsopen = [];
+  const found = {};
+  const video = {};
+  const useCA = false;
+  const debug = false;
 
   class MQTT {
-    #timer
-    #timer2
-    #client
-    #serial
-    #frames
-    #topic_report
-    #topic_request
+    #timer;
+    #timer2;
+    #client;
+    #serial;
+    #frames;
+    #topic_report;
+    #topic_request;
     #options = Object.assign(
       {},
       {
@@ -36,145 +36,145 @@ module.exports = async (server) => {
         : {
             rejectUnauthorized: false,
           }
-    )
+    );
 
     constructor(host, code, serial, onready, onerror, onmessage) {
-      this.#options.host = host
-      this.#options.password = code
-      this.#options.servername = serial
-      this.#serial = serial
-      let client = (this.#client = mqtt.connect(this.#options))
+      this.#options.host = host;
+      this.#options.password = code;
+      this.#options.servername = serial;
+      this.#serial = serial;
+      let client = (this.#client = mqtt.connect(this.#options));
 
       client.on('connect', () => {
-        let report = (this.#topic_report = `device/${serial}/report`)
-        let request = (this.#topic_request = `device/${serial}/request`)
+        let report = (this.#topic_report = `device/${serial}/report`);
+        let request = (this.#topic_request = `device/${serial}/request`);
         // util.log({ report, request });
         client.subscribe(report, (err) => {
-          debug && util.log('mqtt sub', this.#serial, err || 'ok')
-          onready(this)
-          this.keepalive()
+          debug && util.log('mqtt sub', this.#serial, err || 'ok');
+          onready(this);
+          this.keepalive();
           // this.keepconn();
-        })
-      })
+        });
+      });
 
       client.on('message', (topic, message) => {
-        message = JSON.parse(message.toString())
+        message = JSON.parse(message.toString());
         if (onmessage) {
-          onmessage(message)
+          onmessage(message);
         } else {
-          debug && util.log('mqtt_recv', this.#serial, message)
+          debug && util.log('mqtt_recv', this.#serial, message);
         }
-      })
+      });
 
-      client.on('error', (error) => onerror(error))
+      client.on('error', (error) => onerror(error));
     }
 
     set_frames(bool) {
-      video[this.#serial] = bool
+      video[this.#serial] = bool;
       if (this.#frames && !bool) {
-        this.#frames.end()
-        this.#frames = undefined
+        this.#frames.end();
+        this.#frames = undefined;
       } else if (!this.#frames && bool) {
-        let { host, password } = this.#options
+        let { host, password } = this.#options;
         this.#frames = new FrameStream(host, password, this.#serial).on(
           'frame',
           (jpg) => {
             wsend({
               serial: this.#serial,
               frame: jpg.toString('base64'),
-            })
+            });
           }
-        )
+        );
       }
     }
 
     keepalive() {
-      clearTimeout(this.#timer)
+      clearTimeout(this.#timer);
       this.#timer = setTimeout(() => {
-        util.log('keepalive expired', this.#serial)
-        this.end()
-      }, 300000)
+        util.log('keepalive expired', this.#serial);
+        this.end();
+      }, 300000);
     }
 
     keepconn() {
-      clearTimeout(this.#timer2)
+      clearTimeout(this.#timer2);
       this.#timer2 = setTimeout(() => {
-        this.keepconn()
-      }, 120000)
+        this.keepconn();
+      }, 120000);
       if_mqtt(this.#serial, {
         print: {
           sequence_id: '0',
           command: 'push_status',
           msg: 1,
         },
-      })
+      });
     }
 
     async send(msg) {
       if (this.#client) {
-        debug && util.log('mqtt send', this.#serial, msg)
-        this.#client.publish(this.#topic_request, JSON.stringify(msg))
-        this.keepalive()
-        return true
+        debug && util.log('mqtt send', this.#serial, msg);
+        this.#client.publish(this.#topic_request, JSON.stringify(msg));
+        this.keepalive();
+        return true;
       } else {
-        return false
+        return false;
       }
     }
 
     end() {
       if (this.#client) {
-        util.log('mqtt end', this.#serial)
-        this.#client.end()
-        this.#client = undefined
-        this.set_frames(false)
+        util.log('mqtt end', this.#serial);
+        this.#client.end();
+        this.#client = undefined;
+        this.set_frames(false);
       }
-      this.#topic_report = undefined
-      this.#topic_request = undefined
-      delete mcache[this.#serial]
+      this.#topic_report = undefined;
+      this.#topic_request = undefined;
+      delete mcache[this.#serial];
     }
   }
 
   function if_mqtt(serial, msg) {
-    mcache[serial]?.send(msg)
+    mcache[serial]?.send(msg);
   }
 
   function get_mqtt(host, code, serial, onmsg, onconn) {
-    const fns = {}
+    const fns = {};
     const promise = new Promise((resolve, reject) => {
-      Object.assign(fns, { resolve, reject })
-    })
+      Object.assign(fns, { resolve, reject });
+    });
 
-    let mqtt = mcache[serial]
+    let mqtt = mcache[serial];
     if (mqtt) {
-      fns.resolve(mqtt)
+      fns.resolve(mqtt);
     } else {
       mqtt = new MQTT(
         host,
         code,
         serial,
         (obj) => {
-          mcache[serial] = obj
-          fns.resolve(obj)
+          mcache[serial] = obj;
+          fns.resolve(obj);
           if (onconn) {
-            onconn(mqtt)
+            onconn(mqtt);
           }
-          mcache[serial]?.set_frames(video[serial])
+          mcache[serial]?.set_frames(video[serial]);
         },
         (error) => fns.reject(error),
         onmsg
-      )
+      );
     }
 
-    return promise
+    return promise;
   }
 
   async function ftp_open(args = {}) {
-    const client = new Client()
-    const port = parseInt(args.port || 990)
-    const host = args.host || 'localhost'
-    const user = args.user || 'bblp'
-    const password = args.password || args.code || ''
-    client.ftp.verbose = debug
+    const client = new Client();
+    const port = parseInt(args.port || 990);
+    const host = args.host || 'localhost';
+    const user = args.user || 'bblp';
+    const password = args.password || args.code || '';
+    client.ftp.verbose = debug;
     try {
       await client.access({
         port,
@@ -192,58 +192,58 @@ module.exports = async (server) => {
           : {
               rejectUnauthorized: false,
             },
-      })
+      });
     } catch (error) {
-      util.log({ ftp_error: error })
-      throw error
+      util.log({ ftp_error: error });
+      throw error;
     }
-    return client
+    return client;
   }
 
   async function ftp_send(args = {}) {
-    const client = await ftp_open(args)
-    const filename = args.filename || 'test.3mf'
-    const data = args.data || undefined
+    const client = await ftp_open(args);
+    const filename = args.filename || 'test.3mf';
+    const data = args.data || undefined;
     try {
-      const readableStream = new Readable()
-      readableStream._read = () => {}
-      readableStream.push(data)
-      readableStream.push(null)
-      await client.uploadFrom(readableStream, filename)
+      const readableStream = new Readable();
+      readableStream._read = () => {};
+      readableStream.push(data);
+      readableStream.push(null);
+      await client.uploadFrom(readableStream, filename);
     } finally {
-      client.close()
+      client.close();
     }
   }
 
   async function ftp_list(args = {}) {
-    const client = await ftp_open(args)
-    const list = []
+    const client = await ftp_open(args);
+    const list = [];
     try {
-      let files = await client.list()
-      files.forEach((file) => (file.root = ''))
-      list.push(...files)
+      let files = await client.list();
+      files.forEach((file) => (file.root = ''));
+      list.push(...files);
     } catch (e) {}
     try {
-      let files = await client.list('/cache')
-      files.forEach((file) => (file.root = 'cache/'))
-      list.push(...files)
+      let files = await client.list('/cache');
+      files.forEach((file) => (file.root = 'cache/'));
+      list.push(...files);
     } catch (e) {}
-    client.close()
-    return list
+    client.close();
+    return list;
   }
 
   async function ftp_delete(args = {}) {
-    const client = await ftp_open(args)
+    const client = await ftp_open(args);
     try {
-      await client.remove(args.path)
+      await client.remove(args.path);
     } catch (error) {
-      util.log({ ftp_delete_error: error })
+      util.log({ ftp_delete_error: error });
     }
-    client.close()
+    client.close();
   }
 
   function file_print(opts = {}) {
-    const { host, code, serial, filename, amsmap } = opts
+    const { host, code, serial, filename, amsmap } = opts;
     const cmd = {
       print: {
         command: 'project_file',
@@ -257,69 +257,69 @@ module.exports = async (server) => {
         layer_inspect: false,
         vibration_cali: false,
       },
-    }
+    };
     if (amsmap && amsmap !== 'auto') {
-      cmd.print.ams_mapping = amsmap.split(',').map((v) => parseInt(v))
+      cmd.print.ams_mapping = amsmap.split(',').map((v) => parseInt(v));
     }
-    util.log({ file_print: cmd })
+    util.log({ file_print: cmd });
     get_mqtt(host, code, serial, (message) => {
-      debug && util.log('mqtt_recv', message)
-      wsend({ serial, message })
+      debug && util.log('mqtt_recv', message);
+      wsend({ serial, message });
     })
       .then((mqtt) => mqtt.send(cmd))
       .catch((err) => {
-        util.log({ mqtt_err: err })
-      })
+        util.log({ mqtt_err: err });
+      });
   }
 
   function decode_post(req, res, next) {
     if (req.method === 'POST') {
-      let chunks = []
+      let chunks = [];
       req
         .on('data', (data) => chunks.push(data))
         .on('end', () => {
-          req.app.post = Buffer.concat(chunks)
-          next()
-        })
+          req.app.post = Buffer.concat(chunks);
+          next();
+        });
     } else {
-      next()
+      next();
     }
   }
 
   // insert scripts before all others in kiri client
-  server.inject('kiri', 'bambu.js')
-  server.inject('kiri', 'errors.js')
-  server.inject('kiri', 'filament.js')
+  server.inject('kiri', 'bambu.js');
+  server.inject('kiri', 'errors.js');
+  server.inject('kiri', 'filament.js');
 
   function o2s(obj) {
-    return JSON.stringify(obj)
+    return JSON.stringify(obj);
   }
 
   function wsend(msg) {
-    wsopen.forEach((ws) => ws.send(JSON.stringify(msg)))
+    wsopen.forEach((ws) => ws.send(JSON.stringify(msg)));
   }
 
   if (!(env.debug || env.electron)) {
-    util.log('not a valid context for bambu')
-    return
+    util.log('not a valid context for bambu');
+    return;
   }
 
   // start SSDP listener for local Bambu printer broadcasts
   {
-    const dgram = require('dgram')
-    const SSDP_ADDRESS = '239.255.255.250'
-    const SSDP_PORT = 1990
-    const socket = dgram.createSocket('udp4')
+    const dgram = require('dgram');
+    const SSDP_ADDRESS = '239.255.255.250';
+    const SSDP_PORT = 1990;
+    const socket = dgram.createSocket('udp4');
 
     socket.on('message', (msg) => {
-      msg = msg.toString()
+      msg = msg.toString();
       if (msg.indexOf('.bambu.com') > 0) {
-        let rec = {}
+        let rec = {};
         map = msg
           .split('\n')
           .filter((l) => l.indexOf(': ') > 0)
-          .map((l) => l.trim().replace('.bambu.com', '').split(': '))
-        map.forEach((line) => (rec[line[0]] = line[1]))
+          .map((l) => l.trim().replace('.bambu.com', '').split(': '));
+        map.forEach((line) => (rec[line[0]] = line[1]));
         // console.log({ ssdp: rec, map })
         if (rec.DevName && rec.Location) {
           let nurec = {
@@ -328,31 +328,31 @@ module.exports = async (server) => {
             type: rec.DevModel,
             firm: rec.DevVersion,
             srno: rec.USN,
-          }
+          };
           if (!found[rec.DevName]) {
-            found[rec.DevName] = nurec
-            util.log(`found Bambu ${nurec.name} ${nurec.srno} @ ${nurec.host}`)
+            found[rec.DevName] = nurec;
+            util.log(`found Bambu ${nurec.name} ${nurec.srno} @ ${nurec.host}`);
           }
-          wsend({ found })
+          wsend({ found });
         }
       }
-    })
+    });
 
     socket.bind(SSDP_PORT, () => {
-      socket.addMembership(SSDP_ADDRESS)
-    })
+      socket.addMembership(SSDP_ADDRESS);
+    });
   }
 
   api.bambu_send = (req, res, next) => {
-    const { app, url, headers } = req
-    const { host } = headers
-    const { query } = app
-    server.handler.addCORS(req, res)
+    const { app, url, headers } = req;
+    const { host } = headers;
+    const { query } = app;
+    server.handler.addCORS(req, res);
     decode_post(req, res, async () => {
-      res.setHeader('Content-Type', 'application/octet-stream')
-      res.setHeader('Cache-Control', 'no-cache, no-store, private')
-      const data = req.app.post
-      const { host, code, filename, serial, ams, start } = query
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Cache-Control', 'no-cache, no-store, private');
+      const data = req.app.post;
+      const { host, code, filename, serial, ams, start } = query;
       ftp_send({ host, code, filename, data, serial })
         .then(() => {
           if (serial && start === 'true') {
@@ -362,27 +362,27 @@ module.exports = async (server) => {
               serial,
               filename,
               amsmap: ams,
-            })
+            });
           }
-          res.end(o2s({ sent: true }))
+          res.end(o2s({ sent: true }));
         })
         .catch((error) => {
-          util.log({ ftp_send_error: error })
-          res.end(o2s({ sent: false, error }))
-        })
-    })
-  }
+          util.log({ ftp_send_error: error });
+          res.end(o2s({ sent: false, error }));
+        });
+    });
+  };
 
   server.ws.register('/bambu', function (ws, req) {
-    wsopen.push(ws)
-    debug && util.log('ws open', req.url, wsopen.length)
-    wsend({ found })
-    let binaryData
+    wsopen.push(ws);
+    debug && util.log('ws open', req.url, wsopen.length);
+    wsend({ found });
+    let binaryData;
     ws.on('message', (msg, isBinary) => {
       if (isBinary) {
-        return (binaryData = msg)
+        return (binaryData = msg);
       }
-      msg = isBinary ? msg : JSON.parse(msg.toString())
+      msg = isBinary ? msg : JSON.parse(msg.toString());
       let {
         cmd,
         host,
@@ -394,7 +394,7 @@ module.exports = async (server) => {
         frames,
         file,
         data,
-      } = msg
+      } = msg;
       switch (cmd) {
         case 'monitor':
           get_mqtt(
@@ -403,7 +403,7 @@ module.exports = async (server) => {
             serial,
             (message) => {
               // util.log({ mqtt_msg: serial });
-              wsend({ serial, message })
+              wsend({ serial, message });
             },
             (mqtt) => {
               // on open only
@@ -417,28 +417,28 @@ module.exports = async (server) => {
                   sequence_id: '0',
                   command: 'pushall',
                 },
-              })
+              });
               // request system info
               mqtt.send({
                 info: {
                   command: 'get_version',
                 },
-              })
+              });
               // announce all current monitor hosts
-              wsend({ monitoring: Object.keys(mcache) })
+              wsend({ monitoring: Object.keys(mcache) });
             })
             .catch((error) => {
-              util.log({ mqtt_err: error })
+              util.log({ mqtt_err: error });
               wsend({
                 serial,
                 error: error.message || error.toString(),
-              })
-            })
-          break
+              });
+            });
+          break;
         case 'files':
           ftp_list({ host, code, serial })
             .then((files) => {
-              debug && util.log({ ftp_files: files.length })
+              debug && util.log({ ftp_files: files.length });
               // console.log(JSON.stringify(files,undefined,4));
               files = files
                 .filter((file) => file.name.toLowerCase().endsWith('.3mf'))
@@ -449,60 +449,60 @@ module.exports = async (server) => {
                     path: file.root + file.name,
                     size: file.size,
                     date: file.rawModifiedAt,
-                  }
-                })
-              wsend({ serial, files })
+                  };
+                });
+              wsend({ serial, files });
             })
             .catch((error) => {
-              util.log({ ftp_error: error })
+              util.log({ ftp_error: error });
               wsend({
                 serial,
                 error: error.message || error.toString(),
-              })
-            })
-          break
+              });
+            });
+          break;
         case 'file-delete':
           ftp_delete({ host, code, path, serial }).then(() => {
-            util.log({ ftp_delete: path })
-            wsend({ serial, deleted: path })
-          })
-          break
+            util.log({ ftp_delete: path });
+            wsend({ serial, deleted: path });
+          });
+          break;
         case 'file-print':
-          file_print({ host, code, serial, filename: path, amsmap })
-          break
+          file_print({ host, code, serial, filename: path, amsmap });
+          break;
         case 'pause':
           if_mqtt(serial, {
             print: { command: 'pause', sequence_id: '0' },
-          })
-          break
+          });
+          break;
         case 'resume':
           if_mqtt(serial, {
             print: { command: 'resume', sequence_id: '0' },
-          })
-          break
+          });
+          break;
         case 'cancel':
           if_mqtt(serial, {
             print: { command: 'stop', sequence_id: '0', param: '' },
-          })
-          break
+          });
+          break;
         case 'direct':
-          if_mqtt(serial, direct)
-          break
+          if_mqtt(serial, direct);
+          break;
         case 'frames':
-          debug && util.log('request frames', serial, frames)
-          mcache[serial]?.set_frames(frames)
-          video[serial] = frames
-          break
+          debug && util.log('request frames', serial, frames);
+          mcache[serial]?.set_frames(frames);
+          video[serial] = frames;
+          break;
         case 'keepalive':
           // util.log({ keepalive: serial });
-          mcache[serial]?.keepalive()
-          break
+          mcache[serial]?.keepalive();
+          break;
       }
-    })
+    });
     ws.on('close', () => {
-      let io = wsopen.indexOf(ws)
-      if (io >= 0) wsopen.splice(io, 1)
-      debug && util.log('ws close', wsopen.length)
-    })
-  })
-}
+      let io = wsopen.indexOf(ws);
+      if (io >= 0) wsopen.splice(io, 1);
+      debug && util.log('ws close', wsopen.length);
+    });
+  });
+};

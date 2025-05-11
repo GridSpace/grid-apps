@@ -1,36 +1,36 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 // dep: geo.base
 // dep: kiri-mode.sla.driver
 gapp.register('kiri-mode.sla.client', [], (root, exports) => {
-  const { base, kiri } = root
-  const { driver } = kiri
-  const { util } = base
-  const { SLA } = driver
+  const { base, kiri } = root;
+  const { driver } = kiri;
+  const { util } = base;
+  const { SLA } = driver;
 
   gapp.overlay(SLA, {
     init,
     printDownload,
-  })
+  });
 
   function init(kiri, api) {
     api.event.on('mode.set', (mode) => {
       if (mode === 'SLA') {
-        api.ui.func.preview.classList.add('hide')
+        api.ui.func.preview.classList.add('hide');
       } else {
-        api.ui.func.preview.classList.remove('hide')
+        api.ui.func.preview.classList.remove('hide');
       }
-    })
+    });
   }
 
   function printDownload(output, api, names) {
-    const { file, width, height, layers, volume } = output
-    const fileroot = names[0] || 'print'
-    const filename = `${fileroot}-${new Date().getTime().toString(36)}`
+    const { file, width, height, layers, volume } = output;
+    const fileroot = names[0] || 'print';
+    const filename = `${fileroot}-${new Date().getTime().toString(36)}`;
 
-    api.modal.show('xsla')
+    api.modal.show('xsla');
     // api.ajax("/kiri/output-sla.html", html => {
     //     api.ui.print.innerHTML = html;
 
@@ -39,60 +39,60 @@ gapp.register('kiri-mode.sla.client', [], (root, exports) => {
       device = settings.device,
       print_sec =
         process.slaBaseLayers * process.slaBaseOn +
-        (layers - process.slaBaseLayers) * process.slaLayerOn
+        (layers - process.slaBaseLayers) * process.slaLayerOn;
 
     // add peel lift/drop times to total print time
     for (let i = 0; i < layers; i++) {
       let dist = process.slaPeelDist,
         lift = process.slaPeelLiftRate,
         drop = process.slaPeelDropRate,
-        off = process.slaLayerOff
+        off = process.slaLayerOff;
       if (i < process.slaBaseLayers) {
-        dist = process.slaBasePeelDist
-        lift = process.slaBasePeelLiftRate
-        off = process.slaBaseOff
+        dist = process.slaBasePeelDist;
+        lift = process.slaBasePeelLiftRate;
+        off = process.slaBaseOff;
       }
-      print_sec += (dist * lift) / 60
-      print_sec += (dist * drop) / 60
-      print_sec += off
+      print_sec += (dist * lift) / 60;
+      print_sec += (dist * drop) / 60;
+      print_sec += off;
     }
 
     let print_min = Math.floor(print_sec / 60),
       print_hrs = Math.floor(print_min / 60),
-      download = $('print-sla')
+      download = $('print-sla');
 
     // add lift/drop time
-    print_sec -= print_min * 60
-    print_min -= print_hrs * 60
-    print_sec = Math.round(print_sec).toString().padStart(2, '0')
-    print_min = print_min.toString().padStart(2, '0')
-    print_hrs = print_hrs.toString().padStart(2, '0')
+    print_sec -= print_min * 60;
+    print_min -= print_hrs * 60;
+    print_sec = Math.round(print_sec).toString().padStart(2, '0');
+    print_min = print_min.toString().padStart(2, '0');
+    print_hrs = print_hrs.toString().padStart(2, '0');
 
-    $('print-filename-sla').value = filename
-    $('print-volume').value = (volume / 1000).round(2)
-    $('print-layers').value = layers
-    $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`
+    $('print-filename-sla').value = filename;
+    $('print-volume').value = (volume / 1000).round(2);
+    $('print-layers').value = layers;
+    $('print-time').value = `${print_hrs}:${print_min}:${print_sec}`;
 
     switch (device.deviceName) {
       case 'Anycubic.Photon':
-        download.innerText += ' .photon'
+        download.innerText += ' .photon';
         download.onclick = () => {
-          saveFile(api, file, '.photon')
-        }
-        break
+          saveFile(api, file, '.photon');
+        };
+        break;
       case 'Anycubic.Photon.S':
-        download.innerText += ' .photons'
+        download.innerText += ' .photons';
         download.onclick = () => {
-          saveFile(api, file, '.photons')
-        }
-        break
+          saveFile(api, file, '.photons');
+        };
+        break;
       case 'Creality.Halot.Sky':
       default:
-        download.innerText += ' .cxdlp'
+        download.innerText += ' .cxdlp';
         download.onclick = () => {
-          saveFile(api, file, '.cxdlp')
-        }
-        break
+          saveFile(api, file, '.cxdlp');
+        };
+        break;
     }
 
     //     api.modal.show('print');
@@ -100,7 +100,7 @@ gapp.register('kiri-mode.sla.client', [], (root, exports) => {
   }
 
   function saveFile(api, file, ext) {
-    api.util.download(file, $('print-filename-sla').value + ext)
-    api.modal.hide()
+    api.util.download(file, $('print-filename-sla').value + ext);
+    api.modal.hide();
   }
-})
+});

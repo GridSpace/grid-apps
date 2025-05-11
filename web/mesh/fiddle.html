@@ -9,47 +9,47 @@
       }
     </style>
     <script>
-      self.module = { exports: {} }
+      self.module = { exports: {} };
     </script>
     <script src="/src/main/gapp.js"></script>
     <script src="/src/ext/three.js"></script>
     <script src="/src/add/three.js"></script>
     <script src="/src/moto/orbit.js"></script>
     <script>
-      let camera, scene, renderer, controls
-      let material, mesh
-      let vertices, indices
-      let unindexed, indexed
+      let camera, scene, renderer, controls;
+      let material, mesh;
+      let vertices, indices;
+      let unindexed, indexed;
 
       function light(i, x, y, z) {
-        let l = new THREE.PointLight(0xffffff, i)
-        l.position.set(x, y, z)
-        return l
+        let l = new THREE.PointLight(0xffffff, i);
+        l.position.set(x, y, z);
+        return l;
       }
 
       function init() {
-        scene = new THREE.Scene()
+        scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(
           50,
           window.innerWidth / window.innerHeight,
           1,
           10000
-        )
-        camera.position.z = 15
+        );
+        camera.position.z = 15;
 
-        scene.add(camera)
-        scene.add(new THREE.AmbientLight(0xffffff, 0.2))
-        scene.add(light(0.2, 30, 0, 0))
-        scene.add(light(0.2, -30, 0, 0))
-        scene.add(light(0.2, 0, 30, 0))
-        scene.add(light(0.2, 0, -30, 0))
-        scene.add(light(0.2, 0, 0, 30))
-        scene.add(light(0.2, 0, 0, -30))
+        scene.add(camera);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.2));
+        scene.add(light(0.2, 30, 0, 0));
+        scene.add(light(0.2, -30, 0, 0));
+        scene.add(light(0.2, 0, 30, 0));
+        scene.add(light(0.2, 0, -30, 0));
+        scene.add(light(0.2, 0, 0, 30));
+        scene.add(light(0.2, 0, 0, -30));
 
         vertices = Float32Array.from([
           -2, -2, -2, -2, 2, -2, 2, 2, -2, 2, -2, -2, -2, -2, 2, -2, 2, 2, 2, 2,
           2, 2, -2, 2,
-        ])
+        ]);
 
         indices = Uint32Array.from([
           0,
@@ -76,14 +76,14 @@
           3,
           6,
           7,
-        ])
+        ]);
 
         // generate full vertices list (non-indexed)
-        let vertall = []
+        let vertall = [];
         for (let i of indices) {
-          vertall = vertall.concat([...vertices].slice(i * 3, i * 3 + 3))
+          vertall = vertall.concat([...vertices].slice(i * 3, i * 3 + 3));
         }
-        vertall = Float32Array.from(vertall)
+        vertall = Float32Array.from(vertall);
 
         material = new THREE.MeshPhongMaterial({
           side: THREE.DoubleSide,
@@ -92,17 +92,17 @@
           transparent: false,
           color: 0xffff00,
           opacity: 0.5,
-        })
+        });
 
         // non-indexed geometry
         unindexed = new THREE.BufferGeometry().setAttribute(
           'position',
           new THREE.BufferAttribute(vertall, 3)
-        )
-        unindexed.computeVertexNormals()
+        );
+        unindexed.computeVertexNormals();
 
         // mesh with non-indexed geometry
-        let meshU = new THREE.Mesh(unindexed, material)
+        let meshU = new THREE.Mesh(unindexed, material);
         meshU.add(
           new THREE.Mesh(
             unindexed.clone(),
@@ -111,18 +111,18 @@
               color: 0xffff00,
             })
           )
-        )
-        scene.add(meshU)
-        meshU.position.y = 2.5
+        );
+        scene.add(meshU);
+        meshU.position.y = 2.5;
 
         // indexed geometry
         indexed = new THREE.BufferGeometry()
           .setAttribute('position', new THREE.BufferAttribute(vertices, 3))
-          .setIndex(new THREE.BufferAttribute(indices, 1))
-        indexed.computeVertexNormals()
+          .setIndex(new THREE.BufferAttribute(indices, 1));
+        indexed.computeVertexNormals();
 
         // mesh with indexed geometry
-        let meshI = new THREE.Mesh(indexed, material)
+        let meshI = new THREE.Mesh(indexed, material);
         meshI.add(
           new THREE.Mesh(
             indexed.clone(),
@@ -131,32 +131,32 @@
               color: 0xffff00,
             })
           )
-        )
-        scene.add(meshI)
-        meshI.position.y = -2.5
+        );
+        scene.add(meshI);
+        meshI.position.y = -2.5;
 
         renderer = new THREE.WebGLRenderer({
           antialias: true,
           preserveDrawingBuffer: true,
           logarithmicDepthBuffer: true,
-        })
+        });
 
-        controls = new moto.Orbit(camera, renderer.domElement)
-        controls.update()
+        controls = new moto.Orbit(camera, renderer.domElement);
+        controls.update();
 
-        renderer.setSize(window.innerWidth, window.innerHeight)
-        document.body.appendChild(renderer.domElement)
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        animate()
+        animate();
       }
 
       function animate() {
-        requestAnimationFrame(animate)
-        render()
+        requestAnimationFrame(animate);
+        render();
       }
 
       function render() {
-        renderer.render(scene, camera)
+        renderer.render(scene, camera);
       }
     </script>
   </head>

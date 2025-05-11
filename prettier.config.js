@@ -13,6 +13,6 @@ const config = {
   bracketSameLine: false,
   arrowParens: 'always',
   endOfLine: 'crlf',
-}
+};
 
-module.exports = config
+module.exports = config;

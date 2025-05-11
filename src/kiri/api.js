@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 // dep: moto.broker
 // dep: data.local
@@ -33,15 +33,15 @@ gapp.register('kiri.api', (root, exports) => {
       pmode: consts.PMODES.SPEED, // preview modes
       // hover: false, // when true fires mouse hover events
       get hover() {
-        return isHover
+        return isHover;
       },
       set hover(b) {
-        isHover = b
-        moto.broker.publish('feature.hover', b)
+        isHover = b;
+        moto.broker.publish('feature.hover', b);
       },
     },
     onkey = (fn) => {
-      api.feature.on_key2.push(fn)
+      api.feature.on_key2.push(fn);
     },
     doit = {
       undo: noop, // do.js
@@ -51,11 +51,11 @@ gapp.register('kiri.api', (root, exports) => {
       xray(layers, raw) {
         let proc = api.conf.get().process,
           size = proc.sliceHeight || proc.slaSlice || 1,
-          base = proc.firstSliceHeight || size
-        layers = Array.isArray(layers) ? layers : [layers]
-        proc.xray = layers.map((l) => (raw ? l : base + l * size - size / 2))
-        proc.xrayi = layers.slice()
-        api.function.slice()
+          base = proc.firstSliceHeight || size;
+        layers = Array.isArray(layers) ? layers : [layers];
+        proc.xray = layers.map((l) => (raw ? l : base + l * size - size / 2));
+        proc.xrayi = layers.slice();
+        api.function.slice();
       },
     },
     local = {
@@ -63,8 +63,8 @@ gapp.register('kiri.api', (root, exports) => {
       getInt: (key) => parseInt(localGet(key)),
       getFloat: (key) => parseFloat(localGet(key)),
       getBoolean: (key, def = true) => {
-        let val = localGet(key)
-        return val === true || val === 'true' || val === def
+        let val = localGet(key);
+        return val === true || val === 'true' || val === def;
       },
       toggle: (key, val, def) =>
         localSet(key, val ?? !api.local.getBoolean(key, def)),
@@ -73,10 +73,10 @@ gapp.register('kiri.api', (root, exports) => {
     },
     tweak = {
       line_precision(v) {
-        api.work.config({ base: { clipperClean: v } })
+        api.work.config({ base: { clipperClean: v } });
       },
       gcode_decimals(v) {
-        api.work.config({ base: { gcode_decimals: v } })
+        api.work.config({ base: { gcode_decimals: v } });
       },
     },
     und = undefined,
@@ -131,22 +131,22 @@ gapp.register('kiri.api', (root, exports) => {
       view: {}, // main.js
       widgets: {}, // widgets.js
       work: und, // main.js
-    })
+    });
 
   function clip(text) {
     navigator.clipboard
       .writeText(text)
-      .catch((err) => console.error('Clipboard Error:', err))
+      .catch((err) => console.error('Clipboard Error:', err));
   }
 
   function localGet(key) {
-    let sloc = api.conf.get().local
-    return sloc[key] || api.sdb[key]
+    let sloc = api.conf.get().local;
+    return sloc[key] || api.sdb[key];
   }
 
   function localSet(key, val) {
-    let sloc = api.conf.get().local
-    sloc[key] = api.sdb[key] = val
-    return val
+    let sloc = api.conf.get().local;
+    sloc[key] = api.sdb[key] = val;
+    return val;
   }
-})
+});

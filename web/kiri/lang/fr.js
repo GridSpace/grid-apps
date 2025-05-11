@@ -1003,4 +1003,4 @@ kiri.lang['fr'] = kiri.lang['fr-fr'] = {
     'produces larger files',
     'can blur details',
   ],
-}
+};

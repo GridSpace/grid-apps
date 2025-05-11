@@ -1,49 +1,49 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 // dep: add.array
 // dep: data.local
 gapp.register('kiri.conf', (root, exports) => {
-  const { data } = root
-  const { local } = data
-  const { clone } = Object
-  const CVER = 410
+  const { data } = root;
+  const { local } = data;
+  const { clone } = Object;
+  const CVER = 410;
 
   function genID() {
     while (true) {
-      let k = Math.round(Math.random() * 9999999999).toString(36)
-      if (k.length >= 4 && k.length <= 8) return k
+      let k = Math.round(Math.random() * 9999999999).toString(36);
+      if (k.length >= 4 && k.length <= 8) return k;
     }
   }
 
   // add fields to o(bject) from d(efault) that are missing
   // remove fields from o(bject) that don't exist in d(efault)
   function fill_cull_once(obj, def, debug) {
-    if (!obj) return
+    if (!obj) return;
     // handle renaming
     for (let k in obj) {
       if (obj.hasOwnProperty(k)) {
-        let nam = renamed[k] || k
+        let nam = renamed[k] || k;
         if (nam !== k) {
           // handle field renames
-          obj[nam] = obj[k]
-          if (debug) console.log({ rename: k, to: nam })
-          delete obj[k]
+          obj[nam] = obj[k];
+          if (debug) console.log({ rename: k, to: nam });
+          delete obj[k];
         }
       }
     }
     // fill missing
     for (let k in def) {
       if (def.hasOwnProperty(k)) {
-        let okv = obj[k]
+        let okv = obj[k];
         if (okv === undefined || okv === null) {
           // handle fill
-          if (debug) console.log({ fill: k, val: def[k] })
+          if (debug) console.log({ fill: k, val: def[k] });
           if (typeof def[k] === 'object') {
-            obj[k] = clone(def[k])
+            obj[k] = clone(def[k]);
           } else {
-            obj[k] = def[k]
+            obj[k] = def[k];
           }
         }
       }
@@ -51,44 +51,44 @@ gapp.register('kiri.conf', (root, exports) => {
     // remove invalid
     for (let k in obj) {
       if (!def.hasOwnProperty(k)) {
-        if (debug) console.log({ cull: k })
-        delete obj[k]
+        if (debug) console.log({ cull: k });
+        delete obj[k];
       }
     }
   }
 
   function fill_cull_many(map, def) {
     forValues(map, (obj) => {
-      fill_cull_once(obj, def)
-    })
+      fill_cull_once(obj, def);
+    });
   }
 
   function objectMap(o, fn) {
     for (let [key, val] of Object.entries(o)) {
-      o[key] = fn(val) || val
+      o[key] = fn(val) || val;
     }
   }
 
   function valueOf(val, dv) {
     if (typeof val === 'string' && Array.isArray(dv)) {
-      val = [val]
+      val = [val];
     }
-    return typeof val !== 'undefined' ? val : dv
+    return typeof val !== 'undefined' ? val : dv;
   }
 
   function forValues(o, fn) {
-    Object.values(o).forEach((v) => fn(v))
+    Object.values(o).forEach((v) => fn(v));
   }
 
   // convert default filter (from server) into device structure
   function device_from_code(code, mode) {
     // presence of internal field indicates already converted
-    if (code.internal >= 0) return code
+    if (code.internal >= 0) return code;
 
     // if (self.navigator) console.log({mode, convert: code});
     let cmd = code.cmd || {},
       set = code.settings || {},
-      ext = code.extruders
+      ext = code.extruders;
 
     // currently causes unecessary fills and culls because
     // it's not mode and device type sensitive
@@ -130,26 +130,26 @@ gapp.register('kiri.conf', (root, exports) => {
       gcodeLaserOn: valueOf(code['laser-on'], []),
       gcodeLaserOff: valueOf(code['laser-off'], []),
       extruders: [],
-    }
+    };
 
     if (ext) {
       // synthesize extruders from new style settings
       ext.forEach((rec) => {
-        let e = clone(conf.defaults.fdm.d.extruders[0])
-        if (rec.nozzle) e.extNozzle = rec.nozzle
-        if (rec.filament) e.extFilament = rec.filament
-        if (rec.offset_x) e.extOffsetX = rec.offset_x
-        if (rec.offset_y) e.extOffsetY = rec.offset_y
-        device.extruders.push(e)
-      })
+        let e = clone(conf.defaults.fdm.d.extruders[0]);
+        if (rec.nozzle) e.extNozzle = rec.nozzle;
+        if (rec.filament) e.extFilament = rec.filament;
+        if (rec.offset_x) e.extOffsetX = rec.offset_x;
+        if (rec.offset_y) e.extOffsetY = rec.offset_y;
+        device.extruders.push(e);
+      });
     } else {
       // synthesize extruders from old style settings
-      device.extruders = [clone(conf.defaults.fdm.d.extruders[0])]
-      device.extruders[0].extNozzle = valueOf(set.nozzle_size, 0.4)
-      device.extruders[0].extFilament = valueOf(set.filament_diameter, 1.75)
+      device.extruders = [clone(conf.defaults.fdm.d.extruders[0])];
+      device.extruders[0].extNozzle = valueOf(set.nozzle_size, 0.4);
+      device.extruders[0].extFilament = valueOf(set.filament_diameter, 1.75);
     }
 
-    return device
+    return device;
   }
 
   // ensure settings structure is up-to-date
@@ -158,36 +158,36 @@ gapp.register('kiri.conf', (root, exports) => {
       template = conf.template,
       mode = settings.mode.toLowerCase(),
       default_dev = defaults[mode].d,
-      default_pro = defaults[mode].p
+      default_pro = defaults[mode].p;
 
     // fixup old/new detail settings
-    let detail = settings.controller.detail
+    let detail = settings.controller.detail;
     settings.controller.detail =
       {
         best: '100',
         good: '75',
         fair: '50',
         poor: '25',
-      }[detail] || detail
+      }[detail] || detail;
 
-    fill_cull_once(settings, template)
-    fill_cull_once(settings.device, default_dev)
-    fill_cull_once(settings.process, default_pro)
-    fill_cull_once(settings.cdev, template.cdev)
-    fill_cull_once(settings.cproc, template.cproc)
-    fill_cull_once(settings.sproc, template.sproc)
-    fill_cull_once(settings.defaults, template.defaults)
-    fill_cull_once(settings.cdev.FDM, defaults.fdm.d)
-    fill_cull_once(settings.cdev.SLA, defaults.sla.d)
-    fill_cull_once(settings.cdev.CAM, defaults.cam.d)
-    fill_cull_once(settings.cdev.LASER, defaults.laser.d)
-    fill_cull_many(settings.sproc.FDM, defaults.fdm.p)
-    fill_cull_many(settings.sproc.SLA, defaults.sla.p)
-    fill_cull_many(settings.sproc.CAM, defaults.cam.p)
-    fill_cull_many(settings.sproc.LASER, defaults.laser.p)
-    fill_cull_once(settings.controller, template.controller)
+    fill_cull_once(settings, template);
+    fill_cull_once(settings.device, default_dev);
+    fill_cull_once(settings.process, default_pro);
+    fill_cull_once(settings.cdev, template.cdev);
+    fill_cull_once(settings.cproc, template.cproc);
+    fill_cull_once(settings.sproc, template.sproc);
+    fill_cull_once(settings.defaults, template.defaults);
+    fill_cull_once(settings.cdev.FDM, defaults.fdm.d);
+    fill_cull_once(settings.cdev.SLA, defaults.sla.d);
+    fill_cull_once(settings.cdev.CAM, defaults.cam.d);
+    fill_cull_once(settings.cdev.LASER, defaults.laser.d);
+    fill_cull_many(settings.sproc.FDM, defaults.fdm.p);
+    fill_cull_many(settings.sproc.SLA, defaults.sla.p);
+    fill_cull_many(settings.sproc.CAM, defaults.cam.p);
+    fill_cull_many(settings.sproc.LASER, defaults.laser.p);
+    fill_cull_once(settings.controller, template.controller);
 
-    return settings
+    return settings;
   }
 
   // auto field renaming on import
@@ -220,7 +220,7 @@ gapp.register('kiri.conf', (root, exports) => {
     camPocketOnlyFinish: 'camOutlinePocket',
     camWideCutout: 'camOutlineWide',
     outputClockwise: 'camConventional',
-  }
+  };
 
   const conf = exports({
     // --------------- helper functions
@@ -972,23 +972,23 @@ gapp.register('kiri.conf', (root, exports) => {
       id: genID(),
       ver: CVER,
     },
-  })
+  });
 
-  const settings = conf.template
+  const settings = conf.template;
 
   // seed defaults. will get culled on save
-  settings.sproc.FDM.default = clone(settings.process)
-  settings.sproc.SLA.default = clone(settings.process)
-  settings.sproc.CAM.default = clone(settings.process)
-  settings.sproc.LASER.default = clone(settings.process)
-  settings.sproc.DRAG.default = clone(settings.process)
-  settings.sproc.WJET.default = clone(settings.process)
-  settings.sproc.WEDM.default = clone(settings.process)
-  settings.cdev.FDM = clone(settings.device)
-  settings.cdev.SLA = clone(settings.device)
-  settings.cdev.CAM = clone(settings.device)
-  settings.cdev.LASER = clone(settings.device)
-  settings.cdev.DRAG = clone(settings.device)
-  settings.cdev.WJET = clone(settings.device)
-  settings.cdev.WEDM = clone(settings.device)
-})
+  settings.sproc.FDM.default = clone(settings.process);
+  settings.sproc.SLA.default = clone(settings.process);
+  settings.sproc.CAM.default = clone(settings.process);
+  settings.sproc.LASER.default = clone(settings.process);
+  settings.sproc.DRAG.default = clone(settings.process);
+  settings.sproc.WJET.default = clone(settings.process);
+  settings.sproc.WEDM.default = clone(settings.process);
+  settings.cdev.FDM = clone(settings.device);
+  settings.cdev.SLA = clone(settings.device);
+  settings.cdev.CAM = clone(settings.device);
+  settings.cdev.LASER = clone(settings.device);
+  settings.cdev.DRAG = clone(settings.device);
+  settings.cdev.WJET = clone(settings.device);
+  settings.cdev.WEDM = clone(settings.device);
+});

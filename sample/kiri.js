@@ -1,8 +1,8 @@
-console.log('--- kiri main module start ---')
+console.log('--- kiri main module start ---');
 
 // the kiri api starts around line `260` of `src/kiri/main.js`
 kiri.load(function (api) {
-  console.log('--- kiri main module started ---')
+  console.log('--- kiri main module started ---');
 
   // send data to our "/postit" endpoint
   fetch('/postit', {
@@ -11,6 +11,6 @@ kiri.load(function (api) {
   })
     .then((res) => res.text())
     .then((text) => {
-      console.log({ server_said: text })
-    })
-})
+      console.log({ server_said: text });
+    });
+});

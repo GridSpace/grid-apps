@@ -1,21 +1,21 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 // dep: geo.base
 // dep: geo.polygons
 gapp.register('kiri.slice', [], (root, exports) => {
-  const { base, kiri } = root
-  const { key, polygons } = base
-  const { util } = base
+  const { base, kiri } = root;
+  const { key, polygons } = base;
+  const { util } = base;
 
-  const POLY = base.polygons
-  const NOKEY = key.NONE
+  const POLY = base.polygons;
+  const NOKEY = key.NONE;
 
-  let tracker
+  let tracker;
 
   function setSliceTracker(nv) {
-    return (tracker = nv)
+    return (tracker = nv);
   }
 
   /**
@@ -25,28 +25,28 @@ gapp.register('kiri.slice', [], (root, exports) => {
    */
   class Slice {
     constructor(z, view) {
-      this.z = z // z-index
-      this.index = 0 // slice index
-      this.lines = null // slice raw
-      this.groups = null // grouped lines
-      this.up = null // slice above (linked list)
-      this.down = null // slice below (linked list)
-      this.tops = [] // array of Top objects
-      this.view = view // for rendering this slice
-      this.finger = null // cached fingerprint
-      this.layers = null // will replace most of the layer output data
+      this.z = z; // z-index
+      this.index = 0; // slice index
+      this.lines = null; // slice raw
+      this.groups = null; // grouped lines
+      this.up = null; // slice above (linked list)
+      this.down = null; // slice below (linked list)
+      this.tops = []; // array of Top objects
+      this.view = view; // for rendering this slice
+      this.finger = null; // cached fingerprint
+      this.layers = null; // will replace most of the layer output data
     }
 
     /**
      * return Layers object for this slice. creates it if necessary.
      */
     output() {
-      if (this.layers) return this.layers
-      let layers = (this.layers = new kiri.Layers())
+      if (this.layers) return this.layers;
+      let layers = (this.layers = new kiri.Layers());
       if (tracker) {
-        layers.setRotation(-tracker.rotation || 0)
+        layers.setRotation(-tracker.rotation || 0);
       }
-      return layers
+      return layers;
     }
 
     /**
@@ -54,44 +54,44 @@ gapp.register('kiri.slice', [], (root, exports) => {
      */
     clone(deep) {
       const from = this,
-        slice = newSlice(from.z, from.view)
+        slice = newSlice(from.z, from.view);
       from.tops?.forEach(function (top) {
-        slice.addTop(top.poly.clone(deep))
-      })
-      return slice
+        slice.addTop(top.poly.clone(deep));
+      });
+      return slice;
     }
 
     topPolys() {
-      return this.tops.map((top) => top.poly)
+      return this.tops.map((top) => top.poly);
     }
 
     topSimples() {
-      return this.tops.map((top) => top.simple)
+      return this.tops.map((top) => top.simple);
     }
 
     // FDM top intersect optimization
     topPolysFlat() {
       if (this.topFlatPolys) {
-        return this.topFlatPolys
+        return this.topFlatPolys;
       }
       return (this.topFlatPolys = POLY.flatten(
         this.topPolys().clone(true),
         [],
         true
-      ))
+      ));
     }
 
     // FDM retract path routing using first shell
     topRouteFlat() {
       if (this.topFlatRoutes) {
-        return this.topFlatRoutes
+        return this.topFlatRoutes;
       }
-      let topShells0 = this.tops.map((top) => top.shells[0]).filter((p) => p)
+      let topShells0 = this.tops.map((top) => top.shells[0]).filter((p) => p);
       return (this.topFlatRoutes = POLY.flatten(
         topShells0.clone(true),
         [],
         true
-      ))
+      ));
     }
 
     // CAM only
@@ -99,7 +99,7 @@ gapp.register('kiri.slice', [], (root, exports) => {
       return this.tops
         .map((top) => top.poly.inner)
         .flat()
-        .filter((poly) => poly)
+        .filter((poly) => poly);
     }
 
     // FDM / SLA only
@@ -107,7 +107,7 @@ gapp.register('kiri.slice', [], (root, exports) => {
       return this.tops
         .map((top) => top.last)
         .flat()
-        .filter((poly) => poly)
+        .filter((poly) => poly);
     }
 
     // FDM / SLA only
@@ -115,7 +115,7 @@ gapp.register('kiri.slice', [], (root, exports) => {
       return this.tops
         .map((top) => top.fill_off)
         .flat()
-        .filter((poly) => poly)
+        .filter((poly) => poly);
     }
 
     // FDM only
@@ -123,7 +123,7 @@ gapp.register('kiri.slice', [], (root, exports) => {
       return this.tops
         .map((top) => top.fill_lines)
         .flat()
-        .filter((poly) => poly)
+        .filter((poly) => poly);
     }
 
     // FDM only
@@ -131,7 +131,7 @@ gapp.register('kiri.slice', [], (root, exports) => {
       return this.tops
         .map((top) => top.shells)
         .flat()
-        .filter((poly) => poly)
+        .filter((poly) => poly);
     }
 
     /**
@@ -142,9 +142,9 @@ gapp.register('kiri.slice', [], (root, exports) => {
      */
     fingerprint() {
       if (this.finger) {
-        return this.finger
+        return this.finger;
       }
-      return (this.finger = POLY.fingerprint(this.topPolys()))
+      return (this.finger = POLY.fingerprint(this.topPolys()));
     }
 
     /**
@@ -153,14 +153,14 @@ gapp.register('kiri.slice', [], (root, exports) => {
     fingerprintSame(slice) {
       return slice
         ? POLY.fingerprintCompare(this.fingerprint(), slice.fingerprint())
-        : false
+        : false;
     }
 
     addTops(polys) {
       polys.forEach((p) => {
-        this.addTop(p)
-      })
-      return this
+        this.addTop(p);
+      });
+      return this;
     }
 
     /**
@@ -170,53 +170,53 @@ gapp.register('kiri.slice', [], (root, exports) => {
     addTop(data) {
       if (data.length) {
         // standard legacy polygon
-        let top = new Top(data)
-        this.tops.push(top)
-        top.simple = data
-        return top
+        let top = new Top(data);
+        this.tops.push(top);
+        top.simple = data;
+        return top;
       } else {
         // create top object from object bundle passed back by slicePost()
-        let top = new Top(data.poly)
+        let top = new Top(data.poly);
         top.thin_fill = data.thin_fill
           ? data.thin_fill.map((p) => base.newPoint(p.x, p.y, p.z))
-          : undefined
-        top.fill_lines = data.fill_lines
-        top.fill_sparse = data.fill_sparse
-        top.fill_off = data.fill_off
-        top.last = data.last
-        top.gaps = data.gaps
-        top.shells = data.shells
-        top.simple = data.simple
-        this.tops.push(top)
-        return top
+          : undefined;
+        top.fill_lines = data.fill_lines;
+        top.fill_sparse = data.fill_sparse;
+        top.fill_off = data.fill_off;
+        top.last = data.last;
+        top.gaps = data.gaps;
+        top.shells = data.shells;
+        top.simple = data.simple;
+        this.tops.push(top);
+        return top;
       }
     }
 
     findClosestPointTo(target) {
-      let min, find
+      let min, find;
 
       if (this.tops && this.tops.length) {
         this.tops.forEach(function (top) {
-          find = top.poly.findClosestPointTo(target)
+          find = top.poly.findClosestPointTo(target);
           if (!min || find.distance < min.distance) {
-            min = find
+            min = find;
           }
-        })
+        });
       } else if (this.supports) {
         this.supports.forEach(function (poly) {
-          find = poly.findClosestPointTo(target)
+          find = poly.findClosestPointTo(target);
           if (!min || find.distance < min.distance) {
-            min = find
+            min = find;
           }
-        })
+        });
       }
 
-      return min
+      return min;
     }
 
     setFields(fields = {}) {
-      Object.assign(this, fields)
-      return this
+      Object.assign(this, fields);
+      return this;
     }
 
     // xray(dash = 3) {
@@ -237,12 +237,12 @@ gapp.register('kiri.slice', [], (root, exports) => {
    */
   class Top {
     constructor(polygon) {
-      this.poly = polygon // outline poly
+      this.poly = polygon; // outline poly
     }
 
     clone(deep) {
-      let top = new Top(this.poly.clone(deep))
-      return top
+      let top = new Top(this.poly.clone(deep));
+      return top;
     }
 
     /**
@@ -251,12 +251,12 @@ gapp.register('kiri.slice', [], (root, exports) => {
      */
     innerShells() {
       let shells = this.shells,
-        array = []
+        array = [];
       if (shells)
         shells.forEach(function (p) {
-          if (p.inner) array.appendAll(p.inner)
-        })
-      return array
+          if (p.inner) array.appendAll(p.inner);
+        });
+      return array;
     }
 
     /**
@@ -269,16 +269,16 @@ gapp.register('kiri.slice', [], (root, exports) => {
     shellsAtDepth(depth) {
       return this.shells
         ? this.shells.filter((poly) => poly.depth === depth)
-        : []
+        : [];
     }
   }
 
   function newTop(poly) {
-    return new Top(poly)
+    return new Top(poly);
   }
 
   function newSlice(z, view) {
-    return new Slice(z, view)
+    return new Slice(z, view);
   }
 
   gapp.overlay(kiri, {
@@ -287,5 +287,5 @@ gapp.register('kiri.slice', [], (root, exports) => {
     newTop,
     newSlice,
     setSliceTracker,
-  })
-})
+  });
+});

@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict'
+'use strict';
 
 gapp.register('kiri.consts', (root, exports) => {
   const COLOR = {
@@ -17,7 +17,7 @@ gapp.register('kiri.consts', (root, exports) => {
     cam_preview_opacity_dark: 0.2,
     cam_preview_opacity: 0.1,
     cam_sliced_opacity: 0.2,
-  }
+  };
 
   const LISTS = {
     shell: [{ name: 'in-out' }, { name: 'out-in' }, { name: 'alternate' }],
@@ -80,7 +80,7 @@ gapp.register('kiri.consts', (root, exports) => {
       { name: 'type 2' },
       { name: 'type 3' },
     ],
-  }
+  };
 
   // primary device mode
   const MODES = {
@@ -91,7 +91,7 @@ gapp.register('kiri.consts', (root, exports) => {
     DRAG: 5, // drag knife (a variation on laser / 2d)
     WJET: 6, // waterjet (a varation on laser / 2d)
     WEDM: 7, // wire-edm (a variation on laser / 2d)
-  }
+  };
 
   // view mode within device mode
   const VIEWS = {
@@ -99,15 +99,15 @@ gapp.register('kiri.consts', (root, exports) => {
     SLICE: 2,
     PREVIEW: 3,
     ANIMATE: 4,
-  }
+  };
 
   // preview modes
   const PMODES = {
     SPEED: 1,
     TOOLS: 2,
-  }
+  };
 
-  const SEED = 'kiri-seed'
+  const SEED = 'kiri-seed';
 
   exports({
     PMODES,
@@ -117,5 +117,5 @@ gapp.register('kiri.consts', (root, exports) => {
     VIEWS,
     SEED,
     beltfact: Math.cos(Math.PI / 4),
-  })
-})
+  });
+});

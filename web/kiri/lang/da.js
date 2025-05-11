@@ -968,4 +968,4 @@ kiri.lang['da'] = kiri.lang['da-dk'] = {
     'producerer større filer',
     'kan sløre detaljer',
   ],
-}
+};

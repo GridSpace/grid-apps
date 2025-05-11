@@ -1,16 +1,16 @@
-require('dotenv').config()
-const { notarize } = require('@electron/notarize')
+require('dotenv').config();
+const { notarize } = require('@electron/notarize');
 
 exports.default = async function notarizing(context) {
-  const { electronPlatformName, appOutDir } = context
+  const { electronPlatformName, appOutDir } = context;
 
   if (process.env.SKIPNOT || electronPlatformName !== 'darwin') {
-    return
+    return;
   }
 
-  const appName = context.packager.appInfo.productFilename
+  const appName = context.packager.appInfo.productFilename;
 
-  console.log(' ** notarizing:', appName)
+  console.log(' ** notarizing:', appName);
 
   const result = await notarize({
     appBundleId: 'space.grid.kiri',
@@ -18,7 +18,7 @@ exports.default = async function notarizing(context) {
     appleId: process.env.APPLE_ID,
     appleIdPassword: process.env.APPLE_ID_PASSWORD,
     teamId: process.env.APPLE_TEAM_ID,
-  })
+  });
 
-  console.log(' ** notarizing complete:', result || 'no process output')
-}
+  console.log(' ** notarizing complete:', result || 'no process output');
+};

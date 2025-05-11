@@ -1,36 +1,36 @@
-const [host, pass, sn] = process.argv.slice(2)
-const util = require('util')
-const mqtt = require('mqtt')
-const readline = require('readline')
-const { bblCA } = require('./certs')
-const reportTopic = `device/${sn}/report`
-const requestTopic = `device/${sn}/request`
+const [host, pass, sn] = process.argv.slice(2);
+const util = require('util');
+const mqtt = require('mqtt');
+const readline = require('readline');
+const { bblCA } = require('./certs');
+const reportTopic = `device/${sn}/report`;
+const requestTopic = `device/${sn}/request`;
 
-console.log({ host, pass, sn, reportTopic, requestTopic })
+console.log({ host, pass, sn, reportTopic, requestTopic });
 
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
   prompt: '> ',
-})
+});
 
 function erasePrompt() {
-  readline.clearLine(process.stdout, 0)
-  readline.cursorTo(process.stdout, 0)
+  readline.clearLine(process.stdout, 0);
+  readline.cursorTo(process.stdout, 0);
 }
 
-let amsmap = []
+let amsmap = [];
 
-rl.prompt()
+rl.prompt();
 
 rl.on('line', (line) => {
-  line = line.trim()
+  line = line.trim();
   switch (line) {
     case 'quit':
     case 'exit':
-      log('Exiting...')
-      rl.close()
-      break
+      log('Exiting...');
+      rl.close();
+      break;
     default:
       if (
         line.startsWith('M') ||
@@ -40,32 +40,32 @@ rl.on('line', (line) => {
         line = line
           .split(';')
           .map((l) => l.trimStart())
-          .join('\n')
-        sendGcode(line)
+          .join('\n');
+        sendGcode(line);
       } else if (line.startsWith('ams ')) {
-        amsmap = JSON.parse(line.substring(4))
-        log({ amsmap })
+        amsmap = JSON.parse(line.substring(4));
+        log({ amsmap });
       } else if (line.startsWith('print ')) {
-        printStart(line.slice(6))
+        printStart(line.slice(6));
       } else if (line === 'stop') {
-        printStop()
+        printStop();
       } else if (line === 'pause') {
-        printPause()
+        printPause();
       } else if (line === 'resume') {
-        printResume()
+        printResume();
       } else if (line.startsWith('{')) {
-        let cmd = eval('(' + line + ')')
-        log('sending', cmd)
-        sendRequest(cmd)
+        let cmd = eval('(' + line + ')');
+        log('sending', cmd);
+        sendRequest(cmd);
       } else if (line) {
-        log('invalid command:', line)
+        log('invalid command:', line);
       }
-      rl.prompt()
-      break
+      rl.prompt();
+      break;
   }
 }).on('close', () => {
-  process.exit(0)
-})
+  process.exit(0);
+});
 
 const options = {
   protocol: 'mqtts',
@@ -75,10 +75,10 @@ const options = {
   password: pass,
   ca: bblCA,
   servername: sn,
-}
+};
 
 function log() {
-  erasePrompt()
+  erasePrompt();
   console.log(
     [...arguments]
       .map((v) =>
@@ -92,12 +92,12 @@ function log() {
         })
       )
       .join(this.join)
-  )
-  rl.prompt(true)
+  );
+  rl.prompt(true);
 }
 
 function sendRequest(obj) {
-  client.publish(requestTopic, JSON.stringify(obj))
+  client.publish(requestTopic, JSON.stringify(obj));
 }
 
 function sendGcode(gcode) {
@@ -107,11 +107,11 @@ function sendGcode(gcode) {
       param: gcode,
       sequence_id: '0',
     },
-  })
+  });
 }
 
 function printStart(file) {
-  log('print', { file })
+  log('print', { file });
   sendRequest({
     print: {
       command: 'project_file',
@@ -127,7 +127,7 @@ function printStart(file) {
       vibration_cali: false,
       ams_mapping: amsmap || [],
     },
-  })
+  });
 }
 
 function printStop() {
@@ -136,7 +136,7 @@ function printStop() {
       command: 'stop',
       sequence_id: '0',
     },
-  })
+  });
 }
 
 function printPause() {
@@ -145,7 +145,7 @@ function printPause() {
       command: 'pause',
       sequence_id: '0',
     },
-  })
+  });
 }
 
 function printResume() {
@@ -154,37 +154,37 @@ function printResume() {
       command: 'resume',
       sequence_id: '0',
     },
-  })
+  });
 }
 
-const client = mqtt.connect(options)
+const client = mqtt.connect(options);
 
 client.on('connect', () => {
-  log('mqtt connected')
+  log('mqtt connected');
   client.subscribe(reportTopic, (err) => {
     if (err) {
-      log('mqtt subscribe error', err)
+      log('mqtt subscribe error', err);
     } else {
-      log('mqtt subscribed')
+      log('mqtt subscribed');
     }
-  })
-})
+  });
+});
 
 client.on('error', (error) => {
-  log('mqtt error', error)
-})
+  log('mqtt error', error);
+});
 
 client.on('message', (topic, message) => {
-  log(JSON.parse(message.toString()))
-})
+  log(JSON.parse(message.toString()));
+});
 
 client.on('close', () => {
-  log('mqtt disconnect')
-  process.exit()
-})
+  log('mqtt disconnect');
+  process.exit();
+});
 
 process.on('SIGINT', () => {
-  log('SIGINT. Running cleanup...')
-  client.end()
-  process.exit(0)
-})
+  log('SIGINT. Running cleanup...');
+  client.end();
+  process.exit(0);
+});

@@ -1060,4 +1060,4 @@ kiri.lang['pt'] = kiri.lang['pt-pt'] = {
     'produz arquivos maiores',
     'pode desfocar detalhes',
   ],
-}
+};

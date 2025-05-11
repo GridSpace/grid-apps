@@ -1093,4 +1093,4 @@ kiri.lang['es'] = kiri.lang['es-es'] = {
     'produce archivos más grandes',
     'puede eliminar detalles',
   ],
-}
+};
