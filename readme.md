@@ -9,23 +9,20 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
 ![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
 
-
 # Community & Documentation
 
 [Discord](https://discord.com/invite/suyCCgr) -- Live Chat  
 [Forums](https://forum.grid.space/) -- Long Form and Archival Discussion  
 [BlueSky](https://bsky.app/profile/grid.space) -- Like the Good 'Ol Days  
 [YouTube](https://www.youtube.com/c/gridspace) -- Content when I have time  
-[Documentation](https://docs.grid.space/) -- Could really use help with this  
-
+[Documentation](https://docs.grid.space/) -- Could really use help with this
 
 # Free and Open Source
 
-Kiri:Moto and Mesh:Tool are completely open source and free for use without restriction. Over 12 years in development, this passion project has grown well beyond its original scope. It has consumed most of my free time for many years. Please consider donating to support continued development GitHub sponsorship or PayPal.  
+Kiri:Moto and Mesh:Tool are completely open source and free for use without restriction. Over 12 years in development, this passion project has grown well beyond its original scope. It has consumed most of my free time for many years. Please consider donating to support continued development GitHub sponsorship or PayPal.
 
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/GridSpace)](https://github.com/sponsors/GridSpace)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
-
 
 # HTML5 Web Apps (Installable)
 
@@ -34,7 +31,6 @@ Kiri:Moto and Mesh:Tool are completely open source and free for use without rest
 [`Kiri:Moto`](https://grid.space/kiri) is a browser-based Slicer for 3D printers, CNC mills, and Laser cutters
 
 [`Mesh:Tool`](https://grid.space/mesh) is a browser-based mesh repair and editing tool
-
 
 # Electron Builds (Desktop Binaries)
 
@@ -51,7 +47,6 @@ chmod 755 KiriMoto-linux-x86_64.AppImage
 ```
 
 The Windows and Mac binaries are not signed, so you will need to jump through a few safety hoops to get them to open the first time.
-
 
 # Linux / Mac Developers
 
@@ -92,5 +87,5 @@ Follow the instructions in [this issue comment](https://github.com/GridSpace/gri
 
 A script include that injects a web worker into the page that will asynchronously perform any of Kiri’s slicing and gcode generation functions. And a frame messaging API for controlling Kiri:Moto inside an IFrame.
 
-* https://grid.space/kiri/engine.html
-* https://grid.space/kiri/frame.html
+- https://grid.space/kiri/engine.html
+- https://grid.space/kiri/frame.html
