@@ -146,15 +146,16 @@
             kiri.newEngine()
             .setListener(display_message)
             .load("/obj/cube.stl")
+            // should to call widget.setTopZ here ideally
             .then(eng => eng.setMode("CAM"))
             .then(eng => eng.setStock({
-                "x": 110.00001525878906,
-                "y": 60,
-                "z": 60,
+                "x": 25,
+                "y": 25,
+                "z": 24.999998092651367,
                 "center": {
                     "x": 0,
                     "y": 0,
-                    "z": 12.5
+                    "z": 12.499999046325684
                 }
             }))
             .then(eng=> eng.setTools([
@@ -176,24 +177,35 @@
             .then(eng => eng.setProcess({
                 camEaseAngle:10,
                 camEaseDown:true,
-                ops:[
-                    {
-                    "type":"outline",
-                    "tool":1000,
-                    "spindle":15000,
-                    "step":0.4,
-                    "steps":1,
-                    "down":1,
-                    "rate":2500,
-                    "plunge":150,
-                    "dogbones":false,
-                    "omitvoid":false,
-                    "omitthru":false,
-                    "outside":false,
-                    "inside":false,
-                    "wide":false,
-                    "top":false,
-                    },
+                camZAnchor: "bottom",
+                camDepthFirst : false,
+                camZThru: 1.524,
+                camZBottom:-25, // temp hack to get around setTopZ bug
+                origin: {
+                    "x": -12.5,
+                    "y": 12.5,
+                    "z": 25.00999809265137
+                },
+                ops:[{
+                    "type": "outline",
+                    "tool": 1000,
+                    "spindle": 13000,
+                    "step": 0.4,
+                    "steps": 1,
+                    "down": 5.08,
+                    "rate": 635,
+                    "plunge": 51,
+                    "dogbones": false,
+                    "omitvoid": false,
+                    "omitthru": false,
+                    "outside": false,
+                    "inside": false,
+                    "wide": false,
+                    "top": false,
+                    "ov_topz": 0,
+                    "ov_botz": 0,
+                    "ov_conv": true
+                }
                 ]
                 
             }))
@@ -239,7 +251,7 @@
         }
 
         function demoLASER(){
-            
+
         }
 
         function download() {
