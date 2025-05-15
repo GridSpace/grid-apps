@@ -72,7 +72,7 @@
             padding: 3px;
             text-align: center;
         }
-        #api, #loadExample {
+        body div {
             width: 812px;
         }
         #download {
@@ -102,7 +102,6 @@
             let FDMExample = loadExample(demoFDM)
         }
         function display_message(msg) {
-            console.log({msg})
             $('gfoot').innerText = msg ? Object.keys(msg).join(' - ') : '';
         }
         function display_gcode(gcode) {
@@ -152,29 +151,27 @@
             .then(eng => eng.setStock({
                 "x": 25,
                 "y": 25,
-                "z": 24.999998092651367,
+                "z": 25,
                 "center": {
                     "x": 0,
                     "y": 0,
-                    "z": 12.499999046325684
+                    "z": 12.5
                 }
             }))
-            .then(eng=> eng.setTools([
-            {
-                "id": 1000,
-                "number": 1,
-                "type": "endmill",
-                "name": "end 1/4",
-                "metric": false,
-                "shaft_diam": 0.25,
-                "shaft_len": 1,
-                "flute_diam": 0.25,
-                "flute_len": 2,
-                "taper_tip": 0,
-                "order": 5
-            }  
-                
-            ]))
+            .then(eng => eng.moveTo(50, 0, 0))
+            .then(eng=> eng.setTools([{
+                id: 1000,
+                number: 1,
+                type: "endmill",
+                name: "end 1/4",
+                metric: false,
+                shaft_diam: 0.25,
+                shaft_len: 1,
+                flute_diam: 0.25,
+                flute_len: 2,
+                taper_tip: 0,
+                order: 5
+            }]))
             .then(eng => eng.setProcess({
                 camEaseAngle:10,
                 camEaseDown:true,
@@ -182,68 +179,64 @@
                 camDepthFirst : false,
                 camZThru: 1.524,
                 camZBottom:-25, // temp hack to get around setTopZ bug
-                origin: {
-                    "x": -12.5,
-                    "y": 12.5,
-                    "z": 25.00999809265137
-                },
-                ops:[{
-                    "type": "outline",
-                    "tool": 1000,
-                    "spindle": 13000,
-                    "step": 0.4,
-                    "steps": 1,
-                    "down": 5.08,
-                    "rate": 635,
-                    "plunge": 51,
-                    "dogbones": false,
-                    "omitvoid": false,
-                    "omitthru": false,
-                    "outside": false,
-                    "inside": false,
-                    "wide": false,
-                    "top": false,
-                    "ov_topz": 0,
-                    "ov_botz": 0,
-                    "ov_conv": true
+                camToolInit: true,
+                
+                ops: [{
+                    type: "outline",
+                    tool: 1000,
+                    spindle: 13000,
+                    step: 0.4,
+                    steps: 1,
+                    down: 5.08,
+                    rate: 635,
+                    plunge: 51,
+                    dogbones: false,
+                    omitvoid: false,
+                    omitthru: false,
+                    outside: false,
+                    inside: false,
+                    wide: false,
+                    top: false,
+                    ov_topz: 0,
+                    ov_botz: 0,
+                    ov_conv: true
                 }
                 ]
                 
             }))
             .then(eng => eng.setDevice({
-            "mode": "CAM",
-            "internal": 0,
-            "bedHeight": 2.5,
-            "bedWidth": 678.18,
-            "bedDepth": 1524,
-            "maxHeight": 150,
-            "originCenter": false,
-            "spindleMax": 24000,
-            "gcodePre": [
+            mode: "CAM",
+            internal: 0,
+            bedHeight: 2.5,
+            bedWidth: 678.18,
+            bedDepth: 1524,
+            maxHeight: 150,
+            originCenter: false,
+            spindleMax: 24000,
+            gcodePre: [
                 "G20 ; set units to inches (required)",
                 "G90 ; absolute position mode (required)"
             ],
-            "gcodePost": [
+            gcodePost: [
                 "M05 ; spindle off",
                 "M30 ; program end"
             ],
-            "gcodeDwell": [
+            gcodeDwell: [
                 "G4 P{time} ; dwell for {time}ms"
             ],
-            "gcodeSpindle": [
+            gcodeSpindle: [
                 "M3 S{speed} ; spindle on at {spindle} rpm"
             ],
-            "gcodeChange": [
+            gcodeChange: [
                 "M05 ; spindle off",
                 "M6 T{tool} ; change tool to '{tool_name}'",
                 "G37; get tool offset with ETS"
             ],
-            "gcodeFExt": "nc",
-            "gcodeSpace": true,
-            "gcodeStrip": false,
-            "deviceName": "Tormach.24R",
-            "imageURL": "",
-            "useLaser": false
+            gcodeFExt: "nc",
+            gcodeSpace: true,
+            gcodeStrip: false,
+            deviceName: "Tormach.24R",
+            useLaser: false
         }))
             .then(eng => eng.slice())
             .then(eng => eng.prepare())
@@ -334,7 +327,7 @@
     <h2 id="title">Kiri:Moto Javascript Engine <a href="https://docs.grid.space/projects/kiri-moto/apis">API</a></h2>
     <div id="demo">
         <div id="jcode">
-            <div id="jhead">javascript</div>
+            <div id="jhead">JavaScript</div>
             <div id="jbody"></div>
             <div id="jfoot"><button onclick="run_code()">run code</button></div>
         </div>
@@ -357,7 +350,7 @@
         <h2>Engine Methods</h2>
         <li><label>load(url)</label> - where URL points to an STL</li>
         <li><label>parse(data)</label> - where data is a string or binary STL</li>
-        <li><label>setMode(mode)</label> - FDM, CAM, LASER, SLA</li>
+        <li><label>setMode(mode)</label> - FDM, CAM, LASER, SLA (untested)</li>
         <li><label>setListener(fn)</label> - function to receive engine progress messages</li>
         <li><label>setDevice(options)</label> - change default object parameters</li>
         <li><label>setProcess(options)</label> - change default process parameters</li>
@@ -370,6 +363,234 @@
         <li><label>slice()</label> - async slice loaded object</li>
         <li><label>prepare()</label> - async path routing of slice data</li>
         <li><label>export()</label> - async gcode generation from path routing</li>
+    </div>
+
+    <div id="deviceOptions">
+        <h2>Device Options</h2>
+
+    </div>
+
+    <div id="toolOptions">
+        <h2>Tool Options</h2>
+        <p>
+            Tool options are only relevant for <a href="#cam">CAM mode</a>. If you aren't using CAM mode, this section can be ignored. <br>
+            Each CAM Operation has a <code>tool</code> parameter, which is a 
+            refrence to a tool ID in the tool list (not to be confused with the tool number).
+
+            the <code>setTools</code> function accepts an array of objects with the following parameters:
+
+            <table>
+                <thead>
+                  <tr>
+                    <th>Parameter</th>
+                    <th>Default Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>id</td><td>1000</td></tr>
+                  <tr><td>number</td><td>1</td></tr>
+                  <tr><td>type</td><td>"endmill"</td></tr>
+                  <tr><td>name</td><td>"end 1/4"</td></tr>
+                  <tr><td>metric</td><td>false</td></tr>
+                  <tr><td>shaft_diam</td><td>0.25</td></tr>
+                  <tr><td>shaft_len</td><td>1</td></tr>
+                  <tr><td>flute_diam</td><td>0.25</td></tr>
+                  <tr><td>flute_len</td><td>2</td></tr>
+                  <tr><td>taper_tip</td><td>0</td></tr>
+                  <tr><td>order</td><td>5</td></tr>
+                </tbody>
+              </table>
+              
+        </p>
+    </div>
+
+    <div id="processOptions">
+        <h2>Process Options</h2>
+        <p>
+            The process options for a given mode determine the global parameters for how an object is processed. 
+            Some process options are mode-specific, and some are shared between modes.
+        </p>
+
+        <div id="global">
+            <h3>Global</h3>
+            
+        </div>
+
+        <div id="fdm">
+            <h3>FDM</h3>
+            <p>
+                <table border="1" cellpadding="4" cellspacing="0">
+                    <thead>
+                      <tr>
+                        <th>Parameter</th>
+                        <th>Default Value</th>
+                        <th>Param Type</th>
+                        <th>Short Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>processName</td><td>default</td><td>string</td><td>Name of the slicing process profile</td></tr>
+                      <tr><td>sliceAngle</td><td>45</td><td>number</td><td>Angle of slicing fill pattern (degrees)</td></tr>
+                      <tr><td>sliceHeight</td><td>0.25</td><td>number</td><td>Layer height in millimeters</td></tr>
+                      <tr><td>sliceShells</td><td>3</td><td>number</td><td>Number of perimeter shells</td></tr>
+                      <tr><td>sliceShellOrder</td><td>in-out</td><td>string</td><td>Shell printing order (e.g., inside-out)</td></tr>
+                      <tr><td>sliceLayerStart</td><td>last</td><td>string</td><td>Starting layer for slicing</td></tr>
+                      <tr><td>sliceLayerStartX</td><td>0</td><td>number</td><td>X offset for slice start</td></tr>
+                      <tr><td>sliceLayerStartY</td><td>0</td><td>number</td><td>Y offset for slice start</td></tr>
+                      <tr><td>sliceLineWidth</td><td>0</td><td>number</td><td>Line width for slicing (0 = auto)</td></tr>
+                      <tr><td>sliceFillGrow</td><td>0</td><td>number</td><td>Offset to expand fill area</td></tr>
+                      <tr><td>sliceFillAngle</td><td>45</td><td>number</td><td>Fill pattern angle (degrees)</td></tr>
+                      <tr><td>sliceFillWidth</td><td>1</td><td>number</td><td>Width of fill lines</td></tr>
+                      <tr><td>sliceFillOverlap</td><td>0.35</td><td>number</td><td>Overlap ratio of fill to shells</td></tr>
+                      <tr><td>sliceFillSparse</td><td>0.25</td><td>number</td><td>Fill sparsity (density fraction)</td></tr>
+                      <tr><td>sliceFillRepeat</td><td>1</td><td>number</td><td>Number of fill pattern repetitions</td></tr>
+                      <tr><td>sliceFillRate</td><td>0</td><td>number</td><td>Fill print speed multiplier (0 = default)</td></tr>
+                      <tr><td>sliceSolidRate</td><td>0</td><td>number</td><td>Solid fill print speed multiplier</td></tr>
+                      <tr><td>sliceFillType</td><td>hex</td><td>string</td><td>Type of fill pattern</td></tr>
+                      <tr><td>sliceSupportDensity</td><td>0.1</td><td>number</td><td>Density of support material</td></tr>
+                      <tr><td>sliceSupportOffset</td><td>1</td><td>number</td><td>Distance between support and model</td></tr>
+                      <tr><td>sliceSupportGap</td><td>1</td><td>number</td><td>Gap between supports</td></tr>
+                      <tr><td>sliceSupportSize</td><td>5</td><td>number</td><td>Size of support elements</td></tr>
+                      <tr><td>sliceSupportArea</td><td>0.1</td><td>number</td><td>Minimum area for support generation</td></tr>
+                      <tr><td>sliceSupportSpan</td><td>5</td><td>number</td><td>Span length for supports</td></tr>
+                      <tr><td>sliceSupportGrow</td><td>0</td><td>number</td><td>Extra growth around supports</td></tr>
+                      <tr><td>sliceSupportExtra</td><td>0</td><td>number</td><td>Additional support material (unclear)</td></tr>
+                      <tr><td>sliceSupportAngle</td><td>50</td><td>number</td><td>Max overhang angle for supports (degrees)</td></tr>
+                      <tr><td>sliceSupportNozzle</td><td>0</td><td>number</td><td>Nozzle index for support extrusion</td></tr>
+                      <tr><td>sliceSupportEnable</td><td>false</td><td>bool</td><td>Enable or disable support generation</td></tr>
+                      <tr><td>sliceSupportOutline</td><td>true</td><td>bool</td><td>Print outline for supports</td></tr>
+                      <tr><td>sliceZInterleave</td><td>false</td><td>bool</td><td>Interleave support layers in Z</td></tr>
+                      <tr><td>sliceSolidMinArea</td><td>1</td><td>number</td><td>Minimum area to treat as solid</td></tr>
+                      <tr><td>sliceBottomLayers</td><td>3</td><td>number</td><td>Number of solid bottom layers</td></tr>
+                      <tr><td>sliceTopLayers</td><td>3</td><td>number</td><td>Number of solid top layers</td></tr>
+                      <tr><td>firstSliceHeight</td><td>0.25</td><td>number</td><td>Height of first layer</td></tr>
+                      <tr><td>firstLayerRate</td><td>30</td><td>number</td><td>First layer print speed</td></tr>
+                      <tr><td>firstLayerFillRate</td><td>35</td><td>number</td><td>First layer fill print speed</td></tr>
+                      <tr><td>firstLayerPrintMult</td><td>1</td><td>number</td><td>Multiplier for first layer print speed</td></tr>
+                      <tr><td>firstLayerLineMult</td><td>1</td><td>number</td><td>Multiplier for first layer line width</td></tr>
+                      <tr><td>firstLayerYOffset</td><td>0</td><td>number</td><td>Y offset for first layer</td></tr>
+                      <tr><td>firstLayerNozzleTemp</td><td>0</td><td>number</td><td>First layer nozzle temperature (°C)</td></tr>
+                      <tr><td>firstLayerBedTemp</td><td>0</td><td>number</td><td>First layer bed temperature (°C)</td></tr>
+                      <tr><td>firstLayerBrim</td><td>0</td><td>number</td><td>Number of brim lines</td></tr>
+                      <tr><td>firstLayerBrimIn</td><td>0</td><td>number</td><td>Brim inset (distance)</td></tr>
+                      <tr><td>firstLayerBrimTrig</td><td>0</td><td>number</td><td>Brim trigger flag (unclear)</td></tr>
+                      <tr><td>firstLayerBrimGap</td><td>0</td><td>number</td><td>Gap between brim and model</td></tr>
+                      <tr><td>firstLayerBeltLead</td><td>3</td><td>number</td><td>Belt lead distance (unclear, likely for bed movement)</td></tr>
+                      <tr><td>firstLayerBeltBump</td><td>0</td><td>number</td><td>Belt bump parameter (unclear)</td></tr>
+                      <tr><td>firstLayerFanSpeed</td><td>0</td><td>number</td><td>Fan speed during first layer (0-255)</td></tr>
+                      <tr><td>firstLayerFlatten</td><td>0</td><td>number</td><td>Flatten first layer flag (unclear)</td></tr>
+                      <tr><td>outputRaft</td><td>false</td><td>bool</td><td>Enable raft printing</td></tr>
+                      <tr><td>outputRaftSpacing</td><td>0.2</td><td>number</td><td>Spacing between raft lines</td></tr>
+                      <tr><td>outputDraftShield</td><td>false</td><td>bool</td><td>Enable draft shield around print</td></tr>
+                      <tr><td>outputTemp</td><td>200</td><td>number</td><td>Nozzle temperature (°C)</td></tr>
+                      <tr><td>outputBedTemp</td><td>60</td><td>number</td><td>Bed temperature (°C)</td></tr>
+                      <tr><td>outputFeedrate</td><td>50</td><td>number</td><td>Printing feedrate (mm/s)</td></tr>
+                      <tr><td>outputFinishrate</td><td>50</td><td>number</td><td>Finishing move speed (mm/s)</td></tr>
+                      <tr><td>outputSeekrate</td><td>80</td><td>number</td><td>Seek (travel) speed (mm/s)</td></tr>
+                      <tr><td>outputShellMult</td><td>1.25</td><td>number</td><td>Speed multiplier for shell printing</td></tr>
+                      <tr><td>outputFillMult</td><td>1.25</td><td>number</td><td>Speed multiplier for infill printing</td></tr>
+                      <tr><td>outputSparseMult</td><td>1.25</td><td>number</td><td>Speed multiplier for sparse infill</td></tr>
+                      <tr><td>outputFanLayer</td><td>1</td><td>number</td><td>Layer to start fan</td></tr>
+                      <tr><td>outputFanSpeed</td><td>255</td><td>number</td><td>Fan speed (0-255)</td></tr>
+                      <tr><td>outputRetractDist</td><td>1.5</td><td>number</td><td>Retraction distance (mm)</td></tr>
+                      <tr><td>outputRetractSpeed</td><td>40</td><td>number</td><td>Retraction speed (mm/s)</td></tr>
+                      <tr><td>outputRetractWipe</td><td>0</td><td>number</td><td>Wipe distance during retraction (unclear)</td></tr>
+                      <tr><td>outputRetractDwell</td><td>20</td><td>number</td><td>Dwell time after retraction (ms)</td></tr>
+                      <tr><td>outputBrimCount</td><td>2</td><td>number</td><td>Number of brim loops</td></tr>
+                      <tr><td>outputBrimOffset</td><td>2</td><td>number</td><td>Offset distance for brim</td></tr>
+                      <tr><td>outputShortPoly</td><td>100</td><td>number</td><td>Minimum polygon length to consider (units unclear)</td></tr>
+                      <tr><td>outputMinSpeed</td><td>10</td><td>number</td><td>Minimum print speed (mm/s)</td></tr>
+                      <tr><td>outputCoastDist</td><td>0</td><td>number</td><td>Coasting distance before end of extrusion</td></tr>
+                      <tr><td>outputPurgeTower</td><td>0</td><td>number</td><td>Enable/size of purge tower (unclear)</td></tr>
+                      <tr><td>outputBeltFirst</td><td>false</td><td>bool</td><td>Use belt before print (unclear)</td></tr>
+                      <tr><td>outputAvoidGaps</td><td>true</td><td>bool</td><td>Avoid gaps in extrusion paths</td></tr>
+                      <tr><td>outputAlternating</td><td>false</td><td>bool</td><td>Alternate print directions/layers</td></tr>
+                      <tr><td>outputLayerRetract</td><td>false</td><td>bool</td><td>Retract filament at layer changes</td></tr>
+                      <tr><td>outputLoops</td><td>0</td><td>number</td><td>Number of loops to print (unclear)</td></tr>
+                      <tr><td>outputInvertX</td><td>false</td><td>bool</td><td>Invert X axis</td></tr>
+                      <tr><td>outputInvertY</td><td>false</td><td>bool</td><td>Invert Y axis</td></tr>
+                      <tr><td>sliceDetectThin</td><td>off</td><td>string</td><td>Enable thin feature detection</td></tr>
+                      <tr><td>sliceMinHeight</td><td>0</td><td>number</td><td>Minimum slice height</td></tr>
+                      <tr><td>sliceAdaptive</td><td>false</td><td>bool</td><td>Enable adaptive slicing</td></tr>
+                      <tr><td>zHopDistance</td><td>0.2</td><td>number</td><td>Z-hop height during travel moves</td></tr>
+                      <tr><td>arcTolerance</td><td>0</td><td>number</td><td>Arc approximation tolerance</td></tr>
+                      <tr><td>antiBacklash</td><td>0</td><td>number</td><td>Compensation for backlash</td></tr>
+                      <tr><td>ranges</td><td>[]</td><td>array</td><td>Ranges for slicing layers or regions (unclear)</td></tr>
+                    </tbody>
+                  </table>
+                  
+                
+            </p>
+        </div>
+
+        <div id="cam">
+            <h2>CAM</h2>
+            <p>
+                    "processName": "default"<br>
+                    "camFlipAxis": "X"<br>
+                    "camFlipOther": ""<br>
+                    "camLaserEnable":[ "M321" ] <br>
+                    "camLaserDisable": ["M322" ]<br>
+                    "camLaserOn": ["M3" ]<br>
+                    "camLaserOff": ["M5" ]<br>
+                    "camLaserSpeed": 100<br>
+                    "camLaserPower": 1<br>
+                    "camLaserAdaptive": false<br>
+                    "camLaserAdaptMod": false<br>
+                    "camLaserFlatten": false<br>
+                    "camLaserFlatZ": 0<br>
+                    "camLaserPowerMin": 0<br>
+                    "camLaserPowerMax": 1<br>
+                    "camLaserZMin": 0<br>
+                    "camLaserZMax": 0<br>
+                    "camTabsWidth": 5<br>
+                    "camTabsHeight": 5<br>
+                    "camTabsDepth": 5<br>
+                    "camTabsMidline": false<br>
+                    "camDepthFirst": false<br>
+                    "camEaseDown": false<br>
+                    "camEaseAngle": 10<br>
+                    "camOriginTop": true<br>
+                    "camZAnchor": "middle"<br>
+                    "camZOffset": 0<br>
+                    "camZTop": 0<br>
+                    "camZBottom": 0<br>
+                    "camZClearance": 1<br>
+                    "camZThru": 0<br>
+                    "camFastFeed": 6000<br>
+                    "camFastFeedZ": 300<br>
+                    "camFlatness": 0.001<br>
+                    "camContourBridge": 0<br>
+                    "camStockX": 5<br>
+                    "camStockY": 5<br>
+                    "camStockZ": 5<br>
+                    "camStockOffset": true<br>
+                    "camStockClipTo": false<br>
+                    "camStockIndexed": false<br>
+                    "camStockIndexGrid": true<br>
+                    "camIndexAxis": 0<br>
+                    "camIndexAbs": true<br>
+                    "camConventional": false<br>
+                    "camOriginCenter": false<br>
+                    "camOriginOffX": 0<br>
+                    "camOriginOffY": 0<br>
+                    "camOriginOffZ": 0<br>
+                    "outputInvertX": false<br>
+                    "outputInvertY": false<br>
+                    "camExpertFast": false<br>
+                    "camTrueShadow": false<br>
+                    "camForceZMax": false<br>
+                    "camFirstZMax": false<br>
+                    "camToolInit": true<br>
+                    "camFullEngage": 0.8<br>
+                    "ops": []<br>
+                    "op2": []<br>
+                
+            </p>
+            <h3>CAM ops</h3>
+            <p> CAM operations are global functions that generate gcode based on your CAM mesh</p>
+
+        </div>
     </div>
     <a id="download"></a>
 </body>
