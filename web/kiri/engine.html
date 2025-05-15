@@ -102,6 +102,7 @@
             let FDMExample = loadExample(demoFDM)
         }
         function display_message(msg) {
+            console.log({msg})
             $('gfoot').innerText = msg ? Object.keys(msg).join(' - ') : '';
         }
         function display_gcode(gcode) {
@@ -251,13 +252,80 @@
         }
 
         function demoLASER(){
-
+            kiri.newEngine()
+            .setListener(display_message)
+            .load("/obj/cube.stl")
+            // should to call widget.setTopZ here ideally
+            .then(eng => eng.setMode("LASER"))
+            .then(eng => eng.setStock({
+                "x": 25,
+                "y": 25,
+                "z": 24.999998092651367,
+                "center": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 12.499999046325684
+                }
+            }))
+            .then(eng => eng.setProcess({
+                "processName": "default",
+                "ctSliceKerf": 0.1,
+                "ctSliceHeight": 0.5,
+                "ctSliceHeightMin": 0,
+                "ctSliceSingle": false,
+                "ctOutTileSpacing": 1,
+                "ctOutPower": 100,
+                "ctOutSpeed": 1000,
+                "ctOutGroup": true,
+                "ctOutZColor": false,
+                "ctOutLayer": false,
+                "ctOutMark": false,
+                "ctOutStack": false,
+                "ctOutMerged": false,
+                "ctOriginCenter": false,
+                "ctOriginBounds": false,
+                "outputInvertX": false,
+                "outputInvertY": false,
+                "ctOutKnifeDepth": 1,
+                "ctOutKnifePasses": 1,
+                "ctOutKnifeTip": 2,
+                "ctOutInches": false,
+                "ctOutShaper": false
+            }))
+            .then(eng => eng.setDevice({
+                "mode": "LASER",
+                "internal": 0,
+                "bedHeight": 2.5,
+                "bedWidth": 600,
+                "bedDepth": 308,
+                "maxHeight": 150,
+                "gcodePre": [],
+                "gcodePost": [],
+                "gcodeFExt": "svg",
+                "gcodeSpace": true,
+                "gcodeLaserOn": [],
+                "gcodeLaserOff": [],
+                "new": false,
+                "deviceName": "Xtool.P2",
+                "imageURL": "",
+                "laserMaxPower": 255,
+                "bedBelt": false,
+                "bedRound": false,
+                "originCenter": false,
+                "fwRetract": false
+            }))
+            .then(eng => eng.slice())
+            .then(eng => eng.prepare())
+            .then(eng => eng.export())
+            .then(display_gcode);
         }
+        
 
         function download() {
             let blob = new Blob([saveit], {type: "octet/stream"});
             let url  = window.URL.createObjectURL(blob);
-            $('download').innerHTML = `<a id="xo" href="${url}" download="sample.gcode"></a>`;
+            let filename = window.prompt("Enter filename", "sample.gcode");
+            $('download').innerHTML = `<a id="xo" href="${url}" download="${filename}"></a>`;
             $('xo').click();
         }
     </script>
@@ -271,7 +339,7 @@
             <div id="jfoot"><button onclick="run_code()">run code</button></div>
         </div>
         <div id="gcode">
-            <div id="ghead">gcode output</div>
+            <div id="ghead">Output</div>
             <div id="gbody"></div>
             <div id="gfoot"></div>
             <div id="dfoot"><button onclick="download()">download</button></div>
@@ -282,6 +350,7 @@
         <div id="examples">
             <button onclick="loadExample(demoFDM)">Load FDM Example</button>
             <button onclick="loadExample(demoCAM)">Load CAM Example</button>
+            <button onclick="loadExample(demoLASER)">Load LASER Example</button>
         </div>
     </div>
     <div id="api">
