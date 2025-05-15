@@ -703,6 +703,11 @@ class OpOutline extends CamOp {
             cutdir = !cutdir;
         }
 
+        // printpoint becomes NaN in engine mode. not sure why but this fixes it
+        if(Object.values(printPoint).some(v=>Number.isNaN(v))){ 
+            printPoint = newPoint(0,0,0);
+        }
+
         for (let slice of sliceOut) {
             let polys = [], t = [], c = [];
             let lines =POLY.flatten(slice.camLines)
