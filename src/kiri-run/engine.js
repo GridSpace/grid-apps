@@ -104,10 +104,6 @@ class Engine {
         return this;
     }
 
-    setOrigin(x,y,z) {
-        this.settings.origin = { x, y, z };
-        return this;
-    }
 
     moveTo(x, y, z) {
         this.widget.move(x, y, z, true);
