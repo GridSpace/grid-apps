@@ -668,7 +668,10 @@ function generateDevices() {
     fs.readdirSync(root).forEach(type => {
         let map = devs[type] = devs[type] || {};
         fs.readdirSync(PATH.join(root,type)).forEach(device => {
-            map[device] = JSON.parse(fs.readFileSync(PATH.join(root,type,device)));
+            let deviceName = device.endsWith('.json')
+                ? device.substring(0,device.length-5)
+                : device;
+            map[deviceName] = JSON.parse(fs.readFileSync(PATH.join(root,type,device)));
         });
     });
     synth.devices = `self.devices = ${JSON.stringify(devs)};`;
