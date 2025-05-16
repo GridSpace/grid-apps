@@ -68,6 +68,11 @@ class Engine {
         return this;
     }
 
+    /**
+     * Sets the mode of the engine. Valid modes are:
+     * @param {"FDM"|"CAM"|"LASER"|"SLA"} mode - the mode to set
+     * @returns {Engine} this
+     */
     setMode(mode) {
         this.settings.mode = mode;
         return this;
