@@ -493,6 +493,23 @@ kiri.worker = {
         }, function(debug) {
             send.data({debug});
         });
+
+        //export in different modes, based on device type
+        if(mode.toUpperCase() === "LASER"){
+            let FExt = data.settings.device.gcodeFExt.toUpperCase();
+            if(FExt === "DXF"){
+                let dxf = driver.exportDXF(data.settings, current.print.output);
+                send.data({line:dxf});
+            }else if(FExt === "SVG"){
+                let svg = driver.exportSVG(data.settings, current.print.output);
+                send.data({line:svg});
+            }else{
+                //if not svg or dxf, default to gcode
+                let gcode = driver.exportGCode(data.settings, current.print.output);
+                send.data({line:gcode});
+            }
+        }
+
         const {
             bounds,
             time,

@@ -23,6 +23,14 @@
             display: flex;
             flex-direction: row;
         }
+        
+        #loadExample #examples {
+            display:flex;
+            flex-direction: row;
+        }
+        #loadExample #examples button {
+            margin-right: 1rem;
+        }
         #jcode, #gcode {
             width: 400px;
             height: 400px;
@@ -64,7 +72,7 @@
             padding: 3px;
             text-align: center;
         }
-        #api {
+        #loadExample , #api{
             width: 812px;
         }
         #download {
@@ -84,7 +92,6 @@
         let edit, saveit = "";
         function $(id) { return document.getElementById(id) }
         function onload() {
-            let fnstr = demo.toString().split("\n");
             edit = ace.edit($("jbody"), {
                 mode: "ace/mode/javascript",
                 theme: "ace/theme/chrome",
@@ -92,10 +99,7 @@
             });
             edit.session.setTabSize(4);
             edit.session.setUseSoftTabs(true);
-            edit.session.setValue(fnstr
-                .slice(1,fnstr.length - 1)
-                .map(l => l.replace("            ",""))
-                .join('\n'));
+            let FDMExample = loadExample(demoFDM)
         }
         function display_message(msg) {
             $('gfoot').innerText = msg ? Object.keys(msg).join(' - ') : '';
@@ -106,21 +110,27 @@
             $('dfoot').style.display = 'block';
             $('gfoot').style.display = '';
         }
+        function loadExample(func){
+            let fnstr = func.toString().split("\n");
+            edit.session.setValue(
+                fnstr
+                .slice(1,fnstr.length - 1)
+                .map(l => l.replace("            ",""))
+                .join('\n')
+            )
+        }
         function run_code() {
             $('dfoot').style.display = 'none';
             $('gfoot').style.display = 'block';
             let code = edit.session.getValue();
             eval(`(function(){${code}})()`);
         }
-        function demo() {
+        function demoFDM() {
             kiri.newEngine()
                 .setListener(display_message)
                 .load("/obj/cube.stl")
                 .then(eng => eng.setProcess({
-                    sliceShells: 1,
-                    sliceFillSparse: 0.25,
-                    sliceTopLayers: 2,
-                    sliceBottomLayers: 2
+                    
                 }))
                 .then(eng => eng.setDevice({
                     gcodePre: [ "M82", "M104 S220" ],
@@ -131,10 +141,184 @@
                 .then(eng => eng.export())
                 .then(display_gcode);
         }
+
+        function demoCAM(){
+            kiri.newEngine()
+            .setListener(display_message)
+            .load("/obj/cube.stl")
+            // should to call widget.setTopZ here ideally
+            .then(eng => eng.setMode("CAM"))
+            .then(eng => eng.setStock({
+                "x": 25,
+                "y": 25,
+                "z": 25,
+                "center": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 12.5
+                }
+            }))
+            .then(eng => eng.moveTo(50, 0, 0))
+            .then(eng=> eng.setTools([{
+                id: 1000,
+                number: 1,
+                type: "endmill",
+                name: "end 1/4",
+                metric: false,
+                shaft_diam: 0.25,
+                shaft_len: 1,
+                flute_diam: 0.25,
+                flute_len: 2,
+                taper_tip: 0,
+                order: 5
+            }]))
+            .then(eng => eng.setProcess({
+                camEaseAngle:10,
+                camEaseDown:true,
+                camZAnchor: "bottom",
+                camDepthFirst : false,
+                camZThru: 1.524,
+                camZBottom:-25, // temp hack to get around setTopZ bug
+                camToolInit: true,
+                
+                ops: [{
+                    type: "outline",
+                    tool: 1000,
+                    spindle: 13000,
+                    step: 0.4,
+                    steps: 1,
+                    down: 5.08,
+                    rate: 635,
+                    plunge: 51,
+                    dogbones: false,
+                    omitvoid: false,
+                    omitthru: false,
+                    outside: false,
+                    inside: false,
+                    wide: false,
+                    top: false,
+                    ov_topz: 0,
+                    ov_botz: 0,
+                    ov_conv: true
+                }
+                ]
+                
+            }))
+            .then(eng => eng.setDevice({
+            mode: "CAM",
+            internal: 0,
+            bedHeight: 2.5,
+            bedWidth: 678.18,
+            bedDepth: 1524,
+            maxHeight: 150,
+            originCenter: false,
+            spindleMax: 24000,
+            gcodePre: [
+                "G20 ; set units to inches (required)",
+                "G90 ; absolute position mode (required)"
+            ],
+            gcodePost: [
+                "M05 ; spindle off",
+                "M30 ; program end"
+            ],
+            gcodeDwell: [
+                "G4 P{time} ; dwell for {time}ms"
+            ],
+            gcodeSpindle: [
+                "M3 S{speed} ; spindle on at {spindle} rpm"
+            ],
+            gcodeChange: [
+                "M05 ; spindle off",
+                "M6 T{tool} ; change tool to '{tool_name}'",
+                "G37; get tool offset with ETS"
+            ],
+            gcodeFExt: "nc",
+            gcodeSpace: true,
+            gcodeStrip: false,
+            deviceName: "Tormach.24R",
+            useLaser: false
+        }))
+            .then(eng => eng.slice())
+            .then(eng => eng.prepare())
+            .then(eng => eng.export())
+            .then(display_gcode);
+        }
+
+        function demoLASER(){
+            kiri.newEngine()
+            .setListener(display_message)
+            .load("/obj/cube.stl")
+            // should to call widget.setTopZ here ideally
+            .then(eng => eng.setMode("LASER"))
+            .then(eng => eng.setStock({
+                x: 25,
+                y: 25,
+                z: 24.999998092651367,
+                center: {
+                    x: 0,
+                    y: 0,
+                    z: 12.499999046325684
+                }
+            }))
+            .then(eng => eng.setProcess({
+                processName: "default",
+                ctSliceKerf: 0.1,
+                ctSliceHeight: 0.5,
+                ctSliceHeightMin: 0,
+                ctSliceSingle: false,
+                ctOutTileSpacing: 1,
+                ctOutPower: 100,
+                ctOutSpeed: 1000,
+                ctOutGroup: true,
+                ctOutZColor: false,
+                ctOutLayer: false,
+                ctOutMark: false,
+                ctOutStack: false,
+                ctOutMerged: false,
+                ctOriginCenter: false,
+                ctOriginBounds: false,
+                outputInvertX: false,
+                outputInvertY: false,
+                ctOutKnifeDepth: 1,
+                ctOutKnifePasses: 1,
+                ctOutKnifeTip: 2,
+                ctOutInches: false,
+                ctOutShaper: false
+            }))
+            .then(eng => eng.setDevice({
+                mode: "LASER",
+                internal: 0,
+                bedHeight: 2.5,
+                bedWidth: 600,
+                bedDepth: 308,
+                maxHeight: 150,
+                gcodePre: [],
+                gcodePost: [],
+                gcodeFExt: "svg",
+                gcodeSpace: true,
+                gcodeLaserOn: [],
+                gcodeLaserOff: [],
+                new: false,
+                deviceName: "Xtool.P2",
+                imageURL: "",
+                laserMaxPower: 255,
+                bedBelt: false,
+                bedRound: false,
+                originCenter: false,
+                fwRetract: false
+            }))
+            .then(eng => eng.slice())
+            .then(eng => eng.prepare())
+            .then(eng => eng.export())
+            .then(display_gcode);
+        }
+        
+
         function download() {
             let blob = new Blob([saveit], {type: "octet/stream"});
             let url  = window.URL.createObjectURL(blob);
-            $('download').innerHTML = `<a id="xo" href="${url}" download="sample.gcode"></a>`;
+            let filename = window.prompt("Enter filename", "sample.gcode");
+            $('download').innerHTML = `<a id="xo" href="${url}" download="${filename}"></a>`;
             $('xo').click();
         }
     </script>
@@ -143,25 +327,35 @@
     <h2 id="title">Kiri:Moto Javascript Engine <a href="https://docs.grid.space/projects/kiri-moto/apis">API</a></h2>
     <div id="demo">
         <div id="jcode">
-            <div id="jhead">javascript</div>
+            <div id="jhead">JavaScript</div>
             <div id="jbody"></div>
             <div id="jfoot"><button onclick="run_code()">run code</button></div>
         </div>
         <div id="gcode">
-            <div id="ghead">gcode output</div>
+            <div id="ghead">Output</div>
             <div id="gbody"></div>
             <div id="gfoot"></div>
             <div id="dfoot"><button onclick="download()">download</button></div>
+        </div>
+    </div>
+    <div id="loadExample">
+        <h2>Load Examples</h2>
+        <div id="examples">
+            <button onclick="loadExample(demoFDM)">Load FDM Example</button>
+            <button onclick="loadExample(demoCAM)">Load CAM Example</button>
+            <button onclick="loadExample(demoLASER)">Load LASER Example</button>
         </div>
     </div>
     <div id="api">
         <h2>Engine Methods</h2>
         <li><label>load(url)</label> - where URL points to an STL</li>
         <li><label>parse(data)</label> - where data is a string or binary STL</li>
-        <li><label>setMode(mode)</label> - FDM, CAM, LASER, SLA</li>
+        <li><label>setMode(mode)</label> - FDM, CAM, LASER, SLA (untested)</li>
         <li><label>setListener(fn)</label> - function to receive engine progress messages</li>
         <li><label>setDevice(options)</label> - change default object parameters</li>
         <li><label>setProcess(options)</label> - change default process parameters</li>
+        <li><label>setStock(options)</label> - set stock dimensions for CAM mode</li>
+        <li><label>setTools(tools)</label> - set available tools for CAM operations</li>
         <li><label>moveTo(x,y,z)</label> - absolute move origin of loaded object</li>
         <li><label>move(x,y,z)</label> - relative move origin of loaded object</li>
         <li><label>scale(x,y,z)</label> - scale axes of loaded object</li>

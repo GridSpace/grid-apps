@@ -76,8 +76,10 @@ function callExport(callback, mode, names) {
 
 function callExportLaser(options, names) {
     kiri.client.export(api.conf.get(), (line) => {
-        console.log({unexpected_line: line});
+        // engine export uses lines
+        // console.log({unexpected_line: line});
     }, (output, error) => {
+        // UI export uses output
         if (error) {
             api.show.alert(error, 5);
         } else {

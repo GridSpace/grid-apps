@@ -26,7 +26,7 @@ jobs:
       - name: Build Electron app
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npm run build
+        run: npm run build-nopublish
         
   build-windows:
     runs-on: "windows-latest"
@@ -46,7 +46,7 @@ jobs:
       - name: Build Electron app
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npm run build
+        run: npm run build-nopublish
 
 
 
