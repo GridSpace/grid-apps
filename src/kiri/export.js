@@ -106,38 +106,31 @@ function exportLaserDialog(data, names) {
     const filename = `${fileroot}-${(printSeq.toString().padStart(3,"0"))}`;
     const settings = api.conf.get();
     const driver = kiri.driver.LASER;
-
-    function download_svg() {
+    const downloadBtn = $('download-laser')
+    const fileExt = settings.device.gcodeFExt.toLowerCase() ?? "gcode";
+    downloadBtn.innerHTML = fileExt
+    
+    function downloadFile(){
+        let blob;
+        if (fileExt === "svg") {
+            blob = driver.exportSVG(settings, data)
+        } else if (fileExt === "dxf") {
+            blob = driver.exportDXF(settings, data)
+        }else{
+            blob = driver.exportGCode(settings, data)
+        }
         api.util.download(
-            driver.exportSVG(settings, data),
-            $('print-filename-laser').value + ".svg"
+            blob,
+            $('print-filename-laser').value + "." + fileExt
         );
     }
-
-    function download_dxf() {
-        api.util.download(
-            driver.exportDXF(settings, data),
-            $('print-filename-laser').value + ".dxf"
-        );
-    }
-
-    function download_gcode() {
-        api.util.download(
-            driver.exportGCode(settings, data),
-            $('print-filename-laser').value + ".gcode"
-        );
-    }
-
+    
     api.modal.show('xlaser');
 
-    let segments = 0;
-    data.forEach(layer => { segments += layer.length });
-
+    let segments =  data.reduce((acc, layer) => acc + layer.length, 0);
     $('print-filename-laser').value = filename;
     $('print-lines').value = util.comma(segments);
-    $('print-svg').onclick = download_svg;
-    $('print-dxf').onclick = download_dxf;
-    $('print-lg').onclick = download_gcode;
+    downloadBtn.onclick = downloadFile;
 }
 
 function bindField(field, varname) {
