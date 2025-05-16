@@ -66,7 +66,9 @@
         "node-fetch": "^3.3.2",
         "terser-webpack-plugin": "^5.3.10",
         "webpack": "^5.92.1",
-        "webpack-cli": "^5.1.4"
+        "webpack-cli": "^5.1.4",
+        "@docusaurus/core": "3.7.0",
+        "@docusaurus/preset-classic": "3.7.0"
     },
     "scripts": {
         "setup": "npm i && cd mods && npm i",
@@ -90,7 +92,9 @@
         "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
-        "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js"
+        "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js",
+        "docs-build": "docusaurus build",
+        "docs-serve": "docusaurus start"
     },
     "main": "app-el.js",
     "build": {
