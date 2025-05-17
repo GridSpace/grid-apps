@@ -1,6 +1,7 @@
 name: 'docs-publish'
 on:
   push:
+  workflow_dispatch:
 
 # Allow one concurrent deployment
 concurrency:
