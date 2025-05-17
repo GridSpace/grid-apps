@@ -9,3 +9,5 @@ node_modules
 package-lock.json
 src/ext/three.js
 tmp
+.docusaurus
+build

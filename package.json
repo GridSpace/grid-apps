@@ -58,7 +58,10 @@
         "ws": "^8.18.2"
     },
     "devDependencies": {
+        "@docusaurus/core": "^3.7.0",
+        "@docusaurus/preset-classic": "^3.7.0",
         "@electron/notarize": "^3.0.0",
+        "docusaurus-lunr-search": "^3.6.0",
         "dotenv": "latest",
         "electron": "^35.0.1",
         "electron-builder": "^24.9.1",
@@ -91,7 +94,10 @@
         "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
-        "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js"
+        "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js",
+        "docs-dev": "docusaurus start",
+        "docs-build": "docusaurus build",
+        "docs-serve": "docusaurus serve"
     },
     "main": "app-el.js",
     "build": {
