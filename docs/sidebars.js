@@ -13,8 +13,11 @@ const sidebars = {
         {
           type: "category",
           label: "Kiri Moto",
+          link: {
+            type: 'doc',
+            id: 'kiri-moto/index', 
+          },
           items: [
-            "kiri-moto/index",
             "kiri-moto/interface",
             "kiri-moto/controls",
             "kiri-moto/integrations",
@@ -26,6 +29,21 @@ const sidebars = {
             "kiri-moto/faq",
           ],
         },
+        {
+          type: "doc",
+          id: "mesh-tool",
+        },
+        {
+          type: "category",
+          label: "GridBot",
+          link: {
+            type: 'doc',
+            id: 'gridbot/index', 
+          },
+          items: [
+            "gridbot/bom",
+          ]
+        }
       ],
     },
     {
@@ -52,6 +70,18 @@ const sidebars = {
           type: 'link',
           label: 'BlueSky',
           href: 'https://bsky.app/profile/grid.space',
+        },
+      ],
+    },
+    {
+      type: "category",
+      label: "Related",
+      collapsed: false,
+      items: [
+        {
+          type: "link",
+          label: "Thingiverse",
+          href: "http://www.thingiverse.com/stewartallen/about",
         },
       ],
     },
