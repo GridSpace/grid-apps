@@ -1,9 +1,9 @@
 
 
 module.exports = {
-  url: 'https://docusaurus.io',
+  url: 'https://docs.grid.space',
   title: 'grid.space docs',
-  baseUrl : '/',
+  baseUrl : 'grid-apps/',
   staticDirectories: ['./docs/static/'],
   // ...
   plugins: [require.resolve('docusaurus-lunr-search')],
