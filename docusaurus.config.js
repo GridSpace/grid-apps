@@ -6,6 +6,7 @@ module.exports = {
   baseUrl : '/',
   staticDirectories: ['./docs/static/'],
   // ...
+  plugins: [require.resolve('docusaurus-lunr-search')],
   presets: [
     [
       '@docusaurus/preset-classic',
@@ -24,4 +25,18 @@ module.exports = {
       },
     ],
   ],
+
+  themeConfig:{
+    navbar:{
+      title: "Grid.Space Docs",
+      logo: {
+        alt: "Grid.Space Logo",
+        src: "img/gs-logo.png",
+        href: "https://docs.grid.space",
+        width: 32,
+        height:32,
+      },
+
+    },
+  },
 };
