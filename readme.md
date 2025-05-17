@@ -10,14 +10,12 @@
 ![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
 
 
-# Community & Documentation
+# Community
 
 [Discord](https://discord.com/invite/suyCCgr) -- Live Chat  
 [Forums](https://forum.grid.space/) -- Long Form and Archival Discussion  
 [BlueSky](https://bsky.app/profile/grid.space) -- Like the Good 'Ol Days  
 [YouTube](https://www.youtube.com/c/gridspace) -- Content when I have time  
-[Documentation](https://docs.grid.space/) -- Could really use help with this  
-
 
 # Free and Open Source
 
@@ -26,6 +24,18 @@ Kiri:Moto and Mesh:Tool are completely open source and free for use without rest
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/GridSpace)](https://github.com/sponsors/GridSpace)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
 
+# Documentation
+[Documentation](https://docs.grid.space/) -- Could really use help with this  
+
+Docs are build with [Docusaurus](https://docusaurus.io/) and served using [github pages](https://pages.github.com/).
+
+You can build and view the docs locally with:
+```
+git clone git@github.com:GridSpace/grid-apps.git
+cd grid-apps
+npm run setup
+npm run docs-dev
+```
 
 # HTML5 Web Apps (Installable)
 
