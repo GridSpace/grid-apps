@@ -20,8 +20,10 @@ module.exports = {
           //   hideable: true,
           // }
         },
-        blog: false
-        
+        blog: false,
+        theme: {
+          customCss: './docs/src/custom.css',
+        },
       },
     ],
   ],
