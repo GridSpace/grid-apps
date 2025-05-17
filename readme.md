@@ -27,7 +27,7 @@ Kiri:Moto and Mesh:Tool are completely open source and free for use without rest
 # Documentation
 [Documentation](https://docs.grid.space/) -- Could really use help with this  
 
-Docs are build with [Docusaurus](https://docusaurus.io/) and served using [github pages](https://pages.github.com/).
+Docs are build with [Docusaurus](https://docusaurus.io/) and served using [GitHub Pages](https://pages.github.com/).
 
 You can build and view the docs locally with:
 ```
