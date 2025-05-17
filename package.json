@@ -58,7 +58,10 @@
         "ws": "^8.18.2"
     },
     "devDependencies": {
+        "@docusaurus/core": "^3.7.0",
+        "@docusaurus/preset-classic": "^3.7.0",
         "@electron/notarize": "^3.0.0",
+        "docusaurus-lunr-search": "^3.6.0",
         "dotenv": "latest",
         "electron": "^35.0.1",
         "electron-builder": "^24.9.1",
@@ -66,9 +69,7 @@
         "node-fetch": "^3.3.2",
         "terser-webpack-plugin": "^5.3.10",
         "webpack": "^5.92.1",
-        "webpack-cli": "^5.1.4",
-        "@docusaurus/core": "3.7.0",
-        "@docusaurus/preset-classic": "3.7.0"
+        "webpack-cli": "^5.1.4"
     },
     "scripts": {
         "setup": "npm i && cd mods && npm i",
