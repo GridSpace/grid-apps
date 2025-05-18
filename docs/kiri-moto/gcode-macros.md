@@ -6,14 +6,14 @@ description: Variable Substitutions and Expressions in GCode Macros
 
 ## All Modes
 
-### "pre" and "post" (header/footer)
+### "Header"/"Footer" Only Macros
 
 - \{top\} = offset in mm of bed top Y axis
 - \{left\} = offset in mm of bed left X axis
 - \{right\} = offset in mm of bed right X axis
 - \{bottom\} = offset in mm of bed bottom Y axis
 
-### Only "post" (footer)
+### "Footer" Only Macros
 
 - \{time\} = job run time (printing/milling) in seconds (fractional)
 - \{print-time\} = alias for \{time\} ... deprecated after 2.8
@@ -22,13 +22,7 @@ description: Variable Substitutions and Expressions in GCode Macros
 
 ## FDM (3D Printing) Mode Only
 
-
-### "feature" macro only (as of 3.4)
-
-- \{feature\} = feature region of the print (brims, infill, etc)
-- \{minx|miny|maxx|maxy\} = position in mm of extents of the print area
-
-### "pre", "post", and other macros
+### FDM Macros
 
 - \{temp\} = hot end temperature
 - \{bed_temp\} = bed temperature
@@ -49,8 +43,11 @@ description: Variable Substitutions and Expressions in GCode Macros
 - \{z\} = current z position
 - \{e\} = amount of filament extruded
 
-### _Logical Code Flow (IF / ELIF / ELSE / END)_
+### "Feature" only Macros (v3.4+)
+- \{feature\} = feature region of the print (brims, infill, etc)
+- \{minx|miny|maxx|maxy\} = position in mm of extents of the print area
 
+### Logical Code Flow (IF / ELIF / ELSE / END)
 ```
 ;; IF { layer >= 10 && layer <= 20 }
 ;; ..... inside 10-20 layer={layer}
@@ -61,29 +58,14 @@ description: Variable Substitutions and Expressions in GCode Macros
 ;; END
 ```
 
-### _PREAMBLE control (v3.4+) 
+### PREAMBLE control (v3.4+) 
+Allows for intro comment and config list to be re-positioned after the header or disabled. This was introduced to allow GCode output to work with Ultimaker.
 
-Allows for intro comment and config list to be re-positioned after the header or disabled. This was introduced to allow GCode output to work with Ultimaker._
+`;; PREAMBLE OFF`
 
-_`;; PREAMBLE OFF`_
-
-_`;; PREAMBLE END`_
+`;; PREAMBLE END`
 
 ## CAM Mode Only
-
-### CAM Header Directives
-
-Comments Rewrite (v3.8+) converts `;` comments into `()` parenthesis format
-
-_`;; COMMENT_REWRITE_PARENS`_
-
-Minimize the size of GCode output (v3.8+)
-
-_`;; COMPACT-OUTPUT`_
-
-Set decimal precision (n = integer) (v3.8+)
-
-_`;; DECIMALS = n`_
 
 ### CAM Macros
 
@@ -99,7 +81,21 @@ _`;; DECIMALS = n`_
 - \{pos_y\} = last output Y position
 - \{pos_z\} = last output Z position
 
-## Axis Scaling (v3.7+)
+### CAM Header Directives
+
+Comments Rewrite (v3.8+) converts `;` comments into `()` parenthesis format
+
+`;; COMMENT_REWRITE_PARENS`
+
+Minimize the size of GCode output (v3.8+)
+
+`;; COMPACT-OUTPUT`
+
+Set decimal precision (n = integer) (v3.8+)
+
+`;; DECIMALS = n`
+
+### Axis Scaling (v3.7+)
 Allows for a factor to be applied to X,Y,Z coordinates. Useful for some machines like the Roland MDX-40A that uses an unusual coordinate space. Default axis scale is `1`
 
 _`;; SCALE { "X":100, "Y":100, "Z":100 }`_
