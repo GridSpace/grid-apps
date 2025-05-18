@@ -8,25 +8,7 @@ description: Various ways to access Kiri:Moto's internals (2.6 and newer version
 
 The latest slicing engine code is served live at `https://grid.space/code/engine.js`
 
-This can be embedded in your page then accessed with the following API calls. An example page is [here](https://grid.space/kiri/engine.html).
-
-| function               | description                                                                                             |
-| ---------------------- | ------------------------------------------------------------------------------------------------------- |
-| load(_url_)            | load an [STL](https://en.wikipedia.org/wiki/STL\_\(file\_format\)) referred to by _url_                 |
-| clear()                | remove all objects from workspace                                                                       |
-| parse(_data_)          | parse the text or binary contents of an [STL](https://en.wikipedia.org/wiki/STL\_\(file\_format\)) file |
-| setMode(_mode_)        | where _mode_ comes from:`[ "CAM", "FDM", "LASER", "SLA" ]`                                              |
-| setListener(_fn_)      | a function to receive engine progress messages                                                          |
-| setDevice(_options_)   | change default Device options                                                                           |
-| setProcess(options)    | change default Process options                                                                          |
-| setController(options) | change default Core options                                                                             |
-| moveTo(_x, y, z_)      | absolute move the origin of the loaded object                                                           |
-| move(_x, y, z_)        | relative move the origin of the loaded object                                                           |
-| scale(_x, y, z_)       | scale axes of the loaded object                                                                         |
-| rotate(_x, y, z_)      | relative rotate axes of loaded object (in radians)                                                      |
-| slice()                | async slice of loaded object                                                                            |
-| prepare()              | async path routing of slice data                                                                        |
-| export()               | async gcode generation from routed paths                                                                |
+This can be embedded in your page then accessed with the API calls defined on the [Engine APIs](engine-apis) page.
 
 ## Command Line API
 

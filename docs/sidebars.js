@@ -24,6 +24,7 @@ const sidebars = {
             "kiri-moto/shared-profiles",
             "kiri-moto/gcode-macros",
             "kiri-moto/apis",
+            "kiri-moto/engine-apis",
             "kiri-moto/localization",
             "kiri-moto/octoprint",
             "kiri-moto/faq",
