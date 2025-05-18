@@ -8,11 +8,7 @@ description: Various ways to access Kiri:Moto's internals (2.6 and newer version
 
 The latest slicing engine code is served live at `https://grid.space/code/engine.js`
 
-This can be embedded in your page then accessed with the API calls defined on the [Engine APIs](kiri-moto/engine-apis) page
-
-An example page is [here](https://grid.space/kiri/engine.html).
-
-
+This can be embedded in your page then accessed with the API calls defined on the [Engine APIs](engine-apis) page.
 
 ## Command Line API
 
