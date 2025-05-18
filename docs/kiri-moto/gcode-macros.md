@@ -112,3 +112,13 @@ _`;; SCALE { "X":100, "Y":100, "Z":100 }`_
  Allows for over-riding the default axis names. Useful for swapping axes and changing output for specific firmware targets. The format of the map is a JSON object._
 
 `;; AXISMAP {"X":"Y", "Y":"Z", "E":"E1"}`
+
+
+## Laser Mode Only
+
+### Laser Macros
+
+- \{power\} = laser power
+- \{color\} = assigned color
+- \{thick\} = assigned thickness
+- \{z\} = current z position
