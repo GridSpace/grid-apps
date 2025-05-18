@@ -4,29 +4,31 @@ description: Variable Substitutions and Expressions in GCode Macros
 
 # GCode Macros
 
-**FDM (3D Printing) variable substitutions**
+## All Modes
 
-_All Modes "pre" and "post" (header/footer)_
+### "pre" and "post" (header/footer)
 
 - \{top\} = offset in mm of bed top Y axis
 - \{left\} = offset in mm of bed left X axis
 - \{right\} = offset in mm of bed right X axis
 - \{bottom\} = offset in mm of bed bottom Y axis
 
-_All Modes "post" (footer)_
+### Only "post" (footer)
 
 - \{time\} = job run time (printing/milling) in seconds (fractional)
 - \{print-time\} = alias for \{time\} ... deprecated after 2.8
 - \{print_time\} = alias for \{time\} ... 2.9 and beyond
 
-_3D printing / FDM mode only_
 
-"feature" macro only (as of 3.4)
+## FDM (3D Printing) Mode Only
+
+
+### "feature" macro only (as of 3.4)
 
 - \{feature\} = feature region of the print (brims, infill, etc)
 - \{minx|miny|maxx|maxy\} = position in mm of extents of the print area
 
-"pre", "post", and other macros
+### "pre", "post", and other macros
 
 - \{temp\} = hot end temperature
 - \{bed_temp\} = bed temperature
@@ -47,7 +49,7 @@ _3D printing / FDM mode only_
 - \{z\} = current z position
 - \{e\} = amount of filament extruded
 
-_Logical Code Flow (IF / ELIF / ELSE / END)_
+### _Logical Code Flow (IF / ELIF / ELSE / END)_
 
 ```
 ;; IF { layer >= 10 && layer <= 20 }
@@ -59,17 +61,17 @@ _Logical Code Flow (IF / ELIF / ELSE / END)_
 ;; END
 ```
 
-_PREAMBLE control (v3.4+) allows for intro comment and config list to be re-positioned after the header or disabled. This was introduced to allow GCode output to work with Ultimaker._
+### _PREAMBLE control (v3.4+) 
+
+Allows for intro comment and config list to be re-positioned after the header or disabled. This was introduced to allow GCode output to work with Ultimaker._
 
 _`;; PREAMBLE OFF`_
 
 _`;; PREAMBLE END`_
 
-_Axis Remapping (v3.5+) allows for over-riding the default axis names. Useful for swapping axes and changing output for specific firmware targets. The format of the map is a JSON object._
+## CAM Mode Only
 
-_`;; AXISMAP {"X":"Y", "Y":"Z", "E":"E1"}`_
-
-#### CAM Header Directives
+### CAM Header Directives
 
 Comments Rewrite (v3.8+) converts `;` comments into `()` parenthesis format
 
@@ -83,7 +85,7 @@ Set decimal precision (n = integer) (v3.8+)
 
 _`;; DECIMALS = n`_
 
-**CAM variable substitutions**
+### CAM Macros
 
 - \{tool\} = CAM tool #
 - \{tool_name\} = CAM tool name
@@ -97,12 +99,20 @@ _`;; DECIMALS = n`_
 - \{pos_y\} = last output Y position
 - \{pos_z\} = last output Z position
 
-_Axis Scaling (v3.7+) allows for a factor to be applied to X,Y,Z coordinates. Useful for some machines like the Roland MDX-40A that uses an unusual coordinate space. Default axis scale is `1`_
+## Axis Scaling (v3.7+)
+Allows for a factor to be applied to X,Y,Z coordinates. Useful for some machines like the Roland MDX-40A that uses an unusual coordinate space. Default axis scale is `1`
 
 _`;; SCALE { "X":100, "Y":100, "Z":100 }`_
 
-**CAM & FDM : simple algebraic expression support**
+ ## CAM & FDM Modes 
+ 
+ ### Simple Algebraic Expression Support
 
 - Text inside `{}` is evaluated algebraically with access to JS classes and methods
 - `{Math.min(layer/layers, 0.5) + 1}`
 - `{token+n} {token-n}`
+
+### Axis Remapping (v3.5+)
+ Allows for over-riding the default axis names. Useful for swapping axes and changing output for specific firmware targets. The format of the map is a JSON object._
+
+`;; AXISMAP {"X":"Y", "Y":"Z", "E":"E1"}`
