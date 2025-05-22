@@ -535,7 +535,7 @@ function load_files(files) {
                         let { svg_repair, extrude_height } = api.modal.bound;
                         load_files_opt(files, {
                             soup: svg_repair.checked,
-                            depth: extrude_height
+                            depth: parseFloat(extrude_height.value)
                         });
                         api.modal.hide();
                     } }),
