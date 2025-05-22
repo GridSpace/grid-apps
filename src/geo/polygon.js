@@ -1188,74 +1188,7 @@ class Polygon {
         return false;
     }
 
-    /**
-     * Ease down along the polygonal path.
-     *
-     * 1. Travel from fromPoint to closest point on polygon, to rampZ above that that point,
-     * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slope until target Z is hit,
-     * 3. then the rest of the path is completed and repeated at target Z until touchdown point is reached.
-     * 4. this function should probably move to CAM prepare since it's only called from there
-     */
-    forEachPointEaseDown(fn, fromPoint, degrees = 45) {
-        let index = this.findClosestPointTo(fromPoint).index,
-            fromZ = fromPoint.z,
-            offset = 0,
-            points = this.points,
-            length = points.length,
-            touch = -1, // first point to touch target z
-            targetZ = points[0].z,
-            dist2next,
-            last,
-            next,
-            done;
-
-        // Slope for computations.
-        const slope = Math.tan((degrees * Math.PI) / 180);
-        // Z height above polygon Z from which to start the ease-down.
-        // Machine will travel from "fromPoint" to "nearest point x, y, z' => with z' = point z + rampZ",
-        // then start the ease down along path.
-        const rampZ = 2.0;
-        while (true) {
-            next = points[index % length];
-            if (last && next.z < fromZ) {
-                // When "in Ease-Down" (ie. while target Z not yet reached) - follow path while slowly decreasing Z.
-                let deltaZ = fromZ - next.z;
-                dist2next = last.distTo2D(next);
-                let deltaZFullMove = dist2next * slope;
-
-                if (deltaZFullMove > deltaZ) {
-                    // Too long: easing along full path would overshoot depth, synth intermediate point at target Z.
-                    //
-                    // XXX: please check my super basic trig - this should follow from `last` to `next` up until the
-                    //      intersect at the target Z distance.
-                    fn(last.followTo(next, dist2next * deltaZ / deltaZFullMove).setZ(next.z), offset++);
-                } else {
-                    // Ok: execute full move at desired slope.
-                    next = next.clone().setZ(fromZ - deltaZFullMove);
-                }
-
-                fromZ = next.z;
-            } else if (offset === 0 && next.z < fromZ) {
-                // First point, move to rampZ height above next.
-                let deltaZ = fromZ - next.z;
-                fromZ = next.z + Math.min(deltaZ, rampZ)
-                next = next.clone().setZ(fromZ);
-            }
-            last = next;
-            fn(next, offset++);
-            if ((index % length) === touch) {
-                break;
-            }
-            if (touch < 0 && next.z <= targetZ) {
-                // Save touch-down index so as to be able to "complete" the full cut at target Z,
-                // i.e. keep following the path loop until the touch down point is reached again.
-                touch = ((index + length) % length);
-            }
-            index++;
-        }
-
-        return last;
-    }
+    
 
     forEachPoint(fn, close, start) {
         let index = start || 0,
