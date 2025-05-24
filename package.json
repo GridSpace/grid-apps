@@ -81,6 +81,7 @@
         "start-dbg": "npm run prebuild && electron . --debugg",
         "start-ddb": "npm run prebuild && electron . --devel --debugg",
         "build": "npm run prebuild && electron-builder",
+        "build-nopublish": "npm run prebuild && electron-builder --publish never",
         "build-debug": "npm run prebuild && DEBUG=electron-builder electron-builder",
         "build-linux": "npm run build -- --linux --x64",
         "build-linux-arm": "npm run build -- --linux --arm64",

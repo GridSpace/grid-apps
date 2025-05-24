@@ -657,7 +657,7 @@ class OpOutline extends CamOp {
             }
 
             if (process.camStockClipTo && stock.x && stock.y && stock.center) {
-                let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
+                let rect = newPolygon().centerRectangle({x:0,y:0}, stock.x, stock.y);
                 offset = cutPolys([rect], offset, slice.z, true);
             }
 
@@ -701,6 +701,11 @@ class OpOutline extends CamOp {
 
         if (!process.camOutlinePocket) {
             cutdir = !cutdir;
+        }
+
+        // printpoint becomes NaN in engine mode. not sure why but this fixes it
+        if(Object.values(printPoint).some(v=>Number.isNaN(v))){ 
+            printPoint = newPoint(0,0,0);
         }
 
         for (let slice of sliceOut) {
@@ -995,7 +1000,7 @@ class OpTrace extends CamOp {
         let cutdir = ov_conv;
         let polys = [];
         let stockRect = stock.center && stock.x && stock.y ?
-            newPolygon().centerRectangle(stock.center, stock.x, stock.y) : undefined;
+            newPolygon().centerRectangle({x:0,y:0}, stock.x, stock.y) : undefined;
         updateToolDiams(toolDiam);
 
         if (tabs) {

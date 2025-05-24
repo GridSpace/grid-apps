@@ -68,6 +68,11 @@ class Engine {
         return this;
     }
 
+    /**
+     * Sets the mode of the engine. Valid modes are:
+     * @param {"FDM"|"CAM"|"LASER"|"SLA"} mode - the mode to set
+     * @returns {Engine} this
+     */
     setMode(mode) {
         this.settings.mode = mode;
         return this;
@@ -104,10 +109,6 @@ class Engine {
         return this;
     }
 
-    setOrigin(x,y,z) {
-        this.settings.origin = { x, y, z };
-        return this;
-    }
 
     moveTo(x, y, z) {
         this.widget.move(x, y, z, true);

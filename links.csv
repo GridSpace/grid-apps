@@ -5,7 +5,7 @@ src/ext/earcut.js,../../node_modules/earcut/src/earcut.js
 src/ext/tween.js,../../node_modules/@tweenjs/tween.js/src/Tween.js
 src/ext/jszip.js,../../node_modules/jszip/dist/jszip.js
 src/wasm/manifold.wasm,../../node_modules/manifold-3d/manifold.wasm
-src/kiri-dev/fdm/GridBot.Two,GridBot.One
+src/kiri-dev/fdm/GridBot.Two.json,GridBot.One.json
 src/kiri/lang-en.js,../../web/kiri/lang/en.js
 web/fon2,../node_modules/bootstrap-icons/font/
 web/kiri/lang/pl.js,pl-pl.js
