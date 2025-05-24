@@ -889,9 +889,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         } 
 
         poly.forEachPoint(function(point, pidx, points, offset) {
-            arcExport(point,last)
+            last =arcExport(point,last)
             // camOut(point.clone(), offset !== 0, {factor:scale});
-            last = point;
         }, poly.isClosed(), last);
 
         // console.log("at end of arcExport",structuredClone(arcQ));
