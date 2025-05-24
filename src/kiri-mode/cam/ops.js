@@ -657,7 +657,7 @@ class OpOutline extends CamOp {
             }
 
             if (process.camStockClipTo && stock.x && stock.y && stock.center) {
-                let rect = newPolygon().centerRectangle({x:0,y:0}, stock.x, stock.y);
+                let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
                 offset = cutPolys([rect], offset, slice.z, true);
             }
 
@@ -1000,7 +1000,7 @@ class OpTrace extends CamOp {
         let cutdir = ov_conv;
         let polys = [];
         let stockRect = stock.center && stock.x && stock.y ?
-            newPolygon().centerRectangle({x:0,y:0}, stock.x, stock.y) : undefined;
+            newPolygon().centerRectangle(stock.center, stock.x, stock.y) : undefined;
         updateToolDiams(toolDiam);
 
         if (tabs) {
