@@ -37,7 +37,7 @@ Customize how your G-code is formatted for your controller or post-processor:
 
 - **Strip Comments** — Removes all G-code comments for cleaner, smaller files  
 - **Token Spacer** — Inserts a space between G-code tokens (e.g., `G1 X1 Y1` vs `G1X1Y1`)  
-- **Enable Laser** — Activates laser-compatible G-code (typically uses `M3/M5`, adjusts movement strategy)  
+- **Enable Laser** — enables [Laser](ops#Laser-Mode-Only) operations (typically uses `M3/M5`, adjusts movement strategy)  
 - **File Extension** — Optional override for exported file type (e.g., `.nc`, `.ngc`,`.cnc`,`.cam`, `.gcode`, `.txt`)
 
 > 💡 Leave the extension blank to default to `.gcode`.
@@ -64,6 +64,9 @@ When a machine's file extention is set to `.rml`, Kiri Moto will use the RML dia
 
 ## Contribute a Machine Profile
 
-We love to add new machines to the Kiri Moto library. If you have a machine that you'd like to add, you can export your workspace as a `.kmz` file, and share it on the [discord](https://discord.gg/suyCCgr) or [forums](htps://forum.grid.space)
+We love to add new machines to the Kiri Moto library. If you have a tested machine that you'd like to add, you can export your workspace as a `.kmz` file, and share it on the [discord](https://discord.gg/suyCCgr) or [forums](htps://forum.grid.space).
 
-Please [submit a pull request](https://github.com/kiri-moto/kiri-moto/pulls) to add it to the Kiri Moto library!
+If you want to submit a PR, you can find instructions for how to do so [here](https://github.com/GridSpace/grid-apps/blob/master/contributing.md#how-to-add-a-new-machine). 
+
+
+
