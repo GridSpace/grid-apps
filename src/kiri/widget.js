@@ -704,7 +704,10 @@ class Widget {
 
     getBoundingBox(refresh) {
         if (!this.bounds || refresh || this.boundingBoxNeedsUpdate) {
-            this.bounds = new THREE.Box3().setFromArray(this.getGeoVertices());
+            this.bounds = new THREE.Box3().setFromArray(this.getGeoVertices({
+                translate: true,
+                unroll: false
+            }));
             this.boundingBoxNeedsUpdate = false;
         }
         return this.bounds;

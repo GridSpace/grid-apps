@@ -30,66 +30,68 @@ const POLY = polygons;
  */
 CAM.slice = async function(settings, widget, onupdate, ondone) {
     let proc = settings.process,
-        stock = settings.stock || {},
-        isIndexed = proc.camStockIndexed,
-        camOps = widget.camops = [],
         sliceAll = widget.slices = [],
-        bounds = widget.getBoundingBox(),
-        track = widget.track,
-        { camZTop, camZBottom, camZThru } = proc,
-        // widget top z as defined by setTopz()
-        wztop = track.top,
-        // distance between top of part and top of stock
-        ztOff = isIndexed ? 0 : (stock.z - wztop),
-        // distance between bottom of part and bottom of stock
-        zbOff = isIndexed ? 0 : (wztop - track.box.d),
-        // defined z bottom offset by distance to stock bottom
-        // keeps the z bottom relative to the part when z align changes
-        zBottom = isIndexed ? camZBottom : camZBottom - zbOff,
-        // greater of widget bottom and z bottom
-        zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom),
-        zMax = bounds.max.z,
-        zThru = camZThru,
-        zTop = zMax + ztOff,
-        minToolDiam = Infinity,
-        maxToolDiam = -Infinity,
-        dark = settings.controller.dark ? true : false,
-        color = dark ? 0xbbbbbb : 0,
-        tabs = widget.anno.tab,
-        unsafe = proc.camExpertFast,
-        units = settings.controller.units === 'in' ? 25.4 : 1,
-        axisRotation,
-        axisIndex,
-        // new work area tracking
-        part_size = bounds.dim,
-        bottom_gap = zbOff,
-        bottom_part = 0,
-        bottom_stock = -bottom_gap,
-        bottom_thru = zThru,
+        // slices = widget.slices = [],
+        camOps = widget.camops = [],
+        isIndexed = proc.camStockIndexed;
+
+    let stock, bounds, track,
+        camZTop, camZBottom, camZThru, wztop, ztOff, zbOff,
+        zBottom, zMin, zMax, zThru, zTop,
+        minToolDiam, maxToolDiam, dark, color, tabs, unsafe, units,
+        axisRotation, axisIndex,
+        part_size,
+        bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z, bottom_cut,
+        top_stock, top_part, top_gap, top_z,
+        workarea;
+
+    // allow recomputing later if widget or settings changes
+    const var_compute = () => {
+        stock = settings.stock || {};
+        bounds = widget.getBoundingBox();
+        track = widget.track;
+        ({ camZTop, camZBottom, camZThru } = proc);
+        wztop = track.top;
+        ztOff = isIndexed ? 0 : (stock.z - wztop);
+        zbOff = isIndexed ? 0 : (wztop - track.box.d);
+        zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
+        zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom);
+        zMax = bounds.max.z;
+        zThru = camZThru;
+        zTop = zMax + ztOff;
+        minToolDiam = Infinity;
+        maxToolDiam = -Infinity;
+        dark = !!settings.controller.dark;
+        color = dark ? 0xbbbbbb : 0;
+        tabs = widget.anno.tab;
+        unsafe = proc.camExpertFast;
+        units = settings.controller.units === 'in' ? 25.4 : 1;
+        axisRotation = axisIndex = undefined;
+        part_size = bounds.dim;
+        bottom_gap = zbOff;
+        bottom_part = 0;
+        bottom_stock = -bottom_gap;
+        bottom_thru = zThru;
         bottom_z = Math.max(
             (camZBottom ? bottom_stock + camZBottom : bottom_part) - bottom_thru,
             (camZBottom ? bottom_stock + camZBottom : bottom_stock - bottom_thru)
-        ),
-        bottom_cut = Math.max(bottom_z, -zThru),
-        top_stock = zTop,
-        top_part = zMax,
-        top_gap = ztOff,
-        top_z = camZTop ? bottom_stock + camZTop : top_stock,
+        );
+        bottom_cut = Math.max(bottom_z, -zThru);
+        top_stock = zTop;
+        top_part = zMax;
+        top_gap = ztOff;
+        top_z = camZTop ? bottom_stock + camZTop : top_stock;
         workarea = util.round({
-            top_stock,
-            top_part,
-            top_gap,
-            top_z,
-            bottom_stock,
-            bottom_part,
-            bottom_gap,
-            bottom_z,
-            bottom_cut
+            top_stock, top_part, top_gap, top_z,
+            bottom_stock, bottom_part, bottom_gap,
+            bottom_z, bottom_cut
         }, 3);
 
-    // console.table({ workarea });
-    // console.table({ part_size });
-    // console.table({ stock });
+        return structuredClone(workarea);
+    };
+
+    // initial setup
+    var_compute();
 
     if (tabs) {
         // make tab polygons
@@ -267,12 +269,11 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
 
     // call slice() function on all ops in order
     let tracker = setSliceTracker({ rotation: 0 });
-    let workarea_orig = structuredClone(workarea);
     setAxisIndex();
     for (let op of opList) {
         let weight = op.weight();
         // apply operation override vars
-        let workover = structuredClone(workarea_orig);
+        let workover = var_compute();
         let valz = op.op;
         if (valz.ov_topz) {
             workover.top_z = bottom_stock + valz.ov_topz;
