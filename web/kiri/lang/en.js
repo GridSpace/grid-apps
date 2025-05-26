@@ -127,6 +127,8 @@ self.kiri.lang['en-us'] = {
     dv_time_l:      ["modifier to print time estimates","in the gcode export dialog.","raise or lower value based on your","predicted vs observed print times"],
     dv_spmx_s:      "max spindle",
     dv_spmx_l:      ["max spindle rpm speed","0 to disable"],
+    dv_spmn_s:      "min spindle",
+    dv_smn_l:       ["min spindle rpm speed","0 to disable"],
     dv_xtab_s:      "absolute positioning",
     dv_xtab_l:      "extrusion moves absolute",
     dv_orgc_s:      "origin center",

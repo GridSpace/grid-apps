@@ -5,13 +5,14 @@
 // dep: geo.paths
 // dep: geo.point
 // dep: geo.polygons
+// dep: geo.base
 // dep: kiri.render
 // dep: kiri-mode.cam.driver
 // use: kiri-mode.cam.ops
 gapp.register("kiri-mode.cam.prepare", (root, exports) => {
 
 const { base, kiri } = root;
-const { paths, polygons, newPoint } = base;
+const { paths, polygons, newPoint, util } = base;
 const { tip2tipEmit, poly2polyEmit } = paths;
 const { driver, render } = kiri;
 const { CAM } = driver;
@@ -121,6 +122,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         synthPlunge = false,
         spindle = 0,
         spindleMax = device.spindleMax,
+        spindleMin = device.spindleMin,
         maxToolDiam = widget.maxToolDiam,
         terrain = widget.terrain ? widget.terrain.map(data => {
             return {
@@ -167,7 +169,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
     }
 
     function setSpindle(speed) {
-        spindle = Math.min(speed, spindleMax);
+        if( spindleMax == 0 || spindleMin == 0 ) return
+        spindle = util.clamp(speed, spindleMin, spindleMax);
     }
 
     function setTool(toolID, feed, plunge) {

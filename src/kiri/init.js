@@ -1028,6 +1028,7 @@ gapp.register("kiri.init", (root, exports) => {
             deviceBelt:       newBoolean(LANG.dv_belt_s, onBooleanClick, {title:LANG.dv_belt_l, modes:FDM, trigger, show:() => !ui.deviceRound.checked}),
             separator:        newBlank({class:"pop-sep", modes:FDM, driven}),
             spindleMax:       newInput(LANG.dv_spmx_s, {title:LANG.dv_spmx_l, convert:toInt, size:5, modes:CAM, trigger}),
+            spindleMin:       newInput(LANG.dv_spmn_s, {title:LANG.dv_spmn_l, convert:toInt, size:5, modes:CAM, trigger}),
             deviceZMax:       newInput(LANG.dv_zmax_s, {title:LANG.dv_zmax_l, convert:toInt, size:5, modes:FDM}),
             gcodeTime:        newInput(LANG.dv_time_s, {title:LANG.dv_time_l, convert:toFloat, size:5, modes:FDM}),
             _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:FDM }),
@@ -1382,7 +1383,8 @@ gapp.register("kiri.init", (root, exports) => {
         }
 
         function spindleShow() {
-            return settings().device.spindleMax > 0;
+            let dev = settings().device
+            return dev.spindleMax > 0 && dev.spindleMin > 0;
         }
 
         function zIntShow() {
