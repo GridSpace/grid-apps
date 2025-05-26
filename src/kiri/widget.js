@@ -545,6 +545,9 @@ class Widget {
         this.setWireframe(false);
         this.clearSlices();
         mesh.geometry.applyMatrix4(new THREE.Matrix4().makeScale(x, y, z));
+        if (this.outline) {
+            this.setEdges(true);
+        }
         scale.x *= (x || 1.0);
         scale.y *= (y || 1.0);
         scale.z *= (z || 1.0);
@@ -557,6 +560,9 @@ class Widget {
         });
         if (center) {
             this.center(false);
+        }
+        if (this.outline) {
+            this.setEdges(true);
         }
         if ((x || y || z) && api && api.event) {
             api.event.emit('widget.rotate', {widget: this, x, y, z});
