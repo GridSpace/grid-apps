@@ -201,6 +201,7 @@ gapp.register("kiri.devices", (root, exports) => {
                 ui.extFilament,
                 ui.extNozzle,
                 ui.spindleMax,
+                ui.spindleMin,
                 ui.gcodeSpindle,
                 ui.gcodeDwell,
                 ui.gcodeChange,
