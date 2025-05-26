@@ -1,0 +1,90 @@
+---
+description: Keyboard Shortcuts and Mouse Controls
+label: ops
+---
+import {ImageCarousel} from '@site/docs/src/components/carousel.js'
+
+# Operations
+
+ops, not to be confused with [opps](https://knowyourmeme.com/memes/opp-opps) are the operations applied to a model to remove material. The operations tab also contains meta operations that represent parts of the manufacturing process, but do not nessecarity generate toolpaths.
+
+These operation include:
+
+- Toolpath Operations
+  - Global
+    - [Outline](#outline)
+    - [Level](#level)
+    - [Rough](#rough)
+    - [Contour](#contour)
+  - Specific
+    - [Drill](#drill)
+    - [Trace](#trace)
+    - [Pocket](#pocket)
+- Other Operations
+  - [Gcode](#gcode)
+  - [Register](#register)
+- Laser Operations
+  - [laser on](#laser-on)
+  - [laser off](#laser-off) 
+- Indexed Operations
+  - [Index](#index)
+  - [lathe](#lathe)
+
+
+## Global Operations
+
+Operations that apply to all objects in the workspace. 
+
+### Outline
+
+<ImageCarousel base="/img/CAM/example/outline/" images="outline" />
+
+
+The Outline op generates a toolpath surrounding the edges of a part. It is highly configurable and can select both internal or external edges specifically. The Outline operation is great for:
+
+- Cutting out many objects at once
+- Generating a rough/finishing pass on an object
+- Easily avoiding spefic features like pockets or holes
+
+
+### Level
+
+<ImageCarousel base="/img/CAM/example/level/" images="level" />
+
+The Level op creates a flat-surface clearing toolpath across a selected area. It is designed to remove material to a consistent depth, making it useful for preparing stock, flattening uneven surfaces, or cleaning up residual material. The Level operation is great for:
+
+- Surfacing raw stock before detail cuts
+- Creating uniform faces on complex objects
+- Clearing large areas with consistent depth quickly
+
+
+### Rough
+
+<ImageCarousel base="/img/CAM/example/rough/" images="rough" />
+
+The Rough op removes large volumes of material quickly using a stepped-down toolpath. It is typically the first pass in a multi-step workflow, clearing space for finishing tools without concern for fine detail. The Rough operation is great for:
+
+- Rapid bulk material removal
+- Preparing many parts for finishing simeltaneously.
+- Clearing voids or flat faces for many objects at once
+- Preparing a part for finish machining
+- Preserving tool life by reducing cutting load in later passes
+
+### Contour
+
+<ImageCarousel base="/img/CAM/example/contour/" images="contour" />
+
+The Contour op generates detailed toolpaths for complex organic surface geometries. It can trace along the x or y axis and has configurable precision. It is useful for:
+
+- Carving 3D shapes with organic or curved profiles
+- Finishing complex wall geometries
+- cleaning up a part after [roughing](#rough)
+
+
+## Specific Operations
+
+### Outline
+ 
+## Laser Mode Only
+
+
