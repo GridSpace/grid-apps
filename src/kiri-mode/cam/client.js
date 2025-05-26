@@ -479,7 +479,7 @@ CAM.init = function(kiri, api) {
             if (op.type === '|') {
                 break;
             }
-            if (op.type === 'index') {
+            if (op.type === 'index' && !op.disabled) {
                 indexing = true;
                 if (op.absolute) {
                     index = op.degrees
@@ -640,6 +640,9 @@ CAM.init = function(kiri, api) {
                         } else {
                             el.classList.remove("disabled");
                         }
+                    }
+                    if (isIndexed) {
+                        updateIndex();
                     }
                     return true;
                 }
