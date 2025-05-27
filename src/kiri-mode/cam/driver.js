@@ -87,10 +87,17 @@ kiri.load(api => {
             kiri.client.sync();
             const settings = api.conf.get();
             const widgets = api.widgets.map();
-            kiri.client.send("cam_holes", { settings, diam }, output => {
-                let res = kiri.codec.decode(output)
-                onDone(res)
-            });
+            let prom = new Promise((res,rej)=>{
+
+                kiri.client.send("cam_holes", { settings, diam },  output => {
+                    let out = kiri.codec.decode(output)
+                    console.log(out)
+                    onDone(out)
+                    res(out)
+                });
+            })
+
+            return prom
         }
     }
 

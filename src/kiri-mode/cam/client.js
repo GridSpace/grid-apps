@@ -1184,7 +1184,7 @@ CAM.init = function(kiri, api) {
             return func.selectHolesDone();
         }
         func.clearPops();
-        alert = api.show.alert("analyzing parts...", 1000);
+        let alert = api.show.alert("analyzing parts...");
         holeSelOn = hoveredOp;
         holeSelOn.classList.add("editing");
         api.feature.hover = true;
@@ -1225,6 +1225,7 @@ CAM.init = function(kiri, api) {
         let meshesCached = widgets.every(widget=>poppedRec.drills[widget.id] != undefined)
         if( individual && meshesCached ){ // if any widget already has cached holes
             // console.log("already has cached holes",poppedRec.drills)
+            api.hide.alert(alert)
             kiri.api.widgets.for(widget => {
                 if(widget.adds){
                     let drills =  poppedRec.drills[widget.id]
@@ -1245,8 +1246,9 @@ CAM.init = function(kiri, api) {
             })
 
         }else{ // if no widget has cached holes
-            await CAM.holes(individual?0:diam,(centers)=>{
+            await CAM.holes( individual ? 0 : diam, async centers => {
                 let shadow = centers.some(c=>c.shadowed)
+                api.hide.alert(alert)
                 if(shadow){
                     alert = api.show.alert("Some holes are shadowed by part and are not shown.");
                 }
@@ -1270,8 +1272,11 @@ CAM.init = function(kiri, api) {
             });
         }
         //hide the alert once hole meshes are calculated on the worker, and then added to the scene
-        api.hide.alert(alert);
-        alert = api.show.alert("[esc] cancels drill editing");
+        // api.hide.alert(alert);
+        let escAlert = api.show.alert("[esc] cancels drill editing",1000);
+        setTimeout(() => {
+            api.hide.alert(escAlert);
+        }, 5000);
         kiri.api.widgets.opacity(0.8);
     }
 
