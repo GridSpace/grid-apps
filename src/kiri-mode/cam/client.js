@@ -1192,9 +1192,7 @@ CAM.init = function(kiri, api) {
         func.hover = func.selectHolesHover;
         func.hoverUp = func.selectHolesHoverUp;
 
-        let settings = API.conf.get();
-        const {tool,mark} = poppedRec //TODO: display some visual difference if mark is selected
-        let diam = new CAM.Tool(settings,tool).fluteDiameter()
+        
 
         
         const widgets = kiri.api.widgets.all()
@@ -1205,7 +1203,7 @@ CAM.init = function(kiri, api) {
          * @returns {Mesh} the created mesh
          */
         function createHoleMesh(widget,drill){
-            let {depth,selected} = drill
+            let {depth,selected, diam} = drill
             let color = selected ? 0xFF0000:0x39e366
             let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
             const material = new THREE.MeshPhongMaterial( { color  } );
@@ -1246,7 +1244,7 @@ CAM.init = function(kiri, api) {
             })
 
         }else{ // if no widget has cached holes
-            await CAM.holes( individual ? 0 : diam, async centers => {
+            await CAM.holes( individual,poppedRec, async centers => {
                 let shadow = centers.some(c=>c.shadowed)
                 api.hide.alert(alert)
                 if(shadow){
@@ -1787,10 +1785,10 @@ CAM.init = function(kiri, api) {
         dwell:   'camDrillDwell',
         lift:    'camDrillLift',
         mark:    'camDrillMark',
+        precision:'camDrillPrecision',
         thru:    'camDrillThru',
 
-    })
-    drillOp.inputs = {
+    }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
         spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
@@ -1800,8 +1798,9 @@ CAM.init = function(kiri, api) {
         lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => !poppedRec.mark}),
         mark:     UC.newBoolean(LANG.cd_mark_s, undefined, {title:LANG.cd_mark_l}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        thru:     UC.newInput(LANG.cd_dtru_s, {title:LANG.cd_dtru_l, convert:UC.toFloat, units:true}),
-        sep:      UC.newBlank({class:"pop-sep"}),
+        thru:     UC.newInput(LANG.cd_dtru_s, {title:LANG.cd_dtru_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),
+        precision:UC.newInput(LANG.cd_prcn_s, {title:LANG.cd_prcn_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),
+        sep:      UC.newBlank({class:"pop-sep", }),
         actions: UC.newRow([
             UC.newButton(LANG.select, ()=>func.selectHoles(true), {title:LANG.cd_seli_l}),
             UC.newButton(LANG.cd_sela_s, ()=>func.selectHoles(false), {title:LANG.cd_sela_l})

@@ -599,6 +599,8 @@ self.kiri.lang['en-us'] = {
     cd_dtru_l:      ["additional drill depth below part bottom","overrides global z thru","0 to disable"],
     cd_mark_s:      "marking",
     cd_mark_l:      ["only mark holes, do not drill out","the step down setting is used","to determine how deep to mark"],
+    cd_prcn_s:      "precision",
+    cd_prcn_l:      ["distance between slices","to search for holes","in workspace units","lower is slower and","uses more memory","0 = only flats"],
 
     cd_seli_l:    ["individually select holes","to drill"],
     cd_sela_s:    "Select Matching Diameter",
