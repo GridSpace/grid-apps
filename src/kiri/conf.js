@@ -521,6 +521,7 @@ const conf = exports({
                 camDrillLift: 2,
                 camDrillMark: false,
                 camDrillThru: 5,
+                camDrillPrecision: 1,
                 camDrillingOn: false,
                 camRegisterSpeed: 1000,
                 camRegisterThru: 5,
