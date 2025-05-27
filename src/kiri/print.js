@@ -277,7 +277,6 @@ class Print {
             seq = [],
             autolayer = true,
             newlayer = false,
-            arcdivs = Math.PI / 24,
             hasmoved = false,
             lastG = 'G1';
 
@@ -288,61 +287,57 @@ class Print {
             console.log(...[...arguments].map(o => Object.clone(o)));
         }
 
-        function G2G3(g2, line, index) {
-            const rec = {};
+        function arcToPoints( radius, clockwise, start, end,arcdivs=Math.PI / 24) {
 
-            line.forEach(tok => {
-                rec[tok.charAt(0)] = parseFloat(tok.substring(1));
-            });
-
+            console.log({radius, clockwise, start, end, arcdivs});
             let center = { x:0, y:0, r:0 };
 
-            if (rec.X === undefined && rec.X === rec.Y) {
+            if (end.x === undefined && end.x === end.y) {
                 // bambu generates loop z or wipe loop arcs in place
                 // console.log({ skip_empty_arc: rec });
                 return;
             }
-            // G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);return;
+            // G0G1(false, [`X${rec.x}`, `Y${rec.y}`, `E1`]);return;
 
-            if (rec.I !== undefined && rec.J !== undefined) {
-                center.x = pos.X + rec.I;
-                center.y = pos.Y + rec.J;
-                center.r = Math.sqrt(rec.I*rec.I + rec.J*rec.J);
-            } else if (rec.R !== undefined) {
-                let pd = { x: rec.X - pos.X, y: rec.Y - pos.Y };
-                let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2;
+            if (end.I !== undefined && end.J !== undefined) {
+                center.x = start.x + end.I;
+                center.y = start.y + end.J;
+                center.r = Math.sqrt(end.I*end.I + end.J*end.J);
+            } else if (radius !== undefined) {
+                let pd = { x: end.x - start.x, y: end.y - start.y }; //position delta
+                let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2; // distance
                 let pr2;
-                if (Math.abs(dst - rec.R) < 0.001) {
+                if (Math.abs(dst - radius) < 0.001) {
                     // center point radius
-                    pr2 = { x: (rec.X + pos.X) / 2, y: (rec.Y + pos.Y) / 2};
+                    pr2 = { x: (end.x + start.x) / 2, y: (end.y + start.y) / 2};
                 } else {
                     // triangulate
                     pr2 = base.util.center2pr({
-                        x: pos.X,
-                        y: pos.Y
+                        x: start.x,
+                        y: start.y
                     }, {
-                        x: rec.X,
-                        y: rec.Y
-                    }, rec.R, g2);
+                        x: end.x,
+                        y: end.y
+                    }, radius, clockwise);
                 }
                 center.x = pr2.x;
                 center.y = pr2.y;
-                center.r = rec.R;
+                center.r = radius;
             } else {
-                console.log({malfomed_arc: line});
+                console.log({malfomed_arc: {radius, clockwise, start, end}});
             }
 
             // line angles
-            let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X) + Math.PI;
-            let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X) + Math.PI;
-            let ad = base.util.thetaDiff(a1, a2, g2);
+            let a1 = Math.atan2(center.y - start.y, center.x - start.x) + Math.PI;
+            let a2 = Math.atan2(center.y - end.y, center.x - end.x) + Math.PI;
+            let ad = base.util.thetaDiff(a1, a2, clockwise);
             let steps = Math.max(Math.floor(Math.abs(ad) / arcdivs), 3);
             let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
             let rot = a1 + step;
 
             let da = Math.abs(a1 - a2);
-            let dx = pos.X - rec.X;
-            let dy = pos.Y - rec.Y;
+            let dx = start.x - end.x;
+            let dy = start.y - end.y;
             let dd = Math.sqrt(dx * dx + dy * dy);
 
             // LOG({index, da, dd, first: pos, last: rec, center, a1, a2, ad, step, steps, rot, line});
@@ -350,24 +345,41 @@ class Print {
 
             // under 1 degree arc and 5mm, convert to straight line
             if (da < 0.005 && dd < 5) {
-                G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
+                G0G1(false, [`X${end.x}`, `Y${end.y}`, `E1`]);
                 return;
             }
 
-            let pc = { X: pos.X, Y: pos.Y };
+            let arr = [] // point accumulator
             for (let i=0; i<=steps-2; i++) {
-                let np = {
-                    X: center.x + Math.cos(rot) * center.r,
-                    Y: center.y + Math.sin(rot) * center.r
-                };
+                arr.push(newPoint(
+                    center.x + Math.cos(rot) * center.r,
+                    center.y + Math.sin(rot) * center.r));
                 rot += step;
-                G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
             }
+            return arr
+        }
 
-            G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
+        function G2G3(g2, line, index) {
+            
+            console.log({index, g2, line});
+            
+            const rec = {};
 
-            pos.X = rec.X;
-            pos.Y = rec.Y;
+            line.forEach(tok => {
+                rec[tok.charAt(0).toLowerCase()] = parseFloat(tok.substring(1));
+            });
+
+            pos.x = pos.X;
+            pos.y = pos.Y;
+
+            arcToPoints(rec.r, g2, pos, rec, 0.02).forEach(np => {
+                G0G1(false, [`X${np.x}`, `Y${np.y}`, `E1`]);
+            })
+
+            G0G1(false, [`X${rec.x}`, `Y${rec.y}`, `E1`]);
+
+            pos.X = rec.x;
+            pos.Y = rec.y;
         }
 
         function G0G1(g0, line) {
