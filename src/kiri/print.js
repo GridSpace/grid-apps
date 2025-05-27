@@ -11,6 +11,7 @@ gapp.register("kiri.print", [], (root, evets) => {
 
 const { base, kiri } = self;
 const { paths, util, newPoint } = base;
+const { arcToPath } = paths;
 const { numOrDefault } = util;
 const { beltfact } = kiri.consts;
 const XAXIS = new THREE.Vector3(1,0,0);
@@ -287,97 +288,23 @@ class Print {
             console.log(...[...arguments].map(o => Object.clone(o)));
         }
 
-        function arcToPoints( radius, clockwise, start, end,arcdivs=Math.PI / 24) {
-
-            console.log({radius, clockwise, start, end, arcdivs});
-            let center = { x:0, y:0, r:0 };
-
-            if (end.x === undefined && end.x === end.y) {
-                // bambu generates loop z or wipe loop arcs in place
-                // console.log({ skip_empty_arc: rec });
-                return;
-            }
-            // G0G1(false, [`X${rec.x}`, `Y${rec.y}`, `E1`]);return;
-
-            if (end.I !== undefined && end.J !== undefined) {
-                center.x = start.x + end.I;
-                center.y = start.y + end.J;
-                center.r = Math.sqrt(end.I*end.I + end.J*end.J);
-            } else if (radius !== undefined) {
-                let pd = { x: end.x - start.x, y: end.y - start.y }; //position delta
-                let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2; // distance
-                let pr2;
-                if (Math.abs(dst - radius) < 0.001) {
-                    // center point radius
-                    pr2 = { x: (end.x + start.x) / 2, y: (end.y + start.y) / 2};
-                } else {
-                    // triangulate
-                    pr2 = base.util.center2pr({
-                        x: start.x,
-                        y: start.y
-                    }, {
-                        x: end.x,
-                        y: end.y
-                    }, radius, clockwise);
-                }
-                center.x = pr2.x;
-                center.y = pr2.y;
-                center.r = radius;
-            } else {
-                console.log({malfomed_arc: {radius, clockwise, start, end}});
-            }
-
-            // line angles
-            let a1 = Math.atan2(center.y - start.y, center.x - start.x) + Math.PI;
-            let a2 = Math.atan2(center.y - end.y, center.x - end.x) + Math.PI;
-            let ad = base.util.thetaDiff(a1, a2, clockwise);
-            let steps = Math.max(Math.floor(Math.abs(ad) / arcdivs), 3);
-            let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
-            let rot = a1 + step;
-
-            let da = Math.abs(a1 - a2);
-            let dx = start.x - end.x;
-            let dy = start.y - end.y;
-            let dd = Math.sqrt(dx * dx + dy * dy);
-
-            // LOG({index, da, dd, first: pos, last: rec, center, a1, a2, ad, step, steps, rot, line});
-            // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
-
-            // under 1 degree arc and 5mm, convert to straight line
-            if (da < 0.005 && dd < 5) {
-                G0G1(false, [`X${end.x}`, `Y${end.y}`, `E1`]);
-                return;
-            }
-
-            let arr = [] // point accumulator
-            for (let i=0; i<=steps-2; i++) {
-                arr.push(newPoint(
-                    center.x + Math.cos(rot) * center.r,
-                    center.y + Math.sin(rot) * center.r));
-                rot += step;
-            }
-            return arr
-        }
-
+        /**
+         * Handles G2 and G3 arcs, which are circular arcs.
+         * @param {boolean} g2 - Whether this is a G2 or G3 arc. G2 is a clockwise arc, G3 is a counter-clockwise arc.
+         * @param {string[]} line - The line of the g-code file that contains the G2 or G3 command.
+         * @param {number} index - The line number of the g-code file that contains the G2 or G3 command.
+         */
         function G2G3(g2, line, index) {
-            
-            console.log({index, g2, line});
-            
             const rec = {};
-
             line.forEach(tok => {
                 rec[tok.charAt(0).toLowerCase()] = parseFloat(tok.substring(1));
             });
-
             pos.x = pos.X;
             pos.y = pos.Y;
-
-            arcToPoints(rec.r, g2, pos, rec, 0.02).forEach(np => {
+            arcToPath(rec.r, g2, pos, rec, 0.02).forEach(np => {
                 G0G1(false, [`X${np.x}`, `Y${np.y}`, `E1`]);
             })
-
             G0G1(false, [`X${rec.x}`, `Y${rec.y}`, `E1`]);
-
             pos.X = rec.x;
             pos.Y = rec.y;
         }
