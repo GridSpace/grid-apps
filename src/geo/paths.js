@@ -565,13 +565,7 @@ function arcToPath( radius, clockwise, start, end,arcdivs=Math.PI / 24) {
             pr2 = { x: (end.x + start.x) / 2, y: (end.y + start.y) / 2};
         } else {
             // triangulate
-            pr2 = base.util.center2pr({
-                x: start.x,
-                y: start.y
-            }, {
-                x: end.x,
-                y: end.y
-            }, radius, clockwise);
+            pr2 = base.util.center2pr(start, end, radius, clockwise);
         }
         center.x = pr2.x;
         center.y = pr2.y;
