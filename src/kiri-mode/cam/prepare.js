@@ -259,8 +259,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
     /**
      * @param {Point} point
      * @param {number} emit (0=move, !0=filament emit/laser on/cut mode)
-     * @param {number} [speed] speed
-     * @param {number} [tool] tool
+     * @param {number} [speed] feed/plunge rate in mm/min
+     * @param {number} [tool] tool number
      */
     function layerPush(point, emit, speed, tool, type) {
         const dz = (point && lastPush && lastPush.point) ? point.z - lastPush.point.z : 0;
@@ -808,7 +808,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             } else {
                 // if no last point, emit and set
                 drainQ();
-                camOut({x, y},1 );
+                camOut(point,1 ); 
                 // TODO disabling out of plane z moves until a better mechanism
                 // can be built that doesn't rely on computed zpos from layer heights...
                 // when making z moves (like polishing) allow slowdown vs fast seek
@@ -817,12 +817,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
             }
             return point;
         }
-
-
     
         function drainQ() {
-
-            console.log("drainQ called",structuredClone(arcQ));
 
             if (!arcDist) {
                 return;
