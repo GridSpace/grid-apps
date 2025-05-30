@@ -73,8 +73,26 @@ class Print {
         }
         output.appendAll(input);
     }
-
-    // fdm & laser
+    
+    /**
+     * Prints a polygon to a given output array, possibly with a given extrude factor,
+     * and starting from a given point. The last point is returned.
+     * used for FDM and laser
+     * @param {Polygon} poly - the polygon to print
+     * @param {Point} startPoint - the point to start printing from
+     * @param {Array} output - the array to print to
+     * @param {Object} [options] - optional parameters
+     * @param {boolean} [options.ccw] - set the polygon to be counter-clockwise
+     * @param {number} [options.extrude] - extrude factor for the polygon
+     * @param {number} [options.rate] - print speed in mm/s
+     * @param {number} [options.coast] - distance to coast at the end of the polygon
+     * @param {number} [options.simple] - if true, use the first point of the polygon
+     * @param {number} [options.open] - if true, don't close the polygon
+     * @param {number} [options.tool] - the tool to use
+     * @param {function} [options.onfirst] - called with the first point of the polygon
+     * @param {function} [options.onfirstout] - called with the first output point
+     * @returns {Point} the last point of the polygon
+     */
     polyPrintPath(poly, startPoint, output, options = {}) {
         if (options.ccw) {
             poly.setCounterClockwise();
@@ -536,7 +554,7 @@ class Print {
 }
 
 class Output {
-    constructor(point, emit, speed, tool, type) {
+    constructor(point, emit, speed, tool, type, radius) {
         this.point = point; // point to emit
         this.emit = emit; // emit (feed for printers, power for lasers, cut for cam)
         this.speed = speed;
