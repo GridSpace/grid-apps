@@ -11,6 +11,7 @@ gapp.register("kiri.print", [], (root, evets) => {
 
 const { base, kiri } = self;
 const { paths, util, newPoint } = base;
+const { arcToPath } = paths;
 const { numOrDefault } = util;
 const { beltfact } = kiri.consts;
 const XAXIS = new THREE.Vector3(1,0,0);
@@ -72,8 +73,26 @@ class Print {
         }
         output.appendAll(input);
     }
-
-    // fdm & laser
+    
+    /**
+     * Prints a polygon to a given output array, possibly with a given extrude factor,
+     * and starting from a given point. The last point is returned.
+     * used for FDM and laser
+     * @param {Polygon} poly - the polygon to print
+     * @param {Point} startPoint - the point to start printing from
+     * @param {Array} output - the array to print to
+     * @param {Object} [options] - optional parameters
+     * @param {boolean} [options.ccw] - set the polygon to be counter-clockwise
+     * @param {number} [options.extrude] - extrude factor for the polygon
+     * @param {number} [options.rate] - print speed in mm/s
+     * @param {number} [options.coast] - distance to coast at the end of the polygon
+     * @param {number} [options.simple] - if true, use the first point of the polygon
+     * @param {number} [options.open] - if true, don't close the polygon
+     * @param {number} [options.tool] - the tool to use
+     * @param {function} [options.onfirst] - called with the first point of the polygon
+     * @param {function} [options.onfirstout] - called with the first output point
+     * @returns {Point} the last point of the polygon
+     */
     polyPrintPath(poly, startPoint, output, options = {}) {
         if (options.ccw) {
             poly.setCounterClockwise();
@@ -277,7 +296,6 @@ class Print {
             seq = [],
             autolayer = true,
             newlayer = false,
-            arcdivs = Math.PI / 24,
             hasmoved = false,
             lastG = 'G1';
 
@@ -288,86 +306,25 @@ class Print {
             console.log(...[...arguments].map(o => Object.clone(o)));
         }
 
+        /**
+         * Handles G2 and G3 arcs, which are circular arcs.
+         * @param {boolean} g2 - Whether this is a G2 or G3 arc. G2 is a clockwise arc, G3 is a counter-clockwise arc.
+         * @param {string[]} line - The line of the g-code file that contains the G2 or G3 command.
+         * @param {number} index - The line number of the g-code file that contains the G2 or G3 command.
+         */
         function G2G3(g2, line, index) {
             const rec = {};
-
             line.forEach(tok => {
-                rec[tok.charAt(0)] = parseFloat(tok.substring(1));
+                rec[tok.charAt(0).toLowerCase()] = parseFloat(tok.substring(1));
             });
-
-            let center = { x:0, y:0, r:0 };
-
-            if (rec.X === undefined && rec.X === rec.Y) {
-                // bambu generates loop z or wipe loop arcs in place
-                // console.log({ skip_empty_arc: rec });
-                return;
-            }
-            // G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);return;
-
-            if (rec.I !== undefined && rec.J !== undefined) {
-                center.x = pos.X + rec.I;
-                center.y = pos.Y + rec.J;
-                center.r = Math.sqrt(rec.I*rec.I + rec.J*rec.J);
-            } else if (rec.R !== undefined) {
-                let pd = { x: rec.X - pos.X, y: rec.Y - pos.Y };
-                let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2;
-                let pr2;
-                if (Math.abs(dst - rec.R) < 0.001) {
-                    // center point radius
-                    pr2 = { x: (rec.X + pos.X) / 2, y: (rec.Y + pos.Y) / 2};
-                } else {
-                    // triangulate
-                    pr2 = base.util.center2pr({
-                        x: pos.X,
-                        y: pos.Y
-                    }, {
-                        x: rec.X,
-                        y: rec.Y
-                    }, rec.R, g2);
-                }
-                center.x = pr2.x;
-                center.y = pr2.y;
-                center.r = rec.R;
-            } else {
-                console.log({malfomed_arc: line});
-            }
-
-            // line angles
-            let a1 = Math.atan2(center.y - pos.Y, center.x - pos.X) + Math.PI;
-            let a2 = Math.atan2(center.y - rec.Y, center.x - rec.X) + Math.PI;
-            let ad = base.util.thetaDiff(a1, a2, g2);
-            let steps = Math.max(Math.floor(Math.abs(ad) / arcdivs), 3);
-            let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
-            let rot = a1 + step;
-
-            let da = Math.abs(a1 - a2);
-            let dx = pos.X - rec.X;
-            let dy = pos.Y - rec.Y;
-            let dd = Math.sqrt(dx * dx + dy * dy);
-
-            // LOG({index, da, dd, first: pos, last: rec, center, a1, a2, ad, step, steps, rot, line});
-            // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
-
-            // under 1 degree arc and 5mm, convert to straight line
-            if (da < 0.005 && dd < 5) {
-                G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
-                return;
-            }
-
-            let pc = { X: pos.X, Y: pos.Y };
-            for (let i=0; i<=steps-2; i++) {
-                let np = {
-                    X: center.x + Math.cos(rot) * center.r,
-                    Y: center.y + Math.sin(rot) * center.r
-                };
-                rot += step;
-                G0G1(false, [`X${np.X}`, `Y${np.Y}`, `E1`]);
-            }
-
-            G0G1(false, [`X${rec.X}`, `Y${rec.Y}`, `E1`]);
-
-            pos.X = rec.X;
-            pos.Y = rec.Y;
+            pos.x = pos.X;
+            pos.y = pos.Y;
+            arcToPath(rec.r, g2, pos, rec, 0.02).forEach(np => {
+                G0G1(false, [`X${np.x}`, `Y${np.y}`, `E1`]);
+            })
+            G0G1(false, [`X${rec.x}`, `Y${rec.y}`, `E1`]);
+            pos.X = rec.x;
+            pos.Y = rec.y;
         }
 
         function G0G1(g0, line) {
@@ -597,7 +554,7 @@ class Print {
 }
 
 class Output {
-    constructor(point, emit, speed, tool, type) {
+    constructor(point, emit, speed, tool, type, radius) {
         this.point = point; // point to emit
         this.emit = emit; // emit (feed for printers, power for lasers, cut for cam)
         this.speed = speed;

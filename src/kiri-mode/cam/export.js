@@ -118,6 +118,16 @@ CAM.export = function(print, online) {
         }
     }
 
+    /**
+     * Take an array of lines and emit them after:
+     * - splitting a string into an array
+     * - stripping comments if !isRML and stripComments
+     * - applying constant replacements
+     * - applying Inch/Millimeter conversions if G20 or G21 are found
+     * 
+     * @param {string|Array} array - an array of lines or a single string
+     * @param {Object} consts - a dictionary of constants to replace
+     */
     function filterEmit(array, consts) {
         if (!array) {
             return;
