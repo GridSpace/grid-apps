@@ -7,6 +7,7 @@
 // dep: geo.polygons
 // dep: kiri.render
 // dep: kiri-mode.cam.driver
+// dep: kiri.print
 // use: kiri-mode.cam.ops
 gapp.register("kiri-mode.cam.prepare", (root, exports) => {
 
@@ -17,6 +18,7 @@ const { driver, render } = kiri;
 const { CAM } = driver;
 
 const POLY = polygons;
+
 
 /**
  * DRIVER PRINT CONTRACT
@@ -43,18 +45,21 @@ CAM.prepare = async function(widall, settings, update) {
     const output = print.output.filter(level => Array.isArray(level));
 
     if (render) // allows it to run from CLI
-    return render.path(output, (progress, layer) => {
-        update(0.75 + progress * 0.25, "render", layer);
-    }, {
-        thin: true,
-        print: 0,
-        move: 0x557799,
-        speed: false,
-        moves: true,
-        other: "moving",
-        action: "milling",
-        maxspeed: settings.process.camFastFeed || 6000
-    });
+    return render.path(
+        output,
+        (progress, layer) => {
+            update(0.75 + progress * 0.25, "render", layer);
+        }, {
+            thin: true,
+            print: 0,
+            move: 0x557799,
+            speed: false,
+            moves: true,
+            other: "moving",
+            action: "milling",
+            maxspeed: settings.process.camFastFeed || 6000
+        }
+    );
 };
 
 function prepEach(widget, settings, print, firstPoint, update) {
@@ -258,11 +263,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
     /**
      * @param {Point} point
-     * @param {number} emit (0=move, !0=filament emit/laser on/cut mode)
+     * @param {number} emit (0=move, 1=/laser on/cut mode, 2/3= G2/G3 arc)
      * @param {number} [speed] feed/plunge rate in mm/min
      * @param {number} [tool] tool number
      */
-    function layerPush(point, emit, speed, tool, type) {
+    function layerPush(point, emit, speed, tool, options) {
+        const { type, radius, arcPoints } = options ?? {};
         const dz = (point && lastPush && lastPush.point) ? point.z - lastPush.point.z : 0;
         if (dz < 0 && speed > plungeRate) {
             speed = plungeRate;
@@ -292,9 +298,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
             if (lasering.flat) {
                 point.z = (stock && stock.z ? stock.z : wztop) + lasering.flatz;
             }
-            print.addOutput(layerOut, point, power, speed, tool, 'laser');
+            print.addOutput(layerOut, point, power, speed, tool, {type:'laser'});
         } else {
-            print.addOutput(layerOut, point, emit, speed, tool, type);
+            print.addOutput(layerOut, point, emit, speed, tool, {type, radius, arcPoints});
         }
         lastPush = { point, emit, speed, tool };
         return point;
@@ -321,11 +327,14 @@ function prepEach(widget, settings, print, firstPoint, update) {
     function camOut(point, cut,opts) {
 
         let {
-            radius = null,
+            radius = 0,
             clockwise = true,
+            arcPoints = [],
             moveLen = toolDiamMove,
             factor = 1,
         } = opts ?? {}
+
+        const isArc = radius > 0;
 
         point = point.clone();
         point.x += wmx;
@@ -360,7 +369,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         cut ? 1 : 0,
                         rate,
                         tool,
-                        "lerp"
+                        {type:"lerp"},
                     );
                 }
             }
@@ -378,7 +387,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let deltaXY = lastPoint.distTo2D(point),
             deltaZ = point.z - lastPoint.z,
             absDeltaZ = Math.abs(deltaZ),
-            isMove = !cut;
+            isMove = !(cut || isArc);
 
         // drop points too close together
         if (!isLathe && deltaXY < 0.001 && point.z === lastPoint.z) {
@@ -460,15 +469,32 @@ function prepEach(widget, settings, print, firstPoint, update) {
             }
         }
 
-        // todo synthesize move speed from feed / plunge accordingly
-        layerOut.mode = currentOp;
-        layerOut.spindle = spindle;
-        lastPoint = layerPush(
-            point,
-            cut ? 1 : 0,
-            rate,
-            tool
-        );
+
+        if(isArc) {
+            console.log("arc recieved");
+            layerPush(
+                point,
+                clockwise ? 2 : 3,
+                rate,
+                tool,
+                {
+                    radius,
+                    arcPoints
+                }
+            );
+        }else{
+            // for g1 moves
+            
+            // TODO: synthesize move speed from feed / plunge accordingly
+            layerOut.mode = currentOp;
+            layerOut.spindle = spindle;
+            lastPoint = layerPush(
+                point,
+                cut ? 1 : 0,
+                rate,
+                tool
+            );
+        }
     }
 
     /**
@@ -768,7 +794,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                             // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
                             if ( desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault ) {
                                 // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcDist, dist > cc.r, cc.r > arcMax, radFault];
-                                console.log("point off the arc,",structuredClone(arcQ));
+                                // console.log("point off the arc,",structuredClone(arcQ));
                                 if (arcQ.length === 4) {
                                     // not enough points for an arc, drop first point and recalc center
                                     camOut(arcQ.shift(),1);
@@ -856,10 +882,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
                 // XYR form
                 // let pre = `${clockwise? 'G2' : 'G3'} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} `;
-                camOut(to,1,{radius:cc.r, clockwise});
+                camOut(to,1,{radius:cc.r, clockwise, arcPoints:[...arcQ]});
                 // XYIJ form
                 // let pre = `${clockwise? 'G2' : 'G3'} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} I${(cc.x - pos.x).toFixed(decimals)} J${(cc.y - pos.y).toFixed(decimals)} E${emit.toFixed(decimals)}`;
-                
                 // let add = pos.f !== from.speedMMM ? ` E${from.speedMMM}` : '';
                 // append(`${pre}${add} ; merged=${cl-1} len=${dist.toFixed(decimals)} cp=${cc.x.round(2)},${cc.y.round(2)}`);
             } else {

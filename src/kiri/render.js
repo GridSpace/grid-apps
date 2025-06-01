@@ -44,6 +44,13 @@ function rate_to_color(rate, max) {
     }
 };
 
+    /**
+     * Generate visual representation of a gcode program.
+     * @param {Output[][]} levels - Array of arrays containing `Output` objects.
+     * @param {function} update - Called with a completion percentage and the rendered layer.
+     * @param {{tools: Object, flat: Boolean, thin: Boolean, speed: Boolean, lineWidth: Number, toolMode: Boolean, z: Number, action: String, other: String}} [opts] - Optional parameters.
+     * @returns {Promise.kiri.Layers[]} - Array of layers.
+     */
 async function path(levels, update, opts = {}) {
     levels = levels.filter(level => level.length);
     if (levels.length === 0) {
@@ -183,7 +190,8 @@ async function path(levels, update, opts = {}) {
                 return;
             }
 
-            if (lastOut) {
+            if (lastOut) { // if last outpoint is defined
+
                 if (arrowAll || lastOut.emit !== out.emit) {
                     heads.push({p1: lastOutPoint, p2: outPoint});
                 }
@@ -193,7 +201,29 @@ async function path(levels, update, opts = {}) {
                 //     Math.abs(op.y - lp.y),
                 //     Math.abs(op.z - lp.z));
                 // if (moved < 0.0001) return;
-                if (out.emit) {
+                if( is_cam() && (out.emit == 2 || out.emit == 3 )) {
+                    // cam arc emit
+                    console.log('cam arc render woohoo!',out);
+
+                    // checks if a new poly should be started
+                    if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
+                        current = newPolygon().setOpen();
+                        current.push(lastOutPoint);
+                        current.color = color(out);
+                        pushPrint(out.tool, current);
+                    }
+
+                    out.arcPoints.forEach(p => {
+                        current.push(p);
+                    })
+
+                    current.push(outPoint);
+
+                } else if (out.emit) {
+                    // explicity G1 in CAM mode
+                    // just a non-move in other modes
+
+                    // checks if a new poly should be started
                     if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
                         current = newPolygon().setOpen();
                         current.push(lastOutPoint);

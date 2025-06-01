@@ -42,7 +42,8 @@ class Print {
         this.widget = widget;
     }
 
-    addOutput(array, point, emit, speed, tool, type) {
+    addOutput(array, point, emit, speed, tool, opts) {
+        const { type, retract, radius, arcPoints} = opts ?? {};
         let { lastPoint, lastEmit, lastOut } = this;
         // drop duplicates (usually intruced by FDM bisections)
         if (lastPoint && point && type !== 'lerp') {
@@ -55,10 +56,15 @@ class Print {
         // if (emit && emit < 1) console.log(emit);
         this.lastPoint = point;
         this.lastEmit = emit;
-        this.lastOut = lastOut = new Output(point, emit, speed, tool, type || this.nextType);
+        this.lastOut = lastOut = new Output(point, emit, speed, tool, {
+            type: type ?? this.nextType,
+            radius,
+            arcPoints,
+        });
         if (tool !== undefined) {
             this.tools[tool] = true;
         }
+        lastOut.retract = retract;
         lastOut.widget = this.widget;
         array.push(lastOut);
         this.nextType = undefined;
@@ -554,12 +560,31 @@ class Print {
 }
 
 class Output {
-    constructor(point, emit, speed, tool, type, radius) {
+    /**
+     * Construct a new output element.
+     * 
+     * in cam, emit is the G code number (G0, G1, G2, G3)
+     *
+     * @param {Point} point point to emit, with x, y, and z properties
+     * @param {number} emit emit (feed for printers, power for lasers, cut for cam)
+     * @param {number} speed speed in mm/min
+     * @param {number} tool tool id
+     * @param {Object} options options object
+     * @param {string} [options.type] type of point
+     * @param {number} [options.radius] radius of arc
+     * @param {Point[]} [options.arcPoints] point based approximation of arc
+     */
+    constructor(point, emit, speed, tool, options) {
+
+        const { type, radius, arcPoints } = (options ?? {});
+        //speed, tool, type, radius
         this.point = point; // point to emit
         this.emit = emit; // emit (feed for printers, power for lasers, cut for cam)
         this.speed = speed;
         this.tool = tool;
         this.type = type;
+        this.radius = radius;
+        this.arcPoints = arcPoints;
         // this.where = new Error().stack.split("\n");
     }
 

@@ -22,6 +22,8 @@ CAM.export = function(print, online) {
     const widget = print.widgets[0];
     if (!widget) return;
 
+    console.log(print);
+
     const { settings } = print;
     const { device, tools } = settings;
 
@@ -164,6 +166,7 @@ CAM.export = function(print, online) {
         }
     }
 
+
     function moveTo(out, opt = {}) {
         let laser = out.type === 'laser';
         let newpos = out.point;
@@ -251,18 +254,23 @@ CAM.export = function(print, online) {
             points--;
             return;
         }
+        console.log(out)
+        let gn;
+        if ( out.emit >=0 && out.emit <= 3) gn = `G${out.emit}`;
+        else throw new Error(`malformed emit type ${out.emit}`);
 
         let speed = out.speed,
-            gn = speed ? 'G1' : 'G0',
-            nl = (compact_output && lastGn === gn) ? [] : [gn],
-            dx = opt.dx || newpos.x - pos.x,
-            dy = opt.dy || newpos.y - pos.y,
-            dz = opt.dz || newpos.z - pos.z,
-            da = newpos.a != pos.a,
-            maxf = dz ? maxZd : maxXYd,
-            feed = Math.min(speed || maxf, maxf),
-            dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
-            newFeed = feed && feed !== pos.f;
+        arc = out.emit == 2 || out.emit == 3,
+        nl = (compact_output && lastGn === gn) ? [] : [gn],
+        dx = opt.dx || newpos.x - pos.x,
+        dy = opt.dy || newpos.y - pos.y,
+        dz = opt.dz || newpos.z - pos.z,
+        da = newpos.a != pos.a,
+        maxf = dz ? maxZd : maxXYd,
+        feed = Math.min(speed || maxf, maxf),
+        dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
+        newFeed = feed && feed !== pos.f;
+        
 
         // drop dup points (all deltas are 0)
         if (!(dx || dy || dz || da)) {
