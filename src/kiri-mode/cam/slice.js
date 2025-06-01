@@ -504,6 +504,7 @@ CAM.holes = async function(settings, widget, individual, rec) {
                 continue;
             }
             for (let poly of inner) {
+                if ( poly.points.length < 7 ) continue;
                 let center = poly.calcCircleCenter();
                 center.area = poly.area();
                 center.overlapping = [center]
