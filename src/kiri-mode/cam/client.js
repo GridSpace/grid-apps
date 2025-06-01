@@ -1184,7 +1184,7 @@ CAM.init = function(kiri, api) {
             return func.selectHolesDone();
         }
         func.clearPops();
-        alert = api.show.alert("analyzing parts...", 1000);
+        let alert = api.show.alert("analyzing parts...");
         holeSelOn = hoveredOp;
         holeSelOn.classList.add("editing");
         api.feature.hover = true;
@@ -1192,9 +1192,7 @@ CAM.init = function(kiri, api) {
         func.hover = func.selectHolesHover;
         func.hoverUp = func.selectHolesHoverUp;
 
-        let settings = API.conf.get();
-        const {tool,mark} = poppedRec //TODO: display some visual difference if mark is selected
-        let diam = new CAM.Tool(settings,tool).fluteDiameter()
+        
 
         
         const widgets = kiri.api.widgets.all()
@@ -1205,7 +1203,7 @@ CAM.init = function(kiri, api) {
          * @returns {Mesh} the created mesh
          */
         function createHoleMesh(widget,drill){
-            let {depth,selected} = drill
+            let {depth,selected, diam} = drill
             let color = selected ? 0xFF0000:0x39e366
             let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
             const material = new THREE.MeshPhongMaterial( { color  } );
@@ -1221,10 +1219,10 @@ CAM.init = function(kiri, api) {
             widget.adds.push(mesh); //for click detection
             return mesh
         }
-
         let meshesCached = widgets.every(widget=>poppedRec.drills[widget.id] != undefined)
         if( individual && meshesCached ){ // if any widget already has cached holes
             // console.log("already has cached holes",poppedRec.drills)
+            api.hide.alert(alert)
             kiri.api.widgets.for(widget => {
                 if(widget.adds){
                     let drills =  poppedRec.drills[widget.id]
@@ -1245,33 +1243,52 @@ CAM.init = function(kiri, api) {
             })
 
         }else{ // if no widget has cached holes
-            await CAM.holes(individual?0:diam,(centers)=>{
-                let shadow = centers.some(c=>c.shadowed)
-                if(shadow){
-                    alert = api.show.alert("Some holes are shadowed by part and are not shown.");
-                }
-                centers = centers ?? []
-                // list of all hole centers and if they are selected
-                kiri.api.widgets.for(widget => {
-                    const {holes} = centers.find(center=>center.id = widget.id)
-                    // console.log(holes)
-                    if (!holes.length) unselectHoles(holes);
-                    holes.forEach(hole => {
-                        createHoleMesh(widget, hole)
+            let alert = api.show.alert("");
+            await CAM.holes( 
+                individual,
+                poppedRec,
+                (progress,msg)=>{
+                    alert[0]=msg
+                    api.show.progress(progress,msg)
+                    api.alerts.update()
+                },
+                async centers => {
+                    api.show.progress(0)
+                    if(! Array.isArray(centers) ){
+                        console.log("worker returned a malformed drills response")
+                        return
+                    }
+                    let shadow = centers.some(c=>c.shadowed)
+                    api.hide.alert(alert)
+                    if(shadow){
+                        alert = api.show.alert("Some holes are shadowed by part and are not shown.");
+                    }
+                    centers = centers ?? []
+                    // list of all hole centers and if they are selected
+                    kiri.api.widgets.for(widget => {
+                        const {holes} = centers.find(center=>center.id = widget.id)
+                        // console.log(holes)
+                        if (!holes.length) unselectHoles(holes);
+                        holes.forEach(hole => {
+                            createHoleMesh(widget, hole)
+                        })
+                        //add hole data to record
+                        poppedRec.drills = poppedRec.drills ?? {}
+                        poppedRec.drills[widget.id] = holes
+                        //give widget access to an array of drill records that refrence it
+                        //so that it can be cleared when widget is rotated or mirrored etc.
+                        if(!widget.drills){widget.drills = []}
+                        widget.drills.push(holes)
                     })
-                    //add hole data to record
-                    poppedRec.drills = poppedRec.drills ?? {}
-                    poppedRec.drills[widget.id] = holes
-                    //give widget access to an array of drill records that refrence it
-                    //so that it can be cleared when widget is rotated or mirrored etc.
-                    if(!widget.drills){widget.drills = []}
-                    widget.drills.push(holes)
-                })
-            });
+                }
+            );
         }
         //hide the alert once hole meshes are calculated on the worker, and then added to the scene
-        api.hide.alert(alert);
-        alert = api.show.alert("[esc] cancels drill editing");
+        // api.hide.alert(alert);
+        let escAlert = api.show.alert("[esc] cancels drill editing",1000);
+        setTimeout(() => {
+            api.hide.alert(escAlert);
+        }, 5000);
         kiri.api.widgets.opacity(0.8);
     }
 
@@ -1782,10 +1799,10 @@ CAM.init = function(kiri, api) {
         dwell:   'camDrillDwell',
         lift:    'camDrillLift',
         mark:    'camDrillMark',
+        precision:'camDrillPrecision',
         thru:    'camDrillThru',
 
-    })
-    drillOp.inputs = {
+    }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
         spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
@@ -1795,8 +1812,9 @@ CAM.init = function(kiri, api) {
         lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => !poppedRec.mark}),
         mark:     UC.newBoolean(LANG.cd_mark_s, undefined, {title:LANG.cd_mark_l}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        thru:     UC.newInput(LANG.cd_dtru_s, {title:LANG.cd_dtru_l, convert:UC.toFloat, units:true}),
-        sep:      UC.newBlank({class:"pop-sep"}),
+        thru:     UC.newInput(LANG.cd_dtru_s, {title:LANG.cd_dtru_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),
+        precision:UC.newInput(LANG.cd_prcn_s, {title:LANG.cd_prcn_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),
+        sep:      UC.newBlank({class:"pop-sep", }),
         actions: UC.newRow([
             UC.newButton(LANG.select, ()=>func.selectHoles(true), {title:LANG.cd_seli_l}),
             UC.newButton(LANG.cd_sela_s, ()=>func.selectHoles(false), {title:LANG.cd_sela_l})

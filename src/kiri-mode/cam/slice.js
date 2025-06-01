@@ -441,10 +441,16 @@ CAM.traces = async function(settings, widget, single) {
      *
      * @param {Object} settings - settings object
      * @param {Object} widget - widget object
-     * @param {number} diam - diameter of the drill bit
+     * @param {boolean} individual - if true, drill holes individually
+     * @param {Object} rec - DrillOp record
+     * @param {Function} onProgress - callback function to report progress
      * @returns {Array} list of hole centers as objects with `x`, `y`, `z`, `depth`, and `selected` properties.
      */
-CAM.holes = async function(settings, widget, diam) {
+CAM.holes = async function(settings, widget, individual, rec,onProgress) {
+
+    let {tool,mark,precision} = rec //TODO: display some visual difference if mark is selected
+    let toolDiam = new CAM.Tool(settings,tool).fluteDiameter()
+    let diam = individual ? 1 : toolDiam; // sets default diameter when select individual used
 
     let proc = settings.process,
         stock = settings.stock || {},
@@ -462,23 +468,23 @@ CAM.holes = async function(settings, widget, diam) {
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
 
 
-    let slicerOpts = {flatoff: 0.01}
+    let slicerOpts = {flatoff: 0.001}
     let slicer = new kiri.cam_slicer(widget,slicerOpts);
-    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z]).flat()
+    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z,z-0.002]).flat()
     
-    let intervals = slicer.interval(1,{
-        fit: false, off: -0.01, flats: true
-    })
+    precision = Math.max( 0, precision )
+    let intervals = (precision == 0) ? [] : slicer.interval(
+        precision,
+        { 
+            fit: false, off: -0.01, flats: true
+        }
+    )
 
     let zees = [...zFlats,...intervals]
     let indices = [...new Set(zees
         .map(kv => parseFloat(kv).round(5))
         .filter(z => z !== null)
     )]
-    let individual = (diam <= 0);
-
-    diam = individual ? 1 : diam; // sets default diameter when select individual used
-
     let centerDiff = diam * 0.1,
         area = (diam/2) * (diam/2) * Math.PI,
         circles = [],
@@ -487,14 +493,14 @@ CAM.holes = async function(settings, widget, diam) {
     function onEach(slice) {
         slices.push(slice);
     }
-    let opts = { each: onEach  };
+    let opts = { each: onEach, progress: (num,total)=> onProgress(num/total*0.5,"slice") };
     await slicer.slice(indices, opts);
     let shadowedDrills = false;
     // console.log("slices",slices)
-    for (let slice of slices) {
+    for (let [i,slice] of slices.entries()) {
         for(let top of slice.tops){
             // console.log("slicing",slice.z,top)
-            slice.shadow = CAM.shadowAt(widget,slice.z, 0)
+            slice.shadow = CAM.shadowAt(widget, slice.z, 0)
             let inner = top.inner;
             if (!inner) { //no holes
                 continue;
@@ -532,13 +538,13 @@ CAM.holes = async function(settings, widget, diam) {
                 if (!overlap) circles.push(center);
             }
         }
+        onProgress(0.5+(i/slices.length*0.25),"recognize circles")
     }
 
     let drills = []
 
-    for (let c of circles) {
+    for (let [i,c] of circles.entries()) {
         let overlapping = c.overlapping
-        .sort((a,b) => b.z - a.z)
 
         let last = overlapping.shift();
         while (overlapping.length) {
@@ -555,10 +561,11 @@ CAM.holes = async function(settings, widget, diam) {
             }
         }
         if (last.depth != 0) drills.push(last) //add last circle
+        onProgress(0.75+(i/circles.length*0.25),"assemble holes")
     }
-
     drills.forEach( h=>{
         delete h.overlapping //for encoding
+        h.diam = toolDiam // for mesh generation
         h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05 ); //for same size selection
     }) 
 
