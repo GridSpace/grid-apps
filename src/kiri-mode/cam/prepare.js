@@ -325,7 +325,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.factor speed scale factor
      */
     function camOut(point, cut,opts) {
-      console.log({camOut: point, cut, opts})
+    //   console.log({camOut: point, cut, opts})
         let {
             radius = 0,
             clockwise = true,
@@ -736,7 +736,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let arcQ = [];
 
         function arcExport(point,lastp){
-            console.log("start",point,lastp)
+            // console.log("start",point,lastp)
             let dist = lastp? point.distTo2D(lastp) : 0;
             if (lastp)  {
                 if (dist >arcDist) {
