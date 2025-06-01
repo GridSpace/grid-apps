@@ -19,6 +19,7 @@ function show(message, time) {
         api.event.emit('alert', rec);
     } else {
         alerts.push(rec);
+        setTimeout( update, time+0.02);
         update();
     }
     return rec;

@@ -30,66 +30,68 @@ const POLY = polygons;
  */
 CAM.slice = async function(settings, widget, onupdate, ondone) {
     let proc = settings.process,
-        stock = settings.stock || {},
-        isIndexed = proc.camStockIndexed,
-        camOps = widget.camops = [],
         sliceAll = widget.slices = [],
-        bounds = widget.getBoundingBox(),
-        track = widget.track,
-        { camZTop, camZBottom, camZThru } = proc,
-        // widget top z as defined by setTopz()
-        wztop = track.top,
-        // distance between top of part and top of stock
-        ztOff = isIndexed ? 0 : (stock.z - wztop),
-        // distance between bottom of part and bottom of stock
-        zbOff = isIndexed ? 0 : (wztop - track.box.d),
-        // defined z bottom offset by distance to stock bottom
-        // keeps the z bottom relative to the part when z align changes
-        zBottom = isIndexed ? camZBottom : camZBottom - zbOff,
-        // greater of widget bottom and z bottom
-        zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom),
-        zMax = bounds.max.z,
-        zThru = camZThru,
-        zTop = zMax + ztOff,
-        minToolDiam = Infinity,
-        maxToolDiam = -Infinity,
-        dark = settings.controller.dark ? true : false,
-        color = dark ? 0xbbbbbb : 0,
-        tabs = widget.anno.tab,
-        unsafe = proc.camExpertFast,
-        units = settings.controller.units === 'in' ? 25.4 : 1,
-        axisRotation,
-        axisIndex,
-        // new work area tracking
-        part_size = bounds.dim,
-        bottom_gap = zbOff,
-        bottom_part = 0,
-        bottom_stock = -bottom_gap,
-        bottom_thru = zThru,
+        // slices = widget.slices = [],
+        camOps = widget.camops = [],
+        isIndexed = proc.camStockIndexed;
+
+    let stock, bounds, track,
+        camZTop, camZBottom, camZThru, wztop, ztOff, zbOff,
+        zBottom, zMin, zMax, zThru, zTop,
+        minToolDiam, maxToolDiam, dark, color, tabs, unsafe, units,
+        axisRotation, axisIndex,
+        part_size,
+        bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z, bottom_cut,
+        top_stock, top_part, top_gap, top_z,
+        workarea;
+
+    // allow recomputing later if widget or settings changes
+    const var_compute = () => {
+        stock = settings.stock || {};
+        bounds = widget.getBoundingBox();
+        track = widget.track;
+        ({ camZTop, camZBottom, camZThru } = proc);
+        wztop = track.top;
+        ztOff = isIndexed ? 0 : (stock.z - wztop);
+        zbOff = isIndexed ? 0 : (wztop - track.box.d);
+        zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
+        zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom);
+        zMax = bounds.max.z;
+        zThru = camZThru;
+        zTop = zMax + ztOff;
+        minToolDiam = Infinity;
+        maxToolDiam = -Infinity;
+        dark = !!settings.controller.dark;
+        color = dark ? 0xbbbbbb : 0;
+        tabs = widget.anno.tab;
+        unsafe = proc.camExpertFast;
+        units = settings.controller.units === 'in' ? 25.4 : 1;
+        axisRotation = axisIndex = undefined;
+        part_size = bounds.dim;
+        bottom_gap = zbOff;
+        bottom_part = 0;
+        bottom_stock = -bottom_gap;
+        bottom_thru = zThru;
         bottom_z = Math.max(
             (camZBottom ? bottom_stock + camZBottom : bottom_part) - bottom_thru,
             (camZBottom ? bottom_stock + camZBottom : bottom_stock - bottom_thru)
-        ),
-        bottom_cut = Math.max(bottom_z, -zThru),
-        top_stock = zTop,
-        top_part = zMax,
-        top_gap = ztOff,
-        top_z = camZTop ? bottom_stock + camZTop : top_stock,
+        );
+        bottom_cut = Math.max(bottom_z, -zThru);
+        top_stock = zTop;
+        top_part = zMax;
+        top_gap = ztOff;
+        top_z = camZTop ? bottom_stock + camZTop : top_stock;
         workarea = util.round({
-            top_stock,
-            top_part,
-            top_gap,
-            top_z,
-            bottom_stock,
-            bottom_part,
-            bottom_gap,
-            bottom_z,
-            bottom_cut
+            top_stock, top_part, top_gap, top_z,
+            bottom_stock, bottom_part, bottom_gap,
+            bottom_z, bottom_cut
         }, 3);
 
-    // console.table({ workarea });
-    // console.table({ part_size });
-    // console.table({ stock });
+        return structuredClone(workarea);
+    };
+
+    // initial setup
+    var_compute();
 
     if (tabs) {
         // make tab polygons
@@ -267,12 +269,11 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
 
     // call slice() function on all ops in order
     let tracker = setSliceTracker({ rotation: 0 });
-    let workarea_orig = structuredClone(workarea);
     setAxisIndex();
     for (let op of opList) {
         let weight = op.weight();
         // apply operation override vars
-        let workover = structuredClone(workarea_orig);
+        let workover = var_compute();
         let valz = op.op;
         if (valz.ov_topz) {
             workover.top_z = bottom_stock + valz.ov_topz;
@@ -440,10 +441,16 @@ CAM.traces = async function(settings, widget, single) {
      *
      * @param {Object} settings - settings object
      * @param {Object} widget - widget object
-     * @param {number} diam - diameter of the drill bit
+     * @param {boolean} individual - if true, drill holes individually
+     * @param {Object} rec - DrillOp record
+     * @param {Function} onProgress - callback function to report progress
      * @returns {Array} list of hole centers as objects with `x`, `y`, `z`, `depth`, and `selected` properties.
      */
-CAM.holes = async function(settings, widget, diam) {
+CAM.holes = async function(settings, widget, individual, rec,onProgress) {
+
+    let {tool,mark,precision} = rec //TODO: display some visual difference if mark is selected
+    let toolDiam = new CAM.Tool(settings,tool).fluteDiameter()
+    let diam = individual ? 1 : toolDiam; // sets default diameter when select individual used
 
     let proc = settings.process,
         stock = settings.stock || {},
@@ -461,23 +468,23 @@ CAM.holes = async function(settings, widget, diam) {
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
 
 
-    let slicerOpts = {flatoff: 0.01}
+    let slicerOpts = {flatoff: 0.001}
     let slicer = new kiri.cam_slicer(widget,slicerOpts);
-    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z]).flat()
+    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z,z-0.002]).flat()
     
-    let intervals = slicer.interval(1,{
-        fit: false, off: -0.01, flats: true
-    })
+    precision = Math.max( 0, precision )
+    let intervals = (precision == 0) ? [] : slicer.interval(
+        precision,
+        { 
+            fit: false, off: -0.01, flats: true
+        }
+    )
 
     let zees = [...zFlats,...intervals]
     let indices = [...new Set(zees
         .map(kv => parseFloat(kv).round(5))
         .filter(z => z !== null)
     )]
-    let individual = (diam <= 0);
-
-    diam = individual ? 1 : diam; // sets default diameter when select individual used
-
     let centerDiff = diam * 0.1,
         area = (diam/2) * (diam/2) * Math.PI,
         circles = [],
@@ -486,19 +493,20 @@ CAM.holes = async function(settings, widget, diam) {
     function onEach(slice) {
         slices.push(slice);
     }
-    let opts = { each: onEach  };
+    let opts = { each: onEach, progress: (num,total)=> onProgress(num/total*0.5,"slice") };
     await slicer.slice(indices, opts);
     let shadowedDrills = false;
     // console.log("slices",slices)
-    for (let slice of slices) {
+    for (let [i,slice] of slices.entries()) {
         for(let top of slice.tops){
             // console.log("slicing",slice.z,top)
-            slice.shadow = CAM.shadowAt(widget,slice.z, 0)
+            slice.shadow = CAM.shadowAt(widget, slice.z, 0)
             let inner = top.inner;
             if (!inner) { //no holes
                 continue;
             }
             for (let poly of inner) {
+                if ( poly.points.length < 7 ) continue;
                 let center = poly.calcCircleCenter();
                 center.area = poly.area();
                 center.overlapping = [center]
@@ -530,13 +538,13 @@ CAM.holes = async function(settings, widget, diam) {
                 if (!overlap) circles.push(center);
             }
         }
+        onProgress(0.5+(i/slices.length*0.25),"recognize circles")
     }
 
     let drills = []
 
-    for (let c of circles) {
+    for (let [i,c] of circles.entries()) {
         let overlapping = c.overlapping
-        .sort((a,b) => b.z - a.z)
 
         let last = overlapping.shift();
         while (overlapping.length) {
@@ -553,10 +561,11 @@ CAM.holes = async function(settings, widget, diam) {
             }
         }
         if (last.depth != 0) drills.push(last) //add last circle
+        onProgress(0.75+(i/circles.length*0.25),"assemble holes")
     }
-
     drills.forEach( h=>{
         delete h.overlapping //for encoding
+        h.diam = toolDiam // for mesh generation
         h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05 ); //for same size selection
     }) 
 
