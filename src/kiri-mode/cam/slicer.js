@@ -135,9 +135,21 @@ class Slicer {
         return this;
     }
 
-    // slice through points at given Z and return polygons
+    /**
+     * Given an array of z-slice positions, generate a list of polygons
+     * representing the intersection of the mesh with the given z-slice
+     * positions.
+     *
+     * @param {number[]} zs - array of z-slice positions
+     * @param {Object} options - slicing parameters
+     * @param {number} [options.flatoff=0.01] - z offset when slicing on a flat surface
+     * @param {boolean} [options.progress=false] - callback with slice progress
+     * @param {function} [options.each] - callback with each slice result
+     * @returns {Promise<Object[]>} - list of slice objects with z and tops (polygons)
+     */
     async slice(zs, options) {
         const opt = this.setOptions(options);
+        // slice through points at given Z and return polygons
 
         if (!Array.isArray(zs)) {
             throw "slice zs parameter must be ab array";

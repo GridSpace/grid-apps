@@ -1219,7 +1219,6 @@ CAM.init = function(kiri, api) {
             widget.adds.push(mesh); //for click detection
             return mesh
         }
-
         let meshesCached = widgets.every(widget=>poppedRec.drills[widget.id] != undefined)
         if( individual && meshesCached ){ // if any widget already has cached holes
             // console.log("already has cached holes",poppedRec.drills)
@@ -1244,30 +1243,46 @@ CAM.init = function(kiri, api) {
             })
 
         }else{ // if no widget has cached holes
-            await CAM.holes( individual,poppedRec, async centers => {
-                let shadow = centers.some(c=>c.shadowed)
-                api.hide.alert(alert)
-                if(shadow){
-                    alert = api.show.alert("Some holes are shadowed by part and are not shown.");
-                }
-                centers = centers ?? []
-                // list of all hole centers and if they are selected
-                kiri.api.widgets.for(widget => {
-                    const {holes} = centers.find(center=>center.id = widget.id)
-                    // console.log(holes)
-                    if (!holes.length) unselectHoles(holes);
-                    holes.forEach(hole => {
-                        createHoleMesh(widget, hole)
+            let alert = api.show.alert("");
+            await CAM.holes( 
+                individual,
+                poppedRec,
+                (progress,msg)=>{
+                    console.log(progress,msg)
+                    alert[0]=msg
+                    api.show.progress(progress,msg)
+                    api.alerts.update()
+                },
+                async centers => {
+                    api.show.progress(0)
+                    if(! Array.isArray(centers) ){
+                        console.log("worker returned a malformed drills response")
+                        return
+                    }
+                    let shadow = centers.some(c=>c.shadowed)
+                    api.hide.alert(alert)
+                    if(shadow){
+                        alert = api.show.alert("Some holes are shadowed by part and are not shown.");
+                    }
+                    centers = centers ?? []
+                    // list of all hole centers and if they are selected
+                    kiri.api.widgets.for(widget => {
+                        const {holes} = centers.find(center=>center.id = widget.id)
+                        // console.log(holes)
+                        if (!holes.length) unselectHoles(holes);
+                        holes.forEach(hole => {
+                            createHoleMesh(widget, hole)
+                        })
+                        //add hole data to record
+                        poppedRec.drills = poppedRec.drills ?? {}
+                        poppedRec.drills[widget.id] = holes
+                        //give widget access to an array of drill records that refrence it
+                        //so that it can be cleared when widget is rotated or mirrored etc.
+                        if(!widget.drills){widget.drills = []}
+                        widget.drills.push(holes)
                     })
-                    //add hole data to record
-                    poppedRec.drills = poppedRec.drills ?? {}
-                    poppedRec.drills[widget.id] = holes
-                    //give widget access to an array of drill records that refrence it
-                    //so that it can be cleared when widget is rotated or mirrored etc.
-                    if(!widget.drills){widget.drills = []}
-                    widget.drills.push(holes)
-                })
-            });
+                }
+            );
         }
         //hide the alert once hole meshes are calculated on the worker, and then added to the scene
         // api.hide.alert(alert);

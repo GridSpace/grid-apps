@@ -441,10 +441,12 @@ CAM.traces = async function(settings, widget, single) {
      *
      * @param {Object} settings - settings object
      * @param {Object} widget - widget object
-     * @param {number} diam - diameter of the drill bit
+     * @param {boolean} individual - if true, drill holes individually
+     * @param {Object} rec - DrillOp record
+     * @param {Function} onProgress - callback function to report progress
      * @returns {Array} list of hole centers as objects with `x`, `y`, `z`, `depth`, and `selected` properties.
      */
-CAM.holes = async function(settings, widget, individual, rec) {
+CAM.holes = async function(settings, widget, individual, rec,onProgress) {
 
     let {tool,mark,precision} = rec //TODO: display some visual difference if mark is selected
     let toolDiam = new CAM.Tool(settings,tool).fluteDiameter()
@@ -491,11 +493,11 @@ CAM.holes = async function(settings, widget, individual, rec) {
     function onEach(slice) {
         slices.push(slice);
     }
-    let opts = { each: onEach  };
+    let opts = { each: onEach, progress: (num,total)=> onProgress(num/total*0.5,"slice") };
     await slicer.slice(indices, opts);
     let shadowedDrills = false;
     // console.log("slices",slices)
-    for (let slice of slices) {
+    for (let [i,slice] of slices.entries()) {
         for(let top of slice.tops){
             // console.log("slicing",slice.z,top)
             slice.shadow = CAM.shadowAt(widget, slice.z, 0)
@@ -536,11 +538,12 @@ CAM.holes = async function(settings, widget, individual, rec) {
                 if (!overlap) circles.push(center);
             }
         }
+        onProgress(0.5+(i/slices.length*0.25),"recognize circles")
     }
 
     let drills = []
 
-    for (let c of circles) {
+    for (let [i,c] of circles.entries()) {
         let overlapping = c.overlapping
 
         let last = overlapping.shift();
@@ -558,6 +561,7 @@ CAM.holes = async function(settings, widget, individual, rec) {
             }
         }
         if (last.depth != 0) drills.push(last) //add last circle
+        onProgress(0.75+(i/circles.length*0.25),"assemble holes")
     }
     drills.forEach( h=>{
         delete h.overlapping //for encoding

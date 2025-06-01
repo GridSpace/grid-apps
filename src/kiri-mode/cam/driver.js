@@ -82,15 +82,21 @@ kiri.load(api => {
             });
         };
 
-        //0 or less diameter means select all holes
-        CAM.holes = function(indiv,rec,onDone) {
+        
+        CAM.holes = function(indiv,rec,onProgress,onDone) {
             kiri.client.sync();
             const settings = api.conf.get();
             return new Promise((res,rej)=>{
                 kiri.client.send("cam_holes", { settings, rec, indiv },  output => {
                     let out = kiri.codec.decode(output)
-                    onDone(out)
-                    res(out)
+                    if(out.progress != undefined){
+                        //if a progress message,
+                        onProgress(out.progress,out.msg)
+                    }else{
+                        api.hide.alert(alert)
+                        onDone(out)
+                        res(out)
+                    }
                 });
             })
         }
@@ -161,8 +167,11 @@ kiri.load(api => {
             const { settings, indiv, rec } = data;
             const widgets = Object.values(kiri.worker.cache);
             const fresh = [];
-            for (let widget of widgets) {
-                if (await CAM.holes(settings, widget, indiv, rec)) {
+            
+            for (let [i,widget] of widgets.entries() ) {
+                if (await CAM.holes(settings, widget, indiv, rec,
+                    ( prog, msg )=>{ send.data({progress: (i/widgets.length)+(prog/widgets.length),msg})}
+                )){
                     fresh.push(widget);
                 }
             }
