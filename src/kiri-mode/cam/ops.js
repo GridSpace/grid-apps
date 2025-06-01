@@ -1503,22 +1503,19 @@ class OpDrill extends CamOp {
             if(!drill.selected){
                 return
             }
-            let slice = newSlice(0);            
+            let slice = newSlice(0);
             if (op.mark) {
                 // replace depth with single down peck
                 drill.depth = op.down
             }
             drill.zBottom = drill.z - drill.depth;
-            
             // for thru holes, follow z thru when set
             if ((op.thru>0) ) {
                 drill.zBottom -= op.thru;
             }
-            
             const poly  = newPolygon()
             poly.points.push(newPoint(drill.x, drill.y, drill.z))
             poly.points.push(newPoint(drill.x, drill.y, drill.zBottom))
-                
             // poly.points.pop();
             slice.camTrace = { tool: op.tool, rate: op.feed, plunge: op.rate };
             slice.camLines = [poly];
