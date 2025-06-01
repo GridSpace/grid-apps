@@ -201,10 +201,7 @@ async function path(levels, update, opts = {}) {
                 //     Math.abs(op.y - lp.y),
                 //     Math.abs(op.z - lp.z));
                 // if (moved < 0.0001) return;
-                if( is_cam() && (out.emit == 2 || out.emit == 3 )) {
-                    // cam arc emit
-                    console.log('cam arc render woohoo!',out);
-
+                if( is_cam() && (out.emit == 2 || out.emit == 3 )) { // cam arc emit
                     // checks if a new poly should be started
                     if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
                         current = newPolygon().setOpen();
