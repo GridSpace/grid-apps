@@ -325,7 +325,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.factor speed scale factor
      */
     function camOut(point, cut,opts) {
-
+      console.log({camOut: point, cut, opts})
         let {
             radius = 0,
             clockwise = true,
@@ -334,6 +334,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             factor = 1,
         } = opts ?? {}
 
+        // console.log({radius})
         const isArc = radius > 0;
 
         point = point.clone();
@@ -471,17 +472,18 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
 
         if(isArc) {
-            console.log("arc recieved");
-            layerPush(
-                point,
-                clockwise ? 2 : 3,
-                rate,
-                tool,
-                {
-                    radius,
-                    arcPoints
-                }
-            );
+          layerOut.mode = currentOp;
+          layerOut.spindle = spindle;
+          lastPoint = layerPush(
+            point,
+            clockwise ? 2 : 3,
+            rate,
+            tool,
+            {
+                radius,
+                arcPoints
+            }
+          );
         }else{
             // for g1 moves
             
@@ -725,8 +727,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
      */
     function polyEmit(poly, index, count, fromPoint) {
 
-        const arcDist = 1,
-            arcRes = 2, //2 degs max
+        const arcDist = 0.1, // minimum dist for arc
+            arcRes = 4, //4 degs max
             arcMax = Infinity; // no max arc radius
 
         // console.log('polyEmit', poly, index, count);
@@ -734,11 +736,10 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let arcQ = [];
 
         function arcExport(point,lastp){
-
+            console.log("start",point,lastp)
             let dist = lastp? point.distTo2D(lastp) : 0;
-
             if (lastp)  {
-                if (arcDist) {
+                if (dist >arcDist) {
                     let rec = Object.assign(point,{dist});
                     arcQ.push(rec);
                     let desp = false; // do arcQ[0] and rec have differing move speeds?
@@ -757,7 +758,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         let cc = util.center2d(e1, e2, e3, 1); // find center
                         let lr = util.center2d(e3, e4, e5, 1); // find local radius
                         let dc = 0;
-    
+
                         let radFault = false;
                         if (lr) {
                             let angle = 2 * Math.asin(dist/(2*lr.r));
@@ -770,7 +771,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         } else {
                             radFault = true;
                         }
-    
+
                         if (cc) {
                             if ([cc.x,cc.y,cc.z,cc.r].hasNaN()) {
                                 console.log({cc, e1, e2, e3});
@@ -826,15 +827,13 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         }
                     }
                 } else {
-                    // emitMM = emitPerMM * out.emit * dist;
-                    emitMM = extrudeMM(dist, emitPerMM, out.emit);
-                    camOut({x, y, e:emitMM}, true,);
-                    emitted += emitMM;
+                    // if dist to small, output as a cut
+                    camOut(point, 1);
                 }
             } else {
-                // if no last point, emit and set
-                drainQ();
-                camOut(point,1 ); 
+                // if first point, emit and set
+                
+                arcExport(point,point);
                 // TODO disabling out of plane z moves until a better mechanism
                 // can be built that doesn't rely on computed zpos from layer heights...
                 // when making z moves (like polishing) allow slowdown vs fast seek
@@ -853,7 +852,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 // ondebug({arcQ});
                 let vec1 = new THREE.Vector2(arcQ[1].x - arcQ[0].x, arcQ[1].y - arcQ[0].y);
                 let vec2 = new THREE.Vector2(arcQ.center[0].x - arcQ[0].x, arcQ.center[0].y - arcQ[0].y);
-                let clockwise = vec1.cross(vec2) < 0 ? 'G2' : 'G3';
+                let clockwise = vec1.cross(vec2) < 0 
                 let from = arcQ[0];
                 let to = arcQ.peek();
                 arcQ.xSum = arcQ.center.reduce( (t, v) => t + v.x , 0 );
@@ -861,28 +860,32 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 arcQ.rSum = arcQ.center.reduce( (t, v) => t + v.r , 0 );
                 let cl = arcQ.center.length;
                 let cc;
-    
+                let radius = arcQ.rSum / cl;
+
+                // calculate angle between first and last point, relative to arc center
                 let angle = util.thetaDiff(
                     Math.atan2((from.y - arcQ.ySum / cl), (from.x - arcQ.xSum / cl)),
                     Math.atan2((to.y - arcQ.ySum / cl), (to.x - arcQ.xSum / cl)),
                     clockwise
                 );
-    
+
+                // if angle is less than 135 degrees (3PI/4)
                 if (Math.abs(angle) <= 3 * Math.PI / 4) {
-                    cc = util.center2pr(from, to, arcQ.rSum / cl, !clockwise);
+                    cc = util.center2pr(from, to, radius, clockwise);
+                    cc.r = radius;
                 }
     
                 if (!cc) {
-                    cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z, r:arcQ.rSum/cl};
+                    cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z,};
                 }
-    
                 // first arc point
                 camOut(from,true);
                 // rest of arc to final point
 
                 // XYR form
                 // let pre = `${clockwise? 'G2' : 'G3'} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} `;
-                camOut(to,1,{radius:cc.r, clockwise, arcPoints:[...arcQ]});
+                
+                camOut(to,1,{radius, clockwise, arcPoints:[...arcQ]});
                 // XYIJ form
                 // let pre = `${clockwise? 'G2' : 'G3'} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} I${(cc.x - pos.x).toFixed(decimals)} J${(cc.y - pos.y).toFixed(decimals)} E${emit.toFixed(decimals)}`;
                 // let add = pos.f !== from.speedMMM ? ` E${from.speedMMM}` : '';
@@ -893,6 +896,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     camOut(rec,1);
                 }
             }
+            last = arcQ.peek();
             arcQ.length = 0;
             arcQ.center = undefined;
         }
@@ -915,9 +919,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }, poly.isClosed(), last);
 
         // console.log("at end of arcExport",structuredClone(arcQ));
-        drainQ();
-        // console.log("at end of arcExport",structuredClone(arcQ));
-
+        while (arcQ.length){
+          camOut(arcQ.shift(),1);
+        }
         
         newLayer();
         return last;
