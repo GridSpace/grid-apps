@@ -1248,7 +1248,6 @@ CAM.init = function(kiri, api) {
                 individual,
                 poppedRec,
                 (progress,msg)=>{
-                    console.log(progress,msg)
                     alert[0]=msg
                     api.show.progress(progress,msg)
                     api.alerts.update()
