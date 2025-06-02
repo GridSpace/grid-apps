@@ -254,7 +254,6 @@ CAM.export = function(print, online) {
             points--;
             return;
         }
-        console.log(out)
         let gn;
         if ( out.emit >=0 && out.emit <= 3) gn = `G${out.emit}`;
         let speed = out.speed,
