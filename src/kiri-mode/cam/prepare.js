@@ -325,7 +325,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.factor speed scale factor
      */
     function camOut(point, cut,opts) {
-      console.trace({camOut: point, cut, opts})
         let {
             center = {},
             clockwise = true,
@@ -463,10 +462,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 modifier = threshold / absDeltaZ;
             if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
                 // use modifier to speed up long XY move plunge rates
+                console.log('modifier', modifier);
                 rate = Math.round(plungeRate + ((feedRate - plungeRate) * modifier));
                 cut = 1;
             } else {
-                rate = Math.min(feedRate, plungeRate);
+                rate = 1 / Math.hypot(deltaXY / feedRate , absDeltaZ / plungeRate );
             }
         }
 
@@ -484,7 +484,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcPoints
                 }
             );
-            console.log({center, arcPoints});
         }else{
             // for g1 moves
             
@@ -727,16 +726,59 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @returns {Point} - the last point of the polygon
      */
     function polyEmit(poly, index, count, fromPoint) {
-        console.log('polyEmit', poly );
         const arcDist = 0.001, // minimum dist for arc
             arcRes = 8, //8 degs max
             arcMax = Infinity; // no max arc radius
 
         fromPoint = fromPoint || printPoint;
 
-        // console.log('polyEmit', poly, index, count);
+        console.log('polyEmit', poly, index, count);
 
         let arcQ = [];
+
+        let closest = poly.findClosestPointTo(fromPoint);
+        let lastPoint = closest.point;
+        let startIndex = closest.index;
+
+        // scale speed of first cutting poly since it engages the full bit
+        let scale = ((isRough || isPocket) && count === 1) ? engageFactor : 1;
+
+
+        if (easeDown && poly.isClosed()) { //if doing ease-down
+            
+            let last = generateEaseDown((point,offset )=>{ //generate ease-down points
+                if(offset == 0) camOut(point.clone(), 0, {factor:scale});
+                camOut(point.clone(), 1, {factor:scale}); // and pass them to camOut
+            }, poly, fromPoint, easeAngle);
+            lastPoint = poly.points[last];
+            startIndex = last;
+        } 
+
+
+        poly.forEachPoint( ( point, pidx, points, offset) => {
+            // if(offset == 0) console.log("forEachPoint",point,pidx,points)
+            if(offset == 0){
+                // if first point, move to and call export function
+                console.log("offset 0")
+                camOut(point.clone(), 0, {factor:scale});
+                quePush(point);
+            }
+            else arcExport(point, lastPoint);
+            lastPoint = point;
+        }, poly.isClosed(), startIndex);
+
+        // console.log("at end of arcExport",structuredClone(arcQ));
+        if(arcQ.length > 3){
+            //if few points left, emit as lines
+            drainQ();
+        }
+        while (arcQ.length){
+          camOut(arcQ.shift(),1);
+        }
+
+        function quePush(point){
+            arcQ.push(point);
+        }
 
         function arcExport(point,lastp){
             // console.log("start",point,lastp)
@@ -772,6 +814,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                             // }
                         } else {
                             radFault = true;
+                            console.log("too much angle")
                         }
 
                         if (cc) {
@@ -796,7 +839,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                             // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
                             if ( desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault ) {
                                 // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcDist, dist > cc.r, cc.r > arcMax, radFault];
-                                console.log("point off the arc,",structuredClone(arcQ),);
+                                // console.log("point off the arc,",structuredClone(arcQ),);
                                 if (arcQ.length === 4) {
                                     // not enough points for an arc, drop first point and recalc center
                                     camOut(arcQ.shift(),1);
@@ -829,8 +872,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     }
                 } else {
                     // if dist to small, output as a cut
-                    console.log('point too small', point,lastp,dist);
-                    // camOut(point, 1);
+                    console.trace('point too small', point,lastp,dist);
+                    camOut(point, 1);
                 }
             } else {
                 // if first point, emit and set
@@ -861,7 +904,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 arcQ.ySum = arcQ.center.reduce( (t, v) => t + v.y , 0 );
                 arcQ.rSum = arcQ.center.reduce( (t, v) => t + v.r , 0 );
                 let cl = arcQ.center.length;
-                let radius = arcQ.rSum / cl;
                 let center = newPoint(
                     arcQ.xSum / cl,
                     arcQ.ySum / cl,
@@ -869,9 +911,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
                 if(arcQ.length == poly.points.length){
                     //if is a circle
-                    let arcStart = arcQ[0]
-                    camOut(arcStart,1);
-                    camOut(arcStart,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
+                    camOut(from,1);
+                    camOut(from,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
+                    lastPoint = from.clone();
                 }else{
                     //if a non-circle arc
 
@@ -879,6 +921,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     camOut(from,1);
                     // rest of arc to final point
                     camOut(to,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
+                    lastPoint = to.clone();
                 }
 
             } else {
@@ -886,48 +929,17 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 for (let rec of arcQ) {
                     camOut(rec,1);
                 }
+                lastPoint = arcQ.peek().clone();
             }
-            last = arcQ.peek();
             arcQ.length = 0;
             arcQ.center = undefined;
         }
 
 
-        let {point:lastPoint, index:startIdx} = poly.findClosestPointTo(fromPoint);
-        let last = index;
-        // scale speed of first cutting poly since it engages the full bit
-        let scale = ((isRough || isPocket) && count === 1) ? engageFactor : 1;
-
-        if (easeDown && poly.isClosed()) { //if doing ease-down
-            last = generateEaseDown((point, )=>{ //generate ease-down points
-                camOut(point.clone(), 1, {factor:scale}); // and pass them to camOut
-            }, poly, lastPoint, easeAngle);
-        } 
-
-
-        poly.forEachPoint( ( point, pidx, points, offset) => {
-            // if(offset == 0) console.log("forEachPoint",point,pidx,points)
-            if(offset ==0 ) arcExport(point,lastPoint);
-            else arcExport(point, lastPoint);
-            last = pidx;
-            lastPoint = point;
-        }, poly.isClosed(), startIdx);
-
-        // console.log("at end of arcExport",structuredClone(arcQ));
-        if(arcQ.length <= 3){
-            //if few points left, emit as lines
-            while (arcQ.length){
-              camOut(arcQ.shift(),1);
-            }
-        }else{
-            console.log("force draining",structuredClone(arcQ));
-            drainQ();
-            console.log("after draining",structuredClone(arcQ));
-            // camOut(arcQ.shift(),1);
-        }
+        
         
         newLayer();
-        return last;
+        return lastPoint;
     }
 
     function depthRoughPath(start, depth, levels, tops, emitter, fit, ease) {
