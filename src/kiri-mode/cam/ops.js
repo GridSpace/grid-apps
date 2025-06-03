@@ -737,11 +737,11 @@ class OpOutline extends CamOp {
                 Object.entries(orderSplit) //split the polys by order
                 .sort((a,b) => -(a[0] - b[0] )) //sort by order (highest first)
                 .forEach(([order, orderPolys]) => { // emit based on closest for each order
+                    let polyLast;
                     // console.log({order, orderPolys});
                     printPoint = poly2polyEmit(orderPolys, printPoint, function(poly, index, count) {
-                        poly.forEachPoint(function(point, pidx, points, offset) {
-                            camOut(point.clone(), offset !== 0);
-                        }, poly.isClosed(), index);
+                        
+                        polyLast = polyEmit(poly, index, count, polyLast);
                     }, { swapdir: false });
                 })
                 newLayer();

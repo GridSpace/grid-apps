@@ -45,7 +45,7 @@ CAM.export = function(print, online) {
         cmdToolChange = device.gcodeChange || [ "M6 T{tool}" ],
         cmdSpindle = device.gcodeSpindle || [ "M3 S{speed}" ],
         cmdDwell = device.gcodeDwell || [ "G4 P{time}" ],
-        axis = { X: 'X', Y: 'Y', Z: 'Z', A: 'A', F: 'F', R: 'R' },
+        axis = { X: 'X', Y: 'Y', Z: 'Z', A: 'A', F: 'F', R: 'R', I: 'I', J: 'J' },
         dev = settings.device,
         spro = settings.process,
         maxZd = spro.camFastFeedZ,
@@ -258,7 +258,7 @@ CAM.export = function(print, online) {
         if ( out.emit >=0 && out.emit <= 3) gn = `G${out.emit}`;
         let speed = out.speed,
         arc = out.emit == 2 || out.emit == 3,
-        radius = out.radius,
+        center = out.center,
         nl = (compact_output && lastGn === gn) ? [] : [gn],
         dx = opt.dx || newpos.x - pos.x,
         dy = opt.dy || newpos.y - pos.y,
@@ -304,7 +304,8 @@ CAM.export = function(print, online) {
             nl.append(space).append(axis.F).append(add0(consts.feed = feed * factor, true));
         }
         if(arc){
-            nl.append(space).append(axis.R).append(add0(radius * factor, true));
+            nl.append(space).append(axis.I).append(add0(center.x * factor, true))
+            .append(space).append(axis.J).append(add0(center.y * factor, true));
         }
 
         // temp hack to support RML1 dialect from a file extensions trigger

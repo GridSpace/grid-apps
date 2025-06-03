@@ -268,7 +268,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} [tool] tool number
      */
     function layerPush(point, emit, speed, tool, options) {
-        const { type, radius, arcPoints } = options ?? {};
+        const { type, center, arcPoints } = options ?? {};
         const dz = (point && lastPush && lastPush.point) ? point.z - lastPush.point.z : 0;
         if (dz < 0 && speed > plungeRate) {
             speed = plungeRate;
@@ -300,7 +300,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             }
             print.addOutput(layerOut, point, power, speed, tool, {type:'laser'});
         } else {
-            print.addOutput(layerOut, point, emit, speed, tool, {type, radius, arcPoints});
+            print.addOutput(layerOut, point, emit, speed, tool, {type, center, arcPoints});
         }
         lastPush = { point, emit, speed, tool };
         return point;
@@ -327,7 +327,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
     function camOut(point, cut,opts) {
     //   console.log({camOut: point, cut, opts})
         let {
-            radius = 0,
+            center = {},
             clockwise = true,
             arcPoints = [],
             moveLen = toolDiamMove,
@@ -335,7 +335,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         } = opts ?? {}
 
         // console.log({radius})
-        const isArc = radius > 0;
+        const isArc = arcPoints.length > 0;
 
         point = point.clone();
         point.x += wmx;
@@ -472,18 +472,19 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
 
         if(isArc) {
-          layerOut.mode = currentOp;
-          layerOut.spindle = spindle;
-          lastPoint = layerPush(
-            point,
-            clockwise ? 2 : 3,
-            rate,
-            tool,
-            {
-                radius,
-                arcPoints
-            }
-          );
+            layerOut.mode = currentOp;
+            layerOut.spindle = spindle;
+            lastPoint = layerPush(
+                point,
+                clockwise ? 2 : 3,
+                rate,
+                tool,
+                {
+                    center,
+                    arcPoints
+                }
+            );
+            console.log({center, arcPoints});
         }else{
             // for g1 moves
             
@@ -726,10 +727,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @returns {Point} - the last point of the polygon
      */
     function polyEmit(poly, index, count, fromPoint) {
-
-        const arcDist = 0.1, // minimum dist for arc
-            arcRes = 4, //4 degs max
+        console.log('polyEmit', poly );
+        const arcDist = 0.001, // minimum dist for arc
+            arcRes = 8, //8 degs max
             arcMax = Infinity; // no max arc radius
+
+        fromPoint = fromPoint || printPoint;
 
         // console.log('polyEmit', poly, index, count);
 
@@ -744,7 +747,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.push(rec);
                     let desp = false; // do arcQ[0] and rec have differing move speeds?
                     if (arcQ.length > 1) {
-                        let el = arcQ.length;
                         desp = arcQ[0].speedMMM !== rec.speedMMM;
                     }
                     // ondebug({arcQ});
@@ -790,12 +792,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
                                 let dy = cc.y - arcQ.ySum / arcQ.center.length;
                                 dc = Math.sqrt(dx * dx + dy * dy);
                             }
-    
                             // if new point is off the arc
                             // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
                             if ( desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault ) {
                                 // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcDist, dist > cc.r, cc.r > arcMax, radFault];
-                                // console.log("point off the arc,",structuredClone(arcQ));
+                                console.log("point off the arc,",structuredClone(arcQ),);
                                 if (arcQ.length === 4) {
                                     // not enough points for an arc, drop first point and recalc center
                                     camOut(arcQ.shift(),1);
@@ -828,12 +829,13 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     }
                 } else {
                     // if dist to small, output as a cut
+                    console.log('point too small', point);
                     camOut(point, 1);
                 }
             } else {
                 // if first point, emit and set
                 
-                arcExport(point,point);
+                camOut(point, 1);
                 // TODO disabling out of plane z moves until a better mechanism
                 // can be built that doesn't rely on computed zpos from layer heights...
                 // when making z moves (like polishing) allow slowdown vs fast seek
@@ -859,37 +861,16 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 arcQ.ySum = arcQ.center.reduce( (t, v) => t + v.y , 0 );
                 arcQ.rSum = arcQ.center.reduce( (t, v) => t + v.r , 0 );
                 let cl = arcQ.center.length;
-                let cc;
                 let radius = arcQ.rSum / cl;
+                let center = newPoint(
+                    arcQ.xSum / cl,
+                    arcQ.ySum / cl,
+                )
 
-                // calculate angle between first and last point, relative to arc center
-                let angle = util.thetaDiff(
-                    Math.atan2((from.y - arcQ.ySum / cl), (from.x - arcQ.xSum / cl)),
-                    Math.atan2((to.y - arcQ.ySum / cl), (to.x - arcQ.xSum / cl)),
-                    clockwise
-                );
-
-                // if angle is less than 135 degrees (3PI/4)
-                if (Math.abs(angle) <= 3 * Math.PI / 4) {
-                    cc = util.center2pr(from, to, radius, clockwise);
-                    cc.r = radius;
-                }
-    
-                if (!cc) {
-                    cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z,};
-                }
                 // first arc point
-                camOut(from,true);
+                camOut(from,1);
                 // rest of arc to final point
-
-                // XYR form
-                // let pre = `${clockwise? 'G2' : 'G3'} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} `;
-                
-                camOut(to,1,{radius, clockwise, arcPoints:[...arcQ]});
-                // XYIJ form
-                // let pre = `${clockwise? 'G2' : 'G3'} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} I${(cc.x - pos.x).toFixed(decimals)} J${(cc.y - pos.y).toFixed(decimals)} E${emit.toFixed(decimals)}`;
-                // let add = pos.f !== from.speedMMM ? ` E${from.speedMMM}` : '';
-                // append(`${pre}${add} ; merged=${cl-1} len=${dist.toFixed(decimals)} cp=${cc.x.round(2)},${cc.y.round(2)}`);
+                camOut(to,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
             } else {
                 //if q too short, emit as lines
                 for (let rec of arcQ) {
@@ -914,13 +895,21 @@ function prepEach(widget, settings, print, firstPoint, update) {
         } 
 
         poly.forEachPoint(function(point, pidx, points, offset) {
-            last =arcExport(point,last)
-            // camOut(point.clone(), offset !== 0, {factor:scale});
+
+            if(offset ==0 ) last = camOut(point.clone(), 0, {factor:scale}); 
+            else last =arcExport(point,last ?? point);
         }, poly.isClosed(), last);
 
         // console.log("at end of arcExport",structuredClone(arcQ));
-        while (arcQ.length){
-          camOut(arcQ.shift(),1);
+        if(arcQ.length <= 3){
+            //if few points left, emit as lines
+            while (arcQ.length){
+              camOut(arcQ.shift(),1);
+            }
+        }else{
+            console.log("force draining",structuredClone(arcQ));
+            drainQ();
+            // camOut(arcQ.shift(),1);
         }
         
         newLayer();

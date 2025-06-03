@@ -43,7 +43,7 @@ class Print {
     }
 
     addOutput(array, point, emit, speed, tool, opts) {
-        const { type, retract, radius, arcPoints} = opts ?? {};
+        const { type, retract, center, arcPoints} = opts ?? {};
         let { lastPoint, lastEmit, lastOut } = this;
         // drop duplicates (usually intruced by FDM bisections)
         if (lastPoint && point && type !== 'lerp') {
@@ -58,7 +58,7 @@ class Print {
         this.lastEmit = emit;
         this.lastOut = lastOut = new Output(point, emit, speed, tool, {
             type: type ?? this.nextType,
-            radius,
+            center,
             arcPoints,
         });
         if (tool !== undefined) {
@@ -571,19 +571,19 @@ class Output {
      * @param {number} tool tool id
      * @param {Object} options options object
      * @param {string} [options.type] type of point
-     * @param {number} [options.radius] radius of arc
+     * @param {Point} [options.center] the center of the arc
      * @param {Point[]} [options.arcPoints] point based approximation of arc
      */
     constructor(point, emit, speed, tool, options) {
 
-        const { type, radius, arcPoints } = (options ?? {});
-        //speed, tool, type, radius
+        const { type, center, arcPoints } = (options ?? {});
+        //speed, tool, type, center, arcPoints
         this.point = point; // point to emit
         this.emit = emit; // emit (feed for printers, power for lasers, cut for cam)
         this.speed = speed;
         this.tool = tool;
         this.type = type;
-        this.radius = radius;
+        this.center = center;
         this.arcPoints = arcPoints;
         // this.where = new Error().stack.split("\n");
     }
