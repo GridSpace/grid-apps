@@ -325,7 +325,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.factor speed scale factor
      */
     function camOut(point, cut,opts) {
-    //   console.log({camOut: point, cut, opts})
+      console.trace({camOut: point, cut, opts})
         let {
             center = {},
             clockwise = true,
@@ -391,13 +391,13 @@ function prepEach(widget, settings, print, firstPoint, update) {
             isMove = !(cut || isArc);
 
         // drop points too close together
-        if (!isLathe && deltaXY < 0.001 && point.z === lastPoint.z) {
+        if (!isLathe && !isArc && deltaXY < 0.001 && point.z === lastPoint.z) {
             // console.trace(["drop dup",lastPoint,point]);
             return;
         }
 
         // convert short planar moves to cuts in some cases
-        if (!isRough && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
+        if (!isRough&& !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering ) {
             let iscontour = tolerance > 0;
             let isflat = absDeltaZ < 0.001;
             // restrict this to contouring
@@ -742,7 +742,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             // console.log("start",point,lastp)
             let dist = lastp? point.distTo2D(lastp) : 0;
             if (lastp)  {
-                if (dist >arcDist) {
+                if (dist >arcDist && lastp) {
                     let rec = Object.assign(point,{dist});
                     arcQ.push(rec);
                     let desp = false; // do arcQ[0] and rec have differing move speeds?
@@ -829,8 +829,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     }
                 } else {
                     // if dist to small, output as a cut
-                    console.log('point too small', point);
-                    camOut(point, 1);
+                    console.log('point too small', point,lastp,dist);
+                    // camOut(point, 1);
                 }
             } else {
                 // if first point, emit and set
@@ -867,10 +867,20 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.ySum / cl,
                 )
 
-                // first arc point
-                camOut(from,1);
-                // rest of arc to final point
-                camOut(to,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
+                if(arcQ.length == poly.points.length){
+                    //if is a circle
+                    let arcStart = arcQ[0]
+                    camOut(arcStart,1);
+                    camOut(arcStart,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
+                }else{
+                    //if a non-circle arc
+
+                    // first arc point
+                    camOut(from,1);
+                    // rest of arc to final point
+                    camOut(to,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
+                }
+
             } else {
                 //if q too short, emit as lines
                 for (let rec of arcQ) {
@@ -881,24 +891,27 @@ function prepEach(widget, settings, print, firstPoint, update) {
             arcQ.length = 0;
             arcQ.center = undefined;
         }
-        
 
 
-        let last = null;
+        let {point:lastPoint, index:startIdx} = poly.findClosestPointTo(fromPoint);
+        let last = index;
         // scale speed of first cutting poly since it engages the full bit
         let scale = ((isRough || isPocket) && count === 1) ? engageFactor : 1;
 
         if (easeDown && poly.isClosed()) { //if doing ease-down
             last = generateEaseDown((point, )=>{ //generate ease-down points
                 camOut(point.clone(), 1, {factor:scale}); // and pass them to camOut
-            }, poly, fromPoint, easeAngle);
+            }, poly, lastPoint, easeAngle);
         } 
 
-        poly.forEachPoint(function(point, pidx, points, offset) {
 
-            if(offset ==0 ) last = camOut(point.clone(), 0, {factor:scale}); 
-            else last =arcExport(point,last ?? point);
-        }, poly.isClosed(), last);
+        poly.forEachPoint( ( point, pidx, points, offset) => {
+            // if(offset == 0) console.log("forEachPoint",point,pidx,points)
+            if(offset ==0 ) arcExport(point,lastPoint);
+            else arcExport(point, lastPoint);
+            last = pidx;
+            lastPoint = point;
+        }, poly.isClosed(), startIdx);
 
         // console.log("at end of arcExport",structuredClone(arcQ));
         if(arcQ.length <= 3){
@@ -909,6 +922,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }else{
             console.log("force draining",structuredClone(arcQ));
             drainQ();
+            console.log("after draining",structuredClone(arcQ));
             // camOut(arcQ.shift(),1);
         }
         
