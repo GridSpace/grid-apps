@@ -271,7 +271,7 @@ CAM.export = function(print, online) {
         
 
         // drop dup points (all deltas are 0)
-        if (!(dx || dy || dz || da)) {
+        if (!arc && !(dx || dy || dz || da)) {
             return;
         }
 
