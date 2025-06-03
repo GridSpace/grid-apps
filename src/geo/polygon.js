@@ -1190,7 +1190,13 @@ class Polygon {
 
     
 
-    forEachPoint(fn, close, start) {
+    /**
+     * calls function for each point in this polygon
+     * @param {Function} fn to call for each point
+     * @param {boolean} [close=true] whether to close the loop (last point to first)
+     * @param {number} [start=0] starting index
+     */
+    forEachPoint(fn, close, start) { 
         let index = start || 0,
             points = this.points,
             length = points.length,
