@@ -531,11 +531,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
             if (depthFirst) {
                 depthData.push(polys);
             } else {
-                printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
-                    poly.forEachPoint(function(point, pidx, points, offset) {
-                        // scale speed of first cutting poly since it engages the full bit
-                        camOut(point.clone(), offset !== 0,{ factor: count === 1 ? engageFactor : 1});
-                    }, poly.isClosed(), index);
+                poly2polyEmit(polys, printPoint, (poly, index, count)=> {
+                    printPoint =polyEmit(poly, index, count,printPoint);
                 }, { swapdir: false });
                 newLayer();
             }
@@ -724,6 +721,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} index - the index of the polygon in its containing array
      * @param {number} count - the total number of polygons in the array
      * @param {Point} fromPoint - the point to rapid move from
+     * @param {Object} camOutOpts - optional parameters to pass to camOut
      * @returns {Point} - the last point of the polygon
      */
     function polyEmit(poly, index, count, fromPoint) {
@@ -749,7 +747,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         if (easeDown && poly.isClosed()) { //if doing ease-down
             
             let last = generateEaseDown((point,offset )=>{ //generate ease-down points
-                if(offset == 0) camOut(point.clone(), 0, {factor:scale});
+                if(offset == 0) camOut(point.clone(), 0, {factor:engageFactor});
                 camOut(point.clone(), 1, {factor:scale}); // and pass them to camOut
             }, poly, fromPoint, easeAngle);
             lastPoint = poly.points[last];
@@ -761,7 +759,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             // if(offset == 0) console.log("forEachPoint",point,pidx,points)
             if(offset == 0){
                 // if first point, move to and call export function
-                camOut(point.clone(), 0, {factor:scale});
+                camOut(point.clone(), 0, {factor:engageFactor});
                 quePush(point);
             }
             else arcExport(point, lastPoint);
