@@ -726,7 +726,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @returns {Point} - the last point of the polygon
      */
     function polyEmit(poly, index, count, fromPoint) {
-        const arcDist = 0.001, // minimum dist for arc
+        const arcDist = 0.05, // allowable distance between circle centers
             arcRes = 8, //8 degs max
             arcMax = Infinity; // no max arc radius
 
@@ -759,7 +759,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
             // if(offset == 0) console.log("forEachPoint",point,pidx,points)
             if(offset == 0){
                 // if first point, move to and call export function
-                console.log("offset 0")
                 camOut(point.clone(), 0, {factor:scale});
                 quePush(point);
             }
@@ -833,7 +832,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                                 arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
                                 let dx = cc.x - arcQ.xSum / arcQ.center.length;
                                 let dy = cc.y - arcQ.ySum / arcQ.center.length;
-                                dc = Math.sqrt(dx * dx + dy * dy);
+                                dc = Math.hypot(dx, dy); // delta center distance
                             }
                             // if new point is off the arc
                             // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
