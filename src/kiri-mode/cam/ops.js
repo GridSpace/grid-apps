@@ -431,7 +431,7 @@ class OpRough extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut, camFaces } = this;
-        let { setTool, setSpindle, setPrintPoint, sliceOutput } = ops;
+        let { setTool, setSpindle, setPrintPoint, sliceOutput, polyEmit } = ops;
         let { camOut, newLayer, printPoint } = ops;
         let { settings } = state;
         let { process } = settings;
@@ -457,12 +457,9 @@ class OpRough extends CamOp {
             }
             // set winding specified in output
             POLY.setWinding(level, cutdir, false);
-            printPoint = poly2polyEmit(level, printPoint, function(poly, index, count) {
-                const factor = count === 1 ? 0.5 : 1;
-                poly.forEachPoint(function(point, pidx, points, offset) {
-                    camOut(point.clone(), offset !== 0, undefined, factor);
-                }, true, index);
-            });
+            poly2polyEmit(level, printPoint, (poly, index, count) => {
+                printPoint = polyEmit(poly, index, count, printPoint);
+            }); 
             newLayer();
         }
 
