@@ -96,6 +96,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         easeAngle = process.camEaseAngle,
         depthFirst = process.camDepthFirst,
         engageFactor = process.camFullEngage,
+        arcTolerance = process.camArcTolerance,
         tolerance = 0,
         drillDown = 0,
         drillLift = 0,
@@ -726,8 +727,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @returns {Point} - the last point of the polygon
      */
     function polyEmit(poly, index, count, fromPoint) {
-        const arcDist = 0.05, // allowable distance between circle centers
-            arcRes = 8, //8 degs max
+        //arcTolerance is the allowable distance between circle centers
+        let arcRes = 8, //8 degs max
             arcMax = Infinity; // no max arc radius
 
         fromPoint = fromPoint || printPoint;
@@ -783,7 +784,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             // console.log("start",point,lastp)
             let dist = lastp? point.distTo2D(lastp) : 0;
             if (lastp)  {
-                if (dist >arcDist && lastp) {
+                if (dist >arcTolerance && lastp) {
                     let rec = Object.assign(point,{dist});
                     arcQ.push(rec);
                     let desp = false; // do arcQ[0] and rec have differing move speeds?
@@ -835,9 +836,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
                                 dc = Math.hypot(dx, dy); // delta center distance
                             }
                             // if new point is off the arc
-                            // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
-                            if ( desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault ) {
-                                // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcDist, dist > cc.r, cc.r > arcMax, radFault];
+                            // if (deem || depm || desp || dc > arcTolerance || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
+                            if ( desp || dc * arcQ.center.length / arcQ.rSum > arcTolerance || dist > cc.r || cc.r > arcMax || radFault ) {
+                                // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcTolerance, dist > cc.r, cc.r > arcMax, radFault];
                                 // console.log("point off the arc,",structuredClone(arcQ),);
                                 if (arcQ.length === 4) {
                                     // not enough points for an arc, drop first point and recalc center
@@ -889,7 +890,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
     
         function drainQ() {
 
-            if (!arcDist) {
+            if (!arcTolerance) {
                 return;
             }
             if (arcQ.length > 4) {
