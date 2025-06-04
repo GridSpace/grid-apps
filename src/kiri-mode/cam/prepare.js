@@ -729,7 +729,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
     function polyEmit(poly, index, count, fromPoint) {
         //arcTolerance is the allowable distance between circle centers
         let arcRes = 8, //8 degs max
-            arcMax = Infinity; // no max arc radius
+            arcMax = Infinity, // no max arc radius
+            lineTolerance = 0.01; // do not consider points under 0.05mm for lines
 
         fromPoint = fromPoint || printPoint;
 
@@ -784,7 +785,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             // console.log("start",point,lastp)
             let dist = lastp? point.distTo2D(lastp) : 0;
             if (lastp)  {
-                if (dist >arcTolerance && lastp) {
+                if (dist >lineTolerance && lastp) {
                     let rec = Object.assign(point,{dist});
                     arcQ.push(rec);
                     let desp = false; // do arcQ[0] and rec have differing move speeds?
