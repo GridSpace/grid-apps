@@ -1,0 +1,30 @@
+{
+    "file-ext": "nc",
+    "token-space": " ",
+    "strip-comments": false,
+    "pre":[
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)",
+        "G94 ; set unit to mm/minute",
+        "G0 F3000 ; default rapid move speed",
+        "; M3 S15000 ; Uncomment if you want to turn the spindle on by default"
+    ],
+    "post":[
+        "M5  ; spindle off",
+        "M30 ; program end"
+    ],
+    "tool-change":[
+        "M6 T{tool} ; change tool to '{tool_name}'"
+    ],
+    "dwell":[
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "spindle":[
+        "M3 S{speed}"
+    ],
+    "settings": {
+        "bed_width": 744,
+        "bed_depth": 750,
+        "build_height": 90
+    }
+}
