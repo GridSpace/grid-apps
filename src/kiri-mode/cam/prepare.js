@@ -731,9 +731,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
             lineTolerance = 0.01; // do not consider points under 0.05mm for lines
 
         fromPoint = fromPoint || printPoint;
-
-        console.log('polyEmit', poly, index, count);
-
         let arcQ = [];
 
         let closest = poly.findClosestPointTo(fromPoint);
