@@ -739,7 +739,7 @@ FDM.prepare = async function(widgets, settings, update) {
                 // outside brim
                 if (firstLayerBrim && !brimHalf) {
                     print.addOutput(tmpout, newPoint(maxx + b, y, z), 0,    outputSeekrate, tool);
-                    print.addOutput(tmpout, newPoint(maxx + g, y, z), emit, firstLayerRate, tool).retract = true;
+                    print.addOutput(tmpout, newPoint(maxx + g, y, z), emit, firstLayerRate, tool,{retract: true})
                 }
                 // inside brim
                 if (firstLayerBrimIn && pads.length > 1) {
@@ -752,20 +752,20 @@ FDM.prepare = async function(widgets, settings, update) {
                         if (x1 - x0 > bi * 2) {
                             // over 2x brim so emit two segments
                             print.addOutput(tmpout, newPoint(x1 - g, y, z), 0,    outputSeekrate, tool);
-                            print.addOutput(tmpout, newPoint(x1 - bi, y, z), emit, firstLayerRate, tool).retract = true;
+                            print.addOutput(tmpout, newPoint(x1 - bi, y, z), emit, firstLayerRate, tool, {retract: true});
                             print.addOutput(tmpout, newPoint(x0 + bi, y, z), 0,    outputSeekrate, tool);
-                            print.addOutput(tmpout, newPoint(x0 + g, y, z), emit, firstLayerRate, tool).retract = true;
+                            print.addOutput(tmpout, newPoint(x0 + g, y, z), emit, firstLayerRate, tool, {retract: true});
                         } else if (x1 - x0 > bi / 3) {
                             // over 1/3rd brim length emit single segment
                             print.addOutput(tmpout, newPoint(x1 - g, y, z), 0,    outputSeekrate, tool);
-                            print.addOutput(tmpout, newPoint(x0 + g, y, z), emit, firstLayerRate, tool).retract = true;
+                            print.addOutput(tmpout, newPoint(x0 + g, y, z), emit, firstLayerRate, tool, {retract: true});
                         }
                     }
                 }
                 // outside brim
                 if (firstLayerBrim) {
                     print.addOutput(tmpout, newPoint(minx - b, y, z), 0,    outputSeekrate, tool);
-                    print.addOutput(tmpout, newPoint(minx - g, y, z), emit, firstLayerRate, tool).retract = false;
+                    print.addOutput(tmpout, newPoint(minx - g, y, z), emit, firstLayerRate, tool, {retract: true});
                 }
                 // when there is a printing move between layers
                 // inject non-printing move to after brim to prevent erroneous extrusion
