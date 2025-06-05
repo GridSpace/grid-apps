@@ -728,7 +728,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         //arcTolerance is the allowable distance between circle centers
         let arcRes = 8, //8 degs max
             arcMax = Infinity, // no max arc radius
-            lineTolerance = 0.01; // do not consider points under 0.05mm for lines
+            lineTolerance = 0.001; // do not consider points under 0.001mm for lines
 
         fromPoint = fromPoint || printPoint;
         let arcQ = [];

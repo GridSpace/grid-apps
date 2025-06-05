@@ -97,7 +97,7 @@
         "top": false
     }],
     "camTrueShadow": false,
-    "camArcTolerance": 0.01,
+    "camArcTolerance": 0.15,
     "camDrillMark": true,
     "camPocketSpindle": 1000,
     "camPocketTool": 1665454124874,

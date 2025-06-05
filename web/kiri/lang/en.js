@@ -856,6 +856,8 @@ self.kiri.lang['en-us'] = {
     cx_fast_l:      ["disable overhang detection","can be faster and use less","memory with complex models","but fails with overhangs","try enabling if slicing","hangs during shadowing"],
     cx_true_s:      "true shadow",
     cx_true_l:      ["computationally correct shadow","will be slower but produce","better cuts for complex parts"],
+    cx_arct_s:      "arc tolerance",
+    cx_arct_l:      ["convert cicrular paths to arcs;","center point drift tolerance","when matching arc points","consider values around 0.15","in mm, or 0.006 inches;","High values may cause","unexpected behavior","0 to disable"],
 
     // FDM GCODE
     ag_menu:        "gcode",

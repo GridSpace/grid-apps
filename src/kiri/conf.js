@@ -578,7 +578,7 @@ const conf = exports({
                 outputInvertY: false,
                 camExpertFast: false,
                 camTrueShadow: false,
-                camArcTolerance: 0.05,
+                camArcTolerance: 0.15,
                 camForceZMax: false,
                 camFirstZMax: false,
                 camToolInit: true,
