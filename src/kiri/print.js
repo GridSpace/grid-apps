@@ -42,11 +42,25 @@ class Print {
         this.widget = widget;
     }
 
+    /**
+     * addOutput - add a new point to the output gcode array
+     * @param  {any[]} array  - the output gcode array
+     * @param  {Point} point  - the new point
+     * @param  {number} emit   - the extrusion value
+     * @param  {number} speed  - the feed rate
+     * @param  {string} tool  - the tool id
+     * @param  {"lerp"|string} opts.type  - the output type
+     * @param  {Point} opts.center  - the center of the arc
+     * @param  {Point[]} opts.arcPoints  - point based approximation of arc used for rendering
+     * @param  {unknown} opts.retract  - the retraction value used for FDM
+     * @return {Output}       - the new output object
+     */
     addOutput(array, point, emit, speed, tool, opts) {
         const { type, retract, center, arcPoints} = opts ?? {};
         let { lastPoint, lastEmit, lastOut } = this;
+        let arc = emit == 2 || emit == 3;
         // drop duplicates (usually intruced by FDM bisections)
-        if (lastPoint && point && type !== 'lerp') {
+        if (lastPoint && point && !arc && type !== 'lerp') {
             // nested due to uglify confusing browser
             const { x, y, z } = lastPoint;
             if (point.x == x && point.y == y && point.z == z && lastEmit == emit) {
@@ -67,6 +81,7 @@ class Print {
         lastOut.retract = retract;
         lastOut.widget = this.widget;
         array.push(lastOut);
+        console.log(structuredClone({lastOut,array}))
         this.nextType = undefined;
         return lastOut;
     }
@@ -313,24 +328,96 @@ class Print {
         }
 
         /**
+         * @function processLine
+         * @description parses a line of g-code into individual axis movements
+         * @param {string[]} line - the line of g-code as an array of strings,
+         *                          each representing a single axis movement
+         * @param {Object} axes - an object to store the axis values
+         * @returns {Object} an object containing the current and previous points
+         */
+        function processLine(line, axes) {
+            const prevPoint = newPoint(
+                factor * pos.X + xoff.X,
+                factor * pos.Y + xoff.Y,
+                factor * pos.Z + xoff.Z + dz
+            );
+
+            const point = prevPoint.clone()
+            
+            
+
+            line.forEach(tok => {
+                let axis = tok.charAt(0).toUpperCase();
+                if (morph && belt) {
+                    axis = beltaxis[axis];
+                }
+                console.log("position updated",structuredClone(pos))
+
+                let val = parseFloat(tok.substring(1));
+                axes[axis] = val;
+                // if( axis == 'I' || axis == "J") return
+                if (abs) {
+                    pos[axis] = val;
+                    
+                    if (axis == "X") point.x = factor * pos.X + xoff.X
+                    else if (axis == "Y") point.y = factor * pos.Y + xoff.Y
+                    else if (axis == "Z") point.z = factor * pos.Z + xoff.Z+dz
+                    
+
+                } else {
+                    mov[axis] = val;
+                    pos[axis] += val;
+                }
+                console.log("position updated",structuredClone(pos))
+            });
+
+            let center;
+            if(axes.I !== undefined && axes.J !== undefined) {
+                center = newPoint(
+                    factor* axes.I+ xoff.X,
+                    factor* axes.J+ xoff.Y,
+                    0,
+                );
+            }else if(axes.R !== undefined) {
+                center = newPoint(
+                    factor* Math.cos(axes.R * DEG2RAD),
+                    factor* Math.sin(axes.R * DEG2RAD),
+                    0,
+                );
+            }
+            if(center){
+                center = center.add(prevPoint);
+                center.setZ((prevPoint.z+point.z)/2+dz);
+                console.log("center z update",center)
+            }
+            
+            return {
+                center,
+                point,
+                prevPoint
+            };
+        }
+
+        /**
          * Handles G2 and G3 arcs, which are circular arcs.
          * @param {boolean} g2 - Whether this is a G2 or G3 arc. G2 is a clockwise arc, G3 is a counter-clockwise arc.
          * @param {string[]} line - The line of the g-code file that contains the G2 or G3 command.
          * @param {number} index - The line number of the g-code file that contains the G2 or G3 command.
          */
         function G2G3(g2, line, index) {
-            const rec = {};
-            line.forEach(tok => {
-                rec[tok.charAt(0).toLowerCase()] = parseFloat(tok.substring(1));
-            });
-            pos.x = pos.X;
-            pos.y = pos.Y;
-            arcToPath(rec.r, g2, pos, rec, 0.02).forEach(np => {
-                G0G1(false, [`X${np.x}`, `Y${np.y}`, `E1`]);
-            })
-            G0G1(false, [`X${rec.x}`, `Y${rec.y}`, `E1`]);
-            pos.X = rec.x;
-            pos.Y = rec.y;
+            const axes = {};
+            const {point, prevPoint, center} = processLine(line,axes);
+
+            console.log(structuredClone({point,prevPoint,center}));
+
+            let arcPoints = arcToPath( prevPoint, point, 24,{ clockwise:g2,center}) ?? []
+            let emit = g2 ? 2 : 3;
+            
+            console.log("clone point",structuredClone({point,prevPoint,center,arcPoints,emit}));
+            console.log("pointer point",{point,prevPoint,center,arcPoints,emit});
+            
+            scope.addOutput(seq, point, emit, pos.F, tool,{arcPoints});
+            scope.lastPos = Object.assign({}, pos);
         }
 
         function G0G1(g0, line) {
@@ -338,27 +425,7 @@ class Print {
             const axes = {};
 
             lastG = g0 ? 'G0' : 'G1';
-
-            line.forEach(tok => {
-                let axis = tok.charAt(0);
-                if (morph && belt) {
-                    axis = beltaxis[axis];
-                }
-                let val = parseFloat(tok.substring(1));
-                axes[axis] = val;
-                if (abs) {
-                    pos[axis] = val;
-                } else {
-                    mov[axis] = val;
-                    pos[axis] += val;
-                }
-            });
-
-            const point = newPoint(
-                factor * pos.X + xoff.X,
-                factor * pos.Y + xoff.Y,
-                factor * pos.Z + xoff.Z + dz
-            );
+            const {point} = processLine(line,axes);
 
             if (morph && belt) {
                 point.y -= point.z * beltfact;
@@ -389,6 +456,7 @@ class Print {
 
             // always add moves to the current sequence
             if (moving) {
+                console.log("move",structuredClone(point))
                 scope.addOutput(seq, point, false, pos.F, tool).retract = retract;
                 scope.lastPos = Object.assign({}, pos);
                 return;
@@ -439,6 +507,7 @@ class Print {
                 }
             }
             // add point to current sequence
+            console.log("cut",structuredClone(point))
             scope.addOutput(seq, point, true, pos.F, tool).retract = retract;
             scope.lastPos = Object.assign({}, pos);
             scope.lastPosE = pos.E;
@@ -515,10 +584,10 @@ class Print {
                 case 'G11':
                     break;
                 case 'G0':
-                    G0G1(true, line);
+                    G0G1(1, line);
                     break;
                 case 'G1':
-                    G0G1(false, line);
+                    G0G1(0, line);
                     break;
                 case 'G2':
                     // turn arc into a series of points
@@ -555,6 +624,7 @@ class Print {
             console.log({ bounds, print_time: time.round(2) });
         }
 
+        console.log(scope.output)
         done({ output: scope.output });
     }
 }
