@@ -366,6 +366,7 @@ self.kiri.load(api => {
             total_layer_num,
             upload
         } = print || {};
+        let print_busy = print_type !== 'idle';
         let { tray_pre, tray_now, tray_tar } = ams || {};
         let trays = ams?.ams?.map((ams, unit) => {
             return ams.tray.map(tray => {
@@ -435,7 +436,7 @@ self.kiri.load(api => {
             $('bbl_ams_tray').innerHTML = '';
             $('bbl_file_spool').innerHTML = '';
             $('print-bambu-spool').innerHTML = '';
-            print_ams_select = 'auto';
+            // print_ams_select = 'auto';
         }
         let state = (gcode_state || 'unknown').toLowerCase();
         $('bbl_noz').value = nozzle_diameter || '';
@@ -447,8 +448,8 @@ self.kiri.load(api => {
         $('bbl_bed_on').checked = bed_target_temper > 0;
         $('bbl_pause').disabled = (gcode_state !== 'RUNNING');
         $('bbl_resume').disabled = (gcode_state !== 'PAUSE' || gcode_state === 'FAILED');// || print_error);
-        $('bbl_stop').disabled = gcode_file ? false : true;
-        $('bbl_file_print').disabled = gcode_file ? true : false;
+        $('bbl_stop').disabled = print_busy ? false : true;
+        $('bbl_file_print').disabled = print_busy ? true : false;
         $('bbl_fan_part').value = cooling_fan_speed || 0;
         $('bbl_fan_part_on').checked = cooling_fan_speed > 0 ? true : false;
         $('bbl_fan_1').value = big_fan1_speed || 0;
