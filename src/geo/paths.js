@@ -529,33 +529,34 @@ function shapeToPath(shape, points, closed) {
 
 /**
  * Generate a list of points approximating a circular arc.
- *
- * @param {number} radius - the radius of the arc. If undefined, will use the
- *     start and end points to infer the radius.
- * @param {boolean} clockwise - whether the arc is clockwise or counter-clockwise.
  * @param {Point} start - the starting point of the arc.
  * @param {Point} end - the ending point of the arc.
- * @param {number} [arcdivs=Math.PI / 24] - the angular increment to use when
+ * @param {number} [arcdivs= 24] - the number of lines to use to represent PI radians
+ * @param {number} opts.radius - the radius of the arc. If undefined, will use the
+ *     start and end points to infer the radius.
+ * @param {boolean} opts.clockwise - whether the arc is clockwise or counter-clockwise.
  *     generating the points.
  *
  * @return {Array<Point>} an array of points representing the arc.
  */
-function arcToPath( radius, clockwise, start, end,arcdivs=Math.PI / 24) {
+function arcToPath( start, end,arcdivs=24,opts) {
 
-    console.log({radius, clockwise, start, end, arcdivs});
-    let center = { x:0, y:0, r:0 };
+    let { clockwise, center, radius } = opts;
 
-    if (end.x === undefined && end.x === end.y) {
+    // @type {Point}
+    
+
+    if (end.x === undefined && end.x === undefined && center === undefined) {
         // bambu generates loop z or wipe loop arcs in place
         // console.log({ skip_empty_arc: rec });
         return;
-    }
-    // G0G1(false, [`X${rec.x}`, `Y${rec.y}`, `E1`]);return;
 
-    if (end.I !== undefined && end.J !== undefined) {
-        center.x = start.x + end.I;
-        center.y = start.y + end.J;
-        center.r = Math.sqrt(end.I*end.I + end.J*end.J);
+    }
+
+    if (center) {
+        // center = center.add(start);
+        center.r = center.distTo2D(start);
+        
     } else if (radius !== undefined) {
         let pd = { x: end.x - start.x, y: end.y - start.y }; //position delta
         let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2; // distance
@@ -571,38 +572,54 @@ function arcToPath( radius, clockwise, start, end,arcdivs=Math.PI / 24) {
         center.y = pr2.y;
         center.r = radius;
     } else {
-        console.log({malfomed_arc: {radius, clockwise, start, end}});
+        console.log({malfomed_arc: {radius,center, clockwise, start, end}});
     }
+
+    //deltas
+    let dx = start.x - end.x;
+    let dy = start.y - end.y;
+    let dz = start.z - end.z;
 
     // line angles
     let a1 = Math.atan2(center.y - start.y, center.x - start.x) + Math.PI;
     let a2 = Math.atan2(center.y - end.y, center.x - end.x) + Math.PI;
-    let ad = base.util.thetaDiff(a1, a2, clockwise);
-    let steps = Math.max(Math.floor(Math.abs(ad) / arcdivs), 3);
-    let step = (Math.abs(ad) > 0.001 ? ad : Math.PI * 2) / steps;
+    let ad = base.util.thetaDiff(a1, a2, clockwise); // angle difference in radians
+    let samePoint = Math.abs(ad) < 0.001
+    let steps =  samePoint? arcdivs : Math.max(Math.floor(( arcdivs) * (ad)),4);
+    let step =  (samePoint? (Math.PI*2) : ad) / steps;
+    let numPoints  = steps/ step;
+    let zStart = start.z;
+    let zStep = dz / numPoints;
     let rot = a1 + step;
+    // console.log({ad,samePoint,steps,step})
 
+    //unused deltas
     let da = Math.abs(a1 - a2);
-    let dx = start.x - end.x;
-    let dy = start.y - end.y;
     let dd = Math.sqrt(dx * dx + dy * dy);
 
     // LOG({index, da, dd, first: pos, last: rec, center, a1, a2, ad, step, steps, rot, line});
     // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
 
     // under 1 degree arc and 5mm, convert to straight line
-    if (da < 0.005 && dd < 5) {
-        G0G1(false, [`X${end.x}`, `Y${end.y}`, `E1`]);
-        return;
-    }
+    // if (da < 0.005 && dd < 5) {
+    //     G0G1(false, [`X${end.x}`, `Y${end.y}`, `E1`]);
+    //     return ;
+    // }
 
     let arr = [] // point accumulator
     for (let i=0; i<=steps-2; i++) {
+        if (isNaN(center.r) || isNaN(center.x) || isNaN(center.y)) {
+            console.log({malfomed_arc: {radius, clockwise, start, end}});
+        }
         arr.push(newPoint(
             center.x + Math.cos(rot) * center.r,
-            center.y + Math.sin(rot) * center.r));
+            center.y + Math.sin(rot) * center.r,
+            zStart,
+        ));
+        zStart += zStep;
         rot += step;
     }
+    // console.log(arr,start,end);
     return arr
 }
 
