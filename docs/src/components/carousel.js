@@ -25,7 +25,35 @@ const imageDescripts= {
     [ '/1.png', 'close-up of a precise contour'],
     [ '/2.png', 'contour of multiple parts at once'],
     [ '/3.png', 'low precision contour'],
+  ],
+  register:[
+
+  ],
+  drill:[
+
+  ],
+  trace:[
+
+  ],
+  pocket:[
+
+  ],
+  gcode:[
+
+  ],
+  laserOn:[
+    
+  ],
+  laserOff:[
+    
+  ],
+  index:[
+    
+  ],
+  lathe:[
+    
   ]
+
 }
 
 

@@ -6,7 +6,16 @@ import {ImageCarousel} from '@site/docs/src/components/carousel.js'
 
 # Operations
 
-ops, not to be confused with [opps](https://knowyourmeme.com/memes/opp-opps) are the operations applied to a model to remove material. The operations tab also contains meta operations that represent parts of the manufacturing process, but do not nessecarity generate toolpaths.
+ops, not to be confused with [opps](https://knowyourmeme.com/memes/opp-opps) are the operations
+applied to a model to remove material. The operations tab also contains meta operations
+that represent parts of the manufacturing process, but do not nessecarity generate toolpaths.
+
+Each operation has parameters which can be hovered on to reveal their description.
+![](/img/CAM/paramDetails.png)
+
+When an operation's settings are changed, they update the defaults for that operation,
+ when it is made in the future.
+
 
 These operation include:
 
@@ -16,13 +25,12 @@ These operation include:
     - [Level](#level)
     - [Rough](#rough)
     - [Contour](#contour)
+    - [Register](#register)
   - Specific
     - [Drill](#drill)
     - [Trace](#trace)
     - [Pocket](#pocket)
-- Other Operations
-  - [Gcode](#gcode)
-  - [Register](#register)
+- [Gcode](#gcode)
 - Laser Operations
   - [laser on](#laser-on)
   - [laser off](#laser-off) 
@@ -74,17 +82,81 @@ The Rough op removes large volumes of material quickly using a stepped-down tool
 
 <ImageCarousel base="/img/CAM/example/contour/" images="contour" />
 
-The Contour op generates detailed toolpaths for complex organic surface geometries. It can trace along the x or y axis and has configurable precision. It is useful for:
+The Contour op generates detailed toolpaths for complex organic surface geometries. 
+It can trace along the x or y axis and has configurable precision. It is useful for:
 
 - Carving 3D shapes with organic or curved profiles
 - Finishing complex wall geometries
 - cleaning up a part after [roughing](#rough)
 
 
+### Register
+
+<ImageCarousel base="/img/CAM/example/register/" images="register" />
+
+The register operation drills holes in the sides of a part, 
+helping keep a part in the same place when it is flipped onto it's opposite face.
+The operation has options to drill on different sides, and can even generate a puzzle piece-like pattern for registration.
+
 ## Specific Operations
 
-### Outline
- 
-## Laser Mode Only
+Specific operations require spelection of individual part features to apply operations to. 
+These may have some overlap with Global operations, but are generally more configurable.
 
+### Drill 
+
+<ImageCarousel base="/img/CAM/example/drill/" images="drill" />
+
+The Dril op creates pecking toolpaths for a drill tool to follow. 
+It can also drill holes of other diameters, and even mark holes instead of drilling.
+it is useful for:
+
+- Generating a toolpath for a drill tool
+- Selecting specific holes to remove material from
+- Marking holes to be drilled manually
+
+### Trace
+
+<ImageCarousel base="/img/CAM/example/trace/" images="trace" />
+
+The trace operation is likely the most configurable, allowing for generation of toolpaths following loops or lines.
+it can trace on, inside, or outside a line, and can take multiple passes to step down to the desired position. 
+when the type parameter is set to clear, it can even act like a [pocket](#Pocket), 
+clearing the area above the shape created by the selected lines/loop. 
+While the trace op can do a lot, some specific use cases include:
+
+- Engraving lettering or other text
+- Drilling out a hole helically
+- Outlining a part with a nonstandard offset
+- Outlining only one part on the workspace
+
+### Pocket
+
+<ImageCarousel base="/img/CAM/example/pocket/" images="pocket" />
+
+The pocket operation takes a selection of polygon faces, and generates a pocket toolpath that cuts down to them.
+The operation has options to expand and smooth the pocket selection, and the contour option even allows 
+for an approximation a v-bit carve. some use cases specific to the pocket op include:
+
+- Creating one pocket in a part with multiple
+- attempting a v-carve
+- clearing a specific area of a part
+
+### Gcode
+
+The Gcode operation does not generate a toolpath, but instead adds a line or lines of gcode to the output
+of the file. The Gcode operation is different from [Gcode Macros](/kiri-moto/gcode-macros), 
+as it is not tied to any event,
+but is output in the order it is included in the operations array.
+
+
+## Laser Operations
+
+### Laser on
+
+### Laser off
+
+
+
+## Indexed operations
 
