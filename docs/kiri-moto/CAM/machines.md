@@ -4,7 +4,6 @@ description: machine setup for CAM machines
 
 # Machine Setup
 
-
 The Machine Setup tab defines the physical capabilities of your CNC machine, its firmware behavior, and how G-code should be generated. A properly configured machine profile ensures your output matches your hardware's constraints and expectations.
 
 you can access it from the top right menu:
@@ -13,7 +12,7 @@ you can access it from the top right menu:
 
 ---
 
-## 🔧 Workspace Dimensions
+## Workspace Dimensions
 
 These values define your machine’s cutting envelope. Use your *actual usable* dimensions here, not the marketing ones.
 
@@ -25,13 +24,13 @@ The units of these values are set based off the units set in your global prefere
 
 ---
 
-## ⚙️ Firmware Settings
+## Firmware Settings
 
 - **Max Spindle** — The highest RPM your spindle supports. This limits the `feed` speeds set in your [cam operations](/kiri-moto/CAM/ops) to generate proper and safe `S` values in G-code.
 
 ---
 
-## 📤 Output Options
+## Output Options
 
 Customize how your G-code is formatted for your controller or post-processor:
 
@@ -40,11 +39,9 @@ Customize how your G-code is formatted for your controller or post-processor:
 - **Enable Laser** — enables [Laser](ops#Laser-Mode-Only) operations (typically uses `M3/M5`, adjusts movement strategy)  
 - **File Extension** — Optional override for exported file type (e.g., `.nc`, `.ngc`,`.cnc`,`.cam`, `.gcode`, `.txt`)
 
-> 💡 Leave the extension blank to default to `.gcode`.
-
 ---
 
-## 🧱 G-code Macros
+## Gcode Macros
 
 Macros insert custom G-code at key stages of toolpath generation. Each tab corresponds to a different context:
 in these boxes, you have access to [gcode macros](../gcode-macros). Not all macros are available in all contexts, so be careful!
@@ -61,12 +58,8 @@ Kiri Moto supports the [RML](https://downloadcenter.rolanddg.com/contents/manual
 
 When a machine's file extention is set to `.rml`, Kiri Moto will use the RML dialect, using `PU` for non-cut moves, and `Z` for cut moves. RML commands can be used in the `Header`, `Footer`, `Tool`, `Dwell`, and `Spindle` sections of the Machine Setup tab in the same way that G-code commands are used.
 
-
 ## Contribute a Machine Profile
 
 We love to add new machines to the Kiri Moto library. If you have a tested machine that you'd like to add, you can export your workspace as a `.kmz` file, and share it on the [discord](https://discord.gg/suyCCgr) or [forums](htps://forum.grid.space).
 
 If you want to submit a PR, you can find instructions for how to do so [here](https://github.com/GridSpace/grid-apps/blob/master/contributing.md#how-to-add-a-new-machine). 
-
-
-
