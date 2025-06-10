@@ -64,7 +64,6 @@ const imageDescripts= {
  * @returns {ReactElement} - A carousel of the given images.
  */
 export function ImageCarousel({base,images}) {
-  console.log(base,images);
   return (
     <Carousel showThumbs={false} >
       {imageDescripts[images].map(([image,caption], index) => (
