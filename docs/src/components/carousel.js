@@ -51,7 +51,7 @@ const imageDescripts= {
     [ '/5.png', 'many-pocketed part'],
   ],
   gcode:[
-
+    [ '/1.png', 'the gcode editor popup'],
   ],
   laserOn:[
     
