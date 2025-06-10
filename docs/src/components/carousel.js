@@ -64,8 +64,11 @@ const imageDescripts= {
   ],
   lathe:[
     
+  ],
+  tabs:[
+    [ '/1.png', 'tabs added to part'],
+    [ '/2.png', 'sliced part with tabs'],
   ]
-
 }
 
 
