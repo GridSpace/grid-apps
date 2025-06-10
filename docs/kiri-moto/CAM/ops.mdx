@@ -32,11 +32,7 @@ These operation include:
     - [Pocket](#pocket)
 - [Gcode](#gcode)
 - Laser Operations
-  - [laser on](#laser-on)
-  - [laser off](#laser-off) 
 - Indexed Operations
-  - [Index](#index)
-  - [lathe](#lathe)
 
 
 ## Global Operations
@@ -144,19 +140,23 @@ for an approximation a v-bit carve. some use cases specific to the pocket op inc
 
 ### Gcode
 
+<ImageCarousel base="/img/CAM/example/gcode/" images="gcode" />
+
 The Gcode operation does not generate a toolpath, but instead adds a line or lines of gcode to the output
 of the file. The Gcode operation is different from [Gcode Macros](/kiri-moto/gcode-macros), 
 as it is not tied to any event,
 but is output in the order it is included in the operations array.
 
-
 ## Laser Operations
 
-### Laser on
+Laser operations become available when "enable laser" is selected in the [machine](/machine) tab.
 
-### Laser off
-
+These operations are specific to certain machines like the makera carvera, and can be safely igonored for other machines.
 
 
 ## Indexed operations
+
+Indexed operations become available when "Indexed" is selected in the [process ops](/processOpts) tab.
+
+These operations are specific to indexed stock, and allow a user to create operations on different faces of a part.
 
