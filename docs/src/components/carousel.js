@@ -27,16 +27,28 @@ const imageDescripts= {
     [ '/3.png', 'low precision contour'],
   ],
   register:[
-
+    [ '/1.png', '2-drill register'],
+    [ '/2.png', '3-drill register'],
+    [ '/3.png', 'jigsaw register'],
   ],
   drill:[
-
+    [ '/1.png', 'drills for a robot baseplate'],
+    [ '/2.png', 'drills for a pegboard'],
+    [ '/3.png', 'selecting only matching-size holes'],
   ],
   trace:[
-
+    [ '/1.png', 'toolpath tracing a design into a part'],
+    [ '/2.png', 'selecting loops to trace'],
+    [ '/3.png', 'tracing edges for deburring'],
+    [ '/4.png', 'trace to clear a pocket'],
+    [ '/5.png', 'arbitrary offset outline'],
   ],
   pocket:[
-
+    [ '/1.png', 'selecting areas to pocket'],
+    [ '/2.png', 'toolpath for pocket'],
+    [ '/3.gif', 'pocket animation'],
+    [ '/4.png', 'toolpath for v-bit carve'],
+    [ '/5.png', 'many-pocketed part'],
   ],
   gcode:[
 
