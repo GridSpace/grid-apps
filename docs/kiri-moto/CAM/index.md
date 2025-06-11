@@ -70,5 +70,5 @@ Once you're confident in your setup, use the Export menu to generate machine-rea
 
 ![](/img/CAM/exportMenu.png)
 
-Most of the configuration for this step is done in the [Machine](kiri-moto/CAM/machines) settings, so be sure to have that configured before exporting.
+Most of the configuration for this step is done in the [Machine](./machines) settings, so be sure to have that configured before exporting.
 The tab will give you a time estimate for the job (excluding tool changes), and an option to export G-code to a single file, or as a zipped archive of the sepate operation for each tool.

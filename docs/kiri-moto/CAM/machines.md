@@ -36,8 +36,9 @@ Customize how your G-code is formatted for your controller or post-processor:
 
 - **Strip Comments** — Removes all G-code comments for cleaner, smaller files
 - **Token Spacer** — Inserts a space between G-code tokens (e.g., `G1 X1 Y1` vs `G1X1Y1`)
-- **Enable Laser** — Enables [Laser](ops#Laser-Mode-Only) operations (typically uses `M3/M5`; adjusts movement strategy)
+- **Enable Laser** — Enables [Laser](./ops#laser-operations) operations (typically uses `M3/M5`; adjusts movement strategy)
 - **File Extension** — Optional override for exported file type (e.g., `.nc`, `.ngc`, `.cnc`, `.cam`, `.gcode`, `.txt`)
+
 
 ---
 

@@ -46,4 +46,4 @@ Kiri comes from Kiri-e, which is the Japanese art of paper-cutting. Moto is shor
 ## What are the `.kmz` and `.km` file formats short for?
 
 - `kmz` stands for **Kiri Moto Zip**, and contains an entire zipped workspace
-- `km` stands for **Kiri Moto**, and contains [CAM tool](/CAM/tools) paramers.
+- `km` stands for **Kiri Moto**, and contains [CAM tool](./CAM/tools) paramers.
