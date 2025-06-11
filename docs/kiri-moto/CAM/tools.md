@@ -13,8 +13,9 @@ Additionally, tools can be imported and exported as `.km` files. The file format
 
 ![](/img/CAM/toolMenu.png)
 
-Kiri:Moto currently supports four types of tools:  
-- End Mills  
-- Ball Mills  
-- Taper Mills  
+Kiri:Moto currently supports four types of tools:
+
+- End Mills
+- Ball Mills
+- Taper Mills
 - Drills

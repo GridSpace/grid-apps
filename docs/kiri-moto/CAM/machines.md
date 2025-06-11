@@ -14,11 +14,11 @@ You can access it from the top-right menu:
 
 ## Workspace Dimensions
 
-These values define your machine’s cutting envelope. Use your *actual usable* dimensions here, not the marketing ones.
+These values define your machine’s cutting envelope. Use your _actual usable_ dimensions here, not the marketing ones.
 
-- **X (width)** — Maximum horizontal travel (left to right)  
-- **Y (depth)** — Maximum front-to-back travel  
-- **Z (height)** — Maximum vertical travel (top to bottom)  
+- **X (width)** — Maximum horizontal travel (left to right)
+- **Y (depth)** — Maximum front-to-back travel
+- **Z (height)** — Maximum vertical travel (top to bottom)
 
 The units of these values are based on the units set in your global preferences (defaults to mm).
 
@@ -34,9 +34,9 @@ The units of these values are based on the units set in your global preferences 
 
 Customize how your G-code is formatted for your controller or post-processor:
 
-- **Strip Comments** — Removes all G-code comments for cleaner, smaller files  
-- **Token Spacer** — Inserts a space between G-code tokens (e.g., `G1 X1 Y1` vs `G1X1Y1`)  
-- **Enable Laser** — Enables [Laser](ops#Laser-Mode-Only) operations (typically uses `M3/M5`; adjusts movement strategy)  
+- **Strip Comments** — Removes all G-code comments for cleaner, smaller files
+- **Token Spacer** — Inserts a space between G-code tokens (e.g., `G1 X1 Y1` vs `G1X1Y1`)
+- **Enable Laser** — Enables [Laser](ops#Laser-Mode-Only) operations (typically uses `M3/M5`; adjusts movement strategy)
 - **File Extension** — Optional override for exported file type (e.g., `.nc`, `.ngc`, `.cnc`, `.cam`, `.gcode`, `.txt`)
 
 ---
@@ -45,10 +45,10 @@ Customize how your G-code is formatted for your controller or post-processor:
 
 Macros insert custom G-code at key stages of toolpath generation. Each tab corresponds to a different context. In these boxes, you have access to [G-code macros](../gcode-macros). Not all macros are available in all contexts, so be careful!
 
-- **Header** — Runs once at the beginning of the job (e.g., mode override, move to safe Z)  
-- **Footer** — Runs at the end of the job (e.g., spindle stop, move to safe Z)  
-- **Tool** — Called when changing tools. Automatic tool changes and tool measurement can be put here.  
-- **Dwell** — Code for pausing movement/spindle at specified positions  
+- **Header** — Runs once at the beginning of the job (e.g., mode override, move to safe Z)
+- **Footer** — Runs at the end of the job (e.g., spindle stop, move to safe Z)
+- **Tool** — Called when changing tools. Automatic tool changes and tool measurement can be put here.
+- **Dwell** — Code for pausing movement/spindle at specified positions
 - **Spindle** — Code to set spindle RPM
 
 ---
