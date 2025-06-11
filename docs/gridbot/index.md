@@ -15,6 +15,4 @@ The [control software](https://github.com/GridSpace/grid-bot) is open source on 
 
 A Beta for a [new design](https://cad.onshape.com/documents/d0514606a660a802eb16304a/w/43a797f28bcc004e3e7e7e17/e/61abf70c46004ffbc0134231) is also available. Check [forum.grid.space](https://forum.grid.space) for progress on this and other builds.
 
-
-
 ![](/img/GridBot-Two-Right.png)

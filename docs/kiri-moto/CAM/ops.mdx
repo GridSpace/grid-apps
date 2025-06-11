@@ -1,0 +1,155 @@
+---
+description: Keyboard Shortcuts and Mouse Controls
+label: ops
+---
+
+import { ImageCarousel } from "@site/docs/src/components/carousel.js";
+
+# Operations
+
+Ops—not to be confused with [opps](https://knowyourmeme.com/memes/opp-opps)—are the operations
+applied to a model to remove material. The Operations tab also contains meta-operations
+that represent parts of the manufacturing process but do not necessarily generate toolpaths.
+
+Each operation has parameters which can be hovered over to reveal their description.  
+![](/img/CAM/paramDetails.png)
+
+When an operation's settings are changed, they update the defaults for that operation
+when it is created in the future.
+
+These operations include:
+
+- Toolpath Operations
+  - Global
+    - [Outline](#outline)
+    - [Level](#level)
+    - [Rough](#rough)
+    - [Contour](#contour)
+    - [Register](#register)
+  - Specific
+    - [Drill](#drill)
+    - [Trace](#trace)
+    - [Pocket](#pocket)
+- [Gcode](#gcode)
+- Laser Operations
+- Indexed Operations
+
+## Global Operations
+
+Operations that apply to all objects in the workspace.
+
+### Outline
+
+<ImageCarousel base="/img/CAM/example/outline/" images="outline" />
+
+The Outline op generates a toolpath surrounding the edges of a part. It is highly configurable and can select both internal or external edges specifically. The Outline operation is great for:
+
+- Cutting out many objects at once
+- Generating a rough/finishing pass on an object
+- Easily avoiding specific features like pockets or holes
+
+### Level
+
+<ImageCarousel base="/img/CAM/example/level/" images="level" />
+
+The Level op creates a flat-surface clearing toolpath across a selected area. It is designed to remove material to a consistent depth, making it useful for preparing stock, flattening uneven surfaces, or cleaning up residual material. The Level operation is great for:
+
+- Surfacing raw stock before detail cuts
+- Creating uniform faces on complex objects
+- Clearing large areas with consistent depth quickly
+
+### Rough
+
+<ImageCarousel base="/img/CAM/example/rough/" images="rough" />
+
+The Rough op removes large volumes of material quickly using a stepped-down toolpath. It is typically the first pass in a multi-step workflow, clearing space for finishing tools without concern for fine detail. The Rough operation is great for:
+
+- Rapid bulk material removal
+- Preparing many parts for finishing simultaneously
+- Clearing voids or flat faces for many objects at once
+- Preparing a part for finish machining
+- Preserving tool life by reducing cutting load in later passes
+
+### Contour
+
+<ImageCarousel base="/img/CAM/example/contour/" images="contour" />
+
+The Contour op generates detailed toolpaths for complex organic surface geometries.  
+It can trace along the X or Y axis and has configurable precision. It is useful for:
+
+- Carving 3D shapes with organic or curved profiles
+- Finishing complex wall geometries
+- Cleaning up a part after [roughing](#rough)
+
+### Register
+
+<ImageCarousel base="/img/CAM/example/register/" images="register" />
+
+The Register operation drills holes in the sides of a part,  
+helping keep the part in the same place when it is flipped onto its opposite face.  
+The operation has options to drill on different sides and can even generate a puzzle-piece-like pattern for registration.
+
+## Specific Operations
+
+Specific operations require selection of individual part features to apply operations to.  
+These may overlap with Global operations but are generally more configurable.
+
+### Drill
+
+<ImageCarousel base="/img/CAM/example/drill/" images="drill" />
+
+The Drill op creates pecking toolpaths for a drill tool to follow.  
+It can also drill holes of other diameters and even mark holes instead of drilling.  
+It is useful for:
+
+- Generating a toolpath for a drill tool
+- Selecting specific holes to remove material from
+- Marking holes to be drilled manually
+
+### Trace
+
+<ImageCarousel base="/img/CAM/example/trace/" images="trace" />
+
+The Trace operation is likely the most configurable, allowing for generation of toolpaths following loops or lines.  
+It can trace on, inside, or outside a line and can take multiple passes to step down to the desired position.  
+When the type parameter is set to "clear," it can even act like a [Pocket](#pocket),  
+clearing the area above the shape created by the selected lines or loop.  
+While the Trace op can do a lot, some specific use cases include:
+
+- Engraving lettering or other text
+- Drilling out a hole helically
+- Outlining a part with a nonstandard offset
+- Outlining only one part on the workspace
+
+### Pocket
+
+<ImageCarousel base="/img/CAM/example/pocket/" images="pocket" />
+
+The Pocket operation takes a selection of polygon faces and generates a pocket toolpath that cuts down to them.  
+The operation has options to expand and smooth the pocket selection, and the contour option even allows  
+for an approximation of a v-bit carve. Some use cases specific to the Pocket op include:
+
+- Creating one pocket in a part with multiple
+- Attempting a v-carve
+- Clearing a specific area of a part
+
+### Gcode
+
+<ImageCarousel base="/img/CAM/example/gcode/" images="gcode" />
+
+The Gcode operation does not generate a toolpath but instead adds a line or lines of G-code to the output  
+of the file. The Gcode operation is different from [Gcode Macros](/kiri-moto/gcode-macros),  
+as it is not tied to any event  
+but is output in the order it is included in the operations array.
+
+## Laser Operations
+
+Laser operations become available when "Enable Laser" is selected in the [Machine](/machine) tab.
+
+These operations are specific to certain machines, like the Makera Carvera, and can be safely ignored for other machines.
+
+## Indexed Operations
+
+Indexed operations become available when "Indexed" is selected in the [Process Ops](/processOpts) tab.
+
+These operations are specific to indexed stock and allow a user to create operations on different faces of a part.
