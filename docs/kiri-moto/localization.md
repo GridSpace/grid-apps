@@ -15,4 +15,3 @@ Replace all values with correct localized values and submit a [pull request](htt
 If you have the time, please consider also localizing `web/kiri/lang/en-help.html`
 
 Test your language by appending `?ln:XX` to your local URL where `XX` is the name of your language file _without_ the `.js` extension.
-

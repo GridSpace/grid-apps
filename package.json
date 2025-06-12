@@ -1,6 +1,6 @@
 {
     "name": "grid-apps",
-    "version": "4.1.8",
+    "version": "4.1.9",
     "description": "grid.space 3d slicing & modeling tools",
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
@@ -36,7 +36,7 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^6.1.1",
-        "@gridspace/app-server": "^0.0.16",
+        "@gridspace/app-server": "^0.0.17",
         "@gridspace/net-level-client": "^0.2.3",
         "@tracespace/parser": "^5.0.0-next.0",
         "@tweenjs/tween.js": "^16.6.0",
@@ -50,6 +50,7 @@
         "jszip": "^3.7.1",
         "manifold-3d": "^2.5.1",
         "moment": "^2.29.4",
+        "react-responsive-carousel": "^3.2.23",
         "serve-static": "^1.14.1",
         "three": "^0.174.0",
         "three-mesh-bvh": "^0.7.6",

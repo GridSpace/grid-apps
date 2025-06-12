@@ -18,6 +18,7 @@ const { poly2polyEmit, tip2tipEmit, segmentNormal, vertexNormal } = paths;
 const { driver, newSlice } = kiri;
 const { CAM } = driver;
 
+const DEG2RAG = Math.PI / 180;
 const POLY = polygons;
 
 class CamOp {
@@ -1347,7 +1348,7 @@ class OpPocket extends CamOp {
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
         // let vert = widget.getVertices().array.map(v => v.round(4));
         let outline = [];
-        let faces = CAM.surface_find(widget, surfaces, 0.1);
+        let faces = CAM.surface_find(widget, surfaces, (op.follow || 5) * DEG2RAG);
         let zmin = Infinity;
         let j=0, k=faces.length;
         for (let face of faces) {

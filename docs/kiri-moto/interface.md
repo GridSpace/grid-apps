@@ -10,7 +10,7 @@ The left menus control workspace, work mode, and objects while.
 
 The right menus control the behavior and settings for slicing, path routing, and path to code exports.
 
-[OBJ](https://www.cs.cmu.edu/\~mbz/personal/graphics/obj.html), [STL](https://en.wikipedia.org/wiki/STL\_\(file\_format\)), and [3MF](https://docs.fileformat.com/3d/3mf/) files import natively. [SVG](https://en.wikipedia.org/wiki/Scalable\_Vector\_Graphics), [JPG](https://en.wikipedia.org/wiki/JPEG\_File\_Interchange\_Format), and [PNG](https://en.wikipedia.org/wiki/Portable\_Network\_Graphics) are auto-extruded into a 3D parts.
+[OBJ](https://www.cs.cmu.edu/~mbz/personal/graphics/obj.html), [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>), and [3MF](https://docs.fileformat.com/3d/3mf/) files import natively. [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics), [JPG](https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format), and [PNG](https://en.wikipedia.org/wiki/Portable_Network_Graphics) are auto-extruded into a 3D parts.
 
 ![A minimalist approach](/img/kiri-moto.png)
 
@@ -27,4 +27,3 @@ Application preferences are mode-dependent. For example, CNC preferences show an
 ![CNC Mode Preferences](/img/preferences-cam.png)
 
 ![FDM Mode Preferences](/img/preferences-fdm.png)
-

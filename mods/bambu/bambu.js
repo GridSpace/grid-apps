@@ -34,6 +34,8 @@ self.kiri.load(api => {
         "White":         "#FFFFFF"
     }).map(v => `${v.substring(1)}FF`);
 
+    let local_port = 5309;
+    let local_url = `http://localhost:${local_port}`;
     let sequence_id = (Math.random() * 0xfff) | 0;
     let user_id = ((Math.random() * 0xfffffff) | 0).toString();
     let init = false;
@@ -52,7 +54,14 @@ self.kiri.load(api => {
             if (socket.ws) {
                 return;
             }
-            let ws = socket.ws = new WebSocket("/bambu");
+            let ws_url = api.onshape ? `${local_url}/bambu` : "/bambu";
+            let ws = socket.ws = new WebSocket(ws_url);
+            ws.onerror = (error) => {
+                socket.open = false;
+                socket.ws = undefined;
+                console.log({ bambu_ws_error: error });
+                ws_url = "/bambu";
+            };
             ws.onopen = () => {
                 socket.open = true;
                 socket.drain();
@@ -357,6 +366,7 @@ self.kiri.load(api => {
             total_layer_num,
             upload
         } = print || {};
+        let print_busy = print_type !== 'idle';
         let { tray_pre, tray_now, tray_tar } = ams || {};
         let trays = ams?.ams?.map((ams, unit) => {
             return ams.tray.map(tray => {
@@ -426,7 +436,7 @@ self.kiri.load(api => {
             $('bbl_ams_tray').innerHTML = '';
             $('bbl_file_spool').innerHTML = '';
             $('print-bambu-spool').innerHTML = '';
-            print_ams_select = 'auto';
+            // print_ams_select = 'auto';
         }
         let state = (gcode_state || 'unknown').toLowerCase();
         $('bbl_noz').value = nozzle_diameter || '';
@@ -438,8 +448,8 @@ self.kiri.load(api => {
         $('bbl_bed_on').checked = bed_target_temper > 0;
         $('bbl_pause').disabled = (gcode_state !== 'RUNNING');
         $('bbl_resume').disabled = (gcode_state !== 'PAUSE' || gcode_state === 'FAILED');// || print_error);
-        $('bbl_stop').disabled = gcode_file ? false : true;
-        $('bbl_file_print').disabled = gcode_file ? true : false;
+        $('bbl_stop').disabled = print_busy ? false : true;
+        $('bbl_file_print').disabled = print_busy ? true : false;
         $('bbl_fan_part').value = cooling_fan_speed || 0;
         $('bbl_fan_part_on').checked = cooling_fan_speed > 0 ? true : false;
         $('bbl_fan_1').value = big_fan1_speed || 0;
@@ -1279,7 +1289,7 @@ self.kiri.load(api => {
 
     function send(filename, gcode, start) {
         const spool = print_ams_select;
-        const baseUrl = '/api/bambu_send';
+        const baseUrl = api.onshape ? `${local_url}/api/bambu_send` : "/api/bambu_send";
         const url = new URL(baseUrl, window.location.origin);
         url.searchParams.append('host', host);
         url.searchParams.append('code', password);
@@ -1288,7 +1298,7 @@ self.kiri.load(api => {
         url.searchParams.append('start', start ?? false);
         url.searchParams.append('ams', spool === 'auto' && amsmap ? amsmap : spool);
 
-        const alert = api.alerts.show('Sending to Bambu Printer');
+        const alert = api.alerts.show('Sending to Bambu Printer', 120);
 
         fetch(url.toString(), {
             headers: { 'Content-Type': 'text/plain' },
