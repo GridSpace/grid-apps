@@ -13,7 +13,7 @@ gapp.register("kiri-mode.cam.prepare", (root, exports) => {
 
 const { base, kiri } = root;
 const { paths, polygons, newPoint, util} = base;
-const { tip2tipEmit, poly2polyEmit } = paths;
+const { tip2tipEmit, poly2polyEmit, arcToPath } = paths;
 const { driver, render } = kiri;
 const { CAM } = driver;
 
@@ -317,15 +317,15 @@ function prepEach(widget, settings, print, firstPoint, update) {
     }
 
     /**
-     * emit a cut or move operation from the current location to a new location
+     * emit a cut, arc, or move operation from the current location to a new location
      * @param {Point} point destination for move
-     * @param {1|0|boolean} cut 1/true = cut, 0/false = move
+     * @param {0|1|2|3} emit G0, G1, G2, G3
      * @param {number} opts.radius arc radius; truthy values for arc move
      * @param {boolean} opts.clockwise arc direction
      * @param {number} opts.moveLen typically = tool diameter used to trigger terrain detection
      * @param {number} opts.factor speed scale factor
      */
-    function camOut(point, cut,opts) {
+    function camOut(point, emit,opts) {
         let {
             center = {},
             clockwise = true,
@@ -335,7 +335,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         } = opts ?? {}
 
         // console.log({radius})
-        const isArc = arcPoints.length > 0;
+        const isArc = emit == 2 || emit == 3;
 
         point = point.clone();
         point.x += wmx;
@@ -344,7 +344,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
         // console.log(point.z);
         if (nextIsMove) {
-            cut = 0;
+            emit = 0;
             nextIsMove = false;
         }
 
@@ -367,7 +367,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     // console.log(lp.a, lp.x, lp.y, lp.z);
                     lastPoint = layerPush(
                         lp,
-                        cut ? 1 : 0,
+                        emit,
                         rate,
                         tool,
                         {type:"lerp"},
@@ -388,7 +388,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let deltaXY = lastPoint.distTo2D(point),
             deltaZ = point.z - lastPoint.z,
             absDeltaZ = Math.abs(deltaZ),
-            isMove = !(cut || isArc);
+            isMove = emit == 0;
 
         // drop points too close together
         if (!isLathe && !isArc && deltaXY < 0.001 && point.z === lastPoint.z) {
@@ -493,7 +493,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             layerOut.spindle = spindle;
             lastPoint = layerPush(
                 point,
-                cut ? 1 : 0,
+                emit,
                 rate,
                 tool
             );
@@ -886,6 +886,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
     
         function drainQ() {
 
+            let arcPreviewRes = 64
+
             if (!arcTolerance) {
                 return;
             }
@@ -907,16 +909,19 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
                 if(arcQ.length == poly.points.length){
                     //if is a circle
+                    // generate circle
+                    let arcPoints = arcToPath( from, to, arcPreviewRes,{ clockwise,center});
                     camOut(from,1);
-                    camOut(from,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
+                    camOut(from,1,{ center:center.sub(from), clockwise, arcPoints});
                     lastPoint = from.clone();
                 }else{
                     //if a non-circle arc
+                    let arcPoints = arcToPath( from, to, arcPreviewRes,{ clockwise,center});
 
                     // first arc point
                     camOut(from,1);
                     // rest of arc to final point
-                    camOut(to,1,{ center:center.sub(from), clockwise, arcPoints:[...arcQ]});
+                    camOut(to,1,{ center:center.sub(from), clockwise, arcPoints});
                     lastPoint = to.clone();
                 }
 
