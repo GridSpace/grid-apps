@@ -81,7 +81,7 @@ class Print {
         lastOut.retract = retract;
         lastOut.widget = this.widget;
         array.push(lastOut);
-        console.log(structuredClone({lastOut,array}))
+        // console.log("addOutput Called", structuredClone({lastOut,array}))
         this.nextType = undefined;
         return lastOut;
     }
@@ -294,14 +294,14 @@ class Print {
                 E: 0.0
             },
             off = {
-                X: offset ? offset.x || 0 : 0,
-                Y: offset ? offset.y || 0 : 0,
-                Z: offset ? offset.z || 0 : 0
+                x: offset ? offset.x || 0 : 0,
+                y: offset ? offset.y || 0 : 0,
+                z: offset ? offset.z || 0 : 0
             },
             xoff = {
-                X: 0,
-                Y: 0,
-                Z: 0
+                x: 0,
+                y: 0,
+                z: 0
             };
 
         let dz = 0,
@@ -337,21 +337,31 @@ class Print {
          */
         function processLine(line, axes) {
             const prevPoint = newPoint(
-                factor * pos.X + xoff.X,
-                factor * pos.Y + xoff.Y,
-                factor * pos.Z + xoff.Z + dz
-            );
+                factor * pos.X ,
+                factor * pos.Y ,
+                factor * pos.Z + dz
+            )
+            .add(xoff)
+            .add(off);
+
+            // apply origin offset
+            // for (let layer of output) {
+            //     for (let rec of layer) {
+            //         let point = rec.point;
+            //         point.x += off.X;
+            //         point.y += off.Y;
+            //         point.z += off.Z;
+            //     }
+            // }
 
             const point = prevPoint.clone()
-            
-            
 
             line.forEach(tok => {
                 let axis = tok.charAt(0).toUpperCase();
                 if (morph && belt) {
                     axis = beltaxis[axis];
                 }
-                console.log("position updated",structuredClone(pos))
+                // console.log("position updated",structuredClone(pos))
 
                 let val = parseFloat(tok.substring(1));
                 axes[axis] = val;
@@ -359,23 +369,23 @@ class Print {
                 if (abs) {
                     pos[axis] = val;
                     
-                    if (axis == "X") point.x = factor * pos.X + xoff.X
-                    else if (axis == "Y") point.y = factor * pos.Y + xoff.Y
-                    else if (axis == "Z") point.z = factor * pos.Z + xoff.Z+dz
+                    if (axis == "X") point.x = factor * pos.X + xoff.x + off.x
+                    else if (axis == "Y") point.y = factor * pos.Y + xoff.y + off.y
+                    else if (axis == "Z") point.z = factor * pos.Z + xoff.z + off.z + dz
                     
 
                 } else {
                     mov[axis] = val;
                     pos[axis] += val;
                 }
-                console.log("position updated",structuredClone(pos))
+                // console.log("position updated",structuredClone(pos))
             });
 
             let center;
             if(axes.I !== undefined && axes.J !== undefined) {
                 center = newPoint(
-                    factor* axes.I+ xoff.X,
-                    factor* axes.J+ xoff.Y,
+                    factor* axes.I+ xoff.x,
+                    factor* axes.J+ xoff.y,
                     0,
                 );
             }else if(axes.R !== undefined) {
@@ -388,7 +398,6 @@ class Print {
             if(center){
                 center = center.add(prevPoint);
                 center.setZ((prevPoint.z+point.z)/2+dz);
-                console.log("center z update",center)
             }
             
             return {
@@ -396,6 +405,48 @@ class Print {
                 point,
                 prevPoint
             };
+        }
+
+        function outputPoint(point,lastP,emit,{center,arcPoints,retract}) {
+            
+            // non-move in a new plane means burp out
+            // the old sequence and start a new one
+            
+            if (newlayer || (autolayer && seq.z != point.z)) {
+                newlayer = false;
+                let dz = point.z - seq.z;
+                let nh = dz > 0 ? dz : defh;
+                seq = [];
+                seq.height = height = nh;
+                if (fdm) dz = -height / 2;
+                output.push(seq);
+            }
+
+            if (!hasmoved) {
+                seq.height = seq.z = pos.Z;
+                hasmoved = true;
+            }
+
+            // debug extrusion rate
+            const lastPos = scope.lastPos;
+            if (scope.debugE && fdm && lastPos && pos.E) {
+                // extruder move
+                let dE = (absE ? pos.E - scope.lastPosE : pos.E);
+                // distance moved in XY
+                let dV = point.distTo2D(lastP);
+                // debug print time
+                time += (dV * pos.F) / 1000;
+                // filament per mm
+                let dR = (dE / dV);
+                if (dV > 2 && dE > 0.001) {
+                    let lab = (absE ? 'aA' : 'rR')[scope.debugE++ % 2];
+                    console.log(lab, height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(4), pos.F.toFixed(0));
+                }
+            }
+            // add point to current sequence
+            scope.addOutput(seq, point, emit, pos.F, tool,{retract,arcPoints});
+            scope.lastPos = Object.assign({}, pos);
+            scope.lastPosE = pos.E;
         }
 
         /**
@@ -408,16 +459,16 @@ class Print {
             const axes = {};
             const {point, prevPoint, center} = processLine(line,axes);
 
-            console.log(structuredClone({point,prevPoint,center}));
+            // console.log(structuredClone({point,prevPoint,center}));
 
-            let arcPoints = arcToPath( prevPoint, point, 24,{ clockwise:g2,center}) ?? []
+            let arcPoints = arcToPath( prevPoint, point, 64,{ clockwise:g2,center}) ?? []
             let emit = g2 ? 2 : 3;
             
-            console.log("clone point",structuredClone({point,prevPoint,center,arcPoints,emit}));
-            console.log("pointer point",{point,prevPoint,center,arcPoints,emit});
+            // console.log("clone point",structuredClone({point,prevPoint,center,arcPoints,emit}));
+            // console.log("pointer point",{point,prevPoint,center,arcPoints,emit});
             
-            scope.addOutput(seq, point, emit, pos.F, tool,{arcPoints});
-            scope.lastPos = Object.assign({}, pos);
+            outputPoint(point,prevPoint,emit,{center,arcPoints});
+            // scope.addOutput(seq, point, emit, pos.F, tool,{center,arcPoints});
         }
 
         function G0G1(g0, line) {
@@ -425,7 +476,7 @@ class Print {
             const axes = {};
 
             lastG = g0 ? 'G0' : 'G1';
-            const {point} = processLine(line,axes);
+            const {point, prevPoint} = processLine(line,axes);
 
             if (morph && belt) {
                 point.y -= point.z * beltfact;
@@ -456,61 +507,19 @@ class Print {
 
             // always add moves to the current sequence
             if (moving) {
-                console.log("move",structuredClone(point))
-                scope.addOutput(seq, point, false, pos.F, tool).retract = retract;
+                // console.log("move",structuredClone(point))
+                scope.addOutput(seq, point, 0, pos.F, tool,{retract})
                 scope.lastPos = Object.assign({}, pos);
                 return;
             }
-
-            if (seq.Z === undefined) {
-                seq.Z = pos.Z;
+            if (seq.z === undefined) {
+                seq.z = point.z;
             }
-
             if (fdm && height === 0) {
                 seq.height = defh = height = pos.Z;
             }
 
-            // non-move in a new plane means burp out
-            // the old sequence and start a new one
-            if (newlayer || (autolayer && seq.Z != pos.Z)) {
-                newlayer = false;
-                let dz = pos.Z - seq.Z;
-                let nh = dz > 0 ? dz : defh;
-                seq = [];
-                seq.height = height = nh;
-                if (fdm) dz = -height / 2;
-                output.push(seq);
-            }
-
-            if (!hasmoved && !moving) {
-                seq.height = seq.Z = pos.Z;
-                hasmoved = true;
-            }
-
-            // debug extrusion rate
-            const lastPos = scope.lastPos;
-            if (scope.debugE && fdm && lastPos && pos.E) {
-                // extruder move
-                let dE = (absE ? pos.E - scope.lastPosE : pos.E);
-                // distance moved in XY
-                let dV = Math.sqrt(
-                    (Math.pow(pos.X - lastPos.X, 2)) +
-                    (Math.pow(pos.Y - lastPos.Y, 2))
-                );
-                // debug print time
-                time += (dV * pos.F) / 1000;
-                // filament per mm
-                let dR = (dE / dV);
-                if (dV > 2 && dE > 0.001) {
-                    let lab = (absE ? 'aA' : 'rR')[scope.debugE++ % 2];
-                    console.log(lab, height.toFixed(2), dV.toFixed(2), dE.toFixed(3), dR.toFixed(4), pos.F.toFixed(0));
-                }
-            }
-            // add point to current sequence
-            console.log("cut",structuredClone(point))
-            scope.addOutput(seq, point, true, pos.F, tool).retract = retract;
-            scope.lastPos = Object.assign({}, pos);
-            scope.lastPosE = pos.E;
+            outputPoint(point,prevPoint,1,{retract})
         }
 
         const linemod = cam ? Math.ceil(lines.length / 2500) : 0;
@@ -602,17 +611,6 @@ class Print {
                     break;
             }
         });
-
-        // apply origin offset
-        for (let layer of output) {
-            for (let rec of layer) {
-                let point = rec.point;
-                point.x += off.X;
-                point.y += off.Y;
-                point.z += off.Z;
-            }
-        }
-
         scope.imported = gcode;
         scope.lines = lines.length;
         scope.bytes = gcode.length;
