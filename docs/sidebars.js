@@ -28,6 +28,20 @@ const sidebars = {
             "kiri-moto/localization",
             "kiri-moto/octoprint",
             "kiri-moto/faq",
+            {
+              type: "category",
+              label: "CAM Mode",
+              link:{
+                type: 'doc',
+                id: 'kiri-moto/CAM/index',
+              },
+              items:[
+                "kiri-moto/CAM/processOpts",
+                "kiri-moto/CAM/machines",
+                "kiri-moto/CAM/tools",
+                "kiri-moto/CAM/ops",
+              ],
+            }
           ],
         },
         {

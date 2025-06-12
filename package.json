@@ -50,6 +50,7 @@
         "jszip": "^3.7.1",
         "manifold-3d": "^2.5.1",
         "moment": "^2.29.4",
+        "react-responsive-carousel": "^3.2.23",
         "serve-static": "^1.14.1",
         "three": "^0.174.0",
         "three-mesh-bvh": "^0.7.6",
