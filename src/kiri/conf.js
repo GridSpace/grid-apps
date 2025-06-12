@@ -520,6 +520,7 @@ const conf = exports({
                 camDrillDwell: 250,
                 camDrillLift: 2,
                 camDrillMark: false,
+                camDrillFromStockTop: false,
                 camDrillThru: 5,
                 camDrillPrecision: 1,
                 camDrillingOn: false,
