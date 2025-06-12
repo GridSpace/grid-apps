@@ -564,6 +564,11 @@ CAM.holes = async function(settings, widget, individual, rec,onProgress) {
         onProgress(0.75+(i/circles.length*0.25),"assemble holes")
     }
     drills.forEach( h=>{
+        if(rec.fromTop){
+            // set z top if selected
+            h.depth += wztop - h.z
+            h.z = wztop
+        }
         delete h.overlapping //for encoding
         h.diam = toolDiam // for mesh generation
         h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05 ); //for same size selection
