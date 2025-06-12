@@ -309,7 +309,9 @@ module.exports = async (server) => {
                     }
                     if (!found[rec.DevName]) {
                         found[rec.DevName] = nurec;
-                        util.log(`found Bambu ${nurec.name} ${nurec.srno} @ ${nurec.host}`);
+                        let privsn = nurec.srno;
+                        privsn = privsn.slice(0,8) + privsn.slice(8).replace(/./g, 'X');
+                        util.log(`found Bambu ${nurec.name} ${privsn} @ ${nurec.host}`);
                     }
                     wsend({ found });
                 }
