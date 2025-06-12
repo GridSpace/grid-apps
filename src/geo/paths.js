@@ -585,13 +585,13 @@ function arcToPath( start, end,arcdivs=24,opts) {
     let a2 = Math.atan2(center.y - end.y, center.x - end.x) + Math.PI;
     let ad = base.util.thetaDiff(a1, a2, clockwise); // angle difference in radians
     let samePoint = Math.abs(ad) < 0.001
-    let steps =  samePoint? arcdivs : Math.max(Math.floor(( arcdivs) * (ad)),4);
+    let ofFull =  Math.abs(ad)/(2*Math.PI);
+    let steps =  samePoint? arcdivs : Math.max(Math.floor( arcdivs * ofFull),4);
     let step =  (samePoint? (Math.PI*2) : ad) / steps;
     let numPoints  = steps/ step;
     let zStart = start.z;
     let zStep = dz / numPoints;
     let rot = a1 + step;
-    // console.log({ad,samePoint,steps,step})
 
     //unused deltas
     let da = Math.abs(a1 - a2);
