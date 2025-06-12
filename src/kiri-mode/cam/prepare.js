@@ -402,7 +402,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             let isflat = absDeltaZ < 0.001;
             // restrict this to contouring
             if (isflat || (iscontour && absDeltaZ <= tolerance)) {
-                cut = 1;
+                emit = 1;
                 isMove = false;
             } else if (deltaZ <= -tolerance) {
                 // move over before descending
@@ -783,10 +783,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 if (dist >lineTolerance && lastp) {
                     let rec = Object.assign(point,{dist});
                     arcQ.push(rec);
-                    let desp = false; // do arcQ[0] and rec have differing move speeds?
-                    if (arcQ.length > 1) {
-                        desp = arcQ[0].speedMMM !== rec.speedMMM;
-                    }
+
                     // ondebug({arcQ});
                     if (arcQ.length > 2) {
                         let el = arcQ.length;
@@ -833,7 +830,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                             }
                             // if new point is off the arc
                             // if (deem || depm || desp || dc > arcTolerance || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
-                            if ( desp || dc * arcQ.center.length / arcQ.rSum > arcTolerance || dist > cc.r || cc.r > arcMax || radFault ) {
+                            if ( dc * arcQ.center.length / arcQ.rSum > arcTolerance || dist > cc.r || cc.r > arcMax || radFault ) {
                                 // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcTolerance, dist > cc.r, cc.r > arcMax, radFault];
                                 // console.log("point off the arc,",structuredClone(arcQ),);
                                 if (arcQ.length === 4) {
@@ -896,8 +893,10 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 let vec1 = new THREE.Vector2(arcQ[1].x - arcQ[0].x, arcQ[1].y - arcQ[0].y);
                 let vec2 = new THREE.Vector2(arcQ.center[0].x - arcQ[0].x, arcQ.center[0].y - arcQ[0].y);
                 let clockwise = vec1.cross(vec2) < 0 
+                let gc = clockwise ? 2 :3
                 let from = arcQ[0];
                 let to = arcQ.peek();
+                let delta = from.distTo2D(to)
                 arcQ.xSum = arcQ.center.reduce( (t, v) => t + v.x , 0 );
                 arcQ.ySum = arcQ.center.reduce( (t, v) => t + v.y , 0 );
                 arcQ.rSum = arcQ.center.reduce( (t, v) => t + v.r , 0 );
@@ -907,21 +906,22 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.ySum / cl,
                 )
 
-                if(arcQ.length == poly.points.length){
+                if(arcQ.length == poly.points.length && poly.circularity() > 0.98){
                     //if is a circle
                     // generate circle
-                    let arcPoints = arcToPath( from, to, arcPreviewRes,{ clockwise,center});
+                    // console.log("circle",{from, to,center});
+                    let arcPoints = arcToPath( from, from, arcPreviewRes,{ clockwise,center});
                     camOut(from,1);
-                    camOut(from,1,{ center:center.sub(from), clockwise, arcPoints});
+                    camOut(from,gc,{ center:center.sub(from), clockwise, arcPoints});
                     lastPoint = from.clone();
                 }else{
                     //if a non-circle arc
                     let arcPoints = arcToPath( from, to, arcPreviewRes,{ clockwise,center});
-
+                    // console.log("arc")
                     // first arc point
                     camOut(from,1);
                     // rest of arc to final point
-                    camOut(to,1,{ center:center.sub(from), clockwise, arcPoints});
+                    camOut(to,gc,{ center:center.sub(from), clockwise, arcPoints});
                     lastPoint = to.clone();
                 }
 
@@ -936,10 +936,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             arcQ.center = undefined;
         }
 
-
-        
-        
-        newLayer();
+        // newLayer();
         return lastPoint;
     }
 
