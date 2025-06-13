@@ -52,8 +52,8 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         track = widget.track;
         ({ camZTop, camZBottom, camZThru } = proc);
         wztop = track.top;
-        ztOff = isIndexed ? 0 : (stock.z - wztop);
-        zbOff = isIndexed ? 0 : (wztop - track.box.d);
+        ztOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (stock.z - wztop);
+        zbOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (wztop - track.box.d);
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
         zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom);
         zMax = bounds.max.z;
@@ -125,7 +125,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         return error('no processes specified');
     }
 
-    if (stock.x && stock.y && stock.z) {
+    if (stock.x && stock.y && stock.z && !isIndexed) {
         if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
             return error('stock X too small for part. resize stock or use offset stock');
         }
@@ -291,7 +291,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         if (op.op.type === "index") {
             widget.topo = undefined;
             // let points = base.verticesToPoints();
-            state.slicer = new kiri.cam_slicer(widget);
+            slicer = state.slicer = new kiri.cam_slicer(widget);
             shadows = {};
             await new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
                 // console.log('reshadow', progress.round(3));
@@ -471,7 +471,7 @@ CAM.holes = async function(settings, widget, individual, rec,onProgress) {
     let slicerOpts = {flatoff: 0.001}
     let slicer = new kiri.cam_slicer(widget,slicerOpts);
     let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z,z-0.002]).flat()
-    
+
     precision = Math.max( 0, precision )
     let intervals = (precision == 0) ? [] : slicer.interval(
         precision,
