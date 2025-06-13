@@ -726,7 +726,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      */
     function polyEmit(poly, index, count, fromPoint) {
         //arcTolerance is the allowable distance between circle centers
-        let arcRes = 8, //8 degs max
+        let arcRes = util.toRadians(6), //6 degs max
             arcMax = Infinity, // no max arc radius
             lineTolerance = 0.001; // do not consider points under 0.001mm for lines
 
@@ -758,6 +758,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 // if first point, move to and call export function
                 camOut(point.clone(), 0, {factor:engageFactor});
                 quePush(point);
+                lastPoint = point;
             }
             else arcExport(point, lastPoint);
             lastPoint = point;
@@ -775,6 +776,15 @@ function prepEach(widget, settings, print, firstPoint, update) {
         function quePush(point){
             arcQ.push(point);
         }
+
+        /**
+         * Computes the angle between the line segment from first to mid and
+         * the line segment from mid to last. 
+         * @param {Point} first - the first point of the path
+         * @param {Point} mid - the middle point of the path
+         * @param {Point} last - the last point of the path
+         * @returns {number} - the angle between the two line segments in radians
+         */
 
         function arcExport(point,lastp){
             // console.log("start",point,lastp)
@@ -799,15 +809,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         let radFault = false;
                         if (lr) {
                             let angle = 2 * Math.asin(dist/(2*lr.r));
-                            radFault = Math.abs(angle) > Math.PI * 2 / arcRes; // enforce arcRes(olution)
-                            // if (arcQ.center) {
-                            //     arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
-                            //     let avg = arcQ.rSum / arcQ.center.length;
-                            //     radFault = radFault || Math.abs(avg - lr.r) / avg > arcDev; // eliminate sharps and flats when local rad is out of arcDev(iation)
-                            // }
+                            console.log({angle})
+                            radFault = Math.abs(angle) >  arcRes; // enforce arcRes(olution)
+                            
                         } else {
                             radFault = true;
-                            console.log("too much angle")
                         }
 
                         if (cc) {
@@ -829,9 +835,15 @@ function prepEach(widget, settings, print, firstPoint, update) {
                                 dc = Math.hypot(dx, dy); // delta center distance
                             }
                             // if new point is off the arc
-                            // if (deem || depm || desp || dc > arcTolerance || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
-                            if ( dc * arcQ.center.length / arcQ.rSum > arcTolerance || dist > cc.r || cc.r > arcMax || radFault ) {
-                                // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcTolerance, dist > cc.r, cc.r > arcMax, radFault];
+                            // if (  dc > arcTolerance || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
+                            
+                            if (
+                                dc * arcQ.center.length / arcQ.rSum > arcTolerance || 
+                                dist > cc.r || 
+                                cc.r > arcMax || 
+                                radFault 
+                            ) {
+                                
                                 // console.log("point off the arc,",structuredClone(arcQ),);
                                 if (arcQ.length === 4) {
                                     // not enough points for an arc, drop first point and recalc center
@@ -860,7 +872,10 @@ function prepEach(widget, settings, print, firstPoint, update) {
                             }
                         } else {
                             // drainQ on invalid center
+                            let defer = arcQ.pop();
                             drainQ();
+                            // re-add point that was off the last arc
+                            arcQ.push(defer);
                         }
                     }
                 } else {
@@ -906,7 +921,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.ySum / cl,
                 )
 
-                if(arcQ.length == poly.points.length && poly.circularity() > 0.98){
+                if(arcQ.length == poly.points.length){
                     //if is a circle
                     // generate circle
                     // console.log("circle",{from, to,center});
