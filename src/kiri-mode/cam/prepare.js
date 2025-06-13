@@ -777,15 +777,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
             arcQ.push(point);
         }
 
-        /**
-         * Computes the angle between the line segment from first to mid and
-         * the line segment from mid to last. 
-         * @param {Point} first - the first point of the path
-         * @param {Point} mid - the middle point of the path
-         * @param {Point} last - the last point of the path
-         * @returns {number} - the angle between the two line segments in radians
-         */
-
         function arcExport(point,lastp){
             // console.log("start",point,lastp)
             let dist = lastp? point.distTo2D(lastp) : 0;
@@ -921,7 +912,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.ySum / cl,
                 )
 
-                if(arcQ.length == poly.points.length){
+                if(arcQ.length == poly.points.length && poly.circularity() > 0.98){
                     //if is a circle
                     // generate circle
                     // console.log("circle",{from, to,center});
