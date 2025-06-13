@@ -800,9 +800,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         let radFault = false;
                         if (lr) {
                             let angle = 2 * Math.asin(dist/(2*lr.r));
-                            console.log({angle})
                             radFault = Math.abs(angle) >  arcRes; // enforce arcRes(olution)
-                            
                         } else {
                             radFault = true;
                         }
@@ -1034,7 +1032,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
             print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
         }
     }
-    console.log("prepare output", newOutput);
     // replace output single flattened layer with all points
     print.output = newOutput;
     return printPoint;
