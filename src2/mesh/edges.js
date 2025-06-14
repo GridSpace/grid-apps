@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 /**
- * facet edge selecetor. allows for creating new facets
+ * facet edge selector. allows for creating new facets
  * when two connected edges share a single point.
  */
 

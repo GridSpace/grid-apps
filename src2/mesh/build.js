@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { broker } from '../moto/broker.js';
-import { $, h } from '../moto/webui.js';
+import { $, h, estop } from '../moto/webui.js';
 import { api } from './api.js';
 import { util } from './util.js';
 import { space } from '../moto/space.js';

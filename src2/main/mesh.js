@@ -6,6 +6,7 @@ import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
 import '../mesh/build.js';
+
 import { client as motoClient } from '../moto/client.js';
 import { broker as motoBroker } from '../moto/broker.js';
 import { space as motoSpace } from '../moto/space.js';
@@ -18,11 +19,12 @@ import { load as fileLoad } from '../load/file.js';
 import { $, $d, h, estop } from '../moto/webui.js';
 import { THREE } from '../ext/three.js';
 
-const { Quaternion } = THREE;
-const version = '1.5.6';
+const version = '1.5.7';
 const api = meshApi;
 const call = motoBroker.send;
 const dbindex = [ "admin", "space" ];
+
+const { Quaternion } = THREE;
 
 function log() {
     return meshApi.log.emit(...arguments);

@@ -2,12 +2,9 @@
 
 "use strict";
 
-import { base } from './base.js';
 import { THREE } from '../ext/three.js';
 import manifold from '../ext/manifold.js';
-const { Mesh, BufferGeometry, Vector3 } = THREE;
 
-const debug = true;
 const precision = 0.001;
 const factor = 1/precision;
 

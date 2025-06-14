@@ -1115,7 +1115,7 @@ const tool = {
     },
 
     toSketch() {
-        for (let m of selection.models()) {
+        for (let m of api.model.list()) {
             m.selectionToSketch();
         }
     },

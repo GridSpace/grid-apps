@@ -4,6 +4,7 @@ import "../ext/earcut.js";
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
+
 import { version } from '../moto/license.js';
 import { client as motoClient } from '../moto/client.js';
 import { worker } from '../moto/worker.js';
@@ -26,7 +27,7 @@ const work = { cache };
 motoClient.start(`/v2/lib/mesh/pool.js?${version}`, motoClient.max() * 0);
 
 function log(msg) {
-    return motoWorker.publish("mesh.log", msg);
+    return worker.publish("mesh.log", msg);
 }
 
 function cacheUpdate(id, data) {
