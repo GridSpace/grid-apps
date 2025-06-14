@@ -330,6 +330,8 @@ function init(mod) {
     mod.static("/meta/", "web/meta");
     mod.static("/kiri/", "web/kiri");
 
+    mod.static("/v2/", "web2");
+
     function load_modules(root, force) {
         // load modules
         lastmod(`${dir}/${root}`) && fs.readdirSync(`${dir}/${root}`).forEach(mdir => {
@@ -890,7 +892,9 @@ function fixedmap(prefix, map) {
 
 // HTTP 307 redirect
 function redir(path, type) {
-    return (req, res, next) => http.redirect(res, path, type);
+    return (req, res, next) => {
+        http.redirect(res, path, type);
+    }
 }
 
 // mangle request path

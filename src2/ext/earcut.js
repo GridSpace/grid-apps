@@ -1,0 +1,1 @@
+../../node_modules/earcut/dist/earcut.dev.js

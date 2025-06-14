@@ -95,6 +95,7 @@
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
         "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js",
+        "preinstall2": "npx webpack --config src2/webpack/webpack-three-esm.js",
         "docs-dev": "docusaurus start",
         "docs-build": "docusaurus build",
         "docs-serve": "docusaurus serve"
