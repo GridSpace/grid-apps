@@ -82,7 +82,6 @@ kiri.load(api => {
             });
         };
 
-        
         CAM.holes = function(indiv,rec,onProgress,onDone) {
             kiri.client.sync();
             const settings = api.conf.get();

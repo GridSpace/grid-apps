@@ -42,8 +42,11 @@ function build(data, context) {
             func[key] = val;
             elid = elid || `_${nextid++}`;
         } else if (tov === 'object') {
-            if (val.length)
-            html.push(` ${key}="${val.filter(v => v !== undefined).join(' ')}"`);
+            if (Array.isArray(val)) {
+                html.push(` ${key}="${val.filter(v => v !== undefined).join(' ')}"`);
+            } else {
+                html.push(` ${key}="${val}"`);
+            }
         } else if (tov !== 'undefined') {
             html.push(` ${key}="${val}"`);
         }

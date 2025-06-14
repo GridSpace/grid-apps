@@ -223,10 +223,14 @@ class MeshModel extends meshObject {
     // moves mesh object center to target
     centerTo(to) {
         this.log('model-centerto', to);
-        let pos = this.position();
         let { mid } = this.bounds;
-        this.translate(to.x - mid.x, to.y - mid.y, to.z - mid.z);
-        this.position(pos.x, pos.y, pos.z);
+        let abs = this.world_bounds.mid;
+        this.translate(
+            -mid.x + (abs.x - to.x),
+            -mid.y + (abs.y - to.y),
+            -mid.z + (abs.z - to.z),
+        );
+        this.position(to.x, to.y, to.z);
         return this;
     }
 

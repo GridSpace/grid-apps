@@ -1,13 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { broker } from '../moto/broker.js';
-import { h, $ } from '../moto/webui.js';
+import { $, h } from '../moto/webui.js';
 import { api } from './api.js';
 import { util } from './util.js';
 import { space } from '../moto/space.js';
 import { split } from './split.js';
 import { newPolygon } from '../geo/polygon.js';
 
+const { div, label, input, hr } = h;
 const { dbug } = api;
 const devel = api.isDebug;
 
@@ -235,40 +236,118 @@ api.welcome = function(version = "unknown") {
 
 // bind settings endpoint to api
 api.settings = function() {
-    const { util } = mesh;
     const { prefs } = api;
     const { surface, normals, space, sketch, wireframe } = prefs.map;
     const { dark } = space;
 
-    const set1 = h.div([
-        h.label('dark mode'),
-        h.input({ type: "checkbox",
+    const set1 = div([
+        label('dark mode'),
+        input({ type: "checkbox",
             onchange: ev => call.set_darkmode(ev.target.checked),
-            checked: dark
+            [ dark ? 'checked' : 'unchecked' ] : 1
         }),
-        h.label('wireframe'),
-        h.input({ type: "checkbox",
-            onchange: ev => call.set_wireframe(ev.target.checked),
-            checked: wireframe
+        label('auto floor'),
+        input({ type: "checkbox",
+            onchange: ev => prefs.save( space.floor = !space.floor ),
+            [ space.floor !== false ? 'checked' : 'unchecked' ] : 1
         }),
-        h.label('surface'),
-        h.input({ type: "checkbox",
-            onchange: ev => call.set_surface(ev.target.checked),
-            checked: surface
-        }),
-        h.label('normals'),
-        h.input({ type: "checkbox",
-            onchange: ev => call.set_normals(ev.target.checked),
-            checked: normals
-        }),
-        h.label('sketch'),
-        h.input({ type: "checkbox",
-            onchange: ev => call.set_sketch(ev.target.checked),
-            checked: sketch
+        label('auto center'),
+        input({ type: "checkbox",
+            onchange: ev => prefs.save( space.center = !space.center ),
+            [ space.center !== false ? 'checked' : 'unchecked' ] : 1
         }),
     ]);
 
-    modal.show('Settings', set1);
+    const set2 = div([
+        label({ class: "header", _: 'wire'}),
+        label('opacity'),
+        input({ type: "text", size: 5, value: parseFloat(wireframe.opacity),
+            onchange: ev => call.set_wireframe_opacity(ev.target.value)
+        }),
+        label('fog x'),
+        input({ type: "text", size: 5, value: parseFloat(wireframe.fog),
+            onchange: ev => call.set_wireframe_fog(ev.target.value)
+        }),
+    ]);
+
+    const set3 = div([
+        label({ class: "header", _: 'normal'}),
+        label('length'),
+        input({ type: "text", size: 6, value: parseFloat(normals.length),
+            onchange: ev => call.set_normals_length(ev.target.value)
+        }),
+        label('color'),
+        input({ type: "text", size: 6,
+            value: util.toHexRGB(dark ? normals.color_dark : normals.color_lite),
+            onchange: ev => call.set_normals_color(util.fromHexRGB(ev.target.value))
+        }),
+    ]);
+
+    const set4 = div([
+        label({ class: "header", _: 'surface'}),
+        label('radians'),
+        input({ type: "text", size: 5, value: parseFloat(surface.radians),
+            onchange: ev => call.set_surface_radians(ev.target.value)
+        }),
+        label('radius'),
+        input({ type: "text", size: 5, value: parseFloat(surface.radius || 0.2),
+            onchange: ev => call.set_surface_radius(ev.target.value)
+        }),
+    ]);
+
+    const set5 = div([
+        label({ class: "header", _: 'snap'}),
+        label('value'),
+        input({ type: "text", size: 5, value: parseFloat(space.snap || 1),
+            onchange: ev => call.set_snap_value(ev.target.value)
+        }),
+        label('enabled'),
+        input({ type: "checkbox",
+            onchange: ev => prefs.save( space.snapon = !space.snapon ),
+            [ space.snapon === true ? 'checked' : 'unchecked' ] : 1
+        }),
+    ]);
+
+    const set6 = div([
+        label({ class: "header", _: 'duplicate'}),
+        label('select'),
+        input({ type: "checkbox",
+            onchange: ev => prefs.save( space.dup_sel = !space.dup_sel ),
+            [ space.dup_sel === true ? 'checked' : 'unchecked' ] : 1
+        }),
+        label('shift'),
+        input({ type: "checkbox",
+            onchange: ev => prefs.save( space.dup_shift = !space.dup_shift ),
+            [ space.dup_shift === true ? 'checked' : 'unchecked' ] : 1
+        }),
+    ]);
+
+    let ot = sketch.open_type;
+    let srr = () => { api.sketch.list().forEach(s => s.render()) };
+    const set7 = div([
+        label({ class: "header", _: 'open poly'}),
+        label('auto close'),
+        input({ type: "checkbox",
+            onchange: ev => prefs.save( ((sketch.open_close = !sketch.open_close) || true) && srr() ),
+            [ sketch.open_close === true ? 'checked' : 'unchecked' ] : 1
+        }),
+        label('width'),
+        input({ type: "text", size: 5, value: parseFloat(sketch.open_width || 1),
+            onchange: ev => prefs.save( (sketch.open_width = parseFloat(ev.target.value)) && srr() )
+        }),
+        label('type'),
+        h.select({ type: "text", value: sketch.open_type,
+            onchange: ev => prefs.save( (sketch.open_type = ev.target.value) && srr() )
+        }, [
+            h.option({ _: 'square', [ot === 'square' ? 'selected' : '']: '' }),
+            h.option({ _: 'miter', [ot === 'miter' ? 'selected' : '']: '' }),
+            h.option({ _: 'round', [ot === 'round' ? 'selected' : '']: ''}),
+        ]),
+    ]);
+
+    modal.show('settings', div({ class: "settings" }, [
+        set1, set2, set3, set4, set5, set6, set7
+    ] ));
 };
 
 // bootstrap icons
@@ -446,7 +525,7 @@ function ui_build() {
         div({ class: "menu" }, [
             div('Help'),
             div({ class: "menu-items" }, [
-                menu_item('About', () => { api.welcome(mesh.version) }),
+                menu_item('About', () => { api.welcome(license.version) }),
                 hr(),
                 menu_item('Documentation', api.help),
                 menu_item('Report Bugs', api.bugs),
