@@ -7,3 +7,4 @@ const terms = {
 };
 
 export const license = terms;
+export const version = terms.VERSION;

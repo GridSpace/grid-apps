@@ -2,7 +2,8 @@
 
 "use strict";
 
-import { base, util, paths, config, newPoint } from './base.js';
+import { base, util, paths, config } from './base.js';
+import { newPoint } from './point.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 
 const { sqr, numOrDefault } = util;

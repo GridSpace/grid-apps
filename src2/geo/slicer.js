@@ -1,23 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
 /**
  * basic slice and line connection. In future, replace kiri's fdm and cam slicers
  * with wrappers on this one.
  */
-// dep: geo.base
-// dep: geo.line
-// dep: geo.point
-// dep: geo.polygon
-// dep: geo.polygons
-import { newPolygon, newPoint, newOrderedLine } from '../geo/polygon.js';
-gapp.register("geo.slicer", [], (root, exports) => {
-
-const { base } = root;
-const { config, util, polygons } = base
-
-const POLY = base.polygons;
+import { newOrderedLine } from './line.js';
+import { newPolygon } from '../geo/polygon.js';
+import { polygons } from '../geo/polygons.js';
+import { newPoint } from '../geo/point.js';
+import { util } from '../mesh/util.js';
+import { config } from '../geo/base.js';
 
 function dval(v, dv) {
     return v !== undefined ? v : dv;
@@ -32,7 +24,7 @@ function dval(v, dv) {
  * @param {Point[]} points vertex array
  * @param {Object} options slicing parameters
  */
-async function slice(points, options = {}) {
+export async function slice(points, options = {}) {
     let zMin = options.zMin || 0,
         zMax = options.zMax || 0,
         zInc = options.zInc || 0,
@@ -322,7 +314,7 @@ function makeZLine(phash, p1, p2, coplanar, edge) {
  *
  * @param {number} z
  */
-async function sliceZ(z, points, options = {}) {
+export async function sliceZ(z, points, options = {}) {
     if (Array.isArray(z)) {
         return Promise.all(z.map(z => sliceZ(z, points, options)));
     }
@@ -458,7 +450,7 @@ async function sliceZ(z, points, options = {}) {
  * @param {number} [index]
  * @returns {Array}
  */
-function sliceConnect(input, z, opt = {}) {
+export function sliceConnect(input, z, opt = {}) {
     let { debug, both } = opt;
 
     if (both) {
@@ -782,7 +774,7 @@ function sliceConnect(input, z, opt = {}) {
  * @param {Line[]} lines
  * @returns {Line[]}
  */
-function removeDuplicateLines(lines) {
+export function removeDuplicateLines(lines) {
     let output = [],
         tmplines = [],
         points = [],
@@ -873,12 +865,11 @@ function removeDuplicateLines(lines) {
     return output;
 }
 
-gapp.overlay(base, {
+export const slicer = {
     slice,
     sliceZ,
     slicePost: {},
     sliceDedup: removeDuplicateLines,
     sliceConnect
-});
+}
 
-});

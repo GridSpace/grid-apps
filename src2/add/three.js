@@ -7,7 +7,7 @@ import {
     LineSegmentsGeometry, MeshBVHLib } from '../ext/three.js';
   
 // Make THREE available globally
-window.THREE = THREE;
+self.THREE = THREE;
 THREE.BufferGeometryUtils = BufferGeometryUtils;
 THREE.SVGLoader = SVGLoader.SVGLoader;
 THREE.LineMaterial = LineMaterial;

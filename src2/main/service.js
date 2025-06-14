@@ -1,9 +1,8 @@
 const service_worker = navigator.serviceWorker;
 
-import { license } from '../moto/license.js';
+import { version } from '../moto/license.js';
 
 async function start_service_worker() {
-    const version = license.version;
     function debug() {
         console.log(`[${version}]`, ...arguments);
     }

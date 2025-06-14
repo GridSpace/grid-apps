@@ -843,10 +843,9 @@ function v2pr(rec) {
     return p;
 }
 
-const earcut = window.earcut;
+const earcut = self.earcut;
 
 // Export the base object and its properties
 export { base };
 export { earcut };
 export const { config, key, util, paths } = base;
-export { newPoint };

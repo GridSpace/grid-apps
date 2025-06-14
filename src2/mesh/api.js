@@ -1614,7 +1614,7 @@ broker.wrapObject(model, 'model');
 broker.wrapObject(group, 'group');
 
 // optimize db writes by merging updates
-prefs.save = meshUtil.deferWrap(prefs.save, 100);
+// prefs.save = meshUtil.deferWrap(prefs.save, 100);
 
 export {
     selection,

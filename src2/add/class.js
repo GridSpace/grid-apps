@@ -170,9 +170,9 @@ class DataReader {
     }
 }
 
-window.ArrayWriter = ArrayWriter;
-window.DataWriter = DataWriter;
-window.DataReader = DataReader;
+self.ArrayWriter = ArrayWriter;
+self.DataWriter = DataWriter;
+self.DataReader = DataReader;
 
 // Export for ES modules
 export { ArrayWriter, DataWriter, DataReader };

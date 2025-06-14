@@ -150,7 +150,7 @@ const client = {
         if (self.createWorker) {
             return self.createWorker();
         } else {
-            return new Worker(workurl = url);
+            return new Worker(workurl = url, { type: 'module' });
         }
     },
 
@@ -188,9 +188,14 @@ const client = {
             let worker = client.spawn(workurl);
             worker.run = null;
             worker.index = i;
+            worker.onerror = function(e) {
+                console.log({ worker_error: e });
+            }
+            worker.onmessageerror = function(e) {
+                console.log({ worker_message_error: e });
+            }
             worker.onmessage = function(e) {
                 let reply = e.data;
-
                 // handle special case for task binding
                 if (reply.bind) {
                     client.bind(reply.bind);

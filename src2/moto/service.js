@@ -1,8 +1,7 @@
 // code for a ServiceWorker that provides support for running cached/offline
 
-import { license } from './license.js';
+import { version } from './license.js';
 
-const version = license.version;
 const origin = self.location.origin;
 const stats = {
     hit: 0,

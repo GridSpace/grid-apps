@@ -1,5 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+// import '../mesh/work.js';
+
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
@@ -77,7 +79,7 @@ function init() {
     motoClient.on('ready', restore_space);
 
     // start worker
-    motoClient.start(`/code/mesh_work?${version}`);
+    motoClient.start(`/v2/lib/mesh/work.js?${version}`);
 
     // trigger space event binding
     call.space_init({ space: motoSpace, platform });

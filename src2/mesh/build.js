@@ -7,6 +7,7 @@ import { util } from './util.js';
 import { space } from '../moto/space.js';
 import { split } from './split.js';
 import { newPolygon } from '../geo/polygon.js';
+import { version } from '../moto/license.js';
 
 const { div, label, input, hr } = h;
 const { dbug } = api;
@@ -525,7 +526,7 @@ function ui_build() {
         div({ class: "menu" }, [
             div('Help'),
             div({ class: "menu-items" }, [
-                menu_item('About', () => { api.welcome(license.version) }),
+                menu_item('About', () => { api.welcome(version) }),
                 hr(),
                 menu_item('Documentation', api.help),
                 menu_item('Report Bugs', api.bugs),

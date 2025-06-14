@@ -12,11 +12,7 @@ const precision = 0.001;
 const factor = 1/precision;
 
 function log() {
-    if (root?.mesh?.log) {
-        root.mesh.log(...arguments)
-    } else if (root.debug === true) {
-        console.log(...arguments);
-    }
+    console.log(...arguments);
 }
 
 export const CSG = {

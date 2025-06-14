@@ -1,13 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { THREE } from '../ext/three.js';
-const { Matrix4, Vector3, Box3, Box3Helper, Quaternion } = THREE;
 import { broker as motoBroker } from '../moto/broker.js';
 import { client as motoClient } from '../moto/client.js';
 import { space as motoSpace } from '../moto/space.js';
 import { api as meshApi } from './api.js';
 import { util as meshUtil } from './util.js';
 
+const { Matrix4, Vector3, Box3, Box3Helper, Quaternion } = THREE;
 const worker = motoClient.fn;
 const lookUp = new Vector3(0,0,-1);
 

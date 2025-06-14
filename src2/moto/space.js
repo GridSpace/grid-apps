@@ -15,8 +15,8 @@ const {
 
 const nav = navigator;
 
-let WIN = window,
-    DOC = document,
+let WIN = self.window || {},
+    DOC = self.document,
     SCENE = new Scene(),
     WORLD = new Group(),
     PI = Math.PI,
@@ -130,25 +130,27 @@ let WIN = window,
     hiddenKey,
     vizChange,
     docVisible = true,
-    antiAlias = window.devicePixelRatio <= 1,
+    antiAlias = WIN.devicePixelRatio <= 1,
     lastAction = Date.now(),
     renderTime = 0,
     fps = 0;
 
-if (typeof DOC.hidden !== "undefined") {
-    hiddenKey = "hidden";
-    vizChange = "visibilitychange";
-} else if (typeof DOC.msHidden !== "undefined") {
-    hiddenKey = "msHidden";
-    vizChange = "msvisibilitychange";
-} else if (typeof DOC.webkitHidden !== "undefined") {
-    hiddenKey = "webkitHidden";
-    vizChange = "webkitvisibilitychange";
-}
+if (DOC) {
+    if (typeof DOC.hidden !== "undefined") {
+        hiddenKey = "hidden";
+        vizChange = "visibilitychange";
+    } else if (typeof DOC.msHidden !== "undefined") {
+        hiddenKey = "msHidden";
+        vizChange = "msvisibilitychange";
+    } else if (typeof DOC.webkitHidden !== "undefined") {
+        hiddenKey = "webkitHidden";
+        vizChange = "webkitvisibilitychange";
+    }
 
-DOC.addEventListener(vizChange, () => {
-    docVisible = DOC[hiddenKey] ? false : true;
-}, false);
+    DOC.addEventListener(vizChange, () => {
+        docVisible = DOC[hiddenKey] ? false : true;
+    }, false);
+}
 
 function updateLastAction() {
     lastAction = Date.now();
@@ -172,7 +174,7 @@ WORLD.contains = (obj) => {
  ******************************************************************* */
 
 function tweenit() {
-    TWEEN.update();
+    self.TWEEN?.update();
     setTimeout(tweenit, tweenDelay);
 }
 
