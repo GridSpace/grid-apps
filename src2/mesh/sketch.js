@@ -1,18 +1,17 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { THREE } from '../ext/three.js';
-const { BufferGeometry, BufferAttribute, Quaternion, MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide, PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh, Group } = THREE;
-import { license as motoLicense } from '../moto/license.js';
 import { client as motoClient } from '../moto/client.js';
 import { space as motoSpace } from '../moto/space.js';
 import { broker as motoBroker } from '../moto/broker.js';
 import { object as meshObject } from './object.js';
-import { api as meshApi } from './api.js';
+import { model as meshModel, materials } from './model.js';
 import { util as meshUtil } from './util.js';
-import { group as meshGroup } from './group.js';
+import { api as meshApi } from './api.js';
 import { newPolygon } from '../geo/polygon.js';
-import { polygons as POLYS } from '../geo/polygons.js';
+import { polygons } from '../geo/polygons.js';
+import { THREE } from '../ext/three.js';
 
+const { BufferGeometry, BufferAttribute, Quaternion, MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide, PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh, Group } = THREE;
 const worker = motoClient.fn;
 const drag = {};
 const hpos = [
@@ -238,7 +237,7 @@ class MeshSketch extends meshObject {
                 let items = sketch.selection.mesh_items();
                 if (items.length < 2) return log('operation requires at least 2 items');
                 let polys = items.map(i => i.sketch_item.poly);
-                let union = POLYS.union(polys, 0, true);
+                let union = polygons.union(polys, 0, true);
                 sketch.selection.delete();
                 sketch.arrange.group(union.map(poly => sketch.add.polygon({ poly })));
             },
@@ -247,7 +246,7 @@ class MeshSketch extends meshObject {
                 let items = sketch.selection.mesh_items();
                 if (items.length !== 2) return log('operation requires 2 items');
                 let polys = items.map(i => i.sketch_item.poly);
-                let trim = POLYS.trimTo([polys[0]], [polys[1]]);
+                let trim = polygons.trimTo([polys[0]], [polys[1]]);
                 sketch.selection.delete();
                 for (let poly of trim) {
                     sketch.add.polygon({ poly });
@@ -258,8 +257,8 @@ class MeshSketch extends meshObject {
                 let items = sketch.selection.mesh_items();
                 if (items.length !== 2) return log('operation requires 2 items');
                 let polys = items.map(i => i.sketch_item.poly);
-                let diff1 = POLYS.diff([polys[0]], [polys[1]]);
-                let diff2 = POLYS.diff([polys[1]], [polys[0]]);
+                let diff1 = polygons.diff([polys[0]], [polys[1]]);
+                let diff2 = polygons.diff([polys[1]], [polys[0]]);
                 sketch.selection.delete();
                 for (let poly of [...diff1, ...diff2]) {
                     sketch.add.polygon({ poly });
@@ -270,7 +269,7 @@ class MeshSketch extends meshObject {
                 let items = sketch.selection.items();
                 if (items.length < 2) return log('operation requires at least 2 items');
                 let polys = items.map(si => si.poly.annotate({group:si.group}).clone(true, ['group']));
-                let union = POLYS.nest(POLYS.flatten(polys, [], true));
+                let union = polygons.nest(polygons.flatten(polys, [], true));
                 sketch.selection.delete();
                 for (let poly of union) {
                     sketch.add.polygon({ poly, group:poly.group });
@@ -280,8 +279,8 @@ class MeshSketch extends meshObject {
             evenodd() {
                 let items = sketch.selection.items();
                 let polys = items.map(si => si.poly.annotate({group:si.group}));
-                let even = POLYS.nest(POLYS.flatten(polys.clone(true,['group']), [], true));
-                let odd = POLYS.nest(POLYS.flatten(even.clone(true,['group']), [], true).filter(p => p.depth > 0));
+                let even = polygons.nest(polygons.flatten(polys.clone(true,['group']), [], true));
+                let odd = polygons.nest(polygons.flatten(even.clone(true,['group']), [], true).filter(p => p.depth > 0));
                 sketch.selection.delete();
                 for (let poly of [...even, ...odd]) {
                     sketch.add.polygon({ poly, group:poly.group });
@@ -291,7 +290,7 @@ class MeshSketch extends meshObject {
             flatten() {
                 let items = sketch.selection.items();
                 let polys = items.map(si => si.poly.annotate({group:si.group}).clone(true, ['group']));
-                let flat = POLYS.flatten(polys, [], true);
+                let flat = polygons.flatten(polys, [], true);
                 sketch.selection.delete();
                 for (let poly of flat) {
                     sketch.add.polygon({ poly });
@@ -526,7 +525,7 @@ class MeshSketch extends meshObject {
                 chamfer_top,
                 chamfer_bottom
             });
-            let nmdl = new mesh.model({ file: "item", mesh: vert.toFloat32() });
+            let nmdl = new meshModel({ file: "item", mesh: vert.toFloat32() });
             models.push(nmdl);
         }
         if (models.length) {
@@ -588,7 +587,6 @@ class SketchItem {
 
     update() {
         let { item, sketch, order } = this;
-        let { material } = mesh;
         let { type, center, width, height, miter, radius, points, spacing, poly, selected } = item;
         let { open_close, open_width, open_type } = meshApi.prefs.map.sketch;
         let base = 0.025;
@@ -611,7 +609,7 @@ class SketchItem {
         this.poly = poly;
         let isSelected = selected && sketch.select();
         // create solid filled area
-        let mat = (isSelected ? material.select : material.normal).clone();
+        let mat = (isSelected ? materials.select : materials.normal).clone();
             mat.transparent = true;
             mat.opacity = 0.5;
         let vrt = poly.extrude(0).toFloat32();
@@ -628,7 +626,7 @@ class SketchItem {
             let lpt = p.points.map(p => new Vector3(p.x, p.y, p.z));
                 lpt.push(lpt[0]);
             let lge = new BufferGeometry().setFromPoints(lpt);
-            let out = new THREE.Line(lge, material.wireline);
+            let out = new THREE.Line(lge, materials.wireline);
                 out.renderOrder = -1;
                 out.sketch_line = this;
                 out.position.z += base + (order * bump);

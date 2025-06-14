@@ -3,7 +3,8 @@
 "use strict";
 
 import { base, util, paths, config } from './base.js';
-import { newPoint } from './point.js';
+import { newPoint, pointFromClipper } from './point.js';
+import { newPolygon } from './polygon.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 
 const { sqr, numOrDefault } = util;
@@ -118,9 +119,9 @@ export function toClipper(polys = []) {
 }
 
 export function fromClipperNode(tnode, z) {
-    let poly = base.newPolygon();
+    let poly = newPolygon();
     for (let point of tnode.m_polygon) {
-        poly.push(base.pointFromClipper(point, z));
+        poly.push(pointFromClipper(point, z));
     }
     poly.open = tnode.IsOpen;
     return poly;
