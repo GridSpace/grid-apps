@@ -76,8 +76,8 @@ class MeshModel extends meshObject {
         super(id);
         let { file, mesh, vertices } = data;
 
-        if (!mesh) {
-            dbug.error(`'${file}' missing mesh data`);
+        if (!(mesh || vertices)) {
+            meshApi.dbug.error(`'${file}' missing mesh data`);
             return;
         }
 

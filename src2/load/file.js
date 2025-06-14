@@ -2,7 +2,7 @@
 
 'use strict';
 
-import * as STL from './stl.js';
+import { STL } from './stl.js';
 import * as OBJ from './obj.js';
 import * as TMF from './3mf.js';
 import * as SVG from './svg.js';
@@ -39,7 +39,7 @@ const types = {
     png(data, file, resolve, reject, opt = {}) {
         pngLoad.PNG.parse(data, {
             ...opt,
-            done(vertices) { resolve(vertices) },
+            done(vertices) { resolve({ mesh: vertices, file }) },
             error(err) { reject(err) }
         });
     },
@@ -100,5 +100,4 @@ function load_file(file, opt) {
     });
 }
 
-export { types, as_buffer, load_data, load_file };
-export { load_file as load };
+export { types, as_buffer, load_data, load_file, load_file as load };

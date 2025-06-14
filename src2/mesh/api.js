@@ -399,7 +399,7 @@ const group = {
     // @param group {MeshGroup}
     add(group) {
         groups.addOnce(group);
-        motoSpace.world.add(group.object);
+        motoSpace.world.add(group.object);  
         meshUtil.defer(selection.update);
         motoSpace.update();
         return group;
@@ -749,7 +749,7 @@ let add = {
                     const vert = (api.modal.bound.genvrt.value)
                         .split(',').map(v => parseFloat(v)).toFloat32();
                     const nmdl = new meshModel({ file: "input", mesh: vert });
-                    const ngrp = group.new([ nmdl ]);
+                    const ngrp = api.group.new([ nmdl ]);
                     api.modal.hide();
                 } })
             ]) ]
@@ -761,7 +761,7 @@ let add = {
         const box = new THREE.BoxGeometry(1,1,1).toNonIndexed();
         const vert = box.attributes.position.array;
         const nmdl = new meshModel({ file: "box", mesh: vert });
-        const ngrp = group.new([ nmdl ]);
+        const ngrp = api.group.new([ nmdl ]);
         ngrp.scale(10, 10, 10).floor();
         selection.set([ nmdl ]);
         return ngrp;
@@ -781,7 +781,7 @@ let add = {
                 }
                 const vert = cyl.extrude(height, { chamfer }).toFloat32();
                 const nmdl = new meshModel({ file: "cylinder", mesh: vert });
-                const ngrp = group.new([ nmdl ]);
+                const ngrp = api.group.new([ nmdl ]);
                 selection.set([ nmdl ]);
                 ngrp.floor();
             }
@@ -1150,7 +1150,7 @@ const tool = {
         models = fallback(models, true);
         if (models.length) {
             log(`regrouping ${models.length} model(s)`);
-            let group = new meshGroup(models.map(m => m.ungroup()));
+            let group = api.group.new(models.map(m => m.ungroup()));
             let bounds = group.bounds;
             models.forEach(m => m.centerTo(bounds.mid));
             return group;
@@ -1170,7 +1170,7 @@ const tool = {
                     mesh: area.toFloat32()
                 })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
                 if (nm.length) {
-                    new meshGroup(nm, undefined, "patch");
+                    api.group.new(nm, undefined, "patch");
                 }
             });
             promises.push(p);
@@ -1192,7 +1192,7 @@ const tool = {
                     file: m.file,
                     mesh: vert.toFloat32()
                 })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
-                new meshGroup(bodies, undefined, "isolate");
+                api.group.new(bodies, undefined, "isolate");
             });
             promises.push(p);
         }

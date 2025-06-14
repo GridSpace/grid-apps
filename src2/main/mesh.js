@@ -13,7 +13,7 @@ import { split as meshSplit } from '../mesh/split.js';
 import { model as meshModel, materials } from '../mesh/model.js';
 import { edges as meshEdges } from '../mesh/edges.js';
 import { load as fileLoad } from '../load/file.js';
-import { $, $d, estop } from '../moto/webui.js';
+import { $, $d, h, estop } from '../moto/webui.js';
 import { THREE } from '../ext/three.js';
 
 const { Quaternion } = THREE;
@@ -487,7 +487,7 @@ function load_files(files) {
         has_gbr = has_gbr || file.name.toLowerCase().endsWith(".gbr") > 0;
     }
     if (sketch && has_gbr) {
-        fileLoad.load([...files], { flat: true }).then(layers => {
+        fileLoad([...files], { flat: true }).then(layers => {
             for (let layer of layers.flat()) {
                 let { circs, closed, open, rects } = layer;
                 open = open.map(poly => {
@@ -504,7 +504,7 @@ function load_files(files) {
         });
     } else
     if (sketch && has_svg) {
-        fileLoad.load([...files], { flat: true })
+        fileLoad([...files], { flat: true })
             .then(polys => polys.forEach(set => {
                 let group = meshApi.util.uuid();
                 set.forEach(poly => sketch.add.polygon({ poly, group }))
@@ -582,7 +582,7 @@ function load_files(files) {
 }
 
 function load_files_opt(files, opt) {
-    return fileLoad.load([...files], opt)
+    return fileLoad([...files], opt)
         .then(data => call.space_load(data))
         .catch(error => log(error).pin({}) && dbug.error(error))
         // .finally(() => meshApi.log.hide());
