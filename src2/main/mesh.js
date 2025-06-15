@@ -687,13 +687,19 @@ function set_darkmode(dark) {
 }
 
 function set_normals_length(length) {
-    let { prefs } = api;
+    let { prefs, model } = api;
     prefs.map.normals.length = length || 1;
     prefs.save();
+    // Update existing normals
+    for (let m of model.list()) {
+        if (m.normals()) {
+            m.normals({ refresh: true });
+        }
+    }
 }
 
 function set_normals_color(color) {
-    let { prefs } = api;
+    let { prefs, model } = api;
     let { map } = prefs;
     if (map.space.dark) {
         map.normals.color_dark = color || 0;
@@ -701,6 +707,12 @@ function set_normals_color(color) {
         map.normals.color_lite = color || 0;
     }
     prefs.save();
+    // Update existing normals
+    for (let m of model.list()) {
+        if (m.normals()) {
+            m.normals({ refresh: true });
+        }
+    }
 }
 
 function set_surface_radians(radians) {
@@ -716,15 +728,22 @@ function set_surface_radius(radius) {
 }
 
 function set_wireframe_opacity(opacity) {
-    let { prefs } = api;
+    let { prefs, model } = api;
     prefs.map.wireframe.opacity = parseFloat(opacity || 0.15);
     prefs.save();
+    // Update existing wireframes
+    for (let m of model.list()) {
+        if (m.wireframe().enabled) {
+            m.opacity({temp: prefs.map.wireframe.opacity});
+        }
+    }
 }
 
 function set_wireframe_fog(fogx) {
     let { prefs } = api;
     prefs.map.wireframe.fog = parseFloat(fogx || 3);
     prefs.save();
+    api.updateFog();
 }
 
 function set_snap_value(snap) {
