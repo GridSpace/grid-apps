@@ -7,27 +7,26 @@ import '../add/class.js';
 import '../add/three.js';
 import '../mesh/build.js';
 
+import { api } from '../mesh/api.js';
+import { space } from '../moto/space.js';
+import { broker } from '../moto/broker.js';
+import { $, $d, h, estop } from '../moto/webui.js';
 import { client as motoClient } from '../moto/client.js';
-import { broker as motoBroker } from '../moto/broker.js';
-import { space as motoSpace } from '../moto/space.js';
-import { open as dataOpen } from '../data/index.js';
-import { api as meshApi } from '../mesh/api.js';
 import { split as meshSplit } from '../mesh/split.js';
 import { model as meshModel, materials } from '../mesh/model.js';
 import { edges as meshEdges } from '../mesh/edges.js';
+import { open as dataOpen } from '../data/index.js';
 import { load as fileLoad } from '../load/file.js';
-import { $, $d, h, estop } from '../moto/webui.js';
 import { THREE } from '../ext/three.js';
 
 const version = '1.5.7';
-const api = meshApi;
-const call = motoBroker.send;
+const call = broker.send;
 const dbindex = [ "admin", "space" ];
 
 const { Quaternion } = THREE;
 
 function log() {
-    return meshApi.log.emit(...arguments);
+    return api.log.emit(...arguments);
 }
 
 // set below. called once the DOM readyState = complete
@@ -38,21 +37,24 @@ function init() {
         ortho = false,
         zoomrev = true,
         zoomspd = 1,
-        platform = motoSpace.platform,
-        db = meshApi.db = {
+        platform = space.platform,
+        db = api.db = {
             admin: stores.promise('admin'),
             space: stores.promise('space')
         };
+
+    // initialize the API (to avoid circular dependencies)
+    api.init();
 
     // mark init time and use count
     db.admin.put("init", Date.now());
     db.admin.get("uses").then(v => db.admin.put("uses", (v||0) + 1));
 
     // setup default workspace
-    motoSpace.setAntiAlias(true);
-    motoSpace.useDefaultKeys(false);
-    motoSpace.init($('container'), delta => { }, ortho);
-    motoSpace.sky.set({
+    space.setAntiAlias(true);
+    space.useDefaultKeys(false);
+    space.init($('container'), delta => { }, ortho);
+    space.sky.set({
         grid: false,
         color: dark ? 0 : 0xffffff
     });
@@ -71,11 +73,11 @@ function init() {
     platform.onMove(() => {
         // save last location and focus
         db.admin.put('camera', {
-            place: motoSpace.view.save(),
-            focus: motoSpace.view.getFocus()
+            place: space.view.save(),
+            focus: space.view.getFocus()
         });
     }, 100);
-    motoSpace.view.setZoom(zoomrev, zoomspd);
+    space.view.setZoom(zoomrev, zoomspd);
 
     // reload stored space when worker is ready
     motoClient.on('ready', restore_space);
@@ -84,7 +86,7 @@ function init() {
     motoClient.start(`/v2/lib/mesh/work.js?${version}`);
 
     // trigger space event binding
-    call.space_init({ space: motoSpace, platform });
+    call.space_init({ space: space, platform });
 
     // trigger ui building
     call.ui_build();
@@ -92,10 +94,8 @@ function init() {
 
 // restore space layout and view from previous session
 async function restore_space() {
-    const api = meshApi;
-    const space = motoSpace;
-    const db_admin = meshApi.db.admin;
-    const db_space = meshApi.db.space;
+    const db_admin = api.db.admin;
+    const db_space = api.db.space;
     // let mcache = {};
     await db_admin.get("camera")
         .then(saved => {
@@ -180,6 +180,7 @@ async function restore_space() {
         if (api.prefs.map.info.welcome !== false) {
             api.welcome(version);
         }
+        broker.publish("app_ready");
     });
 }
 
@@ -187,7 +188,7 @@ async function restore_space() {
 function space_init(data) {
     let platcolor = 0x00ff00;
     let { space, platform } = data;
-    let { selection } = meshApi;
+    let { selection } = api;
     // add file drop handler
     space.event.addHandlers(self, [
         'drop', (evt) => {
@@ -242,9 +243,6 @@ function space_init(data) {
                     return shiftKey ? api.tool.merge() : api.tool.mirror();
                 case 'KeyU':
                     return shiftKey && api.tool.union();
-                case 'KeyA':
-                    if (api.mode.is([ api.modes.edge ])) return meshEdges.add();
-                    return shiftKey && api.tool.analyze();
                 case 'KeyE':
                     if (api.mode.is([ api.modes.sketch ])) {
                         estop(evt);
@@ -272,8 +270,6 @@ function space_init(data) {
                     return shiftKey ? selection.hide() : space.view.home();
                 case 'KeyT':
                     return shiftKey ? api.tool.triangulate() : space.view.top();
-                case 'KeyZ':
-                    return space.view.reset();
             }
         },
         'keydown', evt => {
@@ -293,14 +289,31 @@ function space_init(data) {
             let rot, floor = api.prefs.map.space.floor !== false;
             switch (code) {
                 case 'KeyA':
+                    estop(evt);
+                    if (api.mode.is([ api.modes.edge ])) {
+                        return meshEdges.add();
+                    }
                     if (metaKey || ctrlKey) {
                         if (!selection.sketch()?.selection.all()) {
                             api.mode.object();
                             selection.set(api.group.list());
                         }
-                        estop(evt);
+                    } else if (shiftKey) {
+                        api.tool.analyze();
                     }
                     break;
+                case 'KeyY':
+                    estop(evt);
+                    if (metaKey || ctrlKey) {
+                        return shiftKey ? api.history.undo() : api.history.redo();
+                    }
+                case 'KeyZ':
+                    estop(evt);
+                    if (metaKey || ctrlKey) {
+                        return shiftKey ? api.history.redo() : api.history.undo();
+                    } else {
+                        return space.view.reset();
+                    }
                 case 'Escape':
                     if (selection.clear()) {
                         meshEdges.clear();
@@ -480,7 +493,7 @@ function space_init(data) {
 
 function load_files(files) {
     log(`loading file...`);
-    let api = meshApi;
+    let api = api;
     let has_image = false;
     let has_svg = false;
     let has_gbr = false;
@@ -499,7 +512,7 @@ function load_files(files) {
                     return diam ? poly.offset_open(diam / 2, 'round') : null;
                 }).filter(p => p).flat();
                 for (let set of [ closed, open, circs, rects ]) {
-                    let group = meshApi.util.uuid();
+                    let group = api.util.uuid();
                     for (let poly of set) {
                         sketch.add.polygon({ poly, group });
                     }
@@ -510,11 +523,11 @@ function load_files(files) {
     if (sketch && has_svg) {
         fileLoad([...files], { flat: true })
             .then(polys => polys.forEach(set => {
-                let group = meshApi.util.uuid();
+                let group = api.util.uuid();
                 set.forEach(poly => sketch.add.polygon({ poly, group }))
             }))
             .catch(error => dbug.error(error))
-            .finally(() => meshApi.log.hide());
+            .finally(() => api.log.hide());
     } else
     if (has_svg) {
         api.modal.dialog({
@@ -589,13 +602,13 @@ function load_files_opt(files, opt) {
     return fileLoad([...files], opt)
         .then(data => call.space_load(data))
         .catch(error => log(error).pin({}) && dbug.error(error))
-        // .finally(() => meshApi.log.hide());
+        // .finally(() => api.log.hide());
 }
 
 // add object loader
 function space_load(data) {
     if (data && data.length && (data = data.flat()).length)
-    meshApi.group.new(data.map(el => new meshModel(el)))
+    api.group.new(data.map(el => new meshModel(el)))
         .promote()
         .focus();
 }
@@ -613,7 +626,7 @@ function key_once_cancel(code) {
 }
 
 function store_meta() {
-    meshApi.db.admin.put("meta", metaCache);
+    api.db.admin.put("meta", metaCache);
 }
 
 function update_meta(id, data) {
@@ -641,8 +654,8 @@ function object_destroy(id) {
 
 // listen for changes like dark mode toggle
 function set_darkmode(dark) {
-    let { prefs, model } = meshApi;
-    let { sky, platform } = motoSpace;
+    let { prefs, model } = api;
+    let { sky, platform } = space;
     prefs.map.space.dark = dark;
     if (dark) {
         materials.wireframe.color.set(0xaaaaaa);
@@ -667,7 +680,7 @@ function set_darkmode(dark) {
             colorMinor: 0xeeeeee,
         },
     });
-    meshApi.updateFog();
+    api.updateFog();
     platform.setSize();
     for (let m of model.list()) {
         m.normals({ refresh: true });
@@ -676,13 +689,13 @@ function set_darkmode(dark) {
 }
 
 function set_normals_length(length) {
-    let { prefs } = meshApi;
+    let { prefs } = api;
     prefs.map.normals.length = length || 1;
     prefs.save();
 }
 
 function set_normals_color(color) {
-    let { prefs } = meshApi;
+    let { prefs } = api;
     let { map } = prefs;
     if (map.space.dark) {
         map.normals.color_dark = color || 0;
@@ -693,37 +706,37 @@ function set_normals_color(color) {
 }
 
 function set_surface_radians(radians) {
-    let { prefs } = meshApi;
+    let { prefs } = api;
     prefs.map.surface.radians = parseFloat(radians || 0.1);
     prefs.save();
 }
 
 function set_surface_radius(radius) {
-    let { prefs } = meshApi;
+    let { prefs } = api;
     prefs.map.surface.radius = parseFloat(radius || 0.2);
     prefs.save();
 }
 
 function set_wireframe_opacity(opacity) {
-    let { prefs } = meshApi;
+    let { prefs } = api;
     prefs.map.wireframe.opacity = parseFloat(opacity || 0.15);
     prefs.save();
 }
 
 function set_wireframe_fog(fogx) {
-    let { prefs } = meshApi;
+    let { prefs } = api;
     prefs.map.wireframe.fog = parseFloat(fogx || 3);
     prefs.save();
 }
 
 function set_snap_value(snap) {
-    let { prefs } = meshApi;
+    let { prefs } = api;
     prefs.map.space.snap = parseFloat(snap || 1);
     prefs.save();
 }
 
 // bind functions to topics
-motoBroker.listeners({
+broker.listeners({
     key_once,
     key_once_cancel,
     load_files,

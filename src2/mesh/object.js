@@ -1,10 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { THREE } from '../ext/three.js';
+import { api } from './api.js';
 import { broker as motoBroker } from '../moto/broker.js';
 import { client as motoClient } from '../moto/client.js';
 import { space as motoSpace } from '../moto/space.js';
-import { api as meshApi } from './api.js';
 import { util as meshUtil } from './util.js';
 
 const { Matrix4, Vector3, Box3, Box3Helper, Quaternion } = THREE;
@@ -28,7 +28,7 @@ class MeshObject {
     }
 
     log() {
-        // meshApi.log.emit(this.id, this.type, ...arguments);
+        // api.log.emit(this.id, this.type, ...arguments);
     }
 
     get type() {
@@ -49,7 +49,7 @@ class MeshObject {
         // update worker state
         worker.object_destroy({id: this.id});
         // update object store
-        meshApi.db.space.remove(this.id);
+        api.db.space.remove(this.id);
         // main app cache workspace updates
         publish.destroy(this.id);
     }
@@ -86,7 +86,7 @@ class MeshObject {
     }
 
     focus() {
-        meshApi.focus(this.object);
+        api.focus(this.object);
         return this;
     }
 

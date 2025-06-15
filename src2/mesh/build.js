@@ -11,7 +11,7 @@ import { version } from '../moto/license.js';
 
 const { div, label, input, hr } = h;
 const { dbug } = api;
-const devel = api.isDebug;
+const isDebug = api.isDebug;
 
 let call = broker.send;
 let rad = 180 / Math.PI;
@@ -135,7 +135,7 @@ const log = api.log = {
             text: `${dbug.since()} | ${[...arguments].join(' ')}`,
             time: now
         });
-        if (api.isDebug) {
+        if (isDebug) {
             console.log(...data.peek().objs);
         }
         while (!log.pinned && data.length && (data.length > lines || now - data[0].time > age)) {
@@ -408,6 +408,9 @@ function ui_build() {
         div({ class: "menu sketch-on" }, [
             div('Edit'),
             div({ class: "menu-items" }, [
+                menu_item('Undo', api.history.undo, ['bi-command','Z']),
+                menu_item('Redo', api.history.redo, ['bi-command','Y']),
+                hr(),
                 menu_item('Add Circle', api.add.circle),
                 menu_item('Add Rectangle', api.add.rectangle),
                 hr(),
@@ -419,13 +422,16 @@ function ui_build() {
         div({ class: "menu sketch-off" }, [
             div('Edit'),
             div({ class: "menu-items" }, [
+                menu_item('Undo', api.history.undo, ['bi-command','Z']),
+                menu_item('Redo', api.history.redo, ['bi-command','Y']),
+                hr(),
                 menu_item('Add Cylinder', add.cylinder),
                 menu_item('Add Cube', add.cube),
                 menu_item('Add Gear', add.gear),
                 menu_item('Add Threads', add.threads),
                 hr(),
                 menu_item('Add Sketch', add.sketch),
-                devel ? menu_item('Add Vertices', add.input) : undefined,
+                isDebug ? menu_item('Add Vertices', add.input) : undefined,
                 hr(),
                 menu_item('Delete', api.selection.delete, 'bi-backspace'),
             ])
@@ -773,7 +779,7 @@ function ui_build() {
                 for (let g of api.selection.groups()) {
                     set(g, tempval, value);
                     if (floor && opt.floor !== false) {
-                        g.floor(mesh.group);
+                        g.floor();
                     }
                 }
                 defer_selection();

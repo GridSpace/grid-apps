@@ -1,10 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 class Broker {
+    debug = false;
+    topics = {};
+    used = {};
+    send = {};
+
     constructor() {
-        this.topics = {};
-        this.used = {};
-        this.send = {};
         // using the pattern "broker.send(msg)" induces runtime errors
         // when there is not at least one registered listener for a topic
         // while also allowing for a more natural function call interface
@@ -37,7 +39,10 @@ class Broker {
             return this;
         }
         if (typeof topic !== 'string') {
-            console.trace({invalid_topic: topic});
+            for (let [ key, fn ] of Object.entries(topic)) {
+                this.subscribe(key, fn.bind(listener));
+            }
+            // console.trace({invalid_topic: topic});
             return;
         }
         let topics = this.topics;
@@ -80,6 +85,9 @@ class Broker {
         }
         if (topic !== ".topic.publish") {
             this.publish(".topic.publish", {topic, message, options});
+        }
+        if (this.debug && !topic.startsWith(".")) {
+            console.log({ topic, message });
         }
         // store last seen message on a topic
         // acts as a tracker for all used topics

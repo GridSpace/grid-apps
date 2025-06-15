@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { broker } from '../moto/broker.js';
+import { history } from './history.js';
 import { client as motoClient } from '../moto/client.js';
 import { space as motoSpace } from '../moto/space.js';
 import { util as meshUtil } from './util.js';
@@ -210,14 +211,21 @@ const selection = {
     },
 
     drag(opt = {}) {
+        if (opt.start) {
+            broker.publish('drag_start', selected);
+        } else if (opt.end) {
+            broker.publish('drag_end', selected);
+        }
         selected.forEach(s => s.drag(opt));
         return selection;
     },
 
     move(dx = 0, dy = 0, dz = 0) {
-        for (let s of [...selection.groups(), ...selection.sketches()]) {
+        let set = [...selection.groups(), ...selection.sketches()];
+        for (let s of set) {
             s.move(dx, dy, dz);
         }
+        broker.publish('move', { set, dx, dy, dz });
         return selection;
     },
 
@@ -225,6 +233,7 @@ const selection = {
         for (let s of selection.models()) {
             s.move(dx, dy, dz);
         }
+        broker.publish('move', { set: selection.models(), dx, dy, dz });
         return selection;
     },
 
@@ -232,6 +241,7 @@ const selection = {
         for (let s of selection.groups()) {
             s.rotate(dx, dy, dz);
         }
+        broker.publish('rotate', { set: selection.models(), dx, dy, dz });
         return selection;
     },
 
@@ -239,6 +249,7 @@ const selection = {
         for (let s of selection.groups()) {
             s.qrotate(q);
         }
+        broker.publish('qrotate', { set: selection.groups(), q });
         return selection;
     },
 
@@ -247,6 +258,7 @@ const selection = {
             let { x, y, z } = s.scale();
             s.scale(x * dx, y * dy, z * dz);
         }
+        broker.publish('scale', { set: selection.groups(), dx, dy, dz });
         return selection;
     },
 
@@ -1466,6 +1478,16 @@ let dbug = self.dbug = self.dbug || {
 
 // api is augmented in mesh.build (log, modal, download)
 const api = {
+    init() {
+        // publish messages when api functions are called
+        // broker.wrapObject(selection, 'selection');
+        // broker.wrapObject(model, 'model');
+        // broker.wrapObject(group, 'group');
+
+        // optimize db writes by merging updates
+        prefs.save = meshUtil.deferWrap(prefs.save, 100);
+    },
+
     help() {
         window.open("https://docs.grid.space/projects/mesh-tool");
     },
@@ -1494,6 +1516,11 @@ const api = {
         for (let group of group.list()) {
             group.remove(group);
         }
+    },
+
+    history: {
+        undo() { history.undo() },
+        redo() { history.redo() }
     },
 
     // @param object {THREE.Object3D | THREE.Object3D[] | Point}
@@ -1567,30 +1594,6 @@ const api = {
         prefs.save( prefs.map.space.norm = norm );
     },
 
-    dbug,
-
-    mode,
-
-    modes,
-
-    selection,
-
-    pattern,
-
-    group,
-
-    model,
-
-    sketch,
-
-    add,
-
-    file,
-
-    tool,
-
-    prefs,
-
     objects() {
         // return model objects suitable for finding ray intersections
         return [
@@ -1598,6 +1601,30 @@ const api = {
             ...sketches.map(s => s.meshes).flat()
         ];
     },
+
+    add,
+
+    dbug,
+
+    file,
+
+    group,
+
+    mode,
+
+    modes,
+
+    model,
+
+    pattern,
+
+    prefs,
+
+    selection,
+
+    sketch,
+
+    tool,
 
     isDebug: self.debug === true
 };
@@ -1608,17 +1635,9 @@ function log() {
 
 const call = broker.send;
 
-// publish messages when api functions are called
-broker.wrapObject(selection, 'selection');
-broker.wrapObject(model, 'model');
-broker.wrapObject(group, 'group');
-
-// optimize db writes by merging updates
-// prefs.save = meshUtil.deferWrap(prefs.save, 100);
-
 export {
+    sketches,
     selection,
     groups,
-    sketches,
     api
 };

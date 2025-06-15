@@ -1407,7 +1407,7 @@ let Space = {
                 const dist = camera.position.distanceTo(viewControl.target);
                 raycaster.params.Line.threshold = Math.min(1, dist / 100);
             }
-            broker.publish("space.view.zoom", camera);
+            // broker.publish("space.view.zoom", camera);
             updateLastAction();
             if (slider) slider(val);
         });
