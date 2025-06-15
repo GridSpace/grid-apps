@@ -15,6 +15,7 @@ const isDebug = api.isDebug;
 
 let call = broker.send;
 let rad = 180 / Math.PI;
+let deg = Math.PI / 180;
 let und = undefined;
 
 broker.listeners({
@@ -765,23 +766,14 @@ function ui_build() {
     function field_edit(title, set, opt = {}) {
         return function(ev) {
             let floor = api.prefs.map.space.floor !== false;
-            let value = ev.target.innerText;
+            let value = parseFloat(ev.target.innerText);
             let onclick = (ev) => {
                 let tempval = parseFloat($('tempval').value);
                 api.modal.hide(modal.info.cancelled);
                 if (modal.info.cancelled) {
                     return;
                 }
-                if (opt.sketch) {
-                    defer_selection();
-                    return set(tempval, value);
-                }
-                for (let g of api.selection.groups()) {
-                    set(g, tempval, value);
-                    if (floor && opt.floor !== false) {
-                        g.floor();
-                    }
-                }
+                set(tempval, value);
                 defer_selection();
             };
             let onkeydown = (ev) => {
@@ -988,39 +980,39 @@ function ui_build() {
         // bind rotation editable fields
         let { group_val_X_rot, group_val_Y_rot, group_val_Z_rot } = bound;
         editable(group_val_X_rot, group_val_Y_rot, group_val_Z_rot);
-        group_val_X_rot.onclick = field_edit('x rotation', (group, val) => {
-            group.rotate(val,0,0);
+        group_val_X_rot.onclick = field_edit('x rotation', (val) => {
+            selection.rotate(val * deg,0,0);
         });
-        group_val_Y_rot.onclick = field_edit('y rotation', (group, val) => {
-            group.rotate(0,val,0);
+        group_val_Y_rot.onclick = field_edit('y rotation', (val) => {
+            selection.rotate(0,val * deg,0);
         });
-        group_val_Z_rot.onclick = field_edit('z rotation', (group, val) => {
-            group.rotate(0,0,val);
+        group_val_Z_rot.onclick = field_edit('z rotation', (val) => {
+            selection.rotate(0,0,val * deg);
         });
 
         // bind position editable fields
         let { group_val_X_pos, group_val_Y_pos, group_val_Z_pos } = bound;
         editable(group_val_X_pos, group_val_Y_pos, group_val_Z_pos);
-        group_val_X_pos.onclick = field_edit('x position', (group, val) => {
+        group_val_X_pos.onclick = field_edit('x position', (val) => {
             selection.move_models(val,0,0);
         }, { floor: false });
-        group_val_Y_pos.onclick = field_edit('y position', (group, val) => {
+        group_val_Y_pos.onclick = field_edit('y position', (val) => {
             selection.move_models(0,val,0);
         }, { floor: false });
-        group_val_Z_pos.onclick = field_edit('z position', (group, val) => {
+        group_val_Z_pos.onclick = field_edit('z position', (val) => {
             selection.move_models(0,0,val);
         }, { floor: false });
 
         // bind center editable fields
         let { span_val_X_center, span_val_Y_center, span_val_Z_center } = bound;
         editable(span_val_X_center, span_val_Y_center, span_val_Z_center);
-        span_val_X_center.onclick = field_edit('x center', (group, val, oval) => {
+        span_val_X_center.onclick = field_edit('x center', (val, oval) => {
             selection.move_models(val - parseFloat(oval),0,0);
         });
-        span_val_Y_center.onclick = field_edit('y center', (group, val, oval) => {
+        span_val_Y_center.onclick = field_edit('y center', (val, oval) => {
             selection.move_models(0,val - parseFloat(oval),0);
         });
-        span_val_Z_center.onclick = field_edit('z center', (group, val, oval) => {
+        span_val_Z_center.onclick = field_edit('z center', (val, oval) => {
             selection.move_models(0,0,val - parseFloat(oval));
         });
 
@@ -1046,28 +1038,28 @@ function ui_build() {
             };
             editable(lbl);
         });
-        span_val_X_size.onclick = field_edit('x size', (group, val, oval) => {
-            let rel = val / parseFloat(oval);
+        span_val_X_size.onclick = field_edit('x size', (val, oval) => {
+            let rel = val / oval;
             if (axgrp.X) {
-                group.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1);
+                selection.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1);
             } else {
-                group.scale(rel, 1, 1);
+                selection.scale(rel, 1, 1);
             }
         });
-        span_val_Y_size.onclick = field_edit('y size', (group, val, oval) => {
-            let rel = val / parseFloat(oval);
+        span_val_Y_size.onclick = field_edit('y size', (val, oval) => {
+            let rel = val / oval;
             if (axgrp.Y) {
-                group.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1);
+                selection.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1);
             } else {
-                group.scale(1, rel, 1);
+                selection.scale(1, rel, 1);
             }
         });
-        span_val_Z_size.onclick = field_edit('z size', (group, val, oval) => {
-            let rel = val / parseFloat(oval);
+        span_val_Z_size.onclick = field_edit('z size', (val, oval) => {
+            let rel = val / oval;
             if (axgrp.Z) {
-                group.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel);
+                selection.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel);
             } else {
-                group.scale(1, 1, rel);
+                selection.scale(1, 1, rel);
             }
         });
 
@@ -1098,11 +1090,13 @@ function ui_build() {
 
     // listen for api calls
     // create a deferred wrapper to merge multiple rapid events
-    let defer_all = util.deferWrap(update_all);
-    let defer_selector = util.deferWrap(update_selector);
-    let defer_selection = util.deferWrap(update_selection);
+    const defer_all = util.deferWrap(update_all);
+    const defer_selector = util.deferWrap(update_selector);
+    const defer_selection = util.deferWrap(update_selection);
 
     broker.listeners({
+        history_undo: defer_all,
+        history_redo: defer_all,
         model_add: defer_all,
         group_add: defer_all,
         model_remove: defer_all,
@@ -1117,4 +1111,4 @@ function ui_build() {
     });
 }
 
-export { api };
+export { };

@@ -255,8 +255,7 @@ const selection = {
 
     scale(dx = 0, dy = 0, dz = 0) {
         for (let s of selection.groups()) {
-            let { x, y, z } = s.scale();
-            s.scale(x * dx, y * dy, z * dz);
+            s.scale(dx, dy, dz);
         }
         broker.publish('scale', { set: selection.groups(), dx, dy, dz });
         return selection;
@@ -1480,7 +1479,7 @@ let dbug = self.dbug = self.dbug || {
 const api = {
     init() {
         // publish messages when api functions are called
-        // broker.wrapObject(selection, 'selection');
+        broker.wrapObject(selection, 'selection');
         // broker.wrapObject(model, 'model');
         // broker.wrapObject(group, 'group');
 
@@ -1519,8 +1518,12 @@ const api = {
     },
 
     history: {
-        undo() { history.undo() },
-        redo() { history.redo() }
+        undo() {
+            history.undo();
+        },
+        redo() {
+            history.redo();
+        }
     },
 
     // @param object {THREE.Object3D | THREE.Object3D[] | Point}

@@ -29,15 +29,30 @@ class History {
             },
 
             move(data) {
-                console.log('move', data);
+                const { set, dx, dy, dz } = data;
+                this.push('move', {
+                    set, dx: -dx, dy: -dy, dz: -dz
+                }, {
+                    set, dx, dy, dz
+                });
             },
 
             rotate(data) {
-                console.log('rotate', data);
+                const { set, dx, dy, dz } = data;
+                this.push('rotate', {
+                    set, dx: -dx, dy: -dy, dz: -dz
+                }, {
+                    set, dx, dy, dz
+                });
             },
 
             scale(data) {
-                console.log('scale', data);
+                const { set, dx, dy, dz } = data;
+                this.push('scale', {
+                    set, dx: 1/dx, dy: 1/dy, dz: 1/dz
+                }, {
+                    set, dx, dy, dz
+                });
             },
 
         }, this);
@@ -64,11 +79,33 @@ class History {
 
     do(type, data) {
         switch (type) {
-            case 'position':
+            case 'move': {
+                let { set, dx, dy, dz } = data;
+                for (let grp of set) {
+                    grp.move(dx, dy, dz);
+                }
+                break;
+            }
+            case 'position': {
                 for (let { model, pos } of data) {
                     model.position(...pos);
                 }
                 break;
+            }
+            case 'rotate': {
+                let { set, dx, dy, dz } = data;
+                for (let grp of set) {
+                    grp.rotate(dx, dy, dz);
+                }
+                break;
+            }
+            case 'scale': {
+                let { set, dx, dy, dz } = data;
+                for (let grp of set) {
+                    grp.scale(dx, dy, dz);
+                }
+                break;
+            }
             default:
                 console.warn(`invalid record type: ${type}`);
         }
@@ -78,6 +115,7 @@ class History {
         if (this.#pos >= 0) {
             const rec = this.#stack[this.#pos--];
             this.do(rec.type, rec.undo);
+            broker.publish("history_undo", rec);
         }
     }
 
@@ -85,6 +123,7 @@ class History {
         if (this.#stack.length && this.#pos >= -1 && this.#pos < this.#stack.length - 1) {
             const rec = this.#stack[++this.#pos];
             this.do(rec.type, rec.redo);
+            broker.publish("history_redo", rec);
         }
     }
 }
