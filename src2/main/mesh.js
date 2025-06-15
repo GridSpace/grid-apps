@@ -227,51 +227,51 @@ function space_init(data) {
                     return api.mode.face();
                 case 'Digit6':
                     return api.mode.edge();
-                case 'KeyQ':
-                    return api.settings();
-                case 'KeyI':
-                    return api.file.import();
-                case 'KeyX':
-                    return api.file.export();
-                case 'KeyD':
-                    return shiftKey && api.tool.duplicate();
+                case 'KeyB':
+                    return selection.boundsBox({toggle:true});
                 case 'KeyC':
                     return selection.centerXY().focus();
-                case 'KeyF':
-                    return shiftKey ? selection.focus() : selection.floor().focus();
-                case 'KeyM':
-                    return shiftKey ? api.tool.merge() : api.tool.mirror();
-                case 'KeyU':
-                    return shiftKey && api.tool.union();
+                case 'KeyD':
+                    return shiftKey && api.tool.duplicate();
                 case 'KeyE':
                     if (api.mode.is([ api.modes.sketch ])) {
                         estop(evt);
                         return api.sketch.extrude();
                     }
                     return;
-                case 'KeyV':
-                    return shiftKey ? selection.show() : selection.focus();
-                case 'KeyR':
-                    return estop(evt, api.tool.rename());
-                case 'KeyN':
-                    return shiftKey ? api.tool.invert() : api.normals();
-                case 'KeyW':
-                    return api.wireframe();
+                case 'KeyF':
+                    return shiftKey ? selection.focus() : selection.floor().focus();
                 case 'KeyG':
                     return shiftKey ?
                         (api.mode.is([ api.modes.sketch ]) ? api.sketch.arrange.group() : api.tool.regroup()) :
                         api.grid();
+                case 'KeyH':
+                    return shiftKey ? selection.hide() : space.view.home();
+                case 'KeyI':
+                    return api.file.import();
                 case 'KeyL':
                     return api.log.toggle({ spinner: false });
+                case 'KeyM':
+                    return shiftKey ? api.tool.merge() : api.tool.mirror();
+                case 'KeyN':
+                    return shiftKey ? api.tool.invert() : api.normals();
+                case 'KeyQ':
+                    return api.settings();
+                case 'KeyR':
+                    return estop(evt, api.tool.rename());
                 case 'KeyS':
                     if (!api.mode.is([ api.modes.object ])) return;
                     return shiftKey ? selection.visible({toggle:true}) : meshSplit.start();
-                case 'KeyB':
-                    return selection.boundsBox({toggle:true});
-                case 'KeyH':
-                    return shiftKey ? selection.hide() : space.view.home();
                 case 'KeyT':
                     return shiftKey ? api.tool.triangulate() : space.view.top();
+                case 'KeyU':
+                    return shiftKey && api.tool.union();
+                case 'KeyV':
+                    return shiftKey ? selection.show() : selection.focus();
+                case 'KeyW':
+                    return api.wireframe();
+                case 'KeyX':
+                    return api.file.export();
             }
         },
         'keydown', evt => {
