@@ -61,7 +61,7 @@ const split = {
             if (buttons) {
                 return;
             }
-            let { dim, mid } = meshUtil.bounds(meshes);
+            let { dim, mid } = meshUtil.bounds(models);
             let { point, face, object } = int;
             let { x, y, z } = point;
             // set appearance of split plane

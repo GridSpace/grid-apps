@@ -10,6 +10,7 @@ import { client as motoClient } from '../moto/client.js';
 import { worker } from '../moto/worker.js';
 import { sliceConnect } from '../geo/slicer.js';
 import { newPolygon } from '../geo/polygon.js';
+import { newPoint } from "../geo/point.js";
 import { polygons } from '../geo/polygons.js';
 import { CSG } from '../geo/csg.js';
 import { util } from './util.js';

@@ -917,7 +917,7 @@ function ui_build() {
                     sel_item[lab] = nval;
                     sketch.render();
                 }, { sketch: true });
-                editable(el, el2, e3);
+                editable(el, el2, el3);
             }
 
             return;
