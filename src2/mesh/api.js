@@ -293,7 +293,7 @@ const selection = {
     },
 
     focus() {
-        api.focus(selection.list());
+        selection.count() && api.focus(selection.list());
     },
 
     bounds() {
@@ -1537,7 +1537,10 @@ const api = {
         if (isNaN(center.x * center.y * center.z)) {
             center = { x: 0, y: 0, z: 0 };
         }
-        let { normal } = Array.isArray(object) ? object[0].object : object.object;
+        let { normal } = Array.isArray(object) && object.length ?
+            object[0].object :
+            object.object ||
+            { };
         let left, up;
         if (normal) {
             let { x, y, z } = normal;

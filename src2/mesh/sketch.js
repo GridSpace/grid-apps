@@ -118,6 +118,11 @@ class MeshSketch extends meshObject {
         return this.group;
     }
 
+    get bounds() {
+        this.plane.geometry.computeBoundingBox();
+        return this.plane.geometry.boundingBox.clone();
+    }
+
     get meshes() {
         return this.group.children.filter(c => {
             return c.sketch || (c.sketch_item && c.sketch_item.selected) ? c : undefined
