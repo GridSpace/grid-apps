@@ -373,7 +373,7 @@ function space_init(data) {
         let obj = int?.object;
         if (obj) api.selection.drag({ start: int.object });
         if (obj) obj.sketch_item?.sketch.drag({ start: int.object });
-        return event?.altKey ? undefined : api.objects(selection.count() ? true : false);
+        return selection.count() ? api.objects(true) : undefined;
     });
 
     // called two ways:

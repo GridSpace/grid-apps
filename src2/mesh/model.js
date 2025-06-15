@@ -169,7 +169,6 @@ class MeshModel extends meshObject {
     qrotate(quaternion) {
         this.log('model-rotate', quaternion.toArray());
         this.geometry.applyQuaternion(quaternion);
-        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
@@ -177,7 +176,6 @@ class MeshModel extends meshObject {
         if (x === 1 && y === 1 && z === 1) return;
         this.log('model-scale', ...arguments, this.bounds);
         this.geometry.scale(x, y, z);
-        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
@@ -185,7 +183,6 @@ class MeshModel extends meshObject {
         if (!(x || y || z)) return;
         this.log('model-translate', ...arguments);
         this.geometry.translate(x, y, z);
-        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
@@ -237,8 +234,10 @@ class MeshModel extends meshObject {
     // when geometry updates, recompute bounds for ray intersections
     // and sync data to worker and indexed db
     updateBounds() {
-        if (this._wire)
-        this._wire.geometry.attributes.position.needsUpdate = true;
+        if (this._wire) {
+            this._wire.geometry.attributes.position.needsUpdate = true;
+            this.updateWireEdges();
+        }
         this.attributes.position.needsUpdate = true;
         this.geometry.computeBoundingBox();
         this.geometry.computeBoundingSphere();
@@ -307,10 +306,12 @@ class MeshModel extends meshObject {
         this.log('reload');
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
+        const oldGeo = geo;
+        geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        // signal util.box3expand that geometry changed
-        geo._model_invalid = true;
         geo.computeVertexNormals();
+        this.mesh.geometry = geo;
+        oldGeo.dispose();
         // restore wireframe state
         this.wireframe(was);
         // fixup normals
@@ -443,19 +444,22 @@ class MeshModel extends meshObject {
         if (bool.toggle) {
             bool = !was;
         }
-        // no change
         if (was === bool) {
             return was;
         }
         if (was) {
             this.mesh.remove(this._wire);
-            this._wire?.geometry.dispose();
+            if (this._wire) {
+                this._wire.geometry.dispose();
+                this._wire.material.dispose();
+            }
             this._wire = undefined;
             this.opacity({restore: true});
         }
         if (bool && opt.edges) {
             let edges = new THREE.EdgesGeometry(this.mesh.geometry, opt.edges);
             this._wire = new THREE.LineSegments(edges, materials.wireline);
+            this._wire._edges = opt.edges;
             this.mesh.add(this._wire);
             this.opacity({temp: opt.opacity || 0.15});
         } else if (bool) {
@@ -465,6 +469,15 @@ class MeshModel extends meshObject {
         }
         space.update();
         return was;
+    }
+
+    updateWireEdges() {
+        if (this._wire?.isLineSegments) {
+            const newEdges = new THREE.EdgesGeometry(this.mesh.geometry, this._wire._edges);
+            this._wire.geometry.dispose();
+            this._wire.material.dispose();
+            this._wire.geometry = newEdges;
+        }
     }
 
     normals(bool) {
@@ -574,6 +587,25 @@ class MeshModel extends meshObject {
             this.group = undefined;
             this.removed = 'pending';
         } else {
+            // Clean up geometries and materials
+            if (this._wire) {
+                this._wire.geometry.dispose();
+                this._wire.material.dispose();
+                this._wire = undefined;
+            }
+            if (this._norm) {
+                this._norm.geometry.dispose();
+                this._norm.material.dispose();
+                this._norm = undefined;
+            }
+            if (this.mesh) {
+                this.mesh.geometry.dispose();
+                if (Array.isArray(this.mesh.material)) {
+                    this.mesh.material.forEach(m => m.dispose());
+                } else {
+                    this.mesh.material.dispose();
+                }
+            }
             // manage lifecycle with worker, mesh app caches, etc
             this.destroy();
             // tag removed for debugging

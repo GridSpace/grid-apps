@@ -442,6 +442,7 @@ function ui_build() {
             div({ class: "menu-items" }, [
                 menu_item('Bounds', () => { selection.boundsBox({ toggle: true }) }, 'B'),
                 menu_item('Normals', () => { api.normals() }, 'N'),
+                hr(),
                 menu_item('WireEdges', () => { api.wireedges() }, 'W'),
                 menu_item('WireFaces', () => { api.wireframe() }, [ 'bi-shift', 'W' ]),
                 hr(),

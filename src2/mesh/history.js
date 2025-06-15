@@ -78,6 +78,7 @@ class History {
     }
 
     do(type, data) {
+        console.log({ type, data });
         switch (type) {
             case 'move': {
                 let { set, dx, dy, dz } = data;
