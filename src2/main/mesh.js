@@ -371,11 +371,7 @@ function space_init(data) {
         let obj = int?.object;
         if (obj) api.selection.drag({ start: int.object });
         if (obj) obj.sketch_item?.sketch.drag({ start: int.object });
-        if (event?.shiftKey) {
-            return api.objects();
-        } else {
-            return undefined;
-        }
+        return event?.shiftKey ? undefined : api.objects(selection.count() ? true : false);
     });
 
     // called two ways:
@@ -477,7 +473,8 @@ function space_init(data) {
     space.mouse.onDrag((delta, offset, up = false) => {
         let { mode, modes } = api;
         if (delta) {
-            if (delta.event?.shiftKey && selection.count()) {
+            // if (delta.event?.shiftKey && selection.count()) {
+            if (selection.count()) {
                 selection.drag({ delta, offset });
             }
         } else if (up) {

@@ -865,7 +865,9 @@ function onMouseDown(event) {
         let selection = null,
             trackTo = alignedTracking ? trackPlane : platform,
             isVis = trackTo.visible;
-        if (mouseDownSelect) selection = mouseDownSelect(undefined, event);
+        if (mouseDownSelect) {
+            selection = mouseDownSelect(undefined, event);
+        }
         if (selection && selection.length > 0) {
             // selection = selection.map(o => o.isGroup ? o.children : o).flat();
             // console.log({ selection });

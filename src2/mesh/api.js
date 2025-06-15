@@ -1597,12 +1597,19 @@ const api = {
         prefs.save( prefs.map.space.norm = norm );
     },
 
-    objects() {
+    objects(selected = false) {
         // return model objects suitable for finding ray intersections
-        return [
-            ...group.list().map(o => o.models).flat().map(o => o.mesh),
-            ...sketches.map(s => s.meshes).flat()
-        ];
+        if (selected) {
+            return [
+                ...selection.models().map(o => o.mesh),
+                ...selection.sketches().map(s => s.meshes).flat()
+            ];
+        } else {
+            return [
+                ...group.list().map(o => o.models).flat().map(o => o.mesh),
+                ...sketches.map(s => s.meshes).flat()
+            ];
+        }
     },
 
     add,
