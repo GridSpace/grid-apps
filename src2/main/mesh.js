@@ -230,7 +230,7 @@ function space_init(data) {
                 case 'KeyQ':
                     return api.settings();
                 case 'KeyI':
-                    return shiftKey ? api.tool.invert() : api.file.import();
+                    return api.file.import();
                 case 'KeyX':
                     return api.file.export();
                 case 'KeyD':
@@ -251,8 +251,10 @@ function space_init(data) {
                     return;
                 case 'KeyV':
                     return shiftKey ? selection.show() : selection.focus();
+                case 'KeyR':
+                    return estop(evt, api.tool.rename());
                 case 'KeyN':
-                    return shiftKey ? estop(evt, api.tool.rename()) : api.normals();
+                    return shiftKey ? api.tool.invert() : api.normals();
                 case 'KeyW':
                     return api.wireframe();
                 case 'KeyG':
@@ -371,7 +373,7 @@ function space_init(data) {
         let obj = int?.object;
         if (obj) api.selection.drag({ start: int.object });
         if (obj) obj.sketch_item?.sketch.drag({ start: int.object });
-        return event?.shiftKey ? undefined : api.objects(selection.count() ? true : false);
+        return event?.altKey ? undefined : api.objects(selection.count() ? true : false);
     });
 
     // called two ways:
@@ -490,7 +492,6 @@ function space_init(data) {
 
 function load_files(files) {
     log(`loading file...`);
-    let api = api;
     let has_image = false;
     let has_svg = false;
     let has_gbr = false;

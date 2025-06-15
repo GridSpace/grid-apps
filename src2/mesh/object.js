@@ -86,7 +86,7 @@ class MeshObject {
     }
 
     focus() {
-        api.focus(this.object);
+        api.focus(this);
         return this;
     }
 

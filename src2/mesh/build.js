@@ -510,6 +510,7 @@ function ui_build() {
                 menu_item('Flip Normals', tool.invert, ['bi-shift','I']),
                 menu_item('Triangulate', tool.triangulate, ['bi-shift','T']),
                 menu_item('To Sketch', tool.toSketch),
+                hr(),
                 menu_item('Analyze', tool.analyze),
                 menu_item('Flatten', tool.flatten),
                 menu_item('Clean', tool.clean),

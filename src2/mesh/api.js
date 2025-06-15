@@ -1526,14 +1526,14 @@ const api = {
         }
     },
 
-    // @param object {THREE.Object3D | THREE.Object3D[] | Point}
+    // @param object {MeshObject | MeshObject[]}
     focus(object) {
-        let { center } = object.center ? object : meshUtil.bounds(object);
+        let { center } = meshUtil.bounds(object);
         // when no valid objects supplied, set origin
         if (isNaN(center.x * center.y * center.z)) {
             center = { x: 0, y: 0, z: 0 };
         }
-        let { normal } = object;
+        let { normal } = object.object;
         let left, up;
         if (normal) {
             let { x, y, z } = normal;

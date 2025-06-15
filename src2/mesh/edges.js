@@ -8,7 +8,7 @@
 import { THREE, Line2, LineSegmentsGeometry, LineSegments2, LineGeometry, LineMaterial } from '../ext/three.js';
 import { space as motoSpace } from '../moto/space.js';
 import { newPoint } from '../geo/point.js';
-import { api as meshApi } from './api.js';
+import { api } from './api.js';
 
 const { Vector3, Group } = THREE;
 
@@ -44,7 +44,7 @@ function cmp(v1, v2) {
 
 // points equal if all axis values are within tolerance of each other
 function eq(p1, p2) {
-    return
+    return true &&
         cmp(p1.x, p2.x) &&
         cmp(p1.y, p2.y) &&
         cmp(p1.z, p2.z);
@@ -61,8 +61,6 @@ const edges = {
             return;
         }
 
-        let { api } = meshApi;
-
         isActive = true;
         selected.length = 0;
         obj.visible = false;
@@ -71,7 +69,7 @@ const edges = {
 
         // enable temp mode
         let state = edges.state = { obj };
-        let models = state.models = api.selection.models();
+        let models = state.models = api.model.list();
         let meshes = models.map(m => m.mesh);
 
         // find closest facet edge to hover location
@@ -105,7 +103,7 @@ const edges = {
         space.scene.remove(edges.selected);
         space.mouse.onHover(undefined);
         isActive = edges.state = undefined;
-        meshApi.api.selection.update();
+        api.selection.update();
     },
 
     async add() {
