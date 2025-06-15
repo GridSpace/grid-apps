@@ -60,13 +60,13 @@ const materials = {
         wireframe: true,
         color: 0x0,
         transparent: true,
-        opacity: 0.5
+        opacity: 0.4
     }),
     wireline: new LineBasicMaterial({
         side: DoubleSide,
         color: 0x0,
         transparent: true,
-        opacity: 0.5
+        opacity: 0.4
     }),
 };
 
@@ -270,7 +270,14 @@ class MeshModel extends meshObject {
         let bounds = this.group.bounds;
         group.add(model);
         model.position(pos.x, pos.y, pos.z);
-        model.wireframe(this.wireframe());
+        // preserve wireframe settings
+        let wireSettings = this.wireframe();
+        if (wireSettings.enabled) {
+            model.wireframe(true, {
+                edges: wireSettings.edges,
+                opacity: wireSettings.opacity
+            });
+        }
         if (opt.select) {
             meshApi.selection.add(model);
         }
@@ -437,6 +444,8 @@ class MeshModel extends meshObject {
                 enabled: true,
                 opacity: this.opacity(),
                 color: was ? this._wire.material.color : undefined,
+                edges: this._wire._edges,
+                isLineSegments: this._wire.isLineSegments
             } : {
                 enabled: false
             };
@@ -458,14 +467,14 @@ class MeshModel extends meshObject {
         }
         if (bool && opt.edges) {
             let edges = new THREE.EdgesGeometry(this.mesh.geometry, opt.edges);
-            this._wire = new THREE.LineSegments(edges, materials.wireline);
+            this._wire = new THREE.LineSegments(edges, materials.wireline.clone());
             this._wire._edges = opt.edges;
             this.mesh.add(this._wire);
-            this.opacity({temp: opt.opacity || 0.15});
+            this.opacity({temp: opt.opacity || meshApi.prefs.map.wireframe.opacity});
         } else if (bool) {
-            this._wire = new Mesh(this.mesh.geometry.shallowClone(), materials.wireframe);
+            this._wire = new Mesh(this.mesh.geometry.shallowClone(), materials.wireframe.clone());
             this.mesh.add(this._wire);
-            this.opacity({temp: opt.opacity || 0.15});
+            this.opacity({temp: opt.opacity || meshApi.prefs.map.wireframe.opacity});
         }
         space.update();
         return was;
