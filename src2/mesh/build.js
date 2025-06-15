@@ -469,7 +469,7 @@ function ui_build() {
             div({ id: "mode-label" })
         ]),
         div({ class: "menu sketch-on" }, [
-            div('Object'),
+            div('Items'),
             div({ class: "menu-items" }, [
                 menu_item('Group', sketch.arrange.group),
                 menu_item('Ungroup', sketch.arrange.ungroup),
@@ -487,7 +487,7 @@ function ui_build() {
             ])
         ]),
         div({ class: "menu sketch-off" }, [
-            div('Object'),
+            div('Objects'),
             div({ class: "menu-items" }, [
                 menu_item('Regroup', tool.regroup),
                 menu_item('Isolate', tool.isolate),
@@ -519,7 +519,7 @@ function ui_build() {
             ])
         ]),
         div({ class: "menu sketch-on" }, [
-            div('Shape'),
+            div('Shapes'),
             div({ class: "menu-items" }, [
                 menu_item('Duplicate', tool.duplicate, ['bi-shift','D']),
                 menu_item('Extrude', () => sketch.extrude(), ['bi-shift','E']),
