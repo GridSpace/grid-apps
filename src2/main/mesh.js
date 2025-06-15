@@ -8,6 +8,7 @@ import '../add/three.js';
 import '../mesh/build.js';
 
 import { api } from '../mesh/api.js';
+import { base } from '../geo/base.js';
 import { space } from '../moto/space.js';
 import { broker } from '../moto/broker.js';
 import { $, $d, h, estop } from '../moto/webui.js';
@@ -269,7 +270,13 @@ function space_init(data) {
                 case 'KeyV':
                     return shiftKey ? selection.show() : selection.focus();
                 case 'KeyW':
-                    return api.wireframe();
+                    return shiftKey ?
+                        api.wireframe() :
+                        api.wireframe({
+                            toggle: true
+                        }, {
+                            edges: base.util.toDegrees(api.prefs.map.surface.radians)
+                        });
                 case 'KeyX':
                     return api.file.export();
             }

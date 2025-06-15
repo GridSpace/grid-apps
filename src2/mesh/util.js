@@ -2,11 +2,9 @@
 
 import { THREE } from '../ext/three.js';
 import { api as meshApi } from './api.js';
-import { object as meshObject } from './object.js';
 
-const { Matrix4, Matrix3, Vector3, Box3, LineSegments, BufferGeometry, Float32BufferAttribute, LineBasicMaterial } = THREE;
+const { Matrix3, Vector3, Box3, LineSegments, BufferGeometry, Float32BufferAttribute, LineBasicMaterial } = THREE;
 const deferFn = [];
-const boundsCache = {};
 
 // util functions augmented in build (download)
 const util = {

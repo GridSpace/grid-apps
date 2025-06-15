@@ -449,12 +449,13 @@ class MeshModel extends meshObject {
         }
         if (was) {
             this.mesh.remove(this._wire);
+            this._wire?.geometry.dispose();
             this._wire = undefined;
             this.opacity({restore: true});
         }
-        if (bool === 'edges') {
-            let edges = new THREE.EdgesGeometry(this.mesh.geometry, 5);
-            this._wire = new THREE.LineSegments(edges, materials.wireframe);
+        if (bool && opt.edges) {
+            let edges = new THREE.EdgesGeometry(this.mesh.geometry, opt.edges);
+            this._wire = new THREE.LineSegments(edges, materials.wireline);
             this.mesh.add(this._wire);
             this.opacity({temp: opt.opacity || 0.15});
         } else if (bool) {

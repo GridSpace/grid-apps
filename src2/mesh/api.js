@@ -183,8 +183,9 @@ const selection = {
             group.select(false);
             group.normals(prefs.map.space.norm || false);
             group.wireframe(prefs.map.space.wire || false, {
-                opacity: prefs.map.wireframe.opacity}
-            );
+                opacity: prefs.map.wireframe.opacity,
+                edges: prefs.map.space.wire_edge
+            });
         }
         for (let sketch of sketches) {
             sketch.select(false);
@@ -1533,7 +1534,7 @@ const api = {
         if (isNaN(center.x * center.y * center.z)) {
             center = { x: 0, y: 0, z: 0 };
         }
-        let { normal } = object.object;
+        let { normal } = Array.isArray(object) ? object[0].object : object.object;
         let left, up;
         if (normal) {
             let { x, y, z } = normal;
@@ -1559,9 +1560,12 @@ const api = {
         save();
     },
 
-    wireframe(state = { toggle:true }, opt = { opacity: prefs.map.wireframe.opacity }) {
+    wireframe(state = { toggle:true }, opt = {
+        opacity: prefs.map.wireframe.opacity,
+        edges: prefs.map.space.wire_edge
+    }) {
         const mspace = prefs.map.space;
-        let wire = mspace.wire;
+        let { wire } = mspace;
         if (state.toggle) {
             wire = !wire;
         } else {
@@ -1570,7 +1574,9 @@ const api = {
         for (let m of model.list()) {
             m.wireframe(wire, opt);
         }
-        prefs.save( mspace.wire = wire );
+        mspace.wire = wire;
+        mspace.wire_edge = wire ? opt.edges : 0;
+        prefs.save();
         api.updateFog();
     },
 
@@ -1644,6 +1650,8 @@ function log() {
 }
 
 const call = broker.send;
+
+self.mesh_api = api;
 
 export {
     sketches,
