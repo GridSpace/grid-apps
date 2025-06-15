@@ -475,7 +475,6 @@ function space_init(data) {
     space.mouse.onDrag((delta, offset, up = false) => {
         let { mode, modes } = api;
         if (delta) {
-            // if (delta.event?.shiftKey && selection.count()) {
             if (selection.count()) {
                 selection.drag({ delta, offset });
             }

@@ -1,10 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { broker } from "../moto/broker.js";
+import { target } from "./sketch.js";
 
 class History {
     #pos = -1;
     #stack = [];
+    #offset; // store final drag move
+    #target; // store sketch drag target
     #tracking = false;
 
     constructor() {
@@ -14,26 +17,35 @@ class History {
                 this.#tracking = true
             },
 
-            drag_start(selected) {
-                this.push('position', selected.map(model => ({
-                    model,
-                    pos: model.position().toArray()
-                })));
+            drag_start(selected) {},
+
+            drag(opt) {
+                this.#target = target();
+                this.#offset = opt.offset;
             },
 
             drag_end(selected) {
-                this.update(selected.map(model => ({
-                    model,
-                    pos: model.position().toArray()
-                })));
+                // console.log({
+                //     drag_end: selected,
+                //     offset: this.#offset,
+                //     target: this.#target
+                // });
+                const { x, y, z } = this.#offset;
+                broker.publish('move', {
+                    target: this.#target,
+                    set: selected,
+                    dx: x,
+                    dy: y,
+                    dz: z
+                });
             },
 
             move(data) {
-                const { set, dx, dy, dz } = data;
+                const { target, set, dx, dy, dz } = data;
                 this.push('move', {
-                    set, dx: -dx, dy: -dy, dz: -dz
+                    set, dx: -dx, dy: -dy, dz: -dz, target
                 }, {
-                    set, dx, dy, dz
+                    set, dx, dy, dz, target
                 });
             },
 
@@ -67,32 +79,32 @@ class History {
         });
     }
 
-    update(redo, undo) {
-        let peek = this.#stack.peek();
-        if (peek) {
-            Object.assign(peek, {
-                redo: redo || peek.redo,
-                undo: undo || peek.undo
-            });
-        }
-    }
+    // update(redo, undo) {
+    //     let peek = this.#stack.peek();
+    //     if (peek) {
+    //         Object.assign(peek, {
+    //             redo: redo || peek.redo,
+    //             undo: undo || peek.undo
+    //         });
+    //     }
+    // }
 
     do(type, data) {
-        console.log({ type, data });
+        // console.log({ type, data });
         switch (type) {
             case 'move': {
-                let { set, dx, dy, dz } = data;
+                let { set, dx, dy, dz, target } = data;
                 for (let grp of set) {
-                    grp.move(dx, dy, dz);
+                    grp.move(dx, dy, dz, target);
                 }
                 break;
             }
-            case 'position': {
-                for (let { model, pos } of data) {
-                    model.position(...pos);
-                }
-                break;
-            }
+            // case 'position': {
+            //     for (let { model, pos } of data) {
+            //         model.position(...pos);
+            //     }
+            //     break;
+            // }
             case 'rotate': {
                 let { set, dx, dy, dz } = data;
                 for (let grp of set) {

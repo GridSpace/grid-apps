@@ -395,8 +395,20 @@ class MeshSketch extends meshObject {
         return bool;
     }
 
-    move(x, y, z = 0) {
+    position() {
         const { target } = drag;
+        console.log({ sk_pos: [ ...arguments ], target });
+        const [ nx, ny, nz ] = [ ...arguments ];
+        if (nx || ny || nz) {
+            this.center = { x: nx, y: ny, z: nz };
+            this.render();
+        } else {
+            const { x, y, z } = this.center;
+            return new Vector3(x, y, z);
+        }
+    }
+
+    move(x, y, z = 0, target = drag.target) {
         const { center, scale, plane, handles } = this;
         const handle = handles.indexOf(target);
         if (target === plane) {
@@ -636,4 +648,8 @@ class SketchItem {
     }
 }
 
-export { MeshSketch as sketch, SketchItem };
+function target() {
+    return drag.target;
+}
+
+export { MeshSketch as sketch, SketchItem, target };

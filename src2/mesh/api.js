@@ -217,6 +217,8 @@ const selection = {
             broker.publish('drag_start', selected);
         } else if (opt.end) {
             broker.publish('drag_end', selected);
+        } else {
+            broker.publish('drag', opt);
         }
         selected.forEach(s => s.drag(opt));
         return selection;
