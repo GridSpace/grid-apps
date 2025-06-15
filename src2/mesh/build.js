@@ -442,7 +442,8 @@ function ui_build() {
             div({ class: "menu-items" }, [
                 menu_item('Bounds', () => { selection.boundsBox({ toggle: true }) }, 'B'),
                 menu_item('Normals', () => { api.normals() }, 'N'),
-                menu_item('Wireframes', () => { api.wireframe() }, 'W'),
+                menu_item('WireEdges', () => { api.wireedges() }, 'W'),
+                menu_item('WireFaces', () => { api.wireframe() }, [ 'bi-shift', 'W' ]),
                 hr(),
                 menu_item('Gridlines', () => { api.grid() }, 'G'),
                 menu_item('Messages', () => { api.log.toggle({ spinner: false }) }, 'L'),

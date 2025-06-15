@@ -4,6 +4,7 @@ import { broker } from '../moto/broker.js';
 import { history } from './history.js';
 import { client as motoClient } from '../moto/client.js';
 import { space as motoSpace } from '../moto/space.js';
+import { base } from '../geo/base.js';
 import { util as meshUtil } from './util.js';
 import { edges as meshEdges } from './edges.js';
 import { group as meshGroup } from './group.js';
@@ -1558,6 +1559,13 @@ const api = {
         }
         map.space.grid = platform.isGridVisible();
         save();
+    },
+
+    wireedges(state = { toggle:true }, opt = {
+        opacity: prefs.map.wireframe.opacity,
+        edges: base.util.toDegrees(api.prefs.map.surface.radians)
+    }) {
+        api.wireframe(state, opt);
     },
 
     wireframe(state = { toggle:true }, opt = {
