@@ -36,7 +36,7 @@ class MeshGroup extends meshObject {
     get bounds() {
         let box3 = new Box3();
         for (let model of this.models) {
-            box3.union(model.world_bounds);
+            box3.union(model.bounds);
         }
         return box3;
     }

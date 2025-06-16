@@ -11,6 +11,7 @@ import { api } from '../mesh/api.js';
 import { space } from '../moto/space.js';
 import { broker } from '../moto/broker.js';
 import { $, $d, h, estop } from '../moto/webui.js';
+import { handles } from '../mesh/handles.js';
 import { client as motoClient } from '../moto/client.js';
 import { split as meshSplit } from '../mesh/split.js';
 import { model as meshModel, materials } from '../mesh/model.js';

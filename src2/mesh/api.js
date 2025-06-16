@@ -324,7 +324,7 @@ const pattern = {
             let models = selection.models();
             let [ cx, cy ] = center;
             for (let model of models) {
-                let pos = model.world_bounds.mid;
+                let pos = model.bounds.mid;
                 let stepr = (Math.PI * 2) / count;
                 let modnu = [ model ];
                 for (let i=1; i<count; i++) {
@@ -414,7 +414,7 @@ const group = {
     // @param group {MeshGroup}
     add(group) {
         groups.addOnce(group);
-        motoSpace.world.add(group.object);  
+        motoSpace.world.add(group.object);
         meshUtil.defer(selection.update);
         motoSpace.update();
         return group;
@@ -506,7 +506,7 @@ let sketch = {
                 for (let rec of recs) {
                     let { item } = rec;
                     let poly = newPolygon().fromObject(item);
-                    poly.move({ x: -center.x, y: -center.y, z:0 });
+                    poly.move({ x: -center.x, y: -center.y, z: 0 });
                     Object.assign(rec.item, poly.toObject());
                 }
                 sketch.render();

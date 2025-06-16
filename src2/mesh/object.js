@@ -28,7 +28,7 @@ class MeshObject {
     }
 
     log() {
-        // api.log.emit(this.id, this.type, ...arguments);
+        api.log.emit(this.id, this.type, ...arguments);
     }
 
     get type() {
@@ -104,20 +104,15 @@ class MeshObject {
     }
 
     floor() {
-        let b = this.bounds;
-        return this.move(0, 0, -b.min.z);
+        return this.move(0, 0, -this.bounds.min.z);
     }
 
     center() {
         throw "center() requires implementation";
-        let b = this.bounds;
-        return this.move(-b.mid.x, -b.mid.y, -b.mid.z);
     }
 
     centerXY() {
         throw "centerXY() requires implementation";
-        let b = this.bounds;
-        return this.move(-b.mid.x, -b.mid.y, 0);
     }
 
     move() {

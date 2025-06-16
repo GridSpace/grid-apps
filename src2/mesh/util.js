@@ -64,8 +64,7 @@ const util = {
         }
     },
 
-    // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}
-    // @returns bounds modified for moto.space
+    // @param object {MeshObject | MeshObject[]}
     bounds(object) {
         // console.log({ bounds: object });
         let box = new Box3();
@@ -76,29 +75,9 @@ const util = {
         } else if (object) {
             box.union(object.bounds);
         }
-        let bnd = {
-            min: {
-                x: box.min.x,
-                y: box.min.y,
-                z: box.min.z
-            },
-            max: {
-                x: box.max.x,
-                y: box.max.y,
-                z: box.max.z
-            }
-        };
-        bnd.size = bnd.dim = {
-            x: bnd.max.x - bnd.min.x,
-            y: bnd.max.y - bnd.min.y,
-            z: bnd.max.z - bnd.min.z
-        };
-        bnd.center = bnd.mid = {
-            x:  (bnd.max.x + bnd.min.x) / 2,
-            y: -(bnd.max.y + bnd.min.y) / 2,
-            z:  (bnd.max.z + bnd.min.z) / 2
-        };
-        return bnd;
+        box.size = box.dim;
+        box.center = box.mid;
+        return box;
     },
 
     // extract object fields into an array with optional rounding

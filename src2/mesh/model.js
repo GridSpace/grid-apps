@@ -114,12 +114,16 @@ class MeshModel extends meshObject {
         return this.mesh;
     }
 
-    get bounds() {
+    get geo_bounds() {
         return this.geometry.boundingBox.clone();
     }
 
-    get world_bounds() {
-        return this.bounds.translate(this.position());
+    get bounds() {
+        // console.log('bounds',
+        //     this.geometry.boundingBox.clone(),
+        //     this.position().clone()
+        // );
+        return this.geometry.boundingBox.clone().translate(this.position());
     }
 
     get positions() {
@@ -220,13 +224,15 @@ class MeshModel extends meshObject {
     // moves mesh object center to target
     centerTo(to) {
         this.log('model-centerto', to);
-        let { mid } = this.bounds;
-        let abs = this.world_bounds.mid;
-        this.translate(
-            -mid.x + (abs.x - to.x),
-            -mid.y + (abs.y - to.y),
-            -mid.z + (abs.z - to.z),
-        );
+        let geo = this.geo_bounds;
+        let { mid } = this.bounds.translate({
+            x: -to.x,
+            y: -to.y,
+            z: -to.z
+        });
+        // this.translate(-geo.mid.x, -geo.mid.y, -geo.mid.z);
+        // this.translate(mid.x, mid.y, mid.z);
+        this.translate(-geo.mid.x+mid.x, -geo.mid.y+mid.y, -geo.mid.z+mid.z);
         this.position(to.x, to.y, to.z);
         return this;
     }
