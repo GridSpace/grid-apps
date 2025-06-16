@@ -6,9 +6,9 @@ description: For Classrooms and Shared Workstations, Maintain Consistent Setups
 
 [Kiri:Moto](https://grid.space/kiri/) stores all settings in our browser's local cache. There are times when you want to share settings between computers or setup a master config that is shared in classroom settings. In order to facilitate this, Kiri:Moto provides two hot keys and a URL short-cut for loading a default configuration at the time the application page loads.
 
-* `U` key (uppercase) to get a unique settings key
-* `u` key (lowercase) to restore a setting with a given key
-* append `#key` to Kiri's URL to load the app with a given key
+- `U` key (uppercase) to get a unique settings key
+- `u` key (lowercase) to restore a setting with a given key
+- append `#key` to Kiri's URL to load the app with a given key
 
 Using the last method, you can create a master settings configuration then give our or link to Kiri with an url that looks like:
 

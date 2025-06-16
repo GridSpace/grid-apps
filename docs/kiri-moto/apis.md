@@ -40,24 +40,24 @@ JSON dictionaries can be used for reference from the [CLI package](https://githu
 
 Kiri:Moto is designed to be embedded in a page using an IFrame. The look and feel and other controls are available for the loaded page using a messaging API. An example page is [here](https://grid.space/kiri/frame.html).
 
-| function                    | description                                                                                             |
-| --------------------------- | ------------------------------------------------------------------------------------------------------- |
-| setFrame(_id\_obj_)         | id or object of IFrame with Kiri:Moto loaded                                                            |
-| load(_url_)                 | load an [STL](https://en.wikipedia.org/wiki/STL\_\(file\_format\)) referred to by _url_                 |
-| clear()                     | remove all objects from workspace                                                                       |
-| parse(_data_)               | parse the text or binary contents of an [STL](https://en.wikipedia.org/wiki/STL\_\(file\_format\)) file |
-| setMode(_mode_)             | where _mode_ comes from:`[ "CAM", "FDM", "LASER", "SLA" ]`                                              |
-| setDevice(_options_)        | change default Device options                                                                           |
-| setProcess(options)         | change default Process options                                                                          |
-| setController(options)      | change default Core options                                                                             |
-| slice()                     | async slice of loaded object                                                                            |
-| prepare()                   | async path routing of slice data                                                                        |
-| export()                    | async gcode generation from routed paths                                                                |
-| onmessage(_fn_)             | function will receive all IFrame messages                                                               |
-| onevent(_event, data_)      | function will receive named messages                                                                    |
-| emit(_event, data_)         | send named event with data payload                                                                      |
-| alert(_msg, time_)          | show alert message with optional time in seconds                                                        |
-| process(_percent, message_) | set progress bar (0.0 to 1.0) with optional message                                                     |
+| function                    | description                                                                                           |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| setFrame(_id_obj_)          | id or object of IFrame with Kiri:Moto loaded                                                          |
+| load(_url_)                 | load an [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>) referred to by _url_                 |
+| clear()                     | remove all objects from workspace                                                                     |
+| parse(_data_)               | parse the text or binary contents of an [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>) file |
+| setMode(_mode_)             | where _mode_ comes from:`[ "CAM", "FDM", "LASER", "SLA" ]`                                            |
+| setDevice(_options_)        | change default Device options                                                                         |
+| setProcess(options)         | change default Process options                                                                        |
+| setController(options)      | change default Core options                                                                           |
+| slice()                     | async slice of loaded object                                                                          |
+| prepare()                   | async path routing of slice data                                                                      |
+| export()                    | async gcode generation from routed paths                                                              |
+| onmessage(_fn_)             | function will receive all IFrame messages                                                             |
+| onevent(_event, data_)      | function will receive named messages                                                                  |
+| emit(_event, data_)         | send named event with data payload                                                                    |
+| alert(_msg, time_)          | show alert message with optional time in seconds                                                      |
+| process(_percent, message_) | set progress bar (0.0 to 1.0) with optional message                                                   |
 
 ## Events
 
