@@ -8,7 +8,7 @@ description: Frequently Asked Questions
 
 Entirely.
 
-The source code is on [GitHub](https://github.com/GridSpace/grid-apps) if you want to install and run it yourself. It is available under the [MIT](https://en.wikipedia.org/wiki/MIT\_License) license, which is one of the most liberal in terms of allowing you to do what you want with the code without restriction.
+The source code is on [GitHub](https://github.com/GridSpace/grid-apps) if you want to install and run it yourself. It is available under the [MIT](https://en.wikipedia.org/wiki/MIT_License) license, which is one of the most liberal in terms of allowing you to do what you want with the code without restriction.
 
 Multiple live [versions](https://grid.space/choose) (including current development branches) are served free of charge and free of ads on [Grid.Space](https://grid.space/kiri/).
 
@@ -18,10 +18,10 @@ It has similar capabilities to other 3D printing slicers like Cura, Simplify3D, 
 
 It is very different in several important ways:
 
-* There is no software to install or maintain. It's just a web page.
-* As a web app, it runs in a security sandbox and cannot access data on your hard drive
-* It offers several modes of operation for most of the common maker tools, like CNC mills
-* It is updated quite frequently (several times a week) with bug fixes and new features
+- There is no software to install or maintain. It's just a web page.
+- As a web app, it runs in a security sandbox and cannot access data on your hard drive
+- It offers several modes of operation for most of the common maker tools, like CNC mills
+- It is updated quite frequently (several times a week) with bug fixes and new features
 
 ## What language is it written in?
 
@@ -29,7 +29,7 @@ It is almost entirely Javascript. There are a few minor modules compiled into WA
 
 ## What file types are supported?
 
-[STL](https://en.wikipedia.org/wiki/STL\_\(file\_format\)), [OBJ](https://en.wikipedia.org/wiki/Wavefront\_.obj\_file), and [3MF](https://github.com/3MFConsortium/spec\_core/blob/master/3MF%20Core%20Specification.md) files are supported for 3D part import. [SVG](https://en.wikipedia.org/wiki/Scalable\_Vector\_Graphics) files import and auto-convert into 3D models. [PNG](https://en.wikipedia.org/wiki/Portable\_Network\_Graphics) files are supported for 2D image to 3D model conversion.
+[STL](<https://en.wikipedia.org/wiki/STL_(file_format)>), [OBJ](https://en.wikipedia.org/wiki/Wavefront_.obj_file), and [3MF](https://github.com/3MFConsortium/spec_core/blob/master/3MF%20Core%20Specification.md) files are supported for 3D part import. [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics) files import and auto-convert into 3D models. [PNG](https://en.wikipedia.org/wiki/Portable_Network_Graphics) files are supported for 2D image to 3D model conversion.
 
 ## What if my printer isn't supported?
 
@@ -43,3 +43,7 @@ Start with the [forum](https://forum.grid.space/) discussions. If you want to ge
 
 Kiri comes from Kiri-e, which is the Japanese art of paper-cutting. Moto is short for "modeling tool".
 
+## What are the `.kmz` and `.km` file formats short for?
+
+- `kmz` stands for **Kiri Moto Zip**, and contains an entire zipped workspace
+- `km` stands for **Kiri Moto**, and contains [CAM tool](./CAM/tools) paramers.
