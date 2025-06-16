@@ -2,7 +2,7 @@
 
 import { client as motoClient } from '../moto/client.js';
 import { space as motoSpace } from '../moto/space.js';
-import { broker as motoBroker } from '../moto/broker.js';
+import { broker } from '../moto/broker.js';
 import { object as meshObject } from './object.js';
 import { model as meshModel, materials } from './model.js';
 import { util as meshUtil } from './util.js';
@@ -11,7 +11,7 @@ import { newPolygon } from '../geo/polygon.js';
 import { polygons } from '../geo/polygons.js';
 import { THREE } from '../ext/three.js';
 
-const { BufferGeometry, BufferAttribute, Quaternion, MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide, PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Mesh, Group } = THREE;
+const { BufferGeometry, BufferAttribute, Quaternion, MeshBasicMaterial, LineBasicMaterial, LineSegments, DoubleSide, PlaneGeometry, EdgesGeometry, SphereGeometry, Vector3, Box3, Mesh, Group } = THREE;
 const worker = motoClient.fn;
 const drag = {};
 const hpos = [
@@ -119,8 +119,19 @@ class MeshSketch extends meshObject {
     }
 
     get bounds() {
-        this.plane.geometry.computeBoundingBox();
-        return this.plane.geometry.boundingBox.clone();
+        const { scale, center } = this;
+        return new Box3(
+            new Vector3(
+                center.x - scale.x/2,
+                center.y - scale.y/2,
+                center.z
+            ),
+            new Vector3(
+                center.x + scale.x/2,
+                center.y + scale.y/2,
+                center.z
+            )
+        );
     }
 
     get meshes() {
@@ -152,7 +163,7 @@ class MeshSketch extends meshObject {
             all() {
                 sketch.items.forEach(i => i.selected = true);
                 sketch.render();
-                motoBroker.publish('sketch_selections');
+                broker.publish('sketch_selections');
                 return sketch.items.length;
             },
 
@@ -162,7 +173,7 @@ class MeshSketch extends meshObject {
                 if (sel.length) {
                     sel.forEach(s => s.selected = false);
                     sketch.render();
-                    motoBroker.publish('sketch_selections');
+                    broker.publish('sketch_selections');
                 }
                 return sel.length;
             },
@@ -173,7 +184,7 @@ class MeshSketch extends meshObject {
                 if (sel.length) {
                     sketch.items = sketch.items.filter(i => !i.selected);
                     sketch.render();
-                    motoBroker.publish('sketch_selections');
+                    broker.publish('sketch_selections');
                 }
                 return sel.length;
             },
@@ -524,6 +535,7 @@ class MeshSketch extends meshObject {
         }
         this.update();
         motoSpace.refresh();
+        broker.publish('sketch_render', this);
     }
 
     render_defer() {
@@ -589,7 +601,7 @@ class SketchItem {
         }
         this.update();
         sketch.render();
-        motoBroker.publish('sketch_selections');
+        broker.publish('sketch_selections');
     }
 
     extrude(z, opt = {}) {

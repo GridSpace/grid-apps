@@ -29,14 +29,14 @@ class TransformTool {
         this.handleColor = 0x0088ff;
         this.handleOpacity = 0.5;
         this.visible = false;
-        
+
         // Create materials
         this.handleMaterial = new MeshBasicMaterial({
             color: this.handleColor,
             transparent: true,
             opacity: this.handleOpacity
         });
-        
+
         this.edgeMaterial = new LineBasicMaterial({
             color: this.handleColor,
             transparent: true,
@@ -56,6 +56,7 @@ class TransformTool {
             selection_scale: () => this.update(),
             selection_rotate: () => this.update(),
             selection_qrotate: () => this.update(),
+            sketch_render: () => this.update(),
             history_undo: () => this.update(),
             history_redo: () => this.update(),
             move: () => this.update(),
@@ -95,18 +96,7 @@ class TransformTool {
         if (sketch) {
             // For sketches, use 2D mode
             this.mode = '2d';
-            bounds = {
-                min: new Vector3(
-                    sketch.center.x - sketch.scale.x/2,
-                    sketch.center.y - sketch.scale.y/2,
-                    0
-                ),
-                max: new Vector3(
-                    sketch.center.x + sketch.scale.x/2,
-                    sketch.center.y + sketch.scale.y/2,
-                    0
-                )
-            };
+            bounds = sketch.bounds;
         } else {
             // For models/groups, use 3D mode
             this.mode = '3d';
@@ -134,7 +124,7 @@ class TransformTool {
 
         const { min, max } = this.bounds;
         const corners = this.getCorners(min, max);
-        
+
         // Create handles for each corner
         corners.forEach(corner => {
             const handle = this.createHandle();
@@ -207,12 +197,13 @@ class TransformTool {
 
     getCorners(min, max) {
         if (this.mode === '2d') {
-            // 2D mode - 4 corners in XY plane
+            // 2D mode - 4 corners in XY plane at z midline
+            const zMid = (min.z + max.z) / 2;
             return [
-                new Vector3(min.x, min.y, 0),
-                new Vector3(max.x, min.y, 0),
-                new Vector3(max.x, max.y, 0),
-                new Vector3(min.x, max.y, 0)
+                new Vector3(min.x, min.y, zMid),
+                new Vector3(max.x, min.y, zMid),
+                new Vector3(max.x, max.y, zMid),
+                new Vector3(min.x, max.y, zMid)
             ];
         } else {
             // 3D mode - 8 corners of bounding box
@@ -236,15 +227,15 @@ class TransformTool {
             this.handleSize,
             this.handleSize
         );
-        
+
         // Create the handle mesh
         const handle = new Mesh(geometry, this.handleMaterial);
-        
+
         // Add wireframe edges
         const edges = new EdgesGeometry(geometry);
         const line = new LineSegments(edges, this.edgeMaterial);
         handle.add(line);
-        
+
         return handle;
     }
 
