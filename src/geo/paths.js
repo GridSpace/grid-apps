@@ -6,10 +6,11 @@
 
 // dep: geo.base
 // dep: geo.point
+
 gapp.register("geo.paths", [], (root, exports) => {
 
 const { base } = root;
-const { util, config } = base;
+const { util, config, newPoint } = base;
 const { sqr, numOrDefault } = util;
 
 const DEG2RAD = Math.PI / 180;
@@ -526,6 +527,102 @@ function shapeToPath(shape, points, closed) {
     return {index, faces};
 }
 
+/**
+ * Generate a list of points approximating a circular arc.
+ * @param {Point} start - the starting point of the arc.
+ * @param {Point} end - the ending point of the arc.
+ * @param {number} [arcdivs= 24] - the number of lines to use to represent PI radians
+ * @param {number} opts.radius - the radius of the arc. If undefined, will use the
+ *     start and end points to infer the radius.
+ * @param {boolean} opts.clockwise - whether the arc is clockwise or counter-clockwise.
+ *     generating the points.
+ *
+ * @return {Array<Point>} an array of points representing the arc.
+ */
+function arcToPath( start, end,arcdivs=24,opts) {
+
+    let { clockwise, center, radius } = opts;
+
+    // @type {Point}
+    
+
+    if (end.x === undefined && end.x === undefined && center === undefined) {
+        // bambu generates loop z or wipe loop arcs in place
+        // console.log({ skip_empty_arc: rec });
+        return;
+
+    }
+
+    if (center) {
+        // center = center.add(start);
+        center.r = center.distTo2D(start);
+        
+    } else if (radius !== undefined) {
+        let pd = { x: end.x - start.x, y: end.y - start.y }; //position delta
+        let dst = Math.sqrt(pd.x * pd.x + pd.y * pd.y) / 2; // distance
+        let pr2;
+        if (Math.abs(dst - radius) < 0.001) {
+            // center point radius
+            pr2 = { x: (end.x + start.x) / 2, y: (end.y + start.y) / 2};
+        } else {
+            // triangulate
+            pr2 = base.util.center2pr(start, end, radius, clockwise);
+        }
+        center.x = pr2.x;
+        center.y = pr2.y;
+        center.r = radius;
+    } else {
+        console.log({malfomed_arc: {radius,center, clockwise, start, end}});
+    }
+
+    //deltas
+    let dx = start.x - end.x;
+    let dy = start.y - end.y;
+    let dz = start.z - end.z;
+
+    // line angles
+    let a1 = Math.atan2(center.y - start.y, center.x - start.x) + Math.PI;
+    let a2 = Math.atan2(center.y - end.y, center.x - end.x) + Math.PI;
+    let ad = base.util.thetaDiff(a1, a2, clockwise); // angle difference in radians
+    let samePoint = Math.abs(ad) < 0.001
+    let ofFull =  Math.abs(ad)/(2*Math.PI);
+    let steps =  samePoint? arcdivs : Math.max(Math.floor( arcdivs * ofFull),4);
+    let step =  (samePoint? (Math.PI*2) : ad) / steps;
+    let numPoints  = steps/ step;
+    let zStart = start.z;
+    let zStep = dz / numPoints;
+    let rot = a1 + step;
+
+    //unused deltas
+    let da = Math.abs(a1 - a2);
+    let dd = Math.sqrt(dx * dx + dy * dy);
+
+    // LOG({index, da, dd, first: pos, last: rec, center, a1, a2, ad, step, steps, rot, line});
+    // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
+
+    // under 1 degree arc and 5mm, convert to straight line
+    // if (da < 0.005 && dd < 5) {
+    //     G0G1(false, [`X${end.x}`, `Y${end.y}`, `E1`]);
+    //     return ;
+    // }
+
+    let arr = [] // point accumulator
+    for (let i=0; i<=steps-2; i++) {
+        if (isNaN(center.r) || isNaN(center.x) || isNaN(center.y)) {
+            console.log({malfomed_arc: {radius, clockwise, start, end}});
+        }
+        arr.push(newPoint(
+            center.x + Math.cos(rot) * center.r,
+            center.y + Math.sin(rot) * center.r,
+            zStart,
+        ));
+        zStart += zStep;
+        rot += step;
+    }
+    // console.log(arr,start,end);
+    return arr
+}
+
 class FloatPacker {
     constructor(size, factor) {
         this.size = size;
@@ -565,6 +662,7 @@ base.paths = {
     shapeToPath,
     pointsToPath,
     pathTo3D,
+    arcToPath,
     vertexNormal: calc_vertex,
     segmentNormal: calc_normal
 };
