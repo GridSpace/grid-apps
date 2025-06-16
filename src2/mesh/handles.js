@@ -22,6 +22,7 @@ class TransformTool {
     constructor() {
         this.group = new Group();
         this.handles = [];
+        this.lines = []; // Add array to track connecting lines
         this.mode = '2d'; // or '3d'
         this.bounds = null;
         this.handleSize = 2; // Fixed size in world units
@@ -123,9 +124,11 @@ class TransformTool {
     }
 
     updateHandles() {
-        // Clear existing handles
+        // Clear existing handles and lines
         this.handles.forEach(handle => this.group.remove(handle));
+        this.lines.forEach(line => this.group.remove(line));
         this.handles = [];
+        this.lines = [];
 
         if (!this.bounds) return;
 
@@ -139,6 +142,67 @@ class TransformTool {
             this.handles.push(handle);
             this.group.add(handle);
         });
+
+        // Add connecting lines between handles
+        if (this.mode === '2d') {
+            // For 2D mode, connect handles with horizontal and vertical lines
+            const lineGeometry = new THREE.BufferGeometry();
+            const linePositions = [];
+
+            // Horizontal lines
+            linePositions.push(
+                corners[0].x, corners[0].y, corners[0].z,  // 0 to 1
+                corners[1].x, corners[1].y, corners[1].z,
+                corners[2].x, corners[2].y, corners[2].z,  // 2 to 3
+                corners[3].x, corners[3].y, corners[3].z
+            );
+
+            // Vertical lines
+            linePositions.push(
+                corners[0].x, corners[0].y, corners[0].z,  // 0 to 3
+                corners[3].x, corners[3].y, corners[3].z,
+                corners[1].x, corners[1].y, corners[1].z,  // 1 to 2
+                corners[2].x, corners[2].y, corners[2].z
+            );
+
+            lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+            const line = new THREE.LineSegments(lineGeometry, this.edgeMaterial);
+            this.lines.push(line);
+            this.group.add(line);
+        } else {
+            // For 3D mode, connect handles with axis-aligned lines
+            const lineGeometry = new THREE.BufferGeometry();
+            const linePositions = [];
+
+            // Bottom face (horizontal lines)
+            for (let i = 0; i < 4; i++) {
+                linePositions.push(
+                    corners[i].x, corners[i].y, corners[i].z,
+                    corners[(i + 1) % 4].x, corners[(i + 1) % 4].y, corners[(i + 1) % 4].z
+                );
+            }
+
+            // Top face (horizontal lines)
+            for (let i = 4; i < 8; i++) {
+                linePositions.push(
+                    corners[i].x, corners[i].y, corners[i].z,
+                    corners[4 + ((i - 3) % 4)].x, corners[4 + ((i - 3) % 4)].y, corners[4 + ((i - 3) % 4)].z
+                );
+            }
+
+            // Vertical edges
+            for (let i = 0; i < 4; i++) {
+                linePositions.push(
+                    corners[i].x, corners[i].y, corners[i].z,
+                    corners[i + 4].x, corners[i + 4].y, corners[i + 4].z
+                );
+            }
+
+            lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+            const line = new THREE.LineSegments(lineGeometry, this.edgeMaterial);
+            this.lines.push(line);
+            this.group.add(line);
+        }
     }
 
     getCorners(min, max) {
