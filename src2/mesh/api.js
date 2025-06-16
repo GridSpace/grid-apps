@@ -1530,17 +1530,15 @@ const api = {
         }
     },
 
-    // @param object {MeshObject | MeshObject[]}
+    // @param object {MeshObject | MeshObject[] | Object}
     focus(object) {
-        let { center } = meshUtil.bounds(object);
+        console.log({ focus: object });
+        let { center } = object.center ? object : meshUtil.bounds(object);
         // when no valid objects supplied, set origin
         if (isNaN(center.x * center.y * center.z)) {
             center = { x: 0, y: 0, z: 0 };
         }
-        let { normal } = Array.isArray(object) && object.length ?
-            object[0].object :
-            object.object ||
-            { };
+        let { normal } = object;
         let left, up;
         if (normal) {
             let { x, y, z } = normal;

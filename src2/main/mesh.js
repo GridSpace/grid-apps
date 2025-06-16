@@ -374,7 +374,7 @@ function space_init(data) {
         let obj = int?.object;
         if (obj) api.selection.drag({ start: int.object });
         if (obj) obj.sketch_item?.sketch.drag({ start: int.object });
-        return selection.count() ? api.objects(true) : undefined;
+        return selection.count() && !event.altKey ? api.objects(true) : undefined;
     });
 
     // called two ways:
@@ -402,7 +402,7 @@ function space_init(data) {
                     // rotate normal using group's matrix
                     const normal = shiftKey ? int.face.normal.applyQuaternion(q) : undefined;
                     // y,z swap due to world rotation for orbit controls
-                    api.focus({center: { x, y:-z, z:y }, normal});
+                    api.focus({ center: { x, y:-z, z:y }, normal });
                     let one = api.sketch.selected.one;
                     if (one && confirm('attach sketch to face?')) {
                         one.center = {
@@ -415,7 +415,7 @@ function space_init(data) {
                         };
                         one.render();
                     }
-                } else if (ctrlKey) {
+                } else if (ctrlKey && selection.contains(model)) {
                     // rotate selected face towawrd z "floor"
                     group.rotateTowardZ(int.face.normal);
                     selection.update();
