@@ -28,8 +28,8 @@ class TransformTool {
         this.handleSize = 2;
         this.handleColor = 0x0088ff;
         this.handleOpacity = 0.5;
-        this.visible = false;
-        this.visible = true;
+        this.enabled = true; // persisted state
+        this.visible = false; // selection state
 
         // Create materials
         this.handleMaterial = new MeshBasicMaterial({
@@ -67,13 +67,18 @@ class TransformTool {
         });
     }
 
-    setVisible(visible) {
-        this.visible = visible;
-        this.group.visible = this.visible;
+    setEnabled(enabled) {
+        this.enabled = enabled;
         if (meshApi && meshApi.prefs) {
-            meshApi.prefs.map.space.bounds = this.visible;
+            meshApi.prefs.map.space.bounds = enabled;
             meshApi.prefs.save();
         }
+        this.updateVisibility();
+    }
+
+    setVisible(visible) {
+        this.visible = visible;
+        this.updateVisibility();
     }
 
     show() {
@@ -85,7 +90,11 @@ class TransformTool {
     }
 
     toggleBounds() {
-        this.setVisible(!this.visible);
+        this.setEnabled(!this.enabled);
+    }
+
+    updateVisibility() {
+        this.group.visible = this.enabled && this.visible;
     }
 
     update() {
@@ -99,6 +108,9 @@ class TransformTool {
             this.hide();
             return;
         }
+
+        // Show transform tool
+        this.show();
 
         // Get bounds based on selection type
         let bounds;
