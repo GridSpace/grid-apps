@@ -178,6 +178,8 @@ async function restore_space() {
     }).finally(() => {
         // hide loading curtain
         $d('curtain','none');
+        // restore handles visibility
+        handles.setVisible(api.prefs.map.space.bounds);
         if (api.prefs.map.info.welcome !== false) {
             api.welcome(version);
         }

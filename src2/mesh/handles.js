@@ -25,10 +25,11 @@ class TransformTool {
         this.lines = []; // Add array to track connecting lines
         this.mode = '2d'; // or '3d'
         this.bounds = null;
-        this.handleSize = 2; // Fixed size in world units
+        this.handleSize = 2;
         this.handleColor = 0x0088ff;
         this.handleOpacity = 0.5;
         this.visible = false;
+        this.visible = true;
 
         // Create materials
         this.handleMaterial = new MeshBasicMaterial({
@@ -66,14 +67,25 @@ class TransformTool {
         });
     }
 
+    setVisible(visible) {
+        this.visible = visible;
+        this.group.visible = this.visible;
+        if (meshApi && meshApi.prefs) {
+            meshApi.prefs.map.space.bounds = this.visible;
+            meshApi.prefs.save();
+        }
+    }
+
     show() {
-        this.visible = true;
-        this.group.visible = true;
+        this.setVisible(true);
     }
 
     hide() {
-        this.visible = false;
-        this.group.visible = false;
+        this.setVisible(false);
+    }
+
+    toggleBounds() {
+        this.setVisible(!this.visible);
     }
 
     update() {
@@ -87,9 +99,6 @@ class TransformTool {
             this.hide();
             return;
         }
-
-        // Show transform tool
-        this.show();
 
         // Get bounds based on selection type
         let bounds;

@@ -5,6 +5,7 @@ import { history } from './history.js';
 import { client as motoClient } from '../moto/client.js';
 import { space as motoSpace } from '../moto/space.js';
 import { base } from '../geo/base.js';
+import { handles } from './handles.js';
 import { util as meshUtil } from './util.js';
 import { edges as meshEdges } from './edges.js';
 import { group as meshGroup } from './group.js';
@@ -282,9 +283,7 @@ const selection = {
     },
 
     boundsBox() {
-        for (let m of selection.groups()) {
-            m.showBounds(...arguments);
-        }
+        handles.toggleBounds();
         return selection;
     },
 
@@ -1532,7 +1531,6 @@ const api = {
 
     // @param object {MeshObject | MeshObject[] | Object}
     focus(object) {
-        console.log({ focus: object });
         let { center } = object.center ? object : meshUtil.bounds(object);
         // when no valid objects supplied, set origin
         if (isNaN(center.x * center.y * center.z)) {

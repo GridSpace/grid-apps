@@ -152,40 +152,8 @@ class MeshObject {
         throw "position() requires implementation";
     }
 
-    showBounds(bool) {
-        let was = this._showBounds;
-        if (bool && bool.toggle) {
-            bool = !this._showBounds;
-        }
-        if (was === bool) {
-            return;
-        }
-        this._showBounds = bool;
-        this.updateBoundsBox();
-    }
-
-    updateBoundsBox() {
-        this.log('update-bounds-box', this._showBounds);
-        let helper = this._boundsBox;
-        let world = motoSpace.world;
-        if (helper) {
-            world.remove(helper);
-        }
-        if (this._showBounds) {
-            let { mid, dim } = this.bounds;
-            let b3 = new Box3().setFromCenterAndSize(
-                new Vector3(mid.x, mid.y, mid.z),
-                new Vector3(dim.x, dim.y, dim.z)
-            );
-            let helper = this._boundsBox = new Box3Helper(b3, 0x555555);
-            world.add(helper);
-            return true;
-        }
-    }
-
     metaChanged(values = {}) {
         this.object.updateMatrix();
-        this.updateBoundsBox();
         motoSpace.update();
         Object.assign(this.meta, values, {
             // matrix: this.object.matrix.elements
