@@ -43,13 +43,12 @@ you can view some example of how to use the engine [here](https://grid.space/kir
 
 If a listener is set via `setListener(fn)`, it will be called with events such as:
 
--   `{ loaded, vertices }` — when an STL file is loaded
--   `{ parsed, vertices }` — when raw data is parsed
--   `{ slice: msg }` — when slicing is complete
--   `{ prepare: { update } }` — during toolpath preparation
--   `{ prepare: { done: true } }` — when preparation is complete
--   `{ export: { segment } }` — during G-code segment export
--   `{ export: { done } }` — when export is finished
+- `{ loaded, vertices }` — when an STL file is loaded
+- `{ parsed, vertices }` — when raw data is parsed
+- `{ slice: msg }` — when slicing is complete
+- `{ prepare: { update } }` — during toolpath preparation
+- `{ prepare: { done: true } }` — when preparation is complete
+- `{ export: { segment } }` — during G-code segment export
+- `{ export: { done } }` — when export is finished
 
 These allow for building progress indicators or responding to processing stages.
-
