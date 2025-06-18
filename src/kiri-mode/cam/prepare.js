@@ -12,7 +12,8 @@
 gapp.register("kiri-mode.cam.prepare", (root, exports) => {
 
 const { base, kiri } = root;
-const { paths, polygons, newPoint, util} = base;
+const { paths, polygons, newPoint, util } = base;
+const { toRadians} = util
 const { tip2tipEmit, poly2polyEmit, arcToPath } = paths;
 const { driver, render } = kiri;
 const { CAM } = driver;
@@ -726,7 +727,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
      */
     function polyEmit(poly, index, count, fromPoint) {
         //arcTolerance is the allowable distance between circle centers
-        let arcRes = 8, //8 degs max
+        let arcRes = toRadians(5), //5 degs max
             arcMax = Infinity, // no max arc radius
             lineTolerance = 0.001; // do not consider points under 0.001mm for lines
 
@@ -799,7 +800,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         let radFault = false;
                         if (lr) {
                             let angle = 2 * Math.asin(dist/(2*lr.r));
-                            radFault = Math.abs(angle) > Math.PI * 2 / arcRes; // enforce arcRes(olution)
+                            radFault = Math.abs(angle) > arcRes; // enforce arcRes(olution)
+                            if(radFault){
+                                console.log({angle, arcRes, dist, lr,radFault});
+
+                            }
                             // if (arcQ.center) {
                             //     arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
                             //     let avg = arcQ.rSum / arcQ.center.length;
@@ -906,7 +911,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.ySum / cl,
                 )
 
-                if(arcQ.length == poly.points.length && poly.circularity() > 0.98){
+                if(arcQ.length == poly.points.length){
                     //if is a circle
                     // generate circle
                     // console.log("circle",{from, to,center});
