@@ -1,6 +1,8 @@
 name: 'Docs Fomatting Check'
 on:
   push:
+    paths:
+      - './docs/**'
   workflow_dispatch:
 
 jobs:
