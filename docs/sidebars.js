@@ -3,7 +3,6 @@ const sidebars = {
     {
       type: "doc",
       id: "index",
-
     },
     {
       type: "category",
@@ -14,8 +13,8 @@ const sidebars = {
           type: "category",
           label: "Kiri Moto",
           link: {
-            type: 'doc',
-            id: 'kiri-moto/index', 
+            type: "doc",
+            id: "kiri-moto/index",
           },
           items: [
             "kiri-moto/interface",
@@ -31,17 +30,17 @@ const sidebars = {
             {
               type: "category",
               label: "CAM Mode",
-              link:{
-                type: 'doc',
-                id: 'kiri-moto/CAM/index',
+              link: {
+                type: "doc",
+                id: "kiri-moto/CAM/index",
               },
-              items:[
+              items: [
                 "kiri-moto/CAM/processOpts",
                 "kiri-moto/CAM/machines",
                 "kiri-moto/CAM/tools",
                 "kiri-moto/CAM/ops",
               ],
-            }
+            },
           ],
         },
         {
@@ -52,39 +51,37 @@ const sidebars = {
           type: "category",
           label: "GridBot",
           link: {
-            type: 'doc',
-            id: 'gridbot/index', 
+            type: "doc",
+            id: "gridbot/index",
           },
-          items: [
-            "gridbot/bom",
-          ]
-        }
+          items: ["gridbot/bom"],
+        },
       ],
     },
     {
-      type: 'category',
-      label: 'Community',
+      type: "category",
+      label: "Community",
       collapsed: false,
       items: [
         {
-          type: 'link',
-          label: 'Forums',
-          href: 'https://forum.grid.space',
+          type: "link",
+          label: "Forums",
+          href: "https://forum.grid.space",
         },
         {
-          type: 'link',
-          label: 'Discord',
-          href: 'https://discord.gg/suyCCgr',
+          type: "link",
+          label: "Discord",
+          href: "https://discord.gg/suyCCgr",
         },
         {
-          type: 'link',
-          label: 'GitHub',
-          href: 'https://github.com/GridSpace/grid-apps',
+          type: "link",
+          label: "GitHub",
+          href: "https://github.com/GridSpace/grid-apps",
         },
         {
-          type: 'link',
-          label: 'BlueSky',
-          href: 'https://bsky.app/profile/grid.space',
+          type: "link",
+          label: "BlueSky",
+          href: "https://bsky.app/profile/grid.space",
         },
       ],
     },
@@ -104,4 +101,3 @@ const sidebars = {
 };
 
 module.exports = sidebars;
-
