@@ -354,12 +354,15 @@ kiri.load(() => {
         //destructure arcs into path points
         path = path.map(o=> 
             o.arcPoints
-            ? o.arcPoints.map(point=> 
+            ? [
+                ...o.arcPoints.map(point=> 
                     ({
                         ...o,
                         point
                     })
-                )
+                ),
+                o
+            ]
             : o
         )
         .flat();
