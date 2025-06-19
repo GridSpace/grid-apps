@@ -737,6 +737,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let lastPoint = closest.point;
         let startIndex = closest.index;
 
+        let circleComplete = false;
+
         // scale speed of first cutting poly since it engages the full bit
         let scale = ((isRough || isPocket) && count === 1) ? engageFactor : 1;
 
@@ -751,17 +753,19 @@ function prepEach(widget, settings, print, firstPoint, update) {
             startIndex = last;
         } 
 
-
-        poly.forEachPoint( ( point, pidx, points, offset) => {
+        console.log(poly,poly.isClosed(),startIndex)
+        
+        //A is first point of segment, B is last
+        poly.forEachSegment( ( pointA, pointB, indexA, indexB) => {
             // if(offset == 0) console.log("forEachPoint",point,pidx,points)
-            if(offset == 0){
+            if(indexA == startIndex){
+                camOut(pointA.clone(), 0, {factor:engageFactor});
                 // if first point, move to and call export function
-                camOut(point.clone(), 0, {factor:engageFactor});
-                quePush(point);
+                console.log("start")
+                quePush(pointA);
             }
-            else arcExport(point, lastPoint);
-            lastPoint = point;
-        }, poly.isClosed(), startIndex);
+            lastPoint = arcExport(pointB, pointA);
+        }, !poly.isClosed(), startIndex);
 
         // console.log("at end of arcExport",structuredClone(arcQ));
         if(arcQ.length > 3){
@@ -913,7 +917,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     let arcPoints = arcToPath( from, from, arcPreviewRes,{ clockwise,center});
                     camOut(from,1);
                     camOut(from,gc,{ center:center.sub(from), clockwise, arcPoints});
-                    lastPoint = from.clone();
+                    // lastPoint = to.clone();
+                    circleComplete = true
                 }else{
                     //if a non-circle arc
                     let arcPoints = arcToPath( from, to, arcPreviewRes,{ clockwise,center});
