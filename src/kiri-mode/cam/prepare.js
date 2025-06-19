@@ -341,6 +341,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.factor speed scale factor
      */
     function camOut(point, emit,opts) {
+
+        // console.log({point, emit, opts})
         let {
             center = {},
             clockwise = true,
@@ -544,8 +546,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
             if (depthFirst) {
                 depthData.push(polys);
             } else {
-                poly2polyEmit(polys, printPoint, (poly, index, count)=> {
-                    printPoint =polyEmit(poly, index, count,printPoint);
+                printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
+                    poly.forEachPoint(function(point, pidx, points, offset) {
+                        // scale speed of first cutting poly since it engages the full bit
+                        camOut(point.clone(), offset !== 0, undefined, count === 1 ? engageFactor : 1);
+                    }, poly.isClosed(), index);
                 }, { swapdir: false });
                 newLayer();
             }
@@ -739,12 +744,13 @@ function prepEach(widget, settings, print, firstPoint, update) {
      */
     function polyEmit(poly, index, count, fromPoint) {
         //arcTolerance is the allowable distance between circle centers
-        let arcRes = toRadians(5), //5 degs max
+        let arcRes = toRadians(2), //5 degs max
             arcMax = Infinity, // no max arc radius
             lineTolerance = 0.001; // do not consider points under 0.001mm for lines
 
         fromPoint = fromPoint || printPoint;
         let arcQ = [];
+        arcQ.angle = []
 
         let closest = poly.findClosestPointTo(fromPoint);
         let lastPoint = closest.point;
@@ -790,7 +796,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         function arcExport(point,lastp){
-            // console.log("start",point,lastp)
             let dist = lastp? point.distTo2D(lastp) : 0;
             if (lastp)  {
                 if (dist >lineTolerance && lastp) {
@@ -813,19 +818,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         if (lr) {
                             let angle = 2 * Math.asin(dist/(2*lr.r));
                             radFault = Math.abs(angle) > arcRes; // enforce arcRes(olution)
-                            if(radFault){
-                                console.log({angle, arcRes, dist, lr,radFault});
 
-                            }
-                            // if (arcQ.center) {
-                            //     arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
-                            //     let avg = arcQ.rSum / arcQ.center.length;
-                            //     radFault = radFault || Math.abs(avg - lr.r) / avg > arcDev; // eliminate sharps and flats when local rad is out of arcDev(iation)
-                            // }
                         } else {
                             radFault = true;
                             console.log("too much angle")
                         }
+                        
 
                         if (cc) {
                             if ([cc.x,cc.y,cc.z,cc.r].hasNaN()) {
@@ -836,6 +834,17 @@ function prepEach(widget, settings, print, firstPoint, update) {
                                 arcQ.xSum = cc.x;
                                 arcQ.ySum = cc.y;
                                 arcQ.rSum = cc.r;
+
+                                // check if first angles should have caused radFault
+                                let a = toRadians(arcQ[0].slopeTo(cc).angle)
+                                let b = toRadians(arcQ[1].slopeTo(cc).angle)
+                                let angle = Math.abs(b-a)
+
+                                if( Math.abs(angle) > arcRes){ 
+                                    // if so, remove first point
+                                    camOut(arcQ.shift(), 1)
+                                    radFault = true
+                                }
                             } else {
                                 // check center point delta
                                 arcQ.xSum = arcQ.center.reduce( function (t, v) { return t + v.x }, 0 );
@@ -867,7 +876,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
                                 } else {
                                     // enough to consider an arc, emit and start new arc
                                     let defer = arcQ.pop();
-                                    console.log("draining",defer, structuredClone(arcQ),arcQ.length);
                                     drainQ();
                                     // re-add point that was off the last arc
                                     arcQ.push(defer);
@@ -924,7 +932,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.ySum / cl,
                 )
 
-                if(arcQ.length == poly.points.length){
+                if(arcQ.length == poly.points.length ){
                     //if is a circle
                     // generate circle
                     // console.log("circle",{from, to,center});
