@@ -317,6 +317,20 @@ function prepEach(widget, settings, print, firstPoint, update) {
         );
     }
 
+
+    /**
+     * Move a point by the widget's movement offset.
+     * @param {Point} p - point to move
+     * @return {Point} new point with offset applied
+     */
+    function applyWidgetMovement(p){
+        return newPoint(
+            p.x + wmx,
+            p.y + wmy,
+            p.z + zadd
+        )
+    }
+
     /**
      * emit a cut, arc, or move operation from the current location to a new location
      * @param {Point} point destination for move
@@ -338,10 +352,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         // console.log({radius})
         const isArc = emit == 2 || emit == 3;
 
-        point = point.clone();
-        point.x += wmx;
-        point.y += wmy;
-        point.z += zadd;
+        //apply widget movement pos
+        point = applyWidgetMovement(point);
 
         // console.log(point.z);
         if (nextIsMove) {
@@ -848,13 +860,14 @@ function prepEach(widget, settings, print, firstPoint, update) {
                                     } else {
                                         arcQ.center = [ tc ];
                                         let angle = 2 * Math.asin(arcQ[1].dist/(2*tc.r));
-                                        if (Math.abs(angle) > Math.PI * 2 / arcRes) { // enforce arcRes on initial angle
+                                        if (Math.abs(angle) > arcRes) { // enforce arcRes on initial angle
                                             camOut(arcQ.shift(),1);
                                         }
                                     }
                                 } else {
                                     // enough to consider an arc, emit and start new arc
                                     let defer = arcQ.pop();
+                                    console.log("draining",defer, structuredClone(arcQ),arcQ.length);
                                     drainQ();
                                     // re-add point that was off the last arc
                                     arcQ.push(defer);
@@ -915,13 +928,15 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     //if is a circle
                     // generate circle
                     // console.log("circle",{from, to,center});
-                    let arcPoints = arcToPath( from, from, arcPreviewRes,{ clockwise,center});
+                    let arcPoints = arcToPath( from, from, arcPreviewRes,{ clockwise,center})
+                    .map(applyWidgetMovement);
                     camOut(from,1);
                     camOut(from,gc,{ center:center.sub(from), clockwise, arcPoints});
                     lastPoint = from.clone();
                 }else{
                     //if a non-circle arc
-                    let arcPoints = arcToPath( from, to, arcPreviewRes,{ clockwise,center});
+                    let arcPoints = arcToPath( from, to, arcPreviewRes,{ clockwise,center})
+                    .map(applyWidgetMovement);
                     // console.log("arc")
                     // first arc point
                     camOut(from,1);
