@@ -135,7 +135,6 @@ const selection = {
         for (let s of selection.list()) {
             selection.remove(s);
             tools.remove(s);
-            s.showBounds(false);
             s.remove();
         }
     },

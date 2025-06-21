@@ -249,13 +249,8 @@ class MeshModel extends meshObject {
         this.geometry.computeBoundingSphere();
         this.log('update-bounds', this.geometry.boundingBox);
         this.normals({ refresh: true });
-        this.updateBoundsBox();
         space.update();
         this.sync();
-    }
-
-    updateBoundsBox() {
-        this.group?.updateBoundsBox();
     }
 
     mirror() {

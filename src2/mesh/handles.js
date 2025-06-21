@@ -263,6 +263,50 @@ class TransformTool {
     get object() {
         return this.group;
     }
+
+    activeHandles() {
+        if (!this.enabled) return [];
+        // Return an array of objects wrapping each handle
+        // Each object: { mesh, index, position }
+        return this.handles.map((mesh, index) => ({
+            mesh,
+            index,
+            position: mesh.position.clone(),
+        }));
+    }
+
+    /**
+     * Given a handle (from activeHandles) and a drag {delta, offset},
+     * compute the new center and size for the bounding box.
+     * Returns: { center: Vector3, size: Vector3 }
+     */
+    computeDelta(handleObj, { delta, offset }) {
+        // Get current bounds
+        if (!this.bounds) return null;
+        const { min, max } = this.bounds;
+        const center = min.clone().add(max).multiplyScalar(0.5);
+        const size = max.clone().sub(min);
+
+        // Which handle is being dragged?
+        const handleIndex = handleObj.index;
+        // Get all corners
+        const corners = this.getCorners(min, max);
+        // Copy corners so we can mutate
+        const newCorners = corners.map(c => c.clone());
+        // Move the dragged corner by delta
+        newCorners[handleIndex].add(delta);
+
+        // Compute new min/max from moved corners
+        let newMin = newCorners[0].clone();
+        let newMax = newCorners[0].clone();
+        for (let c of newCorners) {
+            newMin.min(c);
+            newMax.max(c);
+        }
+        const newCenter = newMin.clone().add(newMax).multiplyScalar(0.5);
+        const newSize = newMax.clone().sub(newMin);
+        return { center: newCenter, size: newSize };
+    }
 }
 
 // Create singleton instance
