@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: geo.line
 // dep: geo.point
 // dep: geo.polygons
 // dep: kiri.slice
@@ -14,7 +15,7 @@ gapp.register("kiri-mode.cam.slice", (root, exports) => {
 const { base, kiri } = root;
 const { util } = base;
 const { driver, newSlice, setSliceTracker } = kiri;
-const { polygons, newPoint, newPolygon } = base;
+const { polygons, newLine, newPoint, newPolygon } = base;
 const { CAM } = driver;
 const { OPS } = CAM;
 
@@ -379,60 +380,107 @@ CAM.addDogbones = function(poly, dist, reverse) {
 };
 
 CAM.traces = async function(settings, widget, single) {
-    if (widget.traces && widget.trace_single === single) {
-        // do no work if cached
+    if (widget.traces) {
         return false;
     }
-    let slicer = new kiri.cam_slicer(widget);
-    let zees = Object.assign({}, slicer.zFlat, slicer.zLine);
-    let indices = [...new Set(Object.keys(zees)
-            .map(kv => parseFloat(kv).round(5))
-            .appendAll(Object.entries(single ? slicer.zLine : {}).map(ze => {
-                let [ zk, zv ] = ze;
-                return zv > 1 ? parseFloat(zk).round(5) : null;
-            })
-            .filter(v => v !== null))
-        )]
-        .sort((a,b) => b - a);
-    let traces = [];
-    // find and trim polys (including open) to shadow
-    let oneach = data => {
-        if (single) {
-            for (let line of data.lines) {
-                if (line.p1.distTo2D(line.p2) > 1) {
-                    traces.push(newPolygon().append(line.p1).append(line.p2).setOpen());
-                }
-            }
-        } else
-        base.polygons.flatten(data.tops).forEach(poly => {
-            poly.inner = null;
-            poly.parent = null;
-            let z = poly.getZ();
-            for (let i=0, il=traces.length; i<il; i++) {
-                let trace = traces[i];
-                let dz = Math.abs(z - trace.getZ());
-                // only compare polys farther apart in Z
-                if (dz > 0.01) {
-                    continue;
-                }
-                // do not add duplicates
-                if (traces[i].isEquivalent(poly) && dz < 0.1) {
-                    // console.log({ dup: poly });
-                    return;
-                }
-            }
-            traces.push(poly);
-        });
-    };
 
+    // --- points → line segments ---
+    let edges = new THREE.EdgesGeometry(widget.mesh.geometry, 20);
+    let array = edges.attributes.position.array;
+    let pcache = {};
+    let points = new Array(2);
+    let lines = new Array(points.length / 2);
+    for (let i=0, j=0, k=0, l=array.length; i<l; ) {
+        let ps = [ array[i++], array[i++], array[i++] ];
+        let key = ps.map(v => (v * 10000) | 0).join(',');
+        let point = pcache[key];
+        if (!point) {
+            point = newPoint(ps[0], ps[1], ps[2], key);
+            point.lines = [];
+            pcache[key] = point;
+        }
+        points[j++ % 2] = point;
+        if (j % 2 === 0) {
+            let [ p0, p1 ] = points;
+            let line = lines[k++] = newLine(p0, p1);
+            p0.lines.push(line);
+            p1.lines.push(line);
+        }
+    }
 
-    let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true, lines: true };
-    await slicer.slice(indices, opts);
-    // pick up bottom features
-    opts.over = true;
-    await slicer.slice(indices, opts);
-    widget.traces = traces;
-    widget.trace_single = single;
+    // --- segments → chains (bidirectional walk) ---
+    let chains = [];
+    {
+        const segs = lines.slice();        // shallow copy
+        segs.forEach(s => (s.visited = false));
+
+        function step(dirPoint, prevSeg, pushFront, chain) {
+            let curr = dirPoint;
+            let prev = prevSeg;
+
+            while (curr.lines.length === 2) {           // stay inside the arc
+                const next = curr.lines.find(l => !l.visited && l !== prev);
+                if (!next) break;                       // should not happen
+
+                next.visited = true;
+                if (pushFront) chain.unshift(next);     // prepend or append?
+                else chain.push(next);
+
+                curr = next.p1 === curr ? next.p2 : next.p1;
+                prev = next;
+            }
+        }
+
+        for (const seed of segs) {
+            if (seed.visited) continue;
+
+            seed.visited = true;        // always include the seed
+            const chain = [seed];
+
+            // grow backwards from p1  (prepend)
+            step(seed.p1, seed, true, chain);
+
+            // grow forwards  from p2  (append)
+            step(seed.p2, seed, false, chain);
+
+            chains.push(chain);
+        }
+    }
+
+    // --- chains → polylines ---
+    const polylines = [];
+
+    for (const chain of chains) {
+        const poly = newPolygon().setOpen();
+
+        // choose any node whose degree !== 2; if none, it’s a closed loop
+        let start = null;
+        for (const s of chain) {
+            if (s.p1.lines.length !== 2) { start = s.p1; break; }
+            if (s.p2.lines.length !== 2) { start = s.p2; break; }
+        }
+        if (!start) start = chain[0].p1;          // closed loop
+
+        let curr = start, prevSeg = null;
+        poly.push(curr);                          // first point
+
+        while (true) {
+            const nextSeg = curr.lines.find(
+                l => l !== prevSeg && chain.includes(l)
+            );
+            if (!nextSeg) break;                  // open end reached
+
+            curr = nextSeg.p1 === curr ? nextSeg.p2 : nextSeg.p1;
+            poly.push(curr);                      // << push *before* test
+            if (curr === start) break;            // loop closed
+
+            prevSeg = nextSeg;
+        }
+        polylines.push(poly);
+    }
+
+    widget.traces = polylines;
+
     return true;
 };
 
