@@ -462,6 +462,8 @@ function space_init(data) {
                 }
             } else if (sketch_item) {
                 sketch_item.toggle();
+            } else {
+                console.log('unknown selection');
             }
         } else {
             // return objects upSelect can choose from
