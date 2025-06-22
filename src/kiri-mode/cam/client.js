@@ -1097,17 +1097,15 @@ CAM.init = function(kiri, api) {
             color.r = colorSave.r;
             color.g = colorSave.g;
             color.b = colorSave.b;
-            lastTrace.position.z -= 0.01;
         }
+        lastTrace = null;
         if (data.type === 'platform') {
-            lastTrace = null;
             return;
         }
         if (!data.int.object.trace) {
             return;
         }
         lastTrace = data.int.object;
-        lastTrace.position.z += 0.01;
         if (lastTrace.selected) {
             let event = data.event;
             let target = event.target;
@@ -1116,11 +1114,8 @@ CAM.init = function(kiri, api) {
         }
         let material = lastTrace.material[0] || lastTrace.material;
         let color = material.color;
-        let {r, g, b} = color;
-        material.colorSave = {r, g, b};
-        color.r = 0;
-        color.g = 0;
-        color.b = 1;
+        material.colorSave = color.clone();
+        color.setHex(isDark() ? 0x0066ff : 0x0000ff);
     };
     func.traceHoverUp = function(int, ev) {
         if (!int) return;
@@ -1149,23 +1144,17 @@ CAM.init = function(kiri, api) {
         let wlist = areas[widget.id] = areas[widget.id] || [];
         obj.selected = !obj.selected;
         if (!colorSave) {
-            colorSave = material.colorSave = {
-                r: color.r,
-                g: color.g,
-                b: color.b
-            };
+            colorSave = material.colorSave = color.clone();
         }
         if (obj.selected) {
-            obj.position.z += 0.01;
-            color.r = colorSave.r = 0.9;
-            color.g = colorSave.g = 0;
-            color.b = colorSave.b = 0.1;
+            color.setHex(isDark() ? 0xdd0011 : 0xff0033);
+            colorSave.r = color.r;
+            colorSave.g = color.g;
+            colorSave.b = color.b;
             if (!skip) wlist.push(poly._trace);
         } else {
-            obj.position.z -= 0.01;
-            color.r = colorSave.r = 0xaa/255;
-            color.g = colorSave.g = 0xaa/255;
-            color.b = colorSave.b = 0x55/255;
+            color.setHex(0xaaaa55);
+            colorSave.setHex(0xaaaa55);
             if (!skip) wlist.remove(poly._trace);
         }
         API.conf.save();
@@ -1194,9 +1183,6 @@ CAM.init = function(kiri, api) {
         func.hover = func.selectHolesHover;
         func.hoverUp = func.selectHolesHoverUp;
 
-        
-
-        
         const widgets = kiri.api.widgets.all()
         /**
          * creates a mesh for a hole and adds it to a widget
@@ -2162,16 +2148,18 @@ function validateTools(tools) {
     }
 }
 
+function isDark() { return API.space.is_dark() };
+
 function addbox() { return FDM.addbox(...arguments)};
 
 function delbox() { return FDM.delbox(...arguments)};
 
 function boxColor() {
-    return API.space.is_dark() ? 0x00ddff : 0x0000dd;
+    return isDark() ? 0x00ddff : 0x0000dd;
 }
 
 function boxOpacity() {
-    return API.space.is_dark() ? 0.75 : 0.6;
+    return isDark() ? 0.75 : 0.6;
 }
 
 function animate() {
@@ -2254,7 +2242,7 @@ function updateStock() {
         camStock.position.z = center.z;
         camStock.rotation.x = currentIndex || 0;
         camStock.lines.material.color =
-            new THREE.Color(API.space.is_dark() ? 0x555555 : 0xaaaaaa);
+            new THREE.Color(isDark() ? 0x555555 : 0xaaaaaa);
     } else if (camStock) {
         SPACE.world.remove(camStock);
         camStock = null;
