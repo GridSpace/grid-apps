@@ -1008,7 +1008,6 @@ CAM.init = function(kiri, api) {
         CAM.traces((ids) => {
             api.hide.alert(alert);
             alert = api.show.alert("[esc] cancels trace editing");
-            kiri.api.widgets.opacity(0.8);
             kiri.api.widgets.for(widget => {
                 if (ids.indexOf(widget.id) >= 0) {
                     unselectTraces(widget, true);
@@ -1042,6 +1041,7 @@ CAM.init = function(kiri, api) {
             });
             // ensure appropriate traces are toggled matching current record
             kiri.api.widgets.for(widget => {
+                widget.setVisualState({ opacity: 0.25 });
                 let areas = (poppedRec.areas[widget.id] || []);
                 let stack = widget.trace_stack;
                 stack.meshes.forEach(mesh => {
@@ -1070,6 +1070,7 @@ CAM.init = function(kiri, api) {
         api.feature.hover = false;
         api.feature.hoverAdds = false;
         kiri.api.widgets.for(widget => {
+            widget.restoreVisualState();
             if (widget.trace_stack) {
                 widget.trace_stack.hide();
                 widget.adds.removeAll(widget.trace_stack.meshes);
