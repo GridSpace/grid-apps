@@ -1128,8 +1128,9 @@ CAM.init = function(kiri, api) {
         if (ev.metaKey || ev.ctrlKey) {
             let { selected } = object;
             let { widget, poly } = object.trace;
+            let avgZ = poly.avgZ();
             for (let add of widget.adds) {
-                if (add.trace && add.selected !== selected && add.trace.poly.getZ() === poly.getZ()) {
+                if (add.trace && add.selected !== selected && add.trace.poly.onZ(avgZ)) {
                     func.traceToggle(add);
                 }
             }
