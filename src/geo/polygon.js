@@ -1002,6 +1002,10 @@ class Polygon {
         return this.z !== undefined ? this.z : this.points[i || 0]?.z || 0;
     }
 
+    minZ() {
+        return Math.min(...this.points.map(p => p.z));
+    }
+
     /**
      */
     render(layer, color, recursive, open) {

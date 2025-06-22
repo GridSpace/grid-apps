@@ -976,11 +976,12 @@ class OpTrace extends CamOp {
     }
 
     async slice(progress) {
+        const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, offset, offover, thru } = op;
         let { ov_conv } = op;
         let { settings, widget, addSlices, zThru, tabs, workarea } = state;
-        let { updateToolDiams, cutTabs, cutPolys, healPolys, color } = state;
+        let { updateToolDiams, cutTabs, cutPolys, healPolys, color, shadowAt } = state;
         let { process, stock } = settings;
         let { camStockClipTo } = process;
         if (state.isIndexed) {
@@ -1042,6 +1043,59 @@ class OpTrace extends CamOp {
                 .setLayer("trace follow", {line: color}, false)
                 .addPolys(slice.camLines)
         }
+
+        function clearZnew(polys, z, down) {
+            if (down) {
+                // adjust step down to a value <= down that
+                // ends on the lowest z specified
+                let diff = zTop - z;
+                down = diff / Math.ceil(diff / down);
+            }
+            let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
+            let zpro = 0, zinc = 1 / (polys.length * zs.length);
+            for (let poly of polys) {
+                // newPocket();
+                for (let z of zs) {
+                    let clip = [], shadow;
+                    shadow = shadowAt(z);
+                    POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
+                    if (op.outline) {
+                        POLY.clearInner(clip);
+                    }
+                    if (clip.length === 0) {
+                        continue;
+                    }
+                    let slice = newSliceOut(z);
+                    let count = 999;
+                    slice.camTrace = { tool, rate, plunge };
+                    if (toolDiam) {
+                        const offs = [ -toolDiam / 2, -toolOver ];
+                        POLY.offset(clip, offs, {
+                            count, outs: slice.camLines = [], flat:true, z, minArea: 0
+                        });
+                    } else {
+                        // when engraving with a 0 width tip
+                        slice.camLines = clip;
+                    }
+                    if (tabs) {
+                        slice.camLines = cutTabs(tabs, POLY.flatten(slice.camLines, null, true), z);
+                    } else {
+                        slice.camLines = POLY.flatten(slice.camLines, null, true);
+                    }
+                    POLY.setWinding(slice.camLines, cutdir, false);
+                    slice.output()
+                        .setLayer("trace", {line: color}, false)
+                        .addPolys(slice.camLines)
+                    if (debug && shadow) slice.output()
+                        .setLayer("trace shadow", {line: 0xff8811}, false)
+                        .addPolys(shadow)
+                    progress(zpro, "trace");
+                    zpro += zinc;
+                    addSlices(slice);
+                }
+            }
+        }
+
         function clearZ(polys, z, down) {
             let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
             let nested = POLY.nest(polys);
@@ -1176,7 +1230,7 @@ class OpTrace extends CamOp {
                 const zbo = widget.track.top - widget.track.box.d;
                 let zmap = {};
                 for (let poly of polys) {
-                    let z = minZ(poly.getZ());
+                    let z = minZ(poly.minZ());
                     if (offover) {
                         let pnew = POLY.offset([poly], -offover, { minArea: 0, open: true });
                         if (pnew) {
@@ -1190,7 +1244,7 @@ class OpTrace extends CamOp {
                     (zmap[z] = zmap[z] || []).appendAll(poly);
                 }
                 for (let [zv, polys] of Object.entries(zmap)) {
-                    clearZ(polys, parseFloat(zv), down);
+                    clearZnew(polys, parseFloat(zv), down);
                 }
         }
     }
