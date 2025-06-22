@@ -16,13 +16,13 @@ you can view some example of how to use the engine [here](https://grid.space/kir
 ## Methods
 
 | Method                      | Description                                                                                                    | Returns           |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------- | ------- | ------- | -------- |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------- |
 | `load(url)`                 | Loads an [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>) file from a given URL and centers the model. | `Promise<Engine>` |
 | `clear()`                   | Clears all objects from workspace.                                                                             | `void`            |
 | `parse(data)`               | Parses raw [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>) data and loads it as a centered widget.    | `Promise<Engine>` |
 | `setListener(listener)`     | Sets an event listener function to receive engine progress updates                                             | `Engine`          |
 | `setRender(bool)`           | Enables or disables rendering.                                                                                 | `Engine`          |
-| `setMode(mode)`             | Sets the slicing mode where mode is "CAM"                                                                      | "FDM"             | "LASER" | "SLA" . | `Engine` |
+| `setMode(mode)`             | Sets the slicing mode where mode is "CAM" \| "FDM" \| "LASER" \| "SLA" .                                       | `Engine`          |
 | `setDevice(device)`         | Merges a custom device profile into the current settings.                                                      | `Engine`          |
 | `setProcess(process)`       | Merges custom slicing process parameters.                                                                      | `Engine`          |
 | `setController(controller)` | Sets the slicing controller settings and starts/stops the worker pool accordingly.                             | `Engine`          |

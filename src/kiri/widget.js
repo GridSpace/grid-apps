@@ -355,6 +355,27 @@ class Widget {
         }
     }
 
+    getVisualState() {
+        return {
+            edges: this.outline ? true : false,
+            wires: this.wire ? true : false,
+            opacity: this.getMaterial().opacity
+        };
+    }
+
+    setVisualState({ edges, wires, opacity}) {
+        this.cache.vizstate = this.getVisualState();
+        this.setEdges(edges ?? false);
+        this.setWireframe(wires ?? false);
+        this.setOpacity(opacity ?? 1);
+    }
+
+    restoreVisualState() {
+        if (this.cache.vizstate) {
+            this.setVisualState(this.cache.vizstate);
+        }
+    }
+
     /**
      * @param {number} value
      */
