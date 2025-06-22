@@ -1700,13 +1700,11 @@ CAM.init = function(kiri, api) {
         dogbone: 'camTraceDogbone',
         revbone: 'camTraceDogbone',
         merge:   'camTraceMerge',
-        select:  'camTraceMode',
         ov_topz: 0,
         ov_botz: 0,
         ov_conv: '~camConventional',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
-        select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
         mode:     UC.newSelect(LANG.cu_type_s, {title:LANG.cu_type_l}, "trace"),
         offset:   UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l, show:() => (poppedRec.mode === 'follow')}, "traceoff"),
         sep:      UC.newBlank({class:"pop-sep"}),

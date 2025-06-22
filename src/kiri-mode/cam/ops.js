@@ -1043,7 +1043,6 @@ class OpTrace extends CamOp {
                 .setLayer("trace follow", {line: color}, false)
                 .addPolys(slice.camLines)
         }
-
         function clearZnew(polys, z, down) {
             if (down) {
                 // adjust step down to a value <= down that
@@ -1092,30 +1091,6 @@ class OpTrace extends CamOp {
                     progress(zpro, "trace");
                     zpro += zinc;
                     addSlices(slice);
-                }
-            }
-        }
-
-        function clearZ(polys, z, down) {
-            let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
-            let nested = POLY.nest(polys);
-            for (let poly of nested) {
-                for (let z of zs) {
-                    let slice = newSliceOut(z);
-                    slice.camTrace = { tool, rate, plunge };
-                    POLY.offset([ poly ], [ -toolDiam/2, -toolOver ], {
-                        count:999, outs: slice.camLines = [], flat:true, z,
-                        minArea: 0
-                    });
-                    if (tabs) {
-                        slice.camLines = cutTabs(tabs, POLY.flatten(slice.camLines, null, true), z);
-                    } else {
-                        slice.camLines = POLY.flatten(slice.camLines, null, true);
-                    }
-                    POLY.setWinding(slice.camLines, cutdir, false);
-                    slice.output()
-                        .setLayer("trace clear", {line: color}, false)
-                        .addPolys(slice.camLines)
                 }
             }
         }
