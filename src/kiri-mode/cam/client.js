@@ -1266,7 +1266,7 @@ CAM.init = function(kiri, api) {
                     centers = centers ?? []
                     // list of all hole centers and if they are selected
                     kiri.api.widgets.for(widget => {
-                        const {holes} = centers.find(center=>center.id = widget.id)
+                        const {holes} = centers.find(center=>center.id == widget.id)
                         // console.log(holes)
                         if (!holes.length) unselectHoles(holes);
                         holes.forEach(hole => {
@@ -1791,7 +1791,7 @@ CAM.init = function(kiri, api) {
         menu:      UC.newRow([ UC.newButton("select", func.surfaceAdd) ], {class:"ext-buttons f-row"}),
     };
 
-    const drillOp =createPopOp('drill', {
+    createPopOp('drill', {
         tool:    'camDrillTool',
         spindle: 'camDrillSpindle',
         down:    'camDrillDown',
@@ -1801,7 +1801,7 @@ CAM.init = function(kiri, api) {
         mark:    'camDrillMark',
         precision:'camDrillPrecision',
         thru:    'camDrillThru',
-
+        fromTop: 'camDrillFromStockTop',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep:      UC.newBlank({class:"pop-sep"}),
@@ -1810,7 +1810,8 @@ CAM.init = function(kiri, api) {
         down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
         dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat}),
         lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => !poppedRec.mark}),
-        mark:     UC.newBoolean(LANG.cd_mark_s, undefined, {title:LANG.cd_mark_l}),
+        mark:     UC.newBoolean(LANG.cd_mark_s,undefined, {title:LANG.cd_mark_l, show:() => !poppedRec.fromTop}),
+        fromTop:  UC.newBoolean(LANG.cd_ftop_s,undefined, {title:LANG.cd_ftop_l, show:() => !poppedRec.mark}),
         sep:      UC.newBlank({class:"pop-sep"}),
         thru:     UC.newInput(LANG.cd_dtru_s, {title:LANG.cd_dtru_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),
         precision:UC.newInput(LANG.cd_prcn_s, {title:LANG.cd_prcn_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),

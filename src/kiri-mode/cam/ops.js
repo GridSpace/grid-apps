@@ -200,9 +200,6 @@ class OpRough extends CamOp {
                 POLY.offset([ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ], step) :
                 POLY.offset(shadow, roughIn ? step : step + roughLeave + toolDiam / 2);
             let facing = POLY.offset(inset, -step, { count: 999, flat: true });
-            if (isIndexed) {
-                ztOff = (stock.z / 2) - zMax;
-            }
             let zdiv = ztOff / roughDown;
             let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
             if (ztOff === 0) {
