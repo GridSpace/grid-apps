@@ -837,8 +837,8 @@ class Widget {
             let drv = driver[settings.mode.toUpperCase()];
 
             if (drv) {
-                drv.slice(settings, widget, catchupdate, catchdone)
-                    .catch(error => ondone(error));
+                let promise = drv.slice(settings, widget, catchupdate, catchdone);
+                if (promise) promise.catch(error => ondone(error));
             } else {
                 console.log('invalid mode: '+settings.mode);
                 ondone('invalid mode: '+settings.mode);
