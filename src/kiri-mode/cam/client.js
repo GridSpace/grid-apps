@@ -474,13 +474,11 @@ CAM.init = function(kiri, api) {
             return;
         }
         let index = 0;
-        let indexing = false;
         for (let op of oplist) {
             if (op.type === '|') {
                 break;
             }
             if (op.type === 'index' && !op.disabled) {
-                indexing = true;
                 if (op.absolute) {
                     index = op.degrees
                 } else {
@@ -2190,6 +2188,8 @@ function updateStock() {
         return;
     }
 
+    api.platform.update_bounds();
+
     const settings = API.conf.get();
     const widgets = API.widgets.all();
 
@@ -2197,9 +2197,13 @@ function updateStock() {
     const { x, y, z, center } = stock;
 
     UI.func.animate.classList.add('disabled');
+    if (camStock) {
+        SPACE.world.remove(camStock);
+        camStock = null;
+    }
     if (x && y && z) {
         UI.func.animate.classList.remove('disabled');
-        if (!camStock) {
+        {
             let geo = new THREE.BoxGeometry(1, 1, 1);
             let mat = new THREE.MeshBasicMaterial({
                 color: 0x777777,
@@ -2231,21 +2235,17 @@ function updateStock() {
             let lines = new THREE.LineSegments(ligeo, limat);
             camStock.lines = lines;
             camStock.add(lines);
-
             SPACE.world.add(camStock);
         }
+        // fight z fighting in threejs
         camStock.scale.x = x + 0.005;
         camStock.scale.y = y + 0.005;
         camStock.scale.z = z + 0.005;
         camStock.position.x = center.x;
         camStock.position.y = center.y;
         camStock.position.z = center.z;
-        camStock.rotation.x = currentIndex || 0;
         camStock.lines.material.color =
             new THREE.Color(isDark() ? 0x555555 : 0xaaaaaa);
-    } else if (camStock) {
-        SPACE.world.remove(camStock);
-        camStock = null;
     }
 
     SPACE.world.remove(camZTop);
