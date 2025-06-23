@@ -45,12 +45,17 @@ class OpIndex extends CamOp {
         super(state, op);
     }
 
-    slice() {
+    async slice() {
         let { op, state } = this;
         if (!state.isIndexed) {
             throw 'index op requires indexed stock';
         }
-        this.degrees = state.setAxisIndex(op.degrees, op.absolute);
+        let { widget, updateSlicer, computeShadows, setAxisIndex } = state;
+        this.degrees = setAxisIndex(op.degrees, op.absolute);
+        // force recompute of topo
+        widget.topo = undefined;
+        updateSlicer();
+        await computeShadows();
     }
 
     prepare(ops, progress) {
@@ -483,8 +488,7 @@ class OpOutline extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { settings, widget, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
-        let { updateToolDiams, tabs, cutTabs, cutPolys, workarea } = state;
-        let { zMax } = state;
+        let { updateToolDiams, tabs, cutTabs, cutPolys, workarea, zMax } = state;
         let { process, stock } = settings;
 
         if (op.down <= 0) {

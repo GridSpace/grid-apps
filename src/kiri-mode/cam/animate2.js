@@ -540,7 +540,7 @@ kiri.load(() => {
             const sd = Math.sqrt(mx*mx + my*my + Math.min(1,mz*mz) + dr*dr);
             const moves = [];
             for (let i=0, x=lp.x, y=lp.y, z=lp.z; i<st; i++) {
-                moves.push({x,y,z,a:lp.a,md:sd});
+                moves.push({ x, y, z, a:lp.a, md:sd, dx, dy, dz });
                 x += mx;
                 y += my;
                 z += mz;
@@ -563,9 +563,11 @@ kiri.load(() => {
             if (!pos) {
                 throw `no pos @ ${index} of ${moves.length}`;
             }
+            const { dx, dy, dz } = pos;
             toolMove(pos);
             // console.log('renderMoves', {id, moves, seed});
             let subs = 0;
+            if (dx || dy || dz < 0)
             for (let slice of stockSlices) {
                 if (slice.bounds.intersectsBox(toolMesh.bounds)) {
                     slice.subtractTool(toolMesh);
