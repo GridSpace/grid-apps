@@ -2,6 +2,7 @@
 
 "use strict";
 
+// dep: geo.line
 // dep: geo.point
 // dep: geo.polygons
 // dep: kiri.slice
@@ -14,7 +15,7 @@ gapp.register("kiri-mode.cam.slice", (root, exports) => {
 const { base, kiri } = root;
 const { util } = base;
 const { driver, newSlice, setSliceTracker } = kiri;
-const { polygons, newPoint, newPolygon } = base;
+const { polygons, newLine, newPoint, newPolygon } = base;
 const { CAM } = driver;
 const { OPS } = CAM;
 
@@ -31,7 +32,6 @@ const POLY = polygons;
 CAM.slice = async function(settings, widget, onupdate, ondone) {
     let proc = settings.process,
         sliceAll = widget.slices = [],
-        // slices = widget.slices = [],
         camOps = widget.camops = [],
         isIndexed = proc.camStockIndexed;
 
@@ -47,13 +47,22 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
 
     // allow recomputing later if widget or settings changes
     const var_compute = () => {
-        stock = settings.stock || {};
+        let { camStockX, camStockY, camStockZ, camStockOffset } = proc;
         bounds = widget.getBoundingBox();
+        stock = camStockOffset ? {
+            x: bounds.dim.x + camStockX,
+            y: bounds.dim.y + camStockY,
+            z: bounds.dim.z + camStockZ,
+        } : {
+            x: camStockX,
+            y: camStockY,
+            z: camStockZ
+        }
         track = widget.track;
         ({ camZTop, camZBottom, camZThru } = proc);
         wztop = track.top;
-        ztOff = isIndexed ? 0 : (stock.z - wztop);
-        zbOff = isIndexed ? 0 : (wztop - track.box.d);
+        ztOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (stock.z - wztop);
+        zbOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (wztop - track.box.d);
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
         zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom);
         zMax = bounds.max.z;
@@ -72,7 +81,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         bottom_part = 0;
         bottom_stock = -bottom_gap;
         bottom_thru = zThru;
-        bottom_z = Math.max(
+        bottom_z = isIndexed ? zBottom : Math.max(
             (camZBottom ? bottom_stock + camZBottom : bottom_part) - bottom_thru,
             (camZBottom ? bottom_stock + camZBottom : bottom_stock - bottom_thru)
         );
@@ -125,7 +134,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         return error('no processes specified');
     }
 
-    if (stock.x && stock.y && stock.z) {
+    if (stock.x && stock.y && stock.z && !isIndexed) {
         if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
             return error('stock X too small for part. resize stock or use offset stock');
         }
@@ -144,14 +153,54 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     }
 
     let mark = Date.now();
-    let slicer = new kiri.cam_slicer(widget);
+    let opList = [];
+    let opSum = 0;
+    let opTot = 0;
+    let shadows = {};
+    let slicer;
+    let state = {
+        settings,
+        widget,
+        bounds,
+        tabs,
+        cutTabs,
+        cutPolys,
+        healPolys,
+        shadowAt,
+        slicer,
+        addSlices,
+        isIndexed,
+        setAxisIndex,
+        updateToolDiams,
+        updateSlicer,
+        computeShadows,
+        zBottom,
+        zThru,
+        ztOff,
+        zMax,
+        zTop,
+        unsafe,
+        color,
+        dark,
+        ops: opList
+    };
+    let tracker = setSliceTracker({ rotation: 0 });
+
+    function updateSlicer() {
+        slicer = state.slicer = new kiri.cam_slicer(widget);
+    }
+
+    async function computeShadows() {
+        shadows = {};
+        await new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
+            // console.log('reshadow', progress.round(3));
+        });
+    }
 
     function updateToolDiams(toolDiam) {
         minToolDiam = Math.min(minToolDiam, toolDiam);
         maxToolDiam = Math.max(maxToolDiam, toolDiam);
     }
-
-    let shadows = {};
 
     function shadowAt(z) {
         let cached = shadows[z];
@@ -215,44 +264,22 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         }
     }
 
-    let state = {
-        settings,
-        widget,
-        bounds,
-        tabs,
-        cutTabs,
-        cutPolys,
-        healPolys,
-        shadowAt,
-        slicer,
-        addSlices,
-        isIndexed,
-        setAxisIndex,
-        updateToolDiams,
-        zBottom,
-        zThru,
-        ztOff,
-        zMax,
-        zTop,
-        unsafe,
-        color,
-        dark,
-    };
-
-    let opList = [
-        // silently preface op list with OpShadow
-        new CAM.OPS.shadow(state, { type: "shadow", silent: true })
-    ];
-
     if (false) {
         opList.push(new CAM.OPS.xray(state, { type: "xray" }));
     }
 
-    let opSum = 0;
-    let opTot = opList.length ? opList.map(op => op.weight()).reduce((a,v) => a + v) : 0;
+    let activeOps = proc.ops.filter(op => !op.disabled);
+
+    // silently preface op list with OpShadow
+    if (isIndexed) {
+        if (activeOps.length === 0 || activeOps[0].type !== 'index')
+        opList.push(new CAM.OPS.index(state, { type: "index", index: 0 }));
+    } else {
+        opList.push(new CAM.OPS.shadow(state, { type: "shadow", silent: true }));
+    }
 
     // determing # of steps and step weighting for progress bar
-    for (let op of proc.ops.filter(op => !op.disabled)) {
+    for (let op of activeOps) {
         if (op.type === '|') {
             break;
         }
@@ -264,39 +291,41 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         }
     }
 
-    // give ops access to entire sequence
-    state.ops = opList;
-
     // call slice() function on all ops in order
-    let tracker = setSliceTracker({ rotation: 0 });
     setAxisIndex();
+    updateSlicer();
     for (let op of opList) {
         let weight = op.weight();
         // apply operation override vars
         let workover = var_compute();
         let valz = op.op;
         if (valz.ov_topz) {
-            workover.top_z = bottom_stock + valz.ov_topz;
+            workover.top_z = isIndexed ? valz.ov_topz : bottom_stock + valz.ov_topz;
         }
         if (valz.ov_botz) {
-            workover.bottom_z = bottom_stock + valz.ov_botz;
+            workover.bottom_z = isIndexed ? valz.ov_botz : bottom_stock + valz.ov_botz;
             workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
         }
-        state.workarea = workover;
+        // state.workarea = workover;
+        Object.assign(state, {
+            zBottom,
+            zThru,
+            ztOff,
+            zMax,
+            zTop,
+            workarea: workover
+        });
+        // console.log({
+        //     op,
+        //     workover,
+        //     bounds: structuredClone(bounds),
+        //     stock: structuredClone(stock)
+        // });
         await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
+        // update tracker rotation for next slice output() visualization
         tracker.rotation = isIndexed ? axisRotation : 0;
-        // setup new state when indexing the workspace
-        if (op.op.type === "index") {
-            widget.topo = undefined;
-            // let points = base.verticesToPoints();
-            state.slicer = new kiri.cam_slicer(widget);
-            shadows = {};
-            await new CAM.OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
-                // console.log('reshadow', progress.round(3));
-            });
-        }
         camOps.push(op);
         opSum += weight;
     }
@@ -379,60 +408,107 @@ CAM.addDogbones = function(poly, dist, reverse) {
 };
 
 CAM.traces = async function(settings, widget, single) {
-    if (widget.traces && widget.trace_single === single) {
-        // do no work if cached
+    if (widget.traces) {
         return false;
     }
-    let slicer = new kiri.cam_slicer(widget);
-    let zees = Object.assign({}, slicer.zFlat, slicer.zLine);
-    let indices = [...new Set(Object.keys(zees)
-            .map(kv => parseFloat(kv).round(5))
-            .appendAll(Object.entries(single ? slicer.zLine : {}).map(ze => {
-                let [ zk, zv ] = ze;
-                return zv > 1 ? parseFloat(zk).round(5) : null;
-            })
-            .filter(v => v !== null))
-        )]
-        .sort((a,b) => b - a);
-    let traces = [];
-    // find and trim polys (including open) to shadow
-    let oneach = data => {
-        if (single) {
-            for (let line of data.lines) {
-                if (line.p1.distTo2D(line.p2) > 1) {
-                    traces.push(newPolygon().append(line.p1).append(line.p2).setOpen());
-                }
-            }
-        } else
-        base.polygons.flatten(data.tops).forEach(poly => {
-            poly.inner = null;
-            poly.parent = null;
-            let z = poly.getZ();
-            for (let i=0, il=traces.length; i<il; i++) {
-                let trace = traces[i];
-                let dz = Math.abs(z - trace.getZ());
-                // only compare polys farther apart in Z
-                if (dz > 0.01) {
-                    continue;
-                }
-                // do not add duplicates
-                if (traces[i].isEquivalent(poly) && dz < 0.1) {
-                    // console.log({ dup: poly });
-                    return;
-                }
-            }
-            traces.push(poly);
-        });
-    };
 
+    // --- points → line segments ---
+    let edges = new THREE.EdgesGeometry(widget.mesh.geometry, 20);
+    let array = edges.attributes.position.array;
+    let pcache = {};
+    let points = new Array(2);
+    let lines = new Array(points.length / 2);
+    for (let i=0, j=0, k=0, l=array.length; i<l; ) {
+        let ps = [ array[i++], array[i++], array[i++] ];
+        let key = ps.map(v => (v * 10000) | 0).join(',');
+        let point = pcache[key];
+        if (!point) {
+            point = newPoint(ps[0], ps[1], ps[2], key);
+            point.lines = [];
+            pcache[key] = point;
+        }
+        points[j++ % 2] = point;
+        if (j % 2 === 0) {
+            let [ p0, p1 ] = points;
+            let line = lines[k++] = newLine(p0, p1);
+            p0.lines.push(line);
+            p1.lines.push(line);
+        }
+    }
 
-    let opts = { each: oneach, over: false, flatoff: 0, edges: true, openok: true, lines: true };
-    await slicer.slice(indices, opts);
-    // pick up bottom features
-    opts.over = true;
-    await slicer.slice(indices, opts);
-    widget.traces = traces;
-    widget.trace_single = single;
+    // --- segments → chains (bidirectional walk) ---
+    let chains = [];
+    {
+        const segs = lines.slice();        // shallow copy
+        segs.forEach(s => (s.visited = false));
+
+        function step(dirPoint, prevSeg, pushFront, chain) {
+            let curr = dirPoint;
+            let prev = prevSeg;
+
+            while (curr.lines.length === 2) {           // stay inside the arc
+                const next = curr.lines.find(l => !l.visited && l !== prev);
+                if (!next) break;                       // should not happen
+
+                next.visited = true;
+                if (pushFront) chain.unshift(next);     // prepend or append?
+                else chain.push(next);
+
+                curr = next.p1 === curr ? next.p2 : next.p1;
+                prev = next;
+            }
+        }
+
+        for (const seed of segs) {
+            if (seed.visited) continue;
+
+            seed.visited = true;        // always include the seed
+            const chain = [seed];
+
+            // grow backwards from p1  (prepend)
+            step(seed.p1, seed, true, chain);
+
+            // grow forwards  from p2  (append)
+            step(seed.p2, seed, false, chain);
+
+            chains.push(chain);
+        }
+    }
+
+    // --- chains → polylines ---
+    const polylines = [];
+
+    for (const chain of chains) {
+        const poly = newPolygon().setOpen();
+
+        // choose any node whose degree !== 2; if none, it’s a closed loop
+        let start = null;
+        for (const s of chain) {
+            if (s.p1.lines.length !== 2) { start = s.p1; break; }
+            if (s.p2.lines.length !== 2) { start = s.p2; break; }
+        }
+        if (!start) start = chain[0].p1;          // closed loop
+
+        let curr = start, prevSeg = null;
+        poly.push(curr);                          // first point
+
+        while (true) {
+            const nextSeg = curr.lines.find(
+                l => l !== prevSeg && chain.includes(l)
+            );
+            if (!nextSeg) break;                  // open end reached
+
+            curr = nextSeg.p1 === curr ? nextSeg.p2 : nextSeg.p1;
+            poly.push(curr);                      // << push *before* test
+            if (curr === start) break;            // loop closed
+
+            prevSeg = nextSeg;
+        }
+        polylines.push(poly);
+    }
+
+    widget.traces = polylines;
+
     return true;
 };
 
@@ -471,7 +547,7 @@ CAM.holes = async function(settings, widget, individual, rec,onProgress) {
     let slicerOpts = {flatoff: 0.001}
     let slicer = new kiri.cam_slicer(widget,slicerOpts);
     let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z,z-0.002]).flat()
-    
+
     precision = Math.max( 0, precision )
     let intervals = (precision == 0) ? [] : slicer.interval(
         precision,
@@ -564,6 +640,11 @@ CAM.holes = async function(settings, widget, individual, rec,onProgress) {
         onProgress(0.75+(i/circles.length*0.25),"assemble holes")
     }
     drills.forEach( h=>{
+        if(rec.fromTop){
+            // set z top if selected
+            h.depth += wztop - h.z
+            h.z = wztop
+        }
         delete h.overlapping //for encoding
         h.diam = toolDiam // for mesh generation
         h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05 ); //for same size selection

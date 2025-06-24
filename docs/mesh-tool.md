@@ -10,7 +10,7 @@ id: mesh-tool
 
 [Mesh:Tool](https://grid.space/mesh) is an intentionally simplified tool designed to address the most common cases of mesh editing and repair. It is under active development with new features daily or weekly. This means the docs can get out of date quickly.
 
-Mesh:Tool is part of the [Grid.Apps GitHub Repo](https://github.com/GridSpace/grid-apps) and is Open Source under the [MIT License](https://en.wikipedia.org/wiki/MIT\_License). It runs entirely in browser, is not connected to the cloud, and does not collect or share any model data. [Desktop builds](https://github.com/GridSpace/grid-apps/releases) are available whiel start in the Slicer view. Use the central drop-menu to switch to Mesh:Tool.
+Mesh:Tool is part of the [Grid.Apps GitHub Repo](https://github.com/GridSpace/grid-apps) and is Open Source under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). It runs entirely in browser, is not connected to the cloud, and does not collect or share any model data. [Desktop builds](https://github.com/GridSpace/grid-apps/releases) are available whiel start in the Slicer view. Use the central drop-menu to switch to Mesh:Tool.
 
 Browse the Mesh:Tool [video playlist](https://www.youtube.com/playlist?list=PLRoVgyRoWZps84Scj5wQ2LYK-wMu-7r0L) on YouTube
 

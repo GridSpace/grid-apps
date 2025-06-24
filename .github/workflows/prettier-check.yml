@@ -1,0 +1,23 @@
+name: 'Docs Fomatting Check'
+on:
+  push:
+    paths:
+      - './docs/**'
+  workflow_dispatch:
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install dependencies
+        run: bun install
+      - name: check format for docs 
+        run:
+          bun docs-check
