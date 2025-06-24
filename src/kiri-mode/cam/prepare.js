@@ -479,7 +479,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 modifier = threshold / absDeltaZ;
             if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
                 // use modifier to speed up long XY move plunge rates
-                console.log('modifier', modifier);
+                // console.log('modifier', modifier);
                 rate = Math.round(plungeRate + ((feedRate - plungeRate) * modifier));
                 cut = 1;
             } else {
@@ -824,13 +824,13 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
                         } else {
                             radFault = true;
-                            console.log("too much angle")
+                            // console.log("too much angle")
                         }
                         
 
                         if (cc) {
                             if ([cc.x,cc.y,cc.z,cc.r].hasNaN()) {
-                                console.log({cc, e1, e2, e3});
+                                // console.log({cc, e1, e2, e3});
                             }
                             if (arcQ.length === 3) {
                                 arcQ.center = [ cc ];
@@ -935,7 +935,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.ySum / cl,
                 )
 
-                console.log("draining")
+                // console.log("draining")
 
                 if(arcQ.length == poly.points.length ){
                     //if is a circle
@@ -1061,7 +1061,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
         }
     }
-    console.log("prepare output", newOutput);
+    // console.log("prepare output", newOutput);
     // replace output single flattened layer with all points
     print.output = newOutput;
     return printPoint;
