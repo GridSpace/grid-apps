@@ -858,6 +858,8 @@ self.kiri.lang['en-us'] = {
     cx_true_l:      ["computationally correct shadow","will be slower but produce","better cuts for complex parts"],
     cx_arct_s:      "arc tolerance",
     cx_arct_l:      ["convert cicrular paths to arcs;","center point drift tolerance","when matching arc points","consider values around 0.15","in mm, or 0.006 inches;","High values may cause","unexpected behavior","0 to disable"],
+    cx_arcr_s:      "arc resolution",
+    cx_arcr_l:      ["change in line direction","aceptible in an arc","consider values around 5","High values may cause","unexpected behavior",],
 
     // FDM GCODE
     ag_menu:        "gcode",
