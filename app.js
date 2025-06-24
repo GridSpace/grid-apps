@@ -568,6 +568,14 @@ function handleVersion(req, res, next) {
         } else {
             return http.redirect(res, `${req.url}?ver:${vstr}`);
         }
+    } else if (!debug) {
+        let { path } = req.app;
+        if (path === '/v2/lib/mesh/work.js') {
+            req.url = req.app.path = '/v2/lib/pack/work.js';
+    } else if (path === '/v2/lib/main/mesh.js') {
+            req.url = req.app.path = '/v2/lib/pack/mesh.js';
+        }
+        next();
     } else {
         next();
     }

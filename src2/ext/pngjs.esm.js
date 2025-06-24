@@ -4,4 +4,4 @@
 import './pngjs.js';
 
 // Re-export the PNG object
-export const PNG = self.png.PNG;
+export const PNG = self.png ? self.png.PNG : null;

@@ -1,5 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+// Import Clipper library first to ensure it's available in worker context
+import "../ext/clip2.js";
+
 import "../ext/earcut.js";
 import '../add/array.js';
 import '../add/class.js';

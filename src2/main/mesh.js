@@ -1,7 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-// import '../mesh/work.js';
-
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
@@ -84,7 +82,7 @@ function init() {
     motoClient.on('ready', restore_space);
 
     // start worker
-    motoClient.start(`/v2/lib/mesh/work.js?${version}`);
+    motoClient.start('../lib/mesh/work.js?' + version);
 
     // trigger space event binding
     call.space_init({ space: space, platform });
@@ -776,15 +774,7 @@ broker.listeners({
     set_snap_value
 });
 
-// remove version cache bust from url
-window.history.replaceState({},'','/v2/mesh/');
-
-// setup init() trigger when dom + scripts complete
-document.onreadystatechange = function() {
-    if (document.readyState === 'complete') {
-        init();
-    }
-}
+init();
 
 export {
     version,

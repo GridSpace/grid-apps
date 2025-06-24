@@ -63,11 +63,14 @@
         "@docusaurus/core": "^3.7.0",
         "@docusaurus/preset-classic": "^3.7.0",
         "@electron/notarize": "^3.0.0",
+        "copy-webpack-plugin": "^12.0.2",
         "docusaurus-lunr-search": "^3.6.0",
         "dotenv": "latest",
         "electron": "^35.0.1",
         "electron-builder": "^24.9.1",
+        "esbuild": "^0.25.5",
         "fs-extra": "^11.2.0",
+        "imports-loader": "^5.0.0",
         "node-fetch": "^3.3.2",
         "terser-webpack-plugin": "^5.3.10",
         "webpack": "^5.92.1",
@@ -91,13 +94,16 @@
         "build-win-arm": "npm run build -- --win --arm64",
         "build-mac": "npm run build -- --mac --arm64",
         "build-mac-intel": "npm run build -- --mac --x64",
+        "mesh-build": "webpack --config webpack.config.js",
+        "mesh-build-dev": "webpack --config webpack.dev.config.js",
+        "serve-mesh": "npx serve dist/v2 -p 8181",
         "mklinks": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > links.csv",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
         "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
         "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js",
-        "preinstall2": "npx webpack --config src2/webpack/webpack-three-esm.js",
+        "preinstall2": "npx webpack --config src2/webpack/webpack-three-esm.js && node src2/webpack/esbuild.config.js",
         "docs-dev": "docusaurus start",
         "docs-build": "docusaurus build",
         "docs-serve": "docusaurus serve",
@@ -194,5 +200,6 @@
             ]
         },
         "afterSign": "bin/electron-notarize.js"
-    }
+    },
+    "sideEffects": true
 }
