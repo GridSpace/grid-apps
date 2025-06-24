@@ -330,6 +330,13 @@ function setContains(setA, poly) {
     return false;
 }
 
+/**
+ * Flatten an array of polygons into a single array of polygons.
+ * @param {Polygon[]} polys - input array of polygons
+ * @param {Polygon[]} [to] - output array. if omitted, a new array will be created
+ * @param {boolean} [crush] - if true, remove the inner array after flattening
+ * @returns {Polygon[]} - the flattened array
+ */
 function flatten(polys, to, crush) {
     to = to || [];
     for (let poly of polys) {
@@ -613,14 +620,18 @@ function offset(polys, dist, opts = {}) {
         }
     }
 
+    let { 
+        count = 1,
+        depth = 0,
+        fill = FillNonZero,
+        join = JoinType.jtMiter,
+        type = EndType.etClosedPolygon,
+    } = opts;
+
     let orig = polys,
-        count = numOrDefault(opts.count, 1),
-        depth = numOrDefault(opts.depth, 0),
         clean = opts.clean !== false,
         simple = opts.simple !== false,
-        fill = numOrDefault(opts.fill, FillNonZero),
-        join = numOrDefault(opts.join, JoinType.jtMiter),
-        type = numOrDefault(opts.type, EndType.etClosedPolygon),
+
         // if dist is array with values, shift out next offset
         offs = Array.isArray(dist) ? (dist.length > 1 ? dist.shift() : dist[0]) : dist,
         mina = numOrDefault(opts.minArea, 0.1),
@@ -656,11 +667,7 @@ function offset(polys, dist, opts = {}) {
 
     // if specified, perform offset gap analysis
     if (opts.gaps && polys.length) {
-        let oneg = offset(polys, -offs, {
-            fill: opts.fill, join: opts.join, type: opts.type, z: opts.z, minArea: mina
-        });
         let suba = [];
-        let diff = subtract(orig, oneg, suba, null, zed);
         opts.gaps.append(suba, opts.flat);
     }
 
@@ -671,6 +678,14 @@ function offset(polys, dist, opts = {}) {
 
     // if specified, perform up to *count* successive offsets
     if (polys.length) {
+        // decrement count, increment depth
+        opts.count = --count;
+        opts.depth = ++depth;
+        
+        //set poly depth
+        polys.forEach(p => {
+            p.depth = depth;
+        });
         // ensure opts has offset accumulator array
         opts.outs = opts.outs || [];
         // store polys in accumulator
@@ -681,9 +696,6 @@ function offset(polys, dist, opts = {}) {
         }
         // check for more offsets
         if (count > 1) {
-            // decrement count, increment depth
-            opts.count = count - 1;
-            opts.depth = depth + 1;
             // call next offset
             offset(polys, dist, opts);
         }
