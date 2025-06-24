@@ -98,6 +98,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         depthFirst = process.camDepthFirst,
         engageFactor = process.camFullEngage,
         arcTolerance = process.camArcTolerance,
+        arcRes = toRadians(process.camArcResolution),
         tolerance = 0,
         drillDown = 0,
         drillLift = 0,
@@ -576,12 +577,11 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
     }
     /**
- * Ease down along the polygonal path.
- *
- * 1. Travel from fromPoint to closest point on polygon, to rampZ above that that point,
- * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slope until target Z is hit,
- */
-
+     * Ease down along the polygonal path.
+     *
+     * 1. Travel from fromPoint to closest point on polygon, to rampZ above that that point,
+     * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slope until target Z is hit,
+     */
     function generateEaseDown(fn,poly, fromPoint, degrees = 45){
         let index = poly.findClosestPointTo(fromPoint).index,
             fromZ = fromPoint.z,
@@ -736,17 +736,16 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * the polygon if that point is not the current position.
      *
      * @param {Polygon} poly - the polygon to output
-     * @param {number} index - the index of the polygon in its containing array
-     * @param {number} count - the total number of polygons in the array
+     * @param {number} index - unused
+     * @param {number} count - 1 to set engage factor
      * @param {Point} fromPoint - the point to rapid move from
      * @param {Object} camOutOpts - optional parameters to pass to camOut
      * @returns {Point} - the last point of the polygon
      */
     function polyEmit(poly, index, count, fromPoint) {
-        //arcTolerance is the allowable distance between circle centers
-        let arcRes = toRadians(2), //5 degs max
-            arcMax = Infinity, // no max arc radius
-            lineTolerance = 0.001; // do not consider points under 0.001mm for lines
+        
+        let arcMax = Infinity, // no max arc radius
+            lineTolerance = 0.001; // do not consider points under 0.001mm for arcs
 
         fromPoint = fromPoint || printPoint;
         let arcQ = [];
@@ -756,7 +755,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let lastPoint = closest.point;
         let startIndex = closest.index;
 
-        let circleComplete = false;
+        // console.log({poly, index, count, fromPoint,startIndex})
 
         // scale speed of first cutting poly since it engages the full bit
         let scale = ((isRough || isPocket) && count === 1) ? engageFactor : 1;
@@ -772,15 +771,15 @@ function prepEach(widget, settings, print, firstPoint, update) {
             startIndex = last;
         } 
 
-        console.log(poly,poly.isClosed(),startIndex)
+        // console.log(poly,poly.isClosed(),startIndex)
         
         //A is first point of segment, B is last
         poly.forEachSegment( ( pointA, pointB, indexA, indexB) => {
             // if(offset == 0) console.log("forEachPoint",point,pidx,points)
+            // console.log({pointA, pointB, indexA, indexB,startIndex})
             if(indexA == startIndex){
                 camOut(pointA.clone(), 0, {factor:engageFactor});
                 // if first point, move to and call export function
-                console.log("start")
                 quePush(pointA);
             }
             lastPoint = arcExport(pointB, pointA);
@@ -895,7 +894,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     }
                 } else {
                     // if dist to small, output as a cut
-                    console.trace('point too small', point,lastp,dist);
+                    // console.trace('point too small', point,lastp,dist);
                     camOut(point, 1);
                 }
             } else {
@@ -936,6 +935,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     arcQ.ySum / cl,
                 )
 
+                console.log("draining")
+
                 if(arcQ.length == poly.points.length ){
                     //if is a circle
                     // generate circle
@@ -945,7 +946,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
                     camOut(from,1);
                     camOut(from,gc,{ center:center.sub(from), clockwise, arcPoints});
                     // lastPoint = to.clone();
-                    circleComplete = true
                 }else{
                     //if a non-circle arc
                     let arcPoints = arcToPath( from, to, arcPreviewRes,{ clockwise,center})
