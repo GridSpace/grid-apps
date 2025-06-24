@@ -4,6 +4,7 @@ module.exports = {
   url: 'https://docs.grid.space',
   title: 'grid.space docs',
   baseUrl : '/',
+  favicon: 'img/gs-logo.png',
   staticDirectories: ['./docs/static/'],
   // ...
   plugins: [require.resolve('docusaurus-lunr-search')],

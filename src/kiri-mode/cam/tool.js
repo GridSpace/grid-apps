@@ -137,7 +137,7 @@ class Tool {
             drill_tip_length = this.drillTipLength(),
             shaft_offset = this.fluteLength(),
             flute_diameter = this.fluteDiameter(),
-            shaft_diameter = this.shaftDiameter(),
+            shaft_diameter = Math.max(flute_diameter, this.shaftDiameter()),
             max_diameter = Math.max(flute_diameter, shaft_diameter),
             shaft_pix_float = max_diameter / resolution,
             shaft_pix_int = Math.round(shaft_pix_float),

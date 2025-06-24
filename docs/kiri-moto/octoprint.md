@@ -14,8 +14,6 @@ The `send` button will spool a print directly to OctoPrint where it will sit und
 
 ![](/img/gridsend.png)
 
-
-
 ## Local Sending
 
 OctoPrint has a web api endpoint that can be configured on `Export` when enabled.

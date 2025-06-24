@@ -1002,6 +1002,23 @@ class Polygon {
         return this.z !== undefined ? this.z : this.points[i || 0]?.z || 0;
     }
 
+    minZ() {
+        return Math.min(...this.points.map(p => p.z));
+    }
+
+    avgZ() {
+        return [...this.points.map(p => p.z)].reduce((a,v) => a+v) / this.points.length;
+    }
+
+    /**
+     * @param {*} z value target
+     * @param {*} epsilon allowed Z variance
+     * @returns {boolean} true if all points Z within epsilon of value
+     */
+    onZ(z, epsilon = 10e-4) {
+        return Math.max(...this.points.map(p => Math.abs(z - p.z))) < epsilon;
+    }
+
     /**
      */
     render(layer, color, recursive, open) {

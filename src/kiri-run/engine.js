@@ -8,6 +8,7 @@
 // dep: kiri.client
 // dep: kiri.widget
 // use: add.three
+// use: add.array
 gapp.register("kiri-run.engine", [], (root, exports) => {
 
 const { kiri } = root;
@@ -105,10 +106,19 @@ class Engine {
     }
 
     setStock(stock) {
-        this.settings.stock = stock;
+        let { settings } = this;
+        let { process } = settings;
+        settings.stock = stock;
+        process.camStockX = stock.x;
+        process.camStockY = stock.y;
+        process.camStockZ = stock.z;
         return this;
     }
 
+    setOrigin(x, y, z) {
+        this.settings.origin = { x, y, z };
+        return this;
+    }
 
     moveTo(x, y, z) {
         this.widget.move(x, y, z, true);

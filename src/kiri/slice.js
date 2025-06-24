@@ -7,11 +7,8 @@
 gapp.register("kiri.slice", [], (root, exports) => {
 
 const { base, kiri } = root;
-const { key, polygons } = base;
-const { util } = base;
 
 const POLY = base.polygons;
-const NOKEY = key.NONE;
 
 let tracker;
 
