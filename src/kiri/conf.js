@@ -526,6 +526,7 @@ const conf = exports({
                 camDrillingOn: false,
                 camRegisterSpeed: 1000,
                 camRegisterThru: 5,
+                camRegisterOffset: 10,
                 camFlipAxis: "X",
                 camFlipOther: "",
                 camLaserEnable: ["M321"],

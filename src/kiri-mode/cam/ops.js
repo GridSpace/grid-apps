@@ -1583,112 +1583,108 @@ class OpRegister extends CamOp {
         updateToolDiams(tool.fluteDiameter());
 
         let { stock } = settings,
-            tz = widget.track.pos.z,
-            lx = bounds.min.x,
-            hx = bounds.max.x,
-            ly = bounds.min.y,
-            hy = bounds.max.y,
-            o3 = tool.fluteDiameter() * 2,
-            mx = (lx + hx) / 2,
-            my = (ly + hy) / 2,
-            mz = op.thru || zThru || 0,
-            dx = (stock.x - (hx - lx)) / 4,
-            dy = (stock.y - (hy - ly)) / 4,
-            dz = stock.z,
-            points = [],
-            wo = stock.z - bounds.max.z,
-            z1 = bounds.max.z + wo + tz,
-            z2 = tz - mz;
+        toolZ = widget.track.pos.z,
+        boundMinX = bounds.min.x,
+        boundMaxX = bounds.max.x,
+        boundMinY = bounds.min.y,
+        boundMaxY = bounds.max.y,
+        toolOffset = tool.fluteDiameter() * 2,
+        centerX = (boundMinX + boundMaxX) / 2,
+        centerY = (boundMinY + boundMaxY) / 2,
+        cutDepth = op.thru || zThru || 0,
+        pathPoints = [],
+        stockToSurfaceOffset = stock.z - bounds.max.z,
+        startZ = bounds.max.z + stockToSurfaceOffset + toolZ,
+        endZ = toolZ - cutDepth,
+        cutOffset = op.offset;
 
         if (!(stock.x && stock.y && stock.z)) {
             return;
         }
 
-        switch (op.axis) {
-            case "X":
+        switch (op.axis.toLowerCase()) {
             case "x":
                 if (op.points == 3) {
-                    points.push(newPoint(lx - dx, my, 0));
-                    points.push(newPoint(hx + dx, my - o3, 0));
-                    points.push(newPoint(hx + dx, my + o3, 0));
+                    pathPoints.push(newPoint(boundMinX - cutOffset, centerY, 0));
+                    pathPoints.push(newPoint(boundMaxX + cutOffset, centerY - toolOffset, 0));
+                    pathPoints.push(newPoint(boundMaxX + cutOffset, centerY + toolOffset, 0));
                 } else {
-                    points.push(newPoint(lx - dx, my, 0));
-                    points.push(newPoint(hx + dx, my, 0));
+                    pathPoints.push(newPoint(boundMinX - cutOffset, centerY, 0));
+                    pathPoints.push(newPoint(boundMaxX + cutOffset, centerY, 0));
                 }
                 break;
-            case "Y":
             case "y":
                 if (op.points == 3) {
-                    points.push(newPoint(mx, ly - dy, 0));
-                    points.push(newPoint(mx - o3, hy + dy, 0));
-                    points.push(newPoint(mx + o3, hy + dy, 0));
+                    pathPoints.push(newPoint(centerX, boundMinY - cutOffset, 0));
+                    pathPoints.push(newPoint(centerX - toolOffset, boundMaxY + cutOffset, 0));
+                    pathPoints.push(newPoint(centerX + toolOffset, boundMaxY + cutOffset, 0));
                 } else {
-                    points.push(newPoint(mx, ly - dy, 0));
-                    points.push(newPoint(mx, hy + dy, 0));
+                    pathPoints.push(newPoint(centerX, boundMinY - cutOffset, 0));
+                    pathPoints.push(newPoint(centerX, boundMaxY + cutOffset, 0));
                 }
                 break;
             case "-":
-                let o2 = o3 / 2,
-                    x0 = lx - dx,
-                    x1 = hx + dx,
-                    y0 = ly - dy - o2,
-                    y1 = hy + dy + o2,
-                    x4 = (x1 - x0 - o2) / 4,
-                    y4 = (y1 - y0 - o2 * 3) / 4,
-                    poly, cp, cz;
+                let halfOffset = toolOffset / 2,
+                    loopMinX = boundMinX - cutOffset,
+                    loopMaxX = boundMaxX + cutOffset,
+                    loopMinY = boundMinY - cutOffset - halfOffset,
+                    loopMaxY = boundMaxY + cutOffset + halfOffset,
+                    deltaX = (loopMaxX - loopMinX - halfOffset) / 4,
+                    deltaY = (loopMaxY - loopMinY - halfOffset * 3) / 4,
+                    poly, currentPoint, currentZ;
                 function start(z) {
-                    cz = z;
-                    cp = {x:x0 + o2 * 0.5, y:y0 + o2 * 1.5};
-                    poly = newPolygon().add(cp.x, cp.y, z);
+                    currentZ = z;
+                    currentPoint = { x: loopMinX + halfOffset * 0.5, y: loopMinY + halfOffset * 1.5 };
+                    poly = newPolygon().add(currentPoint.x, currentPoint.y, z);
                 }
                 function move(dx, dy) {
-                    cp.x += dx;
-                    cp.y += dy;
-                    poly.add(cp.x, cp.y, cz);
+                    currentPoint.x += dx;
+                    currentPoint.y += dy;
+                    poly.add(currentPoint.x, currentPoint.y, currentZ);
                 }
-                function rept(count, tv, fn) {
+                function rept(count, step, fn) {
                     while (count-- > 0) {
-                        fn(tv, count === 0);
-                        tv = -tv;
+                        fn(step, count === 0);
+                        step = -step;
                     }
                 }
-                for (let z of base.util.lerp(z1, z2, op.down)) {
+                for (let z of base.util.lerp(startZ, endZ, op.down)) {
                     let slice = newSlice(z);
                     addSlices(slice);
                     sliceOut.push(slice);
                     start(z);
-                    rept(4, o2, oy => {
+                    rept(4, halfOffset, oy => {
                         move(0, -oy);
-                        move(x4, 0);
+                        move(deltaX, 0);
                     });
-                    rept(4, o2, ox => {
+                    rept(4, halfOffset, ox => {
                         move(ox, 0);
-                        move(0, y4);
+                        move(0, deltaY);
                     });
-                    rept(4, o2, oy => {
+                    rept(4, halfOffset, oy => {
                         move(0, oy);
-                        move(-x4, 0);
+                        move(-deltaX, 0);
                     });
-                    rept(4, o2, ox => {
+                    rept(4, halfOffset, ox => {
                         move(-ox, 0);
-                        move(0, -y4);
+                        move(0, -deltaY);
                     });
                     poly.points.pop();
                     slice.camTrace = { tool: tool.getID(), rate: op.feed, plunge: op.rate };
                     slice.camLines = [ poly ];
                     slice.output()
-                        .setLayer("register", {line: color}, false)
+                        .setLayer("register", { line: color }, false)
                         .addPolys(slice.camLines)
                 }
                 break;
         }
 
-        if (points.length) {
+        if (pathPoints.length) {
             let slice = newSlice(0,null), polys = [];
-            points.forEach(point => {
+            pathPoints.forEach(point => {
                 polys.push(newPolygon()
-                    .append(point.clone().setZ(z1))
-                    .append(point.clone().setZ(z2)));
+                    .append(point.clone().setZ(startZ))
+                    .append(point.clone().setZ(endZ)));
             });
             slice.camLines = polys;
             slice.output()
