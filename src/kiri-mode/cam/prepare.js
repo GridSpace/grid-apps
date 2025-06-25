@@ -491,6 +491,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             if (depthFirst) {
                 depthData.push(polys);
             } else {
+                // if not depth first, output the polys in slice order
                 printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
                     poly.forEachPoint(function(point, pidx, points, offset) {
                         // scale speed of first cutting poly since it engages the full bit
@@ -508,10 +509,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         if (depthFirst) {
+            // get inside vals (the positive ones)
             let ins = depthData.map(a => a.filter(p => !isNeg(p.depth)));
             let itops = ins.map(level => {
                 return POLY.nest(level.filter(poly => poly.depth === 0).clone());
             });
+            // get outside vals (the negative ones)
             let outs = depthData.map(a => a.filter(p => isNeg(p.depth)));
             let otops = outs.map(level => {
                 return POLY.nest(level.filter(poly => poly.depth === 0).clone());

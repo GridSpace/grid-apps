@@ -215,7 +215,6 @@ const renamed = {
     drillDwell: "camDrillDwell",
     drillLift: "camDrillLift",
     drillingOn: "camDrillingOn",
-    camPocketOnlyFinish: "camOutlinePocket",
     camWideCutout: "camOutlineWide",
     outputClockwise: "camConventional"
 };
