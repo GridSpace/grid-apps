@@ -698,10 +698,6 @@ class OpOutline extends CamOp {
         setTool(op.tool, op.rate, op.plunge);
         setSpindle(op.spindle);
 
-        if (!process.camOutlinePocket) {
-            cutdir = !cutdir;
-        }
-
         // printpoint becomes NaN in engine mode. not sure why but this fixes it
         if(Object.values(printPoint).some(v=>Number.isNaN(v))){ 
             printPoint = newPoint(0,0,0);
