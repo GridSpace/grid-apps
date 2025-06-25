@@ -302,7 +302,7 @@ class OpRough extends CamOp {
         thruHoles.forEach(hole => {
             shadow = shadow.map(p => {
                 if (p.isEquivalent(hole)) {
-                    let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.01));
+                    let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.05));
                     return po ? po[0] : undefined;
                 } else {
                     return p;
