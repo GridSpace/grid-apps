@@ -405,6 +405,10 @@ function center2pr(p1, p2, r, clockwise) {
 // find angle difference between 0 and 2pi from n1 to n2 (signed depending on clock direction)
 function thetaDiff(n1, n2, clockwise) {
     let diff = n2 - n1;
+    if(typeof n1  != 'number' || typeof n2 != 'number') {
+        throw ("n1 and n2 must be numbers");
+        // this check is here because this causes an infinite loop when other value are provided
+    }
     while (diff < -Math.PI) diff += Math.PI * 2;
     while (diff > Math.PI) diff -= Math.PI * 2;
     if (clockwise && diff > 0) diff -= Math.PI * 2;
