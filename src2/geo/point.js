@@ -435,10 +435,6 @@ export class Point {
         return this === p || (this.x === p.x && this.y === p.y && this.z === p.z);
     }
 
-    isEqual2D(p) {
-        return this === p || (this.x === p.x && this.y === p.y);
-    }
-
     /**
      * returns true if points are close enough to be considered equivalent
      */

@@ -1,10 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 class Broker {
-    debug = false;
-    topics = {};
-    used = {};
-    send = {};
+    #debug = false;
+    #topics = {};
+    #used = {};
+    #send = {};
 
     constructor() {
         // using the pattern "broker.send(msg)" induces runtime errors
@@ -14,7 +14,11 @@ class Broker {
     }
 
     topics() {
-        return Object.keys(this.topics);
+        return Object.keys(this.#topics);
+    }
+
+    get send() {
+        return this.#send;
     }
 
     // create subscriptions for all functions in an object
@@ -45,13 +49,13 @@ class Broker {
             // console.trace({invalid_topic: topic});
             return;
         }
-        let topics = this.topics;
+        let topics = this.#topics;
         let channel = topics[topic];
         if (!channel) {
             channel = topics[topic] = [];
         }
         if (channel.indexOf(listener) < 0) {
-            let send = this.send;
+            let send = this.#send;
             let name = topic.replace(/[\\ \.-]/g, '_');
             send[name] = send[name] = this.bind(topic);
             channel.push(listener);
@@ -61,7 +65,7 @@ class Broker {
     }
 
     unsubscribe(topic, listener) {
-        let channel = this.topics[topic];
+        let channel = this.#topics[topic];
         if (!channel) {
             return;
         }
@@ -71,7 +75,7 @@ class Broker {
         }
         channel.splice(index,1);
         if (channel.length === 0) {
-            delete this.topics[topic];
+            delete this.#topics[topic];
             this.publish(".topic.remove", topic);
         }
     }
@@ -86,13 +90,13 @@ class Broker {
         if (topic !== ".topic.publish") {
             this.publish(".topic.publish", {topic, message, options});
         }
-        if (this.debug && !topic.startsWith(".")) {
+        if (this.#debug && !topic.startsWith(".")) {
             console.log({ topic, message });
         }
         // store last seen message on a topic
         // acts as a tracker for all used topics
-        this.used[topic] = message;
-        let channel = this.topics[topic];
+        this.#used[topic] = message;
+        let channel = this.#topics[topic];
         if (channel && channel.length) {
             for (let listener of channel) {
                 try {

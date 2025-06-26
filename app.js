@@ -427,6 +427,7 @@ function initModule(mod, file, dir) {
             logger: log.new
         },
         inject: (code, file, opt = {}) => {
+            console.log({ inject: opt, code, file });
             let codelist = script[code];
             if (!codelist) {
                 return logger.log(`inject missing target "${code}"`);
