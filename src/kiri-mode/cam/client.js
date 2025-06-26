@@ -1955,12 +1955,19 @@ function createPopOp(type, map) {
             const settings  = conf.get();
             const {tool} = new CAM.Tool(settings,op.rec.tool); //get tool by id
             const opType = op.rec.type
-            const drillOrRegister = opType == "drill" || opType == "register"
 
-            if ( !drillOrRegister && tool.type == "drill"){
-                alerts.show(`Warning: Drills should not be used for ${opType} operations.`)
+            const register = opType === "register";
+            const drillOp = opType === "drill";
+            const drillRegister = register && op.rec.axis !== '-'
+
+            console.log({drillRegister},op.rec)
+
+            const drillPath = drillOp || drillRegister;
+
+            if( !drillPath && tool.type == "drill"){
+                alerts.show(`Warning: Drills should not be used for non-drill operations.`)
             }
-            else if ( drillOrRegister && tool.type != "drill"){
+            else if ( drillPath && tool.type != "drill"){
                 alerts.show(`Warning: Only drills should be used for drilling operations.`)
             }
 
