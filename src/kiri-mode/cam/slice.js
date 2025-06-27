@@ -412,7 +412,7 @@ CAM.traces = async function(settings, widget, single) {
     }
 
     // --- points → line segments ---
-    let edges = new THREE.EdgesGeometry(widget.mesh.geometry, 20);
+    let edges = new THREE.EdgesGeometry(widget.mesh.geometry, settings.controller.edgeangle ?? 20);
     let array = edges.attributes.position.array;
     let pcache = {};
     let points = new Array(2);
