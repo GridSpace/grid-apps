@@ -1814,7 +1814,8 @@ CAM.init = function(kiri, api) {
         dwell:   'camDrillDwell',
         lift:    'camDrillLift',
         feed:    'camRegisterSpeed',
-        thru:    'camRegisterThru'
+        offset:  'camRegisterOffset',
+        thru:    'camRegisterThru',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         axis:     UC.newSelect(LANG.cd_axis, {}, "regaxis"),
@@ -1828,6 +1829,7 @@ CAM.init = function(kiri, api) {
         dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, show:() => poppedRec.axis !== '-'}),
         lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => poppedRec.axis !== '-'}),
         sep:      UC.newBlank({class:"pop-sep"}),
+        offset:   UC.newInput(LANG.cd_rego_s, {title:LANG.cd_rego_l, convert:UC.toFloat, units:true, }),
         thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
     };
 
@@ -1953,12 +1955,19 @@ function createPopOp(type, map) {
             const settings  = conf.get();
             const {tool} = new CAM.Tool(settings,op.rec.tool); //get tool by id
             const opType = op.rec.type
-            const drillOrRegister = opType == "drill" || opType == "register"
 
-            if ( !drillOrRegister && tool.type == "drill"){
-                alerts.show(`Warning: Drills should not be used for ${opType} operations.`)
+            const register = opType === "register";
+            const drillOp = opType === "drill";
+            const drillRegister = register && op.rec.axis !== '-'
+
+            console.log({drillRegister},op.rec)
+
+            const drillPath = drillOp || drillRegister;
+
+            if( !drillPath && tool.type == "drill"){
+                alerts.show(`Warning: Drills should not be used for non-drill operations.`)
             }
-            else if ( drillOrRegister && tool.type != "drill"){
+            else if ( drillPath && tool.type != "drill"){
                 alerts.show(`Warning: Only drills should be used for drilling operations.`)
             }
 

@@ -111,6 +111,7 @@
     "camTraceBottom": false,
     "cmaPocketOutline": false,
     "camRegisterThru": 5,
+    "camRegisterOffset": 10,
     "camFlatness": 0,
     "camContourBridge": 10,
     "camForceZMax": false,
