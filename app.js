@@ -495,6 +495,7 @@ const script = {
         "&main/kiri",
     ],
     engine : [
+        "@kiri_work",
         "&kiri-run/engine",
         "&main/kiri",
     ],
@@ -696,6 +697,9 @@ function concatCode(key) {
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
+        inject.forEach(key => {
+            code.push(synth[key]);
+        });
         code.push(...[
             oversion ? `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` : '',
             'self.debug=true;',
@@ -709,6 +713,7 @@ function concatCode(key) {
             ']; function load_next() {',
             'let file = load.shift();',
             'if (!file) return;',
+            // 'console.log("loading", file);',
             'if (!self.document) { importScripts(file); return load_next() }',
             'let s = document.createElement("script");',
             's.type = "text/javascript";',
@@ -717,11 +722,11 @@ function concatCode(key) {
             'document.head.appendChild(s);',
             '} load_next(); })();'
         ].join('\n'));
+        code = code.join('\n');
+    } else {
         inject.forEach(key => {
             code.push(synth[key]);
         });
-        code = code.join('\n');
-    } else {
         direct.forEach(file => {
             let cached = getCachedFile(file, path => {
                 return minify(PATH.join(dir,file));
@@ -731,13 +736,9 @@ function concatCode(key) {
             }
             code.push(cached);
         });
-        inject.forEach(key => {
-            code.push(synth[key]);
-        });
         code = code.join('');
+        synth[key] = `self.${key} = "${Buffer.from(code).toString('base64')}";\n`;
     }
-    // console.log(`SETTING synth[${key}]`);
-    // synth[key] = `self.${key} = "${Buffer.from(code).toString('base64')}";\n`;
     return code;
 }
 
