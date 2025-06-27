@@ -92,6 +92,22 @@ npm run setup
 npm run dev
 ```
 
+## TrueNAS Via YAML
+
+`Apps > Discover Apps > Install via YAML`
+
+```
+services:
+  kirimoto:
+    build:
+      context: https://github.com/GridSpace/grid-apps.git#refs/tags/latest
+      dockerfile: ./src/dock/Dockerfile
+    ports:
+      - "8080:8080"
+```
+
+## For any default install...
+
 Then open a browser to [localhost:8080/kiri](http://localhost:8080/kiri)
 
 # Windows Developers

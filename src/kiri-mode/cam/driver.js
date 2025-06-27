@@ -92,13 +92,13 @@ kiri.load(api => {
                         //if a progress message,
                         onProgress(out.progress,out.msg)
                     }else{
-                        api.hide.alert(alert)
-                        onDone(out)
-                        res(out)
+                        api.hide.alert(alert);
+                        onDone(out);
+                        res(out);
                     }
                 });
             })
-        }
+        };
     }
 
     if (kiri.worker) {
@@ -166,7 +166,7 @@ kiri.load(api => {
             const { settings, indiv, rec } = data;
             const widgets = Object.values(kiri.worker.cache);
             const fresh = [];
-            
+
             for (let [i,widget] of widgets.entries() ) {
                 if (await CAM.holes(settings, widget, indiv, rec,
                     ( prog, msg )=>{ send.data({progress: (i/widgets.length)+(prog/widgets.length),msg})}

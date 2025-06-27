@@ -493,7 +493,7 @@ const conf = exports({
                 camTracePlunge: 200,
                 camTraceOffOver: 0,
                 camTraceDogbone: false,
-                camTraceMerge: true,
+                camTraceMerge: false,
                 camTraceLines: false,
                 camTraceZTop: 0,
                 camTraceZBottom: 0,

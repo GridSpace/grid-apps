@@ -165,6 +165,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         tabs,
         cutTabs,
         cutPolys,
+        contourPolys,
         healPolys,
         shadowAt,
         slicer,
@@ -365,8 +366,6 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     ondone();
 };
 
-
-
 CAM.addDogbones = function(poly, dist, reverse) {
     if (Array.isArray(poly)) {
         return poly.forEach(p => CAM.addDogbones(p, dist));
@@ -413,7 +412,7 @@ CAM.traces = async function(settings, widget, single) {
     }
 
     // --- points → line segments ---
-    let edges = new THREE.EdgesGeometry(widget.mesh.geometry, 20);
+    let edges = new THREE.EdgesGeometry(widget.mesh.geometry, settings.controller.edgeangle ?? 20);
     let array = edges.attributes.position.array;
     let pcache = {};
     let points = new Array(2);
@@ -512,16 +511,16 @@ CAM.traces = async function(settings, widget, single) {
     return true;
 };
 
-    /**
-     * Generate a list of holes in the model based on the given diameter.
-     *
-     * @param {Object} settings - settings object
-     * @param {Object} widget - widget object
-     * @param {boolean} individual - if true, drill holes individually
-     * @param {Object} rec - DrillOp record
-     * @param {Function} onProgress - callback function to report progress
-     * @returns {Array} list of hole centers as objects with `x`, `y`, `z`, `depth`, and `selected` properties.
-     */
+/**
+ * Generate a list of holes in the model based on the given diameter.
+ *
+ * @param {Object} settings - settings object
+ * @param {Object} widget - widget object
+ * @param {boolean} individual - if true, drill holes individually
+ * @param {Object} rec - DrillOp record
+ * @param {Function} onProgress - callback function to report progress
+ * @returns {Array} list of hole centers as objects with `x`, `y`, `z`, `depth`, and `selected` properties.
+ */
 CAM.holes = async function(settings, widget, individual, rec,onProgress) {
 
     let {tool,mark,precision} = rec //TODO: display some visual difference if mark is selected
@@ -603,7 +602,6 @@ CAM.holes = async function(settings, widget, individual, rec,onProgress) {
 
                     // //if on the same xy point, 
                     if (dist <= centerDiff ) {
-                        
                         // console.log("overlap",center,circle);
                         circle.overlapping.push(center);
                         // if overlapping, don't add and continue
@@ -667,6 +665,19 @@ function cutPolys(polys, offset, z, inter) {
     let noff = [];
     offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), inter) ));
     return healPolys(noff);
+}
+
+function contourPolys(widget, polys) {
+    const raycaster = new THREE.Raycaster();
+    raycaster.ray.direction.set(0, 0, -1);  // ray pointing down Z
+    for (let poly of polys) {
+        for (let point of poly.points) {
+            raycaster.ray.origin.set(point.x, point.y, 10000);
+            const intersects = raycaster.intersectObject(widget.mesh, false);
+            const firstHit = intersects[0] || null;
+            point.z = firstHit.point.z;
+        }
+    }
 }
 
 function healPolys(noff) {
