@@ -673,7 +673,7 @@ function contourPolys(widget, polys) {
     for (let poly of polys) {
         for (let point of poly.points) {
             raycaster.ray.origin.set(point.x, point.y, 10000);
-            const intersects = raycaster.intersectObject(widget.mesh, true);
+            const intersects = raycaster.intersectObject(widget.mesh, false);
             const firstHit = intersects[0] || null;
             point.z = firstHit.point.z;
         }
