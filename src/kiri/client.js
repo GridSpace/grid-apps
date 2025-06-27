@@ -70,6 +70,10 @@ const client = exports({
     newWorker() {
         if (self.createWorker) {
             return self.createWorker();
+        } else if (self.kiri_work) {
+            const work = atob(self.kiri_work);
+            const blob = new Blob([ work ], { type: 'application/javascript' });
+            return new Worker(URL.createObjectURL(blob));
         } else {
             let _ = debug ? '_' : '';
             return new Worker(`/code/kiri_work.js?${_}${gapp.version}`);

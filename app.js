@@ -681,11 +681,12 @@ function generateDevices() {
 function prepareScripts() {
     generateDevices();
     for (let key of Object.keys(script)) {
-        code[key] = concatCode(script[key]);
+        code[key] = concatCode(key);
     }
 }
 
-function concatCode(array) {
+function concatCode(key) {
+    let array = script[key];
     let code = [];
     let direct = array.filter(f => f.charAt(0) !== '@');
     let inject = array.filter(f => f.charAt(0) === '@').map(f => f.substring(1));
@@ -695,11 +696,11 @@ function concatCode(array) {
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
-        const code = [
+        code.push(...[
             oversion ? `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` : '',
             'self.debug=true;',
             '(function() { let load = [ '
-        ];
+        ]);
         direct.forEach(file => {
             const vers = cachever[file] || oversion || dversion || version;
             code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
@@ -719,24 +720,25 @@ function concatCode(array) {
         inject.forEach(key => {
             code.push(synth[key]);
         });
-        return code.join('\n');
-    }
-
-    direct.forEach(file => {
-        let cached = getCachedFile(file, path => {
-            return minify(PATH.join(dir,file));
+        code = code.join('\n');
+    } else {
+        direct.forEach(file => {
+            let cached = getCachedFile(file, path => {
+                return minify(PATH.join(dir,file));
+            });
+            if (oversion) {
+                cached = `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` + cached;
+            }
+            code.push(cached);
         });
-        if (oversion) {
-            cached = `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` + cached;
-        }
-        code.push(cached);
-    });
-
-    inject.forEach(key => {
-        code.push(synth[key]);
-    });
-
-    return code.join('');
+        inject.forEach(key => {
+            code.push(synth[key]);
+        });
+        code = code.join('');
+    }
+    // console.log(`SETTING synth[${key}]`);
+    // synth[key] = `self.${key} = "${Buffer.from(code).toString('base64')}";\n`;
+    return code;
 }
 
 function getCachedFile(file, fn) {
