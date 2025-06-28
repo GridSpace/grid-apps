@@ -337,6 +337,7 @@ CAM.init = function(kiri, api) {
             case "drill": return func.opAddDrill();
             case "trace": return func.opAddTrace();
             case "pocket": return func.opAddPocket();
+            case "helical": return func.opAddHelical();
             case "flip":
                 // only one flip op permitted
                 for (let op of current.process.ops) {
@@ -417,6 +418,10 @@ CAM.init = function(kiri, api) {
 
     func.opAddFlip = () => {
         func.opAdd(popOp.flip.new());
+    };
+
+    func.opAddHelical = () => {
+        func.opAdd(popOp.helical.new());
     };
 
     // TAB/TRACE BUTTON HANDLERS
@@ -1827,6 +1832,29 @@ CAM.init = function(kiri, api) {
         down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
         dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, show:() => poppedRec.axis !== '-'}),
         lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => poppedRec.axis !== '-'}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
+    };
+    
+    createPopOp('helical', {
+        tool:    'camHelicalTool',
+        mode:    'camHelicalMode',
+        offset:  'camHelicalOffset',
+        spindle: 'camHelicalSpindle',
+        down:    'camHelicalDown',
+        rate:    'camHelicalDownSpeed',
+        feed:    'camHelicalSpeed',
+        thru:    'camRegisterThru'
+    }).inputs = {
+        tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
+        mode:     UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l,}, "helicalmode"),
+        offset:   UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l,}, "helicaloff"),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
+        rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
+        feed:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
         sep:      UC.newBlank({class:"pop-sep"}),
         thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
     };
