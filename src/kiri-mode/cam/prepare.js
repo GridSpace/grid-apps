@@ -84,12 +84,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
         bounds = widget.getBoundingBox(),
         boundsz = isIndexed ? stock.z / 2 : bounds.max.z + ztOff,
         zadd = !isIndexed ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
-        zmax = outerz + zclear + process.camOriginOffZ,
+        zmax = outerz + zclear + (process.camOriginOffZ || 0),
         wmpos = widget.track.pos,
         wmx = wmpos.x,
         wmy = wmpos.y,
-        originx = (startCenter ? 0 : -stock.x / 2) + process.camOriginOffX,
-        originy = (startCenter ? 0 : -stock.y / 2) + process.camOriginOffY,
+        originx = (startCenter ? 0 : -stock.x / 2) + (process.camOriginOffX || 0),
+        originy = (startCenter ? 0 : -stock.y / 2) + (process.camOriginOffY || 0),
         origin = newPoint(originx + wmx, originy + wmy, zmax),
         output = print.output,
         easeDown = process.camEaseDown,
@@ -531,8 +531,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
             if (depthFirst) {
                 depthData.push(polys);
             } else {
-                poly2polyEmit(polys, printPoint, (poly, index, count)=> {
-                    printPoint =polyEmit(poly, index, count,printPoint);
+                // if not depth first, output the polys in slice order
+                printPoint = poly2polyEmit(polys, printPoint, function(poly, index, count) {
+                    poly.forEachPoint(function(point, pidx, points, offset) {
+                        // scale speed of first cutting poly since it engages the full bit
+                        camOut(point.clone(), offset !== 0, undefined, count === 1 ? engageFactor : 1);
+                    }, poly.isClosed(), index);
                 }, { swapdir: false });
                 newLayer();
             }
@@ -545,10 +549,12 @@ function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         if (depthFirst) {
+            // get inside vals (the positive ones)
             let ins = depthData.map(a => a.filter(p => !isNeg(p.depth)));
             let itops = ins.map(level => {
                 return POLY.nest(level.filter(poly => poly.depth === 0).clone());
             });
+            // get outside vals (the negative ones)
             let outs = depthData.map(a => a.filter(p => isNeg(p.depth)));
             let otops = outs.map(level => {
                 return POLY.nest(level.filter(poly => poly.depth === 0).clone());

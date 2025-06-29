@@ -1266,7 +1266,7 @@ CAM.init = function(kiri, api) {
                     centers = centers ?? []
                     // list of all hole centers and if they are selected
                     kiri.api.widgets.for(widget => {
-                        const {holes} = centers.find(center=>center.id = widget.id)
+                        const {holes} = centers.find(center=>center.id == widget.id)
                         // console.log(holes)
                         if (!holes.length) unselectHoles(holes);
                         holes.forEach(hole => {

@@ -200,9 +200,6 @@ class OpRough extends CamOp {
                 POLY.offset([ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ], step) :
                 POLY.offset(shadow, roughIn ? step : step + roughLeave + toolDiam / 2);
             let facing = POLY.offset(inset, -step, { count: 999, flat: true });
-            if (isIndexed) {
-                ztOff = (stock.z / 2) - zMax;
-            }
             let zdiv = ztOff / roughDown;
             let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
             if (ztOff === 0) {
@@ -305,7 +302,7 @@ class OpRough extends CamOp {
         thruHoles.forEach(hole => {
             shadow = shadow.map(p => {
                 if (p.isEquivalent(hole)) {
-                    let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.01));
+                    let po = POLY.offset([p], -(toolDiam / 2 + roughLeave + 0.05));
                     return po ? po[0] : undefined;
                 } else {
                     return p;
@@ -696,10 +693,6 @@ class OpOutline extends CamOp {
 
         setTool(op.tool, op.rate, op.plunge);
         setSpindle(op.spindle);
-
-        if (!process.camOutlinePocket) {
-            cutdir = !cutdir;
-        }
 
         // printpoint becomes NaN in engine mode. not sure why but this fixes it
         if(Object.values(printPoint).some(v=>Number.isNaN(v))){ 
