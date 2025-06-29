@@ -736,9 +736,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * the polygon if that point is not the current position.
      *
      * @param {Polygon} poly - the polygon to output
-     * @param {number} index - the index of the polygon in its containing array 
+     * @param {number} index - the index in the poly to start at. unused in favor of fromPoint 
      * @param {number} count - the total number of polygons in the array
-     * @param {Point?} fromPoint - optionally the point to rapid move from. only used if index is undefined
+     * @param {Point} fromPoint - the point to rapid move from.
      * @param {Object} camOutOpts - optional parameters to pass to camOut
      * @returns {Point} - the last point of the polygon
      */
@@ -751,7 +751,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let arcQ = [];
         arcQ.angle = []
 
-        let closest = index !== undefined ? index : poly.findClosestPointTo(fromPoint);
+        // let closest = index !== undefined ? index : poly.findClosestPointTo(fromPoint);
+        let closest = poly.findClosestPointTo(fromPoint);
         let lastPoint = closest.point;
         let startIndex = closest.index;
 
@@ -813,6 +814,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         let delta = Math.abs(a - b)
                         if(delta > arcRes){
                             radFault = true;
+                            // console.log("radfault", {delta, arcRes})
                         }
                     }
                     // ondebug({arcQ});
