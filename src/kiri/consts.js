@@ -89,16 +89,13 @@ const LISTS = {
         { name: "follow" },
         { name: "clear" }
     ],
-    helicalmode: [
-      { name: "clear" },
-      { name: "threadCutting" }  
-    ],
     traceoff: [
         { name: "none" },
         { name: "inside" },
         { name: "outside" }
     ],
     helicaloff:[
+        { name: "auto" },
         { name: "inside" },
         { name: "outside" },
     ],

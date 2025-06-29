@@ -1835,28 +1835,37 @@ CAM.init = function(kiri, api) {
         sep:      UC.newBlank({class:"pop-sep"}),
         thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
     };
-    
+
     createPopOp('helical', {
         tool:    'camHelicalTool',
-        mode:    'camHelicalMode',
-        offset:  'camHelicalOffset',
         spindle: 'camHelicalSpindle',
-        down:    'camHelicalDown',
         rate:    'camHelicalDownSpeed',
         feed:    'camHelicalSpeed',
-        thru:    'camRegisterThru'
+        down:    'camHelicalDown',
+        thru:    'camHelicalThru',
+        offset:  'camHelicalOffset',
+        forceStartAng:'camHelicalForceStartAngle',
+        startAng:'camHelicalStartAngle',
+        offOver: 'camHelicalOffsetOverride',
+        fromTop: 'camHelicalFromStockTop',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
-        mode:     UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l,}, "helicalmode"),
         offset:   UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l,}, "helicaloff"),
         sep:      UC.newBlank({class:"pop-sep"}),
         spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        feed:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
+        rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toFloat, units:true}),
+        feed:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toFloat, units:true}),
+        down:     UC.newInput(LANG.ch_sdwn_s, {title:LANG.ch_sdwn_l, convert:UC.toFloat, units:true}),
+        startAng: UC.newInput(LANG.ch_stra_s, {title:LANG.ch_stra_l, convert:UC.toDegsFloat, bound:UC.bound(-360,360),show:() => poppedRec.forceStartAng}),
+        offOver:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, bound:UC.bound(0,Infinity)}),
+        sep:      UC.newBlank({class:"pop-sep"}),                                                                                                                                                                       
+        forceStartAng: UC.newBoolean(LANG.ch_fsta_s, undefined, {title:LANG.ch_fsta_l, }),
+        fromTop:  UC.newBoolean(LANG.cd_ftop_s,undefined, {title:LANG.cd_ftop_l}),
         sep:      UC.newBlank({class:"pop-sep"}),
         thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
+        actions: UC.newRow([
+            UC.newButton(LANG.select, ()=>func.selectHoles(true), {title:LANG.cd_seli_l}),
+        ], {class:"ext-buttons f-col"})
     };
 
     createPopOp('flip', {
