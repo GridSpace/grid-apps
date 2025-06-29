@@ -711,9 +711,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
         newLayer();
     }
 
-
-
-    
     /**
      * Output a single polygon as gcode. The polygon is walked in either the
      * clockwise or counter-clockwise direction depending on the winding of the
@@ -724,9 +721,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
      * the polygon if that point is not the current position.
      *
      * @param {Polygon} poly - the polygon to output
-     * @param {number} index - the index of the polygon in its containing array
+     * @param {number} index - the index of the polygon in its containing array 
      * @param {number} count - the total number of polygons in the array
-     * @param {Point} fromPoint - the point to rapid move from
+     * @param {Point?} fromPoint - optionally the point to rapid move from. only used if index is undefined
      * @param {Object} camOutOpts - optional parameters to pass to camOut
      * @returns {Point} - the last point of the polygon
      */
@@ -739,7 +736,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         fromPoint = fromPoint || printPoint;
         let arcQ = [];
 
-        let closest = poly.findClosestPointTo(fromPoint);
+        let closest = index !== undefined ? index : poly.findClosestPointTo(fromPoint);
         let lastPoint = closest.point;
         let startIndex = closest.index;
 
@@ -788,9 +785,19 @@ function prepEach(widget, settings, print, firstPoint, update) {
             let dist = lastp? point.distTo2D(lastp) : 0;
             if (lastp)  {
                 if (dist >lineTolerance && lastp) {
-                    let rec = Object.assign(point,{dist});
+                    let radFault = false;
+                    let angle = Math.atan2(point.y - lastp.y, point.x - lastp.x);
+                    let rec = Object.assign(point,{dist,angle});
                     arcQ.push(rec);
-
+                    // radfault test that includes first 2 segments
+                    if(arcQ.length >1){
+                        let a = arcQ.at(-1).angle
+                        let b = arcQ.at(-2).angle
+                        let delta = Math.abs(a - b)
+                        if(delta > arcRes){
+                            radFault = true;
+                        }
+                    }
                     // ondebug({arcQ});
                     if (arcQ.length > 2) {
                         let el = arcQ.length;
@@ -803,7 +810,6 @@ function prepEach(widget, settings, print, firstPoint, update) {
                         let lr = util.center2d(e3, e4, e5, 1); // find local radius
                         let dc = 0;
 
-                        let radFault = false;
                         if (lr) {
                             let angle = 2 * Math.asin(dist/(2*lr.r));
                             radFault = Math.abs(angle) >  arcRes; // enforce arcRes(olution)
