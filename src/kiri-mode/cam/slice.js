@@ -134,6 +134,10 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
         return error('no processes specified');
     }
 
+    if (stock.x === 0 || stock.y === 0 || stock.z === 0) {
+        return error("one or more stock dimensions is zero<br>offset stock or set to non zero value");
+    }
+
     if (stock.x && stock.y && stock.z && !isIndexed) {
         if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
             return error('stock X too small for part. resize stock or use offset stock');
@@ -681,6 +685,12 @@ function contourPolys(widget, polys) {
 }
 
 function healPolys(noff) {
+    for (let p of noff) {
+        if (p.appearsClosed()) {
+            p.points.pop();
+            p.setClosed();
+        }
+    }
     if (noff.length > 1) {
         let heal = 0;
         // heal/rejoin open segments that share endpoints
