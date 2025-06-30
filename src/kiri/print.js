@@ -646,8 +646,8 @@ class Output {
 
         const { type, center, arcPoints } = (options ?? {});
         //speed, tool, type, center, arcPoints
-        this.point = point; // point to emit
-        this.emit = emit; // emit (feed for printers, power for lasers, cut for cam)
+        this.point = point; 
+        this.emit = Number(emit); //convert bools into 0/1
         this.speed = speed;
         this.tool = tool;
         this.type = type;

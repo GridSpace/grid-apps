@@ -167,6 +167,18 @@ CAM.export = function(print, online) {
     }
 
 
+/**
+ * Move to a point, applies post-processing including for laser/RML, and appends to output
+ * @param {Point} out.point - the point to move to
+ * @param {Tool} [out.tool] - the tool to move with
+ * @param {number} [out.speed] - the speed to move at (in mm/min)
+ * @param {number} [out.emit] - the emission state (0=off, 1=on)
+ * @param {boolean} [opt.newOp] - whether to force a new operation
+ * @param {number} [opt.dx] - the delta X change (if not given, uses out.point.x - pos.x)
+ * @param {number} [opt.dy] - the delta Y change (if not given, uses out.point.y - pos.y)
+ * @param {number} [opt.dz] - the delta Z change (if not given, uses out.point.z - pos.z)
+ * @param {number} [opt.time] - the time to move (in ms) (if not given, calculate from speed)
+ */
     function moveTo(out, opt = {}) {
         let laser = out.type === 'laser';
         let newpos = out.point;
@@ -224,14 +236,16 @@ CAM.export = function(print, online) {
                 moveTo({
                     // speed: Infinity,
                     tool: out.tool,
-                    point: { x: pos.x, y: pos.y, z: newpos.z, a: newpos.a }
+                    point: { x: pos.x, y: pos.y, z: newpos.z, a: newpos.a },
+                    emit: 0,
                 }, {
                     dx: 0, dy: 0, dz: 1, time: 0
                 });
                 moveTo({
                     // speed: Infinity,
                     tool: out.tool,
-                    point: { x: newpos.x, y: newpos.y, z: newpos.z, a: pos.a }
+                    point: { x: newpos.x, y: newpos.y, z: newpos.z, a: pos.a },
+                    emit: 1,
                 }, {
                     dx: 1, dy: 1, dz: 0, time: 0
                 });
@@ -239,14 +253,16 @@ CAM.export = function(print, online) {
                 moveTo({
                     // speed: Infinity,
                     tool: out.tool,
-                    point: { x: newpos.x, y: newpos.y, z: pos.z, a: pos.a }
+                    point: { x: newpos.x, y: newpos.y, z: pos.z, a: pos.a },
+                    emit: 0
                 }, {
                     dx: 1, dy: 1, dz: 0, time: 0
                 });
                 moveTo({
                     // speed: Infinity,
                     tool: out.tool,
-                    point: { x: newpos.x, y: newpos.y, z: newpos.z, a: newpos.a }
+                    point: { x: newpos.x, y: newpos.y, z: newpos.z, a: newpos.a },
+                    emit: 1
                 }, {
                     dx: 0, dy: 0, dz: 1, time: 0
                 });
