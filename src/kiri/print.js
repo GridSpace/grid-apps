@@ -647,7 +647,7 @@ class Output {
         const { type, center, arcPoints } = (options ?? {});
         //speed, tool, type, center, arcPoints
         this.point = point; 
-        this.emit = Number(emit); //v convert bools into 0/1
+        this.emit = Number(emit); //convert bools into 0/1
         this.speed = speed;
         this.tool = tool;
         this.type = type;
