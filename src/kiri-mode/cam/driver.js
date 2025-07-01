@@ -99,6 +99,29 @@ kiri.load(api => {
                 });
             })
         };
+
+        CAM.cylinderFaces = function(opProgress,onDone){
+
+            kiri.client.sync();
+            const settings = api.conf.get();
+            return new Promise((res,rej)=>{
+
+                console.log("messaging worker")
+
+                kiri.client.send("cam_cylinder_faces", { settings },  output => {
+                    let out = kiri.codec.decode(output)
+                    if(out.progress != undefined){
+                        //if a progress message,
+                        opProgress(out.progress,out.msg)
+                    }else{
+                        api.hide.alert(alert);
+                        onDone(out);
+                        res(out);
+                    }
+                });
+            })
+
+        }
     }
 
     if (kiri.worker) {
@@ -180,6 +203,25 @@ kiri.load(api => {
                 holes: widget.drills,
                 shadowed:widget.shadowedDrills
             } } )));
+        }
+
+        kiri.worker.cam_cylinder_faces = async function(data,send){
+            const { settings, rec } = data;
+            const widgets = Object.values(kiri.worker.cache);
+
+            console.log("hi from the worker")
+
+            for (let [i,widget] of widgets.entries() ) {
+                if (await CAM.cylinders(settings, widget,)) {
+                    
+                    let {traces} = widget;
+
+                    console.log("traces",traces)
+
+                    traces.filter(t=>t)
+                }
+                
+            }
         }
     }
 

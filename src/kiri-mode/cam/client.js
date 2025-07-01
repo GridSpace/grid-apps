@@ -1355,6 +1355,29 @@ CAM.init = function(kiri, api) {
         });
     };
 
+    func.selectHelical = () => {
+        
+        console.log("select helical")
+
+
+        CAM.cylinderFaces((progress,msg)=>{
+            api.show.progress(progress,msg)
+        },(data)=>{
+
+            console.log(data)
+
+            func.selectHelicalDone(data);
+        })
+
+    
+
+    }
+
+    func.selectHelicalDone = () =>{
+
+        console.log("select helical done")
+    }
+
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
         if (isCamMode) {
@@ -1864,7 +1887,7 @@ CAM.init = function(kiri, api) {
         sep:      UC.newBlank({class:"pop-sep"}),
         thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
         actions: UC.newRow([
-            UC.newButton(LANG.select, ()=>func.selectHoles(true), {title:LANG.cd_seli_l}),
+            UC.newButton(LANG.select, func.selectHelical, {title:LANG.cd_seli_l}),
         ], {class:"ext-buttons f-col"})
     };
 

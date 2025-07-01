@@ -515,6 +515,12 @@ CAM.traces = async function(settings, widget, single) {
     return true;
 };
 
+
+CAM.cylinders = async (settings, widget) => {
+    
+    //this is where the migic is gonna happen
+}
+
 /**
  * Generate a list of holes in the model based on the given diameter.
  *

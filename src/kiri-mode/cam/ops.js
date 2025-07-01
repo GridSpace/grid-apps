@@ -1726,6 +1726,49 @@ class OpRegister extends CamOp {
     }
 }
 
+class OpHelical extends CamOp {
+    constructor(state, op) {
+        super(state, op);
+    }
+
+    async slice(progress){
+        let { op, state } = this;
+        let { settings, addSlices, widget, updateToolDiams } = state;
+        let { zBottom, zThru, thruHoles, color } = state;
+        let { drills, drillThrough} = op
+
+        let drillTool = new CAM.Tool(settings, op.tool),
+            drillToolDiam = drillTool.fluteDiameter(),
+            sliceOut = this.sliceOut = [];
+
+        updateToolDiams(drillToolDiam);
+
+
+
+        
+        let slice = newSlice(0);
+
+        let poly = newPolygon();
+
+
+
+
+        slice.camTrace = { tool: op.tool, rate: op.feed, plunge: op.rate };
+            slice.camLines = [poly];
+
+            slice.output()
+                .setLayer("Helical", {face: color, line: color})
+                .addPolys(slice.camLines);
+            addSlices(slice);
+            sliceOut.push(slice);
+    }
+
+
+    async prepare(ops, progress){
+
+    }
+}
+
 class OpXRay extends CamOp {
     constructor(state, op) {
         super(state, op);
@@ -1958,6 +2001,7 @@ CAM.OPS = CamOp.MAP = {
     "trace":     OpTrace,
     "drill":     OpDrill,
     "register":  OpRegister,
+    "helical":   OpHelical,
     "laser on":  OpLaserOn,
     "laser off": OpLaserOff,
     "gcode":     OpGCode,
