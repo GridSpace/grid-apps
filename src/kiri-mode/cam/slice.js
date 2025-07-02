@@ -516,9 +516,56 @@ CAM.traces = async function(settings, widget, single) {
 };
 
 
-CAM.cylinders = async (settings, widget) => {
+    /**
+     * Returns an array of arrays of perpindicular triangles in the mesh.
+     * Each sub-array is a list of triangle data that are part of the same
+     * cylinder.
+     *
+     * @param {object} settings - settings object
+     * @param {object} widget - widget object
+     * @param {object} opts - options object
+     * @return {array} - array of arrays of triangle data
+     */
+CAM.cylinders = async (settings, widget, opts) => {
+
+    let {} = opts ?? {}    
+
+    let {array:verts} = widget.mesh.geometry.attributes.position
+    let perpTriangles = []
+
+    //iterate over all triangles
+    for(let i = 0; i < verts.length; i+=9){
+        let a = [verts[i], verts[i+1], verts[i+2]],
+            b = [verts[i+3], verts[i+4], verts[i+5]],
+            c = [verts[i+6], verts[i+7], verts[i+8]];
+
+        //calculate normal
+        let normal = new THREE.Vector3(a[0]-b[0], a[1]-b[1], a[2]-b[2])
+        .cross(new THREE.Vector3(b[0]-c[0], b[1]-c[1], b[2]-c[2]))
+        .normalize()
+
+        // if perpindicular normal, and at least 2 Zs are the same
+        if(normal.z.round(5) == 0 && ! (a[2] != b[2] && b[2] != c[2])){
+            let minZ = Math.min(a[2], b[2], c[2]),
+                maxZ = Math.max(a[2], b[2], c[2]);
+            if(minZ == maxZ){ // all Zs are the same indicated malformed geometry
+                continue;
+            }
+            perpTriangles.push({...[a,b,c], normal,minZ,maxZ,i:index})
+        }
+
+    }
+    //map where zmax, zmin -> triangleData
+    let cylinderTriangles = new Map()
+    for(let t of perpTriangles){
+        let hash = `${t.minZ.round(5)},${t.maxZ.round(5)}`
+        if(!cylinderTriangles.has(hash)){
+            cylinderTriangles.set(hash,[])
+        }
+        cylinderTriangles.get(hash).push(t)
+    }
     
-    //this is where the migic is gonna happen
+    return Array.from(cylinderTriangles.values())
 }
 
 /**
