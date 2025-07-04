@@ -1,7 +1,7 @@
 ---
 description: >-
-  Kiri:Moto is designed to be embedded in or accessible through other web-based
-  applications
+    Kiri:Moto is designed to be embedded in or accessible through other web-based
+    applications
 ---
 
 # Integrations

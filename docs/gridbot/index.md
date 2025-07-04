@@ -1,6 +1,6 @@
 ---
 description: An Open Model, Open Source, Core-XY, FDM 3D Printer
-label: "Parts List"
+label: 'Parts List'
 ---
 
 # GridBot

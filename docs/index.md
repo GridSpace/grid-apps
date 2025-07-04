@@ -1,7 +1,7 @@
 ---
 description: >-
-  Grid.Space provides free, open-source, open-design applications and hardware
-  for makers
+    Grid.Space provides free, open-source, open-design applications and hardware
+    for makers
 title: About
 slug: /
 ---
