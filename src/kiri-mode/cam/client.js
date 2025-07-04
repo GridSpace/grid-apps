@@ -421,7 +421,11 @@ CAM.init = function(kiri, api) {
     };
 
     func.opAddHelical = () => {
-        func.opAdd(popOp.helical.new());
+        func.traceDone();
+        func.surfaceDone();
+        let rec = popOp.helical.new();
+        rec.cylinders = { /* widget.id: [ faces... ] */ };
+        func.opAdd(rec);
     };
 
     // TAB/TRACE BUTTON HANDLERS
@@ -1086,6 +1090,7 @@ CAM.init = function(kiri, api) {
         func.traceDone();
         func.surfaceDone();
         func.selectHolesDone();
+        func.helicalDone();
     };
     api.event.on("cam.trace.clear", func.traceClear = () => {
         func.traceDone();
@@ -1355,27 +1360,64 @@ CAM.init = function(kiri, api) {
         });
     };
 
+    let helicalOn = false;
     func.selectHelical = () => {
-        
-        console.log("select helical")
+        console.log("select helical",{helicalOn})
+        if (helicalOn) {
+            return func.surfaceDone();
+        }
+        func.clearPops();
+        alert = api.show.alert("analyzing surfaces...", 1000);
+        let cylinders = poppedRec.cylinders;
 
-
-        CAM.cylinderFaces((progress,msg)=>{
-            api.show.progress(progress,msg)
-        },(data)=>{
-
-            console.log(data)
-
-            func.selectHelicalDone(data);
-        })
-
-    
-
+        CAM.surface_prep(currentIndex * RAD2DEG, () => {
+            api.hide.alert(alert);
+            alert = api.show.alert("[esc] cancels surface selection");
+            for (let [wid, arr] of Object.entries(cylinders)) {
+                let widget = api.widgets.forid(wid);
+                if (widget && arr.length)
+                for (let faceid of arr) {
+                    CAM.cylinderToggle(widget, faceid, faceids => {
+                        cylinders[widget.id] = faceids;
+                    });
+                }
+            }
+        });
+        helicalOn = hoveredOp;
+        helicalOn.classList.add("editing");
+        api.feature.on_mouse_up = (obj, ev) => {
+            let { face } = obj;
+            let min = Math.min(face.a, face.b, face.c);
+            let faceid = min / 3;
+            let widget = lastWidget = obj.object.widget;
+            CAM.cylinderToggle(widget, faceid, ({faces,error}) => {
+                if (error) {
+                    api.show.alert(error,3000);
+                    return;
+                }
+                cylinders[widget.id] = faces;
+            });
+        };
     }
 
-    func.selectHelicalDone = () =>{
-
-        console.log("select helical done")
+    func.helicalDone = () =>{
+        if (!(helicalOn && poppedRec && poppedRec.cylinders)) {
+            return;
+        }
+        let {cylinders} = poppedRec;
+        for (let wid of Object.keys(cylinders)) {
+            let widget = api.widgets.forid(wid);
+            if (widget) {
+                CAM.cylinderClear(widget);
+            } else {
+                delete cylinders[wid];
+            }
+        }
+        api.hide.alert(alert);
+        api.feature.on_mouse_up = undefined;
+        helicalOn.classList.remove("editing");
+        helicalOn = false;
+        console.log("helicalOn set to false")
     }
 
     // COMMON TAB/TRACE EVENT HANDLERS

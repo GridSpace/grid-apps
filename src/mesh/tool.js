@@ -238,6 +238,8 @@ mesh.tool = class MeshTool {
                 fn++;
             }
         }
+        //faces are the normals in groups of 6 [nx,]
+
         this.indexed = {
             faces, sides, sideExt
         };
@@ -302,6 +304,68 @@ mesh.tool = class MeshTool {
             }
         }
         return faces;
+    }
+
+    findCylinderSurface(face){
+        face = Number(face)
+
+        const radianTolerance = 8 * (Math.PI/180);
+        //helper function
+        const dissimilar = (a,b,c) => a!==b && a!==c && b!==c
+
+        let found = {}
+        let out = [face]
+        const {vertices}= this
+        const {faces} = this.getIndex();
+
+        const zs = [vertices[face*3+2],vertices[face*3+5],vertices[face*3+8]]
+        .map(z => Math.round(z*1000)/1000)
+        
+        if(dissimilar(...zs)){
+            throw "face must have only 2 Z values"
+        }else if(Math.abs( faces[face * 6 + 2] > 1e-6 )){
+            throw "face's normal must be perpendicular to Z axis"
+        }
+        const lowZ = Math.min(zs)
+        const highZ = Math.max(zs)
+        
+        const checked = {};
+        const check = [face]
+        found[face] = 1;
+        while (check.length) {
+            const face = check.shift();
+            const froot = face * 6;
+            const vroot = face * 9
+            
+            // filter faces to those perpendicular to +z axis
+            if ( Math.abs( faces[froot + 2] > 1e-6 )) continue;
+            //filter faces with verts don't share the z values of the first face
+            if(
+                !(vertices[vroot + 2] !== lowZ || vertices[vroot + 2] !== highZ) &&
+                !(vertices[vroot + 5] !== lowZ || vertices[vroot + 5] !== highZ) &&
+                !(vertices[vroot + 8] !== lowZ || vertices[vroot + 8] !== highZ)
+            ) continue;
+
+            const fadj = this.getAdjacentFaces(face);
+            for (let f of fadj) {
+                if (found[f] || checked[f]) {
+                    continue;
+                }
+                const aroot = f * 6;
+                let sum = 0;
+                for (let i=0; i<3; i++) {
+                    sum += Math.pow(faces[froot + i] - faces[aroot + i], 2);
+                }
+                const fn = Math.sqrt(sum);
+                if (fn <= radianTolerance) {
+                    out.push(f);
+                    check.push(f)
+                    checked[f] = 1;
+                    found[f] = 1;
+                }
+            }
+        }
+        return out;
     }
 
     // given a list of faces (indices), return an array of closed

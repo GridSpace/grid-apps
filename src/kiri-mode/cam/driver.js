@@ -37,6 +37,11 @@ kiri.load(api => {
             widget.selectFaces(Object.values(widget._surfaces).flat());
         };
 
+        CAM.cylinder_show = function(widget) {
+            widget.selectFaces(Object.values(widget._cylinders).flat());
+        };
+
+
         CAM.surface_toggle = function(widget, face, radians, ondone) {
             let surfaces = widget._surfaces = widget._surfaces || {};
             for (let [root, faces] of Object.entries(surfaces)) {
@@ -108,28 +113,31 @@ kiri.load(api => {
 
         }
 
-        CAM.cylinderToggle = (widget, face, radians, onDone) => {
-            let surfaces = widget._cylinders = widget._cylinders || {};
-            for (let [root, faces] of Object.entries(surfaces)) {
-                if (faces.contains(face)) {
+        CAM.cylinderToggle = (widget, face, onDone) => {
+            let cyls = widget._cylinders = widget._cylinders || {};
+            for (let [root, faces] of Object.entries(cyls)) {
+                if (faces.contains(face)) { // if a face group contains the selected face
                     // delete this face group
-                    delete surfaces[root];
-                    CAM.surface_show(widget);
-                    ondone(Object.keys(surfaces).map(v => parseInt(v)));
+                    delete cyls[root];
+                    CAM.cylinder_show(widget);
+                    onDone(Object.keys(cyls).map(v => parseInt(v)));
                     return;
                 }
             }
-            kiri.client.send("cam_surface_find", { id: widget.id, face, radians }, faces => {
-                if (faces.length) {
-                    surfaces[face] = faces;
-                    CAM.surface_show(widget);
+            //send 
+            kiri.client.send("cam_cylinder_find", { id: widget.id, face }, ({faces,error}) => {
+                if (faces?.length) {
+                    cyls[face] = faces;
+                    CAM.cylinder_show(widget);
                 }
-                ondone(Object.keys(surfaces).map(v => parseInt(v)));
+                
+                onDone({faces:Object.keys(cyls).map(v => parseInt(v)),error});
             });
         }
 
-        CAM.cylinderClear = (onProgress, onDone) => {
-
+        CAM.cylinderClear = (widget) => {
+            widget.selectFaces([]);
+            widget._cylinders = {};
         }
 
     }
@@ -143,10 +151,7 @@ kiri.load(api => {
             }
         };
 
-        CAM.surface_find = function(widget, faces, radians) {
-            CAM.surface_prep(widget);
-            return widget.tool.findConnectedSurface(faces, radians || 0, 0.0);
-        };
+        
 
         kiri.worker.cam_surfaces = function(data, send) {
             const { settings, index } = data;
@@ -215,19 +220,14 @@ kiri.load(api => {
             } } )));
         }
 
-        kiri.worker.cam_cylinder_faces = async function(data,send){
-            const { settings, rec } = data;
-            const widgets = Object.values(kiri.worker.cache);
-            console.log("hi from the worker")
-            
-            for (let [i,widget] of widgets.entries() ) {
-                CAM.surface_prep(widget);
-                if (await CAM.cylinders(settings, widget,)) {
-                                        
-
-                    
-                }
-                
+        kiri.worker.cam_cylinder_find = async function(data,send){
+            const { id, face, settings } = data;
+            const widget = kiri.worker.cache[id];
+            try{
+                const faces = CAM.cylinder_find(widget, face);
+                send.done({faces});
+            }catch(error){
+                send.done({error});
             }
         }
     }

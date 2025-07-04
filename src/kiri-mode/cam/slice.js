@@ -568,6 +568,16 @@ CAM.cylinders = async (settings, widget, opts) => {
     return Array.from(cylinderTriangles.values())
 }
 
+CAM.surface_find = function(widget, faces, radians) {
+    CAM.surface_prep(widget);
+    return widget.tool.findConnectedSurface(faces, radians || 0, 0.0);
+};
+
+CAM.cylinder_find = (widget, face)=>{
+    CAM.surface_prep(widget);
+    return widget.tool.findCylinderSurface(face);
+}
+
 /**
  * Generate a list of holes in the model based on the given diameter.
  *
