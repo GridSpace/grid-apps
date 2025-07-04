@@ -1,0 +1,49 @@
+---
+description: A tour of Kiri:Moto's web-based interface
+---
+
+import { ImageCarousel } from '@site/docs/src/components/carousel.js'
+
+# Interface
+
+Kiri:Moto's interface is designed for maximum access to the workspace and to present only the options that are necessary and relevant to the current action.
+
+## Overview
+
+The top left menus control workspace, work mode, setup, and objects.
+
+The right menus control the behavior and settings for slicing, path routing, and path to code exports.
+
+[OBJ](https://www.cs.cmu.edu/~mbz/personal/graphics/obj.html), [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>), and [3MF](https://docs.fileformat.com/3d/3mf/) files import natively. [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics), [JPG](https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format), and [PNG](https://en.wikipedia.org/wiki/Portable_Network_Graphics) are auto-extruded into a 3D parts.
+
+![A minimalist approach](/img/interface/kiri-moto.png)
+
+## CAM Mode
+
+In CNC mode, there is an additional storyboard menu at the bottom where you can plan and re-order milling operations.
+
+![](/img/interface/kiri-moto-cnc.png)
+
+## Setup menu
+
+The Device Selection menu offers access to Device selection and customization. It is mode-dependent,
+displaying different options and machines for different modes.
+
+<ImageCarousel base="/img/interface/deviceMenu" images="deviceInterface" />
+
+## Preferences
+
+Application preferences can be found at the bottom of the setup menu, and are mode-dependent.
+For example, CNC preferences show animation controls, whjle other modes do not.
+
+<ImageCarousel base="/img/interface/modePreferences" images="modePreferences" />
+
+## Version, Help, and Donate
+
+Selecting the Kiri:Moto icon in the top center will open a dropdown for selecting the version you want to use, and provides links to helpful resourses and donation options.
+
+![Kiri:Moto Icon](/img/interface/version-opts.png)
+
+Selecting the `version` button will bring you to the version selection screen,
+which will displays the last 5 versions by default. once you chose a version, you must `shift+reload`
+to clear the browser cache and start a new session in the new version.
