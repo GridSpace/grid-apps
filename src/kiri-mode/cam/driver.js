@@ -100,28 +100,38 @@ kiri.load(api => {
             })
         };
 
-        CAM.cylinderFaces = function(opProgress,onDone){
+        CAM.cylinderShow = function(onProgress,onDone){
 
             kiri.client.sync();
             const settings = api.conf.get();
-            return new Promise((res,rej)=>{
-
-                console.log("messaging worker")
-
-                kiri.client.send("cam_cylinder_faces", { settings },  output => {
-                    let out = kiri.codec.decode(output)
-                    if(out.progress != undefined){
-                        //if a progress message,
-                        opProgress(out.progress,out.msg)
-                    }else{
-                        api.hide.alert(alert);
-                        onDone(out);
-                        res(out);
-                    }
-                });
-            })
+            
 
         }
+
+        CAM.cylinderToggle = (widget, face, radians, onDone) => {
+            let surfaces = widget._cylinders = widget._cylinders || {};
+            for (let [root, faces] of Object.entries(surfaces)) {
+                if (faces.contains(face)) {
+                    // delete this face group
+                    delete surfaces[root];
+                    CAM.surface_show(widget);
+                    ondone(Object.keys(surfaces).map(v => parseInt(v)));
+                    return;
+                }
+            }
+            kiri.client.send("cam_surface_find", { id: widget.id, face, radians }, faces => {
+                if (faces.length) {
+                    surfaces[face] = faces;
+                    CAM.surface_show(widget);
+                }
+                ondone(Object.keys(surfaces).map(v => parseInt(v)));
+            });
+        }
+
+        CAM.cylinderClear = (onProgress, onDone) => {
+
+        }
+
     }
 
     if (kiri.worker) {
@@ -208,17 +218,14 @@ kiri.load(api => {
         kiri.worker.cam_cylinder_faces = async function(data,send){
             const { settings, rec } = data;
             const widgets = Object.values(kiri.worker.cache);
-
             console.log("hi from the worker")
-
+            
             for (let [i,widget] of widgets.entries() ) {
+                CAM.surface_prep(widget);
                 if (await CAM.cylinders(settings, widget,)) {
+                                        
+
                     
-                    let {traces} = widget;
-
-                    console.log("traces",traces)
-
-                    traces.filter(t=>t)
                 }
                 
             }
