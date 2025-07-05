@@ -5,7 +5,8 @@ import { client as motoClient } from '../moto/client.js';
 import { api as meshApi } from './api.js';
 import { object as meshObject } from './object.js';
 import { model as meshModel } from './model.js';
-import { newPolygon, polygons } from '../geo/polygon.js';
+import { newPolygon } from '../geo/polygon.js';
+import { polygons } from '../geo/polygons.js';
 import { space } from '../moto/space.js';
 import { util } from './util.js';
 

@@ -1,26 +1,20 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-// Base dependencies
-import { polygons } from '../../geo/base.js';
+import "../ext/clip2.js";
+import "../ext/earcut.js";
+import '../add/array.js';
+import '../add/class.js';
+import '../add/three.js';
 
-// Kiri dependencies
-import { codec } from '../../kiri/index.js';
+import { base } from '../geo/base.js';
+import { newPoint } from '../geo/point.js';
+import { polygons as POLY } from '../geo/polygons.js';
+import { sliceZ } from '../geo/slicer.js';
+import { codec } from '../kiri/codec.js';
+import { broker } from '../moto/broker.js';
+import { doTopShells } from '../kiri-mode/fdm/post.js';
+import { wasm_ctrl } from '../geo/wasm.js';
 
-// Moto dependencies
-import { broker } from '../../moto/broker.js';
-
-// Note: This module also depends on:
-// - moto.license (for licensing functionality)
-// - geo.slicer (for slicing functionality)
-// - geo.wasm (for WebAssembly functionality)
-// - kiri-mode.fdm.post (for FDM post processing)
-// - kiri-mode.cam.topo (for CAM topo functionality)
-// - kiri-mode.cam.topo4 (for CAM topo4 functionality)
-// - kiri-mode.cam.slicer (for CAM slicing)
-// - ext.clip2 (for clipping operations)
-// - Various kiri API functions injected via root
-
-const POLY = polygons;
 const clib = self.ClipperLib;
 const ctyp = clib.ClipType;
 const ptyp = clib.PolyType;
@@ -75,7 +69,7 @@ const funcs = self.minion = {
     topShells: (data, seq) => {
         let top = codec.decode(data.top, {full: true});
         let {z, count, offset1, offsetN, fillOffset, opt} = data;
-        kiri.driver.FDM.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
+        doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
         let state = { zeros: [] };
         reply({ seq, top: codec.encode(top, {full: true}) }, state.zeros);
     },
@@ -122,14 +116,15 @@ const funcs = self.minion = {
     },
 
     sliceZ: (data, seq) => {
+        console.log('minion.sliceZ', { data, seq });
         let { z, points, options } = data;
         let i = 0, p = 0, realp = new Array(points.length / 3);
         while (i < points.length) {
-            realp[p++] = base.newPoint(points[i++], points[i++], points[i++]).round(3);
+            realp[p++] = newPoint(points[i++], points[i++], points[i++]).round(3);
         }
         let state = { zero: [] };
         let output = [];
-        base.sliceZ(z, realp, {
+        sliceZ(z, realp, {
             ...options,
             each(out) { output.push(out) }
         }).then(() => {
@@ -159,9 +154,9 @@ const funcs = self.minion = {
 
     wasm: data => {
         if (data.enable) {
-            base.wasm_ctrl.enable();
+            wasm_ctrl.enable();
         } else {
-            base.wasm_ctrl.disable();
+            wasm_ctrl.disable();
         }
     },
 
@@ -170,18 +165,4 @@ const funcs = self.minion = {
     }
 };
 
-moto.broker.publish("minion.started", { funcs, cache, reply, log });
-
-// Future exports for src/kiri-run/minion.js when unwrapped from gapp.register()
-
-// Utility functions
-export { reply, log };
-
-// Constants
-export { POLY, clib, ctyp, ptyp, cfil };
-
-// Global variables
-export { cache, name };
-
-// Default export - the main minion functionality
-export default funcs; 
+broker.publish("minion.started", { funcs, cache, reply, log });

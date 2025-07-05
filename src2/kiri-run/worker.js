@@ -78,7 +78,16 @@ const minwork = {
             return;
         }
         for (let i=0; i < concurrent; i++) {
-            let minion = new Worker(`/v2/lib/kiri-run/minion.js`);
+            let minion = new Worker(`/v2/lib/kiri-run/minion.js`, { type: 'module' });
+            minion.onerror = (error) => {
+                console.log({ MINION_ERROR: error });
+                error.preventDefault();
+            };
+            minion.onmessageerror = (error) => {
+                console.log({ MINION_MESSAGE_ERROR: error });
+                error.preventDefault();
+            };
+            console.log({ minion });
             minion.onmessage = minhandler;
             minion.postMessage({ cmd: "label", name: `#${i}` });
             minions.push(minion);
@@ -173,6 +182,7 @@ const minwork = {
     },
 
     sliceZ(z, points, options) {
+        console.log('minwork.sliceZ', { z, points, options });
         return new Promise((resolve, reject) => {
             if (concurrent < 2) {
                 reject("concurrent slice unavaiable");

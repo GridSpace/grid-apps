@@ -937,6 +937,7 @@ function cookieValue(cookie,key) {
 function rewriteHtmlVersion(req, res, next) {
     if ([
         "/v2/kiri/",
+        "/v2/lib/kiri-run/minion.js",
         "/v2/lib/kiri-run/worker.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);

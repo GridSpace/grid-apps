@@ -6,13 +6,12 @@ import { base, config, util } from './base.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 import { newBounds } from './bounds.js';
 import { newPoint, pointFromClipper } from './point.js';
-import { polygons } from './polygons.js';
+import { polygons as POLY } from './polygons.js';
 import { earcut } from '../geo/base.js';
 
 const { Vector3 } = THREE;
 
-const POLY = polygons,
-    XAXIS = new Vector3(1,0,0),
+let XAXIS = new Vector3(1,0,0),
     DEG2RAD = Math.PI / 180,
     Clipper = ClipperLib.Clipper,
     ClipType = ClipperLib.ClipType,
@@ -2381,5 +2380,3 @@ export function fromClipperPath(path, z) {
 export function newPolygon(points) {
     return new Polygon(points);
 }
-
-export { polygons };

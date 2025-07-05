@@ -3,6 +3,9 @@
 import { base } from '../../geo/base.js';
 import { polygons as POLY, fillArea } from '../../geo/polygons.js';
 import { getRangeParameters } from './driver.js';
+import { slicer } from '../../geo/slicer.js';
+
+slicer.slicePost.FDM = slicePost;
 
 /**
  * may run in minion or worker context. do not create objects

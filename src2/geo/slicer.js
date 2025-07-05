@@ -10,7 +10,6 @@ import { newOrderedLine } from './line.js';
 import { newPolygon } from '../geo/polygon.js';
 import { polygons } from '../geo/polygons.js';
 import { newPoint } from '../geo/point.js';
-import { util } from '../mesh/util.js';
 import { config } from '../geo/base.js';
 
 function dval(v, dv) {
@@ -409,7 +408,6 @@ export async function sliceZ(z, points, options = {}) {
 
     // look for driver-specific slice post-processor
     if (options.post) {
-        console.log({ options });
         let fn = slicer.slicePost[options.post];
         if (fn) fn(rval, options);
     }

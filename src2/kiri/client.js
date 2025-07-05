@@ -68,11 +68,12 @@ export const client = {
         } else {
             let worker = new Worker(`/v2/lib/kiri-run/worker.js`, { type: 'module' });
             worker.onerror = (error) => {
-                console.log({ worker_error: error });
+                console.log({ WORKER_ERROR: error });
                 error.preventDefault();
             };
             worker.onmessageerror = (error) => {
-                console.log({ worker_message_error: error });
+                console.log({ WORKER_MESSAGE_ERROR: error });
+                error.preventDefault();
             };
             console.log({ worker });
             return worker;
