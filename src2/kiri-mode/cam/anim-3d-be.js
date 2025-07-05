@@ -30,63 +30,67 @@ let renderSpeed = 0;
 let indexCount = 0;
 let updates = 0;
 
-kiri.worker.animate_setup2 = function (data, send) {
-    const { settings } = data;
-    const { process } = settings;
-    const print = worker.print;
-    const density = parseInt(settings.controller.animesh) * 1000;
-    const isIndexed = process.camStockIndexed;
+export function init(worker) {
+    const { dispatch } = worker;
 
-    pathIndex = 0;
-    path = print.output.flat();
-    tools = settings.tools;
-    stock = settings.stock;
-    rez = 1 / Math.sqrt(density / (stock.x * stock.y));
+    dispatch.animate_setup2 = function (data, send) {
+        const { settings } = data;
+        const { process } = settings;
+        const print = worker.current.print;
+        const density = parseInt(settings.controller.animesh) * 1000;
+        const isIndexed = process.camStockIndexed;
 
-    tool = null;
-    last = null;
-    animating = false;
-    animateClear = false;
-    stockIndex = 0;
-    indexCount = 0;
-    startTime = 0;
-    updates = 0;
-    stockZ = isIndexed ? 0 : stock.z;
+        pathIndex = 0;
+        path = print.output.flat();
+        tools = settings.tools;
+        stock = settings.stock;
+        rez = 1 / Math.sqrt(density / (stock.x * stock.y));
 
-    stockSlices = [];
-    const { x, y, z } = stock;
-    const sliceCount = parseInt(settings.controller.animesh || 2000) / 100;
-    const sliceWidth = stock.x / sliceCount;
-    for (let i = 0; i < sliceCount; i++) {
-        let xmin = -(x / 2) + (i * sliceWidth) + sliceWidth / 2;
-        let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, 0);
-        stockSlices.push(slice);
-        slice.updateMesh([]);
-        slice.send(send);
-        // send({ mesh_move: { id: slice.id, pos: { x:0, y:0, z: stock.z/2} } });
-    }
+        tool = null;
+        last = null;
+        animating = false;
+        animateClear = false;
+        stockIndex = 0;
+        indexCount = 0;
+        startTime = 0;
+        updates = 0;
+        stockZ = isIndexed ? 0 : stock.z;
 
-    send.done();
-};
+        stockSlices = [];
+        const { x, y, z } = stock;
+        const sliceCount = parseInt(settings.controller.animesh || 2000) / 100;
+        const sliceWidth = stock.x / sliceCount;
+        for (let i = 0; i < sliceCount; i++) {
+            let xmin = -(x / 2) + (i * sliceWidth) + sliceWidth / 2;
+            let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, 0);
+            stockSlices.push(slice);
+            slice.updateMesh([]);
+            slice.send(send);
+            // send({ mesh_move: { id: slice.id, pos: { x:0, y:0, z: stock.z/2} } });
+        }
 
-kiri.worker.animate2 = function (data, send) {
-    renderPause = data.pause || renderPause;
-    renderSpeed = data.speed || 0;
-    if (animating) {
-        return send.done();
-    }
-    renderSteps = data.steps || 1;
-    renderDone = false;
-    animating = renderSpeed > 0;
-    startTime = startTime || Date.now();
-    renderPath(send);
-};
+        send.done();
+    };
 
-kiri.worker.animate_cleanup2 = function (data, send) {
-    if (animating) {
-        animateClear = true;
-    }
-};
+    dispatch.animate2 = function (data, send) {
+        renderPause = data.pause || renderPause;
+        renderSpeed = data.speed || 0;
+        if (animating) {
+            return send.done();
+        }
+        renderSteps = data.steps || 1;
+        renderDone = false;
+        animating = renderSpeed > 0;
+        startTime = startTime || Date.now();
+        renderPath(send);
+    };
+
+    dispatch.animate_cleanup2 = function (data, send) {
+        if (animating) {
+            animateClear = true;
+        }
+    };
+}
 
 function renderPath(send) {
     if (renderDone) {

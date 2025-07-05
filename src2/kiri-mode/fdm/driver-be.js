@@ -22,7 +22,7 @@ function extrudeMM(dist, perMM, factor) {
 // defer loading until client and worker exist
 function init(worker) {
 
-    worker.fdm_support_generate = function(data, send) {
+    worker.dispatch.fdm_support_generate = function(data, send) {
         const { settings } = data;
         const widgets = Object.values(worker.cache);
         const fresh = widgets.filter(widget => FDM.supports(settings, widget));

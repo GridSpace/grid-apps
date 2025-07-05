@@ -2,82 +2,79 @@
 
 // WORKER BACK END ANIMATION CODE for 2D
 
+import { Tool } from './tool.js';
+
+const asPoints = false;
+const asLines = false;
+
 let stock, center, grid, gridX, gridY, rez;
 let path, pathIndex, tool, tools, last, toolID = 1;
 
-kiri.worker.animate_setup = function(data, send) {
-    const { settings } = data;
-    const { process } = settings;
-    const print = worker.print;
-    const density = parseInt(settings.controller.animesh) * 1000;
+export function init(worker) {
+    const { dispatch } = worker;
 
-    pathIndex = 0;
-    path = print.output.flat();
-    tools = settings.tools;
-    stock = settings.stock;
-    rez = 1/Math.sqrt(density/(stock.x * stock.y));
+    dispatch.animate_setup = function(data, send) {
+        const { settings } = data;
+        const { process } = settings;
+        const print = worker.current.print;
+        const density = parseInt(settings.controller.animesh) * 1000;
 
+        pathIndex = 0;
+        path = print.output.flat();
+        tools = settings.tools;
+        stock = settings.stock;
+        rez = 1/Math.sqrt(density/(stock.x * stock.y));
 
-    //destructure arcs into path points
-    path = path.map(o=> 
-        o.arcPoints
-        ? [
-            ...o.arcPoints.map(point=> 
-                ({
-                    ...o,
-                    point
-                })
-            ),
-            o
-        ]
-        : o
-    )
-    .flat();
+        // destructure arcs into path points
+        path = path.map(o =>
+            o.arcPoints ? [ ...o.arcPoints.map(point => ({ ...o, point })), o ] : o
+        ).flat();
 
-    const step = rez;
-    const stepsX = Math.floor(stock.x / step);
-    const stepsY = Math.floor(stock.y / step);
-    const { pos, ind, sab } = createGrid(stepsX, stepsY, stock, step, true);
-    const offset = {
-        x: process.camOriginCenter ? 0 : stock.x / 2,
-        y: process.camOriginCenter ? 0 : stock.y / 2,
-        z: process.camOriginTop ? -stock.z : 0
-    }
+        const step = rez;
+        const stepsX = Math.floor(stock.x / step);
+        const stepsY = Math.floor(stock.y / step);
+        const { pos, ind, sab } = createGrid(stepsX, stepsY, stock, step, true);
+        const offset = {
+            x: process.camOriginCenter ? 0 : stock.x / 2,
+            y: process.camOriginCenter ? 0 : stock.y / 2,
+            z: process.camOriginTop ? -stock.z : 0
+        }
 
-    grid = pos;
-    gridX = stepsX;
-    gridY = stepsY;
+        grid = pos;
+        gridX = stepsX;
+        gridY = stepsY;
 
-    tool = null;
-    last = null;
-    animating = false;
-    animateClear = false;
+        tool = null;
+        last = null;
+        animating = false;
+        animateClear = false;
 
-    center = Object.assign({}, stock.center);
-    center.z -= stock.z / 2;
+        center = Object.assign({}, stock.center);
+        center.z -= stock.z / 2;
 
-    send.data({ mesh_add: { id: 0, ind, offset, sab } }, [ ]); // sab not transferrable
-    send.data({ mesh_move: { id: 0, pos: center } });
-    send.done();
-};
+        send.data({ mesh_add: { id: 0, ind, offset, sab } }, [ ]); // sab not transferrable
+        send.data({ mesh_move: { id: 0, pos: center } });
+        send.done();
+    };
 
-kiri.worker.animate = function(data, send) {
-    renderPause = data.pause || renderPause;
-    renderSpeed = data.speed || 0;
-    if (animating) {
-        return send.done();
-    }
-    renderSteps = data.steps || 1;
-    renderDone = false;
-    animating = renderSpeed > 0;
-    renderPath(send);
-};
+    dispatch.animate = function(data, send) {
+        renderPause = data.pause || renderPause;
+        renderSpeed = data.speed || 0;
+        if (animating) {
+            return send.done();
+        }
+        renderSteps = data.steps || 1;
+        renderDone = false;
+        animating = renderSpeed > 0;
+        renderPath(send);
+    };
 
-kiri.worker.animate_cleanup = function(data, send) {
-    if (animating) {
-        animateClear = true;
-    }
-};
+    dispatch.animate_cleanup = function(data, send) {
+        if (animating) {
+            animateClear = true;
+        }
+    };
+}
 
 function createGrid(stepsX, stepsY, size, step, stock) {
     const gridPoints = stepsX * stepsY;
@@ -290,7 +287,7 @@ function updateTool(toolobj, send) {
     if (tool) {
         send.data({ mesh_del: toolID });
     }
-    tool = new CAM.Tool({ tools }, toolobj.getID());
+    tool = new Tool({ tools }, toolobj.getID());
     tool.generateProfile(rez);
     const flen = tool.fluteLength() || 15;
     const slen = tool.shaftLength() || 15;

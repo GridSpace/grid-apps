@@ -744,16 +744,17 @@ dispatch.onmessage = self.onmessage = async function(e) {
     }
 };
 
-self.kiri_worker = {
+const worker = self.kiri_worker = {
     cache: wcache,
     current,
+    dispatch,
     drivers,
     version,
     minions: minwork
 };
 
 // initilize driver mode handlers
-CAM.init(dispatch);
-FDM.init(dispatch);
+CAM.init(worker);
+FDM.init(worker);
 
 broker.publish("worker.started", { dispatch, minions: minwork });

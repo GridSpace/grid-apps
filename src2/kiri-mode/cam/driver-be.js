@@ -6,6 +6,9 @@ import { cam_prepare } from './prepare.js';
 import { cam_export } from './export.js';
 import { tool as mesh_tool } from '../../mesh/tool.js';
 
+import { init as init_2d } from './anim-2d-be.js';
+import { init as init_3d } from './anim-3d-be.js';
+
 function surface_prep(widget, index) {
     if (!widget.tool) {
         let tool = widget.tool = new mesh_tool();
@@ -20,7 +23,13 @@ function surface_find(widget, faces, radians) {
 };
 
 function init(worker) {
-    worker.cam_surfaces = function(data, send) {
+
+    const { dispatch } = worker;
+
+    init_2d(worker);
+    init_3d(worker);
+
+    dispatch.cam_surfaces = function(data, send) {
         const { settings, index } = data;
         const widgets = Object.values(worker.cache);
         for (let widget of widgets) {
@@ -36,14 +45,14 @@ function init(worker) {
         send.done({});
     };
 
-    worker.cam_surface_find = function(data, send) {
+    dispatch.cam_surface_find = function(data, send) {
         const { id, face, radians } = data;
         const widget = worker.cache[id];
         const faces = surface_find(widget, [face], radians);
         send.done(faces);
     }
 
-    worker.cam_traces = async function(data, send) {
+    dispatch.cam_traces = async function(data, send) {
         const { settings, single } = data;
         const widgets = Object.values(worker.cache);
         const fresh = [];
@@ -59,7 +68,7 @@ function init(worker) {
         } } )));
     };
 
-    worker.cam_traces_clear = function(data, send) {
+    dispatch.cam_traces_clear = function(data, send) {
         for (let widget of Object.values(worker.cache)) {
             delete widget.traces;
             delete widget.topo;
@@ -67,7 +76,7 @@ function init(worker) {
         send.done({});
     };
 
-    worker.cam_holes = async function(data, send) {
+    dispatch.cam_holes = async function(data, send) {
         const { settings, indiv, rec } = data;
         const widgets = Object.values(worker.cache);
         const fresh = [];
