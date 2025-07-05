@@ -1,20 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
-import { base } from '../geo/base.js';
-import { point } from '../geo/point.js';
-import { polygon } from '../geo/polygon.js';
-import { polygons } from '../geo/polygons.js';
-import { slice } from '../kiri/slice.js';
-import { driver } from '../kiri-mode/sla/driver.js';
-import { pngjs } from '../ext/pngjs.js';
 
+import { util } from '../../geo/base.js';
+import { slicer } from '../../geo/slicer.js';
+import { newPolygon } from '../../geo/polygon.js';
+import { polygons as POLY } from '../../geo/polygons.js';
+import { newSlice, newTop } from '../../kiri/slice.js';
+import { doShells, doDiff, projectFlats, projectBridges } from '../fdm/slice.js';
+import { PNG } from '../../ext/pngjs.esm.js';
+import { SLA } from './driver.js';
 
-const { base, kiri } = root;
-const { driver, newSlice, newTop } = kiri;
-const { util, newPoint, newPolygon, polygons } = base;
-const { SLA } = driver;
-
-const POLY = polygons;
-const FDM = driver.FDM.share;
 const tracker = util.pwait;
 
 let fill_cache;
@@ -26,9 +20,10 @@ let fill_cache;
  * @param {Function} onupdate (called with % complete and optional message)
  * @param {Function} ondone (called when complete with an array of Slice objects)
  */
-SLA.slice = function(settings, widget, onupdate, ondone) {
-    let { process, device, controller } = settings,
-        isConcurrent = controller.threaded && kiri.minions.concurrent,
+export function sla_slice(settings, widget, onupdate, ondone) {
+    let { minions } = self.kiri_worker,
+        { process, device, controller } = settings,
+        isConcurrent = controller.threaded && minions.concurrent,
         work_total,
         work_remain;
 
@@ -66,10 +61,10 @@ SLA.slice = function(settings, widget, onupdate, ondone) {
             break;
     }
 
-    let sws = self.worker.snap.url;
+    let sws = self.kiri_worker.current.snap.url;
     let b64 = atob(sws.substring(sws.indexOf(',') + 1));
     let bin = Uint8Array.from(b64, c => c.charCodeAt(0));
-    let img = new png.PNG();
+    let img = new PNG();
     img.parse(bin, (err, data) => {
         SLA.preview = img;
         SLA.previewSmall = samplePNG(img, smallDims.x, smallDims.y);
@@ -154,14 +149,14 @@ SLA.slice = function(settings, widget, onupdate, ondone) {
         work_remain = work_total;
         forSlices(slices, 5, (slice,index) => {
             if (process.slaShell) {
-                FDM.doShells(slice, 2, 0, process.slaShell);
+                doShells(slice, 2, 0, process.slaShell);
             } else {
-                FDM.doShells(slice, 1, 0);
+                doShells(slice, 1, 0);
             }
         }, "shells");
         forSlices(slices, 10, (slice) => {
             if (slice.synth) return;
-            FDM.doDiff(slice, 0.000001, {
+            doDiff(slice, 0.000001, {
                 sla: true,
                 fakedown: !process.slaOpenBase
             });
@@ -169,8 +164,8 @@ SLA.slice = function(settings, widget, onupdate, ondone) {
         if (solidLayers) {
             forSlices(slices, 10, (slice) => {
                 if (slice.synth) return;
-                FDM.projectFlats(slice, solidLayers);
-                FDM.projectBridges(slice, solidLayers);
+                projectFlats(slice, solidLayers);
+                projectBridges(slice, solidLayers);
             }, "project");
             async function doUnionSolid(slice) {
                 if (slice.synth) return;
@@ -179,7 +174,7 @@ SLA.slice = function(settings, widget, onupdate, ondone) {
                     let trims = slice.solids || [];
                     traces.appendAll(trims);
                     // slice.unioned = POLY.setZ(POLY.union(traces, undefined, true), slice.z);
-                    slice.unioned = POLY.setZ(await kiri.minions.union(traces), slice.z);
+                    slice.unioned = POLY.setZ(await minions.union(traces), slice.z);
                 } else {
                     slice.unioned = traces;
                 }
@@ -212,7 +207,7 @@ SLA.slice = function(settings, widget, onupdate, ondone) {
     let bounds = widget.getBoundingBox();
     let points = widget.getPoints();
 
-    base.slice(points, {
+    slicer.slice(points, {
         indices: process.indices || process.xray,
         union: controller.healMesh,
         debug: process.xray,
@@ -222,7 +217,7 @@ SLA.slice = function(settings, widget, onupdate, ondone) {
         zInc: height,
         // slicer function (worker local or minion distributed)
         slicer(z, points, opts) {
-            return (isConcurrent ? kiri.minions.sliceZ : base.sliceZ)(z, points, opts);
+            return (isConcurrent ? minions.sliceZ : slicer.sliceZ)(z, points, opts);
         },
         onupdate(v) {
             return onupdate(0.0 + v * 0.25);
@@ -603,7 +598,7 @@ function fillPolys(slice, settings) {
     if (!cached && seq_c !== 1)
     for (let x=start_x; x<end_x; x += step_x) {
         fill.push(
-            base.newPolygon().centerRectangle({
+            newPolygon().centerRectangle({
                 x: x + step_x/2,
                 y: 0,
                 z: slice.z
@@ -614,7 +609,7 @@ function fillPolys(slice, settings) {
     if (!cached && seq_c !== 3)
     for (let y=start_y; y<end_y; y += step_y) {
         fill.push(
-            base.newPolygon().centerRectangle({
+            newPolygon().centerRectangle({
                 x: 0,
                 y: y + step_y/2,
                 z: slice.z
@@ -699,6 +694,3 @@ function samplePNG(png, width, height) {
 
     return {width, height, data:buf, png};
 }
-
-
-export { doupdate, forSlices, onSliceDone, doUnionSolid, doRender, computeSupports, projectSupport, projectPillar, fillPolys, pixAt, averageBlock, samplePNG, POLY, FDM, tracker, smallDims, largeDims, sws, b64, bin, img, height, cap, layers, outer, union, expand, s, slice, i, solidLayers, traces, trims, promises, bounds, points, slices, tops, render, poly, area, ops, mass_per_bear, rem_mass, ord, j, seq, flat, out, rec, num, track, sp, rp, isin, nusize, prec, nextpoint, x, close, p, d, newp, process, seq_i, y, idx, dat, th };

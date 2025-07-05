@@ -19,6 +19,7 @@ import { Widget, newWidget } from '../kiri/widget.js';
 import { CAM } from '../kiri-mode/cam/driver-be.js';
 import { FDM } from '../kiri-mode/fdm/driver-be.js';
 import { LASER } from '../kiri-mode/laser/driver.js';
+import { SLA } from '../kiri-mode/sla/driver.js';
 
 const { time } = util;
 
@@ -26,7 +27,8 @@ let debug = (self.debug === true),
     drivers = {
         CAM,
         FDM,
-        LASER
+        LASER,
+        SLA
     },
     ccvalue = self.navigator ? self.navigator.hardwareConcurrency || 0 : 0,
     concurrent = Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
@@ -757,5 +759,6 @@ const worker = self.kiri_worker = {
 CAM.init(worker);
 FDM.init(worker);
 LASER.init(worker);
+SLA.init(worker);
 
 broker.publish("worker.started", { dispatch, minions: minwork });

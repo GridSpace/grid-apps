@@ -7,7 +7,7 @@ logs
 mod
 node_modules
 package-lock.json
-src/ext/three.js
+three.js
 tmp
 .docusaurus
 build

@@ -5,6 +5,7 @@ import { api } from './api.js';
 import { conf } from './conf.js';
 import { space } from '../moto/space.js';
 import { devices as devlist } from '../pack/devices.js';
+import { settings, conf as setconf } from './settings.js';
 
 export const device = {
     clone: cloneDevice,
@@ -22,15 +23,15 @@ export const devices = {
 };
 
 function isBelt() {
-    return api.conf.get().device.bedBelt;
+    return setconf.get().device.bedBelt;
 }
 
 function currentDeviceName() {
-    return api.conf.get().filter[api.mode.get()];
+    return setconf.get().filter[api.mode.get()];
 }
 
 function currentDeviceCode() {
-    return api.conf.get().devices[currentDeviceName()];
+    return setconf.get().devices[currentDeviceName()];
 }
 
 function getModeDevices() {
@@ -38,7 +39,7 @@ function getModeDevices() {
 }
 
 export function showDevices() {
-    api.settings.sync.get().then(_showDevices);
+    settings.sync.get().then(_showDevices);
 }
 
 function _showDevices() {
@@ -52,7 +53,7 @@ function updateDeviceList() {
 
 function updateDeviceName(newname) {
     let selected = api.device.get(),
-        devs = api.conf.get().devices;
+        devs = setconf.get().devices;
     if (newname !== selected) {
         devs[newname] = devs[selected];
         delete devs[selected];
@@ -62,18 +63,18 @@ function updateDeviceName(newname) {
 }
 
 function putLocalDevice(devicename, obj) {
-    api.conf.get().devices[devicename] = obj;
-    api.conf.save();
+    setconf.get().devices[devicename] = obj;
+    setconf.save();
 }
 
 function removeLocalDevice(devicename) {
-    delete api.conf.get().devices[devicename];
-    api.conf.save();
-    api.settings.sync.put();
+    delete setconf.get().devices[devicename];
+    setconf.save();
+    settings.sync.put();
 }
 
 function isLocalDevice(devicename) {
-    return api.conf.get().devices[devicename] ? true : false;
+    return setconf.get().devices[devicename] ? true : false;
 }
 
 function getSelectedDevice() {
@@ -82,9 +83,9 @@ function getSelectedDevice() {
 
 function selectDevice(devicename) {
     if (isLocalDevice(devicename)) {
-        setDeviceCode(api.conf.get().devices[devicename], devicename);
+        setDeviceCode(setconf.get().devices[devicename], devicename);
     } else {
-        let code = devices[api.mode.get_lower()][devicename];
+        let code = devlist[api.mode.get_lower()][devicename];
         if (code) {
             setDeviceCode(code, devicename);
         }
@@ -94,7 +95,7 @@ function selectDevice(devicename) {
 // only for local filters
 function cloneDevice() {
     let name = `${getSelectedDevice().replace(/\./g,' ')}`;
-    let code = api.clone(api.conf.get().device);
+    let code = api.clone(setconf.get().device);
     code.mode = api.mode.get();
     if (name.toLowerCase().indexOf('my ') >= 0) {
         name = `${name} copy`;
@@ -103,11 +104,11 @@ function cloneDevice() {
     }
     putLocalDevice(name, code);
     setDeviceCode(code, name);
-    api.settings.sync.put();
+    settings.sync.put();
 }
 
 function updateLaserState() {
-    const dev = api.conf.get().device;
+    const dev = setconf.get().device;
     $('laser-on').style.display = dev.useLaser ? 'flex' : 'none';
     $('laser-off').style.display = dev.useLaser ? 'flex' : 'none';
 }
@@ -119,7 +120,7 @@ function setDeviceCode(code, devicename) {
 
         let mode = api.mode.get(),
             lmode = mode.toLowerCase(),
-            current = api.conf.get(),
+            current = setconf.get(),
             local = isLocalDevice(devicename),
             dev = current.device = conf.device_from_code(code,mode),
             dproc = current.devproc[devicename], // last process name for this device
@@ -228,7 +229,7 @@ function setDeviceCode(code, devicename) {
         }
         ui.deviceAdd.disabled = dev.noclone;
 
-        api.conf.update_fields();
+        setconf.update_fields();
         space.platform.setBelt(isBelt());
         platform.update_size();
         platform.update_origin();
@@ -242,12 +243,12 @@ function setDeviceCode(code, devicename) {
 
         if (dproc) {
             // restore last process associated with this device
-            api.conf.load(null, dproc);
+            setconf.load(null, dproc);
         } else {
-            api.conf.update();
+            setconf.update();
         }
 
-        api.conf.save();
+        setconf.save();
 
         if (isBelt()) {
             // space.view.setHome(dev.bedBelt ? Math.PI/2 : 0, Math.PI / 2.5);
@@ -276,7 +277,7 @@ function setDeviceCode(code, devicename) {
 function renderDevices(devices) {
     let selected = api.device.get() || devices[0],
         features = api.feature,
-        devs = api.conf.get().devices,
+        devs = setconf.get().devices,
         dfilter = typeof(features.device_filter) === 'function' ? features.device_filter : undefined;
 
     for (let local in devs) {
@@ -300,8 +301,8 @@ function renderDevices(devices) {
     ui.deviceSave.onclick = function() {
         event.emit('device.save');
         api.function.clear();
-        api.conf.save();
-        api.settings.sync.put();
+        setconf.save();
+        settings.sync.put();
         showDevices();
         api.modal.hide();
     };
@@ -320,8 +321,8 @@ function renderDevices(devices) {
         api.uc.prompt(`Rename "${selected}`, selected).then(newname => {
             if (newname) {
                 updateDeviceName(newname);
-                api.conf.save();
-                api.settings.sync.put();
+                setconf.save();
+                settings.sync.put();
                 showDevices();
             } else {
                 showDevices();
@@ -333,7 +334,7 @@ function renderDevices(devices) {
             version: kiri.version,
             device: selected,
             process: api.process.code(),
-            profiles: event.altKey ? api.settings.prof() : undefined,
+            profiles: event.altKey ? settings.prof() : undefined,
             code: devs[selected],
             time: Date.now()
         };

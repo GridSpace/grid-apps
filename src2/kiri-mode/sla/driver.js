@@ -1,21 +1,30 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { newPrint } from '../../kiri/print.js';
+import { sla_slice } from './slice.js';
+import { sla_export } from './export.js';
 
-export const driver = {
-    prepare,
-    legacy: false
+export const SLA = {
+    init,
+    legacy: false,
+    slice: sla_slice,
+    prepare: sla_prepare,
+    export: sla_export,
 };
 
-if (driver.legacy) {
+if (SLA.legacy) {
     console.log("SLA Driver in Legacy Mode");
+}
+
+function init(worker) {
+    // console.log({ INIT_SLA: worker });
 }
 
 // runs in worker. would usually be in src/mode/sla/prepare.js
 // but the SLA driver skips the prepare step because there is no path routing
-async function prepare(widgets, settings, update) {
-    self.worker.print = newPrint(settings, widgets);
-    if (!driver.wasm) {
+async function sla_prepare(widgets, settings, update) {
+    self.kiri_worker.current.print = newPrint(settings, widgets);
+    if (!SLA.wasm) {
         fetch('/wasm/kiri-sla.wasm')
             .then(response => response.arrayBuffer())
             .then(bytes => WebAssembly.instantiate(bytes, {
@@ -28,7 +37,7 @@ async function prepare(widgets, settings, update) {
                 let {module, instance} = results;
                 let {exports} = instance;
                 let heap = new Uint8Array(exports.memory.buffer);
-                driver.wasm = {
+                SLA.wasm = {
                     heap,
                     memory: exports.memory,
                     render: exports.render,
@@ -38,5 +47,3 @@ async function prepare(widgets, settings, update) {
     }
     update(1);
 }
-
-export { prepare };

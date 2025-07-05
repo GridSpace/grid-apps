@@ -34,7 +34,7 @@ const data_term = 0x0d0a;
 // CL-89  3840 x 2400
 // CL-133 3840 x 2160
 
-class CXDLP {
+export class CXDLP {
     constructor() {
         Object.assign(this, default_values);
     }
@@ -447,6 +447,3 @@ if (!self.navigator && self.process && self.process.env) {
 } else if (self.navigator) {
     self.CXDLP = CXDLP;
 }
-
-
-export { read_string, write_string, scaleMovePoly, writePoly, default_values, data_term, read, len, str, meta, layers, i, size, lines, cksum, out, rec, j, d1, d2, d3, y_start, y_end, x_end, color, output, pos, start, b1, b2, b3, b4, b5, ckpos, array, cxdlp, width2, count, area, points, p, inner, bounds, point, slice, polys, wasm, imagelen, writer, poly, image, x, lastv, y, v, fs, args, file, fpos, view };

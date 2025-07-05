@@ -1,9 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-const { base, kiri } = root;
-const { driver } = kiri;
-const { util } = base;
-const { SLA } = driver;
+import { SLA } from './driver.js';
 
 function generatePhoton(print, conf, progress) {
     let printset = print.settings,
@@ -529,12 +526,9 @@ function polyout(poly, ctx, opt) {
     ctx.closePath();
 }
 
-self.photon = {
+export const photon = {
     generatePhoton,
     generatePhotons,
     renderLayer,
     renderLayerWasm
 };
-
-
-export { generatePhoton, generatePhotons, encodeLayers, rleEncode, rleByte, rleDecode, writePhotonImage, renderLayerWasm, scaleMovePoly, writePoly, renderLayer, polyout, printset, d, i, ccl, tcl, converted, count, lineDV, bits, bitsDV, subs, sl, s, view, mask, dv, codedlen, codelen, buflen, filebuf, filedat, printtime, hirez, layerpos, lorez, proppos, proplen, propstart, layers, layerat, sc, l, layer, clo, tlo, j, filePos, index, subindex, data, encoded, maxlen, newColor, bytes, hpos, pos, r, heap, width2, array, area, points, p, inner, bounds, point, slice, polys, wasm, imagelen, writer, poly, image, rlelen, opt, ctx, red };

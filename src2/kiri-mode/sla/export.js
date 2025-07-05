@@ -1,14 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
-import { base } from '../geo/base.js';
-import { driver } from '../kiri-mode/sla/driver.js';
-import { x_cxdlp } from '../kiri-mode/sla/x_cxdlp.js';
-import { x_photon } from '../kiri-mode/sla/x_photon.js';
 
-
-const { base, kiri } = root
-const { driver } = kiri;
-const { util } = base;
-const { SLA } = driver;
+import { CXDLP } from './x_cxdlp.js';
+import { photon } from './x_photon.js';
+import { SLA } from './driver.js';
 
 /**
  * DRIVER CONTRACT - runs in worker
@@ -16,7 +10,7 @@ const { SLA } = driver;
  * @param {Function} online streaming reply
  * @param {Function} ondone last reply
  */
-SLA.export = function(print, online, ondone) {
+export function sla_export(print, online, ondone) {
     let widgets = print.widgets,
         settings = print.settings,
         device = settings.device,
@@ -164,9 +158,6 @@ SLA.export = function(print, online, ondone) {
     console.log('print.export', Date.now() - mark);
 };
 
-function generateCXDLP(print, conf, progress) {
+export function generateCXDLP(print, conf, progress) {
     console.log({generateCXDLP: print, conf, progress});
 }
-
-
-export { generateCXDLP, widgets, isPhoton, legacyMode, d, masks, i, render, index, param, exp_func, file, part1, part2, slices, thumb, tdata, x, y, p, r, g, b, v, preview1, pdata, preview2 };

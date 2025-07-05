@@ -12,6 +12,7 @@ import { settings as set_ctrl } from './settings.js';
 import { init as initCAM } from '../kiri-mode/cam/client.js';
 import { init as initFDM } from '../kiri-mode/fdm/client.js';
 import { init as initLaser } from '../kiri-mode/laser/client.js';
+import { init as initSLA } from '../kiri-mode/sla/client.js';
 
 let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     { consts, client, catalog, platform, selection } = api,
@@ -402,7 +403,7 @@ function keyHandler(evt) {
         case cca('p'): // prepare
             if (api.mode.get() !== 'SLA') {
                 // hidden in SLA mode
-                api.function.print();
+                api.function.prepare();
             }
             break;
         case cca('X'): // export
@@ -1366,6 +1367,7 @@ function init_one() {
     initFDM();
     initCAM();
     initLaser();
+    initSLA();
 
     // override old style settings two-button menu
     ui.settingsSave.onclick = () => {
