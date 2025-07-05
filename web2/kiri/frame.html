@@ -1,0 +1,164 @@
+<html>
+<head lang="en">
+    <title>Kiri:Moto Frame Message API</title>
+    <meta charset="UTF-8" />
+    <meta name="keywords" content="browser,slicer,3d print,free,3d slicer,3d slicing,fdm,sla,cnc,cam,machining,toolpaths,toolpath generation,construction systems,kirimoto,metamoto,kiri:moto,kiri,gridbot" />
+    <meta name="description" content="Kiri:Moto Frame Message API" />
+    <meta property="og:description" content="Control Kiri:Moto in an IFrame on your site">
+    <meta property="og:title" content="Kiri:Moto Frame Message API">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://grid.space/kiri/frame.html">
+    <meta property="og:image" content="//static.grid.space/img/logo_gs_og.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="//static.grid.space/img/favicon.ico">
+    <link rel="apple-touch-icon" href="//static.grid.space/img/favicon-mobile.png">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+        }
+        #demo {
+            display: flex;
+            flex-direction: row;
+        }
+        #mcode {
+            width: 300px;
+        }
+        #fcode {
+            width: 600px;
+        }
+        #mcode, #fcode {
+            height: 600px;
+            margin: 5px;
+            border-radius: 3px;
+            border: 1px solid #aaa;
+        }
+        #mcode, #fcode {
+            display: flex;
+            flex-direction: column;
+        }
+        #mhead, #rhead, #fhead {
+            padding: 3px;
+            text-align: center;
+            background-color: rgba(61,133,198,0.25);
+            border-bottom: 1px solid #aaa;
+        }
+        #rhead {
+            border-top: 1px solid #aaa;
+        }
+        #mbody, #fbody {
+            flex-grow: 1;
+            border: 0;
+        }
+        #rbody {
+            height: 45%;
+        }
+        #mfoot {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            padding: 3px;
+        }
+        #mfoot button {
+            width: 100%;
+        }
+        #rbody, #fbody {
+            font-family: monospace;
+            font-size: smaller;
+            white-space: pre;
+            overflow: auto;
+        }
+        #api {
+            width: 812px;
+        }
+        li {
+            list-style: circle;
+        }
+        li label {
+            white-space: pre;
+            font-family: monospace;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <script src="/code/frame.js"></script>
+    <script>
+        let defc = [
+            "let api = kiri.frame;",
+            "api.setMode('FDM');",
+            "api.clear();",
+            "api.load('/obj/cube.stl');",
+            "api.on('loaded', () => {",
+            "    api.slice();",
+            "});",
+            "api.on('slice.done', () => {",
+            "  api.prepare();",
+            "});",
+            "api.on('prepare.done', () => {",
+            "    api.export();",
+            "});"
+        ].join('\n');
+        let msgs = [];
+        let edit;
+        function $(id) { return document.getElementById(id) }
+        function onload() {
+            let fnstr = demo.toString().split("\n");
+            edit = ace.edit($("mbody"), {
+                mode: "ace/mode/javascript",
+                theme: "ace/theme/chrome",
+                selectionStyle: "text"
+            });
+            edit.session.setTabSize(4);
+            edit.session.setUseSoftTabs(true);
+            edit.session.setValue(localStorage.kiri_frame_code || defc);
+            kiri.frame.setFrame('fbody');
+            kiri.frame.onmessage = receive_message;
+        }
+        function receive_message(data, msg) {
+            msgs.push(JSON.stringify(data));
+            $('rbody').innerText = msgs.join("\n-----\n");
+            $('rbody').scrollTop = 1000000;
+        }
+        function run_code() {
+            let code = edit.session.getValue();
+            eval(`(function(){${code}})()`);
+            localStorage.kiri_frame_code = code;
+        }
+    </script>
+</head>
+<body onload="onload()">
+    <h2 id="title">Kiri:Moto Frame Message API</h2>
+    <div id="demo">
+        <div id="mcode">
+            <div id="mhead">code</div>
+            <div id="mbody"></div>
+            <div id="mfoot"><button onclick="run_code()">run code</button></div>
+            <div id="rhead">output</div>
+            <div id="rbody"></div>
+        </div>
+        <div id="fcode">
+            <div id="fhead">frame</div>
+            <iframe id="fbody" src="/kiri/"></iframe>
+        </div>
+    </div>
+    <div id="api">
+        <h2>Frame Message API</h2>
+        <li><label>load(url)</label> - where URL points to an STL</li>
+        <li><label>clear()</label> - clear workspace</li>
+        <li><label>parse(data,type)</label> - data is string or binary. type is "stl" or "svg"</li>
+        <li><label>setFrame(id_obj, target_origin)</label> - id or object of iframe with Kiri:Moto loaded</li>
+        <li><label>setMode(mode)</label> - FDM, CAM, LASER, SLA</li>
+        <li><label>setDevice(options)</label> - change default object parameters</li>
+        <li><label>setProcess(options)</label> - change default process parameters</li>
+        <li><label>slice()</label> - async slice loaded object. event upon completion</li>
+        <li><label>prepare()</label> - async path routing of slice data. event upon completion</li>
+        <li><label>export(callback)</label> - async gcode generation. opens export dialog or event callback with gcode</li>
+        <li><label>onmessage = fn</label> - function to receive all messages</li>
+        <li><label>onevent(event, fn)</label> - function to receive named messages</li>
+        <li><label>emit(event, data)</label> - send named event with data</li>
+        <li><label>alert(msg, time)</label> - show alert message with optional time in seconds</li>
+        <li><label>progress(pct, msg)</label> - set progress bar (0-1) with optional message</li>
+    </div>
+</body>
+</html>

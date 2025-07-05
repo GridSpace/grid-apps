@@ -1,0 +1,51 @@
+{
+    "mode": "FDM",
+    "internal": 0,
+    "imageURL": "",
+    "bedHeight": 2.5,
+    "bedWidth": 220,
+    "bedDepth": 220,
+    "bedRound": false,
+    "bedBelt": false,
+    "deviceZMax": 0,
+    "gcodeTime": 1,
+    "maxHeight": 250,
+    "originCenter": false,
+    "gcodeFan": [
+        "M106 S{fan_speed}"
+    ],
+    "gcodeFeature": [],
+    "gcodeTrack": [],
+    "gcodeLayer": [],
+    "gcodePre": [
+        "M140 S0",
+        "M104 S0 ",
+        "START_PRINT EXTRUDER_TEMP=220.000000 BED_TEMP=45.000000",
+        "G92 E0",
+        "G1 F2400 E-0.5"
+    ],
+    "gcodePost": [
+        "M106 S0",
+        "M106 P2 S0",
+        "M106 P1 S0",
+        "END_PRINT",
+        "M82 ;absolute extrusion mode",
+        "M104 S0"
+    ],
+    "gcodeProc": "",
+    "gcodeFExt": "gcode",
+    "extruders": [
+        {
+            "extFilament": 1.75,
+            "extNozzle": 0.4,
+            "extOffsetX": 0,
+            "extOffsetY": 0
+        }
+    ],
+    "new": false,
+    "deviceName": "Creality K1",
+    "fwRetract": false,
+    "filamentSource": "direct",
+    "profiles": [],
+    "extras": {}
+}

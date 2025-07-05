@@ -1,0 +1,32 @@
+{
+    "mode": "CAM",
+    "internal": 0,
+    "bedHeight": 2.5,
+    "bedWidth": 500,
+    "bedDepth": 500,
+    "maxHeight": 150,
+    "originCenter": false,
+    "spindleMax": 8000,
+    "gcodePre": [
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)",
+        "M03 S20000 ; spindle on"
+    ],
+    "gcodePost": [
+        "M05 ; spindle off",
+        "M30 ; program end"
+    ],
+    "gcodeDwell": [
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "gcodeSpindle": [],
+    "gcodeChange": [],
+    "gcodeFExt": "nc",
+    "gcodeSpace": true,
+    "gcodeStrip": true,
+    "new": false,
+    "deviceName": "Langmuir MR-1",
+    "imageURL": "",
+    "useLaser": false,
+    "profiles": []
+}

@@ -6,5 +6,6 @@ const terms = {
     VERSION: (is_self ? self : this).debug_version || "4.1.9"
 };
 
+export const beta = 0;
 export const license = terms;
 export const version = terms.VERSION;

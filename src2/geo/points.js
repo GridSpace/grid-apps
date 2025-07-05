@@ -2,9 +2,8 @@
 
 "use strict";
 
+import { config } from './base.js';
 import { newPoint } from '../geo/point.js';
-
-const { config } = base;
 
 /**
  * converts a geometry point array into a kiri point array

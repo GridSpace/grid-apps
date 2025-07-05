@@ -1,0 +1,32 @@
+{
+    "pre":[
+        "T{tool}                ; select extruder #0",
+        "M104 S{temp}           ; set nozzle temp",
+        "M140 S{bed_temp} T{tool} ; set bed temperature",
+        "M109 S{temp}           ; wait for nozzle to heat",
+        "S210 T{tool}           ; wait for heating?",
+        "M82                    ; absolute extrusion mode",
+        "G28                    ; home",
+        "G1 Z15 F6000           ; lower platform 15mm",
+        "G92 E0                 ; zero out extruder position",
+        "G1 F200 E3             ; prime the extruder 3mm"
+    ],
+    "post":[
+        "M107                   ; turn off filament cooling fan",
+        "M104 S0 T{tool}        ; turn off right extruder",
+        "M140 S0                ; turn off bed",
+        "M904                   ; park extruder",
+        "M84                    ; disable stepper motors"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "file-ext": "hvs",
+    "settings":{
+        "origin_center": false,
+        "extrude_abs": true,
+        "bed_width": 150,
+        "bed_depth": 150,
+        "build_height": 150
+    }
+}

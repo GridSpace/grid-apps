@@ -1,19 +1,13 @@
 /** Copyright Stewart Allen -- All Rights Reserved */
 
-// Create global data object if it doesn't exist
-if (!self.data) {
-    self.data = {};
-}
-
-const { data } = self;
-
-data.Index = IDBStore;
-
-data.open = function() {
-    return new IDBStore(...arguments);
-};
-
 // https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
+
+export const data = {
+    Index: IDBStore,
+    open() {
+        return new IDBStore(...arguments);
+    }
+};
 
 let IDB, IRR, local = null;
 
@@ -320,6 +314,5 @@ SP.clear = function(key, store = this.current) {
         .objectStore(store).clear();
 };
 
-// Export for ES modules
-export { IDBStore as Index };
 export const open = data.open;
+export const Index = IDBStore;

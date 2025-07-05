@@ -1,0 +1,24 @@
+{
+   "file-ext":"nc",
+   "token-space":" ",
+   "strip-comments":true,
+   "pre":[
+      "G21 ; set units to MM (required)",
+      "G90 ; absolute position mode (required)"
+   ],
+   "post":[
+      "M30 ; program end"
+   ],
+   "tool-change":[
+      "M6 T{tool} ; change tool to '{tool_name}'"
+   ],
+   "dwell":[
+      "G4 P{time} ; dwell for {time}ms"
+   ],
+   "settings":{
+      "origin_center":false,
+      "bed_width":1220,
+      "bed_depth":2400,
+      "build_height":80
+   }
+}

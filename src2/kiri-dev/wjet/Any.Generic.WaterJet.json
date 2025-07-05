@@ -1,0 +1,21 @@
+{
+    "file-ext": "gcode",
+    "token-space": " ",
+    "pre":[
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)"
+    ],
+    "post":[
+        "M30 ; program end"
+    ],
+    "laser-on":[
+        "M106 S{power}"
+    ],
+    "laser-off":[
+        "M107"
+    ],
+	"settings": {
+		"bed_width": 300,
+		"bed_depth": 300
+	}
+}

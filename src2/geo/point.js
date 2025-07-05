@@ -1,9 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { THREE } from '../ext/three.js';
-const { Vector3 } = THREE;
-
 import { util, config, key } from './base.js';
+import { newLine } from './line.js';
+import { newSlope } from './slope.js';
+
+const { Vector3 } = THREE;
 
 export class Point {
     constructor(x = 0, y = 0, z = 0, key) {
@@ -122,11 +123,11 @@ export class Point {
     }
 
     slopeTo(p) {
-        return base.newSlope(this, p);
+        return newSlope(this, p);
     }
 
     lineTo(p, k) {
-        return base.newLine(this, p, k);
+        return newLine(this, p, k);
     }
 
     isNear(p, dist) {
@@ -292,7 +293,7 @@ export class Point {
             np2 = newPoint(p2.x - oy, p2.y + ox, p2.z, key.NONE);
         np1.op = p1;
         np2.op = p2;
-        return base.newLine(np1, np2, key.NONE);
+        return newLine(np1, np2, key.NONE);
     }
 
     offset(x, y, z) {

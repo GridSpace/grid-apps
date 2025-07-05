@@ -1,8 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-// Import Clipper library first to ensure it's available in worker context
 import "../ext/clip2.js";
-
 import "../ext/earcut.js";
 import '../add/array.js';
 import '../add/class.js';
@@ -18,7 +16,6 @@ import { polygons } from '../geo/polygons.js';
 import { CSG } from '../geo/csg.js';
 import { util } from './util.js';
 import { tool as meshTool } from './tool.js';
-import { THREE } from '../ext/three.js';
 
 const { Triangle, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
 

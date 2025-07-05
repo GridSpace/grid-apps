@@ -1,0 +1,32 @@
+/** atom3dp css */
+
+button {
+    color: #000;
+    border: 1px solid rgba(20,20,20,0.5);
+}
+label {
+    border-bottom: 1px solid rgba(200,200,0,0.75);
+}
+.grouphead {
+    color: white;
+    background-color: rgba(0,0,0,0.85);
+}
+#control-left {
+    background-color: rgba(240,240,20,0.5);
+}
+#control-right {
+    color: #000;
+    background-color: rgba(240,240,20,0.5);
+}
+#appid span {
+    background-color: rgba(240,240,20,0.5) !important;
+}
+#selection span {
+    background-color: rgba(240,240,20,0.5) !important;
+}
+#layer-view span {
+    background-color: rgba(240,240,20,0.5) !important;
+}
+#modeCAM {
+    display: none !important;
+}

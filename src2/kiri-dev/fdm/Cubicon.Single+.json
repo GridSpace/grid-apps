@@ -1,0 +1,37 @@
+{
+    "pre":[
+        "M104 S{temp} T{tool}     ; set extruder temperature",
+        "M140 S{bed_temp} T{tool} ; set bed temperature",
+        "M190 S{bed_temp} T{tool} ; set bed temperature",
+        "M109 S{temp} T{tool}     ; set extruder temperature",
+        "M901 S35            ; set chamber temperature to 35 (standard)",
+        "G90                 ; set absolute positioning mode",
+        "M82                 ; set absolute positioning for extruder",
+        "M107                ; turn off filament cooling fan",
+        "G28                 ; home axes",
+        "G29                 ; level bed",
+        "G92 E0              ; reset all axes positions",
+        "G1 X0 Y0 Z0.25 F180 ; move xy to 0,0 and z 0.25mm over bed",
+        "G92 E0              ; zero the extruder",
+        "G1 E15 F200         ; purge 15mm from extruder",
+        "G92 E0              ; zero the extruded"
+    ],
+    "post":[
+        "M107                ; turn off filament cooling fan",
+        "M104 S0 T{tool}     ; turn off right extruder",
+        "M140 S0             ; turn off bed",
+        "M904                ; park extruder",
+        "M84                 ; disable stepper motors"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "file-ext": "hvs",
+    "settings":{
+        "origin_center": false,
+        "extrude_abs": true,
+        "bed_width": 240,
+        "bed_depth": 190,
+        "build_height": 200
+    }
+}

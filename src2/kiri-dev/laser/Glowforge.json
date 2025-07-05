@@ -1,0 +1,12 @@
+{
+    "file-ext": "gcode",
+    "token-space": " ",
+    "pre":[],
+    "post":[],
+    "laser-on":[],
+    "laser-off":[],
+	"settings": {
+		"bed_width": 500,
+		"bed_depth": 300
+	}
+}

@@ -1,0 +1,26 @@
+{
+    "new": false,
+    "mode": "CAM",
+    "deviceName": "My Sienci LongMill",
+    "noclone":false,
+    "internal": 0,
+    "bedHeight": 2.5,
+    "bedWidth": 760,
+    "bedDepth": 760,
+    "maxHeight": 300,
+    "originCenter": false,
+    "spindleMax": 0,
+    "gcodeSpace": true,
+    "gcodeStrip": false,
+    "gcodePre": [
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)",
+        "G0 F6000 ; default rapid move speed",
+        "G1 F1500 ; default cutting speed"
+    ],
+    "gcodePost": ["M30 ; program end"],
+    "gcodeDwell": ["G4 P{time} ; dwell for {time}ms"],
+    "gcodeSpindle": [],
+    "gcodeChange": ["M6 T{tool} ; change tool to '{tool_name}'"],
+    "gcodeFExt": "nc"
+}

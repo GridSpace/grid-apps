@@ -1,0 +1,43 @@
+{
+    "pre":[
+        "; set bed and nozzle temps",
+        "M104 S{temp} T{tool}",
+        "M140 S{bed_temp}",
+        "; absolute positioning and home",
+        "G90",
+        "G28",
+        "; wait for nozzle and bed to reach target temps",
+        "M190 S{bed_temp}",
+        "M109 S{temp} T{tool}",
+        "M7 T{tool}",
+        "M6 T{tool}",
+        "; select nozzle 0",
+        "M108 T{tool}",
+        "G92 E0",
+        "G1 E0 F300",
+        "; purge nozzle",
+        "G1 X150 Y75 Z15 E-2 F500",
+        "G1 Y125 Z0.5 F600",
+        "G1 Y50 E40 F600"
+    ],
+    "post":[
+        "; stop fan, cool nozzle and bed",
+        "M107",
+        "M104 S0 T{tool}",
+        "M140 S0",
+        "; slow descent of bed",
+        "G0 F300",
+        "; end print",
+        "M18"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "origin_center": true,
+        "extrude_abs": true,
+        "bed_width": 280,
+        "bed_depth": 250,
+        "build_height": 300
+    }
+}

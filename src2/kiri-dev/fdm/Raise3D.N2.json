@@ -1,0 +1,65 @@
+{
+    "pre":[
+        "M140 S{bed_temp}",
+        "M221 T{tool} S100.00",
+        "M104 T{tool} S{temp}",
+        "M109 T{tool} S{temp}",
+        "M190 S{bed_temp}",
+        "G21",
+        "G90",
+        "M82",
+        "M107",
+        "G28 X0 Y0",
+        "G28 Z0",
+        "T{tool}",
+        "G1 Z0.05 F6000.00",
+        "G92 E0",
+        "G1 F140 E29",
+        "G4 P500",
+        "G1 X15 Y15 Z0.02 F2000",
+        "G1 F6000.00",
+        "M117 Printing...",
+        "M1001"
+    ],
+    "post":[
+        "G91",
+        "G1 Z10",
+        "G90",
+        "M1002",
+        "M104 T{tool} S0",
+        "M104 S0",
+        "M140 S0",
+        "G1 X20 Y20 F6000",
+        "G1 X0 Y0",
+        "M84",
+        ";Print Time: {time}",
+        ";Material#1 Used: {material}",
+        ";Material#2 Used: 0.0"
+    ],
+    "pause":[
+        "; --- pause begin ---",
+        "G91        ; Relative Positioning",
+        "G0 Z20     ; Move Bed down 20mm",
+        "G90        ; Absolute positioning",
+        "G0 X10 Y10 ; Move to 10,10",
+        "M2000      ; Pause command",
+        "G91        ; Relative Positioning",
+        "G0 Z-20    ; Move Bed up 20mm",
+        "G90        ; Absolute positioning",
+        "; --- pause end ---"
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}",
+        "layer": [
+            ";LAYER:{layer}",
+            ";HEIGHT:{height}"
+        ]
+    },
+    "settings":{
+        "origin_center": false,
+        "extrude_abs": true,
+        "bed_width": 310,
+        "bed_depth": 310,
+        "build_height": 305
+    }
+}

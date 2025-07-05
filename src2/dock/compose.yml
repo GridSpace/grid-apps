@@ -1,0 +1,10 @@
+version: '3.1'
+
+services:
+  kirimoto:
+    container_name: grid-apps
+    build:
+      context: ../..
+      dockerfile: src/dock/Dockerfile
+    ports:
+      - "8080:8080"

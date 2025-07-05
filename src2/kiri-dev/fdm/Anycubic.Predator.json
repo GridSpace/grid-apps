@@ -1,0 +1,56 @@
+{
+    "pre":[
+        "M140 S{bed_temp} T{tool}",
+        "M105          ; update temperature",
+        "M190 S{bed_temp} T{tool}",
+        "M104 S{temp} T{tool}",
+        "M105          ; update temperature",
+        "M109 S{temp} T{tool}",
+        "M82           ; set extruder to absolute mode",
+        "G21           ; set metric values",
+        "G90           ; set absolute positioning",
+        "M82           ; set extruder to absolute mode",
+        "M107          ; turn off fan",
+        "G28           ; home",
+        "G1 Z15 F1000  ; move the platform down 15mm",
+        "G92 E0        ; zero extruder",
+        "G1 F200 E3    ; extrude 3mm of feed stock",
+        "G92 E0        ; zero extruder",
+        "G1 F4000      ; set default feed rate",
+        "G92 E0        ; zero extruder",
+        ";G5           ; uncomment to enable resume after power failure",
+        "M117 Printing..."
+    ],
+    "post":[
+        "M107                ; turn off fan",
+        "M104 S0 T{tool}     ; turn off extruder",
+        "M140 S0 T{tool}     ; turn off bed",
+        "G91                 ; relative positioning",
+        "G92 E0              ; zero extruder",
+        "G1 E-2 F300         ; retract filament",
+        "G1 Z0.5 E-5         ; retract filament, move z up",
+        "G28                 ; home all axes",
+        "G90                 ; absolute positioning",
+        "M82                 ; absolute extrusion mode",
+        "M84                 ; disable stepper motors"
+    ],
+    "extruders":[
+        {
+            "nozzle": 0.4,
+            "filament": 1.75,
+            "offset_x": 0,
+            "offset_y": 0
+        }
+    ],
+    "cmd":{
+        "fan_power": "M106 S{fan_speed}"
+    },
+    "settings":{
+        "origin_center": true,
+        "extrude_abs": true,
+        "bed_circle": true,
+        "bed_width": 370,
+        "bed_depth": 370,
+        "build_height": 455
+    }
+}

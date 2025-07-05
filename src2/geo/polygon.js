@@ -4,9 +4,8 @@
 
 import { base, config, util } from './base.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
-import { THREE } from '../ext/three.js';
 import { newBounds } from './bounds.js';
-import { newPoint } from './point.js';
+import { newPoint, pointFromClipper } from './point.js';
 import { polygons } from './polygons.js';
 import { earcut } from '../geo/base.js';
 
@@ -2044,7 +2043,7 @@ export class Polygon {
         return res.map(array => {
             let poly = newPolygon();
             for (let pt of array) {
-                poly.push(base.pointFromClipper(pt, z));
+                poly.push(pointFromClipper(pt, z));
             }
             return poly;
         });
@@ -2374,7 +2373,7 @@ export function fromClipperPath(path, z) {
         l = path.length;
     while (i < l) {
         // poly.push(newPoint(null,null,z,null,path[i++]));
-        poly.push(base.pointFromClipper(path[i++], z));
+        poly.push(pointFromClipper(path[i++], z));
     }
     return poly;
 }

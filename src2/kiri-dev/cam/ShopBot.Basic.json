@@ -1,0 +1,45 @@
+{
+    "mode": "CAM",
+    "internal": 0,
+    "bedHeight": 2.5,
+    "bedWidth": 2400,
+    "bedDepth": 1200,
+    "maxHeight": 150,
+    "originCenter": false,
+    "spindleMax": 0,
+    "gcodePre": [
+        "'UNITS:MM",
+        "'",
+        "CN, 90               'Set program to absolute coordinate mode",
+        "&Tool =1             'Tool number to change to",
+        "C9                   'Change tool",
+        "TR,4000              'Set spindle RPM",
+        "C6                   'Spindle on",
+        "PAUSE 2",
+        "'"
+    ],
+    "gcodePost": [
+        "'Turning router OFF",
+        "C7",
+        "END",
+        "'",
+        "UNIT_ERROR:",
+        "CN, 91               'Run file explaining unit error",
+        "END"
+    ],
+    "gcodeDwell": [
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "gcodeSpindle": [],
+    "gcodeChange": [
+        "M6 T{tool} ; change tool to '{tool_name}'"
+    ],
+    "gcodeFExt": ".sbp",
+    "gcodeSpace": true,
+    "gcodeStrip": true,
+    "new": false,
+    "deviceName": "ShopBot.Basic",
+    "imageURL": "",
+    "useLaser": false,
+    "profiles": []
+}

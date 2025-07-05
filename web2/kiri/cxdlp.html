@@ -1,0 +1,146 @@
+<html>
+<head>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        div {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+        th {
+            text-align: left;
+        }
+        canvas, #params, #ctrl {
+            margin: 1px;
+            padding: 3px;
+            border: 1px solid black;
+            border-radius: 3px;
+        }
+        #slider {
+            flex-grow: 1;
+        }
+        #params {
+            flex-grow: 1;
+        }
+        .over {
+            background-color: rgba(0,255,0,0.1);
+        }
+    </style>
+    <script src="/src/add/class.js"></script>
+    <script src="/src/mode/sla/x_cxdlp.js"></script>
+    <script>
+        function onload() {
+            document.addEventListener("drop", (ev) => {
+                document.body.classList.remove("over");
+                let files = ev.dataTransfer.files;
+                let reader = new FileReader();
+                reader.onloadend = (e) => {
+                    let cxdlp = window.cxdlp = new CXDLP();
+                    cxdlp.read(new DataView(e.target.result), 0);
+                    slider.max = layers.value = cxdlp.layers.length - 1;
+                    render(slider.value = layer.value = 0);
+                    meta(cxdlp);
+                };
+                reader.readAsArrayBuffer(files[0]);
+                ev.stopPropagation();
+                ev.preventDefault();
+            }, false);
+            document.addEventListener("dragover", (ev) => {
+                ev.stopPropagation();
+                ev.preventDefault();
+                document.body.classList.add("over");
+            }, false);
+            document.addEventListener("dragleave", (ev) => {
+                ev.stopPropagation();
+                ev.preventDefault();
+                document.body.classList.remove("over");
+            }, false);
+            slider.oninput = slider.onchange = () => {
+                render(layer.value = slider.value);
+            };
+            layer.onchange = () => {
+                render(slider.value = layer.value);
+            };
+        }
+        function row(key,value) {
+            return `<tr><th>${key}</th><td>${value}</td></tr>`;
+        }
+        function rev(value, bits = 8) {
+            let out = 0
+            for (let i=0; i<bits; i++) {
+                out |= (value >> i & 1) << bits-1-i
+            }
+            return out >>> 0;
+        }
+        function decode(canvas, image, size) {
+            let tile = new Uint8Array(image);
+            let draw = canvas.getContext('2d');
+            let data = draw.getImageData(0,0,size,size);
+            let rawd = data.data;
+            for (let x=0; x<size; x++) {
+                for (let y=0; y<size; y++) {
+                    let ind = (y * size + x) * 2;
+                    let rgb = (tile[ind] << 8) | (tile[ind+1] << 0);
+                    let pos = (y * size + x) * 4;
+                    rawd[pos+0] = ((rgb >> 11) << 3) & 0xff;
+                    rawd[pos+1] = ((rgb >>  5) << 2) & 0xff;
+                    rawd[pos+2] = ((rgb >>  0) << 3) & 0xff;
+                    rawd[pos+3] = 255;
+                }
+            }
+            draw.putImageData(data, 0, 0);
+        }
+        function meta(cxdlp) {
+            let rows = Object.entries(cxdlp).filter(e => {
+                let t = typeof(e[1]);
+                return t === 'number' || t === 'string';
+            }).map(e => row(e[0], e[1]));
+            params.innerHTML = [ '<table>', ...rows, '</table>' ].join('');
+            console.log({cxdlp});
+            decode(thumb, cxdlp.thumb, 116);
+            decode(pre1, cxdlp.preview1, 290);
+            decode(pre2, cxdlp.preview2, 290);
+        }
+        function render(layer) {
+            let cxdlp = window.cxdlp;
+            if (!cxdlp || layer > cxdlp.layers.length || layer < 0) {
+                return;
+            }
+            let lines = cxdlp.get_layer_lines(layer);
+            let draw = canvas.getContext('2d');
+            canvas.width = cxdlp.res_x;
+            canvas.height = cxdlp.res_y;
+            draw.fillStyle = 'black';
+            draw.fillRect(0, 0, cxdlp.res_x, cxdlp.res_y);
+            draw.lineWidth = 1;
+            for (let line of lines) {
+                draw.strokeStyle = `rgb(${line.color},${line.color},${line.color})`;
+                draw.beginPath();
+                draw.moveTo(line.x_end, line.y_end);
+                draw.lineTo(line.x_end, line.y_start);
+                draw.stroke();
+            }
+            console.log({render: layer, lines: lines.length});
+        }
+        window.addEventListener("DOMContentLoaded", onload);
+    </script>
+</head>
+<body>
+    <div id="ctrl">
+        <input id="layer" size=5>
+        <input id="slider" type="range" min=0 max=100 value=0>
+        <input id="layers" size=5 disabled=true>
+    </div>
+    <canvas id="canvas" width=4000 height=2000></canvas>
+    <div>
+        <div id="params"></div>
+        <canvas id="pre1" width=290 height=290></canvas>
+        <canvas id="pre2" width=290 height=290></canvas>
+        <canvas id="thumb" width=116 height=116></canvas>
+    </div>
+</body>
+</html>

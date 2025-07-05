@@ -1,0 +1,35 @@
+{
+    "file-ext": "gcode",
+    "token-space": " ",
+    "pre":[
+        "G90            ; absolute positioning",
+        "G21            ; metric units",
+        "M106 P0 S255   ; fan on",
+        "M3 P100 S255   ; set default laser power",
+        "M5             ; laser off",
+        "G0 F3000       ; default feed rates",
+        "G1 F800        ; default feed rates"
+    ],
+    "post":[
+        "M5             ; laser off",
+        "M107 P0        ; fan off",
+        "G91            ; relative positioning",
+        "G0 Z0 F150     ; raise laser",
+        "G90            ; absolute positioning"
+    ],
+    "laser-on":[
+        "M3"
+    ],
+    "laser-off":[
+        "M5"
+    ],
+    "settings": {
+        "origin_center": false,
+        "bed_width": 125,
+        "bed_depth": 125
+    },
+    "profiles":[{
+        "processName": "Snapmaker Laser",
+        "ctOriginCenter": false
+    }]
+}

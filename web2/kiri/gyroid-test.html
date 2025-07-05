@@ -1,0 +1,505 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="copyright" content="stewart allen [sa@grid.space]">
+    <meta name="description" content="gyroid infill code playground">
+    <meta name="keywords" content="gyroid,infill" />
+    <meta name="author" content="Stewart Allen">
+    <meta name="robots" content="noindex, nofollow">
+    <meta property="og:description" content="algorithm testing sandbox">
+    <meta property="og:title" content="gyroid infill playground">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://grid.space/kiri/gyroid-test.html">
+    <title>gyroid testing</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+        }
+        #test {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+        }
+        #gyroid > div {
+            display: flex;
+            flex-direction: row;
+        }
+        #gyroid > div > div {
+            min-width: 3px;
+            min-height: 3px;
+        }
+        #stats,#opts {
+            text-align: center;
+        }
+        #stats {
+            margin-top: 5px;
+        }
+        #stats > input {
+            pointer-events: none;
+            outline: none;
+            width: 5em;
+            background-color: #eee;
+        }
+        svg {
+            border: 1px solid #888;
+        }
+    </style>
+    <script>
+        class Timer {
+            constructor() {
+                this.time = 0;
+                this.times = {};
+                this.order = [];
+                this.start();
+            }
+
+            start() {
+                this.time = Date.now();
+            }
+
+            mark(label) {
+                let newtime = Date.now();
+                let oldval = this.times[label] || 0;
+                if (oldval === 0) {
+                    this.order.push(label);
+                }
+                this.times[label] = oldval + (newtime - this.time);
+                this.time = newtime;
+            }
+
+            toString() {
+                return this.order.map(l => `${l}:${this.times[l]}`);
+            }
+        }
+
+        class Map {
+            constructor(x,y,type) {
+                this.x = x;
+                this.y = y;
+                switch (type) {
+                    case 'f': this.map = new Float32Array(x*y); break;
+                    case 'i': this.map = new Int32Array(x*y); break;
+                    case 'c': this.map = new Uint8Array(x*y); break;
+                    default: throw `invalid type: ${type}`;
+                }
+            }
+
+            pos(x,y) {
+                return x+y*this.x;
+            }
+
+            get(x,y) {
+                return this.map[x+y*this.x];
+            }
+
+            put(x,y,v) {
+                this.map[x+y*this.x] = v;
+            }
+        }
+
+        class Grid {
+            constructor(size,div) {
+                this.size = (size/div)|0;
+                this.div = div;
+                this.grid = new Array(div * div);
+            }
+
+            get(x,y) {
+                x = (x/this.div)|0;
+                y = (y/this.div)|0;
+                let pos = x + y * this.size;
+                let rec = this.grid[pos];
+                if (rec) return rec;
+                return this.grid[pos] = [];
+            }
+
+            _get(x,y) {
+                if (x < 0 || y < 0 || x > this.size || y > this.size) {
+                    return undefined;
+                }
+                return this.grid[x + y * this.size];
+            }
+
+            peers(x,y) {
+                let grid = this.grid;
+                let r = this.x;
+                // console.log('peers',x,y)
+                x = (x/this.div)|0;
+                y = (y/this.div)|0;
+                let peers = [], p;
+                p = this._get(x,y); if (p) peers.push(p);
+                p = this._get(x-1,y); if (p) peers.push(p);
+                p = this._get(x+1,y); if (p) peers.push(p);
+                p = this._get(x,y-1); if (p) peers.push(p);
+                p = this._get(x,y+1); if (p) peers.push(p);
+                p = this._get(x+1,y+1); if (p) peers.push(p);
+                p = this._get(x-1,y+1); if (p) peers.push(p);
+                p = this._get(x+1,y-1); if (p) peers.push(p);
+                p = this._get(x-1,y-1); if (p) peers.push(p);
+                // console.log('---',x,y,peers,this.x,this.y)
+                return peers;
+            }
+
+            density() {
+                let size = this.size;
+                for (let y=0; y<size; y++) {
+                    let v = [];
+                    for (let x=0; x<size; x++) {
+                        v.push(this._get(x,y));
+                    }
+                    console.log(y,v.map(v => v ? (v.length).toString().padStart(2,'0') : '..').join(' '));
+                }
+            }
+        }
+
+        let PI2 = Math.PI * 2;
+        let rez = 300;
+        let inc = PI2 / rez;
+        let zcache = {};
+        let timer = new Timer();
+        let maxdist = rez * 0.01;
+        let fast = true;
+        let tip = 0.2;
+
+        function $(id) {
+            return document.getElementById(id);
+        }
+
+        function init() {
+            let opt = document.location.search.substring(1).split('&').map(v => {
+                return v.split('=').map(v => decodeURIComponent(v));
+            }).reduce( (m,v) => {
+                m[v[0]] = v[1];
+                return m;
+            }, {});
+            function reload() {
+                opt.speed = $('fast').checked ? 'fast' : 'slow';
+                opt.caps = $('caps').checked ? 1 : 0;
+                opt.raw = $('raw').checked ? 1 : 0;
+                let search = [];
+                Object.entries(opt).forEach((k,v) => {
+                    search.push(encodeURIComponent(k[0]) + '=' + encodeURIComponent(k[1]));
+                });
+                document.location.search = search.join('&');
+            };
+            $('offset').onkeypress = (ev) => {
+                if (ev.key === 'Enter') {
+                    opt.offset = $('offset').value;
+                    reload();
+                }
+            };
+            $('offset').focus();
+            if (opt.offset) tip = $('offset').value = (parseFloat(opt.offset) || 0);
+            if (opt.raw) $('raw').checked = opt.raw === 1;
+            if (opt.caps) $('caps').checked = opt.caps === 1;
+            $('fast').checked = fast = opt.speed !== 'slow';
+            $('fast').onchange = reload;
+            $('raw').onchange = update;
+            $('caps').onchange = update;
+            $('zval').max = rez;
+            let mark = Date.now();
+            for (let z=0, zi=0; z<PI2; z += inc) {
+                generate(z, zi++);
+            }
+            console.log(Date.now() - mark, timer.toString());
+            render(0);
+        }
+
+        function update() {
+            let z = $('zval').value;
+            render((z / rez) * PI2);
+        }
+
+        function generate(z,zi) {
+            let zkey = z.toFixed(8);
+            let cached = zcache[zkey];
+
+            if (cached) {
+                return cached;
+            }
+            timer.start();
+
+            let size = ((PI2 / inc)|0) + 1;
+            let edge = new Map(size,size,'c');
+            let vals = new Map(size,size,'f');
+            let points = 0;
+            let points_lr = 0;
+            let points_td = 0;
+            let xv = 0;
+            let sin = new Float32Array(size);
+            let cos = new Float32Array(size);
+            for (let i=0, iv=0; i<size; i++) {
+                sin[i] = Math.sin(iv);
+                cos[i] = Math.cos(iv);
+                iv += inc;
+            }
+            for (let x=0; x<size; x++) {
+                let yv = 0;
+                for (let y=0; y<size; y++) {
+                    vals.put(x,y,
+                        sin[x] * cos[y] +
+                        sin[y] * cos[zi] +
+                        sin[zi] * cos[x]
+                    );
+                    yv += inc;
+                }
+                xv += inc;
+            }
+            timer.mark('points');
+
+            // left-right threshold search (red)
+            for (let x=1; x<size; x++) {
+                for (let y=0; y<size; y++) {
+                    let v0 = vals.get(x-1,y);
+                    let v1 = vals.get(x,y);
+                    if (
+                        (v0 <= tip && v1 >= tip) || (v0 >= tip && v1 <= tip) ||
+                        (v0 <= -tip && v1 >= -tip) || (v0 >= -tip && v1 <= -tip)
+                    ) {
+                        edge.put(x,y,1);
+                        points++;
+                        points_lr++;
+                    }
+                }
+            }
+            timer.mark('gen_red');
+
+            // top-down threshold search (green)
+            for (let y=1; y<size; y++) {
+                for (let x=0; x<size; x++) {
+                    let v0 = vals.get(x,y-1);
+                    let v1 = vals.get(x,y);
+                    if (
+                        (v0 <= tip && v1 >= tip) || (v0 >= tip && v1 <= tip) ||
+                        (v0 <= -tip && v1 >= -tip) || (v0 >= -tip && v1 <= -tip)
+                    ) {
+                        if (edge.get(x,y)) {
+                            edge.put(x,y,3);
+                        } else {
+                            edge.put(x,y,2);
+                            points++;
+                        }
+                        points_td++;
+                    }
+                }
+            }
+            timer.mark('gen_grn');
+
+            // deterime prevailing direction for chaining
+            let dir = points_td > points_lr ? 'lr' : 'td';
+
+            // create sparse representation
+            let sparse = [];
+            let center = rez / 2;
+            let grid = new Grid(size,10);
+            for (let x=0; x<size; x++) {
+                for (let y=0; y<size; y++) {
+                    let val = edge.get(x,y);
+                    if (val) {
+                        let dx = Math.abs(x - center);
+                        let dy = Math.abs(y - center);
+                        let rec = {
+                            x, y, val,
+                            index: -1, // replaced after sort
+                            dist: Math.max(dx,dy)
+                        };
+                        sparse.push(rec);
+                        grid.get(x,y).push(rec);
+                    }
+                }
+            }
+            // order points farthest from center (edges, in other words)
+            sparse.sort((a,b) => {
+                return b.dist - a.dist;
+            });
+            // fix record indexes
+            sparse.forEach((rec,i) => {
+                rec.index = i;
+            });
+            timer.mark('sparse');
+
+            // preserve sparse points for rendering
+            let raw = sparse.slice();
+
+            // join sparse points array by closest distance
+            let polys = [];
+            let chain;
+            let added;
+            let cleared = 0;
+
+            do {
+                for (let i=0; i<sparse.length; i++) {
+                    // find the unclaimed point farthest
+                    // from center and start a chain
+                    if (sparse[i]) {
+                        chain = [ sparse[i] ];
+                        polys.push(chain);
+                        sparse[i] = null;
+                        cleared++;
+                        break;
+                    }
+                }
+                do {
+                    added = false;
+                    let target = chain[chain.length - 1];
+                    let cl_elm = null; // candidate closest element
+                    let cl_idx = null; // candidate closest index
+                    let cl_dst = Infinity; // candidate distance
+                    // look for next closest point to end of chain\
+                    if (fast) {
+                        let peers = grid.peers(target.x, target.y);
+                        if (peers.length === 0) {
+                            console.log('nopeers', target.x, target.y)
+                            break;
+                        }
+                        for (let ps=0, psl=peers.length; ps<psl; ps++) {
+                            let peerl = peers[ps];
+                            for (let pr=0, prl=peerl.length; pr<prl; pr++) {
+                                let rec = peerl[pr];
+                                let srec = sparse[rec.index];
+                                if (!sparse[rec.index]) continue;
+                                let dst = dist(target, rec, dir);
+                                if (cl_idx === null || dst < cl_dst) {
+                                    cl_idx = rec.index;
+                                    cl_elm = rec;
+                                    cl_dst = dst;
+                                }
+                            }
+                        }
+                    } else {
+                        for (let i=0; i<sparse.length; i++) {
+                            let rec = sparse[i];
+                            if (rec) {
+                                let dst = dist(target, rec, dir);
+                                if (cl_idx === null || dst < cl_dst) {
+                                    cl_idx = i;
+                                    cl_elm = rec;
+                                    cl_dst = dst;
+                                }
+                            }
+                        }
+                    }
+                    if (cl_elm) {
+                        if (cl_dst > maxdist) {
+                            break;
+                        }
+                        sparse[cl_idx] = null;
+                        cleared++;
+                        chain.push(cl_elm);
+                        added = true;
+                    }
+                } while (added);
+            } while (cleared < sparse.length);
+            // console.log('chains',chain.length);
+            timer.mark('chain');
+
+            // simplify poly
+            polys = polys.map(poly => filter(poly));
+
+            return zcache[zkey] = { raw, points, dir, polys };
+        }
+
+        function filter(poly) {
+            if (poly.length <= 2) {
+                return poly;
+            }
+            let nuchain = [ poly[0] ];
+            let e1 = poly[1];
+            let e2 = null;
+            let last = poly.length - 2;
+            for (let i=1; i<poly.length; i++) {
+                let el = poly[i];
+                if (e1.x === el.x || e1.y === el.y) {
+                    e2 = el;
+                    if (i < last) {
+                        continue;
+                    }
+                }
+                if (e2) {
+                    nuchain.push({x:(e1.x + e2.x)/2, y:(e1.y + e2.y)/2});
+                    e2 = null;
+                } else {
+                    nuchain.push(e1);
+                    if (i === last) {
+                        nuchain.push(el);
+                    }
+                }
+                e1 = el;
+            }
+            nuchain.push(poly[poly.length-1]);
+            return nuchain;
+        }
+
+        function dist(a, b, dir) {
+            let dx = a.x - b.x;
+            let dy = a.y - b.y;
+            // bias distance by prevailing direction of discovery to join stragglers
+            if (dir === 'lr') dx = dx / 2;
+            if (dir === 'td') dy = dy / 2;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function render(z) {
+            let size = 600;
+            let wh = size / rez;
+            let html = [`<svg width=${size} height=${size}>`];
+            let { raw, points, dir, polys } = generate(z);
+
+            $('points').value = points;
+            $('direction').value = dir;
+            $('polys').value = polys.length;
+
+            // raw threshold points
+            if ($('raw').checked) {
+                html.push('<g>');
+                raw.forEach(point => {
+                    let x = point.x;
+                    let y = point.y;
+                    let color = ['black','#f00a','#0f0a','#00fa'][point.val];
+                    html.push(`<rect dist="${point.dist}" x="${x*wh}" y="${y*wh}" width="${wh}" height="${wh}" style="fill:${color};stroke-width:0"/>`);
+                })
+                html.push('</g>');
+            }
+
+            // points joined into poly lines
+            html.push('<g>');
+            polys.forEach(poly => {
+                let points = poly
+                    .map(point => [point.x * wh + wh / 2, point.y * wh + wh / 2]
+                    .join(',')).join(' ');
+                let x = poly[0].x - 1;
+                let y = poly[0].y - 1;
+                if ($('caps').checked) {
+                    html.push(`<rect x="${x*wh}" y="${y*wh}" width="${wh*3}" height="${wh*3}" style="fill:#f0f5;stroke-width:0"/>`);
+                }
+                html.push(`<polyline points="${points}"/ fill="none" stroke="black" />`);
+            });
+            html.push('</g>');
+
+            html.push('</svg>');
+
+            $('gyroid').innerHTML = html.join('');
+        }
+    </script>
+</head>
+<body onload="init()">
+    <div id="test">
+        <div id="gyroid"></div>
+        <input id="zval" type="range" min="0" max="200" value="0" oninput="update()"/>
+        <div id="opts">
+            <input id="offset" size="5" value="0.2">offset
+            <input id="raw" type="checkbox" checked>raw
+            <input id="caps" type="checkbox" checked>caps
+            <input id="fast" type="checkbox" checked>fast
+        </div>
+        <div id="stats">
+            <input id="points"></input>
+            <input id="direction"></input>
+            <input id="polys"></input>
+        </div>
+    </div>
+</body>
+</html>

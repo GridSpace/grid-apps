@@ -1,0 +1,53 @@
+{
+    "mode": "WEDM",
+    "internal": 0,
+    "imageURL": "",
+    "bedHeight": 2.5,
+    "bedWidth": 250,
+    "bedDepth": 150,
+    "maxHeight": 50,
+    "gcodePre": [
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)"
+    ],
+    "gcodePost": [
+        "M30 ; program end"
+    ],
+    "gcodeFExt": "gcode",
+    "gcodeSpace": true,
+    "gcodeLaserOn": [
+        "M106 S{power}"
+    ],
+    "gcodeLaserOff": [
+        "M107"
+    ],
+    "new": false,
+    "deviceName": "Generic Wire EDM",
+    "bedBelt": false,
+    "bedRound": false,
+    "originCenter": false,
+    "fwRetract": false,
+    "profiles": [
+        {
+            "processName": "wire-edm",
+            "ctSliceKerf": 0.1,
+            "ctSliceHeight": 10,
+            "ctSliceHeightMin": 0,
+            "ctSliceSingle": false,
+            "ctOutTileSpacing": 1,
+            "ctOutPower": 100,
+            "ctOutSpeed": 1000,
+            "ctOutGroup": true,
+            "ctOutZColor": false,
+            "ctOutLayer": false,
+            "ctOutStack": false,
+            "ctOutMerged": false,
+            "ctOriginCenter": true,
+            "outputInvertX": false,
+            "outputInvertY": false,
+            "ctOutKnifeDepth": 1,
+            "ctOutKnifePasses": 1,
+            "ctOutKnifeTip": 2
+        }
+    ]
+}

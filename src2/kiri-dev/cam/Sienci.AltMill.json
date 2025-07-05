@@ -1,0 +1,30 @@
+{
+    "file-ext": "nc",
+    "token-space": " ",
+    "strip-comments": false,
+    "pre":[
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)",
+        "G0 F15000 ; default rapid move speed",
+        "G1 F4000 ; default cutting speed"
+    ],
+    "post":[
+        "M5  ; spindle off",
+        "M9  ; coolant off",
+        "M30 ; program end"
+    ],
+    "tool-change":[
+        "M6 T{tool} ; change tool to '{tool_name}'"
+    ],
+    "dwell":[
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "spindle":[
+        "M3 S{speed}"
+    ],
+    "settings": {
+        "bed_width": 1260,
+        "bed_depth": 1248,
+        "build_height": 170
+    }
+}

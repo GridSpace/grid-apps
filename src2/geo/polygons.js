@@ -5,6 +5,7 @@
 import { base, util, paths, config } from './base.js';
 import { newPoint, pointFromClipper } from './point.js';
 import { newPolygon } from './polygon.js';
+import { newSlope } from './slope.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 
 const { sqr, numOrDefault } = util;
@@ -598,7 +599,7 @@ export function offset(polys, dist, opts = {}) {
     let open = opts.open ? polys.filter(p => p.open) : [];
     if (open.length) {
         open = open.map(p => paths.pointsToPath(p.points, dist, true));
-        open = open.map(p => base.newPolygon().setOpen().addPoints(p.right));
+        open = open.map(p => newPolygon().setOpen().addPoints(p.right));
     }
 
     // do not use clipper to offset open lines
@@ -763,7 +764,7 @@ export function fillArea(polys, angle, spacing, output, minLen, maxLen) {
     while (angle > 90) angle -= 180;
 
     // X,Y ray slope derived from angle
-    raySlope = base.newSlope(0,0,
+    raySlope = newSlope(0,0,
         Math.cos(angle * DEG2RAD) * spacing,
         Math.sin(angle * DEG2RAD) * spacing
     );
@@ -835,8 +836,8 @@ export function fillArea(polys, angle, spacing, output, minLen, maxLen) {
                 if (minlen && plen < minlen) continue;
                 if (maxlen && plen > maxlen) continue;
             }
-            let p1 = base.pointFromClipper(poly.m_polygon[0], zpos);
-            let p2 = base.pointFromClipper(poly.m_polygon[1], zpos);
+            let p1 = pointFromClipper(poly.m_polygon[0], zpos);
+            let p2 = pointFromClipper(poly.m_polygon[1], zpos);
             let od = rayint.origin.distToLineNew(p1,p2) / spacing;
             lines.push([p1, p2, od]);
         }

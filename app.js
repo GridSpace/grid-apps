@@ -573,9 +573,13 @@ function handleVersion(req, res, next) {
     } else if (!debug) {
         let { path } = req.app;
         if (path === '/v2/lib/mesh/work.js') {
-            req.url = req.app.path = '/v2/lib/pack/work.js';
-    } else if (path === '/v2/lib/main/mesh.js') {
-            req.url = req.app.path = '/v2/lib/pack/mesh.js';
+            req.url = req.app.path = '/v2/lib/pack/mesh-work.js';
+        } else if (path === '/v2/lib/main/mesh.js') {
+            req.url = req.app.path = '/v2/lib/pack/mesh-main.js';
+        } else if (path === '/v2/lib/kiri/worker.js') {
+            req.url = req.app.path = '/v2/lib/pack/kiri-work.js';
+        } else if (path === '/v2/lib/main/kiri.js') {
+            req.url = req.app.path = '/v2/lib/pack/kiri-main.js';
         }
         next();
     } else {
@@ -686,7 +690,9 @@ function generateDevices() {
             map[deviceName] = JSON.parse(fs.readFileSync(PATH.join(root,type,device)));
         });
     });
-    synth.devices = `self.devices = ${JSON.stringify(devs)};`;
+    let dstr = JSON.stringify(devs);
+    synth.devices = `self.devices = ${dstr};`;
+    fs.writeFileSync(PATH.join(dir,"src2","pack","devices.js"), `export const devices = ${dstr};`);
 }
 
 // pack/concat code modules served under "/code/"
@@ -848,10 +854,10 @@ function addCorsHeaders(req, res) {
     if (req.headers['access-control-request-private-network'] === 'true') {
         res.setHeader('Access-Control-Allow-Private-Network', 'true');
     }
-    if (!crossOrigin) {
+    // if (!crossOrigin) {
         res.setHeader("Cross-Origin-Opener-Policy", 'same-origin');
         res.setHeader("Cross-Origin-Embedder-Policy", 'require-corp');
-    }
+    // }
     res.setHeader("Allow", "GET,POST,OPTIONS");
 }
 
@@ -929,7 +935,17 @@ function cookieValue(cookie,key) {
 }
 
 function rewriteHtmlVersion(req, res, next) {
-    if (["/kiri/","/mesh/","/meta/","/kiri/engine.html","/kiri/frame.html"].indexOf(req.app.path) >= 0) {
+    if ([
+        "/v2/kiri/"
+    ].indexOf(req.app.path) >= 0) {
+        addCorsHeaders(req, res);
+    } else if ([
+        "/kiri/",
+        "/kiri/engine.html",
+        "/kiri/frame.html",
+        "/mesh/",
+        "/meta/",
+    ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
         let real_write = res.write;
         let real_end = res.end;
@@ -941,10 +957,17 @@ function rewriteHtmlVersion(req, res, next) {
             vstr = vstr.substring(0,mlen);
         }
         res.write = function() {
-            arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
-            real_write.apply(res, arguments);
+            try {
+                console.log('res.write', req.app.path, arguments[0].length);
+                arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
+                console.log('new length', arguments[0].length);
+                real_write.apply(res, arguments);
+            } catch (err) {
+                console.log({ rewrite_error: err });
+            }
         };
         res.end = function() {
+            console.log('res.write', req.app.path, arguments[0]?.length);
             if (arguments[0]) {
                 arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
             }

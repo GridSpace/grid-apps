@@ -1,0 +1,32 @@
+{
+    "file-ext": "nc",
+    "token-space": " ",
+    "strip-comments": false,
+    "pre":[
+        "G20 ; set units to inches (required)",
+        "G90 ; absolute position mode (required)"
+    ],
+    "post":[
+        "M05 ; spindle off",
+        "M30 ; program end"
+    ],
+    "tool-change":[
+        "M05 ; spindle off", 
+        "M6 T{tool} ; change tool to '{tool_name}'",
+        "G37; get tool offset with ETS"
+    ],
+    "spindle": [
+        "M3 S{speed} ; spindle on at {spindle} rpm"
+    ],
+    "dwell":[
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "settings": {
+        "origin_center":false,
+        "bed_width": 678.18,
+        "bed_depth": 1524,
+        "build_height":150,
+        "spindle_max": 24000
+    },
+    "deviceName": "Tormach 24R with ETS"
+}

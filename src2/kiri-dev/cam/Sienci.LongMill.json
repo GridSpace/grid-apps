@@ -1,0 +1,30 @@
+{
+    "file-ext": "nc",
+    "token-space": " ",
+    "strip-comments": false,
+    "pre":[
+        "G21 ; set units to MM (required)",
+        "G90 ; absolute position mode (required)",
+        "G0 F4000 ; default rapid move speed",
+        "G1 F1500 ; default cutting speed"
+    ],
+    "post":[
+        "M5  ; spindle off",
+        "M9  ; coolant off",
+        "M30 ; program end"
+    ],
+    "tool-change":[
+        "M6 T{tool} ; change tool to '{tool_name}'"
+    ],
+    "dwell":[
+        "G4 P{time} ; dwell for {time}ms"
+    ],
+    "settings": {
+        "image_url": "/decal/longmill.png",
+        "image_scale": 200,
+        "image_anchor": 8,
+        "bed_width": 770,
+        "bed_depth": 820,
+        "build_height": 110
+    }
+}
