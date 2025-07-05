@@ -8,13 +8,10 @@ import '../kiri/lang-en.js';
 
 import { run } from '../kiri/init.js';
 
-console.log('KIRI V2');
-
 const load = [];
 
 function checkReady() {
     if (document.readyState === 'complete') {
-        console.trace('READY!');
         let api = run();
         kiri.api = api;
         for (let fn of load) {
@@ -34,9 +31,7 @@ self.kiri = {
     }
 };
 
-self.moto = {
-
-};
+self.moto = { };
 
 // when dom + scripts complete
 document.onreadystatechange = checkReady;
