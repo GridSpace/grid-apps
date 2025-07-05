@@ -1,1 +1,1 @@
-../../node_modules/earcut/dist/earcut.dev.js
+../../node_modules/earcut/src/earcut.js

@@ -13,7 +13,7 @@ import { beta, version } from '../moto/license.js';
 import { settings as set_ctrl } from './settings.js';
 
 let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
-    { client, catalog, platform, selection } = api,
+    { consts, client, catalog, platform, selection } = api,
     LANG = api.language.current,
     WIN = self.window,
     DOC = self.document,
@@ -1850,7 +1850,7 @@ function init_two() {
     if (SETUP.s) SETUP.s.forEach(function(lib) {
         let scr = DOC.createElement('script');
         scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/code/${lib}.js?${kiri.version}`);
+        scr.setAttribute('src',`/code/${lib}.js?${version}`);
         DOC.body.appendChild(scr);
         stats.add('load_'+lib);
         api.event.emit('load.lib', lib);
@@ -1862,7 +1862,7 @@ function init_two() {
         let ss = DOC.createElement('link');
         ss.setAttribute("type", "text/css");
         ss.setAttribute("rel", "stylesheet");
-        ss.setAttribute("href", `${style}.css?${kiri.version}`);
+        ss.setAttribute("href", `${style}.css?${version}`);
         DOC.body.appendChild(ss);
     });
 
@@ -1901,7 +1901,7 @@ function init_two() {
 
         if (!control.devel) {
             // TODO: hide thin type 3 during development
-            kiri.consts.LISTS.thin.length = 3;
+            consts.LISTS.thin.length = 3;
         }
 
         platform.deselect();
@@ -2081,7 +2081,7 @@ function init_two() {
     try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { console.log(e) }
 
     // warn users they are running a beta release
-    if (beta && beta > 0 && sdb.kiri_beta != kiri.beta) {
+    if (beta && beta > 0 && sdb.kiri_beta != beta) {
         api.show.alert("CAUTION");
         api.show.alert("this is a development release");
         api.show.alert("and may not function properly");
@@ -2152,4 +2152,5 @@ function init_lang() {
 
 export function run() {
     init_lang();
+    return api;
 }

@@ -1,13 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
-import { kiri } from './kiri.js';
-import { moto } from '../moto.js';
+
 import { api } from './api.js';
 import { space } from '../moto/space.js';
 
-
-const { kiri, moto } = root;
-const { api } = kiri;
-const { space } = moto;
 const { event } = api;
 
 let stack = [];
@@ -44,7 +39,7 @@ let clear = api.doit.clear = function() {
 };
 
 function updateButtons() {
-    let isArrange = api.view.get() === kiri.consts.VIEWS.ARRANGE;
+    let isArrange = api.view.get() === api.consts.VIEWS.ARRANGE;
     $('doit').style.display = isArrange && stack.length ? 'flex' : 'none';
     $('undo').disabled = stpos === 0;
     $('redo').disabled = stpos == stack.length;
@@ -175,6 +170,3 @@ event.on('mouse.drag.done', () => {
     });
     moved = {x:0, y:0};
 });
-
-
-// No direct exports; extends api.doit

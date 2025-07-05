@@ -427,7 +427,7 @@ function initModule(mod, file, dir) {
             logger: log.new
         },
         inject: (code, file, opt = {}) => {
-            console.log({ inject: opt, code, file });
+            // console.log({ inject: opt, code, file });
             let codelist = script[code];
             if (!codelist) {
                 return logger.log(`inject missing target "${code}"`);
@@ -576,10 +576,16 @@ function handleVersion(req, res, next) {
             req.url = req.app.path = '/v2/lib/pack/mesh-work.js';
         } else if (path === '/v2/lib/main/mesh.js') {
             req.url = req.app.path = '/v2/lib/pack/mesh-main.js';
-        } else if (path === '/v2/lib/kiri/worker.js') {
+        } else if (path === '/v2/lib/kiri-run/minion.js') {
+            req.url = req.app.path = '/v2/lib/pack/kiri-pool.js';
+        } else if (path === '/v2/lib/kiri-run/worker.js') {
             req.url = req.app.path = '/v2/lib/pack/kiri-work.js';
         } else if (path === '/v2/lib/main/kiri.js') {
             req.url = req.app.path = '/v2/lib/pack/kiri-main.js';
+        }
+        if (path !== req.url) {
+            addCorsHeaders(req, res);
+            // console.log('rewrite', path, req.url);
         }
         next();
     } else {
@@ -938,7 +944,8 @@ function rewriteHtmlVersion(req, res, next) {
     if ([
         "/v2/kiri/",
         "/v2/lib/kiri-run/minion.js",
-        "/v2/lib/kiri-run/worker.js"
+        "/v2/lib/kiri-run/worker.js",
+        "/v2/lib/kiri-run/minion.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
     } else if ([
@@ -960,16 +967,16 @@ function rewriteHtmlVersion(req, res, next) {
         }
         res.write = function() {
             try {
-                console.log('res.write', req.app.path, arguments[0].length);
+                // console.log('res.write', req.app.path, arguments[0].length);
                 arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
-                console.log('new length', arguments[0].length);
+                // console.log('new length', arguments[0].length);
                 real_write.apply(res, arguments);
             } catch (err) {
                 console.log({ rewrite_error: err });
             }
         };
         res.end = function() {
-            console.log('res.write', req.app.path, arguments[0]?.length);
+            // console.log('res.write', req.app.path, arguments[0]?.length);
             if (arguments[0]) {
                 arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
             }

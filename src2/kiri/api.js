@@ -121,7 +121,7 @@ export const api = {
     clone,          // <--
     color,
     conf:           settings.conf,
-    const:          { LANG, LOCAL, MODES, SETUP, SECURE, STACKS, VIEWS },
+    const:          { LANG, LISTS: lists, LOCAL, MODES, SETUP, SECURE, STACKS, VIEWS },
     devel,          // <--
     device,
     devices,

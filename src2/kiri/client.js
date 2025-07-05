@@ -75,7 +75,6 @@ export const client = {
                 console.log({ WORKER_MESSAGE_ERROR: error });
                 error.preventDefault();
             };
-            console.log({ worker });
             return worker;
         }
     },
@@ -196,7 +195,6 @@ export const client = {
 
     // called once for each widget
     slice(settings, widget, callback) {
-        console.log('CSLICE', { settings, widget, callback });
         send("slice", {
             id: widget.id,
             anno: widget.annotations(),

@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { newPoint } from './point.js';
+import earcut from '../ext/earcut.js';
 
 const round_decimal_precision = 5;
 
@@ -843,9 +844,5 @@ function v2pr(rec) {
     return p;
 }
 
-const earcut = self.earcut;
-
-// Export the base object and its properties
-export { base };
-export { earcut };
+export { base, earcut };
 export const { config, key, util, paths } = base;

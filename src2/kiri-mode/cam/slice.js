@@ -33,8 +33,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         top_stock, top_part, top_gap, top_z,
         workarea;
 
-    console.log('CAM_SLICE', [...arguments]);
-
     // allow recomputing later if widget or settings changes
     const var_compute = () => {
         let { camStockX, camStockY, camStockZ, camStockOffset } = proc;
@@ -797,32 +795,14 @@ export function computeShadowAt(widget, z, ztop) {
         }
     }
 
-    // const lines = {};
-    // function addline(p1, p2) {
-    //     let key = p1.key < p2.key ? p1.key + ',' + p2.key : p2.key + ',' + p1.key;
-    //     let rec = lines[key];
-    //     if (rec) {
-    //         rec.count++;
-    //     } else {
-    //         lines[key] = { p1, p2, count: 1 };
-    //     }
-    // }
-    // for (let face of found) {
-    //     addline(face[0], face[1]);
-    //     addline(face[1], face[2]);
-    //     addline(face[2], face[0]);
-    // }
-    // const singles = Object.entries(lines).filter(a => a[1].count === 1).map(a => a[1]);
-    // const loops = POLY.nest(sliceConnect(singles, z));
-
     let polys = found.map(a => {
         return newPolygon()
             .add(a[0].x,a[0].y,a[0].z)
             .add(a[1].x,a[1].y,a[1].z)
             .add(a[2].x,a[2].y,a[2].z);
     });
+
     polys = POLY.union(polys, 0.001, true);
-    // console.log({z, loops, polys});
-    // return loops;
+
     return polys;
 }

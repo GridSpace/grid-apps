@@ -2,12 +2,11 @@
 
 "use strict";
 
-import { base, config, util } from './base.js';
+import { base, config, earcut, util } from './base.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 import { newBounds } from './bounds.js';
 import { newPoint, pointFromClipper } from './point.js';
 import { polygons as POLY } from './polygons.js';
-import { earcut } from '../geo/base.js';
 
 const { Vector3 } = THREE;
 

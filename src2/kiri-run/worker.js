@@ -1,7 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import "../ext/clip2.js";
-import "../ext/earcut.js";
+// import "../ext/clip2.js";
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
@@ -87,7 +86,6 @@ const minwork = {
                 console.log({ MINION_MESSAGE_ERROR: error });
                 error.preventDefault();
             };
-            console.log({ minion });
             minion.onmessage = minhandler;
             minion.postMessage({ cmd: "label", name: `#${i}` });
             minions.push(minion);
@@ -394,8 +392,6 @@ const dispatch = {
         const { mode } = settings;
         const driver = drivers[mode];
         const widget = wcache[data.id];
-
-        console.log('WSLICE', { settings, mode, driver, widget });
 
         if (!(driver && driver.prepare)) {
             return console.log({ invalid_print_driver: mode, driver });
