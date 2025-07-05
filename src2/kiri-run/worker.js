@@ -1,7 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-console.log('TOP OF WORKER');
-
 import "../ext/clip2.js";
 import "../ext/earcut.js";
 import '../add/array.js';
@@ -21,6 +19,7 @@ import { version } from '../moto/license.js';
 import { Widget, newWidget } from '../kiri/widget.js';
 
 import { CAM } from '../kiri-mode/cam/driver-be.js';
+import { FDM } from '../kiri-mode/fdm/driver-be.js';
 
 // const CAM = {};
 const { time } = util;
@@ -28,7 +27,8 @@ const POLY = polygons;
 
 let debug = (self.debug === true),
     drivers = {
-        CAM
+        CAM,
+        FDM
     },
     ccvalue = self.navigator ? self.navigator.hardwareConcurrency || 0 : 0,
     concurrent = Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
@@ -44,12 +44,6 @@ let debug = (self.debug === true),
     minionq = [],
     minifns = {},
     miniseq = 0;
-
-const worker = self.kiri_worker = {
-    current,
-    drivers,
-    version
-};
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -70,7 +64,7 @@ function minhandler(msg) {
 }
 
 // for concurrent operations
-const minwork = worker.minions = {
+const minwork = {
     get concurrent() {
         return concurrent
     },
@@ -198,6 +192,7 @@ const minwork = worker.minions = {
                 points: floatP,
                 options
             }, data => {
+                console.log({ data });
                 for (let rec of data.output) {
                     each(rec);
                 }
@@ -744,7 +739,16 @@ dispatch.onmessage = self.onmessage = async function(e) {
     }
 };
 
+self.kiri_worker = {
+    cache: wcache,
+    current,
+    drivers,
+    version,
+    minions: minwork
+};
+
 // initilize driver mode handlers
 CAM.init(dispatch);
+FDM.init(dispatch);
 
 broker.publish("worker.started", { dispatch, minions: minwork });

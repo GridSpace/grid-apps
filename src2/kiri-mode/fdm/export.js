@@ -1,11 +1,19 @@
-import { base } from '../geo/base.js';
-import { utils } from '../kiri/utils.js';
-import { driver } from '../kiri-mode/fdm/driver.js';
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { base, util } from '../../geo/base.js';
+import { getRangeParameters } from './driver.js';
 
-const const { base, kiri } = root;;const const { util, config } = base;;const const { FDM } = kiri.driver;;const const { getRangeParameters } = FDM;;const debug = false;
+const { config } = base;
+const debug = false;
 
-FDM.export = function(print, online, ondone, ondebug) const { const { widgets, settings, belty, tools, firstTool } = print;;const const { bounds, controller, device, process, filter, mode } = settings;;const const { extruders, fwRetract } = device;;const const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;;const const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature, gcodeChange } = device;;let model_labels = [];
+export function fdm_export(print, online, ondone, ondebug) {
+    const { widgets, settings, belty, tools, firstTool } = print;
+    const { bounds, controller, device, process, filter, mode } = settings;
+    const { extruders, fwRetract } = device;
+    const { bedWidth, bedDepth, bedRound, bedBelt, maxHeight } = device;
+    const { gcodeFan, gcodeLayer, gcodeTrack, gcodePause, gcodeFeature, gcodeChange } = device;
+
+    let model_labels = [];
     for (let widget of widgets) {
         model_labels.push(widget.track.grid_id);
     }
@@ -13,7 +21,9 @@ FDM.export = function(print, online, ondone, ondebug) const { const { widgets, s
     let layers = print.output,
         extras = device.extras || {},
         isBambu = extras.bbl,
-        const { extrudeAbs } = device;const { exportThumb } = controller;extused = Object.keys(print.extruders).map(v => parseInt(v)),
+        { extrudeAbs } = device,
+        { exportThumb } = controller,
+        extused = Object.keys(print.extruders).map(v => parseInt(v)),
         timeFactor = (device.gcodeTime || 1) * 1.5,
         decimals = config.gcode_decimals || 4,
         zMoveMax = device.deviceZMax || 0,
@@ -281,7 +291,9 @@ FDM.export = function(print, online, ondone, ondebug) const { const { widgets, s
         append(`; Bed type: ${bedType}`);
         append(`; Target: ${filter[mode]}`);
         // inject thumbnail preview
-        if (exportThumb && worker.snap) const { let { width, height, url } = worker.snap;;let data = url.substring(url.indexOf(',') + 1);
+        if (exportThumb && worker.snap) {
+            let { width, height, url } = worker.snap;
+            let data = url.substring(url.indexOf(',') + 1);
             append(`; thumbnail begin ${width} ${height} ${data.length}`);
             for (let i=0; i<data.length; i += 78) {
                 append(`; ${data.substring(i, i + 78)}`);
@@ -819,7 +831,9 @@ FDM.export = function(print, online, ondone, ondebug) const { const { widgets, s
         drainQ();
     }
 
-    function emitQrec(rec) const { let {e, x, y, dist, emitPerMM, speedMMM } = rec;;// emitMM = emitPerMM * e * dist;
+    function emitQrec(rec) {
+        let {e, x, y, dist, emitPerMM, speedMMM} = rec;
+        // emitMM = emitPerMM * e * dist;
         emitMM = extrudeMM(dist, emitPerMM, e);
         moveTo({x:x, y:y, e:emitMM}, speedMMM);
         emitted += emitMM;
@@ -974,6 +988,3 @@ FDM.export = function(print, online, ondone, ondebug) const { const { widgets, s
         console.log('minz', minz);
     }
 };
-
-
-export { encodeBitOffset, setTempFanSpeed, updateParams, append, appendSubPad, appendSub, appendAll, appendAllSub, appendTok, preamble, dwell, retract, unretract, pushPos, popPos, moveTo, emitQrec, drainQ, arcValid, debug, model_labels, layers, tools_used, bytes, byteIndex, bitPosition, rloops, loops, subon, ifhit, evil, arg, data, i, pre, gcpre, axmap, t0, t1, wait, taxis, tcent, angle, savePos, o, emit, epos, zheight, line, allout, totaldistance, endloop, off, b64, x, rec, deem, depm, desp, el, e1, e2, e3, e4, e5, cc, lr, dc, radFault, avg, dx, dy, tc, defer, moveSpeed, vec1, vec2, gc, from, to, cl, dist, add, globalCenters, ac, rad };

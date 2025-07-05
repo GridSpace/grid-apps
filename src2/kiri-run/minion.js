@@ -1,12 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// Future imports for src/kiri-run/minion.js when unwrapped from gapp.register()
-
-// Core dependencies from root
-import { base, kiri } from '../../main/gapp.js';
-
 // Base dependencies
 import { polygons } from '../../geo/base.js';
 

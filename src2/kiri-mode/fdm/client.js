@@ -3,6 +3,7 @@
 import { $ } from '../../moto/webui.js';
 import { api } from '../../kiri/api.js';
 import { conf } from '../../kiri/conf.js';
+import { client } from '../../kiri/client.js';
 import { addbox, delbox } from '../../kiri/boxes.js';
 import { Layers } from '../../kiri/layers.js';
 import { Stack } from '../../kiri/stack.js';
@@ -201,7 +202,7 @@ export function init() {
             }
         }
         alerts.push(api.show.alert("analyzing part(s)...", 1000));
-        FDM.support_generate(array => {
+        support_generate(array => {
             func.sclear();
             api.hide.alert(undefined,alerts);
             for (let rec of array) {
@@ -537,6 +538,23 @@ export function init() {
 let xpdebug;
 let supsave = {};
 let suptimer;
+
+function support_generate(ondone) {
+    client.clear();
+    client.sync();
+    const settings = api.conf.get();
+    const widgets = api.widgets.map();
+    client.send("fdm_support_generate", { settings }, (gen) => {
+        if (gen && gen.error) {
+            api.show.alert('support generation canceled');
+            return ondone([]);
+        }
+        for (let g of gen) {
+            g.widget = widgets[g.id];
+        }
+        ondone(gen);
+    });
+};
 
 function scheduleSupportSave(widget) {
     clearTimeout(suptimer);

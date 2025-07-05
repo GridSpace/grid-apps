@@ -4,6 +4,8 @@
  * basic slice and line connection. In future, replace kiri's fdm and cam slicers
  * with wrappers on this one.
  */
+
+import { base } from './base.js';
 import { newOrderedLine } from './line.js';
 import { newPolygon } from '../geo/polygon.js';
 import { polygons } from '../geo/polygons.js';
@@ -64,7 +66,6 @@ export async function slice(points, options = {}) {
         for (i = 0; i < points.length; i++) {
             points[i] = points[i].round(3);
         }
-
     }
 
     // gather z-index stats
@@ -78,7 +79,7 @@ export async function slice(points, options = {}) {
         if (p1.z === p2.z && p2.z === p3.z && p1.z >= zMin) {
             // detect faces co-planar with Z and sum the enclosed area
             let zkey = p1.z,
-                area = Math.abs(util.area2(p1,p2,p3)) / 2;
+                area = Math.abs(base.util.area2(p1,p2,p3)) / 2;
             if (!zFlat[zkey]) {
                 zFlat[zkey] = area;
             } else {
@@ -408,7 +409,8 @@ export async function sliceZ(z, points, options = {}) {
 
     // look for driver-specific slice post-processor
     if (options.post) {
-        let fn = base.slicePost[options.post];
+        console.log({ options });
+        let fn = slicer.slicePost[options.post];
         if (fn) fn(rval, options);
     }
 

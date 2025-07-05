@@ -31,20 +31,6 @@
 /******/ })();
 /******/ 
 /************************************************************************/
-var __webpack_exports__ = {};
-
-// EXPORTS
-__webpack_require__.d(__webpack_exports__, {
-  wT: () => (/* reexport */ BufferGeometryUtils_namespaceObject),
-  Xk: () => (/* reexport */ Line2),
-  vK: () => (/* reexport */ LineGeometry),
-  GV: () => (/* reexport */ LineMaterial),
-  bF: () => (/* reexport */ LineSegments2),
-  n3: () => (/* reexport */ LineSegmentsGeometry),
-  Z5: () => (/* reexport */ index_module_namespaceObject),
-  cK: () => (/* reexport */ SVGLoader_namespaceObject),
-  ZH: () => (/* reexport */ three_module_namespaceObject)
-});
 
 // NAMESPACE OBJECT: ./node_modules/three/build/three.module.js
 var three_module_namespaceObject = {};
@@ -80704,13 +80690,4 @@ const shaderIntersectFunction = `
 
 
  
-var __webpack_exports__BufferGeometryUtils = __webpack_exports__.wT;
-var __webpack_exports__Line2 = __webpack_exports__.Xk;
-var __webpack_exports__LineGeometry = __webpack_exports__.vK;
-var __webpack_exports__LineMaterial = __webpack_exports__.GV;
-var __webpack_exports__LineSegments2 = __webpack_exports__.bF;
-var __webpack_exports__LineSegmentsGeometry = __webpack_exports__.n3;
-var __webpack_exports__MeshBVHLib = __webpack_exports__.Z5;
-var __webpack_exports__SVGLoader = __webpack_exports__.cK;
-var __webpack_exports__THREE = __webpack_exports__.ZH;
-export { __webpack_exports__BufferGeometryUtils as BufferGeometryUtils, __webpack_exports__Line2 as Line2, __webpack_exports__LineGeometry as LineGeometry, __webpack_exports__LineMaterial as LineMaterial, __webpack_exports__LineSegments2 as LineSegments2, __webpack_exports__LineSegmentsGeometry as LineSegmentsGeometry, __webpack_exports__MeshBVHLib as MeshBVHLib, __webpack_exports__SVGLoader as SVGLoader, __webpack_exports__THREE as THREE };
+export { BufferGeometryUtils_namespaceObject as BufferGeometryUtils, Line2, LineGeometry, LineMaterial, LineSegments2, LineSegmentsGeometry, index_module_namespaceObject as MeshBVHLib, SVGLoader_namespaceObject as SVGLoader, three_module_namespaceObject as THREE };

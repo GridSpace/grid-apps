@@ -1,23 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
-import { base } from '../geo/base.js';
-import { polygons } from '../geo/polygons.js';
-import { driver } from '../kiri-mode/fdm/driver.js';
 
-
-const { base, kiri } = root;
-const { driver } = kiri;
-const { polygons } = base;
-const { fillArea } = polygons;
-const { FDM } = driver;
-
-const POLY = polygons;
+import { base } from '../../geo/base.js';
+import { polygons as POLY, fillArea } from '../../geo/polygons.js';
+import { getRangeParameters } from './driver.js';
 
 /**
  * may run in minion or worker context. do not create objects
  * that will not quickly encode in threaded mode. add to existing
  * data object. return is ignored.
  */
-base.slicePost.FDM = function(data, options) {
+export function slicePost(data, options) {
     const { z, lines, groups } = data;
     const { useAssembly, post_args, zIndexes } = options;
     const { process, isSynth, vaseMode } = post_args;
@@ -37,7 +29,7 @@ base.slicePost.FDM = function(data, options) {
         return;
     }
     const index = zIndexes.indexOf(z);
-    const range = FDM.getRangeParameters(process, index);
+    const range = getRangeParameters(process, index);
     // calculate fractional shells
     let shellFrac = (range.sliceShells - (range.sliceShells | 0));
     let sliceShells = range.sliceShells | 0;
@@ -59,7 +51,7 @@ base.slicePost.FDM = function(data, options) {
     const nutops = [];
     // co-locate shell processing with top generation in slicer
     for (let top of data.tops) {
-        nutops.push(FDM.doTopShells(z, top, count, offset/2, offset, fillOff, {
+        nutops.push(doTopShells(z, top, count, offset/2, offset, fillOff, {
             thinType,
             vaseMode,
             useAssembly
@@ -190,7 +182,7 @@ function thin_type_3(params) {
  * may run in minion or worker context. performs shell offsetting
  * including thin wall detection when enabled
  */
-FDM.doTopShells = function(z, top, count, offset1, offsetN, fillOffset, opt = {}) {
+export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {}) {
     // pretend we're a top object in minions
     if (!top.poly) {
         top = { poly: top };
@@ -316,6 +308,3 @@ function cullIntersections() {
     }
     return good.length > 2 ? good : [];
 }
-
-
-export { offset_default, thin_type_1, thin_type_2, thin_type_3, cullIntersections, toLines, POLY, process, index, range, shellFrac, sliceShells, v1, v2, parts, rem, trg, isFirst, height, spaceMult, count, offset, fillOff, thinType, nutops, layers, off, min, max, centers, oso, wasm, top_poly, last, dist, ret, nulast, lns, i, aOa, aa, bb, al, j, bl, good };

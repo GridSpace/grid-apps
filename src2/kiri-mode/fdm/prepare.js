@@ -1,25 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
-import { base } from '../geo/base.js';
-import { paths } from '../geo/paths.js';
-import { point } from '../geo/point.js';
-import { polygons } from '../geo/polygons.js';
-import { utils } from '../kiri/utils.js';
-import { slice } from '../kiri/slice.js';
-import { consts } from '../kiri/consts.js';
-import { render } from '../kiri/render.js';
-import { driver } from '../kiri-mode/fdm/driver.js';
 
+import { base, util } from '../../geo/base.js';
+import { poly2polyEmit, tip2tipEmit } from '../../geo/paths.js';
+import { newPoint } from '../../geo/point.js';
+import { newPolygon } from '../../geo/polygon.js';
+import { polygons as POLY, fillArea } from '../../geo/polygons.js';
+import { newSlice } from '../../kiri/slice.js';
+import { render } from '../../kiri/render.js';
+import { getRangeParameters } from './driver.js';
 
-const { base, kiri } = root;
-const { consts, driver, newSlice, render } = kiri;
-const { polygons, paths, util, newPoint, newPolygon, Polygon } = base;
-const { poly2polyEmit, tip2tipEmit } = paths;
 const { numOrDefault } = util;
-const { fillArea } = polygons;
-const { beltfact } = consts;
-const { FDM } = driver;
-const { getRangeParameters } = FDM;
-const POLY = polygons;
 
 /**
  * DRIVER PRINT CONTRACT
@@ -27,7 +17,7 @@ const POLY = polygons;
  * @param {Function} update progress callback
  * @returns {Object[]} returns array of render objects
  */
-FDM.prepare = async function(widgets, settings, update) {
+export async function fdm_prepare(widgets, settings, update) {
     // filter ignored widgets
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
@@ -1509,6 +1499,3 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
     return startPoint.add(offset);
 }
-
-
-export { raft, mkblok, mkrec, linesToPoly, purge, slicePrintPath, retract, intersectsTop, routeAround, outputTraces, outputSparse, outputThin, outputFills, outputOrderClosest, POLY, lastLayerStart, wp, wb, brims, tops, slices, off, extra, zheight, offset, slice, t, polys, brimStart, bbounds, sslices, sslice, swidget, extruders, extcount, extruder, blokw, blokh, count, gap, step, mp, sp, ts, ty, tx, exi, towers, poly, ping, i, p1, p2, purgedFirst, rec, thin, tool, first, rate, wipe, purgeOn, scale, box, pause, fill, bmove, bo, cake, zrec, z, track, order, find, ext, lex, dst, forceRetract, params, wtb, beltStart, lastOut, center, maxDist, useDist, endpoint, preout, belt, thresh, point, brimHalf, firstLayerBrim, firstLayerBrimIn, firstLayerBrimTrig, firstLayerBrimGap, minz, mins, miny, pads, overate, brate, bmult, belty, lowrate, tmpout, trigmet, brimax, y, g, b, bi, lastLayerOut, beltPoint, gaps, lpad, x0, x1, array, last, int, dbug, ints, ip, i1, i2, isCW, points, p1p, p2p, r1s, r1e, r1, r1d, r2s, r2e, r2, r2d, route, debug, finishShell, from, proxy, lp, dist, rdst, itop, emit, d1, d2, idiff, min, restart, out, lastTop, top, isRaft, bounds, radius, angle, x, inner, shells };
