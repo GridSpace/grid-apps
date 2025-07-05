@@ -1362,7 +1362,6 @@ CAM.init = function(kiri, api) {
 
     let helicalOn = false;
     func.selectHelical = () => {
-        console.log("select helical",{helicalOn})
         if (helicalOn) {
             return func.surfaceDone();
         }
