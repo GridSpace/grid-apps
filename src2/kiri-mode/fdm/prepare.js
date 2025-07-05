@@ -3,8 +3,9 @@
 import { base, util } from '../../geo/base.js';
 import { poly2polyEmit, tip2tipEmit } from '../../geo/paths.js';
 import { newPoint } from '../../geo/point.js';
-import { newPolygon } from '../../geo/polygon.js';
+import { newPolygon, Polygon } from '../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../geo/polygons.js';
+import { newPrint } from '../../kiri/print.js';
 import { newSlice } from '../../kiri/slice.js';
 import { render } from '../../kiri/render.js';
 import { getRangeParameters } from './driver.js';
@@ -27,7 +28,7 @@ export async function fdm_prepare(widgets, settings, update) {
         { bedWidth, bedDepth } = device,
         { lineType } = controller,
         printPoint = newPoint(0,0,0),
-        print = self.worker.print = kiri.newPrint(settings, widgets),
+        print = self.kiri_worker.current.print = newPrint(settings, widgets),
         nozzle = process.sliceLineWidth || device.extruders[0].extNozzle,
         isBelt = device.bedBelt,
         isThin = lineType === "line",
