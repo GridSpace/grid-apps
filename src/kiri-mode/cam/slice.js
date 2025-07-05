@@ -578,6 +578,70 @@ CAM.cylinder_find = (widget, face)=>{
     return widget.tool.findCylinderSurface(face);
 }
 
+CAM.cylinder_poly_find = (widget, face)=>{
+    CAM.surface_prep(widget);
+    let faces = CAM.cylinder_find(widget, face);
+
+    let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
+    
+    let slicer = new kiri.cam_slicer(widget,{})
+    
+    let opts = {
+        dedup:false,
+        edges: true,
+        over:true
+    }
+
+    let firstOffset = faces[0]*9
+
+    let [x1,y1,z1,x2,y2,z2,x3,y3,z3]= Array.from(vert.subarray(firstOffset,firstOffset+9))
+    let zs = [z1,z2,z3]
+    let zmin = Math.min(...zs);
+    let zmax = Math.max(...zs);
+
+
+    // console.log({firstOffset,zmin, zs,faces,vert})
+
+    let cylVerts = new Float32Array(faces.length*9)
+    
+    let i = 0
+    //for each cylinder face index
+    for(let index of faces){
+        let off = index*9
+        //copy the 9 triangle vertices floats in
+        for(let j = 0;j < 9;j++){
+            cylVerts[i] = vert[off+j]
+            i++
+        }
+    }
+
+    let poly = slicer.sliceZ(zmin, cylVerts,opts).polys[0]
+    let circular = poly.circularity() > 0.98;
+
+    //throw error if not circular
+    if(!circular) throw "faces must be circular"
+    
+    //calculate circle properties
+    let area = poly.area(),
+        diam = Math.sqrt(area / Math.PI)* 2,
+        center = poly.calcCircleCenter();
+    
+
+    //find direction using normal to center point
+
+    let point = newPoint(x1, y1, z1),
+        delta = point.setZ(center.z).sub(center),
+        normal = new THREE.Vector3(x1-x2, y1-y2, z1-z2)
+        .cross(new THREE.Vector3(x2-x3, y2-y3, z2-z3)),
+        dotProd = normal.dot(delta),
+        interior  = dotProd < 0
+
+
+
+    return {faces, zmin, zmax, poly, circular, area, diam, center,interior} 
+        
+}
+
 /**
  * Generate a list of holes in the model based on the given diameter.
  *
