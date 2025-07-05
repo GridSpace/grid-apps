@@ -1,6 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-// import "../ext/clip2.js";
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
