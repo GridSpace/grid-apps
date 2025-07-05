@@ -1,5 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { CAM } from './driver-be.js';
+import { util as base_util } from '../../geo/base.js';
 import { Tool } from './tool.js';
 import { newPoint } from '../../geo/point.js';
 import { newPolygon } from '../../geo/polygon.js';
@@ -399,7 +401,7 @@ class OpRough extends CamOp {
         let last = slices[slices.length-1];
 
         if (workarea.bottom_z < 0)
-        for (let zneg of base.util.lerp(0, -workarea.bottom_cut, op.down)) {
+        for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
             if (!last) continue;
             let add = last.clone(true);
             add.z -= zneg;
@@ -554,7 +556,7 @@ class OpOutline extends CamOp {
         // extend cut thru (only when z bottom is 0)
         if (workarea.bottom_z < 0) {
             let last = slices[slices.length-1];
-            for (let zneg of base.util.lerp(0, -workarea.bottom_cut, op.down)) {
+            for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
                 if (!last) continue;
                 let add = last.clone(true);
                 add.tops.forEach(top => top.poly.setZ(add.z));
@@ -1046,7 +1048,7 @@ class OpTrace extends CamOp {
                 let diff = zTop - z;
                 down = diff / Math.ceil(diff / down);
             }
-            let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
+            let zs = down ? base_util.lerp(zTop, z, down) : [ z ];
             let zpro = 0, zinc = 1 / (polys.length * zs.length);
             for (let poly of polys) {
                 // newPocket();
@@ -1178,7 +1180,7 @@ class OpTrace extends CamOp {
                         if (zThru && similar(zto,0)) {
                             zto -= zThru;
                         }
-                        for (let z of base.util.lerp(zTop, zto, down)) {
+                        for (let z of base_util.lerp(zTop, zto, down)) {
                             output.push(pi.clone().setZ(z));
                         }
                     } else {
@@ -1297,7 +1299,7 @@ class OpPocket extends CamOp {
                 let diff = zTop - z;
                 down = diff / Math.ceil(diff / down);
             }
-            let zs = down ? base.util.lerp(zTop, z, down) : [ z ];
+            let zs = down ? base_util.lerp(zTop, z, down) : [ z ];
             if (engrave) {
                 toolDiam = toolOver;
             }
@@ -1373,7 +1375,7 @@ class OpPocket extends CamOp {
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
         // let vert = widget.getVertices().array.map(v => v.round(4));
         let outline = [];
-        let faces = surface_find(widget, surfaces, (op.follow || 5) * DEG2RAG);
+        let faces = CAM.surface_find(widget, surfaces, (op.follow || 5) * DEG2RAG);
         let zmin = Infinity;
         let j=0, k=faces.length;
         for (let face of faces) {
@@ -1647,7 +1649,7 @@ class OpRegister extends CamOp {
                         tv = -tv;
                     }
                 }
-                for (let z of base.util.lerp(z1, z2, op.down)) {
+                for (let z of base_util.lerp(z1, z2, op.down)) {
                     let slice = newSlice(z);
                     addSlices(slice);
                     sliceOut.push(slice);
@@ -1844,95 +1846,6 @@ class OpShadow extends CamOp {
         state.thruHoles = tshadow.map(p => p.inner || []).flat();
     }
 }
-
-// union triangles > z (opt cap < ztop) into polygon(s)
-export function shadowAt(widget, z, ztop) {
-    const geo = widget.cache.geo;
-    const length = geo.length;
-    // cache faces with normals up
-    if (!widget.cache.shadow) {
-        const faces = [];
-        for (let i=0, ip=0; i<length; i += 3) {
-            const a = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
-            const b = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
-            const c = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
-            const n = THREE.computeFaceNormal(a,b,c);
-            if (n.z > 0.001) {
-                faces.push(a,b,c);
-                // faces.push(newPoint(...a), newPoint(...b), newPoint(...c));
-            }
-        }
-        widget.cache.shadow = faces;
-    }
-    const found = [];
-    const faces = widget.cache.shadow;
-    const { checkOverUnderOn, intersectPoints } = self.kiri.cam_slicer;
-    for (let i=0; i<faces.length; ) {
-        const a = faces[i++];
-        const b = faces[i++];
-        const c = faces[i++];
-        let where = undefined;
-        if (ztop && a.z > ztop && b.z > ztop && c.z > ztop) {
-            // skip faces over top threshold
-            continue;
-        }
-        if (a.z < z && b.z < z && c.z < z) {
-            // skip faces under threshold
-            continue;
-        } else if (a.z > z && b.z > z && c.z > z) {
-            found.push([a,b,c]);
-        } else {
-            // check faces straddling threshold
-            const where = { under: [], over: [], on: [] };
-            checkOverUnderOn(newPoint(a.x, a.y, a.z), z, where);
-            checkOverUnderOn(newPoint(b.x, b.y, b.z), z, where);
-            checkOverUnderOn(newPoint(c.x, c.y, c.z), z, where);
-            if (where.on.length === 0 && (where.over.length === 2 || where.under.length === 2)) {
-                // compute two point intersections and construct line
-                let line = intersectPoints(where.over, where.under, z);
-                if (line.length === 2) {
-                    if (where.over.length === 2) {
-                        found.push([where.over[1], line[0], line[1]]);
-                        found.push([where.over[0], where.over[1], line[0]]);
-                    } else {
-                        found.push([where.over[0], line[0], line[1]]);
-                    }
-                } else {
-                    console.log({msg: "invalid ips", line: line, where: where});
-                }
-            }
-        }
-    }
-
-    // const lines = {};
-    // function addline(p1, p2) {
-    //     let key = p1.key < p2.key ? p1.key + ',' + p2.key : p2.key + ',' + p1.key;
-    //     let rec = lines[key];
-    //     if (rec) {
-    //         rec.count++;
-    //     } else {
-    //         lines[key] = { p1, p2, count: 1 };
-    //     }
-    // }
-    // for (let face of found) {
-    //     addline(face[0], face[1]);
-    //     addline(face[1], face[2]);
-    //     addline(face[2], face[0]);
-    // }
-    // const singles = Object.entries(lines).filter(a => a[1].count === 1).map(a => a[1]);
-    // const loops = POLY.nest(sliceConnect(singles, z));
-
-    let polys = found.map(a => {
-        return newPolygon()
-            .add(a[0].x,a[0].y,a[0].z)
-            .add(a[1].x,a[1].y,a[1].z)
-            .add(a[2].x,a[2].y,a[2].z);
-    });
-    polys = POLY.union(polys, 0.001, true);
-    // console.log({z, loops, polys});
-    // return loops;
-    return polys;
-};
 
 export const ops = {
     "xray":      OpXRay,

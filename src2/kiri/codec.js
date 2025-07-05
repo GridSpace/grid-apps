@@ -2,7 +2,8 @@
 
 import { base } from '../geo/base.js';
 import { Layers } from './layers.js';
-import { Polygon } from '../geo/polygon.js';
+import { newPoint } from '../geo/point.js';
+import { Polygon, newPolygon } from '../geo/polygon.js';
 import { Slice, newSlice, Top, newTop } from './slice.js';
 import { Widget, newWidget } from './widget.js';
 
@@ -192,7 +193,7 @@ function decodePointArray(array) {
     const points = new Array(length / 3);
 
     for (let vid=0, pid=0; vid < length; ) {
-        points[pid++] = base.newPoint(array[vid++], array[vid++], array[vid++]);
+        points[pid++] = newPoint(array[vid++], array[vid++], array[vid++]);
     }
 
     return points;
@@ -207,7 +208,7 @@ function decodePointArray2D(array, z, fn) {
     for (let vid=0, pid=0; vid < length; ) {
         points[pid++] = fn ?
             fn(array[vid++], array[vid++]) :
-            base.newPoint(array[vid++], array[vid++], z);
+            newPoint(array[vid++], array[vid++], z);
     }
 
     return points;
@@ -334,10 +335,10 @@ registerDecoder(TYPE.POLY, function(v, state) {
 
     const array = v.array;
     const length = array.length;
-    const poly = base.newPolygon();
+    const poly = newPolygon();
 
     for (let vid = 0; vid < length; ) {
-        poly.push(base.newPoint(array[vid++], array[vid++], array[vid++]));
+        poly.push(newPoint(array[vid++], array[vid++], array[vid++]));
     }
 
     state.poly[v.id] = poly;

@@ -2,6 +2,7 @@
 
 import { base } from '../geo/base.js';
 import { verticesToPoints } from '../geo/points.js';
+import { util as mesh_util } from '../mesh/util.js';
 
 const { inRange, time } = base.util;
 const solid_opacity = 1.0;
@@ -333,7 +334,7 @@ class Widget {
     }
 
     selectFaces(faces) {
-        let groups = mesh.util.facesToGroups(faces || []);
+        let groups = mesh_util.facesToGroups(faces || []);
         let geo = this.mesh.geometry;
         geo.clearGroups();
         for (let group of groups) {

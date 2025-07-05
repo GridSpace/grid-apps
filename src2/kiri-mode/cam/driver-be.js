@@ -1,20 +1,21 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { codec } from '../../kiri/codec.js';
-import { cam_slice } from './slice.js';
+import { cam_slice, holes, traces } from './slice.js';
 import { cam_prepare } from './prepare.js';
 import { cam_export } from './export.js';
+import { tool as mesh_tool } from '../../mesh/tool.js';
 
 function surface_prep(widget, index) {
     if (!widget.tool) {
-        let tool = widget.tool = new mesh.tool();
+        let tool = widget.tool = new mesh_tool();
         let translate = index ? true : false;
         tool.index(widget.getGeoVertices({ unroll: true, translate }));
     }
 };
 
 function surface_find(widget, faces, radians) {
-    CAM.surface_prep(widget);
+    surface_prep(widget);
     return widget.tool.findConnectedSurface(faces, radians || 0, 0.0);
 };
 
@@ -38,7 +39,7 @@ function init(worker) {
     worker.cam_surface_find = function(data, send) {
         const { id, face, radians } = data;
         const widget = worker.cache[id];
-        const faces = CAM.surface_find(widget, [face], radians);
+        const faces = surface_find(widget, [face], radians);
         send.done(faces);
     }
 
@@ -47,11 +48,11 @@ function init(worker) {
         const widgets = Object.values(worker.cache);
         const fresh = [];
         for (let widget of widgets) {
-            if (await CAM.traces(settings, widget, single)) {
+            if (await traces(settings, widget, single)) {
                 fresh.push(widget);
             }
         }
-        // const fresh = widgets.filter(widget => CAM.traces(settings, widget, single));
+        // const fresh = widgets.filter(widget => traces(settings, widget, single));
         send.done(codec.encode(fresh.map(widget => { return {
             id: widget.id,
             traces: widget.traces,
@@ -72,7 +73,7 @@ function init(worker) {
         const fresh = [];
 
         for (let [i,widget] of widgets.entries() ) {
-            if (await CAM.holes(settings, widget, indiv, rec,
+            if (await holes(settings, widget, indiv, rec,
                 ( prog, msg )=>{ send.data({progress: (i/widgets.length)+(prog/widgets.length),msg})}
             )){
                 fresh.push(widget);

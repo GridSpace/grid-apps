@@ -422,7 +422,7 @@ func.traceAdd = (ev) => {
     CAM.traces((ids) => {
         api.hide.alert(alert);
         alert = api.show.alert("[esc] cancels trace editing");
-        kiri.api.widgets.for(widget => {
+        api.widgets.for(widget => {
             if (ids.indexOf(widget.id) >= 0) {
                 unselectTraces(widget, true);
                 widget.trace_stack = null;
@@ -454,7 +454,7 @@ func.traceAdd = (ev) => {
             });
         });
         // ensure appropriate traces are toggled matching current record
-        kiri.api.widgets.for(widget => {
+        api.widgets.for(widget => {
             widget.setVisualState({ opacity: 0.25 });
             let areas = (poppedRec.areas[widget.id] || []);
             let stack = widget.trace_stack;
@@ -480,11 +480,11 @@ func.traceDone = () => {
     func.unpop();
     traceOn.classList.remove("editing");
     traceOn = false;
-    kiri.api.widgets.opacity(1);
+    api.widgets.opacity(1);
     api.hide.alert(alert);
     api.feature.hover = false;
     api.feature.hoverAdds = false;
-    kiri.api.widgets.for(widget => {
+    api.widgets.for(widget => {
         widget.restoreVisualState();
         if (widget.trace_stack) {
             widget.trace_stack.hide();
@@ -595,7 +595,7 @@ func.selectHoles = async function(individual){
     func.hover = func.selectHolesHover;
     func.hoverUp = func.selectHolesHoverUp;
 
-    const widgets = kiri.api.widgets.all()
+    const widgets = api.widgets.all()
     /**
      * creates a mesh for a hole and adds it to a widget
      * @param {Object3D} widget - widget to add the hole mesh to
@@ -623,7 +623,7 @@ func.selectHoles = async function(individual){
     if( individual && meshesCached ){ // if any widget already has cached holes
         // console.log("already has cached holes",poppedRec.drills)
         api.hide.alert(alert)
-        kiri.api.widgets.for(widget => {
+        api.widgets.for(widget => {
             if(widget.adds){
                 let drills =  poppedRec.drills[widget.id]
                 let ids = drills
@@ -665,7 +665,7 @@ func.selectHoles = async function(individual){
                 }
                 centers = centers ?? []
                 // list of all hole centers and if they are selected
-                kiri.api.widgets.for(widget => {
+                api.widgets.for(widget => {
                     const {holes} = centers.find(center=>center.id == widget.id)
                     // console.log(holes)
                     if (!holes.length) unselectHoles(holes);
@@ -689,7 +689,7 @@ func.selectHoles = async function(individual){
     setTimeout(() => {
         api.hide.alert(escAlert);
     }, 5000);
-    kiri.api.widgets.opacity(0.8);
+    api.widgets.opacity(0.8);
 }
 
 func.selectHolesHover = function(data) {
@@ -751,12 +751,12 @@ func.selectHolesDone = () => {
     func.unpop();
     holeSelOn.classList.remove("editing");
     holeSelOn = false;
-    kiri.api.widgets.opacity(1);
+    api.widgets.opacity(1);
     api.hide.alert(alert);
     api.feature.hover = false;
     api.feature.hoverAdds = false;
 
-    kiri.api.widgets.for(widget => {
+    api.widgets.for(widget => {
         for(let add of widget.adds){
             add.visible = false
             widget.mesh.remove(add);

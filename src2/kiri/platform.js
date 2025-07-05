@@ -7,6 +7,7 @@ import { base } from '../geo/base.js';
 import { load } from '../load/file.js';
 import { space } from '../moto/space.js';
 import { Widget } from './widget.js';
+import { Packer } from './pack.js';
 
 import { COLOR, MODES } from './consts.js';
 import { THREE } from '../ext/three.js';
@@ -708,12 +709,12 @@ function platformLayout() {
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
             c = Widget.Groups.blocks().sort(),
-            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
+            p = new Packer(ms[0], ms[1], gap).fit(c);
 
         while (!p.packed) {
             ms[0] *= 1.1;
             ms[1] *= 1.1;
-            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
+            p = new Packer(ms[0], ms[1], gap).fit(c);
         }
 
         for (i = 0; i < c.length; i++) {
