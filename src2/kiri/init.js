@@ -7,10 +7,11 @@ import { local as sdb } from '../data/local.js';
 import { space } from '../moto/space.js';
 import { LOCAL, SETUP } from './main.js';
 import { VIEWS, MODES, SEED } from '../kiri/consts.js';
-import { init as initCAM } from '../kiri-mode/cam/client.js';
-import { init as initFDM } from '../kiri-mode/fdm/client.js';
 import { beta, version } from '../moto/license.js';
 import { settings as set_ctrl } from './settings.js';
+import { init as initCAM } from '../kiri-mode/cam/client.js';
+import { init as initFDM } from '../kiri-mode/fdm/client.js';
+import { init as initLaser } from '../kiri-mode/laser/client.js';
 
 let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     { consts, client, catalog, platform, selection } = api,
@@ -1364,6 +1365,7 @@ function init_one() {
     // run client mode initializations right after UI is bound
     initFDM();
     initCAM();
+    initLaser();
 
     // override old style settings two-button menu
     ui.settingsSave.onclick = () => {

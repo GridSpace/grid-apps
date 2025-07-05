@@ -9,7 +9,7 @@ import { broker } from '../moto/broker.js';
 import { codec } from '../kiri/codec.js';
 import { util } from '../geo/base.js';
 import { newPoint } from '../geo/point.js';
-import { polygons } from '../geo/polygons.js';
+import { polygons as POLY } from '../geo/polygons.js';
 import { newPrint } from '../kiri/print.js';
 import { render } from '../kiri/render.js';
 import { wasm_ctrl } from '../geo/wasm.js';
@@ -18,15 +18,15 @@ import { Widget, newWidget } from '../kiri/widget.js';
 
 import { CAM } from '../kiri-mode/cam/driver-be.js';
 import { FDM } from '../kiri-mode/fdm/driver-be.js';
+import { LASER } from '../kiri-mode/laser/driver.js';
 
-// const CAM = {};
 const { time } = util;
-const POLY = polygons;
 
 let debug = (self.debug === true),
     drivers = {
         CAM,
-        FDM
+        FDM,
+        LASER
     },
     ccvalue = self.navigator ? self.navigator.hardwareConcurrency || 0 : 0,
     concurrent = Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
@@ -495,17 +495,17 @@ const dispatch = {
             send.data({debug});
         });
 
-        //export in different modes, based on device type
-        if(mode.toUpperCase() === "LASER"){
+        // export in different modes, based on device type
+        if (mode.toUpperCase() === "LASER") {
             let FExt = data.settings.device.gcodeFExt.toUpperCase();
-            if(FExt === "DXF"){
+            if (FExt === "DXF"){
                 let dxf = driver.exportDXF(data.settings, current.print.output);
                 send.data({line:dxf});
-            }else if(FExt === "SVG"){
+            } else if(FExt === "SVG") {
                 let svg = driver.exportSVG(data.settings, current.print.output);
                 send.data({line:svg});
-            }else{
-                //if not svg or dxf, default to gcode
+            } else {
+                // if not svg or dxf, default to gcode
                 let gcode = driver.exportGCode(data.settings, current.print.output);
                 send.data({line:gcode});
             }
@@ -756,5 +756,6 @@ const worker = self.kiri_worker = {
 // initilize driver mode handlers
 CAM.init(worker);
 FDM.init(worker);
+LASER.init(worker);
 
 broker.publish("worker.started", { dispatch, minions: minwork });

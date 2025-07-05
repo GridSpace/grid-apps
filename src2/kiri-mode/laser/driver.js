@@ -1,11 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../../kiri/api.js';
+import { base } from '../../geo/base.js';
 import { Packer } from '../../kiri/pack.js';
+import { newBounds } from '../../geo/bounds.js';
 import { newPoint } from '../../geo/point.js';
+import { newPrint } from '../../kiri/print.js';
+import { newSlopeFromAngle } from '../../geo/slope.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 import { render } from '../../kiri/render.js';
-import { Slice, newSlice } from '../../kiri/slice.js';
+import { slicer } from '../../geo/slicer.js';
+import { newSlice } from '../../kiri/slice.js';
 
 const TYPE = {
     LASER: 0,
@@ -14,23 +18,8 @@ const TYPE = {
     WEDM: 3
 };
 
-export const driver = {
-    TYPE,
-    type: TYPE.LASER,
-    name: 'Laser',
-    init,
-    slice,
-    prepare,
-    export: exportLaser,
-    exportGCode,
-    exportSVG,
-    exportDXF,
-};
-
-function init() {
-    api.event.on("settings.saved", settings => {
-        // TODO
-    });
+function init(worker) {
+    // console.log({ LASER_INIT: worker });
 }
 
 function polyLabel(poly, label) {
@@ -121,7 +110,7 @@ function arc(center, rad, s1, s2, out) {
         out.push( center.projectOnSlope(s1, rad) );
     }
     while (ticks-- > 0) {
-        out.push( center.projectOnSlope(base.newSlopeFromAngle(a1 + off), rad) );
+        out.push( center.projectOnSlope(newSlopeFromAngle(a1 + off), rad) );
         a1 += step * dir;
     }
     out.push( center.projectOnSlope(s2, rad) );
@@ -179,7 +168,7 @@ function addKnifeRadii(poly, tipoff) {
  * @param {Function} onupdate (called with % complete and optional message)
  * @param {Function} ondone (called when complete with an array of Slice objects)
  */
-function slice(settings, widget, onupdate, ondone) {
+function laser_slice(settings, widget, onupdate, ondone) {
     let proc = settings.process;
     let offset = proc.ctSliceKerf || 0;
     let color = settings.controller.dark ? 0xbbbbbb : 0;
@@ -193,7 +182,7 @@ function slice(settings, widget, onupdate, ondone) {
     let points = widget.getPoints();
     let indices = [];
 
-    base.slice(points, {
+    slicer.slice(points, {
         zMin: bounds.min.z,
         zMax: bounds.max.z,
         zGen(zopt) {
@@ -255,13 +244,14 @@ function slice(settings, widget, onupdate, ondone) {
  * @param {Object} print state object
  * @param {Function} update incremental callback
  */
-async function prepare(widgets, settings, update) {
-    let device = settings.device,
+async function laser_prepare(widgets, settings, update) {
+    let worker = self.kiri_worker.current,
+        device = settings.device,
         process = settings.process,
-        print = self.worker.print = newPrint(settings, widgets),
-        isWire = self.worker.mode === 'WEDM',
-        isKnife = self.worker.mode === 'DRAG',
-        isLaser = self.worker.mode === 'LASER',
+        print = worker.print = newPrint(settings, widgets),
+        isWire = worker.mode === 'WEDM',
+        isKnife = worker.mode === 'DRAG',
+        isLaser = worker.mode === 'LASER',
         output = print.output = [],
         totalSlices = 0,
         slices = 0,
@@ -384,7 +374,7 @@ async function prepare(widgets, settings, update) {
 
     // compute tile bounds
     for (let tile of tiles) {
-        let bounds = base.newBounds();
+        let bounds = newBounds();
         tile.forEach(rec => bounds.merge(rec.poly.bounds));
         tile.w = bounds.width();
         tile.h = bounds.height();
@@ -407,7 +397,7 @@ async function prepare(widgets, settings, update) {
                 y: fit.y - (tp.max.h / 2) - bounds.miny,
                 z: 0}, true);
         }
-        tile.bounds = base.newBounds();
+        tile.bounds = newBounds();
         for (let { poly } of tile) {
             tile.bounds.merge(poly.bounds);
         }
@@ -468,7 +458,7 @@ async function prepare(widgets, settings, update) {
     }, { thin: true, z: ctOutStack ? undefined : 0, action: "cut", moves: process.isKnife });
 };
 
-function exportLaser(print, online, ondone) {
+function laser_export(print, online, ondone) {
     ondone(print.output);
 }
 
@@ -505,7 +495,7 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
     size.w = max.x - min.x;
     size.h = max.y - min.y;
 
-    let bounds = base.newBounds();
+    let bounds = newBounds();
     if (ctOriginCenter) {
         // place origin at geometric center of all points
         // regardless of workspace size
@@ -854,4 +844,17 @@ function exportDXF(settings, data) {
     );
 
     return lines.join('\n');
+};
+
+export const LASER = {
+    TYPE,
+    type: TYPE.LASER,
+    name: 'Laser',
+    init,
+    slice: laser_slice,
+    prepare: laser_prepare,
+    export: laser_export,
+    exportGCode,
+    exportDXF,
+    exportSVG
 };

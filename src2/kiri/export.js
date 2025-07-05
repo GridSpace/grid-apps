@@ -6,7 +6,7 @@ import { client } from './client.js';
 import { local } from '../data/local.js';
 import { util } from '../geo/base.js';
 import { MODES } from './consts.js';
-import { driver as laser_driver } from '../kiri-mode/laser/driver.js';
+import { LASER as laser_driver } from '../kiri-mode/laser/driver.js';
 import { client as sla_client } from '../kiri-mode/sla/client.js';
 
 let printSeq = parseInt(local['kiri-print-seq'] || local['print-seq'] || "0") + 1;

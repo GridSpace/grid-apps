@@ -78,6 +78,7 @@
     },
     "scripts": {
         "setup": "npm i && cd mods && npm i",
+        "setup2": "npm run setup && npm run dev -- --dryrun && npm run preinstall2",
         "dev": "gs-app-server --debug",
         "prod": "gs-app-server",
         "prod-dryrun": "gs-app-server --dryrun",
