@@ -1,11 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { base } from './base.js';
-
-const { util, config } = base;
-const { sqr, numOrDefault } = util;
-
-const DEG2RAD = Math.PI / 180;
+import { newPoint } from './point.js';
 
 /**
  * emit each element in an array based on
@@ -642,4 +638,13 @@ export class FloatPacker {
             return this.array.slice(0, this.pos);
         }
     }
+}
+
+export const paths = {
+    tip2tipEmit,
+    poly2polyEmit,
+    shapeToPath,
+    pointsToPath,
+    pathTo3D,
+    FloatPacker
 }

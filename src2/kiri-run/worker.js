@@ -695,7 +695,7 @@ dispatch.onmessage = self.onmessage = async function(e) {
         msg = e.data || {},
         run = dispatch[msg.task],
         send = {
-            data : function(data,direct) {
+            data : function(data, direct) {
                 // if (direct && direct.length) {
                 //     console.log( direct.map(z => z.byteLength).reduce((a,v) => a+v) );
                 // }

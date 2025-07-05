@@ -2186,11 +2186,13 @@ details[open] summary::after {
 }
 #slider-zero {
     z-index: 10;
+    min-width: 3em;
     background-color: #bbb;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
 }
 #slider-max {
+    min-width: 3em;
     background-color: #bbb;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;

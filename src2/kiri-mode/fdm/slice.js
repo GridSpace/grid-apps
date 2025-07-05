@@ -1510,7 +1510,8 @@ function doFillArea(fillQ, polys, angle, spacing, output, minLen, maxLen) {
  * calculate external overhangs requiring support
  */
 async function doSupport(slice, proc, shadow, opt = {}) {
-    let maxBridge = proc.sliceSupportSpan || 5,
+    let { minions } = self.kiri_worker,
+        maxBridge = proc.sliceSupportSpan || 5,
         minArea = proc.supportMinArea || 0.1,
         pillarSize = proc.sliceSupportSize,
         offset = proc.sliceSupportOffset || 0,

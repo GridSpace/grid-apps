@@ -5,6 +5,7 @@
 import { base, config, earcut, util } from './base.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 import { newBounds } from './bounds.js';
+import { paths } from './paths.js';
 import { newPoint, pointFromClipper } from './point.js';
 import { polygons as POLY } from './polygons.js';
 
@@ -70,11 +71,11 @@ export class Polygon {
     }
 
     toPath2D(offset) {
-        return base.paths.pointsToPath(this.points, offset, this.open);
+        return paths.pointsToPath(this.points, offset, this.open);
     }
 
     toPath3D(offset, height, z) {
-        return base.paths.pathTo3D(this.toPath2D(offset), height, z);
+        return paths.pathTo3D(this.toPath2D(offset), height, z);
     }
 
     toString(verbose) {
@@ -461,7 +462,7 @@ export class Polygon {
         return polys
             .filter(poly => poly.length > 1)
             .map(poly => {
-                let np = base.newPolygon().setOpen();
+                let np = newPolygon().setOpen();
                 for (let p of poly) {
                     np.push(p);
                 }

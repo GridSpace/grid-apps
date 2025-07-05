@@ -2,11 +2,13 @@
 
 import { base, util } from '../../geo/base.js';
 import { poly2polyEmit, tip2tipEmit } from '../../geo/paths.js';
+import { newBounds } from '../../geo/bounds.js';
 import { newPoint } from '../../geo/point.js';
 import { newPolygon, Polygon } from '../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../geo/polygons.js';
 import { newPrint } from '../../kiri/print.js';
 import { newSlice } from '../../kiri/slice.js';
+import { newWidget } from '../../kiri/widget.js';
 import { render } from '../../kiri/render.js';
 import { getRangeParameters } from './driver.js';
 
@@ -201,7 +203,7 @@ export async function fdm_prepare(widgets, settings, update) {
             }
         }
         // recompute bounds for purge block offsets
-        let bbounds = base.newBounds();
+        let bbounds = newBounds();
         brims.forEach(brim => {
             bbounds.merge(brim.bounds);
         });
@@ -232,7 +234,7 @@ export async function fdm_prepare(widgets, settings, update) {
             sslices.push(sslice);
         }
         if (sslices.length) {
-            let swidget = kiri.newWidget(null,widget.group);
+            let swidget = newWidget(null,widget.group);
             swidget.slices = sslices;
             swidget.support = true;
             swidget.belt = widget.belt;

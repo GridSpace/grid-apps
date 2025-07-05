@@ -401,6 +401,10 @@ function center2pr(p1, p2, r, clockwise) {
 // find angle difference between 0 and 2pi from n1 to n2 (signed depending on clock direction)
 function thetaDiff(n1, n2, clockwise) {
     let diff = n2 - n1;
+    if(typeof n1  != 'number' || typeof n2 != 'number') {
+        throw ("n1 and n2 must be numbers");
+        // this check is here because this causes an infinite loop when other value are provided
+    }
     while (diff < -Math.PI) diff += Math.PI * 2;
     while (diff > Math.PI) diff -= Math.PI * 2;
     if (clockwise && diff > 0) diff -= Math.PI * 2;
@@ -516,333 +520,125 @@ function comma(v) {
     return rt ? `${lt}.${rt}` : lt;
 }
 
-// Create the base namespace object
-const base = {
-    config: {
-        // size of gcode debug arrow head
-        debug_arrow: 0.25,
-        // default # of decimal places in generated gcode
-        gcode_decimals: 4,
-        // heal disjoint polygons in slicing (experimental)
-        bridgeLineGapDistance: 0.05,
-        bridgeLineGapDistanceMax: 25,
-        // Bounds default margin nearTo
-        // Polygon.offset mindist2 offset precision
-        precision_offset: 0.05,
-        // Polygon.isEquivalent area() isCloseTo
-        precision_poly_area: 0.05,
-        // Polygon.isEquivalent bounds() equals value
-        precision_poly_bounds: 0.01,
-        // Polygon.isEquivalent point distance to other poly line
-        precision_poly_merge: 0.05,
-        // Polygon.traceIntersects mindist2
-        // Polygon.overlaps (bounds overlaps test precision)
-        // Polygon.isEquivalent circularity (is circle if 1-this < merge)
-        // Slope.isSame (vert/horiz w/in this value)
-        // isCloseTo() default for dist
-        // sliceIntersects point merge dist for non-fill
-        precision_merge: 0.005,
-        precision_slice_z: 0.0001,
-        // Point.isInPolygon nearPolygon value
-        // Point.isInPolygonNotNear nearPolygon value
-        // Point.isMergable2D distToSq2D value
-        // Point.isMergable3D distToSq2D value
-        // Polygon.isInside nearPolygon value
-        // Polygon.isOutside nearPolygon value
-        precision_merge_sq: sqr(0.005),
-        // Bound.isNested inflation value for potential parent
-        precision_bounds: 0.0001,
-        // Slope.isSame default precision
-        precision_slope: 0.02,
-        // Slope.isSame use to calculate precision
-        precision_slope_merge: 0.25,
-        // sliceIntersect point merge distance for fill
-        precision_fill_merge: 0.001,
-        // convertPoints point merge distance
-        // other values break cube-s9 (wtf)
-        precision_decimate: 0.05,
-        // decimate test over this many points
-        decimate_threshold: 500000,
-        // Point.onLine precision distance (endpoints in Polygon.intersect)
-        precision_point_on_line: 0.01,
-        // Polygon.isEquivalent value for determining similar enough to test
-        precision_circularity: 0.001,
-        // polygon fill hinting (settings override)
-        hint_len_min: sqr(3),
-        hint_len_max: sqr(20),
-        hint_min_circ: 0.15,
-        // tolerances to determine if a point is near a masking polygon
-        precision_mask_tolerance: 0.001,
-        // Polygon isInside,isOutside tolerance (accounts for midpoint skew)
-        precision_close_to_poly_sq: sqr(0.001),
-        // how long a segment has to be to trigger a midpoint check (inner/outer)
-        precision_midpoint_check_dist: 1,
-        precision_nested_sq: sqr(0.01),
-        // clipper multiplier
-        clipper: 100000,
-        // clipper poly clean
-        clipperClean: 250
-    },
-    key: {
-        NONE: "",
-        PROJECT: "project",
-        SEGINT: "segint",
-        RAYINT: "rayint",
-        PARALLEL: "parallel"
-    },
-    util: {
-        time,
-        lerp,
-        pwait,
-        ptimer,
-        numOrDefault,
-        doCombinations,
-        isClockwise,
-        isCounterClockwise,
-        pac,
-        area2,
-        isCloseTo,
-        inCloseRange,
-        sqr,
-        rotate,
-        toRadians,
-        toDegrees,
-        dist2D,
-        distSq,
-        distSqv2,
-        offsetPrecision,
-        inRange,
-        round,
-        clamp,
-        intersect,
-        intersectRayLine,
-        determinant,
-        zInPlane,
-        circleCenter,
-        determinant33,
-        center2d,
-        center2pr,
-        thetaDiff,
-        orderClosest,
-        triangulate,
-        flatten,
-        comma
-    },
-    paths: {
-        pointsToPath: function(points, offset, open, miter = 1.5) {
-            const absoff = Math.abs(offset);
-            // calculate segment normals which are used to calculate vertex normals
-            // next segment info is associated with the current point
-            const nupoints = [];
-            const length = points.length;
-            if (length === 2 && points[0].isEqual(points[1])) {
-                return { };
-            }
-            const dedup = (open && length > 2) || (!open && length > 3);
-            for (let i=0; i<length; i++) {
-                let p1 = points[i];
-                let p2 = points[(i + 1) % length];
-                p1.normal = calc_normal(p1, p2);
-                // drop next duplicate point if segment length is 0
-                // is possible there are 3 dups in a row and this is
-                // not handled. could make if a while, but that could
-                // end up in a loop without additional checks. ignore
-                // the case when the last and first point are the same
-                // which is valid when the line is an open path
-                if (dedup && p1.normal.len === 0 && i !== length - 1) {
-                    p1.normal = calc_normal(p1, points[(i + 2) % length]);
-                    i++;
-                }
-                nupoints.push(p1);
-            }
-            if (nupoints.length === 1) {
-                console.log({points, nupoints});
-            }
-            // when points are dropped, we need the new array
-            points = nupoints;
-            // generate left / right paths and triangle faces
-            const left = [];
-            const right = [];
-            const faces = [];
-            const normals = [];
-            const zn = -1;
-            // calculate vertex normals from segments normals
-            // vertex info is associated with the origin point
-            let fl, fr;
-            for (let i=0, l=points.length; i<l; i++) {
-                let n1 = points[(i+l-1)%l].normal;
-                let n2 = points[(i+l)%l].normal;
-                let vn = open && (i === 0 || i === l-1) ?
-                    end_vertex(n1, n2, offset, i === 0) :
-                    calc_vertex(n1, n2, offset);
-                let { p1, p2 } = n2;
-                let { io, vl } = vn;
-                if (offset < 0) {
-                    io = -io;
-                }
-                let split_left = false, split_right = false;
-                if (io > 0) { // right
-                    split_left = vl > absoff * miter;
-                    split_right = vl > Math.min(n1.len, n2.len) + absoff;
-                } else { // left
-                    split_right = vl > absoff * miter;
-                    split_left = vl > Math.min(n1.len, n2.len) + absoff;
-                }
-                let l0 = left.peek(1);
-                let r0 = right.peek(1);
-                if (split_left || split_right) {
-                    // shorten each leg and insert new point
-                    let delta = 0.1;
-                    let np1 = p1.clone().move({ x: n1.dy * delta, y: -n1.dx * delta, z: 0 });
-                    let np2 = p1.clone().move({ x:-n2.dy * delta, y:  n2.dx * delta, z: 0 });
-                    let sn1 = np1.normal = calc_normal(np1, np2);
-                    let sn2 = np2.normal = p1.normal;
-                    let nv1 = calc_vertex(n1.p1.normal, sn1, offset, np1);
-                    let nv2 = calc_vertex(sn1, sn2, offset, np2);
-                    if (split_right) {
-                        right.push(v2pr(nv1), v2pr(nv2));
-                    } else {
-                        right.push(v2pr(vn));
-                    }
-                    if (split_left) {
-                        left.push(v2pl(nv1), v2pl(nv2));
-                    } else {
-                        left.push(v2pl(vn));
-                    }
-                    if (faces) {
-                        let l1 = left.peek(1);
-                        let r1 = right.peek(1);
-                        let l2 = left.peek(2);
-                        let r2 = right.peek(2);
-                        faces.push([l0, r0, l1], [r0, r1, l1], [l1, r1, l2], [r1, r2, l2]);
-                    }
-                } else {
-                    if (split_right) {
-                        right.push(v2pr(vn));
-                    } else {
-                        right.push(v2pr(vn));
-                    }
-                    if (split_left) {
-                        left.push(v2pl(vn));
-                    } else {
-                        left.push(v2pl(vn));
-                    }
-                    if (faces) {
-                        let l1 = left.peek(1);
-                        let r1 = right.peek(1);
-                        faces.push([l0, r0, l1], [r0, r1, l1]);
-                    }
-                }
-            }
-            return { left, right, faces, normals };
-        },
-        pathTo3D: function(path, height, z) {
-            const { left, right, faces } = path;
-            const vertices = [];
-            const normals = [];
-            const uvs = [];
-            const indices = [];
-            let i, j, k, l, r, f, v, n, u;
-            // add left and right vertices
-            for (i = 0; i < left.length; i++) {
-                l = left[i];
-                r = right[i];
-                v = [l.x, l.y, z, r.x, r.y, z];
-                n = [0, 0, 1, 0, 0, 1];
-                u = [0, 0, 1, 0];
-                vertices.push(...v);
-                normals.push(...n);
-                uvs.push(...u);
-            }
-            // add top vertices
-            for (i = 0; i < left.length; i++) {
-                l = left[i];
-                r = right[i];
-                v = [l.x, l.y, z + height, r.x, r.y, z + height];
-                n = [0, 0, 1, 0, 0, 1];
-                u = [0, 1, 1, 1];
-                vertices.push(...v);
-                normals.push(...n);
-                uvs.push(...u);
-            }
-            // add faces
-            for (i = 0; i < faces.length; i++) {
-                f = faces[i];
-                indices.push(f[0], f[1], f[2]);
-            }
-            // add top faces
-            for (i = 0; i < faces.length; i++) {
-                f = faces[i];
-                indices.push(f[0] + left.length, f[1] + left.length, f[2] + left.length);
-            }
-            // add side faces
-            for (i = 0; i < left.length - 1; i++) {
-                j = i * 2;
-                k = j + 2;
-                indices.push(j, k, j + 1, j + 1, k, k + 1);
-            }
-            return { vertices, normals, uvs, indices };
-        }
-    },
-    newPoint
+/** ******************************************************************
+ * Connect to base
+ ******************************************************************* */
+
+export const key = {
+    NONE: "",
+    PROJECT: "project",
+    SEGINT: "segint",
+    RAYINT: "rayint",
+    PARALLEL: "parallel"
 };
 
-// Helper functions for paths
-function calc_normal(p1, p2) {
-    let dx = p2.x - p1.x;
-    let dy = p2.y - p1.y;
-    let len = Math.sqrt(dx * dx + dy * dy);
-    let mn = (1 / len);
-    dx *= mn;
-    dy *= mn;
-    return({ dx: dy, dy: -dx, p1, p2, len });
-}
+export const config = {
+    // size of gcode debug arrow head
+    debug_arrow: 0.25,
+    // default # of decimal places in generated gcode
+    gcode_decimals: 4,
+    // heal disjoint polygons in slicing (experimental)
+    bridgeLineGapDistance: 0.05,
+    bridgeLineGapDistanceMax: 25,
+    // Bounds default margin nearTo
+    // Polygon.offset mindist2 offset precision
+    precision_offset: 0.05,
+    // Polygon.isEquivalent area() isCloseTo
+    precision_poly_area: 0.05,
+    // Polygon.isEquivalent bounds() equals value
+    precision_poly_bounds: 0.01,
+    // Polygon.isEquivalent point distance to other poly line
+    precision_poly_merge: 0.05,
+    // Polygon.traceIntersects mindist2
+    // Polygon.overlaps (bounds overlaps test precision)
+    // Polygon.isEquivalent circularity (is circle if 1-this < merge)
+    // Slope.isSame (vert/horiz w/in this value)
+    // isCloseTo() default for dist
+    // sliceIntersects point merge dist for non-fill
+    precision_merge: 0.005,
+    precision_slice_z: 0.0001,
+    // Point.isInPolygon nearPolygon value
+    // Point.isInPolygonNotNear nearPolygon value
+    // Point.isMergable2D distToSq2D value
+    // Point.isMergable3D distToSq2D value
+    // Polygon.isInside nearPolygon value
+    // Polygon.isOutside nearPolygon value
+    precision_merge_sq: sqr(0.005),
+    // Bound.isNested inflation value for potential parent
+    precision_bounds: 0.0001,
+    // Slope.isSame default precision
+    precision_slope: 0.02,
+    // Slope.isSame use to calculate precision
+    precision_slope_merge: 0.25,
+    // sliceIntersect point merge distance for fill
+    precision_fill_merge: 0.001,
+    // convertPoints point merge distance
+    // other values break cube-s9 (wtf)
+    precision_decimate: 0.05,
+    // decimate test over this many points
+    decimate_threshold: 500000,
+    // Point.onLine precision distance (endpoints in Polygon.intersect)
+    precision_point_on_line: 0.01,
+    // Polygon.isEquivalent value for determining similar enough to test
+    precision_circularity: 0.001,
+    // polygon fill hinting (settings override)
+    hint_len_min: sqr(3),
+    hint_len_max: sqr(20),
+    hint_min_circ: 0.15,
+    // tolerances to determine if a point is near a masking polygon
+    precision_mask_tolerance: 0.001,
+    // Polygon isInside,isOutside tolerance (accounts for midpoint skew)
+    precision_close_to_poly_sq: sqr(0.001),
+    // how long a segment has to be to trigger a midpoint check (inner/outer)
+    precision_midpoint_check_dist: 1,
+    precision_nested_sq: sqr(0.01),
+    // clipper multiplier
+    clipper: 100000,
+    // clipper poly clean
+    clipperClean: 250
+};
 
-function end_vertex(n1, n2, off, start) {
-    let dx, dy;
-    if (start) {
-        dx = n2.dx * off;
-        dy = n2.dy * off;
-    } else {
-        dx = n1.dx * off;
-        dy = n1.dy * off;
-    }
-    return { dx, dy, vp: n1.p2 };
-}
+export const util = {
+    sqr,
+    lerp,
+    time,
+    clamp,
+    comma,
+    round,
+    area2,
+    pwait,
+    ptimer,
+    flatten,
+    rotate,
+    distSq,
+    dist2D,
+    distSqv2,
+    center2d,
+    center2pr,
+    determinant,
+    orderClosest,
+    doCombinations,
+    offsetPrecision,
+    circleCenter,
+    numOrDefault,
+    toRadians,
+    toDegrees,
+    thetaDiff,
+    intersect,
+    inRange,
+    isCloseTo,
+    inCloseRange,
+    isClockwise,
+    isCounterClockwise,
+    intersectRayLine,
+    triangulate,
+    zInPlane
+};
 
-function calc_vertex(n1, n2, off, vp) {
-    let dx, dy, io, vl, q, r;
-    r = 1 + (n1.dx * n2.dx + n1.dy * n2.dy);
-    q = off / r;
-    // handle spurs that switch back 180 degrees
-    if (q === Infinity) {
-        q = 0;
-    }
-    dx = (n1.dx + n2.dx) * q;
-    dy = (n1.dy + n2.dy) * q;
-    // io tells us whether we're turning left or right
-    io = (n1.dx * n2.dy - n2.dx * n1.dy);
-    // vertex length can be compared to the previons and next
-    // segment lengths to see if we're highly acute
-    vl = Math.sqrt(dx * dx + dy * dy);
-    return { dx, dy, vp: vp || n1.p2, io, vl };
-}
+export const base = {
+    config,
+    key,
+    util
+};
 
-function v2pl(rec) {
-    let p = rec.vp.clone();
-    p.x += rec.dx;
-    p.y += rec.dy;
-    p.vp = rec.vp;
-    return p;
-}
-
-function v2pr(rec) {
-    let p = rec.vp.clone();
-    p.x -= rec.dx;
-    p.y -= rec.dy;
-    p.vp = rec.vp;
-    return p;
-}
-
-export { base, earcut };
-export const { config, key, util, paths } = base;
+export { earcut };

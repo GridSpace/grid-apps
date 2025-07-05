@@ -2,13 +2,15 @@
 
 "use strict";
 
-import { base, util, paths, config } from './base.js';
+import { base, util, config } from './base.js';
 import { newPoint, pointFromClipper } from './point.js';
 import { newPolygon } from './polygon.js';
 import { newSlope } from './slope.js';
+import { paths } from './paths.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 
-const { sqr, numOrDefault } = util;
+const geo = base;
+const { numOrDefault } = util;
 
 const DEG2RAD = Math.PI / 180,
     SQRT = Math.sqrt,

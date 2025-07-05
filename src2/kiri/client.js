@@ -111,7 +111,7 @@ export const client = {
         running = {};
         worker = client.newWorker();
 
-        client.onmessage = worker.onmessage = function(e) {
+        client.onmessage = worker.onmessage = (e) => {
             let now = time(),
                 reply = e.data,
                 record = running[reply.seq],

@@ -752,12 +752,11 @@ class Widget {
      */
     render(stack) {
         const mark = Date.now();
-        if (this.slices)
-        this.slices.forEach(slice => {
+        for (let slice of this.slices || []) {
             if (slice.layers) {
                 stack.add(slice.layers);
             }
-        });
+        }
         return Date.now() - mark;
     }
 

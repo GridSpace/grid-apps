@@ -129,6 +129,7 @@ async function path(levels, update, opts = {}) {
         const lasers = [];
         const sparks = [];
         const output = new Layers();
+
         layers.push(output);
 
         const pushPrint = (toolid, poly) => {
