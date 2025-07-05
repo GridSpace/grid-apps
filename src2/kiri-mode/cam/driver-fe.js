@@ -45,7 +45,6 @@ function traces(ondone, single) {
     const settings = api.conf.get();
     const widgets = api.widgets.map();
     api.client.send("cam_traces", { settings, single }, output => {
-        console.log({ output });
         const ids = [];
         codec.decode(output).forEach(rec => {
             ids.push(rec.id);
