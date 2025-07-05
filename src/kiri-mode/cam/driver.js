@@ -224,8 +224,7 @@ kiri.load(api => {
             const { id, face, settings } = data;
             const widget = kiri.worker.cache[id];
             try{
-                const faces = CAM.cylinder_find(widget, face);
-                send.done({faces});
+                send.done(CAM.cylinder_poly_find(widget, face));
             }catch(error){
                 send.done({error});
             }
