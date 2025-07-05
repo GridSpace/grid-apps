@@ -1,6 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base } from '../geo/base.js';
 import { Layers } from './layers.js';
 import { newPoint } from '../geo/point.js';
 import { newPolygon } from '../geo/polygon.js';
