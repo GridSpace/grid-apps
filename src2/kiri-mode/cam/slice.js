@@ -567,7 +567,7 @@ export async function holes(settings, widget, individual, rec,onProgress) {
     for (let [i,slice] of slices.entries()) {
         for(let top of slice.tops){
             // console.log("slicing",slice.z,top)
-            slice.shadow = shadowAt(widget, slice.z, 0)
+            slice.shadow = computeShadowAt(widget, slice.z, 0)
             let inner = top.inner;
             if (!inner) { //no holes
                 continue;

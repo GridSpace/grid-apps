@@ -1,19 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base } from '../../../geo/base.js';
-import { kiri } from '../../kiri.js';
-import { moto } from '../../../moto.js';
-import { driver, newSlice } from '../../kiri.js';
-import { CAM } from './driver.js';
-import { polygons, newLine, newSlope, newPoint, newPolygon } from '../../../geo/base.js';
+import { broker } from '../../moto/broker.js';
+import { codec } from '../../kiri/codec.js';
+import { newPoint } from '../../geo/point.js';
+import { newPolygon } from '../../geo/polygon.js';
+import { newSlice } from '../../kiri/slice.js';
+import { Slicer as topo_slicer } from './slicer2.js';
+import { polygons as POLY } from '../../geo/polygons.js';
+import { Tool } from './tool.js';
 
-const { base, kiri, moto } = root;
-const { driver, newSlice } = kiri;
-const { CAM } = driver;
-const { polygons, newLine, newSlope, newPoint, newPolygon } = base;
-
-const PRO = CAM.process;
-const POLY = polygons;
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
 
@@ -44,7 +39,7 @@ class Topo {
             inside = contour.inside,
             density = 1 + (contour.reduction || 0),
             resolution = tolerance ? tolerance : 1/Math.sqrt(animesh/(boundsX * boundsY)),
-            tool = new CAM.Tool(settings, contour.tool),
+            tool = new Tool(settings, contour.tool),
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
             toolStep = toolDiameter * contour.step, //tool.contourOffset(contour.step),
@@ -197,7 +192,7 @@ class Topo {
     async raster(widget, params, onupdate) {
         const { resolution } = params;
         const { box } = params;
-        const { worker, minions } = kiri;
+        const { dispatch, minions } = self.kiri_worker;
 
         const vertices = widget.getGeoVertices({ unroll: true, translate: true }).toShared();
         const range = { min: Infinity, max: -Infinity };
@@ -232,7 +227,7 @@ class Topo {
         // define sharded ranges
         if (minions.running > 1) {
 
-            worker.putCache({ key: widget.id, data: vertices }, { done: data => {
+            dispatch.putCache({ key: widget.id, data: vertices }, { done: data => {
                 // console.log({ put_cache_done: data });
             }});
 
@@ -262,7 +257,7 @@ class Topo {
                     return box2;
                 });
 
-            worker.clearCache({}, { done: data => {
+            dispatch.clearCache({}, { done: data => {
                 // console.log({ clear_cache_done: data });
             }});
 
@@ -271,12 +266,12 @@ class Topo {
             // iterate over shards, merge output
             // const output = [];
             for (let slice of slices) {
-                new kiri.topo_slicer(slice.index)
+                new topo_slicer(slice.index)
                     .setFromArray(vertices, slice)
                     .slice(resolution)
                     .map(rec => {
 
-                        const slice = kiri.newSlice(rec.z);
+                        const slice = newSlice(rec.z);
                         slice.index = rec.index;
                         slice.lines = rec.lines;
                         for (let line of rec.lines) {
@@ -302,7 +297,7 @@ class Topo {
 
     async contour(params, onupdate) {
         const trace = this.trace;
-        const concurrent = kiri.minions.running;
+        const concurrent = self.kiri_worker.minions.running;
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
         const { gridDelta, resolution, density, partOff, toolStep, contourX, contourY } = params;
@@ -589,7 +584,7 @@ class Trace {
 
     init(params) {
         this.cross = params;
-        const { minions } = kiri;
+        const { minions } = self.kiri_worker;
         const { clipTab, clipTabZ } = params;
 
         // because codec does not encode arbitrary fields
@@ -601,7 +596,6 @@ class Trace {
         }
 
         if (minions && this.cross.concurrent) {
-            const { codec } = kiri;
             minions.broadcast("trace_init", codec.encode({
                 probe: this.probe.params,
                 trace: this.params,
@@ -611,7 +605,7 @@ class Trace {
     }
 
     cleanup() {
-        const { minions } = kiri;
+        const { minions } = self.kiri_worker;
 
         if (minions && this.cross.concurrent) {
             minions.broadcast("trace_cleanup");
@@ -619,14 +613,14 @@ class Trace {
     }
 
     crossY(params, then) {
-        const { minions } = kiri;
+        const { minions } = self.kiri_worker;
 
         if (minions && this.cross.concurrent) {
             minions.queue({
                 cmd: "trace_y",
                 params
             }, data => {
-                then(kiri.codec.decode(data.slice));
+                then(codec.decode(data.slice));
             });
         } else {
             this.crossY_sync(params, then);
@@ -634,14 +628,14 @@ class Trace {
     }
 
     crossX(params, then) {
-        const { minions } = kiri;
+        const { minions } = self.kiri_worker;
 
         if (minions && this.cross.concurrent) {
             minions.queue({
                 cmd: "trace_x",
                 params
             }, data => {
-                then(kiri.codec.decode(data.slice));
+                then(codec.decode(data.slice));
             });
         } else {
             this.crossX_sync(params, then);
@@ -817,11 +811,7 @@ function raster_slice(inputs) {
     return points;
 };
 
-CAM.Topo = async function(opt) {
-    return new Topo().generate(opt);
-};
-
-moto.broker.subscribe("minion.started", msg => {
+broker.subscribe("minion.started", msg => {
     const { funcs, cache, reply, log } = msg;
 
     funcs.topo_raster = (data, seq) => {
@@ -829,7 +819,7 @@ moto.broker.subscribe("minion.started", msg => {
         const { resolution } = params;
         const vertices = cache[id];
         const box = new THREE.Box2();
-        new kiri.topo_slicer(slice.index)
+        new topo_slicer(slice.index)
             .setFromArray(vertices, slice)
             .slice(resolution)
             .forEach(rec => {
@@ -854,7 +844,6 @@ moto.broker.subscribe("minion.started", msg => {
 
     funcs.trace_init = data => {
         const { cache } = self;
-        const { codec } = kiri;
         data.cross.clipTo = codec.decode(data.cross.clipTo);
         data.cross.clipTab = codec.decode(data.cross.clipTab);
         const probe = new Probe(data.probe);
@@ -871,7 +860,7 @@ moto.broker.subscribe("minion.started", msg => {
         const { cache } = self;
         const { trace } = cache.trace;
         trace.crossY_sync(data.params, slice => {
-            slice = kiri.codec.encode(slice);
+            slice = codec.encode(slice);
             reply({ seq, slice });
         });
     };
@@ -880,7 +869,7 @@ moto.broker.subscribe("minion.started", msg => {
         const { cache } = self;
         const { trace } = cache.trace;
         trace.crossX_sync(data.params, slice => {
-            slice = kiri.codec.encode(slice);
+            slice = codec.encode(slice);
             reply({ seq, slice });
         });
     };
@@ -890,5 +879,6 @@ moto.broker.subscribe("minion.started", msg => {
     };
 });
 
-
-export { raster_slice, PRO, POLY, RAD2DEG, DEG2RAD, ctab, debug, output, probe, trace, box, params, vertices, range, i, x, z, shards, step, slices, index, slice, complete, promises, concurrent, stepsTaken, pcount, slicesY, slicesX, promise, inc, dec, gridx, gridy, y, lines, points, toolAtZ, sx, tx, ty, tz, rx, ry, toolAtXY, zAtXY, ix, iy, newslice, newtrace, end_poly, log, push_point, newP, lastP, dl, dz, slope, dv, angle, object, poly, zok, checkr, tv, len, l1, tp, j, l2, p1, crossz, spansy, dy, nup, p2, Topo };
+export async function generate(opt) {
+    return new Topo().generate(opt);
+}

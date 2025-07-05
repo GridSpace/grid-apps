@@ -9,6 +9,7 @@ import { animate2 as anim_3d, animate_clear2 as anim_3d_clear } from './anim-3d-
 import { space as SPACE } from '../../moto/space.js';
 import { Layers } from '../../kiri/layers.js';
 import { Stack } from '../../kiri/stack.js';
+import { Tool } from './tool.js';
 import { CAM } from './driver-fe.js';
 
 const { alerts, conf, noop, space } = api;
@@ -435,7 +436,7 @@ func.traceAdd = (ev) => {
             let areas = (poppedRec.areas[widget.id] || []);
             let stack = new Stack(widget.mesh);
             widget.trace_stack = stack;
-            widget.traces.forEach(poly => {
+            widget.traces?.forEach(poly => {
                 let match = areas.filter(arr => poly.matches(arr));
                 let layers = new Layers();
                 layers.setLayer("trace", {line: 0xaaaa55, fat:4, order:-10}, false).addPoly(poly);
@@ -602,7 +603,7 @@ func.selectHoles = async function(individual){
      * @param {Object} drill - {depth,selected} object of the hole
      * @returns {Mesh} the created mesh
      */
-    function createHoleMesh(widget,drill){
+    function createHoleMesh(widget,drill) {
         let {depth,selected, diam} = drill
         let color = selected ? 0xFF0000:0x39e366
         let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
@@ -612,80 +613,92 @@ func.selectHoles = async function(individual){
         mesh.position.z -= depth/2
         mesh.rotation.x = Math.PI/2
         drill.widgetID = widget.id
-        drill.meshId = mesh.id; //add pointers to both objects
+        drill.meshId = mesh.id; // add pointers to both objects
         mesh.hole = drill;
         mesh.parent = widget.mesh;
         widget.mesh.add(mesh); 
-        widget.adds.push(mesh); //for click detection
+        widget.adds.push(mesh); // for click detection
         return mesh
     }
-    let meshesCached = widgets.every(widget=>poppedRec.drills[widget.id] != undefined)
-    if( individual && meshesCached ){ // if any widget already has cached holes
+    let meshesCached = widgets.every(widget => poppedRec.drills[widget.id] != undefined)
+    if (individual && meshesCached) {
+        // if any widget already has cached holes
         // console.log("already has cached holes",poppedRec.drills)
-        api.hide.alert(alert)
+        api.hide.alert(alert);
         api.widgets.for(widget => {
-            if(widget.adds){
-                let drills =  poppedRec.drills[widget.id]
-                let ids = drills
-                .map(hole => hole.meshId)
-                if(widget.adds.includes(mesh)){
-                    widget.adds.forEach(add=>{
-                        if(ids.includes(add.id)){
-                            add.visible = true
+            if (widget.adds) {
+                let drills =  poppedRec.drills[widget.id];
+                let ids = drills.map(hole => hole.meshId);
+                if (false && widget.adds.includes(mesh)) {
+                    // mesh in the old code was a dead artifact
+                    // so this code branch never actually ran
+                    widget.adds.forEach(add => {
+                        if (ids.includes(add.id)) {
+                            add.visible = true;
                         }
                     })
-                }else{
+                } else {
                     drills.forEach(drill => {
-                        createHoleMesh(widget, drill)
-                    })
+                        createHoleMesh(widget, drill);
+                    });
                 }
             }
         })
-
-    }else{ // if no widget has cached holes
-        let alert = api.show.alert("");
-        await CAM.holes( 
+    } else {
+        // if no widget has cached holes
+        let alert2 = api.show.alert("");
+        let found = await CAM.holes(
             individual,
             poppedRec,
-            (progress,msg)=>{
-                alert[0]=msg
-                api.show.progress(progress,msg)
-                api.alerts.update()
+            (progress, msg) => {
+                alert2[0] = msg;
+                api.show.progress(progress,msg);
+                api.alerts.update();
             },
             async centers => {
-                api.show.progress(0)
-                if(! Array.isArray(centers) ){
-                    console.log("worker returned a malformed drills response")
-                    return
+                api.show.progress(0);
+                if (!Array.isArray(centers)) {
+                    console.log("worker returned a malformed drills response");
+                    return;
                 }
-                let shadow = centers.some(c=>c.shadowed)
-                api.hide.alert(alert)
-                if(shadow){
-                    alert = api.show.alert("Some holes are shadowed by part and are not shown.");
+                if (centers.length === 0) {
+                    console.log("no drill holes found");
+                    return;
                 }
-                centers = centers ?? []
+                let shadow = centers.some(c => c.shadowed);
+                api.hide.alert(alert2);
+                if (shadow) {
+                    alert2 = api.show.alert("Some holes are shadowed by part and are not shown.");
+                }
+                centers = centers ?? [];
                 // list of all hole centers and if they are selected
                 api.widgets.for(widget => {
-                    const {holes} = centers.find(center=>center.id == widget.id)
+                    const { holes } = centers.find(center => center.id == widget.id);
                     // console.log(holes)
                     if (!holes.length) unselectHoles(holes);
                     holes.forEach(hole => {
-                        createHoleMesh(widget, hole)
-                    })
+                        createHoleMesh(widget, hole);
+                    });
                     //add hole data to record
-                    poppedRec.drills = poppedRec.drills ?? {}
-                    poppedRec.drills[widget.id] = holes
+                    poppedRec.drills = poppedRec.drills ?? {};
+                    poppedRec.drills[widget.id] = holes;
                     //give widget access to an array of drill records that refrence it
                     //so that it can be cleared when widget is rotated or mirrored etc.
-                    if(!widget.drills){widget.drills = []}
-                    widget.drills.push(holes)
+                    if(!widget.drills){widget.drills = []};
+                    widget.drills.push(holes);
                 })
             }
         );
+        if (!found || found.length === 0) {
+            api.hide.alert(alert);
+            api.hide.alert(alert2);
+            api.show.alert("no drill holes found");
+            return;
+        }
     }
     //hide the alert once hole meshes are calculated on the worker, and then added to the scene
     // api.hide.alert(alert);
-    let escAlert = api.show.alert("[esc] cancels drill editing",1000);
+    let escAlert = api.show.alert("[esc] cancels drill editing", 1000);
     setTimeout(() => {
         api.hide.alert(escAlert);
     }, 5000);
@@ -1956,7 +1969,7 @@ function createPopOp(type, map) {
             api.util.ui2rec(op.rec, op.inputs);
 
             const settings  = conf.get();
-            const {tool} = new CAM.Tool(settings,op.rec.tool); //get tool by id
+            const {tool} = new Tool(settings,op.rec.tool); //get tool by id
             const opType = op.rec.type
             const drillOrRegister = opType == "drill" || opType == "register"
 

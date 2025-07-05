@@ -6,7 +6,7 @@ import { newSlope } from './slope.js';
 
 const { Vector3 } = THREE;
 
-export class Point {
+class Point {
     constructor(x = 0, y = 0, z = 0, key) {
         this.x = x;
         this.y = y;
@@ -39,7 +39,7 @@ export class Point {
     }
 
     toVector3() {
-        return new THREE.Vector3(this.x, this.y, this.z);
+        return new Vector3(this.x, this.y, this.z);
     }
 
     set(x, y, z) {
@@ -436,6 +436,10 @@ export class Point {
         return this === p || (this.x === p.x && this.y === p.y && this.z === p.z);
     }
 
+    isEqual2D(p) {
+        return this === p || (this.x === p.x && this.y === p.y);
+    }
+
     /**
      * returns true if points are close enough to be considered equivalent
      */
@@ -599,7 +603,6 @@ export class Point {
     }
 }
 
-// Helper functions
 function dot(u, v) {
     return u.x * v.x + u.y * v.y;
 }
@@ -609,22 +612,45 @@ function norm(v) {
 }
 
 function d(u, v) {
-    return Math.sqrt(sqr(u.x - v.x) + sqr(u.y - v.y));
+    return norm({
+        x: u.x - v.x,
+        y: u.y - v.y
+    });
 }
 
 function p2l(p, l1, l2) {
-    let v = l2.clone().sub(l1);
-    let w = p.clone().sub(l1);
-    let proj = w.dot(v) / v.dot(v);
-    if (proj < 0) return w.length();
-    if (proj > 1) return p.distTo(l2);
-    return w.sub(v.multiplyScalar(proj)).length();
+    let v = {
+        x: l2.x - l1.x,
+        y: l2.y - l1.y
+    };
+    let w = {
+        x: p.x - l1.x,
+        y: p.y - l1.y
+    };
+    let c1 = dot(w, v);
+    let c2 = dot(v, v);
+    let b = c1 / c2;
+    if (isNaN(b)) {
+        // console.log('nan', {p, l1, l2, v, w, c1, c2});
+        b = 0;
+    }
+    let pb = {
+        x: l1.x + b * v.x,
+        y: l1.y + b * v.y
+    };
+    return d(p, pb);
 }
 
-export function newPoint(x, y, z, key) {
+function newPoint(x, y, z, key) {
     return new Point(x, y, z, key);
 }
 
-export function pointFromClipper(cp, z) {
+function pointFromClipper(cp, z) {
     return newPoint(cp.X / config.clipper, cp.Y / config.clipper, z);
 }
+
+ export {
+    Point,
+    newPoint,
+    pointFromClipper
+};

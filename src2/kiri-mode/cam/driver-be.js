@@ -81,10 +81,11 @@ function init(worker) {
         const widgets = Object.values(worker.cache);
         const fresh = [];
 
-        for (let [i,widget] of widgets.entries() ) {
-            if (await holes(settings, widget, indiv, rec,
-                ( prog, msg )=>{ send.data({progress: (i/widgets.length)+(prog/widgets.length),msg})}
-            )){
+        for (let [i, widget] of widgets.entries()) {
+            let ret = await holes(settings, widget, indiv, rec, (prog, msg) => {
+                send.data({ progress: (i/widgets.length)+(prog/widgets.length), msg });
+            });
+            if (ret) {
                 fresh.push(widget);
             }
         }
@@ -93,7 +94,7 @@ function init(worker) {
         send.done(codec.encode(fresh.map(widget => { return {
             id: widget.id,
             holes: widget.drills,
-            shadowed:widget.shadowedDrills
+            shadowed: widget.shadowedDrills
         } } )));
     }
 }

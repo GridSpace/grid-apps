@@ -45,6 +45,7 @@ function traces(ondone, single) {
     const settings = api.conf.get();
     const widgets = api.widgets.map();
     api.client.send("cam_traces", { settings, single }, output => {
+        console.log({ output });
         const ids = [];
         codec.decode(output).forEach(rec => {
             ids.push(rec.id);
@@ -60,16 +61,16 @@ function traces_clear(ondone) {
     });
 };
 
-function holes(indiv,rec,onProgress,onDone) {
+function holes(indiv, rec, onProgress, onDone) {
     api.client.sync();
     const settings = api.conf.get();
     return new Promise((res,rej)=>{
         api.client.send("cam_holes", { settings, rec, indiv },  output => {
-            let out = codec.decode(output)
-            if(out.progress != undefined){
+            let out = codec.decode(output);
+            if (out.progress != undefined) {
                 //if a progress message,
                 onProgress(out.progress,out.msg)
-            }else{
+            } else {
                 api.hide.alert(alert);
                 onDone(out);
                 res(out);

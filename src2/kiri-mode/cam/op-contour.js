@@ -2,6 +2,7 @@
 
 import { CamOp } from './op.js';
 import { Tool } from './tool.js';
+import { generate as Topo } from './topo3.js';
 import { newPoint } from '../../geo/point.js';
 import { tip2tipEmit } from '../../geo/paths.js';
 

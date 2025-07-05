@@ -287,7 +287,7 @@ const dispatch = {
         // current.snap = null;
         current.print = null;
         dispatch.group = wgroup = {};
-        dispatch.cache = wcache = {};
+        dispatch.cache = worker.cache = wcache = {};
         Widget.Groups.clear();
         send.done({ clear: true });
     },
