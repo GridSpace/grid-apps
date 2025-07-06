@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../kiri/api.js';
-import { env } from './client.js';
+import { env, clearPops } from './client.js';
 import { CAM } from './driver-fe.js';
 
 const DEG2RAD = Math.PI / 180;
@@ -15,7 +15,7 @@ export function surfaceAdd(ev) {
     if (surfaceOn) {
         return surfaceDone();
     }
-    env.clearPops();
+    clearPops();
     alert = api.show.alert("analyzing surfaces...", 1000);
     let surfaces = env.poppedRec.surfaces;
     let radians = env.poppedRec.follow * DEG2RAD;

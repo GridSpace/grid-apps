@@ -1,8 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../kiri/api.js';
-import { env } from './client.js';
+import { env, opRender } from './client.js';
 import { CAM } from './driver-fe.js';
+import { clearTabs, restoreTabs } from './cl-tab.js';
+import { updateStock } from './cl-stock.js';
 
 export function opFlip() {
     api.view.set_arrange();
@@ -23,7 +25,7 @@ export function opFlip() {
         let anno = api.widgets.annotate(widget.id).tab || [];
         let wbm = widget.bounds.max.z;
         for (let tab of anno) {
-            let box = widget.tabs[tab.id].box;s
+            let box = widget.tabs[tab.id].box;
             let bpo = box.position;
             let xr = 0, yr = 0;
             let flz = wbm - bpo.z;

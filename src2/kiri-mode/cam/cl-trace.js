@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../kiri/api.js';
-import { env } from './client.js';
+import { env, clearPops } from './client.js';
 import { CAM } from './driver-fe.js';
 import { Layers } from '../../kiri/layers.js';
 import { Stack } from '../../kiri/stack.js';
@@ -17,7 +17,7 @@ export function traceAdd(ev) {
     if (traceOn) {
         return traceDone();
     }
-    env.clearPops();
+    clearPops();
     alert = api.show.alert("analyzing parts...", 1000);
     traceOn = env.hoveredOp;
     traceOn.classList.add("editing");

@@ -3,7 +3,6 @@
 import { $, h } from '../../moto/webui.js';
 import { api } from '../../kiri/api.js';
 import { load } from '../../load/file.js';
-import { addbox, delbox } from '../../kiri/boxes.js';
 import { animate as anim_2d, animate_clear as anim_2d_clear } from './anim-2d-fe.js';
 import { animate2 as anim_3d, animate_clear2 as anim_3d_clear } from './anim-3d-fe.js';
 import { space as SPACE } from '../../moto/space.js';
@@ -11,8 +10,9 @@ import { Layers } from '../../kiri/layers.js';
 import { Stack } from '../../kiri/stack.js';
 import { updateStock } from './cl-stock.js';
 import { createPopOps } from './cl-ops.js';
+import { tabAdd, tabDone, tabClear, restoreTabs, updateTabs } from './cl-tab.js';
 import { traceOn, traceDone, unselectTraces } from './cl-trace.js';
-import { selectHolesDone } from './cl-hole.js';
+import { holeSelOn, selectHolesDone } from './cl-hole.js';
 import { surfaceOn, surfaceDone } from './cl-surface.js';
 
 const DEG2RAD = Math.PI / 180;
@@ -46,27 +46,21 @@ class Client {
     popOp = {};
     poppedRec;
     zaxis = { x: 0, y: 0, z: 1 };
-
-    clearPops() {
-        if (env.func.unpop) env.func.unpop();
-        tabDone();
-        traceDone();
-        surfaceDone();
-        selectHolesDone();
-    }
-
-    isDark() { return api.space.is_dark() }
-
-    boxColor() {
-        return env.isDark() ? 0x00ddff : 0x0000dd;
-    }
-
-    boxOpacity() {
-        return env.isDark() ? 0.75 : 0.6;
-    }
 }
 
 export const env = new Client();
+
+export function isDark() {
+    return api.space.is_dark()
+}
+
+export function clearPops() {
+    if (env.func.unpop) env.func.unpop();
+    tabDone();
+    traceDone();
+    surfaceDone();
+    selectHolesDone();
+}
 
 function animFn() {
     return [{
@@ -142,52 +136,6 @@ function updateAxisMode(refresh) {
     updateStock();
 }
 
-function mirrorTabs(widget) {
-    let tabs = api.widgets.annotate(widget.id).tab || [];
-    tabs.forEach(rec => {
-        let { id, pos, rot } = rec;
-        let tab = widget.tabs[id];
-        let e = new THREE.Euler().setFromQuaternion(rot);
-        e._z = Math.PI - e._z;
-        let { _x, _y, _z, _w } = rec.rot;
-        let or = new THREE.Quaternion(_x, _y, _z, _w);
-        let nr = new THREE.Quaternion().setFromEuler(e);
-        let ra = or.angleTo(nr);
-        // console.log({or, nr, ra});
-        rec.rot = nr;
-        // let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,0,e._z));
-        // tab.box.geometry.applyMatrix4(m4);
-        tab.box.position.x = pos.x = -pos.x;
-    });
-    SPACE.update();
-}
-
-function rotateTabs(widget, x, y, z) {
-    let tabs = api.widgets.annotate(widget.id).tab || [];
-    tabs.forEach(rec => {
-        let { id, pos, rot } = rec;
-        if (!Array.isArray(rot)) {
-            rot = rot.toArray();
-        }
-        let coff = widget.track.center;
-        let tab = widget.tabs[id];
-        let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(x || 0, y || 0, z || 0));
-        // update position vector
-        let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
-        // update rotation quaternion
-        let [rx, ry, rz, rw] = rot;
-        rec.rot = new THREE.Quaternion().multiplyQuaternions(
-            new THREE.Quaternion(rx, ry, rz, rw),
-            new THREE.Quaternion().setFromRotationMatrix(m4)
-        ).toArray();
-        tab.box.geometry.applyMatrix4(m4);
-        tab.box.position.x = pos.x = vc.x - coff.dx;
-        tab.box.position.y = pos.y = vc.y - coff.dy;
-        tab.box.position.z = pos.z = vc.z;
-    });
-    SPACE.update();
-}
-
 const opAddLaserOn = () => {
     opAdd(env.popOp['laser on'].new());
 };
@@ -259,102 +207,6 @@ const opAddFlip = () => {
     opAdd(env.popOp.flip.new());
 };
 
-const tabHover = function (data) {
-    delbox('tabb');
-    const { int, type, point } = data;
-    const object = int ? int.object : null;
-    const tab = int ? object.tab : null;
-    if (lastTab) {
-        lastTab.box.material.color.r = 0;
-        lastTab = null;
-    }
-    if (tab) {
-        tab.box.material.color.r = 0.5;
-        lastTab = tab;
-        return;
-    }
-    if (type !== 'widget') {
-        iw = null;
-        return;
-    }
-    let n = int.face.normal;
-    iw = int.object.widget;
-    ic = int.point;
-    // only near vertical faces
-    // if (Math.abs(n.z) > 0.3) {
-    //     return;
-    // }
-    showTab = createTabBox(iw, ic, n);
-};
-
-const tabHoverUp = function (int) {
-    delbox('tabb');
-    if (lastTab) {
-        const { widget, box, id } = lastTab;
-        widget.adds.remove(box);
-        widget.mesh.remove(box);
-        delete widget.tabs[id];
-        let ta = api.widgets.annotate(widget.id).tab;
-        let ix = 0;
-        ta.forEach((rec, i) => {
-            if (rec.id === id) {
-                ix = i;
-            }
-        });
-        ta.splice(ix, 1);
-        api.conf.save();
-        widget.saveState();
-        return;
-    }
-    if (!iw) return;
-    let ip = iw.track.pos;
-    let wa = api.widgets.annotate(iw.id);
-    let wt = (wa.tab = wa.tab || []);
-    let pos = {
-        x: showTab.pos.x - ip.x,
-        y: -showTab.pos.z - ip.y,
-        z: showTab.stock.z ?
-            showTab.pos.y + ip.z + (env.isIndexed ? 0 : iw.track.tzoff) :
-            showTab.dim.z / 2,
-    }
-    let id = Date.now();
-    let { dim, rot } = showTab;
-    let rec = { pos, dim, rot, id };
-    wt.push(Object.clone(rec));
-    addWidgetTab(iw, rec);
-    api.conf.save();
-    iw.saveState();
-};
-
-let showTab, lastTab, tab, iw, ic;
-
-const tabAdd = () => {
-    traceDone();
-    alert = api.show.alert("[esc] cancels tab editing");
-    api.feature.hover = true;
-    env.hover = tabHover;
-    env.hoverUp = tabHoverUp;
-};
-
-const tabDone = () => {
-    delbox('tabb');
-    api.hide.alert(alert);
-    api.feature.hover = false;
-    if (lastTab) {
-        lastTab.box.material.color.r = 0;
-        lastTab = null;
-    }
-};
-
-const tabClear = () => {
-    tabDone();
-    api.widgets.all().forEach(widget => {
-        clearTabs(widget);
-        widget.saveState();
-    });
-    api.conf.save();
-};
-
 const traceClear = () => {
     traceDone();
     api.widgets.all().forEach(widget => {
@@ -365,7 +217,7 @@ const traceClear = () => {
 
 const opAdd = (rec) => {
     if (!env.isCamMode) return;
-    env.clearPops();
+    clearPops();
     let oplist = env.current.process.ops;
     if (oplist.indexOf(rec) < 0) {
         if (oplist.length && oplist[oplist.length - 1].type === '|') {
@@ -385,7 +237,7 @@ const opAdd = (rec) => {
 
 const opDel = (rec) => {
     if (!env.isCamMode) return;
-    env.clearPops();
+    clearPops();
     let oplist = env.current.process.ops;
     let pos = oplist.indexOf(rec);
     if (pos >= 0) {
@@ -395,7 +247,7 @@ const opDel = (rec) => {
     }
 };
 
-const opRender = () => {
+export function opRender() {
     let oplist = env.current.process.ops;
     if (!(env.isCamMode && oplist)) {
         return;
@@ -641,7 +493,7 @@ const opRender = () => {
     }
     env.currentIndex = env.isIndexed && !env.isPreview ? index * DEG2RAD : 0;
     updateStock();
-};
+}
 
 export function init() {
 
@@ -717,7 +569,7 @@ export function init() {
             api.uc.setClass(el, 'hide', !env.isCamMode);
         }
         if (!env.isCamMode) {
-            env.clearPops();
+            clearPops();
             tabClear();
         }
         // do not persist traces across page reloads
@@ -732,7 +584,7 @@ export function init() {
         env.isPreview = (mode === VIEWS.PREVIEW);
         env.isAnimate = (mode === VIEWS.ANIMATE);
         animFn().animate_clear(api);
-        env.clearPops();
+        clearPops();
         if (env.isCamMode && env.isPreview) {
             WIDGETS.setAxisIndex(0);
         }
@@ -918,19 +770,19 @@ export function init() {
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
         if (env.isCamMode) {
-            env.clearPops();
+            clearPops();
         }
     });
 
     api.event.on("key.esc", () => {
         if (env.isCamMode) {
-            env.clearPops();
+            clearPops();
         }
     });
 
     api.event.on("selection.scale", () => {
         if (env.isCamMode) {
-            env.clearPops();
+            clearPops();
         }
     });
 
@@ -1011,74 +863,6 @@ export function init() {
     });
 
     createPopOps();
-};
-
-function createTabBox(iw, ic, n) {
-    const { track } = iw;
-    const { stock, bounds, process } = api.conf.get();
-    const { camTabsWidth, camTabsHeight, camTabsDepth, camTabsMidline } = process;
-    const { camZBottom, camStockIndexed } = process;
-    const sz = stock.z || bounds.max.z;
-    const zto = sz - iw.track.top;
-    const zp = (env.camZBottom || camStockIndexed ? env.camZBottom : sz - track.box.d - zto) + (camTabsMidline ? 0 : camTabsHeight / 2);
-    ic.x += n.x * camTabsDepth / 2; // offset from part
-    ic.z -= n.y * camTabsDepth / 2; // offset swap z,y
-    ic.y = zp; // offset swap in world space y,z
-    const rot = new THREE.Quaternion().setFromAxisAngle(zaxis, Math.atan2(n.y, n.x));
-    const pos = { x: ic.x, y: ic.y, z: ic.z };
-    const dim = { x: camTabsDepth, y: camTabsWidth, z: camTabsHeight };
-    const tab = addbox(pos, env.boxColor(), 'tabb', dim, { rotate: rot, opacity: env.boxOpacity() });
-    return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight, stock };
-}
-
-function addWidgetTab(widget, rec) {
-    const { pos, dim, rot, id } = rec;
-    const tabs = widget.tabs = (widget.tabs || {});
-    // prevent duplicate restore from repeated settings load calls
-    if (!tabs[id]) {
-        pos.box = addbox(
-            pos, env.boxColor(), id,
-            dim, { group: widget.mesh, rotate: rot, opacity: env.boxOpacity() }
-        );
-        pos.box.tab = Object.assign({ widget, id }, pos);
-        widget.adds.push(pos.box);
-        tabs[id] = pos;
-    }
-}
-
-export function restoreTabs(widgets) {
-    widgets.forEach(widget => {
-        const tabs = api.widgets.annotate(widget.id).tab || [];
-        tabs.forEach(rec => {
-            let [x, y, z, w] = rec.rot;
-            rec = Object.clone(rec);
-            rec.rot = new THREE.Quaternion(x, y, z, w);
-            addWidgetTab(widget, rec);
-        });
-    });
-}
-
-function clearTabs(widget, skiprec) {
-    Object.values(widget.tabs || {}).forEach(rec => {
-        widget.adds.remove(rec.box);
-        widget.mesh.remove(rec.box);
-    });
-    widget.tabs = {};
-    if (!skiprec) {
-        delete api.widgets.annotate(widget.id).tab;
-    }
-}
-
-function updateTabs() {
-    // update tab color and opacity
-    api.widgets.all().forEach(widget => {
-        Object.values(widget.tabs || {}).forEach(rec => {
-            for (let rec of widget.adds || []) {
-                rec.material.color = new THREE.Color(env.boxColor());
-                rec.material.opacity = env.boxOpacity();
-            }
-        });
-    });
 }
 
 function validateTools(tools) {

@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../kiri/api.js';
-import { env } from './client.js';
+import { env, isDark } from './client.js';
 import { space as SPACE } from '../../moto/space.js';
 
 const { ui: UI } = api;
@@ -82,7 +82,7 @@ export function updateStock() {
         position.x = center.x;
         position.y = center.y;
         position.z = center.z;
-        lines.material.color = new THREE.Color(env.isDark() ? 0x555555 : 0xaaaaaa);
+        lines.material.color = new THREE.Color(isDark() ? 0x555555 : 0xaaaaaa);
     }
 
     SPACE.world.remove(env.camZTop);

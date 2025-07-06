@@ -1,10 +1,11 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../kiri/api.js';
-import { env } from './client.js';
+import { env, clearPops } from './client.js';
 import { lastTrace, setLastTrace } from './cl-trace.js';
 
-export let holeSelOn = false, lastSelHoles;
+export let holeSelOn = false;
+export let lastSelHoles;
 
 /**
  * Client side function to select holes in widgets for CAM operations.
@@ -18,7 +19,7 @@ export async function selectHoles(individual) {
     if (holeSelOn) {
         return selectHolesDone();
     }
-    env.clearPops();
+    clearPops();
     let alert = api.show.alert("analyzing parts...");
     holeSelOn = env.hoveredOp;
     holeSelOn.classList.add("editing");
