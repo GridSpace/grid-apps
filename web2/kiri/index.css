@@ -251,6 +251,9 @@ details[open] summary::after {
     background-color: #333;
     color: #fff;
 }
+.dark option:checked {
+    background-color: var(--blue-1);
+}
 .dark hr {
     border-color: #555;
 }

@@ -429,21 +429,3 @@ CXDLP.render = function(params) {
     }
     return { lines, area };
 }
-
-if (!self.navigator && self.process && self.process.env) {
-    let fs = require('fs');
-    eval(fs.readFileSync("src/add/class.js").toString());
-    let args = process.argv.slice(2);
-    let file = args.shift();
-    // let fpos = 0;
-    let view = new DataView(fs.readFileSync(file).buffer);
-    let read = new DataReader(view, 0);
-    let cxdlp = new CXDLP().read(view);
-    console.log({
-        cxdlp,
-        layers5: cxdlp.layers.slice(0,5),
-        lines1: cxdlp.get_layer_lines(1)
-    });
-} else if (self.navigator) {
-    self.CXDLP = CXDLP;
-}

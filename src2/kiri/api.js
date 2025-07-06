@@ -16,6 +16,7 @@ import { platform } from './platform.js';
 import { selection } from './selection.js';
 import { stats } from '../kiri/stats.js';
 import { widgets } from './widgets.js';
+import { updateTool } from '../kiri-mode/cam/tools.js';
 
 import { LANG } from './lang.js';
 import { LOCAL, SETUP, SECURE } from './main.js';
@@ -153,7 +154,9 @@ export const api = {
     space,
     stacks:         STACKS,
     stats,
-    tool: {},       // kiri-mode/cam/tools.js
+    tool: {
+        update:     updateTool
+    },
     tweak,
     uc:             UC,
     ui: {},         // init.js

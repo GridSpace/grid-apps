@@ -19,6 +19,7 @@ import { stats } from '../kiri/stats.js';
 import { noop, utils } from '../kiri/utils.js';
 import { version } from '../moto/license.js';
 import { Widget } from './widget.js';
+import { showTools } from '../kiri-mode/cam/tools.js';
 
 let { parseOpt, o2js, js2o, ls2o } = utils,
     { COLOR, MODES, VIEWS } = consts,
@@ -119,13 +120,14 @@ export const process = {
 
 export const show = {
     alert() { return api.alerts.show(...arguments) },
-    devices: showDevices,
-    progress: setProgress,
     controls: setControlsVisible,
-    slices: showSlices,
+    devices: showDevices,
+    import() { api.ui.import.style.display = '' },
     layer: setVisibleLayer,
     local: showLocal,
-    import: function() { api.ui.import.style.display = '' }
+    progress: setProgress,
+    slices: showSlices,
+    tools: showTools
 };
 
 export const space = {
