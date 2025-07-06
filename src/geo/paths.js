@@ -553,6 +553,10 @@ function arcToPath( start, end,arcdivs=24,opts) {
 
     }
 
+    if(arcdivs <= 2){
+        return [start.clone(), end.clone()];
+    }
+
     if (center) {
         // center = center.add(start);
         center.r = center.distTo2D(start);
@@ -578,7 +582,7 @@ function arcToPath( start, end,arcdivs=24,opts) {
     //deltas
     let dx = start.x - end.x;
     let dy = start.y - end.y;
-    let dz = start.z - end.z;
+    let dz = end.z - start.z;
 
     // line angles
     let a1 = Math.atan2(center.y - start.y, center.x - start.x) + Math.PI;
@@ -588,23 +592,13 @@ function arcToPath( start, end,arcdivs=24,opts) {
     let ofFull =  Math.abs(ad)/(2*Math.PI);
     let steps =  samePoint? arcdivs : Math.max(Math.floor( arcdivs * ofFull),4);
     let step =  (samePoint? (Math.PI*2) : ad) / steps;
-    let numPoints  = steps/ step;
     let zStart = start.z;
-    let zStep = dz / numPoints;
-    let rot = a1 + step;
+    let zStep = dz / steps;
+    let rot = a1;
 
     //unused deltas
     let da = Math.abs(a1 - a2);
     let dd = Math.sqrt(dx * dx + dy * dy);
-
-    // LOG({index, da, dd, first: pos, last: rec, center, a1, a2, ad, step, steps, rot, line});
-    // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
-
-    // under 1 degree arc and 5mm, convert to straight line
-    // if (da < 0.005 && dd < 5) {
-    //     G0G1(false, [`X${end.x}`, `Y${end.y}`, `E1`]);
-    //     return ;
-    // }
 
     let arr = [] // point accumulator
     for (let i=0; i<=steps-2; i++) {
@@ -619,6 +613,7 @@ function arcToPath( start, end,arcdivs=24,opts) {
         zStart += zStep;
         rot += step;
     }
+    arr.push(end.clone())
     // console.log(arr,start,end);
     return arr
 }
