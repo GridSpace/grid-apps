@@ -8,9 +8,10 @@ import { tip2tipEmit } from '../../geo/paths.js';
 
 function createFilter(op) {
     let filter = slices => slices;
-    if (op.filter) {
+    let filterString = op.filter?.map(l => l.trim()).join('\n');
+    if (filterString) {
         try {
-            const obj = eval(`( ${op.filter.join('\n')} )`);
+            const obj = eval(`( ${filterString} )`);
             let idx = 0;
             if (obj && obj.slices) {
                 const nadd = [];

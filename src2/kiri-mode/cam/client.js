@@ -45,10 +45,9 @@ let isAnimate,
     popOp = {},
     animVer = 0,
     seed = Date.now(),
-    func = {
-        hover: noop,
-        hoverUp: noop,
-    };
+    hover = noop,
+    hoverUp = noop,
+    func = {};
 
 function animFn() {
     return [{
@@ -117,9 +116,9 @@ function updateAxisMode(refresh) {
     }
     const clockOp = cp.ops.filter(op => op.type === '|')[0];
     if (!clockOp) {
-        func.opAdd(popOp['|'].new());
+        opAdd(popOp['|'].new());
     } else {
-        func.opRender();
+        opRender();
     }
     updateStock();
 }
@@ -127,7 +126,7 @@ function updateAxisMode(refresh) {
 // create custom gcode editor function
 function gcodeEditor(label, field) {
     return function() {
-        func.opGCode(label, field);
+        opGCode(label, field);
     }
 }
 
@@ -193,78 +192,78 @@ function zBottom() {
     return api.conf.get().process.camZBottom > 0;
 }
 
-func.opAddLaserOn = () => {
-    func.opAdd(popOp['laser on'].new());
+const opAddLaserOn = () => {
+    opAdd(popOp['laser on'].new());
 };
 
-func.opAddLaserOff = () => {
-    func.opAdd(popOp['laser off'].new());
+const opAddLaserOff = () => {
+    opAdd(popOp['laser off'].new());
 };
 
-func.opAddGCode = () => {
-    func.opAdd(popOp.gcode.new());
+const opAddGCode = () => {
+    opAdd(popOp.gcode.new());
 };
 
-func.opAddIndex = () => {
-    func.opAdd(popOp.index.new());
+const opAddIndex = () => {
+    opAdd(popOp.index.new());
 };
 
-func.opAddLevel = () => {
-    func.opAdd(popOp.level.new());
+const opAddLevel = () => {
+    opAdd(popOp.level.new());
 };
 
-func.opAddRough = () => {
-    func.opAdd(popOp.rough.new());
+const opAddRough = () => {
+    opAdd(popOp.rough.new());
 };
 
-func.opAddOutline = () => {
-    func.opAdd(popOp.outline.new());
+const opAddOutline = () => {
+    opAdd(popOp.outline.new());
 };
 
-func.opAddPocket = () => {
-    func.traceDone();
-    func.surfaceDone();
+const opAddPocket = () => {
+    traceDone();
+    surfaceDone();
     let rec = popOp.pocket.new();
     rec.surfaces = { /* widget.id: [ faces... ] */ };
-    func.opAdd(rec);
+    opAdd(rec);
 };
 
-func.opAddContour = (axis) => {
+const opAddContour = (axis) => {
     let rec = popOp.contour.new();
     rec.axis = axis.toUpperCase();
-    func.opAdd(rec);
+    opAdd(rec);
 };
 
-func.opAddLathe = (axis) => {
+const opAddLathe = (axis) => {
     let rec = popOp.lathe.new();
     rec.axis = axis.toUpperCase();
-    func.opAdd(rec);
+    opAdd(rec);
 };
 
-func.opAddTrace = () => {
+const opAddTrace = () => {
     let rec = popOp.trace.new();
     rec.areas = { /* widget.id: [ polygons... ] */ };
-    func.opAdd(rec);
+    opAdd(rec);
 };
 
-func.opAddDrill = () => {
+const opAddDrill = () => {
     let rec = popOp.drill.new();
     rec.drills = {  };
-    func.opAdd(rec);
+    opAdd(rec);
 };
 
-func.opAddRegister = (axis, points) => {
+const opAddRegister = (axis, points) => {
     let rec = popOp.register.new();
     rec.axis = axis.toUpperCase();
     rec.points = points;
-    func.opAdd(rec);
+    opAdd(rec);
 };
 
-func.opAddFlip = () => {
-    func.opAdd(popOp.flip.new());
+const opAddFlip = () => {
+    opAdd(popOp.flip.new());
 };
 
-func.opGCode = (label, field = 'gcode') => {
+const opGCode = (label, field = 'gcode') => {
     api.dialog.show('any');
     const { c_gcode } = h.bind(
         $('mod-any'), h.div({ id: "camop_dialog" }, [
@@ -284,7 +283,7 @@ func.opGCode = (label, field = 'gcode') => {
     c_gcode.focus();
 };
 
-func.tabHover = function(data) {
+const tabHover = function(data) {
     delbox('tabb');
     const { int, type, point } = data;
     const object = int ? int.object : null;
@@ -312,7 +311,7 @@ func.tabHover = function(data) {
     showTab = createTabBox(iw, ic, n);
 };
 
-func.tabHoverUp = function(int) {
+const tabHoverUp = function(int) {
     delbox('tabb');
     if (lastTab) {
         const {widget, box, id} = lastTab;
@@ -353,11 +352,11 @@ func.tabHoverUp = function(int) {
 
 // SURFACE FUNCS
 let surfaceOn = false, lastWidget;
-func.surfaceAdd = (ev) => {
+const surfaceAdd = (ev) => {
     if (surfaceOn) {
-        return func.surfaceDone();
+        return surfaceDone();
     }
-    func.clearPops();
+    clearPops();
     alert = api.show.alert("analyzing surfaces...", 1000);
     let surfaces = poppedRec.surfaces;
     let radians = poppedRec.follow * DEG2RAD;
@@ -387,7 +386,7 @@ func.surfaceAdd = (ev) => {
     };
 };
 
-func.surfaceDone = () => {
+const surfaceDone = () => {
     if (!(surfaceOn && poppedRec && poppedRec.surfaces)) {
         return;
     }
@@ -408,18 +407,19 @@ func.surfaceDone = () => {
 
 // TRACE FUNCS
 let traceOn = false, lastTrace;
-func.traceAdd = (ev) => { 
+
+const traceAdd = (ev) => { 
     if (traceOn) {
-        return func.traceDone();
+        return traceDone();
     }
-    func.clearPops();
+    clearPops();
     alert = api.show.alert("analyzing parts...", 1000);
     traceOn = hoveredOp;
     traceOn.classList.add("editing");
     api.feature.hover = true;
     api.feature.hoverAdds = true;
-    func.hover = func.traceHover;
-    func.hoverUp = func.traceHoverUp;
+    hover = traceHover;
+    hoverUp = traceHoverUp;
     CAM.traces((ids) => {
         api.hide.alert(alert);
         alert = api.show.alert("[esc] cancels trace editing");
@@ -464,17 +464,17 @@ func.traceAdd = (ev) => {
                 let match = areas.filter(arr => poly.matches(arr));
                 if (match.length > 0) {
                     if (!mesh.selected) {
-                        func.traceToggle(mesh, true);
+                        traceToggle(mesh, true);
                     }
                 } else if (mesh.selected) {
-                    func.traceToggle(mesh, true);
+                    traceToggle(mesh, true);
                 }
             });
         });
     }, poppedRec.select === 'lines');
 };
 
-func.traceDone = () => {
+const traceDone = () => {
     if (!traceOn) {
         return;
     }
@@ -494,15 +494,15 @@ func.traceDone = () => {
     });
 };
 
-func.clearPops = () => {
+const clearPops = () => {
     if (func.unpop) func.unpop();
-    func.tabDone();
-    func.traceDone();
-    func.surfaceDone();
-    func.selectHolesDone();
+    tabDone();
+    traceDone();
+    surfaceDone();
+    selectHolesDone();
 };
 
-func.traceHover = function(data) {
+const traceHover = function(data) {
     if (lastTrace) {
         let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
         color.r = colorSave.r;
@@ -529,23 +529,23 @@ func.traceHover = function(data) {
     color.setHex(isDark() ? 0x0066ff : 0x0000ff);
 };
 
-func.traceHoverUp = function(int, ev) {
+const traceHoverUp = function(int, ev) {
     if (!int) return;
     let { object } = int;
-    func.traceToggle(object);
+    traceToggle(object);
     if (ev.metaKey || ev.ctrlKey) {
         let { selected } = object;
         let { widget, poly } = object.trace;
         let avgZ = poly.avgZ();
         for (let add of widget.adds) {
             if (add.trace && add.selected !== selected && add.trace.poly.onZ(avgZ)) {
-                func.traceToggle(add);
+                traceToggle(add);
             }
         }
     }
 };
 
-func.traceToggle = function(obj, skip) {
+const traceToggle = function(obj, skip) {
     let material = obj.material[0] || obj.material;
     if (!material) return;
     let { color, colorSave } = material;
@@ -582,19 +582,19 @@ let holeSelOn = false, lastSelHoles;
  * @param {boolean} individual - select all holes, false to only select
  *  holes of tool diameter.
  */
-func.selectHoles = async function(individual){
+const selectHoles = async function(individual){
     // console.log("client individual selected",individual)
     if (holeSelOn) {
-        return func.selectHolesDone();
+        return selectHolesDone();
     }
-    func.clearPops();
+    clearPops();
     let alert = api.show.alert("analyzing parts...");
     holeSelOn = hoveredOp;
     holeSelOn.classList.add("editing");
     api.feature.hover = true;
     api.feature.hoverAdds = true;
-    func.hover = func.selectHolesHover;
-    func.hoverUp = func.selectHolesHoverUp;
+    hover = selectHolesHover;
+    hoverUp = selectHolesHoverUp;
 
     const widgets = api.widgets.all()
     /**
@@ -705,7 +705,7 @@ func.selectHoles = async function(individual){
     api.widgets.opacity(0.8);
 }
 
-func.selectHolesHover = function(data) {
+const selectHolesHover = function(data) {
     //not used right now. may be useful in the future
     if (lastTrace) {
         let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
@@ -720,17 +720,17 @@ func.selectHolesHover = function(data) {
     }
 }
 
-func.selectHolesHoverUp = function(int, ev) {
+const selectHolesHoverUp = function(int, ev) {
     if (!int) return; //if not a hole mesh return
         let { object } = int;
-        func.selectHoleToggle(object);
+        selectHoleToggle(object);
 }
 
 /**
  * Toggle the selection of a hole mesh and update its color
  * @param {Object3D} mesh - the hole mesh to toggle
  */
-func.selectHoleToggle = function(mesh) {
+const selectHoleToggle = function(mesh) {
     let {hole} = mesh
     if(!hole) return
     hole.selected = !hole.selected;
@@ -742,7 +742,7 @@ func.selectHoleToggle = function(mesh) {
  * and also clears the widget.adds array.
  * @param {Object} widget - the widget with the drills array to clear
  */
-func.clearHolesRec = (widget)=>{
+const clearHolesRec = (widget)=>{
     if(widget.drills){
         widget.drills.forEach(rec=>{
         })
@@ -757,7 +757,7 @@ func.clearHolesRec = (widget)=>{
  * Removes all adds from the scene, hides the alert, and resets the opacity of the widgets.
  * Also resets the hover features and the editing class on the holeSelOn html element.
  */
-func.selectHolesDone = () => {
+const selectHolesDone = () => {
     if (!holeSelOn) {
         return;
     }
@@ -777,7 +777,7 @@ func.selectHolesDone = () => {
     });
 };
 
-func.opFlip = () => {
+const opFlip = () => {
     api.view.set_arrange();
     let widgets = api.widgets.all();
     let { process } = current;
@@ -848,10 +848,327 @@ func.opFlip = () => {
         }
     }
     if (add2) {
-        func.opAdd(poppedRec);
+        opAdd(poppedRec);
     } else {
-        func.opRender();
+        opRender();
     }
+};
+
+let showTab, lastTab, tab, iw, ic;
+
+const tabAdd = () => {
+    traceDone();
+    alert = api.show.alert("[esc] cancels tab editing");
+    api.feature.hover = true;
+    hover = tabHover;
+    hoverUp = tabHoverUp;
+};
+
+const tabDone = () => {
+    delbox('tabb');
+    api.hide.alert(alert);
+    api.feature.hover = false;
+    if (lastTab) {
+        lastTab.box.material.color.r = 0;
+        lastTab = null;
+    }
+};
+
+const tabClear = () => {
+    tabDone();
+    api.widgets.all().forEach(widget => {
+        clearTabs(widget);
+        widget.saveState();
+    });
+    api.conf.save();
+};
+
+const traceClear = () => {
+    traceDone();
+    api.widgets.all().forEach(widget => {
+        unselectTraces(widget);
+    });
+    api.conf.save();
+};
+
+const opAdd = (rec) => {
+    if (!isCamMode) return;
+    clearPops();
+    let oplist = current.process.ops;
+    if (oplist.indexOf(rec) < 0) {
+        if (oplist.length && oplist[oplist.length-1].type === '|') {
+            oplist.splice(oplist.length-1,0,rec);
+        } else {
+            oplist.push(rec);
+        }
+        let fpos = oplist.findWith(rec => rec.type === 'flip');
+        if (fpos >= 0 && oplist.length > 1) {
+            let oprec = oplist.splice(fpos,1);
+            oplist.push(oprec[0]);
+        }
+        api.conf.save();
+        opRender();
+    }
+};
+
+const opDel = (rec) => {
+    if (!isCamMode) return;
+    clearPops();
+    let oplist = current.process.ops;
+    let pos = oplist.indexOf(rec);
+    if (pos >= 0) {
+        oplist.splice(pos,1);
+        api.conf.save();
+        opRender();
+    }
+};
+
+const opRender = () => {
+    let oplist = current.process.ops;
+    if (!(isCamMode && oplist)) {
+        return;
+    }
+    oplist = oplist.filter(rec => !Array.isArray(rec));
+    let mark = Date.now();
+    let html = [];
+    let bind = {};
+    let scale = api.view.unit_scale();
+    let notime = false;
+    oplist.forEach((rec,i) => {
+        let title = '';
+        let clock = rec.type === '|';
+        let label = clock ? `` : rec.type;
+        let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
+        let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
+        if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
+        if (notable?.length) label += ` (${notable[0].slice(1)})`;
+        html.appendAll([
+            `<div id="${mark+i}" class="${clazz.join(' ')}"${title}>`,
+            `<label class="label">${label}</label>`,
+            clock ? '' :
+            `<label id="${mark+i}-x" class="del"><i class="fa fa-trash"></i></label>`,
+            `</div>`
+        ]);
+        bind[mark+i] = rec;
+        notime = notime || clock;
+    });
+    let listel = $('oplist');
+    listel.innerHTML = html.join('');
+    let bounds = [];
+    let unpop = null;
+    let index = 0;
+    let indexing = true;
+    // drag and drop re-ordering
+    for (let [id, rec] of Object.entries(bind)) {
+        let type = rec.type;
+        let clock = type === '|';
+        if (!clock) {
+            $(`${id}-x`).onmousedown = (ev) => {
+                ev.stopPropagation();
+                ev.preventDefault();
+                surfaceDone();
+                traceDone();
+                tabDone();
+                opDel(rec);
+            };
+        } else {
+            indexing = false;
+        }
+        let el = $(id);
+        if (!isIndexed && type === 'lathe') {
+            rec.disabled = true;
+        }
+        if (!hasSharedArrays && (type === 'contour' || type === 'lathe')) {
+            rec.disabled = true;
+        }
+        if (rec.disabled) {
+            el.classList.add("disabled");
+        }
+        bounds.push(el);
+        let timer = null;
+        let inside = true;
+        let popped = false;
+        let poprec = popOp[rec.type];
+        if (type === 'index' && indexing && !rec.disabled) {
+            index = rec.absolute ? rec.degrees : index + rec.degrees;
+        }
+        el.rec = rec;
+        el.unpop = () => {
+            let pos = [...el.childNodes].indexOf(poprec.div);
+            if (pos >= 0) {
+                el.removeChild(poprec.div);
+            }
+            popped = false;
+        };
+        function onEnter(ev) {
+            if ((surfaceOn || traceOn) && poppedRec != rec) {
+                return;
+            }
+            if (popped && poppedRec != rec) {
+                surfaceDone();
+                traceDone();
+            }
+            if (unpop) unpop();
+            func.unpop = unpop = el.unpop;
+            inside = true;
+            // pointer to current rec for trace editing
+            poppedRec = rec;
+            popped = true;
+            poprec.use(rec);
+            hoveredOp = el;
+            if (!clock) {
+                // offset Y position of pop div by % of Y screen location of button
+                el.appendChild(poprec.div);
+                poprec.addNote();
+                const { innerHeight } = window;
+                const brect = ev.target.getBoundingClientRect();
+                const prect = poprec.div.getBoundingClientRect();
+                const pcty = (brect.top / innerHeight) * 0.9;
+                const offpx = -pcty * prect.height;
+                poprec.div.style.transform = `translateY(${offpx}px)`;
+            }
+            // option click event appears latent
+            // and overides the sticky settings
+            setTimeout(() => {
+                UC.setSticky(false);
+            }, 0);
+        }
+        function onLeave(ev) {
+            inside = false;
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                if (!inside && poprec.using(rec) && !UC.isSticky()) {
+                    el.unpop();
+                }
+            }, 250);
+        }
+        function onDown(ev) {
+            if (!ev.target.rec) {
+                // only trigger on operation buttons bound to recs
+                return;
+            }
+            let mobile = ev.touches;
+            surfaceDone();
+            traceDone();
+            let target = ev.target, clist = target.classList;
+            if (!clist.contains("draggable")) {
+                return;
+            }
+            // toggle enable / disable
+            if (!clock && (ev.ctrlKey || ev.metaKey)) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                rec.disabled = !rec.disabled;
+                for (let op of ev.shiftKey ? oplist : [ rec ]) {
+                    if (op !== rec) {
+                        op.disabled = op.type !== '|' ? !rec.disabled : false;
+                    }
+                }
+                for (let el of bounds) {
+                    if (el.rec.disabled) {
+                        el.classList.add("disabled");
+                    } else {
+                        el.classList.remove("disabled");
+                    }
+                }
+                if (isIndexed) {
+                    updateIndex();
+                }
+                return true;
+            }
+            // duplicate op
+            if (!clock && ev.shiftKey) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                oplist = current.process.ops;
+                oplist.push(Object.clone(rec));
+                api.conf.save();
+                opRender();
+                return true;
+            }
+            clist.add("drag");
+            ev.stopPropagation();
+            ev.preventDefault();
+            let tracker = UI.tracker;
+            tracker.style.display = 'block';
+            let cancel = tracker.onmouseup = (ev) => {
+                oplist = current.process.ops;
+                clist.remove("drag");
+                tracker.style.display = 'none';
+                if (ev) {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                }
+                oplist.length = 0;
+                for (let child of listel.childNodes) {
+                    oplist.push(child.rec);
+                }
+                api.conf.save();
+                opRender();
+                if (mobile) {
+                    el.ontouchmove = onDown;
+                    el.ontouchend = undefined;
+                }
+            };
+            function onMove(ev) {
+                ev.stopPropagation();
+                ev.preventDefault();
+                if (ev.buttons === 0) {
+                    return cancel();
+                }
+                for (let el of bounds) {
+                    if (el === target) continue;
+                    let rect = el.getBoundingClientRect();
+                    let top = rect.top;
+                    let bottom = rect.bottom;// + rect.height;
+                    let tar = mobile ? ev.touches[0] : ev;
+                    if (tar.pageY >= top && tar.pageY <= bottom) {
+                        let mid = (top + bottom) / 2;
+                        try { listel.removeChild(target); } catch (e) { }
+                        el.insertAdjacentElement(tar.pageY < mid ? "beforebegin" : "afterend", target);
+                    }
+                }
+            }
+            tracker.onmousemove = onMove;
+            if (mobile) {
+                el.ontouchmove = onMove;
+                el.ontouchend = cancel;
+            }
+        }
+        if (SPACE.info.mob) {
+            let touched = false;
+            el.ontouchstart = (ev) => {
+                touched = true;
+                if (poppedRec === rec && popped) {
+                    onLeave(ev);
+                } else {
+                    onEnter(ev);
+                }
+            };
+            el.ontouchmove = onDown;
+            el.onmouseenter = (ev) => {
+                if (touched) {
+                    // touches block mouse events on touchscreen PCs
+                    // which are often sent along with touch events
+                    // but when not touched, allow the mouse to work
+                    return;
+                }
+                el.onmousedown = onDown;
+                el.onmouseleave = onLeave;
+                onEnter(ev);
+            };
+        } else {
+            el.onmousedown = onDown;
+            el.onmouseenter = onEnter;
+            el.onmouseleave = onLeave;
+        }
+    }
+    if (lastMode !== VIEWS.ANIMATE) {
+        // update widget rotations from timeline marker
+        WIDGETS.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
+    }
+    currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
+    updateStock();
 };
 
 export function init() {
@@ -860,17 +1177,11 @@ export function init() {
         // console.log({ poppedRec });
         poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
         poppedRec.absolute = true;
-        func.opRender();
+        opRender();
         updateStock();
     });
 
-    api.event.on("cam.trace.clear", func.traceClear = () => {
-        func.traceDone();
-        api.widgets.all().forEach(widget => {
-            unselectTraces(widget);
-        });
-        api.conf.save();
-    });
+    api.event.on("cam.trace.clear", traceClear);
 
     api.event.on("cam.parse.gerber", opts => {
         const { data, mesh } = opts;
@@ -934,12 +1245,12 @@ export function init() {
             api.uc.setClass(el, 'hide', !isCamMode);
         }
         if (!isCamMode) {
-            func.clearPops();
-            func.tabClear();
+            clearPops();
+            tabClear();
         }
         // do not persist traces across page reloads
-        func.traceClear();
-        func.opRender();
+        traceClear();
+        opRender();
         updateStock();
     });
 
@@ -949,12 +1260,12 @@ export function init() {
         isPreview = (mode === VIEWS.PREVIEW);
         isAnimate = (mode === VIEWS.ANIMATE);
         animFn().animate_clear(api);
-        func.clearPops();
+        clearPops();
         if (isCamMode && isPreview) {
             WIDGETS.setAxisIndex(0);
         }
         updateStock();
-        func.opRender();
+        opRender();
         api.uc.setVisible($('layer-animate'), isAnimate && isCamMode);
     });
 
@@ -978,12 +1289,12 @@ export function init() {
         updateStock();
         updateAxisMode();
         if (!poppedRec) {
-            func.opRender();
+            opRender();
         }
     });
 
     api.event.on("settings.load", (settings) => {
-        func.opRender();
+        opRender();
         if (!isCamMode) return;
         validateTools(settings.tools);
         restoreTabs(api.widgets.all());
@@ -1034,7 +1345,7 @@ export function init() {
     api.event.on([
         "selection.scale",
     ], () => {
-        func.tabClear();
+        tabClear();
     });
 
     api.event.on([
@@ -1066,13 +1377,13 @@ export function init() {
         let settings = api.conf.get();
         let { process, device } = settings;
         switch (ev.target.innerText.toLowerCase()) {
-            case "index": return func.opAddIndex();
-            case "laser on": return func.opAddLaserOn();
-            case "laser off": return func.opAddLaserOff();
-            case "gcode": return func.opAddGCode();
-            case "level": return func.opAddLevel();
-            case "rough": return func.opAddRough();
-            case "outline": return func.opAddOutline();
+            case "index": return opAddIndex();
+            case "laser on": return opAddLaserOn();
+            case "laser off": return opAddLaserOff();
+            case "gcode": return opAddGCode();
+            case "level": return opAddLevel();
+            case "rough": return opAddRough();
+            case "outline": return opAddOutline();
             case "contour":
                 let caxis = "X";
                 for (let op of current.process.ops) {
@@ -1080,7 +1391,7 @@ export function init() {
                         caxis = "Y";
                     }
                 }
-                return func.opAddContour(caxis);
+                return opAddContour(caxis);
             case "lathe":
                 let laxis = "X";
                 for (let op of current.process.ops) {
@@ -1088,11 +1399,11 @@ export function init() {
                         laxis = "Y";
                     }
                 }
-                return func.opAddLathe(laxis);
-            case "register": return func.opAddRegister('X', 2);
-            case "drill": return func.opAddDrill();
-            case "trace": return func.opAddTrace();
-            case "pocket": return func.opAddPocket();
+                return opAddLathe(laxis);
+            case "register": return opAddRegister('X', 2);
+            case "drill": return opAddDrill();
+            case "trace": return opAddTrace();
+            case "pocket": return opAddPocket();
             case "flip":
                 // only one flip op permitted
                 for (let op of current.process.ops) {
@@ -1100,7 +1411,7 @@ export function init() {
                         return;
                     }
                 }
-                return func.opAddFlip();
+                return opAddFlip();
         }
     };
 
@@ -1109,344 +1420,45 @@ export function init() {
         let process = api.conf.get().process;
         switch (target) {
             case api.ui.tabAdd:
-                return func.tabAdd();
+                return tabAdd();
             case api.ui.tabDun:
-                return func.tabDone();
+                return tabDone();
             case api.ui.tabClr:
                 api.uc.confirm("clear tabs?").then(ok => {
-                    if (ok) func.tabClear();
+                    if (ok) tabClear();
                 });
                 break;
         }
     });
 
-    // OPS FUNCS
-    api.event.on("cam.op.add", func.opAdd = (rec) => {
-        if (!isCamMode) return;
-        func.clearPops();
-        let oplist = current.process.ops;
-        if (oplist.indexOf(rec) < 0) {
-            if (oplist.length && oplist[oplist.length-1].type === '|') {
-                oplist.splice(oplist.length-1,0,rec);
-            } else {
-                oplist.push(rec);
-            }
-            let fpos = oplist.findWith(rec => rec.type === 'flip');
-            if (fpos >= 0 && oplist.length > 1) {
-                let oprec = oplist.splice(fpos,1);
-                oplist.push(oprec[0]);
-            }
-            api.conf.save();
-            func.opRender();
-        }
-    });
+    api.event.on("cam.op.add", opAdd);
 
-    api.event.on("cam.op.del", func.opDel = (rec) => {
-        if (!isCamMode) return;
-        func.clearPops();
-        let oplist = current.process.ops;
-        let pos = oplist.indexOf(rec);
-        if (pos >= 0) {
-            oplist.splice(pos,1);
-            api.conf.save();
-            func.opRender();
-        }
-    });
+    api.event.on("cam.op.del", opDel);
 
-    // (re)render the re-orderable op list
-    api.event.on("cam.op.render", func.opRender = () => {
-        let oplist = current.process.ops;
-        if (!(isCamMode && oplist)) {
-            return;
-        }
-        oplist = oplist.filter(rec => !Array.isArray(rec));
-        let mark = Date.now();
-        let html = [];
-        let bind = {};
-        let scale = api.view.unit_scale();
-        let notime = false;
-        oplist.forEach((rec,i) => {
-            let title = '';
-            let clock = rec.type === '|';
-            let label = clock ? `` : rec.type;
-            let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
-            let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
-            if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
-            if (notable?.length) label += ` (${notable[0].slice(1)})`;
-            html.appendAll([
-                `<div id="${mark+i}" class="${clazz.join(' ')}"${title}>`,
-                `<label class="label">${label}</label>`,
-                clock ? '' :
-                `<label id="${mark+i}-x" class="del"><i class="fa fa-trash"></i></label>`,
-                `</div>`
-            ]);
-            bind[mark+i] = rec;
-            notime = notime || clock;
-        });
-        let listel = $('oplist');
-        listel.innerHTML = html.join('');
-        let bounds = [];
-        let unpop = null;
-        let index = 0;
-        let indexing = true;
-        // drag and drop re-ordering
-        for (let [id, rec] of Object.entries(bind)) {
-            let type = rec.type;
-            let clock = type === '|';
-            if (!clock) {
-                $(`${id}-x`).onmousedown = (ev) => {
-                    ev.stopPropagation();
-                    ev.preventDefault();
-                    func.surfaceDone();
-                    func.traceDone();
-                    func.tabDone();
-                    func.opDel(rec);
-                };
-            } else {
-                indexing = false;
-            }
-            let el = $(id);
-            if (!isIndexed && type === 'lathe') {
-                rec.disabled = true;
-            }
-            if (!hasSharedArrays && (type === 'contour' || type === 'lathe')) {
-                rec.disabled = true;
-            }
-            if (rec.disabled) {
-                el.classList.add("disabled");
-            }
-            bounds.push(el);
-            let timer = null;
-            let inside = true;
-            let popped = false;
-            let poprec = popOp[rec.type];
-            if (type === 'index' && indexing && !rec.disabled) {
-                index = rec.absolute ? rec.degrees : index + rec.degrees;
-            }
-            el.rec = rec;
-            el.unpop = () => {
-                let pos = [...el.childNodes].indexOf(poprec.div);
-                if (pos >= 0) {
-                    el.removeChild(poprec.div);
-                }
-                popped = false;
-            };
-            function onEnter(ev) {
-                if ((surfaceOn || traceOn) && poppedRec != rec) {
-                    return;
-                }
-                if (popped && poppedRec != rec) {
-                    func.surfaceDone();
-                    func.traceDone();
-                }
-                if (unpop) unpop();
-                unpop = func.unpop = el.unpop;
-                inside = true;
-                // pointer to current rec for trace editing
-                poppedRec = rec;
-                popped = true;
-                poprec.use(rec);
-                hoveredOp = el;
-                if (!clock) {
-                    // offset Y position of pop div by % of Y screen location of button
-                    el.appendChild(poprec.div);
-                    poprec.addNote();
-                    const { innerHeight } = window;
-                    const brect = ev.target.getBoundingClientRect();
-                    const prect = poprec.div.getBoundingClientRect();
-                    const pcty = (brect.top / innerHeight) * 0.9;
-                    const offpx = -pcty * prect.height;
-                    poprec.div.style.transform = `translateY(${offpx}px)`;
-                }
-                // option click event appears latent
-                // and overides the sticky settings
-                setTimeout(() => {
-                    UC.setSticky(false);
-                }, 0);
-            }
-            function onLeave(ev) {
-                inside = false;
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    if (!inside && poprec.using(rec) && !UC.isSticky()) {
-                        el.unpop();
-                    }
-                }, 250);
-            }
-            function onDown(ev) {
-                if (!ev.target.rec) {
-                    // only trigger on operation buttons bound to recs
-                    return;
-                }
-                let mobile = ev.touches;
-                func.surfaceDone();
-                func.traceDone();
-                let target = ev.target, clist = target.classList;
-                if (!clist.contains("draggable")) {
-                    return;
-                }
-                // toggle enable / disable
-                if (!clock && (ev.ctrlKey || ev.metaKey)) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    rec.disabled = !rec.disabled;
-                    for (let op of ev.shiftKey ? oplist : [ rec ]) {
-                        if (op !== rec) {
-                            op.disabled = op.type !== '|' ? !rec.disabled : false;
-                        }
-                    }
-                    for (let el of bounds) {
-                        if (el.rec.disabled) {
-                            el.classList.add("disabled");
-                        } else {
-                            el.classList.remove("disabled");
-                        }
-                    }
-                    if (isIndexed) {
-                        updateIndex();
-                    }
-                    return true;
-                }
-                // duplicate op
-                if (!clock && ev.shiftKey) {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    oplist = current.process.ops;
-                    oplist.push(Object.clone(rec));
-                    api.conf.save();
-                    func.opRender();
-                    return true;
-                }
-                clist.add("drag");
-                ev.stopPropagation();
-                ev.preventDefault();
-                let tracker = UI.tracker;
-                tracker.style.display = 'block';
-                let cancel = tracker.onmouseup = (ev) => {
-                    oplist = current.process.ops;
-                    clist.remove("drag");
-                    tracker.style.display = 'none';
-                    if (ev) {
-                        ev.stopPropagation();
-                        ev.preventDefault();
-                    }
-                    oplist.length = 0;
-                    for (let child of listel.childNodes) {
-                        oplist.push(child.rec);
-                    }
-                    api.conf.save();
-                    func.opRender();
-                    if (mobile) {
-                        el.ontouchmove = onDown;
-                        el.ontouchend = undefined;
-                    }
-                };
-                function onMove(ev) {
-                    ev.stopPropagation();
-                    ev.preventDefault();
-                    if (ev.buttons === 0) {
-                        return cancel();
-                    }
-                    for (let el of bounds) {
-                        if (el === target) continue;
-                        let rect = el.getBoundingClientRect();
-                        let top = rect.top;
-                        let bottom = rect.bottom;// + rect.height;
-                        let tar = mobile ? ev.touches[0] : ev;
-                        if (tar.pageY >= top && tar.pageY <= bottom) {
-                            let mid = (top + bottom) / 2;
-                            try { listel.removeChild(target); } catch (e) { }
-                            el.insertAdjacentElement(tar.pageY < mid ? "beforebegin" : "afterend", target);
-                        }
-                    }
-                }
-                tracker.onmousemove = onMove;
-                if (mobile) {
-                    el.ontouchmove = onMove;
-                    el.ontouchend = cancel;
-                }
-            }
-            if (SPACE.info.mob) {
-                let touched = false;
-                el.ontouchstart = (ev) => {
-                    touched = true;
-                    if (poppedRec === rec && popped) {
-                        onLeave(ev);
-                    } else {
-                        onEnter(ev);
-                    }
-                };
-                el.ontouchmove = onDown;
-                el.onmouseenter = (ev) => {
-                    if (touched) {
-                        // touches block mouse events on touchscreen PCs
-                        // which are often sent along with touch events
-                        // but when not touched, allow the mouse to work
-                        return;
-                    }
-                    el.onmousedown = onDown;
-                    el.onmouseleave = onLeave;
-                    onEnter(ev);
-                };
-            } else {
-                el.onmousedown = onDown;
-                el.onmouseenter = onEnter;
-                el.onmouseleave = onLeave;
-            }
-        }
-        if (lastMode !== VIEWS.ANIMATE) {
-            // update widget rotations from timeline marker
-            WIDGETS.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
-        }
-        currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
-        updateStock();
-    });
+    api.event.on("cam.op.render", opRender);
 
-    // TAB FUNCS
-    let showTab, lastTab, tab, iw, ic;
-    api.event.on("cam.tabs.add", func.tabAdd = () => {
-        func.traceDone();
-        alert = api.show.alert("[esc] cancels tab editing");
-        api.feature.hover = true;
-        func.hover = func.tabHover;
-        func.hoverUp = func.tabHoverUp;
-    });
+    api.event.on("cam.tabs.add", tabAdd);
 
-    api.event.on("cam.tabs.done", func.tabDone = () => {
-        delbox('tabb');
-        api.hide.alert(alert);
-        api.feature.hover = false;
-        if (lastTab) {
-            lastTab.box.material.color.r = 0;
-            lastTab = null;
-        }
-    });
+    api.event.on("cam.tabs.done", tabDone);
 
-    api.event.on("cam.tabs.clear", func.tabClear = () => {
-        func.tabDone();
-        api.widgets.all().forEach(widget => {
-            clearTabs(widget);
-            widget.saveState();
-        });
-        api.conf.save();
-    });
+    api.event.on("cam.tabs.clear", tabClear);
 
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
         if (isCamMode) {
-            func.clearPops();
+            clearPops();
         }
     });
 
     api.event.on("key.esc", () => {
         if (isCamMode) {
-            func.clearPops();
+            clearPops();
         }
     });
 
     api.event.on("selection.scale", () => {
         if (isCamMode) {
-            func.clearPops();
+            clearPops();
         }
     });
 
@@ -1455,7 +1467,7 @@ export function init() {
             return;
         }
         if (traceOn) {
-            func.traceDone();
+            traceDone();
         }
         unselectTraces(widget);
         if (flipping) {
@@ -1475,12 +1487,12 @@ export function init() {
             return;
         }
         if (traceOn) {
-            func.traceDone();
+            traceDone();
         }
         if (holeSelOn) {
-            func.selectHolesDone();
+            selectHolesDone();
         }
-        func.clearHolesRec(widget)
+        clearHolesRec(widget)
         unselectTraces(widget);
         if (flipping) {
             return;
@@ -1494,16 +1506,16 @@ export function init() {
         }
         let {widget, x, y, z} = rot;
         if (traceOn) {
-            func.traceDone();
+            traceDone();
         }
         unselectTraces(widget);
         if (holeSelOn) {
-            func.selectHolesDone();
+            selectHolesDone();
         }
         if (flipping) {
             return;
         }
-        func.clearHolesRec(widget)
+        clearHolesRec(widget)
         if (x || y) {
             clearTabs(widget);
         } else {
@@ -1516,14 +1528,14 @@ export function init() {
             return;
         }
         let { object, event } = rec;
-        func.hoverUp(object, event);
+        hoverUp(object, event);
     });
 
     api.event.on("mouse.hover", data => {
         if (!isCamMode) {
             return;
         }
-        func.hover(data);
+        hover(data);
     });
 
     createPopOp('level', {
@@ -1751,7 +1763,7 @@ export function init() {
         ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
         exp_end:  UC.endExpand(),
         sep:      UC.newBlank({class:"pop-sep"}),
-        menu:     UC.newRow([ UC.newButton("select", func.traceAdd) ], {class:"ext-buttons f-row"}),
+        menu:     UC.newRow([ UC.newButton("select", traceAdd) ], {class:"ext-buttons f-row"}),
     };
 
     createPopOp('pocket', {
@@ -1798,7 +1810,7 @@ export function init() {
         ov_conv:   UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
         exp_end:   UC.endExpand(),
         sep:       UC.newBlank({class:"pop-sep"}),
-        menu:      UC.newRow([ UC.newButton("select", func.surfaceAdd) ], {class:"ext-buttons f-row"}),
+        menu:      UC.newRow([ UC.newButton("select", surfaceAdd) ], {class:"ext-buttons f-row"}),
     };
 
     createPopOp('drill', {
@@ -1827,8 +1839,8 @@ export function init() {
         precision:UC.newInput(LANG.cd_prcn_s, {title:LANG.cd_prcn_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),
         sep:      UC.newBlank({class:"pop-sep", }),
         actions: UC.newRow([
-            UC.newButton(LANG.select, ()=>func.selectHoles(true), {title:LANG.cd_seli_l}),
-            UC.newButton(LANG.cd_sela_s, ()=>func.selectHoles(false), {title:LANG.cd_sela_l})
+            UC.newButton(LANG.select, ()=>selectHoles(true), {title:LANG.cd_seli_l}),
+            UC.newButton(LANG.cd_sela_s, ()=>selectHoles(false), {title:LANG.cd_sela_l})
         ], {class:"ext-buttons f-col"})
     };
 
@@ -1865,7 +1877,7 @@ export function init() {
         sep:      UC.newBlank({class:"pop-sep", modes:MCAM, show:zBottom}),
         invert:   UC.newBoolean(LANG.cf_nvrt_s, undefined, {title:LANG.cf_nvrt_l, show:zBottom}),
         sep:      UC.newBlank({class:"pop-sep"}),
-        action:   UC.newRow([ UC.newButton(LANG.cf_menu, func.opFlip) ], {class:"ext-buttons f-row"})
+        action:   UC.newRow([ UC.newButton(LANG.cf_menu, opFlip) ], {class:"ext-buttons f-row"})
     };
 
     createPopOp('gcode', {
@@ -2028,7 +2040,7 @@ function createPopOp(type, map) {
                             poppedRec.note = op.x = note;
                             api.conf.save();
                         }
-                        func.opRender();
+                        opRender();
                     });
                 };
                 const note = $(noteid);
@@ -2134,7 +2146,7 @@ function unselectTraces(widget, skip) {
     if (widget.trace_stack) {
         widget.trace_stack.meshes.forEach(mesh => {
             if (mesh.selected) {
-                func.traceToggle(mesh, skip);
+                traceToggle(mesh, skip);
             }
         });
     }

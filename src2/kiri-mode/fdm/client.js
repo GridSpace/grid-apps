@@ -3,8 +3,9 @@
 import { $ } from '../../moto/webui.js';
 import { api } from '../../kiri/api.js';
 import { conf } from '../../kiri/conf.js';
+import { util } from '../../geo/base.js';
 import { client } from '../../kiri/client.js';
-import { addbox, delbox } from '../../kiri/boxes.js';
+import { addbox, delbox, getlastbox } from '../../kiri/boxes.js';
 import { Layers } from '../../kiri/layers.js';
 import { Stack } from '../../kiri/stack.js';
 import { Widget, newWidget } from '../../kiri/widget.js';
@@ -371,6 +372,7 @@ export function init() {
             removeWidgetSupport(lastPillar.widget, lastPillar);
             return;
         }
+        lastBox = getlastbox();
         if (!(iw && lastBox)) return;
         let { point, dim } = lastBox;
         p1.y = Math.max(0, p1.y);

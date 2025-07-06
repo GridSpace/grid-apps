@@ -1,5 +1,13 @@
-const { BoxGeometry, Matrix4, MeshPhongMaterial, Quaternion, Vector3 } = THREE;
+import { space } from '../moto/space.js';
+
+const { BoxGeometry, Matrix4, MeshPhongMaterial, Quaternion, Vector3, Mesh } = THREE;
 const boxes = [];
+
+let lastBox;
+
+export function getlastbox() {
+    return lastBox;
+}
 
 export function delbox(name) {
     const old = boxes[name];
@@ -26,7 +34,7 @@ export function addbox(point, color, name, dim = {x:1,y:1,z:1,rz:0}, opt = {}) {
 
     lastBox = { point, dim };
 
-    const group = opt.group || space.scene
+    const group = opt.group || space.scene;
     group.add(box);
     box.groupTo = group;
 
