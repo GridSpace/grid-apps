@@ -36,12 +36,16 @@ let { parseOpt, o2js, js2o, ls2o } = utils,
     clone   = Object.clone,
     MODE    = MODES.FDM,
     viewMode = VIEWS.ARRANGE,
-    autoSaveTimer = null;
+    autoSaveTimer = null,
+    inits = parseInt(SDB.getItem('kiri-init') || stats.get('init') || 0) + 1;
+
+// update version and init count
+SDB.setItem('kiri-init', inits);
+stats.set('init', inits);
+stats.set('kiri', version);
 
 // allow widget to straddle client / worker FOR NOW
 self.kiri_catalog = FILES;
-
-// API completion
 
 export const dialog = {
     show: showModal,
@@ -246,12 +250,6 @@ function auto_save() {
         api.space.save(true);
     }, 1000);
 }
-
-// update version and init count
-let inits = parseInt(SDB.getItem('kiri-init') || stats.get('init') || 0) + 1;
-SDB.setItem('kiri-init', inits);
-stats.set('init', inits);
-stats.set('kiri', version);
 
 /** ******************************************************************
  * Utility Functions

@@ -2,6 +2,7 @@
 
 import alerts from './alerts.js';
 import settings from './settings.js'
+import STACKS from './stacks.js';
 
 import { broker } from '../moto/broker.js';
 import { client as work } from './client.js';
@@ -21,7 +22,6 @@ import { updateTool } from '../kiri-mode/cam/tools.js';
 import { LANG } from './lang.js';
 import { LOCAL, SETUP, SECURE } from './main.js';
 import { UI } from './ui.js';
-import STACKS from './stacks.js';
 
 let UC = UI.prefix('kiri').inputAction(settings.conf.update),
     und = undefined,

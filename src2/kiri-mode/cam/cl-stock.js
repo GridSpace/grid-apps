@@ -6,6 +6,8 @@ import { space as SPACE } from '../../moto/space.js';
 
 const { ui: UI } = api;
 
+let meshZTop, meshZBottom;
+
 export function updateStock() {
     if (env.isAnimate) {
         if (env.isIndexed) {
@@ -16,12 +18,12 @@ export function updateStock() {
     }
 
     if (!env.isCamMode) {
-        SPACE.world.remove(env.camZTop);
-        SPACE.world.remove(env.camZBottom);
+        SPACE.world.remove(meshZTop);
+        SPACE.world.remove(meshZBottom);
         SPACE.world.remove(env.camStock);
         env.camStock = null;
-        env.camZTop = null;
-        env.camZBottom = null;
+        meshZTop = null;
+        meshZBottom = null;
         return;
     }
 
@@ -85,7 +87,7 @@ export function updateStock() {
         lines.material.color = new THREE.Color(isDark() ? 0x555555 : 0xaaaaaa);
     }
 
-    SPACE.world.remove(env.camZTop);
+    SPACE.world.remove(meshZTop);
     if (process.camZTop && widgets.length) {
         let max = { x, y, z };
         for (let w of widgets) {
@@ -100,18 +102,18 @@ export function updateStock() {
             transparent: true,
             side: THREE.DoubleSide
         });
-        const camZTop = env.camZTop = new THREE.Mesh(geo, mat);
-        camZTop._max = max;
-        camZTop.renderOrder = 1;
-        camZTop.position.x = center.x;
-        camZTop.position.y = center.y;
-        camZTop.position.z = process.camZTop;
-        SPACE.world.add(camZTop);
+        meshZTop = new THREE.Mesh(geo, mat);
+        meshZTop._max = max;
+        meshZTop.renderOrder = 1;
+        meshZTop.position.x = center.x;
+        meshZTop.position.y = center.y;
+        meshZTop.position.z = process.camZTop;
+        SPACE.world.add(meshZTop);
     } else {
-        env.camZTop = undefined;
+        meshZTop = undefined;
     }
 
-    SPACE.world.remove(env.camZBottom);
+    SPACE.world.remove(meshZBottom);
     if (process.camZBottom && widgets.length) {
         let max = { x, y, z };
         for (let w of widgets) {
@@ -126,15 +128,15 @@ export function updateStock() {
             transparent: true,
             side: THREE.DoubleSide
         });
-        const camZBottom = env.camZBottom = new THREE.Mesh(geo, mat);
-        camZBottom._max = max;
-        camZBottom.renderOrder = 1;
-        camZBottom.position.x = center.x;
-        camZBottom.position.y = center.y;
-        camZBottom.position.z = process.camZBottom;
-        SPACE.world.add(camZBottom);
+        meshZBottom = new THREE.Mesh(geo, mat);
+        meshZBottom._max = max;
+        meshZBottom.renderOrder = 1;
+        meshZBottom.position.x = center.x;
+        meshZBottom.position.y = center.y;
+        meshZBottom.position.z = process.camZBottom;
+        SPACE.world.add(meshZBottom);
     } else {
-        env.camZBottom = undefined;
+        meshZBottom = undefined;
     }
 
     SPACE.update();

@@ -27,8 +27,6 @@ const { widgets: WIDGETS } = api;
 class Client {
     animVer = 0;
     camStock;
-    camZTop;
-    camZBottom;
     current;
     currentIndex;
     flipping;
