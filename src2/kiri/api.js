@@ -117,18 +117,18 @@ export const api = {
     busy,
     catalog,
     client:         work, // alias for "work"
-    clip,           // <--
-    clone,          // <--
+    clip,
+    clone,
     color,
     conf:           settings.conf,
     const:          { LANG, LISTS: lists, LOCAL, MODES, SETUP, SECURE, STACKS, VIEWS },
-    devel,          // <--
+    devel,
     device,
     devices,
     dialog,
-    doit,           // <--
+    doit,
     event,
-    feature,        // <--
+    feature,
     function:       functions,
     group,
     help,
@@ -136,13 +136,13 @@ export const api = {
     image,
     js2o,           // via utils
     language:       LANG,
-    lists,          // <--
-    local,          // <--
+    lists,
+    local,
     modal,
     mode,
     noop,
     o2js,           // via utils
-    onkey,          // <--
+    onkey,
     platform,
     probe,
     process,
@@ -154,7 +154,7 @@ export const api = {
     stacks:         STACKS,
     stats,
     tool: {},       // kiri-mode/cam/tools.js
-    tweak,          // <--
+    tweak,
     uc:             UC,
     ui: {},         // init.js
     util,
