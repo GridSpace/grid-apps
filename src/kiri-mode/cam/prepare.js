@@ -754,9 +754,8 @@ function prepEach(widget, settings, print, firstPoint, update) {
         let arcQ = [];
         arcQ.angle = []
 
-        let closest = poly.findClosestPointTo(fromPoint);
-        let lastPoint = closest.point;
-        let startIndex = closest.index;
+        let lastPoint = fromPoint;
+        let startIndex = index;
 
         // console.log({poly, index, count, fromPoint,startIndex})
 
@@ -765,7 +764,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
 
 
         if (easeDown && poly.isClosed()) { //if doing ease-down
-            
+            let closest = poly.findClosestPointTo(fromPoint);
+            lastPoint = closest.point;
+            startIndex = closest.index;
             let last = generateEaseDown((point,offset )=>{ //generate ease-down points
                 if(offset == 0) camOut(point.clone(), 0, {factor:engageFactor});
                 camOut(point.clone(), 1, {factor:scale}); // and pass them to camOut
@@ -972,7 +973,9 @@ function prepEach(widget, settings, print, firstPoint, update) {
             arcQ.center = undefined;
         }
 
-        // newLayer();
+        if (depthFirst) {
+            newLayer();
+        }
         return lastPoint;
     }
 
