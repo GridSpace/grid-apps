@@ -3,10 +3,12 @@
 import { $, h } from '../moto/webui.js';
 import { api } from './api.js';
 import { conf } from './conf.js';
+import { codec } from './codec.js';
 import { consts } from './consts.js';
 import { space } from '../moto/space.js';
 import { local } from '../data/local.js';
 import { utils } from './utils.js';
+import { version } from '../moto/license.js';
 
 const { areEqual, ls2o, js2o } = utils;
 const { COLOR } = consts;
@@ -500,7 +502,7 @@ function settingsExport(opts = {}) {
     const widgets = api.widgets.all();
     const note = opts.node || undefined;
     const shot = opts.work || opts.screen ? space.screenshot() : undefined;
-    const work = opts.work ? kiri.codec.encode(widgets,{_json_:true}) : undefined;
+    const work = opts.work ? codec.encode(widgets,{_json_:true}) : undefined;
     const view = opts.work ? space.view.save() : undefined;
     const setn = Object.clone(settings);
     // stuff in legacy annotations for re-import
@@ -509,7 +511,7 @@ function settingsExport(opts = {}) {
     }
     const xprt = {
         settings: setn,
-        version: kiri.version,
+        version: version,
         screen: shot,
         space: space.info,
         note: note,
@@ -594,7 +596,7 @@ function settingsImport(data, ask) {
                         work.type = 100;
                     }
                 }
-                kiri.codec.decode(data.work).forEach(widget => {
+                codec.decode(data.work).forEach(widget => {
                     api.platform.add(widget, 0, true, true);
                 });
                 if (data.view) {

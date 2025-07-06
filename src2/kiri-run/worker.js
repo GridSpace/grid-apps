@@ -3,6 +3,7 @@
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
+import '../ext/jszip.js';
 
 import { base } from '../geo/base.js';
 import { broker } from '../moto/broker.js';
