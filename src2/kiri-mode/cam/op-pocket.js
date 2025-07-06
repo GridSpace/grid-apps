@@ -2,10 +2,12 @@
 
 import { CamOp } from './op.js';
 import { Tool } from './tool.js';
+import { generate as Topo } from './topo3.js';
 import { newPolygon } from '../../geo/polygon.js';
 import { newSlice } from '../../kiri/slice.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 import { util as base_util } from '../../geo/base.js';
+import { calc_normal, calc_vertex } from '../../geo/paths.js';
 import { CAM } from './driver-be.js';
 
 const DEG2RAG = Math.PI / 180;
@@ -205,13 +207,13 @@ class OpPocket extends CamOp {
                 for (let i=0; i<length; i++) {
                     let p1 = points[i];
                     let p2 = points[(i + 1) % length];
-                    sn.push(segmentNormal(p1, p2));
+                    sn.push(calc_normal(p1, p2));
                 }
                 let vn = []; // vertex normals
                 for (let i=0; i<length; i++) {
                     let n1 = sn[(i + length - 1) % length];
                     let n2 = sn[i];
-                    let vi = vertexNormal(n1, n2, 1);
+                    let vi = calc_vertex(n1, n2, 1);
                     vn.push(vi);
                     let vl = Math.abs(1 - vi.vl).round(2);
                     // vl should be close to zero on smooth / continuous curves
