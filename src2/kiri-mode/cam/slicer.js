@@ -13,11 +13,11 @@ const { sliceConnect, sliceDedup } = slicer;
 const { config } = base;
 const timing = false;
 
-const begin = function() {
+const begin = function () {
     if (timing) console.time(...arguments);
 };
 
-const end = function() {
+const end = function () {
     if (timing) console.timeEnd(...arguments);
 };
 
@@ -74,15 +74,15 @@ export class Slicer {
             zList[z] = (zList[z] || 0) + 1;
         }
 
-        let p1 = newPoint(0,0,0),
-            p2 = newPoint(0,0,0),
-            p3 = newPoint(0,0,0);
+        let p1 = newPoint(0, 0, 0),
+            p2 = newPoint(0, 0, 0),
+            p3 = newPoint(0, 0, 0);
 
         // for (let i = 0, il = points.length; i < il; i++) {
         //     points[i] = points[i].round(5);
         // }
 
-        for (let i = 0, il = points.length; i < il; ) {
+        for (let i = 0, il = points.length; i < il;) {
             p1.set(points[i++], points[i++], points[i++]);
             p2.set(points[i++], points[i++], points[i++]);
             p3.set(points[i++], points[i++], points[i++]);
@@ -100,7 +100,7 @@ export class Slicer {
             if (p1.z === p2.z && p2.z === p3.z) {
                 // detect zFlat faces to avoid slicing directly on them
                 let zkey = p1.z.toFixed(5),
-                    area = Math.abs(util.area2(p1,p2,p3)) / 2;
+                    area = Math.abs(util.area2(p1, p2, p3)) / 2;
                 if (!zFlat[zkey]) {
                     zFlat[zkey] = area;
                 } else {
@@ -155,7 +155,7 @@ export class Slicer {
 
         // sort Z and offset when on a flat
         const flatoff = util.numOrDefault(opt.flatoff, 0.01);
-        zs = zs.sort((a,b) => a-b).map(z => {
+        zs = zs.sort((a, b) => a - b).map(z => {
             if (!flatoff) {
                 return z;
             }
@@ -183,13 +183,13 @@ export class Slicer {
             b += step;
         }
 
-        let p1 = newPoint(0,0,0),
-            p2 = newPoint(0,0,0),
-            p3 = newPoint(0,0,0),
+        let p1 = newPoint(0, 0, 0),
+            p2 = newPoint(0, 0, 0),
+            p3 = newPoint(0, 0, 0),
             ep = 0.001;
 
         begin("create buckets");
-        for (let i = 0, il = points.length; i < il; ) {
+        for (let i = 0, il = points.length; i < il;) {
             p1.set(points[i++], points[i++], points[i++]);
             p2.set(points[i++], points[i++], points[i++]);
             p3.set(points[i++], points[i++], points[i++]);
@@ -236,7 +236,7 @@ export class Slicer {
         }
         const data = (await Promise.all(promises)).flat();
 
-        data.sort((a,b) => b.z - a.z).forEach((rec, i) => {
+        data.sort((a, b) => b.z - a.z).forEach((rec, i) => {
             rec.tops = rec.polys;
             rec.slice = newSlice(rec.z).addTops(rec.tops);
             if (opt.each) {
@@ -297,16 +297,16 @@ export class Slicer {
 
         // const { points } = this,
         const points = indices,
-            p1 = newPoint(0,0,0),
-            p2 = newPoint(0,0,0),
-            p3 = newPoint(0,0,0);
+            p1 = newPoint(0, 0, 0),
+            p2 = newPoint(0, 0, 0),
+            p3 = newPoint(0, 0, 0);
 
-        for (let index = 0; index < points.length; ) {
+        for (let index = 0; index < points.length;) {
             p1.set(points[index++], points[index++], points[index++]);
             p2.set(points[index++], points[index++], points[index++]);
             p3.set(points[index++], points[index++], points[index++]);
 
-            let where = {under: [], over: [], on: []};
+            let where = { under: [], over: [], on: [] };
             checkOverUnderOn(p1, z, where);
             checkOverUnderOn(p2, z, where);
             checkOverUnderOn(p3, z, where);
@@ -334,7 +334,7 @@ export class Slicer {
                 if (line.length === 2) {
                     lines.push(makeZLine(phash, line[0], line[1]));
                 } else {
-                    console.log({msg: "invalid ips", line: line, where: where});
+                    console.log({ msg: "invalid ips", line: line, where: where });
                 }
             }
         }
@@ -344,7 +344,8 @@ export class Slicer {
             lines = sliceDedup(lines, debug);
         }
 
-        return lines.length ? { z,
+        return lines.length ? {
+            z,
             lines: opt.lines !== false ? lines : undefined,
             polys: links ? POLY.nest(sliceConnect(lines, opt, debug)) : undefined
         } : null;
@@ -367,12 +368,12 @@ export class Slicer {
             step = (zmax - zmin) / count;
         }
         if (opt.down) {
-            for (let i=0; i<count; i++) {
+            for (let i = 0; i < count; i++) {
                 array.push(zmax);
                 zmax -= step;
             }
         } else {
-            for (let i=0; i<count; i++) {
+            for (let i = 0; i < count; i++) {
                 array.push(zmin);
                 zmin += step;
             }
@@ -392,13 +393,13 @@ export class Slicer {
                 }
             });
             // add over and under all flats by 'off'
-            array.appendAll(add).sort((a,b) => {
-                return opt.down ? b-a : a-b;
+            array.appendAll(add).sort((a, b) => {
+                return opt.down ? b - a : a - b;
             });
         }
 
         // filter duplicate values
-        array = array.map(v => v.round(5)).filter((e,i,a) => i < 1 || a[i-1] !== a[i]);
+        array = array.map(v => v.round(5)).filter((e, i, a) => i < 1 || a[i - 1] !== a[i]);
 
         // return array.map(v => Math.abs(parseFloat(v.toFixed(5))));
         return array.map(v => parseFloat(v.toFixed(5)));
@@ -471,7 +472,7 @@ function getCachedPoint(phash, p) {
 function makeZLine(phash, p1, p2, coplanar, edge) {
     p1 = getCachedPoint(phash, p1.clone());
     p2 = getCachedPoint(phash, p2.clone());
-    let line = newOrderedLine(p1,p2);
+    let line = newOrderedLine(p1, p2);
     line.coplanar = coplanar || false;
     line.edge = edge || false;
     return line;

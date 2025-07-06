@@ -93,15 +93,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     if (tabs) {
         // make tab polygons
         tabs.forEach(tab => {
-            let zero = newPoint(0,0,0),
+            let zero = newPoint(0, 0, 0),
                 point = newPoint(tab.pos.x, tab.pos.y, tab.pos.z),
                 poly = newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y),
-                [ rx, ry, rz, rw ] = tab.rot,
+                [rx, ry, rz, rw] = tab.rot,
                 m4 = new THREE.Matrix4().makeRotationFromQuaternion(
                     new THREE.Quaternion(rx, ry, rz, rw)
                 );
             poly.points = poly.points
-                .map(p => new THREE.Vector3(p.x,p.y,p.z).applyMatrix4(m4))
+                .map(p => new THREE.Vector3(p.x, p.y, p.z).applyMatrix4(m4))
                 .map(v => newPoint(v.x, v.y, v.z));
             poly.move(point);
             tab.poly = poly;
@@ -141,7 +141,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     if (zMin >= bounds.max.z) {
-        return error(`invalid z bottom ${(zMin/units).round(3)} >= bounds z max ${(zMax/units).round(3)}`);
+        return error(`invalid z bottom ${(zMin / units).round(3)} >= bounds z max ${(zMax / units).round(3)}`);
     }
 
     let mark = Date.now();
@@ -246,7 +246,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
 
     function addSlices(slices, addIndexing = isIndexed) {
         if (!Array.isArray(slices)) {
-            slices = [ slices ];
+            slices = [slices];
         }
         sliceAll.appendAll(slices);
         if (addIndexing && axisIndex !== undefined) {
@@ -266,7 +266,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     // silently preface op list with OpShadow
     if (isIndexed) {
         if (activeOps.length === 0 || activeOps[0].type !== 'index')
-        opList.push(new OPS.index(state, { type: "index", index: 0 }));
+            opList.push(new OPS.index(state, { type: "index", index: 0 }));
     } else {
         opList.push(new OPS.shadow(state, { type: "shadow", silent: true }));
     }
@@ -333,7 +333,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     if (tabs) {
         state.terrain.forEach(slab => {
             tabs.forEach(tab => {
-                if (tab.pos.z + tab.dim.z/2 >= slab.z) {
+                if (tab.pos.z + tab.dim.z / 2 >= slab.z) {
                     let all = [...slab.tops, tab.poly];
                     slab.tops = POLY.union(all, 0, true);
                     // slab.slice.output()
@@ -348,7 +348,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let tabpoly = tabs ? tabs.map(tab => tab.poly) : [];
     let allpoly = POLY.union([...state.shadow.base, ...tabpoly], 0, true);
     let shadowOff = maxToolDiam < 0 ? allpoly :
-        POLY.offset(allpoly, [minToolDiam/2,maxToolDiam/2], { count: 2, flat: true, minArea: 0 });
+        POLY.offset(allpoly, [minToolDiam / 2, maxToolDiam / 2], { count: 2, flat: true, minArea: 0 });
     state.terrain.forEach(level => level.tops.appendAll(shadowOff));
 
     widget.terrain = state.skipTerrain ? null : state.terrain;
@@ -369,8 +369,8 @@ export function addDogbones(poly, dist, reverse) {
     let lastpt = oldpts[oldpts.length - 1];
     let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
     let length = oldpts.length + (open ? 0 : 1);
-    let newpts = [ ];
-    for (let i=0; i<length; i++) {
+    let newpts = [];
+    for (let i = 0; i < length; i++) {
         let nextpt = oldpts[i % oldpts.length];
         let nextsl = lastpt.slopeTo(nextpt).toUnit();
         let adiff = lastsl.angleDiff(nextsl, true);
@@ -409,8 +409,8 @@ export async function traces(settings, widget, single) {
     let pcache = {};
     let points = new Array(2);
     let lines = new Array(points.length / 2);
-    for (let i=0, j=0, k=0, l=array.length; i<l; ) {
-        let ps = [ array[i++], array[i++], array[i++] ];
+    for (let i = 0, j = 0, k = 0, l = array.length; i < l;) {
+        let ps = [array[i++], array[i++], array[i++]];
         let key = ps.map(v => (v * 10000) | 0).join(',');
         let point = pcache[key];
         if (!point) {
@@ -420,7 +420,7 @@ export async function traces(settings, widget, single) {
         }
         points[j++ % 2] = point;
         if (j % 2 === 0) {
-            let [ p0, p1 ] = points;
+            let [p0, p1] = points;
             let line = lines[k++] = newLine(p0, p1);
             p0.lines.push(line);
             p1.lines.push(line);
@@ -513,10 +513,10 @@ export async function traces(settings, widget, single) {
  * @param {Function} onProgress - callback function to report progress
  * @returns {Array} list of hole centers as objects with `x`, `y`, `z`, `depth`, and `selected` properties.
  */
-export async function holes(settings, widget, individual, rec,onProgress) {
+export async function holes(settings, widget, individual, rec, onProgress) {
 
-    let {tool,mark,precision} = rec //TODO: display some visual difference if mark is selected
-    let toolDiam = new Tool(settings,tool).fluteDiameter()
+    let { tool, mark, precision } = rec //TODO: display some visual difference if mark is selected
+    let toolDiam = new Tool(settings, tool).fluteDiameter()
     let diam = individual ? 1 : toolDiam; // sets default diameter when select individual used
 
     let proc = settings.process,
@@ -535,37 +535,37 @@ export async function holes(settings, widget, individual, rec,onProgress) {
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
 
 
-    let slicerOpts = {flatoff: 0.001}
-    let slicer = new cam_slicer(widget,slicerOpts);
-    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z=>[z,z-0.002]).flat()
+    let slicerOpts = { flatoff: 0.001 }
+    let slicer = new cam_slicer(widget, slicerOpts);
+    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z => [z, z - 0.002]).flat()
 
-    precision = Math.max( 0, precision )
+    precision = Math.max(0, precision)
     let intervals = (precision == 0) ? [] : slicer.interval(
         precision,
-        { 
+        {
             fit: false, off: -0.01, flats: true
         }
     )
 
-    let zees = [...zFlats,...intervals]
+    let zees = [...zFlats, ...intervals]
     let indices = [...new Set(zees
         .map(kv => parseFloat(kv).round(5))
         .filter(z => z !== null)
     )]
     let centerDiff = diam * 0.1,
-        area = (diam/2) * (diam/2) * Math.PI,
+        area = (diam / 2) * (diam / 2) * Math.PI,
         circles = [],
         slices = [];
 
     function onEach(slice) {
         slices.push(slice);
     }
-    let opts = { each: onEach, progress: (num,total)=> onProgress(num/total*0.5,"slice") };
+    let opts = { each: onEach, progress: (num, total) => onProgress(num / total * 0.5, "slice") };
     await slicer.slice(indices, opts);
     let shadowedDrills = false;
     // console.log("slices",slices)
-    for (let [i,slice] of slices.entries()) {
-        for(let top of slice.tops){
+    for (let [i, slice] of slices.entries()) {
+        for (let top of slice.tops) {
             // console.log("slicing",slice.z,top)
             slice.shadow = computeShadowAt(widget, slice.z, 0)
             let inner = top.inner;
@@ -573,13 +573,13 @@ export async function holes(settings, widget, individual, rec,onProgress) {
                 continue;
             }
             for (let poly of inner) {
-                if ( poly.points.length < 7 ) continue;
+                if (poly.points.length < 7) continue;
                 let center = poly.calcCircleCenter();
                 center.area = poly.area();
                 center.overlapping = [center]
                 center.depth = 0;
                 // console.log("center",center)
-                if ( poly.circularity() < 0.985 ){
+                if (poly.circularity() < 0.985) {
                     // if not circular, don't add to holes
                     continue;
                 }
@@ -589,11 +589,11 @@ export async function holes(settings, widget, individual, rec,onProgress) {
                     continue;
                 }
                 let overlap = false;
-                for (let [i,circle] of circles.entries()) {
+                for (let [i, circle] of circles.entries()) {
                     let dist = circle.distTo2D(center)
 
                     // //if on the same xy point, 
-                    if (dist <= centerDiff ) {
+                    if (dist <= centerDiff) {
                         // console.log("overlap",center,circle);
                         circle.overlapping.push(center);
                         // if overlapping, don't add and continue
@@ -604,41 +604,41 @@ export async function holes(settings, widget, individual, rec,onProgress) {
                 if (!overlap) circles.push(center);
             }
         }
-        onProgress(0.5+(i/slices.length*0.25),"recognize circles")
+        onProgress(0.5 + (i / slices.length * 0.25), "recognize circles")
     }
 
     let drills = []
 
-    for (let [i,c] of circles.entries()) {
+    for (let [i, c] of circles.entries()) {
         let overlapping = c.overlapping
 
         let last = overlapping.shift();
         while (overlapping.length) {
             let circ = overlapping.shift();
             let aveArea = (circ.area + last.area) / 2;
-            let areaDelta = Math.abs(circ.area -last.area)
-            if (areaDelta < aveArea * 0.05){ // if area delta less than 5% of average area
-              //keep top circle selected
-              last.depth = last.z - circ.z;
-            }else{ // if not the same area
-              //push and move on
-              drills.push(last);
-              last = circ;
+            let areaDelta = Math.abs(circ.area - last.area)
+            if (areaDelta < aveArea * 0.05) { // if area delta less than 5% of average area
+                //keep top circle selected
+                last.depth = last.z - circ.z;
+            } else { // if not the same area
+                //push and move on
+                drills.push(last);
+                last = circ;
             }
         }
         if (last.depth != 0) drills.push(last) //add last circle
-        onProgress(0.75+(i/circles.length*0.25),"assemble holes")
+        onProgress(0.75 + (i / circles.length * 0.25), "assemble holes")
     }
-    drills.forEach( h=>{
-        if(rec.fromTop){
+    drills.forEach(h => {
+        if (rec.fromTop) {
             // set z top if selected
             h.depth += wztop - h.z
             h.z = wztop
         }
         delete h.overlapping //for encoding
         h.diam = toolDiam // for mesh generation
-        h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05 ); //for same size selection
-    }) 
+        h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05); //for same size selection
+    })
 
     // console.log("unfiltered circles",circles)
     // console.log("drills",drills)
@@ -649,13 +649,13 @@ export async function holes(settings, widget, individual, rec,onProgress) {
 }
 
 function cutTabs(tabs, offset, z, inter) {
-    tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z/2).map(tab => tab.off).flat();
+    tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z / 2).map(tab => tab.off).flat();
     return cutPolys(tabs, offset, z, false);
 }
 
 function cutPolys(polys, offset, z, inter) {
     let noff = [];
-    offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), inter) ));
+    offset.forEach(op => noff.appendAll(op.cut(POLY.union(polys, 0, true), inter)));
     return healPolys(noff);
 }
 
@@ -682,12 +682,12 @@ function healPolys(noff) {
     if (noff.length > 1) {
         let heal = 0;
         // heal/rejoin open segments that share endpoints
-        outer: for(;; heal++) {
+        outer: for (; ; heal++) {
             let ntmp = noff, tlen = ntmp.length;
-            for (let i=0; i<tlen; i++) {
+            for (let i = 0; i < tlen; i++) {
                 let s1 = ntmp[i];
                 if (!s1) continue;
-                for (let j=i+1; j<tlen; j++) {
+                for (let j = i + 1; j < tlen; j++) {
                     let s2 = ntmp[j];
                     if (!s2) continue;
                     // require polys at same Z to heal
@@ -743,13 +743,13 @@ export function computeShadowAt(widget, z, ztop) {
     // cache faces with normals up
     if (!widget.cache.shadow) {
         const faces = [];
-        for (let i=0, ip=0; i<length; i += 3) {
+        for (let i = 0, ip = 0; i < length; i += 3) {
             const a = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const b = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const c = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
-            const n = THREE.computeFaceNormal(a,b,c);
+            const n = THREE.computeFaceNormal(a, b, c);
             if (n.z > 0.001) {
-                faces.push(a,b,c);
+                faces.push(a, b, c);
                 // faces.push(newPoint(...a), newPoint(...b), newPoint(...c));
             }
         }
@@ -758,7 +758,7 @@ export function computeShadowAt(widget, z, ztop) {
     const found = [];
     const faces = widget.cache.shadow;
     const { checkOverUnderOn, intersectPoints } = cam_slicer;
-    for (let i=0; i<faces.length; ) {
+    for (let i = 0; i < faces.length;) {
         const a = faces[i++];
         const b = faces[i++];
         const c = faces[i++];
@@ -771,7 +771,7 @@ export function computeShadowAt(widget, z, ztop) {
             // skip faces under threshold
             continue;
         } else if (a.z > z && b.z > z && c.z > z) {
-            found.push([a,b,c]);
+            found.push([a, b, c]);
         } else {
             // check faces straddling threshold
             const where = { under: [], over: [], on: [] };
@@ -789,7 +789,7 @@ export function computeShadowAt(widget, z, ztop) {
                         found.push([where.over[0], line[0], line[1]]);
                     }
                 } else {
-                    console.log({msg: "invalid ips", line: line, where: where});
+                    console.log({ msg: "invalid ips", line: line, where: where });
                 }
             }
         }
@@ -797,9 +797,9 @@ export function computeShadowAt(widget, z, ztop) {
 
     let polys = found.map(a => {
         return newPolygon()
-            .add(a[0].x,a[0].y,a[0].z)
-            .add(a[1].x,a[1].y,a[1].z)
-            .add(a[2].x,a[2].y,a[2].z);
+            .add(a[0].x, a[0].y, a[0].z)
+            .add(a[1].x, a[1].y, a[1].z)
+            .add(a[2].x, a[2].y, a[2].z);
     });
 
     polys = POLY.union(polys, 0.001, true);

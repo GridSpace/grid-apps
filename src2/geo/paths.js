@@ -14,16 +14,16 @@ export function tip2tipEmit(array, startPoint, emitter) {
     for (;;) {
         found = null;
         mindist = Infinity;
-        array.forEach(function(el) {
+        array.forEach(function (el) {
             if (el.delete) return;
             dist = startPoint.distTo2D(el.first);
             if (dist < mindist) {
-                found = {el:el, first:el.first, last:el.last};
+                found = { el: el, first: el.first, last: el.last };
                 mindist = dist;
             }
             dist = startPoint.distTo2D(el.last);
             if (dist < mindist) {
-                found = {el:el, first:el.last, last:el.first};
+                found = { el: el, first: el.last, last: el.first };
                 mindist = dist;
             }
         });
@@ -62,21 +62,21 @@ export function poly2polyEmit(array, startPoint, emitter, opt = {}) {
                 }
                 if (d2l < mindist && d2l < d2f && opt.swapdir !== false) {
                     poly.reverse();
-                    found = {poly:poly, index:0, point:poly.first()};
+                    found = { poly: poly, index: 0, point: poly.first() };
                     mindist = d2l;
                 } else if (d2f < mindist) {
-                    found = {poly:poly, index:0, point:poly.first()};
+                    found = { poly: poly, index: 0, point: poly.first() };
                     mindist = d2f;
                 }
                 continue;
             }
             let area = poly.open ? 1 : poly.area();
-            poly.forEachPoint(function(point, index) {
+            poly.forEachPoint(function (point, index) {
                 dist = opt.weight ?
                     startPoint.distTo3D(point) * area * area :
                     startPoint.distTo2D(point);
                 if (dist < mindist) {
-                    found = {poly:poly, index:index, point:point};
+                    found = { poly: poly, index: index, point: point };
                     mindist = dist;
                 }
             });
@@ -90,7 +90,7 @@ export function poly2polyEmit(array, startPoint, emitter, opt = {}) {
 
     // undo delete marks
     if (opt.perm !== true) {
-        array.forEach(function(poly) { poly[marker] = false });
+        array.forEach(function (poly) { poly[marker] = false });
     }
 
     return startPoint;
@@ -103,7 +103,7 @@ export function calc_normal(p1, p2) {
     let mn = (1 / len);
     dx *= mn;
     dy *= mn;
-    return({ dx: dy, dy: -dx, p1, p2, len });
+    return ({ dx: dy, dy: -dx, p1, p2, len });
 }
 
 export function end_vertex(n1, n2, off, start) {
@@ -159,10 +159,10 @@ export function pointsToPath(points, offset, open, miter = 1.5) {
     const nupoints = [];
     const length = points.length;
     if (length === 2 && points[0].isEqual(points[1])) {
-        return { };
+        return {};
     }
     const dedup = (open && length > 2) || (!open && length > 3);
-    for (let i=0; i<length; i++) {
+    for (let i = 0; i < length; i++) {
         let p1 = points[i];
         let p2 = points[(i + 1) % length];
         p1.normal = calc_normal(p1, p2);
@@ -179,7 +179,7 @@ export function pointsToPath(points, offset, open, miter = 1.5) {
         nupoints.push(p1);
     }
     if (nupoints.length === 1) {
-        console.log({points, nupoints});
+        console.log({ points, nupoints });
     }
     // when points are dropped, we need the new array
     points = nupoints;
@@ -192,10 +192,10 @@ export function pointsToPath(points, offset, open, miter = 1.5) {
     // calculate vertex normals from segments normals
     // vertex info is associated with the origin point
     let fl, fr;
-    for (let i=0, l=points.length; i<l; i++) {
-        let n1 = points[(i+l-1)%l].normal;
-        let n2 = points[(i+l)%l].normal;
-        let vn = open && (i === 0 || i === l-1) ?
+    for (let i = 0, l = points.length; i < l; i++) {
+        let n1 = points[(i + l - 1) % l].normal;
+        let n2 = points[(i + l) % l].normal;
+        let vn = open && (i === 0 || i === l - 1) ?
             end_vertex(n1, n2, offset, i === 0) :
             calc_vertex(n1, n2, offset);
         let { p1, p2 } = n2;
@@ -217,7 +217,7 @@ export function pointsToPath(points, offset, open, miter = 1.5) {
             // shorten each leg and insert new point
             let delta = 0.1;
             let np1 = p1.clone().move({ x: n1.dy * delta, y: -n1.dx * delta, z: 0 });
-            let np2 = p1.clone().move({ x:-n2.dy * delta, y:  n2.dx * delta, z: 0 });
+            let np2 = p1.clone().move({ x: -n2.dy * delta, y: n2.dx * delta, z: 0 });
             let sn1 = np1.normal = calc_normal(np1, np2);
             let sn2 = np2.normal = p1.normal;
             let nv1 = calc_vertex(n1.p1.normal, sn1, offset, np1);
@@ -344,14 +344,14 @@ export function pathTo3D(path, height, z) {
     }
     nrm.appendAll(normals);
     // reverse normals to match faces, but underside so reverse Z as well
-    for (let i=normals.length-1; i>0; i-=3) {
-        nrm.push(normals[i-2]);
-        nrm.push(normals[i-1]);
-        nrm.push(-normals[i-0]);
+    for (let i = normals.length - 1; i > 0; i -= 3) {
+        nrm.push(normals[i - 2]);
+        nrm.push(normals[i - 1]);
+        nrm.push(-normals[i - 0]);
     }
-    for (let i=0, l=left.length, tl = open ? l-1 : l; i<tl; i++) {
+    for (let i = 0, l = left.length, tl = open ? l - 1 : l; i < tl; i++) {
         let p0 = left[i];
-        let p1 = left[(i+1)%l];
+        let p1 = left[(i + 1) % l];
         out.push(p0.x, p0.y, p0.z + height);
         out.push(p0.x, p0.y, p0.z - height);
         out.push(p1.x, p1.y, p1.z - height);
@@ -360,15 +360,15 @@ export function pathTo3D(path, height, z) {
         out.push(p0.x, p0.y, p0.z + height);
         let ln = p0.vp.normal;
         nrm.push(ln.dx, ln.dy, -1);
-        nrm.push(ln.dx, ln.dy,  1);
-        nrm.push(ln.dx, ln.dy,  1);
-        nrm.push(ln.dx, ln.dy,  1);
+        nrm.push(ln.dx, ln.dy, 1);
+        nrm.push(ln.dx, ln.dy, 1);
+        nrm.push(ln.dx, ln.dy, 1);
         nrm.push(ln.dx, ln.dy, -1);
         nrm.push(ln.dx, ln.dy, -1);
     }
-    for (let i=0, l=right.length, tl = open ? l-1 : l; i<tl; i++) {
+    for (let i = 0, l = right.length, tl = open ? l - 1 : l; i < tl; i++) {
         let p0 = right[i];
-        let p1 = right[(i+1)%l];
+        let p1 = right[(i + 1) % l];
         out.push(p0.x, p0.y, p0.z + height);
         out.push(p1.x, p1.y, p1.z - height);
         out.push(p0.x, p0.y, p0.z - height);
@@ -376,12 +376,12 @@ export function pathTo3D(path, height, z) {
         out.push(p0.x, p0.y, p0.z + height);
         out.push(p1.x, p1.y, p1.z + height);
         let rn = p0.vp.normal;
-        nrm.push(-rn.dy, rn.dx,  1);
+        nrm.push(-rn.dy, rn.dx, 1);
         nrm.push(-rn.dy, rn.dx, -1);
         nrm.push(-rn.dy, rn.dx, -1);
         nrm.push(-rn.dy, rn.dx, -1);
-        nrm.push(-rn.dy, rn.dx,  1);
-        nrm.push(-rn.dy, rn.dx,  1);
+        nrm.push(-rn.dy, rn.dx, 1);
+        nrm.push(-rn.dy, rn.dx, 1);
     }
     if (open) {
         // begin cap
@@ -394,12 +394,12 @@ export function pathTo3D(path, height, z) {
         out.push(r0.x, r0.y, r0.z - height);
         out.push(l0.x, l0.y, l0.z + height);
         let ln = l0.vp.normal;
-        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, 1);
         nrm.push(-ln.dy, ln.dx, -1);
         nrm.push(-ln.dy, ln.dx, -1);
-        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, 1);
         nrm.push(-ln.dy, ln.dx, -1);
-        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, 1);
         // end cap
         let le = left.peek();
         let re = right.peek();
@@ -410,11 +410,11 @@ export function pathTo3D(path, height, z) {
         out.push(le.x, le.y, le.z + height);
         out.push(re.x, re.y, re.z - height);
         ln = re.vp.normal;
-        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, 1);
         nrm.push(-ln.dy, ln.dx, -1);
         nrm.push(-ln.dy, ln.dx, -1);
-        nrm.push(-ln.dy, ln.dx,  1);
-        nrm.push(-ln.dy, ln.dx,  1);
+        nrm.push(-ln.dy, ln.dx, 1);
+        nrm.push(-ln.dy, ln.dx, 1);
         nrm.push(-ln.dy, ln.dx, -1);
     }
     return { faces: out, normals: nrm };
@@ -439,9 +439,9 @@ export function shapeToPath(shape, points, closed) {
         let hA = halfAngle;
         let tA = v2.angle() + Math.PI * .5;
 
-        if (!closed){
-            if (i == 0 || i == points.length - 1) {hA = Math.PI * .5;}
-            if (i == points.length - 1) {tA = v1.angle() - Math.PI * .5;}
+        if (!closed) {
+            if (i == 0 || i == points.length - 1) { hA = Math.PI * .5; }
+            if (i == points.length - 1) { tA = v1.angle() - Math.PI * .5; }
         }
 
         const shift = Math.tan(hA - Math.PI * .5);
@@ -476,7 +476,7 @@ export function shapeToPath(shape, points, closed) {
     }
 
     const index = [];
-    const lastCorner = closed == false ? points.length - 1: points.length;
+    const lastCorner = closed == false ? points.length - 1 : points.length;
 
     for (let i = 0; i < lastCorner; i++) {
         for (let j = 0; j < profile.count; j++) {
@@ -512,7 +512,7 @@ export function shapeToPath(shape, points, closed) {
         index.push(p8, p7, p5);
     }
 
-    return {index, faces};
+    return { index, faces };
 }
 
 /**
@@ -527,7 +527,7 @@ export function shapeToPath(shape, points, closed) {
  *
  * @return {Array<Point>} an array of points representing the arc.
  */
-export function arcToPath (start, end, arcdivs=24, opts) {
+export function arcToPath(start, end, arcdivs = 24, opts) {
 
     let { clockwise, center, radius } = opts;
 
@@ -547,7 +547,7 @@ export function arcToPath (start, end, arcdivs=24, opts) {
         let pr2;
         if (Math.abs(dst - radius) < 0.001) {
             // center point radius
-            pr2 = { x: (end.x + start.x) / 2, y: (end.y + start.y) / 2};
+            pr2 = { x: (end.x + start.x) / 2, y: (end.y + start.y) / 2 };
         } else {
             // triangulate
             pr2 = base.util.center2pr(start, end, radius, clockwise);
@@ -556,7 +556,7 @@ export function arcToPath (start, end, arcdivs=24, opts) {
         center.y = pr2.y;
         center.r = radius;
     } else {
-        console.log({malfomed_arc: {radius,center, clockwise, start, end}});
+        console.log({ malfomed_arc: { radius, center, clockwise, start, end } });
     }
 
     //deltas
@@ -569,10 +569,10 @@ export function arcToPath (start, end, arcdivs=24, opts) {
     let a2 = Math.atan2(center.y - end.y, center.x - end.x) + Math.PI;
     let ad = base.util.thetaDiff(a1, a2, clockwise); // angle difference in radians
     let samePoint = Math.abs(ad) < 0.001
-    let ofFull =  Math.abs(ad)/(2*Math.PI);
-    let steps =  samePoint? arcdivs : Math.max(Math.floor( arcdivs * ofFull),4);
-    let step =  (samePoint? (Math.PI*2) : ad) / steps;
-    let numPoints  = steps/ step;
+    let ofFull = Math.abs(ad) / (2 * Math.PI);
+    let steps = samePoint ? arcdivs : Math.max(Math.floor(arcdivs * ofFull), 4);
+    let step = (samePoint ? (Math.PI * 2) : ad) / steps;
+    let numPoints = steps / step;
     let zStart = start.z;
     let zStep = dz / numPoints;
     let rot = a1 + step;
@@ -591,9 +591,9 @@ export function arcToPath (start, end, arcdivs=24, opts) {
     // }
 
     let arr = [] // point accumulator
-    for (let i=0; i<=steps-2; i++) {
+    for (let i = 0; i <= steps - 2; i++) {
         if (isNaN(center.r) || isNaN(center.x) || isNaN(center.y)) {
-            console.log({malfomed_arc: {radius, clockwise, start, end}});
+            console.log({ malfomed_arc: { radius, clockwise, start, end } });
         }
         arr.push(newPoint(
             center.x + Math.cos(rot) * center.r,
@@ -626,7 +626,7 @@ export class FloatPacker {
             this.array = nuarray;
             this.size = nusize;
         }
-        for (let i=0; i<args; i++) {
+        for (let i = 0; i < args; i++) {
             array[this.pos++] = arguments[i];
         }
     }

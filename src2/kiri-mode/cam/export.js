@@ -31,16 +31,16 @@ export function cam_export(print, online) {
         space = device.gcodeSpace ? ' ' : '',
         isRML = device.gcodeFExt?.toLowerCase() === 'rml',
         stripComments = device.gcodeStrip || false,
-        cmdToolChange = device.gcodeChange || [ "M6 T{tool}" ],
-        cmdSpindle = device.gcodeSpindle || [ "M3 S{speed}" ],
-        cmdDwell = device.gcodeDwell || [ "G4 P{time}" ],
+        cmdToolChange = device.gcodeChange || ["M6 T{tool}"],
+        cmdSpindle = device.gcodeSpindle || ["M3 S{speed}"],
+        cmdDwell = device.gcodeDwell || ["G4 P{time}"],
         axis = { X: 'X', Y: 'Y', Z: 'Z', A: 'A', F: 'F', R: 'R', I: 'I', J: 'J' },
         dev = settings.device,
         spro = settings.process,
         maxZd = spro.camFastFeedZ,
         maxXYd = spro.camFastFeed,
         decimals = base.config.gcode_decimals || 3,
-        pos = { x:null, y:null, z:null, a:undefined, f:null, t:null, emit:null },
+        pos = { x: null, y: null, z: null, a: undefined, f: null, t: null, emit: null },
         line,
         cidx,
         mode,
@@ -51,18 +51,18 @@ export function cam_export(print, online) {
         compact_output = false,
         lasering = false,
         laserOp,
-        stock = settings.stock || { },
+        stock = settings.stock || {},
         ztOff = stock.z - widget.track.top,
         bounds = widget.getBoundingBox(),
         zmax = stock.z,
         runbox = {
-            max: { x:-Infinity, y:-Infinity, z:-Infinity},
-            min: { x:Infinity, y:Infinity, z:Infinity}
+            max: { x: -Infinity, y: -Infinity, z: -Infinity },
+            min: { x: Infinity, y: Infinity, z: Infinity }
         },
         offset = {
             x: -origin.x,
-            y:  origin.y,
-            z:  spro.camOriginTop ? origin.z - zmax : origin.z
+            y: origin.y,
+            z: spro.camOriginTop ? origin.z - zmax : origin.z
         },
         scale = {
             x: 1,
@@ -73,10 +73,10 @@ export function cam_export(print, online) {
             box: runbox,
             tool: 0,
             tool_name: "unknown",
-            top: (offset ? dev.bedDepth : dev.bedDepth/2),
-            left: (offset ? 0 : -dev.bedWidth/2),
-            right: (offset ? dev.bedWidth : dev.bedWidth/2),
-            bottom: (offset ? 0 : -dev.bedDepth/2),
+            top: (offset ? dev.bedDepth : dev.bedDepth / 2),
+            left: (offset ? 0 : -dev.bedWidth / 2),
+            right: (offset ? dev.bedWidth : dev.bedWidth / 2),
+            bottom: (offset ? 0 : -dev.bedDepth / 2),
             time_sec: 0,
             time_ms: 0,
             time: 0
@@ -96,9 +96,9 @@ export function cam_export(print, online) {
                 if (spos >= 0) {
                     const left = line.substring(0, spos);
                     const right = '(' + line.substring(spos)
-                        .replace(/; /g,'')
-                        .replace(/;/g,'') + ')';
-                    line = [ left, right ].join('');
+                        .replace(/; /g, '')
+                        .replace(/;/g, '') + ')';
+                    line = [left, right].join('');
                 }
             }
             output.append(line);
@@ -123,21 +123,21 @@ export function cam_export(print, online) {
         if (!array) {
             return;
         }
-        if (typeof(array) === 'string') {
+        if (typeof (array) === 'string') {
             array = array.split('\n');
         }
-        for (i=0; i<array.length; i++) {
+        for (i = 0; i < array.length; i++) {
             line = print.constReplace(array[i], consts);
             if (!isRML && stripComments && (cidx = line.indexOf(";")) >= 0) {
                 line = line.substring(0, cidx).trim();
                 if (line.length === 0) continue;
             }
             if (line.indexOf('G20') === 0) {
-                factor = 1/25.4;
-                consts.top = (offset ? dev.bedDepth : dev.bedDepth/2) * factor;
-                consts.left = (offset ? 0 : -dev.bedWidth/2) * factor;
-                consts.right = (offset ? dev.bedWidth : dev.bedWidth/2) * factor;
-                consts.bottom = (offset ? 0 : -dev.bedDepth/2) * factor;
+                factor = 1 / 25.4;
+                consts.top = (offset ? dev.bedDepth : dev.bedDepth / 2) * factor;
+                consts.left = (offset ? 0 : -dev.bedWidth / 2) * factor;
+                consts.right = (offset ? dev.bedWidth : dev.bedWidth / 2) * factor;
+                consts.bottom = (offset ? 0 : -dev.bedDepth / 2) * factor;
             } else if (line.indexOf('G21') === 0) {
                 factor = 1;
             }
@@ -193,7 +193,7 @@ export function cam_export(print, online) {
             consts.tool = pos.t.getNumber();
             consts.tool_name = pos.t.getName();
             if (!laserOp && (spro.camToolInit || toolChanges > 0)) {
-                filterEmit(cmdToolChange, { ...consts, spindle: newSpindle } );
+                filterEmit(cmdToolChange, { ...consts, spindle: newSpindle });
             }
             toolChanges++;
         }
@@ -259,20 +259,20 @@ export function cam_export(print, online) {
             return;
         }
         let gn;
-        if ( out.emit >=0 && out.emit <= 3) gn = `G${out.emit}`;
+        if (out.emit >= 0 && out.emit <= 3) gn = `G${out.emit}`;
         let speed = out.speed,
-        arc = out.emit == 2 || out.emit == 3,
-        center = out.center,
-        nl = (compact_output && lastGn === gn) ? [] : [gn],
-        dx = opt.dx || newpos.x - pos.x,
-        dy = opt.dy || newpos.y - pos.y,
-        dz = opt.dz || newpos.z - pos.z,
-        da = newpos.a != pos.a,
-        maxf = dz ? maxZd : maxXYd,
-        feed = Math.min(speed || maxf, maxf),
-        dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
-        newFeed = feed && feed !== pos.f;
-        
+            arc = out.emit == 2 || out.emit == 3,
+            center = out.center,
+            nl = (compact_output && lastGn === gn) ? [] : [gn],
+            dx = opt.dx || newpos.x - pos.x,
+            dy = opt.dy || newpos.y - pos.y,
+            dz = opt.dz || newpos.z - pos.z,
+            da = newpos.a != pos.a,
+            maxf = dz ? maxZd : maxXYd,
+            feed = Math.min(speed || maxf, maxf),
+            dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
+            newFeed = feed && feed !== pos.f;
+
 
         // drop dup points (all deltas are 0)
         if (!arc && !(dx || dy || dz || da)) {
@@ -285,7 +285,7 @@ export function cam_export(print, online) {
             pos.x = newpos.x;
             runbox.min.x = Math.min(runbox.min.x, pos.x);
             runbox.max.x = Math.max(runbox.max.x, pos.x);
-            nl.append(space).append(axis.X).append(add0(consts.pos_x =  pos.x * factor));
+            nl.append(space).append(axis.X).append(add0(consts.pos_x = pos.x * factor));
         }
         if (dy || newpos.y !== pos.y) {
             pos.y = newpos.y;
@@ -307,9 +307,9 @@ export function cam_export(print, online) {
             pos.f = feed;
             nl.append(space).append(axis.F).append(add0(consts.feed = feed * factor, true));
         }
-        if(arc){
+        if (arc) {
             nl.append(space).append(axis.I).append(add0(center.x * factor, true))
-            .append(space).append(axis.J).append(add0(center.y * factor, true));
+                .append(space).append(axis.J).append(add0(center.y * factor, true));
         }
 
         // temp hack to support RML1 dialect from a file extensions trigger
@@ -318,9 +318,9 @@ export function cam_export(print, online) {
                 if (newFeed) {
                     append(`VS${feed};`);
                 }
-                nl = [ axis.Z, add0(pos.x * factor), ",", add0(pos.y * factor), ",", add0(pos.z * factor), ";" ];
+                nl = [axis.Z, add0(pos.x * factor), ",", add0(pos.y * factor), ",", add0(pos.z * factor), ";"];
             } else {
-                nl = [ "PU", add0(pos.x * factor), ",", add0(pos.y * factor), ";" ];
+                nl = ["PU", add0(pos.x * factor), ",", add0(pos.y * factor), ";"];
             }
         }
 

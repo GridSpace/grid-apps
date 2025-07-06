@@ -133,7 +133,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
             if (msg && msg !== lastMsg) {
                 let mark = Date.now();
                 if (lastMsg) {
-                    segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
+                    let key = widgets.length > 1 ?
+                        `${widget.id}_${segNumber++}_${lastMsg}` :
+                        `${segNumber++}_${lastMsg}`
+                    segtimes[key] = mark - startTime;
                 }
                 lastMsg = msg;
                 startTime = mark;
