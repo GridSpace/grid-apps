@@ -1,6 +1,8 @@
 .DS_Store
+.docusaurus
 .env
 app.json
+build
 data
 dist
 logs
@@ -9,5 +11,3 @@ node_modules
 package-lock.json
 three.js
 tmp
-.docusaurus
-build

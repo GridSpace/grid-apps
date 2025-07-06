@@ -5,7 +5,7 @@ const path = require('path');
 async function main() {
     console.log('npm pre running');
 
-    const links = fs.readFileSync("links.csv")
+    const links = fs.readFileSync("conf/links.csv")
         .toString()
         .trim()
         .split('\n')
