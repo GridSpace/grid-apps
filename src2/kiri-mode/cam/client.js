@@ -9,59 +9,78 @@ import { animate2 as anim_3d, animate_clear2 as anim_3d_clear } from './anim-3d-
 import { space as SPACE } from '../../moto/space.js';
 import { Layers } from '../../kiri/layers.js';
 import { Stack } from '../../kiri/stack.js';
-import { Tool } from './tool.js';
-import { CAM } from './driver-fe.js';
-
-// import { opFlip } from './cl-flip.js';
-
-const { alerts, conf, noop, space } = api;
+import { updateStock } from './cl-stock.js';
+import { createPopOps } from './cl-ops.js';
+import { traceOn, traceDone, unselectTraces } from './cl-trace.js';
+import { selectHolesDone } from './cl-hole.js';
+import { surfaceOn, surfaceDone } from './cl-surface.js';
 
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
 const hasSharedArrays = self.SharedArrayBuffer ? true : false;
 
-let isAnimate,
-    isArrange,
-    isPreview,
-    isCamMode,
-    isIndexed,
-    isParsed,
-    camStock,
-    camZTop,
-    camZBottom,
-    current,
-    currentIndex,
-    flipping,
-    poppedRec,
-    hoveredOp,
-    lastMode,
-    { MODES, VIEWS, STACKS } = api.const,
-    LANG = api.language.current,
-    WIDGETS = api.widgets,
-    UI = api.ui,
-    UC = api.uc,
-    MCAM = MODES.CAM,
-    zaxis = { x: 0, y: 0, z: 1 },
-    popOp = {},
-    animVer = 0,
-    seed = Date.now(),
-    hover = noop,
-    hoverUp = noop,
+const { VIEWS, STACKS } = api.const;
+const { noop, space } = api;
+const { ui: UI, uc: UC } = api;
+const { widgets: WIDGETS } = api;
+
+class Client {
+    animVer = 0;
+    camStock;
+    camZTop;
+    camZBottom;
+    current;
+    currentIndex;
+    flipping;
     func = {};
+    hoveredOp;
+    hover = noop;
+    hoverUp = noop;
+    isAnimate;
+    isArrange;
+    isPreview;
+    isCamMode;
+    isIndexed;
+    isParsed;
+    lastMode;
+    popOp = {};
+    poppedRec;
+    zaxis = { x: 0, y: 0, z: 1 };
+
+    clearPops() {
+        if (env.func.unpop) env.func.unpop();
+        tabDone();
+        traceDone();
+        surfaceDone();
+        selectHolesDone();
+    }
+
+    isDark() { return api.space.is_dark() }
+
+    boxColor() {
+        return env.isDark() ? 0x00ddff : 0x0000dd;
+    }
+
+    boxOpacity() {
+        return env.isDark() ? 0.75 : 0.6;
+    }
+}
+
+export const env = new Client();
 
 function animFn() {
     return [{
         animate: anim_2d,
         animate_clear: anim_2d_clear
-    },{
+    }, {
         animate: anim_3d,
         animate_clear: anim_3d_clear
-    }][animVer];
+    }][env.animVer];
 }
 
 function updateIndex() {
-    let oplist = current.process.ops;
-    if (!(isCamMode && oplist) || lastMode === VIEWS.ANIMATE) {
+    let oplist = env.current.process.ops;
+    if (!(env.isCamMode && oplist) || env.lastMode === VIEWS.ANIMATE) {
         return;
     }
     let index = 0;
@@ -77,29 +96,29 @@ function updateIndex() {
             }
         }
     }
-    WIDGETS.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
-    currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
+    WIDGETS.setAxisIndex(env.isPreview || !env.isIndexed ? 0 : -index);
+    env.currentIndex = env.isIndexed && !env.isPreview ? index * DEG2RAD : 0;
 }
 
 function updateAxisMode(refresh) {
-    const { camStockIndexGrid, camStockIndexed } = current.process;
+    const { camStockIndexGrid, camStockIndexed } = env.current.process;
     let newIndexed = camStockIndexed;
-    let changed = refresh || isIndexed !== newIndexed;
-    isIndexed = newIndexed;
-    if (!isIndexed || !isCamMode) {
+    let changed = refresh || env.isIndexed !== newIndexed;
+    env.isIndexed = newIndexed;
+    if (!env.isIndexed || !env.isCamMode) {
         WIDGETS.setAxisIndex(0);
     }
-    if (!isCamMode) {
+    if (!env.isCamMode) {
         return;
     }
-    if (isIndexed) {
-        current.process.camZAnchor = "middle";
+    if (env.isIndexed) {
+        env.current.process.camZAnchor = "middle";
     }
-    animVer = isIndexed ? 1 : 0;
-    SPACE.platform.setVisible(!isIndexed);
-    SPACE.platform.showGrid2(!isIndexed || camStockIndexGrid);
-    const showIndexed = isIndexed ? '' : 'none';
-    const showNonIndexed = isIndexed ? 'none' : '';
+    env.animVer = env.isIndexed ? 1 : 0;
+    SPACE.platform.setVisible(!env.isIndexed);
+    SPACE.platform.showGrid2(!env.isIndexed || camStockIndexGrid);
+    const showIndexed = env.isIndexed ? '' : 'none';
+    const showNonIndexed = env.isIndexed ? 'none' : '';
     $('cam-index').style.display = showIndexed;
     $('cam-lathe').style.display = showIndexed;
     $('cam-flip').style.display = showNonIndexed;
@@ -107,27 +126,20 @@ function updateAxisMode(refresh) {
     if (!changed) {
         return;
     }
-    WIDGETS.setIndexed(isIndexed ? true : false);
+    WIDGETS.setIndexed(env.isIndexed ? true : false);
     api.platform.update_bounds();
     // add or remove clock op depending on indexing
-    const cp = current.process;
+    const cp = env.current.process;
     if (!cp.ops) {
         return;
     }
     const clockOp = cp.ops.filter(op => op.type === '|')[0];
     if (!clockOp) {
-        opAdd(popOp['|'].new());
+        opAdd(env.popOp['|'].new());
     } else {
         opRender();
     }
     updateStock();
-}
-
-// create custom gcode editor function
-function gcodeEditor(label, field) {
-    return function() {
-        opGCode(label, field);
-    }
 }
 
 function mirrorTabs(widget) {
@@ -137,11 +149,11 @@ function mirrorTabs(widget) {
         let tab = widget.tabs[id];
         let e = new THREE.Euler().setFromQuaternion(rot);
         e._z = Math.PI - e._z;
-    let { _x, _y, _z, _w } = rec.rot;
-    let or = new THREE.Quaternion(_x, _y, _z, _w);
+        let { _x, _y, _z, _w } = rec.rot;
+        let or = new THREE.Quaternion(_x, _y, _z, _w);
         let nr = new THREE.Quaternion().setFromEuler(e);
-    let ra = or.angleTo(nr);
-    // console.log({or, nr, ra});
+        let ra = or.angleTo(nr);
+        // console.log({or, nr, ra});
         rec.rot = nr;
         // let m4 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0,0,e._z));
         // tab.box.geometry.applyMatrix4(m4);
@@ -163,7 +175,7 @@ function rotateTabs(widget, x, y, z) {
         // update position vector
         let vc = new THREE.Vector3(pos.x, pos.y, pos.z).applyMatrix4(m4);
         // update rotation quaternion
-        let [ rx, ry, rz, rw ] = rot;
+        let [rx, ry, rz, rw] = rot;
         rec.rot = new THREE.Quaternion().multiplyQuaternions(
             new THREE.Quaternion(rx, ry, rz, rw),
             new THREE.Quaternion().setFromRotationMatrix(m4)
@@ -176,114 +188,78 @@ function rotateTabs(widget, x, y, z) {
     SPACE.update();
 }
 
-function hasIndexing() {
-    return isIndexed;
-}
-
-function hasSpindle() {
-    return current.device.spindleMax > 0;
-}
-
-function zTop() {
-    return api.conf.get().process.camZTop > 0;
-}
-
-function zBottom() {
-    return api.conf.get().process.camZBottom > 0;
-}
-
 const opAddLaserOn = () => {
-    opAdd(popOp['laser on'].new());
+    opAdd(env.popOp['laser on'].new());
 };
 
 const opAddLaserOff = () => {
-    opAdd(popOp['laser off'].new());
+    opAdd(env.popOp['laser off'].new());
 };
 
 const opAddGCode = () => {
-    opAdd(popOp.gcode.new());
+    opAdd(env.popOp.gcode.new());
 };
 
 const opAddIndex = () => {
-    opAdd(popOp.index.new());
+    opAdd(env.popOp.index.new());
 };
 
 const opAddLevel = () => {
-    opAdd(popOp.level.new());
+    opAdd(env.popOp.level.new());
 };
 
 const opAddRough = () => {
-    opAdd(popOp.rough.new());
+    opAdd(env.popOp.rough.new());
 };
 
 const opAddOutline = () => {
-    opAdd(popOp.outline.new());
+    opAdd(env.popOp.outline.new());
 };
 
 const opAddPocket = () => {
     traceDone();
     surfaceDone();
-    let rec = popOp.pocket.new();
+    let rec = env.popOp.pocket.new();
     rec.surfaces = { /* widget.id: [ faces... ] */ };
     opAdd(rec);
 };
 
 const opAddContour = (axis) => {
-    let rec = popOp.contour.new();
+    let rec = env.popOp.contour.new();
     rec.axis = axis.toUpperCase();
     opAdd(rec);
 };
 
 const opAddLathe = (axis) => {
-    let rec = popOp.lathe.new();
+    let rec = env.popOp.lathe.new();
     rec.axis = axis.toUpperCase();
     opAdd(rec);
 };
 
 const opAddTrace = () => {
-    let rec = popOp.trace.new();
+    let rec = env.popOp.trace.new();
     rec.areas = { /* widget.id: [ polygons... ] */ };
     opAdd(rec);
 };
 
 const opAddDrill = () => {
-    let rec = popOp.drill.new();
-    rec.drills = {  };
+    let rec = env.popOp.drill.new();
+    rec.drills = {};
     opAdd(rec);
 };
 
 const opAddRegister = (axis, points) => {
-    let rec = popOp.register.new();
+    let rec = env.popOp.register.new();
     rec.axis = axis.toUpperCase();
     rec.points = points;
     opAdd(rec);
 };
 
 const opAddFlip = () => {
-    opAdd(popOp.flip.new());
+    opAdd(env.popOp.flip.new());
 };
 
-const opGCode = (label, field = 'gcode') => {
-    api.dialog.show('any');
-    const { c_gcode } = h.bind(
-        $('mod-any'), h.div({ id: "camop_dialog" }, [
-            h.label(label || 'custom gcode operation'),
-            h.textarea({ id: "c_gcode", rows: 15, cols: 50 }),
-            h.button({ _: 'done', onclick: () => {
-                api.dialog.hide();
-                api.conf.save();
-            } })
-        ])
-    );
-    let av = poppedRec[field] || [];
-    c_gcode.value = typeof(av) === 'string' ? av : av.join('\n');
-    c_gcode.onkeyup = (el) => {
-        poppedRec[field] = c_gcode.value.trim().split('\n');
-    };
-    c_gcode.focus();
-};
-
-const tabHover = function(data) {
+const tabHover = function (data) {
     delbox('tabb');
     const { int, type, point } = data;
     const object = int ? int.object : null;
@@ -311,21 +287,21 @@ const tabHover = function(data) {
     showTab = createTabBox(iw, ic, n);
 };
 
-const tabHoverUp = function(int) {
+const tabHoverUp = function (int) {
     delbox('tabb');
     if (lastTab) {
-        const {widget, box, id} = lastTab;
+        const { widget, box, id } = lastTab;
         widget.adds.remove(box);
         widget.mesh.remove(box);
         delete widget.tabs[id];
         let ta = api.widgets.annotate(widget.id).tab;
         let ix = 0;
-        ta.forEach((rec,i) => {
+        ta.forEach((rec, i) => {
             if (rec.id === id) {
                 ix = i;
             }
         });
-        ta.splice(ix,1);
+        ta.splice(ix, 1);
         api.conf.save();
         widget.saveState();
         return;
@@ -338,8 +314,8 @@ const tabHoverUp = function(int) {
         x: showTab.pos.x - ip.x,
         y: -showTab.pos.z - ip.y,
         z: showTab.stock.z ?
-            showTab.pos.y + ip.z + (isIndexed ? 0 : iw.track.tzoff) :
-            showTab.dim.z/2,
+            showTab.pos.y + ip.z + (env.isIndexed ? 0 : iw.track.tzoff) :
+            showTab.dim.z / 2,
     }
     let id = Date.now();
     let { dim, rot } = showTab;
@@ -350,518 +326,14 @@ const tabHoverUp = function(int) {
     iw.saveState();
 };
 
-// SURFACE FUNCS
-let surfaceOn = false, lastWidget;
-const surfaceAdd = (ev) => {
-    if (surfaceOn) {
-        return surfaceDone();
-    }
-    clearPops();
-    alert = api.show.alert("analyzing surfaces...", 1000);
-    let surfaces = poppedRec.surfaces;
-    let radians = poppedRec.follow * DEG2RAD;
-    CAM.surface_prep(currentIndex * RAD2DEG, () => {
-        api.hide.alert(alert);
-        alert = api.show.alert("[esc] cancels surface selection");
-        for (let [wid, arr] of Object.entries(surfaces)) {
-            let widget = api.widgets.forid(wid);
-            if (widget && arr.length)
-            for (let faceid of arr) {
-                CAM.surface_toggle(widget, faceid, radians, faceids => {
-                    // surfaces[widget.id] = faceids;
-                });
-            }
-        }
-    });
-    surfaceOn = hoveredOp;
-    surfaceOn.classList.add("editing");
-    api.feature.on_mouse_up = (obj, ev) => {
-        let { face } = obj;
-        let min = Math.min(face.a, face.b, face.c);
-        let faceid = min / 3;
-        let widget = lastWidget = obj.object.widget;
-        CAM.surface_toggle(widget, faceid, radians, faceids => {
-            surfaces[widget.id] = faceids;
-        });
-    };
-};
-
-const surfaceDone = () => {
-    if (!(surfaceOn && poppedRec && poppedRec.surfaces)) {
-        return;
-    }
-    let surfaces = poppedRec.surfaces;
-    for (let wid of Object.keys(surfaces)) {
-        let widget = api.widgets.forid(wid);
-        if (widget) {
-            CAM.surface_clear(widget);
-        } else {
-            delete surfaces[wid];
-        }
-    }
-    api.hide.alert(alert);
-    api.feature.on_mouse_up = undefined;
-    surfaceOn.classList.remove("editing");
-    surfaceOn = false;
-};
-
-// TRACE FUNCS
-let traceOn = false, lastTrace;
-
-const traceAdd = (ev) => { 
-    if (traceOn) {
-        return traceDone();
-    }
-    clearPops();
-    alert = api.show.alert("analyzing parts...", 1000);
-    traceOn = hoveredOp;
-    traceOn.classList.add("editing");
-    api.feature.hover = true;
-    api.feature.hoverAdds = true;
-    hover = traceHover;
-    hoverUp = traceHoverUp;
-    CAM.traces((ids) => {
-        api.hide.alert(alert);
-        alert = api.show.alert("[esc] cancels trace editing");
-        api.widgets.for(widget => {
-            if (ids.indexOf(widget.id) >= 0) {
-                unselectTraces(widget, true);
-                widget.trace_stack = null;
-            }
-            if (widget.trace_stack) {
-                widget.adds.appendAll(widget.trace_stack.meshes);
-                widget.trace_stack.show();
-                return;
-            }
-            let areas = (poppedRec.areas[widget.id] || []);
-            let stack = new Stack(widget.mesh);
-            widget.trace_stack = stack;
-            widget.traces?.forEach(poly => {
-                let match = areas.filter(arr => poly.matches(arr));
-                let layers = new Layers();
-                layers.setLayer("trace", {line: 0xaaaa55, fat:4, order:-10}, false).addPoly(poly);
-                stack.addLayers(layers);
-                stack.new_meshes.forEach(mesh => {
-                    mesh.trace = {widget, poly};
-                    // ensure trace poly singleton from matches
-                    if (match.length > 0) {
-                        poly._trace = match[0];
-                    } else {
-                        poly._trace = poly.toArray();
-                    }
-                });
-                widget.adds.appendAll(stack.new_meshes);
-                // console.log(widget)
-            });
-        });
-        // ensure appropriate traces are toggled matching current record
-        api.widgets.for(widget => {
-            widget.setVisualState({ opacity: 0.25 });
-            let areas = (poppedRec.areas[widget.id] || []);
-            let stack = widget.trace_stack;
-            stack.meshes.forEach(mesh => {
-                let { poly } = mesh.trace;
-                let match = areas.filter(arr => poly.matches(arr));
-                if (match.length > 0) {
-                    if (!mesh.selected) {
-                        traceToggle(mesh, true);
-                    }
-                } else if (mesh.selected) {
-                    traceToggle(mesh, true);
-                }
-            });
-        });
-    }, poppedRec.select === 'lines');
-};
-
-const traceDone = () => {
-    if (!traceOn) {
-        return;
-    }
-    func.unpop();
-    traceOn.classList.remove("editing");
-    traceOn = false;
-    api.widgets.opacity(1);
-    api.hide.alert(alert);
-    api.feature.hover = false;
-    api.feature.hoverAdds = false;
-    api.widgets.for(widget => {
-        widget.restoreVisualState();
-        if (widget.trace_stack) {
-            widget.trace_stack.hide();
-            widget.adds.removeAll(widget.trace_stack.meshes);
-        }
-    });
-};
-
-const clearPops = () => {
-    if (func.unpop) func.unpop();
-    tabDone();
-    traceDone();
-    surfaceDone();
-    selectHolesDone();
-};
-
-const traceHover = function(data) {
-    if (lastTrace) {
-        let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
-        color.r = colorSave.r;
-        color.g = colorSave.g;
-        color.b = colorSave.b;
-    }
-    lastTrace = null;
-    if (data.type === 'platform') {
-        return;
-    }
-    if (!data.int.object.trace) {
-        return;
-    }
-    lastTrace = data.int.object;
-    if (lastTrace.selected) {
-        let event = data.event;
-        let target = event.target;
-        let { clientX, clientY } = event;
-        let { offsetWidth, offsetHeight } = target;
-    }
-    let material = lastTrace.material[0] || lastTrace.material;
-    let color = material.color;
-    material.colorSave = color.clone();
-    color.setHex(isDark() ? 0x0066ff : 0x0000ff);
-};
-
-const traceHoverUp = function(int, ev) {
-    if (!int) return;
-    let { object } = int;
-    traceToggle(object);
-    if (ev.metaKey || ev.ctrlKey) {
-        let { selected } = object;
-        let { widget, poly } = object.trace;
-        let avgZ = poly.avgZ();
-        for (let add of widget.adds) {
-            if (add.trace && add.selected !== selected && add.trace.poly.onZ(avgZ)) {
-                traceToggle(add);
-            }
-        }
-    }
-};
-
-const traceToggle = function(obj, skip) {
-    let material = obj.material[0] || obj.material;
-    if (!material) return;
-    let { color, colorSave } = material;
-    let { widget, poly } = obj.trace;
-    let areas = poppedRec.areas;
-    if (!areas) {
-        return;
-    }
-    let wlist = areas[widget.id] = areas[widget.id] || [];
-    obj.selected = !obj.selected;
-    if (!colorSave) {
-        colorSave = material.colorSave = color.clone();
-    }
-    if (obj.selected) {
-        color.setHex(isDark() ? 0xdd0011 : 0xff0033);
-        colorSave.r = color.r;
-        colorSave.g = color.g;
-        colorSave.b = color.b;
-        if (!skip) wlist.push(poly._trace);
-    } else {
-        color.setHex(0xaaaa55);
-        colorSave.setHex(0xaaaa55);
-        if (!skip) wlist.remove(poly._trace);
-    }
-    api.conf.save();
-};
-
-let holeSelOn = false, lastSelHoles;
-
-/**
- * Client side function to select holes in widgets for CAM operations.
- * If holes have already been analyzed, they are displayed immediately.
- * Otherwise, the CAM server is queried and the results are cached.
- * @param {boolean} individual - select all holes, false to only select
- *  holes of tool diameter.
- */
-const selectHoles = async function(individual){
-    // console.log("client individual selected",individual)
-    if (holeSelOn) {
-        return selectHolesDone();
-    }
-    clearPops();
-    let alert = api.show.alert("analyzing parts...");
-    holeSelOn = hoveredOp;
-    holeSelOn.classList.add("editing");
-    api.feature.hover = true;
-    api.feature.hoverAdds = true;
-    hover = selectHolesHover;
-    hoverUp = selectHolesHoverUp;
-
-    const widgets = api.widgets.all()
-    /**
-     * creates a mesh for a hole and adds it to a widget
-     * @param {Object3D} widget - widget to add the hole mesh to
-     * @param {Object} drill - {depth,selected} object of the hole
-     * @returns {Mesh} the created mesh
-     */
-    function createHoleMesh(widget,drill) {
-        let {depth,selected, diam} = drill
-        let color = selected ? 0xFF0000:0x39e366
-        let geo = new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
-        const material = new THREE.MeshPhongMaterial( { color  } );
-        let mesh = new THREE.Mesh(geo, material);
-        mesh.position.copy(drill)
-        mesh.position.z -= depth/2
-        mesh.rotation.x = Math.PI/2
-        drill.widgetID = widget.id
-        drill.meshId = mesh.id; // add pointers to both objects
-        mesh.hole = drill;
-        mesh.parent = widget.mesh;
-        widget.mesh.add(mesh); 
-        widget.adds.push(mesh); // for click detection
-        return mesh
-    }
-    let meshesCached = widgets.every(widget => poppedRec.drills[widget.id] != undefined)
-    if (individual && meshesCached) {
-        // if any widget already has cached holes
-        // console.log("already has cached holes",poppedRec.drills)
-        api.hide.alert(alert);
-        api.widgets.for(widget => {
-            if (widget.adds) {
-                let drills =  poppedRec.drills[widget.id];
-                let ids = drills.map(hole => hole.meshId);
-                if (false && widget.adds.includes(mesh)) {
-                    // mesh in the old code was a dead artifact
-                    // so this code branch never actually ran
-                    widget.adds.forEach(add => {
-                        if (ids.includes(add.id)) {
-                            add.visible = true;
-                        }
-                    })
-                } else {
-                    drills.forEach(drill => {
-                        createHoleMesh(widget, drill);
-                    });
-                }
-            }
-        })
-    } else {
-        // if no widget has cached holes
-        let alert2 = api.show.alert("");
-        let found = await CAM.holes(
-            individual,
-            poppedRec,
-            (progress, msg) => {
-                alert2[0] = msg;
-                api.show.progress(progress,msg);
-                api.alerts.update();
-            },
-            async centers => {
-                api.show.progress(0);
-                if (!Array.isArray(centers)) {
-                    console.log("worker returned a malformed drills response");
-                    return;
-                }
-                if (centers.length === 0) {
-                    console.log("no drill holes found");
-                    return;
-                }
-                let shadow = centers.some(c => c.shadowed);
-                api.hide.alert(alert2);
-                if (shadow) {
-                    alert2 = api.show.alert("Some holes are shadowed by part and are not shown.");
-                }
-                centers = centers ?? [];
-                // list of all hole centers and if they are selected
-                api.widgets.for(widget => {
-                    const { holes } = centers.find(center => center.id == widget.id);
-                    // console.log(holes)
-                    if (!holes.length) unselectHoles(holes);
-                    holes.forEach(hole => {
-                        createHoleMesh(widget, hole);
-                    });
-                    //add hole data to record
-                    poppedRec.drills = poppedRec.drills ?? {};
-                    poppedRec.drills[widget.id] = holes;
-                    //give widget access to an array of drill records that refrence it
-                    //so that it can be cleared when widget is rotated or mirrored etc.
-                    if(!widget.drills){widget.drills = []};
-                    widget.drills.push(holes);
-                })
-            }
-        );
-        if (!found || found.length === 0) {
-            api.hide.alert(alert);
-            api.hide.alert(alert2);
-            api.show.alert("no drill holes found");
-            return;
-        }
-    }
-    //hide the alert once hole meshes are calculated on the worker, and then added to the scene
-    // api.hide.alert(alert);
-    let escAlert = api.show.alert("[esc] cancels drill editing", 1000);
-    setTimeout(() => {
-        api.hide.alert(escAlert);
-    }, 5000);
-    api.widgets.opacity(0.8);
-}
-
-const selectHolesHover = function(data) {
-    //not used right now. may be useful in the future
-    if (lastTrace) {
-        let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
-        color.r = colorSave.r;
-        color.g = colorSave.g;
-        color.b = colorSave.b;
-        lastTrace.position.z -= 0.01;
-    }
-    if (data.type === 'platform') {
-        lastTrace = null;
-        return;
-    }
-}
-
-const selectHolesHoverUp = function(int, ev) {
-    if (!int) return; //if not a hole mesh return
-        let { object } = int;
-        selectHoleToggle(object);
-}
-
-/**
- * Toggle the selection of a hole mesh and update its color
- * @param {Object3D} mesh - the hole mesh to toggle
- */
-const selectHoleToggle = function(mesh) {
-    let {hole} = mesh
-    if(!hole) return
-    hole.selected = !hole.selected;
-    mesh.material.color.setHex( hole.selected ? 0xFF0000:0x39e366 );
-}
-
-/**
- * Clears the recorded holes in the widget (widget.drills array)
- * and also clears the widget.adds array.
- * @param {Object} widget - the widget with the drills array to clear
- */
-const clearHolesRec = (widget)=>{
-    if(widget.drills){
-        widget.drills.forEach(rec=>{
-        })
-    }
-    if(widget.adds){
-        widget.adds.length = 0 //clear adds array
-    }
-}
-
-/**
- * Cleanup function for selectHoles.
- * Removes all adds from the scene, hides the alert, and resets the opacity of the widgets.
- * Also resets the hover features and the editing class on the holeSelOn html element.
- */
-const selectHolesDone = () => {
-    if (!holeSelOn) {
-        return;
-    }
-    func.unpop();
-    holeSelOn.classList.remove("editing");
-    holeSelOn = false;
-    api.widgets.opacity(1);
-    api.hide.alert(alert);
-    api.feature.hover = false;
-    api.feature.hoverAdds = false;
-
-    api.widgets.for(widget => {
-        for(let add of widget.adds){
-            add.visible = false
-            widget.mesh.remove(add);
-        }
-    });
-};
-
-const opFlip = () => {
-    api.view.set_arrange();
-    let widgets = api.widgets.all();
-    let { process } = current;
-    let { ops, op2 } = process;
-    // add flip singleton to b-side
-    let add2 = op2.length === 0;
-    let axis = poppedRec.axis;
-    flipping = true;
-    process.camZAnchor = {
-        top: "bottom",
-        bottom: "top",
-        middle: "middle"
-    }[process.camZAnchor];
-    // flip tabs
-    for (let widget of widgets) {
-        let anno = api.widgets.annotate(widget.id).tab || [];
-        let wbm = widget.bounds.max.z;
-        for (let tab of anno) {
-            let box = widget.tabs[tab.id].box;
-            let bpo = box.position;
-            let xr = 0, yr = 0;
-            let flz = wbm - bpo.z;
-            if (axis === 'X') {
-                tab.pos.y = -tab.pos.y;
-                bpo.y = -bpo.y;
-                xr = Math.PI / 2;
-            }
-            if (axis === 'Y') {
-                tab.pos.x = -tab.pos.x;
-                bpo.x = -bpo.x;
-                yr = Math.PI / 2;
-            }
-            tab.pos.z = bpo.z = flz;
-            let [ rx, ry, rz, rw ] = tab.rot;
-            let qat = new THREE.Quaternion(rx, ry, rz, rw);
-            let eul = new THREE.Euler().setFromQuaternion(qat);
-            eul._z = -eul._z;
-            tab.rot = new THREE.Quaternion().setFromEuler(eul);
-        }
-        clearTabs(widget, true);
-        restoreTabs([widget]);
-    }
-    // flip widget
-    if (axis === 'X') {
-        api.selection.rotate(Math.PI, 0, 0);
-    }
-    if (axis === 'Y') {
-        api.selection.rotate(0, Math.PI, 0);
-    }
-    // clear traces cache
-    CAM.traces_clear();
-    api.client.clear();
-    flipping = false;
-    process.ops = op2;
-    process.op2 = ops;
-    // flip camZBottom
-    if (poppedRec.invert && process.camZBottom && camZBottom) {
-        const maxZ = camZBottom._max.z
-        process.camZBottom = maxZ - process.camZBottom;
-        api.util.rec2ui(process);
-        updateStock();
-    }
-    // keep flip operations in sync
-    for (let op of op2) {
-        if (op.type === 'flip') {
-            op.axis = poppedRec.axis;
-            op.invert = poppedRec.invert;
-        }
-    }
-    if (add2) {
-        opAdd(poppedRec);
-    } else {
-        opRender();
-    }
-};
-
 let showTab, lastTab, tab, iw, ic;
 
 const tabAdd = () => {
     traceDone();
     alert = api.show.alert("[esc] cancels tab editing");
     api.feature.hover = true;
-    hover = tabHover;
-    hoverUp = tabHoverUp;
+    env.hover = tabHover;
+    env.hoverUp = tabHoverUp;
 };
 
 const tabDone = () => {
@@ -892,18 +364,18 @@ const traceClear = () => {
 };
 
 const opAdd = (rec) => {
-    if (!isCamMode) return;
-    clearPops();
-    let oplist = current.process.ops;
+    if (!env.isCamMode) return;
+    env.clearPops();
+    let oplist = env.current.process.ops;
     if (oplist.indexOf(rec) < 0) {
-        if (oplist.length && oplist[oplist.length-1].type === '|') {
-            oplist.splice(oplist.length-1,0,rec);
+        if (oplist.length && oplist[oplist.length - 1].type === '|') {
+            oplist.splice(oplist.length - 1, 0, rec);
         } else {
             oplist.push(rec);
         }
         let fpos = oplist.findWith(rec => rec.type === 'flip');
         if (fpos >= 0 && oplist.length > 1) {
-            let oprec = oplist.splice(fpos,1);
+            let oprec = oplist.splice(fpos, 1);
             oplist.push(oprec[0]);
         }
         api.conf.save();
@@ -912,20 +384,20 @@ const opAdd = (rec) => {
 };
 
 const opDel = (rec) => {
-    if (!isCamMode) return;
-    clearPops();
-    let oplist = current.process.ops;
+    if (!env.isCamMode) return;
+    env.clearPops();
+    let oplist = env.current.process.ops;
     let pos = oplist.indexOf(rec);
     if (pos >= 0) {
-        oplist.splice(pos,1);
+        oplist.splice(pos, 1);
         api.conf.save();
         opRender();
     }
 };
 
 const opRender = () => {
-    let oplist = current.process.ops;
-    if (!(isCamMode && oplist)) {
+    let oplist = env.current.process.ops;
+    if (!(env.isCamMode && oplist)) {
         return;
     }
     oplist = oplist.filter(rec => !Array.isArray(rec));
@@ -934,22 +406,22 @@ const opRender = () => {
     let bind = {};
     let scale = api.view.unit_scale();
     let notime = false;
-    oplist.forEach((rec,i) => {
+    oplist.forEach((rec, i) => {
         let title = '';
         let clock = rec.type === '|';
         let label = clock ? `` : rec.type;
-        let clazz = notime ? [ "draggable", "notime" ] : [ "draggable" ];
+        let clazz = notime ? ["draggable", "notime"] : ["draggable"];
         let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
         if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
         if (notable?.length) label += ` (${notable[0].slice(1)})`;
         html.appendAll([
-            `<div id="${mark+i}" class="${clazz.join(' ')}"${title}>`,
+            `<div id="${mark + i}" class="${clazz.join(' ')}"${title}>`,
             `<label class="label">${label}</label>`,
             clock ? '' :
-            `<label id="${mark+i}-x" class="del"><i class="fa fa-trash"></i></label>`,
+                `<label id="${mark + i}-x" class="del"><i class="fa fa-trash"></i></label>`,
             `</div>`
         ]);
-        bind[mark+i] = rec;
+        bind[mark + i] = rec;
         notime = notime || clock;
     });
     let listel = $('oplist');
@@ -975,7 +447,7 @@ const opRender = () => {
             indexing = false;
         }
         let el = $(id);
-        if (!isIndexed && type === 'lathe') {
+        if (!env.isIndexed && type === 'lathe') {
             rec.disabled = true;
         }
         if (!hasSharedArrays && (type === 'contour' || type === 'lathe')) {
@@ -988,7 +460,7 @@ const opRender = () => {
         let timer = null;
         let inside = true;
         let popped = false;
-        let poprec = popOp[rec.type];
+        let poprec = env.popOp[rec.type];
         if (type === 'index' && indexing && !rec.disabled) {
             index = rec.absolute ? rec.degrees : index + rec.degrees;
         }
@@ -1001,21 +473,21 @@ const opRender = () => {
             popped = false;
         };
         function onEnter(ev) {
-            if ((surfaceOn || traceOn) && poppedRec != rec) {
+            if ((surfaceOn || traceOn) && env.poppedRec != rec) {
                 return;
             }
-            if (popped && poppedRec != rec) {
+            if (popped && env.poppedRec != rec) {
                 surfaceDone();
                 traceDone();
             }
             if (unpop) unpop();
-            func.unpop = unpop = el.unpop;
+            env.func.unpop = unpop = el.unpop;
             inside = true;
             // pointer to current rec for trace editing
-            poppedRec = rec;
+            env.poppedRec = rec;
             popped = true;
             poprec.use(rec);
-            hoveredOp = el;
+            env.hoveredOp = el;
             if (!clock) {
                 // offset Y position of pop div by % of Y screen location of button
                 el.appendChild(poprec.div);
@@ -1059,7 +531,7 @@ const opRender = () => {
                 ev.preventDefault();
                 ev.stopPropagation();
                 rec.disabled = !rec.disabled;
-                for (let op of ev.shiftKey ? oplist : [ rec ]) {
+                for (let op of ev.shiftKey ? oplist : [rec]) {
                     if (op !== rec) {
                         op.disabled = op.type !== '|' ? !rec.disabled : false;
                     }
@@ -1071,7 +543,7 @@ const opRender = () => {
                         el.classList.remove("disabled");
                     }
                 }
-                if (isIndexed) {
+                if (env.isIndexed) {
                     updateIndex();
                 }
                 return true;
@@ -1080,7 +552,7 @@ const opRender = () => {
             if (!clock && ev.shiftKey) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                oplist = current.process.ops;
+                oplist = env.current.process.ops;
                 oplist.push(Object.clone(rec));
                 api.conf.save();
                 opRender();
@@ -1092,7 +564,7 @@ const opRender = () => {
             let tracker = UI.tracker;
             tracker.style.display = 'block';
             let cancel = tracker.onmouseup = (ev) => {
-                oplist = current.process.ops;
+                oplist = env.current.process.ops;
                 clist.remove("drag");
                 tracker.style.display = 'none';
                 if (ev) {
@@ -1139,7 +611,7 @@ const opRender = () => {
             let touched = false;
             el.ontouchstart = (ev) => {
                 touched = true;
-                if (poppedRec === rec && popped) {
+                if (env.poppedRec === rec && popped) {
                     onLeave(ev);
                 } else {
                     onEnter(ev);
@@ -1163,20 +635,20 @@ const opRender = () => {
             el.onmouseleave = onLeave;
         }
     }
-    if (lastMode !== VIEWS.ANIMATE) {
+    if (env.lastMode !== VIEWS.ANIMATE) {
         // update widget rotations from timeline marker
-        WIDGETS.setAxisIndex(isPreview || !isIndexed ? 0 : -index);
+        WIDGETS.setAxisIndex(env.isPreview || !env.isIndexed ? 0 : -index);
     }
-    currentIndex = isIndexed && !isPreview ? index * DEG2RAD : 0;
+    env.currentIndex = env.isIndexed && !env.isPreview ? index * DEG2RAD : 0;
     updateStock();
 };
 
 export function init() {
 
     api.event.on('tool.mesh.face-normal', normal => {
-        // console.log({ poppedRec });
-        poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
-        poppedRec.absolute = true;
+        // console.log({ env.poppedRec });
+        env.poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
+        env.poppedRec.absolute = true;
         opRender();
         updateStock();
     });
@@ -1189,63 +661,63 @@ export function init() {
         const stack = new Stack(mesh || space.world.newGroup());
         const layers = new Layers();
         for (let poly of open) {
-            layers.setLayer("open", {line: 0xff8800}, false).addPoly(poly);
+            layers.setLayer("open", { line: 0xff8800 }, false).addPoly(poly);
             let diam = poly.tool?.shape?.diameter;
             if (diam) {
                 const exp = poly.offset_open(diam, 'round');
-                layers.setLayer("open-exp", {line: 0xff5555}, false).addPolys(exp);
+                layers.setLayer("open-exp", { line: 0xff5555 }, false).addPolys(exp);
             }
         }
         for (let poly of closed) {
-            layers.setLayer("close", {line: 0xff0000}, false).addPoly(poly);
+            layers.setLayer("close", { line: 0xff0000 }, false).addPoly(poly);
         }
         for (let poly of circs) {
-            layers.setLayer("circs", {line: 0x008800}, false).addPoly(poly);
+            layers.setLayer("circs", { line: 0x008800 }, false).addPoly(poly);
         }
         for (let poly of rects) {
-            layers.setLayer("rects", {line: 0x0000ff}, false).addPoly(poly);
+            layers.setLayer("rects", { line: 0x0000ff }, false).addPoly(poly);
         }
         stack.addLayers(layers);
     });
 
     api.event.on("widget.add", widget => {
-        if (isCamMode && !Array.isArray(widget)) {
+        if (env.isCamMode && !Array.isArray(widget)) {
             updateAxisMode(true);
-            widget.setIndexed(isIndexed ? true : false);
+            widget.setIndexed(env.isIndexed ? true : false);
             api.platform.update_bounds();
         }
     });
 
     // wire up animate button in ui
     api.event.on("function.animate", (mode) => {
-        if (isAnimate || !isCamMode) {
+        if (env.isAnimate || !env.isCamMode) {
             return;
         }
         api.function.prepare(() => {
-            if (isCamMode) {
+            if (env.isCamMode) {
                 animate();
             }
         });
     });
 
     api.event.on("function.export", (mode) => {
-        if (isAnimate) {
-            isAnimate = false;
+        if (env.isAnimate) {
+            env.isAnimate = false;
             animFn().animate_clear(api);
         }
     });
 
     api.event.on("mode.set", (mode) => {
-        isIndexed = undefined;
-        isCamMode = mode === 'CAM';
-        SPACE.platform.setColor(isCamMode ? 0xeeeeee : 0xcccccc);
-        api.uc.setVisible(UI.func.animate, isCamMode);
+        env.isIndexed = undefined;
+        env.isCamMode = mode === 'CAM';
+        SPACE.platform.setColor(env.isCamMode ? 0xeeeeee : 0xcccccc);
+        api.uc.setVisible(UI.func.animate, env.isCamMode);
         // hide/show cam mode elements
         for (let el of [...document.getElementsByClassName('mode-cam')]) {
-            api.uc.setClass(el, 'hide', !isCamMode);
+            api.uc.setClass(el, 'hide', !env.isCamMode);
         }
-        if (!isCamMode) {
-            clearPops();
+        if (!env.isCamMode) {
+            env.clearPops();
             tabClear();
         }
         // do not persist traces across page reloads
@@ -1255,27 +727,27 @@ export function init() {
     });
 
     api.event.on("view.set", (mode) => {
-        lastMode = mode;
-        isArrange = (mode === VIEWS.ARRANGE);
-        isPreview = (mode === VIEWS.PREVIEW);
-        isAnimate = (mode === VIEWS.ANIMATE);
+        env.lastMode = mode;
+        env.isArrange = (mode === VIEWS.ARRANGE);
+        env.isPreview = (mode === VIEWS.PREVIEW);
+        env.isAnimate = (mode === VIEWS.ANIMATE);
         animFn().animate_clear(api);
-        clearPops();
-        if (isCamMode && isPreview) {
+        env.clearPops();
+        if (env.isCamMode && env.isPreview) {
             WIDGETS.setAxisIndex(0);
         }
         updateStock();
         opRender();
-        api.uc.setVisible($('layer-animate'), isAnimate && isCamMode);
+        api.uc.setVisible($('layer-animate'), env.isAnimate && env.isCamMode);
     });
 
     api.event.on("settings.saved", (settings) => {
         validateTools(settings.tools);
-        current = settings;
+        env.current = settings;
         let proc = settings.process;
         let hasTabs = false;
         let hasTraces = false;
-        if (isCamMode && proc.ops) {
+        if (env.isCamMode && proc.ops) {
             proc.ops = proc.ops.filter(v => v);
         }
         // for any tabs or traces to set markers
@@ -1288,21 +760,21 @@ export function init() {
         updateIndex();
         updateStock();
         updateAxisMode();
-        if (!poppedRec) {
+        if (!env.poppedRec) {
             opRender();
         }
     });
 
     api.event.on("settings.load", (settings) => {
         opRender();
-        if (!isCamMode) return;
+        if (!env.isCamMode) return;
         validateTools(settings.tools);
         restoreTabs(api.widgets.all());
         updateAxisMode();
     });
 
     api.event.on("cam.stock.toggle", (bool) => {
-        camStock && (camStock.visible = bool ?? !camStock.visible);
+        env.camStock && (env.camStock.visible = bool ?? !env.camStock.visible);
     });
 
     api.event.on("boolean.click", api.platform.update_bounds);
@@ -1330,12 +802,12 @@ export function init() {
         "selection.scale",
         "selection.rotate"
     ], () => {
-        if (!isCamMode) return;
-        for (let op of current.process.ops) {
-            if (op.type === 'trace' && !flipping) {
+        if (!env.isCamMode) return;
+        for (let op of env.current.process.ops) {
+            if (op.type === 'trace' && !env.flipping) {
                 op.areas = {};
             }
-            else if( op.type === 'drill' && !flipping){
+            else if (op.type === 'drill' && !env.flipping) {
                 op.drills = {};
             }
         }
@@ -1354,23 +826,23 @@ export function init() {
     ], updateTabs);
 
     api.event.on("preview.end", () => {
-        isParsed = false;
-        if (isCamMode) {
+        env.isParsed = false;
+        if (env.isCamMode) {
             let bounds = STACKS.getStack("bounds");
             if (bounds) bounds.button("animate", animate);
         }
     });
 
     api.event.on("code.loaded", (info) => {
-        if (isCamMode) {
-            isParsed = true;
+        if (env.isCamMode) {
+            env.isParsed = true;
             let parse = STACKS.getStack("parse", SPACE.world);
             if (parse) parse.button("animate", animate);
         }
     });
 
     $('op-add').onmouseenter = () => {
-        if (func.unpop) func.unpop();
+        if (env.func.unpop) env.func.unpop();
     };
 
     $('op-add-list').onclick = (ev) => {
@@ -1386,7 +858,7 @@ export function init() {
             case "outline": return opAddOutline();
             case "contour":
                 let caxis = "X";
-                for (let op of current.process.ops) {
+                for (let op of env.current.process.ops) {
                     if (op.type === "contour" && op.axis === "X") {
                         caxis = "Y";
                     }
@@ -1394,7 +866,7 @@ export function init() {
                 return opAddContour(caxis);
             case "lathe":
                 let laxis = "X";
-                for (let op of current.process.ops) {
+                for (let op of env.current.process.ops) {
                     if (op.type === "lathe" && op.axis === "X") {
                         laxis = "Y";
                     }
@@ -1406,7 +878,7 @@ export function init() {
             case "pocket": return opAddPocket();
             case "flip":
                 // only one flip op permitted
-                for (let op of current.process.ops) {
+                for (let op of env.current.process.ops) {
                     if (op.type === 'flip') {
                         return;
                     }
@@ -1445,37 +917,37 @@ export function init() {
 
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
-        if (isCamMode) {
-            clearPops();
+        if (env.isCamMode) {
+            env.clearPops();
         }
     });
 
     api.event.on("key.esc", () => {
-        if (isCamMode) {
-            clearPops();
+        if (env.isCamMode) {
+            env.clearPops();
         }
     });
 
     api.event.on("selection.scale", () => {
-        if (isCamMode) {
-            clearPops();
+        if (env.isCamMode) {
+            env.clearPops();
         }
     });
 
     api.event.on("widget.duplicate", (widget, oldwidget) => {
-        if (!isCamMode) {
+        if (!env.isCamMode) {
             return;
         }
         if (traceOn) {
             traceDone();
         }
         unselectTraces(widget);
-        if (flipping) {
+        if (env.flipping) {
             return;
         }
         let ann = api.widgets.annotate(widget.id);
         if (ann.tab) {
-            ann.tab.forEach((tab,i) => {
+            ann.tab.forEach((tab, i) => {
                 tab.id = Date.now() + i;
             });
             restoreTabs([widget]);
@@ -1483,7 +955,7 @@ export function init() {
     });
 
     api.event.on("widget.mirror", widget => {
-        if (!isCamMode) {
+        if (!env.isCamMode) {
             return;
         }
         if (traceOn) {
@@ -1494,17 +966,17 @@ export function init() {
         }
         clearHolesRec(widget)
         unselectTraces(widget);
-        if (flipping) {
+        if (env.flipping) {
             return;
         }
         mirrorTabs(widget);
     });
 
     api.event.on("widget.rotate", rot => {
-        if (!isCamMode) {
+        if (!env.isCamMode) {
             return;
         }
-        let {widget, x, y, z} = rot;
+        let { widget, x, y, z } = rot;
         if (traceOn) {
             traceDone();
         }
@@ -1512,7 +984,7 @@ export function init() {
         if (holeSelOn) {
             selectHolesDone();
         }
-        if (flipping) {
+        if (env.flipping) {
             return;
         }
         clearHolesRec(widget)
@@ -1524,571 +996,38 @@ export function init() {
     });
 
     api.event.on("mouse.hover.up", rec => {
-        if (!isCamMode) {
+        if (!env.isCamMode) {
             return;
         }
         let { object, event } = rec;
-        hoverUp(object, event);
+        env.hoverUp(object, event);
     });
 
     api.event.on("mouse.hover", data => {
-        if (!isCamMode) {
+        if (!env.isCamMode) {
             return;
         }
-        hover(data);
+        env.hover(data);
     });
 
-    createPopOp('level', {
-        tool:    'camLevelTool',
-        spindle: 'camLevelSpindle',
-        step:    'camLevelOver',
-        rate:    'camLevelSpeed',
-        down:    'camLevelDown',
-        over:    'camLevelOver',
-        stock:   'camLevelStock'
-    }).inputs = {
-        tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
-        sep:     UC.newBlank({class:"pop-sep"}),
-        spindle: UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        step:    UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
-        rate:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        down:    UC.newInput(LANG.cc_loff_s, {title:LANG.cc_loff_l, convert:UC.toFloat, units:true}),
-        over:    UC.newInput(LANG.cc_lxyo_s, {title:LANG.cc_lxyo_l, convert:UC.toFloat, units:true}),
-        sep:     UC.newBlank({class:"pop-sep"}),
-        stock:   UC.newBoolean(LANG.cc_lsto_s, undefined, {title:LANG.cc_lsto_l}),
-    };
-
-    createPopOp('rough', {
-        tool:    'camRoughTool',
-        spindle: 'camRoughSpindle',
-        down:    'camRoughDown',
-        step:    'camRoughOver',
-        rate:    'camRoughSpeed',
-        plunge:  'camRoughPlunge',
-        leave:   'camRoughStock',
-        leavez:  'camRoughStockZ',
-        all:     'camRoughAll',
-        voids:   'camRoughVoid',
-        flats:   'camRoughFlat',
-        inside:  'camRoughIn',
-        ov_topz: 0,
-        ov_botz: 0,
-        ov_conv: '~camConventional',
-    }).inputs = {
-        tool:    UC.newSelect(LANG.cc_tool, {}, "tools"),
-        sep:     UC.newBlank({class:"pop-sep"}),
-        spindle: UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:    UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        plunge:  UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        sep:     UC.newBlank({class:"pop-sep"}),
-        down:    UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
-        step:    UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
-        leave:   UC.newInput(LANG.cr_lsto_s, {title:LANG.cr_lsto_l, convert:UC.toFloat, units:true}),
-        leavez:  UC.newInput(LANG.cr_lstz_s, {title:LANG.cr_lstz_l, convert:UC.toFloat, bound:UC.bound(0,10),units:true}),
-        sep:     UC.newBlank({class:"pop-sep"}),
-        all:     UC.newBoolean(LANG.cr_clst_s, undefined, {title:LANG.cr_clst_l, show:hasIndexing}),
-        voids:   UC.newBoolean(LANG.cr_clrp_s, undefined, {title:LANG.cr_clrp_l}),
-        flats:   UC.newBoolean(LANG.cr_clrf_s, undefined, {title:LANG.cr_clrf_l}),
-        inside:  UC.newBoolean(LANG.cr_olin_s, undefined, {title:LANG.cr_olin_l}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        exp:      UC.newExpand("overrides"),
-        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
-        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
-        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
-        exp_end:  UC.endExpand(),
-    };
-
-    createPopOp('outline', {
-        tool:     'camOutlineTool',
-        spindle:  'camOutlineSpindle',
-        step:     'camOutlineOver',
-        steps:    'camOutlineOverCount',
-        down:     'camOutlineDown',
-        rate:     'camOutlineSpeed',
-        plunge:   'camOutlinePlunge',
-        dogbones: 'camOutlineDogbone',
-        omitvoid: 'camOutlineOmitVoid',
-        omitthru: 'camOutlineOmitThru',
-        outside:  'camOutlineOut',
-        inside:   'camOutlineIn',
-        wide:     'camOutlineWide',
-        top:      'camOutlineTop',
-        ov_topz:   0,
-        ov_botz:   0,
-        ov_conv:   '~camConventional',
-    }).inputs = {
-        tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
-        step:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), show:() => popOp.outline.rec.wide}),
-        steps:    UC.newInput(LANG.cc_sovc_s, {title:LANG.cc_sovc_l, convert:UC.toInt, bound:UC.bound(1,5), show:() => popOp.outline.rec.wide}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        top:      UC.newBoolean(LANG.co_clrt_s, undefined, {title:LANG.co_clrt_l}),
-        inside:   UC.newBoolean(LANG.co_olin_s, undefined, {title:LANG.co_olin_l, show:(op) => { return !op.inputs.outside.checked }}),
-        outside:  UC.newBoolean(LANG.co_olot_s, undefined, {title:LANG.co_olot_l, show:(op) => { return !op.inputs.inside.checked }}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        omitthru: UC.newBoolean(LANG.co_omit_s, undefined, {title:LANG.co_omit_l, xshow:(op) => { return op.inputs.outside.checked }}),
-        omitvoid: UC.newBoolean(LANG.co_omvd_s, undefined, {title:LANG.co_omvd_l, xshow:(op) => { return op.inputs.outside.checked }}),
-        wide:     UC.newBoolean(LANG.co_wide_s, undefined, {title:LANG.co_wide_l, show:(op) => { return !op.inputs.inside.checked }}),
-        dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:(op) => { return !op.inputs.wide.checked }}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        exp:      UC.newExpand("overrides"),
-        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
-        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
-        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
-        exp_end:  UC.endExpand(),
-    };
-
-    const contourFilter = gcodeEditor('Layer Filter', 'filter');
-
-    createPopOp('contour', {
-        tool:      'camContourTool',
-        spindle:   'camContourSpindle',
-        step:      'camContourOver',
-        rate:      'camContourSpeed',
-        angle:     'camContourAngle',
-        leave:     'camContourLeave',
-        tolerance: 'camTolerance',
-        flatness:  'camFlatness',
-        reduction: 'camContourReduce',
-        bridging:  'camContourBridge',
-        bottom:    'camContourBottom',
-        curves:    'camContourCurves',
-        inside:    'camContourIn',
-        filter:    'camContourFilter',
-        axis:      'X'
-    }).inputs = {
-        tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
-        axis:      UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,10.0)}),
-        leave:     UC.newInput(LANG.cf_leav_s, {title:LANG.cf_leav_l, convert:UC.toFloat, bound:UC.bound(0,100)}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        angle:     UC.newInput(LANG.cf_angl_s, {title:LANG.cf_angl_l, convert:UC.toFloat, bound:UC.bound(45,90), show:(op) => op.inputs.curves.checked}),
-        flatness:  UC.newInput(LANG.ou_flat_s, {title:LANG.ou_flat_l, convert:UC.toFloat, bound:UC.bound(0,1.0), units:false, round:4}),
-        tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
-        reduction: UC.newInput(LANG.ou_redu_s, {title:LANG.ou_redu_l, convert:UC.toInt, bound:UC.bound(0,10), units:false}),
-        // bridging:  UC.newInput(LANG.ou_brdg_s, {title:LANG.ou_brdg_l, convert:UC.toFloat, bound:UC.bound(0,1000.0), units:true, round:4, show:(op) => op.inputs.curves.checked}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        curves:    UC.newBoolean(LANG.cf_curv_s, undefined, {title:LANG.cf_curv_l}),
-        inside:    UC.newBoolean(LANG.cf_olin_s, undefined, {title:LANG.cf_olin_l}),
-        bottom:    UC.newBoolean(LANG.cf_botm_s, undefined, {title:LANG.cf_botm_l, show:(op,conf) => conf ? conf.process.camZBottom : 0}),
-        filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
-    };
-
-    createPopOp('lathe', {
-        tool:      'camLatheTool',
-        spindle:   'camLatheSpindle',
-        step:      'camLatheOver',
-        angle:     'camLatheAngle',
-        rate:      'camLatheSpeed',
-        tolerance: 'camTolerance',
-        filter:    'camContourFilter',
-        leave:     'camContourLeave',
-        linear:    'camLatheLinear'
-    }).inputs = {
-        tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
-        // axis:      UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,100.0)}),
-        angle:     UC.newInput(LANG.cc_sang_s, {title:LANG.cc_sang_l, convert:UC.toFloat, bound:UC.bound(0.01,180.0)}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4}),
-        leave:     UC.newInput(LANG.cf_leav_s, {title:LANG.cf_leav_l, convert:UC.toFloat, bound:UC.bound(0,100)}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        linear:    UC.newBoolean(LANG.ci_line_s, undefined, {title:LANG.ci_line_l}),
-        // filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
-    };
-
-    function canDogBones() {
-        if (!poppedRec) return false;
-        return poppedRec.mode === 'follow';// && poppedRec.offset && poppedRec.offset !== 'none';
-    }
-
-    function canDogBonesRev() {
-        return canDogBones() && poppedRec.dogbone;
-    }
-
-    function zDogSep() {
-        return canDogBones() || zBottom();
-    }
-
-    createPopOp('trace', {
-        mode:    'camTraceType',
-        offset:  'camTraceOffset',
-        spindle: 'camTraceSpindle',
-        tool:    'camTraceTool',
-        step:    'camTraceOver',
-        down:    'camTraceDown',
-        thru:    'camTraceThru',
-        rate:    'camTraceSpeed',
-        plunge:  'camTracePlunge',
-        offover: 'camTraceOffOver',
-        dogbone: 'camTraceDogbone',
-        revbone: 'camTraceDogbone',
-        merge:   'camTraceMerge',
-        ov_topz: 0,
-        ov_botz: 0,
-        ov_conv: '~camConventional',
-    }).inputs = {
-        tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
-        mode:     UC.newSelect(LANG.cu_type_s, {title:LANG.cu_type_l}, "trace"),
-        offset:   UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l, show:() => (poppedRec.mode === 'follow')}, "traceoff"),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        plunge:   UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        step:     UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0), show:(op) => popOp.trace.rec.mode === "clear"}),
-        down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
-        thru:     UC.newInput(LANG.cc_thru_s, {title:LANG.cc_thru_l, convert:UC.toFloat, units:true}),
-        offover:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, show:() => poppedRec.offset !== "none" || poppedRec.mode === "clear"}),
-        sep:      UC.newBlank({class:"pop-sep", modes:MCAM, xshow:zDogSep}),
-        merge:    UC.newBoolean(LANG.co_merg_s, undefined, {title:LANG.co_merg_l, show:() => !popOp.trace.rec.down}),
-        dogbone:  UC.newBoolean(LANG.co_dogb_s, undefined, {title:LANG.co_dogb_l, show:canDogBones}),
-        revbone:  UC.newBoolean(LANG.co_dogr_s, undefined, {title:LANG.co_dogr_l, show:canDogBonesRev}),
-        exp:      UC.newExpand("overrides"),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        ov_topz:  UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
-        ov_botz:  UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
-        ov_conv:  UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
-        exp_end:  UC.endExpand(),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        menu:     UC.newRow([ UC.newButton("select", traceAdd) ], {class:"ext-buttons f-row"}),
-    };
-
-    createPopOp('pocket', {
-        spindle:   'camPocketSpindle',
-        tool:      'camPocketTool',
-        step:      'camPocketOver',
-        down:      'camPocketDown',
-        rate:      'camPocketSpeed',
-        plunge:    'camPocketPlunge',
-        expand:    'camPocketExpand',
-        smooth:    'camPocketSmooth',
-        refine:    'camPocketRefine',
-        follow:    'camPocketFollow',
-        contour:   'camPocketContour',
-        engrave:   'camPocketEngrave',
-        outline:   'camPocketOutline',
-        ov_topz:   0,
-        ov_botz:   0,
-        ov_conv:   '~camConventional',
-        tolerance: 'camTolerance',
-    }).inputs = {
-        tool:      UC.newSelect(LANG.cc_tool, {}, "tools"),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        spindle:   UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:      UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true}),
-        plunge:    UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        step:      UC.newInput(LANG.cc_sovr_s, {title:LANG.cc_sovr_l, convert:UC.toFloat, bound:UC.bound(0.01,1.0)}),
-        down:      UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true, show:() => !poppedRec.contour}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        expand:    UC.newInput(LANG.cp_xpnd_s, {title:LANG.cp_xpnd_l, convert:UC.toFloat, units:true, xshow:() => !poppedRec.contour}),
-        refine:    UC.newInput(LANG.cp_refi_s, {title:LANG.cp_refi_l, convert:UC.toInt, show:() => poppedRec.contour}),
-        smooth:    UC.newInput(LANG.cp_smoo_s, {title:LANG.cp_smoo_l, convert:UC.toInt}),
-        tolerance: UC.newInput(LANG.ou_toll_s, {title:LANG.ou_toll_l, convert:UC.toFloat, bound:UC.bound(0,10.0), units:true, round:4, show:() => poppedRec.contour}),
-        follow:    UC.newInput(LANG.cp_foll_s, {title:LANG.cp_foll_l, convert:UC.toFloat}),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        contour:   UC.newBoolean(LANG.cp_cont_s, undefined, {title:LANG.cp_cont_s}),
-        engrave:   UC.newBoolean(LANG.cp_engr_s, undefined, {title:LANG.cp_engr_l, show:() => poppedRec.contour}),
-        outline:   UC.newBoolean(LANG.cp_outl_s, undefined, {title:LANG.cp_outl_l}),
-        exp:       UC.newExpand("overrides"),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        ov_topz:   UC.newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:UC.toFloat, units:true}),
-        ov_botz:   UC.newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:UC.toFloat, units:true}),
-        ov_conv:   UC.newBoolean(LANG.ou_conv_s, undefined, {title:LANG.ou_conv_l}),
-        exp_end:   UC.endExpand(),
-        sep:       UC.newBlank({class:"pop-sep"}),
-        menu:      UC.newRow([ UC.newButton("select", surfaceAdd) ], {class:"ext-buttons f-row"}),
-    };
-
-    createPopOp('drill', {
-        tool:    'camDrillTool',
-        spindle: 'camDrillSpindle',
-        down:    'camDrillDown',
-        rate:    'camDrillDownSpeed',
-        dwell:   'camDrillDwell',
-        lift:    'camDrillLift',
-        mark:    'camDrillMark',
-        precision:'camDrillPrecision',
-        thru:    'camDrillThru',
-        fromTop: 'camDrillFromStockTop',
-    }).inputs = {
-        tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
-        dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat}),
-        lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => !poppedRec.mark}),
-        mark:     UC.newBoolean(LANG.cd_mark_s,undefined, {title:LANG.cd_mark_l, show:() => !poppedRec.fromTop}),
-        fromTop:  UC.newBoolean(LANG.cd_ftop_s,undefined, {title:LANG.cd_ftop_l, show:() => !poppedRec.mark}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        thru:     UC.newInput(LANG.cd_dtru_s, {title:LANG.cd_dtru_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),
-        precision:UC.newInput(LANG.cd_prcn_s, {title:LANG.cd_prcn_l, convert:UC.toFloat, units:true,show:() => !poppedRec.mark}),
-        sep:      UC.newBlank({class:"pop-sep", }),
-        actions: UC.newRow([
-            UC.newButton(LANG.select, ()=>selectHoles(true), {title:LANG.cd_seli_l}),
-            UC.newButton(LANG.cd_sela_s, ()=>selectHoles(false), {title:LANG.cd_sela_l})
-        ], {class:"ext-buttons f-col"})
-    };
-
-    createPopOp('register', {
-        tool:    'camDrillTool',
-        spindle: 'camDrillSpindle',
-        down:    'camDrillDown',
-        rate:    'camDrillDownSpeed',
-        dwell:   'camDrillDwell',
-        lift:    'camDrillLift',
-        feed:    'camRegisterSpeed',
-        thru:    'camRegisterThru'
-    }).inputs = {
-        tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
-        axis:     UC.newSelect(LANG.cd_axis, {}, "regaxis"),
-        points:   UC.newSelect(LANG.cd_points, {show:() => poppedRec.axis !== '-'}, "regpoints"),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
-        rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        feed:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true, show:() => poppedRec.axis === '-'}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
-        dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, show:() => poppedRec.axis !== '-'}),
-        lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => poppedRec.axis !== '-'}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
-    };
-
-    createPopOp('flip', {
-        axis:     'camFlipAxis',
-        invert:   'camFlipInvert'
-    }).inputs = {
-        axis:     UC.newSelect(LANG.cd_axis, {}, "regaxis"),
-        sep:      UC.newBlank({class:"pop-sep", modes:MCAM, show:zBottom}),
-        invert:   UC.newBoolean(LANG.cf_nvrt_s, undefined, {title:LANG.cf_nvrt_l, show:zBottom}),
-        sep:      UC.newBlank({class:"pop-sep"}),
-        action:   UC.newRow([ UC.newButton(LANG.cf_menu, opFlip) ], {class:"ext-buttons f-row"})
-    };
-
-    createPopOp('gcode', {
-        gcode:  'camCustomGcode',
-    }).inputs = {
-        action:   UC.newRow([ UC.newButton(LANG.edit, gcodeEditor()) ], {class:"ext-buttons f-row"})
-    };
-
-    function angleTowardZUp() {
-        api.event.emit('tool.mesh.face-up');
-    }
-
-    createPopOp('index', {
-        degrees:  'camIndexAxis',
-        absolute: 'camIndexAbs'
-    }).inputs = {
-        degrees:  UC.newInput(LANG.ci_degr_s, {title:LANG.ci_degr_l, convert:UC.toFloat, bound:UC.bound(-360,360.0) }),
-        absolute: UC.newBoolean(LANG.ci_abso_s, undefined, {title:LANG.ci_abso_l}),
-        select:   UC.newRow([ UC.newButton(LANG.ci_face_s, angleTowardZUp) ], {class:"ext-buttons f-row"})
-    };
-
-    const editEnable = gcodeEditor('Laser Enable Script', 'enable');
-    const editOn = gcodeEditor('Laser On Script', 'on');
-    const editOff = gcodeEditor('Laser Off Script', 'off');
-
-    createPopOp('laser on', {
-        enable:  'camLaserEnable',
-        on:      'camLaserOn',
-        off:     'camLaserOff',
-        power:   'camLaserPower',
-        adapt:   'camLaserAdaptive',
-        adaptrp: 'camLaserAdaptMod',
-        flat:    'camLaserFlatten',
-        flatz:   'camLaserFlatZ',
-        minp:    'camLaserPowerMin',
-        maxp:    'camLaserPowerMax',
-        minz:    'camLaserZMin',
-        maxz:    'camLaserZMax',
-    }).inputs = {
-        enable:  UC.newRow([ UC.newButton(LANG.enable, editEnable) ], {class:"ext-buttons f-row"}),
-        on:      UC.newRow([ UC.newButton(LANG.on, editOn) ], {class:"ext-buttons f-row"}),
-        off:     UC.newRow([ UC.newButton(LANG.off, editOff) ], {class:"ext-buttons f-row"}),
-        sep:     UC.newBlank({class:"pop-sep"}),
-        power:   UC.newInput(LANG.cl_powr_s, {title:LANG.cl_powr_l, convert:UC.toFloat, bound:UC.bound(0,1.0), show:() => !poppedRec.adapt}),
-        maxp:    UC.newInput(LANG.cl_maxp_s, {title:LANG.cl_maxp_l, convert:UC.toFloat, bound:UC.bound(0,1.0), show:() => poppedRec.adapt}),
-        minp:    UC.newInput(LANG.cl_minp_s, {title:LANG.cl_minp_l, convert:UC.toFloat, bound:UC.bound(0,1.0), show:() => poppedRec.adapt}),
-        maxz:    UC.newInput(LANG.cl_maxz_s, {title:LANG.cl_maxz_l, convert:UC.toFloat, show:() => poppedRec.adapt}),
-        minz:    UC.newInput(LANG.cl_minz_s, {title:LANG.cl_minz_l, convert:UC.toFloat, show:() => poppedRec.adapt}),
-        flatz:   UC.newInput(LANG.cl_flaz_s, {title:LANG.cl_flaz_l, convert:UC.toFloat, show:() => poppedRec.flat}),
-        sep:     UC.newBlank({class:"pop-sep"}),
-        adapt:   UC.newBoolean(LANG.cl_adap_s, undefined, {title:LANG.cl_adap_l}),
-        adaptrp: UC.newBoolean(LANG.cl_adrp_s, undefined, {title:LANG.cl_adrp_l, show:() => poppedRec.adapt}),
-        flat:    UC.newBoolean(LANG.cl_flat_s, undefined, {title:LANG.cl_flat_l }),
-    };
-
-    const editDisable = gcodeEditor('Laser Disable Script', 'disable');
-
-    createPopOp('laser off', {
-        disable: 'camLaserDisable',
-    }).inputs = {
-        disable: UC.newRow([ UC.newButton(LANG.disable, editDisable) ], {class:"ext-buttons f-row"}),
-    };
-
-    createPopOp('|', {}).inputs = {};
+    createPopOps();
 };
-
-/**
- * Create a new popup operation (popOp) for a given type.
- * @param {string} type - the name of the popOp to create
- * @param {object} map - an object mapping popOp keys to either a string
- * (representing a key in current.process) or a value (to be used as the default).
- * @returns {object} the newly created popOp.
- */
-function createPopOp(type, map) {
-    let op = popOp[type] = {
-        div: UC.newElement('div', { id:`${type}-op`, class:"cam-pop-op" }),
-        use: (rec) => {
-            op.rec = rec;
-            for (let [key, val] of Object.entries(op.inputs)) {
-                let type = val.type;
-                let from = map[key];
-                let rval = rec[key];
-                // fill undef entries older defines
-                if (type && (rval === null || rval === undefined)) {
-                    if (typeof(from) === 'string') {
-                        rec[key] = current.process[from];
-                    } else if (from !== undefined) {
-                        rec[key] = from;
-                    } else {
-                        console.log('error', { key, val, type, from });
-                    }
-                }
-            }
-            api.util.rec2ui(rec, op.inputs);
-            op.hideshow();
-        },
-        using: (rec) => {
-            return op.rec === rec;
-        },
-        bind: (ev) => {
-            api.util.ui2rec(op.rec, op.inputs);
-
-            const settings  = conf.get();
-            const {tool} = new Tool(settings,op.rec.tool); //get tool by id
-            const opType = op.rec.type
-            const drillOrRegister = opType == "drill" || opType == "register"
-
-            if ( !drillOrRegister && tool.type == "drill"){
-                alerts.show(`Warning: Drills should not be used for ${opType} operations.`)
-            }
-            else if ( drillOrRegister && tool.type != "drill"){
-                alerts.show(`Warning: Only drills should be used for drilling operations.`)
-            }
-
-            for (let [key, val] of Object.entries(op.rec)) {
-                let saveTo = map[key];
-                if (saveTo && typeof(key) === 'string' && !key.startsWith("~")) {
-                    current.process[saveTo] = val;
-                }
-            }
-            api.conf.save();
-            op.hideshow();
-        },
-        new: () => {
-            let rec = { type };
-            for (let [key, src] of Object.entries(map)) {
-                rec[key] = typeof(src) === 'string'
-                    ? current.process[src.replace('~','')]
-                    : src;
-            }
-            return rec;
-        },
-        hideshow: () => {
-            for (let inp of Object.values(op.inputs)) {
-                let parent = inp.parentElement;
-                if (parent && parent.setVisible && parent.__opt.show) {
-                    parent.setVisible(parent.__opt.show(op, api.conf.get()));
-                }
-            }
-        },
-        addNote: () => {
-            if (!op.note && type !== 'flip') {
-                const divid = `div-${++seed}`;
-                const noteid = `note-${++seed}`;
-                const div = document.createElement('div');
-                div.setAttribute('id', divid);
-                div.classList.add('pop-tics')
-                op.div.appendChild(div);
-                div.innerHTML = h.build(
-                    h.div([ h.label({ id: noteid }) ])
-                );
-                op.note = { divid, noteid };
-            }
-            if (op.note) {
-                const { divid, noteid } = op.note;
-                const div = $(divid);
-                if (div) div.onclick = () => {
-                    api.uc.prompt('Edit Note for Operation', poppedRec.note || '').then(note => {
-                        if (note !== undefined && note !== null) {
-                            poppedRec.note = op.x = note;
-                            api.conf.save();
-                        }
-                        opRender();
-                    });
-                };
-                const note = $(noteid);
-                if (note) note.innerText = poppedRec.note || '';
-            }
-        },
-        group: [],
-    };
-
-    /**
-     * @function createRecordGetter
-     * @description Creates a getter function for the current record.
-     *              The getter will bind the current record to the op before returning it.
-     *              This is useful for passing a record to a pre-slice function
-     * @returns {function} A getter function for the current record.
-     */
-    op.createRecordGetter =  () => {
-        return () => {
-            op.bind();
-            return op.rec;
-        }
-    }
-
-    UC.restore({
-        addTo: op.div,
-        bindTo: op.bind,
-        lastDiv: op.div,
-        lastGroup: op.group
-    });
-    return op;
-}
 
 function createTabBox(iw, ic, n) {
     const { track } = iw;
     const { stock, bounds, process } = api.conf.get();
     const { camTabsWidth, camTabsHeight, camTabsDepth, camTabsMidline } = process;
     const { camZBottom, camStockIndexed } = process;
-    const isIndexed = camStockIndexed;
     const sz = stock.z || bounds.max.z;
     const zto = sz - iw.track.top;
-    const zp = (camZBottom || isIndexed ? camZBottom : sz - track.box.d - zto) + (camTabsMidline ? 0 : camTabsHeight / 2);
+    const zp = (env.camZBottom || camStockIndexed ? env.camZBottom : sz - track.box.d - zto) + (camTabsMidline ? 0 : camTabsHeight / 2);
     ic.x += n.x * camTabsDepth / 2; // offset from part
     ic.z -= n.y * camTabsDepth / 2; // offset swap z,y
     ic.y = zp; // offset swap in world space y,z
     const rot = new THREE.Quaternion().setFromAxisAngle(zaxis, Math.atan2(n.y, n.x));
-    const pos = { x:ic.x, y:ic.y, z:ic.z };
-    const dim = { x:camTabsDepth, y:camTabsWidth, z:camTabsHeight };
-    const tab = addbox(pos, boxColor(), 'tabb', dim, { rotate: rot, opacity: boxOpacity() });
+    const pos = { x: ic.x, y: ic.y, z: ic.z };
+    const dim = { x: camTabsDepth, y: camTabsWidth, z: camTabsHeight };
+    const tab = addbox(pos, env.boxColor(), 'tabb', dim, { rotate: rot, opacity: env.boxOpacity() });
     return { pos, dim, rot, tab, width: camTabsWidth, height: camTabsHeight, stock };
 }
 
@@ -2098,10 +1037,10 @@ function addWidgetTab(widget, rec) {
     // prevent duplicate restore from repeated settings load calls
     if (!tabs[id]) {
         pos.box = addbox(
-            pos, boxColor(), id,
-            dim, { group: widget.mesh, rotate: rot, opacity: boxOpacity() }
+            pos, env.boxColor(), id,
+            dim, { group: widget.mesh, rotate: rot, opacity: env.boxOpacity() }
         );
-        pos.box.tab = Object.assign({widget, id}, pos);
+        pos.box.tab = Object.assign({ widget, id }, pos);
         widget.adds.push(pos.box);
         tabs[id] = pos;
     }
@@ -2111,7 +1050,7 @@ export function restoreTabs(widgets) {
     widgets.forEach(widget => {
         const tabs = api.widgets.annotate(widget.id).tab || [];
         tabs.forEach(rec => {
-            let [ x, y, z, w ] = rec.rot;
+            let [x, y, z, w] = rec.rot;
             rec = Object.clone(rec);
             rec.rot = new THREE.Quaternion(x, y, z, w);
             addWidgetTab(widget, rec);
@@ -2135,28 +1074,11 @@ function updateTabs() {
     api.widgets.all().forEach(widget => {
         Object.values(widget.tabs || {}).forEach(rec => {
             for (let rec of widget.adds || []) {
-                rec.material.color = new THREE.Color(boxColor());
-                rec.material.opacity = boxOpacity();
+                rec.material.color = new THREE.Color(env.boxColor());
+                rec.material.opacity = env.boxOpacity();
             }
         });
     });
-}
-
-function unselectTraces(widget, skip) {
-    if (widget.trace_stack) {
-        widget.trace_stack.meshes.forEach(mesh => {
-            if (mesh.selected) {
-                traceToggle(mesh, skip);
-            }
-        });
-    }
-}
-
-function unselectHoles(widget) {
-    if (!widget.holes) return
-    widget.holes.forEach(hole => {
-        hole.selected = false
-    })
 }
 
 function validateTools(tools) {
@@ -2176,155 +1098,11 @@ function validateTools(tools) {
     }
 }
 
-function isDark() { return api.space.is_dark() };
-
-function boxColor() {
-    return isDark() ? 0x00ddff : 0x0000dd;
-}
-
-function boxOpacity() {
-    return isDark() ? 0.75 : 0.6;
-}
-
 function animate() {
-    isAnimate = true;
-    api.widgets.opacity(isParsed ? 0 : 0.75);
+    env.isAnimate = true;
+    api.widgets.opacity(env.isParsed ? 0 : 0.75);
     api.hide.slider();
     STACKS.clear();
     animFn().animate(api);
     api.view.set_animate();
-}
-
-function updateStock() {
-    if (isAnimate) {
-        if (isIndexed) {
-            SPACE.world.remove(camStock);
-            camStock = undefined;
-        }
-        return;
-    }
-
-    if (!isCamMode) {
-        SPACE.world.remove(camZTop);
-        SPACE.world.remove(camZBottom);
-        SPACE.world.remove(camStock);
-        camStock = null;
-        camZTop = null;
-        camZBottom = null;
-        return;
-    }
-
-    api.platform.update_bounds();
-
-    const settings = api.conf.get();
-    const widgets = api.widgets.all();
-
-    const { stock, process } = settings;
-    const { x, y, z, center } = stock;
-
-    UI.func.animate.classList.add('disabled');
-    if (camStock) {
-        SPACE.world.remove(camStock);
-        camStock = null;
-    }
-    if (x && y && z) {
-        UI.func.animate.classList.remove('disabled');
-        {
-            let geo = new THREE.BoxGeometry(1, 1, 1);
-            let mat = new THREE.MeshBasicMaterial({
-                color: 0x777777,
-                opacity: 0.05,
-                transparent: true,
-                side:THREE.DoubleSide
-            });
-            camStock = new THREE.Mesh(geo, mat);
-            camStock.renderOrder = 2;
-
-            let lo = 0.5;
-            let lidat = [
-                 lo, lo, lo,  lo, lo,-lo,
-                 lo, lo, lo,  lo,-lo, lo,
-                 lo, lo, lo, -lo, lo, lo,
-                -lo,-lo,-lo, -lo,-lo, lo,
-                -lo,-lo,-lo, -lo, lo,-lo,
-                -lo,-lo,-lo,  lo,-lo,-lo,
-                 lo, lo,-lo, -lo, lo,-lo,
-                 lo, lo,-lo,  lo,-lo,-lo,
-                 lo,-lo,-lo,  lo,-lo, lo,
-                 lo,-lo, lo, -lo,-lo, lo,
-                -lo,-lo, lo, -lo, lo, lo,
-                -lo, lo, lo, -lo, lo,-lo
-            ];
-            let ligeo = new THREE.BufferGeometry();
-            ligeo.setAttribute('position', new THREE.BufferAttribute(lidat.toFloat32(), 3));
-            let limat = new THREE.LineBasicMaterial({ color: 0xaaaaaa });
-            let lines = new THREE.LineSegments(ligeo, limat);
-            camStock.lines = lines;
-            camStock.add(lines);
-            SPACE.world.add(camStock);
-        }
-        // fight z fighting in threejs
-        camStock.scale.x = x + 0.005;
-        camStock.scale.y = y + 0.005;
-        camStock.scale.z = z + 0.005;
-        camStock.position.x = center.x;
-        camStock.position.y = center.y;
-        camStock.position.z = center.z;
-        camStock.lines.material.color =
-            new THREE.Color(isDark() ? 0x555555 : 0xaaaaaa);
-    }
-
-    SPACE.world.remove(camZTop);
-    if (process.camZTop && widgets.length) {
-        let max = { x, y, z };
-        for (let w of widgets) {
-            max.x = Math.max(max.x, w.track.box.w);
-            max.y = Math.max(max.y, w.track.box.h);
-            max.z = Math.max(max.z, w.track.box.d);
-        }
-        let geo = new THREE.PlaneGeometry(max.x, max.y);
-        let mat = new THREE.MeshBasicMaterial({
-            color: 0x777777,
-            opacity: 0.55,
-            transparent: true,
-            side:THREE.DoubleSide
-        });
-        camZTop = new THREE.Mesh(geo, mat);
-        camZTop._max = max;
-        camZTop.renderOrder = 1;
-        camZTop.position.x = center.x;
-        camZTop.position.y = center.y;
-        camZTop.position.z = process.camZTop;
-        SPACE.world.add(camZTop);
-    } else {
-        camZTop = undefined;
-    }
-
-    SPACE.world.remove(camZBottom);
-    if (process.camZBottom && widgets.length) {
-        let max = { x, y, z };
-        for (let w of widgets) {
-            max.x = Math.max(max.x, w.track.box.w);
-            max.y = Math.max(max.y, w.track.box.h);
-            max.z = Math.max(max.z, w.track.box.d);
-        }
-        let geo = new THREE.PlaneGeometry(max.x, max.y);
-        let mat = new THREE.MeshBasicMaterial({
-            color: 0x777777,
-            opacity: 0.55,
-            transparent: true,
-            side:THREE.DoubleSide
-        });
-        camZBottom = new THREE.Mesh(geo, mat);
-        camZBottom._max = max;
-        camZBottom.renderOrder = 1;
-        camZBottom.position.x = center.x;
-        camZBottom.position.y = center.y;
-        camZBottom.position.z = process.camZBottom;
-        SPACE.world.add(camZBottom);
-    } else {
-        camZBottom = undefined;
-    }
-
-    SPACE.update();
 }
