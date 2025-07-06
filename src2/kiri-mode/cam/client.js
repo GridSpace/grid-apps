@@ -12,6 +12,8 @@ import { Stack } from '../../kiri/stack.js';
 import { Tool } from './tool.js';
 import { CAM } from './driver-fe.js';
 
+// import { opFlip } from './cl-flip.js';
+
 const { alerts, conf, noop, space } = api;
 
 const DEG2RAD = Math.PI / 180;
@@ -38,15 +40,14 @@ let isAnimate,
     WIDGETS = api.widgets,
     UI = api.ui,
     UC = api.uc,
-    MCAM = MODES.CAM;
-
-let zaxis = { x: 0, y: 0, z: 1 },
+    MCAM = MODES.CAM,
+    zaxis = { x: 0, y: 0, z: 1 },
     popOp = {},
     animVer = 0,
     seed = Date.now(),
     func = {
         hover: noop,
-        hoverUp: noop
+        hoverUp: noop,
     };
 
 function animFn() {
@@ -407,7 +408,6 @@ func.surfaceDone = () => {
 
 // TRACE FUNCS
 let traceOn = false, lastTrace;
-
 func.traceAdd = (ev) => { 
     if (traceOn) {
         return func.traceDone();
@@ -855,6 +855,14 @@ func.opFlip = () => {
 };
 
 export function init() {
+
+    api.event.on('tool.mesh.face-normal', normal => {
+        // console.log({ poppedRec });
+        poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
+        poppedRec.absolute = true;
+        func.opRender();
+        updateStock();
+    });
 
     api.event.on("cam.trace.clear", func.traceClear = () => {
         func.traceDone();
@@ -1869,14 +1877,6 @@ export function init() {
     function angleTowardZUp() {
         api.event.emit('tool.mesh.face-up');
     }
-
-    api.event.on('tool.mesh.face-normal', normal => {
-        // console.log({ poppedRec });
-        poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
-        poppedRec.absolute = true;
-        func.opRender();
-        updateStock();
-    });
 
     createPopOp('index', {
         degrees:  'camIndexAxis',

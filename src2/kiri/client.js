@@ -2,7 +2,6 @@
 
 import { api } from './api.js';
 import { noop } from './utils.js';
-import { version } from '../moto/license.js';
 
 // this code runs in kiri's main loop
 let debug = self.debug === true,
