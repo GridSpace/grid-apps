@@ -1861,7 +1861,7 @@ function init_two() {
         let scr = DOC.createElement('script');
         scr.setAttribute('async', true);
         scr.setAttribute('defer', true);
-        scr.setAttribute('src',`/code/${lib}.js?${version}}`);
+        scr.setAttribute('src',`/code/${lib}.js?${version}`);
         DOC.body.appendChild(scr);
         stats.add('load_'+lib);
         api.event.emit('load.lib', lib);
