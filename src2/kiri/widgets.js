@@ -1,5 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { $ } from '../moto/webui.js';
 import { api } from './api.js';
 import { load } from '../load/file.js';
 import { Widget, newWidget } from './widget.js';
@@ -30,7 +31,7 @@ function rename(sel) {
         return;
     }
     let widget = widgets[0];
-    kiri.ui.prompt("new widget name", widget.meta.file || "no name").then(newname => {
+    api.uc.prompt("new widget name", widget.meta.file || "no name").then(newname => {
         if (newname) {
             widget.meta.file = newname;
             api.platform.changed();

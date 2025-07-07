@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { base } from '../geo/base.js';
+import { avgc } from './utils.js';
 import { verticesToPoints } from '../geo/points.js';
 import { util as mesh_util } from '../mesh/util.js';
 

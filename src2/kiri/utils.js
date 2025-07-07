@@ -99,7 +99,7 @@ function trackFn(fn, name) {
 
 function noop() {}
 
-export let utils = {
+export {
     trackFn,
     areEqual,
     parseOpt,
@@ -114,4 +114,17 @@ export let utils = {
     a2c
 };
 
-export { parseOpt, encodeOpt, ajax, o2js, js2o, ls2o, rgb, a2c, avgc, areEqual, trackFn, noop };
+export let utils = {
+    trackFn,
+    areEqual,
+    parseOpt,
+    encodeOpt,
+    noop,
+    ajax,
+    o2js,
+    js2o,
+    ls2o,
+    avgc,
+    rgb,
+    a2c
+};
