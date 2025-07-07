@@ -564,7 +564,7 @@ self.kiri.load(api => {
 
     function monitoring() {
         let mon = selected?.rec?.serial ?? '';
-        ui.setVisible($('bbl_connect'), select.value !== '' && monitors.indexOf(mon) < 0);
+        ui.setVisible($('bbl_connect'), select?.value && monitors.indexOf(mon) < 0);
         return mon ? true : false;
     }
 
@@ -660,7 +660,7 @@ self.kiri.load(api => {
         }
     });
 
-    api.event.on("init-done", function() {
+    api.event.on("load-done", function() {
         if (init) {
             return;
         }

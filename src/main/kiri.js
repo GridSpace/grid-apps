@@ -21,10 +21,12 @@ function safeExec(fn) {
 function checkReady() {
     if (document.readyState === 'complete') {
         kiri.api = run();
+        self.$ = kiri.api.web.$;
         for (let fn of load) {
             safeExec(fn);
         }
         load = undefined;
+        kiri.api.event.emit('load-done', stats);
     }
 }
 

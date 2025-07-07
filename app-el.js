@@ -11,6 +11,8 @@ const datDir = path.join(appDir, 'data');
 const debug = process.argv.slice(2).map(v => v.replaceAll('-', '')).contains('debugg');
 const devel = process.argv.slice(2).map(v => v.replaceAll('-', '')).contains('devel');
 
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = true;
+
 // console.log({ appDir, usrDir, logDir, datDir, basDir });
 // console.log({ argv: process.argv, debug, devel });
 // console.log({

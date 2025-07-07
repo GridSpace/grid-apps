@@ -1,14 +1,15 @@
-if (self.kiri)
-self.kiri.load(api => {
-    console.log('ELECTRON MODULE RUNNING');
-    api.electron = {};
-    api.event.on('init-done', () => {
-        $('app-name-text').innerText = "More Info";
-        $('top-sep').style.display = 'flex';
+if (self.kiri && !self.kiri.electron) {
+    self.kiri.electron = {};
+    self.kiri.load(api => {
+        console.log('ELECTRON MODULE RUNNING');
+        api.event.on('load-done', () => {
+            $('app-name-text').innerText = "More Info";
+            $('top-sep').style.display = 'flex';
+        });
+        api.stats.set('kiri', api.version + 'e');
     });
-    api.stats.set('kiri', self.kiri.version + 'e');
-});
+}
 
-if (self.mesh && self.mesh.api) {
-    self.mesh.api.electron = {};
+if (self.mesh && self.mesh) {
+    self.mesh.electron = {};
 }

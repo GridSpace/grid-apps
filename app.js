@@ -20,7 +20,6 @@ const append = { mesh:'', kiri:'' };
 const code = {};
 const mods = {};
 const load = [];
-const synth = {};
 const api = {};
 
 let forceUseCache = false;
@@ -226,6 +225,7 @@ function initModule(mod, file, dir) {
         },
         inject: (code, file, opt = {}) => {
             const body = fs.readFileSync(dir + '/' + file);
+            // console.log({ inject: code, file, opt });
             if (opt.first) {
                 append[code] = body.toString() + '\n' + append[code];
             } else {
@@ -314,19 +314,19 @@ function handleVersion(req, res, next) {
         // in production serve packed bundles
         let { path } = req.app;
         if (path === '/lib/mesh/work.js') {
-            req.url = req.app.path = '/lib/pack/mesh-work.js';
+            req.url = '/lib/pack/mesh-work.js';
         } else if (path === '/lib/main/mesh.js') {
-            req.url = req.app.path = '/lib/pack/mesh-main.js';
+            req.url = '/lib/pack/mesh-main.js';
         } else if (path === '/lib/kiri-run/minion.js') {
-            req.url = req.app.path = '/lib/pack/kiri-pool.js';
+            req.url = '/lib/pack/kiri-pool.js';
         } else if (path === '/lib/kiri-run/worker.js') {
-            req.url = req.app.path = '/lib/pack/kiri-work.js';
+            req.url = '/lib/pack/kiri-work.js';
         } else if (path === '/lib/main/kiri.js') {
-            req.url = req.app.path = '/lib/pack/kiri-main.js';
+            req.url = '/lib/pack/kiri-main.js';
         }
         // add cors headers on rewrite
         if (path !== req.url) {
-            console.log('rewrite', path, req.url);
+            // console.log('rewrite', path, req.url);
             addCorsHeaders(req, res);
         }
         next();
@@ -388,6 +388,11 @@ function serveWasm(req, res, next) {
 
 // pack/concat device script strings to inject into /code/ scripts
 function generateDevices() {
+    if (process.versions.electron) {
+        // bail when running inside electron
+        console.log('skipping device generation in electron');
+        return;
+    }
     let root = PATH.join(dir,"src","kiri-dev");
     let devs = {};
     fs.readdirSync(root).forEach(type => {
@@ -400,7 +405,6 @@ function generateDevices() {
         });
     });
     let dstr = JSON.stringify(devs);
-    synth.devices = `self.devices = ${dstr};`;
     fs.writeFileSync(PATH.join(dir,"src","pack","devices.js"), `export const devices = ${dstr};`);
 }
 
@@ -533,12 +537,12 @@ function rewriteHtmlVersion(req, res, next) {
     }
     if ([
         "/lib/main/kiri.js",
-        "/lib/main/mesh.js",
+        "/lib/main/mesh.js"
     ].indexOf(req.app.path) >= 0) {
         const data = append[req.app.path.split('/')[3].split('.')[0]];
-        // console.log({ append: req.app.path, data: data?.length });
 
         if (!data) return next();
+        console.log({ append: req.app.path, data: data.length });
 
         const real_write = res.write;
         const real_end = res.end;
