@@ -109,7 +109,7 @@
         "docs-dev": "docusaurus start --config conf/docusaurus.config.js",
         "docs-build": "docusaurus build --config conf/docusaurus.config.js",
         "docs-serve": "docusaurus serve --config conf/docusaurus.config.js",
-        "docs-check": "prettier ./docs --check"
+        "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check"
     },
     "main": "app-el.js",
     "build": {
