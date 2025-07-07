@@ -2099,7 +2099,7 @@ function init_two() {
     }
 
     // hide url params
-    history.replaceState({}, '', '/kiri');
+    history.replaceState({}, '', '/kiri/');
 
     // lift curtain
     $('curtain').style.display = 'none';

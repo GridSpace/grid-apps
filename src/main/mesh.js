@@ -91,7 +91,7 @@ function init() {
     call.ui_build();
 
     // hide url params
-    history.replaceState({}, '', '/mesh');
+    history.replaceState({}, '', '/mesh/');
 }
 
 // restore space layout and view from previous session
