@@ -11,7 +11,7 @@ import { render } from '../../kiri/render.js';
 import { slicer } from '../../geo/slicer.js';
 import { newSlice } from '../../kiri/slice.js';
 
-const TYPE = {
+export const TYPE = {
     LASER: 0,
     DRAG: 1,
     WJET: 2,

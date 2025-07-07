@@ -18,18 +18,24 @@ import { version } from '../moto/license.js';
 import { Widget, newWidget } from '../kiri/widget.js';
 
 import { CAM } from '../kiri-mode/cam/driver-be.js';
+import { DRAG } from '../kiri-mode/drag/driver.js';
 import { FDM } from '../kiri-mode/fdm/driver-be.js';
 import { LASER } from '../kiri-mode/laser/driver.js';
 import { SLA } from '../kiri-mode/sla/driver.js';
+import { WEDM } from '../kiri-mode/wedm/driver.js';
+import { WJET } from '../kiri-mode/wjet/driver.js';
 
 const { time } = util;
 
 let debug = (self.debug === true),
     drivers = {
+        DRAG,
         CAM,
         FDM,
         LASER,
-        SLA
+        SLA,
+        WEDM,
+        WJET
     },
     ccvalue = self.navigator ? self.navigator.hardwareConcurrency || 0 : 0,
     concurrent = Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),

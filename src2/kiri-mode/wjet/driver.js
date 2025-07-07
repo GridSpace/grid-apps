@@ -1,11 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
-import { driver } from '../kiri-mode/laser/driver.js';
 
+import { LASER, TYPE } from '../laser/driver.js';
 
-const DRIVERS = root.kiri.driver;
-const { LASER } = DRIVERS;
-const { TYPE } = LASER;
-DRIVERS.WJET = Object.assign({}, LASER, { name: 'WaterJet', type: TYPE.WJET });
+function init(worker) {
+    // console.log({ WATERJET_INIT: worker });
+}
 
-
-export { DRIVERS };
+export const WJET = Object.assign({}, LASER, {
+    type: TYPE.WJET,
+    name: 'WaterJet',
+    init
+});

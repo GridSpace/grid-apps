@@ -44,7 +44,7 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
         on_mouse_up: und, // function intercepts mouse up select
         on_mouse_down: und, // function intercepts mouse down
         work_alerts: true, // allow disabling work progress alerts
-            pmode: consts.PMODES.SPEED, // preview modes
+        pmode: consts.PMODES.SPEED, // preview modes
         // hover: false, // when true fires mouse hover events
         get hover() {
             return isHover;
@@ -72,7 +72,7 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
             let proc = api.conf.get().process,
                 size = proc.sliceHeight || proc.slaSlice || 1,
                 base = (proc.firstSliceHeight || size);
-            layers = Array.isArray(layers) ? layers : [ layers ];
+            layers = Array.isArray(layers) ? layers : [layers];
             proc.xray = layers.map(l => raw ? l : base + l * size - size / 2);
             proc.xrayi = layers.slice();
             api.function.slice();
@@ -91,8 +91,8 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
         set: (key, val) => localSet(key, val),
     },
     tweak = {
-        line_precision(v) { api.work.config({base:{clipperClean: v}}) },
-        gcode_decimals(v) { api.work.config({base:{gcode_decimals: v}}) }
+        line_precision(v) { api.work.config({ base: { clipperClean: v } }) },
+        gcode_decimals(v) { api.work.config({ base: { gcode_decimals: v } }) }
     };
 
 function clip(text) {
@@ -113,16 +113,16 @@ function localSet(key, val) {
 }
 
 export const api = {
-    ajax,           // via utils
-    alerts,         // alerts.js
+    ajax,
+    alerts,
     busy,
     catalog,
-    client:         work, // alias for "work"
+    client: work,
     clip,
     clone,
     color,
-    conf:           settings.conf,
-    const:          { LANG, LISTS: lists, LOCAL, MODES, SETUP, SECURE, STACKS, VIEWS },
+    conf: settings.conf,
+    const: { LANG, LISTS: lists, LOCAL, MODES, SETUP, SECURE, STACKS, VIEWS },
     devel,
     device,
     devices,
@@ -130,36 +130,36 @@ export const api = {
     doit,
     event,
     feature,
-    function:       functions,
+    function: functions,
     group,
     help,
     hide,
     image,
-    js2o,           // via utils
-    language:       LANG,
+    js2o,
+    language: LANG,
     lists,
     local,
     modal,
     mode,
     noop,
-    o2js,           // via utils
+    o2js,
     onkey,
     platform,
     probe,
     process,
-    sdb:            dataLocal,
+    sdb: dataLocal,
     selection,
     settings,
     show,
     space,
-    stacks:         STACKS,
+    stacks: STACKS,
     stats,
     tool: {
-        update:     updateTool
+        update: updateTool
     },
     tweak,
-    uc:             UC,
-    ui: {},         // init.js
+    uc: UC,
+    ui: {},
     util,
     var: {
         layer_lo: 0,
@@ -168,7 +168,7 @@ export const api = {
     },
     view,
     widgets,
-    work,           // message worker
+    work,
 };
 
 // allow widget to straddle client / worker FOR NOW
