@@ -18,10 +18,14 @@ import { selection } from './selection.js';
 import { stats } from '../kiri/stats.js';
 import { widgets } from './widgets.js';
 import { updateTool } from '../kiri-mode/cam/tools.js';
+import { version } from '../moto/license.js';
+import { space as SPACE } from '../moto/space.js';
 
 import { LANG } from './lang.js';
 import { LOCAL, SETUP, SECURE } from './main.js';
 import { UI } from './ui.js';
+
+import web from '../moto/webui.js';
 
 let UC = UI.prefix('kiri').inputAction(settings.conf.update),
     und = undefined,
@@ -80,6 +84,7 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
     },
     local = {
         get: (key) => localGet(key),
+        getItem: (key) => localGet(key),
         getInt: (key) => parseInt(localGet(key)),
         getFloat: (key) => parseFloat(localGet(key)),
         getBoolean: (key, def = true) => {
@@ -89,6 +94,7 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
         toggle: (key, val, def) => localSet(key, val ?? !api.local.getBoolean(key, def)),
         put: (key, val) => localSet(key, val),
         set: (key, val) => localSet(key, val),
+        setItem: (key, val) => localSet(key, val),
     },
     tweak = {
         line_precision(v) { api.work.config({ base: { clipperClean: v } }) },
@@ -152,6 +158,7 @@ export const api = {
     settings,
     show,
     space,
+    SPACE,
     stacks: STACKS,
     stats,
     tool: {
@@ -166,7 +173,9 @@ export const api = {
         layer_hi: 0,
         layer_max: 0
     },
+    version,
     view,
+    web,
     widgets,
     work,
 };

@@ -8,26 +8,34 @@ import '../kiri/lang-en.js';
 
 import { run } from '../kiri/init.js';
 
-const load = [];
+let load = [];
+
+function safeExec(fn) {
+    try {
+        fn(kiri.api);
+    } catch (error) {
+        console.log('load error', fn, error);
+    }
+}
 
 function checkReady() {
     if (document.readyState === 'complete') {
-        let api = run();
-        kiri.api = api;
+        kiri.api = run();
         for (let fn of load) {
-            try {
-                fn(api);
-            } catch (error) {
-                console.log('load error', fn, error);
-            }
+            safeExec(fn);
         }
+        load = undefined;
     }
 }
 
 self.kiri = {
     load(fn) {
-        console.log('KIRI LOAD', [...arguments]);
-        load.push(fn);
+        // console.log('KIRI LOAD', [...arguments]);
+        if (load) {
+            load.push(fn);
+        } else {
+            safeExec(fn);
+        }
     }
 };
 

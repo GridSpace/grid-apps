@@ -16,14 +16,12 @@ const version = license.version || "rogue";
 const netdb = require('@gridspace/net-level-client');
 const PATH = require('path');
 
-const fileCache = {};
-const code_src = {};
+const append = { mesh:'', kiri:'' };
 const code = {};
 const mods = {};
 const load = [];
 const synth = {};
 const api = {};
-const wrap = {};
 
 let forceUseCache = false;
 let serviceWorker = true;
@@ -36,7 +34,6 @@ let dversion;
 let lastmod;
 let logger;
 let debug;
-let over;
 let http;
 let util;
 let dir;
@@ -100,7 +97,8 @@ function init(mod) {
 
     mod.add(handleSetup);
     mod.add(handleOptions);
-    mod.add(handleWasm);
+    mod.add(serveWasm);
+    mod.add(serveCode);
     mod.add(fullpath({
         "/kiri"            : redir("/kiri/", 301),
         "/mesh"            : redir("/mesh/", 301),
@@ -120,6 +118,8 @@ function init(mod) {
         });
     }
     mod.add(rewriteHtmlVersion);
+    // example of how to use the new middleware
+    // mod.add(appendContent('/kiri/index.html', '<script>console.log("hello")</script>'));
     mod.static("/lib/", "src");
     mod.static("/obj/", "web/obj");
     mod.static("/font/", "web/font");
@@ -149,10 +149,10 @@ function init(mod) {
     }
 
     // load development and 3rd party modules
-    // load_modules('mod');
+    load_modules('mod');
 
     // load optional local modules
-    // load_modules('mods');
+    load_modules('mods');
 
     // run loads injected by modules
     while (load.length) {
@@ -160,6 +160,13 @@ function init(mod) {
             load.shift()();
         } catch (e) {
             logger.log({on_load_fail: e});
+        }
+    }
+
+    // minify appends
+    if (!debug) {
+        for (let key of Object.keys(append)) {
+            append[key] = minify(append[key]);
         }
     }
 };
@@ -179,7 +186,7 @@ function loadModule(mod, dir) {
 
 // load module and call returned function with helper object
 function initModule(mod, file, dir) {
-    logger.log({module: file});
+    logger.log({ module: file, dir });
     require_fresh(file)({
         // express functions added here show up at "/api/" url root
         api: api,
@@ -192,7 +199,6 @@ function initModule(mod, file, dir) {
             args: {},
             meta: mod.meta,
             debug: debug,
-            script: script,
             moddir: dir,
             rootdir: mod.dir,
             version: oversion || version
@@ -219,28 +225,28 @@ function initModule(mod, file, dir) {
             logger: log.new
         },
         inject: (code, file, opt = {}) => {
-            // console.log({ inject: opt, code, file });
-            let codelist = script[code];
-            if (!codelist) {
-                return logger.log(`inject missing target "${code}"`);
-            }
-            const path = `${dir}/${file}`;
-            codelist.push(path);
-            if (opt.cachever) {
-                cachever[path] = opt.cachever;
+            const body = fs.readFileSync(dir + '/' + file);
+            if (opt.first) {
+                append[code] = body.toString() + '\n' + append[code];
+            } else {
+                append[code] += body.toString() + '\n';
             }
         },
         path: {
             any: arg => { mod.add(arg) },
-            pre: arg => { mod.add(prepath(arg)) },
-            map: arg => { mod.add(fixedmap(arg)) },
+            code() {
+                const [ path, file ] = [ ...arguments ];
+                code[path] = fs.readFileSync(file);
+            },
             full: arg => { mod.add(fullpath(arg)) },
+            map: arg => { mod.add(fixedmap(arg)) },
+            pre: arg => { mod.add(prepath(arg)) },
+            redir: redir,
+            remap: remap,
+            setup: fn => { setupFn = fn },
             static: (root, pre) => {
                 mod.static(pre || "/", root);
             },
-            redir: redir,
-            remap: remap,
-            setup: fn => { setupFn = fn }
         },
         handler: {
             addCORS: addCorsHeaders,
@@ -344,7 +350,20 @@ function handleOptions(req, res, next) {
     }
 }
 
-function handleWasm(req, res, next) {
+function serveCode(req, res, next) {
+    let { path } = req.app;
+    if (path.startsWith("/code/")) {
+        path = path.split('/')[2].split('.')[0];
+        if (code[path]) {
+            res.setHeader('Content-Type', 'application/javascript');
+            res.setHeader('Cache-Control', 'public, max-age=600');
+            return res.end(code[path]);
+        }
+    }
+    next();
+}
+
+function serveWasm(req, res, next) {
     let file = req.app.path.split('/').pop();
     let ext = (file || '').split('.')[1];
     let path = PATH.join(dir,"src","wasm",file);
@@ -385,8 +404,7 @@ function generateDevices() {
     fs.writeFileSync(PATH.join(dir,"src","pack","devices.js"), `export const devices = ${dstr};`);
 }
 
-function minify(path) {
-    let code = fs.readFileSync(path);
+function minify(code) {
     let mini = uglify.minify(code.toString(), {
         compress: {
             merge_vars: false,
@@ -512,39 +530,32 @@ function rewriteHtmlVersion(req, res, next) {
         "/lib/kiri-run/minion.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
-    } else if ([
-        "/kiri/",
-        "/kiri/engine.html",
-        "/kiri/frame.html",
-        "/mesh/",
-        "/meta/",
+    }
+    if ([
+        "/lib/main/kiri.js",
+        "/lib/main/mesh.js",
     ].indexOf(req.app.path) >= 0) {
-        addCorsHeaders(req, res);
-        let real_write = res.write;
-        let real_end = res.end;
-        let mlen = '{{version}}'.length;
-        let vstr = oversion || dversion || version;
-        if (vstr.length < mlen) {
-            vstr = vstr.padStart(mlen,0);
-        } else if (vstr.length > mlen) {
-            vstr = vstr.substring(0,mlen);
-        }
-        res.write = function() {
-            try {
-                // console.log('res.write', req.app.path, arguments[0].length);
-                arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
-                // console.log('new length', arguments[0].length);
-                real_write.apply(res, arguments);
-            } catch (err) {
-                console.log({ rewrite_error: err });
-            }
+        const data = append[req.app.path.split('/')[3].split('.')[0]];
+        // console.log({ append: req.app.path, data: data?.length });
+
+        if (!data) return next();
+
+        const real_write = res.write;
+        const real_end = res.end;
+        let body = '';
+
+        res.write = function (chunk, encoding) {
+            body += chunk.toString(encoding);
         };
-        res.end = function() {
-            // console.log('res.write', req.app.path, arguments[0]?.length);
-            if (arguments[0]) {
-                arguments[0] = arguments[0].toString().replace(/{{version}}/g,vstr);
+
+        res.end = function (chunk, encoding) {
+            if (chunk) {
+                body += chunk.toString(encoding);
             }
-            real_end.apply(res, arguments);
+            body += data;
+            res.setHeader('Content-Length', Buffer.byteLength(body));
+            real_write.call(res, body);
+            real_end.call(res);
         };
     }
 

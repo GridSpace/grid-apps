@@ -2,9 +2,8 @@ self.kiri.load(api => {
 
     console.log('BAMBU MODULE RUNNING');
 
-    const { kiri, moto } = self;
-    const { ui } = kiri;
-    const h = moto.webui;
+    const { uc: ui } = api;
+    const { $, h } = api.web;
     const defams = ";; DEFINE BAMBU-AMS ";
     const readonly = true;
     const stock_colors = Object.values({

@@ -18,7 +18,7 @@ import { init as initWEDM } from '../kiri-mode/wedm/client.js';
 import { init as initWJET } from '../kiri-mode/wjet/client.js';
 
 let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
-    { client, catalog, platform, selection } = api,
+    { client, catalog, platform, selection, stats } = api,
     LANG = api.language.current,
     WIN = self.window,
     DOC = self.document,
@@ -1859,8 +1859,9 @@ function init_two() {
     // load script extensions
     if (SETUP.s) SETUP.s.forEach(function(lib) {
         let scr = DOC.createElement('script');
-        scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/code/${lib}.js?${version}`);
+        scr.setAttribute('async', true);
+        scr.setAttribute('defer', true);
+        scr.setAttribute('src',`/code/${lib}.js?${version}}`);
         DOC.body.appendChild(scr);
         stats.add('load_'+lib);
         api.event.emit('load.lib', lib);

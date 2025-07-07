@@ -92,6 +92,9 @@ function init() {
 
     // hide url params
     history.replaceState({}, '', '/mesh/');
+
+    // for electron
+    self.mesh = { api };
 }
 
 // restore space layout and view from previous session

@@ -8,6 +8,7 @@ self.kiri.load(api => {
     });
     api.stats.set('kiri', self.kiri.version + 'e');
 });
+
 if (self.mesh && self.mesh.api) {
     self.mesh.api.electron = {};
 }

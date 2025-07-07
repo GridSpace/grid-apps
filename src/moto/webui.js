@@ -168,4 +168,14 @@ export {
     $C,
     h,
     estop
-};
+}
+
+export default {
+    $,
+    $d,
+    $h,
+    $c,
+    $C,
+    h,
+    estop
+}

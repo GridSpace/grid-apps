@@ -774,6 +774,7 @@ function showHelpFile(local,then) {
         WIN.open("//docs.grid.space/", "_help");
         return;
     }
+    const LANG = api.language.current;
     $('kiri-version').innerHTML = `${LANG.version} ${version}`;
     showModal('help');
     api.event.emit('help.show', local);
