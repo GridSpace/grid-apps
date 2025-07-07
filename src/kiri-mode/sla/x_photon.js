@@ -1,13 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-gapp.register("kiri-mode.sla.x_photons", [], (root, exports) => {
-
-const { base, kiri } = root;
-const { driver } = kiri;
-const { util } = base;
-const { SLA } = driver;
+import { SLA } from './driver.js';
 
 function generatePhoton(print, conf, progress) {
     let printset = print.settings,
@@ -533,11 +526,9 @@ function polyout(poly, ctx, opt) {
     ctx.closePath();
 }
 
-self.photon = {
+export const photon = {
     generatePhoton,
     generatePhotons,
     renderLayer,
     renderLayerWasm
 };
-
-});

@@ -1,7 +1,8 @@
 const service_worker = navigator.serviceWorker;
 
+import { version } from '../moto/license.js';
+
 async function start_service_worker() {
-    const version = self.gapp.version;
     function debug() {
         console.log(`[${version}]`, ...arguments);
     }

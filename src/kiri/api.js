@@ -1,17 +1,30 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import alerts from './alerts.js';
+import settings from './settings.js'
+import STACKS from './stacks.js';
 
-// dep: moto.broker
-// dep: data.local
-// dep: kiri.utils
-// dep: kiri.consts
-gapp.register("kiri.api", (root, exports) => {
+import { broker } from '../moto/broker.js';
+import { client as work } from './client.js';
+import { consts, COLOR as color, LISTS as lists, MODES, VIEWS } from './consts.js';
+import { device, devices } from './devices.js';
+import { catalog, dialog, event, group, help, hide, image } from './main.js';
+import { modal, mode, probe, process, show, space, util, view } from './main.js';
+import { local as dataLocal } from '../data/local.js';
+import { noop, ajax, o2js, js2o } from './utils.js';
+import { functions } from './function.js';
+import { platform } from './platform.js';
+import { selection } from './selection.js';
+import { stats } from '../kiri/stats.js';
+import { widgets } from './widgets.js';
+import { updateTool } from '../kiri-mode/cam/tools.js';
 
-let { data, kiri, moto, noop } = root,
-    { consts, utils } = kiri,
-    { ajax, o2js, js2o } = utils,
-    lists = consts.LISTS,
+import { LANG } from './lang.js';
+import { LOCAL, SETUP, SECURE } from './main.js';
+import { UI } from './ui.js';
+
+let UC = UI.prefix('kiri').inputAction(settings.conf.update),
+    und = undefined,
     clone = Object.clone,
     isHover = false,
     feature = {
@@ -20,26 +33,32 @@ let { data, kiri, moto, noop } = root,
         frame: true, // receive frame events
         alert_event: false, // emit alerts as events instead of display
         controls: true, // show or not side menus
-        device_filter: undefined, // function to limit devices shown
-        drop_group: undefined, // optional array to group multi drop
+        device_filter: und, // function to limit devices shown
+        drop_group: und, // optional array to group multi drop
         drop_layout: true, // layout on new drop
         hoverAdds: false, // when true only searches widget additions
-        on_key: undefined, // function override default key handlers
+        on_key: und, // function override default key handlers
         on_key2: [], // allows for multiple key handlers
-        on_load: undefined, // function override file drop loads
-        on_add_stl: undefined, // legacy override stl drop loads
-        on_mouse_up: undefined, // function intercepts mouse up select
-        on_mouse_down: undefined, // function intercepts mouse down
+        on_load: und, // function override file drop loads
+        on_add_stl: und, // legacy override stl drop loads
+        on_mouse_up: und, // function intercepts mouse up select
+        on_mouse_down: und, // function intercepts mouse down
         work_alerts: true, // allow disabling work progress alerts
-            pmode: consts.PMODES.SPEED, // preview modes
+        pmode: consts.PMODES.SPEED, // preview modes
         // hover: false, // when true fires mouse hover events
         get hover() {
             return isHover;
         },
         set hover(b) {
             isHover = b;
-            moto.broker.publish("feature.hover", b);
+            broker.publish("feature.hover", b);
         }
+    },
+    busyVal = 0,
+    busy = {
+        val() { return busy },
+        inc() { api.event.emit("busy", ++busyVal) },
+        dec() { api.event.emit("busy", --busyVal) }
     },
     onkey = (fn) => {
         api.feature.on_key2.push(fn);
@@ -53,7 +72,7 @@ let { data, kiri, moto, noop } = root,
             let proc = api.conf.get().process,
                 size = proc.sliceHeight || proc.slaSlice || 1,
                 base = (proc.firstSliceHeight || size);
-            layers = Array.isArray(layers) ? layers : [ layers ];
+            layers = Array.isArray(layers) ? layers : [layers];
             proc.xray = layers.map(l => raw ? l : base + l * size - size / 2);
             proc.xrayi = layers.slice();
             api.function.slice();
@@ -72,62 +91,9 @@ let { data, kiri, moto, noop } = root,
         set: (key, val) => localSet(key, val),
     },
     tweak = {
-        line_precision(v) { api.work.config({base:{clipperClean: v}}) },
-        gcode_decimals(v) { api.work.config({base:{gcode_decimals: v}}) }
-    },
-    und = undefined,
-    api = exports({
-        ajax,           // via utils
-        alerts: {},     // alerts.js
-        busy: {},       // main.js
-        catalog: und,   // main.js
-        clip,           // <--
-        clone,          // <--
-        color: und,     // main.js
-        conf: {},       // settings.js
-        const: {},      // main.js
-        devel,          // <--
-        device: {},     // devices.js
-        devices: {},    // devices.js
-        dialog: {},     // main.js
-        doit,           // <--
-        event: {},      // main.js
-        feature,        // <--
-        function: {},   // function.js
-        group: {},      // main.js
-        help: {},       // main.js
-        hide: {},       // main.js
-        image: {},      // main.js
-        js2o,           // via utils
-        language: und,  // main.js
-        lists,          // <--
-        local,          // <--
-        modal: {},      // main.js
-        mode: {},       // main.js
-        o2js,           // via utils
-        onkey,          // <--
-        platform: {},   // platform.js
-        probe: {},      // main.js
-        process: {},    // main.js
-        sdb: data.local,
-        selection: {},  // selection.js
-        settings: {},   // settings.js
-        show: {},       // main.js
-        space: {},      // main.js
-        tool: {},       // kiri-mode/cam/tools.js
-        tweak,          // <--
-        uc: {},         // main.js
-        ui: {},         // main.js
-        util: {},       // main.js
-        var: {
-            layer_lo: 0,
-            layer_hi: 0,
-            layer_max: 0
-        },
-        view: {},       // main.js
-        widgets: {},    // widgets.js
-        work: und,      // main.js
-    });
+        line_precision(v) { api.work.config({ base: { clipperClean: v } }) },
+        gcode_decimals(v) { api.work.config({ base: { gcode_decimals: v } }) }
+    };
 
 function clip(text) {
     navigator.clipboard
@@ -146,4 +112,64 @@ function localSet(key, val) {
     return val;
 }
 
-});
+export const api = {
+    ajax,
+    alerts,
+    busy,
+    catalog,
+    client: work,
+    clip,
+    clone,
+    color,
+    conf: settings.conf,
+    const: { LANG, LISTS: lists, LOCAL, MODES, SETUP, SECURE, STACKS, VIEWS },
+    devel,
+    device,
+    devices,
+    dialog,
+    doit,
+    event,
+    feature,
+    function: functions,
+    group,
+    help,
+    hide,
+    image,
+    js2o,
+    language: LANG,
+    lists,
+    local,
+    modal,
+    mode,
+    noop,
+    o2js,
+    onkey,
+    platform,
+    probe,
+    process,
+    sdb: dataLocal,
+    selection,
+    settings,
+    show,
+    space,
+    stacks: STACKS,
+    stats,
+    tool: {
+        update: updateTool
+    },
+    tweak,
+    uc: UC,
+    ui: {},
+    util,
+    var: {
+        layer_lo: 0,
+        layer_hi: 0,
+        layer_max: 0
+    },
+    view,
+    widgets,
+    work,
+};
+
+// allow widget to straddle client / worker FOR NOW
+self.kiri_api = api;

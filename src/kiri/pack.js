@@ -1,17 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-/**
- * adapted from
- * http://codeincomplete.com/posts/2011/5/7/bin_packing/
- */
-
-gapp.register("kiri.pack", [], (root, exports) => {
-
-const { kiri } = root;
-
-class Packer {
+export class Packer {
     constructor(w, h, spacing, opt = {}) {
         this.w = w;
         this.h = h;
@@ -150,7 +139,3 @@ class Packer {
         return node;
     }
 }
-
-kiri.Pack = Packer;
-
-});

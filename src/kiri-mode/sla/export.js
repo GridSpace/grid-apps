@@ -1,17 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: geo.base
-// dep: kiri-mode.sla.driver
-// dep: kiri-mode.sla.x_cxdlp
-// dep: kiri-mode.sla.x_photon
-gapp.register("kiri-mode.sla.export", [], (root, exports) => {
-
-const { base, kiri } = root
-const { driver } = kiri;
-const { util } = base;
-const { SLA } = driver;
+import { CXDLP } from './x_cxdlp.js';
+import { photon } from './x_photon.js';
+import { SLA } from './driver.js';
 
 /**
  * DRIVER CONTRACT - runs in worker
@@ -19,7 +10,7 @@ const { SLA } = driver;
  * @param {Function} online streaming reply
  * @param {Function} ondone last reply
  */
-SLA.export = function(print, online, ondone) {
+export function sla_export(print, online, ondone) {
     let widgets = print.widgets,
         settings = print.settings,
         device = settings.device,
@@ -167,8 +158,6 @@ SLA.export = function(print, online, ondone) {
     console.log('print.export', Date.now() - mark);
 };
 
-function generateCXDLP(print, conf, progress) {
+export function generateCXDLP(print, conf, progress) {
     console.log({generateCXDLP: print, conf, progress});
 }
-
-});

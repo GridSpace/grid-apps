@@ -1,31 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { base } from '../geo/base.js';
+import { Layers } from './layers.js';
+import { newPoint } from '../geo/point.js';
+import { Polygon, newPolygon } from '../geo/polygon.js';
+import { Slice, newSlice, Top, newTop } from './slice.js';
+import { Widget, newWidget } from './widget.js';
 
-// dep: main.kiri
-// dep: geo.base
-// dep: geo.polygon
-// dep: kiri.widget
-// dep: kiri.slice
-// dep: kiri.layers
-gapp.register("kiri.codec", [], (root, exports) => {
-
-const { base, kiri } = root;
 const decoders = {};
 const freeMem = true;
-
-const codec = exports({
-    undef: undefined,
-    encode: encode,
-    decode: decode,
-    registerDecoder: registerDecoder,
-    allocFloat32Array: allocFloat32Array,
-    encodePointArray,
-    decodePointArray,
-    encodePointArray2D,
-    decodePointArray2D,
-    toCodable
-});
 
 const TYPE = {
     WIDGET: 100,
@@ -210,7 +193,7 @@ function decodePointArray(array) {
     const points = new Array(length / 3);
 
     for (let vid=0, pid=0; vid < length; ) {
-        points[pid++] = base.newPoint(array[vid++], array[vid++], array[vid++]);
+        points[pid++] = newPoint(array[vid++], array[vid++], array[vid++]);
     }
 
     return points;
@@ -225,7 +208,7 @@ function decodePointArray2D(array, z, fn) {
     for (let vid=0, pid=0; vid < length; ) {
         points[pid++] = fn ?
             fn(array[vid++], array[vid++]) :
-            base.newPoint(array[vid++], array[vid++], z);
+            newPoint(array[vid++], array[vid++], z);
     }
 
     return points;
@@ -233,7 +216,7 @@ function decodePointArray2D(array, z, fn) {
 
 // ----- Widget Codec -----
 
-kiri.Widget.prototype.encode = function(state) {
+Widget.prototype.encode = function(state) {
     const json = state._json_;
     const geo = this.getGeoVertices();
     const coded = {
@@ -252,7 +235,7 @@ registerDecoder(TYPE.WIDGET, function(v, state) {
     const id = v.id,
         group = v.group || id,
         track = v.track || undefined,
-        widget = kiri.newWidget(id, kiri.Widget.Groups.forid(group));
+        widget = newWidget(id, Widget.Groups.forid(group));
 
     widget.loadVertices(v.json ? v.geo.toFloat32() : v.geo);
     widget.saved = Date.now();
@@ -266,7 +249,7 @@ registerDecoder(TYPE.WIDGET, function(v, state) {
 
 // ----- Slice Codec -----
 
-kiri.Slice.prototype.encode = function(state) {
+Slice.prototype.encode = function(state) {
     const rv = {
         type: TYPE.SLICE,
         z: this.z,
@@ -279,7 +262,7 @@ kiri.Slice.prototype.encode = function(state) {
 };
 
 registerDecoder(TYPE.SLICE, function(v, state) {
-    let slice = kiri.newSlice(v.z, state.mesh ? state.mesh.newGroup() : null);
+    let slice = newSlice(v.z, state.mesh ? state.mesh.newGroup() : null);
 
     slice.index = v.index;
     slice.layers = decode(v.layers, state)
@@ -289,7 +272,7 @@ registerDecoder(TYPE.SLICE, function(v, state) {
 
 // ----- Slice.Top Codec -----
 
-kiri.Top.prototype.encode = function(state) {
+Top.prototype.encode = function(state) {
     let obj = {
         type: TYPE.TOP,
         poly: encode(this.poly, state)
@@ -307,7 +290,7 @@ kiri.Top.prototype.encode = function(state) {
 };
 
 registerDecoder(TYPE.TOP, function(v, state) {
-    let top = kiri.newTop(decode(v.poly, state));
+    let top = newTop(decode(v.poly, state));
     if (state.full) {
         // top.gaps = decode(v.gaps, state);
         top.last = decode(v.last, state);
@@ -320,7 +303,7 @@ registerDecoder(TYPE.TOP, function(v, state) {
 
 // ----- Polygon Codec -----
 
-base.Polygon.prototype.encode = function(state) {
+Polygon.prototype.encode = function(state) {
     if (!state.poly) state.poly = {};
 
     let cached = state.poly[this.id];
@@ -352,10 +335,10 @@ registerDecoder(TYPE.POLY, function(v, state) {
 
     const array = v.array;
     const length = array.length;
-    const poly = base.newPolygon();
+    const poly = newPolygon();
 
     for (let vid = 0; vid < length; ) {
-        poly.push(base.newPoint(array[vid++], array[vid++], array[vid++]));
+        poly.push(newPoint(array[vid++], array[vid++], array[vid++]));
     }
 
     state.poly[v.id] = poly;
@@ -382,7 +365,7 @@ function encodeLayerPolys(polys, state) {
     });
 }
 
-kiri.Layers.prototype.encode = function(state) {
+Layers.prototype.encode = function(state) {
     let zeros = state.zeros;
     let enc = {
         type: TYPE.LAYERS,
@@ -419,7 +402,7 @@ kiri.Layers.prototype.encode = function(state) {
 };
 
 registerDecoder(TYPE.LAYERS, function(v, state) {
-    const render = new kiri.Layers();
+    const render = new Layers();
     const { layers } = v;
 
     for (let i=0; i<layers.length; i++) {
@@ -463,4 +446,28 @@ registerDecoder(TYPE.LAYERS, function(v, state) {
     return render;
 });
 
-});
+export const codec = {
+    encode,
+    decode,
+    registerDecoder,
+    allocFloat32Array,
+    encodePointArray,
+    decodePointArray,
+    encodePointArray2D,
+    decodePointArray2D,
+    toCodable
+};
+
+export {
+    encode,
+    decode,
+    registerDecoder,
+    allocFloat32Array,
+    encodePointArray,
+    decodePointArray,
+    encodePointArray2D,
+    decodePointArray2D,
+    toCodable
+};
+
+self.kiri_codec = codec;

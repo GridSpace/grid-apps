@@ -1,22 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-// use: geo.bounds
-// use: geo.polygon
-// use: geo.polygons
-// use: ext.gerber
-// use: geo.csg
-gapp.register("load.gbr", (root, exports) => {
+import { polygons } from '../geo/polygons.js';
+import { CSG } from '../geo/csg.js';
+import * as TracespaceParser from '../ext/gerber.js';
+import { newPolygon } from '../geo/polygon.js';
+import { newBounds } from '../geo/bounds.js';
 
-const { load } = root;
-const POLYS = base.polygons;
-const CSG = base.CSG;
-
-load.GBR = {
-    parse,
-    toMesh
-};
-
-function toMesh(text, opt = {}) {
+export function toMesh(text, opt = {}) {
     const progress = opt.progress || function(){};
     const debug = opt.debug ? console.log : function(){};
 
@@ -29,7 +19,7 @@ function toMesh(text, opt = {}) {
     // should produce one top level poly which is the board outline
     // next level down should be the remaining copper trace which we
     // subtract from the board to produce paths that can be milled
-    const nest = POLYS.nest([...closed, ...circs, ...rects], true);
+    const nest = polygons.nest([...closed, ...circs, ...rects], true);
     debug({ nest });
 
     if (nest.length === 0) return [].toFloat32();
@@ -49,7 +39,7 @@ function toMesh(text, opt = {}) {
         for (let p of nest) {
             bounds.merge(p.bounds);
         }
-        const rect = base.newPolygon().centerRectangle(bounds.center(0), bounds.width() + offset, bounds.height() + offset);
+        const rect = newPolygon().centerRectangle(bounds.center(0), bounds.width() + offset, bounds.height() + offset);
         for (let n of nest) {
             n.depth++;
         }
@@ -92,7 +82,7 @@ function toMesh(text, opt = {}) {
 
     // union open trace expansions
     const opn = [];
-    for (let poly of POLYS.union(open_exp, 0, true)) {
+    for (let poly of polygons.union(open_exp, 0, true)) {
         const tool = poly.tool;
         opn.push(poly.extrude(z0 + (opt.raise || 0)));
     }
@@ -133,7 +123,7 @@ function toMesh(text, opt = {}) {
     return CSG.toPositionArray(meshOut);
 }
 
-function parse(text) {
+export function parse(text) {
     let fact = 1000000;
     let tools = {};
     let tool;
@@ -142,7 +132,7 @@ function parse(text) {
     let circs = [];
     let rects = [];
     let last = {};
-    let bounds = base.newBounds();
+    let bounds = newBounds();
     let p = TracespaceParser.createParser();
     p.feed(text);
     let r = p.results();
@@ -178,7 +168,7 @@ function parse(text) {
                     if (true && poly && last.x === x && last.y === y && last.tool === tool) {
                         // console.log('continuation');
                     } else {
-                        poly = base.newPolygon().setOpen().add(pos.x, pos.y, 0);
+                        poly = newPolygon().setOpen().add(pos.x, pos.y, 0);
                         poly.tool = tool;
                         polys.push(poly);
                     }
@@ -192,16 +182,16 @@ function parse(text) {
                     switch (shape.type) {
                         case 'obround':
                             if (shape.xSize === shape.ySize) {
-                                circs.push(base.newPolygon().centerCircle(pos, shape.xSize / 2, 20));
+                                circs.push(newPolygon().centerCircle(pos, shape.xSize / 2, 20));
                             } else {
                                 console.log('TODO', shape);
                             }
                             break;
                         case 'circle':
-                            circs.push(base.newPolygon().centerCircle(pos, shape.diameter / 2, 20));
+                            circs.push(newPolygon().centerCircle(pos, shape.diameter / 2, 20));
                             break;
                         case 'rectangle':
-                            rects.push(base.newPolygon().centerRectangle(pos, shape.xSize, shape.ySize));
+                            rects.push(newPolygon().centerRectangle(pos, shape.xSize, shape.ySize));
                             break;
                         default:
                             console.log('TODO', shape);
@@ -233,9 +223,5 @@ function parse(text) {
             open.push(poly);
         }
     }
-    // const nest = base.polygons.nest([...closed, ...circs, ...rects], true);
-    // console.log({ nest });
     return { open, closed, circs, rects };
 }
-
-});

@@ -1,13 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { util, config, key } from './base.js';
+import { newLine } from './line.js';
+import { newSlope } from './slope.js';
 
-// dep: geo.base
-gapp.register("geo.point", [], (root, exports) => {
-
-const { base } = root;
-const { util, config, key } = base;
-const { round } = util;
+const { Vector3 } = THREE;
 
 class Point {
     constructor(x = 0, y = 0, z = 0, key) {
@@ -42,7 +39,7 @@ class Point {
     }
 
     toVector3() {
-        return new THREE.Vector3(this.x, this.y, this.z);
+        return new Vector3(this.x, this.y, this.z);
     }
 
     set(x, y, z) {
@@ -126,11 +123,11 @@ class Point {
     }
 
     slopeTo(p) {
-        return base.newSlope(this, p);
+        return newSlope(this, p);
     }
 
     lineTo(p, k) {
-        return base.newLine(this, p, k);
+        return newLine(this, p, k);
     }
 
     isNear(p, dist) {
@@ -296,7 +293,7 @@ class Point {
             np2 = newPoint(p2.x - oy, p2.y + ox, p2.z, key.NONE);
         np1.op = p1;
         np2.op = p2;
-        return base.newLine(np1, np2, key.NONE);
+        return newLine(np1, np2, key.NONE);
     }
 
     offset(x, y, z) {
@@ -652,10 +649,8 @@ function pointFromClipper(cp, z) {
     return newPoint(cp.X / config.clipper, cp.Y / config.clipper, z);
 }
 
-gapp.overlay(base, {
+ export {
     Point,
     newPoint,
     pointFromClipper
-});
-
-});
+};

@@ -1,11 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-gapp.register("kiri.lang", [], (root, exports) => {
-
-const { kiri } = root;
-const LANG = kiri.lang = { current: {} };
+const LANG = self.lang = { current: {} };
 const KDFL = 'en-us';
 
 let lset = navigator.language.toLocaleLowerCase();
@@ -78,4 +73,6 @@ LANG.set = function() {
     return undefined;
 }
 
-});
+export default { LANG };
+
+export { LANG };

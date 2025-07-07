@@ -1,29 +1,24 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { base, util } from '../../geo/base.js';
+import { slice as gyroid_slice } from '../../geo/gyroid.js';
 
-// dep: geo.base
-// dep: geo.gyroid
-// dep: kiri-mode.fdm.driver
-gapp.register("kiri-mode.fdm.fill", [], (root, exports) => {
+export const fill_fixed = {
+    hex: fillHexFull,
+    grid: fillGrid,
+    triangle: fillTriangle
+};
 
-const { base, kiri } = root;
-const { util } = base;
+export const fill = {
+    hex: fillHexFull,
+    grid: fillGrid,
+    gyroid: fillGyroid,
+    triangle: fillTriangle,
+    linear: fillLinear,
+    cubic: fillCubic
+};
 
-const DEG2RAD = Math.PI / 180,
-    FILL = kiri.fill = {
-        hex: fillHexFull,
-        grid: fillGrid,
-        gyroid: fillGyroid,
-        triangle: fillTriangle,
-        linear: fillLinear,
-        cubic: fillCubic
-    },
-    CACHE = kiri.fill_fixed = {
-        hex: fillHexFull,
-        grid: fillGrid,
-        triangle: fillTriangle
-    };
+const DEG2RAD = Math.PI / 180;
 
 function fillHexFull(target) {
     fillHex(target, true);
@@ -109,13 +104,13 @@ function fillGyroid(target) {
     let tile_x = span_x / tile;
     let tile_y = span_y / tile;
     let tile_z = 1 / tile;
-    let gyroid = base.gyroid.slice(target.zValue() * tile_z, (1 - density) * 500);
+    let gen = gyroid_slice(target.zValue() * tile_z, (1 - density) * 500);
 
     let polys = [];
-    if (gyroid.dir == 'lr') {
+    if (gen.dir == 'lr') {
         for (let ty=0; ty<=tile_y; ty++) {
             for (let tx=0; tx<=tile_x; tx++) {
-                for (let poly of gyroid.polys) {
+                for (let poly of gen.polys) {
                     target.newline();
                     let points = poly.map(el => {
                         return {
@@ -132,7 +127,7 @@ function fillGyroid(target) {
     } else {
         for (let tx=0; tx<=tile_x; tx++) {
             for (let ty=0; ty<=tile_y; ty++) {
-                for (let poly of gyroid.polys) {
+                for (let poly of gen.polys) {
                     target.newline();
                     let points = poly.map(el => {
                         return {
@@ -323,5 +318,3 @@ function fillTriangle(target) {
         target.emit(xp, bounds.max.y);
     }
 }
-
-});

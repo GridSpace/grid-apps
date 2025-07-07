@@ -1,14 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// use: load.file
-// use: kiri.selection
-// use: kiri.platform
-gapp.register("kiri.widgets", (root, exports) => {
-
-const { data, kiri, moto, noop } = root;
-const { api, consts, utils, newWidget, Widget } = kiri;
+import { $ } from '../moto/webui.js';
+import { api } from './api.js';
+import { load } from '../load/file.js';
+import { Widget, newWidget } from './widget.js';
 
 let WIDGETS = [];
 
@@ -36,7 +31,7 @@ function rename(sel) {
         return;
     }
     let widget = widgets[0];
-    kiri.ui.prompt("new widget name", widget.meta.file || "no name").then(newname => {
+    api.uc.prompt("new widget name", widget.meta.file || "no name").then(newname => {
         if (newname) {
             widget.meta.file = newname;
             api.platform.changed();
@@ -89,7 +84,7 @@ function meshes() {
 
 function opacity(value) {
     api.widgets.each(w => w.setOpacity(value));
-    moto.space.update();
+    api.space.update();
 }
 
 function setIndexed(value) {
@@ -101,7 +96,7 @@ function setAxisIndex(value) {
 }
 
 // extend API (api.widgets)
-const widgets = Object.assign(api.widgets, {
+export const widgets = {
     load:       Widget.loadFromCatalog,
     new:        newWidget,
     map,
@@ -120,6 +115,4 @@ const widgets = Object.assign(api.widgets, {
     each(fn)    { WIDGETS.slice().forEach(widget => fn(widget)) },
     for(fn)     { widgets.each(fn) },
     forid(id)   { return WIDGETS.filter(w => w.id === id)[0] }
-});
-
-});
+};

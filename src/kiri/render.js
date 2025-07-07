@@ -1,35 +1,24 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { Layers } from './layers.js';
+import { newPoint } from '../geo/point.js';
+import { newPolygon } from '../geo/polygon.js';
+import { newSlopeFromAngle } from '../geo/slope.js';
 
-/*
- * uses `layers.js` to convert paths (usually preview) into primordial geometries.
- * the input is based on an array (layers) of arrays containing `Output` objects
- */
-
-// dep: geo.base
-// dep: geo.point
-// dep: geo.polygon
-gapp.register("kiri.render", [], (root, exports) => {
-
-const { base, kiri } = root;
-const { config, util, newPolygon } = base;
 const hsV = 0.9;
 const XAXIS = new THREE.Vector3(1,0,0);
 const DEG2RAD = Math.PI / 180;
 
-exports({
-    path,
-    is_dark,
-    rate_to_color
-});
+function worker() {
+    return self.kiri_worker.current;
+}
 
 function is_cam() {
-    return root.worker.print.settings.mode === 'CAM';
+    return worker().print.settings.mode === 'CAM';
 }
 
 function is_dark() {
-    return root.worker.print.settings.controller.dark ? true : false;
+    return worker().print.settings.controller.dark ? true : false;
 };
 
 function rate_to_color(rate, max) {
@@ -44,17 +33,17 @@ function rate_to_color(rate, max) {
     }
 };
 
-    /**
-     * Generate visual representation of a gcode program.
-     * @param {Output[][]} levels - Array of arrays containing `Output` objects.
-     * @param {function} update - Called with a completion percentage and the rendered layer.
-     * @param {{tools: Object, flat: Boolean, thin: Boolean, speed: Boolean, lineWidth: Number, toolMode: Boolean, z: Number, action: String, other: String}} [opts] - Optional parameters.
-     * @returns {Promise.kiri.Layers[]} - Array of layers.
-     */
+/**
+ * Generate visual representation of a gcode program.
+ * @param {Output[][]} levels - Array of arrays containing `Output` objects.
+ * @param {function} update - Called with a completion percentage and the rendered layer.
+ * @param {{tools: Object, flat: Boolean, thin: Boolean, speed: Boolean, lineWidth: Number, toolMode: Boolean, z: Number, action: String, other: String}} [opts] - Optional parameters.
+ * @returns {Promise.kiri.Layers[]} - Array of layers.
+ */
 async function path(levels, update, opts = {}) {
     levels = levels.filter(level => level.length);
     if (levels.length === 0) {
-        self.worker.print.maxSpeed = 0;
+        worker().print.maxSpeed = 0;
         return [];
     }
 
@@ -107,10 +96,11 @@ async function path(levels, update, opts = {}) {
     // }).reduce((a, v) => Math.max(a, v)) + 1;
 
     // for reporting
-    self.worker.print.minSpeed = minspd;
-    self.worker.print.maxSpeed = maxspd;
-    self.worker.print.thinColor = thin;
-    self.worker.print.flatColor = flat;
+    let print = worker().print;
+    print.minSpeed = minspd;
+    print.maxSpeed = maxspd;
+    print.thinColor = thin;
+    print.flatColor = flat;
 
     let lastTool = null;
     let lastEnd = null;
@@ -138,7 +128,8 @@ async function path(levels, update, opts = {}) {
         const engages = [];
         const lasers = [];
         const sparks = [];
-        const output = new kiri.Layers();
+        const output = new Layers();
+
         layers.push(output);
 
         const pushPrint = (toolid, poly) => {
@@ -172,8 +163,8 @@ async function path(levels, update, opts = {}) {
                 let p2 = new THREE.Vector3(point.x, point.y, point.z)
                     .applyAxisAngle(XAXIS, point.a * DEG2RAD);
                 // reconstruct point point for display without A axis
-                outPoint = base.newPoint(p2.x, p2.y, p2.z);
-                // let sp = base.newPoint(outPoint.x * 1.1, outPoint.y * 1.1, outPoint.z * 1.1);
+                outPoint = newPoint(p2.x, p2.y, p2.z);
+                // let sp = newPoint(outPoint.x * 1.1, outPoint.y * 1.1, outPoint.z * 1.1);
                 // sparks.push(outPoint, sp);
             }
             if (out.tool !== lastTool) {
@@ -321,8 +312,8 @@ async function path(levels, update, opts = {}) {
                 .addAreas(heads.map(points => {
                     const {p1, p2} = points;
                     const slope = p2.slopeTo(p1);
-                    const s1 = base.newSlopeFromAngle(slope.angle + 20);
-                    const s2 = base.newSlopeFromAngle(slope.angle - 20);
+                    const s1 = newSlopeFromAngle(slope.angle + 20);
+                    const s2 = newSlopeFromAngle(slope.angle - 20);
                     const p3 = points.p2.projectOnSlope(s1, arrowSize);
                     const p4 = points.p2.projectOnSlope(s2, arrowSize);
                     return newPolygon().addPoints([p2,p3,p4]).setZ(p2.z + 0.01);
@@ -543,4 +534,14 @@ function color4(rgb, inc, seg) {
     }
 }
 
-});
+export const render = {
+    path,
+    is_dark,
+    rate_to_color
+};
+
+export {
+    path,
+    is_dark,
+    rate_to_color
+};

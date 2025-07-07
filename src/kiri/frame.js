@@ -1,14 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+import { load } from '../load.js';
+import { kiri } from './kiri.js';
+import { moto } from '../moto.js';
+import { api } from './api.js';
+import { newWidget } from './widget.js';
+import { conf, event, feature, platform, settings, show } from './api.js';
+import { VIEWS } from './consts.js';
 
-"use strict";
-
-// use: load.stl
-// use: load.svg
-// use: kiri.api
-// use: kiri.platform
-// use: kiri.settings
-// use: kiri.widget
-gapp.register("kiri.frame", [], (root, exports) => {
 
 // add frame message api listener
 window.addEventListener('message', msg => {
@@ -127,4 +125,5 @@ window.addEventListener('message', msg => {
     }
 });
 
-});
+
+// No direct exports; sets up message listener

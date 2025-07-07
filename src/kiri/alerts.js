@@ -1,12 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: kiri.api
-gapp.register("kiri.alerts", [], (root, exports) => {
-
-const { kiri } = root;
-const { api } = kiri;
+import { api } from './api.js';
 
 let alerts = [];
 
@@ -68,11 +62,14 @@ function update(clear) {
     }
 }
 
-// extend API
-Object.assign(api.alerts, {
+export {
     hide,
     show,
     update
-});
+};
 
-});
+export default {
+    hide,
+    show,
+    update
+};

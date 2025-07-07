@@ -12,7 +12,7 @@ const uglify = require('uglify-js');
 const moment = require('moment');
 const agent = require('express-useragent');
 const license = require_fresh('./src/moto/license.js');
-const version = license.VERSION || "rogue";
+const version = license.version || "rogue";
 const netdb = require('@gridspace/net-level-client');
 const PATH = require('path');
 
@@ -58,25 +58,6 @@ netdb.create = async function(map = {}) {
     return client;
 };
 
-// experimental wrapping of esm modules using embedded data urls
-function wrap_module(buf, as) {
-    const base64 = Buffer.from(buf).toString('base64');
-    const path = as.split('.');
-    const exp = path.pop();
-    return [
-        `gapp.register("${path.join('.')}", [], (root, exports) => {`,
-        `const url = "data:text/javascript;base64,${base64}";`,
-        `exports({ ["${exp}"]: import(url) });`,
-        "});"
-    ].join('\n');
-}
-
-function addonce(array, v) {
-    if (array.indexOf(v) < 0) {
-        array.push(v);
-    }
-};
-
 function init(mod) {
     const ENV = mod.env;
 
@@ -103,173 +84,7 @@ function init(mod) {
     const callstack = [];
     let xxxx = false;
 
-    function find_refs(cache, path, ismod) {
-        let rec = refcache[path];
-        if (rec) {
-            let crec = cache[path];
-            if (!crec) {
-                cache[path] = rec;
-                for (let d of rec.deps) find_refs(cache, d);
-                for (let u of rec.uses) find_refs(cache, u);
-            }
-            return;
-        }
-        callstack.push(path);
-        rec = cache[path] = refcache[path] = {
-            uses: [],
-            deps: [ approot ]
-        };
-        let full = PATH.join(dir,"src",`${path}.js`);
-        try {
-            fs.lstatSync(full);
-        } catch (e) {
-            console.log({missing: full, callstack});
-            throw e;
-        }
-        // skip interrogating file if it's a module (external compacted)
-        if (ismod) {
-            wrap[`src/${path}.js`] = path.replaceAll('/','.');
-            return;
-        }
-        let lines = fs.readFileSync(full)
-            .toString()
-            .split('\n');
-        for (let line of lines) {
-            let arr, pos;
-            let upos = line.indexOf('// use:');
-            if (upos >= 0) {
-                arr = rec.uses;
-                pos = upos + 7;
-            }
-            let dpos = line.indexOf('// dep:');
-            if (dpos >= 0) {
-                arr = rec.deps;
-                pos = dpos + 7;
-            }
-            let mpos = line.indexOf('// mod:');
-            if (mpos >= 0) {
-                arr = rec.deps;
-                pos = mpos + 7;
-            }
-            if (upos >= 0 && dpos >= 0) {
-                console.log(`invalid line: ${line}`);
-                process.exit();
-            }
-            if (arr && pos >= 0) {
-                let path = line.substring(pos).trim().replace(/\./g,'/').trim();
-                addonce(arr, path);
-                find_refs(cache, path, mpos >= 0);
-            }
-        }
-        // if (xxxx) console.log({path, ...rec});
-        if (false) {
-            let seek = 'mesh/api';
-            if (rec.uses.indexOf(seek) >= 0 || rec.deps.indexOf(seek) >= 0) {
-                console.log({PULLS:seek, path});
-            }
-        }
-        callstack.pop();
-    }
-
-    // return record position indicated by path
-    function pos(path, list) {
-        for (let i=0; i<list.length; i++) {
-            if (list[i].path === path) {
-                return i;
-            }
-        }
-        console.trace(`not found: ${path}`);
-        process.exit();
-    }
-
-    function order_refs(cache) {
-        const recs = Object.entries(cache).map(entry => {
-            return { path: entry[0], deps: entry[1].deps }
-        }).sort((a,b) => {
-            return a.path === b.path ? 0 : a.path < b.path ? -1 : 1;
-        });
-        if (xxxx) console.log({ordering: recs});
-
-        // for each rec, ensure that dependencies are inserted before it
-        let lrec = recs.slice();
-        for (let rec of lrec) {
-            let { path, deps } = rec;
-            for (let dep of deps) {
-                let rpos = pos(path, recs);
-                let dpos = pos(dep, recs);
-                if (dpos > rpos) {
-                    let drec = recs[dpos];
-                    // remove old dep record
-                    recs.splice(dpos, 1);
-                    // insert dep before
-                    recs.splice(rpos, 0, drec);
-                    let nrpos = pos(path, recs);
-                    let ndpos = pos(dep, recs);
-                    let fail = nrpos != ndpos + 1;
-                    // if (xxxx) { console.log({move: dep, dpos, before: path, rpos}); }
-                    if (fail) {
-                        console.log({move: dep, dpos, before: path, rpos, ndpos, nrpos, recs: recs.slice(0,10)});
-                        process.exit();
-                    }
-                }
-            }
-        }
-        if (xxxx) console.log({recs});
-        return recs.map(rec => rec.path);
-    }
-
-    // process script dependencies, expand paths
-    for (let [ key, val ] of Object.entries(script)) {
-        if (val.indexOf(approot) < 0) {
-            val = [ approot, ...val ];
-        }
-        const list = val.map(p => p.charAt(0) === '&' ? p.substring(1) : p);
-        const cache = {};
-        const roots = [];
-        // xxxx = key === "kiri_work";
-        // for each path in the list, find deps and add to list
-        for (let path of val) {
-            let fc = path.charAt(0);
-            if (fc === '@') {
-                continue;
-            }
-            if (fc === '#') {
-                continue;
-            }
-            if (fc === '&') {
-                path = path.substring(1);
-                addonce(roots, path);
-            }
-            find_refs(cache, path);
-        }
-        if (xxxx) console.log({ processing: key, val });
-        let refs = order_refs(cache).filter(p => roots.indexOf(p) < 0);
-        // remove paths that are in refs
-        let paths = list.filter(p => {
-            if (p.charAt(0) === '&') {
-                p = p.substring(1);
-            }
-            return refs.indexOf(p) < 0 && roots.indexOf(p) < 0;
-        });
-        // when dependency roots exist, re-write val array
-        if (roots.length) {
-            val = [...refs, ...paths, ...roots];
-        }
-        // val.splice(1, 0, ...roots);
-        if (xxxx) console.log({key, cache, refs, paths, roots, val});
-        script[key] = val.map(p => {
-            let fc = p.charAt(0);
-            if (fc === '@') return p;
-            if (fc === '#') {
-                fc = p.split('#');
-                let nupath = `src/${fc[1]}.js`;
-                wrap[nupath] = fc[1].replaceAll('/','.');
-                return nupath;
-            }
-            return `src/${p}.js`;
-        });
-        // console.log({script: key, files: script[key]});
-    }
+    generateDevices();
 
     mod.on.test((req) => {
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;
@@ -295,10 +110,6 @@ function init(mod) {
         "/meta/index.html" : redir("/meta/", 301)
     }));
     mod.add(handleVersion);
-    mod.add(prepath([
-        [ "/code/", handleCode ],
-        // [ "/wasm/", handleWasm ]
-    ]));
     mod.add(fixedmap("/api/", api));
     if (debug) {
         mod.static("/mod/", "mod");
@@ -309,28 +120,13 @@ function init(mod) {
         });
     }
     mod.add(rewriteHtmlVersion);
-    mod.add((req, res, next) => {
-        const path = req.gs.path.substring(1);
-        if (wrap[path]) {
-            const data = getCachedFile(path, file => {
-                console.log({ hot_wrap: file });
-                return fs.readFileSync(file);
-            });
-            res.setHeader('Content-Type', 'application/javascript; charset=UTF-8');
-            return res.end(data);
-        }
-        next();
-    });
-    mod.static("/src/", "src");
+    mod.static("/lib/", "src");
     mod.static("/obj/", "web/obj");
     mod.static("/font/", "web/font");
     mod.static("/fon2/", "web/fon2");
     mod.static("/mesh/", "web/mesh");
     mod.static("/moto/", "web/moto");
-    mod.static("/meta/", "web/meta");
     mod.static("/kiri/", "web/kiri");
-
-    mod.static("/v2/", "web2");
 
     function load_modules(root, force) {
         // load modules
@@ -353,10 +149,10 @@ function init(mod) {
     }
 
     // load development and 3rd party modules
-    load_modules('mod');
+    // load_modules('mod');
 
     // load optional local modules
-    load_modules('mods');
+    // load_modules('mods');
 
     // run loads injected by modules
     while (load.length) {
@@ -366,9 +162,6 @@ function init(mod) {
             logger.log({on_load_fail: e});
         }
     }
-
-    // runs after module loads / injects
-    prepareScripts();
 };
 
 // either add module assets to path or require(init.js)
@@ -391,7 +184,6 @@ function initModule(mod, file, dir) {
         // express functions added here show up at "/api/" url root
         api: api,
         adm: {
-            reload: prepareScripts,
             setver: (ver) => { oversion = ver },
             crossOrigin: (bool) => { crossOrigin = bool }
         },
@@ -446,19 +238,6 @@ function initModule(mod, file, dir) {
             static: (root, pre) => {
                 mod.static(pre || "/", root);
             },
-            code: (endpoint, path) => {
-                let fpath = PATH.join(mod.dir, path);
-                if (debug) {
-                    code[endpoint] = fs.readFileSync(fpath);
-                } else {
-                    code[endpoint] = minify(fpath);
-                }
-                code_src[endpoint] = {
-                    endpoint,
-                    path: path,
-                    mod: lastmod(fpath)
-                };
-            },
             redir: redir,
             remap: remap,
             setup: fn => { setupFn = fn }
@@ -481,51 +260,6 @@ function initModule(mod, file, dir) {
         }
     });
 }
-
-const script = {
-    kiri : [
-        "@devices",
-        "kiri/ui",
-        "&main/kiri",
-        "&kiri/lang-en"
-    ],
-    kiri_work : [
-        "kiri-run/worker",
-        "&main/kiri",
-    ],
-    kiri_pool : [
-        "&kiri-run/minion",
-        "&main/kiri",
-    ],
-    engine : [
-        "@kiri_work",
-        "&kiri-run/engine",
-        "&main/kiri",
-    ],
-    frame : [
-        "kiri-run/frame"
-    ],
-    meta : [
-        "main/meta",
-    ],
-    mesh : [
-        "&main/mesh"
-    ],
-    mesh_work : [
-        "&mesh/work"
-    ],
-    mesh_pool : [
-        "&mesh/pool"
-    ],
-    cache : [
-        "moto/license",
-        "main/service",
-    ],
-    service : [
-        "moto/license",
-        "moto/service"
-    ]
-};
 
 // prevent caching of specified modules
 const cachever = {};
@@ -564,28 +298,30 @@ function handleSetup(req, res, next) {
 
 function handleVersion(req, res, next) {
     let vstr = oversion || dversion || version;
-    if (["/kiri/","/mesh/","/meta/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
+    if (["/kiri/","/mesh/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
             return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {
             return http.redirect(res, `${req.url}?ver:${vstr}`);
         }
     } else if (!debug) {
+        // in production serve packed bundles
         let { path } = req.app;
-        if (path === '/v2/lib/mesh/work.js') {
-            req.url = req.app.path = '/v2/lib/pack/mesh-work.js';
-        } else if (path === '/v2/lib/main/mesh.js') {
-            req.url = req.app.path = '/v2/lib/pack/mesh-main.js';
-        } else if (path === '/v2/lib/kiri-run/minion.js') {
-            req.url = req.app.path = '/v2/lib/pack/kiri-pool.js';
-        } else if (path === '/v2/lib/kiri-run/worker.js') {
-            req.url = req.app.path = '/v2/lib/pack/kiri-work.js';
-        } else if (path === '/v2/lib/main/kiri.js') {
-            req.url = req.app.path = '/v2/lib/pack/kiri-main.js';
+        if (path === '/lib/mesh/work.js') {
+            req.url = req.app.path = '/lib/pack/mesh-work.js';
+        } else if (path === '/lib/main/mesh.js') {
+            req.url = req.app.path = '/lib/pack/mesh-main.js';
+        } else if (path === '/lib/kiri-run/minion.js') {
+            req.url = req.app.path = '/lib/pack/kiri-pool.js';
+        } else if (path === '/lib/kiri-run/worker.js') {
+            req.url = req.app.path = '/lib/pack/kiri-work.js';
+        } else if (path === '/lib/main/kiri.js') {
+            req.url = req.app.path = '/lib/pack/kiri-main.js';
         }
+        // add cors headers on rewrite
         if (path !== req.url) {
+            console.log('rewrite', path, req.url);
             addCorsHeaders(req, res);
-            // console.log('rewrite', path, req.url);
         }
         next();
     } else {
@@ -631,58 +367,6 @@ function handleWasm(req, res, next) {
     }
 }
 
-function handleCode(req, res, next) {
-    let key = req.app.path.split('/')[2].split('.')[0],
-        ck = code_src[key],
-        js = code[key];
-
-    if (!js) {
-        return http.reply404(req, res);
-    }
-    if (ck) {
-        let mpath = `${dir}/${ck.path}`;
-        let mod = lastmod(mpath);
-        if (mod > ck.mod) {
-            if (debug) {
-                js = code[ck.endpoint] = fs.readFileSync(mpath);
-            } else {
-                js = code[ck.endpoint] = minify(mpath);
-            }
-            ck.mod = mod;
-        }
-    }
-
-    addCorsHeaders(req, res);
-    serveCode(req, res, {
-        code: js,
-        mtime: startTime
-    });
-}
-
-function serveCode(req, res, code) {
-    if (code.deny) {
-        return http.reply404(req, res);
-    }
-
-    let imd = ifModifiedDate(req);
-    if (imd && code.mtime <= imd && !code.nocache) {
-        res.writeHead(304, "Not Modified");
-        res.end();
-        return;
-    }
-
-    let cacheControl = code.nocache ?
-        'private, max-age=0' :
-        'public, max-age=600';
-
-    res.writeHead(200, {
-        'Content-Type': 'application/javascript',
-        'Cache-Control': cacheControl,
-        'Last-Modified': new Date(code.mtime).toGMTString(),
-    });
-    res.end(code.code);
-}
-
 // pack/concat device script strings to inject into /code/ scripts
 function generateDevices() {
     let root = PATH.join(dir,"src","kiri-dev");
@@ -698,128 +382,7 @@ function generateDevices() {
     });
     let dstr = JSON.stringify(devs);
     synth.devices = `self.devices = ${dstr};`;
-    fs.writeFileSync(PATH.join(dir,"src2","pack","devices.js"), `export const devices = ${dstr};`);
-}
-
-// pack/concat code modules served under "/code/"
-function prepareScripts() {
-    generateDevices();
-    for (let key of Object.keys(script)) {
-        code[key] = concatCode(key);
-    }
-}
-
-function concatCode(key) {
-    let array = script[key];
-    let code = [];
-    let direct = array.filter(f => f.charAt(0) !== '@');
-    let inject = array.filter(f => f.charAt(0) === '@').map(f => f.substring(1));
-
-    synth.inject = "/* injection point */";
-
-    // in debug mode, the script should load dependent
-    // scripts instead of serving a complete bundle
-    if (debug) {
-        inject.forEach(key => {
-            code.push(synth[key]);
-        });
-        code.push(...[
-            oversion ? `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` : '',
-            'self.debug=true;',
-            '(function() { let load = [ '
-        ]);
-        direct.forEach(file => {
-            const vers = cachever[file] || oversion || dversion || version;
-            code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
-        });
-        code.push([
-            ']; function load_next() {',
-            'let file = load.shift();',
-            'if (!file) return;',
-            // 'console.log("loading", file);',
-            'if (!self.document) { importScripts(file); return load_next() }',
-            'let s = document.createElement("script");',
-            's.type = "text/javascript";',
-            's.src = file;',
-            's.onload = load_next;',
-            'document.head.appendChild(s);',
-            '} load_next(); })();'
-        ].join('\n'));
-        code = code.join('\n');
-    } else {
-        inject.forEach(key => {
-            code.push(synth[key]);
-        });
-        direct.forEach(file => {
-            let cached = getCachedFile(file, path => {
-                return minify(PATH.join(dir,file));
-            });
-            if (oversion) {
-                cached = `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` + cached;
-            }
-            code.push(cached);
-        });
-        code = code.join('');
-        synth[key] = `self.${key} = "${Buffer.from(code).toString('base64')}";\n`;
-    }
-    return code;
-}
-
-function getCachedFile(file, fn) {
-    let filePath = PATH.join(dir,file);
-    let cachePath = cacheDir + PATH.sep + file
-            .replace(/\//g,'_')
-            .replace(/\\/g,'_')
-            .replace(/:/g,'_'),
-        cached = fileCache[filePath],
-        now = time();
-
-    if (cached) {
-        if (now - cached.lastcheck > 60000) {
-            let smod = lastmod(filePath),
-                cmod = cached.mtime;
-
-            if (!smod) {
-                throw "missing source file";
-            }
-            if (smod > cmod) {
-                cached = null;
-            } else {
-                cached.lastcheck = now;
-            }
-        }
-    }
-
-    if (!cached) {
-        let smod = lastmod(filePath),
-            cmod = lastmod(cachePath),
-            cacheData;
-
-        if (cmod >= smod || (forceUseCache && cmod)) {
-            cacheData = fs.readFileSync(cachePath);
-        } else {
-            logger.log({update_cache:filePath});
-            cacheData = fn(filePath);
-            // console.log(`NEW_CACHE_FILE: ${cachePath}`);
-            fs.writeFileSync(cachePath, cacheData);
-        }
-
-        if (wrap[file]) {
-            // console.log('WRAP', filePath, cacheData.length);
-            cacheData = wrap_module(cacheData, wrap[file]);
-        }
-
-        cached = {
-            data: cacheData,
-            mtime: cmod || now,
-            lastcheck: now
-        };
-
-        fileCache[filePath] = cached;
-    }
-
-    // console.log('[*]', filePath, cached.data.length);
-    return cached.data;
+    fs.writeFileSync(PATH.join(dir,"src","pack","devices.js"), `export const devices = ${dstr};`);
 }
 
 function minify(path) {
@@ -942,10 +505,11 @@ function cookieValue(cookie,key) {
 
 function rewriteHtmlVersion(req, res, next) {
     if ([
-        "/v2/kiri/",
-        "/v2/lib/kiri-run/minion.js",
-        "/v2/lib/kiri-run/worker.js",
-        "/v2/lib/kiri-run/minion.js"
+        "/kiri/",
+        "/mesh/",
+        "/lib/mesh/work.js",
+        "/lib/kiri-run/worker.js",
+        "/lib/kiri-run/minion.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
     } else if ([

@@ -1,20 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: moto.broker
-// dep: kiri.api
-// dep: kiri.utils
-gapp.register("kiri.stats", [], (root, exports) => {
-
-const { data, kiri, gapp } = root;
-const { broker } = gapp;
-const { api, utils } = kiri;
-const { js2o, o2js } = utils;
+import { local } from '../data/local.js';
+import { broker } from '../moto/broker.js';
+import { js2o, o2js } from './utils.js';
 
 class Stats {
     constructor(db) {
-        this.db = db || data.local;
+        this.db = db || local;
         this.obj = js2o(this.db['stats'] || '{}');
         let o = this.obj, k;
         for (k in o) {
@@ -56,6 +48,6 @@ class Stats {
     }
 }
 
-kiri.stats = new Stats();
+export const stats = new Stats();
 
-});
+export { stats as Stats };

@@ -1,12 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-// dep: add.three
-// dep: kiri.api
-gapp.register("kiri.tools", (root, exports) => {
+import { api } from './api.js';
+import { THREE } from '../ext/three.js';
 
 const { Vector3, Quaternion } = THREE;
 const { kiri, moto } = root;
-const { api } = kiri;
 
 const XAXIS = new THREE.Vector3(1,0,0);
 const ZAXIS = new THREE.Vector3(0,0,1);
@@ -164,4 +162,5 @@ api.event.on('mouse.hover.up', (ev) => {
     endIt();
 });
 
-});
+
+export { onLayFlatSelect, onFaceUpSelect, startIt, endIt, cleanup, scale, onDone };

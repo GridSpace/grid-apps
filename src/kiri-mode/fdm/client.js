@@ -1,25 +1,20 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { $ } from '../../moto/webui.js';
+import { api } from '../../kiri/api.js';
+import { conf } from '../../kiri/conf.js';
+import { util } from '../../geo/base.js';
+import { client } from '../../kiri/client.js';
+import { addbox, delbox, getlastbox } from '../../kiri/boxes.js';
+import { Layers } from '../../kiri/layers.js';
+import { Stack } from '../../kiri/stack.js';
+import { Widget, newWidget } from '../../kiri/widget.js';
+import { space } from '../../moto/space.js';
 
-// dep: add.three
-// dep: geo.base
-// dep: moto.space
-// dep: kiri.api
-// dep: kiri.lang
-// dep: kiri.consts
-// dep: kiri-mode.fdm.driver
-gapp.register("kiri-mode.fdm.client", [], (root, exports) => {
+const { Matrix4, Vector3, BufferAttribute, BufferGeometryUtils, Raycaster, Euler } = THREE;
+const { VIEWS } = api.const;
 
-const { Quaternion, Matrix4, Vector3, BufferAttribute, BufferGeometryUtils } = THREE;
-const { Mesh, BoxGeometry, MeshPhongMaterial, Raycaster, Euler } = THREE;
-const { base, kiri, moto } = root;
-const { util } = base;
-const { api, consts, lang } = kiri;
-const { FDM } = kiri.driver;
-const { VIEWS } = consts;
-const { space } = moto;
-const LANG = lang.current;
+const LANG = api.language.current;
 
 let lastBox, lastMode, lastView, lastPillar, fromPillar,
     addingSupports = false,
@@ -27,12 +22,11 @@ let lastBox, lastMode, lastView, lastPillar, fromPillar,
     nextID = Date.now(),
     p1, p2, iw,
     alert = [],
-    boxes = {},
     func = {};
 
-FDM.init = function(kiri, api) {
-    const proc_keys = Object.keys(kiri.conf.defaults.fdm.p);
-    const { ui, uc } = api;
+export function init() {
+    const { ui } = api;
+    const proc_keys = Object.keys(conf.defaults.fdm.p);
     const rangeVars = {
         // slice
         // "sliceHeight": LANG.sl_lahi_s,
@@ -92,8 +86,8 @@ FDM.init = function(kiri, api) {
     function filterSynth() {
         api.widgets.filter((widget) => {
             if (widget.track.synth) {
-                kiri.space.world.remove(widget.mesh);
-                kiri.Widget.Groups.remove(widget);
+                space.world.remove(widget.mesh);
+                Widget.Groups.remove(widget);
             }
             return !widget.track.synth
         });
@@ -209,7 +203,7 @@ FDM.init = function(kiri, api) {
             }
         }
         alerts.push(api.show.alert("analyzing part(s)...", 1000));
-        FDM.support_generate(array => {
+        support_generate(array => {
             func.sclear();
             api.hide.alert(undefined,alerts);
             for (let rec of array) {
@@ -266,7 +260,7 @@ FDM.init = function(kiri, api) {
         updateSupportVisiblity();
         // synth support widget for each widget group
         // iow, create support meshes based on support widget annotation
-        for (let group of kiri.Widget.Groups.list()) {
+        for (let group of Widget.Groups.list()) {
             let merge = group.filter(w => w.sups).map(w => Object.values(w.sups)).flat();
             if (!merge.length) {
                 continue;
@@ -281,14 +275,14 @@ FDM.init = function(kiri, api) {
                 box.setAttribute('uv',new BufferAttribute(new Float32Array(0), 3));
             }
             let bbg = BufferGeometryUtils.mergeGeometries(boxen);
-            let sw = kiri.newWidget(null, group);
+            let sw = newWidget(null, group);
             let fwp = group[0].track.pos;
             sw.loadGeometry(bbg);
             sw._move(fwp.x, fwp.y, fwp.z);
             api.widgets.add(sw);
             sw.track.synth = true;
             sw.track.support = true;
-            kiri.space.world.add(sw.mesh);
+            space.world.add(sw.mesh);
         }
     });
 
@@ -378,6 +372,7 @@ FDM.init = function(kiri, api) {
             removeWidgetSupport(lastPillar.widget, lastPillar);
             return;
         }
+        lastBox = getlastbox();
         if (!(iw && lastBox)) return;
         let { point, dim } = lastBox;
         p1.y = Math.max(0, p1.y);
@@ -518,7 +513,7 @@ FDM.init = function(kiri, api) {
                 poly.addObj(rec);
             }
 
-            let layers = new kiri.Layers();
+            let layers = new Layers();
             let layer = layers.setLayer("arcq", { line: 0xff00ff, face: 0xff00ff, opacity: 1 });
             layer.addPoly(poly, {thin:true});
 
@@ -530,7 +525,7 @@ FDM.init = function(kiri, api) {
                 ));
             }
 
-            xpdebug = new kiri.Stack(space.world, false);
+            xpdebug = new Stack(space.world, false);
             xpdebug.addLayers(layers);
             xpdebug.setVisible(0,Infinity);
             xpdebug.show();
@@ -546,6 +541,23 @@ let xpdebug;
 let supsave = {};
 let suptimer;
 
+function support_generate(ondone) {
+    client.clear();
+    client.sync();
+    const settings = api.conf.get();
+    const widgets = api.widgets.map();
+    client.send("fdm_support_generate", { settings }, (gen) => {
+        if (gen && gen.error) {
+            api.show.alert('support generation canceled');
+            return ondone([]);
+        }
+        for (let g of gen) {
+            g.widget = widgets[g.id];
+        }
+        ondone(gen);
+    });
+};
+
 function scheduleSupportSave(widget) {
     clearTimeout(suptimer);
     supsave[widget.id] = widget;
@@ -556,7 +568,7 @@ function scheduleSupportSave(widget) {
     }, 50);
 }
 
-function restoreSupports(widgets) {
+export function restoreSupports(widgets) {
     widgets.forEach(widget => {
         const supports = api.widgets.annotate(widget.id).support || [];
         supports.forEach(pos => {
@@ -633,49 +645,3 @@ function clearWidgetSupports(widget) {
     scheduleSupportSave(widget);
     return cleared;
 }
-
-function delbox(name) {
-    const old = boxes[name];
-    if (old) {
-        old.groupTo.remove(old);
-    }
-}
-
-function addbox(point, color, name, dim = {x:1,y:1,z:1,rz:0}, opt = {}) {
-    delbox(name);
-    const box = boxes[name] = new Mesh(
-        new BoxGeometry(dim.x, dim.y, dim.z),
-        new MeshPhongMaterial({
-            transparent: true,
-            opacity: opt.opacity || 0.5,
-            color
-        })
-    );
-    box.position.x = point.x;
-    box.position.y = point.y;
-    box.position.z = point.z;
-
-    lastBox = {point, dim};
-
-    const group = opt.group || space.scene
-    group.add(box);
-    box.groupTo = group;
-
-    if (dim.rz) {
-        opt.rotate = new Quaternion().setFromAxisAngle(new Vector3(0,0,1), dim.rz);
-    }
-    if (opt.rotate) {
-        opt.matrix = new Matrix4().makeRotationFromQuaternion(opt.rotate);
-    }
-    if (opt.matrix) {
-        box.geometry.applyMatrix4(opt.matrix);
-    }
-
-    return box;
-}
-
-FDM.delbox = delbox;
-FDM.addbox = addbox;
-FDM.restoreSupports = restoreSupports;
-
-});

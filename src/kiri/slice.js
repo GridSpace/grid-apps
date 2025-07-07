@@ -1,14 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: geo.base
-// dep: geo.polygons
-gapp.register("kiri.slice", [], (root, exports) => {
-
-const { base, kiri } = root;
-
-const POLY = base.polygons;
+import { base } from '../geo/base.js';
+import { Layers } from './layers.js';
+import { polygons as POLY } from '../geo/polygons.js';
 
 let tracker;
 
@@ -41,7 +35,7 @@ class Slice {
      */
     output() {
         if (this.layers) return this.layers;
-        let layers = this.layers = new kiri.Layers();
+        let layers = this.layers = new Layers();
         if (tracker) {
             layers.setRotation(-tracker.rotation || 0);
         }
@@ -251,12 +245,10 @@ function newSlice(z, view) {
     return new Slice(z, view);
 }
 
-gapp.overlay(kiri, {
+export {
     Top,
     Slice,
     newTop,
     newSlice,
     setSliceTracker
-});
-
-});
+};

@@ -1,22 +1,16 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-// use: add.three
-gapp.register("load.svg", (root, exports) => {
+import { newPolygon } from '../geo/polygon.js';
+import { polygons } from '../geo/polygons.js';
+import { THREE } from '../ext/three.js';
 
-const { load } = root;
-
-load.SVG = {
-    parse,
-    parseAsync
-};
-
-function parseAsync(text, opt) {
+export function parseAsync(text, opt) {
     return new Promise((resolve,reject) => {
         resolve(parse(text, opt));
     });
 }
 
-function parse(text, opt = { }) {
+export function parse(text, opt = { }) {
     const justPoly = opt.flat || false;
     const fromSoup = opt.soup !== false || justPoly;
     const rez = (opt.resolution || 1);
@@ -47,10 +41,9 @@ function parse(text, opt = { }) {
                 return curve.getPoints(segs);
             }).flat();
             if (points.length < 3) {
-                // console.log({ sub, length, points });
                 continue;
             }
-            let poly = base.newPolygon().addPoints(points.map(p => base.newPoint(p.x, -p.y, 0)));
+            let poly = newPolygon().addPoints(points.map(p => newPolygon.newPoint(p.x, -p.y, 0)));
             if (poly.appearsClosed()) poly.points.pop();
             if (type === 'polyline') poly.setOpen(true);
             poly._svg = { width, miter };
@@ -61,9 +54,8 @@ function parse(text, opt = { }) {
         }
     }
 
-    const sub = fromSoup ? base.polygons.nest(polys) : polys;
+    const sub = fromSoup ? polygons.nest(polys) : polys;
     const nest = sub.filter(p => {
-        // filter duplicates
         for (let pc of polys) {
             if (pc === p) {
                 return true;
@@ -84,5 +76,3 @@ function parse(text, opt = { }) {
 
     return objs;
 }
-
-});

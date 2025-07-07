@@ -1,41 +1,39 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import '../add/array.js';
+import '../add/class.js';
+import '../add/three.js';
+import '../kiri/lang.js';
+import '../kiri/lang-en.js';
 
-gapp.main({
-    app: "kiri",
+import { run } from '../kiri/init.js';
 
-    pre(root) {
-        let mods = root.kirimod = ( root.kirimod || [] );
+const load = [];
 
-        let kiri = root.kiri = {
-            beta: 0,
-            driver: {
-                // attached driver modules
-            },
-            load(fn) {
-                // modules register exec() functions
-                mods.push(fn);
-            },
-            load_exec(api) {
-                // process all module exec() functions
-                const saferun = (fn) => {
-                    try {
-                        fn(api || kiri.api);
-                    } catch (error) {
-                        console.log({ module_error: error });
-                    }
-                };
-                // complete module loading
-                mods.forEach(fn => saferun(fn));
-                // rewrite load() to run immediately post-finalize
-                kiri.load = (fn) => saferun(fn);
+function checkReady() {
+    if (document.readyState === 'complete') {
+        let api = run();
+        kiri.api = api;
+        for (let fn of load) {
+            try {
+                fn(api);
+            } catch (error) {
+                console.log('load error', fn, error);
             }
-        };
-    },
-
-    post(root) {
-        // complete module loading
-        root.kiri.load_exec();
+        }
     }
-});
+}
+
+self.kiri = {
+    load(fn) {
+        console.log('KIRI LOAD', [...arguments]);
+        load.push(fn);
+    }
+};
+
+self.moto = { };
+
+// when dom + scripts complete
+document.onreadystatechange = checkReady;
+
+checkReady();

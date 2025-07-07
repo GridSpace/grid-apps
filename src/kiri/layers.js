@@ -1,25 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { newPolygon, Polygon } from '../geo/polygon.js';
+import { polygons as POLY } from '../geo/polygons.js';
 
-/*
- * provides the `output` abstraction for turning poly lines (open and closed)
- * into primordial geometries (faces, lines, color ranges). used inside of
- * workers as part of slicing and preview output.
- */
-
-// dep: geo.base
-// dep: geo.paths
-// dep: geo.polygon
-// dep: geo.polygons
-gapp.register("kiri.layers", [], (root, exports) => {
-
-const { base, kiri } = root;
-const { polygons, newPolygon } = base;
-
-const POLY = base.polygons;
-
-class Layers {
+export class Layers {
     constructor() {
         this.init();
     }
@@ -94,7 +78,7 @@ class Layers {
             options.open = true;
             const polys = [];
             for (let i=0; i<lines.length-1; i += 2) {
-                polys.push(new base.Polygon()
+                polys.push(new Polygon()
                     .append(lines[i])
                     .append(lines[i+1])
                     .setOpen());
@@ -110,11 +94,14 @@ class Layers {
 
     // an open or closed polygon
     addPoly(poly, options) {
-        return this.addPolys([poly], options);
+        return this.addPolys([ poly ], options);
     }
 
     // a polygon rendered as a webgl line
     addPolys(polys, options) {
+        if (!Array.isArray(polys)) {
+            throw "polys must be an array";
+        }
         if (polys.length === 0) {
             return this;
         }
@@ -186,8 +173,7 @@ class Layers {
                     p1.setZ(poly.z);
                     p2.setZ(poly.z);
                 }
-                this.addPolys(p1);
-                this.addPolys(p2);
+                this.addPolys([ p1, p2 ]);
             }
             const color = opts.color ?
                 (typeof(opts.color) === 'number' ? { line: opts.color, face: opts.color } : opts.color) :
@@ -277,7 +263,3 @@ function flat(polys) {
         return POLY.flatten([polys.clone(true)], [], true);
     }
 }
-
-kiri.Layers = Layers;
-
-});

@@ -1,15 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-gapp.register("kiri.stack", [], (root, exports) => {
-
-const { kiri } = root;
-
 /*
  * converts `layers.js` output data structures into three.js meshes for display
  */
-class Stack {
+export class Stack {
     constructor(view, freeMem, shiny) {
         this._view = view;
         this.view = view.newGroup();
@@ -245,8 +239,6 @@ class Stack {
     }
 }
 
-kiri.Stack = Stack;
-
 let shininess = 15,
     specular = 0x444444,
     emissive = 0x101010,
@@ -301,5 +293,3 @@ function createLambertMaterial(color, flat) {
         side: flat ? THREE.DoubleSide : THREE.FrontSide
     });
 }
-
-});

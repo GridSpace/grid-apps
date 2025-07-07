@@ -1,18 +1,13 @@
 /** Copyright Stewart Allen -- All Rights Reserved */
 
-"use strict";
-
-gapp.register("data.index", [], (root, exports) => {
-
-const { data } = root;
-
-data.Index = IDBStore;
-
-data.open = function() {
-    return new IDBStore(...arguments);
-};
-
 // https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API
+
+export const data = {
+    Index: IDBStore,
+    open() {
+        return new IDBStore(...arguments);
+    }
+};
 
 let IDB, IRR, local = null;
 
@@ -319,4 +314,5 @@ SP.clear = function(key, store = this.current) {
         .objectStore(store).clear();
 };
 
-});
+export const open = data.open;
+export const Index = IDBStore;

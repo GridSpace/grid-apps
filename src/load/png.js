@@ -1,17 +1,16 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-// use: ext.pngjs
-gapp.register("load.png", (root, exports) => {
+import { PNG } from '../ext/pngjs.esm.js';
 
-const { load } = root;
-
-load.PNG = {
-    parseAsync,
-    parse
+export const load = {
+    PNG: {
+        parseAsync,
+        parse
+    }
 };
 
 function parseAsync(bin, opt) {
-    return new Promise((resolve,reject) => {
+    return new Promise((resolve, reject) => {
         parse(bin, {
             ...opt,
             done(vertices) { resolve(vertices) }
@@ -255,4 +254,4 @@ function parse(bin, opt = {}) {
     });
 }
 
-});
+function noop() {}

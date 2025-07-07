@@ -1,9 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-gapp.register("kiri.consts", (root, exports) => {
-
 const COLOR = {
     wireframe: 0x444444,
     wireframe_opacity: 0.25,
@@ -147,7 +143,7 @@ const PMODES = {
 
 const SEED = 'kiri-seed';
 
-exports({
+export let consts = {
     PMODES,
     COLOR,
     LISTS,
@@ -155,6 +151,6 @@ exports({
     VIEWS,
     SEED,
     beltfact: Math.cos(Math.PI / 4)
-});
+};
 
-});
+export { COLOR, LISTS, MODES, VIEWS, PMODES, SEED };

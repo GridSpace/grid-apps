@@ -1,19 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: data.local
-gapp.register("moto.ajax", [], (root, exports) => {
+import { local } from '../data/local.js';
 
 function rnd() {
     return Math.round(Math.random()*0xffffffff).toString(36);
 }
 
-const { data } = root;
-const { local } = data;
-
 const KEY = "moto-ajax";
-const MOID = moto.id = local.getItem(KEY) || (Date.now().toString(36)+rnd()+rnd());
+const MOID = local.getItem(KEY) || (Date.now().toString(36)+rnd()+rnd());
 
 local.setItem(KEY, MOID);
 
@@ -69,14 +63,13 @@ function call(url, handler) {
 }
 
 function restore(id) {
-    MOID = moto.id = id;
+    MOID = id;
     local.setItem(KEY, MOID);
 }
 
-exports({
-    new(cb, rt) { return new Ajax(cb, rt) },
+export const ajax = {
+    new: (cb, rt) => new Ajax(cb, rt),
     call,
     restore,
-});
-
-});
+    id: MOID
+};

@@ -1,14 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: ext.earcut
-// dep: mesh.geom
-gapp.register("mesh.tool", [], (root, exports) => {
-
-const { mesh } = root;
-const { geom } = mesh;
+import { THREE } from '../ext/three.js';
 const { Vector3 } = THREE;
+import { geom } from './geom.js';
+
 const empty = 0xffffffff;
 
 /**
@@ -17,7 +12,7 @@ const empty = 0xffffffff;
  * two need to be merged. earcut needs to be migrated
  * to base.util.triagulate
  */
-mesh.tool = class MeshTool {
+class MeshTool {
     constructor(params = {}) {
         this.precision = Math.pow(10, params.precision || 6);
     }
@@ -249,22 +244,17 @@ mesh.tool = class MeshTool {
         const s0 = faces[foff + 3];
         const s1 = faces[foff + 4];
         const s2 = faces[foff + 5];
-        const farr = [
-            sides[s0 * 4 + 2],
-            sides[s0 * 4 + 3],
-            sides[s1 * 4 + 2],
-            sides[s1 * 4 + 3],
-            sides[s2 * 4 + 2],
-            sides[s2 * 4 + 3]
-        ].filter(f => f !== empty && f !== face);
-        if (!farr.length) {
-            console.log(`no adjacent faces to ${face}`);
-            return [];
+        const adj = [];
+        for (let s of [s0, s1, s2]) {
+            const soff = s * 4;
+            const f1 = sides[soff + 2];
+            const f2 = sides[soff + 3];
+            if (f1 !== empty) adj.push(f1);
+            if (f2 !== empty) adj.push(f2);
         }
-        return farr;
+        return adj;
     }
 
-    // depends on index() being run first
     findConnectedSurface(faces, radians, filterZ, found = {}) {
         const norms = this.getIndex().faces;
         if (filterZ !== undefined) {
@@ -304,8 +294,6 @@ mesh.tool = class MeshTool {
         return faces;
     }
 
-    // given a list of faces (indices), return an array of closed
-    // polylines that represent the outlines of each discrete island
     generateOutlines(list) {
         const { faces, sides } = this.getIndex();
         const prec = this.precision;
@@ -380,7 +368,6 @@ mesh.tool = class MeshTool {
         return outs;
     }
 
-    // depends on index() being run first
     isolateBodies() {
         const verts = this.checkVertices(this.vertices);
         const bodies = [];
@@ -403,12 +390,6 @@ mesh.tool = class MeshTool {
         return bodies;
     }
 
-    /**
-     * finds edge lines which are line segments on a single face.
-     * construct ordered line maps with array of connected edges.
-     * connect lines into polys. earcut polys into new faces.
-     * requires generateFaces() be run first
-     */
     patch(opt = { merge: true }) {
         let vertices = this.checkVertices(this.uvert);
         let faces = this.faces;
@@ -737,7 +718,6 @@ mesh.tool = class MeshTool {
         return this;
     }
 
-    // add vertex data from given index into array
     appendVertex(index, array = []) {
         let vertx = this.uvert;
         array.push(vertx[index++]);
@@ -746,7 +726,6 @@ mesh.tool = class MeshTool {
         return array;
     }
 
-    // add vertices from a vertex index list to an array
     expandArray(indices, array = []) {
         for (let i of indices) {
             this.appendVertex(i, array);
@@ -754,7 +733,6 @@ mesh.tool = class MeshTool {
         return array;
     }
 
-    // turn loop into XYZ vertex array
     expandLoop(loop, array = []) {
         for (let line of loop) {
             this.appendVertex(line.v1, array);
@@ -763,14 +741,12 @@ mesh.tool = class MeshTool {
         return array;
     }
 
-    // merge generated poly areas into faces
     merge() {
         for (let area of this.areas || []) {
             this.faces.appendAll(area);
         }
     }
 
-    // return non-indexed vertex list (for compatibility)
     unrolled() {
         let out = [];
         for (let face of this.faces) {
@@ -779,8 +755,6 @@ mesh.tool = class MeshTool {
         return out;
     }
 
-    // returns points array for a polygon
-    // extrusion and twist is handled in work.js
     generateGear(numTeeth, module, pressureAngle, offset) {
         // Adapted from: Public Domain Parametric Involute Spur Gear by Leemon Baird, 2011, Leemon@Leemon.com http://www.thingiverse.com/thing:5505
         // see also http://grabcad.com/questions/tutorial-how-to-model-involute-gears-in-solidworks-and-show-design-intent
@@ -858,7 +832,7 @@ mesh.tool = class MeshTool {
             }
 
             pitch = p.round(3);
-            mesh.log(`gear pitch radius: ${pitch}`);
+            geom.log(`gear pitch radius: ${pitch}`);
         }
 
         return { gear, pitch };
@@ -910,7 +884,6 @@ mesh.tool = class MeshTool {
         }
         return verts;
     }
+}
 
-};
-
-});
+export { MeshTool as tool };

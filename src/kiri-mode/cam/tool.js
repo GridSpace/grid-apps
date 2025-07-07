@@ -1,14 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: kiri-mode.cam.driver
-gapp.register("kiri-mode.cam.tools", [], (root, exports) => {
-
-const { kiri } = root;
-const { driver } = kiri;
-const { CAM } = driver;
-
 const HPI = Math.PI/2;
 const RAD2DEG = 180/Math.PI;
 
@@ -77,11 +68,11 @@ class Tool {
 
     setTaperLengthFromAngle(angle) {
         const rad = (this.flute_diam - this.taper_tip) / 2;
-        return this.flute_len = CAM.calcTaperLength(rad, angle);
+        return this.flute_len = calcTaperLength(rad, angle);
     }
 
     getTaperAngle() {
-        return CAM.calcTaperAngle((this.flute_diam - this.taper_tip) / 2, this.flute_len);
+        return calcTaperAngle((this.flute_diam - this.taper_tip) / 2, this.flute_len);
     }
 
     shaftLength() {
@@ -197,18 +188,21 @@ class Tool {
     }
 }
 
-CAM.Tool = Tool;
-
-CAM.calcTaperAngle = function(rad, len) {
+function calcTaperAngle(rad, len) {
     return (Math.atan(rad / len) * RAD2DEG);
 };
 
-CAM.calcTaperLength = function(rad, angle) {
+function calcTaperLength(rad, angle) {
     return (rad / Math.tan(angle));
 };
 
-CAM.getToolDiameter = function(settings, id) {
-    return new CAM.Tool(settings, id).fluteDiameter();
+function getToolDiameter(settings, id) {
+    return new Tool(settings, id).fluteDiameter();
 };
 
-});
+export {
+    Tool,
+    calcTaperAngle,
+    calcTaperLength,
+    getToolDiameter
+};

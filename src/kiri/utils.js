@@ -1,8 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-gapp.register("kiri.utils", [], (root, exports) => {
+import { local as dataLocal } from '../data/local.js';
 
 function parseOpt(ov) {
     let opt = {}, kv, kva;
@@ -46,7 +44,7 @@ function js2o(s,def) {
 
 function ls2o(key,def) {
     // defer ref b/c it may run in a worker
-    return js2o(root.data.local.getItem(key),def);
+    return js2o(dataLocal.getItem(key),def);
 }
 
 // split 24 bit color into [ r, g, b ]
@@ -99,11 +97,14 @@ function trackFn(fn, name) {
     }
 }
 
-exports({
+function noop() {}
+
+export {
     trackFn,
     areEqual,
     parseOpt,
     encodeOpt,
+    noop,
     ajax,
     o2js,
     js2o,
@@ -111,6 +112,19 @@ exports({
     avgc,
     rgb,
     a2c
-});
+};
 
-});
+export let utils = {
+    trackFn,
+    areEqual,
+    parseOpt,
+    encodeOpt,
+    noop,
+    ajax,
+    o2js,
+    js2o,
+    ls2o,
+    avgc,
+    rgb,
+    a2c
+};

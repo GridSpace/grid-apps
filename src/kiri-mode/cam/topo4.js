@@ -1,17 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: geo.base
-// dep: geo.line
-// dep: geo.point
-// dep: geo.polygon
-// dep: geo.polygons
-// dep: moto.broker
-// dep: kiri.slice
-// dep: kiri-mode.cam.driver
-// dep: kiri-mode.cam.slicer2
-gapp.register("kiri-mode.cam.topo", [], (root, exports) => {
+import { base } from '../geo/base.js';
+import { line } from '../geo/line.js';
+import { point } from '../geo/point.js';
+import { polygon } from '../geo/polygon.js';
+import { polygons } from '../geo/polygons.js';
+import { broker } from '../moto/broker.js';
+import { slice } from '../kiri/slice.js';
+import { driver } from '../kiri-mode/cam/driver.js';
+import { slicer2 } from '../kiri-mode/cam/slicer2.js';
 
 const { base, kiri, moto } = root;
 const { driver, newSlice } = kiri;
@@ -533,4 +530,5 @@ moto.broker.subscribe("minion.started", msg => {
 
 });
 
-});
+
+export { scale, rotatePoints, PRO, POLY, RAD2DEG, DEG2RAD, axis, range, slices, lathe, box, i, x, z, shards, step, index, slice, output, complete, recs, points, shared, promises, tlen, slen, sinc, heights, oslices, lines, plen, rec, py0, pz0, py1, pz1, lz, si, rx, mz, ti, xo, yo, zo, ts, dz, dy, fr, rota, steps, mrot, paths, angle, count, poly, repeat, done, tangle, p, linear, vertices, stmp, topo4, Topo4 };

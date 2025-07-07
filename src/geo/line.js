@@ -1,13 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: geo.base
-gapp.register("geo.line", [], (root, exports) => {
-
-const { base } = root;
-
-class Line {
+export class Line {
     constructor(p1, p2, key) {
         if (!key) key = [p1.key, p2.key].join(';');
         this.p1 = p1;
@@ -54,18 +47,10 @@ class Line {
     }
 }
 
-function newLine(p1, p2, key) {
+export function newLine(p1, p2, key) {
     return new Line(p1, p2, key);
 }
 
-function newOrderedLine(p1, p2, key) {
+export function newOrderedLine(p1, p2, key) {
     return p1.key < p2.key ? newLine(p1,p2,key) : newLine(p2,p1,key);
 }
-
-gapp.overlay(base, {
-    Line,
-    newLine,
-    newOrderedLine
-});
-
-});

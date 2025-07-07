@@ -1,30 +1,16 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: kiri.api
-// dep: kiri.client
-// dep: kiri.export
-// dep: moto.space
-// use: kiri-mode.cam.client
-// dep: kiri-mode.fdm.client
-// dep: kiri-mode.sla.client
-// dep: kiri-mode.laser.driver
-// dep: kiri-mode.drag.driver
-// dep: kiri-mode.wjet.driver
-// dep: kiri-mode.wedm.driver
-gapp.register("kiri.function", (root, exports) => {
-
-const { kiri } = root;
-const { api, client, consts, utils } = kiri;
-const { space } = moto;
-const { COLOR, PMODES } = consts;
+import { api } from './api.js';
+import { client } from './client.js';
+import { codec } from './codec.js';
+import { space } from '../moto/space.js';
+import { COLOR, PMODES } from './consts.js';
+import { exportFile } from './export.js';
 
 let complete = {};
 
 function prepareSlices(callback, scale = 1, offset = 0) {
-    const { conf, event, feature, hide, mode, view, platform, show } = api;
-    const { stacks } = kiri;
+    const { conf, event, feature, hide, mode, view, platform, show, stacks } = api;
 
     if (view.is_arrange()) {
         // in arrange mode, create a screenshot at the start slicing
@@ -139,10 +125,34 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     }
 
     function sliceWidget(widget) {
-        // weight each widget progress % by their # vertices
-        let factor = (widget.getVertices().count / defvert);
 
-        widget.slice(settings, (sliced, error) => {
+        function onupdate(update, msg, alert) {
+            if (alert) {
+                api.show.alert(alert);
+            }
+            if (msg && msg !== lastMsg) {
+                let mark = Date.now();
+                if (lastMsg) {
+                    let key = widgets.length > 1 ?
+                        `${widget.id}_${segNumber++}_${lastMsg}` :
+                        `${segNumber++}_${lastMsg}`
+                    segtimes[key] = mark - startTime;
+                }
+                lastMsg = msg;
+                startTime = mark;
+            }
+            // on update
+            if (update >= 0) {
+                track[widget.id] = (update || 0) * factor;
+                totalProgress = 0;
+                for (let w of slicing) {
+                    totalProgress += (track[w.id] || 0);
+                }
+                show.progress(offset + (totalProgress / slicing.length) * scale, msg);
+            }
+        }
+
+        function ondone(sliced, error) {
             let mark = Date.now();
             // update UI info
             if (sliced) {
@@ -169,28 +179,55 @@ function prepareSlices(callback, scale = 1, offset = 0) {
                 // start next widget slice
                 sliceNext();
             }
-        }, (update, msg, alert) => {
-            if (alert) {
-                api.show.alert(alert);
+        }
+
+        // weight each widget progress % by their # vertices
+        let factor = (widget.getVertices().count / defvert);
+
+        widget.settings = settings;
+        widget.clearSlices();
+ 
+        onupdate(0.0001, "slicing");
+
+        // store slicing visuals
+        widget.stack = api.stacks.create(widget.id, widget.mesh);
+
+        // compensate for zcut (widget moved through floor)
+        widget.stack.obj.view.position.z = widget.track.zcut || 0;
+
+        // in case result of slice is nothing, do not preserve previous
+        widget.slices = []
+
+        // executed from kiri.js
+        client.slice(settings, widget, (reply) => {
+            if (reply.alert) {
+                onupdate(null, null, reply.alert);
             }
-            if (msg && msg !== lastMsg) {
-                let mark = Date.now();
-                if (lastMsg) {
-                    segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
-                }
-                lastMsg = msg;
-                startTime = mark;
+            if (reply.update) {
+                onupdate(reply.update, reply.updateStatus);
             }
-            // on update
-            if (update >= 0) {
-                track[widget.id] = (update || 0) * factor;
-                totalProgress = 0;
-                for (let w of slicing) {
-                    totalProgress += (track[w.id] || 0);
-                }
-                show.progress(offset + (totalProgress / slicing.length) * scale, msg);
+            if (reply.send_start) {
+                widget.xfer = {start: reply.send_start};
+            }
+            if (reply.stats) {
+                widget.stats = reply.stats;
+            }
+            if (reply.send_end) {
+                widget.stats.load_time = widget.xfer.start - reply.send_end;
+            }
+            if (reply.slice) {
+                widget.slices.push(codec.decode(reply.slice, {mesh:widget.mesh}));
+            }
+            if (reply.done) {
+                ondone(true);
+            }
+            if (reply.error) {
+                ondone(false, reply.error);
             }
         });
+
+        // discard point cache
+        widget.points = undefined;
     }
 
     function sliceDone() {
@@ -247,9 +284,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
 }
 
 function preparePreview(callback, scale = 1, offset = 0) {
-    const { conf, event, feature, hide, mode, view, platform, show } = api;
-    const { stacks } = kiri;
-
+    const { conf, event, feature, hide, mode, view, platform, show, stacks } = api;
     const widgets = api.widgets.all();
     const settings = conf.get();
     const { device, process, controller } = settings;
@@ -305,7 +340,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
 
     client.prepare(settings, (progress, message, layer) => {
         if (layer) {
-            output.push(kiri.codec.decode(layer));
+            output.push(codec.decode(layer));
         }
         if (message && message !== lastMsg) {
             const mark = Date.now();
@@ -407,7 +442,7 @@ function prepareExport() {
     }
     api.event.emit("function.export", {mode: settings.mode});
     complete.export = true;
-    kiri.export(...argsave);
+    exportFile(...argsave);
 }
 
 function cancelWorker() {
@@ -441,8 +476,12 @@ function parseCode(code, type) {
     });
 }
 
+function clear_progress() {
+    complete = {};
+}
+
 // extend API (api.function)
-const functions = Object.assign(api.function, {
+export const functions = {
     slice: prepareSlices,
     print: preparePreview,
     prepare: preparePreview,
@@ -451,7 +490,16 @@ const functions = Object.assign(api.function, {
     cancel: cancelWorker,
     parse: parseCode,
     clear: client.clear,
-    clear_progress() { complete = {} }
-});
+    clear_progress,
+};
 
-});
+export {
+    prepareSlices as slice,
+    preparePreview as print,
+    preparePreview as prepare,
+    prepareAnimation as animate,
+    prepareExport as export,
+    cancelWorker as cancel,
+    parseCode as parse,
+    clear_progress,
+};

@@ -1,27 +1,22 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: moto.license
-// dep: moto.client
-// dep: moto.broker
-// dep: moto.space
-// dep: mesh.util
-// dep: mesh.edges
-// dep: mesh.group
-// dep: mesh.model
-// dep: mesh.sketch
-// dep: add.three
-// use: add.array
-gapp.register("mesh.api", [], (root, exports) => {
+import { broker } from '../moto/broker.js';
+import { history } from './history.js';
+import { client as motoClient } from '../moto/client.js';
+import { space as motoSpace } from '../moto/space.js';
+import { base } from '../geo/base.js';
+import { handles } from './handles.js';
+import { util as meshUtil } from './util.js';
+import { edges as meshEdges } from './edges.js';
+import { group as meshGroup } from './group.js';
+import { model as meshModel } from './model.js';
+import { sketch as meshSketch } from './sketch.js';
+import { newPolygon } from '../geo/polygon.js';
+import { THREE } from '../ext/three.js';
+import { $, $C, h } from '../moto/webui.js';
 
 const { Matrix4, Vector3 } = THREE;
-const { base, mesh, moto } = root;
-const { space } = moto;
-const { util } = mesh;
-const { newPolygon } = base;
-
-const worker = moto.client.fn
+const worker = motoClient.fn;
 const groups = [];
 const sketches = [];
 
@@ -41,8 +36,8 @@ const selection = {
     // return selected groups + groups from selected models
     groups(strict = true) {
         let all = selection.list(strict);
-        let grp = all.filter(s => s instanceof mesh.group);
-        let mdl = all.filter(s => s instanceof mesh.model);
+        let grp = all.filter(s => s instanceof meshGroup);
+        let mdl = all.filter(s => s instanceof meshModel);
         for (let m of mdl) {
             grp.addOnce(m.group);
         }
@@ -52,8 +47,8 @@ const selection = {
     // return selected models + models from selected groups
     models(strict = true) {
         let all = selection.list(strict);
-        let grp = all.filter(s => s instanceof mesh.group);
-        let mdl = all.filter(s => s instanceof mesh.model);
+        let grp = all.filter(s => s instanceof meshGroup);
+        let mdl = all.filter(s => s instanceof meshModel);
         for (let g of grp) {
             for (let m of g.models) {
                 mdl.addOnce(m);
@@ -83,7 +78,7 @@ const selection = {
         // flatten groups into model lists when present
         selected = objects.map(o => o.models ? o.models : o).flat();
         tools = toolist || [];
-        util.defer(selection.update);
+        meshUtil.defer(selection.update);
     },
 
     // @param group {MeshObject}
@@ -94,7 +89,7 @@ const selection = {
                 mode.sketch();
                 tools.length = 0;
                 selected.length = 0;
-                mesh.edges?.end();
+                meshEdges?.end();
                 break;
             case 'group':
             case 'model':
@@ -115,7 +110,7 @@ const selection = {
                 tools.addOnce(object);
             }
         }
-        util.defer(selection.update);
+        meshUtil.defer(selection.update);
     },
 
     // @param group {MeshObject}
@@ -129,7 +124,7 @@ const selection = {
             selected.remove(object);
             tools.remove(object);
         }
-        util.defer(selection.update);
+        meshUtil.defer(selection.update);
     },
 
     // remove all
@@ -140,7 +135,6 @@ const selection = {
         for (let s of selection.list()) {
             selection.remove(s);
             tools.remove(s);
-            s.showBounds(false);
             s.remove();
         }
     },
@@ -180,7 +174,7 @@ const selection = {
         for (let m of selection.models()) {
             m.visible(...arguments);
         }
-        util.defer(selection.update);
+        meshUtil.defer(selection.update);
     },
 
     // update selection and wireframe for all objects
@@ -190,15 +184,16 @@ const selection = {
             group.select(false);
             group.normals(prefs.map.space.norm || false);
             group.wireframe(prefs.map.space.wire || false, {
-                opacity: prefs.map.wireframe.opacity}
-            );
+                opacity: prefs.map.wireframe.opacity,
+                edges: prefs.map.space.wire_edge
+            });
         }
         for (let sketch of sketches) {
             sketch.select(false);
         }
         api.updateFog();
         // prevent selection of model and its group
-        let mgsel = selected.filter(s => s instanceof mesh.model).map(m => m.group);
+        let mgsel = selected.filter(s => s instanceof meshModel).map(m => m.group);
         selected = selected.filter(sel => !mgsel.contains(sel)).filter(v => v);
         // highlight selected
         for (let object of selected) {
@@ -208,24 +203,33 @@ const selection = {
         prefs.save( prefs.map.space.select = selected.map(s => s.id) );
         prefs.save( prefs.map.space.tools = tools.map(s => s.id) );
         // force repaint in case of idle
-        space.update();
+        motoSpace.update();
         return selection;
     },
 
     update_defer() {
-        util.defer(selection.update);
+        meshUtil.defer(selection.update);
         return selection;
     },
 
     drag(opt = {}) {
+        if (opt.start) {
+            broker.publish('drag_start', selected);
+        } else if (opt.end) {
+            broker.publish('drag_end', selected);
+        } else {
+            broker.publish('drag', opt);
+        }
         selected.forEach(s => s.drag(opt));
         return selection;
     },
 
     move(dx = 0, dy = 0, dz = 0) {
-        for (let s of [...selection.groups(), ...selection.sketches()]) {
+        let set = [...selection.groups(), ...selection.sketches()];
+        for (let s of set) {
             s.move(dx, dy, dz);
         }
+        broker.publish('move', { set, dx, dy, dz });
         return selection;
     },
 
@@ -233,6 +237,7 @@ const selection = {
         for (let s of selection.models()) {
             s.move(dx, dy, dz);
         }
+        broker.publish('move', { set: selection.models(), dx, dy, dz });
         return selection;
     },
 
@@ -240,6 +245,7 @@ const selection = {
         for (let s of selection.groups()) {
             s.rotate(dx, dy, dz);
         }
+        broker.publish('rotate', { set: selection.models(), dx, dy, dz });
         return selection;
     },
 
@@ -247,14 +253,15 @@ const selection = {
         for (let s of selection.groups()) {
             s.qrotate(q);
         }
+        broker.publish('qrotate', { set: selection.groups(), q });
         return selection;
     },
 
     scale(dx = 0, dy = 0, dz = 0) {
         for (let s of selection.groups()) {
-            let { x, y, z } = s.scale();
-            s.scale(x * dx, y * dy, z * dz);
+            s.scale(dx, dy, dz);
         }
+        broker.publish('scale', { set: selection.groups(), dx, dy, dz });
         return selection;
     },
 
@@ -275,9 +282,7 @@ const selection = {
     },
 
     boundsBox() {
-        for (let m of selection.groups()) {
-            m.showBounds(...arguments);
-        }
+        handles.toggleBounds();
         return selection;
     },
 
@@ -286,11 +291,11 @@ const selection = {
     },
 
     focus() {
-        api.focus(selection.list());
+        selection.count() && api.focus(selection.list());
     },
 
     bounds() {
-        return util.bounds(selected.map(s => s.object));
+        return meshUtil.bounds(selected.map(s => s.object));
     },
 
     show() {
@@ -317,7 +322,7 @@ const pattern = {
             let models = selection.models();
             let [ cx, cy ] = center;
             for (let model of models) {
-                let pos = model.world_bounds.mid;
+                let pos = model.bounds.mid;
                 let stepr = (Math.PI * 2) / count;
                 let modnu = [ model ];
                 for (let i=1; i<count; i++) {
@@ -401,23 +406,23 @@ const group = {
 
     // @param group {MeshModel[]}
     new(models, id, name) {
-        return group.add(new mesh.group(models, id, name));
+        return group.add(new meshGroup(models, id, name));
     },
 
     // @param group {MeshGroup}
     add(group) {
         groups.addOnce(group);
-        space.world.add(group.object);
-        util.defer(selection.update);
-        space.update();
+        motoSpace.world.add(group.object);
+        meshUtil.defer(selection.update);
+        motoSpace.update();
         return group;
     },
 
     // @param group {MeshGroup}
     remove(group) {
         groups.remove(group);
-        space.world.remove(group.object);
-        space.update();
+        motoSpace.world.remove(group.object);
+        motoSpace.update();
     }
 };
 
@@ -431,15 +436,15 @@ let model = {
 let sketch = {
     add(sk) {
         sketches.addOnce(sk);
-        space.world.add(sk.object);
-        util.defer(selection.update);
+        motoSpace.world.add(sk.object);
+        meshUtil.defer(selection.update);
         return sk;
     },
 
     remove(sk) {
         sketches.remove(sk);
-        space.world.remove(sk.object);
-        space.update();
+        motoSpace.world.remove(sk.object);
+        motoSpace.update();
     },
 
     list() {
@@ -499,7 +504,7 @@ let sketch = {
                 for (let rec of recs) {
                     let { item } = rec;
                     let poly = newPolygon().fromObject(item);
-                    poly.move({ x: -center.x, y: -center.y, z:0 });
+                    poly.move({ x: -center.x, y: -center.y, z: 0 });
                     Object.assign(rec.item, poly.toObject());
                 }
                 sketch.render();
@@ -683,7 +688,7 @@ let sketch = {
 let add = {
     sketch(opt) {
         mode.sketch();
-        let nu = new mesh.sketch(opt);
+        let nu = new meshSketch(opt);
         selection.set([ sketch.add(nu) ]);
         return nu;
     },
@@ -756,8 +761,8 @@ let add = {
                 h.button({ _: "create", onclick() {
                     const vert = (api.modal.bound.genvrt.value)
                         .split(',').map(v => parseFloat(v)).toFloat32();
-                    const nmdl = new mesh.model({ file: "input", mesh: vert });
-                    const ngrp = group.new([ nmdl ]);
+                    const nmdl = new meshModel({ file: "input", mesh: vert });
+                    const ngrp = api.group.new([ nmdl ]);
                     api.modal.hide();
                 } })
             ]) ]
@@ -768,8 +773,8 @@ let add = {
     cube() {
         const box = new THREE.BoxGeometry(1,1,1).toNonIndexed();
         const vert = box.attributes.position.array;
-        const nmdl = new mesh.model({ file: "box", mesh: vert });
-        const ngrp = group.new([ nmdl ]);
+        const nmdl = new meshModel({ file: "box", mesh: vert });
+        const ngrp = api.group.new([ nmdl ]);
         ngrp.scale(10, 10, 10).floor();
         selection.set([ nmdl ]);
         return ngrp;
@@ -788,8 +793,8 @@ let add = {
                     cyl.addInner(newPolygon().centerCircle(center, bore/2, facets));
                 }
                 const vert = cyl.extrude(height, { chamfer }).toFloat32();
-                const nmdl = new mesh.model({ file: "cylinder", mesh: vert });
-                const ngrp = group.new([ nmdl ]);
+                const nmdl = new meshModel({ file: "cylinder", mesh: vert });
+                const ngrp = api.group.new([ nmdl ]);
                 selection.set([ nmdl ]);
                 ngrp.floor();
             }
@@ -838,7 +843,7 @@ let add = {
                 height: parseFloat(_height.value),
                 chamfer: parseFloat(_chamfer.value),
             }).then(gear => {
-                const nmdl = new mesh.model({ file: "gear", mesh: gear.toFloat32() });
+                const nmdl = new meshModel({ file: "gear", mesh: gear.toFloat32() });
                 const ngrp = group.new([ nmdl ]);
                 selection.set([ nmdl ]);
                 ngrp.floor();
@@ -889,7 +894,7 @@ let add = {
                 steps: parseFloat(_steps.value),
                 taper: _taper.checked ? true : false,
             }).then(verts => {
-                const nmdl = new mesh.model({ file: "threads", mesh: verts.toFloat32() });
+                const nmdl = new meshModel({ file: "threads", mesh: verts.toFloat32() });
                 const ngrp = group.new([ nmdl ]);
                 selection.set([ nmdl ]);
                 ngrp.floor();
@@ -946,7 +951,7 @@ let file = {
                 recs, format: ext
             }).then(data => {
                 if (data.length) {
-                    util.download(data, file);
+                    meshUtil.download(data, file);
                 }
             }).finally( api.modal.hide );
         }
@@ -983,7 +988,7 @@ const tool = {
             return { id: m.id, matrix: m.matrix }
         }))
         .then(data => {
-            let group = api.group.new([new mesh.model({
+            let group = api.group.new([new meshModel({
                 file: `merged`,
                 mesh: data
             })]).promote();
@@ -1002,7 +1007,7 @@ const tool = {
         worker
             .model_union(models.map(m => m.id))
             .then(data => {
-                let group = api.group.new([new mesh.model({
+                let group = api.group.new([new meshModel({
                     file: `union`,
                     mesh: data
                 })]).promote();
@@ -1025,7 +1030,7 @@ const tool = {
         log(`diff ${models.length} models`).pin();
         worker.model_difference(models.map(m => m.id))
         .then(data => {
-            let group = api.group.new([new mesh.model({
+            let group = api.group.new([new meshModel({
                 file: `diff`,
                 mesh: data
             })]).promote();
@@ -1048,7 +1053,7 @@ const tool = {
         log(`intersect ${models.length} models`).pin();
         worker.model_intersect(models.map(m => m.id))
         .then(data => {
-            let group = api.group.new([new mesh.model({
+            let group = api.group.new([new meshModel({
                 file: `intersect`,
                 mesh: data
             })]).promote();
@@ -1073,7 +1078,7 @@ const tool = {
             return { id: m.id, tool: m.tool() }
         }))
         .then(data => {
-            let group = api.group.new([new mesh.model({
+            let group = api.group.new([new meshModel({
                 file: `subtract`,
                 mesh: data
             })]).promote();
@@ -1123,7 +1128,7 @@ const tool = {
     },
 
     toSketch() {
-        for (let m of selection.models()) {
+        for (let m of api.model.list()) {
             m.selectionToSketch();
         }
     },
@@ -1143,7 +1148,7 @@ const tool = {
                 return;
             }
             model.rename( el.value.trim() );
-            util.defer(selection.update);
+            meshUtil.defer(selection.update);
             api.modal.hide();
         };
         let { tempedit } = api.modal.show(`rename ${type}`, h.div({ class: "rename"}, [
@@ -1158,7 +1163,7 @@ const tool = {
         models = fallback(models, true);
         if (models.length) {
             log(`regrouping ${models.length} model(s)`);
-            let group = mesh.api.group.new(models.map(m => m.ungroup()));
+            let group = api.group.new(models.map(m => m.ungroup()));
             let bounds = group.bounds;
             models.forEach(m => m.centerTo(bounds.mid));
             return group;
@@ -1173,12 +1178,12 @@ const tool = {
         for (let m of models) {
             let p = worker.model_analyze({ id: m.id, opt }).then(data => {
                 let { areas, edges } = data.mapped;
-                let nm = areas.map(area => new mesh.model({
+                let nm = areas.map(area => new meshModel({
                     file: (area.length/3).toString(),
                     mesh: area.toFloat32()
                 })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
                 if (nm.length) {
-                    mesh.api.group.new(nm, undefined, "patch");
+                    api.group.new(nm, undefined, "patch");
                 }
             });
             promises.push(p);
@@ -1196,11 +1201,11 @@ const tool = {
         let mark = Date.now();
         for (let m of models) {
             let p = worker.model_isolate({ id: m.id }).then(bodies => {
-                bodies = bodies.map(vert => new mesh.model({
+                bodies = bodies.map(vert => new meshModel({
                     file: m.file,
                     mesh: vert.toFloat32()
                 })).map( nm => nm.applyMatrix4(mcore.clone().multiply(m.mesh.matrixWorld)) );
-                mesh.api.group.new(bodies, undefined, "isolate");
+                api.group.new(bodies, undefined, "isolate");
             });
             promises.push(p);
         }
@@ -1249,7 +1254,7 @@ const tool = {
         log('repairing mesh(es)').pin();
         tool.heal(models, { merge: true }).then(() => {
             log('repair commplete').unpin();
-            util.defer(selection.update);
+            meshUtil.defer(selection.update);
         });
     },
 
@@ -1268,7 +1273,7 @@ const tool = {
                 log(`${vertices.length/3} vertices, ${zlist.length} unique Z`);
             }
             log('cleaning complete').unpin();
-            util.defer(selection.update);
+            meshUtil.defer(selection.update);
         });
     },
 
@@ -1296,7 +1301,7 @@ const mode = {
         $(`mode-${mode}`).classList.add('selected');
         $('mode-label').innerText = mode;
         api.mode.check();
-        mesh.edges?.end();
+        meshEdges?.end();
         if (mode === 'sketch') {
             $C('sketch-on',   null, 'hide');
             $C('sketch-off', 'hide', null);
@@ -1356,7 +1361,7 @@ const mode = {
             selection.clear();
         }
         mode.set(modes.edge);
-        mesh.edges.start();
+        meshEdges.start();
     },
 
     sketch() {
@@ -1425,22 +1430,65 @@ const prefs = {
     // persist to data store
     save() {
         if (prefs.changed()) {
-            mesh.db.admin.put("prefs", prefs.map);
+            api.db.admin.put("prefs", prefs.map);
             prefsig = prefsignew;
         }
     },
 
     // reload from data store
     load() {
-        return mesh.db.admin.get("prefs").then(data => {
+        return api.db.admin.get("prefs").then(data => {
             // handle/ignore incompatible older prefs
             if (data) Object.assign(prefs.map, data);
         });
     }
 };
 
+let mark = Date.now();
+
+let since = () => {
+    return ((Date.now() - mark) / 1000).toFixed(2).padStart(9,0);
+};
+
+let dbug = self.dbug = self.dbug || {
+    level: 1, // 0=debug, 1=normal, 2=warn, 3=error
+
+    set: (level) => {
+        if (level >= 0) dbug.level = Math.min(level, 3);
+    },
+
+    debug: function() {
+        if (dbug.level <= 0) return console.log(since(),'[DBG]', ...arguments);
+    },
+
+    log: function() {
+        if (dbug.level <= 1) return console.log(since(),'|',...arguments);
+    },
+
+    warn: function() {
+        if (dbug.level <= 2) return console.log(since(),'[WRN]', ...arguments);
+    },
+
+    error: function() {
+        if (dbug.level <= 3) return console.trace(since(),'[ERR]', ...arguments);
+    },
+
+    since
+};
+
+
 // api is augmented in mesh.build (log, modal, download)
-const api = exports({
+const api = {
+    init() {
+        // publish messages when api functions are called
+        broker.wrapObject(selection, 'selection');
+        // broker.wrapObject(model, 'model');
+        // broker.wrapObject(group, 'group');
+
+        // optimize db writes by merging updates
+        prefs.save = meshUtil.deferWrap(prefs.save, 100);
+    },
+
     help() {
         window.open("https://docs.grid.space/projects/mesh-tool");
     },
@@ -1471,9 +1519,18 @@ const api = exports({
         }
     },
 
-    // @param object {THREE.Object3D | THREE.Object3D[] | Point}
+    history: {
+        undo() {
+            history.undo();
+        },
+        redo() {
+            history.redo();
+        }
+    },
+
+    // @param object {MeshObject | MeshObject[] | Object}
     focus(object) {
-        let { center } = object.center ? object : util.bounds(object);
+        let { center } = object.center ? object : meshUtil.bounds(object);
         // when no valid objects supplied, set origin
         if (isNaN(center.x * center.y * center.z)) {
             center = { x: 0, y: 0, z: 0 };
@@ -1487,13 +1544,13 @@ const api = exports({
             if (x < 0) left = -left;
         }
         // sets "home" views (front, back, home, reset)
-        space.platform.setCenter(center.x, -center.y, center.z);
+        motoSpace.platform.setCenter(center.x, -center.y, center.z);
         // sets camera focus
-        space.view.panTo(center.x, center.z, -center.y, left, up);
+        motoSpace.view.panTo(center.x, center.z, -center.y, left, up);
     },
 
     grid(state = { toggle:true }) {
-        let { platform } = space;
+        let { platform } = motoSpace;
         let { map, save } = prefs;
         if (state.toggle) {
             platform.showGrid(!platform.isGridVisible());
@@ -1504,9 +1561,19 @@ const api = exports({
         save();
     },
 
-    wireframe(state = { toggle:true }, opt = { opacity: prefs.map.wireframe.opacity }) {
+    wireedges(state = { toggle:true }, opt = {
+        opacity: prefs.map.wireframe.opacity,
+        edges: base.util.toDegrees(api.prefs.map.surface.radians)
+    }) {
+        api.wireframe(state, opt);
+    },
+
+    wireframe(state = { toggle:true }, opt = {
+        opacity: prefs.map.wireframe.opacity,
+        edges: prefs.map.space.wire_edge
+    }) {
         const mspace = prefs.map.space;
-        let wire = mspace.wire;
+        let { wire } = mspace;
         if (state.toggle) {
             wire = !wire;
         } else {
@@ -1515,7 +1582,9 @@ const api = exports({
         for (let m of model.list()) {
             m.wireframe(wire, opt);
         }
-        prefs.save( mspace.wire = wire );
+        mspace.wire = wire;
+        mspace.wire_edge = wire ? opt.edges : 0;
+        prefs.save();
         api.updateFog();
     },
 
@@ -1523,9 +1592,9 @@ const api = exports({
         const mspace = prefs.map.space;
         const mwire = prefs.map.wireframe;
         if (mspace.wire) {
-            space.scene.setFog(mwire.fog, mspace.dark ? 0 : 0xffffff);
+            motoSpace.scene.setFog(mwire.fog, mspace.dark ? 0 : 0xffffff);
         } else {
-            space.scene.setFog(false);
+            motoSpace.scene.setFog(false);
         }
     },
 
@@ -1542,52 +1611,59 @@ const api = exports({
         prefs.save( prefs.map.space.norm = norm );
     },
 
+    objects(selected = false) {
+        // return model objects suitable for finding ray intersections
+        if (selected) {
+            return [
+                ...selection.models().map(o => o.mesh),
+                ...selection.sketches().map(s => s.meshes).flat()
+            ];
+        } else {
+            return [
+                ...group.list().map(o => o.models).flat().map(o => o.mesh),
+                ...sketches.map(s => s.meshes).flat()
+            ];
+        }
+    },
+
+    add,
+
+    dbug,
+
+    file,
+
+    group,
+
     mode,
 
     modes,
 
-    selection,
+    model,
 
     pattern,
 
-    group,
+    prefs,
 
-    model,
+    selection,
 
     sketch,
 
-    add,
-
-    file,
-
     tool,
 
-    prefs,
-
-    objects() {
-        // return model objects suitable for finding ray intersections
-        return [
-            ...group.list().map(o => o.models).flat().map(o => o.mesh),
-            ...sketches.map(s => s.meshes).flat()
-        ];
-    },
-
     isDebug: self.debug === true
-});
+};
 
 function log() {
     return api.log.emit(...arguments);
 }
 
-const { broker } = gapp;
 const call = broker.send;
 
-// publish messages when api functions are called
-broker.wrapObject(selection, 'selection');
-broker.wrapObject(model, 'model');
-broker.wrapObject(group, 'group');
+self.mesh_api = api;
 
-// optimize db writes by merging updates
-prefs.save = util.deferWrap(prefs.save, 100);
-
-});
+export {
+    sketches,
+    selection,
+    groups,
+    api
+};

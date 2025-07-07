@@ -1,13 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: main.kiri
-// use: data.index
-gapp.register("kiri.files", [], (root, exports) => {
-
-const { kiri } = self;
-
 class Files {
     constructor(indexdb) {
         let store = this;
@@ -176,8 +168,8 @@ function notifyFileListeners(store) {
     }
 }
 
-kiri.openFiles = function(indexdb) {
+export const openFiles = function(indexdb) {
     return new Files(indexdb);
 };
 
-});
+export { saveFileList, notifyFileListeners };

@@ -2,21 +2,8 @@
 
 'use strict';
 
-// dep: add.three
-// dep: ext.jszip
-gapp.register('load.3mf', [], (root, exports) => {
-
-let load = self.load = self.load || {};
-
-if (load.TMF) return;
-
-load.TMF = {
-    parseAsync
-};
-
-load.XML = {
-    query
-};
+import { THREE } from '../ext/three.js';
+import * as JSZip from '../ext/jszip.js';
 
 let { BufferAttribute, Matrix4 } = THREE;
 
@@ -29,8 +16,7 @@ let scaleMap = {
     "centimeter": (1 / 10)
 };
 
-// simple query api for xml structures
-function query(node, path, fn) {
+export function query(node, path, fn) {
     let collect = {};
     let match = path[0].split('|').map(key => {
         if (key[0] === '+') {
@@ -230,9 +216,9 @@ function extractItems(records) {
  * @param {Object} data binary file
  * @returns {Array} vertex face array
  */
-function parseAsync(data) {
+export function parseAsync(data) {
     return new Promise(async (resolve, reject) => {
-        let zip = await JSZip.loadAsync(data);
+        let zip = await JSZip.default.loadAsync(data);
         let models = {};
         for (let [key, value] of Object.entries(zip.files)) {
             if (key.endsWith(".model")) {
@@ -244,5 +230,3 @@ function parseAsync(data) {
         resolve(extractItems(models));
     });
 }
-
-});

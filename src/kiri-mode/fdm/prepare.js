@@ -1,28 +1,18 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { base, util } from '../../geo/base.js';
+import { poly2polyEmit, tip2tipEmit } from '../../geo/paths.js';
+import { newBounds } from '../../geo/bounds.js';
+import { newPoint } from '../../geo/point.js';
+import { newPolygon, Polygon } from '../../geo/polygon.js';
+import { polygons as POLY, fillArea } from '../../geo/polygons.js';
+import { newPrint } from '../../kiri/print.js';
+import { newSlice } from '../../kiri/slice.js';
+import { newWidget } from '../../kiri/widget.js';
+import { render } from '../../kiri/render.js';
+import { getRangeParameters } from './driver.js';
 
-// dep: geo.base
-// dep: geo.paths
-// dep: geo.point
-// dep: geo.polygons
-// dep: kiri.utils
-// dep: kiri.slice
-// dep: kiri.consts
-// dep: kiri.render
-// dep: kiri-mode.fdm.driver
-gapp.register("kiri-mode.fdm.prepare", [], (root, exports) => {
-
-const { base, kiri } = root;
-const { consts, driver, newSlice, render } = kiri;
-const { polygons, paths, util, newPoint, newPolygon, Polygon } = base;
-const { poly2polyEmit, tip2tipEmit } = paths;
 const { numOrDefault } = util;
-const { fillArea } = polygons;
-const { beltfact } = consts;
-const { FDM } = driver;
-const { getRangeParameters } = FDM;
-const POLY = polygons;
 
 /**
  * DRIVER PRINT CONTRACT
@@ -30,7 +20,7 @@ const POLY = polygons;
  * @param {Function} update progress callback
  * @returns {Object[]} returns array of render objects
  */
-FDM.prepare = async function(widgets, settings, update) {
+export async function fdm_prepare(widgets, settings, update) {
     // filter ignored widgets
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
@@ -40,7 +30,7 @@ FDM.prepare = async function(widgets, settings, update) {
         { bedWidth, bedDepth } = device,
         { lineType } = controller,
         printPoint = newPoint(0,0,0),
-        print = self.worker.print = kiri.newPrint(settings, widgets),
+        print = self.kiri_worker.current.print = newPrint(settings, widgets),
         nozzle = process.sliceLineWidth || device.extruders[0].extNozzle,
         isBelt = device.bedBelt,
         isThin = lineType === "line",
@@ -213,7 +203,7 @@ FDM.prepare = async function(widgets, settings, update) {
             }
         }
         // recompute bounds for purge block offsets
-        let bbounds = base.newBounds();
+        let bbounds = newBounds();
         brims.forEach(brim => {
             bbounds.merge(brim.bounds);
         });
@@ -244,7 +234,7 @@ FDM.prepare = async function(widgets, settings, update) {
             sslices.push(sslice);
         }
         if (sslices.length) {
-            let swidget = kiri.newWidget(null,widget.group);
+            let swidget = newWidget(null,widget.group);
             swidget.slices = sslices;
             swidget.support = true;
             swidget.belt = widget.belt;
@@ -1512,5 +1502,3 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
     return startPoint.add(offset);
 }
-
-});

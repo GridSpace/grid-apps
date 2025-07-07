@@ -1,13 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: kiri.stack
-// use: kiri.api
-// use: kiri.ui
-gapp.register("kiri.stacks", [], (root, exports) => {
-
-const { kiri } = root;
+import { $ } from '../moto/webui.js';
+import { api } from './api.js';
+import { Stack } from './stack.js';
 
 let freeMem = true,
     stacks = {},
@@ -18,7 +13,7 @@ let freeMem = true,
 
 function init() {
     labels = $("layers");
-    API = kiri.api,
+    API = api,
     UC = API.uc,
     UI = API.ui;
 }
@@ -80,7 +75,7 @@ function create(name, view) {
     }
     const stack = stacks[name] = {
         layers: [ ],
-        obj: new kiri.Stack(view, freeMem, kiri.api.conf.get().controller.shiny),
+        obj: new Stack(view, freeMem, api.conf.get().controller.shiny),
         add: function(layers) {
             let lmap = layers.layers;
             let map = stack.obj.addLayers(layers);
@@ -93,9 +88,9 @@ function create(name, view) {
                                 mat.visible = ctrl.toggle.checked;
                             });
                             if (ctrl.toggle.checked) {
-                                kiri.api.event.emit("stack.show", label);
+                                api.event.emit("stack.show", label);
                             } else {
-                                kiri.api.event.emit("stack.hide", label)
+                                api.event.emit("stack.hide", label)
                             }
                         })
                     };
@@ -155,7 +150,7 @@ function setFraction(frac) {
     });
 }
 
-kiri.stacks = {
+export default {
     clear,
     create,
     rotate,
@@ -170,4 +165,17 @@ kiri.stacks = {
     setFreeMem
 };
 
-});
+export {
+    clear,
+    create,
+    rotate,
+    remove,
+    getStack,
+    getStacks,
+    getRange,
+    setRange,
+    getLabels,
+    setVisible,
+    setFraction,
+    setFreeMem
+};

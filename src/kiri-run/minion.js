@@ -1,26 +1,20 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import "../ext/clip2.js";
+import "../ext/earcut.js";
+import '../add/array.js';
+import '../add/class.js';
+import '../add/three.js';
 
-// dep: moto.license
-// dep: moto.broker
-// dep: geo.base
-// dep: geo.polygons
-// dep: geo.slicer
-// dep: geo.wasm
-// dep: kiri.codec
-// dep: kiri-mode.fdm.post
-// dep: kiri-mode.cam.topo
-// dep: kiri-mode.cam.topo4
-// use: kiri-mode.cam.slicer
-// dep: ext.clip2
-gapp.register("kiri-run.minion", [], (root, exports) => {
+import { base } from '../geo/base.js';
+import { newPoint } from '../geo/point.js';
+import { polygons as POLY } from '../geo/polygons.js';
+import { sliceZ } from '../geo/slicer.js';
+import { codec } from '../kiri/codec.js';
+import { broker } from '../moto/broker.js';
+import { doTopShells } from '../kiri-mode/fdm/post.js';
+import { wasm_ctrl } from '../geo/wasm.js';
 
-const { base, kiri } = root;
-const { polygons } = base;
-const { codec } = kiri;
-
-const POLY = polygons;
 const clib = self.ClipperLib;
 const ctyp = clib.ClipType;
 const ptyp = clib.PolyType;
@@ -75,7 +69,7 @@ const funcs = self.minion = {
     topShells: (data, seq) => {
         let top = codec.decode(data.top, {full: true});
         let {z, count, offset1, offsetN, fillOffset, opt} = data;
-        kiri.driver.FDM.doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
+        doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
         let state = { zeros: [] };
         reply({ seq, top: codec.encode(top, {full: true}) }, state.zeros);
     },
@@ -122,14 +116,15 @@ const funcs = self.minion = {
     },
 
     sliceZ: (data, seq) => {
+        console.log('minion.sliceZ', { data, seq });
         let { z, points, options } = data;
         let i = 0, p = 0, realp = new Array(points.length / 3);
         while (i < points.length) {
-            realp[p++] = base.newPoint(points[i++], points[i++], points[i++]).round(3);
+            realp[p++] = newPoint(points[i++], points[i++], points[i++]).round(3);
         }
         let state = { zero: [] };
         let output = [];
-        base.sliceZ(z, realp, {
+        sliceZ(z, realp, {
             ...options,
             each(out) { output.push(out) }
         }).then(() => {
@@ -159,9 +154,9 @@ const funcs = self.minion = {
 
     wasm: data => {
         if (data.enable) {
-            base.wasm_ctrl.enable();
+            wasm_ctrl.enable();
         } else {
-            base.wasm_ctrl.disable();
+            wasm_ctrl.disable();
         }
     },
 
@@ -170,6 +165,4 @@ const funcs = self.minion = {
     }
 };
 
-moto.broker.publish("minion.started", { funcs, cache, reply, log });
-
-});
+broker.publish("minion.started", { funcs, cache, reply, log });

@@ -1,51 +1,48 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import '../add/array.js';
+import '../add/class.js';
+import '../add/three.js';
+import '../ext/jszip.js';
 
-// dep: geo.base
-// dep: geo.polygons
-// dep: geo.wasm
-// dep: kiri.codec
-// dep: kiri.slice
-// dep: moto.license
-// dep: moto.broker
-// use: load.png
-// use: load.gbr
-// use: ext.jszip
-// use: kiri.render
-// use: kiri-mode.cam.animate
-// use: kiri-mode.cam.animate2
-// use: kiri-mode.cam.slice
-// use: kiri-mode.cam.prepare
-// use: kiri-mode.cam.export
-// use: kiri-mode.cam.tool
-// use: kiri-mode.fdm.slice
-// use: kiri-mode.fdm.prepare
-// use: kiri-mode.fdm.export
-// use: kiri-mode.sla.slice
-// use: kiri-mode.sla.export
-// use: kiri-mode.fdm.slice
-// use: kiri-mode.fdm.prepare
-// use: kiri-mode.fdm.export
-// use: kiri-mode.laser.driver
-// use: kiri-mode.drag.driver
-// use: kiri-mode.wjet.driver
-// use: kiri-mode.wedm.driver
-gapp.register("kiri-run.worker", [], (root, exports) => {
+import { base } from '../geo/base.js';
+import { broker } from '../moto/broker.js';
+import { codec } from '../kiri/codec.js';
+import { util } from '../geo/base.js';
+import { newPoint } from '../geo/point.js';
+import { polygons as POLY } from '../geo/polygons.js';
+import { newPrint } from '../kiri/print.js';
+import { render } from '../kiri/render.js';
+import { wasm_ctrl } from '../geo/wasm.js';
+import { version } from '../moto/license.js';
+import { Widget, newWidget } from '../kiri/widget.js';
 
-const { base, kiri, moto } = root;
-const { util, polygons, wasm_ctrl } = base;
-const { codec } = kiri;
+import { CAM } from '../kiri-mode/cam/driver-be.js';
+import { DRAG } from '../kiri-mode/drag/driver.js';
+import { FDM } from '../kiri-mode/fdm/driver-be.js';
+import { LASER } from '../kiri-mode/laser/driver.js';
+import { SLA } from '../kiri-mode/sla/driver.js';
+import { WEDM } from '../kiri-mode/wedm/driver.js';
+import { WJET } from '../kiri-mode/wjet/driver.js';
+
 const { time } = util;
-const POLY = polygons;
 
-let debug = self.debug === true,
-    ccvalue = this.navigator ? navigator.hardwareConcurrency || 0 : 0,
+let debug = (self.debug === true),
+    drivers = {
+        DRAG,
+        CAM,
+        FDM,
+        LASER,
+        SLA,
+        WEDM,
+        WJET
+    },
+    ccvalue = self.navigator ? self.navigator.hardwareConcurrency || 0 : 0,
     concurrent = Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
-    current = self.worker = {
+    current = {
         print: null,
         snap: null,
-        mode: null
+        mode: null,
     },
     wgroup = {},
     wcache = {},
@@ -54,8 +51,6 @@ let debug = self.debug === true,
     minionq = [],
     minifns = {},
     miniseq = 0;
-
-kiri.version = gapp.version;
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -76,8 +71,7 @@ function minhandler(msg) {
 }
 
 // for concurrent operations
-const minwork =
-kiri.minions = {
+const minwork = {
     get concurrent() {
         return concurrent
     },
@@ -91,13 +85,20 @@ kiri.minions = {
             return;
         }
         for (let i=0; i < concurrent; i++) {
-            let _ = debug ? '_' : '';
-            let minion = new Worker(`/code/kiri_pool.js?${_}${self.kiri.version}`);
+            let minion = new Worker(`/lib/kiri-run/minion.js`, { type: 'module' });
+            minion.onerror = (error) => {
+                console.log({ MINION_ERROR: error });
+                error.preventDefault();
+            };
+            minion.onmessageerror = (error) => {
+                console.log({ MINION_MESSAGE_ERROR: error });
+                error.preventDefault();
+            };
             minion.onmessage = minhandler;
             minion.postMessage({ cmd: "label", name: `#${i}` });
             minions.push(minion);
         }
-        console.log(`kiri | init pool | ${gapp.version || "rogue"} | ${concurrent + 1}`);
+        console.log(`kiri | init pool | ${version || "rogue"} | ${concurrent + 1}`);
     },
 
     stop() {
@@ -150,7 +151,7 @@ kiri.minions = {
                 let arr = data.fill;
                 let fill = [];
                 for (let i=0; i<arr.length; ) {
-                    let pt = base.newPoint(arr[i++], arr[i++], arr[i++]);
+                    let pt = newPoint(arr[i++], arr[i++], arr[i++]);
                     pt.index = arr[i++];
                     fill.push(pt);
                 }
@@ -187,6 +188,7 @@ kiri.minions = {
     },
 
     sliceZ(z, points, options) {
+        console.log('minwork.sliceZ', { z, points, options });
         return new Promise((resolve, reject) => {
             if (concurrent < 2) {
                 reject("concurrent slice unavaiable");
@@ -199,64 +201,63 @@ kiri.minions = {
                 floatP[i++] = p.y;
                 floatP[i++] = p.z;
             }
+            const state = { zeros: [] };
             minwork.queue({
                 cmd: "sliceZ",
                 z,
                 points: floatP,
-                options: codec.toCodable(options)
+                options
             }, data => {
-                let recs = codec.decode(data.output);
-                if (each) {
-                    for (let rec of recs) {
-                        each(rec);
-                    }
+                console.log({ data });
+                for (let rec of data.output) {
+                    each(rec);
                 }
-                resolve(recs);
-            }, [ floatP.buffer ]);
+                resolve();
+            }, state.zeros);
         });
     },
 
     queue(work, ondone, direct) {
-        minionq.push({work, ondone, direct});
+        if (direct) {
+            return ondone(work);
+        }
+        let seq = ++miniseq;
+        minifns[seq] = ondone;
+        minionq.push({ seq, work });
         minwork.kick();
     },
 
     queueAsync(work, direct) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             minwork.queue(work, resolve, direct);
         });
     },
 
     kick() {
-        if (minions.length && minionq.length) {
-            let qrec = minionq.shift();
-            let minion = minions.shift();
-            let seq = miniseq++;
-            qrec.work.seq = seq;
-            minifns[seq] = (data) => {
-                qrec.ondone(data);
-                minions.push(minion);
-                minwork.kick();
-            };
-            minion.postMessage(qrec.work, qrec.direct);
+        if (minionq.length === 0 || minions.length === 0) {
+            return;
         }
+        let minion = minions.shift();
+        let { seq, work } = minionq.shift();
+        work.seq = seq;
+        minion.postMessage(work);
+        minions.push(minion);
     },
 
     broadcast(cmd, data, direct) {
+        if (direct) {
+            return;
+        }
         for (let minion of minions) {
-            minion.postMessage({
-                cmd, ...data
-            }, direct);
+            minion.postMessage({ cmd, data });
         }
     }
 };
 
-console.log(`kiri | init work | ${gapp.version || "rogue"}`);
+console.log(`kiri | init work | ${version || "rogue"}`);
 
 // code is running in the worker / server context
-const dispatch =
-kiri.server =
-kiri.worker = {
+const dispatch = {
     pool_start(data, send) {
         minwork.start();
         send.done({});
@@ -295,8 +296,8 @@ kiri.worker = {
         // current.snap = null;
         current.print = null;
         dispatch.group = wgroup = {};
-        dispatch.cache = wcache = {};
-        kiri.Widget.Groups.clear();
+        dispatch.cache = worker.cache = wcache = {};
+        Widget.Groups.clear();
         send.done({ clear: true });
     },
 
@@ -311,7 +312,7 @@ kiri.worker = {
         }
 
         let vertices = data.vertices,
-            widget = kiri.newWidget(data.id, group)
+            widget = newWidget(data.id, group)
                 .setInWorker()
                 .loadVertices(vertices);
 
@@ -393,19 +394,35 @@ kiri.worker = {
     },
 
     slice(data, send) {
-        send.data({update:0.001, updateStatus:"slicing"});
+        send.data({ update:0.001, updateStatus:"slicing" });
 
-        let settings = data.settings,
-            widget = wcache[data.id],
-            last = time(),
-            now;
+        const { settings } = data;
+        const { mode } = settings;
+        const driver = drivers[mode];
+        const widget = wcache[data.id];
+
+        if (!(driver && driver.prepare)) {
+            return console.log({ invalid_print_driver: mode, driver });
+        }
+
+        let last = time(), now;
 
         current.print = null;
         current.mode = settings.mode.toUpperCase();
 
         widget.anno = data.anno || widget.anno;
+        widget.settings = settings;
+        widget.clearSlices();
 
-        widget.slice(settings, function(error) {
+        driver.slice(settings, widget, (update, msg, alert) => {
+            now = time();
+            // on alert
+            if (alert) send.data({ alert });
+            // on update
+            if (now - last < 10 && update < 0.99) return;
+            if (update || msg) send.data({update: (0.05 + update * 0.95), updateStatus: msg});
+            last = now;
+        }, (error) => {
             if (error) {
                 send.data({error: error});
             } else {
@@ -422,21 +439,14 @@ kiri.worker = {
                 send.data({send_end: time()});
             }
             send.done({done: true});
-        }, function(update, msg, alert) {
-            now = time();
-            // on alert
-            if (alert) send.data({ alert });
-            // on update
-            if (now - last < 10 && update < 0.99) return;
-            if (update || msg) send.data({update: (0.05 + update * 0.95), updateStatus: msg});
-            last = now;
+            widget.points = undefined;
         });
     },
 
     sliceAll(data, send) {
         const { settings } = data;
         const { mode } = settings;
-        const driver = kiri.driver[mode];
+        const driver = drivers[mode];
 
         if (driver.sliceAll) {
             driver.sliceAll(settings, send.data);
@@ -454,10 +464,10 @@ kiri.worker = {
 
         const { settings } = data;
         const { mode } = settings;
-        const driver = kiri.driver[mode];
+        const driver = drivers[mode];
 
         if (!(driver && driver.prepare)) {
-            return console.log({invalid_print_driver: mode, driver});
+            return console.log({ invalid_print_driver: mode, driver });
         }
 
         driver.prepare(widgets, settings, (progress, message, layer) => {
@@ -477,7 +487,7 @@ kiri.worker = {
 
     export(data, send) {
         const mode = data.settings.mode;
-        const driver = kiri.driver[mode];
+        const driver = drivers[mode];
 
         if (!(driver && driver.export)) {
             console.log({missing_export_driver: mode});
@@ -485,26 +495,26 @@ kiri.worker = {
         }
 
         let output;
-        driver.export(current.print, function(line, direct) {
+        driver.export(current.print, (line, direct) => {
             send.data({line}, direct);
-        }, function(done) {
+        }, (done) => {
             // SLA workaround
             output = done;
-        }, function(debug) {
+        }, (debug) => {
             send.data({debug});
         });
 
-        //export in different modes, based on device type
-        if(mode.toUpperCase() === "LASER"){
+        // export in different modes, based on device type
+        if (mode.toUpperCase() === "LASER") {
             let FExt = data.settings.device.gcodeFExt.toUpperCase();
-            if(FExt === "DXF"){
+            if (FExt === "DXF"){
                 let dxf = driver.exportDXF(data.settings, current.print.output);
                 send.data({line:dxf});
-            }else if(FExt === "SVG"){
+            } else if(FExt === "SVG") {
                 let svg = driver.exportSVG(data.settings, current.print.output);
                 send.data({line:svg});
-            }else{
-                //if not svg or dxf, default to gcode
+            } else {
+                // if not svg or dxf, default to gcode
                 let gcode = driver.exportGCode(data.settings, current.print.output);
                 send.data({line:gcode});
             }
@@ -542,7 +552,7 @@ kiri.worker = {
         const { colors, max } = data;
         const colorMap = {};
         colors.forEach(color => {
-            colorMap[color] = kiri.render.rate_to_color(color, max);
+            colorMap[color] = render.rate_to_color(color, max);
         });
         send.done(colorMap);
     },
@@ -556,7 +566,7 @@ kiri.worker = {
             z: origin.z
         };
         const device = settings.device;
-        const print = current.print = kiri.newPrint(settings, Object.values(wcache));
+        const print = current.print = newPrint(settings, Object.values(wcache));
         const tools = device.extruders;
         const mode = settings.mode;
         const thin = settings.controller.lineType === 'line' || mode !== 'FDM';
@@ -566,7 +576,7 @@ kiri.worker = {
         }, done => {
             const minSpeed = print.minSpeed;
             const maxSpeed = print.maxSpeed;
-            kiri.render.path(done.output, progress => {
+            render.path(done.output, progress => {
                 send.data({ progress: 0.25 + progress * 0.75 });
             }, { thin: thin || print.belt, flat, tools })
             .then(layers => {
@@ -583,11 +593,11 @@ kiri.worker = {
         parsed.forEach(layer => {
             layer.forEach(out => {
                 const { x, y, z } = out.point;
-                out.point = base.newPoint(x,y,z || 0);
+                out.point = newPoint(x,y,z || 0);
             });
         });
-        const print = current.print = kiri.newPrint(null, Object.values(wcache));
-        kiri.render.path(parsed, progress => {
+        const print = current.print = newPrint(null, Object.values(wcache));
+        render.path(parsed, progress => {
             send.data({ progress });
         }, { thin:  true })
         .then(layers => {
@@ -694,7 +704,7 @@ dispatch.onmessage = self.onmessage = async function(e) {
         msg = e.data || {},
         run = dispatch[msg.task],
         send = {
-            data : function(data,direct) {
+            data : function(data, direct) {
                 // if (direct && direct.length) {
                 //     console.log( direct.map(z => z.byteLength).reduce((a,v) => a+v) );
                 // }
@@ -743,9 +753,19 @@ dispatch.onmessage = self.onmessage = async function(e) {
     }
 };
 
-moto.broker.publish("worker.started", { dispatch, minions: minwork });
+const worker = self.kiri_worker = {
+    cache: wcache,
+    current,
+    dispatch,
+    drivers,
+    version,
+    minions: minwork
+};
 
-});
+// initilize driver mode handlers
+CAM.init(worker);
+FDM.init(worker);
+LASER.init(worker);
+SLA.init(worker);
 
-// load kiri modules
-// kiri.load_exec(dispatch);
+broker.publish("worker.started", { dispatch, minions: minwork });

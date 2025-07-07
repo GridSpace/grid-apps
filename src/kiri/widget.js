@@ -1,23 +1,11 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { base } from '../geo/base.js';
+import { avgc } from './utils.js';
+import { verticesToPoints } from '../geo/points.js';
+import { util as mesh_util } from '../mesh/util.js';
 
-// dep: geo.base
-// dep: geo.point
-// dep: geo.points
-// dep: geo.polygons
-// dep: kiri.utils
-// use: kiri.codec
-// use: mesh.util
-gapp.register("kiri.widget", [], (root, exports) => {
-
-const { base, kiri } = root;
-const { api, driver, utils } = kiri;
-const { util, polygons } = base;
-const { Mesh, newPoint, verticesToPoints } = base;
-const { inRange, time } = util;
-const { avgc, trackFn } = utils;
-
+const { inRange, time } = base.util;
 const solid_opacity = 1.0;
 const groups = [];
 
@@ -28,12 +16,14 @@ let nextId = 0;
 
 function newWidget(id,group) { return new Widget(id,group) }
 
-function catalog() { return kiri.catalog }
+function catalog() { return self.kiri_catalog };
 
-function index() { return catalog().index }
+function index() { return self.kiri_catalog.index }
 
 class Widget {
     constructor(id, group) {
+        this.api = self.kiri_api;
+
         this.id = id || Date.now().toString(36)+(nextId++);
         this.grouped = group ? true : false;
         this.group = group || [];
@@ -347,7 +337,7 @@ class Widget {
     }
 
     selectFaces(faces) {
-        let groups = mesh.util.facesToGroups(faces || []);
+        let groups = mesh_util.facesToGroups(faces || []);
         let geo = this.mesh.geometry;
         geo.clearGroups();
         for (let group of groups) {
@@ -503,8 +493,8 @@ class Widget {
             w._move(x, y, z, abs);
         });
         // allow for use in engine / cli
-        if ((x || y || z) && api && api.event) {
-            api.event.emit('widget.move', {widget: this, pos: {x, y, z}, abs});
+        if ((x || y || z) && this.api && this.api.event) {
+            this.api.event.emit('widget.move', {widget: this, pos: {x, y, z}, abs});
         }
     }
 
@@ -555,8 +545,8 @@ class Widget {
             w._scale(x, y, z);
         });
         this.center(false);
-        if (api && api.event) {
-            api.event.emit('widget.scale', {widget: this, x, y, z});
+        if (this.api && this.api.event) {
+            this.api.event.emit('widget.scale', {widget: this, x, y, z});
         }
     }
 
@@ -586,8 +576,8 @@ class Widget {
         if (this.outline) {
             this.setEdges(true);
         }
-        if ((x || y || z) && api && api.event) {
-            api.event.emit('widget.rotate', {widget: this, x, y, z});
+        if ((x || y || z) && this.api && this.api.event) {
+            this.api.event.emit('widget.rotate', {widget: this, x, y, z});
         }
     }
 
@@ -630,8 +620,8 @@ class Widget {
             w._mirror();
         });
         this.center();
-        if (api && api.event) {
-            api.event.emit('widget.mirror', {widget: this});
+        if (this.api && this.api.event) {
+            this.api.event.emit('widget.mirror', {widget: this});
         }
     }
 
@@ -759,112 +749,20 @@ class Widget {
     }
 
     /**
-     * processes points into facets, then into slices
-     *
-     * once upon a time there were multiple slicers. this was the fastest in most cases.
-     * lines are added to all the buckets they cross. then buckets are processed in order.
-     * buckets are contiguous ranges of z slicers. the advantage of this method is that
-     * as long as a large percentage of lines do not cross large z distances, this reduces
-     * the number of lines each slice has to consider thus improving speed.
-     *
-     * @params {Object} settings
-     * @params {Function} [ondone]
-     * @params {Function} [onupdate]
-     */
-    slice(settings, ondone, onupdate) {
-        let widget = this;
-        let startTime = time();
-
-        widget.settings = settings;
-        widget.clearSlices();
-        onupdate(0.0001, "slicing");
-
-        if (kiri.client && !widget.inWorker) {
-            // store slicing visuals
-            widget.stack = kiri.stacks.create(widget.id, widget.mesh);
-            // compensate for zcut (widget moved through floor)
-            widget.stack.obj.view.position.z = widget.track.zcut || 0;
-            // in case result of slice is nothing, do not preserve previous
-            widget.slices = []
-
-            // executed from kiri.js
-            kiri.client.slice(settings, this, function(reply) {
-                if (reply.alert) {
-                    onupdate(null, null, reply.alert);
-                }
-                if (reply.update) {
-                    onupdate(reply.update, reply.updateStatus);
-                }
-                if (reply.send_start) {
-                    widget.xfer = {start: reply.send_start};
-                }
-                if (reply.stats) {
-                    widget.stats = reply.stats;
-                }
-                if (reply.send_end) {
-                    widget.stats.load_time = widget.xfer.start - reply.send_end;
-                }
-                if (reply.slice) {
-                    widget.slices.push(kiri.codec.decode(reply.slice, {mesh:widget.mesh}));
-                }
-                if (reply.done) {
-                    ondone(true);
-                }
-                if (reply.error) {
-                    ondone(false, reply.error);
-                }
-            });
-        }
-
-        if (kiri.server) {
-            // executed from kiri-worker.js
-            let catchdone = function(error) {
-                if (error) {
-                    return ondone(error);
-                }
-
-                onupdate(1.0, "transfer");
-
-                widget.stats.slice_time = time() - startTime;
-
-                ondone();
-            };
-
-            let catchupdate = function(progress, message, alert) {
-                onupdate(progress, message, alert);
-            };
-
-            let drv = driver[settings.mode.toUpperCase()];
-
-            if (drv) {
-                let promise = drv.slice(settings, widget, catchupdate, catchdone);
-                if (promise) promise.catch(error => ondone(error));
-            } else {
-                console.log('invalid mode: '+settings.mode);
-                ondone('invalid mode: '+settings.mode);
-            }
-        }
-
-        // discard point cache
-        widget.points = undefined;
-    }
-
-    /**
      * render to provided stack
      */
     render(stack) {
         const mark = Date.now();
-        if (this.slices)
-        this.slices.forEach(slice => {
+        for (let slice of this.slices || []) {
             if (slice.layers) {
                 stack.add(slice.layers);
             }
-        });
+        }
         return Date.now() - mark;
     }
 
     setEdges(set) {
-        if (!(api && api.conf)) {
+        if (!(this.api && this.api.conf)) {
             // missing api features in engine mode
             return;
         }
@@ -878,8 +776,8 @@ class Widget {
 
         }
         if (set) {
-            let dark = api.space.is_dark();
-            let angle = api.conf.get().controller.edgeangle || 20;
+            let dark = this.api.space.is_dark();
+            let angle = this.api.conf.get().controller.edgeangle || 20;
             let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
             let material = new THREE.LineBasicMaterial({ color: 0 });
             this.outline = new THREE.LineSegments(edges, material);
@@ -889,7 +787,7 @@ class Widget {
     }
 
     setWireframe(set, color, opacity) {
-        if (!(api && api.conf)) {
+        if (!(this.api && this.api.conf)) {
             // missing api features in engine mode
             return;
         }
@@ -901,7 +799,7 @@ class Widget {
             this.wire = null;
         }
         if (set) {
-            let dark = api.space.is_dark();
+            let dark = this.api.space.is_dark();
             let mat = new THREE.MeshBasicMaterial({
                 wireframe: true,
                 color: dark ? 0xaaaaaa : 0,
@@ -911,7 +809,7 @@ class Widget {
             let wire = widget.wire = new THREE.Mesh(mesh.geometry.shallowClone(), mat);
             mesh.add(wire);
         }
-        if (api.view.is_arrange()) {
+        if (this.api.view.is_arrange()) {
             this.setColor(this.color);
         } else {
             this.setColor(0x888888,undefined,false);
@@ -1066,7 +964,4 @@ Widget.deleteFromState = function(id,ondone) {
     index().remove('ws-save-'+id, ondone);
 };
 
-kiri.Widget = Widget;
-kiri.newWidget = newWidget;
-
-});
+export { Widget, newWidget };

@@ -1,11 +1,7 @@
 /** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
 
-"use strict";
-
 // extend Array, String, Number, Math
-gapp.register("add.array", [], (root, exports) => {
-
-let AP = {};
+const AP = {};
 
 if (!AP.flat) {
     AP.flat = function() {
@@ -216,12 +212,11 @@ Array.handle = function(fn) {
     }
 };
 
-for (let i in AP) {
-    Object.defineProperty(Array.prototype, i, {
-        value: AP[i],
-        enumerable: false
-    });
-}
+// Apply all methods to Array.prototype
+Object.assign(Array.prototype, AP);
+
+// Export for ES modules
+export { AP as arrayPrototype };
 
 Float32Array.prototype.toShared = function() {
     const newvert = new Float32Array(new SharedArrayBuffer(this.buffer.byteLength));
@@ -265,5 +260,3 @@ Number.prototype.round = function(digits) {
     const pow = Math.pow(10, digits || 3);
     return Math.round(this.valueOf() * pow) / pow;
 };
-
-});

@@ -2,36 +2,29 @@
 
 'use strict';
 
-(function() {
-
-let load = self.load = self.load || {};
-if (load.File) return;
-
-// dep: load.3mf
-// dep: load.obj
-// dep: load.stl
-// dep: load.svg
-// dep: load.url
-// dep: load.png
-// dep: load.gbr
-gapp.register('load.file', []);
+import { STL } from './stl.js';
+import * as OBJ from './obj.js';
+import * as TMF from './3mf.js';
+import * as SVG from './svg.js';
+import * as GBR from './gbr.js';
+import { load as pngLoad } from './png.js';
 
 const types = {
     stl(data, file, resolve, reject, opt = {}) {
         resolve([{
-            mesh: new load.STL().parse(data), file
+            mesh: new STL().parse(data), file
         }]);
     },
 
     obj(data, file, resolve, reject, opt = {}) {
-        resolve(load.OBJ.parse(data).map(m => {
+        resolve(OBJ.parse(data).map(m => {
             return { mesh: m.toFloat32(), file: nameOf(file, m.name, 1) }
         }));
     },
 
     "3mf"(data, file, resolve, reject, opt = {}) {
         let i = 1;
-        load.TMF.parseAsync(data).then((meshes) => {
+        TMF.parseAsync(data).then((meshes) => {
             resolve(meshes.map(m => {
                 return { mesh: m.faces.toFloat32(), file: nameOf(file, m.name, i++) }
             }));
@@ -39,36 +32,28 @@ const types = {
     },
 
     svg(data, file, resolve, reject, opt = {}) {
-        let out = load.SVG.parse(data, opt);
+        let out = SVG.parse(data, opt);
         resolve(opt.flat ? out : out.map(m => { return { mesh: m.toFloat32(), file } }));
     },
 
     png(data, file, resolve, reject, opt = {}) {
-        load.PNG.parse(data, {
+        pngLoad.PNG.parse(data, {
             ...opt,
-            done(data) {
-                resolve({ mesh: data, file });
-            }
+            done(vertices) { resolve({ mesh: vertices, file }) },
+            error(err) { reject(err) }
         });
     },
 
     gbr(data, file, resolve, reject, opt = {}) {
         if (opt.flat) {
-            resolve([ load.GBR.parse(data) ])
+            resolve([ GBR.parse(data) ])
         } else {
-            resolve([{ mesh: load.GBR.toMesh(data).toFloat32(), file }])
+            resolve([{ mesh: GBR.toMesh(data).toFloat32(), file }])
         }
     }
 };
 
 const as_buffer = [ "stl", "png", "3mf" ];
-
-load.File = {
-    types,
-    as_buffer,
-    load_data,
-    load: load_file
-};
 
 function nameOf(file, part, i) {
     let lid = file.lastIndexOf('.');
@@ -79,7 +64,7 @@ function nameOf(file, part, i) {
 }
 
 function load_data(data, file, ext, opt = {}) {
-    ext = ext || name.toLowerCase().split('.').pop();
+    ext = ext || file.name.toLowerCase().split('.').pop();
     return new Promise((resolve, reject) => {
         let fn = types[ext];
         if (fn) {
@@ -115,4 +100,4 @@ function load_file(file, opt) {
     });
 }
 
-})();
+export { types, as_buffer, load_data, load_file, load_file as load };

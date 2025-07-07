@@ -1,19 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { arcToPath } from '../geo/paths.js';
+import { consts } from './consts.js';
+import { newPoint } from '../geo/point.js';
+import { util } from '../geo/base.js';
 
-// dep: geo.base
-// dep: geo.point
-// dep: geo.polygon
-// dep: geo.paths
-// dep: kiri.consts
-gapp.register("kiri.print", [], (root, evets) => {
-
-const { base, kiri } = self;
-const { paths, util, newPoint } = base;
-const { arcToPath } = paths;
 const { numOrDefault } = util;
-const { beltfact } = kiri.consts;
+const { beltfact } = consts;
+
 const XAXIS = new THREE.Vector3(1,0,0);
 const DEG2RAD = Math.PI / 180;
 
@@ -463,10 +457,10 @@ class Print {
 
             let arcPoints = arcToPath( prevPoint, point, 64,{ clockwise:g2,center}) ?? []
             let emit = g2 ? 2 : 3;
-            
+
             // console.log("clone point",structuredClone({point,prevPoint,center,arcPoints,emit}));
             // console.log("pointer point",{point,prevPoint,center,arcPoints,emit});
-            
+
             outputPoint(point,prevPoint,emit,{center,arcPoints});
             // scope.addOutput(seq, point, emit, pos.F, tool,{center,arcPoints});
         }
@@ -680,9 +674,7 @@ function newPrint(settings, widgets, id) {
     return new Print(settings, widgets, id);
 };
 
-gapp.overlay(kiri, {
+export {
     Print,
     newPrint
-});
-
-});
+};

@@ -1,16 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { base } from '../../geo/base.js';
+import { newPoint } from '../../geo/point.js';
+import { newOrderedLine } from '../../geo/line.js';
 
-/**
- * Slicing engine used by CAM Topo
- */
-gapp.register("kiri-mode.cam.slicer2", [], (root, exports) => {
+const { config } = base;
 
-const { base, kiri } = root;
-const { config, newOrderedLine, newPoint } = base;
-
-class Slicer {
+export class Slicer {
 
     static intersectPoints = intersectPoints;
     static checkOverUnderOn = checkOverUnderOn;
@@ -283,7 +279,7 @@ function removeDuplicateLines(lines, debug) {
             // find new endpoints that are not shared point
             let p1 = l1.p1 != point ? l1.p1 : l1.p2,
                 p2 = l2.p1 != point ? l2.p1 : l2.p2,
-                newline = base.newOrderedLine(p1,p2);
+                newline = newOrderedLine(p1,p2);
             // remove deleted lines from associated points
             p1.group.remove(l1);
             p1.group.remove(l2);
@@ -320,7 +316,3 @@ function removeDuplicateLines(lines, debug) {
 
     return output;
 }
-
-kiri.topo_slicer = Slicer;
-
-});

@@ -1,14 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { LASER, TYPE } from '../laser/driver.js';
 
-// dep: kiri-mode.laser.driver
-gapp.register("kiri-mode.drag.driver", [], (root, exports) => {
+function init(worker) {
+    // console.log({ DRAGKNIFE_INIT: worker });
+}
 
-const DRIVERS = root.kiri.driver;
-const { LASER } = DRIVERS;
-const { TYPE } = LASER;
-DRIVERS.DRAG = Object.assign({}, LASER, { name: "DragKnife", type: TYPE.DRAG });
-
+export const DRAG = Object.assign({}, LASER, {
+    type: TYPE.DRAG,
+    name: 'DragKnife',
+    init
 });
-

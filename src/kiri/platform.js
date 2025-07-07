@@ -1,26 +1,16 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { $, h } from '../moto/webui.js';
+import { api } from './api.js';
+import { ajax, js2o } from './utils.js';
+import { base } from '../geo/base.js';
+import { load } from '../load/file.js';
+import { space } from '../moto/space.js';
+import { Widget } from './widget.js';
+import { Packer } from './pack.js';
 
-// dep: moto.space
-// dep: moto.webui
-// dep: kiri.api
-// dep: kiri.consts
-// dep: kiri.utils
-// dep: kiri.widget
-// dep: load.stl
-// dep: load.obj
-// dep: load.3mf
-// dep: load.gbr
-// use: kiri-mode.cam.tool
-gapp.register("kiri.platform", [], (root, exports) => {
-
-const { base, kiri, moto, load } = root;
-const { api, consts, driver, utils, newWidget, Widget } = kiri;
-const { ajax, js2o } = utils;
-const { space } = moto;
-const { util } = base;
-const { COLOR, MODES } = consts;
+import { COLOR, MODES } from './consts.js';
+import { THREE } from '../ext/three.js';
 
 const V0 = new THREE.Vector3(0,0,0);
 
@@ -525,7 +515,7 @@ function platformDelete(widget, defer) {
         api.event.emit('widget.delete', widget);
         return;
     }
-    kiri.client.clear(widget);
+    api.client.clear(widget);
     api.widgets.remove(widget);
     api.selection.remove(widget);
     Widget.Groups.remove(widget);
@@ -719,12 +709,12 @@ function platformLayout() {
             mp = [sz.x, sz.y],
             ms = [mp[0] / 2, mp[1] / 2],
             c = Widget.Groups.blocks().sort(),
-            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
+            p = new Packer(ms[0], ms[1], gap).fit(c);
 
         while (!p.packed) {
             ms[0] *= 1.1;
             ms[1] *= 1.1;
-            p = new kiri.Pack(ms[0], ms[1], gap).fit(c);
+            p = new Packer(ms[0], ms[1], gap).fit(c);
         }
 
         for (i = 0; i < c.length; i++) {
@@ -809,7 +799,7 @@ function platformLoadFiles(files, group) {
                 if (api.conf.get().controller.devel) {
                     api.event.emit('cam.parse.gerber', { data: text });
                 } else {
-                    kiri.client.gerber2mesh(text, progress => {
+                    api.client.gerber2mesh(text, progress => {
                         api.show.progress(progress, "converting");
                     }, vertices => {
                         api.show.progress(0);
@@ -921,7 +911,7 @@ function fitDeviceToWidgets() {
 }
 
 // extend API (api.platform)
-const platform = Object.assign(api.platform, {
+export const platform = {
     fit: fitDeviceToWidgets,
     add: platformAdd,
     changed: platformChanged,
@@ -950,6 +940,4 @@ const platform = Object.assign(api.platform, {
     show_volume: space.platform.showVolume,
     top_z() { return topZ },
     clear() { api.space.clear(); api.space.save(true)  }
-});
-
-});
+};

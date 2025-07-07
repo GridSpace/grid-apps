@@ -1,23 +1,19 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { $, h } from '../moto/webui.js';
+import { api } from './api.js';
+import { conf } from './conf.js';
+import { codec } from './codec.js';
+import { consts } from './consts.js';
+import { space } from '../moto/space.js';
+import { local } from '../data/local.js';
+import { utils } from './utils.js';
+import { version } from '../moto/license.js';
 
-// dep: kiri.api
-// dep: kiri.conf
-// dep: kiri.utils
-// dep: moto.space
-// dep: data.local
-// use: kiri.widgets
-// use: ext.base64
-gapp.register("kiri.settings", (root, exports) => {
-
-const { data, kiri, moto, noop } = self;
-const { api, conf, consts, utils } = kiri;
-const { space } = moto;
-const { local } = data;
-const { clone } = Object;
 const { areEqual, ls2o, js2o } = utils;
 const { COLOR } = consts;
+const { clone } = Object;
+
 const localFilterKey ='kiri-gcode-filters';
 const localFilters = js2o(local.getItem(localFilterKey)) || [];
 
@@ -506,7 +502,7 @@ function settingsExport(opts = {}) {
     const widgets = api.widgets.all();
     const note = opts.node || undefined;
     const shot = opts.work || opts.screen ? space.screenshot() : undefined;
-    const work = opts.work ? kiri.codec.encode(widgets,{_json_:true}) : undefined;
+    const work = opts.work ? codec.encode(widgets,{_json_:true}) : undefined;
     const view = opts.work ? space.view.save() : undefined;
     const setn = Object.clone(settings);
     // stuff in legacy annotations for re-import
@@ -515,7 +511,7 @@ function settingsExport(opts = {}) {
     }
     const xprt = {
         settings: setn,
-        version: kiri.version,
+        version: version,
         screen: shot,
         space: space.info,
         note: note,
@@ -600,7 +596,7 @@ function settingsImport(data, ask) {
                         work.type = 100;
                     }
                 }
-                kiri.codec.decode(data.work).forEach(widget => {
+                codec.decode(data.work).forEach(widget => {
                     api.platform.add(widget, 0, true, true);
                 });
                 if (data.view) {
@@ -761,7 +757,7 @@ function setEnableWASM(bool) {
 }
 
 // extend API (api.conf)
-Object.assign(api.conf, {
+const apiConf = {
     dbo: () => { return ls2o('ws-settings') },
     get: getSettings,
     put: putSettings,
@@ -777,10 +773,10 @@ Object.assign(api.conf, {
     restore: restoreSettings,
     export: settingsExport,
     import: settingsImport,
-});
+};
 
 // extend API (api.settings)
-Object.assign(api.settings, {
+const apiSet = {
     get: getSettings,
     import: settingsImport,
     import_zip: settingsImportZip,
@@ -796,6 +792,16 @@ Object.assign(api.settings, {
         async put() {},
         status: false
     }
-});
+};
 
-});
+export default {
+    conf: apiConf,
+    set: apiSet,
+    settings: apiSet
+};
+
+export {
+    apiConf as conf,
+    apiSet as set,
+    apiSet as settings
+};

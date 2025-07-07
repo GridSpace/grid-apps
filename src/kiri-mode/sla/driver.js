@@ -1,26 +1,29 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { newPrint } from '../../kiri/print.js';
+import { sla_slice } from './slice.js';
+import { sla_export } from './export.js';
 
-// use: kiri.print
-gapp.register("kiri-mode.sla.driver", [], (root, exports) => {
-
-const { kiri } = root
-const { driver } = kiri;
-
-const SLA = driver.SLA = {
-    prepare,
-    legacy: false
+export const SLA = {
+    init,
+    legacy: false,
+    slice: sla_slice,
+    prepare: sla_prepare,
+    export: sla_export,
 };
 
 if (SLA.legacy) {
     console.log("SLA Driver in Legacy Mode");
 }
 
+function init(worker) {
+    // console.log({ INIT_SLA: worker });
+}
+
 // runs in worker. would usually be in src/mode/sla/prepare.js
 // but the SLA driver skips the prepare step because there is no path routing
-async function prepare(widgets, settings, update) {
-    root.worker.print = kiri.newPrint(settings, widgets);
+async function sla_prepare(widgets, settings, update) {
+    self.kiri_worker.current.print = newPrint(settings, widgets);
     if (!SLA.wasm) {
         fetch('/wasm/kiri-sla.wasm')
             .then(response => response.arrayBuffer())
@@ -44,5 +47,3 @@ async function prepare(widgets, settings, update) {
     }
     update(1);
 }
-
-});

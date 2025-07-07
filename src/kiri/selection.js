@@ -1,16 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: moto.space
-// dep: kiri.api
-// dep: kiri.consts
-// dep: kiri.utils
-gapp.register("kiri.selection", (root, exports) => {
-
-const { kiri, moto, noop } = self;
-const { api, consts, utils } = kiri;
-const { space } = moto;
+import { api } from './api.js';
+import { space } from '../moto/space.js';
+import { THREE } from '../ext/three.js';
 
 const selectedMeshes = [];
 
@@ -296,7 +288,7 @@ function setDisabled(bool) {
 }
 
 // extend API (api.selection)
-const selection = Object.assign(api.selection, {
+export const selection = {
     move,
     merge,
     scale,
@@ -320,6 +312,4 @@ const selection = Object.assign(api.selection, {
     disable()   { setDisabled(true) },
     opacity()   { api.widgets.opacity(...arguments) },
     meshes()    { return selectedMeshes.slice() },
-});
-
-});
+};

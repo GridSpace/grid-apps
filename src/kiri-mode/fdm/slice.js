@@ -1,28 +1,19 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { base, util } from '../../geo/base.js';
+import { newBounds } from '../../geo/bounds.js';
+import { newPolygon } from '../../geo/polygon.js';
+import { polygons as POLY } from '../../geo/polygons.js';
+import { newPoint } from '../../geo/point.js';
+import { slice, sliceZ } from '../../geo/slicer.js';
+import { newSlice } from '../../kiri/slice.js';
+import { fill, fill_fixed } from './fill.js';
+import { getRangeParameters } from './driver.js';
+import { doTopShells } from './post.js';
 
-// dep: geo.base
-// dep: geo.slicer
-// dep: geo.polygons
-// dep: kiri.utils
-// dep: kiri.consts
-// dep: kiri-mode.fdm.driver
-// dep: kiri-mode.fdm.post
-// use: kiri-mode.fdm.fill
-// use: ext.clip2
-// use: add.three
-gapp.register("kiri-mode.fdm.slice", [], (root, exports) => {
+const { config } = base;
 
-const { base, kiri, noop } = root;
-const { consts, driver, fill, fill_fixed, newSlice, utils } = kiri;
-const { config, polygons, util, newPoint } = base;
-const { fillArea } = polygons;
-const { FDM } = driver;
-const { doTopShells, getRangeParameters } = FDM;
-
-const POLY = polygons,
-    tracker = util.pwait,
+let tracker = util.pwait,
     lopacity = 0.6,
     opacity = 1,
     fat = 1.5,
@@ -44,6 +35,7 @@ const POLY = polygons,
         part: { line: 0x777777, check: 0x777777, face: 0  },
         thin: { check: 0xbb8800, face: 0xbb8800, line: 0xbb8800, opacity, lopacity, fat },
     }),
+    noop = () => {},
     PROTO = Object.clone(COLOR),
     profile = false,
     profileStart = profile ? console.profile : noop,
@@ -66,9 +58,9 @@ function vopt(opt) {
     return opt;
 }
 
-FDM.sliceAll = function(settings, onupdate) {
+export function sliceAll(settings, onupdate) {
     // future home of brim and anchor generation
-    let widgets = Object.values(kiri.worker.cache)
+    let widgets = Object.values(self.kiri_worker.cache)
         .filter(w => !w.meta.disabled)
         .sort((a,b) => {
             return a.slices[0].z - b.slices[0].z
@@ -123,15 +115,16 @@ FDM.sliceAll = function(settings, onupdate) {
  * @param {Function} onupdate (called with % complete and optional message)
  * @param {Function} ondone (called when complete with an array of Slice objects)
  */
-FDM.slice = function(settings, widget, onupdate, ondone) {
+export function fdm_slice(settings, widget, onupdate, ondone) {
     let render = settings.render !== false,
+        { minions } = self.kiri_worker,
         { process, device, controller } = settings,
         isBelt = device.bedBelt,
         isBrick = controller.devel && process.sliceZInterleave,
         isSynth = widget.track.synth,
         isSupport = widget.track.support,
         useAssembly = controller.assembly,
-        isConcurrent = controller.threaded && kiri.minions.concurrent,
+        isConcurrent = controller.threaded && minions.concurrent,
         topLayers = process.sliceTopLayers || 0,
         bottomLayers = process.sliceBottomLayers || 0,
         vaseMode = process.sliceFillType === 'vase' && !isSynth,
@@ -226,7 +219,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         }
     }
 
-    base.slice(points, {
+    slice(points, {
         debug: process.xray,
         xray: process.xray,
         zMin: bounds.min.z,
@@ -329,7 +322,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         // slicer function (worker local or minion distributed)
         slicer(z, points, opts) {
             // opts.debug = opts.debug || isSynth;
-            return (isConcurrent ? kiri.minions.sliceZ : base.sliceZ)(z, points, opts);
+            return (isConcurrent ? minions.sliceZ : sliceZ)(z, points, opts);
         },
         onupdate(update) {
             return onupdate(0.0 + update * 0.5)
@@ -380,7 +373,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
             .map(w => w.slices).flat()
             .map(s => s.tops).flat().map(t => t.simple);
         let shadow = isConcurrent ?
-            await kiri.minions.union(alltops, 0.1) :
+            await minions.union(alltops, 0.1) :
             POLY.union(alltops, 0.1, true);
         // expand shadow when requested (support clipping)
         if (process.sliceSupportExtra) {
@@ -584,7 +577,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                 addto.belt.touch = false;
                 let z = addto.z;
                 let y = (slope * z) - smin - (lineWidth / 2);
-                let splat = base.newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
+                let splat = newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
                 let snew = addto.addTop(splat).fill_sparse = [ splat ];
                 adds.push(snew);
                 start = addto;
@@ -617,7 +610,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                         let fz = first.z;
                         let n2 = lineWidth / 2;
                         for (let x = mp - dx; x <= mp + dx ; x += 3) {
-                            add.push( base.newPolygon().add(x, fy - n2, fz).add(x, fy + y + n2, fz).setOpen() );
+                            add.push(newPolygon().add(x, fy - n2, fz).add(x, fy + y + n2, fz).setOpen() );
                         }
                     }
                 }
@@ -711,7 +704,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
                             let z = slice.z;
                             let y = z - smin - (lineWidth / 2);
                             for (let line of lines) {
-                                supps.push(base.newPolygon()
+                                supps.push(newPolygon()
                                     .add(minX + line.start / 2, y, z)
                                     .add(minX + line.end / 2, y, z)
                                     .setOpen()
@@ -939,7 +932,7 @@ FDM.slice = function(settings, widget, onupdate, ondone) {
         }
 
         if (isBelt) {
-            let bounds = base.newBounds();
+            let bounds = newBounds();
             let slice = slices[0];
             if (slice.tops) {
                 for (let top of slice.tops) {
@@ -1081,15 +1074,6 @@ function doRender(slice, isSynth, params, opt = {}) {
     // console.log(slice.index, slice.render.stats);
 }
 
-// shared with SLA driver and minions
-FDM.share = {
-    doShells,
-    doTopShells,
-    doDiff,
-    projectFlats,
-    projectBridges
-};
-
 /**
  * Compute offset shell polygons. For FDM, the first offset is usually half
  * of the nozzle width.  Each subsequent offset is a full nozzle width.  User
@@ -1104,7 +1088,7 @@ FDM.share = {
  * @param {number} fillOffset
  * @param {Obejct} options
  */
-function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
+export function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
     for (let top of slice.tops) {
         doTopShells(slice.z, top, count, offset1, offsetN, fillOffset, opt);
     }
@@ -1130,7 +1114,7 @@ function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
 
     slice.tops.forEach(function(top) {
         if (!top.fill_off) return; // missing for inner brick layers
-        let lines = fillArea(top.fill_off, angle, spacing, null);
+        let lines = POLY.fillArea(top.fill_off, angle, spacing, null);
         top.fill_lines.appendAll(lines);
     });
 
@@ -1290,7 +1274,7 @@ function doSparseLayerFill(slice, options = {}) {
     }
 
     if (options.promises) {
-        options.promises.push(kiri.minions.clip(slice, polys, lines));
+        options.promises.push(self.kiri_worker.minions.clip(slice, polys, lines));
         return;
     }
 
@@ -1316,7 +1300,7 @@ function doSparseLayerFill(slice, options = {}) {
  * Used to calculate bridges, flats and then solid projections.
  * 'expand' is used for top offsets in SLA mode
  */
-function doDiff(slice, options = {}) {
+export function doDiff(slice, options = {}) {
     const { sla, fakedown, grow, min } = options;
     if ((slice.index <= 0 && !fakedown) || slice.xray) {
         return;
@@ -1372,7 +1356,7 @@ function addSolidFills(slice, polys) {
 /**
  * project bottom flats down
  */
-function projectFlats(slice, count, expand) {
+export function projectFlats(slice, count, expand) {
     if (!slice.down || !slice.flats) return;
     // these flats are marked for finishing print speed
     if (slice.flats.length) slice.finishSolids = true;
@@ -1385,7 +1369,7 @@ function projectFlats(slice, count, expand) {
 /**
  * project top bridges up
  */
-function projectBridges(slice, count) {
+export function projectBridges(slice, count) {
     if (!slice.up || !slice.bridges) return;
     // these flats are marked for finishing print speed
     if (slice.bridges.length) slice.finishSolids = true;
@@ -1516,7 +1500,7 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
 
 function doFillArea(fillQ, polys, angle, spacing, output, minLen, maxLen) {
     if (fillQ) {
-        fillQ.push(kiri.minions.fill(polys, angle, spacing, output, minLen, maxLen));
+        fillQ.push(self.kiri_worker.minions.fill(polys, angle, spacing, output, minLen, maxLen));
     } else {
         POLY.fillArea(polys, angle, spacing, output, minLen, maxLen);
     }
@@ -1526,7 +1510,8 @@ function doFillArea(fillQ, polys, angle, spacing, output, minLen, maxLen) {
  * calculate external overhangs requiring support
  */
 async function doSupport(slice, proc, shadow, opt = {}) {
-    let maxBridge = proc.sliceSupportSpan || 5,
+    let { minions } = self.kiri_worker,
+        maxBridge = proc.sliceSupportSpan || 5,
         minArea = proc.supportMinArea || 0.1,
         pillarSize = proc.sliceSupportSize,
         offset = proc.sliceSupportOffset || 0,
@@ -1615,26 +1600,26 @@ async function doSupport(slice, proc, shadow, opt = {}) {
 
         // for each point, create a bounding rectangle
         points.forEach(function(point) {
-            pillars.push(base.newPolygon().centerRectangle(point, size/2, size/2));
+            pillars.push(newPolygon().centerRectangle(point, size/2, size/2));
         });
 
         supports.appendAll(POLY.union(pillars, null, true, { wasm: false }));
         // merge pillars and replace with convex hull of outer points (aka smoothing)
         pillars = POLY.union(pillars, null, true, { wasm: false }).forEach(function(pillar) {
-            supports.push(base.newPolygon().createConvexHull(pillar.points));
+            supports.push(newPolygon().createConvexHull(pillar.points));
         });
     })();
 
     // DEBUG code
     if (SDBG && down_traces) slice.output()
         .setLayer('cks', { line: 0xee5533, check: 0xee5533 })
-        .addPolys(cks.map(p => base.newPolygon().centerRectangle(p, 0.25, 0.25)))
+        .addPolys(cks.map(p => newPolygon().centerRectangle(p, 0.25, 0.25)))
         .setLayer('pip', { line: 0xdd4422, check: 0xdd4422 })
-        .addPolys(pip.map(p => base.newPolygon().centerRectangle(p, 0.4, 0.4)))
+        .addPolys(pip.map(p => newPolygon().centerRectangle(p, 0.4, 0.4)))
         .setLayer('pcl', { line: 0xcc3311, check: 0xcc3311 })
-        .addPolys(pcl.map(p => base.newPolygon().centerRectangle(p, 0.3, 0.3)))
+        .addPolys(pcl.map(p => newPolygon().centerRectangle(p, 0.3, 0.3)))
         .setLayer('pts', { line: 0xdd33dd, check: 0xdd33dd })
-        .addPolys(points.map(p => base.newPolygon().centerRectangle(p, 0.8, 0.8)))
+        .addPolys(points.map(p => newPolygon().centerRectangle(p, 0.8, 0.8)))
         .setLayer('dtr', { line: 0x0, check: 0x0 })
         .addPolys(POLY.setZ(down_traces.clone(true),slice.z));
         ;
@@ -1645,7 +1630,7 @@ async function doSupport(slice, proc, shadow, opt = {}) {
 
     // then union supports
     if (supports.length > 10) {
-        supports = await kiri.minions.union(supports);
+        supports = await minions.union(supports);
     } else {
         supports = POLY.union(supports, null, true, { wasm: false });
     }
@@ -1763,7 +1748,7 @@ function projectSolid(slice, polys, count, up, first) {
     }
 }
 
-FDM.supports = function(settings, widget) {
+export function supports(settings, widget) {
     let isBelt = settings.device.bedBelt;
     let process = settings.process;
     let size = process.sliceSupportSize;
@@ -1924,7 +1909,7 @@ class Coplanars {
                 // convert groups of faces to contiguous polygon groups
                 groups = groups.map(group => {
                     let parr = group.map(arr => {
-                        return base.newPolygon()
+                        return newPolygon()
                             .add(arr[0].x, arr[0].y, arr[0].z)
                             .add(arr[1].x, arr[1].y, arr[1].z)
                             .add(arr[2].x, arr[2].y, arr[2].z);
@@ -1942,5 +1927,3 @@ class Coplanars {
         return out;
     }
 }
-
-});

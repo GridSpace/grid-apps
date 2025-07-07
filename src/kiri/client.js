@@ -1,27 +1,17 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// use: kiri.api
-gapp.register("kiri.client", [], (root, exports) => {
-
-const { kiri } = root;
+import { api } from './api.js';
+import { noop } from './utils.js';
 
 // this code runs in kiri's main loop
-let loc = self.location,
-    host = loc.hostname,
-    port = loc.port,
-    proto = loc.protocol,
-    debug = self.debug === true,
+let debug = self.debug === true,
     time = Date.now,
     seqid = 1,
     syncd = {},
     running = {},
     worker = null,
     minions = false,
-    restarting = false
-    // occ = new Worker("/kiri/ext/occ-worker.js", {type:"module"}),
-    ;
+    restarting = false;
 
 /**
  * @param {Function} fn name of function in kiri.worker
@@ -52,7 +42,7 @@ function send(fn, data, onreply, zerocopy) {
 }
 
 // code is running in the browser / client context
-const client = exports({
+export const client = {
     send: send,
 
     pool: {
@@ -75,8 +65,16 @@ const client = exports({
             const blob = new Blob([ work ], { type: 'application/javascript' });
             return new Worker(URL.createObjectURL(blob));
         } else {
-            let _ = debug ? '_' : '';
-            return new Worker(`/code/kiri_work.js?${_}${gapp.version}`);
+            let worker = new Worker(`/lib/kiri-run/worker.js`, { type: 'module' });
+            worker.onerror = (error) => {
+                console.log({ WORKER_ERROR: error });
+                error.preventDefault();
+            };
+            worker.onmessageerror = (error) => {
+                console.log({ WORKER_MESSAGE_ERROR: error });
+                error.preventDefault();
+            };
+            return worker;
         }
     },
 
@@ -112,7 +110,7 @@ const client = exports({
         running = {};
         worker = client.newWorker();
 
-        client.onmessage = worker.onmessage = function(e) {
+        client.onmessage = worker.onmessage = (e) => {
             let now = time(),
                 reply = e.data,
                 record = running[reply.seq],
@@ -161,7 +159,7 @@ const client = exports({
     // widget sync
     sync(widgets) {
         if (!widgets) {
-            widgets = kiri.api.widgets.all();
+            widgets = api.widgets.all();
         }
         // sync any widget that has changed
         for (let widget of widgets.filter(w => w.modified || !syncd[w.id])) {
@@ -245,7 +243,7 @@ const client = exports({
                 ondone(null, reply.error);
             }
             if (reply.debug) {
-                kiri.api.event.emit("export.debug", reply.debug);
+                api.event.emit("export.debug", reply.debug);
             }
         });
     },
@@ -334,9 +332,11 @@ const client = exports({
             // console.log({ clearCache_reply: reply });
         });
     }
-});
+};
 
 // start worker
 client.restart();
 
-});
+self.kiri_client = client;
+
+export default client;

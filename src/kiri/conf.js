@@ -1,13 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: add.array
-// dep: data.local
-gapp.register("kiri.conf", (root, exports) => {
-
-const { data } = root;
-const { local } = data;
 const { clone } = Object;
 const CVER = 410;
 
@@ -219,7 +211,7 @@ const renamed = {
     outputClockwise: "camConventional"
 };
 
-const conf = exports({
+export const conf = {
     // --------------- helper functions
     normalize,
     device_from_code,
@@ -971,7 +963,7 @@ const conf = exports({
         id: genID(),
         ver: CVER
     }
-});
+};
 
 const settings = conf.template;
 
@@ -990,5 +982,3 @@ settings.cdev.LASER = clone(settings.device);
 settings.cdev.DRAG = clone(settings.device);
 settings.cdev.WJET = clone(settings.device);
 settings.cdev.WEDM = clone(settings.device);
-
-});

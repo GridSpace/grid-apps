@@ -1,15 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-gapp.register("moto.broker", [], (root, exports) => {
-
 class Broker {
+    #debug = false;
+    #topics = {};
+    #used = {};
+    #send = {};
 
     constructor() {
-        this.topics = {};
-        this.used = {};
-        this.send = {};
         // using the pattern "broker.send(msg)" induces runtime errors
         // when there is not at least one registered listener for a topic
         // while also allowing for a more natural function call interface
@@ -17,7 +14,11 @@ class Broker {
     }
 
     topics() {
-        return Object.keys(this.topics);
+        return Object.keys(this.#topics);
+    }
+
+    get send() {
+        return this.#send;
     }
 
     // create subscriptions for all functions in an object
@@ -42,16 +43,19 @@ class Broker {
             return this;
         }
         if (typeof topic !== 'string') {
-            console.trace({invalid_topic: topic});
+            for (let [ key, fn ] of Object.entries(topic)) {
+                this.subscribe(key, fn.bind(listener));
+            }
+            // console.trace({invalid_topic: topic});
             return;
         }
-        let topics = this.topics;
+        let topics = this.#topics;
         let channel = topics[topic];
         if (!channel) {
             channel = topics[topic] = [];
         }
         if (channel.indexOf(listener) < 0) {
-            let send = this.send;
+            let send = this.#send;
             let name = topic.replace(/[\\ \.-]/g, '_');
             send[name] = send[name] = this.bind(topic);
             channel.push(listener);
@@ -61,7 +65,7 @@ class Broker {
     }
 
     unsubscribe(topic, listener) {
-        let channel = this.topics[topic];
+        let channel = this.#topics[topic];
         if (!channel) {
             return;
         }
@@ -71,7 +75,7 @@ class Broker {
         }
         channel.splice(index,1);
         if (channel.length === 0) {
-            delete this.topics[topic];
+            delete this.#topics[topic];
             this.publish(".topic.remove", topic);
         }
     }
@@ -86,10 +90,13 @@ class Broker {
         if (topic !== ".topic.publish") {
             this.publish(".topic.publish", {topic, message, options});
         }
+        if (this.#debug && !topic.startsWith(".")) {
+            console.log({ topic, message });
+        }
         // store last seen message on a topic
         // acts as a tracker for all used topics
-        this.used[topic] = message;
-        let channel = this.topics[topic];
+        this.#used[topic] = message;
+        let channel = this.#topics[topic];
         if (channel && channel.length) {
             for (let listener of channel) {
                 try {
@@ -136,10 +143,6 @@ class Broker {
             }
         }
     }
-
 }
 
-const { moto } = root;
-gapp.broker = moto.broker = new Broker();
-
-});
+export const broker = new Broker();

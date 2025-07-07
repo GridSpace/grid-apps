@@ -2,16 +2,31 @@
 
 "use strict";
 
-// dep: moto.license
-// dep: load.stl
-// dep: kiri.conf
-// dep: kiri.client
-// dep: kiri.widget
-// use: add.three
-// use: add.array
-gapp.register("kiri-run.engine", [], (root, exports) => {
+// Future imports for src/kiri-run/engine.js when unwrapped from gapp.register()
 
-const { kiri } = root;
+// Dependencies from dep: comments
+// import { moto_license } from 'moto/license.js';
+// import { load_stl } from 'load/stl.js';
+// import { kiri_conf } from 'kiri/conf.js';
+// import { kiri_client } from 'kiri/client.js';
+// import { kiri_widget } from 'kiri/widget.js';
+
+// Dependencies from use: comments
+// import { add_three } from 'add/three.js';
+// import { add_array } from 'add/array.js';
+
+// Core dependencies from root
+import { kiri } from '../../main/gapp.js';
+
+// Note: This module also depends on:
+// - moto.license (for licensing functionality)
+// - load.stl (for STL file loading)
+// - kiri.conf (for configuration)
+// - kiri.client (for client functionality)
+// - kiri.widget (for widget functionality)
+// - add.three (for Three.js utilities)
+// - add.array (for array utilities)
+// - Various kiri API functions injected via root
 
 class Engine {
     constructor() {
@@ -192,4 +207,16 @@ gapp.overlay(kiri, {
     newEngine
 });
 
-});
+// Future exports for src/kiri-run/engine.js when unwrapped from gapp.register()
+
+// Main Engine class
+export { Engine };
+
+// Factory function
+export { newEngine };
+
+// Default export - the main engine functionality
+export default {
+    Engine,
+    newEngine
+}; 

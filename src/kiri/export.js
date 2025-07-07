@@ -1,23 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: ext.md5
-// dep: geo.base
-// dep: data.local
-// dep: kiri.consts
-// dep: kiri.api
-// dep: kiri.main
-gapp.register("kiri.export", [], (root, exports) => {
-
-const { base, data, kiri } = root;
-const { api, consts } = kiri;
-const { local } = data;
-const { util } = base;
-const { stats, ui } = api;
-const { MODES } = consts;
-
-kiri.export = exportFile;
+import { $ } from '../moto/webui.js';
+import { api } from './api.js';
+import { client } from './client.js';
+import { local } from '../data/local.js';
+import { util } from '../geo/base.js';
+import { MODES } from './consts.js';
+import { LASER as laser_driver } from '../kiri-mode/laser/driver.js';
+import { SLA as sla_client } from '../kiri-mode/sla/client.js';
 
 let printSeq = parseInt(local['kiri-print-seq'] || local['print-seq'] || "0") + 1;
 
@@ -29,7 +19,7 @@ function localSet(key, val) {
     return api.local.set(key, val);
 }
 
-function exportFile(options) {
+export function exportFile(options) {
     let mode = api.mode.get();
     let names = api.widgets.all().map(w => w.meta ? w.meta.file : undefined)
         .filter(v => v)
@@ -53,7 +43,7 @@ function callExport(callback, mode, names) {
     let gcode = [];
     let section = [];
     let sections = { };
-    kiri.client.export(api.conf.get(), (line) => {
+    client.export(api.conf.get(), (line) => {
         if (typeof line !== 'string') {
             if (line.section) {
                 sections[line.section] = section = [];
@@ -75,7 +65,7 @@ function callExport(callback, mode, names) {
 }
 
 function callExportLaser(options, names) {
-    kiri.client.export(api.conf.get(), (line) => {
+    client.export(api.conf.get(), (line) => {
         // engine export uses lines
         // console.log({unexpected_line: line});
     }, (output, error) => {
@@ -89,14 +79,14 @@ function callExportLaser(options, names) {
 }
 
 function callExportSLA(options, names) {
-    kiri.client.export(api.conf.get(), (line) => {
+    client.export(api.conf.get(), (line) => {
         api.show.progress(line.progress, "exporting");
     }, (output, error) => {
         api.show.progress(0);
         if (error) {
             api.show.alert(error, 5);
         } else {
-            kiri.driver.SLA.printDownload(output, api, names);
+            sla_client.printDownload(output, api, names);
         }
     });
 }
@@ -107,7 +97,7 @@ function exportLaserDialog(data, names) {
     const fileroot = names[0] || "laser";
     const filename = `${fileroot}-${(printSeq.toString().padStart(3,"0"))}`;
     const settings = api.conf.get();
-    const driver = kiri.driver.LASER;
+    const driver = laser_driver;
 
     function download_svg() {
         api.util.download(
@@ -207,7 +197,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         ajax.onreadystatechange = function() {
             if (ajax.readyState === 4) {
                 let status = ajax.status;
-                stats.add(`ua_${api.mode.get_lower()}_print_octo_${status}`);
+                api.stats.add(`ua_${api.mode.get_lower()}_print_octo_${status}`);
                 if (status >= 200 && status < 300) {
                     api.modal.hide();
                 } else {
@@ -278,11 +268,11 @@ function exportGCodeDialog(gcode, sections, info, names) {
             )
             .then(t => t.text())
             .then(t => {
-                stats.add(`ua_${api.mode.get_lower()}_print_local_ok`);
+                api.stats.add(`ua_${api.mode.get_lower()}_print_local_ok`);
                 console.log({grid_spool_said: t});
             })
             .catch(e => {
-                stats.add(`ua_${api.mode.get_lower()}_print_local_err`);
+                api.stats.add(`ua_${api.mode.get_lower()}_print_local_err`);
                 console.log({grid_local_spool_error: e});
             })
             .finally(() => {
@@ -394,7 +384,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         xhtr.onreadystatechange = function() {
             if (xhtr.readyState === 4) {
                 let status = xhtr.status;
-                stats.add(`ua_${api.mode.get_lower()}_print_grid_${status}`);
+                api.stats.add(`ua_${api.mode.get_lower()}_print_grid_${status}`);
                 if (status >= 200 && status < 300) {
                     let json = js2o(xhtr.responseText);
                     gridhost_tracker(host,json.key);
@@ -511,7 +501,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     })
                 }
             }
-            kiri.client.zip(files, progress => {
+            client.zip(files, progress => {
                 api.show.progress(progress.percent/100, "generating zip files");
             }, output => {
                 api.show.progress(0);
@@ -681,7 +671,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
                 name: `Metadata/top_1.png`,
                 data: api.view.bambu.s512.png
             }];
-            kiri.client.zip(files, progress => {
+            client.zip(files, progress => {
                 api.show.progress(progress.percent/100, "generating 3mf");
             }, output => {
                 api.show.progress(0);
@@ -742,5 +732,3 @@ function exportGCodeDialog(gcode, sections, info, names) {
         // preview of the generated GCODE (first 64k max)
         if (preview && gcode) $('code-preview-textarea').value = gcode.substring(0,65535);
 }
-
-});
