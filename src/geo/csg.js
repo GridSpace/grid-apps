@@ -126,11 +126,15 @@ let Instance;
 
 ext.manifold.then(mod => {
     mod.default({
-        locateFile() { return "/wasm/manifold.wasm" }
+        locateFile(a,b,c) {
+            return "/wasm/manifold.wasm";
+        }
     }).then(inst => {
         inst.setup();
         Instance = inst;
         CSG.Instance = () => { return Instance };
+    }).catch(error => {
+        console.log('manifold load error', error);
     });
 });
 

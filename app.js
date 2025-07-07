@@ -495,6 +495,7 @@ const script = {
         "&main/kiri",
     ],
     engine : [
+        "@kiri_work",
         "&kiri-run/engine",
         "&main/kiri",
     ],
@@ -681,11 +682,12 @@ function generateDevices() {
 function prepareScripts() {
     generateDevices();
     for (let key of Object.keys(script)) {
-        code[key] = concatCode(script[key]);
+        code[key] = concatCode(key);
     }
 }
 
-function concatCode(array) {
+function concatCode(key) {
+    let array = script[key];
     let code = [];
     let direct = array.filter(f => f.charAt(0) !== '@');
     let inject = array.filter(f => f.charAt(0) === '@').map(f => f.substring(1));
@@ -695,11 +697,14 @@ function concatCode(array) {
     // in debug mode, the script should load dependent
     // scripts instead of serving a complete bundle
     if (debug) {
-        const code = [
+        inject.forEach(key => {
+            code.push(synth[key]);
+        });
+        code.push(...[
             oversion ? `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` : '',
             'self.debug=true;',
             '(function() { let load = [ '
-        ];
+        ]);
         direct.forEach(file => {
             const vers = cachever[file] || oversion || dversion || version;
             code.push(`"/${file.replace(/\\/g,'/')}?${vers}",`);
@@ -708,6 +713,7 @@ function concatCode(array) {
             ']; function load_next() {',
             'let file = load.shift();',
             'if (!file) return;',
+            // 'console.log("loading", file);',
             'if (!self.document) { importScripts(file); return load_next() }',
             'let s = document.createElement("script");',
             's.type = "text/javascript";',
@@ -716,27 +722,24 @@ function concatCode(array) {
             'document.head.appendChild(s);',
             '} load_next(); })();'
         ].join('\n'));
+        code = code.join('\n');
+    } else {
         inject.forEach(key => {
             code.push(synth[key]);
         });
-        return code.join('\n');
-    }
-
-    direct.forEach(file => {
-        let cached = getCachedFile(file, path => {
-            return minify(PATH.join(dir,file));
+        direct.forEach(file => {
+            let cached = getCachedFile(file, path => {
+                return minify(PATH.join(dir,file));
+            });
+            if (oversion) {
+                cached = `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` + cached;
+            }
+            code.push(cached);
         });
-        if (oversion) {
-            cached = `self.debug_version='${oversion}';self.enable_service=${serviceWorker};` + cached;
-        }
-        code.push(cached);
-    });
-
-    inject.forEach(key => {
-        code.push(synth[key]);
-    });
-
-    return code.join('');
+        code = code.join('');
+        synth[key] = `self.${key} = "${Buffer.from(code).toString('base64')}";\n`;
+    }
+    return code;
 }
 
 function getCachedFile(file, fn) {

@@ -474,13 +474,11 @@ CAM.init = function(kiri, api) {
             return;
         }
         let index = 0;
-        let indexing = false;
         for (let op of oplist) {
             if (op.type === '|') {
                 break;
             }
             if (op.type === 'index' && !op.disabled) {
-                indexing = true;
                 if (op.absolute) {
                     index = op.degrees
                 } else {
@@ -1008,7 +1006,6 @@ CAM.init = function(kiri, api) {
         CAM.traces((ids) => {
             api.hide.alert(alert);
             alert = api.show.alert("[esc] cancels trace editing");
-            kiri.api.widgets.opacity(0.8);
             kiri.api.widgets.for(widget => {
                 if (ids.indexOf(widget.id) >= 0) {
                     unselectTraces(widget, true);
@@ -1042,6 +1039,7 @@ CAM.init = function(kiri, api) {
             });
             // ensure appropriate traces are toggled matching current record
             kiri.api.widgets.for(widget => {
+                widget.setVisualState({ opacity: 0.25 });
                 let areas = (poppedRec.areas[widget.id] || []);
                 let stack = widget.trace_stack;
                 stack.meshes.forEach(mesh => {
@@ -1070,6 +1068,7 @@ CAM.init = function(kiri, api) {
         api.feature.hover = false;
         api.feature.hoverAdds = false;
         kiri.api.widgets.for(widget => {
+            widget.restoreVisualState();
             if (widget.trace_stack) {
                 widget.trace_stack.hide();
                 widget.adds.removeAll(widget.trace_stack.meshes);
@@ -1096,17 +1095,15 @@ CAM.init = function(kiri, api) {
             color.r = colorSave.r;
             color.g = colorSave.g;
             color.b = colorSave.b;
-            lastTrace.position.z -= 0.01;
         }
+        lastTrace = null;
         if (data.type === 'platform') {
-            lastTrace = null;
             return;
         }
         if (!data.int.object.trace) {
             return;
         }
         lastTrace = data.int.object;
-        lastTrace.position.z += 0.01;
         if (lastTrace.selected) {
             let event = data.event;
             let target = event.target;
@@ -1115,11 +1112,8 @@ CAM.init = function(kiri, api) {
         }
         let material = lastTrace.material[0] || lastTrace.material;
         let color = material.color;
-        let {r, g, b} = color;
-        material.colorSave = {r, g, b};
-        color.r = 0;
-        color.g = 0;
-        color.b = 1;
+        material.colorSave = color.clone();
+        color.setHex(isDark() ? 0x0066ff : 0x0000ff);
     };
     func.traceHoverUp = function(int, ev) {
         if (!int) return;
@@ -1128,8 +1122,9 @@ CAM.init = function(kiri, api) {
         if (ev.metaKey || ev.ctrlKey) {
             let { selected } = object;
             let { widget, poly } = object.trace;
+            let avgZ = poly.avgZ();
             for (let add of widget.adds) {
-                if (add.trace && add.selected !== selected && add.trace.poly.getZ() === poly.getZ()) {
+                if (add.trace && add.selected !== selected && add.trace.poly.onZ(avgZ)) {
                     func.traceToggle(add);
                 }
             }
@@ -1147,23 +1142,17 @@ CAM.init = function(kiri, api) {
         let wlist = areas[widget.id] = areas[widget.id] || [];
         obj.selected = !obj.selected;
         if (!colorSave) {
-            colorSave = material.colorSave = {
-                r: color.r,
-                g: color.g,
-                b: color.b
-            };
+            colorSave = material.colorSave = color.clone();
         }
         if (obj.selected) {
-            obj.position.z += 0.01;
-            color.r = colorSave.r = 0.9;
-            color.g = colorSave.g = 0;
-            color.b = colorSave.b = 0.1;
+            color.setHex(isDark() ? 0xdd0011 : 0xff0033);
+            colorSave.r = color.r;
+            colorSave.g = color.g;
+            colorSave.b = color.b;
             if (!skip) wlist.push(poly._trace);
         } else {
-            obj.position.z -= 0.01;
-            color.r = colorSave.r = 0xaa/255;
-            color.g = colorSave.g = 0xaa/255;
-            color.b = colorSave.b = 0x55/255;
+            color.setHex(0xaaaa55);
+            colorSave.setHex(0xaaaa55);
             if (!skip) wlist.remove(poly._trace);
         }
         API.conf.save();
@@ -1192,9 +1181,6 @@ CAM.init = function(kiri, api) {
         func.hover = func.selectHolesHover;
         func.hoverUp = func.selectHolesHoverUp;
 
-        
-
-        
         const widgets = kiri.api.widgets.all()
         /**
          * creates a mesh for a hole and adds it to a widget
@@ -1712,13 +1698,11 @@ CAM.init = function(kiri, api) {
         dogbone: 'camTraceDogbone',
         revbone: 'camTraceDogbone',
         merge:   'camTraceMerge',
-        select:  'camTraceMode',
         ov_topz: 0,
         ov_botz: 0,
         ov_conv: '~camConventional',
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
-        select:   UC.newSelect(LANG.cc_sele_s, {title:LANG.cc_sele_l}, "select"),
         mode:     UC.newSelect(LANG.cu_type_s, {title:LANG.cu_type_l}, "trace"),
         offset:   UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l, show:() => (poppedRec.mode === 'follow')}, "traceoff"),
         sep:      UC.newBlank({class:"pop-sep"}),
@@ -2162,16 +2146,18 @@ function validateTools(tools) {
     }
 }
 
+function isDark() { return API.space.is_dark() };
+
 function addbox() { return FDM.addbox(...arguments)};
 
 function delbox() { return FDM.delbox(...arguments)};
 
 function boxColor() {
-    return API.space.is_dark() ? 0x00ddff : 0x0000dd;
+    return isDark() ? 0x00ddff : 0x0000dd;
 }
 
 function boxOpacity() {
-    return API.space.is_dark() ? 0.75 : 0.6;
+    return isDark() ? 0.75 : 0.6;
 }
 
 function animate() {
@@ -2202,6 +2188,8 @@ function updateStock() {
         return;
     }
 
+    api.platform.update_bounds();
+
     const settings = API.conf.get();
     const widgets = API.widgets.all();
 
@@ -2209,9 +2197,13 @@ function updateStock() {
     const { x, y, z, center } = stock;
 
     UI.func.animate.classList.add('disabled');
+    if (camStock) {
+        SPACE.world.remove(camStock);
+        camStock = null;
+    }
     if (x && y && z) {
         UI.func.animate.classList.remove('disabled');
-        if (!camStock) {
+        {
             let geo = new THREE.BoxGeometry(1, 1, 1);
             let mat = new THREE.MeshBasicMaterial({
                 color: 0x777777,
@@ -2243,21 +2235,17 @@ function updateStock() {
             let lines = new THREE.LineSegments(ligeo, limat);
             camStock.lines = lines;
             camStock.add(lines);
-
             SPACE.world.add(camStock);
         }
+        // fight z fighting in threejs
         camStock.scale.x = x + 0.005;
         camStock.scale.y = y + 0.005;
         camStock.scale.z = z + 0.005;
         camStock.position.x = center.x;
         camStock.position.y = center.y;
         camStock.position.z = center.z;
-        camStock.rotation.x = currentIndex || 0;
         camStock.lines.material.color =
-            new THREE.Color(API.space.is_dark() ? 0x555555 : 0xaaaaaa);
-    } else if (camStock) {
-        SPACE.world.remove(camStock);
-        camStock = null;
+            new THREE.Color(isDark() ? 0x555555 : 0xaaaaaa);
     }
 
     SPACE.world.remove(camZTop);

@@ -215,7 +215,6 @@ const renamed = {
     drillDwell: "camDrillDwell",
     drillLift: "camDrillLift",
     drillingOn: "camDrillingOn",
-    camPocketOnlyFinish: "camOutlinePocket",
     camWideCutout: "camOutlineWide",
     outputClockwise: "camConventional"
 };
@@ -494,7 +493,7 @@ const conf = exports({
                 camTracePlunge: 200,
                 camTraceOffOver: 0,
                 camTraceDogbone: false,
-                camTraceMerge: true,
+                camTraceMerge: false,
                 camTraceLines: false,
                 camTraceZTop: 0,
                 camTraceZBottom: 0,
@@ -579,6 +578,8 @@ const conf = exports({
                 outputInvertY: false,
                 camExpertFast: false,
                 camTrueShadow: false,
+                camArcTolerance: 0.006,
+                camArcResolution: 5,
                 camForceZMax: false,
                 camFirstZMax: false,
                 camToolInit: true,

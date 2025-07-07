@@ -330,6 +330,13 @@ function setContains(setA, poly) {
     return false;
 }
 
+/**
+ * Flatten an array of polygons into a single array of polygons.
+ * @param {Polygon[]} polys - input array of polygons
+ * @param {Polygon[]} [to] - output array. if omitted, a new array will be created
+ * @param {boolean} [crush] - if true, remove the inner array after flattening
+ * @returns {Polygon[]} - the flattened array
+ */
 function flatten(polys, to, crush) {
     to = to || [];
     for (let poly of polys) {

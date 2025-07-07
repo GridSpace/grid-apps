@@ -355,6 +355,27 @@ class Widget {
         }
     }
 
+    getVisualState() {
+        return {
+            edges: this.outline ? true : false,
+            wires: this.wire ? true : false,
+            opacity: this.getMaterial().opacity
+        };
+    }
+
+    setVisualState({ edges, wires, opacity}) {
+        this.cache.vizstate = this.getVisualState();
+        this.setEdges(edges ?? false);
+        this.setWireframe(wires ?? false);
+        this.setOpacity(opacity ?? 1);
+    }
+
+    restoreVisualState() {
+        if (this.cache.vizstate) {
+            this.setVisualState(this.cache.vizstate);
+        }
+    }
+
     /**
      * @param {number} value
      */
@@ -451,6 +472,7 @@ class Widget {
         let rad = deg * (Math.PI / 180);
         if (rad !== this.track.indexRad) {
             this.track.indexRad = rad;
+            this.setModified();
             this._updateMeshPosition();
         }
     }
@@ -815,7 +837,8 @@ class Widget {
             let drv = driver[settings.mode.toUpperCase()];
 
             if (drv) {
-                drv.slice(settings, widget, catchupdate, catchdone);
+                let promise = drv.slice(settings, widget, catchupdate, catchdone);
+                if (promise) promise.catch(error => ondone(error));
             } else {
                 console.log('invalid mode: '+settings.mode);
                 ondone('invalid mode: '+settings.mode);
