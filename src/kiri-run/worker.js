@@ -16,6 +16,7 @@ import { render } from '../kiri/render.js';
 import { wasm_ctrl } from '../geo/wasm.js';
 import { version } from '../moto/license.js';
 import { Widget, newWidget } from '../kiri/widget.js';
+import { load } from "../load/png.js";
 
 import { CAM } from '../kiri-mode/cam/driver-be.js';
 import { DRAG } from '../kiri-mode/drag/driver.js';

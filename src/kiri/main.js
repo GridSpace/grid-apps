@@ -18,7 +18,7 @@ import { space as SPACE } from '../moto/space.js';
 import { stats } from '../kiri/stats.js';
 import { noop, utils } from '../kiri/utils.js';
 import { version } from '../moto/license.js';
-import { Widget } from './widget.js';
+import { Widget, newWidget } from './widget.js';
 import { showTools } from '../kiri-mode/cam/tools.js';
 
 let { parseOpt, o2js, js2o, ls2o } = utils,

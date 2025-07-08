@@ -28,7 +28,7 @@ function parseAsync(bin, opt) {
  * opt.base = base added thickness in mm
  */
 function parse(bin, opt = {}) {
-    let img = new png.PNG();
+    let img = new PNG();
     let progress = opt.progress || noop;
     let ondone = opt.done || noop;
     img.parse(bin, (err, output) => {
