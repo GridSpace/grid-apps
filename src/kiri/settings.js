@@ -756,9 +756,14 @@ function setEnableWASM(bool) {
     api.event.emit("set.assembly", bool);
 }
 
-// extend API (api.conf)
-const apiConf = {
-    dbo: () => { return ls2o('ws-settings') },
+// merged api for backward compatibility
+const apiSet = {
+    dbo() { return ls2o('ws-settings') },
+    dev() { return settings.device },
+    proc() { return settings.process },
+    ctrl() { return settings.controller },
+    mode() { return settings.mode },
+    prof() { return settings.sproc[settings.mode] },
     get: getSettings,
     put: putSettings,
     load: loadSettings,
@@ -773,20 +778,9 @@ const apiConf = {
     restore: restoreSettings,
     export: settingsExport,
     import: settingsImport,
-};
-
-// extend API (api.settings)
-const apiSet = {
-    get: getSettings,
-    import: settingsImport,
     import_zip: settingsImportZip,
     import_url: settingsImportUrl,
     import_prusa: settingsPrusaConvert,
-    dev()  { return settings.device },
-    proc() { return settings.process },
-    ctrl() { return settings.controller },
-    mode() { return settings.mode },
-    prof() { return settings.sproc[settings.mode] },
     sync: {
         async get() {},
         async put() {},
@@ -794,14 +788,16 @@ const apiSet = {
     }
 };
 
-export default {
-    conf: apiConf,
-    set: apiSet,
-    settings: apiSet
-};
+// for backward compatibility
+apiSet.conf = apiSet;
+apiSet.set = apiSet;
+apiSet.settings = apiSet;
 
+export default apiSet;
+
+// for backward compatibility
 export {
-    apiConf as conf,
+    apiSet as conf,
     apiSet as set,
     apiSet as settings
 };

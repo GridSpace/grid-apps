@@ -5,6 +5,7 @@ class Broker {
     #topics = {};
     #used = {};
     #send = {};
+    #uuid = ((Math.random() * 0xffffffff) | 0).toString(36);
 
     constructor() {
         // using the pattern "broker.send(msg)" induces runtime errors
@@ -36,6 +37,9 @@ class Broker {
     // creates topic if new topic
     // creates a send function if new topic
     subscribe(topic, listener) {
+        if (this.#debug) {
+            console.log({ subscribe: topic, listener });
+        }
         if (Array.isArray(topic)) {
             for (let t of topic) {
                 this.subscribe(t, listener);
@@ -91,7 +95,7 @@ class Broker {
             this.publish(".topic.publish", {topic, message, options});
         }
         if (this.#debug && !topic.startsWith(".")) {
-            console.log({ topic, message });
+            console.log({ publish: topic, message });
         }
         // store last seen message on a topic
         // acts as a tracker for all used topics

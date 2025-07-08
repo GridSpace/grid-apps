@@ -7,12 +7,12 @@ import '../add/class.js';
 import '../add/three.js';
 
 import { base } from '../geo/base.js';
+import { codec, encode } from '../kiri/codec.js';
+import { doTopShells } from '../kiri-mode/fdm/post.js';
 import { newPoint } from '../geo/point.js';
 import { polygons as POLY } from '../geo/polygons.js';
 import { sliceZ } from '../geo/slicer.js';
-import { codec } from '../kiri/codec.js';
-import { broker } from '../moto/broker.js';
-import { doTopShells } from '../kiri-mode/fdm/post.js';
+import { Slicer as cam_slicer } from '../kiri-mode/cam/slicer.js';
 import { wasm_ctrl } from '../geo/wasm.js';
 
 const clib = self.ClipperLib;
@@ -29,9 +29,14 @@ self.alert = function(o) {
 };
 
 self.onmessage = function(msg) {
-    let data = msg.data;
-    let cmd = data.cmd;
-    (funcs[cmd] || funcs.bad)(data, data.seq, cmd);
+    let { data } = msg;
+    let { cmd } = data;
+    debug('MINION.onmessage', { cmd, data });
+    try {
+        (funcs[cmd] || funcs.invalid)(data, data.seq, cmd);
+    } catch (error) {
+        log('MINION.dispatch.error', error);
+    }
 };
 
 function reply(msg, direct) {
@@ -42,12 +47,22 @@ function log() {
     console.log(`[${name}]`, ...arguments);
 }
 
+function debug() {
+    // console.log(`[${name}]`, ...arguments);
+}
+
 const funcs = self.minion = {
-    label(data, seq) {
-        name = data.name;
+    invalid(data, seq, cmd) {
+        console.error({ invalid_minion_command: cmd, data });
+        reply({ seq, error: `invalid command (${cmd})` });
     },
 
-    config: data => {
+    label(data, seq) {
+        name = data.name;
+        self.kiri_minion = { name, cache, log };
+    },
+
+    config(data) {
         if (data.base) {
             Object.assign(base.config, data.base);
         } else {
@@ -55,7 +70,7 @@ const funcs = self.minion = {
         }
     },
 
-    union: (data, seq) => {
+    union(data, seq) {
         if (!(data.polys && data.polys.length)) {
             reply({ seq, union: codec.encode([]) });
             return;
@@ -66,7 +81,7 @@ const funcs = self.minion = {
         reply({ seq, union: codec.encode(union) }, state.zeros);
     },
 
-    topShells: (data, seq) => {
+    topShells(data, seq) {
         let top = codec.decode(data.top, {full: true});
         let {z, count, offset1, offsetN, fillOffset, opt} = data;
         doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
@@ -74,7 +89,7 @@ const funcs = self.minion = {
         reply({ seq, top: codec.encode(top, {full: true}) }, state.zeros);
     },
 
-    fill: (data, seq) => {
+    fill(data, seq) {
         let polys = codec.decode(data.polys);
         let { angle, spacing, minLen, maxLen } = data;
         let fill = POLY.fillArea(polys, angle, spacing, [], minLen, maxLen);
@@ -89,7 +104,7 @@ const funcs = self.minion = {
         reply({ seq, fill: arr }, [ arr.buffer ]);
     },
 
-    clip: (data, seq) => {
+    clip(data, seq) {
         const clip = new clib.Clipper();
         const ctre = new clib.PolyTree();
         const clips = [];
@@ -115,8 +130,8 @@ const funcs = self.minion = {
         reply({ seq, clips }, state.zeros);
     },
 
-    sliceZ: (data, seq) => {
-        console.log('minion.sliceZ', { data, seq });
+    sliceZ(data, seq) {
+        log('minion.sliceZ', { data, seq });
         let { z, points, options } = data;
         let i = 0, p = 0, realp = new Array(points.length / 3);
         while (i < points.length) {
@@ -136,7 +151,7 @@ const funcs = self.minion = {
         });
     },
 
-    putCache: msg => {
+    putCache(msg) {
         const { key, data } = msg;
         // log({ minion_putCache: key, data });
         if (data) {
@@ -146,13 +161,13 @@ const funcs = self.minion = {
         }
     },
 
-    clearCache: msg => {
+    clearCache(msg) {
         for (let key in cache) {
             delete cache[key];
         }
     },
 
-    wasm: data => {
+    wasm(data) {
         if (data.enable) {
             wasm_ctrl.enable();
         } else {
@@ -160,9 +175,27 @@ const funcs = self.minion = {
         }
     },
 
-    bad: (data, seq, cmd) => {
-        reply({ seq, error: `invalid command (${cmd})` });
-    }
-};
+    cam_slice_init() {
+        cache.slicer = new cam_slicer();
+    },
 
-broker.publish("minion.started", { funcs, cache, reply, log });
+    cam_slice_cleanup() {
+        delete cache.slicer;
+    },
+
+    cam_slice(data, seq) {
+        const { bucket, opt } = data;
+        cache.slicer.sliceBucket(bucket, opt, slice => {
+            // log({ slice });
+        }).then(data => {
+            data.forEach(rec => {
+                rec.polys = encode(rec.polys);
+                if (rec.lines) {
+                    const points = rec.lines.map(l => [l.p1, l.p2]).flat();
+                    rec.lines = encodePointArray(points);
+                }
+            });
+            reply({ seq, slices: data });
+        });
+    },
+};

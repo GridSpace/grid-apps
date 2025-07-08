@@ -1,8 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { base, util } from '../../geo/base.js';
-import { broker } from '../../moto/broker.js';
-import { decode, decodePointArray, encode, encodePointArray } from '../../kiri/codec.js';
+import { decode, decodePointArray } from '../../kiri/codec.js';
 import { newLine, newOrderedLine } from '../../geo/line.js';
 import { newPoint } from '../../geo/point.js';
 import { newSlice } from '../../kiri/slice.js';
@@ -23,18 +22,15 @@ const end = function () {
 
 export class Slicer {
     constructor(widget, options = { zlist: true, zline: true, lines: false }) {
-        this.minions = self.kiri_worker.minions;
+        this.minions = self.kiri_worker?.minions;
         this.options = {};
         this.setOptions(options);
 
         if (widget) {
+            this.threaded = widget.settings.controller.threaded;
             this.setPoints(widget.getGeoVertices({ unroll: true, translate: true }));
             this.computeFeatures();
         }
-    }
-
-    get threaded() {
-        return this.options.threaded;
     }
 
     // zList = generate list of z vertices
@@ -480,32 +476,3 @@ function makeZLine(phash, p1, p2, coplanar, edge) {
 
 Slicer.checkOverUnderOn = checkOverUnderOn;
 Slicer.intersectPoints = intersectPoints;
-
-broker.subscribe("minion.started", msg => {
-    const { funcs, cache, reply, log } = msg;
-
-    funcs.cam_slice_init = () => {
-        cache.slicer = new Slicer();
-    };
-
-    funcs.cam_slice_cleanup = () => {
-        delete cache.slicer;
-    };
-
-    funcs.cam_slice = (data, seq) => {
-        const { bucket, opt } = data;
-        // log({ slice: bucket, opt });
-        cache.slicer.sliceBucket(bucket, opt, slice => {
-            // console.log({ slice });
-        }).then(data => {
-            data.forEach(rec => {
-                rec.polys = encode(rec.polys);
-                if (rec.lines) {
-                    const points = rec.lines.map(l => [l.p1, l.p2]).flat();
-                    rec.lines = encodePointArray(points);
-                }
-            });
-            reply({ seq, slices: data });
-        });
-    };
-});

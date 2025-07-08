@@ -6,7 +6,6 @@ import '../add/three.js';
 import '../ext/jszip.js';
 
 import { base } from '../geo/base.js';
-import { broker } from '../moto/broker.js';
 import { codec } from '../kiri/codec.js';
 import { util } from '../geo/base.js';
 import { newPoint } from '../geo/point.js';
@@ -28,8 +27,7 @@ import { WJET } from '../kiri-mode/wjet/driver.js';
 
 const { time } = util;
 
-let debug = (self.debug === true),
-    drivers = {
+let drivers = {
         DRAG,
         CAM,
         FDM,
@@ -39,7 +37,7 @@ let debug = (self.debug === true),
         WJET
     },
     ccvalue = self.navigator ? self.navigator.hardwareConcurrency || 0 : 0,
-    concurrent = Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
+    concurrent = 1,//Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
     current = {
         print: null,
         snap: null,
@@ -52,6 +50,11 @@ let debug = (self.debug === true),
     minionq = [],
     minifns = {},
     miniseq = 0;
+
+function debug() {
+    if (self.debug === true)
+    console.log(...arguments);
+}
 
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
@@ -88,11 +91,11 @@ const minwork = {
         for (let i=0; i < concurrent; i++) {
             let minion = new Worker(`/lib/kiri-run/minion.js`, { type: 'module' });
             minion.onerror = (error) => {
-                console.log({ MINION_ERROR: error });
+                debug({ MINION_ERROR: error });
                 error.preventDefault();
             };
             minion.onmessageerror = (error) => {
-                console.log({ MINION_MESSAGE_ERROR: error });
+                debug({ MINION_MESSAGE_ERROR: error });
                 error.preventDefault();
             };
             minion.onmessage = minhandler;
@@ -189,11 +192,11 @@ const minwork = {
     },
 
     sliceZ(z, points, options) {
-        console.log('minwork.sliceZ', { z, points, options });
+        debug('minwork.sliceZ', { z, points, options });
         return new Promise((resolve, reject) => {
-            if (concurrent < 2) {
-                reject("concurrent slice unavaiable");
-            }
+            // if (concurrent < 2) {
+            //     reject("concurrent slice unavaiable");
+            // }
             let { each } = options;
             // todo use shared array buffer?
             let i = 0, floatP = new Float32Array(points.length * 3);
@@ -202,7 +205,7 @@ const minwork = {
                 floatP[i++] = p.y;
                 floatP[i++] = p.z;
             }
-            const state = { zeros: [] };
+            const state = { zeros: [ floatP.buffer ] };
             minwork.queue({
                 cmd: "sliceZ",
                 z,
@@ -219,12 +222,13 @@ const minwork = {
     },
 
     queue(work, ondone, direct) {
-        if (direct) {
-            return ondone(work);
-        }
+        debug('WORKER.queue', { work, direct });
+        // if (direct) {
+        //     return ondone(work);
+        // }
         let seq = ++miniseq;
         minifns[seq] = ondone;
-        minionq.push({ seq, work });
+        minionq.push({ seq, work, direct });
         minwork.kick();
     },
 
@@ -239,9 +243,10 @@ const minwork = {
             return;
         }
         let minion = minions.shift();
-        let { seq, work } = minionq.shift();
+        let { seq, work, direct } = minionq.shift();
         work.seq = seq;
-        minion.postMessage(work);
+        debug('WORKER.send', { work, direct });
+        minion.postMessage(work, direct);
         minions.push(minion);
     },
 
@@ -768,5 +773,3 @@ CAM.init(worker);
 FDM.init(worker);
 LASER.init(worker);
 SLA.init(worker);
-
-broker.publish("worker.started", { dispatch, minions: minwork });
