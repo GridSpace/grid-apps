@@ -1,7 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { newPolygon } from '../geo/polygon.js';
-import { newPoint } from '../geo/point.js';
 import { polygons } from '../geo/polygons.js';
 import { THREE } from '../ext/three.js';
 
@@ -44,7 +43,7 @@ export function parse(text, opt = { }) {
             if (points.length < 3) {
                 continue;
             }
-            let poly = newPolygon().addPoints(points.map(p => newPoint(p.x, -p.y, 0)));
+            let poly = newPolygon().addPoints(points.map(p => newPolygon.newPoint(p.x, -p.y, 0)));
             if (poly.appearsClosed()) poly.points.pop();
             if (type === 'polyline') poly.setOpen(true);
             poly._svg = { width, miter };
