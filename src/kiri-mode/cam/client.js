@@ -508,7 +508,7 @@ export function init() {
     api.event.on("cam.parse.gerber", opts => {
         const { data, mesh } = opts;
         const { open, closed, circs, rects } = load.GBR.parse(data);
-        const stack = new Stack(mesh || space.world.newGroup());
+        const stack = new Stack(mesh || SPACE.world.newGroup());
         const layers = new Layers();
         for (let poly of open) {
             layers.setLayer("open", { line: 0xff8800 }, false).addPoly(poly);

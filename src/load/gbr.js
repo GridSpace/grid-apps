@@ -2,7 +2,7 @@
 
 import { polygons } from '../geo/polygons.js';
 import { CSG } from '../geo/csg.js';
-import * as TracespaceParser from '../ext/gerber.js';
+import '../ext/gerber.js';
 import { newPolygon } from '../geo/polygon.js';
 import { newBounds } from '../geo/bounds.js';
 
