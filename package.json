@@ -79,7 +79,7 @@
     },
     "scripts": {
         "setup": "npm i && npm run dev -- --dryrun && npx webpack --config src/webpack/webpack-three-esm.js && node src/webpack/esbuild.config.mjs",
-        "dev": "gs-app-server --debug",
+        "dev": "gs-app-server --debug --single",
         "prod": "gs-app-server",
         "prod-dryrun": "gs-app-server --dryrun",
         "start": "npm run prebuild && electron .",
