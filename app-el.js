@@ -2,6 +2,7 @@ const { app, shell, session, BrowserWindow } = require('electron');
 const path = require('path');
 const server = require('@gridspace/app-server');
 
+const pkgd = app.isPackaged;
 const basDir = __dirname;
 const usrDir = app.getPath("userData");
 const appDir = path.join(usrDir, 'gapp');
@@ -28,9 +29,9 @@ server({
     data: datDir,
     conf: cnfDir,
     logs: logDir,
-    cache: path.join(basDir, "data", "cache"),
     single: true,
     electron: true,
+    pkgd,
     debug
 });
 

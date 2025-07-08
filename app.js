@@ -26,7 +26,6 @@ let forceUseCache = false;
 let serviceWorker = true;
 let crossOrigin = false;
 let setupFn;
-let cacheDir;
 let startTime;
 let oversion;
 let dversion;
@@ -71,8 +70,6 @@ function init(mod) {
 
     if (ENV.single) console.log({ cwd: process.cwd(), env: ENV });
     dversion = debug ? `_${version}` : version;
-    cacheDir = ENV.cache || mod.util.datadir("cache");
-    if (ENV.single) logger.log({ cacheDir });
     forceUseCache = ENV.cache ? true : false;
 
     const approot = PATH.join("main","gapp");
@@ -80,7 +77,9 @@ function init(mod) {
     const callstack = [];
     let xxxx = false;
 
-    generateDevices();
+    if (!ENV.electron) {
+        generateDevices();
+    }
 
     mod.on.test((req) => {
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;
@@ -224,12 +223,17 @@ function initModule(mod, file, dir) {
             logger: log.new
         },
         inject: (code, file, opt = {}) => {
-            const body = fs.readFileSync(dir + '/' + file);
-            // console.log({ inject: code, file, opt });
-            if (opt.first) {
-                append[code] = body.toString() + '\n' + append[code];
-            } else {
-                append[code] += body.toString() + '\n';
+            const path = mod.dir + '/' + dir + '/' + file;
+            try {
+                const body = fs.readFileSync(path);
+                // console.log({ inject: code, file, opt });
+                if (opt.first) {
+                    append[code] = body.toString() + '\n' + append[code];
+                } else {
+                    append[code] += body.toString() + '\n';
+                }
+            } catch (e) {
+                console.log({ missing_file: path, dir, mod });
             }
         },
         path: {
@@ -388,11 +392,6 @@ function serveWasm(req, res, next) {
 
 // pack/concat device script strings to inject into /code/ scripts
 function generateDevices() {
-    if (process.versions.electron) {
-        // bail when running inside electron
-        console.log('skipping device generation in electron');
-        return;
-    }
     let root = PATH.join(dir,"src","kiri-dev");
     let devs = {};
     fs.readdirSync(root).forEach(type => {

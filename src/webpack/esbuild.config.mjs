@@ -47,6 +47,12 @@ async function appendExtraModules(extras, outfile, minify = false) {
     console.log(`Appended ${files.length} module(s) to ${outfile}`);
 }
 
+const logOverride = {
+    'duplicate-class-member': 'silent',
+    'duplicate-object-key': 'silent',
+    'direct-eval': 'silent'
+};
+
 async function buildApp() {
     try {
         // Bundle mesh main app
@@ -62,7 +68,8 @@ async function buildApp() {
             platform: 'browser',
             define: {
                 'process.env.NODE_ENV': `"${mode}"`
-            }
+            },
+            logOverride
         });
 
         appendExtraModules(MESH_EXTRAS, MESH_OUTFILE, isProd);
@@ -80,7 +87,8 @@ async function buildApp() {
             platform: 'browser',
             define: {
                 'process.env.NODE_ENV': `"${mode}"`
-            }
+            },
+            logOverride
         });
 
         // Bundle kiri main app
@@ -96,7 +104,8 @@ async function buildApp() {
             platform: 'browser',
             define: {
                 'process.env.NODE_ENV': `"${mode}"`
-            }
+            },
+            logOverride
         });
 
         appendExtraModules(KIRI_EXTRAS, KIRI_OUTFILE, isProd);
@@ -114,7 +123,8 @@ async function buildApp() {
             platform: 'browser',
             define: {
                 'process.env.NODE_ENV': `"${mode}"`
-            }
+            },
+            logOverride
         });
 
         // Bundle kiri minion
@@ -130,7 +140,8 @@ async function buildApp() {
             platform: 'browser',
             define: {
                 'process.env.NODE_ENV': `"${mode}"`
-            }
+            },
+            logOverride
         });
 
         console.log(`Build completed successfully in ${mode} mode!`);
