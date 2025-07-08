@@ -6,7 +6,7 @@ import { ajax, js2o } from './utils.js';
 import { base } from '../geo/base.js';
 import { load } from '../load/file.js';
 import { space } from '../moto/space.js';
-import { Widget } from './widget.js';
+import { Widget, newWidget } from './widget.js';
 import { Packer } from './pack.js';
 
 import { COLOR, MODES } from './consts.js';
@@ -837,7 +837,7 @@ function platformLoadFiles(files, group) {
                 api.function.parse(data.textDecode('utf-8'), 'gcode');
                 load_dec();
             } else if (issvg) {
-                loadSVGDialog(opt => {
+                loadSVGDialog(opt => { 
                     group = group || [];
                     let svg = load.SVG.parse(data.textDecode('utf-8'), opt);
                     let ind = 0;

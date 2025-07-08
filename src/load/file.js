@@ -100,4 +100,6 @@ function load_file(file, opt) {
     });
 }
 
+Object.assign(load_file, { SVG, OBJ, STL, TMF, GBR, PNG: pngLoad.PNG });
+
 export { types, as_buffer, load_data, load_file, load_file as load };
