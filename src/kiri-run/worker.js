@@ -37,7 +37,7 @@ let drivers = {
         WJET
     },
     ccvalue = self.navigator ? self.navigator.hardwareConcurrency || 0 : 0,
-    concurrent = 1,//Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
+    concurrent = Math.min(4, self.Worker && ccvalue > 3 ? ccvalue - 1 : 0),
     current = {
         print: null,
         snap: null,
@@ -192,11 +192,10 @@ const minwork = {
     },
 
     sliceZ(z, points, options) {
-        debug('minwork.sliceZ', { z, points, options });
         return new Promise((resolve, reject) => {
-            // if (concurrent < 2) {
-            //     reject("concurrent slice unavaiable");
-            // }
+            if (concurrent < 2) {
+                reject("concurrent slice unavaiable");
+            }
             let { each } = options;
             // todo use shared array buffer?
             let i = 0, floatP = new Float32Array(points.length * 3);
@@ -205,57 +204,54 @@ const minwork = {
                 floatP[i++] = p.y;
                 floatP[i++] = p.z;
             }
-            const state = { zeros: [ floatP.buffer ] };
             minwork.queue({
                 cmd: "sliceZ",
                 z,
                 points: floatP,
-                options
+                options: codec.toCodable(options)
             }, data => {
-                console.log({ data });
-                for (let rec of data.output) {
-                    each(rec);
+                let recs = codec.decode(data.output);
+                if (each) {
+                    for (let rec of recs) {
+                        each(rec);
+                    }
                 }
-                resolve();
-            }, state.zeros);
+                resolve(recs);
+            }, [ floatP.buffer ]);
         });
     },
 
     queue(work, ondone, direct) {
-        debug('WORKER.queue', { work, direct });
-        // if (direct) {
-        //     return ondone(work);
-        // }
-        let seq = ++miniseq;
-        minifns[seq] = ondone;
-        minionq.push({ seq, work, direct });
+        minionq.push({work, ondone, direct});
         minwork.kick();
     },
 
     queueAsync(work, direct) {
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
             minwork.queue(work, resolve, direct);
         });
     },
 
     kick() {
-        if (minionq.length === 0 || minions.length === 0) {
-            return;
+        if (minions.length && minionq.length) {
+            let qrec = minionq.shift();
+            let minion = minions.shift();
+            let seq = miniseq++;
+            qrec.work.seq = seq;
+            minifns[seq] = (data) => {
+                qrec.ondone(data);
+                minions.push(minion);
+                minwork.kick();
+            };
+            minion.postMessage(qrec.work, qrec.direct);
         }
-        let minion = minions.shift();
-        let { seq, work, direct } = minionq.shift();
-        work.seq = seq;
-        debug('WORKER.send', { work, direct });
-        minion.postMessage(work, direct);
-        minions.push(minion);
     },
 
     broadcast(cmd, data, direct) {
-        if (direct) {
-            return;
-        }
         for (let minion of minions) {
-            minion.postMessage({ cmd, data });
+            minion.postMessage({
+                cmd, ...data
+            }, direct);
         }
     }
 };

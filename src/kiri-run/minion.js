@@ -131,7 +131,7 @@ const funcs = self.minion = {
     },
 
     sliceZ(data, seq) {
-        log('minion.sliceZ', { data, seq });
+        debug('minion.sliceZ', { data, seq });
         let { z, points, options } = data;
         let i = 0, p = 0, realp = new Array(points.length / 3);
         while (i < points.length) {
