@@ -37,6 +37,7 @@
     "dependencies": {
         "@fortawesome/fontawesome-free": "^6.1.1",
         "@gridspace/app-server": "^0.0.17",
+        "@gridspace/basic-ftp": "^5.0.5",
         "@gridspace/net-level-client": "^0.2.3",
         "@tracespace/parser": "^5.0.0-next.0",
         "@tweenjs/tween.js": "^16.6.0",
@@ -178,11 +179,11 @@
         "nsis": {
             "oneClick": false,
             "allowToChangeInstallationDirectory": true,
-			"differentialPackage": false,
+            "differentialPackage": false,
             "allowElevation": true
         },
         "dmg": {
-			"writeUpdateInfo": false
+            "writeUpdateInfo": false
         },
         "mac": {
             "icon": "bin/GS.icns",
