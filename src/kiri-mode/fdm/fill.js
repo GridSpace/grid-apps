@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { base, util } from '../../geo/base.js';
+import { newPolygon } from '../../geo/polygon.js';
 import { slice as gyroid_slice } from '../../geo/gyroid.js';
 
 export const fill_fixed = {
@@ -119,7 +120,7 @@ function fillGyroid(target) {
                             z: 0
                         }
                     });
-                    polys.push(base.newPolygon().setOpen(true).addObj(points));
+                    polys.push(newPolygon().setOpen(true).addObj(points));
                 }
             }
             polys = connectOpenPolys(polys);
@@ -136,7 +137,7 @@ function fillGyroid(target) {
                             z: 0
                         }
                     });
-                    polys.push(base.newPolygon().setOpen(true).addObj(points));
+                    polys.push(newPolygon().setOpen(true).addObj(points));
                 }
             }
             polys = connectOpenPolys(polys);

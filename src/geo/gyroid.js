@@ -200,10 +200,8 @@ export function filter(poly, inc) {
 export function distTo(a, b, dir) {
     let dx = a.x - b.x;
     let dy = a.y - b.y;
-    if (dir === 'lr') {
-        return Math.abs(dx);
-    } else if (dir === 'td') {
-        return Math.abs(dy);
-    }
+    // bias distance by prevailing direction of discovery to join stragglers
+    if (dir === 'lr') dx = dx / 2;
+    if (dir === 'td') dy = dy / 2;
     return Math.sqrt(dx * dx + dy * dy);
 }
