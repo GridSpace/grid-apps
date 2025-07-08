@@ -232,10 +232,10 @@ function reload() {
 function do_reload(time) {
     // allow time for async saves to complete and busy to to to zero
     setTimeout(() => {
-        if (busy === 0) {
+        if (api.busy.val() === 0) {
             LOC.reload();
         } else {
-            console.log(`reload deferred on busy=${busy}`);
+            console.log(`reload deferred on busy=${api.busy.val()}`);
             do_reload(250);
         }
     }, time || 100);

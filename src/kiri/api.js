@@ -60,7 +60,7 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
     },
     busyVal = 0,
     busy = {
-        val() { return busy },
+        val() { return busyVal },
         inc() { api.event.emit("busy", ++busyVal) },
         dec() { api.event.emit("busy", --busyVal) }
     },
