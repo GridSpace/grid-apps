@@ -404,6 +404,7 @@ function generateDevices() {
         });
     });
     let dstr = JSON.stringify(devs);
+    util.mkdir(PATH.join(dir,"src","pack"));
     fs.writeFileSync(PATH.join(dir,"src","pack","devices.js"), `export const devices = ${dstr};`);
 }
 
