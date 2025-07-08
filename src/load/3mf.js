@@ -218,7 +218,6 @@ function extractItems(records) {
  */
 export function parseAsync(data) {
     return new Promise(async (resolve, reject) => {
-        console.log(JSZip)
         let zip = await JSZip.loadAsync(data);
         let models = {};
         for (let [key, value] of Object.entries(zip.files)) {
