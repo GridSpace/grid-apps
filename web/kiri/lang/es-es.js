@@ -1,7 +1,7 @@
 // Spanish localization for Kiri:Moto
 // Will defer to English map for any missing key/value pairs
-kiri.lang['es'] =
-kiri.lang['es-es'] = {
+self.lang['es'] =
+self.lang['es-es'] = {
     // common keys and menus
     animate:        "animar",       // CAM animate button
     arrange:        "organizar",    // layout workspace objects

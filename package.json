@@ -103,7 +103,7 @@
         "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
         "prebuild": "npm run setup && node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
-        "preinstall": "",
+        "preinstall": "node bin/install-pre.js",
         "docs-dev": "docusaurus start --config conf/docusaurus.config.js",
         "docs-build": "docusaurus build --config conf/docusaurus.config.js",
         "docs-serve": "docusaurus serve --config conf/docusaurus.config.js",

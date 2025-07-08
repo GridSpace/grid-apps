@@ -1,7 +1,7 @@
 // Danish localization for Kiri:Moto
 // Will defer to English map for any missing key/value pairs
-kiri.lang['da'] =
-kiri.lang['da-dk'] = {
+self.lang['da'] =
+self.lang['da-dk'] = {
     version:        "version",
     enable:         "enable",
     settings:       "indstillinger",
