@@ -7,7 +7,7 @@ function rnd() {
 }
 
 const KEY = "moto-ajax";
-const MOID = local.getItem(KEY) || (Date.now().toString(36)+rnd()+rnd());
+let MOID = local.getItem(KEY) || (Date.now().toString(36)+rnd()+rnd());
 
 local.setItem(KEY, MOID);
 
