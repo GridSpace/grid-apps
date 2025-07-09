@@ -12,7 +12,7 @@ import { updateStock } from './cl-stock.js';
 import { createPopOps } from './cl-ops.js';
 import { tabAdd, tabDone, tabClear, restoreTabs, updateTabs } from './cl-tab.js';
 import { traceOn, traceDone, unselectTraces } from './cl-trace.js';
-import { holeSelOn, selectHolesDone } from './cl-hole.js';
+import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
 import { surfaceOn, surfaceDone } from './cl-surface.js';
 
 const DEG2RAD = Math.PI / 180;

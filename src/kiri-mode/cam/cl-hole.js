@@ -2,6 +2,7 @@
 
 import { api } from '../../kiri/api.js';
 import { env, clearPops } from './client.js';
+import { CAM } from './driver-fe.js';
 import { lastTrace, setLastTrace } from './cl-trace.js';
 
 export let holeSelOn = false;
