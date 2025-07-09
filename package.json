@@ -96,6 +96,7 @@
         "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
         "dev": "gs-app-server --debug --single",
         "prod": "gs-app-server",
+        "prod-dryrun": "gs-app-server --dryrun",
         "start": "npm run prebuild && electron .",
         "start-dev": "npm run prebuild && electron . --devel",
         "start-dbg": "npm run prebuild && electron . --debugg",
