@@ -1,16 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-'use strict';
-
-// Polyfill for appendAll if not present
-if (!Array.prototype.appendAll) {
-    Object.defineProperty(Array.prototype, 'appendAll', {
-        value: function(arr) {
-            for (let v of arr) this.push(v);
-        },
-        enumerable: false
-    });
-}
+const CDH = 'Content-Disposition';
 
 export class STL {
     constructor() {
@@ -18,6 +8,7 @@ export class STL {
         this.normals = null;
         this.colors = null;
     }
+
     load(url, callback, formdata, scale, credentials, headers) {
         const stl = this;
 
@@ -25,7 +16,7 @@ export class STL {
             method: formdata ? 'POST' : 'GET',
             credentials: credentials ? credentials : 'same-origin',
             body: formdata,
-            ...(headers ? {headers: headers} : {})
+            ...(headers ? { headers: headers } : {})
         }).then(response => {
             if (response.status === 200 || response.status === 0) {
                 response.arrayBuffer().then(buffer => {
@@ -36,7 +27,7 @@ export class STL {
                         cdhVal = cdhVal.split(';').map(v => v.trim()).filter(v => {
                             return v.indexOf('filename=') === 0;
                         }).map(v => {
-                            return v.substring(10,v.length-1);
+                            return v.substring(10, v.length - 1);
                         })[0];
                     }
                     if (callback) callback(stl.vertices, cdhVal);
@@ -48,11 +39,12 @@ export class STL {
             if (callback) callback(null, err)
         });
     }
+
     encode(vertices, normals) {
         if (!(vertices && vertices.length % 3 === 0)) throw "invalid vertices";
 
         let vc = vertices.length / 3,
-            bs = (vc * 16) + (vc * (2/3)) + 84,
+            bs = (vc * 16) + (vc * (2 / 3)) + 84,
             bin = new ArrayBuffer(bs),
             writer = new DataView(bin),
             i = 0,
@@ -93,6 +85,7 @@ export class STL {
 
         return bin;
     }
+
     parse(data, scale) {
         let binData = this.convertToBinary(data);
 
@@ -100,7 +93,7 @@ export class STL {
             let expect, face_size, n_faces, reader;
             reader = new DataView(binData);
             face_size = (32 / 8 * 3) + ((32 / 8 * 3) * 3) + (16 / 8);
-            n_faces = reader.getUint32(80,true);
+            n_faces = reader.getUint32(80, true);
             expect = 80 + (32 / 8) + (n_faces * face_size);
             return expect === reader.byteLength;
         };
@@ -109,14 +102,16 @@ export class STL {
             ? this.parseBinary(binData, scale)
             : this.parseASCII(this.convertToString(data), scale);
     }
+
     parseAsync(data, scale) {
         return new Promise((resolve, reject) => {
             resolve(this.parse(data, scale));
         });
     }
-    parseBinary(data, scale = 1)  {
+
+    parseBinary(data, scale = 1) {
         let reader = new DataView(data),
-            faces = reader.getUint32 (80, true),
+            faces = reader.getUint32(80, true),
             r, g, b, hasColors = false, colors,
             defaultR, defaultG, defaultB, alpha;
 
@@ -142,7 +137,7 @@ export class STL {
 
         colors = hasColors ? new Uint16Array(faces * 3 * 3) : null;
 
-        for (let face = 0; face < faces; face ++)  {
+        for (let face = 0; face < faces; face++) {
 
             let start = dataOffset + face * faceLength,
                 normalX = reader.getFloat32(start, true),
@@ -164,16 +159,16 @@ export class STL {
 
             let i = 1, vertexstart;
 
-            while (i <= 3)  {
+            while (i <= 3) {
                 vertexstart = start + (i++) * 12;
-                vertices[offset    ] = reader.getFloat32 (vertexstart, true) * scale;
-                vertices[offset + 1] = reader.getFloat32 (vertexstart + 4, true) * scale;
-                vertices[offset + 2] = reader.getFloat32 (vertexstart + 8, true) * scale;
-                    normals[offset    ] = normalX;
-                    normals[offset + 1] = normalY;
-                    normals[offset + 2] = normalZ;
+                vertices[offset] = reader.getFloat32(vertexstart, true) * scale;
+                vertices[offset + 1] = reader.getFloat32(vertexstart + 4, true) * scale;
+                vertices[offset + 2] = reader.getFloat32(vertexstart + 8, true) * scale;
+                normals[offset] = normalX;
+                normals[offset + 1] = normalY;
+                normals[offset + 2] = normalZ;
                 if (hasColors) {
-                    colors[offset    ] = r;
+                    colors[offset] = r;
                     colors[offset + 1] = g;
                     colors[offset + 2] = b;
                 }
@@ -187,6 +182,7 @@ export class STL {
 
         return vertices;
     }
+
     parseASCII(data, scale = 1) {
         let result,
             resultText,
@@ -196,7 +192,7 @@ export class STL {
             normals = [],
             patternFace = /facet([\s\S]*?)endfacet/g;
 
-        while ((result = patternFace.exec(data)) !== null)  {
+        while ((result = patternFace.exec(data)) !== null) {
             resultText = result[0];
             patternNormal = /normal[\s]+([\-+]?[0-9]+\.?[0-9]*([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+/g;
             patternVertex = /vertex[\s]+([\-+]?[0-9]+\.?[0-9]*([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+/g;
@@ -216,14 +212,15 @@ export class STL {
             nToFloat32 = new Float32Array(normals.length),
             i;
 
-        for (i=0; i<vertices.length; i++) vToFloat32[i] = vertices[i];
-        for (i=0; i<normals.length; i++) nToFloat32[i] = normals[i];
+        for (i = 0; i < vertices.length; i++) vToFloat32[i] = vertices[i];
+        for (i = 0; i < normals.length; i++) nToFloat32[i] = normals[i];
 
         this.vertices = vToFloat32;
         this.normals = nToFloat32;
 
         return vToFloat32;
     }
+
     convertToString(buf) {
         if (typeof buf !== "string") {
             let array_buffer = new Uint8Array(buf);
@@ -236,6 +233,7 @@ export class STL {
             return buf;
         }
     }
+
     convertToBinary(buf) {
         if (typeof buf === "string") {
             let array_buffer = new Uint8Array(buf.length);
