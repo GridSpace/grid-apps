@@ -1,17 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
-import { load } from '../load.js';
-import { kiri } from './kiri.js';
-import { moto } from '../moto.js';
-import { api } from './api.js';
-import { newWidget } from './widget.js';
-import { conf, event, feature, platform, settings, show } from './api.js';
-import { VIEWS } from './consts.js';
 
+import { api } from './api.js';
+import { load } from '../load/file.js';
+import { newWidget } from './widget.js';
+import { VIEWS } from './consts.js';
 
 // add frame message api listener
 window.addEventListener('message', msg => {
-    const { load, kiri, moto } = self;
-    const { api, newWidget } = kiri;
     const { conf, event, feature, platform, settings, show } = api;
 
     if (!feature.frame) return;
@@ -124,6 +119,3 @@ window.addEventListener('message', msg => {
         show.progress(data.progress, data.message);
     }
 });
-
-
-// No direct exports; sets up message listener

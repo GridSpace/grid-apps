@@ -1,7 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
 (function() {
     let KIRI = self.kiri = self.kiri || {};
     let frame, cwin, onevent = {}, targetOrigin;

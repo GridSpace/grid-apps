@@ -322,6 +322,7 @@ const productionMap = {
     '/lib/kiri-run/engine.js' : '/lib/pack/kiri-eng.js',
     '/lib/kiri-run/minion.js' : '/lib/pack/kiri-pool.js',
     '/lib/kiri-run/worker.js' : '/lib/pack/kiri-work.js',
+    // '/lib/kiri-run/frame.js' : '/lib/pack/kiri-frame.js',
 };
 
 function handleVersion(req, res, next) {
@@ -539,7 +540,8 @@ function rewriteHtmlVersion(req, res, next) {
         "/lib/mesh/work.js",
         "/lib/kiri-run/worker.js",
         "/lib/kiri-run/minion.js",
-        "/lib/kiri-run/engine.js"
+        "/lib/kiri-run/engine.js",
+        "/lib/kiri-run/frame.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
     }
@@ -547,6 +549,8 @@ function rewriteHtmlVersion(req, res, next) {
         "/lib/main/kiri.js",
         "/lib/main/mesh.js"
     ].indexOf(req.app.path) >= 0) {
+        addCorsHeaders(req, res);
+
         const data = append[req.app.path.split('/')[3].split('.')[0]];
 
         if (!data) return next();
