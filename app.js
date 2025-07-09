@@ -413,7 +413,7 @@ function generateDevices() {
     });
     let dstr = JSON.stringify(devs);
     util.mkdir(PATH.join(dir,"src","pack"));
-    fs.writeFileSync(PATH.join(dir,"src","pack","devices.js"), `export const devices = ${dstr};`);
+    fs.writeFileSync(PATH.join(dir,"src","pack","kiri-devs.js"), `export const devices = ${dstr};`);
 }
 
 function minify(code) {

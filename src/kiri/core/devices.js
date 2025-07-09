@@ -4,7 +4,7 @@ import { $, h } from '../../moto/webui.js';
 import { api } from './api.js';
 import { conf } from './conf.js';
 import { space } from '../../moto/space.js';
-import { devices as devlist } from '../../pack/devices.js';
+import { devices as devlist } from '../../pack/kiri-devs.js';
 import { settings, conf as setconf } from './settings.js';
 
 export const device = {
