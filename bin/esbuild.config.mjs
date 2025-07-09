@@ -42,113 +42,59 @@ const logOverride = {
     'direct-eval': 'silent'
 };
 
+const rec = {
+    bundle: true,
+    define: { 'process.env.NODE_ENV': `"${mode}"` },
+    external: ['module'],
+    format: 'esm',
+    logOverride,
+    minify: isProd,      // false for dev, true for prod
+    platform: 'browser',
+    sourcemap: !isProd,  // true for dev, false for prod
+    target: 'es2020',
+};
+
 async function buildApp() {
     try {
         // Bundle mesh main app
-        await build({
+        await build(Object.assign({}, rec, {
             entryPoints: [ 'src/main/mesh.js' ],
-            bundle: true,
             outfile: MESH_OUTFILE,
-            format: 'esm',
-            external: ['module'],
-            sourcemap: !isProd,  // true for dev, false for prod
-            minify: isProd,      // false for dev, true for prod
-            target: 'es2020',
-            platform: 'browser',
-            define: {
-                'process.env.NODE_ENV': `"${mode}"`
-            },
-            logOverride
-        });
+        }));
 
         appendExtraModules(MESH_EXTRAS, MESH_OUTFILE, isProd);
 
         // Bundle mesh worker
-        await build({
+        await build(Object.assign({}, rec, {
             entryPoints: [ 'src/mesh/work.js' ],
-            bundle: true,
             outfile: 'src/pack/mesh-work.js',
-            format: 'esm',
-            external: ['module'],
-            sourcemap: !isProd,  // true for dev, false for prod
-            minify: isProd,      // false for dev, true for prod
-            target: 'es2020',
-            platform: 'browser',
-            define: {
-                'process.env.NODE_ENV': `"${mode}"`
-            },
-            logOverride
-        });
+        }));
 
         // Bundle kiri main app
-        await build({
+        await build(Object.assign({}, rec, {
             entryPoints: [ 'src/main/kiri.js' ],
-            bundle: true,
             outfile: KIRI_OUTFILE,
-            format: 'esm',
-            external: ['module'],
-            sourcemap: !isProd,  // true for dev, false for prod
-            minify: isProd,      // false for dev, true for prod
-            target: 'es2020',
-            platform: 'browser',
-            define: {
-                'process.env.NODE_ENV': `"${mode}"`
-            },
-            logOverride
-        });
+        }));
 
         appendExtraModules(KIRI_EXTRAS, KIRI_OUTFILE, isProd);
 
         // Bundle kiri worker
-        await build({
+        await build(Object.assign({}, rec, {
             entryPoints: [ 'src/kiri/run/worker.js' ],
-            bundle: true,
             outfile: 'src/pack/kiri-work.js',
-            format: 'esm',
-            external: ['module'],
-            sourcemap: !isProd,  // true for dev, false for prod
-            minify: isProd,      // false for dev, true for prod
-            target: 'es2020',
-            platform: 'browser',
-            define: {
-                'process.env.NODE_ENV': `"${mode}"`
-            },
-            logOverride
-        });
+        }));
 
         // Bundle kiri minion
-        await build({
+        await build(Object.assign({}, rec, {
             entryPoints: [ 'src/kiri/run/minion.js' ],
-            bundle: true,
             outfile: 'src/pack/kiri-pool.js',
-            format: 'esm',
-            external: ['module'],
-            sourcemap: !isProd,  // true for dev, false for prod
-            minify: isProd,      // false for dev, true for prod
-            target: 'es2020',
-            platform: 'browser',
-            define: {
-                'process.env.NODE_ENV': `"${mode}"`
-            },
-            logOverride
-        });
+        }));
 
         // Bundle kiri engine
-        await build({
+        await build(Object.assign({}, rec, {
             entryPoints: [ 'src/kiri/run/engine.js' ],
-            bundle: true,
             outfile: 'src/pack/kiri-eng.js',
-            format: 'esm',
-            external: ['module'],
-            sourcemap: !isProd,  // true for dev, false for prod
-            minify: isProd,      // false for dev, true for prod
-            target: 'es2020',
-            platform: 'browser',
-            define: {
-                'process.env.NODE_ENV': `"${mode}"`
-            },
-            logOverride
-        });
+        }));
 
         console.log(`Build completed successfully in ${mode} mode!`);
     } catch (error) {
