@@ -16,9 +16,10 @@ import { functions } from './function.js';
 import { platform } from './platform.js';
 import { selection } from './selection.js';
 import { stats } from '../kiri/stats.js';
+import { newWidget } from './widget.js';
 import { widgets } from './widgets.js';
 import { updateTool } from '../kiri-mode/cam/tools.js';
-import { version } from '../moto/license.js';
+import { beta, version } from '../moto/license.js';
 import { space as SPACE } from '../moto/space.js';
 
 import { LANG } from './lang.js';
@@ -120,6 +121,7 @@ function localSet(key, val) {
 
 export const api = {
     ajax,
+    beta,
     alerts,
     busy,
     catalog,
@@ -147,6 +149,9 @@ export const api = {
     local,
     modal,
     mode,
+    new: {
+        widget: newWidget
+    },
     noop,
     o2js,
     onkey,

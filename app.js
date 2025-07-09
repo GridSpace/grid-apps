@@ -240,7 +240,16 @@ function initModule(mod, file, dir) {
             any: arg => { mod.add(arg) },
             code() {
                 const [ path, file ] = [ ...arguments ];
-                code[path] = fs.readFileSync(file);
+                if (lastmod(file)) {
+                    code[path] = fs.readFileSync(file);
+                    // console.log({ CODE: path, file });
+                } else if (lastmod(mod.dir + '/' + file)) {
+                    const alt = mod.dir + '/' + file;
+                    code[path] = fs.readFileSync(alt);
+                    // console.log({ CODE: path, alt });
+                } else {
+                    console.log({ MISSING_CODE: path, file });
+                }
             },
             full: arg => { mod.add(fullpath(arg)) },
             map: arg => { mod.add(fixedmap(arg)) },
