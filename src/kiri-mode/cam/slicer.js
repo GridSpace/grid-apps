@@ -11,6 +11,7 @@ import { slicer } from '../../geo/slicer.js';
 const { sliceConnect, sliceDedup } = slicer;
 const { config } = base;
 const timing = false;
+const zDecimal = 3;
 
 const begin = function () {
     if (timing) console.time(...arguments);
@@ -66,7 +67,7 @@ export class Slicer {
         const zList = this.zList;
 
         function countZ(z) {
-            z = z.round(5);
+            z = z.round(zDecimal);
             zList[z] = (zList[z] || 0) + 1;
         }
 
@@ -75,7 +76,7 @@ export class Slicer {
             p3 = newPoint(0, 0, 0);
 
         // for (let i = 0, il = points.length; i < il; i++) {
-        //     points[i] = points[i].round(5);
+        //     points[i] = points[i].round(zDecimal);
         // }
 
         for (let i = 0, il = points.length; i < il;) {
@@ -95,7 +96,7 @@ export class Slicer {
             // use co-flat and co-line detection to adjust slice Z
             if (p1.z === p2.z && p2.z === p3.z) {
                 // detect zFlat faces to avoid slicing directly on them
-                let zkey = p1.z.toFixed(5),
+                let zkey = p1.z.toFixed(zDecimal),
                     area = Math.abs(util.area2(p1, p2, p3)) / 2;
                 if (!zFlat[zkey]) {
                     zFlat[zkey] = area;
@@ -106,17 +107,17 @@ export class Slicer {
                 // detect zLine (curved region tops/bottoms)
                 // in cam used for ball and v mill tracing
                 if (p1.z === p2.z) {
-                    let zkey = p1.z.toFixed(5);
+                    let zkey = p1.z.toFixed(zDecimal);
                     let zval = zLine[zkey];
                     zLine[zkey] = (zval || 0) + 1;
                 }
                 if (p2.z === p3.z) {
-                    let zkey = p2.z.toFixed(5);
+                    let zkey = p2.z.toFixed(zDecimal);
                     let zval = zLine[zkey];
                     zLine[zkey] = (zval || 0) + 1;
                 }
                 if (p3.z === p1.z) {
-                    let zkey = p3.z.toFixed(5);
+                    let zkey = p3.z.toFixed(zDecimal);
                     let zval = zLine[zkey];
                     zLine[zkey] = (zval || 0) + 1;
                 }
@@ -155,7 +156,7 @@ export class Slicer {
             if (!flatoff) {
                 return z;
             }
-            const znorm = z.toFixed(5);
+            const znorm = z.toFixed(zDecimal);
             return this.zFlat[znorm] ? z + flatoff : z;
         });
 
@@ -395,10 +396,10 @@ export class Slicer {
         }
 
         // filter duplicate values
-        array = array.map(v => v.round(5)).filter((e, i, a) => i < 1 || a[i - 1] !== a[i]);
+        array = array.map(v => v.round(zDecimal)).filter((e, i, a) => i < 1 || a[i - 1] !== a[i]);
 
-        // return array.map(v => Math.abs(parseFloat(v.toFixed(5))));
-        return array.map(v => parseFloat(v.toFixed(5)));
+        // return array.map(v => Math.abs(parseFloat(v.toFixed(zDecimal))));
+        return array.map(v => parseFloat(v.toFixed(zDecimal)));
     }
 }
 
