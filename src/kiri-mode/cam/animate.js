@@ -350,7 +350,6 @@ kiri.load(() => {
         stock = settings.stock;
         rez = 1/Math.sqrt(density/(stock.x * stock.y));
 
-
         //destructure arcs into path points
         path = path.map(o=> 
             o.arcPoints
@@ -363,7 +362,9 @@ kiri.load(() => {
                 ),
                 o
             ]
-            : o
+            : [
+                o
+            ]
         )
         .flat();
 
