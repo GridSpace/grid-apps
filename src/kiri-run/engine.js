@@ -22,6 +22,7 @@ class Engine {
             widget: { [this.widget.id]: {} }
         };
         this.listener = () => { };
+        client.start();
     }
 
     load(url) {
@@ -53,6 +54,14 @@ class Engine {
                 reject(error);
             }
         });
+    }
+
+    setThreading(bool) {
+        if (bool) {
+            client.pool.start();
+        } else {
+            client.pool.stop();
+        }
     }
 
     setListener(listener) {

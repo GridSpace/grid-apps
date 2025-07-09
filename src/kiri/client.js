@@ -11,7 +11,9 @@ let debug = self.debug === true,
     running = {},
     worker = null,
     minions = false,
-    restarting = false;
+    restarting = false,
+    workpath,
+    poolpath;
 
 /**
  * @param {Function} fn name of function in kiri.worker
@@ -45,10 +47,20 @@ function send(fn, data, onreply, zerocopy) {
 export const client = {
     send: send,
 
+    setWorkPath(path) {
+        workpath = path;
+        return client;
+    },
+
+    setPoolPath(path) {
+        poolpath = path;
+        return client;
+    },
+
     pool: {
         start() {
             minions = true;
-            send("pool_start", {}, noop);
+            send("pool_start", { url: poolpath }, noop);
         },
 
         stop() {
@@ -65,7 +77,7 @@ export const client = {
             const blob = new Blob([ work ], { type: 'application/javascript' });
             return new Worker(URL.createObjectURL(blob));
         } else {
-            let worker = new Worker(`/lib/kiri-run/worker.js`, { type: 'module' });
+            let worker = new Worker(workpath || api.const.PATHS.work, { type: 'module' });
             worker.onerror = (error) => {
                 console.log({ WORKER_ERROR: error });
                 error.preventDefault();
@@ -85,6 +97,10 @@ export const client = {
             if (rec.fn) current++;
         }
         return current > 0;
+    },
+
+    start() {
+        client.restart();
     },
 
     restart() {
@@ -333,9 +349,6 @@ export const client = {
         });
     }
 };
-
-// start worker
-client.restart();
 
 self.kiri_client = client;
 

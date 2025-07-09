@@ -2166,5 +2166,6 @@ function init_lang() {
 
 export function run() {
     init_lang();
+    client.start();
     return api;
 }

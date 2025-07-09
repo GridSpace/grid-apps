@@ -7,6 +7,7 @@ import '../ext/jszip.js';
 
 import { base } from '../geo/base.js';
 import { codec } from '../kiri/codec.js';
+import { consts } from '../kiri/consts.js';
 import { util } from '../geo/base.js';
 import { newPoint } from '../geo/point.js';
 import { polygons as POLY } from '../geo/polygons.js';
@@ -84,12 +85,12 @@ const minwork = {
         return minions.length;
     },
 
-    start() {
+    start(poolpath) {
         if (minions.length || !concurrent) {
             return;
         }
         for (let i=0; i < concurrent; i++) {
-            let minion = new Worker(`/lib/kiri-run/minion.js`, { type: 'module' });
+            let minion = new Worker(poolpath || consts.PATHS.pool, { type: 'module' });
             minion.onerror = (error) => {
                 debug({ MINION_ERROR: error });
                 error.preventDefault();
@@ -102,7 +103,7 @@ const minwork = {
             minion.postMessage({ cmd: "label", name: `#${i}` });
             minions.push(minion);
         }
-        console.log(`kiri | init pool | ${version || "rogue"} | ${concurrent + 1}`);
+        console.log(`kiri | init pool | ${version || "rogue"} | ${concurrent}`);
     },
 
     stop() {
@@ -261,7 +262,7 @@ console.log(`kiri | init work | ${version || "rogue"}`);
 // code is running in the worker / server context
 const dispatch = {
     pool_start(data, send) {
-        minwork.start();
+        minwork.start(data.url);
         send.done({});
     },
 
