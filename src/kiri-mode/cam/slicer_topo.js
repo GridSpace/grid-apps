@@ -6,6 +6,7 @@ import { newOrderedLine } from '../../geo/line.js';
 
 const { config } = base;
 
+/** Slicer used in Topo3 and Topo4 to find contour lines */
 export class Slicer {
 
     static intersectPoints = intersectPoints;

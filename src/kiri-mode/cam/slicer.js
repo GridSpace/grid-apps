@@ -28,7 +28,7 @@ export class Slicer {
         this.setOptions(options);
 
         if (widget) {
-            this.threaded = widget.settings.controller.threaded;
+            this.threaded = this.minions && this.minions.running;
             this.setPoints(widget.getGeoVertices({ unroll: true, translate: true }));
             this.computeFeatures();
         }

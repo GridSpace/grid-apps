@@ -4,7 +4,7 @@ import { codec } from '../../kiri/codec.js';
 import { newPoint } from '../../geo/point.js';
 import { newPolygon } from '../../geo/polygon.js';
 import { newSlice } from '../../kiri/slice.js';
-import { Slicer as topo_slicer } from './slicer2.js';
+import { Slicer as topo_slicer } from './slicer_topo.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 import { Tool } from './tool.js';
 

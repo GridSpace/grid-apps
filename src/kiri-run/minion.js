@@ -7,13 +7,13 @@ import '../add/class.js';
 import '../add/three.js';
 
 import { base } from '../geo/base.js';
-import { codec, encode } from '../kiri/codec.js';
+import { codec, encode, encodePointArray } from '../kiri/codec.js';
 import { doTopShells } from '../kiri-mode/fdm/post.js';
 import { newPoint } from '../geo/point.js';
 import { polygons as POLY } from '../geo/polygons.js';
 import { sliceZ } from '../geo/slicer.js';
 import { Slicer as cam_slicer } from '../kiri-mode/cam/slicer.js';
-import { Slicer as topo_slicer } from '../kiri-mode/cam/slicer2.js';
+import { Slicer as topo_slicer } from '../kiri-mode/cam/slicer_topo.js';
 import { Probe, Trace, raster_slice } from '../kiri-mode/cam/topo3.js';
 import { wasm_ctrl } from '../geo/wasm.js';
 

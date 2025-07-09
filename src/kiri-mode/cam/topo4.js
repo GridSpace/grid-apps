@@ -5,7 +5,7 @@ import { newPoint } from '../../geo/point.js';
 import { newPolygon } from '../../geo/polygon.js';
 import { sliceConnect } from '../../geo/slicer.js';
 import { Tool } from './tool.js';
-import { Slicer as topo_slicer } from './slicer2.js';
+import { Slicer as topo_slicer } from './slicer_topo.js';
 
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
