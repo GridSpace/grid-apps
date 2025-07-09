@@ -550,11 +550,10 @@ function rewriteHtmlVersion(req, res, next) {
         "/lib/main/mesh.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
-
         const data = append[req.app.path.split('/')[3].split('.')[0]];
 
         if (!data) return next();
-        console.log({ append: req.app.path, data: data.length });
+        if (debug) logger.log({ append: req.app.path, data: data.length });
 
         const real_write = res.write;
         const real_end = res.end;
