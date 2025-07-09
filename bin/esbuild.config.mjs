@@ -101,7 +101,7 @@ async function buildApp() {
 
         // Bundle kiri worker
         await build({
-            entryPoints: [ 'src/kiri-run/worker.js' ],
+            entryPoints: [ 'src/kiri/run/worker.js' ],
             bundle: true,
             outfile: 'src/pack/kiri-work.js',
             format: 'esm',
@@ -118,7 +118,7 @@ async function buildApp() {
 
         // Bundle kiri minion
         await build({
-            entryPoints: [ 'src/kiri-run/minion.js' ],
+            entryPoints: [ 'src/kiri/run/minion.js' ],
             bundle: true,
             outfile: 'src/pack/kiri-pool.js',
             format: 'esm',
@@ -135,7 +135,7 @@ async function buildApp() {
 
         // Bundle kiri engine
         await build({
-            entryPoints: [ 'src/kiri-run/engine.js' ],
+            entryPoints: [ 'src/kiri/run/engine.js' ],
             bundle: true,
             outfile: 'src/pack/kiri-eng.js',
             format: 'esm',

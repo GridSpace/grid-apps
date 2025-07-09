@@ -3,10 +3,10 @@
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
-import '../kiri/lang.js';
-import '../kiri/lang-en.js';
+import '../kiri/core/lang.js';
+import '../kiri/core/lang-en.js';
 
-import { run } from '../kiri/init.js';
+import { run } from '../kiri/core/init.js';
 
 let load = [];
 

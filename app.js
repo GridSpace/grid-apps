@@ -319,10 +319,10 @@ const productionMap = {
     '/lib/mesh/work.js' : '/lib/pack/mesh-work.js',
     '/lib/main/mesh.js' : '/lib/pack/mesh-main.js',
     '/lib/main/kiri.js' : '/lib/pack/kiri-main.js',
-    '/lib/kiri-run/engine.js' : '/lib/pack/kiri-eng.js',
-    '/lib/kiri-run/minion.js' : '/lib/pack/kiri-pool.js',
-    '/lib/kiri-run/worker.js' : '/lib/pack/kiri-work.js',
-    // '/lib/kiri-run/frame.js' : '/lib/pack/kiri-frame.js',
+    '/lib/kiri/run/engine.js' : '/lib/pack/kiri-eng.js',
+    '/lib/kiri/run/minion.js' : '/lib/pack/kiri-pool.js',
+    '/lib/kiri/run/worker.js' : '/lib/pack/kiri-work.js',
+    // '/lib/kiri/run/frame.js' : '/lib/pack/kiri-frame.js',
 };
 
 function handleVersion(req, res, next) {
@@ -400,7 +400,7 @@ function serveWasm(req, res, next) {
 
 // pack/concat device script strings to inject into /code/ scripts
 function generateDevices() {
-    let root = PATH.join(dir,"src","kiri-dev");
+    let root = PATH.join(dir,"src","kiri","dev");
     let devs = {};
     fs.readdirSync(root).forEach(type => {
         let map = devs[type] = devs[type] || {};
@@ -538,10 +538,10 @@ function rewriteHtmlVersion(req, res, next) {
         "/kiri/",
         "/mesh/",
         "/lib/mesh/work.js",
-        "/lib/kiri-run/worker.js",
-        "/lib/kiri-run/minion.js",
-        "/lib/kiri-run/engine.js",
-        "/lib/kiri-run/frame.js"
+        "/lib/kiri/run/worker.js",
+        "/lib/kiri/run/minion.js",
+        "/lib/kiri/run/engine.js",
+        "/lib/kiri/run/frame.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
     }
