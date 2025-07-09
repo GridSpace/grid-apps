@@ -1,6 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { broker } from '../../moto/broker.js';
 import { codec } from '../../kiri/codec.js';
 import { newPoint } from '../../geo/point.js';
 import { newPolygon } from '../../geo/polygon.js';
@@ -422,7 +421,7 @@ class Topo {
 
 }
 
-class Probe {
+export class Probe {
 
     constructor(params) {
 
@@ -478,7 +477,7 @@ class Probe {
 
 }
 
-class Trace {
+export class Trace {
 
     constructor(probe, params) {
 
@@ -584,7 +583,7 @@ class Trace {
 
     init(params) {
         this.cross = params;
-        const { minions } = self.kiri_worker;
+        const { minions } = self.kiri_worker ?? {};
         const { clipTab, clipTabZ } = params;
 
         // because codec does not encode arbitrary fields
@@ -720,7 +719,7 @@ class Trace {
     }
 }
 
-function raster_slice(inputs) {
+export function raster_slice(inputs) {
     const { lines, data, box, resolution, curvesOnly } = inputs;
     const { flatness, zMin, minY, maxY, stepsY, gridx } = inputs;
     const { slice } = inputs;
@@ -810,74 +809,6 @@ function raster_slice(inputs) {
 
     return points;
 };
-
-broker.subscribe("minion.started", msg => {
-    const { funcs, cache, reply, log } = msg;
-
-    funcs.topo_raster = (data, seq) => {
-        const { id, slice, params } = data;
-        const { resolution } = params;
-        const vertices = cache[id];
-        const box = new THREE.Box2();
-        new topo_slicer(slice.index)
-            .setFromArray(vertices, slice)
-            .slice(resolution)
-            .forEach(rec => {
-                const { z, index, lines } = rec;
-
-                for (let line of lines) {
-                    const { p1, p2 } = line;
-                    if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
-                    if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
-                }
-
-                raster_slice({
-                    ...params,
-                    box,
-                    lines,
-                    gridx: index
-                });
-            });
-        // only pass back bounds of rasters to be merged
-        reply({ seq, box });
-    };
-
-    funcs.trace_init = data => {
-        const { cache } = self;
-        data.cross.clipTo = codec.decode(data.cross.clipTo);
-        data.cross.clipTab = codec.decode(data.cross.clipTab);
-        const probe = new Probe(data.probe);
-        const trace = new Trace(probe, data.trace);
-        cache.trace = {
-            probe,
-            trace,
-            cross: data.cross
-        };
-        trace.init(data.cross);
-    };
-
-    funcs.trace_y = (data, seq) => {
-        const { cache } = self;
-        const { trace } = cache.trace;
-        trace.crossY_sync(data.params, slice => {
-            slice = codec.encode(slice);
-            reply({ seq, slice });
-        });
-    };
-
-    funcs.trace_x = (data, seq) => {
-        const { cache } = self;
-        const { trace } = cache.trace;
-        trace.crossX_sync(data.params, slice => {
-            slice = codec.encode(slice);
-            reply({ seq, slice });
-        });
-    };
-
-    funcs.trace_cleanup = () => {
-        delete cache.trace;
-    };
-});
 
 export async function generate(opt) {
     return new Topo().generate(opt);

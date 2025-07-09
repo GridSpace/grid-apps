@@ -1,22 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base } from '../geo/base.js';
-import { line } from '../geo/line.js';
-import { point } from '../geo/point.js';
-import { polygon } from '../geo/polygon.js';
-import { polygons } from '../geo/polygons.js';
-import { broker } from '../moto/broker.js';
-import { slice } from '../kiri/slice.js';
-import { driver } from '../kiri-mode/cam/driver.js';
-import { slicer2 } from '../kiri-mode/cam/slicer2.js';
+import { codec } from '../../kiri/codec.js';
+import { newPoint } from '../../geo/point.js';
+import { newPolygon } from '../../geo/polygon.js';
+import { sliceConnect } from '../../geo/slicer.js';
+import { Tool } from './tool.js';
+import { Slicer as topo_slicer } from './slicer2.js';
 
-const { base, kiri, moto } = root;
-const { driver, newSlice } = kiri;
-const { CAM } = driver;
-const { polygons, newPoint, newPolygon, sliceConnect } = base;
-
-const PRO = CAM.process;
-const POLY = polygons;
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
 
@@ -35,7 +25,7 @@ class Topo4 {
         let { controller, process } = settings;
 
         let axis = op.axis.toLowerCase(),
-            tool = new CAM.Tool(settings, op.tool),
+            tool = new Tool(settings, op.tool),
             bounds = widget.getBoundingBox().clone(),
             density = parseInt(controller.animesh || 100) * 2500,
             { min, max } = bounds,
@@ -151,16 +141,15 @@ class Topo4 {
 
     async sliceWorker(onupdate) {
         const { vertices, slices, resolution } = this;
-        const { codec } = kiri;
 
         let output = [];
         let complete = 0;
         for (let slice of slices) {
-            const recs = new kiri.topo_slicer(slice.index)
+            const recs = new topo_slicer(slice.index)
                 .setFromArray(vertices, slice)
                 .slice(resolution)
                 .map(rec => {
-                    const slice = kiri.newSlice(rec.z);
+                    const slice = newSlice(rec.z);
                     for (let line of rec.lines) {
                         const { p1, p2 } = line;
                         if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
@@ -184,7 +173,6 @@ class Topo4 {
     }
 
     async sliceMinions(onupdate) {
-        const { codec } = kiri;
         const { queue, putCache, clearCache } = this;
         const { vertices, slices, resolution } = this;
         putCache("vertices", vertices);
@@ -474,61 +462,6 @@ function rotatePoints(lines, rot) {
     new THREE.BufferAttribute(lines, 3).applyMatrix4(rot);
 }
 
-CAM.Topo4 = function(opt) {
+export function Topo4(opt) {
     return new Topo4().generate(opt);
 };
-
-moto.broker.subscribe("minion.started", msg => {
-    const { funcs, cache, reply, log } = msg;
-    const { codec } = kiri;
-
-    funcs.topo4_slice = (data, seq) => {
-        const { slice, resolution } = data;
-        const vertices = cache.vertices;
-        const recs = new kiri.topo_slicer(slice.index)
-            .setFromArray(vertices, slice)
-            .slice(resolution)
-            .map(rec => {
-                const { z, index, lines } = rec;
-
-                for (let line of lines) {
-                    const { p1, p2 } = line;
-                    if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
-                    if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
-                }
-
-                const points = codec.encodePointArray(lines.map(l => [ l.p1, l.p2 ]).flat());
-                const shared = new Float32Array(new SharedArrayBuffer(points.length * 4));
-                shared.set(points);
-
-                return {
-                    z, index, shared,
-                    polys: codec.encode(sliceConnect(lines)),
-                };
-            });
-        // only pass back bounds of rasters to be merged
-        reply({ seq, recs });
-    };
-
-    funcs.topo4_lathe = (data, seq) => {
-        const { angle } = data;
-        const { slices, tool } = cache.lathe;
-
-        const axis = new THREE.Vector3(1, 0, 0);
-        const mrot = new THREE.Matrix4().makeRotationAxis(axis, -angle);
-        const stmp = slices.map(s => {
-            const lines = s.lines.slice();
-            rotatePoints(lines, mrot);
-            return { z: s.z, lines }
-        });
-
-        const topo4 = Object.assign(new Topo4(), cache.lathe);
-        const heights = topo4.lathePath(stmp, tool);
-
-        reply({ seq, heights });
-    }
-
-});
-
-
-export { scale, rotatePoints, PRO, POLY, RAD2DEG, DEG2RAD, axis, range, slices, lathe, box, i, x, z, shards, step, index, slice, output, complete, recs, points, shared, promises, tlen, slen, sinc, heights, oslices, lines, plen, rec, py0, pz0, py1, pz1, lz, si, rx, mz, ti, xo, yo, zo, ts, dz, dy, fr, rota, steps, mrot, paths, angle, count, poly, repeat, done, tangle, p, linear, vertices, stmp, topo4, Topo4 };

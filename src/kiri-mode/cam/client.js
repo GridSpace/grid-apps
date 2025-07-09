@@ -246,7 +246,7 @@ const opDel = (rec) => {
 };
 
 export function opRender() {
-    let oplist = env.current.process.ops;
+    let oplist = env.current?.process?.ops;
     if (!(env.isCamMode && oplist)) {
         return;
     }

@@ -27,7 +27,7 @@ export function init(worker) {
 
         // destructure arcs into path points
         path = path.map(o =>
-            o.arcPoints ? [ ...o.arcPoints.map(point => ({ ...o, point })), o ] : o
+            o.arcPoints ? [ ...o.arcPoints.map(point => ({ ...o, point })), o ] : [ o ]
         ).flat();
 
         const step = rez;

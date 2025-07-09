@@ -8,7 +8,7 @@ if (!AP.flat) {
         try {
             return [].concat.apply([], this);
         } catch (e) {
-            // console.log({flat_error: e});
+            // console.log({ flat_error: e, array: this });
             let out = [];
             for (let e of this.slice()) {
                 out.push(...e);

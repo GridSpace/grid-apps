@@ -3,6 +3,7 @@
 // WORKER BACK END ANIMATION CODE for 3D (indexed)
 
 import { CSG } from '../../geo/csg.js';
+import { Tool } from './tool.js';
 
 let nextMeshID = 1;
 let stock, center, rez;
@@ -269,7 +270,7 @@ function toolUpdate(toolid, send) {
     if (tool) {
         send.data({ mesh_del: toolID });
     }
-    tool = new CAM.Tool({ tools }, toolid);
+    tool = new Tool({ tools }, toolid);
     const Instance = CSG.Instance();
     const slen = tool.shaftLength() || 15;
     const srad = tool.shaftDiameter() / 2;

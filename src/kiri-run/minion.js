@@ -13,6 +13,8 @@ import { newPoint } from '../geo/point.js';
 import { polygons as POLY } from '../geo/polygons.js';
 import { sliceZ } from '../geo/slicer.js';
 import { Slicer as cam_slicer } from '../kiri-mode/cam/slicer.js';
+import { Slicer as topo_slicer } from '../kiri-mode/cam/slicer2.js';
+import { Probe, Trace, raster_slice } from '../kiri-mode/cam/topo3.js';
 import { wasm_ctrl } from '../geo/wasm.js';
 
 const clib = self.ClipperLib;
@@ -175,6 +177,8 @@ const funcs = self.minion = {
         }
     },
 
+    // CAM slice support
+
     cam_slice_init() {
         cache.slicer = new cam_slicer();
     },
@@ -198,4 +202,115 @@ const funcs = self.minion = {
             reply({ seq, slices: data });
         });
     },
+
+    // CAM Topo3 support
+
+    topo_raster(data, seq) {
+        const { id, slice, params } = data;
+        const { resolution } = params;
+        const vertices = cache[id];
+        const box = new THREE.Box2();
+        new topo_slicer(slice.index)
+            .setFromArray(vertices, slice)
+            .slice(resolution)
+            .forEach(rec => {
+                const { z, index, lines } = rec;
+
+                for (let line of lines) {
+                    const { p1, p2 } = line;
+                    if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
+                    if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
+                }
+
+                raster_slice({
+                    ...params,
+                    box,
+                    lines,
+                    gridx: index
+                });
+            });
+        // only pass back bounds of rasters to be merged
+        reply({ seq, box });
+    },
+
+    trace_init(data) {
+        data.cross.clipTo = codec.decode(data.cross.clipTo);
+        data.cross.clipTab = codec.decode(data.cross.clipTab);
+        const probe = new Probe(data.probe);
+        const trace = new Trace(probe, data.trace);
+        cache.trace = {
+            probe,
+            trace,
+            cross: data.cross
+        };
+        trace.init(data.cross);
+    },
+
+    trace_y(data, seq) {
+        const { trace } = cache.trace;
+        trace.crossY_sync(data.params, slice => {
+            slice = codec.encode(slice);
+            reply({ seq, slice });
+        });
+    },
+
+    trace_x(data, seq) {
+        const { trace } = cache.trace;
+        trace.crossX_sync(data.params, slice => {
+            slice = codec.encode(slice);
+            reply({ seq, slice });
+        });
+    },
+
+    trace_cleanup() {
+        delete cache.trace;
+    },
+
+    // CAM Topo4 support
+
+    topo4_slice(data, seq) {
+        const { slice, resolution } = data;
+        const vertices = cache.vertices;
+        const recs = new kiri.topo_slicer(slice.index)
+            .setFromArray(vertices, slice)
+            .slice(resolution)
+            .map(rec => {
+                const { z, index, lines } = rec;
+
+                for (let line of lines) {
+                    const { p1, p2 } = line;
+                    if (!p1.swapped) { p1.swapXZ(); p1.swapped = true }
+                    if (!p2.swapped) { p2.swapXZ(); p2.swapped = true }
+                }
+
+                const points = codec.encodePointArray(lines.map(l => [ l.p1, l.p2 ]).flat());
+                const shared = new Float32Array(new SharedArrayBuffer(points.length * 4));
+                shared.set(points);
+
+                return {
+                    z, index, shared,
+                    polys: codec.encode(sliceConnect(lines)),
+                };
+            });
+        // only pass back bounds of rasters to be merged
+        reply({ seq, recs });
+    },
+
+    topo4_lathe(data, seq) {
+        const { angle } = data;
+        const { slices, tool } = cache.lathe;
+
+        const axis = new THREE.Vector3(1, 0, 0);
+        const mrot = new THREE.Matrix4().makeRotationAxis(axis, -angle);
+        const stmp = slices.map(s => {
+            const lines = s.lines.slice();
+            rotatePoints(lines, mrot);
+            return { z: s.z, lines }
+        });
+
+        const topo4 = Object.assign(new Topo4(), cache.lathe);
+        const heights = topo4.lathePath(stmp, tool);
+
+        reply({ seq, heights });
+    }
 };
