@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { ajax } from '../moto/ajax.js';
+import { ajax as moto_ajax } from '../moto/ajax.js';
 import { local as dataLocal } from '../data/local.js';
 
 function parseOpt(ov) {
@@ -27,7 +27,7 @@ function encodeOpt(opt) {
 }
 
 function ajax(url, fn, rt, po, hd) {
-    return ajax.new(fn, rt).request(url, po, hd);
+    return moto_ajax.new(fn, rt).request(url, po, hd);
 }
 
 function o2js(o,def) {
