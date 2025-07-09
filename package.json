@@ -79,7 +79,7 @@
         "webpack-cli": "^5.1.4"
     },
     "scripts": {
-        "setup": "npm i && npm run dev -- --dryrun && npx webpack --config src/webpack/webpack-three-esm.js && node src/webpack/esbuild.config.mjs",
+        "setup": "npm i && npm run dev -- --dryrun && npm run webpack",
         "dev": "gs-app-server --debug --single",
         "prod": "gs-app-server",
         "prod-dryrun": "gs-app-server --dryrun",
@@ -96,8 +96,6 @@
         "build-win-arm": "npm run build -- --win --arm64",
         "build-mac": "npm run build -- --mac --arm64",
         "build-mac-intel": "npm run build -- --mac --x64",
-        "mesh-build": "webpack --config webpack.config.js",
-        "mesh-build-dev": "webpack --config webpack.dev.config.js",
         "mklinks": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > links.csv",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
         "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
@@ -107,7 +105,8 @@
         "docs-dev": "docusaurus start --config conf/docusaurus.config.js",
         "docs-build": "docusaurus build --config conf/docusaurus.config.js",
         "docs-serve": "docusaurus serve --config conf/docusaurus.config.js",
-        "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check"
+        "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
+        "webpack": "npx webpack --config bin/webpack-three-esm.js && node bin/esbuild.config.mjs"
     },
     "main": "app-el.js",
     "build": {

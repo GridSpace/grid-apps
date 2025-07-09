@@ -315,6 +315,15 @@ function handleSetup(req, res, next) {
     }
 }
 
+const productionMap = {
+    '/lib/mesh/work.js' : '/lib/pack/mesh-work.js',
+    '/lib/main/mesh.js' : '/lib/pack/mesh-main.js',
+    '/lib/main/kiri.js' : '/lib/pack/kiri-main.js',
+    '/lib/kiri-run/engine.js' : '/lib/pack/kiri-eng.js',
+    '/lib/kiri-run/minion.js' : '/lib/pack/kiri-pool.js',
+    '/lib/kiri-run/worker.js' : '/lib/pack/kiri-work.js',
+};
+
 function handleVersion(req, res, next) {
     let vstr = oversion || dversion || version;
     if (["/kiri/","/mesh/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
@@ -326,20 +335,9 @@ function handleVersion(req, res, next) {
     } else if (!debug) {
         // in production serve packed bundles
         let { path } = req.app;
-        if (path === '/lib/mesh/work.js') {
-            req.url = '/lib/pack/mesh-work.js';
-        } else if (path === '/lib/main/mesh.js') {
-            req.url = '/lib/pack/mesh-main.js';
-        } else if (path === '/lib/kiri-run/minion.js') {
-            req.url = '/lib/pack/kiri-pool.js';
-        } else if (path === '/lib/kiri-run/worker.js') {
-            req.url = '/lib/pack/kiri-work.js';
-        } else if (path === '/lib/main/kiri.js') {
-            req.url = '/lib/pack/kiri-main.js';
-        }
-        // add cors headers on rewrite
-        if (path !== req.url) {
-            // console.log('rewrite', path, req.url);
+        let mapped = productionMap[path];
+        if (mapped) {
+            req.url = mapped;
             addCorsHeaders(req, res);
         }
         next();
@@ -540,7 +538,8 @@ function rewriteHtmlVersion(req, res, next) {
         "/mesh/",
         "/lib/mesh/work.js",
         "/lib/kiri-run/worker.js",
-        "/lib/kiri-run/minion.js"
+        "/lib/kiri-run/minion.js",
+        "/lib/kiri-run/engine.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
     }

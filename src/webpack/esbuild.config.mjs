@@ -9,21 +9,10 @@ const isProd = mode === 'prod';
 console.log(`Building in ${mode} mode...`);
 
 const MESH_OUTFILE = 'src/pack/mesh-main.js';
-const MESH_EXTRAS = [
-    // 'mod/*/electron.js',
-    // 'mod/*/tra0m.js',
-    // 'mod/*/src/space.js'
-];
+const MESH_EXTRAS = [ ];
 
 const KIRI_OUTFILE = 'src/pack/kiri-main.js';
-const KIRI_EXTRAS = [
-    // 'mod/*/electron.js',
-    // 'mod/*/sync.js',
-    // 'mod/*/don8.js',
-    // 'mod/*/onshape.js',
-    // 'mod/*/tra0.js',
-    // 'mod/*/src/space.js'
-];
+const KIRI_EXTRAS = [ ];
 
 async function appendExtraModules(extras, outfile, minify = false) {
     const files = await glob(extras);
@@ -132,6 +121,23 @@ async function buildApp() {
             entryPoints: [ 'src/kiri-run/minion.js' ],
             bundle: true,
             outfile: 'src/pack/kiri-pool.js',
+            format: 'esm',
+            external: ['module'],
+            sourcemap: !isProd,  // true for dev, false for prod
+            minify: isProd,      // false for dev, true for prod
+            target: 'es2020',
+            platform: 'browser',
+            define: {
+                'process.env.NODE_ENV': `"${mode}"`
+            },
+            logOverride
+        });
+
+        // Bundle kiri engine
+        await build({
+            entryPoints: [ 'src/kiri-run/engine.js' ],
+            bundle: true,
+            outfile: 'src/pack/kiri-eng.js',
             format: 'esm',
             external: ['module'],
             sourcemap: !isProd,  // true for dev, false for prod

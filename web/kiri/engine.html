@@ -23,7 +23,6 @@
             display: flex;
             flex-direction: row;
         }
-        
         #loadExample #examples {
             display:flex;
             flex-direction: row;
@@ -87,8 +86,10 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
-    <script src="/code/engine.js"></script>
-    <script>
+    <!-- <script src="/lib/kiri-run/engine.js" type="module"></script> -->
+    <script type="module">
+        import { Engine } from '/lib/kiri-run/engine.js';
+        const engine = new Engine();
         let edit, saveit = "";
         function $(id) { return document.getElementById(id) }
         function onload() {
@@ -126,24 +127,24 @@
             eval(`(function(){${code}})()`);
         }
         function demoFDM() {
-            kiri.newEngine()
-                .setListener(display_message)
-                .load("/obj/cube.stl")
-                .then(eng => eng.setProcess({
-                    
-                }))
-                .then(eng => eng.setDevice({
-                    gcodePre: [ "M82", "M104 S220" ],
-                    gcodePost: [ "M107" ]
-                }))
-                .then(eng => eng.slice())
-                .then(eng => eng.prepare())
-                .then(eng => eng.export())
-                .then(display_gcode);
+            engine
+            .setListener(display_message)
+            .load("/obj/cube.stl")
+            .then(eng => eng.setProcess({
+                // empty
+            }))
+            .then(eng => eng.setDevice({
+                gcodePre: [ "M82", "M104 S220" ],
+                gcodePost: [ "M107" ]
+            }))
+            .then(eng => eng.slice())
+            .then(eng => eng.prepare())
+            .then(eng => eng.export())
+            .then(display_gcode);
         }
 
         function demoCAM(){
-            kiri.newEngine()
+            engine
             .setListener(display_message)
             .load("/obj/cube.stl")
             // should to call widget.setTopZ here ideally
@@ -180,7 +181,6 @@
                 camZThru: 1.524,
                 camZBottom:-25, // temp hack to get around setTopZ bug
                 camToolInit: true,
-                
                 ops: [{
                     type: "outline",
                     tool: 1000,
@@ -202,42 +202,41 @@
                     ov_conv: true
                 }
                 ]
-                
             }))
             .then(eng => eng.setDevice({
-            mode: "CAM",
-            internal: 0,
-            bedHeight: 2.5,
-            bedWidth: 678.18,
-            bedDepth: 1524,
-            maxHeight: 150,
-            originCenter: false,
-            spindleMax: 24000,
-            gcodePre: [
-                "G20 ; set units to inches (required)",
-                "G90 ; absolute position mode (required)"
-            ],
-            gcodePost: [
-                "M05 ; spindle off",
-                "M30 ; program end"
-            ],
-            gcodeDwell: [
-                "G4 P{time} ; dwell for {time}ms"
-            ],
-            gcodeSpindle: [
-                "M3 S{speed} ; spindle on at {spindle} rpm"
-            ],
-            gcodeChange: [
-                "M05 ; spindle off",
-                "M6 T{tool} ; change tool to '{tool_name}'",
-                "G37; get tool offset with ETS"
-            ],
-            gcodeFExt: "nc",
-            gcodeSpace: true,
-            gcodeStrip: false,
-            deviceName: "Tormach.24R",
-            useLaser: false
-        }))
+                mode: "CAM",
+                internal: 0,
+                bedHeight: 2.5,
+                bedWidth: 678.18,
+                bedDepth: 1524,
+                maxHeight: 150,
+                originCenter: false,
+                spindleMax: 24000,
+                gcodePre: [
+                    "G20 ; set units to inches (required)",
+                    "G90 ; absolute position mode (required)"
+                ],
+                gcodePost: [
+                    "M05 ; spindle off",
+                    "M30 ; program end"
+                ],
+                gcodeDwell: [
+                    "G4 P{time} ; dwell for {time}ms"
+                ],
+                gcodeSpindle: [
+                    "M3 S{speed} ; spindle on at {spindle} rpm"
+                ],
+                gcodeChange: [
+                    "M05 ; spindle off",
+                    "M6 T{tool} ; change tool to '{tool_name}'",
+                    "G37; get tool offset with ETS"
+                ],
+                gcodeFExt: "nc",
+                gcodeSpace: true,
+                gcodeStrip: false,
+                deviceName: "Tormach.24R",
+                useLaser: false
+            }))
             .then(eng => eng.slice())
             .then(eng => eng.prepare())
             .then(eng => eng.export())
@@ -245,7 +244,7 @@
         }
 
         function demoLASER(){
-            kiri.newEngine()
+            engine
             .setListener(display_message)
             .load("/obj/cube.stl")
             // should to call widget.setTopZ here ideally
@@ -312,7 +311,6 @@
             .then(eng => eng.export())
             .then(display_gcode);
         }
-        
 
         function download() {
             let blob = new Blob([saveit], {type: "octet/stream"});
@@ -321,9 +319,20 @@
             $('download').innerHTML = `<a id="xo" href="${url}" download="${filename}"></a>`;
             $('xo').click();
         }
+
+        onload();
+
+        Object.assign(window, {
+            loadExample,
+            demoFDM,
+            demoCAM,
+            demoLASER,
+            download,
+            run_code
+        });
     </script>
 </head>
-<body onload="onload()">
+<body>
     <h2 id="title">Kiri:Moto Javascript Engine <a href="https://docs.grid.space/kiri-moto/engine-apis">API</a></h2>
     <div id="demo">
         <div id="jcode">

@@ -1,53 +1,34 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// Future imports for src/kiri-run/engine.js when unwrapped from gapp.register()
-
-// Dependencies from dep: comments
-// import { moto_license } from 'moto/license.js';
-// import { load_stl } from 'load/stl.js';
-// import { kiri_conf } from 'kiri/conf.js';
-// import { kiri_client } from 'kiri/client.js';
-// import { kiri_widget } from 'kiri/widget.js';
-
-// Dependencies from use: comments
-// import { add_three } from 'add/three.js';
-// import { add_array } from 'add/array.js';
-
-// Core dependencies from root
-import { kiri } from '../../main/gapp.js';
-
-// Note: This module also depends on:
-// - moto.license (for licensing functionality)
-// - load.stl (for STL file loading)
-// - kiri.conf (for configuration)
-// - kiri.client (for client functionality)
-// - kiri.widget (for widget functionality)
-// - add.three (for Three.js utilities)
-// - add.array (for array utilities)
-// - Various kiri API functions injected via root
+import '../add/array.js';
+import '../add/class.js';
+import '../add/three.js';
+import { api } from '../kiri/api.js';
+import { conf } from '../kiri/conf.js';
+import { client } from '../kiri/client.js';
+import { load } from '../load/file.js';
+import { newWidget } from '../kiri/widget.js';
 
 class Engine {
     constructor() {
-        this.widget = kiri.newWidget();
+        this.widget = newWidget();
         this.settings = {
             mode: "FDM",
             controller: {},
             render: false,
             filter: { FDM: "internal" },
-            device: kiri.conf.defaults.fdm.d, // device profile
-            process: kiri.conf.defaults.fdm.p, // slicing settings
-            widget: { [ this.widget.id ]: {} }
+            device: conf.defaults.fdm.d, // device profile
+            process: conf.defaults.fdm.p, // slicing settings
+            widget: { [this.widget.id]: {} }
         };
-        this.listener = () => {};
+        this.listener = () => { };
     }
 
     load(url) {
         return new Promise((accept, reject) => {
             try {
                 new load.STL().load(url, vertices => {
-                    this.listener({loaded: url, vertices});
+                    this.listener({ loaded: url, vertices });
                     this.widget.loadVertices(vertices).center();
                     accept(this);
                 });
@@ -58,14 +39,14 @@ class Engine {
     }
 
     clear() {
-        kiri.api.platform.clear();
+        api.platform.clear();
     }
 
     parse(data) {
         return new Promise((accept, reject) => {
             try {
                 let vertices = new load.STL().parse(data);
-                this.listener({parsed: data, vertices});
+                this.listener({ parsed: data, vertices });
                 this.widget.loadVertices(vertices).center();
                 accept(this);
             } catch (error) {
@@ -108,9 +89,9 @@ class Engine {
         let ctrl = this.settings.controller;
         Object.assign(ctrl, controller);
         if (ctrl.threaded) {
-            kiri.client.pool.start();
+            client.pool.start();
         } else {
-            kiri.client.pool.stop();
+            client.pool.stop();
         }
         return this;
     }
@@ -157,11 +138,11 @@ class Engine {
 
     slice() {
         return new Promise((accept, reject) => {
-            kiri.client.clear();
-            kiri.client.sync([ this.widget ]);
-            kiri.client.rotate(this.settings);
-            kiri.client.slice(this.settings, this.widget, msg => {
-                this.listener({slice:msg});
+            client.clear();
+            client.sync([this.widget]);
+            client.rotate(this.settings);
+            client.slice(this.settings, this.widget, msg => {
+                this.listener({ slice: msg });
                 if (msg.error) {
                     reject(msg.error);
                 }
@@ -174,10 +155,10 @@ class Engine {
 
     prepare() {
         return new Promise((accept, reject) => {
-            kiri.client.prepare(this.settings, update => {
-                this.listener({prepare:{update}});
+            client.prepare(this.settings, update => {
+                this.listener({ prepare: { update } });
             }, done => {
-                this.listener({prepare:{done:true}});
+                this.listener({ prepare: { done: true } });
                 accept(this);
             });
         });
@@ -186,37 +167,21 @@ class Engine {
     export() {
         return new Promise((accept, reject) => {
             let output = [];
-            kiri.client.export(this.settings, segment => {
+            client.export(this.settings, segment => {
                 if (typeof segment === 'string') {
-                    this.listener({export:{segment}});
+                    this.listener({ export: { segment } });
                     output.push(segment);
                 }
             }, done => {
-                this.listener({export:{done}});
+                this.listener({ export: { done } });
                 accept(output.join('\r\n'));
             });
         });
     }
 }
 
-function newEngine() {
+export function newEngine() {
     return new Engine();
 }
 
-gapp.overlay(kiri, {
-    newEngine
-});
-
-// Future exports for src/kiri-run/engine.js when unwrapped from gapp.register()
-
-// Main Engine class
 export { Engine };
-
-// Factory function
-export { newEngine };
-
-// Default export - the main engine functionality
-export default {
-    Engine,
-    newEngine
-}; 
