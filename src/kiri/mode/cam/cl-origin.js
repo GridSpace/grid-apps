@@ -3,7 +3,6 @@
 import { api } from '../../core/api.js';
 import { env, clearPops } from './client.js';
 import { CAM } from './driver-fe.js';
-import { config } from '../../../geo/base.js';
 import { addbox, clearboxes } from '../../core/boxes.js';
 
 export let originSelectOn = false;
@@ -29,25 +28,39 @@ export function originSelect() {
     CAM.traces((ids) => {
         api.hide.alert(alert);
         alert = api.show.alert("select origin<br>[esc] to cancel", 1000);
+        let ends = {};
         let points = {};
         let color = new THREE.Color( 0xff0000 );
+        function incpoint(widget, point) {
+            let rec = ends[point.key];
+            if (rec && rec.count++ === 2) {
+                addpoint(widget, point);
+            } else if (!rec) {
+                rec = ends[point.key] = { count: 1 };
+            }
+        }
+        function addpoint(widget, center) {
+            let box = addbox(center, color, undefined, undefined, { opacity: 1 });
+            widget.adds.push(box);
+            world.add(box);
+            box._origin = center;
+            points[center.key] = { box, center };
+        }
         api.widgets.for(widget => {
             let { pos, tzoff } = widget.track;
-            let { adds, traces } = widget;
-            let polys = traces.map(trace => {
+            let polys = widget.traces.map(trace => {
                 return trace.fixClosed().clone().move(pos).move({ x:0, y:0, z: -tzoff });
             });
             for (let poly of polys) {
-                if (poly.circularity() >= config.hint_min_circ) {
+                if (poly.circularity() >= 0.99) {
                     let center = poly.calcCircleCenter();
                     if (points[center.key]) {
                         continue;
                     }
-                    let box = addbox(center, color, undefined, undefined, { opacity: 1 });
-                    adds.push(box);
-                    world.add(box);
-                    box._origin = center;
-                    points[center.key] = { box, center };
+                    addpoint(widget, center);
+                } else if (poly.isOpen()) {
+                    incpoint(widget, poly.first());
+                    incpoint(widget, poly.last());
                 }
             }
         });

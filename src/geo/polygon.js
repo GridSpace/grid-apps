@@ -1560,7 +1560,12 @@ export class Polygon {
      * @returns {number} 0.0 - 1.0 from flat to perfectly circular
      */
     circularity() {
-        return (4 * Math.PI * this.area()) / util.sqr(this.perimeter());
+        try {
+            return (4 * Math.PI * this.area()) / util.sqr(this.perimeter());
+        } catch (e) {
+            console.log(this.perimeter(), e);
+            return 0;
+        }
     }
 
     circularityDeep() {
