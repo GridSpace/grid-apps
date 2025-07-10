@@ -82,12 +82,9 @@ function holes(indiv, rec, onProgress, onDone) {
     })
 };
 
-CAM.cylinderShow = function(onProgress,onDone){
-
+function cylinderShow(onProgress,onDone){
     kiri.client.sync();
     const settings = api.conf.get();
-    
-
 }
 
  function cylinderToggle(widget, face, onDone){
