@@ -1,14 +1,9 @@
 /** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
 
-"use strict";
+import { config, util } from './base.js';
+import { newPoint } from './point.js';
 
-// dep: geo.base
-gapp.register("geo.bounds", [], (root, exports) => {
-
-const { base } = root;
-const { config, util } = base;
-
-class Bounds {
+export class Bounds {
     constructor() {
         this.minx = 10e7;
         this.miny = 10e7;
@@ -121,7 +116,7 @@ class Bounds {
     }
 
     center(z = 0) {
-        return base.newPoint(this.centerx(), this.centery(), z);
+        return newPoint(this.centerx(), this.centery(), z);
     }
 
     centerx() {
@@ -133,9 +128,6 @@ class Bounds {
     }
 }
 
-gapp.overlay(base, {
-    Bounds,
-    newBounds() { return new Bounds() }
-});
-
-});
+export function newBounds() {
+    return new Bounds();
+}

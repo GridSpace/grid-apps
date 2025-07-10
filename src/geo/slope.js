@@ -2,19 +2,13 @@
 
 "use strict";
 
-// dep: geo.base
-// use: geo.line
-// use: geo.point
-gapp.register("geo.slope", [], (root, exports) => {
-
-const { base } = root;
-const { config } = base;
+import { config } from './base.js';
 
 const ABS = Math.abs,
     DEG2RAD = Math.PI / 180,
     RAD2DEG = 180 / Math.PI;
 
-class Slope {
+export class Slope {
     constructor(p1, p2, dx, dy) {
         this.dx = p1 && p2 ? p2.x - p1.x : dx;
         this.dy = p1 && p2 ? p2.y - p1.y : dy;
@@ -94,21 +88,13 @@ function angleWithinDelta(a1, a2, delta) {
     return (ABS(a1-a2) <= delta || 360-ABS(a1-a2) <= delta);
 }
 
-function newSlope(p1, p2, dx, dy) {
+export function newSlope(p1, p2, dx, dy) {
     return new Slope(p1, p2, dx, dy);
 }
 
-function newSlopeFromAngle(angle) {
+export function newSlopeFromAngle(angle) {
     return newSlope(0,0,
         Math.cos(angle * DEG2RAD),
         Math.sin(angle * DEG2RAD)
     );
 }
-
-gapp.overlay(base, {
-    Slope,
-    newSlope,
-    newSlopeFromAngle
-});
-
-});

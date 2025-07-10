@@ -1,6 +1,6 @@
 // Polish. Język polski tłumaczony na zasadach własności publicznej
-kiri.lang['pl'] =
-kiri.lang['pl-pl'] = {
+self.lang['pl'] =
+self.lang['pl-pl'] = {
     // hasło i tłumaczenie
     animate:        "animacja",     // CAM animate button
     arrange:        "rozmieść",     // layout workspace objects

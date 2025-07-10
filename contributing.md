@@ -25,7 +25,7 @@ This is a community driven project, and we welcome any contributions you'd like 
 - Open the developer console
 - Run the following code: `kiri.api.conf.get().device`
 - Right click on the object and select `Copy object`
-- Make a new file in the `src/kiri-dev/<mode>` directory, with the name of your machine, no spaces or special characters, and a `.json` extension.
+- Make a new file in the `src/kiri/dev/<mode>` directory, with the name of your machine, no spaces or special characters, and a `.json` extension.
 - Paste the copied object into the new file, and save it.
 - Publish your changes to a git repo
 - Submit a [pull request](https://github.com/GridSpace/grid-apps/compare)

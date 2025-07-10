@@ -1,11 +1,5 @@
 /** Copyright Stewart Allen -- All Rights Reserved */
 
-"use strict";
-
-// dep: geo.base
-gapp.register("geo.gyroid", [], (root, exports) => {
-
-const { base } = root;
 const PI2 = Math.PI * 2;
 
 let cache = {};
@@ -17,7 +11,7 @@ let lastSlice = 0;
  * @param off {number} z offset value from 0-1
  * @param res {number} resolution (pixels/slices per side)
  */
-function slice(off, res, val) {
+export function slice(off, res, val) {
     // auto clear cach if it hasn't been hit in the last 20 seconds
     // or the requested resolution or tip values have changed
     let now = Date.now();
@@ -170,7 +164,7 @@ function slice(off, res, val) {
 }
 
 // merge co-linear and distance threshold
-function filter(poly, inc) {
+export function filter(poly, inc) {
     if (poly.length <= 2) {
         return poly;
     }
@@ -200,11 +194,10 @@ function filter(poly, inc) {
         }
         e1 = el;
     }
-    nupoly.push(poly[poly.length-1]);
     return nupoly;
 }
 
-function distTo(a, b, dir) {
+export function distTo(a, b, dir) {
     let dx = a.x - b.x;
     let dy = a.y - b.y;
     // bias distance by prevailing direction of discovery to join stragglers
@@ -212,9 +205,3 @@ function distTo(a, b, dir) {
     if (dir === 'td') dy = dy / 2;
     return Math.sqrt(dx * dx + dy * dy);
 }
-
-gapp.overlay(base, {
-    gyroid: { slice }
-})
-
-});

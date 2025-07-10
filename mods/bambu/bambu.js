@@ -2,9 +2,8 @@ self.kiri.load(api => {
 
     console.log('BAMBU MODULE RUNNING');
 
-    const { kiri, moto } = self;
-    const { ui } = kiri;
-    const h = moto.webui;
+    const { uc: ui } = api;
+    const { $, h } = api.web;
     const defams = ";; DEFINE BAMBU-AMS ";
     const readonly = true;
     const stock_colors = Object.values({
@@ -565,7 +564,7 @@ self.kiri.load(api => {
 
     function monitoring() {
         let mon = selected?.rec?.serial ?? '';
-        ui.setVisible($('bbl_connect'), select.value !== '' && monitors.indexOf(mon) < 0);
+        ui.setVisible($('bbl_connect'), select?.value && monitors.indexOf(mon) < 0);
         return mon ? true : false;
     }
 
@@ -661,7 +660,7 @@ self.kiri.load(api => {
         }
     });
 
-    api.event.on("init-done", function() {
+    api.event.on("load-done", function() {
         if (init) {
             return;
         }

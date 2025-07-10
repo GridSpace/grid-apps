@@ -1,6 +1,7 @@
 // code for a ServiceWorker that provides support for running cached/offline
 
-const version = self.gapp.version;
+import { version } from './license.js';
+
 const origin = self.location.origin;
 const stats = {
     hit: 0,

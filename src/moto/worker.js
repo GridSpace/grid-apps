@@ -1,14 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-gapp.register("moto.worker", [], (root, exports) => {
-
 let endpoints = {};
 
 // code is running in the worker / server context
-const dispatch = exports({
-
+const dispatch = {
     // bind an endpoint name to a function
     bind(name, fn) {
         endpoints[name] = fn;
@@ -95,10 +90,9 @@ const dispatch = exports({
             send.error(`no registered endpoint: ${msg.task}`);
         }
     }
-
-});
+};
 
 // attach onmessage hanler
 self.onmessage = dispatch.onmessage;
 
-});
+export const worker = dispatch;

@@ -1,7 +1,7 @@
 // French localization for Kiri:Moto
 // Will defer to English map for any missing key/value pairs
-kiri.lang['fr'] =
-kiri.lang['fr-fr'] = {
+self.lang['fr'] =
+self.lang['fr-fr'] = {
     // common keys and menus
     animate:        "animer",       // CAM animate button
     arrange:        "organiser",    // layout workspace objects

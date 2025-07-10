@@ -1,7 +1,7 @@
 // German localization for Kiri:Moto
 // Will defer to English map for any missing key/value pairs
-kiri.lang['de'] =
-kiri.lang['de-de'] = {
+self.lang['de'] =
+self.lang['de-de'] = {
     // common keys and menus
     animate:        "Animieren",        // CAM animate button
     arrange:        "Anordnen",         // layout workspace objects

@@ -1,20 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { THREE } from '../ext/three.js';
+import { api as meshApi } from './api.js';
 
-// dep: moto.license
-// dep: add.array
-// dep: add.three
-gapp.register("mesh.util", [], (root, exports) => {
-
-const { Matrix4, Matrix3, Vector3, Box3 } = THREE;
-const { mesh } = root;
-
+const { Matrix3, Vector3, Box3, LineSegments, BufferGeometry, Float32BufferAttribute, LineBasicMaterial } = THREE;
 const deferFn = [];
-const boundsCache = {};
 
 // util functions augmented in build (download)
-const util = exports({
+const util = {
 
     uuid(segs = 1) {
         let uid = [];
@@ -71,81 +64,20 @@ const util = exports({
         }
     },
 
-    // @param object {THREE.Object3D | THREE.Object3D[] | MeshObject | MeshObject[]}
-    // @returns bounds modified for moto.space
+    // @param object {MeshObject | MeshObject[]}
     bounds(object) {
+        // console.log({ bounds: object });
         let box = new Box3();
         if (Array.isArray(object)) {
             for (let o of object) {
-                util.box3expand(box, o instanceof mesh.object ? o.object : o);
+                box.union(o.bounds);
             }
         } else if (object) {
-            util.box3expand(box, object instanceof mesh.object ? object.object : object);
-        } else {
-            return box;
+            box.union(object.bounds);
         }
-        let bnd = {
-            min: {
-                x: box.min.x,
-                y: box.min.z,
-                z: box.min.y
-                },
-            max: {
-                x: box.max.x,
-                y: box.max.z,
-                z: box.max.y
-            }
-        };
-        bnd.size = bnd.dim = {
-            x: bnd.max.x - bnd.min.x,
-            y: bnd.max.y - bnd.min.y,
-            z: bnd.max.z - bnd.min.z
-        };
-        bnd.center = bnd.mid = {
-            x: (bnd.max.x + bnd.min.x) / 2,
-            y: -(bnd.max.y + bnd.min.y) / 2,
-            z: (bnd.max.z + bnd.min.z) / 2
-        };
-        return bnd;
-    },
-
-    // bounding box workaround adapted from:
-    // https://discourse.threejs.org/t/bounding-box-bigger-than-concave-object-extrudegeometry/26073/2
-    // https://discourse.threejs.org/t/invalid-bounds-generated-for-some-orientations/33205
-    box3expand(box3, object) {
-        if (object._no_bounds) {
-            return;
-        }
-
-        let geometry = object.geometry;
-        object.updateWorldMatrix(geometry ? true : false, false);
-
-        if (geometry) {
-            let matrix = object.matrixWorld;
-            let bkey = [matrix.elements.map(v => v.round(5))].join(',')
-            let cached = boundsCache[object.id];
-            // geometry._model_invalid set on model.reload(), usually after a split
-            if (!cached || cached.bkey !== bkey || geometry._model_invalid) {
-                let position = geometry.attributes.position.clone();
-                position.applyMatrix4(new Matrix4().extractRotation(matrix));
-                let bounds = new Box3().setFromBufferAttribute(position);
-                // let scale = new Vector3().setFromMatrixScale(matrix);
-                // bounds.min.multiply(scale);
-                // bounds.max.multiply(scale);
-                cached = boundsCache[object.id] = { bkey, bounds };
-                geometry._model_invalid = undefined;
-            }
-            let bt = cached.bounds.clone();
-            let m4 = new Matrix4();
-            m4.setPosition(new Vector3().setFromMatrixPosition(object.matrixWorld));
-            bt.applyMatrix4(m4);
-            box3.union(bt);
-        }
-
-        let children = object.children;
-        for (let i = 0, l = children.length; i < l; i++) {
-            util.box3expand(box3, children[i]);
-        }
+        box.size = box.dim;
+        box.center = box.mid;
+        return box;
     },
 
     // extract object fields into an array with optional rounding
@@ -183,25 +115,25 @@ const util = exports({
     },
 
     faceNormals(obj, opt = { }) {
-        const _va = new THREE.Vector3();
-        const _vb = new THREE.Vector3();
-        const _vc = new THREE.Vector3();
-        const _v1 = new THREE.Vector3();
-        const _v2 = new THREE.Vector3();
-        const _normalMatrix = new THREE.Matrix3();
-        const prefs = mesh.api.prefs.map;
+        const _va = new Vector3();
+        const _vb = new Vector3();
+        const _vc = new Vector3();
+        const _v1 = new Vector3();
+        const _v2 = new Vector3();
+        const _normalMatrix = new Matrix3();
+        const prefs = meshApi.prefs.map;
         const norms = prefs.normals;
         const defcolor = prefs.space.dark ? norms.color_dark : norms.color_lite;
         const normlen = norms.length || 1;
 
-        class FaceNormalsHelper extends THREE.LineSegments {
+        class FaceNormalsHelper extends LineSegments {
             constructor(object, size = opt.size || normlen, color = opt.color || defcolor) {
                 const objGeometry = object.geometry;
                 const nNormals = objGeometry.attributes.position.count / 3;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new THREE.Float32BufferAttribute(nNormals * 3 * 2, 3);
+                const geometry = new BufferGeometry();
+                const positions = new Float32BufferAttribute(nNormals * 3 * 2, 3);
                 geometry.setAttribute('position', positions);
-                super(geometry, new THREE.LineBasicMaterial({
+                super(geometry, new LineBasicMaterial({
                     color, toneMapped: false
                 }));
                 this.object = object;
@@ -240,20 +172,21 @@ const util = exports({
         const _v2 = new Vector3();
         const _normalMatrix = new Matrix3();
 
-        class VertexNormalsHelper extends THREE.LineSegments {
+        class VertexNormalsHelper extends LineSegments {
             constructor(object, size = 1, color = 0xff0000) {
                 const objGeometry = object.geometry;
                 const nNormals = objGeometry.attributes.normal.count;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new THREE.Float32BufferAttribute(nNormals * 2 * 3, 3);
+                const geometry = new BufferGeometry();
+                const positions = new Float32BufferAttribute(nNormals * 2 * 3, 3);
                 geometry.setAttribute('position', positions);
-                super(geometry, new THREE.LineBasicMaterial({
-                    color,toneMapped: false
+                super(geometry, new LineBasicMaterial({
+                    color, toneMapped: false
                 }));
                 this.object = object;
                 this.size = size;
                 this.type = 'VertexNormalsHelper';
                 this.matrixAutoUpdate = false;
+                this._no_bounds = true;
                 this.update();
             }
 
@@ -261,12 +194,13 @@ const util = exports({
                 this.object.updateMatrixWorld(true);
                 const position = this.geometry.attributes.position;
                 const objGeometry = this.object.geometry;
-                const objPos = objGeometry.attributes.position;
-                const objNorm = objGeometry.attributes.normal;
-                for (let idx = 0, j = 0, jl = objPos.count; j < jl; j++) {
-                    _v1.set(objPos.getX(j), objPos.getY(j), objPos.getZ(j));
-                    _v2.set(objNorm.getX(j), objNorm.getY(j), objNorm.getZ(j));
-                    _v2.applyMatrix3(_normalMatrix).normalize().multiplyScalar(this.size).add(_v1);
+                const objArr = objGeometry.attributes.position.array;
+                const normArr = objGeometry.attributes.normal.array;
+                let j=0;
+                for (let idx = 0, jl = objArr.length; j < jl; ) {
+                    _v1.set(objArr[j++], objArr[j++], objArr[j++]);
+                    _v2.set(normArr[j-3], normArr[j-2], normArr[j-1]);
+                    _v2.multiplyScalar(this.size).add(_v1);
                     position.setXYZ(idx++, _v1.x, _v1.y, _v1.z);
                     position.setXYZ(idx++, _v2.x, _v2.y, _v2.z);
                 }
@@ -332,6 +266,6 @@ const util = exports({
         }
     }
 
-});
+};
 
-});
+export { util };

@@ -1,22 +1,21 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { broker } from '../moto/broker.js';
+import { $, h, estop } from '../moto/webui.js';
+import { api } from './api.js';
+import { util } from './util.js';
+import { space } from '../moto/space.js';
+import { split } from './split.js';
+import { newPolygon } from '../geo/polygon.js';
+import { version } from '../moto/license.js';
 
-// dep: moto.broker
-// dep: mesh.util
-// dep: mesh.api
-gapp.register("mesh.build", [], (root, exports) => {
-
-const { broker } = gapp;
-const { base, mesh, moto } = root;
-const { api, util } = mesh;
-const { space } = moto;
-const { bind, div, label, input, hr } = h;
-
-const devel = api.isDebug;
+const { div, label, input, hr } = h;
+const { dbug } = api;
+const isDebug = api.isDebug;
 
 let call = broker.send;
 let rad = 180 / Math.PI;
+let deg = Math.PI / 180;
 let und = undefined;
 
 broker.listeners({
@@ -38,7 +37,7 @@ const modal = api.modal = {
         if (this.info.showing) {
             throw `modal conflict showing "${title}"`;
         }
-        let bound = bind($('modal'), contents);
+        let bound = h.bind($('modal'), contents);
         $('modal_title_text').innerText = title;
         $('modal_page').style.display = 'flex';
         $('modal_frame').style.display = 'flex';
@@ -101,7 +100,7 @@ const modal = api.modal = {
         let { title, body } = opt;
         let contents = [];
         if (typeof body === 'string') {
-            contents.push(div(body))
+            contents.push(h.div(body))
         } else if (Array.isArray(body)) {
             contents.appendAll(body);
         } else {
@@ -137,7 +136,7 @@ const log = api.log = {
             text: `${dbug.since()} | ${[...arguments].join(' ')}`,
             time: now
         });
-        if (api.isDebug) {
+        if (isDebug) {
             console.log(...data.peek().objs);
         }
         while (!log.pinned && data.length && (data.length > lines || now - data[0].time > age)) {
@@ -184,14 +183,14 @@ const log = api.log = {
     // re-render and show current log messages
     render() {
         let area = $('logtext');
-        bind(area, log.data.map(rec => div({ _: rec.text })));
+        h.bind(area, log.data.map(rec => h.div({ _: rec.text })));
         area.scrollTop = area.scrollHeight;
         return log.show();
     },
 };
 
 // bind endpoint for worker to log in the ui
-gapp.broker.subscribe("mesh.log", msg => {
+broker.subscribe("mesh.log", msg => {
     log.emit(msg);
 });
 
@@ -199,14 +198,14 @@ gapp.broker.subscribe("mesh.log", msg => {
 api.welcome = function(version = "unknown") {
     const { prefs } = api;
     const { map } = prefs;
-    modal.show('About Mesh:Tool', div({ class:"welcome" }, [
+    modal.show('About Mesh:Tool', h.div({ class:"welcome" }, [
         h.a({
             target: "site",
             _: "Grid.Space",
             href: "https://grid.space/"
         }),
-        div(`Version: ${version}`),
-        hr({ width: "100%" }),
+        h.div(`Version: ${version}`),
+        h.hr({ width: "100%" }),
         h.a({
             target: "docs",
             _: "Guide & Documentation",
@@ -222,9 +221,9 @@ api.welcome = function(version = "unknown") {
             _: "Discord Server",
             href: "https://discord.gg/suyCCgr"
         }),
-        hr({ width: "100%" }),
-        div({ class: "choice" }, [
-            input({
+        h.hr({ width: "100%" }),
+        h.div({ class: "choice" }, [
+            h.input({
                 type: "checkbox",
                 [ map.info.welcome !== false ? 'checked' : 'unchecked' ] : 1,
                 onchange: (ev) => {
@@ -232,14 +231,13 @@ api.welcome = function(version = "unknown") {
                     prefs.save();
                 }
             }),
-            div("show at startup")
+            h.div("show at startup")
         ]),
     ]));
 };
 
 // bind settings endpoint to api
 api.settings = function() {
-    const { util } = mesh;
     const { prefs } = api;
     const { surface, normals, space, sketch, wireframe } = prefs.map;
     const { dark } = space;
@@ -352,7 +350,7 @@ api.settings = function() {
     modal.show('settings', div({ class: "settings" }, [
         set1, set2, set3, set4, set5, set6, set7
     ] ));
-}
+};
 
 // bootstrap icons
 function bicon(name) {
@@ -373,18 +371,19 @@ function editable() {
 function menu_item(text, fn, short, id) {
     if (short) {
         short = Array.isArray(short) ? short : [ short ];
-        short = div({ class: "short" }, short.map(s => s.startsWith('bi-') ?
-            bicon(s) : div(s)
+        short = h.div({ class: "short" }, short.map(s => s.startsWith('bi-') ?
+            bicon(s) : h.div(s)
         ));
     }
-    return div({ id, onclick: fn }, [
-        div({ _: text, class: "grow" }),
+    return h.div({ id, onclick: fn }, [
+        h.div({ _: text, class: "grow" }),
         short
     ].filter(o => o));
 }
 
 // create html elements
 function ui_build() {
+    let { bind, div, input, hr, label } = h;
     let { file, selection, mode, tool, sketch, prefs, add } = api;
     let trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
     let eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
@@ -410,6 +409,9 @@ function ui_build() {
         div({ class: "menu sketch-on" }, [
             div('Edit'),
             div({ class: "menu-items" }, [
+                menu_item('Undo', api.history.undo, ['bi-command','Z']),
+                menu_item('Redo', api.history.redo, ['bi-command','Y']),
+                hr(),
                 menu_item('Add Circle', api.add.circle),
                 menu_item('Add Rectangle', api.add.rectangle),
                 hr(),
@@ -421,13 +423,16 @@ function ui_build() {
         div({ class: "menu sketch-off" }, [
             div('Edit'),
             div({ class: "menu-items" }, [
+                menu_item('Undo', api.history.undo, ['bi-command','Z']),
+                menu_item('Redo', api.history.redo, ['bi-command','Y']),
+                hr(),
                 menu_item('Add Cylinder', add.cylinder),
                 menu_item('Add Cube', add.cube),
                 menu_item('Add Gear', add.gear),
                 menu_item('Add Threads', add.threads),
                 hr(),
                 menu_item('Add Sketch', add.sketch),
-                devel ? menu_item('Add Vertices', add.input) : undefined,
+                isDebug ? menu_item('Add Vertices', add.input) : undefined,
                 hr(),
                 menu_item('Delete', api.selection.delete, 'bi-backspace'),
             ])
@@ -437,7 +442,9 @@ function ui_build() {
             div({ class: "menu-items" }, [
                 menu_item('Bounds', () => { selection.boundsBox({ toggle: true }) }, 'B'),
                 menu_item('Normals', () => { api.normals() }, 'N'),
-                menu_item('Wireframes', () => { api.wireframe() }, 'W'),
+                hr(),
+                menu_item('WireEdges', () => { api.wireedges() }, 'W'),
+                menu_item('WireFaces', () => { api.wireframe() }, [ 'bi-shift', 'W' ]),
                 hr(),
                 menu_item('Gridlines', () => { api.grid() }, 'G'),
                 menu_item('Messages', () => { api.log.toggle({ spinner: false }) }, 'L'),
@@ -462,7 +469,7 @@ function ui_build() {
             div({ id: "mode-label" })
         ]),
         div({ class: "menu sketch-on" }, [
-            div('Object'),
+            div('Items'),
             div({ class: "menu-items" }, [
                 menu_item('Group', sketch.arrange.group),
                 menu_item('Ungroup', sketch.arrange.ungroup),
@@ -480,7 +487,7 @@ function ui_build() {
             ])
         ]),
         div({ class: "menu sketch-off" }, [
-            div('Object'),
+            div('Objects'),
             div({ class: "menu-items" }, [
                 menu_item('Regroup', tool.regroup),
                 menu_item('Isolate', tool.isolate),
@@ -488,7 +495,7 @@ function ui_build() {
                 menu_item('Duplicate', tool.duplicate, ['bi-shift','D']),
                 menu_item('Mirror', tool.mirror, 'M'),
                 menu_item('Merge', tool.merge),
-                menu_item('Split', mesh.split.start, 'S'),
+                menu_item('Split', split.start, 'S'),
                 hr(),
                 menu_item('Union', tool.union),
                 menu_item('Subtract', tool.subtract),
@@ -505,13 +512,14 @@ function ui_build() {
                 menu_item('Flip Normals', tool.invert, ['bi-shift','I']),
                 menu_item('Triangulate', tool.triangulate, ['bi-shift','T']),
                 menu_item('To Sketch', tool.toSketch),
+                hr(),
                 menu_item('Analyze', tool.analyze),
                 menu_item('Flatten', tool.flatten),
                 menu_item('Clean', tool.clean),
             ])
         ]),
         div({ class: "menu sketch-on" }, [
-            div('Shape'),
+            div('Shapes'),
             div({ class: "menu-items" }, [
                 menu_item('Duplicate', tool.duplicate, ['bi-shift','D']),
                 menu_item('Extrude', () => sketch.extrude(), ['bi-shift','E']),
@@ -528,7 +536,7 @@ function ui_build() {
         div({ class: "menu" }, [
             div('Help'),
             div({ class: "menu-items" }, [
-                menu_item('About', () => { api.welcome(mesh.version) }),
+                menu_item('About', () => { api.welcome(version) }),
                 hr(),
                 menu_item('Documentation', api.help),
                 menu_item('Report Bugs', api.bugs),
@@ -761,23 +769,14 @@ function ui_build() {
     function field_edit(title, set, opt = {}) {
         return function(ev) {
             let floor = api.prefs.map.space.floor !== false;
-            let value = ev.target.innerText;
+            let value = parseFloat(ev.target.innerText);
             let onclick = (ev) => {
                 let tempval = parseFloat($('tempval').value);
                 api.modal.hide(modal.info.cancelled);
                 if (modal.info.cancelled) {
                     return;
                 }
-                if (opt.sketch) {
-                    defer_selection();
-                    return set(tempval, value);
-                }
-                for (let g of api.selection.groups()) {
-                    set(g, tempval, value);
-                    if (floor && opt.floor !== false) {
-                        g.floor(mesh.group);
-                    }
-                }
+                set(tempval, value);
                 defer_selection();
             };
             let onkeydown = (ev) => {
@@ -899,7 +898,7 @@ function ui_build() {
                 el2.onclick = field_edit(`${axis} size`, (nval, oval) => {
                     if (sel_item.type === 'polygon') {
                         let scale = {x:1,y:1,z:1};
-                        let poly = base.newPolygon().fromObject(sel_item);
+                        let poly = newPolygon().fromObject(sel_item);
                         let bounds = poly.bounds;
                         scale[axis] = nval/oval;
                         poly.move(bounds.center().scale(-1,-1,-1));
@@ -919,7 +918,7 @@ function ui_build() {
                     sel_item[lab] = nval;
                     sketch.render();
                 }, { sketch: true });
-                editable(el, el2, e3);
+                editable(el, el2, el3);
             }
 
             return;
@@ -984,39 +983,39 @@ function ui_build() {
         // bind rotation editable fields
         let { group_val_X_rot, group_val_Y_rot, group_val_Z_rot } = bound;
         editable(group_val_X_rot, group_val_Y_rot, group_val_Z_rot);
-        group_val_X_rot.onclick = field_edit('x rotation', (group, val) => {
-            group.rotate(val,0,0);
+        group_val_X_rot.onclick = field_edit('x rotation', (val) => {
+            selection.rotate(val * deg,0,0);
         });
-        group_val_Y_rot.onclick = field_edit('y rotation', (group, val) => {
-            group.rotate(0,val,0);
+        group_val_Y_rot.onclick = field_edit('y rotation', (val) => {
+            selection.rotate(0,val * deg,0);
         });
-        group_val_Z_rot.onclick = field_edit('z rotation', (group, val) => {
-            group.rotate(0,0,val);
+        group_val_Z_rot.onclick = field_edit('z rotation', (val) => {
+            selection.rotate(0,0,val * deg);
         });
 
         // bind position editable fields
         let { group_val_X_pos, group_val_Y_pos, group_val_Z_pos } = bound;
         editable(group_val_X_pos, group_val_Y_pos, group_val_Z_pos);
-        group_val_X_pos.onclick = field_edit('x position', (group, val) => {
+        group_val_X_pos.onclick = field_edit('x position', (val) => {
             selection.move_models(val,0,0);
         }, { floor: false });
-        group_val_Y_pos.onclick = field_edit('y position', (group, val) => {
+        group_val_Y_pos.onclick = field_edit('y position', (val) => {
             selection.move_models(0,val,0);
         }, { floor: false });
-        group_val_Z_pos.onclick = field_edit('z position', (group, val) => {
+        group_val_Z_pos.onclick = field_edit('z position', (val) => {
             selection.move_models(0,0,val);
         }, { floor: false });
 
         // bind center editable fields
         let { span_val_X_center, span_val_Y_center, span_val_Z_center } = bound;
         editable(span_val_X_center, span_val_Y_center, span_val_Z_center);
-        span_val_X_center.onclick = field_edit('x center', (group, val, oval) => {
+        span_val_X_center.onclick = field_edit('x center', (val, oval) => {
             selection.move_models(val - parseFloat(oval),0,0);
         });
-        span_val_Y_center.onclick = field_edit('y center', (group, val, oval) => {
+        span_val_Y_center.onclick = field_edit('y center', (val, oval) => {
             selection.move_models(0,val - parseFloat(oval),0);
         });
-        span_val_Z_center.onclick = field_edit('z center', (group, val, oval) => {
+        span_val_Z_center.onclick = field_edit('z center', (val, oval) => {
             selection.move_models(0,0,val - parseFloat(oval));
         });
 
@@ -1042,28 +1041,28 @@ function ui_build() {
             };
             editable(lbl);
         });
-        span_val_X_size.onclick = field_edit('x size', (group, val, oval) => {
-            let rel = val / parseFloat(oval);
+        span_val_X_size.onclick = field_edit('x size', (val, oval) => {
+            let rel = val / oval;
             if (axgrp.X) {
-                group.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1);
+                selection.scale(rel, axgrp.Y ? rel : 1, axgrp.Z ? rel : 1);
             } else {
-                group.scale(rel, 1, 1);
+                selection.scale(rel, 1, 1);
             }
         });
-        span_val_Y_size.onclick = field_edit('y size', (group, val, oval) => {
-            let rel = val / parseFloat(oval);
+        span_val_Y_size.onclick = field_edit('y size', (val, oval) => {
+            let rel = val / oval;
             if (axgrp.Y) {
-                group.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1);
+                selection.scale(axgrp.X ? rel : 1, rel, axgrp.Z ? rel : 1);
             } else {
-                group.scale(1, rel, 1);
+                selection.scale(1, rel, 1);
             }
         });
-        span_val_Z_size.onclick = field_edit('z size', (group, val, oval) => {
-            let rel = val / parseFloat(oval);
+        span_val_Z_size.onclick = field_edit('z size', (val, oval) => {
+            let rel = val / oval;
             if (axgrp.Z) {
-                group.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel);
+                selection.scale(axgrp.X ? rel : 1, axgrp.Y ? rel : 1, rel);
             } else {
-                group.scale(1, 1, rel);
+                selection.scale(1, 1, rel);
             }
         });
 
@@ -1094,11 +1093,13 @@ function ui_build() {
 
     // listen for api calls
     // create a deferred wrapper to merge multiple rapid events
-    let defer_all = util.deferWrap(update_all);
-    let defer_selector = util.deferWrap(update_selector);
-    let defer_selection = util.deferWrap(update_selection);
+    const defer_all = util.deferWrap(update_all);
+    const defer_selector = util.deferWrap(update_selector);
+    const defer_selection = util.deferWrap(update_selection);
 
     broker.listeners({
+        history_undo: defer_all,
+        history_redo: defer_all,
         model_add: defer_all,
         group_add: defer_all,
         model_remove: defer_all,
@@ -1113,4 +1114,4 @@ function ui_build() {
     });
 }
 
-});
+export { };

@@ -2,23 +2,14 @@
 
 "use strict";
 
-// dep: geo.base
-// dep: geo.point
-gapp.register("geo.points", [], (root, exports) => {
-
-const { base } = root;
-const { config } = base;
-
-gapp.overlay(base, {
-    verticesToPoints,
-    pointsToVertices
-});
+import { config } from './base.js';
+import { newPoint } from '../geo/point.js';
 
 /**
  * converts a geometry point array into a kiri point array
  * with optional decimation
  */
-function verticesToPoints(array, options) {
+export function verticesToPoints(array, options) {
     let parr = new Array(array.length / 3),
         i = 0,
         j = 0,
@@ -41,7 +32,7 @@ function verticesToPoints(array, options) {
     // replace point objects with their equivalents
     if (maxpass) {
         while (i < array.length) {
-            let p = base.newPoint(array[i++], array[i++], array[i++]),
+            let p = newPoint(array[i++], array[i++], array[i++]),
                 k = p.key,
                 m = hash[k];
             if (!m) {
@@ -53,7 +44,7 @@ function verticesToPoints(array, options) {
         }
     } else {
         while (i < array.length) {
-            parr[j++] = base.newPoint(array[i++], array[i++], array[i++]);
+            parr[j++] = newPoint(array[i++], array[i++], array[i++]);
         }
     }
 
@@ -124,7 +115,7 @@ function verticesToPoints(array, options) {
     return parr;
 }
 
-function pointsToVertices(points) {
+export function pointsToVertices(points) {
     let vertices = new Float32Array(points.length * 3),
         i = 0, vi = 0;
     while (i < points.length) {
@@ -134,5 +125,3 @@ function pointsToVertices(points) {
     }
     return vertices;
 }
-
-});

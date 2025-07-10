@@ -251,6 +251,9 @@ details[open] summary::after {
     background-color: #333;
     color: #fff;
 }
+.dark option:checked {
+    background-color: var(--blue-1);
+}
 .dark hr {
     border-color: #555;
 }
@@ -2186,11 +2189,13 @@ details[open] summary::after {
 }
 #slider-zero {
     z-index: 10;
+    min-width: 3em;
     background-color: #bbb;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
 }
 #slider-max {
+    min-width: 3em;
     background-color: #bbb;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
