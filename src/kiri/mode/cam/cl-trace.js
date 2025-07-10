@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../core/api.js';
-import { env, clearPops } from './client.js';
+import { env, clearPops, isDark } from './client.js';
 import { CAM } from './driver-fe.js';
 import { Layers } from '../../core/layers.js';
 import { Stack } from '../../core/stack.js';
@@ -123,7 +123,7 @@ export function traceHover(data) {
     let material = lastTrace.material[0] || lastTrace.material;
     let color = material.color;
     material.colorSave = color.clone();
-    color.setHex(env.isDark() ? 0x0066ff : 0x0000ff);
+    color.setHex(isDark() ? 0x0066ff : 0x0000ff);
 }
 
 export function traceHoverUp(int, ev) {
@@ -157,7 +157,7 @@ export function traceToggle(obj, skip) {
         colorSave = material.colorSave = color.clone();
     }
     if (obj.selected) {
-        color.setHex(env.isDark() ? 0xdd0011 : 0xff0033);
+        color.setHex(isDark() ? 0xdd0011 : 0xff0033);
         colorSave.r = color.r;
         colorSave.g = color.g;
         colorSave.b = color.b;

@@ -95,6 +95,7 @@ export function createPopOp(type, map) {
             return op.rec === rec;
         },
         bind: (ev) => {
+            console.log({ bind: type, map, op });
             api.util.ui2rec(op.rec, op.inputs);
 
             const settings = conf.get();

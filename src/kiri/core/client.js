@@ -2,6 +2,9 @@
 
 import { api } from './api.js';
 import { noop } from './utils.js';
+import { codec } from './codec.js';
+import { Widget } from './widget.js';
+import { newPrint } from './print.js';
 
 // this code runs in kiri's main loop
 let debug = self.debug === true,
@@ -199,7 +202,7 @@ export const client = {
         send("rotate", { settings }, reply => {
             if (reply.group) {
                 // collect post-rotation data for slice/preview renders
-                for (let widget of kiri.Widget.Groups.forid(reply.group)) {
+                for (let widget of Widget.Groups.forid(reply.group)) {
                     widget.belt = reply.belt;
                 }
             } else if (callback) {
@@ -280,10 +283,10 @@ export const client = {
                 y: -origin.y,
                 z: origin.z
             };
-            const output = kiri.newPrint().parseSVG(code, offset);
+            const output = newPrint().parseSVG(code, offset);
             send("parse_svg", output, reply => {
                 if (reply.parsed) {
-                    done(kiri.codec.decode(reply.parsed));
+                    done(codec.decode(reply.parsed));
                 }
             });
             return;
@@ -293,7 +296,7 @@ export const client = {
                 progress(reply.progress);
             }
             if (reply.parsed) {
-                done(kiri.codec.decode(reply.parsed), reply.maxSpeed, reply.minSpeed);
+                done(codec.decode(reply.parsed), reply.maxSpeed, reply.minSpeed);
             }
         });
     },

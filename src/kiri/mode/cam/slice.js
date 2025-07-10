@@ -398,7 +398,7 @@ export function addDogbones(poly, dist, reverse) {
     }
 };
 
-export async function traces(settings, widget, single) {
+export async function traces(settings, widget) {
     if (widget.traces) {
         return false;
     }
@@ -533,7 +533,6 @@ export async function holes(settings, widget, individual, rec, onProgress) {
         // defined z bottom offset by distance to stock bottom
         // keeps the z bottom relative to the part when z align changes
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
-
 
     let slicerOpts = { flatoff: 0.001 }
     let slicer = new cam_slicer(widget, slicerOpts);

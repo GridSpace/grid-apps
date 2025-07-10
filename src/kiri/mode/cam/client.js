@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { $, h } from '../../../moto/webui.js';
+import { $ } from '../../../moto/webui.js';
 import { api } from '../../core/api.js';
 import { load } from '../../../load/file.js';
 import { animate as anim_2d, animate_clear as anim_2d_clear } from './anim-2d-fe.js';
@@ -14,13 +14,14 @@ import { tabAdd, tabDone, tabClear, restoreTabs, updateTabs } from './cl-tab.js'
 import { traceOn, traceDone, unselectTraces } from './cl-trace.js';
 import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
 import { surfaceOn, surfaceDone } from './cl-surface.js';
+import { originSelectDone } from './cl-origin.js';
 
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
 const hasSharedArrays = self.SharedArrayBuffer ? true : false;
 
 const { VIEWS, STACKS } = api.const;
-const { noop, space } = api;
+const { noop } = api;
 const { ui: UI, uc: UC } = api;
 const { widgets: WIDGETS } = api;
 
@@ -54,10 +55,11 @@ export function isDark() {
 
 export function clearPops() {
     if (env.func.unpop) env.func.unpop();
+    originSelectDone();
+    selectHolesDone();
+    surfaceDone();
     tabDone();
     traceDone();
-    surfaceDone();
-    selectHolesDone();
 }
 
 function animFn() {

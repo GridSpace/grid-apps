@@ -1117,6 +1117,14 @@ export class Polygon {
         return this.first().isEqual(this.last());
     }
 
+    fixClosed() {
+        if (this.appearsClosed()) {
+            this.points.pop();
+            this.open = false;
+        }
+        return this;
+    }
+
     setClockwise() {
         if (!this.isClockwise()) this.reverse();
         return this;

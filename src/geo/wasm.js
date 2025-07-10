@@ -1,9 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { base } from '../geo/base.js';
+import { newPolygon } from './polygon.js';
 
 const { config } = base;
-
 const factor = config.clipper;
 
 export const wasm_ctrl = {
@@ -54,7 +54,7 @@ function writePoly(view, poly, inner) {
 function readPoly(view, z) {
     let points = view.readU16(true);
     if (points === 0) return;
-    let poly = base.newPolygon();
+    let poly = newPolygon();
     while (points-- > 0) {
         poly.add(view.readI32(true)/factor, view.readI32(true)/factor, z || 0);
     }
