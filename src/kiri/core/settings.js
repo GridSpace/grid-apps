@@ -221,13 +221,16 @@ function updateSettingsFromFields(setrec, uirec = api.ui, changes) {
 }
 
 // given a settings region, update values of matching bound UI fields
-function updateFieldsFromSettings(setrec, uirec = api.ui, trace) {
+function updateFieldsFromSettings(setrec, uirec = api.ui, opt = {}) {
     if (!setrec) {
         updateFieldsFromSettings(settings.device);
         updateFieldsFromSettings(settings.process);
         updateFieldsFromSettings(settings.controller);
         updateExtruderFields(settings.device);
         return;
+    }
+    if (opt.trace) {
+        console.log({ setrec, uirec });
     }
     for (let key in setrec) {
         if (!setrec.hasOwnProperty(key)) {
@@ -238,6 +241,9 @@ function updateFieldsFromSettings(setrec, uirec = api.ui, trace) {
             continue;
         }
         let uie = uirec[key], typ = uie ? uie.type : null;
+        if (opt.trace) {
+            console.log({ key, uie, typ, val });
+        }
         if (typ === 'text') {
             if (uie.setv) {
                 uie.setv(val);
@@ -271,6 +277,8 @@ function updateFieldsFromSettings(setrec, uirec = api.ui, trace) {
             } else {
                 uie.value = '';
             }
+        } else if (opt.trace) {
+            console.log('skipped', { key, val, typ });
         }
     }
 }

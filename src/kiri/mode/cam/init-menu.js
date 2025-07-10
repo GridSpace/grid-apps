@@ -1,6 +1,6 @@
 
 import { api } from '../../core/api.js';
-import { originSelect } from './cl-origin.js';
+import { originReset, originSelect } from './cl-origin.js';
 
 let LANG = api.language.current;
 let { CAM } = api.const.MODES,
@@ -80,7 +80,10 @@ export function menu() {
     camOriginOffY:       newInput(LANG.co_offy_s, {title:LANG.co_offy_l, convert:toFloat, units}),
     camOriginOffZ:       newInput(LANG.co_offz_s, {title:LANG.co_offz_l, convert:toFloat, units}),
     separator:           newBlank({ class:"set-sep", driven }),
-    camOriginSelect:     newRow([ newButton("select", originSelect)], { class: "ext-buttons f-row" }),
+    camOriginSelect:     newRow([
+        newButton("select", originSelect),
+        newButton("reset", originReset),
+    ], { class: "ext-buttons f-row" }),
     _____:               newGroup(LANG.op_xprt_s, $('cam-expert'), { group:"cam_expert", modes:CAM, marker: false, driven, separator }),
     camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, show: () => !ui.camTrueShadow.checked }),
     camTrueShadow:       newBoolean(LANG.cx_true_s, onBooleanClick, {title:LANG.cx_true_l, show: () => !ui.camExpertFast.checked }),

@@ -672,6 +672,7 @@ function addUnits(input, round) {
         } else {
             input.value = value;
         }
+        // console.log({ value }, input.real, input.value );
         return input.real;
     };
     return input;

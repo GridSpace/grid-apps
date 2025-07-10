@@ -4,7 +4,7 @@ import { api } from '../../core/api.js';
 import { env, clearPops } from './client.js';
 import { CAM } from './driver-fe.js';
 import { config } from '../../../geo/base.js';
-import { addbox, delbox } from '../../core/boxes.js';
+import { addbox, clearboxes } from '../../core/boxes.js';
 
 export let originSelectOn = false;
 
@@ -43,7 +43,7 @@ export function originSelect() {
                     if (points[center.key]) {
                         continue;
                     }
-                    let box = addbox(center, color, center.key, undefined, { opacity: 1 });
+                    let box = addbox(center, color, undefined, undefined, { opacity: 1 });
                     adds.push(box);
                     world.add(box);
                     box._origin = center;
@@ -53,6 +53,17 @@ export function originSelect() {
         });
         lastPoints = Object.values(points);
     });
+}
+
+export function originReset() {
+    let { process} = api.conf.get();
+    process.camOriginOffX = 0;
+    process.camOriginOffY = 0;
+    process.camOriginOffZ = 0;
+    api.settings.update_fields(process);
+    api.platform.update_origin();
+    api.conf.save();
+    originSelectDone();
 }
 
 export function originSelectDone() {
@@ -68,6 +79,7 @@ export function originSelectDone() {
         }
         widget.adds.length = 0;
     });
+    clearboxes();
     originSelectOn = false;
 }
 
@@ -108,7 +120,8 @@ function pointHoverUp(int, ev) {
     process.camOriginOffX = x;
     process.camOriginOffY = y;
     process.camOriginOffZ = z;
-    api.settings.update_fields();
+    api.settings.update_fields(process);
     api.platform.update_origin();
+    api.conf.save();
     originSelectDone();
 }
