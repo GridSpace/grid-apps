@@ -562,20 +562,16 @@ export async function cylinders(settings, widget, opts){
      * @param {Widget} widget - widget object
      * @param {number} face - index of face in triangle vertex data
      * @return {array} - array of all triangle data that belong to the same cylinder
+     * @requires surface_prep must be called first
      */
 export async function cylinder_find (widget, face){
-    CAM.surface_prep(widget);
     return widget.tool.findCylinderSurface(face);
 }
 
 export async function cylinder_poly_find(widget, face){
-    CAM.surface_prep(widget);
     let faces = cylinder_find(widget, face);
-
     let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
-    
     let slicer = new kiri.cam_slicer(widget,{})
-    
     let opts = {
         dedup:false,
         edges: true,
@@ -583,12 +579,10 @@ export async function cylinder_poly_find(widget, face){
     }
 
     let firstOffset = faces[0]*9
-
     let [x1,y1,z1,x2,y2,z2,x3,y3,z3]= Array.from(vert.subarray(firstOffset,firstOffset+9))
     let zs = [z1,z2,z3]
     let zmin = Math.min(...zs);
     let zmax = Math.max(...zs);
-
 
     // console.log({firstOffset,zmin, zs,faces,vert})
 
@@ -616,7 +610,6 @@ export async function cylinder_poly_find(widget, face){
         diam = Math.sqrt(area / Math.PI)* 2,
         center = poly.calcCircleCenter();
     
-
     //find direction using normal to center point
 
     let point = newPoint(x1, y1, z1),
@@ -626,10 +619,7 @@ export async function cylinder_poly_find(widget, face){
         dotProd = normal.dot(delta),
         interior  = dotProd < 0
 
-
-
     return {faces, zmin, zmax, poly, circular, area, diam, center,interior} 
-        
 }
 
 /**
