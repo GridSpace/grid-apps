@@ -543,7 +543,7 @@ export function createPopOps() {
         rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toFloat, units:true}),
         feed:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toFloat, units:true}),
         down:     UC.newInput(LANG.ch_sdwn_s, {title:LANG.ch_sdwn_l, convert:UC.toFloat, units:true}),
-        startAng: UC.newInput(LANG.ch_stra_s, {title:LANG.ch_stra_l, convert:UC.toDegsFloat, bound:UC.bound(-360,360),show:() => poppedRec.forceStartAng}),
+        startAng: UC.newInput(LANG.ch_stra_s, {title:LANG.ch_stra_l, convert:UC.toDegsFloat, bound:UC.bound(-360,360),show:() => env.poppedRec.forceStartAng}),
         offOver:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, bound:UC.bound(0,Infinity)}),
         sep:      UC.newBlank({class:"pop-sep"}),                                                                                                                                                                       
         forceStartAng: UC.newBoolean(LANG.ch_fsta_s, undefined, {title:LANG.ch_fsta_l, }),

@@ -177,7 +177,7 @@ const opAddHelical = () => {
     surfaceDone();
     let rec = env.popOp.helical.new();
     rec.cylinders = { /* widget.id: [ faces... ] */ };
-    func.opAdd(rec);
+    opAdd(rec);
 };
 
 const opAddContour = (axis) => {

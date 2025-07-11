@@ -1,16 +1,21 @@
 import { api } from "../../core/api.js";
 import { CAM } from "./driver-fe.js";
 
+import { clearPops, env } from "./client.js";
+
+
+let alert, lastWidget;
+
 export let helicalOn = false;
 export function selectHelical() {
   if (helicalOn) {
-    return func.surfaceDone();
+    return helicalDone();
   }
-  func.clearPops();
+  clearPops();
   alert = api.show.alert("analyzing surfaces...", 1000);
-  let cylinders = poppedRec.cylinders;
+  let cylinders = env.poppedRec.cylinders;
 
-  CAM.surface_prep(currentIndex * RAD2DEG, () => {
+  CAM.surface_prep(true, () => {
     api.hide.alert(alert);
     alert = api.show.alert("[esc] cancels surface selection");
     for (let [wid, arr] of Object.entries(cylinders)) {
@@ -23,7 +28,7 @@ export function selectHelical() {
         }
     }
   });
-  helicalOn = hoveredOp;
+  helicalOn = env.hoveredOp;
   helicalOn.classList.add("editing");
   api.feature.on_mouse_up = (obj, ev) => {
     let { face } = obj;
@@ -41,10 +46,10 @@ export function selectHelical() {
 };
 
 export function helicalDone(){
-  if (!(helicalOn && poppedRec && poppedRec.cylinders)) {
+  if (!(helicalOn && env.poppedRec && env.poppedRec.cylinders)) {
     return;
   }
-  let { cylinders } = poppedRec;
+  let { cylinders } = env.poppedRec;
   for (let wid of Object.keys(cylinders)) {
     let widget = api.widgets.forid(wid);
     if (widget) {
