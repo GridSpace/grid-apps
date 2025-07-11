@@ -81,7 +81,7 @@ function init(mod) {
     }
 
     mod.on.test((req) => {
-        let cookie = cookieValue(req.headers.cookie, "version") || undefined;
+        let cookie = cookieValue(req.headers.cookie, "version") || '';
         let vmatch = mod.meta.version || "*";
         if (!Array.isArray(vmatch)) {
             vmatch = [ vmatch ];
@@ -90,6 +90,17 @@ function init(mod) {
             return true;
         }
         return vmatch.indexOf(cookie) >= 0;
+    });
+
+    mod.on.testv((version) => {
+        let vmatch = mod.meta.version || "*";
+        if (!Array.isArray(vmatch)) {
+            vmatch = [ vmatch ];
+        }
+        if (vmatch.indexOf("*") >= 0) {
+            return true;
+        }
+        return vmatch.indexOf(version) >= 0;
     });
 
     mod.add(handleSetup);
@@ -174,6 +185,9 @@ function loadModule(mod, dir) {
     if (lastmod(`${mod.dir}/${dir}/.ignore`)) {
         return;
     }
+    // either load the module, or if it's not a module
+    // directory, serve the module as static content
+    // bound to the root
     lastmod(`${mod.dir}/${dir}/init.js`) ?
         initModule(mod, `./${dir}/init.js`, dir) :
         mod.static("/", `${mod.dir}/${dir}`);
