@@ -619,10 +619,15 @@ class Print {
         scope.belt = belt;
 
         if (scope.debugE) {
-            console.log({ bounds, print_time: time.round(2) });
+            console.log({
+                bounds,
+                minf,
+                maxf,
+                print_time: time.round(2),
+                output: scope.output
+            });
         }
 
-        console.log(scope.output)
         done({ output: scope.output });
     }
 }
