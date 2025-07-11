@@ -46,9 +46,13 @@ netdb.create = async function(map = {}) {
         Object.assign(map, JSON.parse(fs.readFileSync(map.conf)));
     }
     const client = new netdb();
-    if (map.host && map.port) await client.open(map.host, map.port);
-    if (map.user && map.pass) await client.auth(map.user, map.pass);
-    if (map.base) await client.use(map.base);
+    try {
+        if (map.host && map.port) await client.open(map.host, map.port);
+        if (map.user && map.pass) await client.auth(map.user, map.pass);
+        if (map.base) await client.use(map.base);
+    } catch (e) {
+        logger.log({ netdb_setup_error: e });
+    }
     logger.log({ netdb: map.host, user: map.user, base: map.base });
     return client;
 };
