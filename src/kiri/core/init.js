@@ -17,6 +17,9 @@ import { init as initSLA } from '../mode/sla/client.js';
 import { init as initWEDM } from '../mode/wedm/client.js';
 import { init as initWJET } from '../mode/wjet/client.js';
 import { menu as menuCAM } from '../mode/cam/init-menu.js';
+import { menu as menuFDM } from '../mode/fdm/init-menu.js';
+import { menu as menuLaser } from '../mode/laser/init-menu.js';
+import { menu as menuSLA } from '../mode/sla/init-menu.js';
 
 let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     { client, catalog, platform, selection, stats } = api,
@@ -87,15 +90,6 @@ function lineTypeSave() {
     const sel = ui.lineType.options[ui.lineType.selectedIndex];
     if (sel) {
         settings().controller.lineType = sel.value;
-        api.conf.save();
-    }
-}
-
-function thinWallSave() {
-    let opt = ui.sliceDetectThin;
-    let level = opt.options[opt.selectedIndex];
-    if (level) {
-        settings().process.sliceDetectThin = level.value;
         api.conf.save();
     }
 }
@@ -769,11 +763,6 @@ function updateCatalog(files) {
     }
 }
 
-function isMultiHead() {
-    let dev = api.conf.get().device;
-    return isNotBelt() && dev.extruders && dev.extruders.length > 1;
-}
-
 function isBelt() {
     return api.device.isBelt();
 }
@@ -845,7 +834,6 @@ function init_one() {
 
     // api augmentation with local functions
     api.device.export = deviceExport;
-    let anim = ui.anim = {};
 
     Object.assign(ui, {
         tracker:            tracker,
@@ -982,33 +970,6 @@ function init_one() {
         stockDepth:         $('stock-width'),
         stockHeight:        $('stock-width'),
 
-        /** CAM Animation Bar */
-
-        _____: {
-            _____: newDiv({ addto: $('layer-animate'), set:true }),
-            row: newRow([
-                anim.replay   = newButton(null,"anim.replay",{icon:'<i class="fas fa-fast-backward"></i>',title:"restart"}),
-                anim.play     = newButton(null,"anim.play",{icon:'<i class="fas fa-play"></i>',title:"play"}),
-                anim.pause    = newButton(null,"anim.pause",{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
-                anim.step     = newButton(null,"anim.step",{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
-                anim.speed    = newButton(null,"anim.fast",{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
-                anim.labspd   = newValue(3, {class:"center padleft"}),
-                anim.labx     = newLabel("X", {class:"padleft"}),
-                anim.valx     = newValue(7, {class:"center"}),
-                anim.laby     = newLabel("Y", {class:"padleft"}),
-                anim.valy     = newValue(7, {class:"center"}),
-                anim.labz     = newLabel("Z", {class:"padleft"}),
-                anim.valz     = newValue(6, {class:"center"}),
-                anim.laba     = newLabel("A", {class:"padleft hide"}),
-                anim.vala     = newValue(6, {class:"center hide"}),
-                anim.labpro   = newLabel("%", {class:"padleft"}),
-                anim.progress = newValue(5, {class:"center"}),
-                anim.trans    = newButton(null,"anim.trans",{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency",class:"padleft"}),
-                anim.model    = newButton(null,"anim.model",{icon:'<i class="fa-solid fa-eye"></i>',title:"show model"}),
-                anim.shade    = newButton(null,"anim.stock",{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
-            ])
-        },
-
         /** Device Browser / Editor */
 
         _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true }),
@@ -1110,201 +1071,16 @@ function init_one() {
         prefadd:          uc.checkpoint($('prefs-add')),
 
         /** FDM Settings */
-
-        _____:               newGroup(LANG.sl_menu, $('fdm-layers'), { modes:FDM, driven, hideable, separator, group:"fdm-layers" }),
-        sliceHeight:         newInput(LANG.sl_lahi_s, { title:LANG.sl_lahi_l, convert:toFloat }),
-        sliceMinHeight:      newInput(LANG.ad_minl_s, { title:LANG.ad_minl_l, convert:toFloat, bound:bound(0,3.0), show:() => ui.sliceAdaptive.checked }),
-        sliceTopLayers:      newInput(LANG.sl_ltop_s, { title:LANG.sl_ltop_l, convert:toInt }),
-        sliceBottomLayers:   newInput(LANG.sl_lbot_s, { title:LANG.sl_lbot_l, convert:toInt }),
-        separator:           newBlank({ class:"set-sep", driven }),
-        sliceAdaptive:       newBoolean(LANG.ad_adap_s, onBooleanClick, { title: LANG.ad_adap_l }),
-        _____:               newGroup(LANG.sw_menu, $('fdm-walls'), { modes:FDM, driven, hideable, separator, group:"fdm-walls" }),
-        sliceShells:         newInput(LANG.sl_shel_s, { title:LANG.sl_shel_l, convert:toFloat }),
-        sliceLineWidth:      newInput(LANG.sl_line_s, { title:LANG.sl_line_l, convert:toFloat, bound:bound(0,5) }),
-        separator:           newBlank({ class:"set-sep", driven }),
-        sliceShellOrder:     newSelect(LANG.sl_ordr_s, { title:LANG.sl_ordr_l}, "shell"),
-        sliceDetectThin:     newSelect(LANG.ad_thin_s, { title: LANG.ad_thin_l, action: thinWallSave }, "thin"),
-        outputAlternating:   newBoolean(LANG.ad_altr_s, onBooleanClick, {title:LANG.ad_altr_l}),
-        sliceZInterleave:    newBoolean(LANG.ad_zint_s, onBooleanClick, {title:LANG.ad_zint_l, show:zIntShow}),
-        _____:               newGroup(LANG.fi_menu, $('fdm-fill'), { modes:FDM, driven, hideable, separator, group:"fdm-fill" }),
-        sliceFillType:       newSelect(LANG.fi_type, {trigger}, "infill"),
-        sliceFillSparse:     newInput(LANG.fi_pcnt_s, {title:LANG.fi_pcnt_l, convert:toFloat, bound:bound(0.0,1.0), show:hasInfill}),
-        sliceFillRepeat:     newInput(LANG.fi_rept_s, {title:LANG.fi_rept_l, convert:toInt,   bound:bound(1,10),    show:fillIsLinear}),
-        sliceFillOverlap:    newInput(LANG.fi_over_s, {title:LANG.fi_over_l, convert:toFloat, bound:bound(0.0,2.0), show:hasInfill}),
-        separator:           newBlank({ class:"set-sep", driven }),
-        sliceFillRate:       newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:toInt,   bound:bound(0,500)}),
-        sliceSolidRate:      newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:toInt,   bound:bound(0,500)}),
-        separator:           newBlank({ class:"set-sep", driven }),
-        sliceFillGrow:       newInput(LANG.fi_grow_s, {title:LANG.fi_grow_l, convert:toFloat}),
-        sliceFillAngle:      newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:toFloat}),
-        _____:               newGroup(LANG.fh_menu, $('fdm-heat'), { modes:FDM, driven, hideable, separator, group:"fdm-heat" }),
-        outputTemp:          newInput(LANG.ou_nozl_s, {title:LANG.ou_nozl_l, convert:toInt}),
-        outputBedTemp:       newInput(LANG.ou_bedd_s, {title:LANG.ou_bedd_l, convert:toInt}),
-        _____:               newGroup(LANG.fc_menu, $('fdm-cool'), { modes:FDM, driven, hideable, separator, group:"fdm-cool" }),
-        outputFanLayer:      newInput(LANG.ou_fanl_s, { title:LANG.ou_fanl_l, convert:toInt,   bound:bound(0,255) }),
-        outputFanSpeed:      newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:toInt, bound:bound(0,255)}),
-        _____:               newGroup(LANG.sp_menu, $('fdm-support'), { modes:FDM, driven, hideable, separator, group:"fdm-supp" }),
-        sliceSupportNozzle:  newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, show:isMultiHead}, "extruders"),
-        sliceSupportDensity: newInput(LANG.sp_dens_s, {title:LANG.sp_dens_l, convert:toFloat, bound:bound(0.0,1.0)}),
-        sliceSupportSize:    newInput(LANG.sp_size_s, {title:LANG.sp_size_l, convert:toFloat, bound:bound(1.0,200.0)}),
-        sliceSupportOffset:  newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, convert:toFloat, bound:bound(0.0,200.0)}),
-        sliceSupportGap:     newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, convert:toInt,   bound:bound(0,5)}),
-        sliceSupportArea:    newInput(LANG.sp_area_s, {title:LANG.sp_area_l, convert:toFloat, bound:bound(0.0,200.0)}),
-        sliceSupportExtra:   newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, convert:toFloat, bound:bound(0.0,10.0)}),
-        sliceSupportGrow:    newInput(LANG.sp_grow_s, {title:LANG.sp_grow_l, convert:toFloat, bound:bound(0.0,10.0)}),
-        sliceSupportAngle:   newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, convert:toFloat, bound:bound(0.0,90.0)}),
-        sliceSupportSpan:    newInput(LANG.sp_span_s, {title:LANG.sp_span_l, convert:toFloat, bound:bound(0.0,200.0), show:() => ui.sliceSupportEnable.checked }),
-        separator:           newBlank({ class:"set-sep", driven }),
-        sliceSupportEnable:  newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, show:isNotBelt}),
-        sliceSupportOutline: newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l}),
-        separator:           newBlank({ class:"set-sep", driven }),
-        sliceSupportGen:     newRow([
-            ui.ssaGen = newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
-        ], { modes: FDM, class: "ext-buttons f-row grow" }),
-        separator:           newBlank({ class:"set-sep", driven }),
-        sliceSupportManual: newRow([
-            (ui.ssmAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
-            (ui.ssmDun = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
-            (ui.ssmClr = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
-        ], {class:"ext-buttons f-row"}),
-        _____:               newGroup(LANG.fl_menu, $('fdm-base'), { modes:FDM, driven, hideable, separator, group:"fdm-base" }),
-        firstSliceHeight:    newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:toFloat, show:isNotBelt}),
-        firstLayerNozzleTemp:newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:toInt,   show:isNotBelt}),
-        firstLayerBedTemp:   newInput(LANG.fl_bedd_s, {title:LANG.fl_bedd_l, convert:toInt,   show:isNotBelt}),
-        separator:           newBlank({ class:"set-sep", driven }),
-        firstLayerFanSpeed:  newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:toInt,   bound:bound(0,255), show:isBelt}),
-        firstLayerYOffset:   newInput(LANG.fl_zoff_s, {title:LANG.fl_zoff_l, convert:toFloat, show:isBelt}),
-        firstLayerFlatten:   newInput(LANG.fl_flat_s, {title:LANG.fl_flat_l, convert:toFloat, show:isBelt}),
-        firstLayerRate:      newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:toFloat}),
-        firstLayerFillRate:  newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:toFloat, show:isNotBelt}),
-        separator:           newBlank({ class:"set-sep", driven, show:isNotBelt }),
-        firstLayerLineMult:  newInput(LANG.fl_sfac_s, {title:LANG.fl_sfac_l, convert:toFloat, bound:bound(0.5,2), show:isNotBelt}),
-        firstLayerPrintMult: newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:toFloat}),
-        separator:           newBlank({ class:"set-sep", driven, show:isBelt }),
-        firstLayerBrim:      newInput(LANG.fl_brim_s, {title:LANG.fl_brim_l, convert:toInt,   show:isBelt}),
-        firstLayerBrimIn:    newInput(LANG.fl_brin_s, {title:LANG.fl_brin_l, convert:toInt,   show:isBelt}),
-        firstLayerBrimTrig:  newInput(LANG.fl_brmn_s, {title:LANG.fl_brmn_l, convert:toInt,   show:isBelt}),
-        firstLayerBrimGap:   newInput(LANG.fl_brgp_s, {title:LANG.fl_brgp_l, convert:toFloat, show:isBelt}),
-        separator:           newBlank({ class:"set-sep", driven, show:isBelt }),
-        firstLayerBeltLead:  newInput(LANG.fl_bled_s, {title:LANG.fl_bled_l, convert:toFloat, show:isBelt}),
-        firstLayerBeltBump:  newInput(LANG.fl_blmp_s, {title:LANG.fl_blmp_l, convert:toFloat, bound:bound(0, 10), show:isBelt}),
-        separator:           newBlank({ class:"set-sep", driven, show:isNotBelt }),
-        outputBrimCount:     newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:toInt,   show:isNotBelt}),
-        outputBrimOffset:    newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:toFloat, show:isNotBelt}),
-        outputRaftSpacing:   newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:toFloat, bound:bound(0.0,3.0), show: () => ui.outputRaft.checked && isNotBelt() }),
-        separator:           newBlank({ class:"set-sep", driven, show:isNotBelt }),
-        outputRaft:          newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, trigger, show:() => isNotBelt()}),
-        outputDraftShield:   newBoolean(LANG.fr_draf_s, onBooleanClick, {title:LANG.fr_draf_l, trigger, show:() => isNotBelt()}),
-        _____:               newGroup(LANG.ou_menu, $('fdm-output'), { modes:FDM, driven, hideable, separator, group:"fdm-out" }),
-        outputFeedrate:      newInput(LANG.ou_feed_s, {title:LANG.ou_feed_l, convert:toInt}),
-        outputFinishrate:    newInput(LANG.ou_fini_s, {title:LANG.ou_fini_l, convert:toInt}),
-        outputSeekrate:      newInput(LANG.ou_move_s, {title:LANG.ou_move_l, convert:toInt}),
-        separator:           newBlank({ class:"set-sep", driven }),
-        outputShellMult:     newInput(LANG.ou_shml_s, {title:LANG.ou_exml_l, convert:toFloat, bound:bound(0.0,2.0)}),
-        outputFillMult:      newInput(LANG.ou_flml_s, {title:LANG.ou_exml_l, convert:toFloat, bound:bound(0.0,2.0)}),
-        outputSparseMult:    newInput(LANG.ou_spml_s, {title:LANG.ou_exml_l, convert:toFloat, bound:bound(0.0,2.0)}),
-        separator:           newBlank({ class:"set-sep", driven }),
-        outputRetractDist:   newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:toFloat}),
-        outputRetractSpeed:  newInput(LANG.ad_rrat_s, {title:LANG.ad_rrat_l, convert:toInt}),
-        outputRetractWipe:   newInput(LANG.ad_wpln_s, {title:LANG.ad_wpln_l, convert:toFloat, bound:bound(0.0,10)}),
-        separator:           newBlank({ class:"set-sep", driven }),
-        sliceLayerStart:     newSelect(LANG.sl_strt_s, {title:LANG.sl_strt_l}, "start"),
-        outputLayerRetract:  newBoolean(LANG.ad_lret_s, onBooleanClick, {title:LANG.ad_lret_l}),
-        outputAvoidGaps:     newBoolean(LANG.ad_agap_s, onBooleanClick, {title:LANG.ad_agap_l}),
-        separator:           newBlank({ class:"set-sep", driven, show:isBelt }),
-        outputBeltFirst:     newBoolean(LANG.ad_lbir_s, onBooleanClick, {title:LANG.ad_lbir_l, show:isBelt}),
-        _____:               newGroup(LANG.ad_menu, $('fdm-expert'), { modes:FDM, driven, hideable, separator, group:"fdm-xprt" }),
-        sliceAngle:          newInput(LANG.sl_angl_s, {title:LANG.sl_angl_l, convert:toFloat, show:isBelt}),
-        outputRetractDwell:  newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:toInt}),
-        sliceSolidMinArea:   newInput(LANG.ad_msol_s, {title:LANG.ad_msol_l, convert:toFloat}),
-        outputMinSpeed:      newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, convert:toFloat, bound:bound(1,200)}),
-        outputShortPoly:     newInput(LANG.ad_spol_s, {title:LANG.ad_spol_l, convert:toFloat, bound:bound(0,10000)}),
-        outputCoastDist:     newInput(LANG.ad_scst_s, {title:LANG.ad_scst_l, convert:toFloat, bound:bound(0.0,10)}),
-        zHopDistance:        newInput(LANG.ad_zhop_s, {title:LANG.ad_zhop_l, convert:toFloat, bound:bound(0,3.0)}),
-        arcTolerance:        newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, convert:toFloat, bound:bound(0,1.0), show:() => { return isNotBelt() }}),
-        antiBacklash:        newInput(LANG.ad_abkl_s, {title:LANG.ad_abkl_l, convert:toInt,   bound:bound(0,3)}),
-        outputLoops:         newInput(LANG.ag_loop_s, {title:LANG.ag_loop_l, convert:toInt,   bound:bound(-1,1000), show:isBelt}),
-        outputPurgeTower:    newInput(LANG.ad_purg_s, {title:LANG.ad_purg_l, convert:toInt,   bound:bound(0,1000)}),
-
-        fdmRanges:    $('fdm-ranges'),
+        ...menuFDM(),
 
         /** CAM Settings */
         ...menuCAM(),
 
         /** LASER/DRAG/WJET/WEDM cut tool Settings */
-
-        _____:               newGroup(LANG.sl_menu, $('lzr-slice'), { modes:TWOD, driven, separator }),
-        ctSliceKerf:         newInput(LANG.ls_offs_s, {title:LANG.ls_offs_l, convert:toFloat}),
-        ctSliceHeight:       newInput(LANG.ls_lahi_s, {title:LANG.ls_lahi_l, convert:toFloat, trigger}),
-        ctSliceHeightMin:    newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:toFloat, show:() => ui.ctSliceHeight.value == 0 && !ui.ctSliceSingle.checked }),
-        separator:           newBlank({ class:"set-sep", driven }),
-        ctSliceSingle:       newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l}),
-        ctOmitInner:         newBoolean(LANG.we_omit_s, onBooleanClick, {title:LANG.we_omit_l, modes:WEDM}),
-        _____:               newGroup('surfaces', $('lzr-surface'), { modes:[-1], driven, separator }),
-        ctSurfaces: newRow([
-            (ui.faceAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
-            (ui.faceDun = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
-            (ui.faceClr = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
-        ], {class:"ext-buttons f-row", modes:WEDM}),
-        _____:               newGroup(LANG.dk_menu, $('lzr-knife'), { modes:DRAG, marker:true, driven, separator }),
-        ctOutKnifeDepth:     newInput(LANG.dk_dpth_s, { title:LANG.dk_dpth_l, convert:toFloat, bound:bound(0.0,5.0) }),
-        ctOutKnifePasses:    newInput(LANG.dk_pass_s, { title:LANG.dk_pass_l, convert:toInt,   bound:bound(0,5) }),
-        ctOutKnifeTip:       newInput(LANG.dk_offs_s, { title:LANG.dk_offs_l, convert:toFloat, bound:bound(0.0,10.0) }),
-        _____:               newGroup(LANG.lo_menu, $('lzr-layout'), { modes:TWOD, driven, separator }),
-        ctOutTileSpacing:    newInput(LANG.ou_spac_s, { title:LANG.ou_spac_l, convert:toInt }),
-        ctOutMerged:         newBoolean(LANG.ou_mrgd_s, onBooleanClick, {title:LANG.ou_mrgd_l, modes:TWONED, show:() => !ui.ctOutStack.checked }),
-        ctOutGroup:          newBoolean(LANG.ou_grpd_s, onBooleanClick, {title:LANG.ou_grpd_l, show:() => !(ui.ctOutMark.checked || ui.ctOutStack.checked) }),
-        _____:               newGroup(LANG.ou_menu, $('lzr-output'), { modes:TWOD, driven, separator, group:"lzr-output" }),
-        ctOutPower:          newInput(LANG.ou_powr_s, {title:LANG.ou_powr_l, convert:toInt, bound:bound(1,100), modes:TWONED }),
-        ctOutSpeed:          newInput(LANG.ou_sped_s, {title:LANG.ou_sped_l, convert:toInt }),
-        ctAdaptive:          newBoolean('adaptive speed', onBooleanClick, {modes:WEDM, title:'controller determines best cutting speed based on material feedback at runtime'}),
-        separator:           newBlank({ class:"set-sep", driven }),
-        ctOriginBounds:      newBoolean(LANG.or_bnds_s, onBooleanClick, { title:LANG.or_bnds_l, show:() => !ui.ctOriginCenter.checked }),
-        ctOriginCenter:      newBoolean(LANG.or_cntr_s, onBooleanClick, { title:LANG.or_cntr_l, show:() => !ui.ctOriginBounds.checked }),
-        separator:           newBlank({ class:"set-sep", driven, modes:WEDM, show:() => ui.ctOriginBounds.checked }),
-        ctOriginOffX:        newInput(LANG.or_offx_s, { title:LANG.or_offx_l, convert:toFloat, modes:WEDM, show:() => ui.ctOriginBounds.checked }),
-        ctOriginOffY:        newInput(LANG.or_offy_s, { title:LANG.or_offy_l, convert:toFloat, modes:WEDM, show:() => ui.ctOriginBounds.checked }),
-        separator:           newBlank({ class:"set-sep", driven, modes:TWONED }),
-        ctOutZColor:         newBoolean(LANG.ou_layo_s, onBooleanClick, { title:LANG.ou_layo_l, modes:TWONED, show:() => !ui.ctOutMerged.checked }),
-        ctOutLayer:          newBoolean(LANG.ou_layr_s, onBooleanClick, { title:LANG.ou_layr_l, modes:TWONED, show:() => !ui.ctOutStack.checked }),
-        ctOutMark:           newBoolean(LANG.ou_lays_s, onBooleanClick, { title:LANG.ou_lays_l, modes:TWONED, show:() => !ui.ctOutStack.checked }),
-        separator:           newBlank({ class:"set-sep", driven, modes:LASER }),
-        ctOutInches:         newBoolean(LANG.ou_inch_s, onBooleanClick, { title:LANG.ou_inch_l, modes:LASER }),
-        ctOutStack:          newBoolean(LANG.ou_stak_s, onBooleanClick, { title:LANG.ou_stak_l, modes:LASER }),
-        ctOutShaper:         newBoolean(LANG.ou_shap_s, onBooleanClick, { title:LANG.ou_shap_l, modes:LASER, show:() => ui.ctOutStack.checked }),
+        ...menuLaser(),
 
         /** SLA SETTINGS */
-
-        slaProc:             newGroup(LANG.sa_menu, $('sla-slice'), { modes:SLA, group:"sla-slice", driven, separator }),
-        slaSlice:            newInput(LANG.sa_lahe_s, {title:LANG.sa_lahe_l, convert:toFloat}),
-        slaShell:            newInput(LANG.sa_shel_s, {title:LANG.sa_shel_l, convert:toFloat}),
-        slaOpenTop:          newBoolean(LANG.sa_otop_s, onBooleanClick, {title:LANG.sa_otop_l}),
-        slaOpenBase:         newBoolean(LANG.sa_obas_s, onBooleanClick, {title:LANG.sa_obas_l}),
-        slaLayers:           newGroup(LANG.sa_layr_m, $('sla-layers'), { modes:SLA, group:"sla-layers", driven, separator }),
-        slaLayerOn:          newInput(LANG.sa_lton_s, {title:LANG.sa_lton_l, convert:toFloat}),
-        slaLayerOff:         newInput(LANG.sa_ltof_s, {title:LANG.sa_ltof_l, convert:toFloat}),
-        slaPeelDist:         newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:toFloat}),
-        slaPeelLiftRate:     newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:toFloat}),
-        slaPeelDropRate:     newInput(LANG.sa_pldr_s, {title:LANG.sa_pldr_l, convert:toFloat}),
-        slaBase:             newGroup(LANG.sa_base_m, $('sla-base'), { modes:SLA, group:"sla-base", driven, separator }),
-        slaBaseLayers:       newInput(LANG.sa_balc_s, {title:LANG.sa_balc_l, convert:toInt}),
-        slaBaseOn:           newInput(LANG.sa_lton_s, {title:LANG.sa_bltn_l, convert:toFloat}),
-        slaBaseOff:          newInput(LANG.sa_ltof_s, {title:LANG.sa_bltf_l, convert:toFloat}),
-        slaBasePeelDist:     newInput(LANG.sa_pldi_s, {title:LANG.sa_pldi_l, convert:toFloat}),
-        slaBasePeelLiftRate: newInput(LANG.sa_pllr_s, {title:LANG.sa_pllr_l, convert:toFloat}),
-        slaFill:             newGroup(LANG.sa_infl_m, $('sla-fill'), { modes:SLA, group:"sla-infill", driven, separator }),
-        slaFillDensity:      newInput(LANG.sa_ifdn_s, {title:LANG.sa_ifdn_l, convert:toFloat, bound:bound(0,1)}),
-        slaFillLine:         newInput(LANG.sa_iflw_s, {title:LANG.sa_iflw_l, convert:toFloat, bound:bound(0,5)}),
-        slaSupport:          newGroup(LANG.sa_supp_m, $('sla-support'), { modes:SLA, group:"sla-support", driven, separator }),
-        slaSupportLayers:    newInput(LANG.sa_slyr_s, {title:LANG.sa_slyr_l, convert:toInt,   bound:bound(5,100)}),
-        slaSupportGap:       newInput(LANG.sa_slgp_s, {title:LANG.sa_slgp_l, convert:toInt,   bound:bound(3,30)}),
-        slaSupportDensity:   newInput(LANG.sa_sldn_s, {title:LANG.sa_sldn_l, convert:toFloat, bound:bound(0.01,0.9)}),
-        slaSupportSize:      newInput(LANG.sa_slsz_s, {title:LANG.sa_slsz_l, convert:toFloat, bound:bound(0.1,1)}),
-        slaSupportPoints:    newInput(LANG.sa_slpt_s, {title:LANG.sa_slpt_l, convert:toInt,   bound:bound(3,10)}),
-        slaSupportEnable:    newBoolean(LANG.enable, onBooleanClick, {title:LANG.sl_slen_l}),
-        slaOutput:           newGroup(LANG.sa_outp_m, $('sla-output'), { modes:SLA, driven, separator, group:"sla-output" }),
-        slaFirstOffset:      newInput(LANG.sa_opzo_s, {title:LANG.sa_opzo_l, convert:toFloat, bound:bound(0,1)}),
-        slaAntiAlias:        newSelect(LANG.sa_opaa_s, {title:LANG.sa_opaa_l}, "antialias"),
+        ...menuSLA(),
 
         layers:             uc.setGroup($("layers")),
 
@@ -1327,27 +1103,6 @@ function init_one() {
     ui.settingsSave.onclick = () => {
         settingsSave(undefined, ui.settingsName.value);
     };
-
-    function optSelected(sel) {
-        let opt = sel.options[sel.selectedIndex];
-        return opt ? opt.value : undefined;
-    }
-
-    function hasInfill() {
-        return optSelected(ui.sliceFillType) !== 'none'
-    }
-
-    function fillIsLinear() {
-        return hasInfill() && optSelected(ui.sliceFillType) === 'linear';
-    }
-
-    function spindleShow() {
-        return settings().device.spindleMax > 0;
-    }
-
-    function zIntShow() {
-        return settings().controller.devel;
-    }
 
     // slider setup
     const mobile = space.info.mob;

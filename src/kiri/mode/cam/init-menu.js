@@ -1,3 +1,4 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../core/api.js';
 import { originReset, originSelect } from './cl-origin.js';
@@ -8,7 +9,7 @@ let { CAM } = api.const.MODES,
     { uc, ui } = api,
     { bound, toInt, toFloat } = uc,
     { newBlank, newButton, newBoolean, newGroup, newInput } = uc,
-    { newSelect, newLabel, newValue, newRow, newGCode, newDiv } = uc,
+    { newSelect, newLabel, newValue, newRow, newDiv } = uc,
     driven = true,
     separator = true,
     trigger = true,
@@ -29,7 +30,38 @@ function zAnchorSave() {
 }
 
 export function menu() {
+    let anim = ui.anim = {};
+
     return {
+
+    /** Animation Bar */
+
+    _____: {
+        _____: newDiv({ addto: $('layer-animate'), set:true }),
+        row: newRow([
+            anim.replay   = newButton(null,"anim.replay",{icon:'<i class="fas fa-fast-backward"></i>',title:"restart"}),
+            anim.play     = newButton(null,"anim.play",{icon:'<i class="fas fa-play"></i>',title:"play"}),
+            anim.pause    = newButton(null,"anim.pause",{icon:'<i class="fas fa-pause"></i>',title:"pause"}),
+            anim.step     = newButton(null,"anim.step",{icon:'<i class="fas fa-step-forward"></i>',title:"single step"}),
+            anim.speed    = newButton(null,"anim.fast",{icon:'<i class="fas fa-forward"></i>',title:"toggle speed"}),
+            anim.labspd   = newValue(3, {class:"center padleft"}),
+            anim.labx     = newLabel("X", {class:"padleft"}),
+            anim.valx     = newValue(7, {class:"center"}),
+            anim.laby     = newLabel("Y", {class:"padleft"}),
+            anim.valy     = newValue(7, {class:"center"}),
+            anim.labz     = newLabel("Z", {class:"padleft"}),
+            anim.valz     = newValue(6, {class:"center"}),
+            anim.laba     = newLabel("A", {class:"padleft hide"}),
+            anim.vala     = newValue(6, {class:"center hide"}),
+            anim.labpro   = newLabel("%", {class:"padleft"}),
+            anim.progress = newValue(5, {class:"center"}),
+            anim.trans    = newButton(null,"anim.trans",{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency",class:"padleft"}),
+            anim.model    = newButton(null,"anim.model",{icon:'<i class="fa-solid fa-eye"></i>',title:"show model"}),
+            anim.shade    = newButton(null,"anim.stock",{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
+        ])
+    },
+
+    /** Left Side Menu */
 
     _____:               newGroup(LANG.ct_menu, $('cam-tabs'), { modes:CAM, marker:true, driven, separator }),
     camTabsWidth:        newInput(LANG.ct_wdth_s, {title:LANG.ct_wdth_l, convert:toFloat, bound:bound(0.005,100), units}),
