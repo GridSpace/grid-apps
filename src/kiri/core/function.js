@@ -452,8 +452,7 @@ function cancelWorker() {
 }
 
 function parseCode(code, type) {
-    const { conf, event, show, widgets, view } = api;
-    const { stacks } = kiri;
+    const { conf, event, show, stacks, widgets, view } = api;
     const settings = conf.get();
 
     event.emit("code.load", {code, type});
