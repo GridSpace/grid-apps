@@ -483,7 +483,10 @@ function prepEach(widget, settings, print, firstPoint, update) {
                 rate = Math.round(plungeRate + ((feedRate - plungeRate) * modifier));
                 cut = 1;
             } else {
-                rate = 1 / Math.hypot(deltaXY / feedRate , absDeltaZ / plungeRate );
+                rate = Math.max(
+                    plungeRate,
+                    1 / Math.hypot(deltaXY / feedRate , absDeltaZ / plungeRate )
+                );
             }
         }
 

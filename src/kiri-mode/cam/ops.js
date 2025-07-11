@@ -765,9 +765,10 @@ class OpOutline extends CamOp {
 
 function createFilter(op) {
     let filter = slices => slices;
-    if (op.filter) {
+    let filterStr = op.filter?.map(l => l.trim()).join('\n');
+    if (filterStr) {
         try {
-            const obj = eval(`( ${op.filter.join('\n')} )`);
+            const obj = eval(`( ${filterStr} )`);
             let idx = 0;
             if (obj && obj.slices) {
                 const nadd = [];
