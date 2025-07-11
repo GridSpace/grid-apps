@@ -1,7 +1,8 @@
 
-import { arcToPath } from "../../../geo/paths";
-import { newPolygon } from "../../../geo/polygon";
-import { CAM } from "./driver-fe"
+import { arcToPath } from "../../../geo/paths.js";
+import { newPolygon } from "../../../geo/polygon.js";
+import { CAM } from "./driver-be.js"
+import { CamOp } from "./op.js";
 
 
 export class OpHelical extends CamOp {
