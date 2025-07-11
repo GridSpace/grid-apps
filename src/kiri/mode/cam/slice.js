@@ -504,17 +504,17 @@ export async function traces(settings, widget, single) {
 };
 
 
-    /**
-     * Returns an array of arrays of perpindicular triangles in the mesh.
-     * Each sub-array is a list of triangle data that are part of the same
-     * cylinder.
-     *
-     * @param {object} settings - settings object
-     * @param {object} widget - widget object
-     * @param {object} opts - options object
-     * @return {array} - array of arrays of triangle data
-     */
-CAM.cylinders = async (settings, widget, opts) => {
+/**
+ * Returns an array of arrays of perpindicular triangles in the mesh.
+ * Each sub-array is a list of triangle data that are part of the same
+ * cylinder.
+ *
+ * @param {object} settings - settings object
+ * @param {object} widget - widget object
+ * @param {object} opts - options object
+ * @return {array} - array of arrays of triangle data
+ */
+export async function cylinders(settings, widget, opts){
 
     let {} = opts ?? {}    
 
@@ -556,19 +556,21 @@ CAM.cylinders = async (settings, widget, opts) => {
     return Array.from(cylinderTriangles.values())
 }
 
-CAM.surface_find = function(widget, faces, radians) {
-    CAM.surface_prep(widget);
-    return widget.tool.findConnectedSurface(faces, radians || 0, 0.0);
-};
 
-CAM.cylinder_find = (widget, face)=>{
+    /**
+     * Find all triangles that are part of the same cylinder as the given triangle
+     * @param {Widget} widget - widget object
+     * @param {number} face - index of face in triangle vertex data
+     * @return {array} - array of all triangle data that belong to the same cylinder
+     */
+export async function cylinder_find (widget, face){
     CAM.surface_prep(widget);
     return widget.tool.findCylinderSurface(face);
 }
 
-CAM.cylinder_poly_find = (widget, face)=>{
+export async function cylinder_poly_find(widget, face){
     CAM.surface_prep(widget);
-    let faces = CAM.cylinder_find(widget, face);
+    let faces = cylinder_find(widget, face);
 
     let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
     
