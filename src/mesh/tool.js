@@ -296,6 +296,21 @@ class MeshTool {
         return faces;
     }
 
+    /**
+     * Finds all faces in a cylinder surface connected to the given face.
+     * 
+     * @param {number} face - the face index to start from
+     * @return {number[]} face indices in the cylinder surface
+     * 
+     * @throws {string} if the face has only one Z value
+     * @throws {string} if the face normal is not perpendicular to Z axis
+     * 
+     * The algorithm works by:
+     * 1. Finding the two distinct Z values of the given face
+     * 2. Filtering adjacent faces to those with the same Z values
+     * 3. Filtering faces with normals perpendicular to Z axis
+     * 4. Recursively adding adjacent faces with the same Z values and normal perpendicular to Z axis
+     */
     findCylinderSurface(face){
         face = Number(face)
 
@@ -308,8 +323,14 @@ class MeshTool {
         const {vertices}= this
         const {faces} = this.getIndex();
 
-        const zs = [vertices[face*3+2],vertices[face*3+5],vertices[face*3+8]]
-        .map(z => Math.round(z*1000)/1000)
+        console.log({vertices,faces})
+
+        let faceOffset = face*9
+
+        const verts = Array.from(vertices.slice(faceOffset,faceOffset+9))
+        const zs = [vertices[faceOffset+2],vertices[faceOffset+5],vertices[faceOffset+8]]
+        .map(z => z.round(3))
+        console.log(verts,zs)
         
         if(dissimilar(...zs)){
             throw "face must have only 2 Z values"
