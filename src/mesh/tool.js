@@ -240,6 +240,13 @@ class MeshTool {
         };
     }
 
+/**
+ * Retrieves the adjacent faces for a given face index.
+ * 
+ * @param {number} face - The index of the face for which adjacent faces are to be found.
+ * @returns {number[]} An array of face indices that are adjacent to the given face.
+ */
+
     getAdjacentFaces(face) {
         const { faces, sides } = this.getIndex();
         const foff = face * 6;
@@ -318,30 +325,24 @@ class MeshTool {
         //helper function
         const dissimilar = (a,b,c) => a!==b && a!==c && b!==c
 
-        let found = {}
-        let out = [face]
-        const {vertices}= this
-        const {faces} = this.getIndex();
-
-        console.log({vertices,faces})
-
-        let faceOffset = face*9
-
-        const verts = Array.from(vertices.slice(faceOffset,faceOffset+9))
-        const zs = [vertices[faceOffset+2],vertices[faceOffset+5],vertices[faceOffset+8]]
-        .map(z => z.round(3))
-        console.log(verts,zs)
+        let found = {},
+            out = [face],
+            {vertices} = this,
+            {faces} = this.getIndex(),
+            faceOffset = face*9,
+            zs = [2,5,8].map(i => vertices[faceOffset+i].round(5)), //get zs from face vertices
+            lowZ = Math.min(zs),
+            highZ = Math.max(zs),
+            checked = {},
+            check = [face];
         
+        //check for errors, and throw if found
         if(dissimilar(...zs)){
             throw "face must have only 2 Z values"
         }else if(Math.abs( faces[face * 6 + 2] > 1e-6 )){
             throw "face's normal must be perpendicular to Z axis"
         }
-        const lowZ = Math.min(zs)
-        const highZ = Math.max(zs)
-        
-        const checked = {};
-        const check = [face]
+
         found[face] = 1;
         while (check.length) {
             const face = check.shift();
