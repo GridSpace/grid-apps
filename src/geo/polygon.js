@@ -843,6 +843,7 @@ export class Polygon {
      * scale polygon around origin
      */
     scale(scale, round) {
+        this.area2 = undefined;
         let x, y, z;
         if (typeof(scale) === 'number') {
             x = y = z = scale;
@@ -1073,6 +1074,7 @@ export class Polygon {
      * append point to polygon and return point
      */
     push(p) {
+        this.area2 = undefined;
         // clone any point belonging to another polygon
         if (p.poly) p = p.clone();
         p.poly = this;

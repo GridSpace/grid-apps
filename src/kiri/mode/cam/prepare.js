@@ -177,7 +177,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         }
         feedRate = feed || feedRate || plunge;
         plungeRate = Math.min(feedRate || plunge, plunge || plungeRate || feedRate);
-        console.log({ setTool: toolID, feed, plunge, plungeRate });
+        // console.log({ setTool: toolID, feed, plunge, plungeRate });
     }
 
     function setLasering(bool, power = 0) {

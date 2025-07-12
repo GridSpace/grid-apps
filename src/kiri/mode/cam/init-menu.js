@@ -37,7 +37,7 @@ export function menu() {
     /** Animation Bar */
 
     _____: {
-        _____: newDiv({ addto: $('layer-animate'), set:true }),
+        _____: newDiv({ addto: $('layer-animate'), set:true, group:false }),
         row: newRow([
             anim.replay   = newButton(null,"anim.replay",{icon:'<i class="fas fa-fast-backward"></i>',title:"restart"}),
             anim.play     = newButton(null,"anim.play",{icon:'<i class="fas fa-play"></i>',title:"play"}),

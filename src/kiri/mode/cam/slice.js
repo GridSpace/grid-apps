@@ -801,7 +801,7 @@ export function computeShadowAt(widget, z, ztop) {
             .add(a[2].x, a[2].y, a[2].z);
     });
 
-    polys = POLY.union(polys, 0.001, true);
+    polys = POLY.union(polys, 0, true);
 
     return polys;
 }
