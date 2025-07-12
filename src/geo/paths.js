@@ -566,7 +566,7 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
     //deltas
     let dx = start.x - end.x;
     let dy = start.y - end.y;
-    let dz = end.z - start.z;
+    let dz = start.z - end.z;
 
     // line angles
     let a1 = Math.atan2(center.y - start.y, center.x - start.x) + Math.PI;
@@ -577,7 +577,7 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
     let steps =  samePoint? arcdivs : Math.max(Math.floor( arcdivs * ofFull),4);
     let step =  (samePoint? (Math.PI*2) : ad) / steps;
     let zStart = start.z;
-    let zStep = dz / steps;
+    let zStep = -dz / steps;
     let rot = a1;
 
     //unused deltas
