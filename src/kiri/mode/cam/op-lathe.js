@@ -2,7 +2,7 @@
 
 import { CamOp } from './op.js';
 import { Tool } from './tool.js';
-import { Topo4 } from './topo4.js';
+import { generate as topo4_generate } from './topo4.js';
 import { newPoint } from '../../../geo/point.js';
 
 function createFilter(op) {
@@ -39,7 +39,7 @@ class OpLathe extends CamOp {
         let { addSlices } = state;
         let filter = createFilter(op);
 
-        this.topo = await Topo4({
+        this.topo = await topo4_generate({
             op,
             state,
             onupdate: (pct, msg) => {

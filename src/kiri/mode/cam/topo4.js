@@ -17,7 +17,7 @@ function scale(fn, factor = 1, base = 0) {
     }
 }
 
-class Topo {
+export class Topo {
     constructor() { }
 
     async generate(opt = {}) {
@@ -296,7 +296,7 @@ class Topo {
     }
 
     async latheWorker(onupdate) {
-        const { sliced, tool, zoff, leave } = this;
+        const { sliced, tool, zoff, leave, linear } = this;
 
         const rota = this.angle * DEG2RAD;
         const steps = (Math.PI * 2) / rota;
@@ -319,19 +319,32 @@ class Topo {
             onupdate(count / steps);
         }
 
-        count = recs[0].heights.length / 3;
+        count = linear ? recs.length : recs[0].heights.length / 3;
+        // count = recs[0].heights.length / 3;
         while (count-- > 0) {
             let slice = newSlice(count);
             slice.camLines = [ newPolygon().setOpen() ];
             paths.push(slice);
         }
 
-        for (let rec of recs) {
-            const { degrees, heights } = rec;
-            [...heights].group(3).forEach((a,i) => {
-                // progress each path 360 degrees to prevent A rolling backwards
-                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+        if (linear) {
+            recs.forEach((rec,i) => {
+                const { degrees, heights } = rec;
+                [...heights].group(3).forEach((a) => {
+                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees) );
+                });
+                if (i % 2 === 1) {
+                    paths[i].camLines[0].reverse();
+                }
             });
+        } else {
+            for (let rec of recs) {
+                const { degrees, heights } = rec;
+                [...heights].group(3).forEach((a,i) => {
+                    // progress each path 360 degrees to prevent A rolling backwards
+                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+                });
+            }
         }
 
         for (let slice of paths) {
@@ -394,8 +407,6 @@ class Topo {
 
         await Promise.all(promises);
         recs.sort((a, b) => { return b.angle - a.angle });
-
-        // let linear = true;
 
         count = linear ? recs.length : recs[0].heights.length / 3;
         while (count-- > 0) {
@@ -468,6 +479,6 @@ export function rotatePoints(lines, rot) {
     new THREE.BufferAttribute(lines, 3).applyMatrix4(rot);
 }
 
-export function Topo4(opt) {
+export async function generate(opt) {
     return new Topo().generate(opt);
 };

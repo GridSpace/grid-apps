@@ -15,7 +15,7 @@ import { sliceZ, sliceConnect } from '../../geo/slicer.js';
 import { Slicer as cam_slicer } from '../mode/cam/slicer.js';
 import { Slicer as topo_slicer } from '../mode/cam/slicer_topo.js';
 import { Probe, Trace, raster_slice } from '../mode/cam/topo3.js';
-import { Topo4, rotatePoints } from '../mode/cam/topo4.js';
+import { Topo as Topo4, rotatePoints } from '../mode/cam/topo4.js';
 import { wasm_ctrl } from '../../geo/wasm.js';
 
 const clib = self.ClipperLib;
@@ -54,9 +54,13 @@ function debug() {
     // console.log(`[${name}]`, ...arguments);
 }
 
+let invalid = 0;
 const funcs = self.minion = {
     invalid(data, seq, cmd) {
-        console.error({ invalid_minion_command: cmd, data });
+        if (invalid++ < 20) {
+            // prevent flooding console and killing session
+            console.error({ invalid_minion_command: cmd, data });
+        }
         reply({ seq, error: `invalid command (${cmd})` });
     },
 

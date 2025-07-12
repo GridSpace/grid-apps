@@ -11,7 +11,7 @@ import { Tool } from './tool.js';
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
 
-class Topo {
+export class Topo {
     constructor() { }
 
     async generate(opt = {}) {
