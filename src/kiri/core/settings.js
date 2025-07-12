@@ -9,6 +9,7 @@ import { space } from '../../moto/space.js';
 import { local } from '../../data/local.js';
 import { utils } from './utils.js';
 import { version } from '../../moto/license.js';
+import JSZip from '../../ext/jszip.esm.js';
 
 const { areEqual, ls2o, js2o } = utils;
 const { COLOR } = consts;

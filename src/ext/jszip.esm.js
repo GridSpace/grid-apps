@@ -4,4 +4,4 @@
 import * as JSZip from "./jszip.js";
 
 //export object attached to the window object
-export default self.JSZip;
+export default JSZip;
