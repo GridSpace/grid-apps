@@ -99,7 +99,7 @@ function cylinderShow(onProgress,onDone){
         }
     }
     //send 
-    kiri.client.send("cam_cylinder_find", { id: widget.id, face }, ({faces,error}) => {
+    api.client.send("cam_cylinder_find", { id: widget.id, face }, ({faces,error}) => {
         if (faces?.length) {
             cyls[face] = faces;
             CAM.cylinder_show(widget);
