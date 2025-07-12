@@ -318,7 +318,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             p.x + wmx,
             p.y + wmy,
             p.z + zadd
-        )
+        ).setA(p.a);
     }
 
     /**

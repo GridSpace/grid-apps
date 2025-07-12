@@ -267,12 +267,12 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     if (isIndexed) {
         if (activeOps.length === 0 || activeOps[0].type !== 'index') {
             opList.push(new OPS.index(state, { type: "index", index: 0 }));
-            opTot++;
+            opTot += opList.peek().weight();
 
         }
     } else {
         opList.push(new OPS.shadow(state, { type: "shadow", silent: true }));
-        opTot++;
+        opTot += opList.peek().weight();
     }
 
     // determing # of steps and step weighting for progress bar
