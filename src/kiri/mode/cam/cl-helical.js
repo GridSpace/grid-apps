@@ -15,7 +15,7 @@ export function selectHelical() {
   alert = api.show.alert("analyzing surfaces...", 1000);
   let cylinders = env.poppedRec.cylinders;
 
-  CAM.surface_prep(true, () => {
+  CAM.surface_prep(false, () => {
     api.hide.alert(alert);
     alert = api.show.alert("[esc] cancels surface selection");
     for (let [wid, arr] of Object.entries(cylinders)) {
@@ -38,6 +38,7 @@ export function selectHelical() {
     CAM.cylinderToggle(widget, faceid, ({ faces, error }) => {
       if (error) {
         api.show.alert(error, 3000);
+        console.log( error );
         return;
       }
       cylinders[widget.id] = faces;
