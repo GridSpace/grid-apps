@@ -4,6 +4,7 @@ import { codec } from '../../core/codec.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
 import { sliceConnect } from '../../../geo/slicer.js';
+import { newSlice } from '../../core/slice.js';
 import { Tool } from './tool.js';
 import { Slicer as topo_slicer } from './slicer_topo.js';
 
@@ -16,7 +17,7 @@ function scale(fn, factor = 1, base = 0) {
     }
 }
 
-class Topo4 {
+class Topo {
     constructor() { }
 
     async generate(opt = {}) {
@@ -132,7 +133,8 @@ class Topo4 {
         slices.push(slice);
         // console.log({ shards, range, step, slices });
 
-        if (kiri.minions.running > 1) {
+        const { minions } = self.kiri_worker;
+        if (minions?.running > 1) {
             return await this.sliceMinions(onupdate);
         } else {
             return await this.sliceWorker(onupdate);
@@ -202,7 +204,8 @@ class Topo4 {
     }
 
     async lathe(onupdate) {
-        if (kiri.minions.running > 1) {
+        const { minions } = self.kiri_worker;
+        if (minions?.running > 1) {
             return await this.latheMinions(onupdate);
         } else {
             return await this.latheWorker(onupdate);
@@ -444,24 +447,27 @@ class Topo4 {
     }
 
     putCache(key, data) {
-        kiri.worker.putCache({ key, data }, { done: data => { } });
+        const { dispatch } = self.kiri_worker;
+        dispatch.putCache({ key, data }, { done: data => { } });
     }
 
     clearCache() {
-        kiri.worker.clearCache({}, { done: data => { } });
+        const { dispatch } = self.kiri_worker;
+        dispatch.clearCache({}, { done: data => { } });
     }
 
     queue(cmd, params) {
+        const { minions } = self.kiri_worker;
         return new Promise(resolve => {
-            kiri.minions.queue({ cmd, ...params }, resolve);
+            minions.queue({ cmd, ...params }, resolve);
         });
     }
 }
 
-function rotatePoints(lines, rot) {
+export function rotatePoints(lines, rot) {
     new THREE.BufferAttribute(lines, 3).applyMatrix4(rot);
 }
 
 export function Topo4(opt) {
-    return new Topo4().generate(opt);
+    return new Topo().generate(opt);
 };
