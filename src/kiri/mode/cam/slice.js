@@ -9,6 +9,7 @@ import { setSliceTracker } from '../../core/slice.js';
 import { ops as OPS } from './ops.js';
 import { Tool } from './tool.js';
 import { Slicer as cam_slicer } from './slicer.js';
+import { CAM } from './driver-be.js';
 
 /**
  * DRIVER SLICE CONTRACT
@@ -564,28 +565,26 @@ export async function cylinders(settings, widget, opts){
      * @return {array} - array of all triangle data that belong to the same cylinder
      * @requires surface_prep must be called first
      */
-export async function cylinder_find (widget, face){
+export function cylinder_find (widget, face){
+    CAM.surface_prep(widget,false);
     return widget.tool.findCylinderSurface(face);
 }
 
-export async function cylinder_poly_find(widget, face){
+export function cylinder_poly_find(widget, face){
     let faces = cylinder_find(widget, face);
     let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
-    let slicer = new kiri.cam_slicer(widget,{})
+    let slicer = new cam_slicer(widget,{})
     let opts = {
         dedup:false,
-        edges: true,
+        edges: false,
         over:true
     }
-
     let firstOffset = faces[0]*9
     let [x1,y1,z1,x2,y2,z2,x3,y3,z3]= Array.from(vert.subarray(firstOffset,firstOffset+9))
-    let zs = [z1,z2,z3]
+    let zs = [z1,z2,z3].map(z => z.round(5))
     let zmin = Math.min(...zs);
     let zmax = Math.max(...zs);
-
-    // console.log({firstOffset,zmin, zs,faces,vert})
-
+    let zmid = (zmin+zmax)/2
     let cylVerts = new Float32Array(faces.length*9)
     
     let i = 0
@@ -598,10 +597,10 @@ export async function cylinder_poly_find(widget, face){
             i++
         }
     }
-
-    let poly = slicer.sliceZ(zmin, cylVerts,opts).polys[0]
+    //slice the poly at the midpoint
+    let poly = slicer.sliceZ(zmid, cylVerts,opts)?.polys?.at(0)
+    if(!poly) throw "slicing returned no poly"
     let circular = poly.circularity() > 0.98;
-
     //throw error if not circular
     if(!circular) throw "faces must be circular"
     
