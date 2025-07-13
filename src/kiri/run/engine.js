@@ -10,7 +10,7 @@ import { load } from '../../load/file.js';
 import { newWidget } from '../core/widget.js';
 
 class Engine {
-    constructor() {
+    constructor({ workURL, poolURL } = {}) {
         this.widget = newWidget();
         this.settings = {
             mode: "FDM",
@@ -22,7 +22,13 @@ class Engine {
             widget: { [this.widget.id]: {} }
         };
         this.listener = () => { };
-        client.start();
+        try {
+            client.setWorkPath(workURL);
+            client.setPoolPath(poolURL);
+            client.restart();
+        } catch (error) {
+            console.log({ error });
+        }
     }
 
     load(url) {
@@ -190,7 +196,7 @@ class Engine {
 }
 
 export function newEngine() {
-    return new Engine();
+    return new Engine(...arguments);
 }
 
 export { Engine };
