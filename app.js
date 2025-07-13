@@ -272,7 +272,7 @@ function init(mod) {
     }
 
     mod.on.test((req) => {
-        let cookie = cookieValue(req.headers.cookie, "version") || undefined;
+        let cookie = cookieValue(req.headers.cookie, "version") || '';
         let vmatch = mod.meta.version || "*";
         if (!Array.isArray(vmatch)) {
             vmatch = [ vmatch ];

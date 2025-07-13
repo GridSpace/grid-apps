@@ -540,7 +540,6 @@ function shapeToPath(shape, points, closed) {
  * @return {Array<Point>} an array of points representing the arc.
  */
 function arcToPath( start, end,arcdivs=24,opts) {
-
     let { clockwise, center, radius } = opts;
 
     // @type {Point}
