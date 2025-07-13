@@ -341,12 +341,11 @@ const redirList = [
 
 function handleVersion(req, res, next) {
     let vstr = oversion || dversion || version;
-    if (!redirList.indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
-        let pp = req.app.ispre ? pre : undefined;
+    if (!req.app.ispre && !redirList.indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
-            return http.redirect(res, `${pp??''}${req.url},ver:${vstr}`);
+            return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {
-            return http.redirect(res, `${pp??''}${req.url}?ver:${vstr}`);
+            return http.redirect(res, `${req.url}?ver:${vstr}`);
         }
     } else if (!debug) {
         // in production serve packed bundles
