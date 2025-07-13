@@ -117,7 +117,7 @@ function indexVertices(pos) {
 
 let Instance;
 manifold({
-    locateFile() { return "/wasm/manifold.wasm" }
+    locateFile() { return "../wasm/manifold.wasm" }
 }).then(inst => {
         inst.setup();
         Instance = inst;

@@ -1802,8 +1802,12 @@ function init_two() {
         sdb.kiri_beta = beta;
     }
 
-    // hide url params
-    history.replaceState({}, '', '/kiri/');
+    // hide url params but preserve version root (when present)
+    let wlp = WIN.location.pathname;
+    let kio = wlp.indexOf('/kiri/');
+    if (kio >= 0) {
+        history.replaceState({}, '', wlp.substring(0,kio + 6));
+    }
 
     // lift curtain
     $('curtain').style.display = 'none';

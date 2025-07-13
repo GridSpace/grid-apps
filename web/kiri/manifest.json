@@ -9,7 +9,7 @@
     "background_color": "#ffffff",
     "orientation": "landscape-primary",
     "icons": [
-        { "src": "/kiri/logo-cube-512.png", "type": "image/png", "sizes": "512x512" },
-        { "src": "/kiri/logo-cube-144.png", "type": "image/png", "sizes": "144x144" }
+        { "src": "./logo-cube-512.png", "type": "image/png", "sizes": "512x512" },
+        { "src": "./logo-cube-144.png", "type": "image/png", "sizes": "144x144" }
     ]
 }

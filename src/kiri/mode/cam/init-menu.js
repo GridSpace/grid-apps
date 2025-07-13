@@ -55,9 +55,9 @@ export function menu() {
             anim.vala     = newValue(6, {class:"center hide"}),
             anim.labpro   = newLabel("%", {class:"padleft"}),
             anim.progress = newValue(5, {class:"center"}),
-            anim.trans    = newButton(null,"anim.trans",{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency",class:"padleft"}),
-            anim.model    = newButton(null,"anim.model",{icon:'<i class="fa-solid fa-eye"></i>',title:"show model"}),
-            anim.shade    = newButton(null,"anim.stock",{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
+            anim.trans    = newButton(null,null,{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency",class:"padleft"}),
+            anim.model    = newButton(null,null,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model"}),
+            anim.shade    = newButton(null,null,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
         ])
     },
 

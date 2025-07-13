@@ -36,6 +36,7 @@ let http;
 let util;
 let dir;
 let log;
+let pre;
 
 const EventEmitter = require('events');
 class AppEmitter extends EventEmitter {}
@@ -63,6 +64,7 @@ function init(mod) {
     startTime = time();
     lastmod = mod.util.lastmod;
     logger = mod.log;
+    pre = ENV.pre || mod.meta.pre;
     debug = ENV.debug || mod.meta.debug;
     oversion = ENV.over || mod.meta.over;
     crossOrigin = ENV.xorigin || mod.meta.xorigin || false;
@@ -80,7 +82,19 @@ function init(mod) {
         generateDevices();
     }
 
+    if (pre) {
+        for (let [k,v] of Object.entries(productionMap)) {
+            productionMap[`${pre}${k}`] = `${pre}${v}`;
+        }
+    }
+
     mod.on.test((req) => {
+        if (req.app?.path?.startsWith(pre)) {
+            req.url = req.url.substring(pre.length);
+            req.app.path = req.app.path.substring(pre.length);
+            req.app.ispre = true;
+            return true;
+        }
         let cookie = cookieValue(req.headers.cookie, "version") || '';
         let vmatch = mod.meta.version || "*";
         if (!Array.isArray(vmatch)) {
@@ -108,12 +122,12 @@ function init(mod) {
     mod.add(serveWasm);
     mod.add(serveCode);
     mod.add(fullpath({
-        "/kiri"            : redir("/kiri/", 301),
-        "/mesh"            : redir("/mesh/", 301),
-        "/meta"            : redir("/meta/", 301),
-        "/kiri/index.html" : redir("/kiri/", 301),
-        "/mesh/index.html" : redir("/mesh/", 301),
-        "/meta/index.html" : redir("/meta/", 301)
+        "/kiri"            : redir((pre??"") + "/kiri/", 301),
+        "/mesh"            : redir((pre??"") + "/mesh/", 301),
+        "/meta"            : redir((pre??"") + "/meta/", 301),
+        "/kiri/index.html" : redir((pre??"") + "/kiri/", 301),
+        "/mesh/index.html" : redir((pre??"") + "/mesh/", 301),
+        "/meta/index.html" : redir((pre??"") + "/meta/", 301)
     }));
     mod.add(handleVersion);
     mod.add(fixedmap("/api/", api));
@@ -318,16 +332,21 @@ const productionMap = {
     '/lib/kiri/run/engine.js' : '/lib/pack/kiri-eng.js',
     '/lib/kiri/run/minion.js' : '/lib/pack/kiri-pool.js',
     '/lib/kiri/run/worker.js' : '/lib/pack/kiri-work.js',
-    // '/lib/kiri/run/frame.js' : '/lib/pack/kiri-frame.js',
 };
+
+const redirList = [
+    "/kiri/",
+    "/mesh/"
+];
 
 function handleVersion(req, res, next) {
     let vstr = oversion || dversion || version;
-    if (["/kiri/","/mesh/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
+    if (!redirList.indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
+        let pp = req.app.ispre ? pre : undefined;
         if (req.url.indexOf("?") > 0) {
-            return http.redirect(res, `${req.url},ver:${vstr}`);
+            return http.redirect(res, `${pp??''}${req.url},ver:${vstr}`);
         } else {
-            return http.redirect(res, `${req.url}?ver:${vstr}`);
+            return http.redirect(res, `${pp??''}${req.url}?ver:${vstr}`);
         }
     } else if (!debug) {
         // in production serve packed bundles
@@ -546,7 +565,8 @@ function rewriteHtmlVersion(req, res, next) {
         "/lib/main/mesh.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
-        const data = append[req.app.path.split('/')[3].split('.')[0]];
+        // const data = append[req.app.path.split('/')[3].split('.')[0]];
+        const data = append[req.app.path.split('.')[0].split('/').pop()];
 
         if (!data) return next();
         if (debug) logger.log({ append: req.app.path, data: data.length });
