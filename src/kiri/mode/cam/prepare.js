@@ -808,8 +808,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                         }
 
                         let endDelta = e1.distTo2D(e3)
-                        if(endDelta < 0.1){
-                            console.log("circleCompleteFault")
+                        if(endDelta < 0.01){
+                            // console.log("circleCompleteFault")
                             drainQ(true)
                             return e3
                         }
@@ -851,7 +851,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                             // if point is off-center, or too far from center, or too large of a radius
                             if (dc * arcQ.center.length / arcQ.rSum > arcTolerance || dist > cc.r || cc.r > arcMax || radFault || zFault) {
                                 // let debug = [ dc * arcQ.center.length / arcQ.rSum > arcTolerance, dist > cc.r, cc.r > arcMax, radFault];
-                                console.log("point off the arc,",structuredClone(arcQ),radFault,zFault,[dc * arcQ.center.length / arcQ.rSum > arcTolerance , dist > cc.r , cc.r > arcMax]);
+                                // console.log("point off the arc,",structuredClone(arcQ),radFault,zFault,[dc * arcQ.center.length / arcQ.rSum > arcTolerance , dist > cc.r , cc.r > arcMax]);
                                 if (arcQ.length === 4) {
                                     // not enough points for an arc, drop first point and recalc center
                                     camOut(arcQ.shift(), 1);
@@ -904,7 +904,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
          * @param {boolean} forceCircle emits a single circle iven if poly is not closed.
          */
         function drainQ(forceCircle = false) {
-            console.trace("draining")
+            // console.trace("draining")
             let arcPreviewRes = 64
 
             if (!arcTolerance) {
@@ -941,7 +941,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                     let arcPoints = arcToPath(from, to, arcPreviewRes, { clockwise, center })
                     .map(applyWidgetMovement);
                     
-                    console.log({arcPoints})
+                    // console.log({arcPoints})
 
                     camOut(from, 1);
                     camOut(to, gc, { center: center.sub(from), clockwise, arcPoints });
@@ -949,7 +949,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                     //if a non-circle arc
                     let arcPoints = arcToPath(from, to, arcPreviewRes, { clockwise, center })
                         .map(applyWidgetMovement);
-                    console.log("arc")
+                    // console.log("arc")
                     // first arc point
                     camOut(from, 1);
                     // rest of arc to final point

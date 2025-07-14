@@ -129,7 +129,7 @@ export class OpHelical extends CamOp {
                 )
               );
 
-          console.log({down,toBottom,ofFull,ofCircle,finalAngle,finalEnd});
+          // console.log({down,toBottom,ofFull,ofCircle,finalAngle,finalEnd});
 
           //circle down to final point
           poly.addPoints(
