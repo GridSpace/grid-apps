@@ -341,7 +341,7 @@ const redirList = [
 
 function handleVersion(req, res, next) {
     let vstr = oversion || dversion || version;
-    if (!req.app.ispre && !redirList.indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
+    if (!req.app.ispre && redirList.indexOf(req.app.path) === 0 && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
             return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {

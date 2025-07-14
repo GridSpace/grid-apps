@@ -1872,7 +1872,7 @@ function init_lang() {
 }
 
 export function run() {
-    init_lang();
     client.start();
+    init_lang();
     return api;
 }

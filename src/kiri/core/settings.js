@@ -9,7 +9,7 @@ import { space } from '../../moto/space.js';
 import { local } from '../../data/local.js';
 import { utils } from './utils.js';
 import { version } from '../../moto/license.js';
-import JSZip from '../../ext/jszip.esm.js';
+import { JSZip } from '../../ext/jszip-esm.js';
 
 const { areEqual, ls2o, js2o } = utils;
 const { COLOR } = consts;
@@ -660,7 +660,7 @@ function settingsImportUrl(url, ask) {
 
 function settingsImportZip(data, ask) {
     let alert = api.show.alert("Importing Workspace");
-    JSZip.loadAsync(data).then(zip => {
+    new JSZip().loadAsync(data).then(zip => {
         for (let [key,value] of Object.entries(zip.files)) {
             if (key === "workspace.json") {
                 value.async("string").then(json => {

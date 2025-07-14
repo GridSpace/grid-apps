@@ -3,7 +3,7 @@
 'use strict';
 
 import { THREE } from '../ext/three.js';
-import JSZip from '../ext/jszip.esm.js';
+import { JSZip } from '../ext/jszip-esm.js';
 
 let { BufferAttribute, Matrix4 } = THREE;
 
@@ -218,7 +218,7 @@ function extractItems(records) {
  */
 export function parseAsync(data) {
     return new Promise(async (resolve, reject) => {
-        let zip = await JSZip.loadAsync(data);
+        let zip = await new JSZip().loadAsync(data);
         let models = {};
         for (let [key, value] of Object.entries(zip.files)) {
             if (key.endsWith(".model")) {
