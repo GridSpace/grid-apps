@@ -30,8 +30,8 @@ fs.copySync("mods", modsTmp, { dereference: true, filter:(src,dst) => {
 } });
 
 // create minified asset cache
-server({
-    electron: true,
-    dryrun: true,
-    single: true
-});
+// server({
+//     electron: true,
+//     dryrun: true,
+//     single: true
+// });

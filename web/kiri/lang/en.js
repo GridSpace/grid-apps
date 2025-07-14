@@ -1,7 +1,7 @@
 // English language map. Other localization maps will
 // defer to English map for any missing key/value pairs
-self.kiri.lang['en'] =
-self.kiri.lang['en-us'] = {
+self.lang['en'] =
+self.lang['en-us'] = {
     // common keys and menus
     animate:        "animate",      // CAM animate button
     arrange:        "arrange",      // layout workspace objects
@@ -617,6 +617,8 @@ self.kiri.lang['en-us'] = {
     ch_stra_s:      "start angle",
     ch_stra_l:      ["start angle of helix","in degrees ccw of +x axis"],
     ch_selc_l:      ["select a cylinder face", "inner holes that are too small","will be ignored."],
+    ch_fini_s:      "bottom finish pass",
+    ch_fini_l:      ["trace a circle at bottom of helix","used for hole clearing"],
 
 
     // CNC FLIP

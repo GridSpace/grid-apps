@@ -1,48 +1,49 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import '../add/array.js';
+import '../add/class.js';
+import '../add/three.js';
+import '../mesh/build.js';
 
-// dep: moto.license
-// dep: moto.webui
-// dep: moto.client
-// dep: moto.broker
-// dep: moto.space
-// dep: data.index
-// dep: mesh.api
-// dep: mesh.split
-// dep: mesh.edges
-// dep: mesh.model
-// dep: mesh.build
-// dep: load.file
-// use: geo.polygons
-gapp.main("main.mesh", [], (root) => {
+import { api } from '../mesh/api.js';
+import { space } from '../moto/space.js';
+import { broker } from '../moto/broker.js';
+import { $, $d, h, estop } from '../moto/webui.js';
+import { handles } from '../mesh/handles.js';
+import { client as motoClient } from '../moto/client.js';
+import { split as meshSplit } from '../mesh/split.js';
+import { model as meshModel, materials } from '../mesh/model.js';
+import { edges as meshEdges } from '../mesh/edges.js';
+import { open as dataOpen } from '../data/index.js';
+import { load as fileLoad } from '../load/file.js';
+import { THREE } from '../ext/three.js';
 
-const { Quaternion } = THREE;
-const { mesh, moto } = root;
-const { broker } = gapp;
-const { space } = moto;
-
-const version = mesh.version = '1.5.6';
+const version = '1.5.7';
 const call = broker.send;
 const dbindex = [ "admin", "space" ];
 
+const { Quaternion } = THREE;
+
 function log() {
-    return mesh.api.log.emit(...arguments);
+    return api.log.emit(...arguments);
 }
 
 // set below. called once the DOM readyState = complete
 // this is the main() entrypoint called after all dependents load
 function init() {
-    let stores = data.open('mesh', { stores: dbindex, version: 4 }).init(),
+    let stores = dataOpen('mesh', { stores: dbindex, version: 4 }).init(),
         dark = false,
         ortho = false,
         zoomrev = true,
         zoomspd = 1,
         platform = space.platform,
-        db = mesh.db = {
+        db = api.db = {
             admin: stores.promise('admin'),
             space: stores.promise('space')
         };
+
+    // initialize the API (to avoid circular dependencies)
+    api.init();
 
     // mark init time and use count
     db.admin.put("init", Date.now());
@@ -78,24 +79,28 @@ function init() {
     space.view.setZoom(zoomrev, zoomspd);
 
     // reload stored space when worker is ready
-    moto.client.on('ready', restore_space);
+    motoClient.on('ready', restore_space);
 
     // start worker
-    moto.client.start(`/code/mesh_work?${gapp.version}`);
+    motoClient.start('/lib/mesh/work.js?' + version);
 
     // trigger space event binding
-    call.space_init({ space, platform });
+    call.space_init({ space: space, platform });
 
     // trigger ui building
     call.ui_build();
+
+    // hide url params
+    history.replaceState({}, '', '/mesh/');
+
+    // for electron
+    self.mesh = { api };
 }
 
 // restore space layout and view from previous session
 async function restore_space() {
-    const { api } = mesh;
-    const space = moto.space;
-    const db_admin = mesh.db.admin;
-    const db_space = mesh.db.space;
+    const db_admin = api.db.admin;
+    const db_space = api.db.space;
     // let mcache = {};
     await db_admin.get("camera")
         .then(saved => {
@@ -126,17 +131,17 @@ async function restore_space() {
                         return { id, md: cached[id] }
                     })
                     .filter(r => r.md) // filter cache misses
-                    .map(r => new mesh.model(r.md, r.id).applyMeta(mcache[r.id]))
+                    .map(r => new meshModel(r.md, r.id).applyMeta(mcache[r.id]))
                 if (models.length) {
                     log(`restored ${models.length} model(s)`);
-                    mesh.api.group.new(models, id).applyMeta(mcache[id])
+                    api.group.new(models, id).applyMeta(mcache[id])
                 } else {
                     log(`removed empty group ${id}`);
                     db_space.remove(id);
                 }
             } else if (data.type === 'sketch') {
                 claimed.push(id);
-                mesh.api.add.sketch({ id, ...data });
+                api.add.sketch({ id, ...data });
             }
         }
         for (let id of claimed) {
@@ -177,9 +182,12 @@ async function restore_space() {
     }).finally(() => {
         // hide loading curtain
         $d('curtain','none');
+        // restore handles visibility
+        handles.setEnabled(api.prefs.map.space.bounds);
         if (api.prefs.map.info.welcome !== false) {
             api.welcome(version);
         }
+        broker.publish("app_ready");
     });
 }
 
@@ -187,9 +195,7 @@ async function restore_space() {
 function space_init(data) {
     let platcolor = 0x00ff00;
     let { space, platform } = data;
-    let { api } = mesh;
     let { selection } = api;
-
     // add file drop handler
     space.event.addHandlers(self, [
         'drop', (evt) => {
@@ -228,54 +234,51 @@ function space_init(data) {
                     return api.mode.face();
                 case 'Digit6':
                     return api.mode.edge();
-                case 'KeyQ':
-                    return api.settings();
-                case 'KeyI':
-                    return shiftKey ? api.tool.invert() : api.file.import();
-                case 'KeyX':
-                    return api.file.export();
-                case 'KeyD':
-                    return shiftKey && api.tool.duplicate();
+                case 'KeyB':
+                    return selection.boundsBox({toggle:true});
                 case 'KeyC':
                     return selection.centerXY().focus();
-                case 'KeyF':
-                    return shiftKey ? selection.focus() : selection.floor().focus();
-                case 'KeyM':
-                    return shiftKey ? api.tool.merge() : api.tool.mirror();
-                case 'KeyU':
-                    return shiftKey && api.tool.union();
-                case 'KeyA':
-                    if (api.mode.is([ api.modes.edge ])) return mesh.edges.add();
-                    return shiftKey && api.tool.analyze();
+                case 'KeyD':
+                    return shiftKey && api.tool.duplicate();
                 case 'KeyE':
                     if (api.mode.is([ api.modes.sketch ])) {
                         estop(evt);
                         return api.sketch.extrude();
                     }
                     return;
-                case 'KeyV':
-                    return shiftKey ? selection.show() : selection.focus();
-                case 'KeyN':
-                    return shiftKey ? estop(evt, api.tool.rename()) : api.normals();
-                case 'KeyW':
-                    return api.wireframe();
+                case 'KeyF':
+                    return shiftKey ? selection.focus() : selection.floor().focus();
                 case 'KeyG':
                     return shiftKey ?
                         (api.mode.is([ api.modes.sketch ]) ? api.sketch.arrange.group() : api.tool.regroup()) :
                         api.grid();
-                case 'KeyL':
-                    return api.log.toggle({ spinner: false });
-                case 'KeyS':
-                    if (!api.mode.is([ api.modes.object ])) return;
-                    return shiftKey ? selection.visible({toggle:true}) : mesh.split.start();
-                case 'KeyB':
-                    return selection.boundsBox({toggle:true});
                 case 'KeyH':
                     return shiftKey ? selection.hide() : space.view.home();
+                case 'KeyI':
+                    return api.file.import();
+                case 'KeyL':
+                    return api.log.toggle({ spinner: false });
+                case 'KeyM':
+                    return shiftKey ? api.tool.merge() : api.tool.mirror();
+                case 'KeyN':
+                    return shiftKey ? api.tool.invert() : api.normals();
+                case 'KeyQ':
+                    return api.settings();
+                case 'KeyR':
+                    return estop(evt, api.tool.rename());
+                case 'KeyS':
+                    if (!api.mode.is([ api.modes.object ])) return;
+                    return shiftKey ? selection.visible({toggle:true}) : meshSplit.start();
                 case 'KeyT':
                     return shiftKey ? api.tool.triangulate() : space.view.top();
-                case 'KeyZ':
-                    return space.view.reset();
+                case 'KeyU':
+                    return shiftKey && api.tool.union();
+                case 'KeyV':
+                    return shiftKey ? selection.show() : selection.focus();
+                case 'KeyW':
+                    return shiftKey ? api.wireframe() : api.wireedges();
+                case 'KeyX':
+                    return api.file.export();
             }
         },
         'keydown', evt => {
@@ -295,18 +298,35 @@ function space_init(data) {
             let rot, floor = api.prefs.map.space.floor !== false;
             switch (code) {
                 case 'KeyA':
+                    estop(evt);
+                    if (api.mode.is([ api.modes.edge ])) {
+                        return meshEdges.add();
+                    }
                     if (metaKey || ctrlKey) {
                         if (!selection.sketch()?.selection.all()) {
                             api.mode.object();
                             selection.set(api.group.list());
                         }
-                        estop(evt);
+                    } else if (shiftKey) {
+                        api.tool.analyze();
                     }
                     break;
+                case 'KeyY':
+                    estop(evt);
+                    if (metaKey || ctrlKey) {
+                        return shiftKey ? api.history.undo() : api.history.redo();
+                    }
+                case 'KeyZ':
+                    estop(evt);
+                    if (metaKey || ctrlKey) {
+                        return shiftKey ? api.history.redo() : api.history.undo();
+                    } else {
+                        return space.view.reset();
+                    }
                 case 'Escape':
                     if (selection.clear()) {
-                        mesh.edges.clear();
-                        mesh.split.end();
+                        meshEdges.clear();
+                        meshSplit.end();
                     }
                     estop(evt);
                     break;
@@ -360,11 +380,7 @@ function space_init(data) {
         let obj = int?.object;
         if (obj) api.selection.drag({ start: int.object });
         if (obj) obj.sketch_item?.sketch.drag({ start: int.object });
-        if (event?.shiftKey) {
-            return api.objects();
-        } else {
-            return undefined;
-        }
+        return selection.count() && !event.altKey ? api.objects(true) : undefined;
     });
 
     // called two ways:
@@ -380,8 +396,8 @@ function space_init(data) {
             // a selection was made
             const { model, sketch, sketch_item } = int?.object || {};
             const { altKey, ctrlKey, metaKey, shiftKey } = event;
-            if (mesh.split.active()) {
-                return mesh.split.select(model);
+            if (meshSplit.active()) {
+                return meshSplit.select(model);
             }
             if (model) {
                 const group = model.group;
@@ -392,7 +408,7 @@ function space_init(data) {
                     // rotate normal using group's matrix
                     const normal = shiftKey ? int.face.normal.applyQuaternion(q) : undefined;
                     // y,z swap due to world rotation for orbit controls
-                    api.focus({center: { x, y:-z, z:y }, normal});
+                    api.focus({ center: { x, y:-z, z:y }, normal });
                     let one = api.sketch.selected.one;
                     if (one && confirm('attach sketch to face?')) {
                         one.center = {
@@ -405,7 +421,7 @@ function space_init(data) {
                         };
                         one.render();
                     }
-                } else if (ctrlKey) {
+                } else if (ctrlKey && selection.contains(model)) {
                     // rotate selected face towawrd z "floor"
                     group.rotateTowardZ(int.face.normal);
                     selection.update();
@@ -431,7 +447,7 @@ function space_init(data) {
                                 opt);
                             break;
                         case modes.edge:
-                            mesh.edges.select();
+                            meshEdges.select();
                             break;
                     }
                 }
@@ -450,6 +466,8 @@ function space_init(data) {
                 }
             } else if (sketch_item) {
                 sketch_item.toggle();
+            } else {
+                console.log('unknown selection');
             }
         } else {
             // return objects upSelect can choose from
@@ -466,7 +484,7 @@ function space_init(data) {
     space.mouse.onDrag((delta, offset, up = false) => {
         let { mode, modes } = api;
         if (delta) {
-            if (delta.event?.shiftKey && selection.count()) {
+            if (selection.count()) {
                 selection.drag({ delta, offset });
             }
         } else if (up) {
@@ -482,7 +500,6 @@ function space_init(data) {
 
 function load_files(files) {
     log(`loading file...`);
-    let api = mesh.api;
     let has_image = false;
     let has_svg = false;
     let has_gbr = false;
@@ -493,7 +510,7 @@ function load_files(files) {
         has_gbr = has_gbr || file.name.toLowerCase().endsWith(".gbr") > 0;
     }
     if (sketch && has_gbr) {
-        load.File.load([...files], { flat: true }).then(layers => {
+        fileLoad([...files], { flat: true }).then(layers => {
             for (let layer of layers.flat()) {
                 let { circs, closed, open, rects } = layer;
                 open = open.map(poly => {
@@ -501,7 +518,7 @@ function load_files(files) {
                     return diam ? poly.offset_open(diam / 2, 'round') : null;
                 }).filter(p => p).flat();
                 for (let set of [ closed, open, circs, rects ]) {
-                    let group = mesh.util.uuid();
+                    let group = api.util.uuid();
                     for (let poly of set) {
                         sketch.add.polygon({ poly, group });
                     }
@@ -510,13 +527,13 @@ function load_files(files) {
         });
     } else
     if (sketch && has_svg) {
-        load.File.load([...files], { flat: true })
+        fileLoad([...files], { flat: true })
             .then(polys => polys.forEach(set => {
-                let group = mesh.util.uuid();
+                let group = api.util.uuid();
                 set.forEach(poly => sketch.add.polygon({ poly, group }))
             }))
             .catch(error => dbug.error(error))
-            .finally(() => mesh.api.log.hide());
+            .finally(() => api.log.hide());
     } else
     if (has_svg) {
         api.modal.dialog({
@@ -588,16 +605,16 @@ function load_files(files) {
 }
 
 function load_files_opt(files, opt) {
-    return load.File.load([...files], opt)
+    return fileLoad([...files], opt)
         .then(data => call.space_load(data))
         .catch(error => log(error).pin({}) && dbug.error(error))
-        // .finally(() => mesh.api.log.hide());
+        // .finally(() => api.log.hide());
 }
 
 // add object loader
 function space_load(data) {
     if (data && data.length && (data = data.flat()).length)
-    mesh.api.group.new(data.map(el => new mesh.model(el)))
+    api.group.new(data.map(el => new meshModel(el)))
         .promote()
         .focus();
 }
@@ -615,7 +632,7 @@ function key_once_cancel(code) {
 }
 
 function store_meta() {
-    mesh.db.admin.put("meta", metaCache);
+    api.db.admin.put("meta", metaCache);
 }
 
 function update_meta(id, data) {
@@ -643,16 +660,16 @@ function object_destroy(id) {
 
 // listen for changes like dark mode toggle
 function set_darkmode(dark) {
-    let { prefs, model } = mesh.api;
-    let { sky, platform } = moto.space;
+    let { prefs, model } = api;
+    let { sky, platform } = space;
     prefs.map.space.dark = dark;
     if (dark) {
-        mesh.material.wireframe.color.set(0xaaaaaa);
-        mesh.material.wireline.color.set(0xaaaaaa);
+        materials.wireframe.color.set(0xaaaaaa);
+        materials.wireline.color.set(0xaaaaaa);
         $('app').classList.add('dark');
     } else {
-        mesh.material.wireframe.color.set(0,0,0);
-        mesh.material.wireline.color.set(0,0,0);
+        materials.wireframe.color.set(0,0,0);
+        materials.wireline.color.set(0,0,0);
         $('app').classList.remove('dark');
     }
     sky.set({
@@ -669,7 +686,7 @@ function set_darkmode(dark) {
             colorMinor: 0xeeeeee,
         },
     });
-    mesh.api.updateFog();
+    api.updateFog();
     platform.setSize();
     for (let m of model.list()) {
         m.normals({ refresh: true });
@@ -678,13 +695,19 @@ function set_darkmode(dark) {
 }
 
 function set_normals_length(length) {
-    let { prefs } = mesh.api;
+    let { prefs, model } = api;
     prefs.map.normals.length = length || 1;
     prefs.save();
+    // Update existing normals
+    for (let m of model.list()) {
+        if (m.normals()) {
+            m.normals({ refresh: true });
+        }
+    }
 }
 
 function set_normals_color(color) {
-    let { prefs } = mesh.api;
+    let { prefs, model } = api;
     let { map } = prefs;
     if (map.space.dark) {
         map.normals.color_dark = color || 0;
@@ -692,34 +715,47 @@ function set_normals_color(color) {
         map.normals.color_lite = color || 0;
     }
     prefs.save();
+    // Update existing normals
+    for (let m of model.list()) {
+        if (m.normals()) {
+            m.normals({ refresh: true });
+        }
+    }
 }
 
 function set_surface_radians(radians) {
-    let { prefs } = mesh.api;
+    let { prefs } = api;
     prefs.map.surface.radians = parseFloat(radians || 0.1);
     prefs.save();
 }
 
 function set_surface_radius(radius) {
-    let { prefs } = mesh.api;
+    let { prefs } = api;
     prefs.map.surface.radius = parseFloat(radius || 0.2);
     prefs.save();
 }
 
 function set_wireframe_opacity(opacity) {
-    let { prefs } = mesh.api;
+    let { prefs, model } = api;
     prefs.map.wireframe.opacity = parseFloat(opacity || 0.15);
     prefs.save();
+    // Update existing wireframes
+    for (let m of model.list()) {
+        if (m.wireframe().enabled) {
+            m.opacity({temp: prefs.map.wireframe.opacity});
+        }
+    }
 }
 
 function set_wireframe_fog(fogx) {
-    let { prefs } = mesh.api;
+    let { prefs } = api;
     prefs.map.wireframe.fog = parseFloat(fogx || 3);
     prefs.save();
+    api.updateFog();
 }
 
 function set_snap_value(snap) {
-    let { prefs } = mesh.api;
+    let { prefs } = api;
     prefs.map.space.snap = parseFloat(snap || 1);
     prefs.save();
 }
@@ -744,14 +780,30 @@ broker.listeners({
     set_snap_value
 });
 
-// remove version cache bust from url
-window.history.replaceState({},'','/mesh/');
+init();
 
-// setup init() trigger when dom + scripts complete
-document.onreadystatechange = function() {
-    if (document.readyState === 'complete') {
-        init();
-    }
-}
-
-});
+export {
+    version,
+    init,
+    log,
+    restore_space,
+    space_init,
+    load_files,
+    load_files_opt,
+    space_load,
+    key_once,
+    key_once_cancel,
+    store_meta,
+    update_meta,
+    object_visible,
+    object_meta,
+    object_destroy,
+    set_darkmode,
+    set_normals_length,
+    set_normals_color,
+    set_surface_radians,
+    set_surface_radius,
+    set_wireframe_opacity,
+    set_wireframe_fog,
+    set_snap_value
+};

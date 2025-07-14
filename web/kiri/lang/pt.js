@@ -1,7 +1,7 @@
 // Portuguese localization for Kiri:Moto
 // Will defer to English map for any missing key/value pairs
-kiri.lang['pt'] =
-kiri.lang['pt-pt'] = {
+self.lang['pt'] =
+self.lang['pt-pt'] = {
     // common keys and menus
     animate:        "animar",      // CAM animate button
     arrange:        "organizar",      // layout workspace objects

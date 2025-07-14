@@ -1,9 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { license as motoLicense } from '../moto/license.js';
+import { worker as motoWorker } from '../moto/worker.js';
 
-// dep: moto.license
-// dep: moto.worker
-gapp.main("mesh.pool", [], (root) => {
-    // todo
-});
+// todo
+export const pool = {};

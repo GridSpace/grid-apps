@@ -1,16 +1,13 @@
 /** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
 
-"use strict";
-
 // dep: ext.three
-gapp.register("add.three", [], (root, exports) => {
-
-const {
+import {
     THREE, SVGLoader, BufferGeometryUtils,
-    LineMaterial, Line2, LineGeometry, LineSegments2, LineSegmentsGeometry
-} = ThreeBundle;
-
-root.THREE = THREE;
+    LineMaterial, Line2, LineGeometry, LineSegments2,
+    LineSegmentsGeometry, MeshBVHLib } from '../ext/three.js';
+  
+// Make THREE available globally
+self.THREE = THREE;
 THREE.BufferGeometryUtils = BufferGeometryUtils;
 THREE.SVGLoader = SVGLoader.SVGLoader;
 THREE.LineMaterial = LineMaterial;
@@ -147,4 +144,5 @@ THREE.Object3D.prototype.removeAll = function() {
     this.children = [];
 };
 
-});
+// Export for ES modules
+export { THREE };

@@ -8,9 +8,16 @@ import { LineGeometry } from '../node_modules/three/examples/jsm/lines/LineGeome
 import { LineSegments2 } from '../node_modules/three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from '../node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js';
 
+import * as MeshBVHLib from '../node_modules/three-mesh-bvh/build/index.module.js';
+
 export {
-    THREE, SVGLoader, BufferGeometryUtils,
+    THREE,
+    SVGLoader,
+    BufferGeometryUtils,
     LineMaterial,
-    Line2, LineGeometry,
-    LineSegments2, LineSegmentsGeometry
-};
+    Line2,
+    LineGeometry,
+    LineSegments2,
+    LineSegmentsGeometry,
+    MeshBVHLib
+}; 

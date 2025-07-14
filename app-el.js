@@ -2,6 +2,7 @@ const { app, shell, session, BrowserWindow } = require('electron');
 const path = require('path');
 const server = require('@gridspace/app-server');
 
+const pkgd = app.isPackaged;
 const basDir = __dirname;
 const usrDir = app.getPath("userData");
 const appDir = path.join(usrDir, 'gapp');
@@ -10,6 +11,8 @@ const logDir = path.join(appDir, 'logs');
 const datDir = path.join(appDir, 'data');
 const debug = process.argv.slice(2).map(v => v.replaceAll('-', '')).contains('debugg');
 const devel = process.argv.slice(2).map(v => v.replaceAll('-', '')).contains('devel');
+
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = true;
 
 // console.log({ appDir, usrDir, logDir, datDir, basDir });
 // console.log({ argv: process.argv, debug, devel });
@@ -26,9 +29,9 @@ server({
     data: datDir,
     conf: cnfDir,
     logs: logDir,
-    cache: path.join(basDir, "data", "cache"),
     single: true,
     electron: true,
+    pkgd,
     debug
 });
 

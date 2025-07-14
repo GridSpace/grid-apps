@@ -1,14 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: ext.earcut
-// dep: mesh.geom
-gapp.register("mesh.tool", [], (root, exports) => {
-
-const { mesh } = root;
-const { geom } = mesh;
+import { THREE } from '../ext/three.js';
 const { Vector3 } = THREE;
+import { geom } from './geom.js';
+
 const empty = 0xffffffff;
 
 /**
@@ -17,7 +12,7 @@ const empty = 0xffffffff;
  * two need to be merged. earcut needs to be migrated
  * to base.util.triagulate
  */
-mesh.tool = class MeshTool {
+class MeshTool {
     constructor(params = {}) {
         this.precision = Math.pow(10, params.precision || 6);
     }
@@ -245,28 +240,30 @@ mesh.tool = class MeshTool {
         };
     }
 
+/**
+ * Retrieves the adjacent faces for a given face index.
+ * 
+ * @param {number} face - The index of the face for which adjacent faces are to be found.
+ * @returns {number[]} An array of face indices that are adjacent to the given face.
+ */
+
     getAdjacentFaces(face) {
         const { faces, sides } = this.getIndex();
         const foff = face * 6;
         const s0 = faces[foff + 3];
         const s1 = faces[foff + 4];
         const s2 = faces[foff + 5];
-        const farr = [
-            sides[s0 * 4 + 2],
-            sides[s0 * 4 + 3],
-            sides[s1 * 4 + 2],
-            sides[s1 * 4 + 3],
-            sides[s2 * 4 + 2],
-            sides[s2 * 4 + 3]
-        ].filter(f => f !== empty && f !== face);
-        if (!farr.length) {
-            console.log(`no adjacent faces to ${face}`);
-            return [];
+        const adj = [];
+        for (let s of [s0, s1, s2]) {
+            const soff = s * 4;
+            const f1 = sides[soff + 2];
+            const f2 = sides[soff + 3];
+            if (f1 !== empty) adj.push(f1);
+            if (f2 !== empty) adj.push(f2);
         }
-        return farr;
+        return adj;
     }
 
-    // depends on index() being run first
     findConnectedSurface(faces, radians, filterZ, found = {}) {
         const norms = this.getIndex().faces;
         if (filterZ !== undefined) {
@@ -306,6 +303,21 @@ mesh.tool = class MeshTool {
         return faces;
     }
 
+    /**
+     * Finds all faces in a cylinder surface connected to the given face.
+     * 
+     * @param {number} face - the face index to start from
+     * @return {number[]} face indices in the cylinder surface
+     * 
+     * @throws {string} if the face has only one Z value
+     * @throws {string} if the face normal is not perpendicular to Z axis
+     * 
+     * The algorithm works by:
+     * 1. Finding the two distinct Z values of the given face
+     * 2. Filtering adjacent faces to those with the same Z values
+     * 3. Filtering faces with normals perpendicular to Z axis
+     * 4. Recursively adding adjacent faces with the same Z values and normal perpendicular to Z axis
+     */
     findCylinderSurface(face){
         face = Number(face)
 
@@ -313,24 +325,24 @@ mesh.tool = class MeshTool {
         //helper function
         const dissimilar = (a,b,c) => a!==b && a!==c && b!==c
 
-        let found = {}
-        let out = [face]
-        const {vertices}= this
-        const {faces} = this.getIndex();
-
-        const zs = [vertices[face*3+2],vertices[face*3+5],vertices[face*3+8]]
-        .map(z => Math.round(z*1000)/1000)
+        let found = {},
+            out = [face],
+            {vertices} = this,
+            {faces} = this.getIndex(),
+            faceOffset = face*9,
+            zs = [2,5,8].map(i => vertices[faceOffset+i].round(5)), //get zs from face vertices
+            lowZ = Math.min(zs),
+            highZ = Math.max(zs),
+            checked = {},
+            check = [face];
         
+        //check for errors, and throw if found
         if(dissimilar(...zs)){
             throw "face must have only 2 Z values"
         }else if(Math.abs( faces[face * 6 + 2] > 1e-6 )){
             throw "face's normal must be perpendicular to Z axis"
         }
-        const lowZ = Math.min(zs)
-        const highZ = Math.max(zs)
-        
-        const checked = {};
-        const check = [face]
+
         found[face] = 1;
         while (check.length) {
             const face = check.shift();
@@ -444,7 +456,6 @@ mesh.tool = class MeshTool {
         return outs;
     }
 
-    // depends on index() being run first
     isolateBodies() {
         const verts = this.checkVertices(this.vertices);
         const bodies = [];
@@ -467,12 +478,6 @@ mesh.tool = class MeshTool {
         return bodies;
     }
 
-    /**
-     * finds edge lines which are line segments on a single face.
-     * construct ordered line maps with array of connected edges.
-     * connect lines into polys. earcut polys into new faces.
-     * requires generateFaces() be run first
-     */
     patch(opt = { merge: true }) {
         let vertices = this.checkVertices(this.uvert);
         let faces = this.faces;
@@ -801,7 +806,6 @@ mesh.tool = class MeshTool {
         return this;
     }
 
-    // add vertex data from given index into array
     appendVertex(index, array = []) {
         let vertx = this.uvert;
         array.push(vertx[index++]);
@@ -810,7 +814,6 @@ mesh.tool = class MeshTool {
         return array;
     }
 
-    // add vertices from a vertex index list to an array
     expandArray(indices, array = []) {
         for (let i of indices) {
             this.appendVertex(i, array);
@@ -818,7 +821,6 @@ mesh.tool = class MeshTool {
         return array;
     }
 
-    // turn loop into XYZ vertex array
     expandLoop(loop, array = []) {
         for (let line of loop) {
             this.appendVertex(line.v1, array);
@@ -827,14 +829,12 @@ mesh.tool = class MeshTool {
         return array;
     }
 
-    // merge generated poly areas into faces
     merge() {
         for (let area of this.areas || []) {
             this.faces.appendAll(area);
         }
     }
 
-    // return non-indexed vertex list (for compatibility)
     unrolled() {
         let out = [];
         for (let face of this.faces) {
@@ -843,8 +843,6 @@ mesh.tool = class MeshTool {
         return out;
     }
 
-    // returns points array for a polygon
-    // extrusion and twist is handled in work.js
     generateGear(numTeeth, module, pressureAngle, offset) {
         // Adapted from: Public Domain Parametric Involute Spur Gear by Leemon Baird, 2011, Leemon@Leemon.com http://www.thingiverse.com/thing:5505
         // see also http://grabcad.com/questions/tutorial-how-to-model-involute-gears-in-solidworks-and-show-design-intent
@@ -922,7 +920,7 @@ mesh.tool = class MeshTool {
             }
 
             pitch = p.round(3);
-            mesh.log(`gear pitch radius: ${pitch}`);
+            geom.log(`gear pitch radius: ${pitch}`);
         }
 
         return { gear, pitch };
@@ -974,7 +972,6 @@ mesh.tool = class MeshTool {
         }
         return verts;
     }
+}
 
-};
-
-});
+export { MeshTool as tool };

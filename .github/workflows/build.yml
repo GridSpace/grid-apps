@@ -22,8 +22,8 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Setup Build Environment
+        run: npm run setup
 
       - name: Build Electron app
         env:

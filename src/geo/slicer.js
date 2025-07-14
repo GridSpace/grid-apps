@@ -1,23 +1,16 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
 /**
  * basic slice and line connection. In future, replace kiri's fdm and cam slicers
  * with wrappers on this one.
  */
-// dep: geo.base
-// dep: geo.line
-// dep: geo.point
-// dep: geo.polygon
-// dep: geo.polygons
-gapp.register("geo.slicer", [], (root, exports) => {
 
-const { base } = root;
-const { config, util, polygons } = base
-const { newOrderedLine, newPolygon, newPoint } = base;
-
-const POLY = base.polygons;
+import { base } from './base.js';
+import { newOrderedLine } from './line.js';
+import { newPolygon } from '../geo/polygon.js';
+import { polygons } from '../geo/polygons.js';
+import { newPoint } from '../geo/point.js';
+import { config } from '../geo/base.js';
 
 function dval(v, dv) {
     return v !== undefined ? v : dv;
@@ -32,7 +25,7 @@ function dval(v, dv) {
  * @param {Point[]} points vertex array
  * @param {Object} options slicing parameters
  */
-async function slice(points, options = {}) {
+export async function slice(points, options = {}) {
     let zMin = options.zMin || 0,
         zMax = options.zMax || 0,
         zInc = options.zInc || 0,
@@ -72,7 +65,6 @@ async function slice(points, options = {}) {
         for (i = 0; i < points.length; i++) {
             points[i] = points[i].round(3);
         }
-
     }
 
     // gather z-index stats
@@ -86,7 +78,7 @@ async function slice(points, options = {}) {
         if (p1.z === p2.z && p2.z === p3.z && p1.z >= zMin) {
             // detect faces co-planar with Z and sum the enclosed area
             let zkey = p1.z,
-                area = Math.abs(util.area2(p1,p2,p3)) / 2;
+                area = Math.abs(base.util.area2(p1,p2,p3)) / 2;
             if (!zFlat[zkey]) {
                 zFlat[zkey] = area;
             } else {
@@ -322,7 +314,7 @@ function makeZLine(phash, p1, p2, coplanar, edge) {
  *
  * @param {number} z
  */
-async function sliceZ(z, points, options = {}) {
+export async function sliceZ(z, points, options = {}) {
     if (Array.isArray(z)) {
         return Promise.all(z.map(z => sliceZ(z, points, options)));
     }
@@ -388,14 +380,14 @@ async function sliceZ(z, points, options = {}) {
     if (groupFn) {
         let groups = groupFn(lines, z, options);
         if (options.xor) {
-            groups = POLY.xor(groups);
+            groups = polygons.xor(groups);
         }
         if (options.union) {
             let points = groups.map(p => p.length);
             if (points.length > 1) points = points.reduce((a,b) => a + b);
             // simplistic healing of non-manifold meshes
             let opt = { x: 1 };
-            let union = POLY.union(POLY.nest(groups), 0.1, true, opt);
+            let union = polygons.union(polygons.nest(groups), 0.1, true, opt);
             // fall back to xor'ing polygons that might overlap
             // when one does not cleanly contain the other and we lose lots of points
             // trigger when 2 polygons and we lose > 40% of points in the union
@@ -409,14 +401,14 @@ async function sliceZ(z, points, options = {}) {
             }
             // track total poly length changes to determine if healed
             rval.changes = opt.changes;
-            groups = POLY.flatten(union, null, true);
+            groups = polygons.flatten(union, null, true);
         }
         rval.groups = groups;
     }
 
     // look for driver-specific slice post-processor
     if (options.post) {
-        let fn = base.slicePost[options.post];
+        let fn = slicer.slicePost[options.post];
         if (fn) fn(rval, options);
     }
 
@@ -458,7 +450,7 @@ async function sliceZ(z, points, options = {}) {
  * @param {number} [index]
  * @returns {Array}
  */
-function sliceConnect(input, z, opt = {}) {
+export function sliceConnect(input, z, opt = {}) {
     let { debug, both } = opt;
 
     if (both) {
@@ -782,7 +774,7 @@ function sliceConnect(input, z, opt = {}) {
  * @param {Line[]} lines
  * @returns {Line[]}
  */
-function removeDuplicateLines(lines) {
+export function removeDuplicateLines(lines) {
     let output = [],
         tmplines = [],
         points = [],
@@ -873,12 +865,11 @@ function removeDuplicateLines(lines) {
     return output;
 }
 
-gapp.overlay(base, {
+export const slicer = {
     slice,
     sliceZ,
     slicePost: {},
     sliceDedup: removeDuplicateLines,
     sliceConnect
-});
+}
 
-});

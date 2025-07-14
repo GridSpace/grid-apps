@@ -2,24 +2,17 @@
 
 "use strict";
 
-// dep: geo.base
-// mod: ext.manifold
-gapp.register("geo.csg", [], (root, exports) => {
+import { THREE } from '../ext/three.js';
+import manifold from '../ext/manifold.js';
 
-const { base, ext } = root;
-const debug = true;
 const precision = 0.001;
 const factor = 1/precision;
 
 function log() {
-    if (root?.mesh?.log) {
-        root.mesh.log(...arguments)
-    } else if (root.debug === true) {
-        console.log(...arguments);
-    }
+    console.log(...arguments);
 }
 
-const CSG = {
+export const CSG = {
     // accepts 2 or more arguments with threejs vertex position arrays
     union() {
         return CSG.moduleOp('manifold.union', 'union', ...arguments);
@@ -123,23 +116,10 @@ function indexVertices(pos) {
 }
 
 let Instance;
-
-ext.manifold.then(mod => {
-    mod.default({
-        locateFile(a,b,c) {
-            return "/wasm/manifold.wasm";
-        }
-    }).then(inst => {
+manifold({
+    locateFile() { return "/wasm/manifold.wasm" }
+}).then(inst => {
         inst.setup();
         Instance = inst;
         CSG.Instance = () => { return Instance };
-    }).catch(error => {
-        console.log('manifold load error', error);
-    });
-});
-
-gapp.overlay(base, {
-    CSG
-});
-
 });
