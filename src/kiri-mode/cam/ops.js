@@ -1066,7 +1066,20 @@ class OpTrace extends CamOp {
                 for (let z of zs) {
                     let clip = [], shadow;
                     shadow = shadowAt(z);
-                    POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
+                    // for cases where the shadow IS the poly like
+                    // with lettering without a bounding frame, clip
+                    // will fail and we need to restore the matching poly
+                    let subshadow = true;
+                    for (let spo of shadow) {
+                        if (poly.isInside(spo, 0.01)) {
+                            subshadow = false;
+                            clip = [ poly ];
+                            break;
+                        }
+                    }
+                    if (subshadow) {
+                        POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
+                    }
                     if (op.outline) {
                         POLY.clearInner(clip);
                     }
