@@ -35,7 +35,8 @@ export class OpHelical extends CamOp {
       startAngle = forceStartAng ? startAng : 0;
 
     updateToolDiams(toolDiam);
-    let faces = cylinders[widget.id];
+    // console.log({cylinders})
+    let faces = cylinders[widget.id] ?? [];
     if (faces.faces) faces = faces.faces;
     let polys = [];
 
@@ -75,8 +76,13 @@ export class OpHelical extends CamOp {
           radAdd = toolDiam / 2;
         }
       }
-      console.log({ radius, radAdd });
       radius += radAdd;
+
+      if( radius <= 0 ){
+        //if negative radius, skip this cylinder
+        console.log('negative radius', radius);
+        continue
+      }
 
       let startPoint = center
         .clone()
@@ -122,14 +128,20 @@ export class OpHelical extends CamOp {
                 )
               );
 
+          console.log({down,toBottom,ofFull,ofCircle,finalAngle,finalEnd});
+
           //circle down to final point
           poly.addPoints(
-            arcToPath(startPoint.setZ(currentZ), finalEnd, numSegs * ofFull, {
+            arcToPath(startPoint.setZ(currentZ), finalEnd, numSegs , {
               clockwise: !clockwise,
               radius,
               center,
             })
           );
+
+          // poly.addPoints([
+          //   newPoint(0,0,0)
+          // ])
 
           //do a full circle at the bottom
           poly.addPoints(
@@ -137,9 +149,12 @@ export class OpHelical extends CamOp {
               clockwise,
               radius,
               center,
-            })
+            }),
           );
 
+          poly.append(
+            finalEnd.clone().setZ(zBottom),
+          )
           break;
         }
         currentZ = bottom;
@@ -180,7 +195,7 @@ export class OpHelical extends CamOp {
 
     let pp = getPrintPoint();
 
-    console.log(polys)
+    // console.log(polys)
 
     polys = polys.slice();
     for (;;) {
