@@ -1374,7 +1374,7 @@ CAM.init = function(kiri, api) {
             alert = api.show.alert("[esc] cancels surface selection");
             for (let [wid, arr] of Object.entries(cylinders)) {
                 let widget = api.widgets.forid(wid);
-                if (widget && arr.length)
+                if (widget && arr && arr.length)
                 for (let faceid of arr) {
                     CAM.cylinderToggle(widget, faceid, faceids => {
                         cylinders[widget.id] = faceids;
