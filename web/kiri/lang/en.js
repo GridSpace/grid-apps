@@ -617,6 +617,8 @@ self.lang['en-us'] = {
     ch_stra_s:      "start angle",
     ch_stra_l:      ["start angle of helix","in degrees ccw of +x axis"],
     ch_selc_l:      ["select a cylinder face", "inner holes that are too small","will be ignored."],
+    ch_fini_s:      "bottom finish pass",
+    ch_fini_l:      ["trace a circle at bottom of helix","used for hole clearing"],
 
 
     // CNC FLIP

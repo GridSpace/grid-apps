@@ -24,6 +24,7 @@ export class OpHelical extends CamOp {
       offset,
       down,
       thru,
+      finish,
     } = op;
     let {stock} = settings
 
@@ -139,22 +140,19 @@ export class OpHelical extends CamOp {
             })
           );
 
-          // poly.addPoints([
-          //   newPoint(0,0,0)
-          // ])
-
-          //do a full circle at the bottom
-          poly.addPoints(
-            arcToPath(finalEnd, finalEnd, numSegs, {
-              clockwise,
-              radius,
-              center,
-            }),
-          );
-
-          poly.append(
-            finalEnd.clone().setZ(zBottom),
-          )
+          //if settings dictate, do a full circle at the bottom
+          if(finish){
+            poly.addPoints(
+              arcToPath(finalEnd, finalEnd, numSegs, {
+                clockwise,
+                radius,
+                center,
+              }),
+            );
+            poly.append(
+              finalEnd.clone().setZ(zBottom),
+            )
+          }
           break;
         }
         currentZ = bottom;

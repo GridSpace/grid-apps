@@ -522,6 +522,7 @@ export const conf = {
                 camHelicalDownSpeed: 250,
                 camHelicalSpeed: 1000,
                 camHelicalDown: 5,
+                camHelicalBottomFinish: true,
                 camHelicalThru: 0,
                 camHelicalOffset: "auto",
                 camHelicalForceStartAngle: false,
