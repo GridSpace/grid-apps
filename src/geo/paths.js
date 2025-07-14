@@ -597,7 +597,6 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
         zStart += zStep;
         rot += step;
     }
-    arr.push(end.clone())
     // console.log(arr,start,end);
     return arr
 }
