@@ -234,7 +234,7 @@ CAM.slice = async function(settings, widget, onupdate, ondone) {
     }
 
     function setAxisIndex(degrees = 0, absolute = true) {
-        axisIndex = absolute ? degrees : axisIndex + degrees;
+        axisIndex = absolute ? degrees : (axisIndex || 0) + degrees;
         axisRotation = (Math.PI / 180) * axisIndex;
         widget.setAxisIndex(isIndexed ? -axisIndex : 0);
         return isIndexed ? -axisIndex : 0;
