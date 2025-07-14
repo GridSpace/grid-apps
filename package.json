@@ -111,7 +111,7 @@
         "webpack-ext": "npm run webpack-three && npm run webpack-zip",
         "webpack-src": "node bin/esbuild.config.mjs",
         "webpack-three": "npx webpack --config bin/webpack-three-esm.js",
-        "webpack-zip": "npx webpack --config bin/webpack-three-esm.js"
+        "webpack-zip": "npx webpack --config bin/webpack-jszip-esm.js"
     },
     "main": "app-el.js",
     "build": {
