@@ -99,6 +99,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         engageFactor = process.camFullEngage,
         arcTolerance = process.camArcTolerance,
         arcRes = toRadians(process.camArcResolution),
+        arcEnabled = process.camArcEnabled && arcTolerance > 0 && arcRes > 0,
         tolerance = 0,
         drillDown = 0,
         drillLift = 0,
@@ -787,7 +788,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
             if(indexA == startIndex){
                 camOut(pointA.clone(), 0, {factor:engageFactor});
                 // if first point, move to and call export function
-                quePush(pointA);
+                if (arcEnabled) quePush(pointA);
             }
             lastPoint = arcExport(pointB, pointA);
         }, !poly.isClosed(), startIndex);
@@ -808,7 +809,7 @@ function prepEach(widget, settings, print, firstPoint, update) {
         function arcExport(point,lastp){
             let dist = lastp? point.distTo2D(lastp) : 0;
             if (lastp)  {
-                if (dist >lineTolerance && lastp) {
+                if (arcEnabled && dist >lineTolerance && lastp) {
                     let rec = Object.assign(point,{dist});
                     arcQ.push(rec);
 

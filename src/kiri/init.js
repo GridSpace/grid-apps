@@ -1282,8 +1282,9 @@ gapp.register("kiri.init", (root, exports) => {
             camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, show: () => !ui.camTrueShadow.checked }),
             camTrueShadow:       newBoolean(LANG.cx_true_s, onBooleanClick, {title:LANG.cx_true_l, show: () => !ui.camExpertFast.checked }),
             separator:           newBlank({ class:"set-sep", driven }),
-            camArcTolerance:     newInput(LANG.cx_arct_s, {title:LANG.cx_arct_l, convert:toFloat, units, bound:bound(0,100)}),
-            camArcResolution:    newInput(LANG.cx_arcr_s, {title:LANG.cx_arcr_l, convert:toFloat, bound:bound(0,180), show:() => ui.camArcTolerance.value > 0}),
+            camArcEnabled:       newBoolean(LANG.cx_arce_s, onBooleanClick, {title:LANG.cx_arce_l}),
+            camArcTolerance:     newInput(LANG.cx_arct_s, {title:LANG.cx_arct_l, convert:toFloat, bound:bound(0,100), units, trigger, show:() => ui.camArcEnabled.checked}),
+            camArcResolution:    newInput(LANG.cx_arcr_s, {title:LANG.cx_arcr_l, convert:toFloat, bound:bound(0,180), trigger, show:() => ui.camArcEnabled.checked}),
 
             /** LASER/DRAG/WJET/WEDM cut tool Settings */
 
