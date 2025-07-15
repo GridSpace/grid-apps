@@ -859,7 +859,7 @@ self.lang['en-us'] = {
     cx_true_s:      "true shadow",
     cx_true_l:      ["computationally correct shadow","will be slower but produce","better cuts for complex parts"],
     cx_arce_s:      "arc output",
-    cx_arce_l:      ["enable path to arc conversion"],
+    cx_arce_l:      ["EXPERIMENTAL: enable path to arc conversion"],
     cx_arct_s:      "arc tolerance",
     cx_arct_l:      ["convert cicrular paths to arcs;","center point drift tolerance","when matching arc points","consider values around 0.15","in mm, or 0.006 inches;","High values may cause","unexpected behavior","0 to disable"],
     cx_arcr_s:      "arc resolution",
