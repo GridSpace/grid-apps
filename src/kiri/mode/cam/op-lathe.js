@@ -13,7 +13,7 @@ function createFilter(op) {
             let idx = 0;
             if (obj && obj.slices) {
                 const nadd = [];
-                filter = function(slices) {
+                filter = function (slices) {
                     for (let slice of slices) {
                         if (obj.slices(slice, idx++)) {
                             nadd.push(slice);
@@ -110,7 +110,7 @@ class OpLathe extends CamOp {
         // camOut(last = last.clone().setZ(zmax), 0);
         // camOut(last = last.clone().setA(amax), 0);
         newLayer();
-        ops.addGCode([`G0 Z${zmax.round(2)}`,`G0 A${amax}`,"G92 A0"]);
+        ops.addGCode([`G0 Z${zmax.round(2)}`, `G0 A${amax}`, "G92 A0"]);
 
         setPrintPoint(last);
     }

@@ -78,7 +78,7 @@ class OpRegister extends CamOp {
                     poly, cp, cz;
                 function start(z) {
                     cz = z;
-                    cp = {x:x0 + o2 * 0.5, y:y0 + o2 * 1.5};
+                    cp = { x: x0 + o2 * 0.5, y: y0 + o2 * 1.5 };
                     poly = newPolygon().add(cp.x, cp.y, z);
                 }
                 function move(dx, dy) {
@@ -115,16 +115,16 @@ class OpRegister extends CamOp {
                     });
                     poly.points.pop();
                     slice.camTrace = { tool: tool.getID(), rate: op.feed, plunge: op.rate };
-                    slice.camLines = [ poly ];
+                    slice.camLines = [poly];
                     slice.output()
-                        .setLayer("register", {line: color}, false)
+                        .setLayer("register", { line: color }, false)
                         .addPolys(slice.camLines)
                 }
                 break;
         }
 
         if (points.length) {
-            let slice = newSlice(0,null), polys = [];
+            let slice = newSlice(0, null), polys = [];
             points.forEach(point => {
                 polys.push(newPolygon()
                     .append(point.clone().setZ(z1))
@@ -132,7 +132,7 @@ class OpRegister extends CamOp {
             });
             slice.camLines = polys;
             slice.output()
-                .setLayer("register", {face: color, line: color})
+                .setLayer("register", { face: color, line: color })
                 .addPolys(polys);
             addSlices(slice);
             sliceOut.push(slice);

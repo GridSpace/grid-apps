@@ -15,7 +15,7 @@ class OpDrill extends CamOp {
         let { op, state } = this;
         let { settings, addSlices, widget, updateToolDiams } = state;
         let { zBottom, zThru, thruHoles, color } = state;
-        let { drills, drillThrough} = op
+        let { drills, drillThrough } = op
 
         let drillTool = new Tool(settings, op.tool),
             drillToolDiam = drillTool.fluteDiameter(),
@@ -25,8 +25,8 @@ class OpDrill extends CamOp {
 
         const allDrills = drills[widget.id] ?? []
         // drill points to use center (average of all points) of the polygon
-        allDrills.forEach((drill)=> {
-            if(!drill.selected){
+        allDrills.forEach((drill) => {
+            if (!drill.selected) {
                 return
             }
             let slice = newSlice(0);
@@ -36,10 +36,10 @@ class OpDrill extends CamOp {
             }
             drill.zBottom = drill.z - drill.depth;
             // for thru holes, follow z thru when set
-            if ((op.thru>0) ) {
+            if ((op.thru > 0)) {
                 drill.zBottom -= op.thru;
             }
-            const poly  = newPolygon()
+            const poly = newPolygon()
             poly.points.push(newPoint(drill.x, drill.y, drill.z))
             poly.points.push(newPoint(drill.x, drill.y, drill.zBottom))
             // poly.points.pop();
@@ -47,7 +47,7 @@ class OpDrill extends CamOp {
             slice.camLines = [poly];
 
             slice.output()
-                .setLayer("drill", {face: color, line: color})
+                .setLayer("drill", { face: color, line: color })
                 .addPolys(slice.camLines);
             addSlices(slice);
             sliceOut.push(slice);
@@ -59,7 +59,7 @@ class OpDrill extends CamOp {
         let { settings, widget, addSlices, updateToolDiams } = state;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
         setTool(op.tool, undefined, op.rate);
-        setDrill(op.down, op.lift, op.dwell,op.thru);
+        setDrill(op.down, op.lift, op.dwell, op.thru);
         setSpindle(op.spindle);
         emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
     }
