@@ -37,7 +37,7 @@ export class Topo {
             boundsY = maxY - minY,
             inside = contour.inside,
             density = 1 + (contour.reduction || 0),
-            resolution = tolerance ? tolerance : 1/Math.sqrt(animesh/(boundsX * boundsY)),
+            resolution = tolerance ? tolerance : 1 / Math.sqrt(animesh / (boundsX * boundsY)),
             tool = new Tool(settings, contour.tool),
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
@@ -68,11 +68,11 @@ export class Topo {
             },
             data = topo.data,
             newslices = [],
-            tabsMax = tabs ? Math.max(...tabs.map(tab => tab.dim.z/2 + tab.pos.z)) : 0,
+            tabsMax = tabs ? Math.max(...tabs.map(tab => tab.dim.z / 2 + tab.pos.z)) : 0,
             tabsOn = tabs,
             tabHeight = Math.max(process.camTabsHeight + zBottom, tabsMax),
             clipTab = tabsOn ? [] : null,
-            clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter/2 + resolution * 3),
+            clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter / 2 + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
             gridDelta = Math.floor(partOff / resolution),
             debug = false,
@@ -92,8 +92,8 @@ export class Topo {
 
         if (tabs) {
             clipTab.appendAll(tabs.map(tab => {
-                let ctab = POLY.expand([tab.poly], toolDiameter/2);
-                ctab.forEach(ct => ct.z = tab.dim.z/2 + tab.pos.z);
+                let ctab = POLY.expand([tab.poly], toolDiameter / 2);
+                ctab.forEach(ct => ct.z = tab.dim.z / 2 + tab.pos.z);
                 return ctab;
             }).flat());
         }
@@ -197,7 +197,7 @@ export class Topo {
         const range = { min: Infinity, max: -Infinity };
 
         // swap XZ in shared array
-        for (let i=0,l=vertices.length; i<l; i += 3) {
+        for (let i = 0, l = vertices.length; i < l; i += 3) {
             const x = vertices[i];
             const z = vertices[i + 2];
             vertices[i] = z;
@@ -226,9 +226,11 @@ export class Topo {
         // define sharded ranges
         if (minions.running > 1) {
 
-            dispatch.putCache({ key: widget.id, data: vertices }, { done: data => {
-                // console.log({ put_cache_done: data });
-            }});
+            dispatch.putCache({ key: widget.id, data: vertices }, {
+                done: data => {
+                    // console.log({ put_cache_done: data });
+                }
+            });
 
             let promises = slices.map(slice => {
                 return new Promise(resolve => {
@@ -256,9 +258,11 @@ export class Topo {
                     return box2;
                 });
 
-            dispatch.clearCache({}, { done: data => {
-                // console.log({ clear_cache_done: data });
-            }});
+            dispatch.clearCache({}, {
+                done: data => {
+                    // console.log({ clear_cache_done: data });
+                }
+            });
 
         } else {
 
@@ -340,8 +344,8 @@ export class Topo {
         let promise = new Promise(resolve => {
             resolver = () => {
                 // sort output slices (required for async)
-                slicesY.sort((a,b) => a.z - b.z);
-                slicesX.sort((a,b) => a.z - b.z);
+                slicesY.sort((a, b) => a.z - b.z);
+                slicesX.sort((a, b) => a.z - b.z);
                 newslices.appendAll(slicesY);
                 newslices.appendAll(slicesX);
                 resolve();
@@ -369,7 +373,7 @@ export class Topo {
                         let slice = newSlice(gridx);
                         slice.camLines = segments;
                         slice.output()
-                            .setLayer("contour y", {face: color, line: color})
+                            .setLayer("contour y", { face: color, line: color })
                             .addPolys(segments);
                         slicesY.push(slice);
                     }
@@ -398,7 +402,7 @@ export class Topo {
                         let slice = newSlice(gridy);
                         slice.camLines = segments;
                         slice.output()
-                            .setLayer("contour x", {face: color, line: color})
+                            .setLayer("contour x", { face: color, line: color })
                             .addPolys(segments);
                         slicesX.push(slice);
                     }
@@ -431,7 +435,7 @@ export class Probe {
         this.params = params;
 
         // return the touching z given topo x,y and a tool profile
-        const toolAtZ = this.toolAtZ = function(x,y) {
+        const toolAtZ = this.toolAtZ = function (x, y) {
             let sx = stepsX,
                 sy = stepsY,
                 xl = sx - 1,
@@ -461,13 +465,13 @@ export class Probe {
         // export z probe function
         const rx = stepsX / boundsX;
         const ry = stepsX / boundsX;
-        const toolAtXY = this.toolAtXY = function(px, py) {
+        const toolAtXY = this.toolAtXY = function (px, py) {
             px = Math.round(rx * (px - minX));
             py = Math.round(ry * (py - minY));
             return toolAtZ(px, py);
         };
 
-        const zAtXY = this.zAtXY = function(px, py) {
+        const zAtXY = this.zAtXY = function (px, py) {
             let ix = Math.round(rx * (px - minX));
             let iy = Math.round(ry * (py - minY));
             return data[ix * stepsY + iy] || zMin;
@@ -496,11 +500,11 @@ export class Trace {
             this.slice = slice = [];
         }
 
-        const newtrace = this.newtrace = function() {
+        const newtrace = this.newtrace = function () {
             trace = newPolygon().setOpen();
         }
 
-        const end_poly = this.end_poly = function(point) {
+        const end_poly = this.end_poly = function (point) {
             if (latent) {
                 trace.push(latent);
             }
@@ -520,7 +524,7 @@ export class Trace {
             }
         }
 
-        const log = function(map) {
+        const log = function (map) {
             for (let key in map) {
                 const val = map[key];
                 if (typeof val === 'number') {
@@ -530,7 +534,7 @@ export class Trace {
             console.log(...arguments);
         }
 
-        const push_point = this.push_point = function(x, y, z) {
+        const push_point = this.push_point = function (x, y, z) {
             const newP = newPoint(x, y, z);
             const lastP = lastPP;//trace.last();
 
@@ -550,7 +554,7 @@ export class Trace {
                     if (curvesOnly) {
                         const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
                         // const dz = lastPP.z - z;
-                        const angle = Math.atan2( Math.abs(dz), dv) * RAD2DEG;
+                        const angle = Math.atan2(Math.abs(dz), dv) * RAD2DEG;
                         if (angle > maxangle) {
                             end_poly();
                         }
@@ -568,7 +572,7 @@ export class Trace {
         const object = this.object = this;
 
         this.inClip = function (clips, checkZ, point) {
-            for (let i=0; i<clips.length; i++) {
+            for (let i = 0; i < clips.length; i++) {
                 let poly = clips[i];
                 let zok = checkZ ? checkZ <= poly.z : true;
                 object.tabZ = poly.z;
@@ -590,9 +594,9 @@ export class Trace {
         // in this case, z is appended to clip tabs in topo constructor
         // we pass it as a side-channel and re-consitute here
         if (clipTab)
-        for (let i=0, l=clipTab.length; i<l; i++) {
-            clipTab[i].z = clipTabZ[i];
-        }
+            for (let i = 0, l = clipTab.length; i < l; i++) {
+                clipTab[i].z = clipTabZ[i];
+            }
 
         if (minions && this.cross.concurrent) {
             minions.broadcast("trace_init", codec.encode({
@@ -649,7 +653,7 @@ export class Trace {
         let { from, to, x, gridx, gridy } = params;
 
         const step = resolution * density;
-        const checkr = newPoint(0,0);
+        const checkr = newPoint(0, 0);
         newslice();
         newtrace();
         for (let y = from; y < to; y += step) {
@@ -687,7 +691,7 @@ export class Trace {
         let { from, to, y, gridx, gridy } = params;
 
         const step = resolution * density;
-        const checkr = newPoint(0,0);
+        const checkr = newPoint(0, 0);
         newslice();
         newtrace();
         for (let x = from; x < to; x += step) {
@@ -734,7 +738,7 @@ export function raster_slice(inputs) {
     // emit an array of valid line-pairs
     const len = lines.length;
 
-    outer: for (let i=0; i<len; i++) {
+    outer: for (let i = 0; i < len; i++) {
         let l1 = lines[i], p1 = l1.p1, p2 = l1.p2;
         // eliminate vertical
         if (Math.abs(p1.y - p2.y) < flatness) continue;
@@ -743,14 +747,14 @@ export function raster_slice(inputs) {
         // sort p1,p2 by y for comparison
         if (p1.y > p2.y) { const tp = p1; p1 = p2; p2 = tp };
         // eliminate if points "under" other lines
-        for (let j=0; j<len; j++) {
+        for (let j = 0; j < len; j++) {
             // skip self and adjacent
-            if (j >= i-1 && j <= i+1) continue;
+            if (j >= i - 1 && j <= i + 1) continue;
             let l2 = lines[j], p3 = l2.p1, p4 = l2.p2;
             // sort p3,p4 by y for comparison
             if (p3.y > p4.y) { const tp = p3; p3 = p4; p4 = tp };
             // it's under the other line
-            if (Math.max(p1.z,p2.z) < Math.min(p3.z,p4.z)) {
+            if (Math.max(p1.z, p2.z) < Math.min(p3.z, p4.z)) {
                 // it's inside the other line, too, so skip
                 if (p1.y >= p3.y && p2.y <= p4.y) continue outer;
             }
@@ -766,8 +770,8 @@ export function raster_slice(inputs) {
         gridi = gridx * stepsY + gridy;
         gridv = data[gridi] || zMin;
         // strategy using raw lines (faster slice, but more lines)
-        for (i=0, il=points.length; i<il; i += 2) {
-            const p1 = points[i], p2 = points[i+1];
+        for (i = 0, il = points.length; i < il; i += 2) {
+            const p1 = points[i], p2 = points[i + 1];
             // one endpoint above grid
             const crossz = (p1.z > gridv || p2.z > gridv);
             // segment crosses grid y
@@ -783,7 +787,7 @@ export function raster_slice(inputs) {
                 if (nz > gridv) {
                     gridv = data[gridi] = Math.max(nz, zMin);
                     if (slice) slice.output()
-                        .setLayer("heights", {face: 0, line: 0})
+                        .setLayer("heights", { face: 0, line: 0 })
                         .addLine(
                             newPoint(p1.x, y, 0),
                             newPoint(p1.x, y, gridv)
@@ -797,9 +801,9 @@ export function raster_slice(inputs) {
     // remove flat lines when curvesOnly
     if (curvesOnly) {
         let nup = [];
-        for (let i=0, p=points, l=p.length; i<l; i += 2) {
+        for (let i = 0, p = points, l = p.length; i < l; i += 2) {
             const p1 = p[i];
-            const p2 = p[i+1];
+            const p2 = p[i + 1];
             if (Math.abs(p1.z - p2.z) >= flatness) {
                 nup.push(p1, p2);
             }

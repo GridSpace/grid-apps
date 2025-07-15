@@ -92,7 +92,7 @@ export class Topo {
         const box = this.box = new THREE.Box2();
 
         // swap XZ in shared array
-        for (let i=0, l=vertices.length; i<l; i += 3) {
+        for (let i = 0, l = vertices.length; i < l; i += 3) {
             const x = vertices[i];
             const z = vertices[i + 2] + zoff;
             vertices[i] = z;
@@ -106,7 +106,7 @@ export class Topo {
         range.max += this.diam / 2;
 
         // merge in tab vertices here so they don't affect slice range / dimensions
-        for (let i=0, l=tabverts.length; i<l; i += 3) {
+        for (let i = 0, l = tabverts.length; i < l; i += 3) {
             const x = tabverts[i];
             const z = tabverts[i + 2] + zoff;
             tabverts[i] = z;
@@ -160,7 +160,7 @@ export class Topo {
                     slice.index = rec.index;
                     slice.addTops(sliceConnect(rec.lines));
 
-                    const points = codec.encodePointArray(rec.lines.map(l => [ l.p1, l.p2 ]).flat());
+                    const points = codec.encodePointArray(rec.lines.map(l => [l.p1, l.p2]).flat());
                     const shared = new Float32Array(new SharedArrayBuffer(points.length * 4));
                     shared.set(points);
                     slice.shared = shared;
@@ -168,7 +168,7 @@ export class Topo {
                     return slice;
                 });
             output.appendAll(recs);
-            onupdate(++complete /slices.length);
+            onupdate(++complete / slices.length);
         }
 
         return output;
@@ -197,7 +197,7 @@ export class Topo {
             .map(rec => newSlice(rec.z)
                 .addTops(rec.polys)
                 .setFields({ shared: rec.shared }))
-            .sort((a,b) => a.z - b.z);
+            .sort((a, b) => a.z - b.z);
 
         clearCache();
         return output;
@@ -226,7 +226,7 @@ export class Topo {
             const lines = slice.lines;
             const plen = lines.length;
             const rec = { z: slice.z, lines: [] };
-            for (let i = 0; i < plen; ) {
+            for (let i = 0; i < plen;) {
                 ++i; // skip x which should match slice.z
                 let py0 = lines[i++];
                 const pz0 = lines[i++];
@@ -248,7 +248,7 @@ export class Topo {
             const rx = oslices[si].z;
             let mz = -Infinity;
             // iterate over tool offsets
-            for (let ti = 0; ti < tlen; ) {
+            for (let ti = 0; ti < tlen;) {
                 // tool offset in grid units from present x (si)
                 const xo = tool[ti++]; // x grid offset (slice)
                 const yo = tool[ti++] * resolution; // y grid offset (mult rez to get real y)
@@ -262,7 +262,7 @@ export class Topo {
                 const slice = oslices[ts];
                 const lines = slice.lines;
                 const plen = lines.length;
-                for (let i = 0; i < plen; ) {
+                for (let i = 0; i < plen;) {
                     ++i; // skip x which should match slice.z
                     let py0 = lines[i++];
                     const pz0 = lines[i++];
@@ -323,15 +323,15 @@ export class Topo {
         // count = recs[0].heights.length / 3;
         while (count-- > 0) {
             let slice = newSlice(count);
-            slice.camLines = [ newPolygon().setOpen() ];
+            slice.camLines = [newPolygon().setOpen()];
             paths.push(slice);
         }
 
         if (linear) {
-            recs.forEach((rec,i) => {
+            recs.forEach((rec, i) => {
                 const { degrees, heights } = rec;
                 [...heights].group(3).forEach((a) => {
-                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees) );
+                    paths[i].camLines[0].push(newPoint(a[0], a[1], a[2] + leave).setA(degrees));
                 });
                 if (i % 2 === 1) {
                     paths[i].camLines[0].reverse();
@@ -340,9 +340,9 @@ export class Topo {
         } else {
             for (let rec of recs) {
                 const { degrees, heights } = rec;
-                [...heights].group(3).forEach((a,i) => {
+                [...heights].group(3).forEach((a, i) => {
                     // progress each path 360 degrees to prevent A rolling backwards
-                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+                    paths[i].camLines[0].push(newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360));
                 });
             }
         }
@@ -358,7 +358,7 @@ export class Topo {
             slice.camLines[0].push(repeat.clone().setA(repeat.a - 360));
             slice.output()
                 .setLayer("lathe", { line: this.lineColor })
-                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
+                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x: 0, y: 0 }));
         }
 
         // console.log({ tool, slices, paths });
@@ -411,15 +411,15 @@ export class Topo {
         count = linear ? recs.length : recs[0].heights.length / 3;
         while (count-- > 0) {
             let slice = newSlice(count);
-            slice.camLines = [ newPolygon().setOpen() ];
+            slice.camLines = [newPolygon().setOpen()];
             paths.push(slice);
         }
 
         if (linear) {
-            recs.forEach((rec,i) => {
+            recs.forEach((rec, i) => {
                 const { degrees, heights } = rec;
                 [...heights].group(3).forEach((a) => {
-                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees) );
+                    paths[i].camLines[0].push(newPoint(a[0], a[1], a[2] + leave).setA(degrees));
                 });
                 if (i % 2 === 1) {
                     paths[i].camLines[0].reverse();
@@ -428,9 +428,9 @@ export class Topo {
         } else {
             for (let rec of recs) {
                 const { degrees, heights } = rec;
-                [...heights].group(3).forEach((a,i) => {
+                [...heights].group(3).forEach((a, i) => {
                     // progress each path 360 degrees to prevent A rolling backwards
-                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+                    paths[i].camLines[0].push(newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360));
                 });
             }
         }
@@ -448,7 +448,7 @@ export class Topo {
             }
             slice.output()
                 .setLayer("lathe", { line: this.lineColor })
-                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
+                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x: 0, y: 0 }));
         }
 
         // console.log({ tool, slices, paths });

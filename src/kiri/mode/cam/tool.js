@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-const HPI = Math.PI/2;
-const RAD2DEG = 180/Math.PI;
+const HPI = Math.PI / 2;
+const RAD2DEG = 180 / Math.PI;
 
 class Tool {
     constructor(settings, id, number) {
@@ -102,7 +102,7 @@ class Tool {
         return this.tool.type === "tapermill";
     }
 
-    isDrill(){
+    isDrill() {
         return this.tool.type === "drill";
     }
 
@@ -162,8 +162,8 @@ class Tool {
                         // z_offset = (1 - Math.cos((dist_from_center / flute_radius_pix_float) * HPI)) * -flute_radius;
                     } else if (taper && dist_from_center >= tip_radius_pix_float) {// if tapered and not in the flat tip radius
                         z_offset = ((dist_from_center - tip_radius_pix_float) / tip_max_radius_offset) * -shaft_offset;
-                    }else if(drill){
-                        z_offset = -dist_from_center /45;
+                    } else if (drill) {
+                        z_offset = -dist_from_center / 45;
                     }
                     toolOffset.push(dx, dy, z_offset);
                 } else if (shaft_offset && larger_shaft && dist_from_center <= shaft_radius_pix_float) {
