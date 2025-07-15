@@ -17,7 +17,7 @@ class OpOutline extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { settings, widget, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
-        let { updateToolDiams, tabs, cutTabs, cutPolys, workarea, zMax } = state;
+        let { updateToolDiams, tabs, cutTabs, cutPolys, workarea, zMax, shadowAt } = state;
         let { process, stock } = settings;
 
         if (op.down <= 0) {
@@ -37,6 +37,7 @@ class OpOutline extends CamOp {
         };
         let indices = slicer.interval(op.down, intopt);
         let trueShadow = process.camTrueShadow === true;
+        let lastShadowZ;
         // shift out first (top-most) slice
         indices.shift();
         // add flats to shadow
@@ -44,7 +45,6 @@ class OpOutline extends CamOp {
             .map(v => (parseFloat(v) - 0.01).round(5))
             .filter(v => v > 0 && indices.indexOf(v) < 0);
         indices = indices.appendAll(flats).sort((a,b) => b-a);
-
         let cnt = 0;
         let tot = 0;
         if (op.outside && !op.inside) {
@@ -65,7 +65,7 @@ class OpOutline extends CamOp {
                 // exclude flats injected to complete shadow
                 return;
             }
-            data.shadow = trueShadow ? shadowAt(widget, data.z) : shadow.clone(true);
+            data.shadow = trueShadow ? shadowAt(data.z, lastShadowZ) : shadow.clone(true);
             data.slice.shadow = data.shadow;
             // data.slice.tops[0].inner = data.shadow;
             // data.slice.tops[0].inner = POLY.setZ(tshadow.clone(true), data.z);
@@ -73,6 +73,7 @@ class OpOutline extends CamOp {
             // data.slice.xray();
             // onupdate(0.2 + (index/total) * 0.1, "outlines");
             progress(0.5 + 0.5 * (++cnt / tot));
+            lastShadowZ = data.z;
         }, progress: (index, total) => {
             tot = total;
             progress((index / total) * 0.5);
