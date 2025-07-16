@@ -33,6 +33,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         top_stock, top_part, top_gap, top_z,
         workarea;
 
+    axisRotation = axisIndex = undefined;
+    dark = settings.controller.dark;
+    color = dark ? 0xbbbbbb : 0;
+    minToolDiam = Infinity;
+    maxToolDiam = -Infinity;
+    tabs = widget.anno.tab;
+    unsafe = proc.camExpertFast;
+    units = settings.controller.units === 'in' ? 25.4 : 1;
+
     // allow recomputing later if widget or settings changes
     const var_compute = () => {
         let { camStockX, camStockY, camStockZ, camStockOffset } = proc;
@@ -45,9 +54,9 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             x: camStockX,
             y: camStockY,
             z: camStockZ
-        }
-        track = widget.track;
+        };
         ({ camZTop, camZBottom, camZThru } = proc);
+        track = widget.track;
         wztop = track.top;
         ztOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (stock.z - wztop);
         zbOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (wztop - track.box.d);
@@ -56,14 +65,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         zMax = bounds.max.z;
         zThru = camZThru;
         zTop = zMax + ztOff;
-        minToolDiam = Infinity;
-        maxToolDiam = -Infinity;
-        dark = !!settings.controller.dark;
-        color = dark ? 0xbbbbbb : 0;
-        tabs = widget.anno.tab;
-        unsafe = proc.camExpertFast;
-        units = settings.controller.units === 'in' ? 25.4 : 1;
-        axisRotation = axisIndex = undefined;
         part_size = bounds.dim;
         bottom_gap = zbOff;
         bottom_part = 0;

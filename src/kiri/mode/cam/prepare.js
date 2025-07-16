@@ -243,7 +243,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 break;
             }
         }
-        camOut(point.clone().setZ(zmax));
+        camOut(point.clone().setZ(zmax_outer));
         points.forEach(function (point, index) {
             camOut(point, 1);
             if (index > 0 && index < points.length - 1) {
@@ -251,7 +251,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 if (lift) camOut(point.clone().setZ(point.z + lift), 0);
             }
         })
-        camOut(point.clone().setZ(zmax), 0);
+        camOut(point.clone().setZ(zmax_outer), 0);
         newLayer();
     }
 
@@ -319,7 +319,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             p.x + wmx,
             p.y + wmy,
             p.z + zadd
-        ).setA(p.a);
+        ).setA(p.a ?? lastPoint?.a);
     }
 
     /**
@@ -344,7 +344,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         // console.log({radius})
         const isArc = emit == 2 || emit == 3;
 
-        //apply widget movement pos
+        // apply widget movement pos
+        const pointA = point.a;
         point = applyWidgetMovement(point);
 
         // console.log(point.z);
@@ -356,15 +357,13 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         let rate = feedRate * factor;
 
         // carry rotation forward when not overridden
-        if (point.a === undefined && lastPoint) {
-            point.a = lastPoint.a;
-        } else if (lastPoint && point.a !== undefined && lastPoint.a !== undefined) {
-            let DA = lastPoint.a - point.a;
+        if (lastPoint && pointA !== undefined && lastPoint.a !== undefined) {
+            let DA = lastPoint.a - pointA;
             let MZ = Math.max(lastPoint.z, point.z)
             // find arc length
             let AL = (Math.abs(DA) / 360) * (2 * Math.PI * MZ);
             if (AL >= 1) {
-                let lerp = base.util.lerp(lastPoint.a, point.a, 1);
+                let lerp = base.util.lerp(lastPoint.a, pointA, 1);
                 // create interpolated point set for rendering and animation
                 // console.log({ DA, MZ, AL }, lerp.length);
                 for (let a of lerp) {

@@ -133,7 +133,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
             if (msg && msg !== lastMsg) {
                 let mark = Date.now();
                 if (lastMsg) {
-                    let key = widgets.length > 1 ?
+                    let key = slicing.length > 1 ?
                         `${widget.id}_${segNumber++}_${lastMsg}` :
                         `${segNumber++}_${lastMsg}`
                     segtimes[key] = mark - startTime;
@@ -158,7 +158,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
             if (sliced) {
                 // update segment time
                 if (lastMsg) {
-                    segtimes[`${widget.id}_${segNumber++}_${lastMsg}`] = mark - startTime;
+                    let key = slicing.length > 1 ?
+                        `${widget.id}_${segNumber++}_${lastMsg}` :
+                        `${segNumber++}_${lastMsg}`
+                    segtimes[`${key}`] = mark - startTime;
                 }
                 event.emit('slice', settings.mode);
             }
@@ -237,7 +240,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         };
         for (let widget of slicing) {
             // on done
-            segtimes[`${widget.id}_${segNumber++}_draw`] = widget.render(widget.stack);
+            let key = slicing.length > 1 ?
+                `${widget.id}_${segNumber++}_draw` :
+                `${segNumber++}_draw`
+            segtimes[`${key}`] = widget.render(widget.stack);
             // rotate stack for belt beds
             if (widget.belt) {
                 widget.stack.obj.rotate(widget.belt);

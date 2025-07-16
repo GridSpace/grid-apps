@@ -4,6 +4,7 @@ import { api } from '../../core/api.js';
 import { env, isDark } from './client.js';
 import { addbox, delbox, clearboxes } from '../../core/boxes.js';
 import { traceDone } from './cl-trace.js';
+import { space as SPACE } from '../../../moto/space.js';
 
 let showTab, lastTab, tab, iw, ic;
 
