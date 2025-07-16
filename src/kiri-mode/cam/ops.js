@@ -795,8 +795,10 @@ class OpContour extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices } = state;
+        let { addSlices, settings, updateToolDiams } = state;
         let filter = createFilter(op);
+        let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+        updateToolDiams(toolDiam);
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
@@ -826,7 +828,7 @@ class OpContour extends CamOp {
         let { camOut, polyEmit, newLayer, printPoint, lastPoint } = ops;
         let { bounds, zmax } = ops;
 
-        let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+        let toolDiam = this.toolDiam;
         let stepover = toolDiam * op.step * 2;
         let depthFirst = process.camDepthFirst;
         let depthData = [];
