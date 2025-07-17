@@ -26,7 +26,7 @@ export class Slicer {
         const max = options.max || Infinity;
         const len = position.length;
         const pts = this.points = [];
-        for (let i=0; i<len; ) {
+        for (let i = 0; i < len;) {
             const x0 = position[i++];
             const y0 = position[i++];
             const z0 = position[i++];
@@ -57,7 +57,7 @@ export class Slicer {
         const len = points.length;
         const min = options.min || -Infinity;
         const max = options.max || Infinity;
-        for (let i=0; i<len; ) {
+        for (let i = 0; i < len;) {
             const p0 = points[i++];
             const p1 = points[i++];
             const p2 = points[i++];
@@ -95,11 +95,11 @@ export class Slicer {
         if (!under && !both) over = true;
 
         // iterate over matching buckets for this z offset
-        for (let i = 0; i < points.length; ) {
+        for (let i = 0; i < points.length;) {
             p1 = points[i++];
             p2 = points[i++];
             p3 = points[i++];
-            let where = {under: [], over: [], on: []};
+            let where = { under: [], over: [], on: [] };
             checkOverUnderOn(p1, z, where);
             checkOverUnderOn(p2, z, where);
             checkOverUnderOn(p3, z, where);
@@ -130,7 +130,7 @@ export class Slicer {
                 if (line.length === 2) {
                     lines.push(makeZLine(phash, line[0], line[1]));
                 } else {
-                    console.log({msg: "invalid ips", line: line, where: where});
+                    console.log({ msg: "invalid ips", line: line, where: where });
                 }
             }
         }
@@ -210,7 +210,7 @@ function getCachedPoint(phash, p) {
 function makeZLine(phash, p1, p2, coplanar, edge) {
     p1 = getCachedPoint(phash, p1);
     p2 = getCachedPoint(phash, p2);
-    let line = newOrderedLine(p1,p2);
+    let line = newOrderedLine(p1, p2);
     line.coplanar = coplanar || false;
     line.edge = edge || false;
     return line;
@@ -243,7 +243,7 @@ function removeDuplicateLines(lines, debug) {
 
     function addLinesToPoint(point, line) {
         cachePoint(point);
-        if (!point.group) point.group = [ line ];
+        if (!point.group) point.group = [line];
         else point.group.push(line);
     }
 
@@ -261,7 +261,7 @@ function removeDuplicateLines(lines, debug) {
     });
 
     // associate points with their lines, cull deleted
-    lines.forEach(function(line) {
+    lines.forEach(function (line) {
         if (!line.del) {
             tmplines.push(line);
             addLinesToPoint(line.p1, line);
@@ -270,7 +270,7 @@ function removeDuplicateLines(lines, debug) {
     });
 
     // merge collinear lines
-    points.forEach(function(point) {
+    points.forEach(function (point) {
         if (point.group.length != 2) return;
         let l1 = point.group[0],
             l2 = point.group[1];
@@ -280,7 +280,7 @@ function removeDuplicateLines(lines, debug) {
             // find new endpoints that are not shared point
             let p1 = l1.p1 != point ? l1.p1 : l1.p2,
                 p2 = l2.p1 != point ? l2.p1 : l2.p2,
-                newline = newOrderedLine(p1,p2);
+                newline = newOrderedLine(p1, p2);
             // remove deleted lines from associated points
             p1.group.remove(l1);
             p1.group.remove(l2);
@@ -307,7 +307,7 @@ function removeDuplicateLines(lines, debug) {
     });
 
     // create new line array culling deleted
-    tmplines.forEach(function(line) {
+    tmplines.forEach(function (line) {
         if (!line.del) {
             output.push(line);
             line.p1.group = null;

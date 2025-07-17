@@ -114,6 +114,7 @@ class OpRough extends CamOp {
         indices = indices.filter(v => v >= workarea.bottom_z);
         // console.log('indices', ...indices, {zBottom});
 
+        let lsz;
         let cnt = 0;
         let tot = 0;
         await slicer.slice(indices, { each: data => {
@@ -125,9 +126,10 @@ class OpRough extends CamOp {
             if (data.z > workarea.top_z) {
                 return;
             }
-            data.shadow = trueShadow ? shadowAt(data.z) : shadow.clone(true);
+            data.shadow = trueShadow ? shadowAt(data.z, lsz) : shadow.clone(true);
             data.slice.shadow = data.shadow;
             slices.push(data.slice);
+            lsz = data.z;
             progress(0.25 + 0.25 * (++cnt / tot));
         }, progress: (index, total) => {
             tot = total;

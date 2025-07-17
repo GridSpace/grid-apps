@@ -36,6 +36,7 @@ let http;
 let util;
 let dir;
 let log;
+let pre;
 
 const EventEmitter = require('events');
 class AppEmitter extends EventEmitter {}
@@ -46,9 +47,13 @@ netdb.create = async function(map = {}) {
         Object.assign(map, JSON.parse(fs.readFileSync(map.conf)));
     }
     const client = new netdb();
-    if (map.host && map.port) await client.open(map.host, map.port);
-    if (map.user && map.pass) await client.auth(map.user, map.pass);
-    if (map.base) await client.use(map.base);
+    try {
+        if (map.host && map.port) await client.open(map.host, map.port);
+        if (map.user && map.pass) await client.auth(map.user, map.pass);
+        if (map.base) await client.use(map.base);
+    } catch (e) {
+        logger.log({ netdb_setup_error: e });
+    }
     logger.log({ netdb: map.host, user: map.user, base: map.base });
     return client;
 };
@@ -59,6 +64,7 @@ function init(mod) {
     startTime = time();
     lastmod = mod.util.lastmod;
     logger = mod.log;
+    pre = ENV.pre || mod.meta.pre;
     debug = ENV.debug || mod.meta.debug;
     oversion = ENV.over || mod.meta.over;
     crossOrigin = ENV.xorigin || mod.meta.xorigin || false;
@@ -72,17 +78,24 @@ function init(mod) {
     dversion = debug ? `_${version}` : version;
     forceUseCache = ENV.cache ? true : false;
 
-    const approot = PATH.join("main","gapp");
-    const refcache = {};
-    const callstack = [];
-    let xxxx = false;
-
     if (!ENV.electron) {
         generateDevices();
     }
 
+    if (pre) {
+        for (let [k,v] of Object.entries(productionMap)) {
+            productionMap[`${pre}${k}`] = `${pre}${v}`;
+        }
+    }
+
     mod.on.test((req) => {
-        let cookie = cookieValue(req.headers.cookie, "version") || undefined;
+        if (req.app?.path?.startsWith(pre)) {
+            req.url = req.url.substring(pre.length);
+            req.app.path = req.app.path.substring(pre.length);
+            req.app.ispre = true;
+            return true;
+        }
+        let cookie = cookieValue(req.headers.cookie, "version") || '';
         let vmatch = mod.meta.version || "*";
         if (!Array.isArray(vmatch)) {
             vmatch = [ vmatch ];
@@ -93,17 +106,28 @@ function init(mod) {
         return vmatch.indexOf(cookie) >= 0;
     });
 
+    mod.on.testv((version) => {
+        let vmatch = mod.meta.version || "*";
+        if (!Array.isArray(vmatch)) {
+            vmatch = [ vmatch ];
+        }
+        if (vmatch.indexOf("*") >= 0) {
+            return true;
+        }
+        return vmatch.indexOf(version) >= 0;
+    });
+
     mod.add(handleSetup);
     mod.add(handleOptions);
     mod.add(serveWasm);
     mod.add(serveCode);
     mod.add(fullpath({
-        "/kiri"            : redir("/kiri/", 301),
-        "/mesh"            : redir("/mesh/", 301),
-        "/meta"            : redir("/meta/", 301),
-        "/kiri/index.html" : redir("/kiri/", 301),
-        "/mesh/index.html" : redir("/mesh/", 301),
-        "/meta/index.html" : redir("/meta/", 301)
+        "/kiri"            : redir((pre??"") + "/kiri/", 301),
+        "/mesh"            : redir((pre??"") + "/mesh/", 301),
+        "/meta"            : redir((pre??"") + "/meta/", 301),
+        "/kiri/index.html" : redir((pre??"") + "/kiri/", 301),
+        "/mesh/index.html" : redir((pre??"") + "/mesh/", 301),
+        "/meta/index.html" : redir((pre??"") + "/meta/", 301)
     }));
     mod.add(handleVersion);
     mod.add(fixedmap("/api/", api));
@@ -116,8 +140,6 @@ function init(mod) {
         });
     }
     mod.add(rewriteHtmlVersion);
-    // example of how to use the new middleware
-    // mod.add(appendContent('/kiri/index.html', '<script>console.log("hello")</script>'));
     mod.static("/lib/", "src");
     mod.static("/obj/", "web/obj");
     mod.static("/font/", "web/font");
@@ -126,8 +148,8 @@ function init(mod) {
     mod.static("/moto/", "web/moto");
     mod.static("/kiri/", "web/kiri");
 
+    // module loader
     function load_modules(root, force) {
-        // load modules
         lastmod(`${dir}/${root}`) && fs.readdirSync(`${dir}/${root}`).forEach(mdir => {
             const modpath = `${root}/${mdir}`;
             if (dir.charAt(0) === '.' && !ENV.single) return;
@@ -152,7 +174,7 @@ function init(mod) {
     // load optional local modules
     load_modules('mods');
 
-    // run loads injected by modules
+    // run load functions injected by modules
     while (load.length) {
         try {
             load.shift()();
@@ -161,7 +183,7 @@ function init(mod) {
         }
     }
 
-    // minify appends
+    // minify appends in production mode
     if (!debug) {
         for (let key of Object.keys(append)) {
             append[key] = minify(append[key]);
@@ -177,6 +199,9 @@ function loadModule(mod, dir) {
     if (lastmod(`${mod.dir}/${dir}/.ignore`)) {
         return;
     }
+    // either load the module, or if it's not a module
+    // directory, serve the module as static content
+    // bound to the root
     lastmod(`${mod.dir}/${dir}/init.js`) ?
         initModule(mod, `./${dir}/init.js`, dir) :
         mod.static("/", `${mod.dir}/${dir}`);
@@ -189,14 +214,14 @@ function initModule(mod, file, dir) {
         // express functions added here show up at "/api/" url root
         api: api,
         adm: {
-            setver: (ver) => { oversion = ver },
-            crossOrigin: (bool) => { crossOrigin = bool }
+            setver(ver) { oversion = ver },
+            crossOrigin(bool) { crossOrigin = bool }
         },
         events,
         const: {
             args: {},
             meta: mod.meta,
-            debug: debug,
+            debug,
             moddir: dir,
             rootdir: mod.dir,
             version: oversion || version
@@ -209,35 +234,21 @@ function initModule(mod, file, dir) {
         },
         mod: mods,
         util: {
+            guid,
+            time,
             log: logger.log,
-            time: time,
-            guid: guid,
+            logger: log.new,
             mkdirs: util.mkdir,
-            isfile: util.isfile,
             confdir: util.confdir,
             datadir: util.datadir,
             lastmod: lastmod,
-            obj2string: obj2string,
-            string2obj: string2obj,
+            isfile: util.isfile,
             getCookieValue: cookieValue,
-            logger: log.new
-        },
-        inject: (code, file, opt = {}) => {
-            const path = mod.dir + '/' + dir + '/' + file;
-            try {
-                const body = fs.readFileSync(path);
-                // console.log({ inject: code, file, opt });
-                if (opt.first) {
-                    append[code] = body.toString() + '\n' + append[code];
-                } else {
-                    append[code] += body.toString() + '\n';
-                }
-            } catch (e) {
-                console.log({ missing_file: path, dir, mod });
-            }
+            obj2string(o) { return JSON.stringify(o) },
+            string2obj(s) { return JSON.parse(s) },
         },
         path: {
-            any: arg => { mod.add(arg) },
+            any(arg) { mod.add(arg) },
             code() {
                 const [ path, file ] = [ ...arguments ];
                 if (lastmod(file)) {
@@ -251,13 +262,13 @@ function initModule(mod, file, dir) {
                     console.log({ MISSING_CODE: path, file });
                 }
             },
-            full: arg => { mod.add(fullpath(arg)) },
-            map: arg => { mod.add(fixedmap(arg)) },
-            pre: arg => { mod.add(prepath(arg)) },
+            full(arg) { mod.add(fullpath(arg)) },
+            map(arg) { mod.add(fixedmap(arg)) },
+            pre(arg) { mod.add(prepath(arg)) },
             redir: redir,
             remap: remap,
-            setup: fn => { setupFn = fn },
-            static: (root, pre) => {
+            setup(fn) { setupFn = fn },
+            static(root, pre) {
                 mod.static(pre || "/", root);
             },
         },
@@ -271,20 +282,27 @@ function initModule(mod, file, dir) {
         ws: {
             register: mod.wss
         },
-        onload: (fn) => {
+        inject(code, file, opt = {}) {
+            const path = mod.dir + '/' + dir + '/' + file;
+            try {
+                const body = fs.readFileSync(path);
+                // console.log({ inject: code, file, opt });
+                if (opt.first) {
+                    append[code] = body.toString() + '\n' + append[code];
+                } else {
+                    append[code] += body.toString() + '\n';
+                }
+            } catch (e) {
+                console.log({ missing_file: path, dir, mod });
+            }
+        },
+        onload(fn) {
             load.push(fn);
         },
-        onexit: (fn) => {
+        onexit(fn) {
             mod.on.exit(fn);
         }
     });
-}
-
-// prevent caching of specified modules
-const cachever = {};
-
-function promise(resolve, reject) {
-    return new Promise(resolve, reject);
 }
 
 function rval() {
@@ -297,14 +315,6 @@ function guid() {
 
 function time() {
     return Date.now();
-}
-
-function obj2string(o) {
-    return JSON.stringify(o);
-}
-
-function string2obj(s) {
-    return JSON.parse(s);
 }
 
 function handleSetup(req, res, next) {
@@ -322,12 +332,16 @@ const productionMap = {
     '/lib/kiri/run/engine.js' : '/lib/pack/kiri-eng.js',
     '/lib/kiri/run/minion.js' : '/lib/pack/kiri-pool.js',
     '/lib/kiri/run/worker.js' : '/lib/pack/kiri-work.js',
-    // '/lib/kiri/run/frame.js' : '/lib/pack/kiri-frame.js',
 };
+
+const redirList = [
+    "/kiri/",
+    "/mesh/"
+];
 
 function handleVersion(req, res, next) {
     let vstr = oversion || dversion || version;
-    if (["/kiri/","/mesh/"].indexOf(req.app.path) >= 0 && req.url.indexOf(vstr) < 0) {
+    if (!req.app.ispre && redirList.indexOf(req.app.path) === 0 && req.url.indexOf(vstr) < 0) {
         if (req.url.indexOf("?") > 0) {
             return http.redirect(res, `${req.url},ver:${vstr}`);
         } else {
@@ -550,7 +564,8 @@ function rewriteHtmlVersion(req, res, next) {
         "/lib/main/mesh.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
-        const data = append[req.app.path.split('/')[3].split('.')[0]];
+        // const data = append[req.app.path.split('/')[3].split('.')[0]];
+        const data = append[req.app.path.split('.')[0].split('/').pop()];
 
         if (!data) return next();
         if (debug) logger.log({ append: req.app.path, data: data.length });

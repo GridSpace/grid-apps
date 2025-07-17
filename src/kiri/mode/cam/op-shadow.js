@@ -20,6 +20,10 @@ class OpShadow extends CamOp {
         super(state, op);
     }
 
+    weight() {
+        return 0.1;
+    }
+
     async slice(progress) {
         let state = this.state;
         let { ops, slicer, widget, unsafe, addSlices, shadowAt } = state;

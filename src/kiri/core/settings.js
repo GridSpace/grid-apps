@@ -9,6 +9,7 @@ import { space } from '../../moto/space.js';
 import { local } from '../../data/local.js';
 import { utils } from './utils.js';
 import { version } from '../../moto/license.js';
+import { JSZip } from '../../ext/jszip-esm.js';
 
 const { areEqual, ls2o, js2o } = utils;
 const { COLOR } = consts;
@@ -221,13 +222,16 @@ function updateSettingsFromFields(setrec, uirec = api.ui, changes) {
 }
 
 // given a settings region, update values of matching bound UI fields
-function updateFieldsFromSettings(setrec, uirec = api.ui, trace) {
+function updateFieldsFromSettings(setrec, uirec = api.ui, opt = {}) {
     if (!setrec) {
         updateFieldsFromSettings(settings.device);
         updateFieldsFromSettings(settings.process);
         updateFieldsFromSettings(settings.controller);
         updateExtruderFields(settings.device);
         return;
+    }
+    if (opt.trace) {
+        console.log({ setrec, uirec });
     }
     for (let key in setrec) {
         if (!setrec.hasOwnProperty(key)) {
@@ -238,6 +242,9 @@ function updateFieldsFromSettings(setrec, uirec = api.ui, trace) {
             continue;
         }
         let uie = uirec[key], typ = uie ? uie.type : null;
+        if (opt.trace) {
+            console.log({ key, uie, typ, val });
+        }
         if (typ === 'text') {
             if (uie.setv) {
                 uie.setv(val);
@@ -271,6 +278,8 @@ function updateFieldsFromSettings(setrec, uirec = api.ui, trace) {
             } else {
                 uie.value = '';
             }
+        } else if (opt.trace) {
+            console.log('skipped', { key, val, typ });
         }
     }
 }
@@ -651,7 +660,7 @@ function settingsImportUrl(url, ask) {
 
 function settingsImportZip(data, ask) {
     let alert = api.show.alert("Importing Workspace");
-    JSZip.loadAsync(data).then(zip => {
+    new JSZip().loadAsync(data).then(zip => {
         for (let [key,value] of Object.entries(zip.files)) {
             if (key === "workspace.json") {
                 value.async("string").then(json => {

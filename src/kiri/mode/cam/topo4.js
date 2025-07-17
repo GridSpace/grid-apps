@@ -4,6 +4,7 @@ import { codec } from '../../core/codec.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
 import { sliceConnect } from '../../../geo/slicer.js';
+import { newSlice } from '../../core/slice.js';
 import { Tool } from './tool.js';
 import { Slicer as topo_slicer } from './slicer_topo.js';
 
@@ -16,7 +17,7 @@ function scale(fn, factor = 1, base = 0) {
     }
 }
 
-class Topo4 {
+export class Topo {
     constructor() { }
 
     async generate(opt = {}) {
@@ -91,7 +92,7 @@ class Topo4 {
         const box = this.box = new THREE.Box2();
 
         // swap XZ in shared array
-        for (let i=0, l=vertices.length; i<l; i += 3) {
+        for (let i = 0, l = vertices.length; i < l; i += 3) {
             const x = vertices[i];
             const z = vertices[i + 2] + zoff;
             vertices[i] = z;
@@ -105,7 +106,7 @@ class Topo4 {
         range.max += this.diam / 2;
 
         // merge in tab vertices here so they don't affect slice range / dimensions
-        for (let i=0, l=tabverts.length; i<l; i += 3) {
+        for (let i = 0, l = tabverts.length; i < l; i += 3) {
             const x = tabverts[i];
             const z = tabverts[i + 2] + zoff;
             tabverts[i] = z;
@@ -132,7 +133,8 @@ class Topo4 {
         slices.push(slice);
         // console.log({ shards, range, step, slices });
 
-        if (kiri.minions.running > 1) {
+        const { minions } = self.kiri_worker;
+        if (minions?.running > 1) {
             return await this.sliceMinions(onupdate);
         } else {
             return await this.sliceWorker(onupdate);
@@ -158,7 +160,7 @@ class Topo4 {
                     slice.index = rec.index;
                     slice.addTops(sliceConnect(rec.lines));
 
-                    const points = codec.encodePointArray(rec.lines.map(l => [ l.p1, l.p2 ]).flat());
+                    const points = codec.encodePointArray(rec.lines.map(l => [l.p1, l.p2]).flat());
                     const shared = new Float32Array(new SharedArrayBuffer(points.length * 4));
                     shared.set(points);
                     slice.shared = shared;
@@ -166,7 +168,7 @@ class Topo4 {
                     return slice;
                 });
             output.appendAll(recs);
-            onupdate(++complete /slices.length);
+            onupdate(++complete / slices.length);
         }
 
         return output;
@@ -195,14 +197,15 @@ class Topo4 {
             .map(rec => newSlice(rec.z)
                 .addTops(rec.polys)
                 .setFields({ shared: rec.shared }))
-            .sort((a,b) => a.z - b.z);
+            .sort((a, b) => a.z - b.z);
 
         clearCache();
         return output;
     }
 
     async lathe(onupdate) {
-        if (kiri.minions.running > 1) {
+        const { minions } = self.kiri_worker;
+        if (minions?.running > 1) {
             return await this.latheMinions(onupdate);
         } else {
             return await this.latheWorker(onupdate);
@@ -223,7 +226,7 @@ class Topo4 {
             const lines = slice.lines;
             const plen = lines.length;
             const rec = { z: slice.z, lines: [] };
-            for (let i = 0; i < plen; ) {
+            for (let i = 0; i < plen;) {
                 ++i; // skip x which should match slice.z
                 let py0 = lines[i++];
                 const pz0 = lines[i++];
@@ -245,7 +248,7 @@ class Topo4 {
             const rx = oslices[si].z;
             let mz = -Infinity;
             // iterate over tool offsets
-            for (let ti = 0; ti < tlen; ) {
+            for (let ti = 0; ti < tlen;) {
                 // tool offset in grid units from present x (si)
                 const xo = tool[ti++]; // x grid offset (slice)
                 const yo = tool[ti++] * resolution; // y grid offset (mult rez to get real y)
@@ -259,7 +262,7 @@ class Topo4 {
                 const slice = oslices[ts];
                 const lines = slice.lines;
                 const plen = lines.length;
-                for (let i = 0; i < plen; ) {
+                for (let i = 0; i < plen;) {
                     ++i; // skip x which should match slice.z
                     let py0 = lines[i++];
                     const pz0 = lines[i++];
@@ -293,7 +296,7 @@ class Topo4 {
     }
 
     async latheWorker(onupdate) {
-        const { sliced, tool, zoff, leave } = this;
+        const { sliced, tool, zoff, leave, linear } = this;
 
         const rota = this.angle * DEG2RAD;
         const steps = (Math.PI * 2) / rota;
@@ -316,19 +319,32 @@ class Topo4 {
             onupdate(count / steps);
         }
 
-        count = recs[0].heights.length / 3;
+        count = linear ? recs.length : recs[0].heights.length / 3;
+        // count = recs[0].heights.length / 3;
         while (count-- > 0) {
             let slice = newSlice(count);
-            slice.camLines = [ newPolygon().setOpen() ];
+            slice.camLines = [newPolygon().setOpen()];
             paths.push(slice);
         }
 
-        for (let rec of recs) {
-            const { degrees, heights } = rec;
-            [...heights].group(3).forEach((a,i) => {
-                // progress each path 360 degrees to prevent A rolling backwards
-                paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+        if (linear) {
+            recs.forEach((rec, i) => {
+                const { degrees, heights } = rec;
+                [...heights].group(3).forEach((a) => {
+                    paths[i].camLines[0].push(newPoint(a[0], a[1], a[2] + leave).setA(degrees));
+                });
+                if (i % 2 === 1) {
+                    paths[i].camLines[0].reverse();
+                }
             });
+        } else {
+            for (let rec of recs) {
+                const { degrees, heights } = rec;
+                [...heights].group(3).forEach((a, i) => {
+                    // progress each path 360 degrees to prevent A rolling backwards
+                    paths[i].camLines[0].push(newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360));
+                });
+            }
         }
 
         for (let slice of paths) {
@@ -342,7 +358,7 @@ class Topo4 {
             slice.camLines[0].push(repeat.clone().setA(repeat.a - 360));
             slice.output()
                 .setLayer("lathe", { line: this.lineColor })
-                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
+                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x: 0, y: 0 }));
         }
 
         // console.log({ tool, slices, paths });
@@ -392,20 +408,18 @@ class Topo4 {
         await Promise.all(promises);
         recs.sort((a, b) => { return b.angle - a.angle });
 
-        // let linear = true;
-
         count = linear ? recs.length : recs[0].heights.length / 3;
         while (count-- > 0) {
             let slice = newSlice(count);
-            slice.camLines = [ newPolygon().setOpen() ];
+            slice.camLines = [newPolygon().setOpen()];
             paths.push(slice);
         }
 
         if (linear) {
-            recs.forEach((rec,i) => {
+            recs.forEach((rec, i) => {
                 const { degrees, heights } = rec;
                 [...heights].group(3).forEach((a) => {
-                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees) );
+                    paths[i].camLines[0].push(newPoint(a[0], a[1], a[2] + leave).setA(degrees));
                 });
                 if (i % 2 === 1) {
                     paths[i].camLines[0].reverse();
@@ -414,9 +428,9 @@ class Topo4 {
         } else {
             for (let rec of recs) {
                 const { degrees, heights } = rec;
-                [...heights].group(3).forEach((a,i) => {
+                [...heights].group(3).forEach((a, i) => {
                     // progress each path 360 degrees to prevent A rolling backwards
-                    paths[i].camLines[0].push( newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360) );
+                    paths[i].camLines[0].push(newPoint(a[0], a[1], a[2] + leave).setA(degrees + i * -360));
                 });
             }
         }
@@ -434,7 +448,7 @@ class Topo4 {
             }
             slice.output()
                 .setLayer("lathe", { line: this.lineColor })
-                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x:0, y:0 }));
+                .addPoly(poly.clone().applyRotations().move({ z: -zoff, x: 0, y: 0 }));
         }
 
         // console.log({ tool, slices, paths });
@@ -444,24 +458,27 @@ class Topo4 {
     }
 
     putCache(key, data) {
-        kiri.worker.putCache({ key, data }, { done: data => { } });
+        const { dispatch } = self.kiri_worker;
+        dispatch.putCache({ key, data }, { done: data => { } });
     }
 
     clearCache() {
-        kiri.worker.clearCache({}, { done: data => { } });
+        const { dispatch } = self.kiri_worker;
+        dispatch.clearCache({}, { done: data => { } });
     }
 
     queue(cmd, params) {
+        const { minions } = self.kiri_worker;
         return new Promise(resolve => {
-            kiri.minions.queue({ cmd, ...params }, resolve);
+            minions.queue({ cmd, ...params }, resolve);
         });
     }
 }
 
-function rotatePoints(lines, rot) {
+export function rotatePoints(lines, rot) {
     new THREE.BufferAttribute(lines, 3).applyMatrix4(rot);
 }
 
-export function Topo4(opt) {
-    return new Topo4().generate(opt);
+export async function generate(opt) {
+    return new Topo().generate(opt);
 };

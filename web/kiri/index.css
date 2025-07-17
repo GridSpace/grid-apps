@@ -34,7 +34,7 @@
 /* surface size configuration and font import */
 @font-face {
     font-family: 'Russo One';
-    src: url('/moto/russo-one.ttf');
+    src: url('../moto/russo-one.ttf');
 }
 @media only screen and (max-width : 1000px) {
     .top-menu > span > label {

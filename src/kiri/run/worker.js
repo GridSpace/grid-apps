@@ -3,7 +3,6 @@
 import '../../add/array.js';
 import '../../add/class.js';
 import '../../add/three.js';
-import '../../ext/jszip.js';
 
 import { base } from '../../geo/base.js';
 import { codec } from '../core/codec.js';
@@ -17,6 +16,7 @@ import { wasm_ctrl } from '../../geo/wasm.js';
 import { version } from '../../moto/license.js';
 import { Widget, newWidget } from '../core/widget.js';
 import { load } from "../../load/png.js";
+import { JSZip } from '../../ext/jszip-esm.js';
 
 import { CAM } from '../mode/cam/driver-be.js';
 import { DRAG } from '../mode/drag/driver.js';

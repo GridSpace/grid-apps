@@ -87,10 +87,10 @@ Object.assign(client, {
 
     animate_setup2(settings, ondone) {
         color = settings.controller.dark ? 0x888888 : 0;
-        material = new THREE.MeshMatcapMaterial({
+        material = new THREE.MeshPhongMaterial({
             flatShading: true,
             transparent: false,
-            opacity: 0.9,
+            opacity: 0.5,
             color: 0x888888,
             side: THREE.DoubleSide
         });

@@ -11,10 +11,11 @@ import { codec, encode, encodePointArray } from '../core/codec.js';
 import { doTopShells } from '../mode/fdm/post.js';
 import { newPoint } from '../../geo/point.js';
 import { polygons as POLY } from '../../geo/polygons.js';
-import { sliceZ } from '../../geo/slicer.js';
+import { sliceZ, sliceConnect } from '../../geo/slicer.js';
 import { Slicer as cam_slicer } from '../mode/cam/slicer.js';
 import { Slicer as topo_slicer } from '../mode/cam/slicer_topo.js';
 import { Probe, Trace, raster_slice } from '../mode/cam/topo3.js';
+import { Topo as Topo4, rotatePoints } from '../mode/cam/topo4.js';
 import { wasm_ctrl } from '../../geo/wasm.js';
 
 const clib = self.ClipperLib;
@@ -53,9 +54,13 @@ function debug() {
     // console.log(`[${name}]`, ...arguments);
 }
 
+let invalid = 0;
 const funcs = self.minion = {
     invalid(data, seq, cmd) {
-        console.error({ invalid_minion_command: cmd, data });
+        if (invalid++ < 20) {
+            // prevent flooding console and killing session
+            console.error({ invalid_minion_command: cmd, data });
+        }
         reply({ seq, error: `invalid command (${cmd})` });
     },
 
@@ -271,7 +276,7 @@ const funcs = self.minion = {
     topo4_slice(data, seq) {
         const { slice, resolution } = data;
         const vertices = cache.vertices;
-        const recs = new kiri.topo_slicer(slice.index)
+        const recs = new topo_slicer(slice.index)
             .setFromArray(vertices, slice)
             .slice(resolution)
             .map(rec => {

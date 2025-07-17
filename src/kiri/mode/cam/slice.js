@@ -34,6 +34,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         top_stock, top_part, top_gap, top_z,
         workarea;
 
+    axisRotation = axisIndex = undefined;
+    dark = settings.controller.dark;
+    color = dark ? 0xbbbbbb : 0;
+    minToolDiam = Infinity;
+    maxToolDiam = -Infinity;
+    tabs = widget.anno.tab;
+    unsafe = proc.camExpertFast;
+    units = settings.controller.units === 'in' ? 25.4 : 1;
+
     // allow recomputing later if widget or settings changes
     const var_compute = () => {
         let { camStockX, camStockY, camStockZ, camStockOffset } = proc;
@@ -46,9 +55,9 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             x: camStockX,
             y: camStockY,
             z: camStockZ
-        }
-        track = widget.track;
+        };
         ({ camZTop, camZBottom, camZThru } = proc);
+        track = widget.track;
         wztop = track.top;
         ztOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (stock.z - wztop);
         zbOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (wztop - track.box.d);
@@ -57,14 +66,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         zMax = bounds.max.z;
         zThru = camZThru;
         zTop = zMax + ztOff;
-        minToolDiam = Infinity;
-        maxToolDiam = -Infinity;
-        dark = !!settings.controller.dark;
-        color = dark ? 0xbbbbbb : 0;
-        tabs = widget.anno.tab;
-        unsafe = proc.camExpertFast;
-        units = settings.controller.units === 'in' ? 25.4 : 1;
-        axisRotation = axisIndex = undefined;
         part_size = bounds.dim;
         bottom_gap = zbOff;
         bottom_part = 0;
@@ -223,7 +224,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     function setAxisIndex(degrees = 0, absolute = true) {
-        axisIndex = absolute ? degrees : axisIndex + degrees;
+        axisIndex = absolute ? degrees : (axisIndex || 0) + degrees;
         axisRotation = (Math.PI / 180) * axisIndex;
         widget.setAxisIndex(isIndexed ? -axisIndex : 0);
         return isIndexed ? -axisIndex : 0;
@@ -266,10 +267,14 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
 
     // silently preface op list with OpShadow
     if (isIndexed) {
-        if (activeOps.length === 0 || activeOps[0].type !== 'index')
+        if (activeOps.length === 0 || activeOps[0].type !== 'index') {
             opList.push(new OPS.index(state, { type: "index", index: 0 }));
+            opTot += opList.peek().weight();
+
+        }
     } else {
         opList.push(new OPS.shadow(state, { type: "shadow", silent: true }));
+        opTot += opList.peek().weight();
     }
 
     // determing # of steps and step weighting for progress bar
@@ -399,7 +404,7 @@ export function addDogbones(poly, dist, reverse) {
     }
 };
 
-export async function traces(settings, widget, single) {
+export async function traces(settings, widget) {
     if (widget.traces) {
         return false;
     }
@@ -651,7 +656,6 @@ export async function holes(settings, widget, individual, rec, onProgress) {
         // defined z bottom offset by distance to stock bottom
         // keeps the z bottom relative to the part when z align changes
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
-
 
     let slicerOpts = { flatoff: 0.001 }
     let slicer = new cam_slicer(widget, slicerOpts);
@@ -920,7 +924,7 @@ export function computeShadowAt(widget, z, ztop) {
             .add(a[2].x, a[2].y, a[2].z);
     });
 
-    polys = POLY.union(polys, 0.001, true);
+    polys = POLY.union(polys, 0, true);
 
     return polys;
 }

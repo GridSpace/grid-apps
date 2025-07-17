@@ -359,7 +359,7 @@ export function subtract(setA, setB, outA, outB, z, minArea, opt = {}) {
 
     function filter(from, to = []) {
         from.forEach(function(poly) {
-            if (poly.area() >= min) {
+            if (poly.area() >= min && poly.length > 2) {
                 to.push(poly);
                 out.push(poly);
             }

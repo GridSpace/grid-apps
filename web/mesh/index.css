@@ -10,7 +10,7 @@
 
 @font-face {
     font-family: 'Russo One';
-    src: url('/moto/russo-one.ttf');
+    src: url('../moto/russo-one.ttf');
 }
 
 /** defaults */

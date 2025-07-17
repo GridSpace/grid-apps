@@ -434,8 +434,13 @@ function newDiv(opt = {}) {
     (opt.addto || addTo).appendChild(div);
     if (opt.addto) lastDiv = addTo = div;
     if (opt.class) div.setAttribute('class', opt.class);
-    lastGroup?.push(div);
-    div._group = groupName;
+    if (opt.group !== false) {
+        lastGroup?.push(div);
+        div._group = groupName;
+    } else {
+        lastGroup = undefined;
+        groupName = undefined;
+    }
     return div;
 }
 
@@ -685,6 +690,7 @@ function addUnits(input, round) {
         } else {
             input.value = value;
         }
+        // console.log({ value }, input.real, input.value );
         return input.real;
     };
     return input;

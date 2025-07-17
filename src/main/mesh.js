@@ -82,7 +82,7 @@ function init() {
     motoClient.on('ready', restore_space);
 
     // start worker
-    motoClient.start('/lib/mesh/work.js?' + version);
+    motoClient.start('../lib/mesh/work.js?' + version);
 
     // trigger space event binding
     call.space_init({ space: space, platform });
@@ -91,7 +91,11 @@ function init() {
     call.ui_build();
 
     // hide url params
-    history.replaceState({}, '', '/mesh/');
+    let wlp = window.location.pathname;
+    let mio = wlp.indexOf('/mesh/');
+    if (mio >= 0) {
+        history.replaceState({}, '', wlp.substring(0,mio + 6));
+    }
 
     // for electron
     self.mesh = { api };

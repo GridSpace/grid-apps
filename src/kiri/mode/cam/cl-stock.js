@@ -52,7 +52,6 @@ export function updateStock() {
             });
             env.camStock = new THREE.Mesh(geo, mat);
             env.camStock.renderOrder = 2;
-
             let lo = 0.5;
             let lidat = [
                 lo, lo, lo, lo, lo, -lo,

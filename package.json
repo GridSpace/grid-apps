@@ -36,7 +36,7 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^6.1.1",
-        "@gridspace/app-server": "^0.0.17",
+        "@gridspace/app-server": "^0.0.18",
         "@gridspace/basic-ftp": "^5.0.5",
         "@gridspace/net-level-client": "^0.2.3",
         "@tracespace/parser": "^5.0.0-next.0",
@@ -49,9 +49,11 @@
         "earcut": "^3.0.1",
         "express-useragent": "^1.0.13",
         "fast-glob": "^3.3.3",
+        "i": "^0.3.7",
         "jszip": "^3.7.1",
         "manifold-3d": "^3.1.1",
         "moment": "^2.29.4",
+        "npm": "^11.4.2",
         "prettier": "^3.5.3",
         "react-responsive-carousel": "^3.2.23",
         "serve-static": "^1.14.1",
@@ -79,7 +81,7 @@
         "webpack-cli": "^5.1.4"
     },
     "scripts": {
-        "setup": "npm i && npm run clean && npm run dev -- --dryrun && npm run webpack3",
+        "setup": "npm i && npm run clean && npm run dev -- --dryrun && npm run webpack-ext",
         "build": "npm run prebuild && electron-builder",
         "build-nopublish": "npm run prebuild && electron-builder --publish never",
         "build-debug": "npm run prebuild && DEBUG=electron-builder electron-builder",
@@ -94,8 +96,9 @@
         "docs-build": "docusaurus build --config conf/docusaurus.config.js",
         "docs-serve": "docusaurus serve --config conf/docusaurus.config.js",
         "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
-        "dev": "npm run webpack3 && gs-app-server --debug --single",
-        "prod": "npm run webpack prod && gs-app-server",
+        "dev": "npm run webpack-ext && gs-app-server --debug --single",
+        "prod": "npm run webpack-ext && npm run webpack-src prod && gs-app-server",
+        "prod-pack": "npm run webpack-ext && npm run webpack-src prod",
         "prod-dryrun": "gs-app-server --dryrun",
         "start": "npm run prebuild prod && electron .",
         "start-dev": "npm run prebuild prod && electron . --devel",
@@ -103,11 +106,13 @@
         "start-ddb": "npm run prebuild && electron . --devel --debugg",
         "mk-links": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > conf/links.csv",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
-        "prebuild": "npm run setup && npm run webpack prod && node bin/electron-pre.js",
+        "prebuild": "npm run setup && npm run webpack-src prod && node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
         "preinstall": "node bin/install-pre.js",
-        "webpack": "npm run webpack3 && node bin/esbuild.config.mjs",
-        "webpack3": "npx webpack --config bin/webpack-three-esm.js"
+        "webpack-ext": "npm run webpack-three && npm run webpack-zip",
+        "webpack-src": "node bin/esbuild.config.mjs",
+        "webpack-three": "npx webpack --config bin/webpack-three-esm.js",
+        "webpack-zip": "npx webpack --config bin/webpack-jszip-esm.js"
     },
     "main": "app-el.js",
     "build": {

@@ -147,8 +147,8 @@ const PMODES = {
 };
 
 const PATHS = {
-    work: "/lib/kiri/run/worker.js",
-    pool: "/lib/kiri/run/minion.js"
+    work: "../lib/kiri/run/worker.js",
+    pool: "./minion.js"
 };
 
 const SEED = 'kiri-seed';

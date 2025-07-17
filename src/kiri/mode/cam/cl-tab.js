@@ -2,8 +2,9 @@
 
 import { api } from '../../core/api.js';
 import { env, isDark } from './client.js';
-import { addbox, delbox } from '../../core/boxes.js';
+import { addbox, delbox, clearboxes } from '../../core/boxes.js';
 import { traceDone } from './cl-trace.js';
+import { space as SPACE } from '../../../moto/space.js';
 
 let showTab, lastTab, tab, iw, ic;
 
@@ -107,6 +108,7 @@ export function clearTabs(widget, skiprec) {
     if (!skiprec) {
         delete api.widgets.annotate(widget.id).tab;
     }
+    clearboxes();
 }
 
 export function updateTabs() {
@@ -198,6 +200,7 @@ export function tabAdd() {
 
 export function tabDone() {
     delbox('tabb');
+    clearboxes();
     api.hide.alert(alert);
     api.feature.hover = false;
     if (lastTab) {

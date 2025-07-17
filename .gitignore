@@ -5,6 +5,7 @@ app.json
 build
 data
 dist
+jszip-esm.js
 logs
 mod
 node_modules

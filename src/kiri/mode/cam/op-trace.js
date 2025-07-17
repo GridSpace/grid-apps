@@ -107,15 +107,28 @@ class OpTrace extends CamOp {
                 for (let z of zs) {
                     let clip = [], shadow;
                     shadow = shadowAt(z);
-                    POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
+                    // for cases where the shadow IS the poly like
+                    // with lettering without a bounding frame, clip
+                    // will fail and we need to restore the matching poly
+                    let subshadow = true;
+                    for (let spo of shadow) {
+                        if (poly.isInside(spo, 0.01)) {
+                            subshadow = false;
+                            clip = [ poly ];
+                            break;
+                        }
+                    }
+                    if (subshadow) {
+                        POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
+                    }
                     if (op.outline) {
                         POLY.clearInner(clip);
                     }
                     if (clip.length === 0) {
                         continue;
                     }
-                    let slice = newSliceOut(z);
                     let count = 999;
+                    let slice = newSliceOut(z);
                     slice.camTrace = { tool, rate, plunge };
                     if (toolDiam) {
                         const offs = [ -toolDiam / 2, -toolOver ];
@@ -132,12 +145,15 @@ class OpTrace extends CamOp {
                         slice.camLines = POLY.flatten(slice.camLines, null, true);
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
-                    slice.output()
-                        .setLayer("trace", {line: color}, false)
-                        .addPolys(slice.camLines)
                     if (debug && shadow) slice.output()
                         .setLayer("trace shadow", {line: 0xff8811}, false)
                         .addPolys(shadow)
+                    if (debug) slice.output()
+                        .setLayer("trace poly", {line: 0x1188ff}, false)
+                        .addPolys([ poly ])
+                    slice.output()
+                        .setLayer("trace", {line: color}, false)
+                        .addPolys(slice.camLines)
                     progress(zpro, "trace");
                     zpro += zinc;
                     addSlices(slice);
@@ -254,6 +270,7 @@ class OpTrace extends CamOp {
             case "clear":
                 const zbo = widget.track.top - widget.track.box.d;
                 let zmap = {};
+                polys = POLY.nest(polys);
                 for (let poly of polys) {
                     let z = minZ(poly.minZ());
                     if (offover) {

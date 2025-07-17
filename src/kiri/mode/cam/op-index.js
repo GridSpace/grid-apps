@@ -7,6 +7,10 @@ export class OpIndex extends CamOp {
         super(state, op);
     }
 
+    weight() {
+        return 0.1;
+    }
+
     async slice() {
         let { op, state } = this;
         if (!state.isIndexed) {

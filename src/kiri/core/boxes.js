@@ -5,6 +5,10 @@ const boxes = [];
 
 let lastBox;
 
+export function clearboxes() {
+    boxes.length = 0;
+}
+
 export function getlastbox() {
     return lastBox;
 }
@@ -19,7 +23,7 @@ export function delbox(name) {
 export function addbox(point, color, name, dim = {x:1,y:1,z:1,rz:0}, opt = {}) {
     delbox(name);
 
-    const box = boxes[name] = new Mesh(
+    const box = new Mesh(
         new BoxGeometry(dim.x, dim.y, dim.z),
         new MeshPhongMaterial({
             transparent: true,
@@ -27,6 +31,10 @@ export function addbox(point, color, name, dim = {x:1,y:1,z:1,rz:0}, opt = {}) {
             color
         })
     );
+
+    if (name) {
+        boxes[name] = box;
+    }
 
     box.position.x = point.x;
     box.position.y = point.y;

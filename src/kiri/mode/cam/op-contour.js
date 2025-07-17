@@ -15,7 +15,7 @@ function createFilter(op) {
             let idx = 0;
             if (obj && obj.slices) {
                 const nadd = [];
-                filter = function(slices) {
+                filter = function (slices) {
                     for (let slice of slices) {
                         if (obj.slices(slice, idx++)) {
                             nadd.push(slice);
@@ -38,8 +38,10 @@ class OpContour extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices } = state;
+        let { addSlices, settings, updateToolDiams } = state;
         let filter = createFilter(op);
+        let toolDiam = this.toolDiam = new Tool(settings, op.tool).fluteDiameter();
+        updateToolDiams(toolDiam);
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
@@ -69,7 +71,7 @@ class OpContour extends CamOp {
         let { camOut, polyEmit, newLayer, printPoint, lastPoint } = ops;
         let { bounds, zmax } = ops;
 
-        let toolDiam = this.toolDiam = new Tool(settings, op.tool).fluteDiameter();
+        let toolDiam = this.toolDiam;
         let stepover = toolDiam * op.step * 2;
         let depthFirst = process.camDepthFirst;
         let depthData = [];
@@ -78,7 +80,7 @@ class OpContour extends CamOp {
         setSpindle(op.spindle);
         setTolerance(this.tolerance);
 
-        printPoint = newPoint(bounds.min.x,bounds.min.y,zmax);
+        printPoint = newPoint(bounds.min.x, bounds.min.y, zmax);
 
         for (let slice of sliceOut) {
             // ignore debug slices
@@ -88,17 +90,17 @@ class OpContour extends CamOp {
             let polys = [], poly, emit;
             slice.camLines.forEach(function (poly) {
                 if (depthFirst) poly = poly.clone(true);
-                polys.push({first:poly.first(), last:poly.last(), poly:poly});
+                polys.push({ first: poly.first(), last: poly.last(), poly: poly });
             });
             if (depthFirst) {
                 depthData.appendAll(polys);
             } else {
-                printPoint = tip2tipEmit(polys, printPoint, function(el, point, count) {
+                printPoint = tip2tipEmit(polys, printPoint, function (el, point, count) {
                     poly = el.poly;
                     if (poly.last() === point) {
                         poly.reverse();
                     }
-                    poly.forEachPoint(function(point, pidx) {
+                    poly.forEachPoint(function (point, pidx) {
                         camOut(point.clone(), pidx > 0, stepover);
                     }, false);
                 });
@@ -107,12 +109,12 @@ class OpContour extends CamOp {
         }
 
         if (depthFirst) {
-            printPoint = tip2tipEmit(depthData, printPoint, function(el, point, count) {
+            printPoint = tip2tipEmit(depthData, printPoint, function (el, point, count) {
                 let poly = el.poly;
                 if (poly.last() === point) {
                     poly.reverse();
                 }
-                poly.forEachPoint(function(point, pidx) {
+                poly.forEachPoint(function (point, pidx) {
                     camOut(point.clone(), pidx > 0, stepover);
                 }, false);
                 newLayer();
