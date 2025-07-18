@@ -44,10 +44,18 @@ export class OpHelical extends CamOp {
     //iterate over selected faces
     for (let face of faces) {
       //get poly info for the cylinder
-      let { zmin, zmax, diam, center, interior, faces } = cylinder_poly_find(
-        widget,
-        face
-      );
+      let res
+      try{
+        res = cylinder_poly_find(
+          widget,
+          face
+        );
+      }catch(error){
+        // don't quit if a cylinder errors out, just skip
+        console.error(error)
+        continue
+      }
+      let { zmin, zmax, diam, center, interior, faces } = res;
       // console.log({ zmin, zmax, diam, center, interior });
       let radius = diam >> 1;
       zmax = fromTop ?  stock.z: zmax;
