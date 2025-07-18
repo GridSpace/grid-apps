@@ -815,7 +815,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                             let angle = 2 * Math.asin(dist / (2 * lr.r));
                             radFault = Math.abs(angle) > arcRes; // enforce arcRes(olution)
                         } else {
-                            console.log("too much angle")
+                            // console.log("too much angle")
                             radFault = true;
                         }
 
@@ -842,13 +842,12 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                                 arcQ.rSum = cc.r;
 
                                 // check if first angles should have caused radFault
-                                let a = toRadians(arcQ[0].slopeTo(cc).angle)
-                                let b = toRadians(arcQ[1].slopeTo(cc).angle)
-                                let angle = Math.abs(b - a)
+                                let angle = toRadians(arcQ[0].slopeTo(cc).angleDiff(arcQ[1].slopeTo(cc)).angle)
                                 radFault = Math.abs(angle) > arcRes
                                 if (radFault) {
                                     // if so, remove first point
-                                    console.log("secondary radfault")
+                                    
+                                    console.log("secondary radfault,",structuredClone(arcQ),{angle,arcRes,a,b})
                                     camOut(arcQ.shift(), 1)
                                 }
 
