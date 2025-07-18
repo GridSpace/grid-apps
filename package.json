@@ -62,6 +62,7 @@
     "devDependencies": {
         "@docusaurus/core": "^3.7.0",
         "@docusaurus/preset-classic": "^3.7.0",
+        "@docusaurus/plugin-client-redirects": "^3.8.1",
         "@electron/notarize": "^3.0.0",
         "docusaurus-lunr-search": "^3.6.0",
         "dotenv": "latest",
