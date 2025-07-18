@@ -2,7 +2,6 @@
 description: A 3D Mesh Repair and Editing Tool, and 2D Sketch Tool in one
 title: 'Mesh:Tool'
 id: mesh-tool
-slug: /projects/mesh-tool
 ---
 
 # Mesh:Tool
