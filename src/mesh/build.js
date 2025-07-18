@@ -210,7 +210,7 @@ api.welcome = function(version = "unknown") {
         h.a({
             target: "docs",
             _: "Guide & Documentation",
-            href: "https://docs.grid.space/mesh-tool"
+            href: "https://docs.grid.space/projects/mesh-tool"
         }),
         h.a({
             target: "help",
