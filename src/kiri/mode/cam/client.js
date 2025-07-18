@@ -806,6 +806,9 @@ export function init() {
         if (traceOn) {
             traceDone();
         }
+        if(helicalOn){
+            helicalDone();
+        }
         unselectTraces(widget);
         if (env.flipping) {
             return;
@@ -829,6 +832,9 @@ export function init() {
         if (holeSelOn) {
             selectHolesDone();
         }
+        if(helicalOn){
+            helicalDone();
+        }
         clearHolesRec(widget)
         unselectTraces(widget);
         if (env.flipping) {
@@ -848,6 +854,9 @@ export function init() {
         unselectTraces(widget);
         if (holeSelOn) {
             selectHolesDone();
+        }
+        if(helicalOn){
+            helicalDone();
         }
         if (env.flipping) {
             return;
