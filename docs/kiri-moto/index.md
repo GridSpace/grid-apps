@@ -2,7 +2,6 @@
 description: >-
     A Browser-Based Slicer for 3D FDM and SLA printing, CNC Milling, and Laser
     cutting
-slug: /projects/kiri-moto
 ---
 
 # Kiri:Moto
