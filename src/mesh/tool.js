@@ -322,8 +322,11 @@ class MeshTool {
         face = Number(face)
 
         const radianTolerance = 8 * (Math.PI/180);
+        const vertexTolerance = 1e-4;
         //helper function
-        const dissimilar = (a,b,c) => a!==b && a!==c && b!==c
+        const dissimilar = (a,b,c) => Math.abs(a-b) > vertexTolerance &&
+            Math.abs(b-c) > vertexTolerance &&
+            Math.abs(a-c) > vertexTolerance;
 
         let found = {},
             out = [face],
@@ -338,7 +341,7 @@ class MeshTool {
         
         //check for errors, and throw if found
         if(dissimilar(...zs)){
-            throw "face must have only 2 Z values"
+            throw `face must have only 2 Z values. found: ${zs.join(", ")}`
         }else if(Math.abs( faces[face * 6 + 2] > 1e-6 )){
             throw "face's normal must be perpendicular to Z axis"
         }
