@@ -42,7 +42,7 @@ export class OpHelical extends CamOp {
     let polys = [];
 
     //iterate over selected faces
-    for (let face of faces) {
+    for (let [i,face] of faces.entries()) {
       //get poly info for the cylinder
       let res
       try{
@@ -166,6 +166,7 @@ export class OpHelical extends CamOp {
         currentZ = bottom;
       }
 
+      progress(i/faces.length, "Helical intrerpolation");
       polys.push(poly);
     }
 
