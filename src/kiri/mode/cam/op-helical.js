@@ -10,7 +10,6 @@ export class OpHelical extends CamOp {
   constructor(state, op) {
     super(state, op);
   }
-
   async slice(progress) {
     let { op, state } = this;
     let { settings, addSlices, widget, updateToolDiams, slicer } = state;
@@ -27,8 +26,6 @@ export class OpHelical extends CamOp {
       finish,
     } = op;
     let {stock} = settings
-
-    
 
     let tool = new Tool(settings, op.tool),
       toolDiam = tool.fluteDiameter(),
