@@ -619,7 +619,14 @@ self.lang['en-us'] = {
     ch_selc_l:      ["select a cylinder face", "inner holes that are too small","will be ignored."],
     ch_fini_s:      "bottom finish pass",
     ch_fini_l:      ["trace a circle at bottom of helix","used for hole clearing"],
-
+    ch_entr_s:      "enter from center",
+    ch_entr_l:      ["start cut from center of cylinder","gently arcing in horisontaly", "instead of plunging"],
+    ch_ento_s:      "center entry offset",
+    ch_ento_l:      ["offset from path for curved entry","usually thread depth if threadmilling","in workspace units","0 for a linear entry"],
+    ch_rvrs_s:      "reverse",
+    ch_rvrs_l:      ["reverse helical z-axis direction","low-Z to high-Z when checked","useful for thread milling","not recomended for other operations"],
+    ch_clkw_s:      "clockwise",
+    ch_clkw_l:      ["reverse helical rotation around cylinder","clockwise when checked"],
 
     // CNC FLIP
     cf_menu:        "flip",

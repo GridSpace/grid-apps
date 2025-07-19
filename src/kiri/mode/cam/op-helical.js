@@ -24,6 +24,11 @@ export class OpHelical extends CamOp {
       down,
       thru,
       finish,
+
+      clockwise,
+      reverse,
+      entry,
+      entryOffset,
     } = op;
     let {stock} = settings
 
@@ -59,7 +64,7 @@ export class OpHelical extends CamOp {
 
       let radAdd,
         zBottom = zmin - thru,
-        clockwise = true,
+        
         numSegs = faces.length / 2,
         poly = newPolygon().setOpen();
 
@@ -122,7 +127,8 @@ export class OpHelical extends CamOp {
           let toBottom = currentZ - zBottom,
             ofFull = toBottom / down,
             ofCircle = ofFull * (2 * Math.PI),
-            finalAngle = startAngle + ofCircle,
+            cwMultiplier = clockwise ? -1 : 1,
+            finalAngle = startAngle + (ofCircle*cwMultiplier),
             finalEnd = center
               .clone()
               .setZ(zBottom)
@@ -134,19 +140,75 @@ export class OpHelical extends CamOp {
                 )
               );
 
-          // console.log({down,toBottom,ofFull,ofCircle,finalAngle,finalEnd});
+          console.log({down,toBottom,ofFull,ofCircle,startAngle,finalAngle,finalEnd});
 
           //circle down to final point
           poly.addPoints(
             arcToPath(startPoint.setZ(currentZ), finalEnd, numSegs , {
-              clockwise: !clockwise,
+              clockwise,
               radius,
               center,
             })
           );
 
-          //if settings dictate, do a full circle at the bottom
-          if(finish){
+          //if starting at the bottom, reverse poly
+          if (reverse){
+            poly.reverse();
+          }
+
+          if ( entry ){
+            //get first z of poly to use for entry
+            let firstZ = poly.first().z;
+            
+            //create new pointArray
+            let entry =[newPoint(0,0,0)];
+            //add center point
+            let entryCenter = center.clone().setZ(firstZ)
+
+            console.log({firstZ,entry,})
+            
+            //if doing a curved enter, add more
+
+            if ( entryOffset > 0 ){
+              if(entryOffset > radius){
+
+                console.error("entryOffset must be less than radius of helix");
+              }else{
+                //calculate entry center
+                let lineOut = radius - entryOffset;
+                let centerOffset = (entryOffset**2 + 2*entryOffset*lineOut) / (2*(entryOffset + lineOut));
+                //add entry points
+                entry.push(...
+                  newPoint(0,-lineOut,0),
+                  arcToPath(
+                    newPoint(0,-lineOut,0),
+                    newPoint(radius,0,0),
+                    128,
+                    {
+                      clockwise:false,
+                      radius:lineOut,
+                      center:newPoint(centerOffset,0,0)
+                    }
+                  ),
+                  newPoint(radius,0,0),
+                )
+              }
+
+            }
+            //for each point
+            entry = entry.map(p => {
+              //rotate by start angle
+              // add to hole center
+              // TODO: there's totally a way to do this with a matrix
+              p.y *= clockwise ? 1 : -1
+              p.rotate(startAngle)
+              return p.add(entryCenter)
+            })
+            //append to start of poly
+            poly = newPolygon().setOpen().addPoints(entry).addPoints(poly.points);
+          }
+          //if doing a finish pass, do a full circle at the bottom
+          if(finish && !reverse){
             poly.addPoints(
               arcToPath(finalEnd, finalEnd, numSegs, {
                 clockwise,
