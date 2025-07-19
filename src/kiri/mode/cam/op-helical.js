@@ -13,7 +13,7 @@ export class OpHelical extends CamOp {
   async slice(progress) {
     let { op, state } = this;
     let { settings, addSlices, widget, updateToolDiams, slicer } = state;
-    let { zBottom, zThru, thruHoles, color } = state;
+    let { color } = state;
     let {
       cylinders,
       forceStartAng,
@@ -24,7 +24,6 @@ export class OpHelical extends CamOp {
       down,
       thru,
       finish,
-
       clockwise,
       reverse,
       entry,
@@ -64,7 +63,6 @@ export class OpHelical extends CamOp {
 
       let radAdd,
         zBottom = zmin - thru,
-        
         numSegs = faces.length / 2,
         poly = newPolygon().setOpen();
 
@@ -109,7 +107,7 @@ export class OpHelical extends CamOp {
       let currentZ = zmax;
       for (;;) {
         let bottom = currentZ - down;
-        if (bottom > zBottom) {
+        if ( bottom > zBottom ) {
           //if not at the bottom, do a whole helix
           let start = startPoint.setZ(currentZ),
             end = startPoint.clone().setZ(bottom);
@@ -123,7 +121,6 @@ export class OpHelical extends CamOp {
           poly.addPoints(path);
         } else {
           //if at the bottom, do a partial helix
-
           let toBottom = currentZ - zBottom,
             ofFull = toBottom / down,
             ofCircle = ofFull * (2 * Math.PI),
@@ -139,8 +136,7 @@ export class OpHelical extends CamOp {
                   0
                 )
               );
-
-          console.log({down,toBottom,ofFull,ofCircle,startAngle,finalAngle,finalEnd});
+          // console.log({down,toBottom,ofFull,ofCircle,startAngle,finalAngle,finalEnd});
 
           //circle down to final point
           poly.addPoints(
@@ -152,26 +148,21 @@ export class OpHelical extends CamOp {
           );
 
           //if starting at the bottom, reverse poly
-          if (reverse){
+          if ( reverse ){
             poly.reverse();
           }
 
           if ( entry ){
             //get first z of poly to use for entry
             let firstZ = poly.first().z;
-            
             //create new pointArray
             let entry =[newPoint(0,0,0)];
             //add center point
             let entryCenter = center.clone().setZ(firstZ)
 
-            console.log({firstZ,entry,})
-            
             //if doing a curved enter, add more
-
             if ( entryOffset > 0 ){
-              if(entryOffset > radius){
-
+              if ( entryOffset > radius ){
                 console.error("entryOffset must be less than radius of helix");
               }else{
                 //calculate entry center
@@ -193,7 +184,6 @@ export class OpHelical extends CamOp {
                   newPoint(radius,0,0),
                 )
               }
-
             }
             //for each point
             entry = entry.map(p => {
@@ -208,7 +198,7 @@ export class OpHelical extends CamOp {
             poly = newPolygon().setOpen().addPoints(entry).addPoints(poly.points);
           }
           //if doing a finish pass, do a full circle at the bottom
-          if(finish && !reverse){
+          if ( finish && !reverse ){
             poly.addPoints(
               arcToPath(finalEnd, finalEnd, numSegs, {
                 clockwise,
@@ -258,10 +248,7 @@ export class OpHelical extends CamOp {
     setSpindle(spindle);
 
     let [polys] = this.sliceOut.map((s) => s.camLines);
-
     let pp = getPrintPoint();
-
-    // console.log(polys)
 
     polys = polys.slice();
     for (;;) {
@@ -284,10 +271,8 @@ export class OpHelical extends CamOp {
       poly = polys[closestI]
       polys[closestI] = null;
       //emit
-      
       pp = polyEmit(poly,0,1,poly.points[0])
     }
-
     setPrintPoint(pp);
   }
 }
