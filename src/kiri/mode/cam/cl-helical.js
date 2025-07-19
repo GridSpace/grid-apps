@@ -23,7 +23,7 @@ export function selectHelical() {
       if (widget && arr.length)
         for (let faceid of arr) {
           CAM.cylinderToggle(widget, faceid, (faceids) => {
-            cylinders[widget.id] = faceids;
+            // cylinders[widget.id] = faceids;
           });
         }
     }
@@ -41,6 +41,7 @@ export function selectHelical() {
         console.log( error );
         return;
       }
+      console.log( faces );
       cylinders[widget.id] = faces;
     });
   };
@@ -63,5 +64,4 @@ export function helicalDone(){
   api.feature.on_mouse_up = undefined;
   helicalOn.classList.remove("editing");
   helicalOn = false;
-  console.log("helicalOn set to false");
 };
