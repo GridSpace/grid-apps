@@ -38,6 +38,7 @@ export const UI = {
     bound,
     toInt,
     toFloat,
+    toDegsFloat,
     isSticky,
     setSticky,
     newBoolean,
@@ -328,6 +329,18 @@ function toFloat() {
     if (nv !== null && this.bound) nv = this.bound(nv);
     if (this.setv) {
         return this.setv(nv * units);
+    } else {
+        this.value = nv;
+    }
+    return nv;
+}
+
+function toDegsFloat(){
+    let nv = this.value !== '' ? parseFloat(this.value) : null;
+    if (nv !== null && this.bound) nv = this.bound(nv);
+    nv = (nv+360)% 360; // bound the val to 0-359.99
+    if (this.setv) {
+        return this.setv(nv);
     } else {
         this.value = nv;
     }

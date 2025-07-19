@@ -332,7 +332,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.factor speed scale factor
      */
     function camOut(point, emit, opts) {
-        // console.log({point, emit, opts})
+        // console.trace({point, emit, opts})
         let {
             center = {},
             clockwise = true,
@@ -742,7 +742,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     function polyEmit(poly, index, count, fromPoint) {
         let arcQ = [],
             arcMax = Infinity, // no max arc radius
-            lineTolerance = 0.001; // do not consider points under 0.001mm for arcs
+            lineTolerance = 0.001, // do not consider points under 0.001mm for arcs
+            zTolerance = 0.1; // allow zs of Points to be off by 0.001mm per radian of rotation
 
         fromPoint = fromPoint || printPoint;
         arcQ.angle = []
@@ -818,6 +819,18 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                             radFault = true;
                         }
 
+                        let endDelta = e1.distTo2D(e3)
+                        if(endDelta < 0.01){
+                            console.log("circleCompleteFault")
+                            let last = arcQ.peek()
+                            drainQ(true)
+                            arcQ.push(last)
+                            return e3
+                        }
+
+                        let ddz = Math.abs((e3.z - e4.z) - (e4.z - e5.z)) // take second derivitive of z
+                        let zFault =  Math.abs(ddz) > zTolerance
+
                         if (cc) {
                             if ([cc.x, cc.y, cc.z, cc.r].hasNaN()) {
                                 // console.log({cc, e1, e2, e3});
@@ -829,15 +842,15 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                                 arcQ.rSum = cc.r;
 
                                 // check if first angles should have caused radFault
-                                let a = toRadians(arcQ[0].slopeTo(cc).angle)
-                                let b = toRadians(arcQ[1].slopeTo(cc).angle)
-                                let angle = Math.abs(b - a)
-
-                                if (Math.abs(angle) > arcRes) {
+                                let angle = toRadians(arcQ[0].slopeTo(cc).angleDiff(arcQ[1].slopeTo(cc)).angle)
+                                radFault = Math.abs(angle) > arcRes
+                                if (radFault) {
                                     // if so, remove first point
+                                    
+                                    console.log("secondary radfault,",structuredClone(arcQ),{angle,arcRes,a,b})
                                     camOut(arcQ.shift(), 1)
-                                    radFault = true
                                 }
+
                             } else {
                                 // check center point delta
                                 arcQ.xSum = arcQ.center.reduce(function (t, v) { return t + v.x }, 0);
@@ -848,10 +861,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                                 dc = Math.hypot(dx, dy); // delta center distance
                             }
                             // if new point is off the arc
-                            // if (deem || depm || desp || dc > arcTolerance || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
-                            if (dc * arcQ.center.length / arcQ.rSum > arcTolerance || dist > cc.r || cc.r > arcMax || radFault) {
-                                // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcTolerance, dist > cc.r, cc.r > arcMax, radFault];
-                                // console.log("point off the arc,",structuredClone(arcQ),);
+                            // if point is off-center, or too far from center, or too large of a radius
+                            if (dc * arcQ.center.length / arcQ.rSum > arcTolerance || dist > cc.r || cc.r > arcMax || radFault || zFault) {
+                                // let debug = [ dc * arcQ.center.length / arcQ.rSum > arcTolerance, dist > cc.r, cc.r > arcMax, radFault];
+                                // console.log("point off the arc,",structuredClone(arcQ),radFault,zFault,[dc * arcQ.center.length / arcQ.rSum > arcTolerance , dist > cc.r , cc.r > arcMax]);
                                 if (arcQ.length === 4) {
                                     // not enough points for an arc, drop first point and recalc center
                                     camOut(arcQ.shift(), 1);
@@ -899,7 +912,12 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             return point;
         }
 
-        function drainQ() {
+        /**
+         * Emits arcs and/or lines from the arcQ to the current point set.
+         * @param {boolean} forceCircle emits a single circle iven if poly is not closed.
+         */
+        function drainQ(forceCircle = false) {
+            // console.trace("draining")
             let arcPreviewRes = 64
 
             if (!arcTolerance) {
@@ -915,6 +933,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 let from = arcQ[0];
                 let to = arcQ.peek();
                 let delta = from.distTo2D(to)
+                let closed = poly.isClosed()
                 arcQ.xSum = arcQ.center.reduce((t, v) => t + v.x, 0);
                 arcQ.ySum = arcQ.center.reduce((t, v) => t + v.y, 0);
                 arcQ.rSum = arcQ.center.reduce((t, v) => t + v.r, 0);
@@ -925,15 +944,20 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 )
 
                 // console.log("draining")
-                if (arcQ.length == poly.points.length) {
+                if (closed && arcQ.length == poly.points.length || forceCircle ) {
                     //if is a circle
                     // generate circle
                     // console.log("circle",{from, to,center});
-                    let arcPoints = arcToPath(from, from, arcPreviewRes, { clockwise, center })
-                        .map(applyWidgetMovement);
+                    to = forceCircle? from.clone().setZ(to.z) : from
+
+
+                    let arcPoints = arcToPath(from, to, arcPreviewRes, { clockwise, center })
+                    .map(applyWidgetMovement);
+                    
+                    // console.log({arcPoints})
+
                     camOut(from, 1);
-                    camOut(from, gc, { center: center.sub(from), clockwise, arcPoints });
-                    // lastPoint = to.clone();
+                    camOut(to, gc, { center: center.sub(from), clockwise, arcPoints });
                 } else {
                     //if a non-circle arc
                     let arcPoints = arcToPath(from, to, arcPreviewRes, { clockwise, center })

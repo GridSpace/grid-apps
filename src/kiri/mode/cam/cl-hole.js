@@ -140,17 +140,7 @@ export async function selectHoles(individual) {
 
 export function selectHolesHover(data) {
     //not used right now. may be useful in the future
-    if (lastTrace) {
-        let { color, colorSave } = lastTrace.material[0] || lastTrace.material;
-        color.r = colorSave.r;
-        color.g = colorSave.g;
-        color.b = colorSave.b;
-        lastTrace.position.z -= 0.01;
-    }
-    if (data.type === 'platform') {
-        setLastTrace();
-        return;
-    }
+    
 }
 
 export function selectHolesHoverUp(int, ev) {

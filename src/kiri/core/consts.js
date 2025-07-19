@@ -90,6 +90,11 @@ const LISTS = {
         { name: "inside" },
         { name: "outside" }
     ],
+    helicaloff:[
+        { name: "auto" },
+        { name: "inside" },
+        { name: "outside" },
+    ],
     zanchor: [
         { name: "top" },
         { name: "middle" },

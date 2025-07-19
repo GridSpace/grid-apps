@@ -233,10 +233,19 @@ class MeshTool {
                 fn++;
             }
         }
+        //faces are the normals in groups of 6 [nx,]
+
         this.indexed = {
             faces, sides, sideExt
         };
     }
+
+/**
+ * Retrieves the adjacent faces for a given face index.
+ * 
+ * @param {number} face - The index of the face for which adjacent faces are to be found.
+ * @returns {number[]} An array of face indices that are adjacent to the given face.
+ */
 
     getAdjacentFaces(face) {
         const { faces, sides } = this.getIndex();
@@ -294,6 +303,88 @@ class MeshTool {
         return faces;
     }
 
+    /**
+     * Finds all faces in a cylinder surface connected to the given face.
+     * 
+     * @param {number} face - the face index to start from
+     * @return {number[]} face indices in the cylinder surface
+     * 
+     * @throws {string} if the face has only one Z value
+     * @throws {string} if the face normal is not perpendicular to Z axis
+     * 
+     * The algorithm works by:
+     * 1. Finding the two distinct Z values of the given face
+     * 2. Filtering adjacent faces to those with the same Z values
+     * 3. Filtering faces with normals perpendicular to Z axis
+     * 4. Recursively adding adjacent faces with the same Z values and normal perpendicular to Z axis
+     */
+    findCylinderSurface(face){
+        face = Number(face)
+
+        const radianTolerance = 8 * (Math.PI/180);
+        const vertexTolerance = 1e-4;
+        //helper function
+        const dissimilar = (a,b,c) => Math.abs(a-b) > vertexTolerance &&
+            Math.abs(b-c) > vertexTolerance &&
+            Math.abs(a-c) > vertexTolerance;
+
+        let found = {},
+            out = [face],
+            {vertices} = this,
+            {faces} = this.getIndex(),
+            faceOffset = face*9,
+            zs = [2,5,8].map(i => vertices[faceOffset+i].round(5)), //get zs from face vertices
+            lowZ = Math.min(zs),
+            highZ = Math.max(zs),
+            checked = {},
+            check = [face];
+        
+        //check for errors, and throw if found
+        if(dissimilar(...zs)){
+            throw `face must have only 2 Z values. found: ${zs.join(", ")}`
+        }else if(Math.abs( faces[face * 6 + 2] > 1e-6 )){
+            throw "face's normal must be perpendicular to Z axis"
+        }
+
+        found[face] = 1;
+        while (check.length) {
+            const face = check.shift();
+            const froot = face * 6;
+            const vroot = face * 9
+            
+            // filter faces to those perpendicular to +z axis
+            if ( Math.abs( faces[froot + 2] > 1e-6 )) continue;
+            //filter faces with verts don't share the z values of the first face
+            if(
+                !(vertices[vroot + 2] !== lowZ || vertices[vroot + 2] !== highZ) &&
+                !(vertices[vroot + 5] !== lowZ || vertices[vroot + 5] !== highZ) &&
+                !(vertices[vroot + 8] !== lowZ || vertices[vroot + 8] !== highZ)
+            ) continue;
+
+            const fadj = this.getAdjacentFaces(face);
+            for (let f of fadj) {
+                if (found[f] || checked[f]) {
+                    continue;
+                }
+                const aroot = f * 6;
+                let sum = 0;
+                for (let i=0; i<3; i++) {
+                    sum += Math.pow(faces[froot + i] - faces[aroot + i], 2);
+                }
+                const fn = Math.sqrt(sum);
+                if (fn <= radianTolerance) {
+                    out.push(f);
+                    check.push(f)
+                    checked[f] = 1;
+                    found[f] = 1;
+                }
+            }
+        }
+        return out;
+    }
+
+    // given a list of faces (indices), return an array of closed
+    // polylines that represent the outlines of each discrete island
     generateOutlines(list) {
         const { faces, sides } = this.getIndex();
         const prec = this.precision;

@@ -16,6 +16,7 @@ import { OpLaserOff } from './op-laser-off.js';
 import { OpGCode } from './op-gcode.js';
 import { OpIndex } from './op-index.js';
 import { CamOp } from './op.js';
+import { OpHelical } from './op-helical.js';
 
 export const ops = {
     "xray":      OpXRay,
@@ -29,6 +30,7 @@ export const ops = {
     "trace":     OpTrace,
     "drill":     OpDrill,
     "register":  OpRegister,
+    "helical":   OpHelical,
     "laser on":  OpLaserOn,
     "laser off": OpLaserOff,
     "gcode":     OpGCode,
