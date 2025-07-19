@@ -1,11 +1,8 @@
 import { api } from "../../core/api.js";
 import { CAM } from "./driver-fe.js";
-
 import { clearPops, env } from "./client.js";
 
-
 let alert, lastWidget;
-
 export let helicalOn = false;
 export function selectHelical() {
   if (helicalOn) {
@@ -20,7 +17,7 @@ export function selectHelical() {
     alert = api.show.alert("[esc] cancels surface selection");
     for (let [wid, arr] of Object.entries(cylinders)) {
       let widget = api.widgets.forid(wid);
-      if (widget && arr?.length)
+      if ( widget && arr?.length )
         for (let faceid of arr) {
           CAM.cylinderToggle(widget, faceid, (faceids) => {
             // cylinders[widget.id] = faceids;
@@ -36,7 +33,7 @@ export function selectHelical() {
     let faceid = min / 3;
     let widget = (lastWidget = obj.object.widget);
     CAM.cylinderToggle(widget, faceid, ({ faces, error }) => {
-      if (error) {
+      if ( error ) {
         api.show.alert(error, 3000);
         console.log( error );
         return;
@@ -47,7 +44,7 @@ export function selectHelical() {
 };
 
 export function helicalDone(){
-  if (!(helicalOn && env.poppedRec && env.poppedRec.cylinders)) {
+  if (!( helicalOn && env.poppedRec && env.poppedRec.cylinders )) {
     return;
   }
   let { cylinders } = env.poppedRec;
