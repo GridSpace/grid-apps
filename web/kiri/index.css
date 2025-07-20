@@ -2432,10 +2432,16 @@ details[open] summary::after {
     justify-self: center;
 }
 .var-row input {
+    flex: 1 1 auto;  
+    min-width: 0;    
+    max-width: 7ch; 
     margin-right: 0;
     margin-bottom: 1px;
     padding-bottom: 1px;
     padding-top: 1px;
+}
+.var-row #tool-name{
+    max-width: 15ch;
 }
 .var-row button {
     margin-right: 0;
