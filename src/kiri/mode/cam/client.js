@@ -61,7 +61,6 @@ export function clearPops() {
     surfaceDone();
     tabDone();
     traceDone();
-    surfaceDone();
     selectHolesDone();
     helicalDone();
 }
