@@ -78,6 +78,7 @@ self.lang['en-us'] = {
     rc_xstl:        "export STL",
     sb_info:        ["print speed","in mm/s"],
     rc_merg:        "merge object meshes",
+    rc_splt:        "isolate bodies",
 
     // DEVICE MENU and related dialogs
     dm_sldt:        "select a device type",

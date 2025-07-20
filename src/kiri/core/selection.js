@@ -3,6 +3,7 @@
 import { api } from './api.js';
 import { space } from '../../moto/space.js';
 import { THREE } from '../../ext/three.js';
+import { tool as MeshTool } from '../../mesh/tool.js';
 
 const selectedMeshes = [];
 
@@ -206,6 +207,39 @@ function merge() {
     api.platform.select(w);
 }
 
+/**
+ * Isolates the bodies within the selected widgets. If no widgets are selected,
+ * it processes all available widgets. For each widget, it checks if a tool is
+ * associated; if not, it creates a new MeshTool and indexes the vertices.
+ * The function identifies isolated bodies within each widget. If a widget has
+ * a single body, it remains selected. Otherwise, it creates new widgets for
+ * each isolated body and selects them while deleting the original widget.
+ */
+function isolateBodies(){
+    let sel = widgets();
+    console.log('isolate', sel);
+    if (sel.length === 0) {
+        sel = api.widgets.all();
+    }
+    for(let widget of sel){
+        if (!widget.tool) {
+            let tool = widget.tool = new MeshTool();
+            tool.index(widget.getGeoVertices({ unroll: true, translate:true }));
+        }
+        let bodies = widget.tool.isolateBodies()
+        if(bodies.length ==1){
+            api.platform.select(widget);
+        }else{
+            console.log(bodies,Array.from(bodies.entries()))
+            for(let [i,verts] of bodies.entries()){
+                let w = api.platform.load_verts([], verts, `isolate ${i} of ${ widget.anno.file}`);
+                api.platform.select(w)
+            }
+            api.platform.delete(widget);
+        }
+    }
+}
+
 function exportWidgets(format = "stl") {
     let sel = widgets();
     if (sel.length === 0) {
@@ -291,6 +325,7 @@ function setDisabled(bool) {
 export const selection = {
     move,
     merge,
+    isolateBodies,
     scale,
     rotate,
     mirror,
