@@ -538,6 +538,10 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
         return;
     }
 
+    if(arcdivs <= 2){
+        return [start.clone(), end.clone()];
+    }
+
     if (center) {
         // center = center.add(start);
         center.r = center.distTo2D(start);
@@ -569,26 +573,16 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
     let a2 = Math.atan2(center.y - end.y, center.x - end.x) + Math.PI;
     let ad = base.util.thetaDiff(a1, a2, clockwise); // angle difference in radians
     let samePoint = Math.abs(ad) < 0.001
-    let ofFull = Math.abs(ad) / (2 * Math.PI);
-    let steps = samePoint ? arcdivs : Math.max(Math.floor(arcdivs * ofFull), 4);
-    let step = (samePoint ? (Math.PI * 2) : ad) / steps;
-    let numPoints = steps / step;
+    let ofFull =  Math.abs(ad)/(2*Math.PI);
+    let steps =  samePoint? arcdivs : Math.max(Math.floor( arcdivs * ofFull),4);
+    let step =  (samePoint? (Math.PI*2)*(clockwise? -1 : 1) : ad) / steps;
     let zStart = start.z;
-    let zStep = dz / numPoints;
-    let rot = a1 + step;
+    let zStep = -dz / steps;
+    let rot = a1;
 
     //unused deltas
     let da = Math.abs(a1 - a2);
     let dd = Math.sqrt(dx * dx + dy * dy);
-
-    // LOG({index, da, dd, first: pos, last: rec, center, a1, a2, ad, step, steps, rot, line});
-    // G0G1(false, [`X${center.x}`, `Y${center.y}`, `E1`]);
-
-    // under 1 degree arc and 5mm, convert to straight line
-    // if (da < 0.005 && dd < 5) {
-    //     G0G1(false, [`X${end.x}`, `Y${end.y}`, `E1`]);
-    //     return ;
-    // }
 
     let arr = [] // point accumulator
     for (let i = 0; i <= steps - 2; i++) {

@@ -608,6 +608,26 @@ self.lang['en-us'] = {
     cd_sela_s:    "Select Matching Diameter",
     cd_sela_l:    ["select all holes that", "match selected tool diameter"],
 
+    // CNC HELICAL tolpath
+    ch_menu:        "helical",
+    ch_sdwn_s:      "step down (pitch)",
+    ch_sdwn_l:      ["z-distance","per revolution","in workspace units","(inverse of threads per unit)", "0 to disable"],
+    ch_fsta_s:      "force start angle",
+    ch_fsta_l:      ["override start angle","defaults to closest point to tool"],
+    ch_stra_s:      "start angle",
+    ch_stra_l:      ["start angle of helix","in degrees ccw of +x axis"],
+    ch_selc_l:      ["select a cylinder face", "inner holes that are too small","will be ignored."],
+    ch_fini_s:      "bottom finish pass",
+    ch_fini_l:      ["trace a circle at bottom of helix","used for hole clearing"],
+    ch_entr_s:      "enter from center",
+    ch_entr_l:      ["start cut from center of cylinder","gently arcing in horisontaly", "instead of plunging"],
+    ch_ento_s:      "center entry offset",
+    ch_ento_l:      ["offset from path for curved entry","usually thread depth if threadmilling","in workspace units","0 for a linear entry"],
+    ch_rvrs_s:      "reverse",
+    ch_rvrs_l:      ["reverse helical z-axis direction","low-Z to high-Z when checked","useful for thread milling","not recomended for other operations"],
+    ch_clkw_s:      "clockwise",
+    ch_clkw_l:      ["reverse helical rotation around cylinder","clockwise when checked"],
+
     // CNC FLIP
     cf_menu:        "flip",
     cf_nvrt_s:      "z bottom",
@@ -642,6 +662,10 @@ self.lang['en-us'] = {
     cl_minz_l:      ["lowest Z band position"],
     cl_maxz_s:      "max z height",
     cl_maxz_l:      ["highest Z band position. when set to 0, uses the highest Z point of the workspace"],
+
+
+
+
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",

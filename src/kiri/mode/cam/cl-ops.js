@@ -6,6 +6,7 @@ import { env } from './client.js';
 import { Tool } from './tool.js';
 import { opFlip } from './cl-flip.js';
 import { selectHoles } from './cl-hole.js';
+import { selectHelical } from './cl-helical.js';
 import { surfaceAdd } from './cl-surface.js';
 import { traceAdd } from './cl-trace.js';
 
@@ -522,6 +523,49 @@ export function createPopOps() {
         lift: UC.newInput(LANG.cd_lift_s, { title: LANG.cd_lift_l, convert: UC.toFloat, units: true, show: () => env.poppedRec.axis !== '-' }),
         sep: UC.newBlank({ class: "pop-sep" }),
         thru: UC.newInput(LANG.cd_thru_s, { title: LANG.cd_thru_l, convert: UC.toFloat, units: true }),
+    };
+
+    createPopOp('helical', {
+        tool:    'camHelicalTool',
+        offset:  'camHelicalOffset',
+        spindle: 'camHelicalSpindle',
+        rate:    'camHelicalDownSpeed',
+        feed:    'camHelicalSpeed',
+        down:    'camHelicalDown',
+        finish:  'camHelicalBottomFinish',
+        startAng:'camHelicalStartAngle',
+        offOver: 'camHelicalOffsetOverride',
+        entry:   'camHelicalEntry',
+        entryOffset: 'camHelicalEntryOffset',
+        reverse: 'camHelicalReverse',
+        clockwise:'camHelicalClockwise',
+        thru:    'camHelicalThru',
+        forceStartAng:'camHelicalForceStartAngle',
+        fromTop: 'camHelicalFromStockTop',
+    }).inputs = {
+        tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
+        offset:   UC.newSelect(LANG.cc_offs_s, {title: LANG.cc_offs_l,}, "helicaloff"),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
+        rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toFloat, units:true}),
+        feed:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toFloat, units:true}),
+        down:     UC.newInput(LANG.ch_sdwn_s, {title:LANG.ch_sdwn_l, convert:UC.toFloat, units:true}),
+        startAng: UC.newInput(LANG.ch_stra_s, {title:LANG.ch_stra_l, convert:UC.toDegsFloat, bound:UC.bound(-360,360),show:() => env.poppedRec.forceStartAng}),
+        offOver:  UC.newInput(LANG.cc_offd_s, {title:LANG.cc_offd_l, convert:UC.toFloat, units:true, bound:UC.bound(0,Infinity)}),
+        sep:      UC.newBlank({class:"pop-sep"}),                                                                                                                                                                       
+        entry:    UC.newBoolean(LANG.ch_entr_s,undefined, {title:LANG.ch_entr_l}),
+        entryOffset: UC.newInput(LANG.ch_ento_s, {title:LANG.ch_ento_l, convert:UC.toFloat, units:true, show:() => env.poppedRec.entry}),
+        reverse:  UC.newBoolean(LANG.ch_rvrs_s,undefined, {title:LANG.ch_rvrs_l}),
+        clockwise:UC.newBoolean(LANG.ch_clkw_s,undefined, {title:LANG.ch_clkw_l}),
+        sep:      UC.newBlank({class:"pop-sep"}),                                                                                                                                                                       
+        finish:   UC.newBoolean(LANG.ch_fini_s,undefined, { title:LANG.ch_fini_l ,show: ()=>!env.poppedRec.reverse}),
+        forceStartAng: UC.newBoolean(LANG.ch_fsta_s, undefined, {title:LANG.ch_fsta_l }),
+        fromTop:  UC.newBoolean(LANG.cd_ftop_s,undefined, {title:LANG.cd_ftop_l}),
+        sep:      UC.newBlank({class:"pop-sep"}),
+        thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),
+        actions: UC.newRow([
+            UC.newButton(LANG.select, selectHelical, {title:LANG.cd_seli_l}),
+        ], {class:"ext-buttons f-col"})
     };
 
     createPopOp('flip', {

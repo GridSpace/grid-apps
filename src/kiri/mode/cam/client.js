@@ -14,6 +14,7 @@ import { tabAdd, tabDone, tabClear, restoreTabs, rotateTabs, updateTabs, clearTa
 import { traceOn, traceDone, unselectTraces } from './cl-trace.js';
 import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
 import { surfaceOn, surfaceDone } from './cl-surface.js';
+import { helicalOn, helicalDone } from './cl-helical.js';
 import { originSelectDone } from './cl-origin.js';
 
 const DEG2RAD = Math.PI / 180;
@@ -60,6 +61,8 @@ export function clearPops() {
     surfaceDone();
     tabDone();
     traceDone();
+    selectHolesDone();
+    helicalDone();
 }
 
 function animFn() {
@@ -169,6 +172,14 @@ const opAddPocket = () => {
     surfaceDone();
     let rec = env.popOp.pocket.new();
     rec.surfaces = { /* widget.id: [ faces... ] */ };
+    opAdd(rec);
+};
+
+const opAddHelical = () => {
+    traceDone();
+    surfaceDone();
+    let rec = env.popOp.helical.new();
+    rec.cylinders = { /* widget.id: [ faces... ] */ };
     opAdd(rec);
 };
 
@@ -728,6 +739,7 @@ export function init() {
             case "drill": return opAddDrill();
             case "trace": return opAddTrace();
             case "pocket": return opAddPocket();
+            case "helical": return opAddHelical();
             case "flip":
                 // only one flip op permitted
                 for (let op of env.current.process.ops) {
@@ -793,6 +805,9 @@ export function init() {
         if (traceOn) {
             traceDone();
         }
+        if(helicalOn){
+            helicalDone();
+        }
         unselectTraces(widget);
         if (env.flipping) {
             return;
@@ -816,6 +831,9 @@ export function init() {
         if (holeSelOn) {
             selectHolesDone();
         }
+        if(helicalOn){
+            helicalDone();
+        }
         clearHolesRec(widget)
         unselectTraces(widget);
         if (env.flipping) {
@@ -835,6 +853,9 @@ export function init() {
         unselectTraces(widget);
         if (holeSelOn) {
             selectHolesDone();
+        }
+        if(helicalOn){
+            helicalDone();
         }
         if (env.flipping) {
             return;

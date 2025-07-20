@@ -5,6 +5,7 @@ import { cam_slice, holes, traces } from './slice.js';
 import { cam_prepare } from './prepare.js';
 import { cam_export } from './export.js';
 import { tool as mesh_tool } from '../../../mesh/tool.js';
+import { cylinder_poly_find } from './slice.js';
 
 import { init as init_2d } from './anim-2d-be.js';
 import { init as init_3d } from './anim-3d-be.js';
@@ -96,6 +97,16 @@ function init(worker) {
             holes: widget.drills,
             shadowed: widget.shadowedDrills
         } } )));
+    }
+
+    dispatch.cam_cylinder_find = async function(data,send){
+        const { id, face, settings } = data;
+        const widget = worker.cache[id];
+        try{
+            send.done(cylinder_poly_find(widget, face));
+        }catch(error){
+            send.done({error});
+        }
     }
 }
 
