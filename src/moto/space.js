@@ -10,7 +10,7 @@ const {
     Scene,
     Group,
     MeshPhongMaterial,
-    DoubleSide
+    FrontSide,
 } = THREE;
 
 const nav = navigator;
@@ -125,7 +125,8 @@ let WIN = self.window || {},
         shininess: 0,
         transparent: true,
         opacity: 0.6,
-        side: DoubleSide
+        side: FrontSide,
+        depthWrite: false,
     }),
     hiddenKey,
     vizChange,
