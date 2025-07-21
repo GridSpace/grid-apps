@@ -4,6 +4,10 @@ description: Keyboard Shortcuts and Mouse Controls
 
 # Controls
 
+Kiri:Moto provides a wide range of keyboard and mouse controls to streamline your workflow across FDM, CAM, and layout modes. These shortcuts enable quick access to views, dialogs, object manipulation, and export functions. Mastering them enhances precision, efficiency, and navigation within the workspace.
+
+## General Controls
+
 | Key              | Action                                    | Notes                                   |
 | ---------------- | ----------------------------------------- | --------------------------------------- |
 | e                | Device Dialog                             | Select and customize devices            |
@@ -40,7 +44,7 @@ description: Keyboard Shortcuts and Mouse Controls
 | \[shift + arrow] | Rotate 5 degrees                          | Rotate selected object                  |
 | \[ctrl + a]      | Select All Objects                        | Select all objects                      |
 |                  |                                           |                                         |
-| \[shit + click]  | Toggle Selection                          | Select or Deselect a single object      |
+| \[shift + click] | Toggle Selection                          | Select or Deselect a single object      |
 | \[shift + wheel] | Cycle through layers (preview mode)       | Use mouse wheel as range slider         |
 | \[meta + drag]   | Pan View                                  | Move focus of camera                    |
 | \[right + drag]  | Pan View                                  |                                         |
@@ -52,10 +56,20 @@ description: Keyboard Shortcuts and Mouse Controls
 | \[meta + click]  | Align face of selected object to platform |                                         |
 |                  |                                           |                                         |
 | \[shift + z]     | Reset all preferences to stock            | Reload page afterward                   |
-|                  |                                           |                                         |
-| **Mouse**        | **FDM Support Controls**                  | **Version Notes**                       |
-| \[left click]    | Toggle add / remove column                |                                         |
-| \[ctrl + drag]   | Erase support columns                     | 2.7+                                    |
-| \[cmd + drag]    | Erase support columns                     | 2.7+                                    |
-| \[opt + drag]    | Draw on support columns                   | 2.7+                                    |
-| \[alt + drag]    | Draw on support columns                   | 2.7+                                    |
+
+## FDM Controls
+
+| Key            | Action                     | Notes |
+| -------------- | -------------------------- | ----- |
+| \[left click]  | Toggle add / remove column |       |
+| \[ctrl + drag] | Erase support columns      | v2.7+ |
+| \[cmd + drag]  | Erase support columns      | v2.7+ |
+| \[opt + drag]  | Draw on support columns    | v2.7+ |
+| \[alt + drag]  | Draw on support columns    | v2.7+ |
+
+## CAM Controls
+
+| Key                            | Action           | Notes |
+| ------------------------------ | ---------------- | ----- |
+| \[ctl + click] on an operation | Toggle operation |       |
+
