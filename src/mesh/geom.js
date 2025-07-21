@@ -1,17 +1,11 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: moto.license
-// dep: add.array
-// dep: add.three
-gapp.register("mesh.geom", [], (root, exports) => {
-
+import { THREE } from '../ext/three.js';
 const { Matrix4, Matrix3, Vector3, Box3 } = THREE;
+import { license as motoLicense } from '../moto/license.js';
 
 // geometry helper functions
-const geom = exports({
-
+const geom = {
     // given a closed polyline as an expanded point array
     // return enclosed area with sign indicating winding order
     areaSigned(points, axes = 3) {
@@ -93,6 +87,6 @@ const geom = exports({
 
         return recs;
     }
-});
+};
 
-});
+export { geom };

@@ -1,10 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: moto.license
-// dep: add.array
-gapp.register("moto.webui", [], (root, exports) => {
 
 let nextid = 1;
 
@@ -47,8 +42,11 @@ function build(data, context) {
             func[key] = val;
             elid = elid || `_${nextid++}`;
         } else if (tov === 'object') {
-            if (val.length)
-            html.push(` ${key}="${val.filter(v => v !== undefined).join(' ')}"`);
+            if (Array.isArray(val)) {
+                html.push(` ${key}="${val.filter(v => v !== undefined).join(' ')}"`);
+            } else {
+                html.push(` ${key}="${val}"`);
+            }
         } else if (tov !== 'undefined') {
             html.push(` ${key}="${val}"`);
         }
@@ -77,7 +75,7 @@ function build(data, context) {
 }
 
 // core html builder funtions
-let h = exports({
+const h = {
     bind: (el, data, opt = {}) => {
         let ctx = [];
         let html = build(data, ctx).join('');
@@ -118,43 +116,39 @@ let h = exports({
     build: (data) => {
         return build(data, []).join('');
     }
-});
+};
 
 // window ui helpers
-gapp.overlay(root, {
-    $: (id) => {
-        return document.getElementById(id);
-    },
+const $ = (id) => {
+    return document.getElementById(id);
+};
 
-    $d: (id, v) => {
-        $(id).style.display = v;
-    },
+const $d = (id, v) => {
+    $(id).style.display = v;
+};
 
-    $h: (id, h) => {
-        $(id).innerHTML = h;
-    },
+const $h = (id, h) => {
+    $(id).innerHTML = h;
+};
 
-    $c: (id, add, del) => {
-        if (add) $(id).classList.add(add);
-        if (del) $(id).classList.remove(del);
-    },
+const $c = (id, add, del) => {
+    if (add) $(id).classList.add(add);
+    if (del) $(id).classList.remove(del);
+};
 
-    $C: (clazz, add, del) => {
-        let el = [...document.getElementsByClassName(clazz)];
-        for (let e of el) {
-            if (add) e.classList.add(add);
-            if (del) e.classList.remove(del);
-        }
-        return el;
-    },
-
-    h,
-
-    estop: (evt) => {
-        evt.stopPropagation();
-        evt.preventDefault();
+const $C = (clazz, add, del) => {
+    let el = [...document.getElementsByClassName(clazz)];
+    for (let e of el) {
+        if (add) e.classList.add(add);
+        if (del) e.classList.remove(del);
     }
-});
+    return el;
+};
+
+const estop = (evt) => {
+    evt.stopPropagation();
+    evt.preventDefault();
+};
 
 // add common element types
 [
@@ -166,4 +160,22 @@ gapp.overlay(root, {
     }
 });
 
-});
+export {
+    $,
+    $d,
+    $h,
+    $c,
+    $C,
+    h,
+    estop
+}
+
+export default {
+    $,
+    $d,
+    $h,
+    $c,
+    $C,
+    h,
+    estop
+}

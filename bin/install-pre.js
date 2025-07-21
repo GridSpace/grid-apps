@@ -5,14 +5,14 @@ const path = require('path');
 async function main() {
     console.log('npm pre running');
 
-    const links = fs.readFileSync("links.csv")
+    const links = fs.readFileSync("conf/links.csv")
         .toString()
         .trim()
         .split('\n')
         .map(line => line.trim())
         .map(line => line.split(',').map(v => v.trim()));
 
-    if (os.platform() === 'win32')
+    if (os.platform() === 'win32') {
         // convert links to the contents of the files/directories they reference
         for (let [link, target] of links) {
             const absoluteTarget = path.resolve(path.dirname(link), target);
@@ -24,6 +24,9 @@ async function main() {
                 console.error(`Error creating symlink: ${link} -> ${absoluteTarget}`, err);
             }
         }
+    } else {
+        console.log('skipping symlink conversion');
+    }
 }
 
 main().catch(err => console.error('Error', err));

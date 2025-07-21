@@ -6,24 +6,21 @@
  * click to split the selected mesh(es)
  */
 
-"use strict";
+import { THREE } from '../ext/three.js';
+import { space as motoSpace } from '../moto/space.js';
+import { broker as motoBroker } from '../moto/broker.js';
+import { api as meshApi } from './api.js';
+import { util as meshUtil } from './util.js';
 
-// dep: moto.space
-// dep: moto.broker
-gapp.register("mesh.split", [], (root, exports) => {
-
-const { broker } = gapp;
 const { Mesh, MeshPhongMaterial, PlaneGeometry, DoubleSide, Vector3 } = THREE;
-const { mesh, moto } = root;
-const { space } = moto;
 
 let isActive;
 
-const key_once = broker.bind('key_once');
-const key_cancel = broker.bind('key_once_cancel');
+const key_once = motoBroker.bind('key_once');
+const key_cancel = motoBroker.bind('key_once_cancel');
 
 // split functions
-let split = {
+const split = {
     active() {
         return isActive ? true : false;
     },
@@ -32,9 +29,8 @@ let split = {
         if (isActive) {
             return;
         }
-        let { api, util } = mesh;
-        let { log } = api;
-        if (api.selection.models().length === 0) {
+        let { log } = meshApi;
+        if (meshApi.selection.models().length === 0) {
             log.emit('no models selected for splitting');
             return;
         }
@@ -48,15 +44,15 @@ let split = {
                 opacity: 0.5
             })
         );
-        space.scene.add(obj);
+        motoSpace.scene.add(obj);
         // hide until first hover
         obj.visible = false;
         // enable temp mode
         let state = split.state = { obj };
-        let models = state.models = api.selection.models();
+        let models = state.models = meshApi.selection.models();
         let meshes = models.map(m => m.mesh);
         // for split and lay flat modes
-        space.mouse.onHover((int, event, ints) => {
+        motoSpace.mouse.onHover((int, event, ints) => {
             if (!event) {
                 return meshes;
             }
@@ -65,11 +61,11 @@ let split = {
             if (buttons) {
                 return;
             }
-            let { dim, mid } = util.bounds(meshes);
+            let { dim, mid } = meshUtil.bounds(models);
             let { point, face, object } = int;
             let { x, y, z } = point;
             // set appearance of split plane
-            mat.color.set(api.prefs.map.space.dark ? 0x0059bb : 0x0079ff);
+            mat.color.set(meshApi.prefs.map.space.dark ? 0x0059bb : 0x0079ff);
             obj.visible = true;
             if (event.shiftKey) {
                 y = split.closestZ(y, object, face).y;
@@ -92,31 +88,31 @@ let split = {
                 state.plane = { z };
                 split.select(state);
             }
-            api.modal.dialog({
+            meshApi.modal.dialog({
                 title: "split object Z",
                 body: [ h.div({ class: "additem" }, [
                     h.label('Z value'),
                     h.input({ value: 0, size: 5, id: "_value" }),
                     h.button({ _: "split", onclick() {
-                        const { _value } = api.modal.bound;
+                        const { _value } = meshApi.modal.bound;
                         doit(parseFloat(_value.value));
-                        api.modal.hide();
+                        meshApi.modal.hide();
                     } })
                 ]) ]
             });
-            api.modal.bound._value.focus();
+            meshApi.modal.bound._value.focus();
         } });
     },
 
     select(state) {
-        let { log } = mesh.api;
+        let { log } = meshApi;
         let { models, plane } = split.state || state;
         if (!(models && plane)) {
             return split.end();
         }
         log.emit(`splitting ${models.length} model(s) at ${plane.z.round(3)}`).pin();
         Promise.all(models.map(m => m.split(plane))).then(models => {
-            mesh.api.selection.set(models.filter(m => m));
+            meshApi.selection.set(models.filter(m => m));
             log.emit('split complete').unpin();
             split.end();
         });
@@ -128,12 +124,11 @@ let split = {
         }
         key_cancel('KeyS');
         key_cancel('KeyV');
-        let space = moto.space;
         let { obj } = split.state;
-        space.scene.remove(obj);
-        space.mouse.onHover(undefined);
+        motoSpace.scene.remove(obj);
+        motoSpace.mouse.onHover(undefined);
         isActive = split.state = undefined;
-        mesh.api.selection.update();
+        meshApi.selection.update();
     },
 
     closestZ(z, object, face) {
@@ -147,8 +142,6 @@ let split = {
         v2._d = Math.abs(v2.y - z);
         return [ v0, v1, v2 ].sort((a,b) => a._d - b._d)[0];
     }
-}
+};
 
-exports(split);
-
-});
+export { split };

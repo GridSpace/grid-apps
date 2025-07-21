@@ -2,22 +2,17 @@
 
 "use strict";
 
-// dep: geo.base
-// dep: geo.paths
-// dep: ext.clip2
-// dep: ext.earcut
-// dep: geo.point
-// dep: geo.bounds
-// dep: geo.polygons
-gapp.register("geo.polygon", [], (root, exports) => {
+import { base, config, earcut, util } from './base.js';
+import { ClipperLib } from '../ext/clip2.esm.js';
+import { newBounds } from './bounds.js';
+import { paths } from './paths.js';
+import { newPoint, pointFromClipper } from './point.js';
+import { polygons as POLY } from './polygons.js';
 
-const { base } = root;
-const { config, util, polygons, newBounds, newPoint } = base;
+const { Vector3 } = THREE;
 
-const POLY = polygons,
-    XAXIS = new THREE.Vector3(1,0,0),
+let XAXIS = new Vector3(1,0,0),
     DEG2RAD = Math.PI / 180,
-    ClipperLib = self.ClipperLib,
     Clipper = ClipperLib.Clipper,
     ClipType = ClipperLib.ClipType,
     PolyType = ClipperLib.PolyType,
@@ -39,7 +34,7 @@ const POLY = polygons,
 
 let seqid = Math.round(Math.random() * 0xffffffff);
 
-class Polygon {
+export class Polygon {
     constructor(points) {
         this.id = seqid++; // polygon unique id
         this.open = false;
@@ -76,11 +71,11 @@ class Polygon {
     }
 
     toPath2D(offset) {
-        return base.paths.pointsToPath(this.points, offset, this.open);
+        return paths.pointsToPath(this.points, offset, this.open);
     }
 
     toPath3D(offset, height, z) {
-        return base.paths.pathTo3D(this.toPath2D(offset), height, z);
+        return paths.pathTo3D(this.toPath2D(offset), height, z);
     }
 
     toString(verbose) {
@@ -235,7 +230,7 @@ class Polygon {
         }
 
         // perform earcut()
-        let cut = self.earcut(out, holes, 3);
+        let cut = earcut(out, holes, 3);
         let ret = [];
 
         // preserve swaps in new polys
@@ -467,7 +462,7 @@ class Polygon {
         return polys
             .filter(poly => poly.length > 1)
             .map(poly => {
-                let np = base.newPolygon().setOpen();
+                let np = newPolygon().setOpen();
                 for (let p of poly) {
                     np.push(p);
                 }
@@ -848,6 +843,7 @@ class Polygon {
      * scale polygon around origin
      */
     scale(scale, round) {
+        this.area2 = undefined;
         let x, y, z;
         if (typeof(scale) === 'number') {
             x = y = z = scale;
@@ -1078,6 +1074,7 @@ class Polygon {
      * append point to polygon and return point
      */
     push(p) {
+        this.area2 = undefined;
         // clone any point belonging to another polygon
         if (p.poly) p = p.clone();
         p.poly = this;
@@ -1122,6 +1119,14 @@ class Polygon {
         return this.first().isEqual(this.last());
     }
 
+    fixClosed() {
+        if (this.appearsClosed()) {
+            this.points.pop();
+            this.open = false;
+        }
+        return this;
+    }
+
     setClockwise() {
         if (!this.isClockwise()) this.reverse();
         return this;
@@ -1143,7 +1148,7 @@ class Polygon {
     applyRotations() {
         for (let point of this.points) {
             if (point.a) {
-                let p2 = new THREE.Vector3(point.x, point.y, point.z)
+                let p2 = new Vector3(point.x, point.y, point.z)
                     .applyAxisAngle(XAXIS, point.a * DEG2RAD);
                 point.x = p2.x;
                 point.y = p2.y;
@@ -1205,15 +1210,76 @@ class Polygon {
         return false;
     }
 
-    
-
     /**
-     * calls function for each point in this polygon
-     * @param {Function} fn to call for each point
-     * @param {boolean} [close=true] whether to close the loop (last point to first)
-     * @param {number} [start=0] starting index
+     * Ease down along the polygonal path.
+     *
+     * 1. Travel from fromPoint to closest point on polygon, to rampZ above that that point,
+     * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slope until target Z is hit,
+     * 3. then the rest of the path is completed and repeated at target Z until touchdown point is reached.
+     * 4. this function should probably move to CAM prepare since it's only called from there
      */
-    forEachPoint(fn, close, start) { 
+    forEachPointEaseDown(fn, fromPoint, degrees = 45) {
+        let index = this.findClosestPointTo(fromPoint).index,
+            fromZ = fromPoint.z,
+            offset = 0,
+            points = this.points,
+            length = points.length,
+            touch = -1, // first point to touch target z
+            targetZ = points[0].z,
+            dist2next,
+            last,
+            next,
+            done;
+
+        // Slope for computations.
+        const slope = Math.tan((degrees * Math.PI) / 180);
+        // Z height above polygon Z from which to start the ease-down.
+        // Machine will travel from "fromPoint" to "nearest point x, y, z' => with z' = point z + rampZ",
+        // then start the ease down along path.
+        const rampZ = 2.0;
+        while (true) {
+            next = points[index % length];
+            if (last && next.z < fromZ) {
+                // When "in Ease-Down" (ie. while target Z not yet reached) - follow path while slowly decreasing Z.
+                let deltaZ = fromZ - next.z;
+                dist2next = last.distTo2D(next);
+                let deltaZFullMove = dist2next * slope;
+
+                if (deltaZFullMove > deltaZ) {
+                    // Too long: easing along full path would overshoot depth, synth intermediate point at target Z.
+                    //
+                    // XXX: please check my super basic trig - this should follow from `last` to `next` up until the
+                    //      intersect at the target Z distance.
+                    fn(last.followTo(next, dist2next * deltaZ / deltaZFullMove).setZ(next.z), offset++);
+                } else {
+                    // Ok: execute full move at desired slope.
+                    next = next.clone().setZ(fromZ - deltaZFullMove);
+                }
+
+                fromZ = next.z;
+            } else if (offset === 0 && next.z < fromZ) {
+                // First point, move to rampZ height above next.
+                let deltaZ = fromZ - next.z;
+                fromZ = next.z + Math.min(deltaZ, rampZ)
+                next = next.clone().setZ(fromZ);
+            }
+            last = next;
+            fn(next, offset++);
+            if ((index % length) === touch) {
+                break;
+            }
+            if (touch < 0 && next.z <= targetZ) {
+                // Save touch-down index so as to be able to "complete" the full cut at target Z,
+                // i.e. keep following the path loop until the touch down point is reached again.
+                touch = ((index + length) % length);
+            }
+            index++;
+        }
+
+        return last;
+    }
+
+    forEachPoint(fn, close, start) {
         let index = start || 0,
             points = this.points,
             length = points.length,
@@ -1496,7 +1562,12 @@ class Polygon {
      * @returns {number} 0.0 - 1.0 from flat to perfectly circular
      */
     circularity() {
-        return (4 * Math.PI * this.area()) / util.sqr(this.perimeter());
+        try {
+            return (4 * Math.PI * this.area()) / util.sqr(this.perimeter());
+        } catch (e) {
+            console.log(this.perimeter(), e);
+            return 0;
+        }
     }
 
     circularityDeep() {
@@ -2003,7 +2074,7 @@ class Polygon {
         return res.map(array => {
             let poly = newPolygon();
             for (let pt of array) {
-                poly.push(base.pointFromClipper(pt, z));
+                poly.push(pointFromClipper(pt, z));
             }
             return poly;
         });
@@ -2318,8 +2389,7 @@ class Polygon {
 
 }
 
-// use Slope.angleDiff() then re-test path mitering / rendering
-function slopeDiff(s1, s2) {
+export function slopeDiff(s1, s2) {
     const n1 = s1.angle;
     const n2 = s2.angle;
     let diff = n2 - n1;
@@ -2328,28 +2398,17 @@ function slopeDiff(s1, s2) {
     return Math.abs(diff);
 }
 
-function fromClipperPath(path, z) {
+export function fromClipperPath(path, z) {
     let poly = newPolygon(),
         i = 0,
         l = path.length;
     while (i < l) {
         // poly.push(newPoint(null,null,z,null,path[i++]));
-        poly.push(base.pointFromClipper(path[i++], z));
+        poly.push(pointFromClipper(path[i++], z));
     }
     return poly;
 }
 
-function newPolygon(points) {
+export function newPolygon(points) {
     return new Polygon(points);
 }
-
-Polygon.fromArray = function(array) {
-    return newPolygon().fromArray(array);
-};
-
-gapp.overlay(base, {
-    Polygon,
-    newPolygon
-});
-
-});

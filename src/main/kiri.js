@@ -1,41 +1,49 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import '../add/array.js';
+import '../add/class.js';
+import '../add/three.js';
+import '../kiri/core/lang.js';
+import '../kiri/core/lang-en.js';
 
-gapp.main({
-    app: "kiri",
+import { run } from '../kiri/core/init.js';
 
-    pre(root) {
-        let mods = root.kirimod = ( root.kirimod || [] );
+let load = [];
 
-        let kiri = root.kiri = {
-            beta: 0,
-            driver: {
-                // attached driver modules
-            },
-            load(fn) {
-                // modules register exec() functions
-                mods.push(fn);
-            },
-            load_exec(api) {
-                // process all module exec() functions
-                const saferun = (fn) => {
-                    try {
-                        fn(api || kiri.api);
-                    } catch (error) {
-                        console.log({ module_error: error });
-                    }
-                };
-                // complete module loading
-                mods.forEach(fn => saferun(fn));
-                // rewrite load() to run immediately post-finalize
-                kiri.load = (fn) => saferun(fn);
-            }
-        };
-    },
-
-    post(root) {
-        // complete module loading
-        root.kiri.load_exec();
+function safeExec(fn) {
+    try {
+        fn(kiri.api);
+    } catch (error) {
+        console.log('load error', fn, error);
     }
-});
+}
+
+function checkReady() {
+    if (document.readyState === 'complete') {
+        kiri.api = run();
+        self.$ = kiri.api.web.$;
+        for (let fn of load) {
+            safeExec(fn);
+        }
+        load = undefined;
+        kiri.api.event.emit('load-done', stats);
+    }
+}
+
+self.kiri = {
+    load(fn) {
+        // console.log('KIRI LOAD', [...arguments]);
+        if (load) {
+            load.push(fn);
+        } else {
+            safeExec(fn);
+        }
+    }
+};
+
+self.moto = { };
+
+// when dom + scripts complete
+document.onreadystatechange = checkReady;
+
+checkReady();

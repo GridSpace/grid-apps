@@ -1,16 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { base } from '../geo/base.js';
+import { newPolygon } from './polygon.js';
 
-// dep: geo.base
-// dep: ext.clip2
-gapp.register("geo.wasm", [], (root, exports) => {
-
-const { base } = root;
 const { config } = base;
-
 const factor = config.clipper;
-const wasm_ctrl = {
+
+export const wasm_ctrl = {
     enable,
     disable,
     count: {
@@ -19,8 +15,6 @@ const wasm_ctrl = {
         diff: 0
     }
 };
-
-gapp.overlay(base, { wasm_ctrl });
 
 function log() {
     console.log(...arguments);
@@ -60,7 +54,7 @@ function writePoly(view, poly, inner) {
 function readPoly(view, z) {
     let points = view.readU16(true);
     if (points === 0) return;
-    let poly = self.base.newPolygon();
+    let poly = newPolygon();
     while (points-- > 0) {
         poly.add(view.readI32(true)/factor, view.readI32(true)/factor, z || 0);
     }
@@ -79,7 +73,7 @@ function readPolys(view, z, out = []) {
     return out;
 }
 
-function polyOffset(polys, offset, z, clean, simple) {
+export function polyOffset(polys, offset, z, clean, simple) {
     wasm_ctrl.count.offset++;
     let wasm = base.wasm,
         buffer = wasm.shared,
@@ -89,7 +83,7 @@ function polyOffset(polys, offset, z, clean, simple) {
     return polyNest(out);
 }
 
-function polyUnion(polys, z) {
+export function polyUnion(polys, z) {
     wasm_ctrl.count.union++;
     let wasm = base.wasm,
         buffer = wasm.shared,
@@ -99,7 +93,7 @@ function polyUnion(polys, z) {
     return polyNest(out);
 }
 
-function polyDiff(polysA, polysB, z, AB, BA) {
+export function polyDiff(polysA, polysB, z, AB, BA) {
     wasm_ctrl.count.diff++;
     let wasm = base.wasm,
         buffer = wasm.shared,
@@ -153,7 +147,7 @@ function readString(pos, len) {
     return out.join('');
 }
 
-function enable() {
+export function enable() {
     if (base.wasm || base._wasm) {
         return;
     }
@@ -200,11 +194,9 @@ function enable() {
         });
 }
 
-function disable() {
+export function disable() {
     if (base.wasm) {
+        base.wasm.free(base.wasm.shared);
         delete base.wasm;
-        // console.log({disabled: geo});
     }
 }
-
-});

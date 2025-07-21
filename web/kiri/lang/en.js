@@ -1,7 +1,7 @@
 // English language map. Other localization maps will
 // defer to English map for any missing key/value pairs
-self.kiri.lang['en'] =
-self.kiri.lang['en-us'] = {
+self.lang['en'] =
+self.lang['en-us'] = {
     // common keys and menus
     animate:        "animate",      // CAM animate button
     arrange:        "arrange",      // layout workspace objects
@@ -78,6 +78,7 @@ self.kiri.lang['en-us'] = {
     rc_xstl:        "export STL",
     sb_info:        ["print speed","in mm/s"],
     rc_merg:        "merge object meshes",
+    rc_splt:        "isolate bodies",
 
     // DEVICE MENU and related dialogs
     dm_sldt:        "select a device type",
@@ -612,6 +613,25 @@ self.kiri.lang['en-us'] = {
     cd_rego_s:      "part offset",
     cd_rego_l:      ["offset of hole center","from part bounding box","in workspace units"],
 
+    // CNC HELICAL tolpath
+    ch_menu:        "helical",
+    ch_sdwn_s:      "step down (pitch)",
+    ch_sdwn_l:      ["z-distance","per revolution","in workspace units","(inverse of threads per unit)", "0 to disable"],
+    ch_fsta_s:      "force start angle",
+    ch_fsta_l:      ["override start angle","defaults to closest point to tool"],
+    ch_stra_s:      "start angle",
+    ch_stra_l:      ["start angle of helix","in degrees ccw of +x axis"],
+    ch_selc_l:      ["select a cylinder face", "inner holes that are too small","will be ignored."],
+    ch_fini_s:      "bottom finish pass",
+    ch_fini_l:      ["trace a circle at bottom of helix","used for hole clearing"],
+    ch_entr_s:      "enter from center",
+    ch_entr_l:      ["start cut from center of cylinder","gently arcing in horisontaly", "instead of plunging"],
+    ch_ento_s:      "center entry offset",
+    ch_ento_l:      ["offset from path for curved entry","usually thread depth if threadmilling","in workspace units","0 for a linear entry"],
+    ch_rvrs_s:      "reverse",
+    ch_rvrs_l:      ["reverse helical z-axis direction","low-Z to high-Z when checked","useful for thread milling","not recomended for other operations"],
+    ch_clkw_s:      "clockwise",
+    ch_clkw_l:      ["reverse helical rotation around cylinder","clockwise when checked"],
 
     // CNC FLIP
     cf_menu:        "flip",
@@ -647,6 +667,10 @@ self.kiri.lang['en-us'] = {
     cl_minz_l:      ["lowest Z band position"],
     cl_maxz_s:      "max z height",
     cl_maxz_l:      ["highest Z band position. when set to 0, uses the highest Z point of the workspace"],
+
+
+
+
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",
@@ -863,6 +887,8 @@ self.kiri.lang['en-us'] = {
     cx_fast_l:      ["disable overhang detection","can be faster and use less","memory with complex models","but fails with overhangs","try enabling if slicing","hangs during shadowing"],
     cx_true_s:      "true shadow",
     cx_true_l:      ["computationally correct shadow","will be slower but produce","better cuts for complex parts"],
+    cx_arce_s:      "arc output",
+    cx_arce_l:      ["EXPERIMENTAL: enable path to arc conversion"],
     cx_arct_s:      "arc tolerance",
     cx_arct_l:      ["convert cicrular paths to arcs;","center point drift tolerance","when matching arc points","consider values around 0.15","in mm, or 0.006 inches;","High values may cause","unexpected behavior","0 to disable"],
     cx_arcr_s:      "arc resolution",

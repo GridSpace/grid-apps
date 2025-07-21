@@ -1,11 +1,10 @@
 /** Copyright 2014-2019 Stewart Allen -- All Rights Reserved */
 
-"use strict";
-
 // use: add.array
-gapp.register("add.class", [], (root, exports) => {
+import { arrayPrototype } from './array.js';
 
-self.ArrayWriter = class ArrayWriter {
+// Make classes available globally
+class ArrayWriter {
     constructor() {
         this.pos = 0;
         this.array = [];
@@ -48,7 +47,7 @@ self.ArrayWriter = class ArrayWriter {
     }
 };
 
-self.DataWriter = class DataWriter {
+class DataWriter {
     constructor(view, pos) {
         this.view = view;
         this.pos = pos || 0;
@@ -106,7 +105,7 @@ self.DataWriter = class DataWriter {
     }
 }
 
-self.DataReader = class DataReader {
+class DataReader {
     constructor(view, pos) {
         this.view = view;
         this.pos = pos || 0;
@@ -171,4 +170,9 @@ self.DataReader = class DataReader {
     }
 }
 
-});
+self.ArrayWriter = ArrayWriter;
+self.DataWriter = DataWriter;
+self.DataReader = DataReader;
+
+// Export for ES modules
+export { ArrayWriter, DataWriter, DataReader };

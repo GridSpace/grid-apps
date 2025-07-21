@@ -34,7 +34,7 @@
 /* surface size configuration and font import */
 @font-face {
     font-family: 'Russo One';
-    src: url('/moto/russo-one.ttf');
+    src: url('../moto/russo-one.ttf');
 }
 @media only screen and (max-width : 1000px) {
     .top-menu > span > label {
@@ -250,6 +250,9 @@ details[open] summary::after {
     border-color: #888;
     background-color: #333;
     color: #fff;
+}
+.dark option:checked {
+    background-color: var(--blue-1);
 }
 .dark hr {
     border-color: #555;
@@ -2186,11 +2189,13 @@ details[open] summary::after {
 }
 #slider-zero {
     z-index: 10;
+    min-width: 3em;
     background-color: #bbb;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
 }
 #slider-max {
+    min-width: 3em;
     background-color: #bbb;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
@@ -2427,10 +2432,16 @@ details[open] summary::after {
     justify-self: center;
 }
 .var-row input {
+    flex: 1 1 auto;  
+    min-width: 0;    
+    max-width: 7ch; 
     margin-right: 0;
     margin-bottom: 1px;
     padding-bottom: 1px;
     padding-top: 1px;
+}
+.var-row #tool-name{
+    max-width: 15ch;
 }
 .var-row button {
     margin-right: 0;

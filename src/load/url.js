@@ -2,20 +2,14 @@
 
 'use strict';
 
-(function() {
-
-let load = self.load = self.load || {};
-if (load.URL) return;
-
-gapp.register('load.url');
-
-load.URL = {
-    load: load_url
-};
+import { STL } from './stl.js';
+import { OBJ } from './obj.js';
+import { TMF } from './3mf.js';
+import { SVG } from './svg.js';
 
 const CDH = 'Content-Disposition';
 
-function load_url(url, options = {}) {
+export function load_url(url, options = {}) {
     return new Promise((resolve, reject) => {
         let xhr = new XMLHttpRequest();
         let file = options.file || options.filename || (((url.split('?')[0]).split('#')[0]).split('/')).pop();
@@ -47,21 +41,21 @@ function load_url(url, options = {}) {
                 switch (ext) {
                     case "stl":
                         resolve([{
-                            mesh: new load.STL().parse(data), file
+                            mesh: new STL().parse(data), file
                         }]);
                         break;
                     case "obj":
-                        resolve(load.OBJ.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
+                        resolve(OBJ.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
                         break;
                     case "3mf":
-                        load.TMF.parseAsync(data).then((meshes) => {
+                        TMF.parseAsync(data).then((meshes) => {
                             resolve(meshes.map(m => {
                                 return { mesh: m.faces.toFloat32(), file }
                             }));
                         });
                         break;
                     case "svg":
-                        resolve(load.SVG.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
+                        resolve(SVG.parse(data).map(m => { return {mesh: m.toFloat32(), file} }));
                         break;
                     default:
                         reject(`unknown file type: "${ext}" from ${url}`);
@@ -84,6 +78,4 @@ function load_url(url, options = {}) {
         xhr.responseType = datatype;
         xhr.send(formdata);
     });
-};
-
-})();
+}

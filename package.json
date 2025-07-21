@@ -1,6 +1,6 @@
 {
     "name": "grid-apps",
-    "version": "4.2.0",
+    "version": "4.3.0",
     "description": "grid.space 3d slicing & modeling tools",
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
@@ -32,11 +32,12 @@
         "slicer"
     ],
     "engines": {
-        "node": ">=18.0.0"
+        "node": ">=22.0.0"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^6.1.1",
-        "@gridspace/app-server": "^0.0.17",
+        "@gridspace/app-server": "^0.0.18",
+        "@gridspace/basic-ftp": "^5.0.5",
         "@gridspace/net-level-client": "^0.2.3",
         "@tracespace/parser": "^5.0.0-next.0",
         "@tweenjs/tween.js": "^16.6.0",
@@ -45,15 +46,18 @@
         "buffer-crc32": "^0.2.13",
         "compression": "^1.7.4",
         "connect": "^3.7.0",
-        "earcut": "^2.2.3",
+        "earcut": "^3.0.1",
         "express-useragent": "^1.0.13",
+        "fast-glob": "^3.3.3",
+        "i": "^0.3.7",
         "jszip": "^3.7.1",
-        "manifold-3d": "^2.5.1",
+        "manifold-3d": "^3.1.1",
         "moment": "^2.29.4",
+        "npm": "^11.4.2",
         "prettier": "^3.5.3",
         "react-responsive-carousel": "^3.2.23",
         "serve-static": "^1.14.1",
-        "three": "^0.174.0",
+        "three": "^0.178.0",
         "three-mesh-bvh": "^0.7.6",
         "uglify-js": "3.14.5",
         "validator": ">=13.7.0",
@@ -63,25 +67,21 @@
         "@docusaurus/core": "^3.7.0",
         "@docusaurus/preset-classic": "^3.7.0",
         "@electron/notarize": "^3.0.0",
+        "copy-webpack-plugin": "^12.0.2",
         "docusaurus-lunr-search": "^3.6.0",
         "dotenv": "latest",
         "electron": "^35.0.1",
         "electron-builder": "^24.9.1",
+        "esbuild": "^0.25.5",
         "fs-extra": "^11.2.0",
+        "imports-loader": "^5.0.0",
         "node-fetch": "^3.3.2",
         "terser-webpack-plugin": "^5.3.10",
         "webpack": "^5.92.1",
         "webpack-cli": "^5.1.4"
     },
     "scripts": {
-        "setup": "npm i && cd mods && npm i",
-        "dev": "gs-app-server --debug",
-        "prod": "gs-app-server",
-        "prod-dryrun": "gs-app-server --dryrun",
-        "start": "npm run prebuild && electron .",
-        "start-dev": "npm run prebuild && electron . --devel",
-        "start-dbg": "npm run prebuild && electron . --debugg",
-        "start-ddb": "npm run prebuild && electron . --devel --debugg",
+        "setup": "npm i && npm run clean && npm run dev -- --dryrun && npm run webpack-ext",
         "build": "npm run prebuild && electron-builder",
         "build-nopublish": "npm run prebuild && electron-builder --publish never",
         "build-debug": "npm run prebuild && DEBUG=electron-builder electron-builder",
@@ -91,16 +91,28 @@
         "build-win-arm": "npm run build -- --win --arm64",
         "build-mac": "npm run build -- --mac --arm64",
         "build-mac-intel": "npm run build -- --mac --x64",
-        "mklinks": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > links.csv",
+        "clean": "rm -rf build data dist src/pack tmp src.old web.old",
+        "docs-dev": "docusaurus start --config conf/docusaurus.config.js",
+        "docs-build": "docusaurus build --config conf/docusaurus.config.js",
+        "docs-serve": "docusaurus serve --config conf/docusaurus.config.js",
+        "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
+        "dev": "npm run webpack-ext && gs-app-server --debug --single",
+        "prod": "npm run webpack-ext && npm run webpack-src prod && gs-app-server",
+        "prod-pack": "npm run webpack-ext && npm run webpack-src prod",
+        "prod-dryrun": "gs-app-server --dryrun",
+        "start": "npm run prebuild prod && electron .",
+        "start-dev": "npm run prebuild prod && electron . --devel",
+        "start-dbg": "npm run prebuild && electron . --debugg",
+        "start-ddb": "npm run prebuild && electron . --devel --debugg",
+        "mk-links": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > conf/links.csv",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
-        "clear-cache": "rm -rf data/cache/* dist/ tmp/*",
-        "prebuild": "node bin/electron-pre.js",
+        "prebuild": "npm run setup && npm run webpack-src prod && node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
-        "preinstall": "node bin/install-pre.js && npx webpack --config bin/webpack-three.js",
-        "docs-dev": "docusaurus start",
-        "docs-build": "docusaurus build",
-        "docs-serve": "docusaurus serve",
-        "docs-check": "prettier ./docs --check"
+        "preinstall": "node bin/install-pre.js",
+        "webpack-ext": "npm run webpack-three && npm run webpack-zip",
+        "webpack-src": "node bin/esbuild.config.mjs",
+        "webpack-three": "npx webpack --config bin/webpack-three-esm.js",
+        "webpack-zip": "npx webpack --config bin/webpack-jszip-esm.js"
     },
     "main": "app-el.js",
     "build": {
@@ -172,7 +184,11 @@
         "nsis": {
             "oneClick": false,
             "allowToChangeInstallationDirectory": true,
+            "differentialPackage": false,
             "allowElevation": true
+        },
+        "dmg": {
+            "writeUpdateInfo": false
         },
         "mac": {
             "icon": "bin/GS.icns",
@@ -182,8 +198,7 @@
             "entitlements": "bin/electron-entitlements.plist",
             "entitlementsInherit": "bin/electron-entitlements.plist",
             "target": [
-                "dmg",
-                "zip"
+                "dmg"
             ]
         },
         "linux": {
@@ -193,5 +208,6 @@
             ]
         },
         "afterSign": "bin/electron-notarize.js"
-    }
+    },
+    "sideEffects": true
 }

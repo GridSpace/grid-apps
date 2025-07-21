@@ -1,33 +1,21 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { THREE } from '../ext/three.js';
+import { client as motoClient } from '../moto/client.js';
+import { api as meshApi } from './api.js';
+import { object as meshObject } from './object.js';
+import { model as meshModel } from './model.js';
+import { newPolygon } from '../geo/polygon.js';
+import { polygons } from '../geo/polygons.js';
+import { space } from '../moto/space.js';
+import { util } from './util.js';
 
-// dep: add.array
-// dep: add.three
-// dep: geo.polygon
-// dep: geo.polygons
-// dep: moto.license
-// dep: moto.client
-// dep: mesh.object
-// use: mesh.api
-// use: mesh.util
-// use: mesh.group
-gapp.register("mesh.model", [], (root, exports) => {
-
-const { MeshPhongMaterial, MeshBasicMaterial, LineBasicMaterial } = THREE;
-const { BufferGeometry, BufferAttribute, DoubleSide, Mesh } = THREE;
-const { Box3, Vector3, Triangle } = THREE;
-const { base, mesh, moto } = root;
-const { space } = moto;
-const { api } = mesh;
-const { newBounds, newPolygon, polygons } = base;
-
-const mapp = mesh;
-const worker = moto.client.fn;
+const { MeshPhongMaterial, MeshBasicMaterial, LineBasicMaterial, BufferGeometry, BufferAttribute, DoubleSide, Mesh, Box3, Vector3, Triangle } = THREE;
+const worker = motoClient.fn;
 const zero = new Vector3(0,0,0);
 
 /** default materials **/
-let materials = mesh.material = {
+const materials = {
     // model unselected
     normal: new MeshPhongMaterial({
         flatShading: true,
@@ -73,24 +61,24 @@ let materials = mesh.material = {
         wireframe: true,
         color: 0x0,
         transparent: true,
-        opacity: 0.5
+        opacity: 0.4
     }),
     wireline: new LineBasicMaterial({
         side: DoubleSide,
         color: 0x0,
         transparent: true,
-        opacity: 0.5
+        opacity: 0.4
     }),
 };
 
 /** 3D model rendered on plaform **/
-mesh.model = class MeshModel extends mesh.object {
+class MeshModel extends meshObject {
     constructor(data, id) {
         super(id);
         let { file, mesh, vertices } = data;
 
-        if (!mesh) {
-            dbug.error(`'${file}' missing mesh data`);
+        if (!(mesh || vertices)) {
+            meshApi.dbug.error(`'${file}' missing mesh data`);
             return;
         }
 
@@ -127,29 +115,21 @@ mesh.model = class MeshModel extends mesh.object {
         return this.mesh;
     }
 
-    get bounds() {
+    get geo_bounds() {
         return this.geometry.boundingBox.clone();
     }
 
-    get world_bounds() {
-        return this.bounds.translate(this.position());
+    get bounds() {
+        // console.log('bounds',
+        //     this.geometry.boundingBox.clone(),
+        //     this.position().clone()
+        // );
+        return this.geometry.boundingBox.clone().translate(this.position());
     }
-
-    // get world_positions() {
-    //     let pos = this.position();
-    //     return this.geometry
-    //         .clone()
-    //         .translate(pos.x,pos.y,pos.z)
-    //         .attributes.position.array;
-    // }
 
     get positions() {
         return this.geometry.attributes.position.array;
     }
-
-    // get matrix() {
-    //     return this.matrixWorld.elements;
-    // }
 
     get matrixWorld() {
         return this.mesh.matrixWorld;
@@ -157,7 +137,7 @@ mesh.model = class MeshModel extends mesh.object {
 
     drag(opt = {}) {
         let { start, delta, offset, end } = opt;
-        let { snap, snapon } = api.prefs.map.space;
+        let { snap, snapon } = meshApi.prefs.map.space;
         if (start) {
             let mid = this.bounds.mid;
             this._save = {
@@ -194,7 +174,6 @@ mesh.model = class MeshModel extends mesh.object {
     qrotate(quaternion) {
         this.log('model-rotate', quaternion.toArray());
         this.geometry.applyQuaternion(quaternion);
-        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
@@ -202,7 +181,6 @@ mesh.model = class MeshModel extends mesh.object {
         if (x === 1 && y === 1 && z === 1) return;
         this.log('model-scale', ...arguments, this.bounds);
         this.geometry.scale(x, y, z);
-        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
@@ -210,7 +188,6 @@ mesh.model = class MeshModel extends mesh.object {
         if (!(x || y || z)) return;
         this.log('model-translate', ...arguments);
         this.geometry.translate(x, y, z);
-        this.geometry._model_invalid = true;
         this.updateBounds();
     }
 
@@ -248,13 +225,15 @@ mesh.model = class MeshModel extends mesh.object {
     // moves mesh object center to target
     centerTo(to) {
         this.log('model-centerto', to);
-        let { mid } = this.bounds;
-        let abs = this.world_bounds.mid;
-        this.translate(
-            -mid.x + (abs.x - to.x),
-            -mid.y + (abs.y - to.y),
-            -mid.z + (abs.z - to.z),
-        );
+        let geo = this.geo_bounds;
+        let { mid } = this.bounds.translate({
+            x: -to.x,
+            y: -to.y,
+            z: -to.z
+        });
+        // this.translate(-geo.mid.x, -geo.mid.y, -geo.mid.z);
+        // this.translate(mid.x, mid.y, mid.z);
+        this.translate(-geo.mid.x+mid.x, -geo.mid.y+mid.y, -geo.mid.z+mid.z);
         this.position(to.x, to.y, to.z);
         return this;
     }
@@ -262,20 +241,17 @@ mesh.model = class MeshModel extends mesh.object {
     // when geometry updates, recompute bounds for ray intersections
     // and sync data to worker and indexed db
     updateBounds() {
-        if (this._wire)
-        this._wire.geometry.attributes.position.needsUpdate = true;
+        if (this._wire) {
+            this._wire.geometry.attributes.position.needsUpdate = true;
+            this.updateWireEdges();
+        }
         this.attributes.position.needsUpdate = true;
         this.geometry.computeBoundingBox();
         this.geometry.computeBoundingSphere();
         this.log('update-bounds', this.geometry.boundingBox);
         this.normals({ refresh: true });
-        this.updateBoundsBox();
-        moto.space.update();
+        space.update();
         this.sync();
-    }
-
-    updateBoundsBox() {
-        this.group?.updateBoundsBox();
     }
 
     mirror() {
@@ -291,14 +267,21 @@ mesh.model = class MeshModel extends mesh.object {
         let data = this.attributes.position.clone().array;
         if (opt.append) data = [...data, ...opt.append].toFloat32();
         if (opt.x) return this.reload(data);
-        let model = new mesh.model({ file: `${this.file}`, mesh: data });
-        let group = opt.group || mesh.api.group.new();
+        let model = new meshModel({ file: `${this.file}`, mesh: data });
+        let group = opt.group || meshApi.group.new();
         let bounds = this.group.bounds;
         group.add(model);
         model.position(pos.x, pos.y, pos.z);
-        model.wireframe(this.wireframe());
+        // preserve wireframe settings
+        let wireSettings = this.wireframe();
+        if (wireSettings.enabled) {
+            model.wireframe(true, {
+                edges: wireSettings.edges,
+                opacity: wireSettings.opacity
+            });
+        }
         if (opt.select) {
-            api.selection.add(model);
+            meshApi.selection.add(model);
         }
         if (opt.mirror) {
             group.move(0, 0, bounds.dim.z);
@@ -332,10 +315,12 @@ mesh.model = class MeshModel extends mesh.object {
         this.log('reload');
         let was = this.wireframe(false);
         let geo = this.mesh.geometry;
+        const oldGeo = geo;
+        geo = new BufferGeometry();
         geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        // signal util.box3expand that geometry changed
-        geo._model_invalid = true;
         geo.computeVertexNormals();
+        this.mesh.geometry = geo;
+        oldGeo.dispose();
         // restore wireframe state
         this.wireframe(was);
         // fixup normals
@@ -343,7 +328,7 @@ mesh.model = class MeshModel extends mesh.object {
         // sync worker, allows raycasting to work
         this.updateBounds();
         // re-gen face index in surface mode
-        mesh.api.mode.check();
+        meshApi.mode.check();
     }
 
     rename(file) {
@@ -356,7 +341,7 @@ mesh.model = class MeshModel extends mesh.object {
         // sync to worker
         worker.model_load({ id: this.id, name: this.file, vertices: this.positions });
         // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, {
+        meshApi.db.space.put(this.id, {
             file: this.file,
             mesh: this.attributes.position.array
         });
@@ -461,6 +446,8 @@ mesh.model = class MeshModel extends mesh.object {
                 enabled: true,
                 opacity: this.opacity(),
                 color: was ? this._wire.material.color : undefined,
+                edges: this._wire._edges,
+                isLineSegments: this._wire.isLineSegments
             } : {
                 enabled: false
             };
@@ -468,27 +455,40 @@ mesh.model = class MeshModel extends mesh.object {
         if (bool.toggle) {
             bool = !was;
         }
-        // no change
         if (was === bool) {
             return was;
         }
         if (was) {
             this.mesh.remove(this._wire);
+            if (this._wire) {
+                this._wire.geometry.dispose();
+                this._wire.material.dispose();
+            }
             this._wire = undefined;
             this.opacity({restore: true});
         }
-        if (bool === 'edges') {
-            let edges = new THREE.EdgesGeometry(this.mesh.geometry, 5);
-            this._wire = new THREE.LineSegments(edges, materials.wireframe);
+        if (bool && opt.edges) {
+            let edges = new THREE.EdgesGeometry(this.mesh.geometry, opt.edges);
+            this._wire = new THREE.LineSegments(edges, materials.wireline.clone());
+            this._wire._edges = opt.edges;
             this.mesh.add(this._wire);
-            this.opacity({temp: opt.opacity || 0.15});
+            this.opacity({temp: opt.opacity || meshApi.prefs.map.wireframe.opacity});
         } else if (bool) {
-            this._wire = new Mesh(this.mesh.geometry.shallowClone(), materials.wireframe);
+            this._wire = new Mesh(this.mesh.geometry.shallowClone(), materials.wireframe.clone());
             this.mesh.add(this._wire);
-            this.opacity({temp: opt.opacity || 0.15});
+            this.opacity({temp: opt.opacity || meshApi.prefs.map.wireframe.opacity});
         }
         space.update();
         return was;
+    }
+
+    updateWireEdges() {
+        if (this._wire?.isLineSegments) {
+            const newEdges = new THREE.EdgesGeometry(this.mesh.geometry, this._wire._edges);
+            this._wire.geometry.dispose();
+            this._wire.material.dispose();
+            this._wire.geometry = newEdges;
+        }
     }
 
     normals(bool) {
@@ -511,7 +511,7 @@ mesh.model = class MeshModel extends mesh.object {
             this._norm = undefined;
         }
         if (bool) {
-            this.mesh.add(this._norm = mesh.util.faceNormals(this.mesh));
+            this.mesh.add(this._norm = util.faceNormals(this.mesh));
         }
     }
 
@@ -521,7 +521,7 @@ mesh.model = class MeshModel extends mesh.object {
 
     // invert normals for entire mesh or selected faces depending on mode
     invert(mode) {
-        let { modes } = mesh.api;
+        let { modes } = meshApi;
         let geo = this.mesh.geometry;
         let pos = geo.attributes.position;
         let arr = pos.array;
@@ -565,12 +565,12 @@ mesh.model = class MeshModel extends mesh.object {
                     return resolve(group);
                 }
                 if (o1?.length)
-                group.add(new mesh.model({
+                group.add(new meshModel({
                     file: `${this.file}-bot`,
                     mesh: o1
                 }).reCenter());
                 if (o2?.length)
-                group.add(new mesh.model({
+                group.add(new meshModel({
                     file: `${this.file}-top`,
                     mesh: o2
                 }).reCenter());
@@ -598,6 +598,25 @@ mesh.model = class MeshModel extends mesh.object {
             this.group = undefined;
             this.removed = 'pending';
         } else {
+            // Clean up geometries and materials
+            if (this._wire) {
+                this._wire.geometry.dispose();
+                this._wire.material.dispose();
+                this._wire = undefined;
+            }
+            if (this._norm) {
+                this._norm.geometry.dispose();
+                this._norm.material.dispose();
+                this._norm = undefined;
+            }
+            if (this.mesh) {
+                this.mesh.geometry.dispose();
+                if (Array.isArray(this.mesh.material)) {
+                    this.mesh.material.forEach(m => m.dispose());
+                } else {
+                    this.mesh.material.dispose();
+                }
+            }
             // manage lifecycle with worker, mesh app caches, etc
             this.destroy();
             // tag removed for debugging
@@ -652,7 +671,7 @@ mesh.model = class MeshModel extends mesh.object {
         let center = bounds.getCenter(new Vector3);
         polys.forEach(p => p.move({ x: -center.x, y: -center.y, z: -center.z }));
         let normal = new Vector3(0,0,1).applyQuaternion(quaternion);
-        let sketch = mesh.api.add.sketch({
+        let sketch = meshApi.add.sketch({
             normal,
             center: center.applyQuaternion(quaternion).add(this.position())
         });
@@ -729,7 +748,7 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     updateSelections() {
-        let groups = mesh.util.facesToGroups(this.sel.faces);
+        let groups = util.facesToGroups(this.sel.faces);
         let geo = this.mesh.geometry;
         geo.clearGroups();
         for (let group of groups) {
@@ -802,13 +821,13 @@ mesh.model = class MeshModel extends mesh.object {
         let { a, b, c } = face;
         let timer = setTimeout(() => {
             timer = undefined;
-            mesh.api.log.emit("matching surface").pin();
+            meshApi.log.emit("matching surface").pin();
         }, 150);
         // let mark = Date.now();
         worker.model_select({
             id: this.id, x, y:-z, z:y, a, b, c, surface
         }).then(data => {
-            // mesh.api.log.emit(`... data time = ${Date.now() - mark}`); mark = Date.now();
+            // meshApi.log.emit(`... data time = ${Date.now() - mark}`); mark = Date.now();
             if (timer) {
                 clearTimeout(timer);
             }
@@ -816,16 +835,16 @@ mesh.model = class MeshModel extends mesh.object {
             // console.log({data});
             // this.toggleSelectedVertices(verts);
             this.selectFaces(faces, action);
-            // mesh.api.log.emit(`... select time = ${Date.now() - mark}`); mark = Date.now();
+            // meshApi.log.emit(`... select time = ${Date.now() - mark}`); mark = Date.now();
             this.updateSelections();
             if (!timer) {
-                mesh.api.log.emit("surface match complete").unpin();
-                moto.space.refresh();
+                api.log.emit("surface match complete").unpin();
+                space.refresh();
             }
-            // mesh.api.log.emit(`... paint time = ${Date.now() - mark}`);
+            // meshApi.log.emit(`... paint time = ${Date.now() - mark}`);
         });
     }
 
-};
+}
 
-});
+export { MeshModel as model, materials };

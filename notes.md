@@ -2,8 +2,6 @@
 
 ## `C` cosmetic, `F` functional, `P` performance, `B` bug fix
 
-* `F` experiment with structuredClone(), SharedArrayBuffer, createImageBitmap()
-* `F` test #private fields, array.at() for negative indices
 * `F` option to hide platform when viewing from below
 
 # Kiri:Moto
@@ -14,7 +12,6 @@
 
 * `P` refactor vertex replacement and widget update matrix tracking
 * `P` duplicate objects should share same slice data unless rotated or scaled
-* `P` allow selection to be decimated on demand (context menu?)
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
 * `P` faster ray intersect https://github.com/gkjohnson/three-mesh-bvh/
 * `P` try material clipping planes for slice range selection
@@ -26,7 +23,7 @@
 * `F` complete and expose grouping feature
 * `F` add svgnest-like arrange algorithm
 * `F` date column and sorting in recent files list
-* `F` warn if part hanging in negative Z space or off bed in general
+* `F` highlight part outside workspace bounds (like can neg Z shader)
 
 # FDM
 
@@ -34,6 +31,7 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` better thin-wall (like arachne)
 * `F` add scarf seams
 * `F` add 'random' and 'seam' start point options
 * `F` convert ranges to z offsets while continuing to show layer #
@@ -52,12 +50,6 @@
 * `P` extruder + filament max flow rate cap in planner
 * `P` solid fill the tops of supports for down facing flats
 
-# FDM - SLA
-
-# `P` common support area detection (fork new fdm code)
-* `P` prioritize supports by length of unsupported span. mandatory when circularity > X
-*     or % area of inner to outer poly is high (making it a thin shell)
-
 # FDM - BELT
 
 * `B` auto bed resizing leaves the origin in the wrong place at first
@@ -69,7 +61,6 @@
 
 # CAM
 
-* `B` roughing leave stock should also increase Z slightly (sqrt(2) * leave)
 * `B` rapid moves should be max of terrain zmax and last cut layer height (roughing)
 * `B` feed rate for next tool set before tool change (push/pop feed rates?)
 * `B` tab cuts cause loss of direction, parenting, depth, and it's hard to fix
@@ -84,18 +75,14 @@
 * `F` add `match faces` option in `outline` operation
 * `F` add {progress} substitution and maybe {time-remaining} if can be calc'd
 * `F` import and follow 2D paths (conformed like pocket contours)
-* `F` add user-defined origin (issue #28)
-* `F` intelligently turn circle hole pocket clear into spiral down
 * `F` add `plunge max` to contouring that can override z feed limit
 * `F` add lead-in milling (requires adding clamp / no go areas)
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
-* `F` add ease-down support to trace op
 * `F` add support for tapered ball mills
 * `F` change color of line selection in trace op when not a closed poly
 * `F` limit cut depth to flute length of selected tool (or warn)
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
-* `F` parameterize dropping close points in prep.js. ensure long segments remain straight
 * `F` trapezoidal tabs in Z
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` maintain several part orientations + op chains in a single profile
@@ -104,13 +91,7 @@
 * `P` outer corner arc moves
 * `P` log Z interpolation for contour XYZ moves
 * `P` option to start with the smallest poly by area on layer change
-* `P` refactor slicing engine to add minion threading
-* `P` port arc code from FDM export to CAM export
 * `P` redo all path route / planning in prepare to account for terrain before camOut
-
-# SLA
-
-* `P` blit layers w/ 3JS ortho camera to canvas
 
 # Laser
 
@@ -124,8 +105,9 @@
 
 # Mesh:Tool
 
-* font to path with https://github.com/paulzi/svg-text-to-path
 * add undo/redo
+* add TextGeometry
+* font to path with https://github.com/paulzi/svg-text-to-path
 * click to repair normals based on a known good (selected) face
 * send to Kiri:Moto workspace (or update model vertices in place)
 * better z snap using just vertexes from face intersected
@@ -134,6 +116,5 @@
 * add flatten/crush op: for z bottoms (or surfaces?)
 * allow setting model/group origin for scale/rotate
 * fix mirror to work with groups (just models currently)
-* bounding box toggle should be global, not selection
 * add analyze results dialog
 * remove/hide auto-repair function

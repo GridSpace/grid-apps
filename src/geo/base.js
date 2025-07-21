@@ -1,12 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
+import { newPoint } from './point.js';
+import earcut from '../ext/earcut.js';
 
-// use: add.array
-// use: add.class
-gapp.register("geo.base", [], (root, exports) => {
-
-const base = root.base = {};
 const round_decimal_precision = 5;
 
 function time() {
@@ -219,7 +215,7 @@ function intersect(p1, p2, p3, p4, test, parallelok) {
     if (test === keys.SEGINT && !segint) return null;
     if (test === keys.RAYINT && !rayint) return null;
 
-    let ip = base.newPoint(
+    let ip = newPoint(
         p1x + (a * d1x), // x
         p1y + (a * d1y), // y
         p3.z || p4.z, // z
@@ -264,7 +260,7 @@ function intersectRayLine(ro, s1, p1, p2, infinite) {
     b = n2 / d;
 
     if (infinite || (inCloseRange(b, 0, 1) && a >= 0)) {
-        let ip = base.newPoint(
+        let ip = newPoint(
             p1x + (a * s1x),
             p1y + (a * s1y),
             p2.z || ro.z,
@@ -528,7 +524,7 @@ function comma(v) {
  * Connect to base
  ******************************************************************* */
 
-base.key = {
+export const key = {
     NONE: "",
     PROJECT: "project",
     SEGINT: "segint",
@@ -536,7 +532,7 @@ base.key = {
     PARALLEL: "parallel"
 };
 
-base.config = {
+export const config = {
     // size of gcode debug arrow head
     debug_arrow: 0.25,
     // default # of decimal places in generated gcode
@@ -602,7 +598,7 @@ base.config = {
     clipperClean: 250
 };
 
-base.util = {
+export const util = {
     sqr,
     lerp,
     time,
@@ -639,4 +635,10 @@ base.util = {
     zInPlane
 };
 
-});
+export const base = {
+    config,
+    key,
+    util
+};
+
+export { earcut };

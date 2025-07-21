@@ -1,27 +1,19 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-"use strict";
-
-// dep: add.array
-// dep: add.three
-// dep: moto.license
-// dep: moto.broker
-// dep: moto.client
-// dep: mesh.object
-// use: mesh.api
-// use: mesh.model
-gapp.register("mesh.group", [], (root, exports) => {
-
-const { mesh, moto } = root;
+import { THREE } from '../ext/three.js';
 const { Group, Box3 } = THREE;
-const { broker } = gapp;
-const { space } = moto;
+import { license as motoLicense } from '../moto/license.js';
+import { broker as motoBroker } from '../moto/broker.js';
+import { client as motoClient } from '../moto/client.js';
+import { space as motoSpace } from '../moto/space.js';
+import { object as meshObject } from './object.js';
+import { api as meshApi } from './api.js';
+import { model as meshModel } from './model.js';
 
-const call = broker.send;
-const worker = moto.client.fn;
+const call = motoBroker.send;
+const worker = motoClient.fn;
 
-mesh.group = class MeshGroup extends mesh.object {
-
+class MeshGroup extends meshObject {
     // @param group {MeshModel[]}
     constructor(models = [], id, name) {
         super(id);
@@ -44,7 +36,7 @@ mesh.group = class MeshGroup extends mesh.object {
     get bounds() {
         let box3 = new Box3();
         for (let model of this.models) {
-            box3.union(model.world_bounds);
+            box3.union(model.bounds);
         }
         return box3;
     }
@@ -54,11 +46,11 @@ mesh.group = class MeshGroup extends mesh.object {
         model.group = this;
         this.models.addOnce(model);
         this.group3.add(model.mesh);
-        space.update();
+        motoSpace.update();
         call.model_add({model, group:this});
         worker.group_add({id: this.id, model:model.id});
         // update data store
-        mesh.db.space.put(this.id, this.models.map(m => m.id));
+        meshApi.db.space.put(this.id, this.models.map(m => m.id));
         return this;
     }
 
@@ -82,14 +74,14 @@ mesh.group = class MeshGroup extends mesh.object {
         if (opt.free) model.remove(true);
         // auto-remove group when empty
         if (this.group3.children.length === 0) {
-            mesh.api.group.remove(this);
+            meshApi.group.remove(this);
             // manage lifecycle with worker, mesh app caches, etc
             this.destroy();
         } else {
             // update data store
-            mesh.db.space.put(this.id, this.models.map(m => m.id));
+            meshApi.db.space.put(this.id, this.models.map(m => m.id));
         }
-        space.update();
+        motoSpace.update();
         return this;
     }
 
@@ -98,10 +90,10 @@ mesh.group = class MeshGroup extends mesh.object {
         let { x, y, z } = dim;
         let max = Math.max(x, y, z);
         if (max < 2) {
-            mesh.api.log.emit(`auto-scaling import from ${max.round(5)}`);
+            meshApi.log.emit(`auto-scaling import from ${max.round(5)}`);
             this.scale(1000, 1000, 1000);
         }
-        let { center, floor } = mesh.api.prefs.map.space;
+        let { center, floor } = meshApi.prefs.map.space;
         if (center !== false) this.centerXY();
         if (floor !== false) this.floor();
         return this;
@@ -173,6 +165,6 @@ mesh.group = class MeshGroup extends mesh.object {
             model.select(...arguments);
         }
     }
-};
+}
 
-});
+export { MeshGroup as group };

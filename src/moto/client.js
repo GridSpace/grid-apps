@@ -2,9 +2,7 @@
 
 "use strict";
 
-// dep: add.array
-// dep: moto.broker
-gapp.register("moto.client", [], (root, exports) => {
+import { broker } from './broker.js';
 
 let ccvalue = self.navigator ? navigator.hardwareConcurrency || 1 : 1,
     ccmax = ccvalue > 3 ? ccvalue - 1 : 1,
@@ -22,8 +20,7 @@ function dispatch(topic, message) {
 }
 
 // code is running in the browser / client context
-const client = exports({
-
+const client = {
     /** @returns [integer] total number of workers **/
     live: () => {
         return workers.length;
@@ -153,7 +150,7 @@ const client = exports({
         if (self.createWorker) {
             return self.createWorker();
         } else {
-            return new Worker(workurl = url);
+            return new Worker(workurl = url, { type: 'module' });
         }
     },
 
@@ -191,9 +188,14 @@ const client = exports({
             let worker = client.spawn(workurl);
             worker.run = null;
             worker.index = i;
+            worker.onerror = function(e) {
+                console.log({ worker_error: e });
+            }
+            worker.onmessageerror = function(e) {
+                console.log({ worker_message_error: e });
+            }
             worker.onmessage = function(e) {
                 let reply = e.data;
-
                 // handle special case for task binding
                 if (reply.bind) {
                     client.bind(reply.bind);
@@ -208,7 +210,7 @@ const client = exports({
 
                 // handle special case for broker publish
                 if (reply.publish) {
-                    gapp.broker.publish(reply.publish, reply.message);
+                    broker.publish(reply.publish, reply.message);
                     return;
                 }
 
@@ -251,7 +253,6 @@ const client = exports({
 
         client.kick();
     }
+};
 
-});
-
-});
+export { client };

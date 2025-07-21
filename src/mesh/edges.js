@@ -1,21 +1,16 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 /**
- * facet edge selecetor. allows for creating new facets
+ * facet edge selector. allows for creating new facets
  * when two connected edges share a single point.
  */
 
-"use strict";
+import { THREE, Line2, LineSegmentsGeometry, LineSegments2, LineGeometry, LineMaterial } from '../ext/three.js';
+import { space as motoSpace } from '../moto/space.js';
+import { newPoint } from '../geo/point.js';
+import { api } from './api.js';
 
-
-// dep: moto.space
-gapp.register("mesh.edges", [], (root, exports) => {
-
-const { Line2, LineMaterial, LineGeometry, Vector3, Group } = THREE;
-const { LineSegments2, LineSegmentsGeometry } = THREE;
-const { base, mesh, moto } = root;
-const { space } = moto;
-const { newPoint } = base;
+const { Vector3, Group } = THREE;
 
 let isActive;
 let hovered;
@@ -49,14 +44,14 @@ function cmp(v1, v2) {
 
 // points equal if all axis values are within tolerance of each other
 function eq(p1, p2) {
-    return
+    return true &&
         cmp(p1.x, p2.x) &&
         cmp(p1.y, p2.y) &&
         cmp(p1.z, p2.z);
 }
 
 // split functions
-let edges = {
+const edges = {
     active() {
         return isActive ? true : false;
     },
@@ -66,21 +61,19 @@ let edges = {
             return;
         }
 
-        let { api } = mesh;
-
         isActive = true;
         selected.length = 0;
         obj.visible = false;
 
-        space.scene.add(obj);
+        motoSpace.scene.add(obj);
 
         // enable temp mode
         let state = edges.state = { obj };
-        let models = state.models = api.selection.models();
+        let models = state.models = api.model.list();
         let meshes = models.map(m => m.mesh);
 
         // find closest facet edge to hover location
-        space.mouse.onHover((int, event, ints) => {
+        motoSpace.mouse.onHover((int, event, ints) => {
             if (!event) {
                 obj.visible = false;
                 return meshes;
@@ -105,12 +98,12 @@ let edges = {
         if (!isActive) {
             return;
         }
-        let space = moto.space;
+        let space = motoSpace;
         space.scene.remove(obj);
         space.scene.remove(edges.selected);
         space.mouse.onHover(undefined);
         isActive = edges.state = undefined;
-        mesh.api.selection.update();
+        api.selection.update();
     },
 
     async add() {
@@ -163,11 +156,11 @@ let edges = {
 
     clear() {
         selected.length = 0;
-        space.scene.remove(edges.selected);
+        motoSpace.scene.remove(edges.selected);
     },
 
     select() {
-        space.scene.remove(edges.selected);
+        motoSpace.scene.remove(edges.selected);
         if (!hovered) return;
 
         const { object, face, side } = hovered;
@@ -199,7 +192,7 @@ let edges = {
         }
 
         const group = edges.selected = new Group();
-        space.scene.add(edges.selected);
+        motoSpace.scene.add(edges.selected);
         let verts = selected.map(s => s.side.verts).flat();
         group.add(line2(verts));
     },
@@ -216,8 +209,7 @@ let edges = {
         let l2 = { p0:v2, p1:v0, d:point.distToLine3D(v2, v0), v:[face.c,face.a].sort() };
         return [ l0, l1, l2 ].sort((a,b) => a.d - b.d)[0];
     }
-}
+};
 
-exports(edges);
-
-});
+export default edges;
+export { edges };
