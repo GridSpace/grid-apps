@@ -8,6 +8,7 @@ import { polygons as POLY } from '../../../geo/polygons.js';
 import { util as base_util } from '../../../geo/base.js';
 import { poly2polyEmit } from '../../../geo/paths.js';
 import { newPoint } from '../../../geo/point.js';
+import { addDogbones } from './slice.js';
 
 class OpOutline extends CamOp {
     constructor(state, op) {
