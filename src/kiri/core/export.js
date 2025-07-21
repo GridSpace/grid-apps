@@ -471,7 +471,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         $('print-filament').style.display = fdm ? '' : 'none';
         $('print-filename').value = filename;
         $('print-filesize').value = util.comma(info.bytes);
-        $('print-filament').value = Math.round(info.distance);
+        $('print-length').value = Math.round(info.distance);
         if (set.controller.devel) {
             $('code-preview-textarea').style.height = "30em";
         }
