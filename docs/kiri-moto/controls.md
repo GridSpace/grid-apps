@@ -21,7 +21,6 @@ Kiri:Moto provides a wide range of keyboard and mouse controls to streamline you
 |                  |                                           | already in layout view                  |
 | s                | Slice Object                              | Slice workspace objects                 |
 | p                | Preview Paths                             | Do route planning for sliced objects    |
-| g                | CNC Animation                             | Enter milling animation mode            |
 | x                | Export Paths as GCode, SVG, DXF           | Produce downloadable files              |
 |                  |                                           |                                         |
 | i                | File Import Dialog                        |                                         |
@@ -69,7 +68,9 @@ Kiri:Moto provides a wide range of keyboard and mouse controls to streamline you
 
 ## CAM Controls
 
-| Key                            | Action           | Notes |
-| ------------------------------ | ---------------- | ----- |
-| \[ctl + click] on an operation | Toggle operation |       |
+| Key                              | Action              | Notes                        |
+| -------------------------------- | ------------------- | ---------------------------- |
+| g                                | CNC Animation       | Enter milling animation mode |
+| \[ctl + click] on an operation   | Toggle operation    |                              |
+| \[shift + click] on an operation | Duplicate Operation |                              |
 
