@@ -518,6 +518,7 @@ export const conf = {
                 camDrillingOn: false,
                 camRegisterSpeed: 1000,
                 camRegisterThru: 5,
+                camRegisterOffset: 10,
                 camHelicalTool: 1000,
                 camHelicalSpindle: 1000,
                 camHelicalDownSpeed: 250,

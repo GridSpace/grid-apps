@@ -592,8 +592,6 @@ self.lang['en-us'] = {
     cd_dwll_l:      ["dwell time","between plunges in","in milliseconds"],
     cd_lift_s:      "drill lift",
     cd_lift_l:      ["lift between plunges","after dwell period","in workspace units","0 to disable"],
-    cd_regi_s:      "register",
-    cd_regi_l:      ["drill registration holes","for double-sided parts","independent of enable","drilling but uses same","tool and settings"],
     cd_thru_s:      "z extend",
     cd_thru_l:      ["extend downward cut through stock","in workspace units"],
     cd_dtru_s:      "drill through",
@@ -608,6 +606,12 @@ self.lang['en-us'] = {
     cd_seli_l:    ["individually select holes","to drill"],
     cd_sela_s:    "Select Matching Diameter",
     cd_sela_l:    ["select all holes that", "match selected tool diameter"],
+
+    //CNC Registration
+    cd_regi_s:      "register",
+    cd_regi_l:      ["drill registration holes","for double-sided parts","independent of enable","drilling but uses same","tool and settings"],
+    cd_rego_s:      "part offset",
+    cd_rego_l:      ["offset of hole center","from part bounding box","in workspace units"],
 
     // CNC HELICAL tolpath
     ch_menu:        "helical",
