@@ -101,12 +101,12 @@ export function createPopOp(type, map) {
             const settings = conf.get();
             const { tool } = new Tool(settings, op.rec.tool); //get tool by id
             const opType = op.rec.type
-            const drillOrRegister = opType == "drill" || opType == "register"
+            const drillingOp = opType == "drill" || ( opType == "register" && op.rec.axis != "-" )
 
-            if (!drillOrRegister && tool.type == "drill") {
-                alerts.show(`Warning: Drills should not be used for ${opType} operations.`)
+            if (!drillingOp && tool.type == "drill") {
+                alerts.show(`Warning: Drills should not be used for non-drilling operations.`)
             }
-            else if (drillOrRegister && tool.type != "drill") {
+            else if (drillingOp && tool.type != "drill") {
                 alerts.show(`Warning: Only drills should be used for drilling operations.`)
             }
 
@@ -513,15 +513,15 @@ export function createPopOps() {
     }).inputs = {
         tool:     UC.newSelect(LANG.cc_tool, {}, "tools"),
         axis:     UC.newSelect(LANG.cd_axis, {}, "regaxis"),
-        points:   UC.newSelect(LANG.cd_points, {show:() => poppedRec.axis !== '-'}, "regpoints"),
+        points:   UC.newSelect(LANG.cd_points, {show:() => env.poppedRec.axis !== '-'}, "regpoints"),
         sep:      UC.newBlank({class:"pop-sep"}),
         spindle:  UC.newInput(LANG.cc_spnd_s, {title:LANG.cc_spnd_l, convert:UC.toInt, show:hasSpindle}),
         rate:     UC.newInput(LANG.cc_plng_s, {title:LANG.cc_plng_l, convert:UC.toInt, units:true}),
-        feed:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true, show:() => poppedRec.axis === '-'}),
+        feed:     UC.newInput(LANG.cc_feed_s, {title:LANG.cc_feed_l, convert:UC.toInt, units:true, show:() => env.poppedRec.axis === '-'}),
         sep:      UC.newBlank({class:"pop-sep"}),
         down:     UC.newInput(LANG.cc_sdwn_s, {title:LANG.cc_sdwn_l, convert:UC.toFloat, units:true}),
-        dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, show:() => poppedRec.axis !== '-'}),
-        lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => poppedRec.axis !== '-'}),
+        dwell:    UC.newInput(LANG.cd_dwll_s, {title:LANG.cd_dwll_l, convert:UC.toFloat, show:() => env.poppedRec.axis !== '-'}),
+        lift:     UC.newInput(LANG.cd_lift_s, {title:LANG.cd_lift_l, convert:UC.toFloat, units:true, show:() => env.poppedRec.axis !== '-'}),
         sep:      UC.newBlank({class:"pop-sep"}),
         offset:   UC.newInput(LANG.cd_rego_s, {title:LANG.cd_rego_l, convert:UC.toFloat, units:true, }),
         thru:     UC.newInput(LANG.cd_thru_s, {title:LANG.cd_thru_l, convert:UC.toFloat, units:true}),

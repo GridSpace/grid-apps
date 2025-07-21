@@ -17,7 +17,7 @@ class OpRegister extends CamOp {
         let { settings, widget, bounds, addSlices, zMax, zThru, color } = state;
         let { updateToolDiams } = state;
 
-        let tool = new CAM.Tool(settings, op.tool);
+        let tool = new Tool(settings, op.tool);
         let sliceOut = this.sliceOut = [];
 
         updateToolDiams(tool.fluteDiameter());
