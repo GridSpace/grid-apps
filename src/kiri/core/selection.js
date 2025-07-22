@@ -49,8 +49,13 @@ function update_info() {
     const ui = api.ui;
     let bounds = new THREE.Box3(), track;
     for_meshes(mesh => {
-        bounds = bounds.union(mesh.getBoundingBox());
+        let box = mesh.getBoundingBox().clone();
         track = mesh.widget.track;
+        let {pos} = track
+        box.min.add(pos);
+        box.max.add(pos);
+        console.log(structuredClone({pos}))
+        bounds = bounds.union(box);
     });
     if (bounds.min.x === Infinity) {
         if (selectedMeshes.length === 0) {
