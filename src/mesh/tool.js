@@ -3,6 +3,7 @@
 import { THREE } from '../ext/three.js';
 const { Vector3 } = THREE;
 import { geom } from './geom.js';
+import earcut from '../ext/earcut.js';
 
 const empty = 0xffffffff;
 
