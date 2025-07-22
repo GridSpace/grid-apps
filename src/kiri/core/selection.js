@@ -54,7 +54,6 @@ function update_info() {
         let {pos} = track
         box.min.add(pos);
         box.max.add(pos);
-        console.log(structuredClone({pos}))
         bounds = bounds.union(box);
     });
     if (bounds.min.x === Infinity) {
