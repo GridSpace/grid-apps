@@ -174,7 +174,7 @@ function thin_type_3(params) {
     let thin = top.thin_fill;
     let scale = 5000;
     let minR = offsetN / 2;
-    let minSpur = offsetN * 3;
+    let minSpur = 0;//offsetN * 3;
 
     let pointMap = new Map();
     let lineMap = new Map();
@@ -219,16 +219,23 @@ function thin_type_3(params) {
     let chains = [];
 
     for (let poly of noodle) {
+        // scale the polygon (including inners) so the medial axis code works properly
         poly = poly.clone(true).scale({ x:scale, y:scale, z:scale });
         let out = poly.points.map(p => ({ x: p.x|0, y: p.y|0 }));
         let inr = (poly.inner ?? []).map(p => p.points.map(p => ({ x: p.x|0, y: p.y|0 })));
+        // construct medial axis lines. this appears to produce duplicate
+        // reverse segments in a subset of cases
         let ma = JSPoly.construct_medial_axis(out, inr);
+        // dedup the points so we can track them uniquely (for chain intersections)
         for (let { point0, point1 } of ma) {
             pointsToLine(point0, point1);
         }
         for (let seg of lineMap.values()) {
             let { p0, p1 } = seg;
             let len = seg.len = Math.hypot(p0.x-p1.x, p0.y-p1.y);
+            // filter out lines where both points' radii are under the
+            // minR threshold. shorten and fixup lines where minR falls
+            // somewhere along the gradient between ends.
             if (p0.r < minR || p1.r < minR) {
                 if (p0.r > minR && len > minSpur) {
                     // move p1 toward p0 until minR met
@@ -253,36 +260,54 @@ function thin_type_3(params) {
                     continue;
                 }
             }
-            // thin.push(new Point(p0.x, p0.y));
-            // thin.push(new Point(p1.x, p1.y));
+            // for each line segment either add it to a chain or start a new chain
             let add;
             for (let chain of chains) {
-                if (p0.count === 2 && p0 === chain[0]) {
-                    chain.splice(0,0,p1);
-                } else if (p0.count === 2 && p0 === chain.peek()) {
-                    chain.push(p1);
+                if (p0.count === 2 && p0.key === chain[0].key) {
+                    chain.splice(0,0,{...p1, len});
+                } else if (p0.count === 2 && p0.key === chain.peek().key) {
+                    chain.peek().len = len;
+                    chain.push({...p1});
                     add = true;
-                } else if (p1.count === 2 && p1 === chain[0]) {
-                    chain.splice(0,0,p0);
+                } else if (p1.count === 2 && p1.key === chain[0].key) {
+                    chain.splice(0,0,{...p0, len});
                     add = true;
-                } else if (p1.count ===2 && p1 === chain.last) {
-                    chain.push(p0);
+                } else if (p1.count === 2 && p1.key === chain.peek().key) {
+                    chain.peek().len = len;
+                    chain.push({...p0});
                     add = true;
                 }
                 if (add) {
+                    chain.total += len;
                     break;
                 }
             }
             if (!add) {
-                chains.push([ p0, p1 ]);
+                chains.push([ {...p0 ,len}, {...p1} ]);
+                chains.peek().total = len;
             }
         }
     }
 
+    // add chains to thinwall output for visualization
     for (let chain of chains) {
+        if (chain.total >= minR)
         for (let i=0; i<chain.length-1; i++) {
             thin.push(new Point(chain[i].x, chain[i].y));
             thin.push(new Point(chain[i+1].x, chain[i+1].y));
+            let p0 = chain[i];
+            let p1 = chain[i+1];
+            let cp = {
+                mx: (p0.x + p1.x) / 2,
+                my: (p0.y + p1.y) / 2,
+                mr: (p0.r + p1.r) / 2,
+                dx: (p1.x - p0.x) / p0.len,
+                dy: (p1.y - p0.y) / p0.len
+            };
+            thin.push(new Point(cp.mx, cp.my));
+            thin.push(new Point(cp.mx + cp.dy * cp.mr, cp.my - cp.dx * cp.mr));
+            thin.push(new Point(cp.mx, cp.my));
+            thin.push(new Point(cp.mx - cp.dy * cp.mr, cp.my + cp.dx * cp.mr));
         }
     }
 
