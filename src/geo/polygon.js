@@ -257,32 +257,14 @@ export class Polygon {
     // including inner polys. return the noodle and the remainder
     // of the polygon with the noodle removed (for the next pass)
     noodle(width) {
-        // inset outer polygon
-        let inner = this.inner;
-        let inset = this.clone().offset(width);
-        let noodot = [ this.clone().setInner(inset) ];
-        let noodin = [];
-        // subtract inners from the inset
-        if (inner) {
-            noodot = POLY.subtract(noodot, inner, []);
-            // for each inner, offset and subtract noodle + itself
-            let nood = [];
-            for (let innie of inner) {
-                let inexp = innie.clone().offset(-width);
-                let intrm = POLY.trimTo(inexp, [ this ]);
-                let inood = POLY.subtract(intrm, [ ...noodot, innie ], []);
-                nood.push(...inood);
-            }
-            noodin = POLY.union(nood, 0, true);
-        }
-        // unify inner noodles and outer noodle
-        let noodle = POLY.union([ ...noodot, ...noodin ], 0, true);
-        // subtract noodle from poly for next noodle calc
-        let remain = POLY.subtract([ this ], noodle, []);
-        return { noodle, remain };
+        let clone = this.clone(true);
+        let ins = clone.offset(width);
+        let nood = POLY.nest(POLY.flatten([ clone, ...ins ], [], true));
+        return { noodle: nood, remain: ins };
     }
 
     // generate center crossing point cloud
+    // only used for fdm thin-wall type 1 (fdm/post.js)
     centers(step, z, min, max, opt = {}) {
         let cloud = [],
             bounds = this.bounds,
@@ -555,6 +537,7 @@ export class Polygon {
         return this;
     }
 
+    // only used in fdm/slice.js for enclosing supports
     createConvexHull(points) {
         function removeMiddle(a, b, c) {
             let cross = (a.x - b.x) * (c.y - b.y) - (a.y - b.y) * (c.x - b.x);
@@ -886,6 +869,7 @@ export class Polygon {
 
     /**
      * hint fill angle hinting from longest segment
+     * only used in fdm/slice.js for projected infill orientation
      */
     hintFillAngle() {
         let index = 0,
@@ -1217,6 +1201,8 @@ export class Polygon {
      * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slope until target Z is hit,
      * 3. then the rest of the path is completed and repeated at target Z until touchdown point is reached.
      * 4. this function should probably move to CAM prepare since it's only called from there
+     *
+     * possibly no longer used anywhere
      */
     forEachPointEaseDown(fn, fromPoint, degrees = 45) {
         let index = this.findClosestPointTo(fromPoint).index,
@@ -1537,6 +1523,7 @@ export class Polygon {
         return this;
     }
 
+    // used in geo/slicer.js to free memory
     freeParentRefs() {
         if (this.inner && this.inner.length > 0) {
             for (let inner of this.inner) {
@@ -1549,6 +1536,7 @@ export class Polygon {
         }
     }
 
+    // possibly ununsed
     newUndeleted() {
         let poly = newPolygon();
         this.forEachPoint(p => {
@@ -1888,6 +1876,7 @@ export class Polygon {
         return out;
     }
 
+    // possibly unused
     shortestSegmentLength() {
         let len = Infinity;
         this.forEachSegment((p1, p2) => {
@@ -2362,6 +2351,8 @@ export class Polygon {
         return this;
     }
 
+    // only used by cam/op-pocket.js
+    // for any poly points closer than `dist`, replace them with their midpoint
     midpoints(dist = 0.01) {
         const newp = [];
         const points = this.points;

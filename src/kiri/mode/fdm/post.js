@@ -1,9 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import '../../../ext/jspoly.js';
 import { base } from '../../../geo/base.js';
+import { Line } from '../../../geo/line.js';
 import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { getRangeParameters } from './driver.js';
 import { slicer } from '../../../geo/slicer.js';
+import { Point } from '../../../geo/point.js';
 
 slicer.slicePost.FDM = slicePost;
 
@@ -164,19 +167,124 @@ function thin_type_3(params) {
     top.thin_fill = [];
     top.fill_sparse = [];
 
-    let { noodle, remain } = top.poly.noodle(offsetN);
+    let { noodle, remain } = top.poly.noodle(offsetN * 2);
     top.shells = noodle;
     top.gaps = remain;
-    // top.fill_off = noodle;
 
-    // if (remain.length) {
-    //     top.gaps = [];
-    //     for (let poly of remain) {
-    //         let { noodle } = poly.noodle(offsetN);
-    //         console.log({ next_noodle: noodle });
-    //         top.gaps.push(...noodle);
-    //     }
-    // }
+    let thin = top.thin_fill;
+    let scale = 5000;
+    let minR = offsetN / 2;
+    let minSpur = offsetN * 3;
+
+    let pointMap = new Map();
+    let lineMap = new Map();
+
+    function pointToRec(point) {
+        let key = `${(point.x*100)|0}|${(point.y*100)|0}`;
+        let rec = pointMap.get(key);
+        if (!rec) {
+            rec = {
+                key,
+                count: 0,
+                x: point.x/scale,
+                y: point.y/scale,
+                r: point.radius/scale,
+            };
+            pointMap.set(key, rec);
+        }
+        return rec;
+    }
+
+    function pointsToLine(p0, p1) {
+        p0 = pointToRec(p0);
+        p1 = pointToRec(p1);
+        let key = p0.key > p1.key ? `${p1.key}:${p0.key}` : `${p0.key}:${p1.key}`;
+        let rec = lineMap.get(key);
+        if (rec) {
+            rec.count++;
+        } else {
+            rec = {
+                p0,
+                p1,
+                key,
+                count: 1,
+            };
+            p0.count++;
+            p1.count++;
+            lineMap.set(key, rec);
+        }
+        return rec;
+    }
+
+    let chains = [];
+
+    for (let poly of noodle) {
+        poly = poly.clone(true).scale({ x:scale, y:scale, z:scale });
+        let out = poly.points.map(p => ({ x: p.x|0, y: p.y|0 }));
+        let inr = (poly.inner ?? []).map(p => p.points.map(p => ({ x: p.x|0, y: p.y|0 })));
+        let ma = JSPoly.construct_medial_axis(out, inr);
+        for (let { point0, point1 } of ma) {
+            pointsToLine(point0, point1);
+        }
+        for (let seg of lineMap.values()) {
+            let { p0, p1 } = seg;
+            let len = seg.len = Math.hypot(p0.x-p1.x, p0.y-p1.y);
+            if (p0.r < minR || p1.r < minR) {
+                if (p0.r > minR && len > minSpur) {
+                    // move p1 toward p0 until minR met
+                    let pct = (minR - p1.r) / (p0.r - p1.r);
+                    let dx = p1.x - p0.x;
+                    let dy = p1.y - p0.y;
+                    p1.x -= dx * pct;
+                    p1.y -= dy * pct;
+                    p1.r = minR;
+                    pointMap.delete(p1.key);
+                } else if (p1.r > minR && len > minSpur) {
+                    // move p0 toward p1 until minR met
+                    let pct = (minR - p0.r) / (p1.r - p0.r);
+                    let dx = p0.x - p1.x;
+                    let dy = p0.y - p1.y;
+                    p0.x -= dx * pct;
+                    p0.y -= dy * pct;
+                    p0.r = minR;
+                    pointMap.delete(p0.key);
+                } else {
+                    lineMap.delete(seg.key);
+                    continue;
+                }
+            }
+            // thin.push(new Point(p0.x, p0.y));
+            // thin.push(new Point(p1.x, p1.y));
+            let add;
+            for (let chain of chains) {
+                if (p0.count === 2 && p0 === chain[0]) {
+                    chain.splice(0,0,p1);
+                } else if (p0.count === 2 && p0 === chain.peek()) {
+                    chain.push(p1);
+                    add = true;
+                } else if (p1.count === 2 && p1 === chain[0]) {
+                    chain.splice(0,0,p0);
+                    add = true;
+                } else if (p1.count ===2 && p1 === chain.last) {
+                    chain.push(p0);
+                    add = true;
+                }
+                if (add) {
+                    break;
+                }
+            }
+            if (!add) {
+                chains.push([ p0, p1 ]);
+            }
+        }
+    }
+
+    for (let chain of chains) {
+        for (let i=0; i<chain.length-1; i++) {
+            thin.push(new Point(chain[i].x, chain[i].y));
+            thin.push(new Point(chain[i+1].x, chain[i+1].y));
+        }
+    }
 
     return { last, gaps };
 }
