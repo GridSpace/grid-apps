@@ -2,7 +2,6 @@
 
 import '../../../ext/jspoly.js';
 import { base } from '../../../geo/base.js';
-import { Line } from '../../../geo/line.js';
 import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { getRangeParameters } from './driver.js';
 import { slicer } from '../../../geo/slicer.js';
@@ -293,21 +292,31 @@ function thin_type_3(params) {
     for (let chain of chains) {
         if (chain.total >= minR)
         for (let i=0; i<chain.length-1; i++) {
+            // medial axis segment
             thin.push(new Point(chain[i].x, chain[i].y));
             thin.push(new Point(chain[i+1].x, chain[i+1].y));
+            // compute medial axis segment cross section
             let p0 = chain[i];
             let p1 = chain[i+1];
-            let cp = {
-                mx: (p0.x + p1.x) / 2,
-                my: (p0.y + p1.y) / 2,
-                mr: (p0.r + p1.r) / 2,
-                dx: (p1.x - p0.x) / p0.len,
-                dy: (p1.y - p0.y) / p0.len
-            };
-            thin.push(new Point(cp.mx, cp.my));
-            thin.push(new Point(cp.mx + cp.dy * cp.mr, cp.my - cp.dx * cp.mr));
-            thin.push(new Point(cp.mx, cp.my));
-            thin.push(new Point(cp.mx - cp.dy * cp.mr, cp.my + cp.dx * cp.mr));
+            let dr = (p1.r - p0.r);
+            let dx = (p1.x - p0.x);
+            let dy = (p1.y - p0.y);
+            let ndx = dx / p0.len;
+            let ndy = dy / p0.len;
+            let offs = p0.len <= offsetN ? [ 0.5 ] : base.util.lerp(0, p0.len, offsetN, true);
+            let indx = 0;
+            let step = 1 / offs.length;
+            // interpolate across the length of the chain segment
+            for (let off of offs) {
+                let inc = (indx++ * step);
+                let cp = {
+                    r: p0.r + dr * inc,
+                    x: p0.x + dx * inc,
+                    y: p0.y + dy * inc
+                };
+                thin.push(new Point(cp.x + ndy * cp.r, cp.y - ndx * cp.r));
+                thin.push(new Point(cp.x - ndy * cp.r, cp.y + ndx * cp.r));
+            }
         }
     }
 
