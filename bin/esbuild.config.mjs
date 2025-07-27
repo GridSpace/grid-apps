@@ -45,7 +45,21 @@ const logOverride = {
 const rec = {
     bundle: true,
     define: { 'process.env.NODE_ENV': `"${mode}"` },
-    external: ['module'],
+    external: [
+        'module',
+        './constants',
+        './voronoi_structures',
+        './voronoi_ctypes',
+        '../thirdparty/jsbn',
+        './collections',
+        './voronoi_predicates',
+        './voronoi_builder',
+        './point_data',
+        './segment_data',
+        './cppgen',
+        './voronoi_diagram',
+        './voronoi'
+    ],
     format: 'esm',
     logOverride,
     minify: isProd,      // false for dev, true for prod
