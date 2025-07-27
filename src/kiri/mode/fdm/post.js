@@ -289,8 +289,20 @@ function thin_type_3(params) {
     }
 
     // add chains to thinwall output for visualization
-    for (let chain of chains) {
-        if (chain.total >= minR)
+    for (let chain of chains.filter(c => c.total >= minR)) {
+        // chain reduction by merging short segments
+        let end = chain[0];
+        let nuchain = [ end ];
+        for (let point of chain.slice(1)) {
+            if (point.len === undefined || point.len + end.len >= minR) {
+                nuchain.push(point);
+                end = point;
+            } else {
+                end.len += point.len;
+            }
+        }
+        chain = nuchain;
+        // emit chain with subdivision for long segments
         for (let i=0; i<chain.length-1; i++) {
             // medial axis segment
             thin.push(new Point(chain[i].x, chain[i].y));
