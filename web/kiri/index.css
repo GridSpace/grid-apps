@@ -2427,7 +2427,7 @@ details[open] summary::after {
     justify-self: center;
 }
 .var-row input {
-    flex: 1 1 auto;  
+    /* flex: 1 1 auto;   */
     min-width: 0;    
     max-width: 7ch; 
     margin-right: 0;
