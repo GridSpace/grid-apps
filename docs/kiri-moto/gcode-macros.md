@@ -82,6 +82,7 @@ Allows for intro comment and config list to be re-positioned after the header or
 - \{pos_x\} = last output X position
 - \{pos_y\} = last output Y position
 - \{pos_z\} = last output Z position
+- \{stock_z\} = max stock volume height in mm
 
 ### CAM Header Directives
 
