@@ -2,6 +2,7 @@
 
 import '../../../ext/jspoly.js';
 import { base } from '../../../geo/base.js';
+import { newPolygon } from '../../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { getRangeParameters } from './driver.js';
 import { slicer } from '../../../geo/slicer.js';
@@ -166,14 +167,15 @@ function thin_type_3(params) {
     top.thin_fill = [];
     top.fill_sparse = [];
 
-    let { noodle, remain } = top.poly.noodle(offsetN * 2);
+    let { noodle, remain } = top.poly.noodle(offsetN * count);
     top.shells = noodle;
-    top.gaps = remain;
+    top.gaps = last = remain;
 
     let thin = top.thin_fill;
     let scale = 5000;
     let minR = offsetN / 2;
-    let minSpur = 0;//offsetN * 3;
+    let maxR = minR * 1.5;
+    let minSpur = 0; // offsetN * 3;
 
     let pointMap = new Map();
     let lineMap = new Map();
@@ -288,7 +290,31 @@ function thin_type_3(params) {
         }
     }
 
+    let showMid = false;
+    let showCross = false;
+    let showRad = true;
+
+    function div(cr) {
+        if (cr <= maxR) {
+            return [ cr ];
+        } else if (cr <= maxR * 2) {
+            return [ cr / 2, cr / 2 ];
+        } else if (cr <= maxR * 3) {
+            let rem = cr - minR * 2;
+            if (rem < maxR) {
+                return [ minR, rem, minR ];
+            } else {
+                return [ minR, rem / 2, rem / 2, minR ];
+            }
+        } else {
+            return [ minR, ...div(cr - minR * 2), minR ];
+        }
+    }
+
     // add chains to thinwall output for visualization
+    if (showRad) {
+        top.shells = [];
+    }
     for (let chain of chains.filter(c => c.total >= minR)) {
         // chain reduction by merging short segments
         let end = chain[0];
@@ -305,8 +331,10 @@ function thin_type_3(params) {
         // emit chain with subdivision for long segments
         for (let i=0; i<chain.length-1; i++) {
             // medial axis segment
-            thin.push(new Point(chain[i].x, chain[i].y));
-            thin.push(new Point(chain[i+1].x, chain[i+1].y));
+            if (showMid) {
+                thin.push(new Point(chain[i].x, chain[i].y));
+                thin.push(new Point(chain[i+1].x, chain[i+1].y));
+            }
             // compute medial axis segment cross section
             let p0 = chain[i];
             let p1 = chain[i+1];
@@ -321,13 +349,29 @@ function thin_type_3(params) {
             // interpolate across the length of the chain segment
             for (let off of offs) {
                 let inc = (indx++ * step);
-                let cp = {
-                    r: p0.r + dr * inc,
-                    x: p0.x + dx * inc,
-                    y: p0.y + dy * inc
-                };
-                thin.push(new Point(cp.x + ndy * cp.r, cp.y - ndx * cp.r));
-                thin.push(new Point(cp.x - ndy * cp.r, cp.y + ndx * cp.r));
+                let cr = p0.r + dr * inc;
+                let cx = p0.x + dx * inc;
+                let cy = p0.y + dy * inc;
+                let xo = ndx * cr;
+                let yo = ndy * cr;
+                if (showCross) {
+                    thin.push(new Point(cx + yo, cy - xo));
+                    thin.push(new Point(cx - yo, cy + xo));
+                }
+                if (showRad) {
+                    let circ = top.shells;
+                    let pop = div(cr);
+                    let sx = cx + yo;
+                    let sy = cy - xo;
+                    let m = 1;
+                    for (let r of pop) {
+                        sx -= (r/cr) * yo * m;
+                        sy += (r/cr) * xo * m;
+                        circ.push(newPolygon().centerCircle({ x:sx, y:sy }, r, 10));
+                        m = 2;
+                    }
+                    // console.log(pop);
+                }
             }
         }
     }
@@ -384,7 +428,6 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                     break;
                 case "type 3":
                     ret = thin_type_3({ z, top, count, top_poly, offsetN });
-                    fillOffset = 0;
                     break;
                 default:
                     ret = offset_default({ z, top, count, top_poly, offset1, offsetN, wasm });
