@@ -282,19 +282,19 @@ export function cam_export(print, online) {
 
         lastGn = gn;
 
-        if (dx || newpos.x !== pos.x) {
+        if (dx || newpos.x !== pos.x || arc) {
             pos.x = newpos.x;
             runbox.min.x = Math.min(runbox.min.x, pos.x);
             runbox.max.x = Math.max(runbox.max.x, pos.x);
             nl.append(space).append(axis.X).append(add0(consts.pos_x = pos.x * factor));
         }
-        if (dy || newpos.y !== pos.y) {
+        if (dy || newpos.y !== pos.y || arc) {
             pos.y = newpos.y;
             runbox.min.y = Math.min(runbox.min.y, pos.y);
             runbox.max.y = Math.max(runbox.max.y, pos.y);
             nl.append(space).append(axis.Y).append(add0(consts.pos_y = pos.y * factor));
         }
-        if (dz || newpos.z !== pos.z) {
+        if (dz || newpos.z !== pos.z || arc) {
             pos.z = newpos.z;
             runbox.min.z = Math.min(runbox.min.z, pos.z);
             runbox.max.z = Math.max(runbox.max.z, pos.z);
