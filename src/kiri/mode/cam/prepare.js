@@ -821,7 +821,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
 
                         let endDelta = e1.distTo2D(e3)
                         if(endDelta < 0.01){
-                            console.log("circleCompleteFault")
                             let last = arcQ.peek()
                             drainQ(true)
                             arcQ.push(last)
