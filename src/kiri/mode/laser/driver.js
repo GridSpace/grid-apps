@@ -120,12 +120,18 @@ function arc(center, rad, s1, s2, out) {
 function addKnifeRadii(poly, tipoff) {
     poly.setClockwise();
     let oldpts = poly.points.slice();
+
     // find leftpoint and make that the first point
     let start = oldpts[0];
     let startI = 0;
+    let inner = tipoff < 0;
+    tipoff = Math.abs(tipoff);
     for (let i=1; i<oldpts.length; i++) {
         let pt = oldpts[i];
-        if (pt.x < start.x || pt.y > start.y) {
+        if (inner && (pt.x > start.x || (pt.x == start.x && pt.y < start.y))) {
+            start = pt;
+            startI = i;
+        } else if (!inner && (pt.x < start.x || (pt.x == start.x && pt.y > start.y))) {
             start = pt;
             startI = i;
         }
@@ -352,7 +358,7 @@ async function laser_prepare(widgets, settings, update) {
                     for (let poly of slice.offset) {
                         addKnifeRadii(poly, ctOutKnifeTip);
                         if (poly.inner) poly.inner.forEach(ip => {
-                            addKnifeRadii(ip, ctOutKnifeTip);
+                            addKnifeRadii(ip, -ctOutKnifeTip);
                         });
                     }
                 }
