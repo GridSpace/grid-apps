@@ -144,6 +144,7 @@ class OpRough extends CamOp {
 
         // inset or eliminate thru holes from shadow
         shadow = POLY.flatten(shadow.clone(true), [], true);
+        if (!op.omitthru)
         thruHoles.forEach(hole => {
             shadow = shadow.map(p => {
                 if (p.isEquivalent(hole)) {

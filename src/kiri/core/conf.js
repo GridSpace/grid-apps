@@ -441,6 +441,7 @@ export const conf = {
                 camRoughTop: true,
                 camRoughIn: true,
                 camRoughOn: true,
+                camRoughOmitThru: false,
                 camRoughOmitVoid: false,
                 camOutlineTool: 1000,
                 camOutlineSpindle: 1000,
