@@ -161,7 +161,7 @@ function addKnifeRadii(poly, tipoff) {
         lastpt = nextpt;
     }
     newpts.push( tmp = lastpt.projectOnSlope(lastsl, tipoff) );
-    newpts.push( tmp.clone().move({x:tipoff, y:0, z: 0}) );
+    // newpts.push( tmp.clone().move({x:tipoff, y:0, z: 0}) );
     poly.open = true;
     poly.points = newpts;
 }
@@ -263,7 +263,7 @@ async function laser_prepare(widgets, settings, update) {
         slices = 0,
         maxZ = 0,
         { bedWidth, bedDepth } = device,
-        { ctOutLayer, ctOutTileSpacing } = process,
+        { ctOutLayer, ctOutTileSpacing, ctSliceSingle } = process,
         { ctOriginCenter, ctOriginBounds } = process,
         { ctOriginOffX, ctOriginOffY } = process,
         { ctOutStack, ctOutMerged, ctOutKnifeTip, ctOutShaper } = process;
@@ -385,6 +385,11 @@ async function laser_prepare(widgets, settings, update) {
         tile.w = bounds.width();
         tile.h = bounds.height();
         tile.bounds = bounds;
+        if (ctSliceSingle && isKnife) {
+            for (let { poly } of tile) {
+                poly.setZ(0);
+            }
+        }
     }
 
     // pack tiles
@@ -393,7 +398,7 @@ async function laser_prepare(widgets, settings, update) {
     });
 
     // reposition tiles into their packed locations (unless 3d stack)
-    if (!ctOutStack)
+    if (!(ctOutStack || ctSliceSingle))
     for (let tile of tiles) {
         let { fit, bounds } = tile;
         for (let { poly } of tile) {
