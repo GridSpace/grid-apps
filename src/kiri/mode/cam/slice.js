@@ -4,6 +4,7 @@ import { base, util } from '../../../geo/base.js';
 import { newLine } from '../../../geo/line.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
+import { newSlopeFromAngle } from '../../../geo/slope.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { setSliceTracker } from '../../core/slice.js';
 import { ops as OPS } from './ops.js';
@@ -383,11 +384,11 @@ export function addDogbones(poly, dist, reverse) {
         let bdiff = ((adiff < 0 ? (180 - adiff) : (180 + adiff)) / 2) + 180;
         if (!open || (i > 1 && i < length)) {
             if (isCW && adiff > 45) {
-                let newa = base.newSlopeFromAngle(lastsl.angle + bdiff);
+                let newa = newSlopeFromAngle(lastsl.angle + bdiff);
                 newpts.push(lastpt.projectOnSlope(newa, dist));
                 newpts.push(lastpt.clone());
             } else if (!isCW && adiff < -45) {
-                let newa = base.newSlopeFromAngle(lastsl.angle - bdiff);
+                let newa = newSlopeFromAngle(lastsl.angle - bdiff);
                 newpts.push(lastpt.projectOnSlope(newa, dist));
                 newpts.push(lastpt.clone());
             }
