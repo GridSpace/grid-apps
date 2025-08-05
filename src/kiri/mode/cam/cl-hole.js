@@ -7,6 +7,9 @@ import { lastTrace, setLastTrace } from './cl-trace.js';
 
 export let holeSelOn = false;
 export let lastSelHoles;
+let holeGeo =  new THREE.CylinderGeometry(diam/2,diam/2,depth,20);
+let holeMaterial = new THREE.MeshPhongMaterial( { color } );
+let holeMesh;
 
 /**
  * Client side function to select holes in widgets for CAM operations.
@@ -36,12 +39,17 @@ export async function selectHoles(individual) {
      * @param {Object} drill - {depth,selected} object of the hole
      * @returns {Mesh} the created mesh
      */
-    function createHoleMesh(widget, drill) {
-        let { depth, selected, diam } = drill
-        let color = selected ? 0xFF0000 : 0x39e366
-        let geo = new THREE.CylinderGeometry(diam / 2, diam / 2, depth, 20);
-        const material = new THREE.MeshPhongMaterial({ color });
-        let mesh = new THREE.Mesh(geo, material);
+    function createHoleMesh(widget,drills){
+        if(holeMesh) holeMesh.dispose()
+        holeMesh = new THREE.instancedMesh(holeGeo, holeMaterial,drills.length);
+
+
+        for(let drill of drills){
+            let { depth, selected, diam } = drill
+            let color = selected ? 0xFF0000 : 0x39e366
+            let mx = new THREE.Matrix4();
+        }
+
         mesh.position.copy(drill)
         mesh.position.z -= depth / 2
         mesh.rotation.x = Math.PI / 2
@@ -71,9 +79,7 @@ export async function selectHoles(individual) {
                         }
                     })
                 } else {
-                    drills.forEach(drill => {
-                        createHoleMesh(widget, drill);
-                    });
+                    createHoleMesh(widget, drills);
                 }
             }
         })
