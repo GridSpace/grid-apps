@@ -126,6 +126,10 @@ class Engine {
         return this;
     }
 
+    setTopOffset(offset = 0) {
+        this.topOffset = offset;
+    }
+
     setOrigin(x, y, z) {
         this.settings.origin = { x, y, z };
         return this;
@@ -152,6 +156,7 @@ class Engine {
     }
 
     slice() {
+        this.widget.setTopZ(this.settings.stock.z - (this.topOffset || 0));
         return new Promise((accept, reject) => {
             client.clear();
             client.sync([this.widget]);

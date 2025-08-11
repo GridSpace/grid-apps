@@ -85,6 +85,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         easeDown = process.camEaseDown,
         easeAngle = process.camEaseAngle,
         depthFirst = process.camDepthFirst,
+        innerFirst = process.camInnerFirst,
         engageFactor = process.camFullEngage,
         arcTolerance = process.camArcTolerance,
         arcRes = toRadians(process.camArcResolution),
@@ -719,7 +720,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         setTool(tool, rate, plunge);
         let traceTool = new Tool(settings, tool);
         let traceToolDiam = traceTool.fluteDiameter();
-        printPoint = poly2polyEmit(slice.camLines, printPoint, polyEmit, { swapdir: false });
+        printPoint = poly2polyEmit(slice.camLines, printPoint, polyEmit, {
+            swapdir: false,
+            weight: innerFirst
+        });
         newLayer();
     }
 

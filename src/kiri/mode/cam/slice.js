@@ -87,6 +87,8 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             bottom_z, bottom_cut
         }, 3);
 
+        console.log({ track, bounds, stock, workarea });
+
         return structuredClone(workarea);
     };
 

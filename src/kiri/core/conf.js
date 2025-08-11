@@ -556,6 +556,7 @@ export const conf = {
                 camTabsDepth: 5,
                 camTabsMidline: false,
                 camDepthFirst: false,
+                camInnerFirst: false,
                 camEaseDown: false,
                 camEaseAngle: 10,
                 camOriginTop: true,
