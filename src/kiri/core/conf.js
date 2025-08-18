@@ -640,9 +640,6 @@ export const conf = {
                 ctOriginBounds: false,
                 outputInvertX: false,
                 outputInvertY: false,
-                ctOutKnifeDepth: 1,
-                ctOutKnifePasses: 1,
-                ctOutKnifeTip: 2,
                 ctOutInches: false,
                 ctOutShaper: false
             }
@@ -729,9 +726,6 @@ export const conf = {
                 ctOriginBounds: false,
                 outputInvertX: false,
                 outputInvertY: false,
-                ctOutKnifeDepth: 1,
-                ctOutKnifePasses: 1,
-                ctOutKnifeTip: 2,
                 ctOutStack: false,
             },
         },
