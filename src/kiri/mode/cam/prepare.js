@@ -740,10 +740,15 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} index - unused
      * @param {number} count - 1 to set engage factor
      * @param {Point} fromPoint - the point to rapid move from
-     * @param {Object} camOutOpts - optional parameters to pass to camOut
+     * @param {boolean} ops.cutFromLast - whether to emit a 1 when moving from last point. Defaults to false
      * @returns {Point} - the last point of the polygon
      */
-    function polyEmit(poly, index, count, fromPoint) {
+    function polyEmit(poly, index, count, fromPoint,ops) {
+        let {
+            cutFromLast,
+        } = ops ?? {
+            cutFromLast: false
+        };
         let arcQ = [],
             arcMax = Infinity, // no max arc radius
             lineTolerance = 0.001, // do not consider points under 0.001mm for arcs
@@ -779,7 +784,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             // if(offset == 0) console.log("forEachPoint",point,pidx,points)
             // console.log({pointA, pointB, indexA, indexB,startIndex})
             if (indexA == startIndex) {
-                camOut(pointA.clone(), 0, { factor: engageFactor });
+                //if cutFromLast is true, emit a 1 for a cutting move
+                camOut(pointA.clone(), cutFromLast ? 1 : 0, { factor: engageFactor });
                 // if first point, move to and call export function
                 if (arcEnabled) arcQ.push(pointA);
             }
