@@ -41,8 +41,6 @@ export async function selectHoles(individual) {
      * @returns {Mesh} the created mesh
      */
     function createHoleMesh(widget,drills){
-        console.log("creating hole mesh",Date.now())
-        
         if(holeMesh) holeMesh.dispose()
         holeMesh = new THREE.InstancedMesh(holeGeo, holeMaterial,drills.length);
         let baseMx = new THREE.Matrix4()
@@ -59,25 +57,18 @@ export async function selectHoles(individual) {
             holeMesh.setColorAt(i, new THREE.Color(color));
             drill.widgetID = widget.id
         }
-        console.log(holeMesh)
-
-        // mesh.rotation.x = Math.PI / 2
         widget.mesh.add(holeMesh);
         widget.adds.push(holeMesh); // for click detection
-        console.log("created hole mesh",Date.now())
         return holeMesh
     }
     let meshesCached = widgets.every(widget => env.poppedRec.drills[widget.id] != undefined)
     if (individual && meshesCached) {
         // if any widget already has cached holes
-        // console.log("already has cached holes",env.poppedRec.drills)
         api.hide.alert(alert);
         api.widgets.for(widget => {
             if (widget.adds) {
                 let drills = activeDrills = env.poppedRec.drills[widget.id];
-                
                 createHoleMesh(widget, drills);
-                
             }
         })
     } else {
@@ -141,12 +132,11 @@ export async function selectHoles(individual) {
 
 export function selectHolesHover(data) {
     //not used right now. may be useful in the future
-    
 }
 
 export function selectHolesHoverUp(int, ev) {
     if (!int) return; //if not a hole mesh return
-    let { object, instanceId } = int;
+    let { instanceId } = int;
     selectHoleToggle(instanceId);
 }
 
@@ -169,10 +159,6 @@ export function selectHoleToggle(id) {
  * @param {Object} widget - the widget with the drills array to clear
  */
 export function clearHolesRec(widget) {
-    if (widget.drills) {
-        widget.drills.forEach(rec => {
-        })
-    }
     if (widget.adds) {
         widget.adds.length = 0 //clear adds array
     }
