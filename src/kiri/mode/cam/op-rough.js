@@ -55,7 +55,14 @@ class OpRough extends CamOp {
             for (let z = zstart; zsteps > 0; zsteps--) {
                 let slice = newSlice();
                 slice.z = z;
-                slice.camLines = POLY.setZ(facing.clone(true), slice.z + roughLeaveZ);
+                let polys = POLY.setZ(facing.clone(true), slice.z + roughLeaveZ);
+                if (tabs) {
+                    tabs.forEach(tab => {
+                        tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
+                    });
+                    polys = cutTabs(tabs, polys, slice.z);
+                }
+                slice.camLines = polys;
                 slice.output()
                     .setLayer("face", {face: color, line: color})
                     .addPolys(slice.camLines);
