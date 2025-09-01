@@ -26,6 +26,7 @@ const sidebars = {
                         'kiri-moto/engine-apis',
                         'kiri-moto/localization',
                         'kiri-moto/octoprint',
+                        'kiri-moto/bambu-network-send',
                         'kiri-moto/faq',
                         {
                             type: 'category',

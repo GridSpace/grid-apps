@@ -30,7 +30,41 @@ There are two primary modes of operation: 3D Mesh and 2D Sketch. Use the Mode me
 
 ## Keyboard / Mouse Shortcuts
 
-<table><thead><tr><th width="212.5359955621766"></th><th width="289.3333333333333"></th></tr></thead><tbody><tr><td></td><td><strong>Selection</strong></td></tr><tr><td>[Delete]</td><td>Delete Selection</td></tr><tr><td>E</td><td>Extrude Sketch or Sketch Selection</td></tr><tr><td>I</td><td>Import File(s)</td></tr><tr><td>M</td><td>Merge Selection into a Single Model</td></tr><tr><td>S</td><td>Enter Split Mode (click splits on selected plane)</td></tr><tr><td>V</td><td>Focus Camera on Center of Selection</td></tr><tr><td>X</td><td>Export Selection as OBJ or STL</td></tr><tr><td>Shift + A</td><td>Analyze Selection Geometries</td></tr><tr><td>Shift + D</td><td>Duplicate Selection</td></tr><tr><td>Shift + S</td><td>Toggle Selection Visibility</td></tr><tr><td>Shift + G</td><td>Group or Re-Group</td></tr><tr><td></td><td><strong>Rotation</strong></td></tr><tr><td>Left and Right Arrows</td><td>Rotate around Z</td></tr><tr><td>Up and Down Arrows</td><td>Rotate around Y</td></tr><tr><td>[Shift] + Left/Right</td><td>Rotate around X</td></tr><tr><td></td><td><strong>View</strong></td></tr><tr><td>H</td><td>Home view</td></tr><tr><td>T</td><td>Top down view</td></tr><tr><td>Z</td><td>Reset Viewport</td></tr><tr><td>[Meta] + Click</td><td>Set Camera Focus</td></tr><tr><td>Mouse Wheel or 2 Finger dolly</td><td>Zoom In / Out</td></tr><tr><td></td><td><strong>Move</strong></td></tr><tr><td>F</td><td>Floor: Put Model Bottoms on Grid</td></tr><tr><td>C</td><td>Center Selection on Grid</td></tr><tr><td>[Ctrl] + Click</td><td><em>Lay Flat</em>: Rotate Clicked Face Toward Grid</td></tr><tr><td>[Shift] + Drag</td><td>Move Selection in the X/Y Plane</td></tr><tr><td></td><td><strong>Workspace</strong></td></tr><tr><td>B</td><td>Toggle Selection Bounding Box</td></tr><tr><td>G</td><td>Toggle Grid Lines</td></tr><tr><td>L</td><td>Toggle Log Message Display</td></tr><tr><td>N</td><td>Toggle Normals Visualization</td></tr><tr><td>Q</td><td>Open Preferences Dialog</td></tr><tr><td>W</td><td>Toggle Wireframe Visualization</td></tr></tbody></table>
+| Key                    | Action                                            |
+| ---------------------- | ------------------------------------------------- |
+| [Delete]               | Delete Selection                                  |
+| E                      | Extrude Sketch or Sketch Selection                |
+| I                      | Import File(s)                                    |
+| M                      | Merge Selection into a Single Model               |
+| S                      | Enter Split Mode (click splits on selected plane) |
+| V                      | Focus Camera on Center of Selection               |
+| X                      | Export Selection as OBJ or STL                    |
+| Shift + A              | Analyze Selection Geometries                      |
+| Shift + D              | Duplicate Selection                               |
+| Shift + S              | Toggle Selection Visibility                       |
+| Shift + G              | Group or Re-Group                                 |
+|                        | **Rotation**                                      |
+| Left and Right Arrows  | Rotate around Z                                   |
+| Up and Down Arrows     | Rotate around Y                                   |
+| Shift + Left/Right     | Rotate around X                                   |
+|                        | **View**                                          |
+| H                      | Home view                                         |
+| T                      | Top down view                                     |
+| Z                      | Reset Viewport                                    |
+| Meta + Click           | Set Camera Focus                                  |
+| Mouse Wheel / 2 Finger | Zoom In / Out                                     |
+|                        | **Move**                                          |
+| F                      | Floor: Put Model Bottoms on Grid                  |
+| C                      | Center Selection on Grid                          |
+| Ctrl + Click           | _Lay Flat_: Rotate Clicked Face Toward Grid       |
+| Shift + Drag           | Move Selection in the X/Y Plane                   |
+|                        | **Workspace**                                     |
+| B                      | Toggle Selection Bounding Box                     |
+| G                      | Toggle Grid Lines                                 |
+| L                      | Toggle Log Message Display                        |
+| N                      | Toggle Normals Visualization                      |
+| Q                      | Open Preferences Dialog                           |
+| W                      | Toggle Wireframe Visualization                    |
 
 ## Screenshots
 
