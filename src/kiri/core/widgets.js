@@ -63,7 +63,7 @@ function replace(vertices, sel) {
     } else {
         // dialog
         $('load-file').onchange = function(event) {
-            load.File.load(event.target.files[0])
+            load(event.target.files[0])
                 .then(data => onload(data[0].mesh))
                 .catch(error => console.log({error}));
         };
