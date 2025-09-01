@@ -652,7 +652,7 @@ export class Polygon {
             td += d;
             if (ap.length === 1 && td >= pe1) {
                 ap.push(np);
-            } else if (ap.length === 2 && td >= pe2) {
+            } else if (ap.length === 2 && (td >= pe2 || i >= l)) {
                 ap.push(np);
                 break;
             }
