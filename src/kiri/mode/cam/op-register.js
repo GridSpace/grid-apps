@@ -5,7 +5,7 @@ import { Tool } from './tool.js';
 import { newPolygon } from '../../../geo/polygon.js';
 import { newSlice } from '../../core/slice.js';
 import { newPoint } from '../../../geo/point.js';
-import { util as base_util } from '../../../geo/base.js';
+import { util } from '../../../geo/base.js';
 
 class OpRegister extends CamOp {
     constructor(state, op) {
@@ -88,7 +88,7 @@ class OpRegister extends CamOp {
                         step = -step;
                     }
                 }
-                for (let z of base.util.lerp(startZ, endZ, op.down)) {
+                for (let z of util.lerp(startZ, endZ, op.down)) {
                     let slice = newSlice(z);
                     addSlices(slice);
                     sliceOut.push(slice);
