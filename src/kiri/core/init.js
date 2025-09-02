@@ -20,6 +20,7 @@ import { menu as menuCAM } from '../mode/cam/init-menu.js';
 import { menu as menuFDM } from '../mode/fdm/init-menu.js';
 import { menu as menuLaser } from '../mode/laser/init-menu.js';
 import { menu as menuSLA } from '../mode/sla/init-menu.js';
+import './tools.js';
 
 let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     { client, catalog, platform, selection, stats } = api,
