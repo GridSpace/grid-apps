@@ -331,7 +331,7 @@ function renderDevices(devices) {
     };
     ui.deviceExport.onclick = function(event) {
         const record = {
-            version: kiri.version,
+            version: api.version,
             device: selected,
             process: api.process.code(),
             profiles: event.altKey ? settings.prof() : undefined,

@@ -318,7 +318,7 @@ function _showTools() {
                 return;
             }
             const record = {
-                version: kiri.version,
+                version: api.version,
                 tools: api.conf.get().tools,
                 time: Date.now()
             };
