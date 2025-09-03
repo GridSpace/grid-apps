@@ -393,7 +393,18 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         let deltaXY = lastPoint.distTo2D(point),
             deltaZ = point.z - lastPoint.z,
             absDeltaZ = Math.abs(deltaZ),
+            hasDelta = deltaXY >= 0.001 && absDeltaZ >= 0,
             isMove = emit == 0;
+
+        // when rapid pluge could cut thru stock, rapid to just above stock
+        // then continue plunge as a plunge cut
+        if (deltaZ < 0 && lastPoint.z > stockz && point.z < stockz && emit === 0) {
+            // console.log('detected plunge cut as rapid move', lastPoint.z, point.z);
+            let above = point.clone().setZ(stockz + 0.1);
+            layerPush(above, 0, 0, tool);
+            // change to cutting move for remainder of plunge
+            emit = 1;
+        }
 
         // drop points too close together
         if (!isLathe && !isArc && deltaXY < 0.001 && point.z === lastPoint.z) {
@@ -402,7 +413,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // convert short planar moves to cuts in some cases
-        if (!isRough && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
+        if (hasDelta && !isRough && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
             let iscontour = tolerance > 0;
             let isflat = absDeltaZ < 0.001;
             // restrict this to contouring
@@ -718,8 +729,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     function emitTrace(slice) {
         let { tool, rate, plunge } = slice.camTrace;
         setTool(tool, rate, plunge);
-        let traceTool = new Tool(settings, tool);
-        let traceToolDiam = traceTool.fluteDiameter();
         printPoint = poly2polyEmit(slice.camLines, printPoint, polyEmit, {
             swapdir: false,
             weight: innerFirst
@@ -743,7 +752,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * @param {boolean} ops.cutFromLast - whether to emit a 1 when moving from last point. Defaults to false
      * @returns {Point} - the last point of the polygon
      */
-    function polyEmit(poly, index, count, fromPoint,ops) {
+    function polyEmit(poly, index, count, fromPoint, ops) {
         let {
             cutFromLast,
         } = ops ?? {
@@ -855,7 +864,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                                 radFault = Math.abs(angle) > arcRes
                                 if (radFault) {
                                     // if so, remove first point
-                                    
                                     console.log("secondary radfault,",structuredClone(arcQ),{angle,arcRes,a,b})
                                     camOut(arcQ.shift(), 1)
                                 }

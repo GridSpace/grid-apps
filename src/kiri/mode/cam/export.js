@@ -234,7 +234,7 @@ export function cam_export(print, online) {
                     // speed: Infinity,
                     tool: out.tool,
                     point: { x: newpos.x, y: newpos.y, z: newpos.z, a: pos.a },
-                    emit: 1,
+                    emit: out.emit,
                 }, {
                     dx: 1, dy: 1, dz: 0, time: 0
                 });
@@ -251,7 +251,7 @@ export function cam_export(print, online) {
                     // speed: Infinity,
                     tool: out.tool,
                     point: { x: newpos.x, y: newpos.y, z: newpos.z, a: newpos.a },
-                    emit: 1
+                    emit: out.emit
                 }, {
                     dx: 0, dy: 0, dz: 1, time: 0
                 });

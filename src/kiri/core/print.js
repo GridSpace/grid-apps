@@ -88,7 +88,7 @@ class Print {
         }
         output.appendAll(input);
     }
-    
+
     /**
      * Prints a polygon to a given output array, possibly with a given extrude factor,
      * and starting from a given point. The last point is returned.

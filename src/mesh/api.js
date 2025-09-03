@@ -1392,14 +1392,15 @@ const prefs = {
             scale_group_Z: true
         },
         space: {
+            bounds: false,
+            center: false,
+            dark: false,
+            floor: false,
+            grid: true,
+            select: [],
             snap: 1,
             snapon: false,
-            center: false,
-            floor: false,
-            wire: false,
-            grid: true,
-            dark: false,
-            select: []
+            wire: false
         },
         sketch: {
             open_close: false,
