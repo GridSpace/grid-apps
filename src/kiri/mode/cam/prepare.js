@@ -1072,7 +1072,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, dir, ease);
             fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, !dir, ease);
             return fromPoint;
-        }, { weight: false, swapdir: false });
+        }, {
+            weight: innerFirst,
+            swapdir: false
+        });
         return start;
     }
 

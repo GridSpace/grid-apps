@@ -310,6 +310,8 @@ class OpRough extends CamOp {
             POLY.setWinding(level, cutdir, false);
             poly2polyEmit(level, printPoint, (poly, index, count) => {
                 printPoint = polyEmit(poly, index, count, printPoint, {cutFromLast: true});
+            }, {
+                weight: process.camInnerFirst
             });
             newLayer();
         }

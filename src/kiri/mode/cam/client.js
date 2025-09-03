@@ -226,7 +226,7 @@ const traceClear = () => {
     api.conf.save();
 };
 
-const opAdd = (rec) => {
+export const opAdd = (rec) => {
     if (!env.isCamMode) return;
     clearPops();
     let oplist = env.current.process.ops;

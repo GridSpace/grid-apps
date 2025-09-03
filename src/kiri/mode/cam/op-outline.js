@@ -269,9 +269,11 @@ class OpOutline extends CamOp {
                     let polyLast;
                     // console.log({order, orderPolys});
                     printPoint = poly2polyEmit(orderPolys, printPoint, function(poly, index, count) {
-
                         polyLast = polyEmit(poly, index, count, polyLast);
-                    }, { swapdir: false });
+                    }, {
+                        swapdir: false,
+                        weight: process.camInnerFirst
+                    });
                 })
                 newLayer();
             }
