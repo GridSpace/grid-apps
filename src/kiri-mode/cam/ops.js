@@ -1050,6 +1050,7 @@ class OpTrace extends CamOp {
             if (reContour) {
                 state.contourPolys(widget, slice.camLines);
             }
+            POLY.setWinding(slice.camLines, cutdir, false);
             slice.output()
                 .setLayer("trace follow", {line: color}, false)
                 .addPolys(slice.camLines)
