@@ -274,6 +274,9 @@ export function cam_export(print, online) {
             dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
             newFeed = feed && feed !== pos.f;
 
+        // catch NaN in debugging
+        // if (nl.length === 0 || nl[0] === undefined)
+        // console.log(out, nl.length, ...nl);
 
         // drop dup points (all deltas are 0)
         if (!arc && !(dx || dy || dz || da)) {

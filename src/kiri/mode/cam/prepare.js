@@ -244,7 +244,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 break;
             }
         }
-        camOut(point.clone().setZ(zmax_outer));
+        camOut(point.clone().setZ(zmax_outer), 0);
         points.forEach(function (point, index) {
             camOut(point, 1);
             if (index > 0 && index < points.length - 1) {
@@ -332,7 +332,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.moveLen typically = tool diameter used to trigger terrain detection
      * @param {number} opts.factor speed scale factor
      */
-    function camOut(point, emit, opts) {
+    function camOut(point, emit = 1, opts) {
         // console.trace({point, emit, opts})
         let {
             center = {},
@@ -399,9 +399,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         // when rapid pluge could cut thru stock, rapid to just above stock
         // then continue plunge as a plunge cut
         if (deltaZ < 0 && lastPoint.z > stockz && point.z < stockz && emit === 0) {
-            // console.log('detected plunge cut as rapid move', lastPoint.z, point.z);
-            let above = point.clone().setZ(stockz + 0.1);
-            layerPush(above, 0, 0, tool);
+            // console.log('detected plunge cut as rapid move', lastPoint.z, stockz, point.z);
+            layerPush(point.clone().setZ(stockz + 1), 0, 0, tool);
             // change to cutting move for remainder of plunge
             emit = 1;
         }
@@ -467,6 +466,11 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                     layerPush(point.clone().setZ(zClearance), 0, 0, tool);
                     // new pos for plunge calc
                     deltaXY = 0;
+                    // if plunge goes below stock, convert to cut
+                    if (emit === 0 && point.z < stockz) {
+                        lastPoint = layerPush(point.clone().setZ(stockz + 1), 0, 0, tool);
+                        emit = 1;
+                    }
                 }
             } else if (isRough && deltaZ < 0) {
                 layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
