@@ -225,7 +225,7 @@ class OpOutline extends CamOp {
 
         let easeDown = process.camEaseDown;
         let toolDiam = this.toolDiam;
-        let cutdir = op.ov_conv;//process.camConventional;
+        let cutdir = op.ov_conv;
         let depthFirst = process.camDepthFirst;
         let depthData = [];
 
@@ -251,9 +251,9 @@ class OpOutline extends CamOp {
             });
 
             // set cut direction on outer polys
-            POLY.setWinding(t, cutdir);
+            POLY.setWinding(t, !cutdir);
             // set cut direction on inner polys
-            POLY.setWinding(c, !cutdir);
+            POLY.setWinding(c, cutdir);
 
             if (depthFirst) {
                 depthData.push(polys);
