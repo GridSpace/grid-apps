@@ -1123,10 +1123,10 @@ function getZClearPath(terrain, x1, y1, x2, y2, z, zadd, off, over) {
         }
     }
     check.reverse();
+    let p1 = newPoint(x1, y1);
+    let p2 = newPoint(x2, y2);
     for (let i = 0; i < check.length; i++) {
         let data = check[i];
-        let p1 = newPoint(x1, y1);
-        let p2 = newPoint(x2, y2);
         let int = data.tops.map(p => p.intersections(p1, p2, true)).flat();
         if (int.length) {
             maxz = Math.max(maxz, data.z + zadd + over);
