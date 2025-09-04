@@ -89,7 +89,7 @@ class OpTrace extends CamOp {
             if (reContour) {
                 state.contourPolys(widget, slice.camLines);
             }
-            POLY.setWinding(slice.camLines, cutdir, false);
+            POLY.setWinding(slice.camLines, offset === "outside" ? !cutdir : cutdir, false);
             slice.output()
                 .setLayer("trace follow", {line: color}, false)
                 .addPolys(slice.camLines)
@@ -145,7 +145,7 @@ class OpTrace extends CamOp {
                     } else {
                         slice.camLines = POLY.flatten(slice.camLines, null, true);
                     }
-                    POLY.setWinding(slice.camLines, cutdir, false);
+                    POLY.setWinding(slice.camLines, offset === "outside" ? !cutdir : cutdir, false);
                     if (debug && shadow) slice.output()
                         .setLayer("trace shadow", {line: 0xff8811}, false)
                         .addPolys(shadow)
