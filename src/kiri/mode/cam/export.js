@@ -53,8 +53,6 @@ export function cam_export(print, online) {
         lasering = false,
         laserOp,
         stock = settings.stock || {},
-        ztOff = stock.z - widget.track.top,
-        bounds = widget.getBoundingBox(),
         zmax = stock.z,
         runbox = {
             max: { x: -Infinity, y: -Infinity, z: -Infinity },
@@ -411,7 +409,7 @@ export function cam_export(print, online) {
 
     // collect tool info to add to header
     let toolz = {}, ctool;
-    const isOffset = offset && (offset.x || offset.y);
+    const isOffset = offset && (offset.x || offset.y || offset.z);
     // remap points as necessary for origins, offsets, inversions
     print.output.forEach(layer => {
         if (!Array.isArray(layer)) {
@@ -430,8 +428,9 @@ export function cam_export(print, online) {
             // ensure not point is modified twice
             point.mod = 1;
             if (isOffset) {
-                point.x += offset.x;
-                point.y += offset.y;
+                point.x += offset.x ?? 0;
+                point.y += offset.y ?? 0;
+                point.z -= offset.z ?? 0;
             }
             if (scale) {
                 point.x *= scale.x;

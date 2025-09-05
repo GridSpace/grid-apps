@@ -546,11 +546,12 @@ const dispatch = {
 
     parse(args, send) {
         const { settings, code, type } = args;
+        const { process } = settings;
         const origin = settings.origin;
         const offset = {
-            x: origin.x,
-            y: -origin.y,
-            z: origin.z
+            x:  origin.x - (process.camOriginOffX ?? 0),
+            y: -origin.y - (process.camOriginOffY ?? 0),
+            z:  origin.z - (process.camOriginOffZ ?? 0)
         };
         const device = settings.device;
         const print = current.print = newPrint(settings, Object.values(wcache));
