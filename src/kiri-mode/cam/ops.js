@@ -232,7 +232,7 @@ class OpRough extends CamOp {
         let shadow = [];
         let slices = [];
         let indices = slicer.interval(roughDown, {
-            down: true, min: workarea.bottom_z, fit: true, off: 0.01
+            down: true, min: workarea.bottom_z < 0 ? workarea.bottom_z : 0, fit: true, off: 0.01
         });
 
         // shift out first (top-most) slice
@@ -490,7 +490,7 @@ class OpOutline extends CamOp {
             off: 0.01,
             fit: true,
             down: true,
-            min: Math.max(0, workarea.bottom_z),
+            min: workarea.bottom_z < 0 ? workarea.bottom_z : 0,
             max: workarea.top_z
         };
         let indices = slicer.interval(op.down, intopt);
