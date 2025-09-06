@@ -232,7 +232,7 @@ class OpRough extends CamOp {
         let shadow = [];
         let slices = [];
         let indices = slicer.interval(roughDown, {
-            down: true, min: 0, fit: true, off: 0.01
+            down: true, min: workarea.bottom_z < 0 ? workarea.bottom_z : 0, fit: true, off: 0.01
         });
 
         // shift out first (top-most) slice
@@ -410,17 +410,7 @@ class OpRough extends CamOp {
 
         let last = slices[slices.length-1];
 
-        if (workarea.bottom_z < 0)
-        for (let zneg of base.util.lerp(0, -workarea.bottom_cut, op.down)) {
-            if (!last) continue;
-            let add = last.clone(true);
-            add.z -= zneg;
-            add.camLines = last.camLines.clone(true);
-            add.camLines.forEach(p => p.setZ(add.z + roughLeaveZ));
-            // add.tops.forEach(top => top.poly.setZ(add.z));
-            // add.shadow = last.shadow.clone(true);
-            slices.push(add);
-        }
+        // Z-Through passes are now included in the main interval calculation above
 
         slices.forEach(slice => {
             slice.output()
@@ -500,7 +490,7 @@ class OpOutline extends CamOp {
             off: 0.01,
             fit: true,
             down: true,
-            min: Math.max(0, workarea.bottom_z),
+            min: workarea.bottom_z < 0 ? workarea.bottom_z : 0,
             max: workarea.top_z
         };
         let indices = slicer.interval(op.down, intopt);
@@ -563,18 +553,7 @@ class OpOutline extends CamOp {
             }
         }
 
-        // extend cut thru (only when z bottom is 0)
-        if (workarea.bottom_z < 0) {
-            let last = slices[slices.length-1];
-            for (let zneg of base.util.lerp(0, -workarea.bottom_cut, op.down)) {
-                if (!last) continue;
-                let add = last.clone(true);
-                add.tops.forEach(top => top.poly.setZ(add.z));
-                add.shadow = last.shadow.clone(true);
-                add.z -= zneg;
-                slices.push(add);
-            }
-        }
+        // Z-Through passes are now included in the main interval calculation above
 
         slices.forEach(slice => {
             let tops = slice.shadow;
