@@ -830,6 +830,8 @@ self.kiri.lang['en-us'] = {
     ad_mins_l:      ["minimum speed","for short segments"],
     ad_spol_s:      "short path",
     ad_spol_l:      ["polygons shorter than this","will have their print speed","scaled down to min speed","in millimeters"],
+    cx_arce_s:      "arc output",
+    cx_arce_l:      ["EXPERIMENTAL: enable path to arc conversion"],
     ad_arct_s:      "arc tolerance",
     ad_arct_l:      ["convert faceted lines to arcs","center point drift tolerance","when matching arc points","consider values around 0.15","in millimeters","0 to disable"],
     ad_zhop_s:      "z hop dist",

@@ -461,7 +461,7 @@ class OpRough extends CamOp {
             // set winding specified in output
             POLY.setWinding(level, cutdir, false);
             poly2polyEmit(level, printPoint, (poly, index, count) => {
-                printPoint = polyEmit(poly, index, count, printPoint);
+                printPoint = polyEmit(poly, index, count, printPoint, {cutFromLast: true});
             }); 
             newLayer();
         }
@@ -795,8 +795,10 @@ class OpContour extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices } = state;
+        let { addSlices, settings, updateToolDiams } = state;
         let filter = createFilter(op);
+        let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+        updateToolDiams(toolDiam);
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
@@ -826,7 +828,7 @@ class OpContour extends CamOp {
         let { camOut, polyEmit, newLayer, printPoint, lastPoint } = ops;
         let { bounds, zmax } = ops;
 
-        let toolDiam = this.toolDiam = new CAM.Tool(settings, op.tool).fluteDiameter();
+        let toolDiam = this.toolDiam;
         let stepover = toolDiam * op.step * 2;
         let depthFirst = process.camDepthFirst;
         let depthData = [];
@@ -1048,6 +1050,7 @@ class OpTrace extends CamOp {
             if (reContour) {
                 state.contourPolys(widget, slice.camLines);
             }
+            POLY.setWinding(slice.camLines, cutdir, false);
             slice.output()
                 .setLayer("trace follow", {line: color}, false)
                 .addPolys(slice.camLines)
@@ -1066,7 +1069,20 @@ class OpTrace extends CamOp {
                 for (let z of zs) {
                     let clip = [], shadow;
                     shadow = shadowAt(z);
-                    POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
+                    // for cases where the shadow IS the poly like
+                    // with lettering without a bounding frame, clip
+                    // will fail and we need to restore the matching poly
+                    let subshadow = true;
+                    for (let spo of shadow) {
+                        if (poly.isInside(spo, 0.01)) {
+                            subshadow = false;
+                            clip = [ poly ];
+                            break;
+                        }
+                    }
+                    if (subshadow) {
+                        POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
+                    }
                     if (op.outline) {
                         POLY.clearInner(clip);
                     }
