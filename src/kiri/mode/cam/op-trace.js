@@ -38,7 +38,7 @@ class OpTrace extends CamOp {
         let cutdir = ov_conv;
         let polys = [];
         let reContour = false;
-        let canRecontour = offset !== 'none' && down === 0;
+        let canRecontour = offset !== 'none' && down < 0;
         let stockRect = stock.center && stock.x && stock.y ?
             newPolygon().centerRectangle({x:0,y:0}, stock.x, stock.y) : undefined;
         updateToolDiams(toolDiam);
@@ -57,6 +57,7 @@ class OpTrace extends CamOp {
             let max = Math.max(...zs);
             if (max - min > 0.0001 && canRecontour) {
                 reContour = true;
+                down = 0;
             }
         }
         if (false) newSliceOut(0).output()
