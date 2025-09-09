@@ -167,6 +167,7 @@ function thin_type_3(params) {
     top.thin_fill = [];
     top.fill_sparse = [];
 
+    // produce trace from outside of poly inward no more than max inset
     let { noodle, remain } = top.poly.noodle(offsetN * count);
     top.shells = noodle;
     top.gaps = last = remain;
@@ -180,6 +181,7 @@ function thin_type_3(params) {
     let pointMap = new Map();
     let lineMap = new Map();
 
+    // convert point to deduplicated / unique point record
     function pointToRec(point) {
         let key = `${(point.x*100)|0}|${(point.y*100)|0}`;
         let rec = pointMap.get(key);
@@ -196,6 +198,7 @@ function thin_type_3(params) {
         return rec;
     }
 
+    // convert line to unique line record. matches reversed and duplicate lines
     function pointsToLine(p0, p1) {
         p0 = pointToRec(p0);
         p1 = pointToRec(p1);
@@ -294,6 +297,7 @@ function thin_type_3(params) {
     let showCross = false;
     let showRad = true;
 
+    // divide a segment/redius into 1 or more equal subsegments
     function div(cr) {
         if (cr <= maxR) {
             return [ cr ];
@@ -315,6 +319,8 @@ function thin_type_3(params) {
     if (showRad) {
         top.shells = [];
     }
+    // ranked points by inset distance
+    let inset = [];
     for (let chain of chains.filter(c => c.total >= minR)) {
         // chain reduction by merging short segments
         let end = chain[0];
@@ -364,18 +370,26 @@ function thin_type_3(params) {
                     let sx = cx + yo;
                     let sy = cy - xo;
                     let m = 1;
+                    let indx = 0;
                     for (let r of pop) {
+                        indx = Math.min(indx, pop.length - 1 - indx);
+                        let inset_arr = inset[indx];
+                        if (!inset_arr) {
+                            inset_arr = inset[indx] = [];
+                        }
                         sx -= (r/cr) * yo * m;
                         sy += (r/cr) * xo * m;
                         circ.push(newPolygon().centerCircle({ x:sx, y:sy }, r, 10));
                         m = 2;
+                        inset_arr.push({ x:sx, y:sy, r });
+                        indx++;
                     }
-                    // console.log(pop);
                 }
             }
         }
     }
 
+    // console.log({ inset });
     return { last, gaps };
 }
 
