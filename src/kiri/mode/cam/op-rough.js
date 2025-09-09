@@ -90,7 +90,7 @@ class OpRough extends CamOp {
                 .filter(row => row[1] > flatArea)
                 .map(row => row[0])
                 .map(v => parseFloat(v).round(5))
-                .filter(v => v >= workarea.bottom_z);
+                .filter(v => v >= workarea.bottom_cut);
             flats.forEach(v => {
                 if (!indices.contains(v)) {
                     indices.push(v);
@@ -118,7 +118,7 @@ class OpRough extends CamOp {
             indices = indices.appendAll(flats).sort((a,b) => b-a);
         }
 
-        indices = indices.filter(v => v >= workarea.bottom_z);
+        indices = indices.filter(v => v >= workarea.bottom_cut);
         // console.log('indices', ...indices, {zBottom});
 
         let lsz;
@@ -258,17 +258,8 @@ class OpRough extends CamOp {
 
         let last = slices[slices.length-1];
 
-        if (workarea.bottom_z < 0)
-        for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
-            if (!last) continue;
-            let add = last.clone(true);
-            add.z -= zneg;
-            add.camLines = last.camLines.clone(true);
-            add.camLines.forEach(p => p.setZ(add.z + roughLeaveZ));
-            // add.tops.forEach(top => top.poly.setZ(add.z));
-            // add.shadow = last.shadow.clone(true);
-            slices.push(add);
-        }
+        // z-thru depth is now handled by regular slicing using workarea.bottom_cut
+        // No separate z-thru slices needed
 
         slices.forEach(slice => {
             slice.output()
