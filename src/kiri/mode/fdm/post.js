@@ -2,7 +2,7 @@
 
 import '../../../ext/jspoly.js';
 import { base } from '../../../geo/base.js';
-import { newPolygon } from '../../../geo/polygon.js';
+import { newPolygon, Polygon } from '../../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { getRangeParameters } from './driver.js';
 import { slicer } from '../../../geo/slicer.js';
@@ -169,7 +169,7 @@ function thin_type_3(params) {
 
     // produce trace from outside of poly inward no more than max inset
     let { noodle, remain } = top.poly.noodle(offsetN * count);
-    top.shells = noodle;
+    // top.shells = noodle;
     top.gaps = last = remain;
 
     let thin = top.thin_fill;
@@ -293,9 +293,16 @@ function thin_type_3(params) {
         }
     }
 
-    let showMid = false;
-    let showCross = false;
-    let showRad = true;
+    let showNoodle = false;
+    let showMid    = false;
+    let showCross  = false;
+    let showRad    = true;
+    let showShells = true;
+
+    // render inset "noodle"
+    if (showNoodle) {
+        top.shells.appendAll(noodle);
+    }
 
     // divide a segment/redius into 1 or more equal subsegments
     function div(cr) {
@@ -315,12 +322,8 @@ function thin_type_3(params) {
         }
     }
 
-    // add chains to thinwall output for visualization
-    if (showRad) {
-        top.shells = [];
-    }
-    // ranked points by inset distance
-    let inset = [];
+    // gather point offsets into shells
+    let shells = { count: 0 };
     for (let chain of chains.filter(c => c.total >= minR)) {
         // chain reduction by merging short segments
         let end = chain[0];
@@ -364,32 +367,75 @@ function thin_type_3(params) {
                     thin.push(new Point(cx + yo, cy - xo));
                     thin.push(new Point(cx - yo, cy + xo));
                 }
-                if (showRad) {
+                if (showRad || showShells) {
                     let circ = top.shells;
                     let pop = div(cr);
                     let sx = cx + yo;
                     let sy = cy - xo;
                     let m = 1;
-                    let indx = 0;
+                    let index = 0;
+                    let plen = pop.length;
+                    let mid = plen / 2;
                     for (let r of pop) {
-                        indx = Math.min(indx, pop.length - 1 - indx);
-                        let inset_arr = inset[indx];
+                        let shell = index < mid ? index + 1 : -(pop.length - index);
+                        let inset_arr = shells[shell];
                         if (!inset_arr) {
-                            inset_arr = inset[indx] = [];
+                            inset_arr = shells[shell] = [];
                         }
                         sx -= (r/cr) * yo * m;
                         sy += (r/cr) * xo * m;
-                        circ.push(newPolygon().centerCircle({ x:sx, y:sy }, r, 10));
                         m = 2;
-                        inset_arr.push({ x:sx, y:sy, r });
-                        indx++;
+                        if (showRad) {
+                            circ.push(newPolygon().centerCircle({ x:sx, y:sy }, r, 10));
+                        }
+                        inset_arr.push(new Point(sx, sy, r));
+                        index++;
+                        shells.count = Math.max(shells.count, Math.abs(shell));
                     }
                 }
             }
         }
     }
 
-    // console.log({ inset });
+    // follow shells and output lines
+    console.log({ shells });
+    if (showShells)
+    for (let shell = 1; shell <= 1; shell++) {
+        let poly = new Polygon().setOpen();
+        let arr = shells[shell];
+        let lp = arr[0];
+        poly.push(lp);
+        let find;
+        for (;;) {
+            find = { dist: Infinity };
+            // find next closest point
+            for (let i=1; i<arr.length; i++) {
+                let pt = arr[i];
+                if (!pt) continue;
+                let dist = lp.distTo2D(pt);
+                if (dist < find.dist) {
+                    find.dist = dist;
+                    find.pi = i;
+                    find.pt = pt;
+                }
+            }
+            if (find.pt) {
+                if (find.dist > 1) {
+                    top.shells.push(poly);
+                    poly = new Polygon().setOpen();
+                }
+                arr[find.pi] = undefined;
+                poly.push(lp = find.pt);
+            } else {
+                break;
+            }
+        }
+        console.log({ poly });
+        if (poly.length > 1) {
+            top.shells.push(poly);
+        }
+    }
+
     return { last, gaps };
 }
 
