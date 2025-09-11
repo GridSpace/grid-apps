@@ -293,11 +293,15 @@ function thin_type_3(params) {
         }
     }
 
+    // todo: merge chains at next of 3 or more preferencing
+    // merging longer chains. then shorten remaining nexus chain
+    // intersections by minR
+
     let showNoodle = false;
-    let showMid    = false;
+    let showMid    = true;
     let showCross  = false;
     let showRad    = true;
-    let showShells = true;
+    let showShells = false;
 
     // render inset "noodle"
     if (showNoodle) {
@@ -323,7 +327,9 @@ function thin_type_3(params) {
     }
 
     // gather point offsets into shells
+    // todo: order outer shell innersection to inner
     let shells = { count: 0 };
+    // filter chains that are too short from consideration
     for (let chain of chains.filter(c => c.total >= minR)) {
         // chain reduction by merging short segments
         let end = chain[0];
@@ -373,11 +379,10 @@ function thin_type_3(params) {
                     let sx = cx + yo;
                     let sy = cy - xo;
                     let m = 1;
-                    let index = 0;
+                    let index = 1;
                     let plen = pop.length;
-                    let mid = plen / 2;
                     for (let r of pop) {
-                        let shell = index < mid ? index + 1 : -(pop.length - index);
+                        let shell = Math.min(index, plen - index + 1);
                         let inset_arr = shells[shell];
                         if (!inset_arr) {
                             inset_arr = shells[shell] = [];
@@ -389,8 +394,8 @@ function thin_type_3(params) {
                             circ.push(newPolygon().centerCircle({ x:sx, y:sy }, r, 10));
                         }
                         inset_arr.push(new Point(sx, sy, r));
+                        shells.count = Math.max(shells.count, shell);
                         index++;
-                        shells.count = Math.max(shells.count, Math.abs(shell));
                     }
                 }
             }
