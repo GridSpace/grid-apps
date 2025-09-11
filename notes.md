@@ -31,6 +31,10 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
+* `F` min layer time
+* `F` separate bridging speed / fan control
+* `F` elephant foot compensation
+* `F` inner / outer perimeter compensation
 * `F` better thin-wall (like arachne)
 * `F` add scarf seams
 * `F` add 'random' and 'seam' start point options
