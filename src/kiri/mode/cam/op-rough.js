@@ -90,7 +90,7 @@ class OpRough extends CamOp {
                 .filter(row => row[1] > flatArea)
                 .map(row => row[0])
                 .map(v => parseFloat(v).round(5))
-                .filter(v => v >= workarea.bottom_cut);
+                .filter(v => v >= workarea.bottom_z);
             flats.forEach(v => {
                 if (!indices.contains(v)) {
                     indices.push(v);
@@ -118,7 +118,7 @@ class OpRough extends CamOp {
             indices = indices.appendAll(flats).sort((a,b) => b-a);
         }
 
-        indices = indices.filter(v => v >= workarea.bottom_cut);
+        indices = indices.filter(v => v >= workarea.bottom_z);
         // console.log('indices', ...indices, {zBottom});
 
         let lsz;
