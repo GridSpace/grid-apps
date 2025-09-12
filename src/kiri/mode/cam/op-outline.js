@@ -33,7 +33,7 @@ class OpOutline extends CamOp {
             off: 0.01,
             fit: true,
             down: true,
-            min: Math.max(0, workarea.bottom_z),
+            min: Math.max(0, workarea.bottom_cut),
             max: workarea.top_z
         };
         let indices = slicer.interval(op.down, intopt);

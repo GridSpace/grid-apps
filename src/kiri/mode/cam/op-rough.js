@@ -77,7 +77,7 @@ class OpRough extends CamOp {
         let shadow = [];
         let slices = [];
         let indices = slicer.interval(roughDown, {
-            down: true, min: workarea.bottom_z, fit: true, off: 0.01
+            down: true, min: workarea.bottom_cut, fit: true, off: 0.01
         });
 
         // shift out first (top-most) slice
