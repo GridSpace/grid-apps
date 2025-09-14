@@ -173,17 +173,23 @@ function thin_type_3(params) {
     top.gaps = last = remain;
 
     let thin = top.thin_fill;
-    let scale = 5000;
+    let scale = 1000;
     let minR = offsetN / 2;
     let maxR = minR * 1.5;
     let minSpur = 0; // offsetN * 3;
+    let mergeClosePoints = true;
+    let interpolateShortSpur = true;
 
     let pointMap = new Map();
     let lineMap = new Map();
 
+    function point2key(point) {
+        return `${(point.x*100)|0}|${(point.y*100)|0}`;
+    }
+
     // convert point to deduplicated / unique point record
     function pointToRec(point) {
-        let key = `${(point.x*100)|0}|${(point.y*100)|0}`;
+        let key = point2key(point);
         let rec = pointMap.get(key);
         if (!rec) {
             rec = {
@@ -222,6 +228,9 @@ function thin_type_3(params) {
 
     let chains = [];
 
+    // for each standalone noodle, construct medial axis
+    // map medial axis points into de-duplicated segments
+    // which will be re-connected into chains
     for (let poly of noodle) {
         // scale the polygon (including inners) so the medial axis code works properly
         poly = poly.clone(true).scale({ x:scale, y:scale, z:scale });
@@ -234,62 +243,74 @@ function thin_type_3(params) {
         for (let { point0, point1 } of ma) {
             pointsToLine(point0, point1);
         }
-        for (let seg of lineMap.values()) {
-            let { p0, p1 } = seg;
-            let len = seg.len = Math.hypot(p0.x-p1.x, p0.y-p1.y);
-            // filter out lines where both points' radii are under the
-            // minR threshold. shorten and fixup lines where minR falls
-            // somewhere along the gradient between ends.
-            if (p0.r < minR || p1.r < minR) {
-                if (p0.r > minR && len > minSpur) {
-                    // move p1 toward p0 until minR met
-                    let pct = (minR - p1.r) / (p0.r - p1.r);
-                    let dx = p1.x - p0.x;
-                    let dy = p1.y - p0.y;
-                    p1.x -= dx * pct;
-                    p1.y -= dy * pct;
-                    p1.r = minR;
-                    pointMap.delete(p1.key);
-                } else if (p1.r > minR && len > minSpur) {
-                    // move p0 toward p1 until minR met
-                    let pct = (minR - p0.r) / (p1.r - p0.r);
-                    let dx = p0.x - p1.x;
-                    let dy = p0.y - p1.y;
-                    p0.x -= dx * pct;
-                    p0.y -= dy * pct;
-                    p0.r = minR;
-                    pointMap.delete(p0.key);
-                } else {
-                    lineMap.delete(seg.key);
-                    continue;
-                }
+    }
+
+    // connect segments into chains
+    // console.log({ seg: [...lineMap.values()].sort((s1,s2) => s2.len - s1.len) });
+    for (let seg of lineMap.values()) {
+        let { p0, p1 } = seg;
+        let len = seg.len = Math.hypot(p0.x-p1.x, p0.y-p1.y);
+        // filter out lines where both points' radii are under the
+        // minR threshold. shorten and fixup lines where minR falls
+        // somewhere along the gradient between ends.
+        if (interpolateShortSpur)
+        if (p0.r < minR || p1.r < minR) {
+            if (p0.r > minR && len > minSpur) {
+                // move p1 toward p0 until minR met
+                let pct = (minR - p1.r) / (p0.r - p1.r);
+                let dx = p1.x - p0.x;
+                let dy = p1.y - p0.y;
+                p1.x -= dx * pct;
+                p1.y -= dy * pct;
+                p1.r = minR;
+                pointMap.delete(p1.key);
+            } else if (p1.r > minR && len > minSpur) {
+                // move p0 toward p1 until minR met
+                let pct = (minR - p0.r) / (p1.r - p0.r);
+                let dx = p0.x - p1.x;
+                let dy = p0.y - p1.y;
+                p0.x -= dx * pct;
+                p0.y -= dy * pct;
+                p0.r = minR;
+                pointMap.delete(p0.key);
+            } else {
+                // both points eliminated
+                pointMap.delete(p0.key);
+                pointMap.delete(p1.key);
+                lineMap.delete(seg.key);
+                continue;
             }
-            // for each line segment either add it to a chain or start a new chain
-            let add;
-            for (let chain of chains) {
-                if (p0.count === 2 && p0.key === chain[0].key) {
-                    chain.splice(0,0,{...p1, len});
-                } else if (p0.count === 2 && p0.key === chain.peek().key) {
-                    chain.peek().len = len;
-                    chain.push({...p1});
-                    add = true;
-                } else if (p1.count === 2 && p1.key === chain[0].key) {
-                    chain.splice(0,0,{...p0, len});
-                    add = true;
-                } else if (p1.count === 2 && p1.key === chain.peek().key) {
-                    chain.peek().len = len;
-                    chain.push({...p0});
-                    add = true;
-                }
-                if (add) {
-                    chain.total += len;
-                    break;
-                }
+        }
+        // for each line segment either add it to a chain or start a new chain
+        let add;
+        for (let chain of chains) {
+            if (p0.count === 2 && p0.key === chain[0].key) {
+                // prefix chain with p1
+                chain.splice(0,0,{...p1, len});
+                add = true;
+            } else if (p0.count === 2 && p0.key === chain.peek().key) {
+                // append chain with p1
+                chain.peek().len = len;
+                chain.push({...p1});
+                add = true;
+            } else if (p1.count === 2 && p1.key === chain[0].key) {
+                // prefix chain with p0
+                chain.splice(0,0,{...p0, len});
+                add = true;
+            } else if (p1.count === 2 && p1.key === chain.peek().key) {
+                // append chain with p0
+                chain.peek().len = len;
+                chain.push({...p0});
+                add = true;
             }
-            if (!add) {
-                chains.push([ {...p0 ,len}, {...p1} ]);
-                chains.peek().total = len;
+            if (add) {
+                chain.total += len;
+                break;
             }
+        }
+        if (!add) {
+            chains.push([ {...p0 ,len}, {...p1} ]);
+            chains.peek().total = len;
         }
     }
 
@@ -300,7 +321,7 @@ function thin_type_3(params) {
     let showNoodle = false;
     let showMid    = true;
     let showCross  = false;
-    let showRad    = true;
+    let showRad    = false;
     let showShells = false;
 
     // render inset "noodle"
@@ -327,10 +348,16 @@ function thin_type_3(params) {
     }
 
     // filter chains that are too short from consideration
-    chains = chains.filter(c => c.total >= minR).map(chain => {
+    chains = chains.filter(c => c.total >= minR);
+    chains.sort((c1,c2) => c2.total - c1.total);
+
+    // merge chain points that are too close
+    if (mergeClosePoints)
+    chains = chains.map(chain => {
         // chain reduction by merging short segments
         let end = chain[0];
         let nuchain = [ end ];
+        nuchain.total = chain.total;
         for (let point of chain.slice(1)) {
             if (point.len === undefined || point.len + end.len >= minR) {
                 nuchain.push(point);
@@ -342,9 +369,37 @@ function thin_type_3(params) {
         return nuchain;
     });
 
+    // map chains to nexus via endpoints
+    let nexus = {};
+    function addEp(point, chain) {
+        let key = point.key;
+        let rec = nexus[key];
+        if (!rec) rec = nexus[key] = [];
+        if (rec.indexOf(chain) < 0) rec.push(chain);
+    }
+    for (let chain of chains) {
+        addEp(chain[0], chain);
+        addEp(chain.peek(), chain);
+    }
+
+    // mark spurs
+    for (let [key,val] of Object.entries(nexus)) {
+        if (val.length === 1) {
+            val[0].spur = true;
+            delete nexus[key];
+        }
+    }
+
+    // detach spurs from nexus and shorten by ?
+    for (let [key,val] of Object.entries(nexus)) {
+        nexus[key] = val.filter(c => !c.spur);
+    }
+
+    console.log({ chains, nexus });
+
     // connect chains end to end following nexus branches that result
     // in the longest final merged chain (open or closed)
-    console.log(chains);
+    // map chain endpoints to nexus points
 
     // gather point offsets into shells
     // todo: order outer shell innersection to inner
@@ -410,43 +465,43 @@ function thin_type_3(params) {
     }
 
     // follow shells and output lines
-    console.log({ shells });
-    if (showShells)
-    for (let shell = 1; shell <= 1; shell++) {
-        let poly = new Polygon().setOpen();
-        let arr = shells[shell];
-        let lp = arr[0];
-        poly.push(lp);
-        let find;
-        for (;;) {
-            find = { dist: Infinity };
-            // find next closest point
-            for (let i=1; i<arr.length; i++) {
-                let pt = arr[i];
-                if (!pt) continue;
-                let dist = lp.distTo2D(pt);
-                if (dist < find.dist) {
-                    find.dist = dist;
-                    find.pi = i;
-                    find.pt = pt;
-                }
-            }
-            if (find.pt) {
-                if (find.dist > 1) {
-                    top.shells.push(poly);
-                    poly = new Polygon().setOpen();
-                }
-                arr[find.pi] = undefined;
-                poly.push(lp = find.pt);
-            } else {
-                break;
-            }
-        }
-        console.log({ poly });
-        if (poly.length > 1) {
-            top.shells.push(poly);
-        }
-    }
+    // console.log({ shells });
+    // if (showShells)
+    // for (let shell = 1; shell <= 1; shell++) {
+    //     let poly = new Polygon().setOpen();
+    //     let arr = shells[shell];
+    //     let lp = arr[0];
+    //     poly.push(lp);
+    //     let find;
+    //     for (;;) {
+    //         find = { dist: Infinity };
+    //         // find next closest point
+    //         for (let i=1; i<arr.length; i++) {
+    //             let pt = arr[i];
+    //             if (!pt) continue;
+    //             let dist = lp.distTo2D(pt);
+    //             if (dist < find.dist) {
+    //                 find.dist = dist;
+    //                 find.pi = i;
+    //                 find.pt = pt;
+    //             }
+    //         }
+    //         if (find.pt) {
+    //             if (find.dist > 1) {
+    //                 top.shells.push(poly);
+    //                 poly = new Polygon().setOpen();
+    //             }
+    //             arr[find.pi] = undefined;
+    //             poly.push(lp = find.pt);
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    //     console.log({ poly });
+    //     if (poly.length > 1) {
+    //         top.shells.push(poly);
+    //     }
+    // }
 
     return { last, gaps };
 }
