@@ -163,22 +163,29 @@ function thin_type_2(params) {
 }
 
 function thin_type_3(params) {
+    // offsetN usually = extrusion width (nozzle diameter)
     let { z, top, count, offsetN, last, gaps } = params;
-    top.thin_fill = [];
-    top.fill_sparse = [];
 
     // produce trace from outside of poly inward no more than max inset
     let { noodle, remain } = top.poly.noodle(offsetN * count);
+
     // top.shells = noodle;
     top.gaps = last = remain;
 
-    let thin = top.thin_fill;
+    let thin = top.thin_fill = [];
+    let sparse = top.fill_sparse = [];
     let scale = 1000;
     let minR = offsetN / 2;
     let maxR = minR * 1.5;
-    let minSpur = 0; // offsetN * 3;
-    let mergeClosePoints = true;
+    let minSpur = offsetN * 3;
+
     let interpolateShortSpur = true;
+    let showChainInterpPoints = true;
+    let showChainRawPoints = false;
+    let showNoodle = false;
+    let showMid    = true;
+    let showCross  = true;
+    let showRad    = true;
 
     let pointMap = new Map();
     let lineMap = new Map();
@@ -246,7 +253,6 @@ function thin_type_3(params) {
     }
 
     // connect segments into chains
-    // console.log({ seg: [...lineMap.values()].sort((s1,s2) => s2.len - s1.len) });
     for (let seg of lineMap.values()) {
         let { p0, p1 } = seg;
         let len = seg.len = Math.hypot(p0.x-p1.x, p0.y-p1.y);
@@ -318,12 +324,6 @@ function thin_type_3(params) {
     // merging longer chains. then shorten remaining nexus chain
     // intersections by minR
 
-    let showNoodle = false;
-    let showMid    = true;
-    let showCross  = false;
-    let showRad    = false;
-    let showShells = false;
-
     // render inset "noodle"
     if (showNoodle) {
         top.shells.appendAll(noodle);
@@ -350,24 +350,6 @@ function thin_type_3(params) {
     // filter chains that are too short from consideration
     chains = chains.filter(c => c.total >= minR);
     chains.sort((c1,c2) => c2.total - c1.total);
-
-    // merge chain points that are too close
-    if (mergeClosePoints)
-    chains = chains.map(chain => {
-        // chain reduction by merging short segments
-        let end = chain[0];
-        let nuchain = [ end ];
-        nuchain.total = chain.total;
-        for (let point of chain.slice(1)) {
-            if (point.len === undefined || point.len + end.len >= minR) {
-                nuchain.push(point);
-                end = point;
-            } else {
-                end.len += point.len;
-            }
-        }
-        return nuchain;
-    });
 
     // map chains to nexus via endpoints
     let nexus = {};
@@ -403,8 +385,11 @@ function thin_type_3(params) {
 
     // gather point offsets into shells
     // todo: order outer shell innersection to inner
-    let shells = { count: 0 };
     for (let chain of chains) {
+        if (showChainRawPoints)
+        for (let pt of chain) {
+            top.shells.push(newPolygon().centerCircle(pt, pt.r ?? 0.1, 10));
+        }
         // emit chain with subdivision for long segments
         for (let i=0; i<chain.length-1; i++) {
             // medial axis segment
@@ -424,84 +409,39 @@ function thin_type_3(params) {
             let indx = 0;
             let step = 1 / offs.length;
             // interpolate across the length of the chain segment
+            if (showChainInterpPoints)
             for (let off of offs) {
-                let inc = (indx++ * step);
-                let cr = p0.r + dr * inc;
-                let cx = p0.x + dx * inc;
-                let cy = p0.y + dy * inc;
-                let xo = ndx * cr;
-                let yo = ndy * cr;
+                const inc = (indx++ * step);
+                const cr = p0.r + dr * inc;
+                const cx = p0.x + dx * inc;
+                const cy = p0.y + dy * inc;
+                const xo = ndx * cr;
+                const yo = ndy * cr;
                 if (showCross) {
                     thin.push(new Point(cx + yo, cy - xo));
                     thin.push(new Point(cx - yo, cy + xo));
+                } else {
+                    top.shells.push(newPolygon().centerCircle({ x:cx, y:cy }, 0.15, 10));
                 }
-                if (showRad || showShells) {
-                    let circ = top.shells;
-                    let pop = div(cr);
-                    let sx = cx + yo;
-                    let sy = cy - xo;
-                    let m = 1;
-                    let index = 1;
-                    let plen = pop.length;
+                if (showRad) {
+                    const Sx = cx + ndy * cr;
+                    const Sy = cy - ndx * cr;
+                    const circ = top.shells;
+                    const pop = div(cr);
+                    let acc = 0;
                     for (let r of pop) {
-                        let shell = Math.min(index, plen - index + 1);
-                        let inset_arr = shells[shell];
-                        if (!inset_arr) {
-                            inset_arr = shells[shell] = [];
-                        }
-                        sx -= (r/cr) * yo * m;
-                        sy += (r/cr) * xo * m;
-                        m = 2;
-                        if (showRad) {
-                            circ.push(newPolygon().centerCircle({ x:sx, y:sy }, r, 10));
-                        }
-                        inset_arr.push(new Point(sx, sy, r));
-                        shells.count = Math.max(shells.count, shell);
-                        index++;
+                        const t = acc + r;
+                        const px = Sx + -ndy * t;
+                        const py = Sy + ndx * t;
+                        circ.push(newPolygon().centerCircle({x:px, y:py}, r, 10));
+                        acc += r * 2;
                     }
                 }
             }
         }
     }
 
-    // follow shells and output lines
-    // console.log({ shells });
-    // if (showShells)
-    // for (let shell = 1; shell <= 1; shell++) {
-    //     let poly = new Polygon().setOpen();
-    //     let arr = shells[shell];
-    //     let lp = arr[0];
-    //     poly.push(lp);
-    //     let find;
-    //     for (;;) {
-    //         find = { dist: Infinity };
-    //         // find next closest point
-    //         for (let i=1; i<arr.length; i++) {
-    //             let pt = arr[i];
-    //             if (!pt) continue;
-    //             let dist = lp.distTo2D(pt);
-    //             if (dist < find.dist) {
-    //                 find.dist = dist;
-    //                 find.pi = i;
-    //                 find.pt = pt;
-    //             }
-    //         }
-    //         if (find.pt) {
-    //             if (find.dist > 1) {
-    //                 top.shells.push(poly);
-    //                 poly = new Polygon().setOpen();
-    //             }
-    //             arr[find.pi] = undefined;
-    //             poly.push(lp = find.pt);
-    //         } else {
-    //             break;
-    //         }
-    //     }
-    //     console.log({ poly });
-    //     if (poly.length > 1) {
-    //         top.shells.push(poly);
-    //     }
-    // }
+    POLY.setZ([...thin, ...top.shells], z);
 
     return { last, gaps };
 }
