@@ -326,11 +326,8 @@ function thin_type_3(params) {
         }
     }
 
-    // gather point offsets into shells
-    // todo: order outer shell innersection to inner
-    let shells = { count: 0 };
     // filter chains that are too short from consideration
-    for (let chain of chains.filter(c => c.total >= minR)) {
+    chains = chains.filter(c => c.total >= minR).map(chain => {
         // chain reduction by merging short segments
         let end = chain[0];
         let nuchain = [ end ];
@@ -342,7 +339,17 @@ function thin_type_3(params) {
                 end.len += point.len;
             }
         }
-        chain = nuchain;
+        return nuchain;
+    });
+
+    // connect chains end to end following nexus branches that result
+    // in the longest final merged chain (open or closed)
+    console.log(chains);
+
+    // gather point offsets into shells
+    // todo: order outer shell innersection to inner
+    let shells = { count: 0 };
+    for (let chain of chains) {
         // emit chain with subdivision for long segments
         for (let i=0; i<chain.length-1; i++) {
             // medial axis segment
