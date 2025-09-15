@@ -179,16 +179,16 @@ function thin_type_3(params) {
     let maxR = minR * 1.5;
     let minSpur = offsetN * 3;
 
+    let showNoodle = false;
     let mergeChains = true;
     let interpolateShortSpur = true;
-    let showChainInterpPoints = true;
-    let showCross  = false;
-    let showPoint  = true;
     let showChainRawPoints = false;
-    let showNoodle = false;
-    let showMid    = true;
-    let showRad    = false;
-    let showNexus  = false;
+    let showChainInterpPoints = true;
+    let showMidNormals = true;
+    let showMidPoints = true;
+    let showMidline = true;
+    let showMidRadii = false;
+    let showNexuses = false;
 
     let pointMap = new Map();
     let lineMap = new Map();
@@ -474,7 +474,7 @@ function thin_type_3(params) {
         }
     }
 
-    if (showNexus)
+    if (showNexuses)
     for (let rec of Object.values(nexus)) {
         let { point, chains } = rec;
         // console.log(rec);
@@ -492,7 +492,7 @@ function thin_type_3(params) {
         // emit chain with subdivision for long segments
         for (let i=0; i<chain.length-1; i++) {
             // medial axis segment
-            if (showMid) {
+            if (showMidline) {
                 thin.push(new Point(chain[i].x, chain[i].y, zi));
                 thin.push(new Point(chain[i+1].x, chain[i+1].y, zi));
             }
@@ -517,13 +517,14 @@ function thin_type_3(params) {
                 const cy = p0.y + dy * inc;
                 const xo = ndx * cr;
                 const yo = ndy * cr;
-                if (showCross) {
-                    thin.push(new Point(cx + yo, cy - xo));
-                    thin.push(new Point(cx - yo, cy + xo));
-                } else if (showPoint) {
+                if (showMidPoints) {
                     top.shells.push(newPolygon().centerCircle({ x:cx, y:cy }, 0.05, 10));
                 }
-                if (showRad) {
+                if (showMidNormals) {
+                    thin.push(new Point(cx + yo, cy - xo));
+                    thin.push(new Point(cx - yo, cy + xo));
+                }
+                if (showMidRadii) {
                     const Sx = cx + ndy * cr;
                     const Sy = cy - ndx * cr;
                     const circ = top.shells;
@@ -541,8 +542,8 @@ function thin_type_3(params) {
         }
     }
 
-    // POLY.setZ([...thin, ...top.shells], z);
-    POLY.setZ([...top.shells], z);
+    POLY.setZ([...thin, ...top.shells], z);
+    // POLY.setZ([...top.shells], z);
 
     return { last, gaps };
 }
