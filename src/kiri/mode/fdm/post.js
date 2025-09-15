@@ -191,6 +191,10 @@ function thin_type_3(params) {
     let pointMap = new Map();
     let lineMap = new Map();
 
+    function pointDist(p0, p1) {
+        return Math.hypot(p0.x-p1.x, p0.y-p1.y);
+    }
+
     function point2key(point) {
         return `${(point.x*100)|0}|${(point.y*100)|0}`;
     }
@@ -256,7 +260,7 @@ function thin_type_3(params) {
     // connect segments into chains
     for (let seg of lineMap.values()) {
         let { p0, p1 } = seg;
-        let len = seg.len = Math.hypot(p0.x-p1.x, p0.y-p1.y);
+        let len = seg.len = pointDist(p0, p1);
         // filter out lines where both points' radii are under the
         // minR threshold. shorten and fixup lines where minR falls
         // somewhere along the gradient between ends.
@@ -427,6 +431,11 @@ function thin_type_3(params) {
     chains = chains.filter(chain => chain);
     console.log({ chains });
 
+    // mark closed chains
+    for (let chain of chains) {
+        chain.closed = pointDist(chain[0], chain.peek()) <= offsetN;
+    }
+
     // gather point offsets into shells
     // todo: order outer shell innersection to inner
     for (let chain of chains) {
@@ -444,7 +453,7 @@ function thin_type_3(params) {
             // compute medial axis segment cross section
             let p0 = chain[i];
             let p1 = chain[i+1];
-            let len = Math.hypot(p0.x-p1.x, p0.y-p1.y);
+            let len = pointDist(p0, p1);
             let dr = (p1.r - p0.r);
             let dx = (p1.x - p0.x);
             let dy = (p1.y - p0.y);
