@@ -179,7 +179,7 @@ function thin_type_3(params) {
     let maxR = minR * 1.5;
     let minSpur = offsetN * 3;
 
-    let mergeChains = false;
+    let mergeChains = true;
     let interpolateShortSpur = true;
     let showChainInterpPoints = true;
     let showChainRawPoints = false;
@@ -291,23 +291,21 @@ function thin_type_3(params) {
         // for each line segment either add it to a chain or start a new chain
         let add;
         for (let chain of chains) {
-            if (p0.count === 2 && p0.key === chain[0].key) {
+            if (p0.count === 2 && p0 === chain[0]) {
                 // prefix chain with p1
-                chain.splice(0,0,{...p1, len});
+                chain.splice(0,0,p1);
                 add = true;
-            } else if (p0.count === 2 && p0.key === chain.peek().key) {
+            } else if (p0.count === 2 && p0 === chain.peek()) {
                 // append chain with p1
-                chain.peek().len = len;
-                chain.push({...p1});
+                chain.push(p1);
                 add = true;
-            } else if (p1.count === 2 && p1.key === chain[0].key) {
+            } else if (p1.count === 2 && p1 === chain[0]) {
                 // prefix chain with p0
-                chain.splice(0,0,{...p0, len});
+                chain.splice(0,0,p0);
                 add = true;
-            } else if (p1.count === 2 && p1.key === chain.peek().key) {
+            } else if (p1.count === 2 && p1 === chain.peek()) {
                 // append chain with p0
-                chain.peek().len = len;
-                chain.push({...p0});
+                chain.push(p0);
                 add = true;
             }
             if (add) {
@@ -316,7 +314,7 @@ function thin_type_3(params) {
             }
         }
         if (!add) {
-            chains.push([ {...p0 ,len}, {...p1} ]);
+            chains.push([ p0, p1 ]);
             chains.peek().total = len;
         }
     }
@@ -391,25 +389,25 @@ function thin_type_3(params) {
             for (let j=i+1; j<clen; j++) {
                 let cj = chains[j];
                 if (!cj) continue;
-                if (ci[0].key === cj[0].key) {
+                if (ci[0] === cj[0]) {
                     ci.reverse().appendAll(cj.slice(1))
                     ci.total += cj.total;
                     cj.merged = true;
                     chains[j] = undefined;
                     return true;
-                } else if (ci.peek().key === cj.peek().key) {
+                } else if (ci.peek() === cj.peek()) {
                     ci.appendAll(cj.reverse().slice(1));
                     ci.total += cj.total;
                     cj.merged = true;
                     chains[j] = undefined;
                     return true;
-                } else if (ci.peek().key === cj[0].key) {
+                } else if (ci.peek() === cj[0]) {
                     ci.appendAll(cj.slice(1));
                     ci.total += cj.total;
                     cj.merged = true;
                     chains[j] = undefined;
                     return true;
-                } else if (ci[0].key === cj.peek().key) {
+                } else if (ci[0] === cj.peek()) {
                     cj.appendAll(ci.slice(1));
                     cj.total += ci.total;
                     ci.merged = true;
