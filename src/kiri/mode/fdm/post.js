@@ -179,13 +179,14 @@ function thin_type_3(params) {
     let maxR = minR * 1.5;
     let minSpur = offsetN * 3;
 
+    let mergeChains = false;
     let interpolateShortSpur = true;
     let showChainInterpPoints = true;
     let showChainRawPoints = false;
     let showNoodle = false;
     let showMid    = true;
     let showCross  = true;
-    let showRad    = true;
+    let showRad    = false;
 
     let pointMap = new Map();
     let lineMap = new Map();
@@ -356,32 +357,77 @@ function thin_type_3(params) {
     function addEp(point, chain) {
         let key = point.key;
         let rec = nexus[key];
-        if (!rec) rec = nexus[key] = [];
-        if (rec.indexOf(chain) < 0) rec.push(chain);
+        if (!rec) rec = nexus[key] = { point, chains: [] };
+        if (rec.chains.indexOf(chain) < 0) rec.chains.push(chain);
     }
+    // since chains are sorted longest to shortest,
+    // they will appear in the nexus record longest to shortest
     for (let chain of chains) {
         addEp(chain[0], chain);
         addEp(chain.peek(), chain);
     }
 
     // mark spurs
-    for (let [key,val] of Object.entries(nexus)) {
-        if (val.length === 1) {
-            val[0].spur = true;
+    for (let [key, rec] of Object.entries(nexus)) {
+        if (rec.chains.length === 1) {
+            rec.chains[0].spur = true;
             delete nexus[key];
+            // console.log({ delete_nexus: key });
         }
     }
 
     // detach spurs from nexus and shorten by ?
-    for (let [key,val] of Object.entries(nexus)) {
-        nexus[key] = val.filter(c => !c.spur);
-    }
+    // for (let [key,val] of Object.entries(nexus)) {
+    //     nexus[key].chains = val.chains.filter(c => !c.spur);
+    // }
 
     console.log({ chains, nexus });
+
+    function merge1chain() {
+        let clen = chains.length;
+        for (let i=0; i<clen; i++) {
+            let ci = chains[i];
+            if (!ci) continue;
+            for (let j=i+1; j<clen; j++) {
+                let cj = chains[j];
+                if (!cj) continue;
+                if (ci[0].key === cj[0].key) {
+                    ci.reverse().appendAll(cj.slice(1))
+                    ci.total += cj.total;
+                    cj.merged = true;
+                    chains[j] = undefined;
+                    return true;
+                } else if (ci.peek().key === cj.peek().key) {
+                    ci.appendAll(cj.reverse().slice(1));
+                    ci.total += cj.total;
+                    cj.merged = true;
+                    chains[j] = undefined;
+                    return true;
+                } else if (ci.peek().key === cj[0].key) {
+                    ci.appendAll(cj.slice(1));
+                    ci.total += cj.total;
+                    cj.merged = true;
+                    chains[j] = undefined;
+                    return true;
+                } else if (ci[0].key === cj.peek().key) {
+                    cj.appendAll(ci.slice(1));
+                    cj.total += ci.total;
+                    ci.merged = true;
+                    chains[i] = undefined;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     // connect chains end to end following nexus branches that result
     // in the longest final merged chain (open or closed)
     // map chain endpoints to nexus points
+    while (mergeChains && merge1chain()) ;
+
+    chains = chains.filter(chain => chain);
+    console.log({ chains });
 
     // gather point offsets into shells
     // todo: order outer shell innersection to inner
@@ -400,12 +446,13 @@ function thin_type_3(params) {
             // compute medial axis segment cross section
             let p0 = chain[i];
             let p1 = chain[i+1];
+            let len = Math.hypot(p0.x-p1.x, p0.y-p1.y);
             let dr = (p1.r - p0.r);
             let dx = (p1.x - p0.x);
             let dy = (p1.y - p0.y);
-            let ndx = dx / p0.len;
-            let ndy = dy / p0.len;
-            let offs = p0.len <= offsetN ? [ 0.5 ] : base.util.lerp(0, p0.len, offsetN, true);
+            let ndx = dx / len;
+            let ndy = dy / len;
+            let offs = len <= offsetN ? [ 0.5 ] : base.util.lerp(0, len, offsetN, true);
             let indx = 0;
             let step = 1 / offs.length;
             // interpolate across the length of the chain segment
