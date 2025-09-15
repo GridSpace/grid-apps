@@ -182,11 +182,13 @@ function thin_type_3(params) {
     let mergeChains = true;
     let interpolateShortSpur = true;
     let showChainInterpPoints = true;
+    let showCross  = false;
+    let showPoint  = true;
     let showChainRawPoints = false;
     let showNoodle = false;
     let showMid    = true;
-    let showCross  = true;
     let showRad    = false;
+    let showNexus  = false;
 
     let pointMap = new Map();
     let lineMap = new Map();
@@ -354,37 +356,6 @@ function thin_type_3(params) {
     chains = chains.filter(c => c.total >= minR);
     chains.sort((c1,c2) => c2.total - c1.total);
 
-    // map chains to nexus via endpoints
-    let nexus = {};
-    function addEp(point, chain) {
-        let key = point.key;
-        let rec = nexus[key];
-        if (!rec) rec = nexus[key] = { point, chains: [] };
-        if (rec.chains.indexOf(chain) < 0) rec.chains.push(chain);
-    }
-    // since chains are sorted longest to shortest,
-    // they will appear in the nexus record longest to shortest
-    for (let chain of chains) {
-        addEp(chain[0], chain);
-        addEp(chain.peek(), chain);
-    }
-
-    // mark spurs
-    for (let [key, rec] of Object.entries(nexus)) {
-        if (rec.chains.length === 1) {
-            rec.chains[0].spur = true;
-            delete nexus[key];
-            // console.log({ delete_nexus: key });
-        }
-    }
-
-    // detach spurs from nexus and shorten by ?
-    // for (let [key,val] of Object.entries(nexus)) {
-    //     nexus[key].chains = val.chains.filter(c => !c.spur);
-    // }
-
-    console.log({ chains, nexus });
-
     function merge1chain() {
         let clen = chains.length;
         for (let i=0; i<clen; i++) {
@@ -423,6 +394,25 @@ function thin_type_3(params) {
         return false;
     }
 
+    // console.log({ chains });
+
+    // map chains to nexus via endpoints
+    let nexus = {};
+    function addEp(point, chain) {
+        let key = point.key;
+        let rec = nexus[key];
+        if (!rec) rec = nexus[key] = { point, chains: [] };
+        if (rec.chains.indexOf(chain) < 0) rec.chains.push(chain);
+    }
+    // since chains are sorted longest to shortest,
+    // they will appear in the nexus record longest to shortest
+    for (let chain of chains) {
+        addEp(chain[0], chain);
+        addEp(chain.peek(), chain);
+    }
+
+    // console.log({ chains, nexus, np: Object.values(nexus).length });
+
     // connect chains end to end following nexus branches that result
     // in the longest final merged chain (open or closed)
     // map chain endpoints to nexus points
@@ -432,13 +422,69 @@ function thin_type_3(params) {
     console.log({ chains });
 
     // mark closed chains
+    // todo use exact point match by eliminating slice above
+    // then later removing repeated points in the resulting chain from merges
     for (let chain of chains) {
         chain.closed = pointDist(chain[0], chain.peek()) <= offsetN;
+        // console.log(chain.closed);
+    }
+
+    function shorten(chain) {
+        for (let rem=0, i=chain.length-1; i>=1 && rem < minR; i--) {
+            let c1 = chain[i];
+            let c2 = chain[i-1];
+            let d = pointDist(c1,c2);
+            if (rem + d <= minR) {
+                chain.pop();
+                rem += d;
+            } else {
+                let diff = minR - rem;
+                // move c1 toward c2
+                let pct = diff / d;
+                let dx = c1.x - c2.x;
+                let dy = c1.y - c2.y;
+                chain[i] = {
+                    x: c1.x - dx * pct,
+                    y: c1.y - dy * pct,
+                    r: c1.r
+                };
+                rem = 0;
+                break;
+            }
+        }
+    }
+
+    // add chains
+
+    // shorten chains terminating at nexus by midR
+    for (let rec of Object.values(nexus)) {
+        let { point } = rec;
+        rec.shorts = 0;
+        if (rec.chains.length < 3) continue;
+        for (let chain of chains.filter(c => !c.closed)) {
+            if (pointDist(chain[0], point) < minR) {
+                chain.reverse();
+                shorten(chain);
+                chain.reverse();
+                rec.shorts++;
+            } else if (chain.peek() === point) {
+                shorten(chain);
+                rec.shorts++;
+            }
+        }
+    }
+
+    if (showNexus)
+    for (let rec of Object.values(nexus)) {
+        let { point, chains } = rec;
+        // console.log(rec);
+        top.shells.push(newPolygon().centerCircle(point, 0.2, 6 - rec.shorts));
     }
 
     // gather point offsets into shells
-    // todo: order outer shell innersection to inner
+    let zi = z;
     for (let chain of chains) {
+        // zi += 0.1;
         if (showChainRawPoints)
         for (let pt of chain) {
             top.shells.push(newPolygon().centerCircle(pt, pt.r ?? 0.1, 10));
@@ -447,8 +493,8 @@ function thin_type_3(params) {
         for (let i=0; i<chain.length-1; i++) {
             // medial axis segment
             if (showMid) {
-                thin.push(new Point(chain[i].x, chain[i].y));
-                thin.push(new Point(chain[i+1].x, chain[i+1].y));
+                thin.push(new Point(chain[i].x, chain[i].y, zi));
+                thin.push(new Point(chain[i+1].x, chain[i+1].y, zi));
             }
             // compute medial axis segment cross section
             let p0 = chain[i];
@@ -474,8 +520,8 @@ function thin_type_3(params) {
                 if (showCross) {
                     thin.push(new Point(cx + yo, cy - xo));
                     thin.push(new Point(cx - yo, cy + xo));
-                } else {
-                    top.shells.push(newPolygon().centerCircle({ x:cx, y:cy }, 0.15, 10));
+                } else if (showPoint) {
+                    top.shells.push(newPolygon().centerCircle({ x:cx, y:cy }, 0.05, 10));
                 }
                 if (showRad) {
                     const Sx = cx + ndy * cr;
@@ -495,7 +541,8 @@ function thin_type_3(params) {
         }
     }
 
-    POLY.setZ([...thin, ...top.shells], z);
+    // POLY.setZ([...thin, ...top.shells], z);
+    POLY.setZ([...top.shells], z);
 
     return { last, gaps };
 }

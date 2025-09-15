@@ -258,7 +258,7 @@ export class Polygon {
     // of the polygon with the noodle removed (for the next pass)
     noodle(width) {
         let clone = this.clone(true);
-        let ins = clone.offset(width);
+        let ins = clone.offset(width) ?? [];
         let remain = ins.clone(true);
         let nood = POLY.nest(POLY.flatten([ clone, ...ins ], [], true));
         return { noodle: nood, remain };
