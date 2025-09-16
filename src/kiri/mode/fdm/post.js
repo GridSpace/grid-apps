@@ -177,17 +177,17 @@ function thin_type_3(params) {
     let scale = 1000;
     let minR = offsetN / 2;
     let maxR = minR * 1.5;
-    let minSpur = offsetN * 3;
+    let minSpur = offsetN * 2;
 
     let showNoodle = false;
     let mergeChains = true;
     let interpolateShortSpur = true;
     let showChainRawPoints = false;
-    let showChainInterpPoints = false;
+    let showChainInterpPoints = true;
     let showMidline = true;
-    let showMidPoints = true;
-    let showMidNormals = true;
-    let showMidRadii = false;
+    let showMidPoints = false;
+    let showMidNormals = false;
+    let showMidRadii = true;
     let showNexuses = false;
 
     let pointMap = new Map();
@@ -365,25 +365,25 @@ function thin_type_3(params) {
                 let cj = chains[j];
                 if (!cj) continue;
                 if (ci[0] === cj[0]) {
-                    ci.reverse().appendAll(cj.slice(1))
+                    ci.reverse().appendAll(cj)
                     ci.total += cj.total;
                     cj.merged = true;
                     chains[j] = undefined;
                     return true;
                 } else if (ci.peek() === cj.peek()) {
-                    ci.appendAll(cj.reverse().slice(1));
+                    ci.appendAll(cj.reverse());
                     ci.total += cj.total;
                     cj.merged = true;
                     chains[j] = undefined;
                     return true;
                 } else if (ci.peek() === cj[0]) {
-                    ci.appendAll(cj.slice(1));
+                    ci.appendAll(cj);
                     ci.total += cj.total;
                     cj.merged = true;
                     chains[j] = undefined;
                     return true;
                 } else if (ci[0] === cj.peek()) {
-                    cj.appendAll(ci.slice(1));
+                    cj.appendAll(ci);
                     cj.total += ci.total;
                     ci.merged = true;
                     chains[i] = undefined;
@@ -393,8 +393,6 @@ function thin_type_3(params) {
         }
         return false;
     }
-
-    // console.log({ chains });
 
     // map chains to nexus via endpoints
     let nexus = {};
@@ -411,24 +409,27 @@ function thin_type_3(params) {
         addEp(chain.peek(), chain);
     }
 
-    // console.log({ chains, nexus, np: Object.values(nexus).length });
-
     // connect chains end to end following nexus branches that result
     // in the longest final merged chain (open or closed)
     // map chain endpoints to nexus points
     while (mergeChains && merge1chain()) ;
 
+    // filter out null chains that were merged into other chains
     chains = chains.filter(chain => chain);
-    console.log({ chains });
+
+    // filter dup points from connecting ends
+    chains = chains.map(chain => chain.filter((v, i) => i === 0 || v !== chain[i - 1]));
 
     // mark closed chains
     // todo use exact point match by eliminating slice above
     // then later removing repeated points in the resulting chain from merges
     for (let chain of chains) {
-        chain.closed = pointDist(chain[0], chain.peek()) <= offsetN;
-        // console.log(chain.closed);
+        chain.closed = (chain[0] === chain.peek());
+        console.log(chain.closed ? 'closed' : 'open');
+        if (chain.closed) chain.pop();
     }
 
+    // shorten chain length by minR distance by popping or moving points
     function shorten(chain) {
         for (let rem=0, i=chain.length-1; i>=1 && rem < minR; i--) {
             let c1 = chain[i];
@@ -454,8 +455,6 @@ function thin_type_3(params) {
         }
     }
 
-    // add chains
-
     // shorten chains terminating at nexus by midR
     for (let rec of Object.values(nexus)) {
         let { point } = rec;
@@ -476,8 +475,7 @@ function thin_type_3(params) {
 
     if (showNexuses)
     for (let rec of Object.values(nexus)) {
-        let { point, chains } = rec;
-        // console.log(rec);
+        let { point } = rec;
         top.shells.push(newPolygon().centerCircle(point, 0.2, 6 - rec.shorts));
     }
 
