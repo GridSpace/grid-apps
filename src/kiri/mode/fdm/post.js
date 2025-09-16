@@ -169,19 +169,46 @@ function thin_type_3(params) {
     // produce trace from outside of poly inward no more than max inset
     let { noodle, remain } = top.poly.noodle(offsetN * count);
 
+    top.gaps = remain;
+
     let thin = top.thin_fill = [];
+    let shells = top.shells;
     let sparse = top.fill_sparse = [];
     let scale = 1000;
     let midR = offsetN * 0.5;
     let minR = midR * 0.75;
     let maxR = midR * 1.5;
-    let minSpur = offsetN * 2;
+    let minSpur = offsetN * 1;
 
-    // top.shells = noodle;
-    top.gaps = last = remain;
+    if (false) {
+        let dtotl = 0;
+        let dstep = minR / 2;
+        let inset = POLY.expand(noodle, -dstep);
+        while (inset && inset.length) {
+            dtotl += dstep;
+            let ps = POLY.flatten(inset);
+            for (let poly of ps) {
+                for (let p of poly.segment(minR).points) {
+                    let d = dtotl * 0+0.05;
+                    // let z = dtotl * 10;
+                    shells.append( newPolygon().centerCircle(p, d, 10).setZ(z) );
+                }
+            }
+            POLY.setZ(inset, z);
+            shells.appendAll(inset);
+            if (dtotl >= maxR) {
+                break;
+            }
+            inset = POLY.expand(inset, -dstep);
+        }
+    }
+
+    // shells.appendAll(noodle);
+    // return { last, gaps };
 
     let showNoodle = false;
     let mergeChains = true;
+    let shortenAtNexus = false;
     let interpolateShortSpur = true;
     let showChainRawPoints = false;
     let showChainInterpPoints = true;
@@ -332,7 +359,7 @@ function thin_type_3(params) {
 
     // render inset "noodle"
     if (showNoodle) {
-        top.shells.appendAll(noodle);
+        shells.appendAll(noodle);
     }
 
     // divide a segment/redius into 1 or more equal subsegments
@@ -457,6 +484,7 @@ function thin_type_3(params) {
     }
 
     // shorten chains terminating at nexus by midR
+    if (shortenAtNexus)
     for (let rec of Object.values(nexus)) {
         let { point } = rec;
         rec.shorts = 0;
@@ -477,7 +505,7 @@ function thin_type_3(params) {
     if (showNexuses)
     for (let rec of Object.values(nexus)) {
         let { point } = rec;
-        top.shells.push(newPolygon().centerCircle(point, 0.2, 6 - rec.shorts));
+        shells.push(newPolygon().centerCircle(point, 0.2, 6 - rec.shorts));
     }
 
     function renderPointNormal(pt, ndx, ndy) {
@@ -490,14 +518,13 @@ function thin_type_3(params) {
         if (showMidRadii) {
             const Sx = pt.x + ndy * pt.r;
             const Sy = pt.y - ndx * pt.r;
-            const circ = top.shells;
             const pop = div(pt.r);
             let acc = 0;
             for (let r of pop) {
                 const t = acc + r;
                 const px = Sx + -ndy * t;
                 const py = Sy + ndx * t;
-                circ.push(newPolygon().centerCircle({x:px, y:py}, r, 10));
+                shells.push(newPolygon().centerCircle({x:px, y:py}, r, 10));
                 acc += r * 2;
             }
         }
@@ -509,7 +536,7 @@ function thin_type_3(params) {
         // zi += 0.1;
         if (showChainRawPoints)
         for (let pt of chain) {
-            top.shells.push(newPolygon().centerCircle(pt, pt.r ?? 0.1, 10));
+            shells.push(newPolygon().centerCircle(pt, pt.r ?? 0.1, 10));
         }
         // draw medial axis chain
         let { closed, length } = chain;
@@ -525,14 +552,14 @@ function thin_type_3(params) {
                 thin.push(new Point(p1.x, p1.y, zi));
             }
             // compute medial axis segment normal
-            let offs = len <= midR ? [ 0 ] : base.util.lerp(0, len, midR, true);
-            let step = 1 / offs.length;
+            let steps = Math.ceil(len / midR) + 1;
+            let step = 1 / steps;
             let dr = (p1.r - p0.r);
             let dx = (p1.x - p0.x);
             let dy = (p1.y - p0.y);
             let ndx = dx / len;
             let ndy = dy / len;
-            segs.push({ p0, p1, offs, step, dr, dx, dy, ndx, ndy });
+            segs.push({ p0, p1, steps, step, dr, dx, dy, ndx, ndy });
         }
 
         // compute chain subdivisions
@@ -540,7 +567,7 @@ function thin_type_3(params) {
         for (let si=0; si<slen; si++) {
             let seg = segs[si];
             let segp = segs[(si - 1 + slen) % slen];
-            let { p0, p1, offs, step, dr, dx, dy, ndx, ndy } = seg;
+            let { p0, p1, steps, step, dr, dx, dy, ndx, ndy } = seg;
             let first = si === 0;
             let last = si === slen - 1;
             let mid = !(first || last);
@@ -548,19 +575,19 @@ function thin_type_3(params) {
             if (showMidPoints) {
                 if (first) {
                     // todo: handle closed
-                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                    shells.push(newPolygon().centerCircle(p0, 0.08, 10));
                 }
                 if (mid) {
                     // mid segments
-                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                    shells.push(newPolygon().centerCircle(p0, 0.08, 10));
                 }
                 if (last) {
                     // todo: handle closed
-                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                    shells.push(newPolygon().centerCircle(p0, 0.08, 10));
                     if (closed) {
                         console.log('closed');
                     } else {
-                        top.shells.push(newPolygon().centerCircle(p1, 0.08, 10));
+                        shells.push(newPolygon().centerCircle(p1, 0.08, 10));
                     }
                 }
             }
@@ -578,7 +605,7 @@ function thin_type_3(params) {
             }
             // interpolate across the length of the chain segment
             if (showChainInterpPoints)
-            for (let indx = 1; indx < offs.length; indx++) {
+            for (let indx = 1; indx < steps; indx++) {
                 const inc = indx * step;
                 const cr = p0.r + dr * inc;
                 const cx = p0.x + dx * inc;
@@ -593,8 +620,8 @@ function thin_type_3(params) {
         }
     }
 
-    POLY.setZ([...thin, ...top.shells], z);
-    // POLY.setZ([...top.shells], z);
+    POLY.setZ([...thin, ...shells], z);
+    // POLY.setZ([...shells], z);
 
     return { last, gaps };
 }
