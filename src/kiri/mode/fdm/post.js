@@ -184,10 +184,10 @@ function thin_type_3(params) {
     let interpolateShortSpur = true;
     let showChainRawPoints = false;
     let showChainInterpPoints = true;
-    let showMidNormals = true;
-    let showMidPoints = true;
     let showMidline = true;
-    let showMidRadii = false;
+    let showMidPoints = true;
+    let showMidNormals = true;
+    let showMidRadii = true;
     let showNexuses = false;
 
     let pointMap = new Map();
@@ -489,29 +489,84 @@ function thin_type_3(params) {
         for (let pt of chain) {
             top.shells.push(newPolygon().centerCircle(pt, pt.r ?? 0.1, 10));
         }
-        // emit chain with subdivision for long segments
-        for (let i=0; i<chain.length-1; i++) {
+        // draw medial axis chain
+        let { closed, length } = chain;
+        let term = closed ? length : length - 1;
+        let segs = [];
+        for (let i=0; i<term; i++) {
+            let p0 = chain[i];
+            let p1 = chain[(i+1) % length];
+            let len = pointDist(p0, p1);
             // medial axis segment
             if (showMidline) {
-                thin.push(new Point(chain[i].x, chain[i].y, zi));
-                thin.push(new Point(chain[i+1].x, chain[i+1].y, zi));
+                thin.push(new Point(p0.x, p0.y, zi));
+                thin.push(new Point(p1.x, p1.y, zi));
             }
-            // compute medial axis segment cross section
-            let p0 = chain[i];
-            let p1 = chain[i+1];
-            let len = pointDist(p0, p1);
+            // compute medial axis segment normal
+            let offs = len <= offsetN ? [ 0 ] : base.util.lerp(0, len, offsetN, true);
+            let step = 1 / offs.length;
             let dr = (p1.r - p0.r);
             let dx = (p1.x - p0.x);
             let dy = (p1.y - p0.y);
             let ndx = dx / len;
             let ndy = dy / len;
-            let offs = len <= offsetN ? [ 0.5 ] : base.util.lerp(0, len, offsetN, true);
-            let indx = 0;
-            let step = 1 / offs.length;
+            segs.push({ p0, p1, len, offs, step, dr, dx, dy, ndx, ndy });
+        }
+        console.log({ segs });
+        // compute chain subdivisions
+        let slen = segs.length;
+        for (let si=0; si<slen; si++) {
+            let seg = segs[si];
+            let segp = segs[(si - 1 + slen) % slen];
+            let { p0, p1, len, offs, step, dr, dx, dy, ndx, ndy } = seg;
+            let first = si === 0;
+            let last = si === slen - 1;
+            let mid = !(first || last);
+            // for length 2, first and last segment are the same
+            if (showMidPoints) {
+                if (first) {
+                    // todo: handle closed
+                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                }
+                if (mid) {
+                    // mid segments
+                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                }
+                if (last) {
+                    // todo: handle closed
+                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                    if (closed) {
+                        console.log('closed');
+                    } else {
+                        top.shells.push(newPolygon().centerCircle(p1, 0.08, 10));
+                    }
+                }
+            }
+            if (showMidNormals) {
+                // todo: handle closed
+                if (first) {
+                    let xo = ndx * p0.r;
+                    let yo = ndy * p0.r;
+                    thin.push(new Point(p0.x + yo, p0.y - xo));
+                    thin.push(new Point(p0.x - yo, p0.y + xo));
+                }
+                if (mid) {
+                    let xo = ((ndx + segp.ndx)/2) * p0.r;
+                    let yo = ((ndy + segp.ndy)/2) * p0.r;
+                    thin.push(new Point(p0.x + yo, p0.y - xo));
+                    thin.push(new Point(p0.x - yo, p0.y + xo));
+                }
+                if (last) {
+                    let xo = ndx * p1.r;
+                    let yo = ndy * p1.r;
+                    thin.push(new Point(p1.x + yo, p1.y - xo));
+                    thin.push(new Point(p1.x - yo, p1.y + xo));
+                }
+            }
             // interpolate across the length of the chain segment
             if (showChainInterpPoints)
-            for (let off of offs) {
-                const inc = (indx++ * step);
+            for (let indx = 1; indx < offs.length; indx++) {
+                const inc = indx * step;
                 const cr = p0.r + dr * inc;
                 const cx = p0.x + dx * inc;
                 const cy = p0.y + dy * inc;
