@@ -39,7 +39,6 @@ Customize how your G-code is formatted for your controller or post-processor:
 - **Enable Laser** — Enables [Laser](./ops#laser-operations) operations (typically uses `M3/M5`; adjusts movement strategy)
 - **File Extension** — Optional override for exported file type (e.g., `.nc`, `.ngc`, `.cnc`, `.cam`, `.gcode`, `.txt`)
 
-
 ---
 
 ## G-code Macros
