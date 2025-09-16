@@ -77,7 +77,7 @@ class OpRough extends CamOp {
         let shadow = [];
         let slices = [];
         let indices = slicer.interval(roughDown, {
-            down: true, min: 0, fit: true, off: 0.01
+            down: true, min: workarea.bottom_z, fit: true, off: 0.01
         });
 
         // shift out first (top-most) slice
@@ -258,17 +258,8 @@ class OpRough extends CamOp {
 
         let last = slices[slices.length-1];
 
-        if (workarea.bottom_z < 0)
-        for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
-            if (!last) continue;
-            let add = last.clone(true);
-            add.z -= zneg;
-            add.camLines = last.camLines.clone(true);
-            add.camLines.forEach(p => p.setZ(add.z + roughLeaveZ));
-            // add.tops.forEach(top => top.poly.setZ(add.z));
-            // add.shadow = last.shadow.clone(true);
-            slices.push(add);
-        }
+        // z-thru depth is now handled by regular slicing using workarea.bottom_cut
+        // No separate z-thru slices needed
 
         slices.forEach(slice => {
             slice.output()

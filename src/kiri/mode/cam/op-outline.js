@@ -33,7 +33,7 @@ class OpOutline extends CamOp {
             off: 0.01,
             fit: true,
             down: true,
-            min: Math.max(0, workarea.bottom_z),
+            min: workarea.bottom_z,
             max: workarea.top_z
         };
         let indices = slicer.interval(op.down, intopt);
@@ -97,18 +97,8 @@ class OpOutline extends CamOp {
             }
         }
 
-        // extend cut thru (only when z bottom is 0)
-        if (workarea.bottom_z < 0) {
-            let last = slices[slices.length-1];
-            for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
-                if (!last) continue;
-                let add = last.clone(true);
-                add.tops.forEach(top => top.poly.setZ(add.z));
-                add.shadow = last.shadow.clone(true);
-                add.z -= zneg;
-                slices.push(add);
-            }
-        }
+        // z-thru depth is now handled by regular slicing using workarea.bottom_cut
+        // No separate z-thru slices needed
 
         slices.forEach(slice => {
             let tops = slice.shadow;
