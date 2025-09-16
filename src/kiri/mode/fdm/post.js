@@ -169,15 +169,16 @@ function thin_type_3(params) {
     // produce trace from outside of poly inward no more than max inset
     let { noodle, remain } = top.poly.noodle(offsetN * count);
 
-    // top.shells = noodle;
-    top.gaps = last = remain;
-
     let thin = top.thin_fill = [];
     let sparse = top.fill_sparse = [];
     let scale = 1000;
-    let minR = offsetN / 2;
-    let maxR = minR * 1.5;
+    let midR = offsetN * 0.5;
+    let minR = midR * 0.75;
+    let maxR = midR * 1.5;
     let minSpur = offsetN * 2;
+
+    // top.shells = noodle;
+    top.gaps = last = remain;
 
     let showNoodle = false;
     let mergeChains = true;
@@ -341,14 +342,14 @@ function thin_type_3(params) {
         } else if (cr <= maxR * 2) {
             return [ cr / 2, cr / 2 ];
         } else if (cr <= maxR * 3) {
-            let rem = cr - minR * 2;
-            if (rem < maxR) {
-                return [ minR, rem, minR ];
+            if (cr - maxR * 2 >= minR) {
+                return [ maxR, cr - maxR * 2, maxR ];
             } else {
-                return [ minR, rem / 2, rem / 2, minR ];
+                return [ cr / 3, cr / 3, cr / 3 ];
             }
         } else {
-            return [ minR, ...div(cr - minR * 2), minR ];
+            let divs = (cr / midR) | 0;
+            return new Array(divs).fill(cr / divs);
         }
     }
 
@@ -524,7 +525,7 @@ function thin_type_3(params) {
                 thin.push(new Point(p1.x, p1.y, zi));
             }
             // compute medial axis segment normal
-            let offs = len <= offsetN ? [ 0 ] : base.util.lerp(0, len, offsetN, true);
+            let offs = len <= midR ? [ 0 ] : base.util.lerp(0, len, midR, true);
             let step = 1 / offs.length;
             let dr = (p1.r - p0.r);
             let dx = (p1.x - p0.x);
@@ -533,7 +534,7 @@ function thin_type_3(params) {
             let ndy = dy / len;
             segs.push({ p0, p1, offs, step, dr, dx, dy, ndx, ndy });
         }
-        console.log({ segs });
+
         // compute chain subdivisions
         let slen = segs.length;
         for (let si=0; si<slen; si++) {
