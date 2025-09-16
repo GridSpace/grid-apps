@@ -183,11 +183,11 @@ function thin_type_3(params) {
     let mergeChains = true;
     let interpolateShortSpur = true;
     let showChainRawPoints = false;
-    let showChainInterpPoints = true;
+    let showChainInterpPoints = false;
     let showMidline = true;
     let showMidPoints = true;
     let showMidNormals = true;
-    let showMidRadii = true;
+    let showMidRadii = false;
     let showNexuses = false;
 
     let pointMap = new Map();
@@ -481,6 +481,29 @@ function thin_type_3(params) {
         top.shells.push(newPolygon().centerCircle(point, 0.2, 6 - rec.shorts));
     }
 
+    function renderPointNormal(pt, ndx, ndy) {
+        if (showMidNormals) {
+            let xo = ndx * pt.r;
+            let yo = ndy * pt.r;
+            thin.push(new Point(pt.x + yo, pt.y - xo));
+            thin.push(new Point(pt.x - yo, pt.y + xo));
+        }
+        if (showMidRadii) {
+            const Sx = pt.x + ndy * pt.r;
+            const Sy = pt.y - ndx * pt.r;
+            const circ = top.shells;
+            const pop = div(pt.r);
+            let acc = 0;
+            for (let r of pop) {
+                const t = acc + r;
+                const px = Sx + -ndy * t;
+                const py = Sy + ndx * t;
+                circ.push(newPolygon().centerCircle({x:px, y:py}, r, 10));
+                acc += r * 2;
+            }
+        }
+}
+
     // gather point offsets into shells
     let zi = z;
     for (let chain of chains) {
@@ -510,7 +533,7 @@ function thin_type_3(params) {
             let dy = (p1.y - p0.y);
             let ndx = dx / len;
             let ndy = dy / len;
-            segs.push({ p0, p1, len, offs, step, dr, dx, dy, ndx, ndy });
+            segs.push({ p0, p1, offs, step, dr, dx, dy, ndx, ndy });
         }
         console.log({ segs });
         // compute chain subdivisions
@@ -518,7 +541,7 @@ function thin_type_3(params) {
         for (let si=0; si<slen; si++) {
             let seg = segs[si];
             let segp = segs[(si - 1 + slen) % slen];
-            let { p0, p1, len, offs, step, dr, dx, dy, ndx, ndy } = seg;
+            let { p0, p1, offs, step, dr, dx, dy, ndx, ndy } = seg;
             let first = si === 0;
             let last = si === slen - 1;
             let mid = !(first || last);
@@ -542,25 +565,16 @@ function thin_type_3(params) {
                     }
                 }
             }
-            if (showMidNormals) {
+            {
                 // todo: handle closed
                 if (first) {
-                    let xo = ndx * p0.r;
-                    let yo = ndy * p0.r;
-                    thin.push(new Point(p0.x + yo, p0.y - xo));
-                    thin.push(new Point(p0.x - yo, p0.y + xo));
+                    renderPointNormal(p0, ndx, ndy);
                 }
                 if (mid) {
-                    let xo = ((ndx + segp.ndx)/2) * p0.r;
-                    let yo = ((ndy + segp.ndy)/2) * p0.r;
-                    thin.push(new Point(p0.x + yo, p0.y - xo));
-                    thin.push(new Point(p0.x - yo, p0.y + xo));
+                    renderPointNormal(p0, ((ndx + segp.ndx)/2), ((ndy + segp.ndy)/2));
                 }
                 if (last) {
-                    let xo = ndx * p1.r;
-                    let yo = ndy * p1.r;
-                    thin.push(new Point(p1.x + yo, p1.y - xo));
-                    thin.push(new Point(p1.x - yo, p1.y + xo));
+                    renderPointNormal(p1, ndx, ndy);
                 }
             }
             // interpolate across the length of the chain segment
@@ -575,24 +589,7 @@ function thin_type_3(params) {
                 if (showMidPoints) {
                     top.shells.push(newPolygon().centerCircle({ x:cx, y:cy }, 0.05, 10));
                 }
-                if (showMidNormals) {
-                    thin.push(new Point(cx + yo, cy - xo));
-                    thin.push(new Point(cx - yo, cy + xo));
-                }
-                if (showMidRadii) {
-                    const Sx = cx + ndy * cr;
-                    const Sy = cy - ndx * cr;
-                    const circ = top.shells;
-                    const pop = div(cr);
-                    let acc = 0;
-                    for (let r of pop) {
-                        const t = acc + r;
-                        const px = Sx + -ndy * t;
-                        const py = Sy + ndx * t;
-                        circ.push(newPolygon().centerCircle({x:px, y:py}, r, 10));
-                        acc += r * 2;
-                    }
-                }
+                renderPointNormal({ x:cx, y:cy, r:cr }, ndx, ndy);
             }
         }
     }
