@@ -181,6 +181,7 @@ function thin_type_3(params) {
     let showInsetPoints = false;
     let showChainRawPoints = false;
     let showChainInterpPoints = true;
+    let showChainIntersect = false;
     let showNuMedLine = false;
     let showMedLine = true;
     let showMedPoints = false;
@@ -192,9 +193,10 @@ function thin_type_3(params) {
     let shells = top.shells;
     let sparse = top.fill_sparse = [];
     let scale = 1000;
-    let midR = offsetN * 0.5;
-    let minR = midR * 0.75;
-    let maxR = midR * 1.5;
+    let midR = offsetN * 0.5;  // nominal extrusion width
+    let minR = midR * 0.75; // smallest interior fill or single wall width
+    let maxR = midR * 1.5; // max double wall extrusion width
+    let maxF = midR * 2; // max interior extrusion width
     let minSpur = offsetN * 1;
 
     let inset;
@@ -678,7 +680,6 @@ function thin_type_3(params) {
 
     // project inset segment normals onto closest chain
     if (intersectChains) {
-        console.log({ chains, nuchains });
         let { intersect } = base.util;
         let { SEGINT } = base.key;
         inset = POLY.flatten(inset, []);
@@ -701,14 +702,21 @@ function thin_type_3(params) {
                     }
                 }
                 if (min.p1) {
-                    thin.push(new Point(np1.x, np1.y));
-                    thin.push(new Point(min.x, min.y));
-                    let mr = Math.min(min.p1.r, min.p2.r);
+                    let { p1, p2 } = min;
+                    if (showChainIntersect) {
+                        thin.push(new Point(np1.x, np1.y));
+                        thin.push(new Point(min.x, min.y));
+                    }
+                    let mr = Math.min(p1.r, p2.r);
                     if (mr < minR) return;
                     let pop = div(mr);
-                    // todo decide which side has priority to emit single wall
-                    // same is true for odd midlines: 3, 5, etc
-                    if (pop.length === 1) return;
+                    // implement first-to-intersect claim system
+                    // for odd wall counts so that they're not emitted twice
+                    // todo extend to all odd counts
+                    if (pop.length === 1 && p1.claimed) {
+                        return;
+                    }
+                    p1.claimed = true;
                     shells.push(newPolygon().centerCircle({
                         x: np1.x + dy * (pop[0] - dstep),
                         y: np1.y - dx * (pop[0] - dstep)
