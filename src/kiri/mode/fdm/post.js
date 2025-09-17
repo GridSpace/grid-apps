@@ -718,10 +718,19 @@ function thin_type_3(params) {
                         return;
                     }
                     p1.claimed = true;
-                    shells.push(newPolygon().centerCircle({
-                        x: np1.x + dy * (pop[0] - dstep),
-                        y: np1.y - dx * (pop[0] - dstep)
-                    }, pop[0], 10));
+                    if (pop.length === 1) {
+                        // for single wall place it exactly on medial axis
+                        shells.push(newPolygon().centerCircle({
+                            x: min.x,
+                            y: min.y
+                        }, mr, 12));
+                    } else {
+                        // otherwise use divisions
+                        shells.push(newPolygon().centerCircle({
+                            x: np1.x + dy * (pop[0] - dstep),
+                            y: np1.y - dx * (pop[0] - dstep)
+                        }, pop[0], 12));
+                    }
                 }
             });
         }
