@@ -171,6 +171,23 @@ function thin_type_3(params) {
 
     top.gaps = remain;
 
+    let mergeChains = false;
+    let simplifyChain = false;
+    let shortenAtNexus = false;
+    let shortenEdgeSpur = false;
+    let intersectChains = true;
+
+    let showNoodle = false;
+    let showInsetPoints = false;
+    let showChainRawPoints = false;
+    let showChainInterpPoints = true;
+    let showNuMedLine = false;
+    let showMedLine = true;
+    let showMedPoints = false;
+    let showMedNormals = false;
+    let showMedRadii = false;
+    let showNexuses = false;
+
     let thin = top.thin_fill = [];
     let shells = top.shells;
     let sparse = top.fill_sparse = [];
@@ -180,10 +197,16 @@ function thin_type_3(params) {
     let maxR = midR * 1.5;
     let minSpur = offsetN * 1;
 
-    if (false) {
+    let inset;
+    let dstep = minR / 4;
+    top.gaps = remain;
+
+    if (true) {
         let dtotl = 0;
-        let dstep = minR / 2;
-        let inset = POLY.expand(noodle, -dstep);
+        inset = POLY.offset(noodle, -dstep, {
+            join: ClipperLib.JoinType.jtRound,
+            arc: (1/dstep) * 4
+        });
         while (inset && inset.length) {
             dtotl += dstep;
             let ps = POLY.flatten(inset);
@@ -191,12 +214,13 @@ function thin_type_3(params) {
                 for (let p of poly.segment(minR).points) {
                     let d = dtotl * 0+0.05;
                     // let z = dtotl * 10;
+                    if (showInsetPoints)
                     shells.append( newPolygon().centerCircle(p, d, 10).setZ(z) );
                 }
             }
             POLY.setZ(inset, z);
             shells.appendAll(inset);
-            if (dtotl >= maxR) {
+            if (true || dtotl >= maxR) {
                 break;
             }
             inset = POLY.expand(inset, -dstep);
@@ -205,18 +229,6 @@ function thin_type_3(params) {
 
     // shells.appendAll(noodle);
     // return { last, gaps };
-
-    let showNoodle = false;
-    let mergeChains = true;
-    let shortenAtNexus = false;
-    let interpolateShortSpur = true;
-    let showChainRawPoints = false;
-    let showChainInterpPoints = true;
-    let showMidline = true;
-    let showMidPoints = false;
-    let showMidNormals = false;
-    let showMidRadii = true;
-    let showNexuses = false;
 
     let pointMap = new Map();
     let lineMap = new Map();
@@ -294,7 +306,7 @@ function thin_type_3(params) {
         // filter out lines where both points' radii are under the
         // minR threshold. shorten and fixup lines where minR falls
         // somewhere along the gradient between ends.
-        if (interpolateShortSpur)
+        if (shortenEdgeSpur)
         if (p0.r < minR || p1.r < minR) {
             if (p0.r > minR && len > minSpur) {
                 // move p1 toward p0 until minR met
@@ -451,9 +463,9 @@ function thin_type_3(params) {
     // mark closed chains
     // todo use exact point match by eliminating slice above
     // then later removing repeated points in the resulting chain from merges
+    if (mergeChains)
     for (let chain of chains) {
         chain.closed = (chain[0] === chain.peek());
-        console.log(chain.closed ? 'closed' : 'open');
         if (chain.closed) chain.pop();
     }
 
@@ -508,14 +520,39 @@ function thin_type_3(params) {
         shells.push(newPolygon().centerCircle(point, 0.2, 6 - rec.shorts));
     }
 
+    // Keep endpoints; drop interior points closer than R from the last kept point.
+    function dropClosePoints(chain, R) {
+        if (!chain || chain.length <= 2 || R <= 0) {
+            return chain;
+        }
+        let last = chain[0];
+        let out = [ last ];
+        let R2 = R * R;
+        for (let i = 1; i < chain.length - 1; i++) {
+            let dx = chain[i].x - last.x,
+                dy = chain[i].y - last.y;
+            if (dx * dx + dy * dy >= R2) {
+                out.push(chain[i]);
+                last = chain[i];
+            }
+        }
+        out.push(chain[chain.length - 1]);
+        return out;
+    }
+
+    // drop chain points < minR apart
+    if (simplifyChain) {
+        chains = chains.map(chain => dropClosePoints(chain, minR));
+    }
+
     function renderPointNormal(pt, ndx, ndy) {
-        if (showMidNormals) {
+        if (showMedNormals) {
             let xo = ndx * pt.r;
             let yo = ndy * pt.r;
             thin.push(new Point(pt.x + yo, pt.y - xo));
             thin.push(new Point(pt.x - yo, pt.y + xo));
         }
-        if (showMidRadii) {
+        if (showMedRadii) {
             const Sx = pt.x + ndy * pt.r;
             const Sy = pt.y - ndx * pt.r;
             const pop = div(pt.r);
@@ -532,7 +569,10 @@ function thin_type_3(params) {
 
     // gather point offsets into shells
     let zi = z;
+    let nuchains = [];
     for (let chain of chains) {
+        let nuchain = [];
+        nuchains.push(nuchain);
         // zi += 0.1;
         if (showChainRawPoints)
         for (let pt of chain) {
@@ -547,7 +587,7 @@ function thin_type_3(params) {
             let p1 = chain[(i+1) % length];
             let len = pointDist(p0, p1);
             // medial axis segment
-            if (showMidline) {
+            if (showMedLine) {
                 thin.push(new Point(p0.x, p0.y, zi));
                 thin.push(new Point(p1.x, p1.y, zi));
             }
@@ -571,23 +611,26 @@ function thin_type_3(params) {
             let first = si === 0;
             let last = si === slen - 1;
             let mid = !(first || last);
+            if (first || mid) {
+                nuchain.push(p0);
+            }
             // for length 2, first and last segment are the same
-            if (showMidPoints) {
+            if (showMedPoints) {
                 if (first) {
                     // todo: handle closed
-                    shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                    shells.push(newPolygon().centerCircle(p0, p0.r/2, 10));
                 }
                 if (mid) {
                     // mid segments
-                    shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                    shells.push(newPolygon().centerCircle(p0, p0.r/2, 10));
                 }
                 if (last) {
                     // todo: handle closed
-                    shells.push(newPolygon().centerCircle(p0, 0.08, 10));
+                    shells.push(newPolygon().centerCircle(p0, p0.r/2, 10));
                     if (closed) {
                         console.log('closed');
                     } else {
-                        shells.push(newPolygon().centerCircle(p1, 0.08, 10));
+                        shells.push(newPolygon().centerCircle(p1, p1.r/2, 10));
                     }
                 }
             }
@@ -604,7 +647,6 @@ function thin_type_3(params) {
                 }
             }
             // interpolate across the length of the chain segment
-            if (showChainInterpPoints)
             for (let indx = 1; indx < steps; indx++) {
                 const inc = indx * step;
                 const cr = p0.r + dr * inc;
@@ -612,11 +654,67 @@ function thin_type_3(params) {
                 const cy = p0.y + dy * inc;
                 const xo = ndx * cr;
                 const yo = ndy * cr;
-                if (showMidPoints) {
-                    top.shells.push(newPolygon().centerCircle({ x:cx, y:cy }, 0.05, 10));
+                if (showChainInterpPoints) {
+                    if (showMedPoints) {
+                        shells.push(newPolygon().centerCircle({ x:cx, y:cy }, cr/2, 10));
+                    }
+                    renderPointNormal({ x:cx, y:cy, r:cr }, ndx, ndy);
                 }
-                renderPointNormal({ x:cx, y:cy, r:cr }, ndx, ndy);
+                nuchain.push({ x:cx, y:cy, r:cr });
             }
+            if (last) {
+                nuchain.push(p1);
+            }
+        }
+        if (showNuMedLine) {
+            for (let i=0; i<nuchain.length-1; i++) {
+                let p0 = nuchain[i];
+                let p1 = nuchain[i+1];
+                thin.push(new Point(p0.x, p0.y, z));
+                thin.push(new Point(p1.x, p1.y, z));
+            }
+        }
+    }
+
+    // project inset segment normals onto closest chain
+    if (intersectChains) {
+        console.log({ chains, nuchains });
+        let { intersect } = base.util;
+        let { SEGINT } = base.key;
+        inset = POLY.flatten(inset, []);
+        for (let poly of inset) {
+            poly.segment(minR).forEachSegment((p1, p2) => {
+                let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
+                let len = pointDist(p1, p2);
+                let dx = (p1.x - p2.x) / len;
+                let dy = (p1.y - p2.y) / len;
+                let np2 = { x: np1.x + dy * 10, y: np1.y - dx * 10 };
+                let min = { dist: Infinity };
+                for (let chain of nuchains) {
+                    for (let i=0; i<chain.length-1; i++) {
+                        let c1 = chain[i];
+                        let c2 = chain[i+1];
+                        let int = intersect(np1, np2, c1, c2, SEGINT);
+                        if (int?.dist < min.dist && int?.dist < midR) {
+                            min = int;
+                        }
+                    }
+                }
+                if (min.p1) {
+                    thin.push(new Point(np1.x, np1.y));
+                    thin.push(new Point(min.x, min.y));
+                    let mr = Math.min(min.p1.r, min.p2.r);
+                    if (mr < minR) return;
+                    let pop = div(mr);
+                    // todo decide which side has priority to emit single wall
+                    // same is true for odd midlines: 3, 5, etc
+                    if (pop.length === 1) return;
+                    shells.push(newPolygon().centerCircle({
+                        x: np1.x + dy * (pop[0] - dstep),
+                        y: np1.y - dx * (pop[0] - dstep)
+                    }, pop[0], 10));
+                }
+            });
         }
     }
 
