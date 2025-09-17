@@ -383,10 +383,11 @@ function thin_type_3(params) {
         } else if (cr <= maxR * 2) {
             return [ cr / 2, cr / 2 ];
         } else if (cr <= maxR * 3) {
-            if (cr - maxR * 2 >= minR) {
-                return [ maxR, cr - maxR * 2, maxR ];
-            } else {
+            let rem = (cr - midR * 2);
+            if (rem < minR) {
                 return [ cr / 3, cr / 3, cr / 3 ];
+            } else {
+                return [ midR, rem, midR ];
             }
         } else {
             let divs = (cr / midR) | 0;
