@@ -178,6 +178,8 @@ function thin_type_3(params) {
     let intersectChains = true;
 
     let showNoodle = false;
+    let showExtrusion = true;
+    let showExtrudeInset = false;
     let showInsetPoints = false;
     let showChainRawPoints = false;
     let showChainInterpPoints = true;
@@ -685,6 +687,7 @@ function thin_type_3(params) {
         let { SEGINT } = base.key;
         inset = POLY.flatten(inset, []);
         for (let poly of inset) {
+            let nupoly = new Polygon();
             poly.segment(minR).forEachSegment((p1, p2) => {
                 let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
                 let len = pointDist(p1, p2);
@@ -711,28 +714,41 @@ function thin_type_3(params) {
                     let mr = Math.min(p1.r, p2.r);
                     if (mr < minR) return;
                     let pop = div(mr);
+                    let odd = (pop.length % 2 === 1);
+                    let len = Math.ceil(pop.length / 2);
+                    if (odd && p1.claimed) len--;
                     // implement first-to-intersect claim system
                     // for odd wall counts so that they're not emitted twice
                     // todo extend to all odd counts
-                    if (pop.length === 1 && p1.claimed) {
+                    if (len === 0) {
                         return;
                     }
-                    p1.claimed = true;
                     if (pop.length === 1) {
+                        nupoly.push(new Point(min.x, min.y));
                         // for single wall place it exactly on medial axis
+                        if (showExtrusion)
                         shells.push(newPolygon().centerCircle({
                             x: min.x,
                             y: min.y
                         }, mr, 12));
                     } else {
+                        let off = -dstep;
                         // otherwise use divisions
-                        shells.push(newPolygon().centerCircle({
-                            x: np1.x + dy * (pop[0] - dstep),
-                            y: np1.y - dx * (pop[0] - dstep)
-                        }, pop[0], 12));
+                        for (let i=0; i<1; i++) {
+                            off += (pop[i] * (i ? 2 : 1));
+                            if (showExtrusion)
+                            shells.push(newPolygon().centerCircle({
+                                x: np1.x + dy * off,
+                                y: np1.y - dx * off
+                            }, pop[0], 12));
+                        }
+                        off += dstep / 2;
+                        nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
                     }
+                    p1.claimed = true;
                 }
             });
+            if (showExtrudeInset) shells.push(nupoly);
         }
     }
 
