@@ -171,12 +171,9 @@ function thin_type_3(params) {
 
     top.gaps = remain;
 
-    let mergeChains = false;
-    let simplifyChain = false;
-    let shortenAtNexus = false;
-    let shortenEdgeSpur = false;
     let intersectChains = true;
     let maxInsetBypass = false;
+    let altNuSegs = true;
 
     let showNoodle = false;
     let showMedLine = false;
@@ -184,13 +181,8 @@ function thin_type_3(params) {
     let showExtrusion = true;
     let showExtrudeInset = false;
     let showChainRawPoints = false;
-    let showChainInterpPoints = true;
     let showChainIntersect = false;
-    let showNuMedLine = true;
-    let showMedPoints = false;
-    let showMedNormals = false;
-    let showMedRadii = false;
-    let showNexuses = false;
+    let showNuMedLine = false;
 
     let thin = top.thin_fill = [];
     let shells = top.shells;
@@ -200,7 +192,6 @@ function thin_type_3(params) {
     let minR = midR * 0.75; // smallest interior fill or single wall width
     let maxR = midR * 1.5; // max double wall extrusion width
     let maxF = midR * 2; // max interior extrusion width
-    let minSpur = offsetN * 1;
 
     let insets = [];
     let inset;
@@ -333,6 +324,7 @@ function thin_type_3(params) {
     }
 
     let chains = [];
+    let nusegs = [];
 
     // for each standalone noodle, construct medial axis
     // map medial axis points into de-duplicated segments
@@ -355,37 +347,22 @@ function thin_type_3(params) {
     for (let seg of lineMap.values()) {
         let { p0, p1 } = seg;
         let len = seg.len = pointDist(p0, p1);
-        // filter out lines where both points' radii are under the
-        // minR threshold. shorten and fixup lines where minR falls
-        // somewhere along the gradient between ends.
-        if (shortenEdgeSpur)
-        if (p0.r < minR || p1.r < minR) {
-            if (p0.r > minR && len > minSpur) {
-                // move p1 toward p0 until minR met
-                let pct = (minR - p1.r) / (p0.r - p1.r);
-                let dx = p1.x - p0.x;
-                let dy = p1.y - p0.y;
-                p1.x -= dx * pct;
-                p1.y -= dy * pct;
-                p1.r = minR;
-                pointMap.delete(p1.key);
-            } else if (p1.r > minR && len > minSpur) {
-                // move p0 toward p1 until minR met
-                let pct = (minR - p0.r) / (p1.r - p0.r);
-                let dx = p0.x - p1.x;
-                let dy = p0.y - p1.y;
-                p0.x -= dx * pct;
-                p0.y -= dy * pct;
-                p0.r = minR;
-                pointMap.delete(p0.key);
+        if (altNuSegs) {
+            // add to nusegs
+            if (len <= minR) {
+                nusegs.push({ p0, p1 });
             } else {
-                // both points eliminated
-                pointMap.delete(p0.key);
-                pointMap.delete(p1.key);
-                lineMap.delete(seg.key);
-                continue;
+                let steps = Math.ceil(len / minR) + 1;
+                let dx = (p1.x - p0.x) / steps;
+                let dy = (p1.y - p0.y) / steps;
+                for (let i=0; i<steps; i++) {
+                    p1 = { x:p0.x + dx, y:p0.y + dy };
+                    nusegs.push({ p0, p1 });
+                    p0 = p1;
+                }
             }
         }
+        if (altNuSegs) continue;
         // for each line segment either add it to a chain or start a new chain
         let add;
         for (let chain of chains) {
@@ -417,10 +394,6 @@ function thin_type_3(params) {
         }
     }
 
-    // todo: merge chains at next of 3 or more preferencing
-    // merging longer chains. then shorten remaining nexus chain
-    // intersections by minR
-
     // render inset "noodle"
     if (showNoodle) {
         shells.appendAll(noodle);
@@ -450,184 +423,12 @@ function thin_type_3(params) {
     }
 
     // filter chains that are too short from consideration
-    chains = chains.filter(c => c.total >= minR);
-    chains.sort((c1,c2) => c2.total - c1.total);
-
-    function merge1chain() {
-        let clen = chains.length;
-        for (let i=0; i<clen; i++) {
-            let ci = chains[i];
-            if (!ci) continue;
-            for (let j=i+1; j<clen; j++) {
-                let cj = chains[j];
-                if (!cj) continue;
-                if (ci[0] === cj[0]) {
-                    ci.reverse().appendAll(cj)
-                    ci.total += cj.total;
-                    cj.merged = true;
-                    chains[j] = undefined;
-                    return true;
-                } else if (ci.peek() === cj.peek()) {
-                    ci.appendAll(cj.reverse());
-                    ci.total += cj.total;
-                    cj.merged = true;
-                    chains[j] = undefined;
-                    return true;
-                } else if (ci.peek() === cj[0]) {
-                    ci.appendAll(cj);
-                    ci.total += cj.total;
-                    cj.merged = true;
-                    chains[j] = undefined;
-                    return true;
-                } else if (ci[0] === cj.peek()) {
-                    cj.appendAll(ci);
-                    cj.total += ci.total;
-                    ci.merged = true;
-                    chains[i] = undefined;
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    // map chains to nexus via endpoints
-    let nexus = {};
-    function addEp(point, chain) {
-        let key = point.key;
-        let rec = nexus[key];
-        if (!rec) rec = nexus[key] = { point, chains: [] };
-        if (rec.chains.indexOf(chain) < 0) rec.chains.push(chain);
-    }
-    // since chains are sorted longest to shortest,
-    // they will appear in the nexus record longest to shortest
-    for (let chain of chains) {
-        addEp(chain[0], chain);
-        addEp(chain.peek(), chain);
-    }
-
-    // connect chains end to end following nexus branches that result
-    // in the longest final merged chain (open or closed)
-    // map chain endpoints to nexus points
-    while (mergeChains && merge1chain()) ;
-
-    // filter out null chains that were merged into other chains
-    chains = chains.filter(chain => chain);
-
-    // filter dup points from connecting ends
-    chains = chains.map(chain => chain.filter((v, i) => i === 0 || v !== chain[i - 1]));
-
-    // mark closed chains
-    // todo use exact point match by eliminating slice above
-    // then later removing repeated points in the resulting chain from merges
-    if (mergeChains)
-    for (let chain of chains) {
-        chain.closed = (chain[0] === chain.peek());
-        if (chain.closed) chain.pop();
-    }
-
-    // shorten chain length by minR distance by popping or moving points
-    function shorten(chain) {
-        for (let rem=0, i=chain.length-1; i>=1 && rem < minR; i--) {
-            let c1 = chain[i];
-            let c2 = chain[i-1];
-            let d = pointDist(c1,c2);
-            if (rem + d <= minR) {
-                chain.pop();
-                rem += d;
-            } else {
-                let diff = minR - rem;
-                // move c1 toward c2
-                let pct = diff / d;
-                let dx = c1.x - c2.x;
-                let dy = c1.y - c2.y;
-                chain[i] = {
-                    x: c1.x - dx * pct,
-                    y: c1.y - dy * pct,
-                    r: c1.r
-                };
-                rem = 0;
-                break;
-            }
-        }
-    }
-
-    // shorten chains terminating at nexus by midR
-    if (shortenAtNexus)
-    for (let rec of Object.values(nexus)) {
-        let { point } = rec;
-        rec.shorts = 0;
-        if (rec.chains.length < 3) continue;
-        for (let chain of chains.filter(c => !c.closed)) {
-            if (pointDist(chain[0], point) < minR) {
-                chain.reverse();
-                shorten(chain);
-                chain.reverse();
-                rec.shorts++;
-            } else if (chain.peek() === point) {
-                shorten(chain);
-                rec.shorts++;
-            }
-        }
-    }
-
-    if (showNexuses)
-    for (let rec of Object.values(nexus)) {
-        let { point } = rec;
-        shells.push(newPolygon().centerCircle(point, 0.2, 6 - rec.shorts));
-    }
-
-    // Keep endpoints; drop interior points closer than R from the last kept point.
-    function dropClosePoints(chain, R) {
-        if (!chain || chain.length <= 2 || R <= 0) {
-            return chain;
-        }
-        let last = chain[0];
-        let out = [ last ];
-        let R2 = R * R;
-        for (let i = 1; i < chain.length - 1; i++) {
-            let dx = chain[i].x - last.x,
-                dy = chain[i].y - last.y;
-            if (dx * dx + dy * dy >= R2) {
-                out.push(chain[i]);
-                last = chain[i];
-            }
-        }
-        out.push(chain[chain.length - 1]);
-        return out;
-    }
-
-    // drop chain points < minR apart
-    if (simplifyChain) {
-        chains = chains.map(chain => dropClosePoints(chain, minR));
-    }
-
-    function renderPointNormal(pt, ndx, ndy) {
-        if (showMedNormals) {
-            let xo = ndx * pt.r;
-            let yo = ndy * pt.r;
-            thin.push(new Point(pt.x + yo, pt.y - xo));
-            thin.push(new Point(pt.x - yo, pt.y + xo));
-        }
-        if (showMedRadii) {
-            const Sx = pt.x + ndy * pt.r;
-            const Sy = pt.y - ndx * pt.r;
-            const pop = div(pt.r);
-            let acc = 0;
-            for (let r of pop) {
-                const t = acc + r;
-                const px = Sx + -ndy * t;
-                const py = Sy + ndx * t;
-                shells.push(newPolygon().centerCircle({x:px, y:py}, r, 10));
-                acc += r * 2;
-            }
-        }
-}
+    // chains = chains.filter(c => c.total >= minR);
 
     // gather point offsets into shells
     let zi = z;
     let nuchains = [];
-    let nusegs = [];
+    if (!altNuSegs)
     for (let chain of chains) {
         let nuchain = [];
         nuchains.push(nuchain);
@@ -672,63 +473,25 @@ function thin_type_3(params) {
             if (first || mid) {
                 nuchain.push(p0);
             }
-            // for length 2, first and last segment are the same
-            if (showMedPoints) {
-                if (first) {
-                    // todo: handle closed
-                    shells.push(newPolygon().centerCircle(p0, p0.r/2, 10));
-                }
-                if (mid) {
-                    // mid segments
-                    shells.push(newPolygon().centerCircle(p0, p0.r/2, 10));
-                }
-                if (last) {
-                    // todo: handle closed
-                    shells.push(newPolygon().centerCircle(p0, p0.r/2, 10));
-                    if (closed) {
-                        console.log('closed');
-                    } else {
-                        shells.push(newPolygon().centerCircle(p1, p1.r/2, 10));
-                    }
-                }
-            }
-            {
-                // todo: handle closed
-                if (first) {
-                    renderPointNormal(p0, ndx, ndy);
-                }
-                if (mid) {
-                    renderPointNormal(p0, ((ndx + segp.ndx)/2), ((ndy + segp.ndy)/2));
-                }
-                if (last) {
-                    renderPointNormal(p1, ndx, ndy);
-                }
-            }
             // interpolate across the length of the chain segment
             for (let indx = 1; indx < steps; indx++) {
                 const inc = indx * step;
                 const cr = p0.r + dr * inc;
                 const cx = p0.x + dx * inc;
                 const cy = p0.y + dy * inc;
-                const xo = ndx * cr;
-                const yo = ndy * cr;
-                if (showChainInterpPoints) {
-                    if (showMedPoints) {
-                        shells.push(newPolygon().centerCircle({ x:cx, y:cy }, cr/2, 10));
-                    }
-                    renderPointNormal({ x:cx, y:cy, r:cr }, ndx, ndy);
-                }
                 nuchain.push({ x:cx, y:cy, r:cr });
             }
             if (last) {
                 nuchain.push(p1);
             }
         }
-        if (showNuMedLine) {
-            for (let i=0; i<nuchain.length-1; i++) {
-                let p0 = nuchain[i];
-                let p1 = nuchain[i+1];
+        for (let i=0; i<nuchain.length-1; i++) {
+            let p0 = nuchain[i];
+            let p1 = nuchain[i+1];
+            if (!altNuSegs) {
                 nusegs.push({ p0, p1 });
+            }
+            if (showNuMedLine) {
                 thin.push(new Point(p0.x, p0.y, z));
                 thin.push(new Point(p1.x, p1.y, z));
             }
@@ -751,16 +514,6 @@ function thin_type_3(params) {
                 let dx = (p1.x - p2.x) / len;
                 let dy = (p1.y - p2.y) / len;
                 let min = { dist: Infinity };
-                // for (let chain of nuchains) {
-                //     for (let i=0; i<chain.length-1; i++) {
-                //         let c1 = chain[i];
-                //         let c2 = chain[i+1];
-                //         let int = intersectRayLine(np1, { dx: dy, dy: -dx }, c1, c2);
-                //         if (int?.dist < min.dist && int?.dist < offsetN * count) {
-                //             min = int;
-                //         }
-                //     }
-                // }
                 for (let seg of nusegs) {
                     let { p0, p1 } = seg;
                     let int = intersectRayLine(np1, { dx: dy, dy: -dx }, p0, p1);
