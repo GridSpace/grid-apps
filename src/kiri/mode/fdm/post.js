@@ -186,7 +186,7 @@ function thin_type_3(params) {
     let showChainRawPoints = false;
     let showChainInterpPoints = true;
     let showChainIntersect = false;
-    let showNuMedLine = false;
+    let showNuMedLine = true;
     let showMedPoints = false;
     let showMedNormals = false;
     let showMedRadii = false;
@@ -627,6 +627,7 @@ function thin_type_3(params) {
     // gather point offsets into shells
     let zi = z;
     let nuchains = [];
+    let nusegs = [];
     for (let chain of chains) {
         let nuchain = [];
         nuchains.push(nuchain);
@@ -727,6 +728,7 @@ function thin_type_3(params) {
             for (let i=0; i<nuchain.length-1; i++) {
                 let p0 = nuchain[i];
                 let p1 = nuchain[i+1];
+                nusegs.push({ p0, p1 });
                 thin.push(new Point(p0.x, p0.y, z));
                 thin.push(new Point(p1.x, p1.y, z));
             }
@@ -748,20 +750,27 @@ function thin_type_3(params) {
                 let len = pointDist(p1, p2);
                 let dx = (p1.x - p2.x) / len;
                 let dy = (p1.y - p2.y) / len;
-                let np2 = { x: np1.x + dy * 10, y: np1.y - dx * 10 };
                 let min = { dist: Infinity };
-                for (let chain of nuchains) {
-                    for (let i=0; i<chain.length-1; i++) {
-                        let c1 = chain[i];
-                        let c2 = chain[i+1];
-                        let int = intersectRayLine(np1, { dx: dy, dy: -dx }, c1, c2);
-                        if (int?.dist < min.dist && int?.dist < offsetN * count) {
-                            min = int;
-                        }
+                // for (let chain of nuchains) {
+                //     for (let i=0; i<chain.length-1; i++) {
+                //         let c1 = chain[i];
+                //         let c2 = chain[i+1];
+                //         let int = intersectRayLine(np1, { dx: dy, dy: -dx }, c1, c2);
+                //         if (int?.dist < min.dist && int?.dist < offsetN * count) {
+                //             min = int;
+                //         }
+                //     }
+                // }
+                for (let seg of nusegs) {
+                    let { p0, p1 } = seg;
+                    let int = intersectRayLine(np1, { dx: dy, dy: -dx }, p0, p1);
+                    if (int?.dist < min.dist && int?.dist < offsetN * count) {
+                        min = int;
+                        min.seg = seg;
                     }
                 }
                 if (min.p1) {
-                    let { p1, p2 } = min;
+                    let mp1 = min.seg;
                     if (showChainIntersect) {
                         thin.push(new Point(np1.x, np1.y));
                         thin.push(new Point(min.x, min.y));
@@ -774,10 +783,9 @@ function thin_type_3(params) {
                     let pop = div(mr);
                     let odd = (pop.length % 2 === 1);
                     let len = Math.ceil(pop.length / 2);
-                    if (odd && p1.claimed) len--;
-                    // implement first-to-intersect claim system
+                    // check if chain segment was claimed by a different originating segment
                     // for odd wall counts so that they're not emitted twice
-                    // todo extend to all odd counts
+                    if (odd && mp1.claimed) len--;
                     if (len === 0) {
                         nupoly.push(new Point(min.x, min.y));
                         return;
@@ -804,7 +812,9 @@ function thin_type_3(params) {
                         off += dstep / 2;
                         nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
                     }
-                    p1.claimed = true;
+                    if (odd && !mp1.claimed) {
+                        mp1.claimed = true;
+                    }
                 }
             });
             if (showExtrudeInset) {
