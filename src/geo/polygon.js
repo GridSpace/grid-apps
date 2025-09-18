@@ -2042,13 +2042,9 @@ export class Polygon {
 
         // use expand / deflate technique instead
         if (opt.pump) {
-            let p2 = POLY.offset([this], opt.pump, {
-                z
-            });
+            let p2 = POLY.offset([this], opt.pump, { z });
             if (p2) {
-                p2 = POLY.offset(p2, -opt.pump, {
-                    z
-                });
+                p2 = POLY.offset(p2, -opt.pump, { z });
                 return p2;
             }
             return null;

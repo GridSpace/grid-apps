@@ -175,7 +175,8 @@ function thin_type_3(params) {
     let simplifyChain = false;
     let shortenAtNexus = false;
     let shortenEdgeSpur = false;
-    let intersectChains = true;
+    let intersectChains = false;
+    let maxInsetBypass = true;
 
     let showNoodle = false;
     let showExtrusion = true;
@@ -185,7 +186,7 @@ function thin_type_3(params) {
     let showChainInterpPoints = true;
     let showChainIntersect = false;
     let showNuMedLine = false;
-    let showMedLine = false;
+    let showMedLine = true;
     let showMedPoints = false;
     let showMedNormals = false;
     let showMedRadii = false;
@@ -201,38 +202,90 @@ function thin_type_3(params) {
     let maxF = midR * 2; // max interior extrusion width
     let minSpur = offsetN * 1;
 
+    let insets = [];
     let inset;
     let dstep = minR / 4;
+    let dtotl = 0;
     top.gaps = remain;
 
-    if (true) {
-        let dtotl = 0;
+    if (maxInsetBypass || intersectChains) {
         inset = POLY.offset(noodle, -dstep, {
             join: ClipperLib.JoinType.jtRound,
             arc: (1/dstep) * 4
         });
         while (inset && inset.length) {
             dtotl += dstep;
-            let ps = POLY.flatten(inset);
-            for (let poly of ps) {
-                for (let p of poly.segment(minR).points) {
-                    let d = dtotl * 0+0.05;
-                    // let z = dtotl * 10;
-                    if (showInsetPoints)
-                    shells.append( newPolygon().centerCircle(p, d, 10).setZ(z) );
-                }
+            for (let p of POLY.flatten(inset, [])) {
+                p.dtotl = dtotl;
             }
+            insets.push(inset);
+            let ps = POLY.flatten(inset);
             POLY.setZ(inset, z);
             shells.appendAll(inset);
-            if (true || dtotl >= maxR) {
+            if (intersectChains) {
                 break;
             }
-            inset = POLY.expand(inset, -dstep);
+            // if (dtotl >= maxR * 3) {
+            //     break;
+            // }
+            inset = POLY.offset(inset, -dstep, {
+                // join: ClipperLib.JoinType.jtRound,
+                // arc: (1/dstep) * 4
+                minArea: 0
+            });
         }
     }
 
-    // shells.appendAll(noodle);
-    // return { last, gaps };
+    // project from first inset and find greated offset intersection
+    if (maxInsetBypass) {
+        // shells.appendAll(noodle);
+        // return { last, gaps };
+        let { intersectRayLine } = base.util;
+        let tests = insets.slice(1);
+        let source = POLY.flatten(insets[0], []);
+        console.log({ source, tests });
+        for (let poly of source) {
+            // segment the smallest inset and test against all other insets
+            poly.segment(minR).forEachSegment((p1, p2) => {
+                let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
+                let len = pointDist(p1, p2);
+                let dx = (p1.x - p2.x) / len;
+                let dy = (p1.y - p2.y) / len;
+                let np2 = { x: np1.x + dy * 10, y: np1.y - dx * 10 };
+                let max = { dtotl: poly.dtotl, dist: Infinity, maxd: Infinity };
+                let term = false;
+                outer: for (let test of tests) {
+                    for (let tpoly of POLY.flatten(test, [])) {
+                        tpoly.forEachSegment((tp1, tp2) => {
+                            let int = intersectRayLine(np1, { dx: dy, dy: -dx }, tp1, tp2);
+                            if (int && int.dist > int.p1.poly.dtotl) {
+                                return;
+                            }
+                            if (int && int.dist <= max.maxd && int.p1.poly.dtotl > max.dtotl) {
+                                max.dtotl = int.p1.poly.dtotl;
+                                max.dist = int.dist;
+                                max.int = int;
+                            } else if (int && int.dist <= max.maxd && int.p1.poly.dtotl === max.dtotl && int.dist < max.dist) {
+                                max.dtotl = int.p1.poly.dtotl;
+                                max.dist = int.dist;
+                                max.int = int;
+                            }
+                        });
+                        if (term) {
+                            break outer;
+                        }
+                    }
+                }
+                if (max.int) {
+                    thin.push(new Point(np1.x, np1.y, z));
+                    thin.push(new Point(max.int.x, max.int.y, z));
+                }
+            });
+        }
+
+        shells.appendAll(noodle);
+        return { last, gaps };
+    }
 
     let pointMap = new Map();
     let lineMap = new Map();

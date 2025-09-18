@@ -871,6 +871,7 @@ export function fillArea(polys, angle, spacing, output, minLen, maxLen) {
  * @returns {Point[]}
  */
 export function rayIntersect(start, slope, polygons, for_fill) {
+    throw "deprecated";
     let i = 0,
         flat = [],
         points = [],
