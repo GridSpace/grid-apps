@@ -175,18 +175,18 @@ function thin_type_3(params) {
     let simplifyChain = false;
     let shortenAtNexus = false;
     let shortenEdgeSpur = false;
-    let intersectChains = false;
-    let maxInsetBypass = true;
+    let intersectChains = true;
+    let maxInsetBypass = false;
 
     let showNoodle = false;
+    let showMedLine = false;
+    let showInset = false;
     let showExtrusion = true;
     let showExtrudeInset = false;
-    let showInsetPoints = false;
     let showChainRawPoints = false;
     let showChainInterpPoints = true;
     let showChainIntersect = false;
     let showNuMedLine = false;
-    let showMedLine = true;
     let showMedPoints = false;
     let showMedNormals = false;
     let showMedRadii = false;
@@ -221,16 +221,13 @@ function thin_type_3(params) {
             insets.push(inset);
             let ps = POLY.flatten(inset);
             POLY.setZ(inset, z);
-            shells.appendAll(inset);
+            if (showInset) {
+                shells.appendAll(inset);
+            }
             if (intersectChains) {
                 break;
             }
-            // if (dtotl >= maxR * 3) {
-            //     break;
-            // }
             inset = POLY.offset(inset, -dstep, {
-                // join: ClipperLib.JoinType.jtRound,
-                // arc: (1/dstep) * 4
                 minArea: 0
             });
         }
@@ -238,8 +235,6 @@ function thin_type_3(params) {
 
     // project from first inset and find greated offset intersection
     if (maxInsetBypass) {
-        // shells.appendAll(noodle);
-        // return { last, gaps };
         let { intersectRayLine } = base.util;
         let tests = insets.slice(1);
         let source = POLY.flatten(insets[0], []);
@@ -739,12 +734,15 @@ function thin_type_3(params) {
     }
 
     // project inset segment normals onto closest chain
-    if (intersectChains) {
-        let { intersect } = base.util;
-        let { SEGINT } = base.key;
-        inset = POLY.flatten(inset, []);
-        for (let poly of inset) {
-            let nupoly = new Polygon();
+    if (intersectChains) for (let insetp of inset) {
+        let { intersectRayLine } = base.util;
+        let parent = new Polygon();
+        let inner = [];
+        for (let poly of insetp.flattenTo([])) {
+            let nupoly = poly.parent ? new Polygon() : parent;
+            if (poly.parent) {
+                inner.push(nupoly);
+            }
             poly.segment(minR).forEachSegment((p1, p2) => {
                 let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
                 let len = pointDist(p1, p2);
@@ -756,8 +754,8 @@ function thin_type_3(params) {
                     for (let i=0; i<chain.length-1; i++) {
                         let c1 = chain[i];
                         let c2 = chain[i+1];
-                        let int = intersect(np1, np2, c1, c2, SEGINT);
-                        if (int?.dist < min.dist && int?.dist < midR) {
+                        let int = intersectRayLine(np1, { dx: dy, dy: -dx }, c1, c2);
+                        if (int?.dist < min.dist && int?.dist < offsetN * count) {
                             min = int;
                         }
                     }
@@ -768,8 +766,11 @@ function thin_type_3(params) {
                         thin.push(new Point(np1.x, np1.y));
                         thin.push(new Point(min.x, min.y));
                     }
-                    let mr = Math.min(p1.r, p2.r);
-                    if (mr < minR) return;
+                    let mr = min.dist + dstep;
+                    if (mr < minR) {
+                        nupoly.push(new Point(min.x, min.y));
+                        return;
+                    }
                     let pop = div(mr);
                     let odd = (pop.length % 2 === 1);
                     let len = Math.ceil(pop.length / 2);
@@ -778,6 +779,7 @@ function thin_type_3(params) {
                     // for odd wall counts so that they're not emitted twice
                     // todo extend to all odd counts
                     if (len === 0) {
+                        nupoly.push(new Point(min.x, min.y));
                         return;
                     }
                     if (pop.length === 1) {
@@ -809,10 +811,14 @@ function thin_type_3(params) {
                 shells.push(...nupoly.clean().simplify());
             }
         }
+        {
+            let cut = POLY.subtract([ parent ], inner, []);
+            console.log({ parent, cut });
+            shells.push(...cut);
+        }
     }
 
     POLY.setZ([...thin, ...shells], z);
-    // POLY.setZ([...shells], z);
 
     return { last, gaps };
 }
