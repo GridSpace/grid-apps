@@ -185,7 +185,7 @@ function thin_type_3(params) {
     let showChainInterpPoints = true;
     let showChainIntersect = false;
     let showNuMedLine = false;
-    let showMedLine = true;
+    let showMedLine = false;
     let showMedPoints = false;
     let showMedNormals = false;
     let showMedRadii = false;
@@ -752,7 +752,9 @@ function thin_type_3(params) {
                     p1.claimed = true;
                 }
             });
-            if (showExtrudeInset) shells.push(nupoly);
+            if (showExtrudeInset) {
+                shells.push(...nupoly.clean().simplify());
+            }
         }
     }
 
