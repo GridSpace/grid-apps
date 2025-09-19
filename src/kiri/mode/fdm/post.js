@@ -164,11 +164,14 @@ function thin_type_2(params) {
 
 function thin_type_3(params) {
     // offsetN usually = extrusion width (nozzle diameter)
-    let { z, top, count, offsetN, last, gaps } = params;
+    let { z, top, count, offsetN } = params;
 
     // produce trace from outside of poly inward no more than max inset
     let noodleWidth = offsetN * count;
-    let { noodle,} = top.poly.noodle(noodleWidth);
+    let { noodle, remain } = top.poly.noodle(noodleWidth);
+
+    // remaining area for infill after shells are extruded
+    let gaps = top.gaps = remain;
 
     // render inset "noodle"
     // shells.appendAll(noodle);
@@ -189,6 +192,7 @@ function thin_type_3(params) {
     for (let i=0; i<count; i++) {
         let remain = [];
 
+        // process each top level noodle separately
         for (let n of noodle)
         trace_noodle(
             [ n ],
@@ -206,26 +210,24 @@ function thin_type_3(params) {
             showChainIntersect: false
         });
 
-        console.log({ remain });
-
         // show remaining noodle after single trace
-        shells.push(...POLY.flatten(remain));
+        // shells.push(...POLY.setZ(POLY.flatten(remain), z));
 
         noodle = remain;
     }
 
-    console.log({ lines, polys, trace });
+    // console.log({ lines, polys, trace });
 
     // show extrusion
     for (let point of trace) {
-        shells.push(newPolygon().centerCircle(point, point.r, 12));
+        shells.push(newPolygon().centerCircle(point, point.r, 12).setZ(z));
     }
 
     POLY.setZ([...lines, ...polys], z);
     thin.push(...lines);
     shells.push(...polys);
 
-    return { last, gaps };
+    return { trace, gaps };
 }
 
 // trace a single extrusion line around the inside of the noodle poly
@@ -375,7 +377,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         // construct medial axis lines. this appears to produce duplicate
         // reverse segments in a subset of cases
         let ma = JSPoly.construct_medial_axis(out, inr);
-        // dedup the points so we can track them uniquely (for chain intersections)
+        // dedup the points so we can track them uniquely
         for (let { point0, point1 } of ma) {
             pointsToLine(point0, point1);
         }
@@ -427,7 +429,8 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         }
     }
 
-    // project inset segment normals onto closest chain
+    // project inset segment normals onto closest medial segment
+    // use this to find a radius which we divide into extrusion lanes
     if (!brute)
     for (let insetp of inset) {
         let { intersectRayLine } = base.util;
@@ -463,6 +466,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                         nupoly.push(new Point(min.x, min.y));
                         return;
                     }
+                    // use intersection off and divide into extrusion lanes
                     let pop = div(mr);
                     let odd = (pop.length % 2 === 1);
                     let len = Math.ceil(pop.length / 2);
@@ -475,21 +479,19 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                     }
                     let op;
                     if (pop.length === 1) {
-                        nupoly.push(new Point(min.x, min.y));
                         // for single wall place it exactly on medial axis
+                        nupoly.push(new Point(min.x, min.y));
                         trace.push(op = { x: min.x, y: min.y, r: mr })
                     } else {
-                        let off = -dstep;
-                        // otherwise use divisions
-                        for (let i=0; i<1; i++) {
-                            off += (pop[i] * (i ? 2 : 1));
-                            trace.push(op = {
-                                x: np1.x + dy * off,
-                                y: np1.y - dx * off,
-                                r: pop[0]
-                            })
-                        }
-                        off += dstep / 2;
+                        // otherwise use first division
+                        // compensate for minimal inset
+                        let off = -dstep + pop[0];
+                        trace.push(op = {
+                            x: np1.x + dy * off,
+                            y: np1.y - dx * off,
+                            r: pop[0]
+                        })
+                        // trace inset by full diameter
                         nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
                     }
                     if (odd && !mp1.claimed) {
@@ -569,7 +571,7 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                     ret = thin_type_2({ z, top, count, top_poly, offset1, offsetN, fillOffset, gaps, wasm });
                     break;
                 case "type 3":
-                    ret = thin_type_3({ z, top, count, top_poly, offsetN });
+                    ret = thin_type_3({ z, top, count, offsetN });
                     break;
                 default:
                     ret = offset_default({ z, top, count, top_poly, offset1, offsetN, wasm });
