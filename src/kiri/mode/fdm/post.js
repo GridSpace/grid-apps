@@ -170,15 +170,14 @@ function thin_type_3(params) {
     let noodleWidth = offsetN * count;
     let { noodle, remain } = top.poly.noodle(noodleWidth);
 
-    // remaining area for infill after shells are extruded
-    let gaps = top.gaps = remain;
-
     // render inset "noodle"
     // shells.appendAll(noodle);
 
-    let thin = top.thin_fill = [];
-    let shells = top.shells;
-    let sparse = top.fill_sparse = [];
+    let debugRemain = false;
+    let debugExtrusion = false;
+
+    let shells = top.shells; // only used for debug
+    let trace = top.thin_wall = [];
 
     let midR = offsetN * 0.5;  // nominal extrusion width
     let minR = midR * 0.75; // smallest interior fill or single wall width
@@ -187,7 +186,6 @@ function thin_type_3(params) {
 
     let lines = [];
     let polys = [];
-    let trace = [];
 
     for (let i=0; i<count; i++) {
         let remain = [];
@@ -211,7 +209,7 @@ function thin_type_3(params) {
         });
 
         // show remaining noodle after single trace
-        // shells.push(...POLY.setZ(POLY.flatten(remain), z));
+        if (debugRemain) polys.push(...POLY.setZ(POLY.flatten(remain), z));
 
         noodle = remain;
     }
@@ -219,15 +217,17 @@ function thin_type_3(params) {
     // console.log({ lines, polys, trace });
 
     // show extrusion
+    if (debugExtrusion)
     for (let point of trace) {
-        shells.push(newPolygon().centerCircle(point, point.r, 12).setZ(z));
+        polys.push(newPolygon().centerCircle(point, point.r, 12).setZ(z));
     }
 
     POLY.setZ([...lines, ...polys], z);
-    thin.push(...lines);
-    shells.push(...polys);
 
-    return { trace, gaps };
+    if (lines.length) top.thin_fill = lines;
+    if (polys.length) shells.push(...polys);
+
+    return { trace, last: remain };
 }
 
 // trace a single extrusion line around the inside of the noodle poly
@@ -577,8 +577,8 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                     ret = offset_default({ z, top, count, top_poly, offset1, offsetN, wasm });
                     break;
             }
-            last = ret.last || last;
-            gaps = ret.gaps || gaps;
+            last = ret.last ?? last;
+            gaps = ret.gaps ?? gaps;
         }
     } else {
         // no shells, just infill, is permitted

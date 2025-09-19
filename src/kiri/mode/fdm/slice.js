@@ -1001,27 +1001,31 @@ function doRender(slice, isSynth, params, opt = {}) {
             .setLayer(isSynth ? "support" : "shells", isSynth ? Color.support : Color.shell)
             .addPolys(top.shells || [], vopt({ offset, height, clean: true }));
 
-        output
+        if (top.fill_lines?.length) output
             .setLayer("solid fill", isSynth ? Color.support : Color.fill)
             .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height, z:slice.z }));
 
-        if (!(slice.belt && slice.belt.anchor)) output
+        if (!(slice.belt?.anchor)) output
             .setLayer("sparse fill", Color.infill)
             .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
 
-        if (slice.belt && slice.belt.anchor) output
+        if (slice.belt?.anchor) output
             .setLayer("anchor", Color.anchor)
             .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
 
-        if (top.thin_fill) output
+        if (top.thin_fill?.length) output
             .setLayer("thin fill", Color.thin)
             .addLines(top.thin_fill, vopt({ offset, height }));
 
-        if (top.gaps && devel) output
+        if (top.thin_wall?.length) output
+            .setLayer("shells", Color.thin)
+            .addPolys(top.thin_wall.map(p => newPolygon().centerCircle(p, p.r, 12).setZ(slice.z)), vopt({ offset, height }));
+
+        if (top.gaps?.length && devel) output
             .setLayer("gaps", Color.gaps)
             .addPolys(top.gaps, vopt({ offset, height, thin: true }));
 
-        if (isThin && devel && top.fill_off && top.fill_off.length) {
+        if (isThin && devel && top.fill_off?.length) {
             slice.output()
                 .setLayer('fill inset', Color.inset)
                 .addPolys(top.fill_off);
