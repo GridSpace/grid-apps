@@ -168,9 +168,7 @@ function thin_type_3(params) {
 
     // produce trace from outside of poly inward no more than max inset
     let noodleWidth = offsetN * count;
-    let { noodle, remain } = top.poly.noodle(noodleWidth);
-
-    top.gaps = remain;
+    let { noodle,} = top.poly.noodle(noodleWidth);
 
     // render inset "noodle"
     // shells.appendAll(noodle);
@@ -184,10 +182,8 @@ function thin_type_3(params) {
     let maxR = midR * 1.5; // max double wall extrusion width
     let maxF = midR * 2; // max interior extrusion width
 
-    let { lines, polys } = trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
+    let { lines, polys, remain, trace } = trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
         brute: false,
-        showExtrusion: true,
-        showExtrudeInset: true,
         showChainIntersect: false
     });
 
@@ -197,18 +193,26 @@ function thin_type_3(params) {
     thin.push(...lines);
     shells.push(...polys);
 
+    // show extrusion
+    for (let point of trace) {
+        shells.push(newPolygon().centerCircle(point, point.r, 12));
+    }
+
+    // show remaining noodle after single trace
+    shells.push(...remain);
+
     return { last, gaps };
 }
 
 // trace a single extrusion line around the inside of the noodle
 function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
     brute,
-    showExtrusion,
-    showExtrudeInset,
     showChainIntersect,
 }) {
     let scale = 1000;
 
+    let remain = [];
+    let trace = [];
     let polys = [];
     let lines = [];
     let insets = [];
@@ -385,8 +389,6 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
             return [ midR, rem, midR ];
         } else {
             return [ midR, cr - midR * 2, midR ];
-            // let divs = (cr / midR) | 0;
-            // return new Array(divs).fill(cr / divs);
         }
     }
 
@@ -436,24 +438,21 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
                         nupoly.push(new Point(min.x, min.y));
                         return;
                     }
+                    let op;
                     if (pop.length === 1) {
                         nupoly.push(new Point(min.x, min.y));
                         // for single wall place it exactly on medial axis
-                        if (showExtrusion)
-                        polys.push(newPolygon().centerCircle({
-                            x: min.x,
-                            y: min.y
-                        }, mr, 12));
+                        trace.push(op = { x: min.x, y: min.y, r: mr })
                     } else {
                         let off = -dstep;
                         // otherwise use divisions
                         for (let i=0; i<1; i++) {
                             off += (pop[i] * (i ? 2 : 1));
-                            if (showExtrusion)
-                            polys.push(newPolygon().centerCircle({
+                            trace.push(op = {
                                 x: np1.x + dy * off,
-                                y: np1.y - dx * off
-                            }, pop[0], 12));
+                                y: np1.y - dx * off,
+                                r: pop[0]
+                            })
                         }
                         off += dstep / 2;
                         nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
@@ -465,12 +464,10 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
             });
         }
         // subtract inner extrusion offset from parent
-        if (showExtrudeInset) {
-            polys.push(...POLY.subtract([ parent ], inner, []));
-        }
+        remain.push(...POLY.subtract([ parent ], inner, []));
     }
 
-    return { lines, polys };
+    return { lines, polys, remain, trace };
 }
 
 /**
