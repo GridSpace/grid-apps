@@ -182,51 +182,67 @@ function thin_type_3(params) {
     let maxR = midR * 1.5; // max double wall extrusion width
     let maxF = midR * 2; // max interior extrusion width
 
-    for (let i=0; i<1; i++) {
-        console.log({ noodle });
+    let lines = [];
+    let polys = [];
+    let trace = [];
 
-        let { lines, polys, remain, trace } = trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
+    for (let i=0; i<count; i++) {
+        let remain = [];
+
+        for (let n of noodle)
+        trace_noodle(
+            [ n ],
+            noodleWidth,
+            minR,
+            i === 0 ? midR : midR * 1.25,
+            i === 0 ? maxR : maxF,
+        {
+            lines,
+            polys,
+            remain,
+            trace,
             brute: false,
-            showMedialAxis: i > 0,
-            showChainIntersect: i > 0
+            showMedialAxis: false,
+            showChainIntersect: false
         });
 
-        console.log({ lines, polys, remain, trace });
-
-        POLY.setZ([...lines, ...polys], z);
-        thin.push(...lines);
-        shells.push(...polys);
-
-        // show extrusion
-        if (i === 0)
-        for (let point of trace) {
-            shells.push(newPolygon().centerCircle(point, point.r, 12));
-        }
+        console.log({ remain });
 
         // show remaining noodle after single trace
         shells.push(...POLY.flatten(remain));
 
-        noodle = [ POLY.nest(remain)[3] ];
-        // break;
+        noodle = remain;
     }
+
+    console.log({ lines, polys, trace });
+
+    // show extrusion
+    for (let point of trace) {
+        shells.push(newPolygon().centerCircle(point, point.r, 12));
+    }
+
+    POLY.setZ([...lines, ...polys], z);
+    thin.push(...lines);
+    shells.push(...polys);
 
     return { last, gaps };
 }
 
 // trace a single extrusion line around the inside of the noodle poly
-function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
-    brute,
-    showInset,
-    showMedialAxis,
-    showChainIntersect,
-}) {
-    let scale = 1000;
-
-    let remain = [];
-    let trace = [];
-    let polys = [];
-    let lines = [];
+function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
+    let {
+        brute,
+        showInset,
+        showMedialAxis,
+        showChainIntersect,
+        minArea = midR * midR,
+        lines = [],
+        polys = [],
+        remain = [],
+        trace = [],
+    } = opt;
     let insets = [];
+    let scale = 1000;
     let dstep = minR / 4;
     let dtotl = 0;
 
@@ -498,7 +514,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
             POLY.flatten(setA, [], true).map(p => {
                 return p.clean().simplify();
             }).flat()
-        );
+        ).filter(p => p.area() >= minArea);
         remain.push(...ret);
     }
 
