@@ -167,69 +167,78 @@ function thin_type_3(params) {
     let { z, top, count, offsetN, last, gaps } = params;
 
     // produce trace from outside of poly inward no more than max inset
-    let { noodle, remain } = top.poly.noodle(offsetN * count);
+    let noodleWidth = offsetN * count;
+    let { noodle, remain } = top.poly.noodle(noodleWidth);
 
     top.gaps = remain;
 
-    let intersectChains = true;
-    let maxInsetBypass = false;
-    let altNuSegs = true;
-
-    let showNoodle = false;
-    let showMedLine = false;
-    let showInset = false;
-    let showExtrusion = true;
-    let showExtrudeInset = false;
-    let showChainRawPoints = false;
-    let showChainIntersect = false;
-    let showNuMedLine = false;
+    // render inset "noodle"
+    // shells.appendAll(noodle);
 
     let thin = top.thin_fill = [];
     let shells = top.shells;
     let sparse = top.fill_sparse = [];
-    let scale = 1000;
+
     let midR = offsetN * 0.5;  // nominal extrusion width
     let minR = midR * 0.75; // smallest interior fill or single wall width
     let maxR = midR * 1.5; // max double wall extrusion width
     let maxF = midR * 2; // max interior extrusion width
 
+    let { lines, polys } = trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
+        brute: false,
+        showExtrusion: true,
+        showExtrudeInset: true,
+        showChainIntersect: false
+    });
+
+    console.log({ lines, polys });
+
+    POLY.setZ([...lines, ...polys], z);
+    thin.push(...lines);
+    shells.push(...polys);
+
+    return { last, gaps };
+}
+
+// trace a single extrusion line around the inside of the noodle
+function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
+    brute,
+    showExtrusion,
+    showExtrudeInset,
+    showChainIntersect,
+}) {
+    let scale = 1000;
+
+    let polys = [];
+    let lines = [];
     let insets = [];
-    let inset;
     let dstep = minR / 4;
     let dtotl = 0;
-    top.gaps = remain;
 
-    if (maxInsetBypass || intersectChains) {
-        inset = POLY.offset(noodle, -dstep, {
-            join: ClipperLib.JoinType.jtRound,
-            arc: (1/dstep) * 4
-        });
-        while (inset && inset.length) {
-            dtotl += dstep;
-            for (let p of POLY.flatten(inset, [])) {
-                p.dtotl = dtotl;
-            }
-            insets.push(inset);
-            let ps = POLY.flatten(inset);
-            POLY.setZ(inset, z);
-            if (showInset) {
-                shells.appendAll(inset);
-            }
-            if (intersectChains) {
-                break;
-            }
-            inset = POLY.offset(inset, -dstep, {
-                minArea: 0
-            });
+    let inset = POLY.offset(noodle, -dstep, {
+        join: ClipperLib.JoinType.jtRound,
+        arc: (1/dstep) * 4
+    });
+    while (inset && inset.length) {
+        dtotl += dstep;
+        for (let p of POLY.flatten(inset, [])) {
+            p.dtotl = dtotl;
         }
+        insets.push(inset);
+        polys.appendAll(inset);
+        if (!brute) {
+            break;
+        }
+        inset = POLY.offset(inset, -dstep, {
+            minArea: 0
+        });
     }
 
     // project from first inset and find greated offset intersection
-    if (maxInsetBypass) {
+    if (brute) {
         let { intersectRayLine } = base.util;
         let tests = insets.slice(1);
         let source = POLY.flatten(insets[0], []);
-        console.log({ source, tests });
         for (let poly of source) {
             // segment the smallest inset and test against all other insets
             poly.segment(minR).forEachSegment((p1, p2) => {
@@ -263,14 +272,12 @@ function thin_type_3(params) {
                     }
                 }
                 if (max.int) {
-                    thin.push(new Point(np1.x, np1.y, z));
-                    thin.push(new Point(max.int.x, max.int.y, z));
+                    lines.push(new Point(np1.x, np1.y));
+                    lines.push(new Point(max.int.x, max.int.y));
                 }
             });
         }
-
-        shells.appendAll(noodle);
-        return { last, gaps };
+        return { lines, polys };
     }
 
     let pointMap = new Map();
@@ -323,12 +330,10 @@ function thin_type_3(params) {
         return rec;
     }
 
-    let chains = [];
     let nusegs = [];
 
     // for each standalone noodle, construct medial axis
     // map medial axis points into de-duplicated segments
-    // which will be re-connected into chains
     for (let poly of noodle) {
         // scale the polygon (including inners) so the medial axis code works properly
         poly = poly.clone(true).scale({ x:scale, y:scale, z:scale });
@@ -343,60 +348,23 @@ function thin_type_3(params) {
         }
     }
 
-    // connect segments into chains
+    // break down long segments
     for (let seg of lineMap.values()) {
         let { p0, p1 } = seg;
         let len = seg.len = pointDist(p0, p1);
-        if (altNuSegs) {
-            // add to nusegs
-            if (len <= minR) {
+        // add to nusegs
+        if (len <= minR) {
+            nusegs.push({ p0, p1 });
+        } else {
+            let steps = Math.ceil(len / minR) + 1;
+            let dx = (p1.x - p0.x) / steps;
+            let dy = (p1.y - p0.y) / steps;
+            for (let i=0; i<steps; i++) {
+                p1 = { x:p0.x + dx, y:p0.y + dy };
                 nusegs.push({ p0, p1 });
-            } else {
-                let steps = Math.ceil(len / minR) + 1;
-                let dx = (p1.x - p0.x) / steps;
-                let dy = (p1.y - p0.y) / steps;
-                for (let i=0; i<steps; i++) {
-                    p1 = { x:p0.x + dx, y:p0.y + dy };
-                    nusegs.push({ p0, p1 });
-                    p0 = p1;
-                }
+                p0 = p1;
             }
         }
-        if (altNuSegs) continue;
-        // for each line segment either add it to a chain or start a new chain
-        let add;
-        for (let chain of chains) {
-            if (p0.count === 2 && p0 === chain[0]) {
-                // prefix chain with p1
-                chain.splice(0,0,p1);
-                add = true;
-            } else if (p0.count === 2 && p0 === chain.peek()) {
-                // append chain with p1
-                chain.push(p1);
-                add = true;
-            } else if (p1.count === 2 && p1 === chain[0]) {
-                // prefix chain with p0
-                chain.splice(0,0,p0);
-                add = true;
-            } else if (p1.count === 2 && p1 === chain.peek()) {
-                // append chain with p0
-                chain.push(p0);
-                add = true;
-            }
-            if (add) {
-                chain.total += len;
-                break;
-            }
-        }
-        if (!add) {
-            chains.push([ p0, p1 ]);
-            chains.peek().total = len;
-        }
-    }
-
-    // render inset "noodle"
-    if (showNoodle) {
-        shells.appendAll(noodle);
     }
 
     // divide a segment/redius into 1 or more equal subsegments
@@ -422,84 +390,9 @@ function thin_type_3(params) {
         }
     }
 
-    // filter chains that are too short from consideration
-    // chains = chains.filter(c => c.total >= minR);
-
-    // gather point offsets into shells
-    let zi = z;
-    let nuchains = [];
-    if (!altNuSegs)
-    for (let chain of chains) {
-        let nuchain = [];
-        nuchains.push(nuchain);
-        // zi += 0.1;
-        if (showChainRawPoints)
-        for (let pt of chain) {
-            shells.push(newPolygon().centerCircle(pt, pt.r ?? 0.1, 10));
-        }
-        // draw medial axis chain
-        let { closed, length } = chain;
-        let term = closed ? length : length - 1;
-        let segs = [];
-        for (let i=0; i<term; i++) {
-            let p0 = chain[i];
-            let p1 = chain[(i+1) % length];
-            let len = pointDist(p0, p1);
-            // medial axis segment
-            if (showMedLine) {
-                thin.push(new Point(p0.x, p0.y, zi));
-                thin.push(new Point(p1.x, p1.y, zi));
-            }
-            // compute medial axis segment normal
-            let steps = Math.ceil(len / midR) + 1;
-            let step = 1 / steps;
-            let dr = (p1.r - p0.r);
-            let dx = (p1.x - p0.x);
-            let dy = (p1.y - p0.y);
-            let ndx = dx / len;
-            let ndy = dy / len;
-            segs.push({ p0, p1, steps, step, dr, dx, dy, ndx, ndy });
-        }
-
-        // compute chain subdivisions
-        let slen = segs.length;
-        for (let si=0; si<slen; si++) {
-            let seg = segs[si];
-            let segp = segs[(si - 1 + slen) % slen];
-            let { p0, p1, steps, step, dr, dx, dy, ndx, ndy } = seg;
-            let first = si === 0;
-            let last = si === slen - 1;
-            let mid = !(first || last);
-            if (first || mid) {
-                nuchain.push(p0);
-            }
-            // interpolate across the length of the chain segment
-            for (let indx = 1; indx < steps; indx++) {
-                const inc = indx * step;
-                const cr = p0.r + dr * inc;
-                const cx = p0.x + dx * inc;
-                const cy = p0.y + dy * inc;
-                nuchain.push({ x:cx, y:cy, r:cr });
-            }
-            if (last) {
-                nuchain.push(p1);
-            }
-        }
-        for (let i=0; i<nuchain.length-1; i++) {
-            let p0 = nuchain[i];
-            let p1 = nuchain[i+1];
-            if (!altNuSegs) {
-                nusegs.push({ p0, p1 });
-            }
-            if (showNuMedLine) {
-                thin.push(new Point(p0.x, p0.y, z));
-                thin.push(new Point(p1.x, p1.y, z));
-            }
-        }
-    }
-
     // project inset segment normals onto closest chain
-    if (intersectChains) for (let insetp of inset) {
+    if (!brute)
+    for (let insetp of inset) {
         let { intersectRayLine } = base.util;
         let parent = new Polygon();
         let inner = [];
@@ -517,7 +410,7 @@ function thin_type_3(params) {
                 for (let seg of nusegs) {
                     let { p0, p1 } = seg;
                     let int = intersectRayLine(np1, { dx: dy, dy: -dx }, p0, p1);
-                    if (int?.dist < min.dist && int?.dist < offsetN * count) {
+                    if (int?.dist < min.dist && int?.dist < noodleWidth) {
                         min = int;
                         min.seg = seg;
                     }
@@ -525,8 +418,8 @@ function thin_type_3(params) {
                 if (min.p1) {
                     let mp1 = min.seg;
                     if (showChainIntersect) {
-                        thin.push(new Point(np1.x, np1.y));
-                        thin.push(new Point(min.x, min.y));
+                        lines.push(new Point(np1.x, np1.y));
+                        lines.push(new Point(min.x, min.y));
                     }
                     let mr = min.dist + dstep;
                     if (mr < minR) {
@@ -536,7 +429,7 @@ function thin_type_3(params) {
                     let pop = div(mr);
                     let odd = (pop.length % 2 === 1);
                     let len = Math.ceil(pop.length / 2);
-                    // check if chain segment was claimed by a different originating segment
+                    // check if segment was claimed by a different originating segment
                     // for odd wall counts so that they're not emitted twice
                     if (odd && mp1.claimed) len--;
                     if (len === 0) {
@@ -547,7 +440,7 @@ function thin_type_3(params) {
                         nupoly.push(new Point(min.x, min.y));
                         // for single wall place it exactly on medial axis
                         if (showExtrusion)
-                        shells.push(newPolygon().centerCircle({
+                        polys.push(newPolygon().centerCircle({
                             x: min.x,
                             y: min.y
                         }, mr, 12));
@@ -557,7 +450,7 @@ function thin_type_3(params) {
                         for (let i=0; i<1; i++) {
                             off += (pop[i] * (i ? 2 : 1));
                             if (showExtrusion)
-                            shells.push(newPolygon().centerCircle({
+                            polys.push(newPolygon().centerCircle({
                                 x: np1.x + dy * off,
                                 y: np1.y - dx * off
                             }, pop[0], 12));
@@ -570,20 +463,14 @@ function thin_type_3(params) {
                     }
                 }
             });
-            if (showExtrudeInset) {
-                shells.push(...nupoly.clean().simplify());
-            }
         }
-        {
-            let cut = POLY.subtract([ parent ], inner, []);
-            console.log({ parent, cut });
-            shells.push(...cut);
+        // subtract inner extrusion offset from parent
+        if (showExtrudeInset) {
+            polys.push(...POLY.subtract([ parent ], inner, []));
         }
     }
 
-    POLY.setZ([...thin, ...shells], z);
-
-    return { last, gaps };
+    return { lines, polys };
 }
 
 /**
