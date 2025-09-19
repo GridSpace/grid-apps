@@ -182,31 +182,42 @@ function thin_type_3(params) {
     let maxR = midR * 1.5; // max double wall extrusion width
     let maxF = midR * 2; // max interior extrusion width
 
-    let { lines, polys, remain, trace } = trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
-        brute: false,
-        showChainIntersect: false
-    });
+    for (let i=0; i<1; i++) {
+        console.log({ noodle });
 
-    console.log({ lines, polys });
+        let { lines, polys, remain, trace } = trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
+            brute: false,
+            showMedialAxis: i > 0,
+            showChainIntersect: i > 0
+        });
 
-    POLY.setZ([...lines, ...polys], z);
-    thin.push(...lines);
-    shells.push(...polys);
+        console.log({ lines, polys, remain, trace });
 
-    // show extrusion
-    for (let point of trace) {
-        shells.push(newPolygon().centerCircle(point, point.r, 12));
+        POLY.setZ([...lines, ...polys], z);
+        thin.push(...lines);
+        shells.push(...polys);
+
+        // show extrusion
+        if (i === 0)
+        for (let point of trace) {
+            shells.push(newPolygon().centerCircle(point, point.r, 12));
+        }
+
+        // show remaining noodle after single trace
+        shells.push(...POLY.flatten(remain));
+
+        noodle = [ POLY.nest(remain)[3] ];
+        // break;
     }
-
-    // show remaining noodle after single trace
-    shells.push(...remain);
 
     return { last, gaps };
 }
 
-// trace a single extrusion line around the inside of the noodle
+// trace a single extrusion line around the inside of the noodle poly
 function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
     brute,
+    showInset,
+    showMedialAxis,
     showChainIntersect,
 }) {
     let scale = 1000;
@@ -229,7 +240,9 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
             p.dtotl = dtotl;
         }
         insets.push(inset);
-        polys.appendAll(inset);
+        if (showInset) {
+            polys.appendAll(inset);
+        }
         if (!brute) {
             break;
         }
@@ -359,6 +372,9 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
         // add to nusegs
         if (len <= minR) {
             nusegs.push({ p0, p1 });
+            if (showMedialAxis) {
+                lines.push(new Point(p0.x, p0.y), new Point(p1.x, p1.y));
+            }
         } else {
             let steps = Math.ceil(len / minR) + 1;
             let dx = (p1.x - p0.x) / steps;
@@ -366,6 +382,9 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
             for (let i=0; i<steps; i++) {
                 p1 = { x:p0.x + dx, y:p0.y + dy };
                 nusegs.push({ p0, p1 });
+                if (showMedialAxis) {
+                    lines.push(new Point(p0.x, p0.y), new Point(p1.x, p1.y));
+                }
                 p0 = p1;
             }
         }
@@ -463,8 +482,24 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, {
                 }
             });
         }
-        // subtract inner extrusion offset from parent
-        remain.push(...POLY.subtract([ parent ], inner, []));
+
+        // subtract inner extrusion offsets from parent extrusion offset
+        // this can result in more top level polys and must be processed
+        // iteratively.
+        let setA = [ parent ];
+        for (let setB of inner) {
+            setA = POLY.subtract(setA, [ setB ], []);
+        }
+
+        // clean and re-nest the resulting polygon soup
+        // subtraction cleans pre-subtract but not post and these
+        // outlines can have sharp unprintable interiors
+        let ret = POLY.nest(
+            POLY.flatten(setA, [], true).map(p => {
+                return p.clean().simplify();
+            }).flat()
+        );
+        remain.push(...ret);
     }
 
     return { lines, polys, remain, trace };
