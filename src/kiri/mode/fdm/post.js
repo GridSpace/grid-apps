@@ -199,6 +199,7 @@ function thin_type_3(params) {
             i === 0 ? midR : midR * 1.25,
             i === 0 ? maxR : maxF,
         {
+            shell: 0,
             lines,
             polys,
             remain,
@@ -242,6 +243,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         polys = [],
         remain = [],
         trace = [],
+        shell = 0
     } = opt;
     let insets = [];
     let scale = 1000;
@@ -437,6 +439,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         let parent = new Polygon();
         let inner = [];
         for (let poly of insetp.flattenTo([])) {
+            let sno = poly.parent ? shell : -shell; // shell number (- for inner/hole)
             let nupoly = poly.parent ? new Polygon() : parent;
             if (poly.parent) {
                 inner.push(nupoly);
@@ -481,7 +484,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                     if (pop.length === 1) {
                         // for single wall place it exactly on medial axis
                         nupoly.push(new Point(min.x, min.y));
-                        trace.push(op = { x: min.x, y: min.y, r: mr })
+                        trace.push(op = { x: min.x, y: min.y, r: mr, sno })
                     } else {
                         // otherwise use first division
                         // compensate for minimal inset
@@ -489,7 +492,8 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                         trace.push(op = {
                             x: np1.x + dy * off,
                             y: np1.y - dx * off,
-                            r: pop[0]
+                            r: pop[0],
+                            sno
                         })
                         // trace inset by full diameter
                         nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
