@@ -1098,7 +1098,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             if (lastPoint && lastPoint.distTo2D(np) > retractDist) {
                 print.addOutput(preout, np, 0, moveSpeed);
             } else {
-                print.addOutput(preout, np, (r * 2) / nozzleSize, printSpeed);
+                print.addOutput(preout, np, ((r * 2) / nozzleSize) * shellMult, printSpeed);
             }
         }
     }
