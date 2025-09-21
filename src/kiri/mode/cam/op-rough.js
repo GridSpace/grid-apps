@@ -32,11 +32,12 @@ class OpRough extends CamOp {
         let roughStock = op.all && isIndexed;
         let toolDiam = new Tool(settings, op.tool).fluteDiameter();
         let trueShadow = process.camTrueShadow === true;
+        let cutThruBypass = op.down > workarea.top_stock - workarea.bottom_part;
 
         updateToolDiams(toolDiam);
 
         // clear the stock above the area to be roughed out
-        if (workarea.top_z > workarea.top_part) {
+        if (workarea.top_z > workarea.top_part && !cutThruBypass) {
             let shadow = state.shadow.base.clone();
             let step = toolDiam * op.step;
             let inset = roughStock ?
@@ -258,6 +259,12 @@ class OpRough extends CamOp {
 
         let last = slices[slices.length-1];
 
+        // when step down > full cut depth, clear slices and
+        // leave only the cut-thru pass(es)
+        if (cutThruBypass) {
+            slices.length = 0;
+        }
+        // add cut thru passes
         if (workarea.bottom_z < 0)
         for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
             if (!last) continue;
