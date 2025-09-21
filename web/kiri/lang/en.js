@@ -790,6 +790,8 @@ self.lang['en-us'] = {
     ou_conv_l:      ["milling direction","uncheck for 'climb'"],
     ou_depf_s:      "depth first",
     ou_depf_l:      ["optimize pocket cuts","with depth priority"],
+    ou_inrf_s:      "inner first",
+    ou_inrf_l:      ["always cut inner to outer"],
     ou_toin_s:      "tool init",
     ou_toin_l:      "add tool change with first operation. when disabled, the gcode assumes the first tool is loaded and offset probed",
     ou_forz_s:      "force z max",

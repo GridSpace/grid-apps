@@ -544,12 +544,14 @@ function settingsImport(data, ask) {
             return;
         }
     }
+
     if (api.const.LOCAL) console.log('import', data);
-    let isSettings = (data.settings && data.version && data.time);
-    let isProcess = (data.process && data.version && data.time && data.mode && data.name);
-    let isDevice = (data.device && data.version && data.time);
-    let isTools = (data.tools && data.version && data.time)
+    let isSettings = (data.settings && data.time);
+    let isProcess = (data.process && data.time && data.mode && data.name);
+    let isDevice = (data.device && data.time);
+    let isTools = (data.tools && data.time)
     let isWork = (data.work);
+
     if (!isSettings && !isDevice && !isProcess && !isTools) {
         uc.alert('invalid settings or device format');
         console.log('data',data);

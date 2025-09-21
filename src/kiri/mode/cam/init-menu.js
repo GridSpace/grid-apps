@@ -97,6 +97,7 @@ export function menu() {
     camConventional:     newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l}),
     camEaseDown:         newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l}),
     camDepthFirst:       newBoolean(LANG.ou_depf_s, onBooleanClick, {title:LANG.ou_depf_l}),
+    camInnerFirst:       newBoolean(LANG.ou_inrf_s, onBooleanClick, {title:LANG.ou_inrf_l}),
     camToolInit:         newBoolean(LANG.ou_toin_s, onBooleanClick, {title:LANG.ou_toin_l}),
     separator:           newBlank({ class:"set-sep", driven }),
     camFirstZMax:        newBoolean(LANG.ou_z1st_s, onBooleanClick, {title:LANG.ou_z1st_l}),

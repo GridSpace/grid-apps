@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import './frame.js';
+import '../../ext/base64.js';
 
 import lang from './lang.js';
 import STACKS from './stacks.js';

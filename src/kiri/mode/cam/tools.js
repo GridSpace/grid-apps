@@ -4,6 +4,7 @@ import { $ } from '../../../moto/webui.js';
 import { api } from '../../core/api.js';
 import { consts } from '../../core/consts.js';
 import { settings as setconf } from '../../core/settings.js';
+import { calcTaperLength, calcTaperAngle } from './tool.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -44,7 +45,7 @@ function selectTool(tool) {
     ui.toolMetric.checked = tool.metric;
     ui.toolType.selectedIndex = toolNames.indexOf(tool.type);
     if (tool === 'tapermill') {
-        ui.toolTaperAngle.value = kiri.driver.CAM.calcTaperAngle(
+        ui.toolTaperAngle.value = calcTaperAngle(
             (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
         ).round(1);
     } else if(tool === 'drill'){
@@ -208,16 +209,15 @@ export function updateTool(ev) {
     selectedTool.metric = ui.toolMetric.checked;
     selectedTool.type = toolNames[ui.toolType.selectedIndex];
     if (selectedTool.type === 'tapermill') {
-        const CAM = kiri.driver.CAM;
         const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
         if (ev && ev.target === ui.toolTaperAngle) {
             const angle = parseFloat(ev.target.value);
-            const len = CAM.calcTaperLength(rad, angle * DEG2RAD);
+            const len = calcTaperLength(rad, angle * DEG2RAD);
             selectedTool.flute_len = len;
             ui.toolTaperAngle.value = angle.round(1);
             ui.toolFluteLen.value = selectedTool.flute_len.round(4);
         } else {
-            ui.toolTaperAngle.value = CAM.calcTaperAngle(rad, selectedTool.flute_len).round(1);
+            ui.toolTaperAngle.value = calcTaperAngle(rad, selectedTool.flute_len).round(1);
         }
     } else {
         ui.toolTaperAngle.value = 0;
@@ -318,7 +318,7 @@ function _showTools() {
                 return;
             }
             const record = {
-                version: kiri.version,
+                version: api.version,
                 tools: api.conf.get().tools,
                 time: Date.now()
             };

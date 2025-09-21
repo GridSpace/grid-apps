@@ -99,7 +99,11 @@
             });
             edit.session.setTabSize(4);
             edit.session.setUseSoftTabs(true);
-            let FDMExample = loadExample(demoFDM)
+            if (localStorage.engineCode) {
+                edit.session.setValue(localStorage.engineCode);
+            } else {
+                loadExample(demoFDM);
+            }
         }
         function display_message(msg) {
             $('gfoot').innerText = msg ? Object.keys(msg).join(' - ') : '';
@@ -110,7 +114,7 @@
             $('dfoot').style.display = 'block';
             $('gfoot').style.display = '';
         }
-        function loadExample(func){
+        function loadExample(func) {
             let fnstr = func.toString().split("\n");
             edit.session.setValue(
                 fnstr
@@ -124,6 +128,7 @@
             $('gfoot').style.display = 'block';
             let code = edit.session.getValue();
             eval(`(function(){${code}})()`);
+            localStorage.engineCode = code;
         }
         function demoFDM() {
             new Engine()

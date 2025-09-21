@@ -1115,7 +1115,7 @@ self.kiri.load(api => {
                         ]),
                         h.div({ class: "var-row f-grow" }, [
                             h.label('active'),
-                            h.input({ id: "bbl_file_active", class: "t-left", readonly })
+                            h.input({ id: "bbl_file_active", class: "t-left", style: "width: 20ch; max-width: 20ch", readonly })
                         ]),
                         h.div({ class: "pop-sep" }),
                         h.div({ class: "f-row gap3 f-grow" }, [

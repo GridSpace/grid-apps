@@ -32,11 +32,12 @@ class OpRough extends CamOp {
         let roughStock = op.all && isIndexed;
         let toolDiam = new Tool(settings, op.tool).fluteDiameter();
         let trueShadow = process.camTrueShadow === true;
+        let cutThruBypass = op.down > workarea.top_stock - workarea.bottom_part;
 
         updateToolDiams(toolDiam);
 
         // clear the stock above the area to be roughed out
-        if (workarea.top_z > workarea.top_part) {
+        if (workarea.top_z > workarea.top_part && !cutThruBypass) {
             let shadow = state.shadow.base.clone();
             let step = toolDiam * op.step;
             let inset = roughStock ?
@@ -55,9 +56,16 @@ class OpRough extends CamOp {
             for (let z = zstart; zsteps > 0; zsteps--) {
                 let slice = newSlice();
                 slice.z = z;
-                slice.camLines = POLY.setZ(facing.clone(true), slice.z + roughLeaveZ);
+                let polys = POLY.setZ(facing.clone(true), slice.z + roughLeaveZ);
+                if (tabs) {
+                    tabs.forEach(tab => {
+                        tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
+                    });
+                    polys = cutTabs(tabs, polys, slice.z);
+                }
+                slice.camLines = polys;
                 slice.output()
-                    .setLayer("face", {face: color, line: color})
+                    .setLayer("roughing", {face: color, line: color})
                     .addPolys(slice.camLines);
                 addSlices(slice);
                 camFaces.push(slice);
@@ -251,6 +259,12 @@ class OpRough extends CamOp {
 
         let last = slices[slices.length-1];
 
+        // when step down > full cut depth, clear slices and
+        // leave only the cut-thru pass(es)
+        if (cutThruBypass) {
+            slices.length = 0;
+        }
+        // add cut thru passes
         if (workarea.bottom_z < 0)
         for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
             if (!last) continue;
@@ -302,7 +316,9 @@ class OpRough extends CamOp {
             // set winding specified in output
             POLY.setWinding(level, cutdir, false);
             poly2polyEmit(level, printPoint, (poly, index, count) => {
-                printPoint = polyEmit(poly, index, count, printPoint);
+                printPoint = polyEmit(poly, index, count, printPoint, {cutFromLast: true});
+            }, {
+                weight: process.camInnerFirst
             });
             newLayer();
         }

@@ -4,6 +4,7 @@ import { base, util } from '../../../geo/base.js';
 import { newLine } from '../../../geo/line.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
+import { newSlopeFromAngle } from '../../../geo/slope.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { setSliceTracker } from '../../core/slice.js';
 import { ops as OPS } from './ops.js';
@@ -85,6 +86,8 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             bottom_stock, bottom_part, bottom_gap,
             bottom_z, bottom_cut
         }, 3);
+
+        // console.log({ track, bounds, stock, workarea });
 
         return structuredClone(workarea);
     };
@@ -383,11 +386,11 @@ export function addDogbones(poly, dist, reverse) {
         let bdiff = ((adiff < 0 ? (180 - adiff) : (180 + adiff)) / 2) + 180;
         if (!open || (i > 1 && i < length)) {
             if (isCW && adiff > 45) {
-                let newa = base.newSlopeFromAngle(lastsl.angle + bdiff);
+                let newa = newSlopeFromAngle(lastsl.angle + bdiff);
                 newpts.push(lastpt.projectOnSlope(newa, dist));
                 newpts.push(lastpt.clone());
             } else if (!isCW && adiff < -45) {
-                let newa = base.newSlopeFromAngle(lastsl.angle - bdiff);
+                let newa = newSlopeFromAngle(lastsl.angle - bdiff);
                 newpts.push(lastpt.projectOnSlope(newa, dist));
                 newpts.push(lastpt.clone());
             }
@@ -657,9 +660,9 @@ export async function holes(settings, widget, individual, rec, onProgress) {
         // keeps the z bottom relative to the part when z align changes
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
 
-    let slicerOpts = { flatoff: 0.001 }
+    let slicerOpts = { flatoff: 0.001 };
     let slicer = new cam_slicer(widget, slicerOpts);
-    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z => [z, z - 0.002]).flat()
+    let zFlats = Object.keys(slicer.zFlat).map(Number).map(z => [z, z - 0.002]).flat();
 
     precision = Math.max(0, precision)
     let intervals = (precision == 0) ? [] : slicer.interval(
@@ -669,11 +672,11 @@ export async function holes(settings, widget, individual, rec, onProgress) {
         }
     )
 
-    let zees = [...zFlats, ...intervals]
+    let zees = [...zFlats, ...intervals];
     let indices = [...new Set(zees
         .map(kv => parseFloat(kv).round(5))
         .filter(z => z !== null)
-    )]
+    )];
     let centerDiff = diam * 0.1,
         area = (diam / 2) * (diam / 2) * Math.PI,
         circles = [],
@@ -689,19 +692,20 @@ export async function holes(settings, widget, individual, rec, onProgress) {
     for (let [i, slice] of slices.entries()) {
         for (let top of slice.tops) {
             // console.log("slicing",slice.z,top)
-            slice.shadow = computeShadowAt(widget, slice.z, 0)
+            slice.shadow = computeShadowAt(widget, slice.z, 0);
             let inner = top.inner;
             if (!inner) { //no holes
                 continue;
             }
             for (let poly of inner) {
                 if (poly.points.length < 7) continue;
+
                 let center = poly.calcCircleCenter();
                 center.area = poly.area();
-                center.overlapping = [center]
+                center.overlapping = [center];
                 center.depth = 0;
                 // console.log("center",center)
-                if (poly.circularity() < 0.985) {
+                if (poly.circularity() < 0.98) {
                     // if not circular, don't add to holes
                     continue;
                 }
@@ -712,7 +716,7 @@ export async function holes(settings, widget, individual, rec, onProgress) {
                 }
                 let overlap = false;
                 for (let [i, circle] of circles.entries()) {
-                    let dist = circle.distTo2D(center)
+                    let dist = circle.distTo2D(center);
 
                     // //if on the same xy point, 
                     if (dist <= centerDiff) {
@@ -726,19 +730,19 @@ export async function holes(settings, widget, individual, rec, onProgress) {
                 if (!overlap) circles.push(center);
             }
         }
-        onProgress(0.5 + (i / slices.length * 0.25), "recognize circles")
+        onProgress(0.5 + (i / slices.length * 0.25), "recognize circles");
     }
 
-    let drills = []
+    let drills = [];
 
     for (let [i, c] of circles.entries()) {
-        let overlapping = c.overlapping
+        let overlapping = c.overlapping;
 
         let last = overlapping.shift();
         while (overlapping.length) {
             let circ = overlapping.shift();
             let aveArea = (circ.area + last.area) / 2;
-            let areaDelta = Math.abs(circ.area - last.area)
+            let areaDelta = Math.abs(circ.area - last.area);
             if (areaDelta < aveArea * 0.05) { // if area delta less than 5% of average area
                 //keep top circle selected
                 last.depth = last.z - circ.z;
@@ -748,24 +752,25 @@ export async function holes(settings, widget, individual, rec, onProgress) {
                 last = circ;
             }
         }
-        if (last.depth != 0) drills.push(last) //add last circle
-        onProgress(0.75 + (i / circles.length * 0.25), "assemble holes")
+        if (last.depth != 0) drills.push(last); // add last circle
+        onProgress(0.75 + (i / circles.length * 0.25), "assemble holes");
     }
     drills.forEach(h => {
         if (rec.fromTop) {
             // set z top if selected
-            h.depth += wztop - h.z
-            h.z = wztop
+            h.depth += wztop - h.z;
+            h.z = wztop;
         }
-        delete h.overlapping //for encoding
-        h.diam = toolDiam // for mesh generation
-        h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05); //for same size selection
+        delete h.overlapping; //for encoding
+        h.diam = toolDiam; // for mesh generation
+        h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05); // for same size selection
     })
 
-    // console.log("unfiltered circles",circles)
-    // console.log("drills",drills)
-    drills = drills.filter(drill => drill.depth > 0)
-    widget.shadowedDrills = shadowedDrills
+    console.log("unfiltered circles",circles);
+    console.log("drills",drills);
+
+    drills = drills.filter(drill => drill.depth > 0);
+    widget.shadowedDrills = shadowedDrills;
     widget.drills = drills;
     return drills;
 }

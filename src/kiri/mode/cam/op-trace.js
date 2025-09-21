@@ -38,7 +38,7 @@ class OpTrace extends CamOp {
         let cutdir = ov_conv;
         let polys = [];
         let reContour = false;
-        let canRecontour = offset !== 'none' && down === 0;
+        let canRecontour = offset !== 'none' && down < 0;
         let stockRect = stock.center && stock.x && stock.y ?
             newPolygon().centerRectangle({x:0,y:0}, stock.x, stock.y) : undefined;
         updateToolDiams(toolDiam);
@@ -57,6 +57,7 @@ class OpTrace extends CamOp {
             let max = Math.max(...zs);
             if (max - min > 0.0001 && canRecontour) {
                 reContour = true;
+                down = 0;
             }
         }
         if (false) newSliceOut(0).output()
@@ -89,6 +90,7 @@ class OpTrace extends CamOp {
             if (reContour) {
                 state.contourPolys(widget, slice.camLines);
             }
+            POLY.setWinding(slice.camLines, offset === "outside" ? !cutdir : cutdir, false);
             slice.output()
                 .setLayer("trace follow", {line: color}, false)
                 .addPolys(slice.camLines)
@@ -144,7 +146,7 @@ class OpTrace extends CamOp {
                     } else {
                         slice.camLines = POLY.flatten(slice.camLines, null, true);
                     }
-                    POLY.setWinding(slice.camLines, cutdir, false);
+                    POLY.setWinding(slice.camLines, offset === "outside" ? !cutdir : cutdir, false);
                     if (debug && shadow) slice.output()
                         .setLayer("trace shadow", {line: 0xff8811}, false)
                         .addPolys(shadow)

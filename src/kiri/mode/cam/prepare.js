@@ -85,6 +85,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         easeDown = process.camEaseDown,
         easeAngle = process.camEaseAngle,
         depthFirst = process.camDepthFirst,
+        innerFirst = process.camInnerFirst,
         engageFactor = process.camFullEngage,
         arcTolerance = process.camArcTolerance,
         arcRes = toRadians(process.camArcResolution),
@@ -243,7 +244,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 break;
             }
         }
-        camOut(point.clone().setZ(zmax_outer));
+        camOut(point.clone().setZ(zmax_outer), 0);
         points.forEach(function (point, index) {
             camOut(point, 1);
             if (index > 0 && index < points.length - 1) {
@@ -331,7 +332,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.moveLen typically = tool diameter used to trigger terrain detection
      * @param {number} opts.factor speed scale factor
      */
-    function camOut(point, emit, opts) {
+    function camOut(point, emit = 1, opts) {
         // console.trace({point, emit, opts})
         let {
             center = {},
@@ -392,7 +393,17 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         let deltaXY = lastPoint.distTo2D(point),
             deltaZ = point.z - lastPoint.z,
             absDeltaZ = Math.abs(deltaZ),
+            hasDelta = deltaXY >= 0.001 && absDeltaZ >= 0,
             isMove = emit == 0;
+
+        // when rapid pluge could cut thru stock, rapid to just above stock
+        // then continue plunge as a plunge cut
+        if (deltaZ < 0 && lastPoint.z > stockz && point.z < stockz && emit === 0) {
+            // console.log('detected plunge cut as rapid move', lastPoint.z, stockz, point.z);
+            layerPush(point.clone().setZ(stockz + 1), 0, 0, tool);
+            // change to cutting move for remainder of plunge
+            emit = 1;
+        }
 
         // drop points too close together
         if (!isLathe && !isArc && deltaXY < 0.001 && point.z === lastPoint.z) {
@@ -401,7 +412,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // convert short planar moves to cuts in some cases
-        if (!isRough && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
+        if (hasDelta && !isRough && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
             let iscontour = tolerance > 0;
             let isflat = absDeltaZ < 0.001;
             // restrict this to contouring
@@ -455,6 +466,11 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                     layerPush(point.clone().setZ(zClearance), 0, 0, tool);
                     // new pos for plunge calc
                     deltaXY = 0;
+                    // if plunge goes below stock, convert to cut
+                    if (emit === 0 && point.z < stockz) {
+                        lastPoint = layerPush(point.clone().setZ(stockz + 1), 0, 0, tool);
+                        emit = 1;
+                    }
                 }
             } else if (isRough && deltaZ < 0) {
                 layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
@@ -717,9 +733,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     function emitTrace(slice) {
         let { tool, rate, plunge } = slice.camTrace;
         setTool(tool, rate, plunge);
-        let traceTool = new Tool(settings, tool);
-        let traceToolDiam = traceTool.fluteDiameter();
-        printPoint = poly2polyEmit(slice.camLines, printPoint, polyEmit, { swapdir: false });
+        printPoint = poly2polyEmit(slice.camLines, printPoint, polyEmit, {
+            swapdir: false,
+            weight: innerFirst
+        });
         newLayer();
     }
 
@@ -736,10 +753,15 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} index - unused
      * @param {number} count - 1 to set engage factor
      * @param {Point} fromPoint - the point to rapid move from
-     * @param {Object} camOutOpts - optional parameters to pass to camOut
+     * @param {boolean} ops.cutFromLast - whether to emit a 1 when moving from last point. Defaults to false
      * @returns {Point} - the last point of the polygon
      */
-    function polyEmit(poly, index, count, fromPoint) {
+    function polyEmit(poly, index, count, fromPoint, ops) {
+        let {
+            cutFromLast,
+        } = ops ?? {
+            cutFromLast: false
+        };
         let arcQ = [],
             arcMax = Infinity, // no max arc radius
             lineTolerance = 0.001, // do not consider points under 0.001mm for arcs
@@ -775,7 +797,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             // if(offset == 0) console.log("forEachPoint",point,pidx,points)
             // console.log({pointA, pointB, indexA, indexB,startIndex})
             if (indexA == startIndex) {
-                camOut(pointA.clone(), 0, { factor: engageFactor });
+                //if cutFromLast is true, emit a 1 for a cutting move
+                camOut(pointA.clone(), cutFromLast ? 1 : 0, { factor: engageFactor });
                 // if first point, move to and call export function
                 if (arcEnabled) arcQ.push(pointA);
             }
@@ -845,7 +868,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                                 radFault = Math.abs(angle) > arcRes
                                 if (radFault) {
                                     // if so, remove first point
-                                    
                                     console.log("secondary radfault,",structuredClone(arcQ),{angle,arcRes,a,b})
                                     camOut(arcQ.shift(), 1)
                                 }
@@ -1062,7 +1084,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, dir, ease);
             fromPoint = depthOutlinePath(fromPoint, depth + 1, levels, radius, emitter, !dir, ease);
             return fromPoint;
-        }, { weight: false, swapdir: false });
+        }, {
+            weight: innerFirst,
+            swapdir: false
+        });
         return start;
     }
 
@@ -1098,10 +1123,10 @@ function getZClearPath(terrain, x1, y1, x2, y2, z, zadd, off, over) {
         }
     }
     check.reverse();
+    let p1 = newPoint(x1, y1);
+    let p2 = newPoint(x2, y2);
     for (let i = 0; i < check.length; i++) {
         let data = check[i];
-        let p1 = newPoint(x1, y1);
-        let p2 = newPoint(x2, y2);
         let int = data.tops.map(p => p.intersections(p1, p2, true)).flat();
         if (int.length) {
             maxz = Math.max(maxz, data.z + zadd + over);

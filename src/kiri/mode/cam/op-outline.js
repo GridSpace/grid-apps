@@ -100,6 +100,11 @@ class OpOutline extends CamOp {
         // extend cut thru (only when z bottom is 0)
         if (workarea.bottom_z < 0) {
             let last = slices[slices.length-1];
+            // when step down > full cut depth, clear slices and
+            // leave only the cut-thru pass(es)
+            if (op.down > workarea.top_stock - workarea.bottom_part) {
+                slices.length = 0;
+            }
             for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
                 if (!last) continue;
                 let add = last.clone(true);
@@ -225,7 +230,7 @@ class OpOutline extends CamOp {
 
         let easeDown = process.camEaseDown;
         let toolDiam = this.toolDiam;
-        let cutdir = op.ov_conv;//process.camConventional;
+        let cutdir = op.ov_conv;
         let depthFirst = process.camDepthFirst;
         let depthData = [];
 
@@ -251,9 +256,9 @@ class OpOutline extends CamOp {
             });
 
             // set cut direction on outer polys
-            POLY.setWinding(t, cutdir);
+            POLY.setWinding(t, !cutdir);
             // set cut direction on inner polys
-            POLY.setWinding(c, !cutdir);
+            POLY.setWinding(c, cutdir);
 
             if (depthFirst) {
                 depthData.push(polys);
@@ -269,9 +274,11 @@ class OpOutline extends CamOp {
                     let polyLast;
                     // console.log({order, orderPolys});
                     printPoint = poly2polyEmit(orderPolys, printPoint, function(poly, index, count) {
-
                         polyLast = polyEmit(poly, index, count, polyLast);
-                    }, { swapdir: false });
+                    }, {
+                        swapdir: false,
+                        weight: process.camInnerFirst
+                    });
                 })
                 newLayer();
             }

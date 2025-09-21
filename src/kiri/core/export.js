@@ -8,6 +8,7 @@ import { util } from '../../geo/base.js';
 import { MODES } from './consts.js';
 import { LASER as laser_driver } from '../mode/laser/driver.js';
 import { SLA as sla_client } from '../mode/sla/client.js';
+import { hash } from '../../ext/md5.js';
 
 let printSeq = parseInt(local['kiri-print-seq'] || local['print-seq'] || "0") + 1;
 
@@ -654,7 +655,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
                 data: gcode
             },{
                 name: `Metadata/plate_1.gcode.md5`,
-                data: ext.md5.hash(gcode)
+                data: hash(gcode)
             },{
                 name: `Metadata/plate_1_small.png`,
                 data: api.view.bambu.s128.png

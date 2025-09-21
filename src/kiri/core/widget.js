@@ -155,7 +155,7 @@ class Widget {
      * @returns {Widget}
      */
     loadVertices(data, options = { index: false }) {
-        // console.log({ loadVertices: this.id, worker: this.inWorker, data });
+        // console.trace({ loadVertices: this.id, worker: this.inWorker, data });
         let vertices,
             autoscale = false;
         if (ArrayBuffer.isView(data) || typeof(data) != 'object') {
