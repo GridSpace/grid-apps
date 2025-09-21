@@ -362,14 +362,11 @@ class Print {
                 // if( axis == 'I' || axis == "J") return
                 if (abs) {
                     pos[axis] = val;
-                    
                     if (axis == "X") point.x = factor * pos.X + xoff.x + off.x
                     else if (axis == "Y") point.y = factor * pos.Y + xoff.y + off.y
                     else if (axis == "Z") point.z = factor * pos.Z + xoff.z + off.z + dz
-                    
-
                 } else {
-                    mov[axis] = val;
+                    // mov[axis] = val;
                     pos[axis] += val;
                 }
                 // console.log("position updated",structuredClone(pos))
@@ -393,7 +390,6 @@ class Print {
                 center = center.add(prevPoint);
                 center.setZ((prevPoint.z+point.z)/2+dz);
             }
-            
             return {
                 center,
                 point,
@@ -402,10 +398,8 @@ class Print {
         }
 
         function outputPoint(point,lastP,emit,{center,arcPoints,retract}) {
-            
             // non-move in a new plane means burp out
             // the old sequence and start a new one
-            
             if (newlayer || (autolayer && seq.z != point.z)) {
                 newlayer = false;
                 let dz = point.z - seq.z;

@@ -156,7 +156,7 @@ class Engine {
     }
 
     slice() {
-        this.widget.setTopZ(this.settings.stock.z - (this.topOffset || 0));
+        this.widget.setTopZ((this.settings?.stock?.z || 0) - (this.topOffset || 0));
         return new Promise((accept, reject) => {
             client.clear();
             client.sync([this.widget]);

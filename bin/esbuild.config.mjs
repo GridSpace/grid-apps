@@ -12,7 +12,9 @@ const MESH_OUTFILE = 'src/pack/mesh-main.js';
 const MESH_EXTRAS = [ ];
 
 const KIRI_OUTFILE = 'src/pack/kiri-main.js';
-const KIRI_EXTRAS = [ ];
+const KIRI_EXTRAS = [
+    'src/ext/base64.js'
+];
 
 async function appendExtraModules(extras, outfile, minify = false) {
     const files = await glob(extras);

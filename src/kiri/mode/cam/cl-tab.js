@@ -61,7 +61,7 @@ export function createTabBox(iw, ic, n) {
     const { camZBottom, camStockIndexed } = process;
     const sz = stock.z || bounds.max.z;
     const zto = sz - iw.track.top;
-    const zp = (env.camZBottom || camStockIndexed ? env.camZBottom : sz - track.box.d - zto) + (camTabsMidline ? 0 : camTabsHeight / 2);
+    const zp = (camZBottom || camStockIndexed ? camZBottom : sz - track.box.d - zto) + (camTabsMidline ? 0 : camTabsHeight / 2);
     ic.x += n.x * camTabsDepth / 2; // offset from part
     ic.z -= n.y * camTabsDepth / 2; // offset swap z,y
     ic.y = zp; // offset swap in world space y,z
