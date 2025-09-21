@@ -192,7 +192,7 @@ async function path(levels, update, opts = {}) {
                 //     Math.abs(op.y - lp.y),
                 //     Math.abs(op.z - lp.z));
                 // if (moved < 0.0001) return;
-                if( is_cam() && (out.emit == 2 || out.emit == 3 )) { // cam arc emit
+                if (is_cam() && (out.emit == 2 || out.emit == 3 )) { // cam arc emit
                     // checks if a new poly should be started
                     if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
                         current = newPolygon().setOpen();
@@ -210,7 +210,6 @@ async function path(levels, update, opts = {}) {
                 } else if (out.emit) {
                     // explicity G1 in CAM mode
                     // just a non-move in other modes
-
                     // checks if a new poly should be started
                     if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
                         current = newPolygon().setOpen();

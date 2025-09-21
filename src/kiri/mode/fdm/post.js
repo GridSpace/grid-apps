@@ -447,6 +447,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
             if (poly.parent) {
                 inner.push(nupoly);
             }
+            let fpo;
             poly.segment(minR).forEachSegment((p1, p2) => {
                 let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
                 let len = pointDist(p1, p2);
@@ -507,8 +508,14 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                     if (odd && !mp1.claimed) {
                         mp1.claimed = true;
                     }
+                    // store first trace out for this poly to repeat at the end
+                    fpo = fpo ?? trace.peek();
                 }
             });
+            // repeat first point of trace (if close enough to be closed)
+            if (fpo && pointDist(fpo, trace.peek()) <= maxR) {
+                trace.push(fpo);
+            }
         }
 
         // subtract inner extrusion offsets from parent extrusion offset
