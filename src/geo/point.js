@@ -114,10 +114,15 @@ class Point {
         return this.key;
     }
 
-    clone() {
+    clone(keys) {
         let p = newPoint(this.x, this.y, this.z, this._key);
         if (this.a !== undefined) {
             p.a = this.a;
+        }
+        if (keys) {
+            for (let key of keys) {
+                p[key] = this[key];
+            }
         }
         return p;
     }

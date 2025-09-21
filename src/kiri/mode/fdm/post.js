@@ -218,11 +218,14 @@ function thin_type_3(params) {
     // console.log({ lines, polys, trace });
 
     // show extrusion
+    let zo = z + 0.1;
     if (debugExtrusion)
+    for (let trace of traces)
     for (let point of trace) {
-        polys.push(newPolygon().centerCircle(point, point.r, 12).setZ(z));
+        polys.push(newPolygon().centerCircle(point, point.r, 12).setZ(zo = zo + 0.005));
     }
 
+    if (!debugExtrusion)
     POLY.setZ([...lines, ...polys], z);
 
     if (lines.length) top.thin_fill = lines;
@@ -279,7 +282,11 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         });
     }
 
-    // project from first inset and find greated offset intersection
+    // project from first inset and find greated offset intersection.
+    // this examples show how to brute force create a medial axis from
+    // micro stepping insets. the same intersect technique used with
+    // medial axis can be applied to this structure to produce an
+    // equivalent output. not as computationally efficient, but much simpler.
     if (brute) {
         let { intersectRayLine } = base.util;
         let tests = insets.slice(1);
@@ -375,8 +382,6 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         return rec;
     }
 
-    let nusegs = [];
-
     // for each standalone noodle, construct medial axis
     // map medial axis points into de-duplicated segments
     for (let poly of noodle) {
@@ -390,31 +395,6 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         // dedup the points so we can track them uniquely
         for (let { point0, point1 } of ma) {
             pointsToLine(point0, point1);
-        }
-    }
-
-    // break down long segments
-    for (let seg of lineMap.values()) {
-        let { p0, p1 } = seg;
-        let len = seg.len = pointDist(p0, p1);
-        // add to nusegs
-        if (len <= minR) {
-            nusegs.push({ p0, p1 });
-            if (showMedialAxis) {
-                lines.push(new Point(p0.x, p0.y), new Point(p1.x, p1.y));
-            }
-        } else {
-            let steps = Math.ceil(len / minR) + 1;
-            let dx = (p1.x - p0.x) / steps;
-            let dy = (p1.y - p0.y) / steps;
-            for (let i=0; i<steps; i++) {
-                p1 = { x:p0.x + dx, y:p0.y + dy };
-                nusegs.push({ p0, p1 });
-                if (showMedialAxis) {
-                    lines.push(new Point(p0.x, p0.y), new Point(p1.x, p1.y));
-                }
-                p0 = p1;
-            }
         }
     }
 
@@ -439,6 +419,9 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         }
     }
 
+    // medial axis segments for comparison
+    let segs = [...lineMap.values()];
+
     // project inset segment normals onto closest medial segment
     // use this to find a radius which we divide into extrusion lanes
     if (!brute)
@@ -455,13 +438,13 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
             let ltpo;
             let trace = [];
             trace.shell = sno;
-            poly.segment(minR).forEachSegment((p1, p2) => {
+            poly.segment(minR,  true).forEachSegment((p1, p2) => {
                 let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
                 let len = pointDist(p1, p2);
                 let dx = (p1.x - p2.x) / len;
                 let dy = (p1.y - p2.y) / len;
                 let min = { dist: Infinity };
-                for (let seg of nusegs) {
+                for (let seg of segs) {
                     let { p0, p1 } = seg;
                     let int = intersectRayLine(np1, { dx: dy, dy: -dx }, p0, p1);
                     if (int?.dist < min.dist && int?.dist < noodleWidth) {
@@ -486,24 +469,23 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                     let len = Math.ceil(pop.length / 2);
                     // check if segment was claimed by a different originating segment
                     // for odd wall counts so that they're not emitted twice
-                    if (odd && mp1.claimed) len--;
+                    if (odd && mp1.claimed && mp1.claimed !== p1.segment) len--;
                     if (len === 0) {
                         nupoly.push(new Point(min.x, min.y));
                         return;
                     }
-                    let op;
                     if (pop.length === 1) {
                         // let rad_step = ((pop[0] * sstep) | 0) / sstep;
                         // for single wall place it exactly on medial axis
                         nupoly.push(new Point(min.x, min.y));
-                        trace.push(op = { x: min.x, y: min.y, r: mr })
+                        trace.push({ x: min.x, y: min.y, r: mr })
                     } else {
                         // radius rounded to nearest step
                         let rad_step = ((pop[0] * sstep) | 0) / sstep;
                         // otherwise use first division
                         // compensate for minimal inset
                         let off = -dstep + rad_step;
-                        trace.push(op = {
+                        trace.push({
                             x: np1.x + dy * off,
                             y: np1.y - dx * off,
                             r: rad_step
@@ -512,7 +494,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                         nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
                     }
                     if (odd && !mp1.claimed) {
-                        mp1.claimed = true;
+                        mp1.claimed = p1.segment;
                     }
                     // detect trace jump and start new trace
                     if (ltpo && pointDist(ltpo, trace.peek()) > maxR) {
