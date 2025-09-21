@@ -100,6 +100,11 @@ class OpOutline extends CamOp {
         // extend cut thru (only when z bottom is 0)
         if (workarea.bottom_z < 0) {
             let last = slices[slices.length-1];
+            // when step down > full cut depth, clear slices and
+            // leave only the cut-thru pass(es)
+            if (op.down > workarea.top_stock - workarea.bottom_part) {
+                slices.length = 0;
+            }
             for (let zneg of base_util.lerp(0, -workarea.bottom_cut, op.down)) {
                 if (!last) continue;
                 let add = last.clone(true);

@@ -1323,7 +1323,8 @@ function init_one() {
             yr = ((tl && yc) || (!tl && yt) ? ra : 1),
             zr = ((tl && zc) || (!tl && zt) ? ra : 1);
         // prevent null scale
-        if (xr * yr * zr === 0) {
+        if (xv * xr < 0.1 || yv * yr < 0.1 || zv * zr < 0.1) {
+            api.alerts.show('invalid scale value');
             return;
         }
         selection.scale(xr,yr,zr);
@@ -1350,7 +1351,11 @@ function init_one() {
             xr = ((tl && xc) || (!tl && xt) ? ra : 1),
             yr = ((tl && yc) || (!tl && yt) ? ra : 1),
             zr = ((tl && zc) || (!tl && zt) ? ra : 1);
-
+        // prevent null scale
+        if (xv * xr < 0.1 || yv * yr < 0.1 || zv * zr < 0.1) {
+            api.alerts.show('invalid scale value');
+            return;
+        }
         selection.scale(xr,yr,zr);
         ui.scaleX.was = ui.scaleX.value = xv * xr;
         ui.scaleY.was = ui.scaleY.value = yv * yr;
@@ -1362,6 +1367,7 @@ function init_one() {
         e.target.value = val;
     }
 
+    // on enter but not on blur
     space.event.onEnterKey([
         ui.scaleX,        selectionScale,
         ui.scaleY,        selectionScale,
@@ -1369,6 +1375,9 @@ function init_one() {
         ui.sizeX,         selectionSize,
         ui.sizeY,         selectionSize,
         ui.sizeZ,         selectionSize,
+    ]);
+    // on enter and blur
+    space.event.onEnterKey([
         ui.toolName,      updateTool,
         ui.toolNum,       updateTool,
         ui.toolFluteDiam, updateTool,
