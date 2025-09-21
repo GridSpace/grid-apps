@@ -177,7 +177,7 @@ function thin_type_3(params) {
     let debugExtrusion = false;
 
     let shells = top.shells; // only used for debug
-    let trace = top.thin_wall = [];
+    let traces = top.thin_wall = [];
 
     let midR = offsetN * 0.5;  // nominal extrusion width
     let minR = midR * 0.75; // smallest interior fill or single wall width
@@ -199,11 +199,11 @@ function thin_type_3(params) {
             i === 0 ? midR : midR * 1.25,
             i === 0 ? maxR : maxF,
         {
-            shell: 0,
+            shell: i + 1,
             lines,
             polys,
             remain,
-            trace,
+            traces,
             brute: false,
             showMedialAxis: false,
             showChainIntersect: false
@@ -228,7 +228,12 @@ function thin_type_3(params) {
     if (lines.length) top.thin_fill = lines;
     if (polys.length) shells.push(...polys);
 
-    return { trace, last: remain };
+    // create shell depth annotation that will survive serialization
+    top.thin_sort = traces.map(a => a.shell);
+
+    console.log({ this: (self.kiri_minion?.name ?? self.kiri_worker), traces });
+
+    return { traces, last: remain };
 }
 
 // trace a single extrusion line around the inside of the noodle poly
@@ -243,7 +248,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         lines = [],
         polys = [],
         remain = [],
-        trace = [],
+        traces = [],
         shell = 0
     } = opt;
 
@@ -447,7 +452,9 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
             if (poly.parent) {
                 inner.push(nupoly);
             }
-            let fpo;
+            let ltpo;
+            let trace = [];
+            trace.shell = sno;
             poly.segment(minR).forEachSegment((p1, p2) => {
                 let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
                 let len = pointDist(p1, p2);
@@ -489,7 +496,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                         // let rad_step = ((pop[0] * sstep) | 0) / sstep;
                         // for single wall place it exactly on medial axis
                         nupoly.push(new Point(min.x, min.y));
-                        trace.push(op = { x: min.x, y: min.y, r: mr, sno })
+                        trace.push(op = { x: min.x, y: min.y, r: mr })
                     } else {
                         // radius rounded to nearest step
                         let rad_step = ((pop[0] * sstep) | 0) / sstep;
@@ -499,8 +506,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                         trace.push(op = {
                             x: np1.x + dy * off,
                             y: np1.y - dx * off,
-                            r: rad_step,
-                            sno
+                            r: rad_step
                         })
                         // trace inset by full diameter
                         nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
@@ -508,13 +514,29 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                     if (odd && !mp1.claimed) {
                         mp1.claimed = true;
                     }
-                    // store first trace out for this poly to repeat at the end
-                    fpo = fpo ?? trace.peek();
+                    // detect trace jump and start new trace
+                    if (ltpo && pointDist(ltpo, trace.peek()) > maxR) {
+                        // start new trace removing jump point
+                        // and adding that to the new trace
+                        traces.push(trace);
+                        let nutrace = [ trace.pop() ];
+                        nutrace.shell = sno;
+                        // close last trace if endpoints near enough
+                        if (pointDist(ltpo, trace[0] <= maxR)) {
+                            trace.push(trace[0]);
+                        }
+                        trace = nutrace;
+                    }
+                    // update last trace point out
+                    ltpo = trace.peek();
                 }
             });
             // repeat first point of trace (if close enough to be closed)
-            if (fpo && pointDist(fpo, trace.peek()) <= maxR) {
-                trace.push(fpo);
+            if (trace[0] && pointDist(trace[0], trace.peek()) <= maxR) {
+                trace.push(trace[0]);
+            }
+            if (trace.length) {
+                traces.push(trace);
             }
         }
 
@@ -534,10 +556,11 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                 return p.clean().simplify();
             }).flat()
         ).filter(p => p.area() >= minArea);
+
         remain.push(...ret);
     }
 
-    return { lines, polys, remain, trace };
+    return { lines, polys, remain, traces };
 }
 
 /**

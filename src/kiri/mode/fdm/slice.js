@@ -1003,11 +1003,17 @@ function doRender(slice, isSynth, params, opt = {}) {
 
         if (isThin && top.thin_wall?.length) output
             .setLayer("walls", Color.thin)
-            .addPolys(top.thin_wall.map(p => newPolygon().centerCircle(p, p.r, 12).setZ(slice.z)), vopt({ offset, height }));
+            .addPolys(top.thin_wall.map(a => a.map(p => newPolygon().centerCircle(p, p.r, 12).setZ(slice.z))).flat(), vopt({ offset, height }));
 
         if (!isThin && top.thin_wall?.length) output
             .setLayer("walls", Color.thin)
-            .addPolys(top.thin_wall.map(p => newPolygon().centerCircle(p, p.r, 3).setZ(slice.z)), vopt({ offset, height }));
+            .addPolys(top.thin_wall.map(a =>
+                    a.length === 1 ?
+                    newPolygon().centerCircle(a[0], a[0].r, 6) :
+                    newPolygon(a.map(p => newPoint(p.x, p.y)))
+                        .setZ(slice.z)
+                        .closeIf(height)
+                ), vopt({ offset, height }));
 
         if (top.fill_lines?.length) output
             .setLayer("solid fill", isSynth ? Color.support : Color.fill)

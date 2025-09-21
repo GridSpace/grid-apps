@@ -1089,9 +1089,14 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
     }
 
-    function outputAdaptiveWalls(thin, opt = {}) {
+    function outputAdaptiveWalls(thin, sort, opt = {}) {
+        // restore thin shell order annotation and sort on it
+        thin.forEach((a,i) => a.shell = sort[i]);
+        thin.sort((a,b) => (a.shell - b.shell) * shellOrder);
+        // perform nearest poly to poly algorithm on shells
         let np;
-        for (let pt of thin) {
+        for (let trace of thin)
+        for (let pt of trace) {
             let { lastPoint, lastEmit } = print;
             let { x, y, r } = pt;
             np = new Point(x, y, z);
@@ -1459,7 +1464,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             if (top.traces) outputTraces(top.traces);
 
             // thin wall v3
-            if (top.thin_wall) outputAdaptiveWalls(top.thin_wall);
+            if (top.thin_wall) outputAdaptiveWalls(top.thin_wall, top.thin_sort);
 
             // innermost shells
             let inner = next.innerShells() || [];

@@ -1104,6 +1104,14 @@ export class Polygon {
         return this.first().isEqual(this.last());
     }
 
+    closeIf(dist = 1) {
+        if (this.first().distTo2D(this.last()) <= dist) {
+            return this.setClosed();
+        } else {
+            return this.setOpen();
+        }
+    }
+
     fixClosed() {
         if (this.appearsClosed()) {
             this.points.pop();

@@ -146,6 +146,7 @@ class Slice {
             let top = new Top(data.poly);
             top.thin_fill = data.thin_fill?.map(p => newPoint(p.x,p.y,p.z));
             top.thin_wall = data.thin_wall;
+            top.thin_sort = data.thin_sort;
             top.fill_lines = data.fill_lines;
             top.fill_sparse = data.fill_sparse;
             top.fill_off = data.fill_off;
