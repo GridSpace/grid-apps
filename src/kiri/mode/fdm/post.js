@@ -239,12 +239,15 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         showMedialAxis,
         showChainIntersect,
         minArea = midR * midR,
+        shellStep = 1 / 30, // diameter step as % of nozzle
         lines = [],
         polys = [],
         remain = [],
         trace = [],
         shell = 0
     } = opt;
+
+    let sstep = 1 / shellStep;
     let insets = [];
     let scale = 1000;
     let dstep = minR / 4;
@@ -482,17 +485,20 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                     }
                     let op;
                     if (pop.length === 1) {
+                        // let rad_step = ((pop[0] * sstep) | 0) / sstep;
                         // for single wall place it exactly on medial axis
                         nupoly.push(new Point(min.x, min.y));
                         trace.push(op = { x: min.x, y: min.y, r: mr, sno })
                     } else {
+                        // radius rounded to nearest step
+                        let rad_step = ((pop[0] * sstep) | 0) / sstep;
                         // otherwise use first division
                         // compensate for minimal inset
-                        let off = -dstep + pop[0];
+                        let off = -dstep + rad_step;
                         trace.push(op = {
                             x: np1.x + dy * off,
                             y: np1.y - dx * off,
-                            r: pop[0],
+                            r: rad_step,
                             sno
                         })
                         // trace inset by full diameter
