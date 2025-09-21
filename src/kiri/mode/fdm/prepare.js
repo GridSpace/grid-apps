@@ -3,7 +3,7 @@
 import { base, util } from '../../../geo/base.js';
 import { poly2polyEmit, tip2tipEmit } from '../../../geo/paths.js';
 import { newBounds } from '../../../geo/bounds.js';
-import { newPoint } from '../../../geo/point.js';
+import { newPoint, Point } from '../../../geo/point.js';
 import { newPolygon, Polygon } from '../../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { newPrint } from '../../core/print.js';
@@ -834,7 +834,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         z = slice.z,
         lastPoly;
 
-    // support alternating shell order
+        // support alternating shell order
     if (Math.abs(shellOrder) > 1 && slice.index % 2 === 1) {
         shellOrder = -shellOrder;
     }
@@ -1086,6 +1086,20 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 }
             });
             lastPoly = slice.lastPoly = poly;
+        }
+    }
+
+    function outputAdaptiveWalls(thin, opt = {}) {
+        let np;
+        for (let pt of thin) {
+            let { lastPoint, lastEmit } = print;
+            let { x, y, r } = pt;
+            np = new Point(x, y, z);
+            if (lastPoint && lastPoint.distTo2D(np) > retractDist) {
+                print.addOutput(preout, np, 0, moveSpeed);
+            } else {
+                print.addOutput(preout, np, (r * 2) / nozzleSize, printSpeed);
+            }
         }
     }
 
@@ -1443,6 +1457,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
             // raft
             if (top.traces) outputTraces(top.traces);
+
+            // thin wall v3
+            if (top.thin_wall) outputAdaptiveWalls(top.thin_wall);
 
             // innermost shells
             let inner = next.innerShells() || [];

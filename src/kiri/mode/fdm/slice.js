@@ -997,9 +997,13 @@ function doRender(slice, isSynth, params, opt = {}) {
             .setLayer('part', Color.part)
             .addPolys([top.poly]);
 
-        output
+        if (top.shells?.length) output
             .setLayer(isSynth ? "support" : "shells", isSynth ? Color.support : Color.shell)
             .addPolys(top.shells || [], vopt({ offset, height, clean: true }));
+
+        if (top.thin_wall?.length) output
+            .setLayer("walls", Color.thin)
+            .addPolys(top.thin_wall.map(p => newPolygon().centerCircle(p, p.r, 12).setZ(slice.z)), vopt({ offset, height }));
 
         if (top.fill_lines?.length) output
             .setLayer("solid fill", isSynth ? Color.support : Color.fill)
@@ -1016,10 +1020,6 @@ function doRender(slice, isSynth, params, opt = {}) {
         if (top.thin_fill?.length) output
             .setLayer("thin fill", Color.thin)
             .addLines(top.thin_fill, vopt({ offset, height }));
-
-        if (top.thin_wall?.length) output
-            .setLayer("shells", Color.thin)
-            .addPolys(top.thin_wall.map(p => newPolygon().centerCircle(p, p.r, 12).setZ(slice.z)), vopt({ offset, height }));
 
         if (top.gaps?.length && devel) output
             .setLayer("gaps", Color.gaps)
