@@ -601,13 +601,13 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
             } });
             let ret = { last, gaps };
             switch (opt.thinType) {
-                case "type 1":
+                case "legacy 1":
                     ret = thin_type_1({ z, top, count, top_poly, offsetN, fillOffset });
                     break;
-                case "type 2":
+                case "legacy 2":
                     ret = thin_type_2({ z, top, count, top_poly, offset1, offsetN, fillOffset, gaps, wasm });
                     break;
-                case "type 3":
+                case "adaptive":
                     ret = thin_type_3({ z, top, count, offsetN });
                     break;
                 default:
