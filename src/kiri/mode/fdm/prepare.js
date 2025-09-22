@@ -844,6 +844,11 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         fillSpeed = process.sliceSolidRate || finishSpeed;
     }
 
+    // on flats layers also slow down shell print speed
+    if (slice.isFlatsLayer) {
+        printSpeed = finishSpeed || printSpeed;
+    }
+
     // override: adapt bridge layer speed
     if (slice.isBridgeLayer) {
         fillSpeed /= 2;

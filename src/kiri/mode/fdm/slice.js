@@ -506,6 +506,9 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 let fillSpace = fillSpacing * spaceMult * solidWidth;
                 doSolidLayerFill(slice, fillSpace, sliceFillAngle);
             }
+            if (slice.index === slices.length - 1) {
+                slice.isFlatsLayer = true;
+            }
             if (isTopBase) {
                 // mark the first top solid supporting layer as a bridge
                 slice.isBridgeLayer = true;
@@ -1378,8 +1381,9 @@ function addSolidFills(slice, polys) {
 export function projectFlats(slice, count, expand) {
     if (!slice.down || !slice.flats) return;
     // these flats are marked for finishing print speed
-    if (slice.flats.length) slice.finishSolids = true;
-    if (slice && slice.flats && slice.flats.length) {
+    if (slice.flats?.length) {
+        slice.finishSolids = true;
+        slice.isFlatsLayer = true;
         const flats = expand ? POLY.expand(slice.flats, expand) : slice.flats;
         projectSolid(slice, flats, count, false, true);
     }
@@ -1391,7 +1395,7 @@ export function projectFlats(slice, count, expand) {
 export function projectBridges(slice, count) {
     if (!slice.up || !slice.bridges) return;
     // these flats are marked for finishing print speed
-    if (slice.bridges.length) {
+    if (slice.bridges?.length) {
         slice.finishSolids = true;
         slice.isBridgeLayer = true;
     }
