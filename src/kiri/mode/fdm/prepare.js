@@ -1101,7 +1101,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         thin.forEach((a,i) => a.shell = sort[i] * shellOrder);
         thin.forEach(t => t.shell = t.shell < 0 ? Math.abs(t.shell) + 0.5 : t.shell);
         thin.sort((a,b) => a.shell - b.shell);
-        let np;
+        let np = print.lastPoint;
         // perform nearest poly to poly algorithm on shells
         for (;;) {
             let min = { dist: Infinity };
@@ -1114,6 +1114,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 }
             }
             if (!min.trace) {
+                startPoint = np;
                 return;
             }
             let { trace } = min;

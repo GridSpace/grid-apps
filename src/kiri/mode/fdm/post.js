@@ -170,6 +170,9 @@ function thin_type_3(params) {
     let noodleWidth = offsetN * count;
     let { noodle, remain } = top.poly.noodle(noodleWidth);
 
+    // re-expand inner offset so fill offsets align properly with expectation
+    remain = POLY.offset(remain, offsetN / 2);
+
     // render inset "noodle"
     // shells.appendAll(noodle);
 
@@ -188,7 +191,7 @@ function thin_type_3(params) {
     let polys = [];
 
     for (let i=0; i<count; i++) {
-        let remain = [];
+        let next = [];
 
         // process each top level noodle separately
         for (let n of noodle)
@@ -202,16 +205,16 @@ function thin_type_3(params) {
             shell: i + 1,
             lines,
             polys,
-            remain,
+            remain: next,
             traces,
             brute: false,
             showChainIntersect: false
         });
 
         // show remaining noodle after single trace
-        if (debugRemain) polys.push(...POLY.setZ(POLY.flatten(remain), z));
+        if (debugRemain) polys.push(...POLY.setZ(POLY.flatten(next), z));
 
-        noodle = remain;
+        noodle = next;
     }
 
     // console.log({ lines, polys, trace });
@@ -471,25 +474,34 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                         nupoly.push(new Point(min.x, min.y));
                         return;
                     }
+                    let npo;
                     if (pop.length === 1) {
                         // let rad_step = ((pop[0] * sstep) | 0) / sstep;
                         // for single wall place it exactly on medial axis
                         nupoly.push(new Point(min.x, min.y));
-                        trace.push({ x: min.x, y: min.y, r: mr })
+                        npo = { x: min.x, y: min.y, r: mr, s: p1.segment };
                     } else {
                         // radius rounded to nearest step
                         let rad_step = ((pop[0] * sstep) | 0) / sstep;
                         // otherwise use first division
                         // compensate for minimal inset
                         let off = -dstep + rad_step;
-                        trace.push({
+                        npo = {
                             x: np1.x + dy * off,
                             y: np1.y - dx * off,
-                            r: rad_step
-                        })
+                            r: rad_step,
+                            s: p1.segment
+                        };
                         // trace inset by full diameter
                         nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
                     }
+                    let lpo = trace.peek();
+                    // when outputting the same segment at the same radius
+                    // it's safe to drop the last point since path output will connect them
+                    if (trace.length > 1 && lpo.s === npo.s && lpo.r === npo.r) {
+                        trace.pop();
+                    }
+                    trace.push(npo);
                     if (odd && !mp1.claimed) {
                         mp1.claimed = p1.segment;
                     }
