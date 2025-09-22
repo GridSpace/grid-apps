@@ -1130,12 +1130,13 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             if (np && np.distTo2D(new Point(trace[0].x, trace[0].y)) > retractDist) {
                 retract();
             }
+            let outputSpeed = trace.shell === 1 || trace.shell === 1.5 ? finishSpeed : printSpeed;
             for (let pt of trace) {
                 np = new Point(pt.x, pt.y, z);
                 if (pt === trace[0]) {
                     print.addOutput(preout, np, 0, moveSpeed);
                 } else {
-                    print.addOutput(preout, np, ((pt.r * 2) / nozzleSize) * shellMult, printSpeed);
+                    print.addOutput(preout, np, ((pt.r * 2) / nozzleSize) * shellMult, outputSpeed);
                 }
             }
         }
@@ -1237,10 +1238,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             start = 0,
             skip = false,
             lastIndex = -1,
-            raft = opt.raft || false,
+            raft = opt.raft ?? false,
             flow = opt.flow || 1,
-            near = opt.near || (antiBacklash ? false : true),
-            fast = opt.fast || false, // support infill only!
+            near = opt.near ?? (antiBacklash ? false : true),
+            fast = opt.fast ?? false, // support infill only!
             fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
             thinDist = near ? thinWall : thinWall;
 

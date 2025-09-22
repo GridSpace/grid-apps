@@ -247,7 +247,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         showInset,
         showChainIntersect,
         minArea = midR * midR,
-        shellStep = 1 / 30, // diameter step as % of nozzle
+        shellStep = 1 / 100, // diameter step as % of nozzle
         lines = [],
         polys = [],
         remain = [],
