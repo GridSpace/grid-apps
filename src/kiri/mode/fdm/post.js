@@ -468,6 +468,10 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                     let len = Math.ceil(pop.length / 2);
                     // check if segment was claimed by a different originating segment
                     // for odd wall counts so that they're not emitted twice
+                    // todo: failing for noodle width single wall on circular objects
+                    // update claim system to eliminate overlapping close singles
+                    // and/or extend segment definition to curve within angle deviation
+                    // instead of strict point/point segments
                     if (odd && mp1.claimed && mp1.claimed !== p1.segment) len--;
                     if (len === 0) {
                         nupoly.push(new Point(min.x, min.y));
