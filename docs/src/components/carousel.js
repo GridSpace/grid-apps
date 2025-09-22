@@ -58,6 +58,11 @@ const imageDescripts = {
     ["/1.png", "tabs added to part"],
     ["/2.png", "sliced part with tabs"],
   ],
+  camInterface:[
+    ["/1.png", "empty Ops list"],
+    ["/2.png", "sample Ops list"],
+    ["/3.png", "Ops list with history bar"],
+  ]
 };
 
 /**
@@ -68,13 +73,16 @@ const imageDescripts = {
  */
 export function ImageCarousel({ base, images }) {
   return (
-    <Carousel showThumbs={false}>
-      {imageDescripts[images].map(([image, caption], index) => (
-        <div>
-          <img src={base + image} alt="" />
-          <p className="caption">{caption}</p>
-        </div>
-      ))}
-    </Carousel>
+    <div class="carouselWrapper">
+
+      <Carousel showThumbs={false}>
+        {imageDescripts[images].map(([image, caption], index) => (
+          <div>
+            <img src={base + image} alt="" />
+            <p className="caption">{caption}</p>
+          </div>
+        ))}
+      </Carousel>
+    </div>
   );
 }

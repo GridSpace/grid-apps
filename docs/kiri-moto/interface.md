@@ -6,17 +6,19 @@ description: A tour of Kiri:Moto's web-based interface
 
 Kiri:Moto's interface is designed for maximum access to the workspace and to present only the options that are necessary and relevant to the current action.
 
+For the CAM interface, click [here](/kiri-moto/cam)
+
+The top menu bar contains buttons to move through the Arrange->Slice->Preview->Export workflow.
+
 The left menus control workspace, work mode, and objects while.
 
 The right menus control the behavior and settings for slicing, path routing, and path to code exports.
 
 [OBJ](https://www.cs.cmu.edu/~mbz/personal/graphics/obj.html), [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>), and [3MF](https://docs.fileformat.com/3d/3mf/) files import natively. [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics), [JPG](https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format), and [PNG](https://en.wikipedia.org/wiki/Portable_Network_Graphics) are auto-extruded into a 3D parts.
 
-![A minimalist approach](/img/kiri-moto.png)
+![A minimalist approach](/img/interface/main.png)
 
-In CNC mode, there is an additional storyboard menu at the bottom where you can plan and re-order milling operations.
 
-![](/img/kiri-moto-cnc.png)
 
 The Setup menu offers access to Device selection and customization.&#x20;
 
