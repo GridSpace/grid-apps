@@ -1105,7 +1105,11 @@ export class Polygon {
     }
 
     closeIf(dist = 1) {
-        if (this.first().distTo2D(this.last()) <= dist) {
+        let closeDist = this.first().distTo2D(this.last());
+        if (closeDist < 0.001) {
+            this.points.pop();
+            return this.setClosed();
+        } else if (closeDist <= dist) {
             return this.setClosed();
         } else {
             return this.setOpen();

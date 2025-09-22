@@ -1009,7 +1009,7 @@ function doRender(slice, isSynth, params, opt = {}) {
             .setLayer("walls", Color.thin)
             .addPolys(top.thin_wall.map(a =>
                     a.length === 1 ?
-                    newPolygon().centerCircle(a[0], a[0].r, 6) :
+                    newPolygon().centerCircle(a[0], a[0].r/2, 12) :
                     newPolygon(a.map(p => newPoint(p.x, p.y)))
                         .setZ(slice.z)
                         .closeIf(height)

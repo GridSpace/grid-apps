@@ -287,50 +287,50 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
     // micro stepping insets. the same intersect technique used with
     // medial axis can be applied to this structure to produce an
     // equivalent output. not as computationally efficient, but much simpler.
-    if (brute) {
-        let { intersectRayLine } = base.util;
-        let tests = insets.slice(1);
-        let source = POLY.flatten(insets[0], []);
-        for (let poly of source) {
-            // segment the smallest inset and test against all other insets
-            poly.segment(minR).forEachSegment((p1, p2) => {
-                let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
-                let len = pointDist(p1, p2);
-                let dx = (p1.x - p2.x) / len;
-                let dy = (p1.y - p2.y) / len;
-                let np2 = { x: np1.x + dy * 10, y: np1.y - dx * 10 };
-                let max = { dtotl: poly.dtotl, dist: Infinity, maxd: Infinity };
-                let term = false;
-                outer: for (let test of tests) {
-                    for (let tpoly of POLY.flatten(test, [])) {
-                        tpoly.forEachSegment((tp1, tp2) => {
-                            let int = intersectRayLine(np1, { dx: dy, dy: -dx }, tp1, tp2);
-                            if (int && int.dist > int.p1.poly.dtotl) {
-                                return;
-                            }
-                            if (int && int.dist <= max.maxd && int.p1.poly.dtotl > max.dtotl) {
-                                max.dtotl = int.p1.poly.dtotl;
-                                max.dist = int.dist;
-                                max.int = int;
-                            } else if (int && int.dist <= max.maxd && int.p1.poly.dtotl === max.dtotl && int.dist < max.dist) {
-                                max.dtotl = int.p1.poly.dtotl;
-                                max.dist = int.dist;
-                                max.int = int;
-                            }
-                        });
-                        if (term) {
-                            break outer;
-                        }
-                    }
-                }
-                if (max.int) {
-                    lines.push(new Point(np1.x, np1.y));
-                    lines.push(new Point(max.int.x, max.int.y));
-                }
-            });
-        }
-        return { lines, polys };
-    }
+    // if (brute) {
+    //     let { intersectRayLine } = base.util;
+    //     let tests = insets.slice(1);
+    //     let source = POLY.flatten(insets[0], []);
+    //     for (let poly of source) {
+    //         // segment the smallest inset and test against all other insets
+    //         poly.segment(minR).forEachSegment((p1, p2) => {
+    //             let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
+    //             let len = pointDist(p1, p2);
+    //             let dx = (p1.x - p2.x) / len;
+    //             let dy = (p1.y - p2.y) / len;
+    //             let np2 = { x: np1.x + dy * 10, y: np1.y - dx * 10 };
+    //             let max = { dtotl: poly.dtotl, dist: Infinity, maxd: Infinity };
+    //             let term = false;
+    //             outer: for (let test of tests) {
+    //                 for (let tpoly of POLY.flatten(test, [])) {
+    //                     tpoly.forEachSegment((tp1, tp2) => {
+    //                         let int = intersectRayLine(np1, { dx: dy, dy: -dx }, tp1, tp2);
+    //                         if (int && int.dist > int.p1.poly.dtotl) {
+    //                             return;
+    //                         }
+    //                         if (int && int.dist <= max.maxd && int.p1.poly.dtotl > max.dtotl) {
+    //                             max.dtotl = int.p1.poly.dtotl;
+    //                             max.dist = int.dist;
+    //                             max.int = int;
+    //                         } else if (int && int.dist <= max.maxd && int.p1.poly.dtotl === max.dtotl && int.dist < max.dist) {
+    //                             max.dtotl = int.p1.poly.dtotl;
+    //                             max.dist = int.dist;
+    //                             max.int = int;
+    //                         }
+    //                     });
+    //                     if (term) {
+    //                         break outer;
+    //                     }
+    //                 }
+    //             }
+    //             if (max.int) {
+    //                 lines.push(new Point(np1.x, np1.y));
+    //                 lines.push(new Point(max.int.x, max.int.y));
+    //             }
+    //         });
+    //     }
+    //     return { lines, polys };
+    // }
 
     let pointMap = new Map();
     let lineMap = new Map();
