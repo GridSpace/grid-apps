@@ -1126,6 +1126,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             }
             // remove emitted trace
             thin = thin.filter(t => t !== trace);
+            // retract if moving > retractDist
+            if (np && np.distTo2D(new Point(trace[0].x, trace[0].y)) > retractDist) {
+                retract();
+            }
             for (let pt of trace) {
                 np = new Point(pt.x, pt.y, z);
                 if (pt === trace[0]) {

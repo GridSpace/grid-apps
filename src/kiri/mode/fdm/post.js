@@ -430,14 +430,13 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         let parent = new Polygon();
         let inner = [];
         for (let poly of insetp.flattenTo([])) {
-            let sno = poly.parent ? shell : -shell; // shell number (- for inner/hole)
             let nupoly = poly.parent ? new Polygon() : parent;
             if (poly.parent) {
                 inner.push(nupoly);
             }
             let ltpo;
             let trace = [];
-            trace.shell = sno;
+            trace.shell = poly.parent ? shell : -shell; // shell number (- for inner/hole)
             poly.segment(minR,  true).forEachSegment((p1, p2) => {
                 let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
                 let len = pointDist(p1, p2);
@@ -511,7 +510,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
                         // and adding that to the new trace
                         traces.push(trace);
                         let nutrace = [ trace.pop() ];
-                        nutrace.shell = sno;
+                        nutrace.shell = trace.shell;
                         // close last trace if endpoints near enough
                         if (pointDist(ltpo, trace[0] <= maxR)) {
                             trace.push(trace[0]);
@@ -549,6 +548,13 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         ).filter(p => p.area() >= minArea);
 
         remain.push(...ret);
+    }
+
+    // remove point.segment markers for codec encoding between minion and worker
+    for (let trace of traces) {
+        for (let pt of trace) {
+            delete pt.s;
+        }
     }
 
     return { lines, polys, remain, traces };
