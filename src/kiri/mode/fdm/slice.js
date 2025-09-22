@@ -498,12 +498,17 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             let spaceMult = slice.index === 0 ? process.firstLayerLineMult || 1 : 1;
             let isBottom = slice.index < bottomLayers;
             let isTop = topLayers && slice.index > slices.length - topLayers - 1;
+            let isTopBase = isTop && slice.index === slices.length - topLayers;
             let isDense = range.sliceFillSparse > 0.995;
             let isSolid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
             let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
             if (solidWidth) {
                 let fillSpace = fillSpacing * spaceMult * solidWidth;
                 doSolidLayerFill(slice, fillSpace, sliceFillAngle);
+            }
+            if (isTopBase) {
+                // mark the first top solid supporting layer as a bridge
+                slice.isBridgeLayer = true;
             }
             sliceFillAngle = (sliceFillAngle + 90.0) % 360;
         }, "solid layers");
@@ -1386,7 +1391,10 @@ export function projectFlats(slice, count, expand) {
 export function projectBridges(slice, count) {
     if (!slice.up || !slice.bridges) return;
     // these flats are marked for finishing print speed
-    if (slice.bridges.length) slice.finishSolids = true;
+    if (slice.bridges.length) {
+        slice.finishSolids = true;
+        slice.isBridgeLayer = true;
+    }
     projectSolid(slice, slice.bridges, count, true, true);
 };
 
@@ -1746,6 +1754,9 @@ function fillSupportPolys(args) {
  * @returns {*}
  */
 function projectSolid(slice, polys, count, up, first) {
+    if (slice && !up && count === 1) {
+        slice.isBridgeLayer = true;
+    }
     if (!slice || count <= 0) {
         return;
     }

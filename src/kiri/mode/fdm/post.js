@@ -169,13 +169,15 @@ function thin_type_3(params) {
     // produce trace from outside of poly inward no more than max inset
     let noodleWidth = offsetN * count;
     let { noodle, remain } = top.poly.noodle(noodleWidth);
+    for (let n of POLY.flatten(noodle).sort((a,b) => a.depth - b.depth)) {
+        n.shell = [1,-1][Math.floor(n.depth / 2)];
+        // console.log('map', n.depth, n.shell, n.length, n.area().round(3));
+    }
 
     // re-expand inner offset so fill offsets align properly with expectation
     remain = POLY.offset(remain, offsetN / 2);
 
-    // render inset "noodle"
-    // shells.appendAll(noodle);
-
+    let debugNoodle = false;
     let debugRemain = false;
     let debugExtrusion = false;
 
@@ -190,11 +192,14 @@ function thin_type_3(params) {
     let lines = [];
     let polys = [];
 
-    for (let i=0; i<count; i++) {
+    // show inset "noodle"
+    if (debugNoodle) polys.push(...noodle);
+
+    outer: for (let i=0; i<count; i++) {
         let next = [];
 
         // process each top level noodle separately
-        for (let n of noodle)
+        for (let n of noodle.sort((a,b) => b.area() - a.area()))
         trace_noodle(
             [ n ],
             noodleWidth,
@@ -202,7 +207,7 @@ function thin_type_3(params) {
             i === 0 ? midR : midR * 1.25,
             i === 0 ? maxR : maxF,
         {
-            shell: i + 1,
+            shell: n.shell,
             lines,
             polys,
             remain: next,
@@ -234,9 +239,17 @@ function thin_type_3(params) {
     if (polys.length) shells.push(...polys);
 
     // create shell depth annotation that will survive serialization
-    top.thin_sort = traces.map(a => a.shell);
+    top.thin_sort = traces.map(t => t.shell);
 
-    // console.log({ this: (self.kiri_minion?.name ?? self.kiri_worker), traces });
+    // remove point.segment markers for codec encoding between minion and worker
+    for (let trace of traces) {
+        for (let pt of trace) {
+            delete pt.s;
+        }
+    }
+
+    // console.log({ traces: traces.map(t => [t.length, t.shell]) });
+    // console.log({ this: (self.kiri_minion?.name ?? self.kiri_worker), traces, polys });
     return { traces, last: remain };
 }
 
@@ -255,6 +268,8 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         shell = 0
     } = opt;
 
+    // increment shell with direction (1=outside, -1=inside)
+    let shellAdd = shell > 0 ? 1 : -1;
     let sstep = 1 / shellStep;
     let insets = [];
     let scale = 1000;
@@ -265,6 +280,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         join: ClipperLib.JoinType.jtRound,
         arc: (1/dstep) * 4
     });
+
     while (inset && inset.length) {
         dtotl += dstep;
         for (let p of POLY.flatten(inset, [])) {
@@ -434,9 +450,10 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
             if (poly.parent) {
                 inner.push(nupoly);
             }
+            let sadd = shellAdd > 0 ? (poly.parent ? shellAdd : 0) : (poly.parent ? 0 : shellAdd);
             let ltpo;
             let trace = [];
-            trace.shell = poly.parent ? shell : -shell; // shell number (- for inner/hole)
+            trace.shell = shell + sadd;
             poly.segment(minR,  true).forEachSegment((p1, p2) => {
                 let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
                 let len = pointDist(p1, p2);
@@ -548,17 +565,13 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         let ret = POLY.nest(
             POLY.flatten(setA, [], true).map(p => {
                 return p.clean().simplify();
-            }).flat()
+            }).flat().map(p => {
+                p.shell = shell + shellAdd;
+                return p;
+            })
         ).filter(p => p.area() >= minArea);
 
         remain.push(...ret);
-    }
-
-    // remove point.segment markers for codec encoding between minion and worker
-    for (let trace of traces) {
-        for (let pt of trace) {
-            delete pt.s;
-        }
     }
 
     return { lines, polys, remain, traces };

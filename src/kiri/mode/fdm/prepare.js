@@ -805,10 +805,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         shellOrder = {"out-in":-1,"in-out":1,"alternate":-2}[process.sliceShellOrder] || -1,
         sparseMult = process.outputSparseMult,
         coastDist = process.outputCoastDist || 0,
-        finishSpeed = opt.speed || process.outputFinishrate,
         firstShellSpeed = process.firstLayerRate,
         firstFillSpeed = process.firstLayerFillRate,
         firstPrintMult = process.firstLayerPrintMult,
+        finishSpeed = firstLayer ? firstShellSpeed : (opt.speed || process.outputFinishrate),
         printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
         fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
         infillSpeed = process.sliceFillRate || opt.infillSpeed || fillSpeed || printSpeed,
@@ -834,13 +834,19 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         z = slice.z,
         lastPoly;
 
-        // support alternating shell order
+    // support alternating shell order
     if (Math.abs(shellOrder) > 1 && slice.index % 2 === 1) {
         shellOrder = -shellOrder;
     }
 
+    // update fill speed when solids detected
     if (slice.finishSolids) {
         fillSpeed = process.sliceSolidRate || finishSpeed;
+    }
+
+    // override: adapt bridge layer speed
+    if (slice.isBridgeLayer) {
+        fillSpeed /= 2;
     }
 
     // apply first layer extrusion multipliers
