@@ -205,7 +205,6 @@ function thin_type_3(params) {
             remain,
             traces,
             brute: false,
-            showMedialAxis: false,
             showChainIntersect: false
         });
 
@@ -234,8 +233,7 @@ function thin_type_3(params) {
     // create shell depth annotation that will survive serialization
     top.thin_sort = traces.map(a => a.shell);
 
-    console.log({ this: (self.kiri_minion?.name ?? self.kiri_worker), traces });
-
+    // console.log({ this: (self.kiri_minion?.name ?? self.kiri_worker), traces });
     return { traces, last: remain };
 }
 
@@ -244,7 +242,6 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
     let {
         brute,
         showInset,
-        showMedialAxis,
         showChainIntersect,
         minArea = midR * midR,
         shellStep = 1 / 30, // diameter step as % of nozzle

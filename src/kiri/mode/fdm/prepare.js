@@ -1089,21 +1089,49 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
     }
 
-    function outputAdaptiveWalls(thin, sort, opt = {}) {
+    function minThinDist(np, trace) {
+        return Math.min(
+            Math.hypot(np.x - trace[0].x, np.y - trace[0].y),
+            Math.hypot(np.x - trace.peek().x, np.y - trace.peek().y),
+        );
+    }
+
+    function outputAdaptiveWalls(thin, sort) {
         // restore thin shell order annotation and sort on it
-        thin.forEach((a,i) => a.shell = sort[i]);
-        thin.sort((a,b) => (a.shell - b.shell) * shellOrder);
-        // perform nearest poly to poly algorithm on shells
+        thin.forEach((a,i) => a.shell = sort[i] * shellOrder);
+        thin.forEach(t => t.shell = t.shell < 0 ? Math.abs(t.shell) + 0.5 : t.shell);
+        thin.sort((a,b) => a.shell - b.shell);
         let np;
-        for (let trace of thin)
-        for (let pt of trace) {
-            let { lastPoint, lastEmit } = print;
-            let { x, y, r } = pt;
-            np = new Point(x, y, z);
-            if (lastPoint && lastPoint.distTo2D(np) > retractDist) {
-                print.addOutput(preout, np, 0, moveSpeed);
-            } else {
-                print.addOutput(preout, np, ((r * 2) / nozzleSize) * shellMult, printSpeed);
+        // perform nearest poly to poly algorithm on shells
+        for (;;) {
+            let min = { dist: Infinity };
+            for (let trace of thin) {
+                if (!min.trace) {
+                    min.trace = trace;
+                } else if (np && min.trace.shell === trace.shell) {
+                    let dist = minThinDist(np, trace);
+                    if (dist < min.dist) min = { dist, trace };
+                }
+            }
+            if (!min.trace) {
+                return;
+            }
+            let { trace } = min;
+            let fp = trace[0];
+            let lp = trace.peek();
+            // reverse trace if far end closer
+            if (np && Math.hypot(np.x - lp.x, np.y - lp.y) < Math.hypot(np.x - fp.x, np.y - fp.y)) {
+                trace.reverse();
+            }
+            // remove emitted trace
+            thin = thin.filter(t => t !== trace);
+            for (let pt of trace) {
+                np = new Point(pt.x, pt.y, z);
+                if (pt === trace[0]) {
+                    print.addOutput(preout, np, 0, moveSpeed);
+                } else {
+                    print.addOutput(preout, np, ((pt.r * 2) / nozzleSize) * shellMult, printSpeed);
+                }
             }
         }
     }
