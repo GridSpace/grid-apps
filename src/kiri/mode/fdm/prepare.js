@@ -3,7 +3,7 @@
 import { base, util } from '../../../geo/base.js';
 import { poly2polyEmit, tip2tipEmit } from '../../../geo/paths.js';
 import { newBounds } from '../../../geo/bounds.js';
-import { newPoint } from '../../../geo/point.js';
+import { newPoint, Point } from '../../../geo/point.js';
 import { newPolygon, Polygon } from '../../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { newPrint } from '../../core/print.js';
@@ -834,7 +834,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         z = slice.z,
         lastPoly;
 
-    // support alternating shell order
+        // support alternating shell order
     if (Math.abs(shellOrder) > 1 && slice.index % 2 === 1) {
         shellOrder = -shellOrder;
     }
@@ -1089,6 +1089,59 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
     }
 
+    function minThinDist(np, trace) {
+        return Math.min(
+            Math.hypot(np.x - trace[0].x, np.y - trace[0].y),
+            Math.hypot(np.x - trace.peek().x, np.y - trace.peek().y),
+        );
+    }
+
+    function outputAdaptiveWalls(thin, sort) {
+        // restore thin shell order annotation and sort on it
+        thin.forEach((a,i) => a.shell = sort[i] * shellOrder);
+        thin.forEach(t => t.shell = t.shell < 0 ? Math.abs(t.shell) + 0.5 : t.shell);
+        thin.sort((a,b) => a.shell - b.shell);
+        let np = print.lastPoint;
+        // perform nearest poly to poly algorithm on shells
+        for (;;) {
+            let min = { dist: Infinity };
+            for (let trace of thin) {
+                if (!min.trace) {
+                    min.trace = trace;
+                } else if (np && min.trace.shell === trace.shell) {
+                    let dist = minThinDist(np, trace);
+                    if (dist < min.dist) min = { dist, trace };
+                }
+            }
+            if (!min.trace) {
+                startPoint = np;
+                return;
+            }
+            let { trace } = min;
+            let fp = trace[0];
+            let lp = trace.peek();
+            // reverse trace if far end closer
+            if (np && Math.hypot(np.x - lp.x, np.y - lp.y) < Math.hypot(np.x - fp.x, np.y - fp.y)) {
+                trace.reverse();
+            }
+            // remove emitted trace
+            thin = thin.filter(t => t !== trace);
+            // retract if moving > retractDist
+            if (np && np.distTo2D(new Point(trace[0].x, trace[0].y)) > retractDist) {
+                retract();
+            }
+            let outputSpeed = trace.shell === 1 || trace.shell === 1.5 ? finishSpeed : printSpeed;
+            for (let pt of trace) {
+                np = new Point(pt.x, pt.y, z);
+                if (pt === trace[0]) {
+                    print.addOutput(preout, np, 0, moveSpeed);
+                } else {
+                    print.addOutput(preout, np, ((pt.r * 2) / nozzleSize) * shellMult, outputSpeed);
+                }
+            }
+        }
+    }
+
     /**
      * output sparse infill
      * @param {Polygon[]} polys
@@ -1185,10 +1238,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             start = 0,
             skip = false,
             lastIndex = -1,
-            raft = opt.raft || false,
+            raft = opt.raft ?? false,
             flow = opt.flow || 1,
-            near = opt.near || (antiBacklash ? false : true),
-            fast = opt.fast || false, // support infill only!
+            near = opt.near ?? (antiBacklash ? false : true),
+            fast = opt.fast ?? false, // support infill only!
             fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
             thinDist = near ? thinWall : thinWall;
 
@@ -1443,6 +1496,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
             // raft
             if (top.traces) outputTraces(top.traces);
+
+            // thin wall v3
+            if (top.thin_wall) outputAdaptiveWalls(top.thin_wall, top.thin_sort);
 
             // innermost shells
             let inner = next.innerShells() || [];
