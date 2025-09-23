@@ -58,7 +58,7 @@ const imageDescripts = {
     ["/1.png", "Tabs added to part"],
     ["/2.png", "Sliced part with tabs"],
   ],
-  camInterface:[
+  camInterface: [
     ["/1.png", "Empty Ops list"],
     ["/2.png", "Sample Ops list"],
     ["/3.png", "Ops list with history bar"],
@@ -78,8 +78,7 @@ const imageDescripts = {
  */
 export function ImageCarousel({ base, images, sml }) {
   return (
-    <div className={sml ?"carouselWrapper": ""}>
-
+    <div className={sml ? "carouselWrapper" : ""}>
       <Carousel showThumbs={false}>
         {imageDescripts[images].map(([image, caption], index) => (
           <div>
