@@ -6,42 +6,46 @@ import { ImageCarousel } from "@site/docs/src/components/carousel.js";
 
 # Interface
 
-Kiri:Moto's interface is designed for maximum access to the workspace and to present only the options that are necessary and relevant to the current action.
+Kiri:Moto's interface is designed for maximum access to the workspace, showing only the options necessary and relevant to the current action.
 
-[OBJ](https://www.cs.cmu.edu/~mbz/personal/graphics/obj.html), [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>), and [3MF](https://docs.fileformat.com/3d/3mf/) files import natively. [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics), [JPG](https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format), and [PNG](https://en.wikipedia.org/wiki/Portable_Network_Graphics) are auto-extruded into a 3D parts.
+[OBJ](https://www.cs.cmu.edu/~mbz/personal/graphics/obj.html), [STL](<https://en.wikipedia.org/wiki/STL_(file_format)>), and [3MF](https://docs.fileformat.com/3d/3mf/) files import natively. [SVG](https://en.wikipedia.org/wiki/Scalable_Vector_Graphics), [JPG](https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format), and [PNG](https://en.wikipedia.org/wiki/Portable_Network_Graphics) files are auto-extruded into 3D parts.
 
-For the CAM interface, click [here](/kiri-moto/cam)
+For the CAM interface, click [here](/kiri-moto/cam).
 
 ![A minimalist approach](/img/interface/main.png)
 
-## Top menu 
+## Top Menu
 
-On the left are buttons to move through the Arrange->Slice->Preview->Export workflow . These buttons are also available as [keyboard shortcuts](/kiri-moto/controls). Selecting an option here will automatically move through the prior steps. 
+- **Left:** Buttons to move through the `Arrange → Slice → Preview → Export` workflow. These steps are also available as [keyboard shortcuts](/kiri-moto/controls). Selecting an option here will automatically run prior steps as needed.  
+- **Center:** Clicking the [logo](/kiri-moto) opens a dialog with version selection, helpful links, and your current Kiri:Moto version. If you are unsure which version to use, check the [release notes](https://github.com/GridSpace/grid-apps/releases/) on GitHub.  
+- **Right:** Options for importing/exporting the workspace, manipulating the view, changing modes, and setting preferences. Kiri:Moto currently supports CAM, FDM, SLA, and LASER modes. Some other modes are extensions of the LASER workflow, but do not have first-class support. The [preferences menu](#preferences) will be covered later in this section.  
+  - Changing the mode updates the left menu and enables/disables mode-specific options such as the `CAM Operation` menu and the `CAM Animate` step.  
+  - Learn about K:M file types [here](/kiri-moto/faq#what-are-the-kmz-and-km-file-formats-short-for).  
 
-In the center-top, clicking the [logo](/kiri-moto) opens a dialog with options for version selection, helpful links, and a display of your current version of kiri:moto.
-if you are unsure which version to select, you can view the [release notes](https://github.com/GridSpace/grid-apps/releases/) on github.
+## Left Menu
 
-On the right are options for importing/exporting the workspace, manipulating the view, changing the mode, and setting preferences. You can learn about K:M filetypes [here](kiri-moto/faq#what-are-the-kmz-and-km-file-formats-short-for). Changing the mode changes the options available in the left menu, and enables/disables mode-specific options, such as the `CAM Operation` menu, and the `CAM Animate` step. Kiri:Moto currently supports CAM, FDM, SLA, and LASER modes. Some other modes are available as extentions of the laser workflow, but do not have first class support. The [prefrences menu](#prefrences) will be discussed later in this section.
+The left menu contains options for the current mode. These vary widely:  
+- CAM has ample documentation on [Process Options](/kiri-moto/cam/processOpts).  
+- Other modes are less documented but many options are self-explanatory if you're familiar with the manufacturing process.  
+- Hovering over an option provides tooltips. When in doubt, a quick search usually explains the option in detail.  
 
-## Left menu
+## Right Menu
 
-The left menu contains options for the current mode. These vary wildly, and although there is ample documentation on the [CAM Process Options](/kiri-moto/cam/processOpts), the same does not yet exist for the other modes. Many of the options will be self-explanitory for those familiar with the mode of manufacturing they are using, and more detail can be found by hovering over the option. Otherwise, a quick google can typically explain what the option does.
-
-## Right menu
-
-The right menu contains controls for the objects in the workspace. Hovering over the arrow on the left of the object will display options for deleting, renaming, disabling, and replacing the object. if an object is disabled, it will be displayed, but will be ignored in slicing and exporting.
-
-
+The right menu contains controls for objects in the workspace.  
+- Hovering over the arrow next to an object reveals options for deleting, renaming, disabling, or replacing it.  
+- Disabled objects remain visible but are ignored during slicing and exporting.  
 
 ## Machines Dialog
 
 ![Device Dialog](/img/interface/CAMDevice.png)
 
-The device dialog can be accessed through the settings dropdown. Once opened, it contains options for configuring a device, or finding a pre-defined one. The device dropdown will only show devices for the current mode. The options inputs will be greyed out and not editable for a stock device. The `customize` button must be selected first, and then the device can be configured. you can find more information about how K:M handles CAM devices [here](/kiri-moto/cam/devices).
-
+The device dialog is accessed through the settings dropdown. It allows you to configure a device or select a predefined one.  
+- The dropdown only shows devices available for the current mode.  
+- Stock device settings are greyed out. To modify them, click `Customize`.  
+- Learn more about how K:M handles CAM devices [here](/kiri-moto/cam/devices).  
 
 ## Preferences
-Application preferences are accessed through the settings dropdown. They are mode-dependent, but share many common options. For example, CNC preferences show animation controls.
+
+Application preferences are also accessed through the settings dropdown. These are mode-dependent but share many common options. For example, CNC preferences include animation controls.
 
 <ImageCarousel base="/img/interface/" images="prefs" />
-

@@ -1,32 +1,28 @@
 ---
-description: Overview of cam mode
+description: Overview of CAM mode
 ---
 
 import { ImageCarousel } from "@site/docs/src/components/carousel.js";
 
 # Interface
 
-The CAM interface is in most regards the same as the [general interface](/kiri-moto/interface). It is highly reccommended to familiarize yourself with the general interface before using the CAM interface.
+The CAM interface is, in most respects, the same as the [general interface](/kiri-moto/interface). It is highly recommended to familiarize yourself with the general interface before using the CAM interface.
 
-With that in mind, Here are the key differences:
+With that in mind, here are the key differences:
 
-- Operation list
+## Operation List
 
-  The Operation list defines the order in which Operations are
-  done on the model. Selecting the Plus button will open a popup
-  menu for selecting an Operation to add. The Operations are
-  draggable, enabling easy re-ordering. An operation can be
-  disabled by ctrl+clicking it. disabled operations will be
-  skipped in the slice/preview/export process. Finally,
-  The thin blue bar in the Operation list is also draggable.
-  moving the bar automitically disables all operations below it. 
-  This allows you to slice, preview and export up to a specific 
-  point in the timeline
+  The Operation List defines the order in which operations are
+  performed on the model. Selecting the **plus** button will open a
+  popup menu for choosing an operation to add. The operations are
+  draggable, enabling easy re-ordering.  
+  - An operation can be disabled by **Ctrl+clicking** it. Disabled operations will be skipped in the slice/preview/export process.  
+  - The thin blue bar in the Operation List is also draggable. Moving the bar automatically disables all operations below it. This allows you to slice, preview, and export up to a specific point in the timeline.
 
   <ImageCarousel base="/img/CAM/interface/" images="camInterface" sml />
 
-- Origin selection
+## Origin Selection
 
-  Origin selection, a feature released in v4.3 enables automatically setting an origin to points on interest on the model, including corners and arc centers.
+  Origin Selection (introduced in v4.3) enables automatically setting an origin to points of interest on the model, including corners and arc centers.
 
   ![](/img/CAM/interface/originSelect.png)
