@@ -1636,8 +1636,10 @@ details[open] summary::after {
     background-color: rgba(255,255,255,0.5);
     position: absolute;
     z-index: 30;
-    bottom: -20px;
+    bottom: calc(-4px - 1em);
     right: 0;
+    height: 1em;
+    aspect-ratio: 1 / 1 !important;
 }
 .mod-x svg {
     aspect-ratio: 1 / 1 !important;
