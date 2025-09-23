@@ -949,7 +949,9 @@ export const conf = {
         hidden: {
             "fdm-base": true,
             "fdm-cool": true,
+            "fdm-heat": true,
             "fdm-fill": true,
+            "fdm-solid": true,
             "fdm-supp": true,
             "fdm-xprt": true
         },

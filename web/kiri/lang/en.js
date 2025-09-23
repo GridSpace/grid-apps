@@ -332,14 +332,14 @@ self.lang['en-us'] = {
     se_save:        "save",
 
     // FDM LAYERS
-    sl_menu:        "paths",
+    sl_menu:        "layers",
     sl_angl_s:      "slice angle",
     sl_angl_l:      ["slice angle bias in degrees"],
     sl_lahi_s:      "layer height",
     sl_lahi_l:      ["height of each slice","layer in millimeters"],
     ad_minl_s:      "layer minimum",
     ad_minl_l:      ["adaptive min layer height","in millimeters","must be non-zero"],
-    ad_adap_s:      "adaptive",
+    ad_adap_s:      "adaptive height",
     ad_adap_l:      ["use adaptive layer heights","with 'layer height' as max","and 'layer min' as the min"],
     sl_ltop_s:      "top layers",
     sl_ltop_l:      ["number of solid layers at the top of the print or on flat areas facing up"],
@@ -363,6 +363,15 @@ self.lang['en-us'] = {
     sl_strt_s:      "layer start",
     sl_strt_l:      ["layer starting point","last = last layer end","center = part center","origin = device origin"],
 
+    // FDM SOLID
+    fs_menu:        "solid fill",
+    fi_over_s:      "shell overlap",
+    fi_over_l:      ["overlap with shell and other fill","for improved extrusion bonding","as fraction of nozzle diameter","0.0 - 2.0"],
+    fi_angl_s:      "start angle",
+    fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
+    fi_grow_s:      "area expand",
+    fi_grow_l:      ["expand projected solids","can help with solid areas","over sparse infill areas","units in millimeters"],
+
     // FDM FILL
     fi_menu:        "sparse fill",
     fi_type:        "fill type",
@@ -370,12 +379,6 @@ self.lang['en-us'] = {
     fi_pcnt_l:      ["fill density values","0.0 - 1.0"],
     fi_rept_s:      "fill repeat",
     fi_rept_l:      ["number of times to repeat","unchanged fill layers"],
-    fi_angl_s:      "solid angle",
-    fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
-    fi_grow_s:      "solid expand",
-    fi_grow_l:      ["expand projected solids","can help with solid areas","over sparse infill areas","units in millimeters"],
-    fi_over_s:      "fill overlap",
-    fi_over_l:      ["overlap with shell and other fill","for improved extrusion bonding","as fraction of nozzle diameter","0.0 - 2.0"],
     // fi_rate_s:      "print speed",
     fi_rate_l:      ["extrusion speed for infill","set to 0 to use default","output print speeds"],
 
@@ -855,7 +858,7 @@ self.lang['en-us'] = {
     ad_rdwl_l:      ["time between re-engaging","filament and movement","in milliseconds"],
     ad_scst_s:      "shell coast",
     ad_scst_l:      ["non-printing end","of perimeter shells","in millimeters"],
-    ad_msol_s:      "min solid",
+    ad_msol_s:      "min area",
     ad_msol_l:      ["minimum area (mm^2)","required to keep solid","must be > 0.1"],
     ad_mins_s:      "min speed",
     ad_mins_l:      ["minimum speed","for short segments"],
