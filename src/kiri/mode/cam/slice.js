@@ -132,15 +132,17 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     if (stock.x && stock.y && stock.z && !isIndexed) {
-        if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
+        let maxDelta = 1e-3;
+
+        if (stock.x + maxDelta < (bounds.max.x - bounds.min.x)) {
             return error('stock X too small for part. resize stock or use offset stock');
         }
 
-        if (stock.y + 0.00001 < bounds.max.y - bounds.min.y) {
+        if (stock.y + maxDelta < (bounds.max.y - bounds.min.y)) {
             return error('stock Y too small for part. resize stock or use offset stock');
         }
 
-        if (stock.z + 0.00001 < bounds.max.z - bounds.min.z) {
+        if (stock.z + maxDelta < (bounds.max.z - bounds.min.z)) {
             return error('stock Z too small for part. resize stock or use offset stock');
         }
     }
