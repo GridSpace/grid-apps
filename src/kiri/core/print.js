@@ -138,16 +138,17 @@ class Print {
         }
 
         poly.forEachPoint((point, pos, points, count) => {
-            if (first) {
-                if (options.onfirst) {
+            if (first || point.skip) {
+                // if (point.skip) console.log({ skip: point });
+                if (first && options.onfirst) {
                     options.onfirst(point);
                 }
                 // move to first output point on poly
                 let out = scope.addOutput(output, point, 0, moveSpeed, tool);
-                if (options.onfirstout) {
+                if (first && options.onfirstout) {
                     options.onfirstout(out);
                 }
-                first = false;
+                if (first) first = false;
             } else {
                 let seglen = last.distTo2D(point);
                 if (coastDist && shellMult && perimeter - seglen <= coastDist) {
@@ -158,6 +159,7 @@ class Print {
                     shellMult = 0;
                 }
                 perimeter -= seglen;
+                // to increase shellMult when point.inc set for collapsed points
                 scope.addOutput(output, point, shellMult, printSpeed, tool);
             }
             last = point;

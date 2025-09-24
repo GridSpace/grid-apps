@@ -99,6 +99,37 @@ function offset_default(params) {
             }
         }
     );
+    // look for close points on segmented polys
+    if (false)
+    for (let poly of POLY.flatten(last)) {
+        let ps = poly.segment(offset1, true);
+        let pp = ps.points;
+        let moved = false;
+        pp.push(pp[0]);
+        for (let i=0; i<pp.length; i++) {
+            let p0 = pp[i];
+            if (p0.moved) continue;
+            for (let j=i+1; j<pp.length; j++) {
+                let p1 = pp[j];
+                if (p1.moved) continue;
+                if (p0.segment === p1.segment) {
+                    continue;
+                }
+                if (p0.distTo2D(p1) < offset1) {
+                    // merge points marking point offset and skip
+                    let mid = p0.midPointTo(p1);
+                    let inc = p0.distTo2D(mid);
+                    moved = p0.moved = p1.moved = inc;
+                    p1.skip = true;
+                    p0.x = p1.x = mid.x;
+                    p0.y = p1.y = mid.y;
+                }
+            }
+        }
+        if (moved) {
+            poly.points = pp;
+        }
+    }
     return { last, gaps };
 }
 
