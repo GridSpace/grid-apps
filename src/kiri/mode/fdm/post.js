@@ -7,6 +7,7 @@ import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { getRangeParameters } from './driver.js';
 import { slicer } from '../../../geo/slicer.js';
 import { Point } from '../../../geo/point.js';
+import { Slope } from '../../../geo/slope.js';
 
 slicer.slicePost.FDM = slicePost;
 
@@ -69,7 +70,7 @@ export function slicePost(data, options) {
 };
 
 function offset_default(params) {
-    let { z, top, count, top_poly, offset1, offsetN, wasm, last, gaps } = params;
+    let { z, top, count, top_poly, offset1, offsetN, wasm, last, gaps, thin } = params;
 
     let first;
 
@@ -104,16 +105,31 @@ function offset_default(params) {
         }
     );
 
+    if (!thin) {
+        return { last, gaps };
+    }
+
+    const deltaBig = 160;
+    const deltSmall = 20;
+
     // look for close points on adjacent segmented polys and merge
     let test_polys = first !== last ? [ ...first, ...last ] : last;
-    let thin_test = POLY.flatten(test_polys).map(poly => {
+    let test_flats = POLY.flatten(test_polys);
+
+    // pre-compute segment angles
+    for (let poly of test_flats)
+    poly.forEachSegment((p0, p1) => {
+        p0.angle = new Slope(p0, p1);
+    });
+
+    // segment each poly to be tested
+    let thin_test = test_flats.map(poly => {
         return {
             poly,
             points: poly.segment(offset1, true).points
         }
     });
 
-    if (false)
     for (let pi=0, pil=thin_test.length; pi<pil; pi++) {
         for (let pj=pi; pj<pil; pj++) {
             let prec0 = thin_test[pi];
@@ -123,18 +139,19 @@ function offset_default(params) {
             let moved = false;
             for (let i=0; i<pp0.length; i++) {
                 let p0 = pp0[i];
-                if (p0.moved) continue;
+                if (p0.moved !== undefined) continue;
                 for (let j=0; j<pp1.length; j++) {
                     let p1 = pp1[j];
-                    if (p1.moved) continue;
-                    if (p0 === p1 || p0.segment === p1.segment) {
-                        continue;
-                    }
+                    if (p1.moved !== undefined) continue;
+                    if (p0 === p1 || p0.segment === p1.segment) continue;
                     let dist = p0.distTo2D(p1);
                     if (dist < offset1) {
+                        let diff = p0.segment.angle.angleDiff(p1.segment.angle,false);
+                        if (p0.segment === p1.segment && diff < deltaBig) continue;
+                        if (p0.segment !== p1.segment && diff > deltSmall && diff < deltaBig) continue;
                         // merge points marking point offset and skip
                         let mid = p0.midPointTo(p1);
-                        let inc = p0.distTo2D(mid);
+                        let inc = p0.distTo2D(mid) / offset1;
                         moved = p0.moved = p1.moved = inc;
                         p1.skip = true;
                         p0.x = p1.x = mid.x;
@@ -153,36 +170,6 @@ function offset_default(params) {
             rec.poly.points = rec.points;
         }
     }
-
-    // for (let poly of poly.segment(offset1, true)) {
-    //     let ps = poly.segment(offset1, true);
-    //     let pp = ps.points;
-    //     let moved = false;
-    //     pp.push(pp[0]);
-    //     for (let i=0; i<pp.length; i++) {
-    //         let p0 = pp[i];
-    //         if (p0.moved) continue;
-    //         for (let j=i+1; j<pp.length; j++) {
-    //             let p1 = pp[j];
-    //             if (p1.moved) continue;
-    //             if (p0.segment === p1.segment) {
-    //                 continue;
-    //             }
-    //             if (p0.distTo2D(p1) < offset1) {
-    //                 // merge points marking point offset and skip
-    //                 let mid = p0.midPointTo(p1);
-    //                 let inc = p0.distTo2D(mid);
-    //                 moved = p0.moved = p1.moved = inc;
-    //                 p1.skip = true;
-    //                 p0.x = p1.x = mid.x;
-    //                 p0.y = p1.y = mid.y;
-    //             }
-    //         }
-    //     }
-    //     if (moved) {
-    //         poly.points = pp;
-    //     }
-    // }
 
     return { last, gaps };
 }
@@ -712,8 +699,12 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                 case "adaptive":
                     ret = thin_type_3({ z, top, count, offsetN });
                     break;
+                case "basic":
                 default:
-                    ret = offset_default({ z, top, count, top_poly, offset1, offsetN, wasm });
+                    ret = offset_default({
+                        z, top, count, top_poly, offset1, offsetN, wasm,
+                        thin: opt.thinType === 'basic'
+                    });
                     break;
             }
             last = ret.last ?? last;

@@ -115,6 +115,7 @@ const LISTS = {
     ],
     thin: [
         { name: "off" },
+        { name: "basic" },
         { name: "adaptive" },
         { name: "legacy 1" },
         { name: "legacy 2" }

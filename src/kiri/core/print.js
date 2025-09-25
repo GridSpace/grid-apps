@@ -137,18 +137,21 @@ class Print {
             printSpeed = minSpeed + (printSpeed - minSpeed) * (perimeter / process.outputShortPoly);
         }
 
+        let lpo;
         poly.forEachPoint((point, pos, points, count) => {
-            if (first || point.skip) {
+            if (point.skip && lpo?.skip) {
+                scope.addOutput(output, point, 0, moveSpeed, tool);
+            } else if (first) {
                 // if (point.skip) console.log({ skip: point });
-                if (first && options.onfirst) {
+                if (options.onfirst) {
                     options.onfirst(point);
                 }
                 // move to first output point on poly
                 let out = scope.addOutput(output, point, 0, moveSpeed, tool);
-                if (first && options.onfirstout) {
+                if (options.onfirstout) {
                     options.onfirstout(out);
                 }
-                if (first) first = false;
+                first = false;
             } else {
                 let seglen = last.distTo2D(point);
                 if (coastDist && shellMult && perimeter - seglen <= coastDist) {
@@ -159,10 +162,12 @@ class Print {
                     shellMult = 0;
                 }
                 perimeter -= seglen;
+                // increase mult by % of point moved relative to nozzle radius
+                let multOut = shellMult + (point.moved ?? 0);
                 // to increase shellMult when point.inc set for collapsed points
-                scope.addOutput(output, point, shellMult, printSpeed, tool);
+                scope.addOutput(output, point, multOut, printSpeed, tool);
             }
-            last = point;
+            last = lpo = point;
         }, close, closest.index);
 
         this.lastPoly = poly;
