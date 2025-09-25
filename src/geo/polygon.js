@@ -2326,7 +2326,7 @@ export class Polygon {
 
     // split long straight lines into segments no longer than max
     // and return a new polygon
-    segment(max = 1, mark) {
+    segment(max = 1, mark, wrap) {
         const newp = [];
         const points = this.points;
         const length = points.length;
@@ -2358,6 +2358,9 @@ export class Polygon {
             }
         }
         if (newp.length > length) {
+            if (wrap) {
+                newp.push(newp[0]);
+            }
             return newPolygon().addPoints(newp.map(p => p.clone(['segment']))).setOpenValue(this.open);
         }
         return this;

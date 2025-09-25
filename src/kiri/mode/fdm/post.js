@@ -70,6 +70,9 @@ export function slicePost(data, options) {
 
 function offset_default(params) {
     let { z, top, count, top_poly, offset1, offsetN, wasm, last, gaps } = params;
+
+    let first;
+
     // standard wall offsetting strategy
     POLY.offset(
         top_poly,
@@ -81,6 +84,7 @@ function offset_default(params) {
             outs: top.shells,
             flat: true,
             call: (polys, onCount) => {
+                first = first || polys;
                 last = polys;
                 // mark each poly with depth (offset #) starting at 0
                 for (let p of polys) {
@@ -99,37 +103,87 @@ function offset_default(params) {
             }
         }
     );
-    // look for close points on segmented polys
+
+    // look for close points on adjacent segmented polys and merge
+    let test_polys = first !== last ? [ ...first, ...last ] : last;
+    let thin_test = POLY.flatten(test_polys).map(poly => {
+        return {
+            poly,
+            points: poly.segment(offset1, true).points
+        }
+    });
+
     if (false)
-    for (let poly of POLY.flatten(last)) {
-        let ps = poly.segment(offset1, true);
-        let pp = ps.points;
-        let moved = false;
-        pp.push(pp[0]);
-        for (let i=0; i<pp.length; i++) {
-            let p0 = pp[i];
-            if (p0.moved) continue;
-            for (let j=i+1; j<pp.length; j++) {
-                let p1 = pp[j];
-                if (p1.moved) continue;
-                if (p0.segment === p1.segment) {
-                    continue;
-                }
-                if (p0.distTo2D(p1) < offset1) {
-                    // merge points marking point offset and skip
-                    let mid = p0.midPointTo(p1);
-                    let inc = p0.distTo2D(mid);
-                    moved = p0.moved = p1.moved = inc;
-                    p1.skip = true;
-                    p0.x = p1.x = mid.x;
-                    p0.y = p1.y = mid.y;
+    for (let pi=0, pil=thin_test.length; pi<pil; pi++) {
+        for (let pj=pi; pj<pil; pj++) {
+            let prec0 = thin_test[pi];
+            let prec1 = thin_test[pj];
+            let pp0 = prec0.points;
+            let pp1 = prec1.points;
+            let moved = false;
+            for (let i=0; i<pp0.length; i++) {
+                let p0 = pp0[i];
+                if (p0.moved) continue;
+                for (let j=0; j<pp1.length; j++) {
+                    let p1 = pp1[j];
+                    if (p1.moved) continue;
+                    if (p0 === p1 || p0.segment === p1.segment) {
+                        continue;
+                    }
+                    let dist = p0.distTo2D(p1);
+                    if (dist < offset1) {
+                        // merge points marking point offset and skip
+                        let mid = p0.midPointTo(p1);
+                        let inc = p0.distTo2D(mid);
+                        moved = p0.moved = p1.moved = inc;
+                        p1.skip = true;
+                        p0.x = p1.x = mid.x;
+                        p0.y = p1.y = mid.y;
+                    }
                 }
             }
-        }
-        if (moved) {
-            poly.points = pp;
+            if (moved) {
+                prec0.moved = prec1.moved = true;
+            }
         }
     }
+
+    for (let rec of thin_test) {
+        if (rec.moved) {
+            rec.poly.points = rec.points;
+        }
+    }
+
+    // for (let poly of poly.segment(offset1, true)) {
+    //     let ps = poly.segment(offset1, true);
+    //     let pp = ps.points;
+    //     let moved = false;
+    //     pp.push(pp[0]);
+    //     for (let i=0; i<pp.length; i++) {
+    //         let p0 = pp[i];
+    //         if (p0.moved) continue;
+    //         for (let j=i+1; j<pp.length; j++) {
+    //             let p1 = pp[j];
+    //             if (p1.moved) continue;
+    //             if (p0.segment === p1.segment) {
+    //                 continue;
+    //             }
+    //             if (p0.distTo2D(p1) < offset1) {
+    //                 // merge points marking point offset and skip
+    //                 let mid = p0.midPointTo(p1);
+    //                 let inc = p0.distTo2D(mid);
+    //                 moved = p0.moved = p1.moved = inc;
+    //                 p1.skip = true;
+    //                 p0.x = p1.x = mid.x;
+    //                 p0.y = p1.y = mid.y;
+    //             }
+    //         }
+    //     }
+    //     if (moved) {
+    //         poly.points = pp;
+    //     }
+    // }
+
     return { last, gaps };
 }
 
