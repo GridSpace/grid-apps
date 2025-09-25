@@ -167,7 +167,12 @@ function offset_default(params) {
 
     for (let rec of thin_test) {
         if (rec.moved) {
-            rec.poly.points = rec.points;
+            let last_seg;
+            rec.poly.points = rec.points.filter((p,i) => {
+                let keep = (last_seg !== p.segment || p.moved || p.skip);
+                last_seg = p.segment;
+                return keep;
+            });
         }
     }
 
