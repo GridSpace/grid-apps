@@ -58,7 +58,7 @@ export class OpHelical extends CamOp {
       }
       let { zmin, zmax, diam, center, interior, faces } = res;
       // console.log({ zmin, zmax, diam, center, interior });
-      let radius = diam >> 1;
+      let radius = diam /2;
       zmax = fromTop ?  stock.z: zmax;
 
       let radAdd,
