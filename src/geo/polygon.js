@@ -1104,6 +1104,18 @@ export class Polygon {
         return this.first().isEqual(this.last());
     }
 
+    closeIf(dist = 1) {
+        let closeDist = this.first().distTo2D(this.last());
+        if (closeDist < 0.001) {
+            this.points.pop();
+            return this.setClosed();
+        } else if (closeDist <= dist) {
+            return this.setClosed();
+        } else {
+            return this.setOpen();
+        }
+    }
+
     fixClosed() {
         if (this.appearsClosed()) {
             this.points.pop();
@@ -2042,13 +2054,9 @@ export class Polygon {
 
         // use expand / deflate technique instead
         if (opt.pump) {
-            let p2 = POLY.offset([this], opt.pump, {
-                z
-            });
+            let p2 = POLY.offset([this], opt.pump, { z });
             if (p2) {
-                p2 = POLY.offset(p2, -opt.pump, {
-                    z
-                });
+                p2 = POLY.offset(p2, -opt.pump, { z });
                 return p2;
             }
             return null;
@@ -2318,7 +2326,7 @@ export class Polygon {
 
     // split long straight lines into segments no longer than max
     // and return a new polygon
-    segment(max = 1) {
+    segment(max = 1, mark, wrap) {
         const newp = [];
         const points = this.points;
         const length = points.length;
@@ -2330,6 +2338,7 @@ export class Polygon {
             const dy = p2.y - p1.y;
             const dl = Math.sqrt(dx * dx + dy * dy);
             newp.push(p1);
+            if (mark) p1.segment = p1;
             if (dl < max) {
                 continue;
             }
@@ -2344,10 +2353,15 @@ export class Polygon {
                 newp.push(newPoint(ox, oy, (p1.z + p2.z) / 2));
                 ox += ix;
                 oy += iy;
+                // mark new point with first point of originating segment
+                if (mark) newp.peek().segment = p1;
             }
         }
         if (newp.length > length) {
-            return newPolygon().addPoints(newp.map(p => p.clone())).setOpenValue(this.open);
+            if (wrap) {
+                newp.push(newp[0]);
+            }
+            return newPolygon().addPoints(newp.map(p => p.clone(['segment']))).setOpenValue(this.open);
         }
         return this;
     }

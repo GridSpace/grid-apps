@@ -25,6 +25,16 @@ export function originSelect() {
     env.hover = pointHover;
     env.hoverUp = pointHoverUp;
 
+    // less precise point key for hi-res meshes that leads to dups
+    function updateKey(pt) {
+        pt._key = [
+            ((pt.x * 1000) | 0),
+            ((pt.y * 1000) | 0),
+            ((pt.z * 1000) | 0)
+        ].join(' ');
+        return pt;
+    }
+
     CAM.traces((ids) => {
         api.hide.alert(alert);
         alert = api.show.alert("select origin<br>[esc] to cancel", 1000);
@@ -53,14 +63,14 @@ export function originSelect() {
             });
             for (let poly of polys) {
                 if (poly.circularity() >= 0.99) {
-                    let center = poly.calcCircleCenter();
+                    let center = updateKey(poly.calcCircleCenter());
                     if (points[center.key]) {
                         continue;
                     }
                     addpoint(widget, center);
                 } else if (poly.isOpen()) {
-                    incpoint(widget, poly.first());
-                    incpoint(widget, poly.last());
+                    incpoint(widget, updateKey(poly.first()));
+                    incpoint(widget, updateKey(poly.last()));
                 }
             }
         });

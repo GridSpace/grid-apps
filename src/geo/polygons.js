@@ -645,7 +645,7 @@ export function offset(polys, dist, opts = {}) {
         for (let poly of polys) {
             // convert to clipper format
             poly = poly.toClipper();
-            if (clean) poly = CleanPolygons(poly, config.clipperClean);
+            if (clean) poly = CleanPolygons(poly, opts.cleanDist ?? config.clipperClean);
             if (simple) poly = SimplifyPolygons(poly, fill);
             coff.AddPaths(poly, join, type);
         }
@@ -871,6 +871,7 @@ export function fillArea(polys, angle, spacing, output, minLen, maxLen) {
  * @returns {Point[]}
  */
 export function rayIntersect(start, slope, polygons, for_fill) {
+    throw "deprecated";
     let i = 0,
         flat = [],
         points = [],

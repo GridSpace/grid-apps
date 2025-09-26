@@ -426,7 +426,7 @@ export function init() {
             let idn = new Raycaster(rp, dn)
                 .intersectObjects(targets, false)
                 .filter(t => !t.object.pillar);
-            if (idn.length && idn.length % 2 === 0) {
+            if (idn.length) {
                 iw = iup[0].object.widget || iw;
                 let wa = api.widgets.annotate(iw.id);
                 let ws = (wa.support = wa.support || []);
@@ -471,10 +471,11 @@ export function init() {
             iw = null;
         }
         p1 = point;
+        // looking up by default (assumes platform intersect)
         let dir = new Vector3(0,1,0)
         let ray = new Raycaster(point, dir);
         let rz = int && int.face ? Math.atan2(int.face.normal.y, int.face.normal.x) : 0;
-        // when on object, project down on downward faces
+        // when intersecting underside of object, project down
         if (int && int.face && int.face.normal.z < -0.1) {
             dir.y = -1;
         }
@@ -482,7 +483,7 @@ export function init() {
         let i2 = ray.intersectObjects(targets, false)
             .filter(t => !t.object.pillar)  // eliminate other pillars
             .filter(i => i.distance > 0.1); // false matches close to origin of ray
-        if (i2.length && i2.length % 2 === 0) {
+        if (i2.length) {
             p2 = i2[0].point;
             iw = i2[0].object.widget || iw;
             let p1y = Math.max(0, p1.y);
