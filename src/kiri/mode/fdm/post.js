@@ -152,8 +152,8 @@ function offset_default(params) {
                         // merge points marking point offset and skip
                         let mid = p0.midPointTo(p1);
                         let inc = p0.distTo2D(mid) / offset1;
-                        moved = p0.moved = p1.moved = inc;
-                        p1.skip = true;
+                        moved = p0.moved = p1.moved = inc.round(4);
+                        p1.skip = 1;
                         p0.x = p1.x = mid.x;
                         p0.y = p1.y = mid.y;
                     }
@@ -168,6 +168,8 @@ function offset_default(params) {
     for (let rec of thin_test) {
         if (rec.moved) {
             let last_seg;
+            // tag for codec extended point encoding
+            rec.poly._epk = ["moved", "skip"];
             rec.poly.points = rec.points.filter((p,i) => {
                 let keep = (last_seg !== p.segment || p.moved || p.skip);
                 last_seg = p.segment;
