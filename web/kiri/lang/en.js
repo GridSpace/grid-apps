@@ -360,8 +360,8 @@ self.lang['en-us'] = {
     sl_line_l:      ["extrusion width in millimeters","0 = nozzle diameter"],
     sl_ordr_s:      "shell order",
     sl_ordr_l:      ["output shell order","inside to outside","or outside to inside","affects surface quality"],
-    sl_strt_s:      "layer start",
-    sl_strt_l:      ["layer starting point","last = last layer end","center = part center","origin = device origin"],
+    sl_strt_s:      "start point",
+    sl_strt_l:      ["layer starting point","last = where last layer ended","center = part center","origin = device origin","random = yolo"],
 
     // FDM SOLID
     fs_menu:        "solid fill",
@@ -876,8 +876,8 @@ self.lang['en-us'] = {
     ad_altr_l:      ["alternate shell winding order","clockwise / counter-clockwise","may reduce warping in thin areas","and help with belt edge adhesion"],
     ad_zint_s:      "interleave z",
     ad_zint_l:      ["interleave Z heights with odd number shells"],
-    ad_lret_s:      "layer retract",
-    ad_lret_l:      ["force filament retraction","between layers"],
+    ad_lret_s:      "force retract",
+    ad_lret_l:      ["force filament retraction between layers"],
     ad_agap_s:      "avoid gaps",
     ad_agap_l:      ["route around gaps rather","than perform a retract","when possible"],
     ad_play_s:      "polish layers",
