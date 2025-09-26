@@ -338,7 +338,7 @@ export const conf = {
                 outputLoops: 0,
                 outputInvertX: false,
                 outputInvertY: false,
-                sliceDetectThin: "basic",
+                sliceDetectThin: "off",
                 sliceMinHeight: 0,
                 sliceAdaptive: false,
                 zHopDistance: 0.2,

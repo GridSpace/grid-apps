@@ -114,7 +114,7 @@ function offset_default(params) {
 
     // look for close points on adjacent segmented polys and merge
     let test_polys = first !== last ? [ ...first, ...last ] : last;
-    let test_flats = POLY.flatten(test_polys);
+    let test_flats = POLY.flatten(test_polys ?? []);
 
     // pre-compute segment angles
     for (let poly of test_flats)
