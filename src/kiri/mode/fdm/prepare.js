@@ -41,6 +41,7 @@ export async function fdm_prepare(widgets, settings, update) {
         zneg = 0,
         zoff = 0,
         zmin = 0,
+        zmax = 0,
         shield,
         output = [],
         layerout = [];
@@ -224,6 +225,7 @@ export async function fdm_prepare(widgets, settings, update) {
         }
         for (let slice of widget.slices) {
             zmin = Math.min(zmin, slice.z);
+            zmax = Math.max(zmax, slice.z);
             if (!slice.supports) {
                 continue;
             }
@@ -468,6 +470,8 @@ export async function fdm_prepare(widgets, settings, update) {
     let lastWidget;
     let lastExt;
     let lastOut;
+
+    print.zmax = zmax;
 
     // walk cake layers bottom up
     for (let layer of cake) {
@@ -1474,6 +1478,13 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
             // control of layer start point
             switch (process.sliceLayerStart) {
+                case "spiral": {
+                    let center = top.poly.bounds.center();
+                    let angle = (Math.PI * 2) * (slice.z / print.zmax);
+                    let x = center.x + Math.cos(angle)*10000;
+                    let y = center.y + Math.sin(angle)*10000;
+                    startPoint = newPoint(x,y,startPoint.z);
+                    } break;
                 case "last":
                     break;
                 case "random":

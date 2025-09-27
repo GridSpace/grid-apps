@@ -848,7 +848,7 @@ self.lang['en-us'] = {
 
     // FDM ADVANCED
     ad_menu:        "expert",
-    ad_rdst_s:      "retract dist",
+    ad_rdst_s:      "retract distance",
     ad_rdst_l:      ["amount to retract filament","for long moves. in millimeters"],
     ad_rrat_s:      "retract rate",
     ad_rrat_l:      ["speed of filament","retraction in mm/s"],
@@ -866,7 +866,7 @@ self.lang['en-us'] = {
     ad_spol_l:      ["polygons shorter than this","will have their print speed","scaled down to min speed","in millimeters"],
     ad_arct_s:      "arc tolerance",
     ad_arct_l:      ["convert faceted lines to arcs","center point drift tolerance","when matching arc points","consider values around 0.15","in millimeters","0 to disable"],
-    ad_zhop_s:      "z hop dist",
+    ad_zhop_s:      "z hop distance",
     ad_zhop_l:      ["amount to raise z","on retraction moves","in millimeters","0 to disable"],
     ad_abkl_s:      "anti-backlash",
     ad_abkl_l:      ["for better flat surface finish","use micro-movements to cancel","backlash in solid layer output","in millimeters","0 to disable","if your firmware has M425","put that in the gcode header","and leave this as 0"],

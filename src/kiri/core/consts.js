@@ -27,6 +27,7 @@ const LISTS = {
         { name: "center" },
         { name: "origin" },
         { name: "random" },
+        { name: "spiral" },
     ],
     infill: [
         { name: "none" },
