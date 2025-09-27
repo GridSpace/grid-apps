@@ -111,6 +111,8 @@ export function fdm_export(print, online, ondone, ondebug) {
             progress: 0,
             nozzle: tool,
             tool: tool,
+            oid: '',
+            oname: '',
             model_labels: model_labels.sort().join(',')
         },
         pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
@@ -620,6 +622,8 @@ export function fdm_export(print, online, ondone, ondebug) {
                     let b64 = encodeBitOffset(off);
                     append(`; start object id: ${out.widget.track.grid_id}`);
                     isBambu && append(`M624 ${b64}`);
+                    subst.oid = out.widget.track.grid_id;
+                    subst.oname = out.widget.meta.file;
                 }
                 cwidget = out.widget;
             }

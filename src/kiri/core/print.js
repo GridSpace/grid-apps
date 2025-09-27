@@ -176,6 +176,14 @@ class Print {
     }
 
     constReplace(str, consts, start, pad, short) {
+        function tryeval(str) {
+            try {
+                return eval(`{ ${str} }`)
+            } catch (e) {
+                console.log({ eval_error: e, str });
+                return str;
+            }
+        }
         let cs = str.indexOf("{", start || 0),
             ce = str.indexOf("}", cs),
             tok, nutok, nustr;
@@ -199,8 +207,7 @@ class Print {
             }
             eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(4) }`);
             eva.push(`try {( ${tok} )} catch (e) {console.log(e);0}`);
-            let scr = eva.join('');
-            let evl = eval(`{ ${scr} }`);
+            let evl = tryeval(eva.join(''));
             nutok = evl;
             if (pad === 666) {
                 return evl;
