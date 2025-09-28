@@ -100,11 +100,12 @@
 * subfolder parameter for dropped files
 * auto-kick check box in preferences
 
-
 # Mesh:Tool
 
 * add undo/redo
 * add TextGeometry
+* https://threejs.org/docs/#examples/en/geometries/TextGeometry
+* https://dustinpfister.github.io/2023/07/05/threejs-text-geometry/
 * font to path with https://github.com/paulzi/svg-text-to-path
 * click to repair normals based on a known good (selected) face
 * send to Kiri:Moto workspace (or update model vertices in place)
@@ -116,3 +117,7 @@
 * fix mirror to work with groups (just models currently)
 * add analyze results dialog
 * remove/hide auto-repair function
+
+# Other
+
+* preferred icons https://icons.getbootstrap.com/

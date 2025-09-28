@@ -142,6 +142,7 @@ export async function fdm_prepare(widgets, settings, update) {
                 });
                 layerout.z = zoff + height;
                 layerout.height = height;
+                layerout.print_time = printPoint.layer_time;
                 output.append(layerout);
 
                 layerout = [];
@@ -196,7 +197,7 @@ export async function fdm_prepare(widgets, settings, update) {
                 });
             });
 
-            print.addPrintPoints(preout, layerout, null);
+            print.addPrintPoints(preout, layerout);
 
             if (preout.length) {
                 // retract between brims and print
@@ -472,6 +473,7 @@ export async function fdm_prepare(widgets, settings, update) {
     let lastOut;
 
     print.zmax = zmax;
+    print.total_time = 0;
 
     // walk cake layers bottom up
     for (let layer of cake) {
@@ -574,6 +576,8 @@ export async function fdm_prepare(widgets, settings, update) {
                     }
                 }
             );
+            layerout.print_time = printPoint.layer_time;
+            print.total_time += printPoint.layer_time;
             print.setWidget(null);
 
             lastOut = slice;
@@ -1084,6 +1088,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             }
         } else {
             let finishShell = poly.depth === 0 && !firstLayer;
+            let scarf = (slice.index > 0 && traceNo === 0 && z - startPoint?.z > 1e-3) ? scarfLength : 0;
             startPoint = print.polyPrintPath(poly, startPoint, preout, {
                 accel: finishShell,
                 ccw: opt.shell && process.outputAlternating && slice.index % 2,
@@ -1091,10 +1096,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 extrude: numOrDefault(opt.extrude, shellMult),
                 nozzleSize,
                 rate: finishShell ? finishSpeed : printSpeed,
-                scarf: (traceNo === 0 && z - startPoint?.z > 1e-3) ? scarfLength : 0,
+                scarf,
                 tool: extruder,
-                wipe: process.outputWipeDistance || 0,
-                onfirst: function(firstPoint) {
+                onfirst: (firstPoint, preout) => {
                     let from = seedPoint || startPoint;
                     if (from.distTo2D(firstPoint) > retractDist) {
                         if (intersectsTop(from, firstPoint)) {
@@ -1576,23 +1580,21 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
     // adjust layer output speeds (by slowing them down)
     // if layer print time is less than minimum (required for cooling)
-    if (minLayerTime) {
-        let lp, td = 0, tt = 0;
-        for (let p of preout) {
-            if (!p.emit) continue;
-            let mms = p.speed ?? 1;
-            let dst = lp?.distTo2D(p.point) ?? 0;
-            if (dst) {
-                tt += (dst/mms);
-                td += dst;
-            }
-            lp = p.point;
+    let lp, td = 0, tt = 0;
+    for (let p of preout) {
+        if (!p.emit) continue;
+        let mms = p.speed ?? 1;
+        let dst = lp?.distTo2D(p.point) ?? 0;
+        if (dst) {
+            tt += (dst/mms);
+            td += dst;
         }
-        if (tt < minLayerTime) {
-            let fact = tt / minLayerTime;
-            for (let p of preout) {
-                if (p.emit) p.speed *= fact;
-            }
+        lp = p.point;
+    }
+    if (minLayerTime && tt < minLayerTime) {
+        let fact = tt / minLayerTime;
+        for (let p of preout) {
+            if (p.emit) p.speed *= fact;
         }
     }
 
@@ -1602,7 +1604,12 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     }
 
     // add offset points to total print
-    print.addPrintPoints(preout, output, origin, extruder);
+    print.addPrintPoints(preout, output);
 
-    return startPoint.add(offset);
+    // create next layer start point and annotate
+    // with print time for previous layer (hack to
+    // avoid changing return signature rn)
+    let newStart = startPoint.add(offset);
+    newStart.layer_time = Math.max(tt, minLayerTime);
+    return newStart;
 }

@@ -80,11 +80,9 @@ class Print {
         return lastOut;
     }
 
-    addPrintPoints(input, output, startPoint, tool) {
+    addPrintPoints(input, output) {
         if (this.startPoint && input.length > 0) {
             this.lastPoint = this.startPoint;
-            // TODO: revisit seek to origin as the first move
-            // addOutput(output, startPoint, 0, undefined, tool);
         }
         output.appendAll(input);
     }
@@ -120,11 +118,11 @@ class Print {
         const { settings } = scope;
         const { process } = settings;
 
-        let shortDist = process.outputShortDistance,
-            shellMult = numOrDefault(options.extrude, process.outputShellMult),
+        let shellMult = numOrDefault(options.extrude, process.outputShellMult),
             printSpeed = options.rate || process.outputFeedrate,
             moveSpeed = process.outputSeekrate,
             minSpeed = process.outputMinSpeed,
+            nozzleSize = options.nozzleSize,
             coastDist = options.coast || 0,
             closest = options.simple ? poly.first() : poly.findClosestPointTo(startPoint),
             perimeter = poly.perimeter(),
@@ -177,20 +175,20 @@ class Print {
                 scarf -= d;
                 if (scarf <= 0) break;
             }
-            let scale = 0.25; // flow compensation on overlap
-            let mid = (1 / sp.length) * 0.75; // flow compensation (- half step)
+            let fcs = 1.0; // flow compensation seam
+            let fco = (1 / sp.length) * 0.0; // flow compensation offset (- half step)
             let zd = (epz - spz) / sp.length;
             let zi = 1;
             for (let p of sp) {
                 p.z -= zd * (sp.length - zi);
-                p.moved = (((zi++) / sp.length) * scale) - 1 - mid;
+                p.moved = (((zi++) / sp.length) * fcs) - 1 - fco;
             }
             let esp = sp.map(p => p.clone()); // ending scarf points
             for (let p of esp) {
                 p.z = epz;
-                p.moved = (((--zi) / esp.length) * scale) - 1 - mid;
+                p.moved = (((--zi) / esp.length) * fcs) - 1 - fco;
             }
-            esp.pop(); // stop short to prevent overlap bulge
+            // esp.pop(); // stop short to prevent overlap bulge
             pp.push(...esp);
             // console.log({ poly, spz, epz, zd, sp, esp });
             scarf = true;
@@ -208,7 +206,7 @@ class Print {
             } else if (first) {
                 // if (point.skip) console.log({ skip: point });
                 if (options.onfirst) {
-                    options.onfirst(point);
+                    options.onfirst(point, output);
                 }
                 // move to first output point on poly
                 let out = scope.addOutput(output, point, 0, moveSpeed, tool);
