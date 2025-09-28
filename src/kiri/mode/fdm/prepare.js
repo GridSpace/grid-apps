@@ -800,6 +800,8 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         process = opt.params || settings.process,
         originCenter = device.originCenter || bedRound,
         extruder = parseInt(slice.extruder || 0),
+        scarfLength = process.outputScarfLength || 0,
+        minLayerTime = process.outputMinLayerTime || 0,
         nozzleSize = process.sliceLineWidth || device.extruders[extruder].extNozzle,
         firstLayer = (opt.first || false) && !opt.support,
         thinWall = nozzleSize * (opt.thinWall || 1.75),
@@ -1036,8 +1038,8 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         return false;
     }
 
-    // solid infill
-    function outputTraces(poly, opt = {}) {
+    // output shell wall
+    function outputTraces(poly, opt = {}, traceNo = 0) {
         if (!poly) return;
         if (Array.isArray(poly)) {
             if (opt.sort) {
@@ -1070,26 +1072,28 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                     if (next) {
                         last = next;
                         polys.remove(next);
-                        outputTraces(next, opt);
+                        outputTraces(next, opt, traceNo++);
                     } else {
                         last = null;
                     }
                 }
             } else {
                 outputOrderClosest(poly, function(next) {
-                    outputTraces(next, opt);
+                    outputTraces(next, opt, traceNo++);
                 }, null);
             }
         } else {
             let finishShell = poly.depth === 0 && !firstLayer;
             startPoint = print.polyPrintPath(poly, startPoint, preout, {
-                ccw: opt.shell && process.outputAlternating && slice.index % 2,
-                tool: extruder,
-                rate: finishShell ? finishSpeed : printSpeed,
                 accel: finishShell,
-                wipe: process.outputWipeDistance || 0,
+                ccw: opt.shell && process.outputAlternating && slice.index % 2,
                 coast: firstLayer ? 0 : coastDist,
                 extrude: numOrDefault(opt.extrude, shellMult),
+                nozzleSize,
+                rate: finishShell ? finishSpeed : printSpeed,
+                scarf: (traceNo === 0 && z - startPoint?.z > 1e-3) ? scarfLength : 0,
+                tool: extruder,
+                wipe: process.outputWipeDistance || 0,
                 onfirst: function(firstPoint) {
                     let from = seedPoint || startPoint;
                     if (from.distTo2D(firstPoint) > retractDist) {
@@ -1567,6 +1571,28 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
         if (y) {
             outputSparse(y, 0, process.polishSpeed);
+        }
+    }
+
+    // adjust layer output speeds (by slowing them down)
+    // if layer print time is less than minimum (required for cooling)
+    if (minLayerTime) {
+        let lp, td = 0, tt = 0;
+        for (let p of preout) {
+            if (!p.emit) continue;
+            let mms = p.speed ?? 1;
+            let dst = lp?.distTo2D(p.point) ?? 0;
+            if (dst) {
+                tt += (dst/mms);
+                td += dst;
+            }
+            lp = p.point;
+        }
+        if (tt < minLayerTime) {
+            let fact = tt / minLayerTime;
+            for (let p of preout) {
+                if (p.emit) p.speed *= fact;
+            }
         }
     }
 

@@ -31,27 +31,21 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
-* `F` min layer time
-* `F` separate bridging speed / fan control
-* `F` elephant foot compensation
-* `F` inner / outer perimeter compensation
-* `F` better thin-wall (like arachne)
-* `F` add scarf seams
-* `F` add 'random' and 'seam' start point options
+* `F` new parameter to cap output flow rate (on printer device)
+* `F` new parameters for bridging speed / bridge fan control
+* `F` new base paremeter for hole and perimeter compensation
+* `F` new parameters for inner / outer perimeter compensation
 * `F` convert ranges to z offsets while continuing to show layer #
 * `F` support pillar top/bottom should conform to part
 * `F` more explicit line width control with ranges and min/max adaptive
 * `F` test outlining solid projected areas (internally)
 * `F` gradient infill https://www.youtube.com/watch?v=hq53gsYREHU&feature=emb_logo
-* `F` feather sharp tips by reducing extrusion in area of overlap
 * `F` segment large flat areas on first layer to mitigate peeling
 * `F` option to support interior bridges when 0% infill
 * `F` calculate filament use per extruder per print
 * `F` expand internal supporting flats / solids before projection (threshold)
 
-* `P` reduce fan speed, feed rate, and extrusion factor for bridges
 * `P` auto purge pillars when quick layers are detected for extra cooling
-* `P` extruder + filament max flow rate cap in planner
 * `P` solid fill the tops of supports for down facing flats
 
 # FDM - BELT
@@ -91,8 +85,8 @@
 * `F` ease-in and ease-out especially on tab cut-out start/stop
 * `F` maintain several part orientations + op chains in a single profile
 
+* `P` outer outside corners as arc moves
 * `P` improve parser - do not require spaced tokens and support implied G0 / G1
-* `P` outer corner arc moves
 * `P` log Z interpolation for contour XYZ moves
 * `P` option to start with the smallest poly by area on layer change
 * `P` redo all path route / planning in prepare to account for terrain before camOut

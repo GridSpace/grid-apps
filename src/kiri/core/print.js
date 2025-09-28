@@ -98,6 +98,7 @@ class Print {
      * @param {Array} output - the array to print to
      * @param {Object} [options] - optional parameters
      * @param {boolean} [options.ccw] - set the polygon to be counter-clockwise
+     * @param {boolean} [options.scarf] - scarf seam permitted
      * @param {number} [options.extrude] - extrude factor for the polygon
      * @param {number} [options.rate] - print speed in mm/s
      * @param {number} [options.coast] - distance to coast at the end of the polygon
@@ -128,6 +129,7 @@ class Print {
             closest = options.simple ? poly.first() : poly.findClosestPointTo(startPoint),
             perimeter = poly.perimeter(),
             close = !options.open,
+            scarf = !poly.open ? (options.scarf ?? 0) : false,
             tool = options.tool,
             last = startPoint,
             first = true;
@@ -137,8 +139,70 @@ class Print {
             printSpeed = minSpeed + (printSpeed - minSpeed) * (perimeter / process.outputShortPoly);
         }
 
+        // if not starting at first point in poly, rotate to move start to index = 0
+        let pp = poly.points;
+        if (closest.index > 0) {
+            let cio = pp.indexOf(closest.point);
+            pp = poly.points = [ ...pp.slice(cio), ...pp.slice(0, cio) ];
+        }
+
+        // scarf sanity checks
+        if (scarf) {
+            // cancel scarf for thin wall polys
+            if (pp.filter(p => p.skip || p.moved).length) {
+                scarf = 0;
+            } else {
+                // cancel scarf if any point.z differs
+                let z0 = pp[0].z;
+                let zd = 0;
+                for (let p of pp) zd += Math.abs(p.z - z0);
+                if (zd) scarf = 0;
+            }
+            // console.log({ scarf });
+        }
+
+        // when creating scarf seams, segment poly up to seam length
+        // create array of step up points at start of poly with increasing z
+        // and increasing shellMult and then append the same points on the back
+        // end of the poly with fixed z and decreasing shellMult
+        if (scarf) {
+            let epz = Math.max(...poly.points.map(p => p.z));
+            let spz = startPoint.z;
+            poly = poly.segment(options.nozzleSize ?? 0.4, false, false, scarf * 2);
+            pp = poly.points;
+            let lp, sp = [];
+            for (let p of pp) {
+                let d = lp?.distTo2D(p) ?? 0;
+                sp.push(lp = p);
+                scarf -= d;
+                if (scarf <= 0) break;
+            }
+            let scale = 0.25; // flow compensation on overlap
+            let mid = (1 / sp.length) * 0.75; // flow compensation (- half step)
+            let zd = (epz - spz) / sp.length;
+            let zi = 1;
+            for (let p of sp) {
+                p.z -= zd * (sp.length - zi);
+                p.moved = (((zi++) / sp.length) * scale) - 1 - mid;
+            }
+            let esp = sp.map(p => p.clone()); // ending scarf points
+            for (let p of esp) {
+                p.z = epz;
+                p.moved = (((--zi) / esp.length) * scale) - 1 - mid;
+            }
+            esp.pop(); // stop short to prevent overlap bulge
+            pp.push(...esp);
+            // console.log({ poly, spz, epz, zd, sp, esp });
+            scarf = true;
+        }
+
+        // scarf manages its own close point
+        if (close && !scarf) {
+            pp.push(pp[0]);
+        }
+
         let lpo;
-        poly.forEachPoint((point, pos, points, count) => {
+        for (let point of pp) {
             if (point.skip && lpo?.skip) {
                 scope.addOutput(output, point, 0, moveSpeed, tool);
             } else if (first) {
@@ -154,7 +218,8 @@ class Print {
                 first = false;
             } else {
                 let seglen = last.distTo2D(point);
-                if (coastDist && shellMult && perimeter - seglen <= coastDist) {
+                // cancel coast when using scarf seam
+                if (!scarf && coastDist && shellMult && perimeter - seglen <= coastDist) {
                     let delta = perimeter - coastDist;
                     let offset = seglen - delta;
                     let offPoint = last.offsetPointFrom(point, offset)
@@ -168,7 +233,7 @@ class Print {
                 scope.addOutput(output, point, multOut, printSpeed, tool);
             }
             last = lpo = point;
-        }, close, closest.index);
+        }
 
         this.lastPoly = poly;
 

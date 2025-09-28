@@ -765,8 +765,10 @@ self.lang['en-us'] = {
     ou_exml_l:      ["extrusion multiplier","0.0 - 2.0"],
     ou_fanl_s:      "fan on layer",
     ou_fanl_l:      ["layer # to turn on fan","layers start at 0"],
-    ou_fans_s:      "fan speed",
+    ou_fans_s:      "fan on speed",
     ou_fans_l:      "0 - 255",
+    ou_layt_s:      "min layer time",
+    ou_layt_l:      ["minimum allowable layer print time in seconds. printing will be slowed if the layer would outerwise complete in fewer seconds.","0 = disabled"],
 
     // OUTPUT CAM
     ou_toll_s:      "precision",
@@ -862,6 +864,8 @@ self.lang['en-us'] = {
     ad_msol_l:      ["minimum area (mm^2)","required to keep solid","must be > 0.1"],
     ad_mins_s:      "min speed",
     ad_mins_l:      ["minimum speed","for short segments"],
+    ad_scar_s:      "scarf length",
+    ad_scar_l:      ["ease up length for scarf joint","0 = disabled"],
     ad_spol_s:      "short path",
     ad_spol_l:      ["polygons shorter than this","will have their print speed","scaled down to min speed","in millimeters"],
     ad_arct_s:      "arc tolerance",

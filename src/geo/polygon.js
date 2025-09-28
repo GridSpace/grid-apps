@@ -2324,9 +2324,12 @@ export class Polygon {
         return obj;
     }
 
-    // split long straight lines into segments no longer than max
-    // and return a new polygon
-    segment(max = 1, mark, wrap) {
+    // split long straight lines into segments no longer than `max`
+    // and return a new polygon. optionally `mark` points with their
+    // derived segment start point (hinting for thin walls), `wrap`
+    // the poly first point by appending to the end (adaptive walls),
+    // or stopping segmentation at `maxoff`
+    segment(max = 1, mark = false, wrap = false, maxoff = Infinity) {
         const newp = [];
         const points = this.points;
         const length = points.length;
@@ -2339,9 +2342,13 @@ export class Polygon {
             const dl = Math.sqrt(dx * dx + dy * dy);
             newp.push(p1);
             if (mark) p1.segment = p1;
-            if (dl < max) {
+            // if segment shorter than max (delta) or
+            // maxoff is exhausted (only segmenting up to some length)
+            // then skip sub-segmenting the current segment
+            if (dl < max || maxoff < 0) {
                 continue;
             }
+            maxoff -= dl;
             const div = dl / max;
             const fit = div | 0;
             const add = fit - 1;
