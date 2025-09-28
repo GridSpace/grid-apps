@@ -797,7 +797,7 @@ export function fdm_export(print, online, ondone, ondebug) {
             } else {
                 drainQ();
                 if (scarfZ) {
-                    moveTo({x, y, z:z + path.height/2, e:emitMM}, speedMMM);
+                    moveTo({x, y, z:z + path.height/2}, speedMMM);
                 } else {
                     moveTo({x, y}, seekMMM);
                 }

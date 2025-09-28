@@ -188,9 +188,7 @@ class Print {
                 p.z = epz;
                 p.moved = (((--zi) / esp.length) * fcs) - 1 - fco;
             }
-            // esp.pop(); // stop short to prevent overlap bulge
             pp.push(...esp);
-            // console.log({ poly, spz, epz, zd, sp, esp });
             scarf = true;
         }
 
