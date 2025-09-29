@@ -1485,6 +1485,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             }
 
             // control of layer start point
+            if (!lastTop)
             switch (process.sliceLayerStart) {
                 case "spiral": {
                     let center = top.poly.bounds.center();
