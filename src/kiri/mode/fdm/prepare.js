@@ -894,7 +894,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
     // return true if move path from p1 to p2 intersects a
     // top and a path around the top (inside print) was not found
-    function intersectsTop(p1, p2) {
+    function requiresRetract(p1, p2) {
         if (slice.index < 0) {
             return false;
         }
@@ -919,15 +919,20 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         if (dbug === slice.index) console.log(slice.index, {p1, p2, d: p1.distTo2D(p2)});
 
         let ints = [];
+        let intk = new Set();
         let tops = slice.topRouteFlat();
         for (let poly of tops) {
             poly.forEachSegment((s1, s2) => {
                 let ip = util.intersect(p1,p2,s1,s2,base.key.SEGINT);
-                if (ip) {
+                if (ip) ip._key = undefined;
+                if (ip && !intk.has(ip.key)) {
                     ints.push({ip, poly});
+                    intk.add(ip.key);
+                    ip.p1.poly.hits = (ip.p1.poly.hits ?? 0) + 1;
                 }
             });
         }
+        ints = ints.filter(i => i.poly.hits === 2);
 
         // no intersections
         if (ints.length === 0) {
@@ -1101,7 +1106,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 onfirst: (firstPoint, preout) => {
                     let from = seedPoint || startPoint;
                     if (from.distTo2D(firstPoint) > retractDist) {
-                        if (intersectsTop(from, firstPoint)) {
+                        if (requiresRetract(from, firstPoint)) {
                             retract();
                         }
                     }
@@ -1183,7 +1188,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             poly.forEachPoint((p, i) => {
                 let dist = lp.distTo2D(p);
                 let rdst = dist > retractDist;
-                let itop = rdst && intersectsTop(lp,p);
+                let itop = rdst && requiresRetract(lp,p);
                 let emit = extrude;
                 // retract if dist trigger and crosses a slice top polygon
                 if (i === 0) {
@@ -1227,7 +1232,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
         let first = points[0];
         let last = first;
-        if (startPoint && startPoint.distTo2D(first) > thinWall && intersectsTop(startPoint, first)) {
+        if (startPoint && startPoint.distTo2D(first) > thinWall && requiresRetract(startPoint, first)) {
             retract();
         }
         print.addOutput(preout, first, 0, moveSpeed, extruder);
@@ -1376,7 +1381,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 print.addOutput(preout, p2, fill, fillSpeed, extruder);
             } else {
                 // retract if dist trigger or crosses a slice top polygon
-                if (!fast && dist > retractDist && (zhop || intersectsTop(startPoint, p1))) {
+                if (!fast && dist > retractDist && (zhop || requiresRetract(startPoint, p1))) {
                     retract();
                 }
 

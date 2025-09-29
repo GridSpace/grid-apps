@@ -487,6 +487,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         // construct medial axis lines. this appears to produce duplicate
         // reverse segments in a subset of cases
         let ma = JSPoly.construct_medial_axis(out, inr);
+        if (ma.length === 0) throw('cannot construct medial axis');
         // dedup the points so we can track them uniquely
         for (let { point0, point1 } of ma) {
             pointsToLine(point0, point1);
@@ -696,7 +697,8 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                 if (dist < 1) p.open = false;
             } });
             let ret = { last, gaps };
-            switch (opt.thinType) {
+            let ttype = opt.thinType;
+            switch (ttype) {
                 case "legacy 1":
                     ret = thin_type_1({ z, top, count, top_poly, offsetN, fillOffset });
                     break;
@@ -704,13 +706,18 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                     ret = thin_type_2({ z, top, count, top_poly, offset1, offsetN, fillOffset, gaps, wasm });
                     break;
                 case "adaptive":
-                    ret = thin_type_3({ z, top, count, offsetN });
-                    break;
+                    try {
+                        ret = thin_type_3({ z, top, count, offsetN });
+                        break;
+                    } catch (e) {
+                        console.log('adaptive layer failed. falling back to basic.', e);
+                        ttype = "basic";
+                    }
                 case "basic":
                 default:
                     ret = offset_default({
                         z, top, count, top_poly, offset1, offsetN, wasm,
-                        thin: opt.thinType === 'basic'
+                        thin: ttype === 'basic'
                     });
                     break;
             }
