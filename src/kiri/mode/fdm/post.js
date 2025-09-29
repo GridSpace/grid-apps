@@ -165,9 +165,8 @@ function offset_default(params) {
                     if (p0 === p1 || p0.segment === p1.segment) continue;
                     let dist = p0.distTo2D(p1);
                     if (dist < offset1) {
-                        let diff = p0.segment.angle.angleDiff(p1.segment.angle,false);
-                        if (p0.segment === p1.segment && diff < deltaBig) continue;
-                        if (p0.segment !== p1.segment && diff > deltSmall && diff < deltaBig) continue;
+                        let diff = p0.segment.angle.angleDiff(p1.segment.angle,true);
+                        if (diff < deltaBig) continue;
                         // merge points marking point offset and skip
                         let mid = p0.midPointTo(p1);
                         let inc = p0.distTo2D(mid) / offset1;
