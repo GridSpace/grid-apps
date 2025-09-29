@@ -3,7 +3,7 @@
 import { base, util } from '../../../geo/base.js';
 import { poly2polyEmit, tip2tipEmit } from '../../../geo/paths.js';
 import { newBounds } from '../../../geo/bounds.js';
-import { newPoint } from '../../../geo/point.js';
+import { newPoint, Point } from '../../../geo/point.js';
 import { newPolygon, Polygon } from '../../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { newPrint } from '../../core/print.js';
@@ -41,6 +41,7 @@ export async function fdm_prepare(widgets, settings, update) {
         zneg = 0,
         zoff = 0,
         zmin = 0,
+        zmax = 0,
         shield,
         output = [],
         layerout = [];
@@ -141,6 +142,7 @@ export async function fdm_prepare(widgets, settings, update) {
                 });
                 layerout.z = zoff + height;
                 layerout.height = height;
+                layerout.print_time = printPoint.layer_time;
                 output.append(layerout);
 
                 layerout = [];
@@ -195,7 +197,7 @@ export async function fdm_prepare(widgets, settings, update) {
                 });
             });
 
-            print.addPrintPoints(preout, layerout, null);
+            print.addPrintPoints(preout, layerout);
 
             if (preout.length) {
                 // retract between brims and print
@@ -224,6 +226,7 @@ export async function fdm_prepare(widgets, settings, update) {
         }
         for (let slice of widget.slices) {
             zmin = Math.min(zmin, slice.z);
+            zmax = Math.max(zmax, slice.z);
             if (!slice.supports) {
                 continue;
             }
@@ -469,6 +472,9 @@ export async function fdm_prepare(widgets, settings, update) {
     let lastExt;
     let lastOut;
 
+    print.zmax = zmax;
+    print.total_time = 0;
+
     // walk cake layers bottom up
     for (let layer of cake) {
         // track purge blocks generated for each layer
@@ -570,6 +576,8 @@ export async function fdm_prepare(widgets, settings, update) {
                     }
                 }
             );
+            layerout.print_time = printPoint.layer_time;
+            print.total_time += printPoint.layer_time;
             print.setWidget(null);
 
             lastOut = slice;
@@ -796,6 +804,8 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         process = opt.params || settings.process,
         originCenter = device.originCenter || bedRound,
         extruder = parseInt(slice.extruder || 0),
+        scarfLength = process.outputScarfLength || 0,
+        minLayerTime = process.outputMinLayerTime || 0,
         nozzleSize = process.sliceLineWidth || device.extruders[extruder].extNozzle,
         firstLayer = (opt.first || false) && !opt.support,
         thinWall = nozzleSize * (opt.thinWall || 1.75),
@@ -805,10 +815,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         shellOrder = {"out-in":-1,"in-out":1,"alternate":-2}[process.sliceShellOrder] || -1,
         sparseMult = process.outputSparseMult,
         coastDist = process.outputCoastDist || 0,
-        finishSpeed = opt.speed || process.outputFinishrate,
         firstShellSpeed = process.firstLayerRate,
         firstFillSpeed = process.firstLayerFillRate,
         firstPrintMult = process.firstLayerPrintMult,
+        finishSpeed = firstLayer ? firstShellSpeed : (opt.speed || process.outputFinishrate),
         printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
         fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
         infillSpeed = process.sliceFillRate || opt.infillSpeed || fillSpeed || printSpeed,
@@ -839,8 +849,19 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         shellOrder = -shellOrder;
     }
 
+    // update fill speed when solids detected
     if (slice.finishSolids) {
         fillSpeed = process.sliceSolidRate || finishSpeed;
+    }
+
+    // on flats layers also slow down shell print speed
+    if (slice.isFlatsLayer) {
+        printSpeed = finishSpeed || printSpeed;
+    }
+
+    // override: adapt bridge layer speed
+    if (slice.isBridgeLayer) {
+        fillSpeed /= 2;
     }
 
     // apply first layer extrusion multipliers
@@ -873,7 +894,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
     // return true if move path from p1 to p2 intersects a
     // top and a path around the top (inside print) was not found
-    function intersectsTop(p1, p2) {
+    function requiresRetract(p1, p2) {
         if (slice.index < 0) {
             return false;
         }
@@ -898,15 +919,20 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         if (dbug === slice.index) console.log(slice.index, {p1, p2, d: p1.distTo2D(p2)});
 
         let ints = [];
+        let intk = new Set();
         let tops = slice.topRouteFlat();
         for (let poly of tops) {
             poly.forEachSegment((s1, s2) => {
                 let ip = util.intersect(p1,p2,s1,s2,base.key.SEGINT);
-                if (ip) {
+                if (ip) ip._key = undefined;
+                if (ip && !intk.has(ip.key)) {
                     ints.push({ip, poly});
+                    intk.add(ip.key);
+                    ip.p1.poly.hits = (ip.p1.poly.hits ?? 0) + 1;
                 }
             });
         }
+        ints = ints.filter(i => i.poly.hits === 2);
 
         // no intersections
         if (ints.length === 0) {
@@ -1021,8 +1047,8 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         return false;
     }
 
-    // solid infill
-    function outputTraces(poly, opt = {}) {
+    // output shell wall
+    function outputTraces(poly, opt = {}, traceNo = 0) {
         if (!poly) return;
         if (Array.isArray(poly)) {
             if (opt.sort) {
@@ -1055,30 +1081,32 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                     if (next) {
                         last = next;
                         polys.remove(next);
-                        outputTraces(next, opt);
+                        outputTraces(next, opt, traceNo++);
                     } else {
                         last = null;
                     }
                 }
             } else {
                 outputOrderClosest(poly, function(next) {
-                    outputTraces(next, opt);
+                    outputTraces(next, opt, traceNo++);
                 }, null);
             }
         } else {
             let finishShell = poly.depth === 0 && !firstLayer;
+            let scarf = (slice.index > 0 && traceNo === 0 && z - startPoint?.z > 1e-3) ? scarfLength : 0;
             startPoint = print.polyPrintPath(poly, startPoint, preout, {
-                ccw: opt.shell && process.outputAlternating && slice.index % 2,
-                tool: extruder,
-                rate: finishShell ? finishSpeed : printSpeed,
                 accel: finishShell,
-                wipe: process.outputWipeDistance || 0,
+                ccw: opt.shell && process.outputAlternating && slice.index % 2,
                 coast: firstLayer ? 0 : coastDist,
                 extrude: numOrDefault(opt.extrude, shellMult),
-                onfirst: function(firstPoint) {
+                nozzleSize,
+                rate: finishShell ? finishSpeed : printSpeed,
+                scarf,
+                tool: extruder,
+                onfirst: (firstPoint, preout) => {
                     let from = seedPoint || startPoint;
                     if (from.distTo2D(firstPoint) > retractDist) {
-                        if (intersectsTop(from, firstPoint)) {
+                        if (requiresRetract(from, firstPoint)) {
                             retract();
                         }
                     }
@@ -1086,6 +1114,59 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 }
             });
             lastPoly = slice.lastPoly = poly;
+        }
+    }
+
+    function minThinDist(np, trace) {
+        return Math.min(
+            Math.hypot(np.x - trace[0].x, np.y - trace[0].y),
+            Math.hypot(np.x - trace.peek().x, np.y - trace.peek().y),
+        );
+    }
+
+    function outputAdaptiveWalls(thin, sort) {
+        // restore thin shell order annotation and sort on it
+        thin.forEach((a,i) => a.shell = sort[i] * shellOrder);
+        thin.forEach(t => t.shell = t.shell < 0 ? Math.abs(t.shell) + 0.5 : t.shell);
+        thin.sort((a,b) => a.shell - b.shell);
+        let np = print.lastPoint;
+        // perform nearest poly to poly algorithm on shells
+        for (;;) {
+            let min = { dist: Infinity };
+            for (let trace of thin) {
+                if (!min.trace) {
+                    min.trace = trace;
+                } else if (np && min.trace.shell === trace.shell) {
+                    let dist = minThinDist(np, trace);
+                    if (dist < min.dist) min = { dist, trace };
+                }
+            }
+            if (!min.trace) {
+                startPoint = np;
+                return;
+            }
+            let { trace } = min;
+            let fp = trace[0];
+            let lp = trace.peek();
+            // reverse trace if far end closer
+            if (np && Math.hypot(np.x - lp.x, np.y - lp.y) < Math.hypot(np.x - fp.x, np.y - fp.y)) {
+                trace.reverse();
+            }
+            // remove emitted trace
+            thin = thin.filter(t => t !== trace);
+            // retract if moving > retractDist
+            if (np && np.distTo2D(new Point(trace[0].x, trace[0].y)) > retractDist) {
+                retract();
+            }
+            let outputSpeed = trace.shell === 1 || trace.shell === 1.5 ? finishSpeed : printSpeed;
+            for (let pt of trace) {
+                np = new Point(pt.x, pt.y, z);
+                if (pt === trace[0]) {
+                    print.addOutput(preout, np, 0, moveSpeed);
+                } else {
+                    print.addOutput(preout, np, ((pt.r * 2) / nozzleSize) * shellMult, outputSpeed);
+                }
+            }
         }
     }
 
@@ -1107,7 +1188,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             poly.forEachPoint((p, i) => {
                 let dist = lp.distTo2D(p);
                 let rdst = dist > retractDist;
-                let itop = rdst && intersectsTop(lp,p);
+                let itop = rdst && requiresRetract(lp,p);
                 let emit = extrude;
                 // retract if dist trigger and crosses a slice top polygon
                 if (i === 0) {
@@ -1151,7 +1232,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
         let first = points[0];
         let last = first;
-        if (startPoint && startPoint.distTo2D(first) > thinWall && intersectsTop(startPoint, first)) {
+        if (startPoint && startPoint.distTo2D(first) > thinWall && requiresRetract(startPoint, first)) {
             retract();
         }
         print.addOutput(preout, first, 0, moveSpeed, extruder);
@@ -1185,10 +1266,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             start = 0,
             skip = false,
             lastIndex = -1,
-            raft = opt.raft || false,
+            raft = opt.raft ?? false,
             flow = opt.flow || 1,
-            near = opt.near || (antiBacklash ? false : true),
-            fast = opt.fast || false, // support infill only!
+            near = opt.near ?? (antiBacklash ? false : true),
+            fast = opt.fast ?? false, // support infill only!
             fill = (opt.fill >= 0 ? opt.fill : fillMult) * flow,
             thinDist = near ? thinWall : thinWall;
 
@@ -1300,7 +1381,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 print.addOutput(preout, p2, fill, fillSpeed, extruder);
             } else {
                 // retract if dist trigger or crosses a slice top polygon
-                if (!fast && dist > retractDist && (zhop || intersectsTop(startPoint, p1))) {
+                if (!fast && dist > retractDist && (zhop || requiresRetract(startPoint, p1))) {
                     retract();
                 }
 
@@ -1409,7 +1490,15 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             }
 
             // control of layer start point
+            if (!lastTop)
             switch (process.sliceLayerStart) {
+                case "spiral": {
+                    let center = top.poly.bounds.center();
+                    let angle = (Math.PI * 2) * (slice.z / print.zmax);
+                    let x = center.x + Math.cos(angle)*10000;
+                    let y = center.y + Math.sin(angle)*10000;
+                    startPoint = newPoint(x,y,startPoint.z);
+                    } break;
                 case "last":
                     break;
                 case "random":
@@ -1443,6 +1532,9 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
             // raft
             if (top.traces) outputTraces(top.traces);
+
+            // thin wall v3
+            if (top.thin_wall) outputAdaptiveWalls(top.thin_wall, top.thin_sort);
 
             // innermost shells
             let inner = next.innerShells() || [];
@@ -1492,13 +1584,38 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         }
     }
 
+    // adjust layer output speeds (by slowing them down)
+    // if layer print time is less than minimum (required for cooling)
+    let lp, td = 0, tt = 0;
+    for (let p of preout) {
+        if (!p.emit) continue;
+        let mms = p.speed ?? 1;
+        let dst = lp?.distTo2D(p.point) ?? 0;
+        if (dst) {
+            tt += (dst/mms);
+            td += dst;
+        }
+        lp = p.point;
+    }
+    if (minLayerTime && tt < minLayerTime) {
+        let fact = tt / minLayerTime;
+        for (let p of preout) {
+            if (p.emit) p.speed *= fact;
+        }
+    }
+
     // offset print points
     for (let i=0; i<preout.length; i++) {
         preout[i].point = preout[i].point.add(offset);
     }
 
     // add offset points to total print
-    print.addPrintPoints(preout, output, origin, extruder);
+    print.addPrintPoints(preout, output);
 
-    return startPoint.add(offset);
+    // create next layer start point and annotate
+    // with print time for previous layer (hack to
+    // avoid changing return signature rn)
+    let newStart = startPoint.add(offset);
+    newStart.layer_time = Math.max(tt, minLayerTime);
+    return newStart;
 }

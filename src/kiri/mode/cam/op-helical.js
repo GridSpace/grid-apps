@@ -58,7 +58,7 @@ export class OpHelical extends CamOp {
       }
       let { zmin, zmax, diam, center, interior, faces } = res;
       // console.log({ zmin, zmax, diam, center, interior });
-      let radius = diam >> 1;
+      let radius = diam /2;
       zmax = fromTop ?  stock.z: zmax;
 
       let radAdd,
@@ -138,14 +138,17 @@ export class OpHelical extends CamOp {
               );
           // console.log({down,toBottom,ofFull,ofCircle,startAngle,finalAngle,finalEnd});
 
-          //circle down to final point
-          poly.addPoints(
-            arcToPath(startPoint.setZ(currentZ), finalEnd, numSegs , {
-              clockwise,
-              radius,
-              center,
-            })
-          );
+          //if not already very close to final point
+          if( ofCircle >= 0.001 ){
+            //circle down to final point
+            poly.addPoints(
+              arcToPath(startPoint.setZ(currentZ), finalEnd, numSegs , {
+                clockwise,
+                radius,
+                center,
+              })
+            );
+          }
 
           //if starting at the bottom, reverse poly
           if ( reverse ){
@@ -169,9 +172,9 @@ export class OpHelical extends CamOp {
                 let lineOut = radius - entryOffset;
                 let centerOffset = (entryOffset**2 + 2*entryOffset*lineOut) / (2*(entryOffset + lineOut));
                 //add entry points
-                entry.push(...
+                entry.push(
                   newPoint(0,-lineOut,0),
-                  arcToPath(
+                  ...arcToPath(
                     newPoint(0,-lineOut,0),
                     newPoint(radius,0,0),
                     128,
@@ -186,12 +189,15 @@ export class OpHelical extends CamOp {
               }
             }
             //for each point
+            //rotate by start angle
+            // add to hole center
+            let invert = ((clockwise && !reverse ) || (!clockwise && reverse) )  ? -1 : 1
+            let entryAngle = reverse ? finalAngle : startAngle
             entry = entry.map(p => {
-              //rotate by start angle
-              // add to hole center
               // TODO: there's totally a way to do this with a matrix
-              p.y *= clockwise ? 1 : -1
-              p.rotate(startAngle)
+              // logical XOR
+              p.y *= invert
+              p.rotate(entryAngle)
               return p.add(entryCenter)
             })
             //append to start of poly

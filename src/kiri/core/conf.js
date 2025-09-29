@@ -327,8 +327,10 @@ export const conf = {
                 outputRetractDwell: 20,
                 outputBrimCount: 2,
                 outputBrimOffset: 2,
+                outputScarfLength: 0,
                 outputShortPoly: 100.0,
                 outputMinSpeed: 10.0,
+                outputMinLayerTime: 0,
                 outputCoastDist: 0,
                 outputPurgeTower: 0,
                 outputBeltFirst: false,
@@ -949,7 +951,9 @@ export const conf = {
         hidden: {
             "fdm-base": true,
             "fdm-cool": true,
+            "fdm-heat": true,
             "fdm-fill": true,
+            "fdm-solid": true,
             "fdm-supp": true,
             "fdm-xprt": true
         },

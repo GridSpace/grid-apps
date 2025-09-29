@@ -91,11 +91,11 @@ function area2(p1, p2, p3) {
 }
 
 function isCloseTo(v1, v2, dist) {
-    return Math.abs(v1 - v2) <= (dist || base.config.precision_merge);
+    return Math.abs(v1 - v2) <= (dist ?? base.config.precision_merge);
 }
 
-function inCloseRange(val, min, max) {
-    return (isCloseTo(val, min) || val >= min) && (isCloseTo(val, max) || val <= max);
+function inCloseRange(val, min, max, precisiom) {
+    return (isCloseTo(val, min, precisiom) || val >= min) && (isCloseTo(val, max, precisiom) || val <= max);
 }
 
 /**
@@ -232,7 +232,7 @@ function intersect(p1, p2, p3, p4, test, parallelok) {
 /**
  * used by {@link rayIntersect} and {@link Polygon.trace}
  */
-function intersectRayLine(ro, s1, p1, p2, infinite) {
+function intersectRayLine(ro, s1, p1, p2) {
     let keys = base.key,
         p1x = ro.x,
         p1y = ro.y,
@@ -259,11 +259,11 @@ function intersectRayLine(ro, s1, p1, p2, infinite) {
     a = n1 / d;
     b = n2 / d;
 
-    if (infinite || (inCloseRange(b, 0, 1) && a >= 0)) {
+    if (inCloseRange(b, 0, 1, 0.00) && a >= 0) {
         let ip = newPoint(
             p1x + (a * s1x),
             p1y + (a * s1y),
-            p2.z || ro.z,
+            p2.z ?? ro.z,
             keys.NONE
         );
         ip.dist = a;

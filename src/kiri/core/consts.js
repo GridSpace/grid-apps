@@ -27,6 +27,7 @@ const LISTS = {
         { name: "center" },
         { name: "origin" },
         { name: "random" },
+        { name: "spiral" },
     ],
     infill: [
         { name: "none" },
@@ -115,9 +116,10 @@ const LISTS = {
     ],
     thin: [
         { name: "off" },
-        { name: "type 1" },
-        { name: "type 2" },
-        { name: "type 3" }
+        { name: "basic" },
+        { name: "adaptive" },
+        { name: "legacy 1" },
+        { name: "legacy 2" }
     ]
 };
 

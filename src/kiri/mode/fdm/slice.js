@@ -345,7 +345,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 }
             }
             if (process.xray) {
-                slice.index = process.xrayi.shift();
+                slice.index = process.xray.shift();
                 slice.lines = lines;
                 slice.groups = groups;
                 slice.xray = process.xray;
@@ -498,12 +498,20 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             let spaceMult = slice.index === 0 ? process.firstLayerLineMult || 1 : 1;
             let isBottom = slice.index < bottomLayers;
             let isTop = topLayers && slice.index > slices.length - topLayers - 1;
+            let isTopBase = isTop && slice.index === slices.length - topLayers;
             let isDense = range.sliceFillSparse > 0.995;
             let isSolid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
             let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
             if (solidWidth) {
                 let fillSpace = fillSpacing * spaceMult * solidWidth;
                 doSolidLayerFill(slice, fillSpace, sliceFillAngle);
+            }
+            if (slice.index === slices.length - 1) {
+                slice.isFlatsLayer = true;
+            }
+            if (isTopBase) {
+                // mark the first top solid supporting layer as a bridge
+                slice.isBridgeLayer = true;
             }
             sliceFillAngle = (sliceFillAngle + 90.0) % 360;
         }, "solid layers");
@@ -997,31 +1005,45 @@ function doRender(slice, isSynth, params, opt = {}) {
             .setLayer('part', Color.part)
             .addPolys([top.poly]);
 
-        output
+        if (top.shells?.length) output
             .setLayer(isSynth ? "support" : "shells", isSynth ? Color.support : Color.shell)
             .addPolys(top.shells || [], vopt({ offset, height, clean: true }));
 
-        output
+        if (isThin && top.thin_wall?.length) output
+            .setLayer("walls", Color.thin)
+            .addPolys(top.thin_wall.map(a => a.map(p => newPolygon().centerCircle(p, p.r, 12).setZ(slice.z))).flat(), vopt({ offset, height }));
+
+        if (!isThin && top.thin_wall?.length) output
+            .setLayer("walls", Color.thin)
+            .addPolys(top.thin_wall.map(a =>
+                    a.length === 1 ?
+                    newPolygon().centerCircle(a[0], a[0].r/2, 12) :
+                    newPolygon(a.map(p => newPoint(p.x, p.y)))
+                        .setZ(slice.z)
+                        .closeIf(height)
+                ), vopt({ offset, height }));
+
+        if (top.fill_lines?.length) output
             .setLayer("solid fill", isSynth ? Color.support : Color.fill)
             .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height, z:slice.z }));
 
-        if (!(slice.belt && slice.belt.anchor)) output
+        if (!(slice.belt?.anchor)) output
             .setLayer("sparse fill", Color.infill)
             .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
 
-        if (slice.belt && slice.belt.anchor) output
+        if (slice.belt?.anchor) output
             .setLayer("anchor", Color.anchor)
             .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
 
-        if (top.thin_fill) output
+        if (top.thin_fill?.length) output
             .setLayer("thin fill", Color.thin)
             .addLines(top.thin_fill, vopt({ offset, height }));
 
-        if (top.gaps && devel) output
+        if (top.gaps?.length && devel) output
             .setLayer("gaps", Color.gaps)
             .addPolys(top.gaps, vopt({ offset, height, thin: true }));
 
-        if (isThin && devel && top.fill_off && top.fill_off.length) {
+        if (isThin && devel && top.fill_off?.length) {
             slice.output()
                 .setLayer('fill inset', Color.inset)
                 .addPolys(top.fill_off);
@@ -1359,8 +1381,9 @@ function addSolidFills(slice, polys) {
 export function projectFlats(slice, count, expand) {
     if (!slice.down || !slice.flats) return;
     // these flats are marked for finishing print speed
-    if (slice.flats.length) slice.finishSolids = true;
-    if (slice && slice.flats && slice.flats.length) {
+    if (slice.flats?.length) {
+        slice.finishSolids = true;
+        slice.isFlatsLayer = true;
         const flats = expand ? POLY.expand(slice.flats, expand) : slice.flats;
         projectSolid(slice, flats, count, false, true);
     }
@@ -1372,7 +1395,10 @@ export function projectFlats(slice, count, expand) {
 export function projectBridges(slice, count) {
     if (!slice.up || !slice.bridges) return;
     // these flats are marked for finishing print speed
-    if (slice.bridges.length) slice.finishSolids = true;
+    if (slice.bridges?.length) {
+        slice.finishSolids = true;
+        slice.isBridgeLayer = true;
+    }
     projectSolid(slice, slice.bridges, count, true, true);
 };
 
@@ -1732,6 +1758,9 @@ function fillSupportPolys(args) {
  * @returns {*}
  */
 function projectSolid(slice, polys, count, up, first) {
+    if (slice && !up && count === 1) {
+        slice.isBridgeLayer = true;
+    }
     if (!slice || count <= 0) {
         return;
     }

@@ -132,15 +132,17 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     if (stock.x && stock.y && stock.z && !isIndexed) {
-        if (stock.x + 0.00001 < bounds.max.x - bounds.min.x) {
+        let maxDelta = 1e-3;
+
+        if (stock.x + maxDelta < (bounds.max.x - bounds.min.x)) {
             return error('stock X too small for part. resize stock or use offset stock');
         }
 
-        if (stock.y + 0.00001 < bounds.max.y - bounds.min.y) {
+        if (stock.y + maxDelta < (bounds.max.y - bounds.min.y)) {
             return error('stock Y too small for part. resize stock or use offset stock');
         }
 
-        if (stock.z + 0.00001 < bounds.max.z - bounds.min.z) {
+        if (stock.z + maxDelta < (bounds.max.z - bounds.min.z)) {
             return error('stock Z too small for part. resize stock or use offset stock');
         }
     }
@@ -510,8 +512,7 @@ export async function traces(settings, widget) {
     widget.traces = polylines;
 
     return true;
-};
-
+}
 
 /**
  * Returns an array of arrays of perpindicular triangles in the mesh.
@@ -523,110 +524,109 @@ export async function traces(settings, widget) {
  * @param {object} opts - options object
  * @return {array} - array of arrays of triangle data
  */
-export async function cylinders(settings, widget, opts){
-
-    let {} = opts ?? {}    
-
-    let {array:verts} = widget.mesh.geometry.attributes.position
-    let perpTriangles = []
+export async function cylinders(settings, widget, opts) {
+    let { } = opts ?? {};
+    let { array: verts } = widget.mesh.geometry.attributes.position;
+    let perpTriangles = [];
 
     //iterate over all triangles
-    for(let i = 0; i < verts.length; i+=9){
-        let a = [verts[i], verts[i+1], verts[i+2]],
-            b = [verts[i+3], verts[i+4], verts[i+5]],
-            c = [verts[i+6], verts[i+7], verts[i+8]];
+    for (let i = 0; i < verts.length; i += 9) {
+        let a = [verts[i], verts[i + 1], verts[i + 2]],
+            b = [verts[i + 3], verts[i + 4], verts[i + 5]],
+            c = [verts[i + 6], verts[i + 7], verts[i + 8]];
 
         //calculate normal
-        let normal = new THREE.Vector3(a[0]-b[0], a[1]-b[1], a[2]-b[2])
-        .cross(new THREE.Vector3(b[0]-c[0], b[1]-c[1], b[2]-c[2]))
-        .normalize()
+        let normal = new THREE.Vector3(a[0] - b[0], a[1] - b[1], a[2] - b[2])
+            .cross(new THREE.Vector3(b[0] - c[0], b[1] - c[1], b[2] - c[2]))
+            .normalize();
 
         // if perpindicular normal, and at least 2 Zs are the same
-        if(normal.z.round(5) == 0 && ! (a[2] != b[2] && b[2] != c[2])){
+        if (normal.z.round(5) == 0 && !(a[2] != b[2] && b[2] != c[2])) {
             let minZ = Math.min(a[2], b[2], c[2]),
                 maxZ = Math.max(a[2], b[2], c[2]);
-            if(minZ == maxZ){ // all Zs are the same indicated malformed geometry
+            if (minZ == maxZ) { // all Zs are the same indicated malformed geometry
                 continue;
             }
-            perpTriangles.push({...[a,b,c], normal,minZ,maxZ,i:index})
+            perpTriangles.push({ ...[a, b, c], normal, minZ, maxZ, i: index });
         }
 
     }
     //map where zmax, zmin -> triangleData
-    let cylinderTriangles = new Map()
-    for(let t of perpTriangles){
-        let hash = `${t.minZ.round(5)},${t.maxZ.round(5)}`
-        if(!cylinderTriangles.has(hash)){
-            cylinderTriangles.set(hash,[])
+    let cylinderTriangles = new Map();
+    for (let t of perpTriangles) {
+        let hash = `${t.minZ.round(5)},${t.maxZ.round(5)}`;
+        if (!cylinderTriangles.has(hash)) {
+            cylinderTriangles.set(hash, []);
         }
-        cylinderTriangles.get(hash).push(t)
+        cylinderTriangles.get(hash).push(t);
     }
-    
-    return Array.from(cylinderTriangles.values())
+
+    return Array.from(cylinderTriangles.values());
 }
 
-
-    /**
-     * Find all triangles that are part of the same cylinder as the given triangle
-     * @param {Widget} widget - widget object
-     * @param {number} face - index of face in triangle vertex data
-     * @return {array} - array of all triangle data that belong to the same cylinder
-     * @requires surface_prep must be called first
-     */
+/**
+ * Find all triangles that are part of the same cylinder as the given triangle
+ * @param {Widget} widget - widget object
+ * @param {number} face - index of face in triangle vertex data
+ * @return {array} - array of all triangle data that belong to the same cylinder
+ * @requires surface_prep must be called first
+ */
 export function cylinder_find (widget, face){
     CAM.surface_prep(widget,false);
     return widget.tool.findCylinderSurface(face);
 }
 
-export function cylinder_poly_find(widget, face){
+export function cylinder_poly_find(widget, face) {
     let faces = cylinder_find(widget, face);
     let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
-    let slicer = new cam_slicer(widget,{})
-    let opts = {
-        dedup:false,
-        edges: false,
-        over:true
-    }
-    let firstOffset = faces[0]*9
-    let [x1,y1,z1,x2,y2,z2,x3,y3,z3]= Array.from(vert.subarray(firstOffset,firstOffset+9))
-    let zs = [z1,z2,z3].map(z => z.round(5))
+    let slicer = new cam_slicer(widget, {});
+    let firstOffset = faces[0] * 9;
+    let [x1, y1, z1, x2, y2, z2, x3, y3, z3] = Array.from(vert.subarray(firstOffset, firstOffset + 9));
+    let zs = [z1, z2, z3].map(z => z.round(5));
     let zmin = Math.min(...zs);
     let zmax = Math.max(...zs);
-    let zmid = (zmin+zmax)/2
-    let cylVerts = new Float32Array(faces.length*9)
-    
+    let zmid = (zmin + zmax) / 2;
+    let cylVerts = new Float32Array(faces.length * 9);
+    let opts = {
+        dedup: false,
+        edges: false,
+        over: true
+    };
+
     let i = 0
     //for each cylinder face index
-    for(let index of faces){
-        let off = index*9
+    for (let index of faces) {
+        let off = index * 9;
         //copy the 9 triangle vertices floats in
-        for(let j = 0;j < 9;j++){
-            cylVerts[i] = vert[off+j]
-            i++
+        for (let j = 0; j < 9; j++) {
+            cylVerts[i] = vert[off + j];
+            i++;
         }
     }
+
     //slice the poly at the midpoint
-    let poly = slicer.sliceZ(zmid, cylVerts,opts)?.polys?.at(0)
-    if(!poly) throw "slicing returned no poly"
+    let poly = slicer.sliceZ(zmid, cylVerts, opts)?.polys?.at(0);
+    if (!poly) throw "slicing returned no poly";
+
     let circular = poly.circularity() > 0.98;
+
     //throw error if not circular
-    if(!circular) throw "faces must be circular"
-    
+    if (!circular) throw "faces must be circular";
+
     //calculate circle properties
     let area = poly.area(),
-        diam = Math.sqrt(area / Math.PI)* 2,
+        diam = Math.sqrt(area / Math.PI) * 2,
         center = poly.calcCircleCenter();
-    
-    //find direction using normal to center point
 
+    //find direction using normal to center point
     let point = newPoint(x1, y1, z1),
         delta = point.setZ(center.z).sub(center),
-        normal = new THREE.Vector3(x1-x2, y1-y2, z1-z2)
-        .cross(new THREE.Vector3(x2-x3, y2-y3, z2-z3)),
+        normal = new THREE.Vector3(x1 - x2, y1 - y2, z1 - z2)
+            .cross(new THREE.Vector3(x2 - x3, y2 - y3, z2 - z3)),
         dotProd = normal.dot(delta),
-        interior  = dotProd < 0
+        interior = dotProd < 0
 
-    return {faces, zmin, zmax, poly, circular, area, diam, center,interior} 
+    return { faces, zmin, zmax, poly, circular, area, diam, center, interior }
 }
 
 /**

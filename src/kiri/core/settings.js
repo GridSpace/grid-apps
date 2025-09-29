@@ -286,7 +286,7 @@ function updateFieldsFromSettings(setrec, uirec = api.ui, opt = {}) {
 
 function updateExtruderFields(device) {
     const { ui } = api;
-    const { LANG } = api.const;
+    const { current: LANG } = api.const.LANG;
     if (device.extruders && device.extruders[device.internal]) {
         updateFieldsFromSettings(device.extruders[device.internal]);
         ui.extruder.innerHTML =

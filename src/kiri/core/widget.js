@@ -360,6 +360,10 @@ class Widget {
         this.setOpacity(opacity ?? 1);
     }
 
+    refreshVisualState() {
+        this.setVisualState(this.getVisualState());
+    }
+
     restoreVisualState() {
         if (this.cache.vizstate) {
             this.setVisualState(this.cache.vizstate);
@@ -613,6 +617,7 @@ class Widget {
         this.roto = [];
         this.center();
         this.setModified();
+        this.refreshVisualState();
     }
 
     mirror() {

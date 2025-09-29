@@ -312,7 +312,7 @@ Polygon.prototype.encode = function(state) {
 
     state.poly[this.id] = this;
 
-    return {
+    let enc = {
         type: TYPE.POLY,
         id: this.id,
         array: encodePointArray(this.points, state, this.z),
@@ -322,6 +322,20 @@ Polygon.prototype.encode = function(state) {
         color: this.color,
         open: this.open
     };
+
+    // encode extended point info for tagged polys
+    if (this._epk) {
+        let epk = enc.epk = {};
+        for (let key of this._epk) {
+            let arr = epk[key] = [];
+            let pts = this.points;
+            for (let i=0, l=pts.length; i<l; i++) {
+                if (pts[i][key]) arr.push(i, pts[i][key]);
+            }
+        }
+    }
+
+    return enc;
 };
 
 registerDecoder(TYPE.POLY, function(v, state) {
@@ -338,6 +352,18 @@ registerDecoder(TYPE.POLY, function(v, state) {
 
     for (let vid = 0; vid < length; ) {
         poly.push(newPoint(array[vid++], array[vid++], array[vid++]));
+    }
+
+    // decode extended point when present
+    if (v.epk) {
+        let pts = poly.points;
+        for (let [key, arr] of Object.entries(v.epk)) {
+            for (let i=0; i<arr.length; ) {
+                let pos = arr[i++];
+                let val = arr[i++];
+                pts[pos][key] = val;
+            }
+        }
     }
 
     state.poly[v.id] = poly;

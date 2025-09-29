@@ -7,6 +7,7 @@ import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { getRangeParameters } from './driver.js';
 import { slicer } from '../../../geo/slicer.js';
 import { Point } from '../../../geo/point.js';
+import { Slope } from '../../../geo/slope.js';
 
 slicer.slicePost.FDM = slicePost;
 
@@ -20,7 +21,26 @@ export function slicePost(data, options) {
     const { useAssembly, post_args, zIndexes } = options;
     const { process, isSynth, vaseMode } = post_args;
     const { shellOffset, fillOffset, clipOffset } = post_args;
-    data.tops = POLY.nest(groups);
+
+    if (options.pump) {
+        let nugroups = [];
+        let pump = shellOffset / 10;
+        for (let p of groups) {
+            let retop = POLY.offset([ p ], -pump, {
+                join: ClipperLib.JoinType.jtRound,
+                arc: (1/pump) * 4
+            });
+            retop = POLY.offset(retop, pump, {
+                join: ClipperLib.JoinType.jtRound,
+                arc: (1/pump) * 4
+            });
+            nugroups.push(...retop);
+        }
+        data.tops = POLY.nest(nugroups);
+    } else {
+        data.tops = POLY.nest(groups);
+    }
+
     if (isSynth) {
         const process = post_args.process;
         if (process.sliceSupportGrow > 0) {
@@ -69,7 +89,10 @@ export function slicePost(data, options) {
 };
 
 function offset_default(params) {
-    let { z, top, count, top_poly, offset1, offsetN, wasm, last, gaps } = params;
+    let { z, top, count, top_poly, offset1, offsetN, wasm, last, gaps, thin } = params;
+
+    let first;
+
     // standard wall offsetting strategy
     POLY.offset(
         top_poly,
@@ -81,6 +104,7 @@ function offset_default(params) {
             outs: top.shells,
             flat: true,
             call: (polys, onCount) => {
+                first = first || polys;
                 last = polys;
                 // mark each poly with depth (offset #) starting at 0
                 for (let p of polys) {
@@ -99,6 +123,79 @@ function offset_default(params) {
             }
         }
     );
+
+    if (!thin) {
+        return { last, gaps };
+    }
+
+    const deltaBig = 160;
+    const deltSmall = 20;
+
+    // look for close points on adjacent segmented polys and merge
+    let test_polys = first !== last ? [ ...first, ...last ] : last;
+    let test_flats = POLY.flatten(test_polys ?? []);
+
+    // pre-compute segment angles
+    for (let poly of test_flats)
+    poly.forEachSegment((p0, p1) => {
+        p0.angle = new Slope(p0, p1);
+    });
+
+    // segment each poly to be tested
+    let thin_test = test_flats.map(poly => {
+        return {
+            poly,
+            points: poly.segment(offset1, true).points
+        }
+    });
+
+    for (let pi=0, pil=thin_test.length; pi<pil; pi++) {
+        for (let pj=pi; pj<pil; pj++) {
+            let prec0 = thin_test[pi];
+            let prec1 = thin_test[pj];
+            let pp0 = prec0.points;
+            let pp1 = prec1.points;
+            let moved = false;
+            for (let i=0; i<pp0.length; i++) {
+                let p0 = pp0[i];
+                if (p0.moved !== undefined) continue;
+                for (let j=0; j<pp1.length; j++) {
+                    let p1 = pp1[j];
+                    if (p1.moved !== undefined) continue;
+                    if (p0 === p1 || p0.segment === p1.segment) continue;
+                    let dist = p0.distTo2D(p1);
+                    if (dist < offset1) {
+                        let diff = p0.segment.angle.angleDiff(p1.segment.angle,true);
+                        if (diff < deltaBig) continue;
+                        // merge points marking point offset and skip
+                        let mid = p0.midPointTo(p1);
+                        let inc = p0.distTo2D(mid) / offset1;
+                        moved = p0.moved = p1.moved = inc.round(4);
+                        p1.skip = 1;
+                        p0.x = p1.x = mid.x;
+                        p0.y = p1.y = mid.y;
+                    }
+                }
+            }
+            if (moved) {
+                prec0.moved = prec1.moved = true;
+            }
+        }
+    }
+
+    for (let rec of thin_test) {
+        if (rec.moved) {
+            let last_seg;
+            // tag for codec extended point encoding
+            rec.poly._epk = ["moved", "skip"];
+            rec.poly.points = rec.points.filter((p,i) => {
+                let keep = (last_seg !== p.segment || p.moved || p.skip);
+                last_seg = p.segment;
+                return keep;
+            });
+        }
+    }
+
     return { last, gaps };
 }
 
@@ -164,31 +261,189 @@ function thin_type_2(params) {
 
 function thin_type_3(params) {
     // offsetN usually = extrusion width (nozzle diameter)
-    let { z, top, count, offsetN, last, gaps } = params;
+    let { z, top, count, offsetN } = params;
 
     // produce trace from outside of poly inward no more than max inset
-    let { noodle, remain } = top.poly.noodle(offsetN * count);
+    let noodleWidth = offsetN * count;
+    let { noodle, remain } = top.poly.noodle(noodleWidth);
+    for (let n of POLY.flatten(noodle).sort((a,b) => a.depth - b.depth)) {
+        n.shell = [1,-1][Math.floor(n.depth / 2)];
+        // console.log('map', n.depth, n.shell, n.length, n.area().round(3));
+    }
 
-    // top.shells = noodle;
-    top.gaps = last = remain;
+    // re-expand inner offset so fill offsets align properly with expectation
+    remain = POLY.offset(remain, offsetN / 2);
 
-    let thin = top.thin_fill = [];
-    let sparse = top.fill_sparse = [];
+    let debugNoodle = false;
+    let debugRemain = false;
+    let debugExtrusion = false;
+
+    let shells = top.shells; // only used for debug
+    let traces = top.thin_wall = [];
+
+    let midR = offsetN * 0.5;  // nominal extrusion width
+    let minR = midR * 0.75; // smallest interior fill or single wall width
+    let maxR = midR * 1.5; // max double wall extrusion width
+    let maxF = midR * 2; // max interior extrusion width
+
+    let lines = [];
+    let polys = [];
+
+    // show inset "noodle"
+    if (debugNoodle) polys.push(...noodle);
+
+    outer: for (let i=0; i<count; i++) {
+        let next = [];
+
+        // process each top level noodle separately
+        for (let n of noodle.sort((a,b) => b.area() - a.area()))
+        trace_noodle(
+            [ n ],
+            noodleWidth,
+            minR,
+            i === 0 ? midR : midR * 1.25,
+            i === 0 ? maxR : maxF,
+        {
+            shell: n.shell,
+            lines,
+            polys,
+            remain: next,
+            traces,
+            brute: false,
+            showChainIntersect: false
+        });
+
+        // show remaining noodle after single trace
+        if (debugRemain) polys.push(...POLY.setZ(POLY.flatten(next), z));
+
+        noodle = next;
+    }
+
+    // console.log({ lines, polys, trace });
+
+    // show extrusion
+    let zo = z + 0.1;
+    if (debugExtrusion)
+    for (let trace of traces)
+    for (let point of trace) {
+        polys.push(newPolygon().centerCircle(point, point.r, 12).setZ(zo = zo + 0.005));
+    }
+
+    if (!debugExtrusion)
+    POLY.setZ([...lines, ...polys], z);
+
+    if (lines.length) top.thin_fill = lines;
+    if (polys.length) shells.push(...polys);
+
+    // create shell depth annotation that will survive serialization
+    top.thin_sort = traces.map(t => t.shell);
+
+    // remove point.segment markers for codec encoding between minion and worker
+    for (let trace of traces) {
+        for (let pt of trace) {
+            delete pt.s;
+        }
+    }
+
+    // console.log({ traces: traces.map(t => [t.length, t.shell]) });
+    // console.log({ this: (self.kiri_minion?.name ?? self.kiri_worker), traces, polys });
+    return { traces, last: remain };
+}
+
+// trace a single extrusion line around the inside of the noodle poly
+function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
+    let {
+        brute,
+        showInset,
+        showChainIntersect,
+        minArea = midR * midR,
+        shellStep = 1 / 100, // diameter step as % of nozzle
+        lines = [],
+        polys = [],
+        remain = [],
+        traces = [],
+        shell = 0
+    } = opt;
+
+    // increment shell with direction (1=outside, -1=inside)
+    let shellAdd = shell > 0 ? 1 : -1;
+    let sstep = 1 / shellStep;
+    let insets = [];
     let scale = 1000;
-    let minR = offsetN / 2;
-    let maxR = minR * 1.5;
-    let minSpur = offsetN * 2;
+    let dstep = minR / 4;
+    let dtotl = 0;
 
-    let showNoodle = false;
-    let mergeChains = true;
-    let interpolateShortSpur = true;
-    let showChainRawPoints = false;
-    let showChainInterpPoints = true;
-    let showMidline = true;
-    let showMidPoints = false;
-    let showMidNormals = false;
-    let showMidRadii = true;
-    let showNexuses = false;
+    let inset = POLY.offset(noodle, -dstep, {
+        join: ClipperLib.JoinType.jtRound,
+        arc: (1/dstep) * 4
+    });
+
+    while (inset && inset.length) {
+        dtotl += dstep;
+        for (let p of POLY.flatten(inset, [])) {
+            p.dtotl = dtotl;
+        }
+        insets.push(inset);
+        if (showInset) {
+            polys.appendAll(inset);
+        }
+        if (!brute) {
+            break;
+        }
+        inset = POLY.offset(inset, -dstep, {
+            minArea: 0
+        });
+    }
+
+    // project from first inset and find greated offset intersection.
+    // this examples show how to brute force create a medial axis from
+    // micro stepping insets. the same intersect technique used with
+    // medial axis can be applied to this structure to produce an
+    // equivalent output. not as computationally efficient, but much simpler.
+    // if (brute) {
+    //     let { intersectRayLine } = base.util;
+    //     let tests = insets.slice(1);
+    //     let source = POLY.flatten(insets[0], []);
+    //     for (let poly of source) {
+    //         // segment the smallest inset and test against all other insets
+    //         poly.segment(minR).forEachSegment((p1, p2) => {
+    //             let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
+    //             let len = pointDist(p1, p2);
+    //             let dx = (p1.x - p2.x) / len;
+    //             let dy = (p1.y - p2.y) / len;
+    //             let np2 = { x: np1.x + dy * 10, y: np1.y - dx * 10 };
+    //             let max = { dtotl: poly.dtotl, dist: Infinity, maxd: Infinity };
+    //             let term = false;
+    //             outer: for (let test of tests) {
+    //                 for (let tpoly of POLY.flatten(test, [])) {
+    //                     tpoly.forEachSegment((tp1, tp2) => {
+    //                         let int = intersectRayLine(np1, { dx: dy, dy: -dx }, tp1, tp2);
+    //                         if (int && int.dist > int.p1.poly.dtotl) {
+    //                             return;
+    //                         }
+    //                         if (int && int.dist <= max.maxd && int.p1.poly.dtotl > max.dtotl) {
+    //                             max.dtotl = int.p1.poly.dtotl;
+    //                             max.dist = int.dist;
+    //                             max.int = int;
+    //                         } else if (int && int.dist <= max.maxd && int.p1.poly.dtotl === max.dtotl && int.dist < max.dist) {
+    //                             max.dtotl = int.p1.poly.dtotl;
+    //                             max.dist = int.dist;
+    //                             max.int = int;
+    //                         }
+    //                     });
+    //                     if (term) {
+    //                         break outer;
+    //                     }
+    //                 }
+    //             }
+    //             if (max.int) {
+    //                 lines.push(new Point(np1.x, np1.y));
+    //                 lines.push(new Point(max.int.x, max.int.y));
+    //             }
+    //         });
+    //     }
+    //     return { lines, polys };
+    // }
 
     let pointMap = new Map();
     let lineMap = new Map();
@@ -240,11 +495,8 @@ function thin_type_3(params) {
         return rec;
     }
 
-    let chains = [];
-
     // for each standalone noodle, construct medial axis
     // map medial axis points into de-duplicated segments
-    // which will be re-connected into chains
     for (let poly of noodle) {
         // scale the polygon (including inners) so the medial axis code works properly
         poly = poly.clone(true).scale({ x:scale, y:scale, z:scale });
@@ -253,85 +505,11 @@ function thin_type_3(params) {
         // construct medial axis lines. this appears to produce duplicate
         // reverse segments in a subset of cases
         let ma = JSPoly.construct_medial_axis(out, inr);
-        // dedup the points so we can track them uniquely (for chain intersections)
+        if (ma.length === 0) throw('cannot construct medial axis');
+        // dedup the points so we can track them uniquely
         for (let { point0, point1 } of ma) {
             pointsToLine(point0, point1);
         }
-    }
-
-    // connect segments into chains
-    for (let seg of lineMap.values()) {
-        let { p0, p1 } = seg;
-        let len = seg.len = pointDist(p0, p1);
-        // filter out lines where both points' radii are under the
-        // minR threshold. shorten and fixup lines where minR falls
-        // somewhere along the gradient between ends.
-        if (interpolateShortSpur)
-        if (p0.r < minR || p1.r < minR) {
-            if (p0.r > minR && len > minSpur) {
-                // move p1 toward p0 until minR met
-                let pct = (minR - p1.r) / (p0.r - p1.r);
-                let dx = p1.x - p0.x;
-                let dy = p1.y - p0.y;
-                p1.x -= dx * pct;
-                p1.y -= dy * pct;
-                p1.r = minR;
-                pointMap.delete(p1.key);
-            } else if (p1.r > minR && len > minSpur) {
-                // move p0 toward p1 until minR met
-                let pct = (minR - p0.r) / (p1.r - p0.r);
-                let dx = p0.x - p1.x;
-                let dy = p0.y - p1.y;
-                p0.x -= dx * pct;
-                p0.y -= dy * pct;
-                p0.r = minR;
-                pointMap.delete(p0.key);
-            } else {
-                // both points eliminated
-                pointMap.delete(p0.key);
-                pointMap.delete(p1.key);
-                lineMap.delete(seg.key);
-                continue;
-            }
-        }
-        // for each line segment either add it to a chain or start a new chain
-        let add;
-        for (let chain of chains) {
-            if (p0.count === 2 && p0 === chain[0]) {
-                // prefix chain with p1
-                chain.splice(0,0,p1);
-                add = true;
-            } else if (p0.count === 2 && p0 === chain.peek()) {
-                // append chain with p1
-                chain.push(p1);
-                add = true;
-            } else if (p1.count === 2 && p1 === chain[0]) {
-                // prefix chain with p0
-                chain.splice(0,0,p0);
-                add = true;
-            } else if (p1.count === 2 && p1 === chain.peek()) {
-                // append chain with p0
-                chain.push(p0);
-                add = true;
-            }
-            if (add) {
-                chain.total += len;
-                break;
-            }
-        }
-        if (!add) {
-            chains.push([ p0, p1 ]);
-            chains.peek().total = len;
-        }
-    }
-
-    // todo: merge chains at next of 3 or more preferencing
-    // merging longer chains. then shorten remaining nexus chain
-    // intersections by minR
-
-    // render inset "noodle"
-    if (showNoodle) {
-        top.shells.appendAll(noodle);
     }
 
     // divide a segment/redius into 1 or more equal subsegments
@@ -339,263 +517,162 @@ function thin_type_3(params) {
         if (cr <= maxR) {
             return [ cr ];
         } else if (cr <= maxR * 2) {
-            return [ cr / 2, cr / 2 ];
+            let rem = (cr - midR * 2);
+            if (rem < minR) {
+                return [ cr / 2, cr / 2 ];
+            }
+            return [ midR, rem, midR ];
         } else if (cr <= maxR * 3) {
-            let rem = cr - minR * 2;
-            if (rem < maxR) {
-                return [ minR, rem, minR ];
-            } else {
-                return [ minR, rem / 2, rem / 2, minR ];
+            let rem = (cr - midR * 2);
+            if (rem < minR) {
+                return [ cr / 3, cr / 3, cr / 3 ];
             }
+            return [ midR, rem, midR ];
         } else {
-            return [ minR, ...div(cr - minR * 2), minR ];
+            return [ midR, cr - midR * 2, midR ];
         }
     }
 
-    // filter chains that are too short from consideration
-    chains = chains.filter(c => c.total >= minR);
-    chains.sort((c1,c2) => c2.total - c1.total);
+    // medial axis segments for comparison
+    let segs = [...lineMap.values()];
 
-    function merge1chain() {
-        let clen = chains.length;
-        for (let i=0; i<clen; i++) {
-            let ci = chains[i];
-            if (!ci) continue;
-            for (let j=i+1; j<clen; j++) {
-                let cj = chains[j];
-                if (!cj) continue;
-                if (ci[0] === cj[0]) {
-                    ci.reverse().appendAll(cj)
-                    ci.total += cj.total;
-                    cj.merged = true;
-                    chains[j] = undefined;
-                    return true;
-                } else if (ci.peek() === cj.peek()) {
-                    ci.appendAll(cj.reverse());
-                    ci.total += cj.total;
-                    cj.merged = true;
-                    chains[j] = undefined;
-                    return true;
-                } else if (ci.peek() === cj[0]) {
-                    ci.appendAll(cj);
-                    ci.total += cj.total;
-                    cj.merged = true;
-                    chains[j] = undefined;
-                    return true;
-                } else if (ci[0] === cj.peek()) {
-                    cj.appendAll(ci);
-                    cj.total += ci.total;
-                    ci.merged = true;
-                    chains[i] = undefined;
-                    return true;
-                }
+    // project inset segment normals onto closest medial segment
+    // use this to find a radius which we divide into extrusion lanes
+    if (!brute)
+    for (let insetp of inset) {
+        let { intersectRayLine } = base.util;
+        let parent = new Polygon();
+        let inner = [];
+        for (let poly of insetp.flattenTo([])) {
+            let nupoly = poly.parent ? new Polygon() : parent;
+            if (poly.parent) {
+                inner.push(nupoly);
             }
-        }
-        return false;
-    }
-
-    // map chains to nexus via endpoints
-    let nexus = {};
-    function addEp(point, chain) {
-        let key = point.key;
-        let rec = nexus[key];
-        if (!rec) rec = nexus[key] = { point, chains: [] };
-        if (rec.chains.indexOf(chain) < 0) rec.chains.push(chain);
-    }
-    // since chains are sorted longest to shortest,
-    // they will appear in the nexus record longest to shortest
-    for (let chain of chains) {
-        addEp(chain[0], chain);
-        addEp(chain.peek(), chain);
-    }
-
-    // connect chains end to end following nexus branches that result
-    // in the longest final merged chain (open or closed)
-    // map chain endpoints to nexus points
-    while (mergeChains && merge1chain()) ;
-
-    // filter out null chains that were merged into other chains
-    chains = chains.filter(chain => chain);
-
-    // filter dup points from connecting ends
-    chains = chains.map(chain => chain.filter((v, i) => i === 0 || v !== chain[i - 1]));
-
-    // mark closed chains
-    // todo use exact point match by eliminating slice above
-    // then later removing repeated points in the resulting chain from merges
-    for (let chain of chains) {
-        chain.closed = (chain[0] === chain.peek());
-        console.log(chain.closed ? 'closed' : 'open');
-        if (chain.closed) chain.pop();
-    }
-
-    // shorten chain length by minR distance by popping or moving points
-    function shorten(chain) {
-        for (let rem=0, i=chain.length-1; i>=1 && rem < minR; i--) {
-            let c1 = chain[i];
-            let c2 = chain[i-1];
-            let d = pointDist(c1,c2);
-            if (rem + d <= minR) {
-                chain.pop();
-                rem += d;
-            } else {
-                let diff = minR - rem;
-                // move c1 toward c2
-                let pct = diff / d;
-                let dx = c1.x - c2.x;
-                let dy = c1.y - c2.y;
-                chain[i] = {
-                    x: c1.x - dx * pct,
-                    y: c1.y - dy * pct,
-                    r: c1.r
-                };
-                rem = 0;
-                break;
-            }
-        }
-    }
-
-    // shorten chains terminating at nexus by midR
-    for (let rec of Object.values(nexus)) {
-        let { point } = rec;
-        rec.shorts = 0;
-        if (rec.chains.length < 3) continue;
-        for (let chain of chains.filter(c => !c.closed)) {
-            if (pointDist(chain[0], point) < minR) {
-                chain.reverse();
-                shorten(chain);
-                chain.reverse();
-                rec.shorts++;
-            } else if (chain.peek() === point) {
-                shorten(chain);
-                rec.shorts++;
-            }
-        }
-    }
-
-    if (showNexuses)
-    for (let rec of Object.values(nexus)) {
-        let { point } = rec;
-        top.shells.push(newPolygon().centerCircle(point, 0.2, 6 - rec.shorts));
-    }
-
-    function renderPointNormal(pt, ndx, ndy) {
-        if (showMidNormals) {
-            let xo = ndx * pt.r;
-            let yo = ndy * pt.r;
-            thin.push(new Point(pt.x + yo, pt.y - xo));
-            thin.push(new Point(pt.x - yo, pt.y + xo));
-        }
-        if (showMidRadii) {
-            const Sx = pt.x + ndy * pt.r;
-            const Sy = pt.y - ndx * pt.r;
-            const circ = top.shells;
-            const pop = div(pt.r);
-            let acc = 0;
-            for (let r of pop) {
-                const t = acc + r;
-                const px = Sx + -ndy * t;
-                const py = Sy + ndx * t;
-                circ.push(newPolygon().centerCircle({x:px, y:py}, r, 10));
-                acc += r * 2;
-            }
-        }
-}
-
-    // gather point offsets into shells
-    let zi = z;
-    for (let chain of chains) {
-        // zi += 0.1;
-        if (showChainRawPoints)
-        for (let pt of chain) {
-            top.shells.push(newPolygon().centerCircle(pt, pt.r ?? 0.1, 10));
-        }
-        // draw medial axis chain
-        let { closed, length } = chain;
-        let term = closed ? length : length - 1;
-        let segs = [];
-        for (let i=0; i<term; i++) {
-            let p0 = chain[i];
-            let p1 = chain[(i+1) % length];
-            let len = pointDist(p0, p1);
-            // medial axis segment
-            if (showMidline) {
-                thin.push(new Point(p0.x, p0.y, zi));
-                thin.push(new Point(p1.x, p1.y, zi));
-            }
-            // compute medial axis segment normal
-            let offs = len <= offsetN ? [ 0 ] : base.util.lerp(0, len, offsetN, true);
-            let step = 1 / offs.length;
-            let dr = (p1.r - p0.r);
-            let dx = (p1.x - p0.x);
-            let dy = (p1.y - p0.y);
-            let ndx = dx / len;
-            let ndy = dy / len;
-            segs.push({ p0, p1, offs, step, dr, dx, dy, ndx, ndy });
-        }
-        console.log({ segs });
-        // compute chain subdivisions
-        let slen = segs.length;
-        for (let si=0; si<slen; si++) {
-            let seg = segs[si];
-            let segp = segs[(si - 1 + slen) % slen];
-            let { p0, p1, offs, step, dr, dx, dy, ndx, ndy } = seg;
-            let first = si === 0;
-            let last = si === slen - 1;
-            let mid = !(first || last);
-            // for length 2, first and last segment are the same
-            if (showMidPoints) {
-                if (first) {
-                    // todo: handle closed
-                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
-                }
-                if (mid) {
-                    // mid segments
-                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
-                }
-                if (last) {
-                    // todo: handle closed
-                    top.shells.push(newPolygon().centerCircle(p0, 0.08, 10));
-                    if (closed) {
-                        console.log('closed');
-                    } else {
-                        top.shells.push(newPolygon().centerCircle(p1, 0.08, 10));
+            let sadd = shellAdd > 0 ? (poly.parent ? shellAdd : 0) : (poly.parent ? 0 : shellAdd);
+            let ltpo;
+            let trace = [];
+            trace.shell = shell + sadd;
+            poly.segment(minR,  true).forEachSegment((p1, p2) => {
+                let np1 = { x:(p1.x+p2.x)/2, y:(p1.y+p2.y)/2 };
+                let len = pointDist(p1, p2);
+                let dx = (p1.x - p2.x) / len;
+                let dy = (p1.y - p2.y) / len;
+                let min = { dist: Infinity };
+                for (let seg of segs) {
+                    let { p0, p1 } = seg;
+                    let int = intersectRayLine(np1, { dx: dy, dy: -dx }, p0, p1);
+                    if (int?.dist < min.dist && int?.dist < noodleWidth) {
+                        min = int;
+                        min.seg = seg;
                     }
                 }
+                if (min.p1) {
+                    let mp1 = min.seg;
+                    if (showChainIntersect) {
+                        lines.push(new Point(np1.x, np1.y));
+                        lines.push(new Point(min.x, min.y));
+                    }
+                    let mr = min.dist + dstep;
+                    if (mr < minR) {
+                        nupoly.push(new Point(min.x, min.y));
+                        return;
+                    }
+                    // use intersection off and divide into extrusion lanes
+                    let pop = div(mr);
+                    let odd = (pop.length % 2 === 1);
+                    let len = Math.ceil(pop.length / 2);
+                    // check if segment was claimed by a different originating segment
+                    // for odd wall counts so that they're not emitted twice
+                    // todo: failing for noodle width single wall on circular objects
+                    // update claim system to eliminate overlapping close singles
+                    // and/or extend segment definition to curve within angle deviation
+                    // instead of strict point/point segments
+                    if (odd && mp1.claimed && mp1.claimed !== p1.segment) len--;
+                    if (len === 0) {
+                        nupoly.push(new Point(min.x, min.y));
+                        return;
+                    }
+                    let npo;
+                    if (pop.length === 1) {
+                        // let rad_step = ((pop[0] * sstep) | 0) / sstep;
+                        // for single wall place it exactly on medial axis
+                        nupoly.push(new Point(min.x, min.y));
+                        npo = { x: min.x, y: min.y, r: mr, s: p1.segment };
+                    } else {
+                        // radius rounded to nearest step
+                        let rad_step = ((pop[0] * sstep) | 0) / sstep;
+                        // otherwise use first division
+                        // compensate for minimal inset
+                        let off = -dstep + rad_step;
+                        npo = {
+                            x: np1.x + dy * off,
+                            y: np1.y - dx * off,
+                            r: rad_step,
+                            s: p1.segment
+                        };
+                        // trace inset by full diameter
+                        nupoly.push(new Point(np1.x + dy * off * 2, np1.y - dx * off * 2));
+                    }
+                    let lpo = trace.peek();
+                    // when outputting the same segment at the same radius
+                    // it's safe to drop the last point since path output will connect them
+                    if (trace.length > 1 && lpo.s === npo.s && lpo.r === npo.r) {
+                        trace.pop();
+                    }
+                    trace.push(npo);
+                    if (odd && !mp1.claimed) {
+                        mp1.claimed = p1.segment;
+                    }
+                    // detect trace jump and start new trace
+                    if (ltpo && pointDist(ltpo, trace.peek()) > maxR) {
+                        // start new trace removing jump point
+                        // and adding that to the new trace
+                        traces.push(trace);
+                        let nutrace = [ trace.pop() ];
+                        nutrace.shell = trace.shell;
+                        // close last trace if endpoints near enough
+                        if (pointDist(ltpo, trace[0] <= maxR)) {
+                            trace.push(trace[0]);
+                        }
+                        trace = nutrace;
+                    }
+                    // update last trace point out
+                    ltpo = trace.peek();
+                }
+            });
+            // repeat first point of trace (if close enough to be closed)
+            if (trace[0] && pointDist(trace[0], trace.peek()) <= maxR) {
+                trace.push(trace[0]);
             }
-            {
-                // todo: handle closed
-                if (first) {
-                    renderPointNormal(p0, ndx, ndy);
-                }
-                if (mid) {
-                    renderPointNormal(p0, ((ndx + segp.ndx)/2), ((ndy + segp.ndy)/2));
-                }
-                if (last) {
-                    renderPointNormal(p1, ndx, ndy);
-                }
-            }
-            // interpolate across the length of the chain segment
-            if (showChainInterpPoints)
-            for (let indx = 1; indx < offs.length; indx++) {
-                const inc = indx * step;
-                const cr = p0.r + dr * inc;
-                const cx = p0.x + dx * inc;
-                const cy = p0.y + dy * inc;
-                const xo = ndx * cr;
-                const yo = ndy * cr;
-                if (showMidPoints) {
-                    top.shells.push(newPolygon().centerCircle({ x:cx, y:cy }, 0.05, 10));
-                }
-                renderPointNormal({ x:cx, y:cy, r:cr }, ndx, ndy);
+            if (trace.length) {
+                traces.push(trace);
             }
         }
+
+        // subtract inner extrusion offsets from parent extrusion offset
+        // this can result in more top level polys and must be processed
+        // iteratively.
+        let setA = [ parent ];
+        for (let setB of inner) {
+            setA = POLY.subtract(setA, [ setB ], []);
+        }
+
+        // clean and re-nest the resulting polygon soup
+        // subtraction cleans pre-subtract but not post and these
+        // outlines can have sharp unprintable interiors
+        let ret = POLY.nest(
+            POLY.flatten(setA, [], true).map(p => {
+                return p.clean().simplify();
+            }).flat().map(p => {
+                p.shell = shell + shellAdd;
+                return p;
+            })
+        ).filter(p => p.area() >= minArea);
+
+        remain.push(...ret);
     }
 
-    POLY.setZ([...thin, ...top.shells], z);
-    // POLY.setZ([...top.shells], z);
-
-    return { last, gaps };
+    return { lines, polys, remain, traces };
 }
 
 /**
@@ -638,22 +715,32 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                 if (dist < 1) p.open = false;
             } });
             let ret = { last, gaps };
-            switch (opt.thinType) {
-                case "type 1":
+            let ttype = opt.thinType;
+            switch (ttype) {
+                case "legacy 1":
                     ret = thin_type_1({ z, top, count, top_poly, offsetN, fillOffset });
                     break;
-                case "type 2":
+                case "legacy 2":
                     ret = thin_type_2({ z, top, count, top_poly, offset1, offsetN, fillOffset, gaps, wasm });
                     break;
-                case "type 3":
-                    ret = thin_type_3({ z, top, count, top_poly, offsetN });
-                    break;
+                case "adaptive":
+                    try {
+                        ret = thin_type_3({ z, top, count, offsetN });
+                        break;
+                    } catch (e) {
+                        console.log('adaptive layer failed. falling back to basic.', e);
+                        ttype = "basic";
+                    }
+                case "basic":
                 default:
-                    ret = offset_default({ z, top, count, top_poly, offset1, offsetN, wasm });
+                    ret = offset_default({
+                        z, top, count, top_poly, offset1, offsetN, wasm,
+                        thin: ttype === 'basic'
+                    });
                     break;
             }
-            last = ret.last || last;
-            gaps = ret.gaps || gaps;
+            last = ret.last ?? last;
+            gaps = ret.gaps ?? gaps;
         }
     } else {
         // no shells, just infill, is permitted
