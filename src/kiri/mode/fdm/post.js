@@ -21,7 +21,26 @@ export function slicePost(data, options) {
     const { useAssembly, post_args, zIndexes } = options;
     const { process, isSynth, vaseMode } = post_args;
     const { shellOffset, fillOffset, clipOffset } = post_args;
-    data.tops = POLY.nest(groups);
+
+    if (options.pump) {
+        let nugroups = [];
+        let pump = shellOffset / 10;
+        for (let p of groups) {
+            let retop = POLY.offset([ p ], -pump, {
+                join: ClipperLib.JoinType.jtRound,
+                arc: (1/pump) * 4
+            });
+            retop = POLY.offset(retop, pump, {
+                join: ClipperLib.JoinType.jtRound,
+                arc: (1/pump) * 4
+            });
+            nugroups.push(...retop);
+        }
+        data.tops = POLY.nest(nugroups);
+    } else {
+        data.tops = POLY.nest(groups);
+    }
+
     if (isSynth) {
         const process = post_args.process;
         if (process.sliceSupportGrow > 0) {

@@ -345,7 +345,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 }
             }
             if (process.xray) {
-                slice.index = process.xrayi.shift();
+                slice.index = process.xray.shift();
                 slice.lines = lines;
                 slice.groups = groups;
                 slice.xray = process.xray;
