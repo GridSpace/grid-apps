@@ -362,6 +362,10 @@ self.lang['en-us'] = {
     sl_ordr_l:      ["output shell order","inside to outside","or outside to inside","affects surface quality"],
     sl_strt_s:      "start point",
     sl_strt_l:      ["layer starting point","last = where last layer ended","center = part center","origin = device origin","random = yolo"],
+    sl_ofin_s:      "shell inner offset",
+    sl_ofin_l:      ["inner hole perimeter offset","in millimeters"],
+    sl_ofot_s:      "shell outer offset",
+    sl_ofot_l:      ["outer wall perimeter offset","in millimeters"],
 
     // FDM SOLID
     fs_menu:        "solid fill",

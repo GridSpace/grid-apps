@@ -267,6 +267,8 @@ export const conf = {
                 sliceLayerStartX: 0,
                 sliceLayerStartY: 0,
                 sliceLineWidth: 0,
+                sliceCompInner: 0,
+                sliceCompOuter: 0,
                 sliceFillGrow: 0,
                 sliceFillAngle: 45,
                 sliceFillWidth: 1,

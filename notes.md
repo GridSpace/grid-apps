@@ -33,8 +33,6 @@
 
 * `F` new parameter to cap output flow rate (on printer device)
 * `F` new parameters for bridging speed / bridge fan control
-* `F` new base paremeter for hole and perimeter compensation
-* `F` new parameters for inner / outer perimeter compensation
 * `F` convert ranges to z offsets while continuing to show layer #
 * `F` support pillar top/bottom should conform to part
 * `F` more explicit line width control with ranges and min/max adaptive

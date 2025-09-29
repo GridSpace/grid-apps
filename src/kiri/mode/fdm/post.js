@@ -17,12 +17,13 @@ slicer.slicePost.FDM = slicePost;
  * data object. return is ignored.
  */
 export function slicePost(data, options) {
-    const { z, lines, groups } = data;
-    const { useAssembly, post_args, zIndexes } = options;
-    const { process, isSynth, vaseMode } = post_args;
-    const { shellOffset, fillOffset, clipOffset } = post_args;
+    const { groups, z } = data;
+    const { post_args, useAssembly, zIndexes } = options;
+    const { isSynth, process, vaseMode } = post_args;
+    const { compInner, compOuter, pump } = post_args;
+    const { clipOffset, fillOffset, shellOffset  } = post_args;
 
-    if (options.pump) {
+    if (pump) {
         let nugroups = [];
         let pump = shellOffset / 10;
         for (let p of groups) {
@@ -41,6 +42,19 @@ export function slicePost(data, options) {
         data.tops = POLY.nest(groups);
     }
 
+    // perimeter and inner hole compensation offsets
+    if (compInner || compOuter) {
+        let inner = POLY.inner(data.tops).flat();
+        let outer = POLY.outer(data.tops);
+        if (compInner) {
+            inner = POLY.flatten(POLY.offset(inner, compInner/2));
+        }
+        if (compOuter) {
+            outer = POLY.flatten(POLY.offset(outer, -compOuter/2));
+        }
+        data.tops = POLY.nest([...inner, ...outer]);
+    }
+
     if (isSynth) {
         const process = post_args.process;
         if (process.sliceSupportGrow > 0) {
@@ -54,6 +68,7 @@ export function slicePost(data, options) {
         delete data.groups;
         return;
     }
+
     const index = zIndexes.indexOf(z);
     const range = getRangeParameters(process, index);
     // calculate fractional shells
@@ -129,7 +144,7 @@ function offset_default(params) {
     }
 
     const deltaBig = 160;
-    const deltSmall = 20;
+    const deltaSmall = 20;
 
     // look for close points on adjacent segmented polys and merge
     let test_polys = first !== last ? [ ...first, ...last ] : last;
@@ -139,6 +154,8 @@ function offset_default(params) {
     for (let poly of test_flats)
     poly.forEachSegment((p0, p1) => {
         p0.angle = new Slope(p0, p1);
+        // todo calc vertex angle
+        // exclude segment vertex from merge when angle < deltaSmall
     });
 
     // segment each poly to be tested
