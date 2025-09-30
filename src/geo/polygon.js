@@ -1323,15 +1323,15 @@ export class Polygon {
                 pp2.pos = ip2;
             }
         });
-        list.sort(function(p1, p2) {
-            return util.distSq(lp1, p1) - util.distSq(lp1, p2);
-        });
         if (deep && this.inner) {
             this.inner.forEach(p => {
                 let ints = p.intersections(lp1, lp2);
                 if (ints) list.appendAll(ints);
             });
         }
+        list.sort(function(p1, p2) {
+            return util.distSq(lp1, p1) - util.distSq(lp1, p2);
+        });
         return list;
     }
 
@@ -1390,6 +1390,23 @@ export class Polygon {
         poly.push(i2);
         // console.log({emit: poly});
         return poly;
+    }
+
+    /**
+     * emit the shortest poly that connects two points on a closed CW poly
+     * because traveling around the 'end point' may yield a shorter route.
+     * if the poly is open, use emitSegment()
+     */
+    emitShortestSegment(i1, i2) {
+        if (this.open) {
+            return this.emitSegment(i1, i2);
+        }
+        let start = i1.p2.pos,
+            end = i2.p1.pos,
+            points = this.points,
+            seg0 = new Polygon([ i1, ...points.slice(start, end + 1), i2 ]).setOpen(),
+            seg1 = new Polygon([ i2, ...points.slice(end +1 ), ...points.slice(0, start), i1 ]).setOpen();
+        return seg0.perimeter() < seg1.perimeter() ? seg0 : seg1;
     }
 
     /**
@@ -2324,9 +2341,12 @@ export class Polygon {
         return obj;
     }
 
-    // split long straight lines into segments no longer than max
-    // and return a new polygon
-    segment(max = 1, mark, wrap) {
+    // split long straight lines into segments no longer than `max`
+    // and return a new polygon. optionally `mark` points with their
+    // derived segment start point (hinting for thin walls), `wrap`
+    // the poly first point by appending to the end (adaptive walls),
+    // or stopping segmentation at `maxoff`
+    segment(max = 1, mark = false, wrap = false, maxoff = Infinity) {
         const newp = [];
         const points = this.points;
         const length = points.length;
@@ -2339,9 +2359,13 @@ export class Polygon {
             const dl = Math.sqrt(dx * dx + dy * dy);
             newp.push(p1);
             if (mark) p1.segment = p1;
-            if (dl < max) {
+            // if segment shorter than max (delta) or
+            // maxoff is exhausted (only segmenting up to some length)
+            // then skip sub-segmenting the current segment
+            if (dl < max || maxoff < 0) {
                 continue;
             }
+            maxoff -= dl;
             const div = dl / max;
             const fit = div | 0;
             const add = fit - 1;

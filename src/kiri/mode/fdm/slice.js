@@ -140,7 +140,8 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         fillOffset = lineWidth * fillOffsetMult,
         clipOffset = process.sliceSupportOffset,
         sliceFillAngle = process.sliceFillAngle,
-        supportDensity = process.sliceSupportDensity;
+        supportDensity = process.sliceSupportDensity,
+        { sliceCompInner, sliceCompOuter } = process;
 
     // override globals used by vopt()
     isFlat = controller.lineType === "flat";
@@ -230,6 +231,8 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         useAssembly,
         post: 'FDM',
         post_args: {
+            compInner: sliceCompInner,
+            compOuter: sliceCompOuter,
             shellOffset,
             fillOffset,
             clipOffset,
@@ -345,7 +348,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 }
             }
             if (process.xray) {
-                slice.index = process.xrayi.shift();
+                slice.index = process.xray.shift();
                 slice.lines = lines;
                 slice.groups = groups;
                 slice.xray = process.xray;

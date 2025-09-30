@@ -59,7 +59,8 @@ export function fdm_export(print, online, ondone, ondebug) {
         retSpeed = process.outputRetractSpeed * 60 || 1, // range
         retDwell = process.outputRetractDwell || 0, // range
         timeDwell = retDwell / 1000,
-        arcDist = isBelt ? 0 : (process.arcTolerance || 0),
+        scarfZ = process.outputScarfLength ? true : false,
+        arcDist = isBelt || scarfZ ? 0 : (process.arcTolerance || 0),
         arcMin = 1,
         arcRes = 20,
         arcDev = 0.5,
@@ -111,7 +112,11 @@ export function fdm_export(print, online, ondone, ondebug) {
             progress: 0,
             nozzle: tool,
             tool: tool,
-            model_labels: model_labels.sort().join(',')
+            oid: '',
+            oname: '',
+            model_labels: model_labels.sort().join(','),
+            total_time: Math.ceil(print.total_time / 60),
+            remain_time: Math.ceil(print.total_time / 60),
         },
         pidx, path, out, speedMMM, emitMM, emitPerMM, lastp, laste, dist,
         lines = 0,
@@ -525,6 +530,7 @@ export function fdm_export(print, online, ondone, ondebug) {
     // retract before first move
     retract();
 
+    subst.remain_time = Math.ceil(print.total_time / 60);
     while (layer < layers.length) {
         path = layers[layer];
         layerno = path.slice.index;
@@ -598,7 +604,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         }
 
         // move Z to layer height
-        if (layer > 0 || !isBelt) {
+        if (layer === 0 || ((layer > 0 || !isBelt) && !scarfZ)) {
             moveTo({z:zpos}, seekMMM);
         }
 
@@ -620,6 +626,8 @@ export function fdm_export(print, online, ondone, ondebug) {
                     let b64 = encodeBitOffset(off);
                     append(`; start object id: ${out.widget.track.grid_id}`);
                     isBambu && append(`M624 ${b64}`);
+                    subst.oid = out.widget.track.grid_id;
+                    subst.oname = out.widget.meta.file;
                 }
                 cwidget = out.widget;
             }
@@ -779,12 +787,20 @@ export function fdm_export(print, online, ondone, ondebug) {
                 } else {
                     // emitMM = emitPerMM * out.emit * dist;
                     emitMM = extrudeMM(dist, emitPerMM, out.emit);
-                    moveTo({x:x, y:y, e:emitMM}, speedMMM);
+                    if (scarfZ) {
+                        moveTo({x, y, z:z + path.height/2, e:emitMM}, speedMMM);
+                    } else {
+                        moveTo({x, y, e:emitMM}, speedMMM);
+                    }
                     emitted += emitMM;
                 }
             } else {
                 drainQ();
-                moveTo({x:x, y:y}, seekMMM);
+                if (scarfZ) {
+                    moveTo({x, y, z:z + path.height/2}, speedMMM);
+                } else {
+                    moveTo({x, y}, seekMMM);
+                }
                 // TODO disabling out of plane z moves until a better mechanism
                 // can be built that doesn't rely on computed zpos from layer heights...
                 // when making z moves (like polishing) allow slowdown vs fast seek
@@ -830,11 +846,13 @@ export function fdm_export(print, online, ondone, ondebug) {
             append(`M808`);
         }
         drainQ();
+
+        print.total_time -= path.print_time;
+        subst.remain_time = Math.ceil(print.total_time / 60);
     }
 
     function emitQrec(rec) {
         let {e, x, y, dist, emitPerMM, speedMMM} = rec;
-        // emitMM = emitPerMM * e * dist;
         emitMM = extrudeMM(dist, emitPerMM, e);
         moveTo({x:x, y:y, e:emitMM}, speedMMM);
         emitted += emitMM;
@@ -958,7 +976,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         }
 
         return true;
-
     }
 
     if (inloops) {

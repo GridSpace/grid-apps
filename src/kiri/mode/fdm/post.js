@@ -17,11 +17,44 @@ slicer.slicePost.FDM = slicePost;
  * data object. return is ignored.
  */
 export function slicePost(data, options) {
-    const { z, lines, groups } = data;
-    const { useAssembly, post_args, zIndexes } = options;
-    const { process, isSynth, vaseMode } = post_args;
-    const { shellOffset, fillOffset, clipOffset } = post_args;
-    data.tops = POLY.nest(groups);
+    const { groups, z } = data;
+    const { post_args, useAssembly, zIndexes } = options;
+    const { isSynth, process, vaseMode } = post_args;
+    const { compInner, compOuter, pump } = post_args;
+    const { clipOffset, fillOffset, shellOffset  } = post_args;
+
+    if (pump) {
+        let nugroups = [];
+        let pump = shellOffset / 10;
+        for (let p of groups) {
+            let retop = POLY.offset([ p ], -pump, {
+                join: ClipperLib.JoinType.jtRound,
+                arc: (1/pump) * 4
+            });
+            retop = POLY.offset(retop, pump, {
+                join: ClipperLib.JoinType.jtRound,
+                arc: (1/pump) * 4
+            });
+            nugroups.push(...retop);
+        }
+        data.tops = POLY.nest(nugroups);
+    } else {
+        data.tops = POLY.nest(groups);
+    }
+
+    // perimeter and inner hole compensation offsets
+    if (compInner || compOuter) {
+        let inner = POLY.inner(data.tops).flat();
+        let outer = POLY.outer(data.tops);
+        if (compInner) {
+            inner = POLY.flatten(POLY.offset(inner, compInner/2));
+        }
+        if (compOuter) {
+            outer = POLY.flatten(POLY.offset(outer, -compOuter/2));
+        }
+        data.tops = POLY.nest([...inner, ...outer]);
+    }
+
     if (isSynth) {
         const process = post_args.process;
         if (process.sliceSupportGrow > 0) {
@@ -35,6 +68,7 @@ export function slicePost(data, options) {
         delete data.groups;
         return;
     }
+
     const index = zIndexes.indexOf(z);
     const range = getRangeParameters(process, index);
     // calculate fractional shells
@@ -110,7 +144,7 @@ function offset_default(params) {
     }
 
     const deltaBig = 160;
-    const deltSmall = 20;
+    const deltaSmall = 20;
 
     // look for close points on adjacent segmented polys and merge
     let test_polys = first !== last ? [ ...first, ...last ] : last;
@@ -120,6 +154,8 @@ function offset_default(params) {
     for (let poly of test_flats)
     poly.forEachSegment((p0, p1) => {
         p0.angle = new Slope(p0, p1);
+        // todo calc vertex angle
+        // exclude segment vertex from merge when angle < deltaSmall
     });
 
     // segment each poly to be tested
@@ -146,14 +182,13 @@ function offset_default(params) {
                     if (p0 === p1 || p0.segment === p1.segment) continue;
                     let dist = p0.distTo2D(p1);
                     if (dist < offset1) {
-                        let diff = p0.segment.angle.angleDiff(p1.segment.angle,false);
-                        if (p0.segment === p1.segment && diff < deltaBig) continue;
-                        if (p0.segment !== p1.segment && diff > deltSmall && diff < deltaBig) continue;
+                        let diff = p0.segment.angle.angleDiff(p1.segment.angle,true);
+                        if (diff < deltaBig) continue;
                         // merge points marking point offset and skip
                         let mid = p0.midPointTo(p1);
                         let inc = p0.distTo2D(mid) / offset1;
-                        moved = p0.moved = p1.moved = inc;
-                        p1.skip = true;
+                        moved = p0.moved = p1.moved = inc.round(4);
+                        p1.skip = 1;
                         p0.x = p1.x = mid.x;
                         p0.y = p1.y = mid.y;
                     }
@@ -168,6 +203,8 @@ function offset_default(params) {
     for (let rec of thin_test) {
         if (rec.moved) {
             let last_seg;
+            // tag for codec extended point encoding
+            rec.poly._epk = ["moved", "skip"];
             rec.poly.points = rec.points.filter((p,i) => {
                 let keep = (last_seg !== p.segment || p.moved || p.skip);
                 last_seg = p.segment;
@@ -485,6 +522,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
         // construct medial axis lines. this appears to produce duplicate
         // reverse segments in a subset of cases
         let ma = JSPoly.construct_medial_axis(out, inr);
+        if (ma.length === 0) throw('cannot construct medial axis');
         // dedup the points so we can track them uniquely
         for (let { point0, point1 } of ma) {
             pointsToLine(point0, point1);
@@ -694,7 +732,8 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                 if (dist < 1) p.open = false;
             } });
             let ret = { last, gaps };
-            switch (opt.thinType) {
+            let ttype = opt.thinType;
+            switch (ttype) {
                 case "legacy 1":
                     ret = thin_type_1({ z, top, count, top_poly, offsetN, fillOffset });
                     break;
@@ -702,13 +741,18 @@ export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {
                     ret = thin_type_2({ z, top, count, top_poly, offset1, offsetN, fillOffset, gaps, wasm });
                     break;
                 case "adaptive":
-                    ret = thin_type_3({ z, top, count, offsetN });
-                    break;
+                    try {
+                        ret = thin_type_3({ z, top, count, offsetN });
+                        break;
+                    } catch (e) {
+                        console.log('adaptive layer failed. falling back to basic.', e);
+                        ttype = "basic";
+                    }
                 case "basic":
                 default:
                     ret = offset_default({
                         z, top, count, top_poly, offset1, offsetN, wasm,
-                        thin: opt.thinType === 'basic'
+                        thin: ttype === 'basic'
                     });
                     break;
             }

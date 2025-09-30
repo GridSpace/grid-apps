@@ -96,6 +96,7 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
         put: (key, val) => localSet(key, val),
         set: (key, val) => localSet(key, val),
         setItem: (key, val) => localSet(key, val),
+        removeItem: (key) => localRemove(key)
     },
     tweak = {
         line_precision(v) { api.work.config({ base: { clipperClean: v } }) },
@@ -117,6 +118,11 @@ function localSet(key, val) {
     let sloc = api.conf.get().local;
     sloc[key] = api.sdb[key] = val;
     return val;
+}
+
+function localRemove(key) {
+    let sloc = api.conf.get().local;
+    return delete sloc[key];
 }
 
 export const api = {

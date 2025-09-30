@@ -181,8 +181,8 @@ async function path(levels, update, opts = {}) {
                 return;
             }
 
-            if (lastOut) { // if last outpoint is defined
-
+            // if last outpoint is defined
+            if (lastOut) {
                 if (arrowAll || lastOut.emit !== out.emit) {
                     heads.push({p1: lastOutPoint, p2: outPoint});
                 }
@@ -200,13 +200,10 @@ async function path(levels, update, opts = {}) {
                         current.color = color(out);
                         pushPrint(out.tool, current);
                     }
-
                     out.arcPoints.forEach(p => {
                         current.push(p);
                     })
-
                     current.push(outPoint);
-
                 } else if (out.emit) {
                     // explicity G1 in CAM mode
                     // just a non-move in other modes
