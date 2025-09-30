@@ -15,6 +15,7 @@
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
 * `P` faster ray intersect https://github.com/gkjohnson/three-mesh-bvh/
 * `P` try material clipping planes for slice range selection
+* `P` switch png lib to https://github.com/photopea/UPNG.js
 
 * `F` edit in Mesh:Tool
 * `F` custom device vars for profiles / ranges / gcode
