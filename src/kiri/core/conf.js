@@ -294,7 +294,7 @@ export const conf = {
                 outputLayerRetract: false,
                 outputLoops: 0,
                 outputMinLayerTime: 10,
-                outputMinSpeed: 10.0,
+                outputMinSpeed: 5.0,
                 outputPurgeTower: 0,
                 outputRaft: false,
                 outputRaftSpacing: 0.2,

@@ -46,8 +46,6 @@ export async function fdm_prepare(widgets, settings, update) {
         output = [],
         layerout = [];
 
-    let lastLayerStart = null;
-
     // compute bounds if missing
     if (!bounds) {
         bounds = new THREE.Box3();
@@ -553,12 +551,9 @@ export async function fdm_prepare(widgets, settings, update) {
                 offset,
                 layerout,
                 {
-                    routeAround: process.outputAvoidGaps,
-                    seedPoint: printPoint.sub(offset),
-                    params, // range parameters
                     first: slice.index === 0,
-                    support: slice.widget.support,
                     onBelt: beltStart,
+                    params, // range parameters
                     pretract: (wipeDist) => {
                         if (!(lastLayer && lastLayer.length)) {
                             return;
@@ -573,7 +568,11 @@ export async function fdm_prepare(widgets, settings, update) {
                                 print.addOutput(lastLayer, endpoint, null, null, lastOut.tool);
                             }
                         }
-                    }
+                    },
+                    routeAround: process.outputAvoidGaps,
+                    seedPoint: printPoint.sub(offset),
+                    support: slice.widget.support,
+                    zmax,
                 }
             );
             layerout.print_time = printPoint.layer_time;
@@ -823,8 +822,10 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
         infillSpeed = process.sliceFillRate || opt.infillSpeed || fillSpeed || printSpeed,
         moveSpeed = process.outputSeekrate,
+        minSpeed = process.outputMinSpeed,
         origin = startPoint.add(offset),
         zhop = process.zHopDistance || 0,
+        zmax = opt.zmax,
         antiBacklash = process.antiBacklash,
         wipeDist = process.outputRetractWipe || 0,
         isBelt = device.bedBelt,
@@ -1100,9 +1101,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 coast: firstLayer ? 0 : coastDist,
                 extrude: numOrDefault(opt.extrude, shellMult),
                 nozzleSize,
-                rate: finishShell ? finishSpeed : printSpeed,
-                scarf,
-                tool: extruder,
                 onfirst: (firstPoint, preout) => {
                     let from = seedPoint || startPoint;
                     if (from.distTo2D(firstPoint) > retractDist) {
@@ -1111,7 +1109,11 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                         }
                     }
                     seedPoint = null;
-                }
+                },
+                rate: finishShell ? finishSpeed : printSpeed,
+                scarf,
+                tool: extruder,
+                zmax
             });
             lastPoly = slice.lastPoly = poly;
         }
@@ -1600,7 +1602,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     if (minLayerTime && tt < minLayerTime) {
         let fact = tt / minLayerTime;
         for (let p of preout) {
-            if (p.emit) p.speed *= fact;
+            if (p.emit) p.speed = Math.max(p.speed * fact, minSpeed);
         }
     }
 

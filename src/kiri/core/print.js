@@ -129,6 +129,7 @@ class Print {
             close = !options.open,
             scarf = !poly.open ? (options.scarf ?? 0) : false,
             tool = options.tool,
+            zmax = options.zmax,
             last = startPoint,
             first = true;
 
