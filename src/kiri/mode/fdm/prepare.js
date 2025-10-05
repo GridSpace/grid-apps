@@ -814,6 +814,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         shellOrder = {"out-in":-1,"in-out":1,"alternate":-2}[process.sliceShellOrder] || -1,
         sparseMult = process.outputSparseMult,
         coastDist = process.outputCoastDist || 0,
+        fanSpeed = process.outputFanSpeed,
         firstShellSpeed = process.firstLayerRate,
         firstFillSpeed = process.firstLayerFillRate,
         firstPrintMult = process.firstLayerPrintMult,
@@ -863,6 +864,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     // override: adapt bridge layer speed
     if (slice.isBridgeLayer) {
         fillSpeed /= 2;
+        printSpeed /= 2;
     }
 
     // apply first layer extrusion multipliers
@@ -1613,6 +1615,12 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
     // add offset points to total print
     print.addPrintPoints(preout, output);
+
+    // bridge layer fan change
+    if (slice.isBridgeLayer) {
+        preout[0].fan = Math.round(fanSpeed / 3);
+        preout.peek().fan = fanSpeed;
+    }
 
     // create next layer start point and annotate
     // with print time for previous layer (hack to

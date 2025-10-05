@@ -613,6 +613,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         for (pidx=0; pidx<path.length; pidx++) {
             out = path[pidx];
             speedMMM = (out.speed || process.outputFeedrate) * 60; // range
+            fanSpeed = out.fan ?? fanSpeed;
 
             // hint to controller that we're working on a specific object
             // so that gcode between start/stop comments can be cancelled
@@ -685,13 +686,13 @@ export function fdm_export(print, online, ondone, ondebug) {
             }
 
             // in belt mode, fan can change per segment (for base)
-            if (isBelt) {
+            // if (isBelt) {
                 setTempFanSpeed(out.fan);
                 if (fanSpeed !== lastFanSpeed) {
                     appendAllSub(gcodeFan);
                     lastFanSpeed = fanSpeed;
                 }
-            }
+            // }
 
             if (lastp && out.emit) {
                 if (arcDist) {
