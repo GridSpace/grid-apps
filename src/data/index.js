@@ -168,7 +168,7 @@ SP.init = function(options = {}) {
         request = IDB.open(name, this.version);
 
         request.onupgradeneeded = function(event) {
-            let db = storage.db = request.result;
+            let db = request.result;
             let current = [...db.objectStoreNames];
             let stores = storage.stores;
             // add missing stores
@@ -184,16 +184,16 @@ SP.init = function(options = {}) {
             // remove obsolete stores
             for (let curr of current) {
                 if (stores.indexOf(curr) < 0) {
-                    storage.db.deleteObjectStore(curr);
+                    db.deleteObjectStore(curr);
                     console.log({index_dropped: curr});
                 }
             }
-            event.target.transaction.oncomplete = function(event) {
-                storage.runQueue();
-            };
+            // allow transactions
+            storage.db = db;
         };
 
         request.onsuccess = function(event) {
+            console.log('IDB open succeeded');
             storage.current = storage.stores[0];
             storage.db = request.result;
             storage.runQueue();
@@ -217,6 +217,7 @@ SP.runQueue = function() {
         let i = 0, q = this.queue, e;
         while (i < q.length) {
             e = q[i++];
+            // console.log('runQ', i, ...e);
             switch (e.shift()) {
                 case 'iterate': this.iterate(...e); break;
                 case 'keys': this.keys(...e); break;
@@ -252,7 +253,11 @@ SP.put = function(key, value, callback, store = this.current) {
             req.onerror = function(event) { callback(false) };
         }
     } catch (e) {
-        console.log(e);
+        if (e.name === 'InvalidStateError') {
+            console.log({ putRetry: key });
+            return this.queue.push(['put', key, value, callback, store]);
+        }
+        console.log(e.name, e);
         if (callback) callback(false);
     }
 };
@@ -275,6 +280,10 @@ SP.get = function(key, callback, store = this.current) {
             req.onerror = function(event) { callback(null) };
         }
     } catch (e) {
+        if (e.name === 'InvalidStateError') {
+            console.log({ getRetry: key });
+            return this.queue.push(['get', key, callback, store]);
+        }
         console.log(e);
         if (callback) callback(null);
     }

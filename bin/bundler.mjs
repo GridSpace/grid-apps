@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import uglify from 'uglify-js';
 import { Buffer } from 'buffer';
 
 const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bundle.config.json', 'utf8'));
+const compress = process.env.UGLIFY ? true : false
 
 // --- recursive directory walker (follows symlinks safely) ---
 function* walk(dir, seen = new Set()) {
@@ -37,12 +39,36 @@ for (const input of cfg.inputs) {
 const dataParts = [];
 const entryMeta = [];
 let offset = 0;
+let cache = new Map();
 
 for (const { file, virt } of entries) {
-    const data = fs.readFileSync(file);
-    entryMeta.push({ virt, offset, length: data.length });
-    dataParts.push(data);
-    offset += data.length;
+    let record = cache.get(file);
+    if (record) {
+        // console.log({ dup: file });
+        entryMeta.push({ ...record, virt });
+    } else {
+        let data = fs.readFileSync(file);
+        if (compress && file.endsWith("js")) {
+            console.log('compress', file);
+            data = uglify.minify(data.toString(), {
+                compress: {
+                    merge_vars: false,
+                    unused: false
+                }
+            });
+            // console.log({ to: typeof(data), data });
+            if (!data.code) {
+                console.log({ skip: file });
+                continue;
+            }
+            data = Buffer.from(data.code);
+        }
+        record = { virt, offset, length: data.length };
+        cache.set(file, record);
+        entryMeta.push(record);
+        dataParts.push(data);
+        offset += data.length;
+    }
 }
 
 // temporary header without offsets to measure total size
@@ -66,7 +92,7 @@ for (const { virt, offset, length } of entryMeta) {
     const offb = Buffer.alloc(4); offb.writeUInt32LE(headerSize + offset);
     const lenb = Buffer.alloc(4); lenb.writeUInt32LE(length);
     headerParts.push(nlen, name, offb, lenb);
-    console.log(virt);
+    // console.log(virt);
 }
 
 const header = Buffer.concat([count, ...headerParts]);
