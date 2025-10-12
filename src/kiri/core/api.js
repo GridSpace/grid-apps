@@ -9,7 +9,7 @@ import { client as work } from './client.js';
 import { consts, COLOR as color, LISTS as lists } from './consts.js';
 import { device, devices } from './devices.js';
 import { catalog, dialog, event, group, help, hide, image } from './main.js';
-import { modal, mode, probe, process, show, space, util, view } from './main.js';
+import { modal, mode, process, show, space, util, view } from './main.js';
 import { local as dataLocal } from '../../data/local.js';
 import { noop, ajax, o2js, js2o } from './utils.js';
 import { functions } from './function.js';
@@ -162,7 +162,6 @@ export const api = {
     o2js,
     onkey,
     platform,
-    probe,
     process,
     sdb: dataLocal,
     selection,

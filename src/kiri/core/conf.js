@@ -927,8 +927,6 @@ export const conf = {
             devel: false,
             drawer: false,
             edgeangle: 20,
-            exportGhost: false,
-            exportLocal: false,
             exportOcto: false,
             exportPreview: false,
             exportThumb: false,

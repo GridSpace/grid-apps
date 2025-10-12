@@ -155,8 +155,6 @@ function booleanSave() {
     control.reverseZoom = ui.reverseZoom.checked;
     control.dark = ui.dark.checked;
     control.exportOcto = ui.exportOcto.checked;
-    control.exportGhost = ui.exportGhost.checked;
-    control.exportLocal = ui.exportLocal.checked;
     control.exportThumb = ui.exportThumb.checked;
     control.exportPreview = ui.exportPreview.checked;
     control.healMesh = ui.healMesh.checked;
@@ -904,7 +902,6 @@ function init_one() {
             xany:               $('mod-x-any'),
             xsla:               $('mod-x-sla'),
             xlaser:             $('mod-x-laser'),
-            local:              $('mod-local'),
             don8:               $('mod-don8'),
             any:                $('mod-any'),
         },
@@ -1058,8 +1055,6 @@ function init_one() {
         spaceRandoX:      newBoolean(LANG.op_spcx_s, booleanSave, {title:LANG.op_spcx_l, show:isBelt}),
         spaceLayout:      newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:toFloat, size:3, units}),
         _____:            newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
-        exportLocal:      newBoolean(`Grid:Local`, booleanSave, {title:LANG.op_exgl_l}),
-        exportGhost:      newBoolean(`Grid:Host`, booleanSave, {title:LANG.op_exgh_l}),
         exportOcto:       newBoolean(`OctoPrint`, booleanSave, {title:LANG.op_exop_l}),
         exportThumb:      newBoolean(`Thumbnail`, booleanSave, {modes:FDM}),
         exportPreview:    newBoolean(`Code Preview`, booleanSave),
