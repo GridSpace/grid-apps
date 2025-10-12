@@ -4,26 +4,70 @@ import { CamOp } from './op.js';
 import { Tool } from './tool.js';
 import { generate as Topo } from './topo3.js';
 import { newPoint } from '../../../geo/point.js';
+import { newPolygon } from '../../../geo/polygon.js';
 import { tip2tipEmit } from '../../../geo/paths.js';
 
-function createFilter(op) {
+function createFilter(op, origin, axis) {
+    console.log({ origin, axis });
+    let ok = () => true;
     let filter = slices => slices;
     let filterString = op.filter?.map(l => l.trim()).join('\n');
     if (filterString) {
         try {
             const obj = eval(`( ${filterString} )`);
-            let idx = 0;
-            if (obj && obj.slices) {
-                const nadd = [];
-                filter = function (slices) {
-                    for (let slice of slices) {
-                        if (obj.slices(slice, idx++)) {
-                            nadd.push(slice);
+            let box = obj?.box;
+            let slice_fn = obj?.slices;
+            let index = 0;
+            const accept = [];
+            filter = function (slices) {
+                for (let slice of slices) {
+                    if (slice_fn && slice_fn(slice, index++)) {
+                        accept.push(slice);
+                    } else if (box) {
+                        // slice.z = x when axis = y
+                        // slice.z = y when axis = x
+                        let { x, y, z } = box;
+                        x = x ?? [ -Infinity, Infinity ];
+                        y = y ?? [ -Infinity, Infinity ];
+                        z = z ?? [ -Infinity, Infinity ];
+                        let ok = false;
+                        if (axis === 'x') {
+                            let sy = slice.z + origin.y;
+                            if (sy >= y[0] && sy <= y[1]) {
+                                ok = true;
+                                for (let p of slice.camLines) {
+                                    p.points = p.points.filter(p =>
+                                        p.x - origin.x >= x[0] && p.x - origin.x <= x[1] &&
+                                        p.z - origin.z >= z[0] && p.z - origin.z <= z[1]
+                                    );
+                                }
+                            }
+                        } else {
+                            let sx = slice.z - origin.x;
+                            if (sx >= x[0] && sx <= x[1]) {
+                                ok = true;
+                                for (let p of slice.camLines) {
+                                    p.points = p.points.filter(p =>
+                                        p.y + origin.y >= y[0] && p.y + origin.y <= y[1] &&
+                                        p.z - origin.z >= z[0] && p.z - origin.z <= z[1]
+                                    );
+                                }
+                            }
+                        }
+                        if (ok) {
+                            slice.camLines = slice.camLines.map(p => {
+                                if (p.points.length > 1) {
+                                    return newPolygon(p.points).setOpen(true);
+                                } else {
+                                    return undefined;
+                                }
+                            }).filter(p => p);
+                            accept.push(slice);
                         }
                     }
-                    return nadd;
-                };
-            }
+                }
+                return accept;
+            };
         } catch (e) {
             console.log('filter parse error', e, op.filter);
         }
@@ -38,8 +82,8 @@ class OpContour extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices, settings, updateToolDiams } = state;
-        let filter = createFilter(op);
+        let { color, addSlices, settings, updateToolDiams } = state;
+        let filter = createFilter(op, settings.origin, op.axis.toLowerCase());
         let toolDiam = this.toolDiam = new Tool(settings, op.tool).fluteDiameter();
         updateToolDiams(toolDiam);
         // we need topo for safe travel moves when roughing and outlining
@@ -54,6 +98,11 @@ class OpContour extends CamOp {
                 slices = filter(slices);
                 this.sliceOut = slices;
                 addSlices(slices);
+                for (let slice of slices) {
+                    slice.output()
+                        .setLayer(`contour ${op.axis}`, { face: color, line: color })
+                        .addPolys(slice.camLines);
+                }
             },
             contour: op,
             state: state

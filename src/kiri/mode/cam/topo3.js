@@ -16,7 +16,7 @@ export class Topo {
 
     async generate(opt = {}) {
         let { state, contour, onupdate, ondone } = opt;
-        let { widget, settings, tshadow, center, tabs, color } = opt.state;
+        let { widget, settings, tshadow, tabs } = opt.state;
 
         let { controller, process } = settings,
             animesh = parseInt(controller.animesh || 100) * 2500,
@@ -177,8 +177,7 @@ export class Topo {
             clipTabZ: clipTab ? clipTab.map(t => t.z) : undefined,
             tabHeight,
             newslices,
-            leave,
-            color
+            leave
         }, (i, l, p) => {
             onupdate(l / 2 + i / 2, l, p);
         });
@@ -304,7 +303,7 @@ export class Topo {
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
         const { gridDelta, resolution, density, partOff, toolStep, contourX, contourY } = params;
-        const { clipTo, clipTab, clipTabZ, tabHeight, newslices, color, leave } = params;
+        const { clipTo, clipTab, clipTabZ, tabHeight, newslices, leave } = params;
 
         let stepsTaken = 0,
             stepsTotal = 0;
@@ -370,11 +369,8 @@ export class Topo {
                     gridy
                 }, segments => {
                     if (segments.length > 0) {
-                        let slice = newSlice(gridx);
+                        let slice = newSlice(x);
                         slice.camLines = segments;
-                        slice.output()
-                            .setLayer("contour y", { face: color, line: color })
-                            .addPolys(segments);
                         slicesY.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour y");
@@ -399,11 +395,8 @@ export class Topo {
                     gridy
                 }, segments => {
                     if (segments.length > 0) {
-                        let slice = newSlice(gridy);
+                        let slice = newSlice(y);
                         slice.camLines = segments;
-                        slice.output()
-                            .setLayer("contour x", { face: color, line: color })
-                            .addPolys(segments);
                         slicesX.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour x");

@@ -20,6 +20,7 @@ function safeExec(fn) {
 
 function checkReady() {
     if (document.readyState === 'complete') {
+        console.log(`kiri | boot ctrl | ` + (navigator.serviceWorker.controller ? true : false));
         kiri.api = run();
         self.$ = kiri.api.web.$;
         for (let fn of load) {

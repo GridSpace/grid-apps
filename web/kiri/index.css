@@ -1376,6 +1376,8 @@ details[open] summary::after {
 #camops {
     display: flex;
     padding: 5px 0 0 0;
+    max-height: 70vh;
+    /* overflow-y: auto; */
 }
 .cam-pop-op {
     top: 50%;

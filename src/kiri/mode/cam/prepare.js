@@ -973,8 +973,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
 
 
                     let arcPoints = arcToPath(from, to, arcPreviewRes, { clockwise, center })
-                    .map(applyWidgetMovement);
-                    
+                        .map(applyWidgetMovement);
+
                     // console.log({arcPoints})
 
                     camOut(from, 1);

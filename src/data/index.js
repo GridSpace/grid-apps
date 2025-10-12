@@ -193,7 +193,6 @@ SP.init = function(options = {}) {
         };
 
         request.onsuccess = function(event) {
-            console.log('IDB open succeeded');
             storage.current = storage.stores[0];
             storage.db = request.result;
             storage.runQueue();
