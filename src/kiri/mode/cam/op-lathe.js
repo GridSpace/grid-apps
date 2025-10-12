@@ -6,22 +6,23 @@ import { generate as topo4_generate } from './topo4.js';
 import { newPoint } from '../../../geo/point.js';
 
 function createFilter(op) {
+    let ok = () => true;
     let filter = slices => slices;
-    if (op.filter) {
+    let filterString = op.filter?.map(l => l.trim()).join('\n');
+    if (filterString) {
         try {
-            const obj = eval(`( ${op.filter.join('\n')} )`);
-            let idx = 0;
-            if (obj && obj.slices) {
-                const nadd = [];
-                filter = function (slices) {
-                    for (let slice of slices) {
-                        if (obj.slices(slice, idx++)) {
-                            nadd.push(slice);
-                        }
+            const obj = eval(`( ${filterString} )`);
+            const accept = [];
+            let index = 0;
+            let sl_fn = obj?.slices ?? ok;
+            filter = function (slices) {
+                for (let slice of slices) {
+                    if (sl_fn(slice, index++)) {
+                        accept.push(slice);
                     }
-                    return nadd;
-                };
-            }
+                }
+                return accept;
+            };
         } catch (e) {
             console.log('filter parse error', e, op.filter);
         }
@@ -38,7 +39,6 @@ class OpLathe extends CamOp {
         let { op, state } = this;
         let { addSlices } = state;
         let filter = createFilter(op);
-
         this.topo = await topo4_generate({
             op,
             state,

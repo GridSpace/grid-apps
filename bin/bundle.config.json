@@ -1,0 +1,11 @@
+{
+    "outputs": {
+      "bundle": "./web/kiri/bundle.bin"
+    },
+    "inputs": [
+      { "root": "./web", "prefix": "" },
+      { "root": "./src", "prefix": "lib" },
+      { "root": "./src/wasm", "prefix": "wasm" },
+      { "root": "./src/wasm", "prefix": "lib/kiri/wasm" }
+    ]
+}

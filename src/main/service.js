@@ -11,8 +11,9 @@ async function start_service_worker() {
     debug('service worker registration');
 
     try {
-        // const reg = await navigator.serviceWorker.register("/src/moto/service.js?013", { scope: "/" });
-        const reg = await navigator.serviceWorker.register("/code/service.js?"+version, { scope: "/" });
+        const reg = await navigator
+            .serviceWorker
+            .register(`/code/service.js?${version}`, { scope: "/" });
         if (reg.installing) {
             debug('service worker installing');
         } else if (reg.waiting) {
@@ -31,4 +32,6 @@ async function start_service_worker() {
     }
 }
 
-if (service_worker && self.enable_service) start_service_worker();
+if (service_worker && self.enable_service) {
+    start_service_worker();
+}

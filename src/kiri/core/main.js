@@ -114,12 +114,6 @@ export const mode = {
     }
 };
 
-export const probe = {
-    live: "https://live.grid.space",
-    grid: noop,
-    local: noop
-};
-
 export const process = {
     code: currentProcessCode,
     get: currentProcessName
@@ -784,43 +778,7 @@ function showHelpFile(local,then) {
 }
 
 function showLocal() {
-    showModal('local');
-    api.probe.local((err,data) => {
-        let devc = 0;
-        let bind = [];
-        let html = ['<table>'];
-        html.push(`<thead><tr><th>device</th><th>type</th><th>status</th><th></th></tr></thead>`);
-        html.push(`<tbody>`);
-        let recs = [];
-        for (let k in data) {
-            recs.push(data[k].stat);
-        }
-        recs.sort((a,b) => {
-            return a.device.name < b.device.name ? -1 : 1;
-        });
-        for (let r of recs) {
-            bind.push({uuid: r.device.uuid, host: r.device.addr[0], port: r.device.port});
-            html.push(`<tr>`);
-            html.push(`<td>${r.device.name}</td>`);
-            html.push(`<td>${r.device.mode}</td>`);
-            html.push(`<td>${r.state}</td>`);
-            html.push(`<td><button id="${r.device.uuid}">admin</button></td>`);
-            html.push(`</tr>`);
-            devc++;
-        }
-        html.push(`</tbody>`);
-        html.push(`</table>`);
-        if (devc) {
-            $('mod-local').innerHTML = html.join('');
-        } else {
-            $('mod-local').innerHTML = `<br><b>no local devices</b>`;
-        }
-        bind.forEach(rec => {
-            $(rec.uuid).onclick = () => {
-                window.open(`http://${rec.host}:${rec.port||4080}/`);
-            };
-        });
-    });
+    // deprecated
 }
 
 function setViewMode(mode) {
