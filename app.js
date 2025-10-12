@@ -122,6 +122,7 @@ function init(mod) {
     mod.add(serveWasm);
     mod.add(serveCode);
     mod.add(fullpath({
+        "/boot"            : redir((pre??"") + "/boot/", 301),
         "/kiri"            : redir((pre??"") + "/kiri/", 301),
         "/mesh"            : redir((pre??"") + "/mesh/", 301),
         "/meta"            : redir((pre??"") + "/meta/", 301),
@@ -147,6 +148,7 @@ function init(mod) {
     mod.static("/mesh/", "web/mesh");
     mod.static("/moto/", "web/moto");
     mod.static("/kiri/", "web/kiri");
+    mod.static("/boot/", "web/boot");
 
     // module loader
     function load_modules(root, force) {
