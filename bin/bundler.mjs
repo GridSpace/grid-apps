@@ -32,13 +32,19 @@ function* walk(dir, seen = new Set()) {
 
 // --- collect all files according to config ---
 let entries = [];
+let virtMap = new Set();
 for (const input of inputs) {
     const root = input.root;
     const prefix = input.prefix || '';
     for (const file of walk(root)) {
         const rel = path.relative(root, file).replace(/\\/g, '/');
         const virt = prefix ? `${prefix}/${rel}` : rel;
-        entries.push({ file, virt });
+        if (virtMap.has(virt)) {
+            console.log('pre-existing', virt, rel, root);
+        } else {
+            entries.push({ file, virt });
+            virtMap.add(virt);
+        }
     }
 }
 

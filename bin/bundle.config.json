@@ -5,7 +5,8 @@
     },
     "inputs": [
       { "root": "web", "prefix": "" },
-      { "root": "src", "prefix": "lib" },
+      { "root": "alt", "prefix": "lib"},
+      { "root": "src", "prefix": "lib"},
       { "root": "src/wasm", "prefix": "wasm" },
       { "root": "src/wasm", "prefix": "lib/kiri/wasm" }
     ],
