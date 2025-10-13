@@ -1,6 +1,6 @@
 {
     "outputs": {
-      "bundle": "./web/kiri/bundle.bin"
+      "bundle": "./web/boot/bundle.bin"
     },
     "inputs": [
       { "root": "./web", "prefix": "" },

@@ -3,7 +3,7 @@ import path from 'path';
 import uglify from 'uglify-js';
 import { Buffer } from 'buffer';
 
-const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bundle.config.json', 'utf8'));
+const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bin/bundle.config.json', 'utf8'));
 const compress = process.env.UGLIFY ? true : false
 
 // --- recursive directory walker (follows symlinks safely) ---
@@ -42,6 +42,9 @@ let offset = 0;
 let cache = new Map();
 
 for (const { file, virt } of entries) {
+    if (file.endsWith('/bundle.bin')) {
+        continue;
+    }
     let record = cache.get(file);
     if (record) {
         // console.log({ dup: file });

@@ -19,8 +19,10 @@
             font-weight: bold;
         }
     </style>
-    <script>
+    <script type="module">
+        import { version } from '/lib/moto/license.js';
         (async () => {
+            const ver = location.search.slice(1);
             const reg = await navigator.serviceWorker.register('/boot/service.js', { scope: '/' });
             await reg.update();
             await navigator.serviceWorker.ready;
@@ -33,7 +35,7 @@
 
             navigator.serviceWorker.controller.postMessage({
                 mode: 'cached',
-                version: 1
+                version: ver || version
             });
 
             navigator.serviceWorker.addEventListener('message', e => {

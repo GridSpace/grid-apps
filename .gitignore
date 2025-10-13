@@ -9,7 +9,8 @@ jszip-esm.js
 logs
 mod
 node_modules
+pack
 package-lock.json
 three.js
 tmp
-pack
+web/boot/bundle.bin

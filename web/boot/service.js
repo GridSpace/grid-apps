@@ -1,6 +1,6 @@
 // --- configurable ---
-const CACHE_VERSION = 'kiri-v001';
-const BUNDLE_URL = '/kiri/bundle.bin';
+const CACHE_VERSION = 'boot-v001';
+const BUNDLE_URL = '/boot/bundle.bin';
 const VERSION_KEY = '/__version__';
 
 let mode = 'cached';
@@ -36,8 +36,7 @@ async function ensureVersion(incomingVersion) {
         log('no version stored → preload');
         needPreload = true;
     } else {
-        const text = await existing.text();
-        const stored = parseInt(text, 10);
+        const stored = await existing.text();
         if (stored !== incomingVersion) {
             log(`version mismatch ${stored} ≠ ${incomingVersion} → preload`);
             needPreload = true;
