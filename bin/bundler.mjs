@@ -4,10 +4,16 @@ import uglify from 'uglify-js';
 import { Buffer } from 'buffer';
 
 const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bin/bundle.config.json', 'utf8'));
-const compress = process.env.UGLIFY ? true : false
+const { inputs, outputs, excludes, compress } = cfg;
+const envcomp = process.env.UGLIFY ? JSON.parse(process.env.UGLIFY) : undefined;
 
 // --- recursive directory walker (follows symlinks safely) ---
 function* walk(dir, seen = new Set()) {
+    dir = path.normalize(dir);
+    if (excludes.indexOf(dir) >= 0) {
+        return;
+    }
+
     const real = fs.realpathSync(dir);
     if (seen.has(real)) {
         return;
@@ -25,7 +31,7 @@ function* walk(dir, seen = new Set()) {
 
 // --- collect all files according to config ---
 let entries = [];
-for (const input of cfg.inputs) {
+for (const input of inputs) {
     const root = input.root;
     const prefix = input.prefix || '';
     for (const file of walk(root)) {
@@ -42,16 +48,16 @@ let offset = 0;
 let cache = new Map();
 
 for (const { file, virt } of entries) {
-    if (file.endsWith('/bundle.bin')) {
+    if (excludes.indexOf(file) >= 0) {
         continue;
     }
     let record = cache.get(file);
     if (record) {
-        // console.log({ dup: file });
+        // console.log({ alias: file, to: record.virt });
         entryMeta.push({ ...record, virt });
     } else {
         let data = fs.readFileSync(file);
-        if (compress && file.endsWith("js")) {
+        if ((envcomp ?? compress) && file.endsWith("js")) {
             console.log('compress', file);
             data = uglify.minify(data.toString(), {
                 compress: {
@@ -102,7 +108,7 @@ const header = Buffer.concat([count, ...headerParts]);
 const full = Buffer.concat([header, ...dataParts]);
 
 // --- write final bundle ---
-const outPath = cfg.outputs.bundle || './bundle.bin';
+const outPath = outputs.bundle || './bundle.bin';
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, full); // ⚡ write raw binary
 

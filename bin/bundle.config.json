@@ -1,11 +1,16 @@
 {
+    "compress": false,
     "outputs": {
       "bundle": "./web/boot/bundle.bin"
     },
     "inputs": [
-      { "root": "./web", "prefix": "" },
-      { "root": "./src", "prefix": "lib" },
-      { "root": "./src/wasm", "prefix": "wasm" },
-      { "root": "./src/wasm", "prefix": "lib/kiri/wasm" }
+      { "root": "web", "prefix": "" },
+      { "root": "src", "prefix": "lib" },
+      { "root": "src/wasm", "prefix": "wasm" },
+      { "root": "src/wasm", "prefix": "lib/kiri/wasm" }
+    ],
+    "excludes": [
+        "src/pack",
+        "web/boot/bundle.bin"
     ]
 }
