@@ -5,7 +5,8 @@ import { Buffer } from 'buffer';
 
 const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bin/bundle.config.json', 'utf8'));
 const { inputs, outputs, excludes, compress } = cfg;
-const envcomp = process.env.UGLIFY ? JSON.parse(process.env.UGLIFY) : undefined;
+const envcomp = process.env.COMPRESS ? JSON.parse(process.env.COMPRESS) : undefined;
+const debug = process.env.DEBUG;
 
 // --- recursive directory walker (follows symlinks safely) ---
 function* walk(dir, seen = new Set()) {
@@ -53,9 +54,10 @@ for (const { file, virt } of entries) {
     }
     let record = cache.get(file);
     if (record) {
-        // console.log({ alias: file, to: record.virt });
+        if (debug) console.log({ alias: virt, from: file });
         entryMeta.push({ ...record, virt });
     } else {
+        if (debug) console.log({ write: virt, from: file });
         let data = fs.readFileSync(file);
         if ((envcomp ?? compress) && file.endsWith("js")) {
             console.log('compress', file);
@@ -67,7 +69,7 @@ for (const { file, virt } of entries) {
             });
             // console.log({ to: typeof(data), data });
             if (!data.code) {
-                console.log({ skip: file });
+                if (debug) console.log({ skip: file });
                 continue;
             }
             data = Buffer.from(data.code);
