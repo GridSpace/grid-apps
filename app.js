@@ -526,7 +526,13 @@ function fixedmap(prefix, map) {
 // HTTP 307 redirect
 function redir(path, type) {
     return (req, res, next) => {
-        http.redirect(res, path, type);
+        let query = req.url.split('?')[1];
+        let rpath = path;
+        if (query && path.indexOf('?') < 0) {
+            rpath += `?${query}`;
+        }
+        // console.log({ redir: req.url, to: path, query, new_path: rpath });
+        http.redirect(res, rpath, type);
     }
 }
 

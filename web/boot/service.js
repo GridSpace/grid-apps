@@ -1,8 +1,9 @@
 // --- configurable ---
-const CACHE_VERSION = 'boot-v001';
+const CACHE_VERSION = 'boot-001';
 const BUNDLE_URL = '/boot/bundle.bin';
 const VERSION_KEY = '/__version__';
 
+let loaded = 0;
 let mode = 'cached';
 let currentVersion = null;
 
@@ -18,13 +19,32 @@ self.addEventListener('activate', e => e.waitUntil(clients.claim()));
 
 // --- mode control ---
 self.addEventListener('message', e => {
-    log({ message: e.data });
     const data = e.data || {};
-    if (data.mode) mode = data.mode;
-    if (data.mode === 'cached' && data.version !== undefined) {
-        ensureVersion(data.version);
+    const { clear, disable, version } = data;
+    if (clear) {
+        clearCache();
+    }
+    if (disable) {
+        mode = 'transparent';
+        broadcast('transparent mode');
+        unregister();
+    } else if (version !== undefined) {
+        mode = 'cached';
+        log('version', version);
+        ensureVersion(version);
     }
 });
+
+// --- unregister current service worker ---
+async function unregister() {
+    await self.registration.unregister();
+}
+
+// --- erase existing cache ---
+async function clearCache() {
+    log('clearing cache');
+    await caches.delete(CACHE_VERSION);
+}
 
 // --- version check and preload ---
 async function ensureVersion(incomingVersion) {
@@ -38,10 +58,8 @@ async function ensureVersion(incomingVersion) {
     } else {
         const stored = await existing.text();
         if (stored !== incomingVersion) {
-            log(`version mismatch ${stored} ≠ ${incomingVersion} → preload`);
+            log(`mismatch ${stored} ≠ ${incomingVersion} → preload`);
             needPreload = true;
-        } else {
-            log(`version OK (${stored})`);
         }
     }
 
@@ -51,9 +69,9 @@ async function ensureVersion(incomingVersion) {
             VERSION_KEY,
             new Response(String(incomingVersion), { headers: { 'Content-Type': 'text/plain' } })
         );
-        broadcast('preload-complete');
+        broadcast(`preload added ${loaded} files`);
     } else {
-        broadcast('preload-cached');
+        broadcast('preload cached');
     }
 }
 
@@ -80,7 +98,7 @@ self.addEventListener('fetch', e => {
 
     if (request.method !== 'GET') return;
 
-    if (mode === 'transparent') {
+    if (mode == 'transparent') {
         e.respondWith(fetch_safe(e.request));
         return;
     }
@@ -93,21 +111,13 @@ async function fromCacheOrNetwork(req) {
     const cache = await caches.open(CACHE_VERSION);
     const hit = await cache.match(req);
     if (hit) {
-        // log({ hit: hit.url || req.url });
+        // log(`hit: ${req.url}`);
         return hit;
     }
     const net = await fetch_safe(req);
     cache.put(req, net.clone());
-    log({ put: net.url });
+    log(`put: ${net.url}`);
     return net;
-}
-
-async function serveIndex() {
-    const cache = await caches.open(CACHE_VERSION);
-    const hit = await cache.match('/kiri/index.html');
-    log({ serve_index: hit, cache });
-    if (hit) return hit;
-    return fetch_safe('/kiri/index.html');
 }
 
 async function broadcast(message) {
@@ -124,12 +134,11 @@ const sec_headers = {
 
 // --- preload & unpack bundle ---
 async function preloadBundle() {
-    // return;
+    loaded = 0;
     const cache = await caches.open(CACHE_VERSION);
     const res = await fetch(BUNDLE_URL, { cache: 'no-store' });
     const buf = await res.arrayBuffer();
     const files = await unpackBundle(buf);
-    log({ files });
     await Promise.all(
         Object.entries(files).map(([path, blob]) => {
             const ext = path.split('.').pop();
@@ -142,8 +151,8 @@ async function preloadBundle() {
                 ext === 'svg' ? 'image/svg+xml' :
                         'application/octet-stream';
             const headers = { 'Content-Type': type, ...sec_headers };
-            // Object.assign(headers, sec_headers);
             const resp = new Response(blob, { headers });
+            loaded++;
             return cache.put('/' + path, resp);
         })
     );
@@ -166,7 +175,6 @@ async function unpackBundle(buf) {
         const len = view.getUint32(pos, true); pos += 4;
         table.push({ name, offset, len });
     }
-    log({ table });
 
     const files = {};
     for (const { name, offset, len } of table)

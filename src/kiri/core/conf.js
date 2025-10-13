@@ -302,7 +302,7 @@ export const conf = {
                 outputRetractDwell: 20,
                 outputRetractSpeed: 40,
                 outputRetractWipe: 0,
-                outputScarfLength: 5,
+                outputScarfLength: 0,
                 outputSeekrate: 80,
                 outputShellMult: 1.25,
                 outputShortPoly: 0.0,

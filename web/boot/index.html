@@ -22,7 +22,6 @@
     <script type="module">
         import { version } from '/lib/moto/license.js';
         (async () => {
-            const ver = location.search.slice(1);
             const reg = await navigator.serviceWorker.register('/boot/service.js', { scope: '/' });
             await reg.update();
             await navigator.serviceWorker.ready;
@@ -33,19 +32,31 @@
                 return;
             }
 
+            // turn url params into key/value map
+            const map = Object.fromEntries(
+                (location.search || location.hash).slice(1).split('&')
+                .map(v => v.split('='))
+                .map(([k, v = true]) => [k, v])
+            );
+            if (map.debug) {
+                console.log({ map });
+            }
+
             navigator.serviceWorker.controller.postMessage({
-                mode: 'cached',
-                version: ver || version
+                clear: map.clear,
+                disable: map.disable,
+                version: map.version || version
             });
 
             navigator.serviceWorker.addEventListener('message', e => {
-                if (e.data === 'preload-complete') {
-                    console.log('preload complete');
-                    location.replace('/kiri/index.html');
-                } else if (e.data === 'preload-cached') {
-                    console.log('preload cached');
-                    location.replace('/kiri/index.html');
-                }
+                console.log('[SM]', e.data);
+                    setTimeout(() => {
+                        if (map.mesh) {
+                        location.replace('/mesh/index.html');
+                    } else {
+                        location.replace('/kiri/index.html');
+                    }
+                }, map.delay || 10);
             });
         })();
     </script>
