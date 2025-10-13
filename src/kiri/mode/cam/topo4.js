@@ -52,7 +52,7 @@ export class Topo {
             console.log(widget.id, 'topo4 auto tolerance', resolution.round(4));
         }
 
-        this.zBottom = state.zBottom;
+        this.zBottom = state.zBottom ?? 0;
         this.resolution = resolution;
         this.vertices = widget.getGeoVertices({ unroll: true, translate: true });
         this.tabverts = widget.getTabVertices();
@@ -285,8 +285,8 @@ export class Topo {
                 }
             }
             if (mz === -Infinity) {
-                mz = zBottom; // Math.min(0, lz)
-            } else if (zBottom && mz < zBottom) {
+                mz = zBottom;
+            } else if (mz < zBottom) {
                 mz = zBottom;
             }
             heights.push(rx, 0, lz = mz);
