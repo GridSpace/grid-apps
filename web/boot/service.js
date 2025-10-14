@@ -96,12 +96,6 @@ self.addEventListener('fetch', e => {
     const { request } = e;
     const url = new URL(request.url);
 
-    if (url.pathname.endsWith("/")) {
-        return e.respondWith(redirectOr404(appendURL(url, 'index.html').pathname));
-    } else if (url.pathname.indexOf(".") < 0) {
-        return e.respondWith(redirectOr404(appendURL(url, '/index.html').pathname));
-    }
-
     if (request.method !== 'GET') return;
 
     if (mode == 'transparent') {
@@ -109,7 +103,13 @@ self.addEventListener('fetch', e => {
         return;
     }
 
-    e.respondWith(fromCacheOrNetwork(request));
+    if (url.pathname.endsWith("/")) {
+        return e.respondWith(redirectOr404(appendURL(url, 'index.html').pathname));
+    } else if (url.pathname.indexOf(".") < 0) {
+        return e.respondWith(redirectOr404(appendURL(url, '/index.html').pathname));
+    } else {
+        e.respondWith(fromCacheOrNetwork(request));
+    }
 });
 
 // --- helpers ---
