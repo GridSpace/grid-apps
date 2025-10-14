@@ -358,7 +358,6 @@ export function cam_export(print, online) {
         // }
         append(nl.join(''));
         points++;
-        if (dz < 0) console.log(nl);
     }
 
     // look for SCALE header directive

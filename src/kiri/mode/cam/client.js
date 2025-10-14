@@ -29,6 +29,7 @@ const { widgets: WIDGETS } = api;
 class Client {
     animVer = 0;
     camStock;
+    showStock = true;
     current;
     currentIndex;
     flipping;
@@ -640,7 +641,8 @@ export function init() {
     });
 
     api.event.on("cam.stock.toggle", (bool) => {
-        env.camStock && (env.camStock.visible = bool ?? !env.camStock.visible);
+        env.showStock = bool ?? !env.showStock;
+        updateStock();
     });
 
     api.event.on("boolean.click", api.platform.update_bounds);
