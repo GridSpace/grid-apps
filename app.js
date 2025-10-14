@@ -196,8 +196,13 @@ function init(mod) {
 
     if (alt) {
         for (let [ key, val ] of Object.entries(append)) {
+            let src = `src/main/${key}.js`;
+            if (!fs.existsSync(src)) {
+                logger.log('missing:', src);
+                continue;
+            }
             fs.mkdirSync(`alt/main`, { recursive: true });
-            let body = fs.readFileSync(`src/main/${key}.js`);
+            let body = fs.readFileSync(src);
             fs.writeFileSync(`alt/main/${key}.js`, body + val);
         }
     }

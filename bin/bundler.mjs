@@ -14,6 +14,9 @@ function* walk(dir, seen = new Set()) {
     if (excludes.indexOf(dir) >= 0) {
         return;
     }
+    if (!fs.existsSync(dir)) {
+        return;
+    }
 
     const real = fs.realpathSync(dir);
     if (seen.has(real)) {
