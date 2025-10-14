@@ -94,6 +94,14 @@ async function fetch_safe(req) {
 // --- fetch handler ---
 self.addEventListener('fetch', e => {
     const { request } = e;
+
+    if (request.url.endsWith("/kiri") || request.url.endsWith("/kiri/")) {
+        e.respondWith((async () => {
+            return Response.redirect("/kiri/index.html", 302);
+        })());
+        return;
+    }
+
     const url = new URL(request.url);
 
     if (request.method !== 'GET') return;
