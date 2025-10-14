@@ -94,15 +94,13 @@ async function fetch_safe(req) {
 // --- fetch handler ---
 self.addEventListener('fetch', e => {
     const { request } = e;
-
-    if (request.url.endsWith("/kiri") || request.url.endsWith("/kiri/")) {
-        e.respondWith((async () => {
-            return Response.redirect("/kiri/index.html", 302);
-        })());
-        return;
-    }
-
     const url = new URL(request.url);
+
+    if (url.pathname.endsWith("/")) {
+        return e.respondWith(redirectOr404(appendURL(url, 'index.html').pathname));
+    } else if (url.pathname.indexOf(".") < 0) {
+        return e.respondWith(redirectOr404(appendURL(url, '/index.html').pathname));
+    }
 
     if (request.method !== 'GET') return;
 
@@ -115,12 +113,29 @@ self.addEventListener('fetch', e => {
 });
 
 // --- helpers ---
-async function fromCacheOrNetwork(req) {
+function appendURL(url, append) {
+    return new URL(url.origin + url.pathname + append + url.search);
+}
+
+async function redirectOr404(path) {
     const cache = await caches.open(CACHE_VERSION);
-    const hit = await cache.match(req);
+    const hit = await cache.match(path, { ignoreSearch: true });
+    if (hit) {
+        return Response.redirect(path, 302);
+    } else {
+        return new Response('Not Found', { status: 404, statusText: 'Not Found' });
+    }
+}
+
+async function fromCacheOrNetwork(req, test) {
+    const cache = await caches.open(CACHE_VERSION);
+    const hit = await cache.match(req, { ignoreSearch: true });
     if (hit) {
         // log(`hit: ${req.url}`);
         return hit;
+    }
+    if (test) {
+        return test;
     }
     const net = await fetch_safe(req);
     cache.put(req, net.clone());
