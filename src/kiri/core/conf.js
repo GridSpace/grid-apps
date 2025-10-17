@@ -293,6 +293,7 @@ export const conf = {
                 outputInvertY: false,
                 outputLayerRetract: false,
                 outputLoops: 0,
+                outputMaxFlowrate: 15,
                 outputMinLayerTime: 10,
                 outputMinSpeed: 5.0,
                 outputPurgeTower: 0,

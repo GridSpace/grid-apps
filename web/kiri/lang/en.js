@@ -868,6 +868,8 @@ self.lang['en-us'] = {
     ad_msol_l:      ["minimum area (mm^2)","required to keep solid","must be > 0.1"],
     ad_mins_s:      "min speed",
     ad_mins_l:      ["minimum speed","for short segments"],
+    ad_maxf_s:      "max flowrate",
+    ad_maxf_l:      ["maximum volumetric flowrate supported by this print head and filament","in millimeters^3 / second"],
     ad_scar_s:      "scarf length",
     ad_scar_l:      ["ease up length for scarf joint. disables arc detection","0 = disabled"],
     ad_spol_s:      "short path",

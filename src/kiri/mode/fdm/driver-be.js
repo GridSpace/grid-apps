@@ -9,6 +9,7 @@ import { fdm_export } from './export.js';
 // fil = filament diameter
 // slice = slice height
 function extrudePerMM(noz, fil, slice) {
+    // (ratio of nozzle to filament) * (ratio of slice to nozzle)
     return ((Math.PI * util.sqr(noz / 2)) / (Math.PI * util.sqr(fil / 2))) * (slice / noz);
 };
 

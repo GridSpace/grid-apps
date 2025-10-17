@@ -38,7 +38,6 @@ export class Topo {
                 x: axis === "x",
                 y: axis === "y"
             },
-            zMin = min.z + 0.0001,
             tolerance = op.tolerance,
             resolution = tolerance ? tolerance : 1 / Math.sqrt(density / (span.x * span.y)),
             step = this.step = (tool.traceOffset() * 2) * op.step,
@@ -123,7 +122,9 @@ export class Topo {
         let slices = this.slices = [];
         let slice = { min: range.min, max: range.min + step, index };
 
-        for (let z = range.min; z < range.max; z += resolution) {
+        // console.log({ shards, step, range, resolution });
+        for (let z = range.min; z <= range.max; z += resolution) {
+            // console.log({ z });
             if (z > slice.max) {
                 slices.push(slice);
                 slice = { min: z, max: z + step, index };
@@ -131,7 +132,7 @@ export class Topo {
             index++;
         }
         slices.push(slice);
-        // console.log({ shards, range, step, slices });
+        // console.log({ shards, range, step, slices: slices.slice() });
 
         const { minions } = self.kiri_worker;
         if (minions?.running > 1) {

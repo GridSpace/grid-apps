@@ -177,6 +177,7 @@ export function menu() {
     arcTolerance:        newInput(LANG.ad_arct_s, {title:LANG.ad_arct_l, convert:toFloat, bound:bound(0,1.0), show:() => { return isNotBelt() }}),
     outputRetractDwell:  newInput(LANG.ad_rdwl_s, {title:LANG.ad_rdwl_l, convert:toInt}),
     outputMinSpeed:      newInput(LANG.ad_mins_s, {title:LANG.ad_mins_l, convert:toFloat, bound:bound(1,200)}),
+    outputMaxFlowrate:   newInput(LANG.ad_maxf_s, {title:LANG.ad_maxf_l, convert:toFloat, bound:bound(1,200)}),
     outputPurgeTower:    newInput(LANG.ad_purg_s, {title:LANG.ad_purg_l, convert:toInt,   bound:bound(0,1000)}),
     outputScarfLength:   newInput(LANG.ad_scar_s, {title:LANG.ad_scar_l, convert:toFloat, bound:bound(0,1000)}),
     outputShortPoly:     newInput(LANG.ad_spol_s, {title:LANG.ad_spol_l, convert:toFloat, bound:bound(0,10000)}),

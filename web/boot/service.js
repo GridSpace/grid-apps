@@ -127,15 +127,11 @@ async function redirectOr404(path) {
     }
 }
 
-async function fromCacheOrNetwork(req, test) {
+async function fromCacheOrNetwork(req) {
     const cache = await caches.open(CACHE_VERSION);
     const hit = await cache.match(req, { ignoreSearch: true });
     if (hit) {
-        // log(`hit: ${req.url}`);
         return hit;
-    }
-    if (test) {
-        return test;
     }
     const net = await fetch_safe(req);
     cache.put(req, net.clone());
