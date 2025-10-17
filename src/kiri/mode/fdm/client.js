@@ -41,7 +41,6 @@ export function init() {
         "sliceTopLayers": LANG.sl_ltop_s,
         "sliceBottomLayers": LANG.sl_lbot_s,
         "firstLayerRate": LANG.fl_rate_s,
-        "firstLayerPrintMult": LANG.fl_mult_s,
         "firstLayerFanSpeed": LANG.ou_fans_s,
         // prepare
         "sliceShellOrder": LANG.sl_ordr_s,

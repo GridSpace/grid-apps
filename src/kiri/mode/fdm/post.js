@@ -82,12 +82,9 @@ export function slicePost(data, options) {
         let trg = shellFrac > 0.5 ? 1 : parts - 1;
         sliceShells += rem >= trg ? 1 : 0;
     }
-    const isFirst = index === 0;
-    const height = process.sliceHeight;
-    const spaceMult = isFirst ? process.firstLayerLineMult || 1 : 1;
     const count = isSynth ? 1 : sliceShells;
-    const offset =  shellOffset * spaceMult;
-    const fillOff = fillOffset * spaceMult;
+    const offset =  shellOffset;
+    const fillOff = fillOffset;
     const thinType = isSynth ? undefined : process.sliceDetectThin;
     const nutops = [];
     // co-locate shell processing with top generation in slicer

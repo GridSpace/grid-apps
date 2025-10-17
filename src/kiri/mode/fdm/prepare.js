@@ -683,7 +683,6 @@ export async function fdm_prepare(widgets, settings, update) {
             for (let rec of layer) {
                 overate = rec.overate >= 0 ? rec.overate : overate;
                 let brate = params.firstLayerRate || firstLayerRate;
-                let bmult = params.firstLayerPrintMult || params.firstLayerPrintMult;
                 let point = rec.point;
                 let belty = rec.belty = -point.y + (point.z * belt.slope);
                 let lowrate = belty <= thresh ? brate : overate || brate;
@@ -695,7 +694,6 @@ export async function fdm_prepare(widgets, settings, update) {
                 if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.01) {
                     // apply base speed to segments touching belt
                     rec.speed = params.firstLayerRate || Math.min(rec.speed, lowrate);
-                    rec.emit *= bmult;
                     rec.fan = params.firstLayerFanSpeed;
                     minx = Math.min(minx, point.x, lastout.point.x);
                     maxx = Math.max(maxx, point.x, lastout.point.x);
@@ -831,7 +829,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         fanSpeed = process.outputFanSpeed,
         firstShellSpeed = process.firstLayerRate,
         firstFillSpeed = process.firstLayerFillRate,
-        firstPrintMult = process.firstLayerPrintMult,
         finishSpeed = firstLayer ? firstShellSpeed : (opt.speed || process.outputFinishrate),
         printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
         fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
@@ -880,13 +877,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     if (slice.isBridgeLayer) {
         fillSpeed /= 2;
         printSpeed /= 2;
-    }
-
-    // apply first layer extrusion multipliers
-    if (firstLayer) {
-        fillMult *= firstPrintMult;
-        shellMult *= firstPrintMult;
-        sparseMult *= firstPrintMult;
     }
 
     function retract() {
