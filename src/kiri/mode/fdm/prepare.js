@@ -832,7 +832,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         finishSpeed = firstLayer ? firstShellSpeed : (opt.speed || process.outputFinishrate),
         printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
         fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
-        infillSpeed = process.sliceFillRate || opt.infillSpeed || fillSpeed || printSpeed,
+        infillSpeed = opt.infillSpeed || fillSpeed || printSpeed,
         moveSpeed = process.outputSeekrate,
         minSpeed = process.outputMinSpeed,
         origin = startPoint.add(offset),
@@ -861,11 +861,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     // support alternating shell order
     if (Math.abs(shellOrder) > 1 && slice.index % 2 === 1) {
         shellOrder = -shellOrder;
-    }
-
-    // update fill speed when solids detected
-    if (slice.finishSolids) {
-        fillSpeed = process.sliceSolidRate || finishSpeed;
     }
 
     // on flats layers also slow down shell print speed
