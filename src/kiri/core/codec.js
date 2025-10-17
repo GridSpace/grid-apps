@@ -225,7 +225,9 @@ Widget.prototype.encode = function(state) {
         json: json, // safe for JSON (float32array mess)
         group: this.group.id,
         track: this.track,
-        geo: json ? Array.from(geo) : geo
+        geo: json ? Array.from(geo) : geo,
+        meta: this.meta,
+        anno: this.anno,
     };
     return coded;
 };
@@ -234,8 +236,12 @@ registerDecoder(TYPE.WIDGET, function(v, state) {
     const id = v.id,
         group = v.group || id,
         track = v.track || undefined,
-        widget = newWidget(id, Widget.Groups.forid(group));
+        widget = newWidget(id, Widget.Groups.forid(group)),
+        meta= v.meta || widget.meta,
+        anno = v.anno || widget.anno;
 
+    widget.meta = meta;
+    widget.anno = anno;
     widget.loadVertices(v.json ? v.geo.toFloat32() : v.geo);
     widget.saved = Date.now();
     if (track && track.pos) {
