@@ -56,6 +56,20 @@ const dataParts = [];
 const entryMeta = [];
 let offset = 0;
 let cache = new Map();
+let compEnable = (envcomp ?? compress);
+let cacheDir = cfg.cacheDir ?? ".bcache";
+
+if (compEnable) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+}
+
+function fileTime(path) {
+    try {
+        return (fs.statSync(path).ctimeMs/1000) | 0;
+    } catch (e) {
+        return 0;
+    }
+}
 
 for (const { file, virt } of entries) {
     if (excludes.indexOf(file) >= 0) {
@@ -68,20 +82,28 @@ for (const { file, virt } of entries) {
     } else {
         if (debug) console.log({ write: virt, from: file });
         let data = fs.readFileSync(file);
-        if ((envcomp ?? compress) && file.endsWith("js")) {
-            console.log('compress', file);
-            data = uglify.minify(data.toString(), {
-                compress: {
-                    merge_vars: false,
-                    unused: false
+        if (compEnable && file.endsWith("js")) {
+            let cpath = path.resolve(cacheDir, file);
+            if (fileTime(cpath) > fileTime(file)) {
+                data = fs.readFileSync(cpath);
+                console.log('cached', file);
+            } else {
+                console.log('compress', file);
+                data = uglify.minify(data.toString(), {
+                    compress: {
+                        merge_vars: false,
+                        unused: false
+                    }
+                });
+                // console.log({ to: typeof(data), data });
+                if (!data.code) {
+                    if (debug) console.log({ skip: file });
+                    continue;
                 }
-            });
-            // console.log({ to: typeof(data), data });
-            if (!data.code) {
-                if (debug) console.log({ skip: file });
-                continue;
+                data = Buffer.from(data.code);
+                fs.mkdirSync(path.dirname(cpath), { recursive: true });
+                fs.writeFileSync(cpath, data);
             }
-            data = Buffer.from(data.code);
         }
         record = { virt, offset, length: data.length };
         cache.set(file, record);
