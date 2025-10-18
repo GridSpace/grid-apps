@@ -39,7 +39,7 @@ export class Topo {
                 y: axis === "y"
             },
             tolerance = op.tolerance,
-            resolution = tolerance ? tolerance : 1 / Math.sqrt(density / (span.x * span.y)),
+            resolution = (tolerance ? tolerance : 1 / Math.sqrt(density / (span.x * span.y))).round(5),
             step = this.step = (tool.traceOffset() * 2) * op.step,
             angle = this.angle = op.angle || 1;
 
@@ -58,10 +58,13 @@ export class Topo {
         this.tool = tool.generateProfile(resolution).profile;
         this.maxo = tool.profileDim.maxo * resolution;
         this.diam = tool.fluteDiameter();
+        this.unit = tool.unitScale();
         this.zoff = widget.track.top || 0;
         this.leave = op.leave || 0;
         this.linear = op.linear || false;
         this.lineColor = state.settings.controller.dark ? 0xffff00 : 0x555500;
+        this.offStart = op.offStart ?? 0;
+        this.offEnd = op.offEnd ?? 0;
 
         onupdate(0, "lathe");
 
@@ -85,8 +88,8 @@ export class Topo {
     }
 
     async slice(onupdate) {
-        const { vertices, resolution, tabverts, zoff } = this;
-
+        const { vertices, resolution, tabverts, zoff, offStart, offEnd, tool, unit } = this;
+        const { minions } = self.kiri_worker;
         const range = this.range = { min: Infinity, max: -Infinity };
         const box = this.box = new THREE.Box2();
 
@@ -100,9 +103,10 @@ export class Topo {
             range.max = Math.max(range.max, x);
         }
 
-        // add tool radius to slice min/max range ot fully carve part
-        range.min -= this.diam / 2;
-        range.max += this.diam / 2;
+        // add tool diameter to slice min/max range to fully carve part
+        range.min += offStart * unit;
+        range.max -= offEnd * unit;
+        range.max += resolution * 2;
 
         // merge in tab vertices here so they don't affect slice range / dimensions
         for (let i = 0, l = tabverts.length; i < l; i += 3) {
@@ -115,26 +119,31 @@ export class Topo {
         // re-create shared vertex array for workers
         this.vertices = [].appendAll(vertices).appendAll(tabverts).toFloat32().toShared();
 
+        const zSpan = range.max - range.min;
         const shards = Math.ceil(Math.min(25, vertices.length / 27000));
-        const step = (range.max - range.min) / shards;
+        const totalSteps = Math.ceil(zSpan / resolution);
+        const stardSteps = Math.ceil(totalSteps / shards);
+        const stepWidth = stardSteps * resolution;
 
-        let index = 0;
         let slices = this.slices = [];
-        let slice = { min: range.min, max: range.min + step, index };
-
-        // console.log({ shards, step, range, resolution });
-        for (let z = range.min; z <= range.max; z += resolution) {
-            // console.log({ z });
-            if (z > slice.max) {
-                slices.push(slice);
-                slice = { min: z, max: z + step, index };
-            }
-            index++;
+        for (let i=0; i<shards; i++) {
+            let s;
+            slices.push(s = {
+                min: range.min + i * stepWidth,
+                max: Math.min(range.max, range.min + (i+1) * stepWidth),
+                index: i * stardSteps
+            });
         }
-        slices.push(slice);
-        // console.log({ shards, range, step, slices: slices.slice() });
 
-        const { minions } = self.kiri_worker;
+        // console.log({
+        //     shards,
+        //     step: stepWidth,
+        //     range,
+        //     resolution,
+        //     slices: slices.slice(),
+        //     minions
+        // });
+
         if (minions?.running > 1) {
             return await this.sliceMinions(onupdate);
         } else {
@@ -218,10 +227,10 @@ export class Topo {
 
         const tlen = tool.length;
         const slen = slices.length;
-        const sinc = Math.max(1, Math.ceil(step / resolution));
         const heights = [];
 
-        // cull slice lines to only the ones in range (5x faster)
+        // console.log({ tlen, slen, sinc, slices: slices.map(s => s.z) });
+        // cull slice lines to only the ones in range (~5x faster)
         const oslices = [];
         for (let slice of slices) {
             const lines = slice.lines;
@@ -245,7 +254,9 @@ export class Topo {
         // iterate over all slices (real x = z)
         // find max real z using z ray intersect from tool point to slice lines + offset
         let lz = 0;
-        for (let si = 0; si < slen; si += sinc) {
+        for (let sz = 0; ; sz += step) {
+            let si = Math.ceil(sz / resolution);
+            if (si >= oslices.length) break;
             const rx = oslices[si].z;
             let mz = -Infinity;
             // iterate over tool offsets
@@ -282,7 +293,7 @@ export class Topo {
                 }
                 if (mz === -Infinity && xo === 0 && yo === 0) {
                     // tool tip is off the model
-                    continue;
+                    // continue;
                 }
             }
             if (mz === -Infinity) {

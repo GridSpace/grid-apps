@@ -315,7 +315,6 @@ const funcs = self.minion = {
 
         const topo4 = Object.assign(new Topo4(), cache.lathe);
         const heights = topo4.lathePath(stmp, tool);
-
         reply({ seq, heights });
     }
 };

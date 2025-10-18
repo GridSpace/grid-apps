@@ -497,6 +497,8 @@ export const conf = {
                 camLatheSpeed: 500,
                 camLatheSpindle: 1000,
                 camLatheTool: 1000,
+                camLatheOffStart: 0,
+                camLatheOffEnd: 0,
                 camLevelDown: 0,
                 camLevelInset: 0.5,
                 camLevelOver: 0.75,

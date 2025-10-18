@@ -350,7 +350,9 @@ export function createPopOps() {
         tolerance: 'camTolerance',
         filter: 'camContourFilter',
         leave: 'camContourLeave',
-        linear: 'camLatheLinear'
+        linear: 'camLatheLinear',
+        offStart: 'camLatheOffStart',
+        offEnd: 'camLatheOffEnd'
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         // axis:      UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
@@ -360,6 +362,9 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: UC.toFloat, bound: UC.bound(0.01, 100.0) }),
         angle: UC.newInput(LANG.cc_sang_s, { title: LANG.cc_sang_l, convert: UC.toFloat, bound: UC.bound(0.01, 180.0) }),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        offStart: UC.newInput(LANG.ci_laso_s, { title: LANG.ci_laso_l, convert: UC.toFloat}),
+        offEnd: UC.newInput(LANG.ci_laeo_s, { title: LANG.ci_laeo_l, convert: UC.toFloat}),
         sep: UC.newBlank({ class: "pop-sep" }),
         tolerance: UC.newInput(LANG.ou_toll_s, { title: LANG.ou_toll_l, convert: UC.toFloat, bound: UC.bound(0, 10.0), units: true, round: 4 }),
         leave: UC.newInput(LANG.cf_leav_s, { title: LANG.cf_leav_l, convert: UC.toFloat, bound: UC.bound(0, 100) }),

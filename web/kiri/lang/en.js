@@ -393,7 +393,7 @@ self.lang['en-us'] = {
     fc_menu:        "cooling",
 
     // FDM FIRST LAYER
-    fl_menu:        "base layer",
+    fl_menu:        "base",
     fl_lahi_s:      "layer height",
     fl_lahi_l:      ["height of each slice","in millimeters","should be >= slice height"],
     fl_rate_s:      "shell speed",
@@ -654,6 +654,10 @@ self.lang['en-us'] = {
     ci_face_l:      "select face to rotate facing up",
     ci_line_s:      "linear",
     ci_line_l:      "make linear passes along X then rotate Y",
+    ci_laso_s:      "offset start",
+    ci_laso_l:      ["x offet from left of part. negative values are outside of the part. in workspace units"],
+    ci_laeo_s:      "offset end",
+    ci_laeo_l:      ["x offet from right of part. negative values are outside of the part. in workspace units"],
 
     // CNC LASER On/Off Operations (Carvera)
     cl_powr_s:      "power",
@@ -674,10 +678,6 @@ self.lang['en-us'] = {
     cl_minz_l:      ["lowest Z band position"],
     cl_maxz_s:      "max z height",
     cl_maxz_l:      ["highest Z band position. when set to 0, uses the highest Z point of the workspace"],
-
-
-
-
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",
