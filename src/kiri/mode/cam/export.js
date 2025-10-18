@@ -257,17 +257,18 @@ export function cam_export(print, online) {
             points--;
             return;
         }
-        let gn;
-        if (out.emit >= 0 && out.emit <= 3) gn = `G${out.emit}`;
-        let speed = out.speed,
-            arc = out.emit == 2 || out.emit == 3,
-            center = out.center,
-            nl = (compact_output && lastGn === gn) ? [] : [gn],
-            dx = opt.dx || newpos.x - pos.x,
+
+        let dx = opt.dx || newpos.x - pos.x,
             dy = opt.dy || newpos.y - pos.y,
             dz = opt.dz || newpos.z - pos.z,
             da = newpos.a != pos.a,
-            maxf = dz ? maxZd : maxXYd,
+            gv = (dz >= 0 && out.emit >= 0 && out.emit <= 3) ? out.emit : 1,
+            gn = `G${gv}`,
+            speed = out.speed,
+            arc = out.emit == 2 || out.emit == 3,
+            center = out.center,
+            nl = (compact_output && lastGn === gn) ? [] : [gn],
+            maxf = (dz < 0 ? maxZd : maxXYd) || speed,
             feed = Math.min(speed || maxf, maxf),
             dist = Math.sqrt(dx * dx + dy * dy + dz * dz),
             newFeed = feed && feed !== pos.f;

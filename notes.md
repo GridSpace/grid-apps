@@ -32,7 +32,6 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
-* `F` new parameter to cap output flow rate (on printer device)
 * `F` new parameters for bridging speed / bridge fan control
 * `F` convert ranges to z offsets while continuing to show layer #
 * `F` support pillar top/bottom should conform to part

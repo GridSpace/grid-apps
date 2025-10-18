@@ -26,7 +26,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         { extrudeAbs } = device,
         { exportThumb } = controller,
         { extrudeMM, extrudePerMM } = FDM,
-        extused = Object.keys(print.extruders).map(v => parseInt(v)),
         timeFactor = (device.gcodeTime || 1) * 1.5,
         decimals = config.gcode_decimals || 4,
         zMoveMax = device.deviceZMax || 0,
@@ -49,7 +48,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         last = null,
         zpos = 0,
         bmax = 0,
-        blastz = 0,
         belt_add_y = (process.firstLayerYOffset || 0) - (belty || 0),
         oloops = process.outputLoops || 0,
         zhop = process.zHopDistance || 0, // range
@@ -58,10 +56,8 @@ export function fdm_export(print, online, ondone, ondebug) {
         retDist = process.outputRetractDist || 0, // range
         retSpeed = process.outputRetractSpeed * 60 || 1, // range
         retDwell = process.outputRetractDwell || 0, // range
-        timeDwell = retDwell / 1000,
         scarfZ = process.outputScarfLength ? true : false,
         arcDist = isBelt || scarfZ ? 0 : (process.arcTolerance || 0),
-        arcMin = 1,
         arcRes = 20,
         arcDev = 0.5,
         arcMax = 40,
@@ -85,7 +81,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         fanSpeedSave = undefined,
         fanSpeedBase = 0,
         fanSpeed = 0,
-        lastType = undefined,
         lastNozzleTemp = nozzleTemp,
         lastBedTemp = bedTemp,
         lastFanSpeed = fanSpeed,
@@ -169,7 +164,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         retDist = params.outputRetractDist || 0; // range
         retSpeed = params.outputRetractSpeed * 60 || 1; // range
         retDwell = params.outputRetractDwell || 0; // range
-        timeDwell = retDwell / 1000;
         nozzleTemp = layer === 0 ?
             params.firstLayerNozzleTemp || params.outputTemp :
             params.outputTemp || params.firstLayerNozzleTemp;
@@ -470,7 +464,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         if (isBelt) {
             let zheight = path ? path.height || 0 : 0;
             epos.x = originCenter ? -pos.x : device.bedWidth - pos.x;
-            epos.z = blastz = pos.z * icos;
+            epos.z = pos.z * icos;
             epos.y = -pos.y + epos.z * bcos + belt_add_y;
             lout = epos;
         }
@@ -635,7 +629,7 @@ export function fdm_export(print, online, ondone, ondebug) {
 
             // emit comment on output type chage
             if (last && out.type !== last.type) {
-                lastType = subst.feature = out.type;
+                subst.feature = out.type;
                 if (gcodeFeature && gcodeFeature.length) {
                     appendAllSub(gcodeFeature);
                 } else {
@@ -752,7 +746,6 @@ export function fdm_export(print, online, ondone, ondebug) {
                             }
 
                             // if new point is off the arc
-                            // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
                             if (deem || depm || desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault || !arcValid()) {
                                 // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcDist, dist > cc.r, cc.r > arcMax, radFault];
                                 if (arcQ.length === 4) {

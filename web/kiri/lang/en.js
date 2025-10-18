@@ -356,7 +356,7 @@ self.lang['en-us'] = {
     ad_thin_l:      ["detect and fill gaps","between shell walls"],
 
     // FDM SHELLS
-    sl_line_s:      "shell width",
+    sl_line_s:      "line width",
     sl_line_l:      ["extrusion width in millimeters","0 = nozzle diameter"],
     sl_ordr_s:      "shell order",
     sl_ordr_l:      ["output shell order","inside to outside","or outside to inside","affects surface quality"],
@@ -369,8 +369,8 @@ self.lang['en-us'] = {
 
     // FDM SOLID
     fs_menu:        "solid fill",
-    fi_over_s:      "shell overlap",
-    fi_over_l:      ["overlap with shell and other fill","for improved extrusion bonding","as fraction of nozzle diameter","0.0 - 2.0"],
+    fi_over_s:      "fill overlap",
+    fi_over_l:      ["overlap between shells and solid or sparse infill. can improve bonding to shells","as fraction of line width","0.0 - 1.0"],
     fi_angl_s:      "start angle",
     fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
     fi_grow_s:      "area expand",
@@ -654,6 +654,10 @@ self.lang['en-us'] = {
     ci_face_l:      "select face to rotate facing up",
     ci_line_s:      "linear",
     ci_line_l:      "make linear passes along X then rotate Y",
+    ci_laso_s:      "offset start",
+    ci_laso_l:      ["x offet from left of part. negative values are outside of the part. in workspace units"],
+    ci_laeo_s:      "offset end",
+    ci_laeo_l:      ["x offet from right of part. negative values are outside of the part. in workspace units"],
 
     // CNC LASER On/Off Operations (Carvera)
     cl_powr_s:      "power",
@@ -674,10 +678,6 @@ self.lang['en-us'] = {
     cl_minz_l:      ["lowest Z band position"],
     cl_maxz_s:      "max z height",
     cl_maxz_l:      ["highest Z band position. when set to 0, uses the highest Z point of the workspace"],
-
-
-
-
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",
@@ -864,10 +864,12 @@ self.lang['en-us'] = {
     ad_rdwl_l:      ["time between re-engaging","filament and movement","in milliseconds"],
     ad_scst_s:      "shell coast",
     ad_scst_l:      ["non-printing end","of perimeter shells","in millimeters"],
-    ad_msol_s:      "min area",
-    ad_msol_l:      ["minimum area (mm^2)","required to keep solid","must be > 0.1"],
+    ad_msol_s:      "area filter",
+    ad_msol_l:      ["minimum area (mm^2)","bridges and flats less than this are culled"],
     ad_mins_s:      "min speed",
     ad_mins_l:      ["minimum speed","for short segments"],
+    ad_maxf_s:      "max flowrate",
+    ad_maxf_l:      ["maximum volumetric flowrate supported by this print head and filament","in millimeters^3 / second"],
     ad_scar_s:      "scarf length",
     ad_scar_l:      ["ease up length for scarf joint. disables arc detection","0 = disabled"],
     ad_spol_s:      "short path",

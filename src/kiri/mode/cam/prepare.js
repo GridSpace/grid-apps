@@ -412,7 +412,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // convert short planar moves to cuts in some cases
-        if (hasDelta && !isRough && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
+        if (hasDelta && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
             let iscontour = tolerance > 0;
             let isflat = absDeltaZ < 0.001;
             // restrict this to contouring

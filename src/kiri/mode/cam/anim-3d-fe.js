@@ -10,24 +10,26 @@ const { client } = api;
 let meshes = {},
     button = {},
     label = {},
+    lineTracker,
     material,
-    speedPauses = [0, 0, 0, 0, 0],
     speedValues = [1, 2, 4, 8, 32],
     speedNames = ["1x", "2x", "4x", "8x", "!!"],
     speedMax = speedValues.length - 1,
     speedIndex = 0,
     speed,
     origin,
-    color = 0;
+    color = 0,
+    A2R = Math.PI / 180;
 
 export function animate_clear2(api) {
     let { anim } = api.ui;
-    client.animate_cleanup2();
+    lineTracker?.clear();
     Object.keys(meshes).forEach(id => deleteMesh(id));
     api.widgets.setAxisIndex(0);
     api.uc.setVisible(anim.laba, true);
     api.uc.setVisible(anim.vala, true);
     anim.vala.value = "0.0";
+    client.animate_cleanup2();
 }
 
 export function animate2(api, delay) {
@@ -86,8 +88,9 @@ Object.assign(client, {
     },
 
     animate_setup2(settings, ondone) {
+        initPathMesh();
         color = settings.controller.dark ? 0x888888 : 0;
-        material = new THREE.MeshPhongMaterial({
+        material = material ?? new THREE.MeshPhongMaterial({
             flatShading: true,
             transparent: false,
             opacity: 0.5,
@@ -101,6 +104,66 @@ Object.assign(client, {
         client.send("animate_cleanup2", data, ondone);
     }
 });
+
+function initPathMesh() {
+    if (lineTracker) {
+        return lineTracker.clear();
+    }
+    let count = 0,
+        max = 10000,
+        rot = new THREE.Euler(0,0,0),
+        geo = new THREE.BufferGeometry(),
+        mat = new THREE.LineBasicMaterial({ color: 0xffff00 }),
+        pos = new Float32Array(max * 6),
+        lines = new THREE.LineSegments(geo, mat),
+        vec = new THREE.Vector3(0,0,0),
+        ang = new THREE.Vector3(1,0,0);
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    let track = lineTracker = {
+        xro(p) {
+            vec.set(p.x, p.y, p.z);
+            vec.applyAxisAngle(ang, p.a * A2R);
+        },
+        add(p1, p2) {
+            let ind = count * 6;
+            track.xro(p1);
+            pos[ind+0] = vec.x;
+            pos[ind+1] = vec.y;
+            pos[ind+2] = vec.z;
+            track.xro(p2);
+            pos[ind+3] = vec.x;
+            pos[ind+4] = vec.y;
+            pos[ind+5] = vec.z;
+            count++;
+            if (count >= max) {
+                let opos = pos;
+                max += 10000;
+                pos = new Float32Array(max * 6),
+                pos.set(opos);
+                geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            }
+            geo.setDrawRange(0, count * 2);
+            geo.attributes.position.needsUpdate = true;
+            track.visible(true);
+        },
+        clear() {
+            count = 0;
+            geo.setDrawRange(0,0);
+            track.rotate(0);
+            track.visible(false);
+        },
+        rotate(angle) {
+            rot.x = angle * A2R;
+            lines.setRotationFromEuler(rot);
+        },
+        visible(bool) {
+            if (bool !== lines.visible) {
+                lines.visible = bool;
+            }
+        }
+    }
+    space.world.add(lines);
+}
 
 function meshAdd(id, ind, pos, ilen, plen) {
     const geo = new THREE.BufferGeometry();
@@ -132,6 +195,7 @@ function meshUpdate(id, ind, pos, ilen, plen) {
 
 function deleteMesh(id) {
     space.world.remove(meshes[id]);
+    meshes[id].geometry.dispose();
     delete meshes[id];
 }
 
@@ -165,8 +229,7 @@ function play(opts) {
     }
     client.animate2({
         speed,
-        steps: steps || Infinity,
-        pause: speedPauses[speedIndex]
+        steps: steps || Infinity
     }, handleUpdate);
 }
 
@@ -177,8 +240,7 @@ function fast(opts) {
     button.pause.style.display = '';
     client.animate2({
         speed,
-        steps: steps || Infinity,
-        pause: speedPauses[speedIndex]
+        steps: steps || Infinity
     }, handleUpdate);
 }
 
@@ -216,6 +278,7 @@ function handleUpdate(data) {
     if (data.stock_index !== undefined) {
         api.widgets.setAxisIndex(data.stock_index);
         label.a.value = -data.stock_index.toFixed(1);
+        lineTracker.rotate(-data.stock_index);
     }
     if (data.mesh_index) {
         const { id, index } = data.mesh_index;
@@ -229,8 +292,11 @@ function handleUpdate(data) {
         const { id, ind, pos, ilen, plen } = data.mesh_update;
         meshUpdate(id, ind, pos, ilen, plen);
     }
-    if (data && data.progress) {
+    if (data.progress) {
         label.progress.value = (data.progress * 100).toFixed(1);
+    }
+    if (data.line) {
+        lineTracker.add(...data.line);
     }
 }
 

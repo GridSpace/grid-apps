@@ -37,6 +37,7 @@ let util;
 let dir;
 let log;
 let pre;
+let alt;
 
 const EventEmitter = require('events');
 class AppEmitter extends EventEmitter {}
@@ -64,6 +65,7 @@ function init(mod) {
     startTime = time();
     lastmod = mod.util.lastmod;
     logger = mod.log;
+    alt = ENV.alt;
     pre = ENV.pre || mod.meta.pre;
     debug = ENV.debug || mod.meta.debug;
     oversion = ENV.over || mod.meta.over;
@@ -191,6 +193,19 @@ function init(mod) {
             append[key] = minify(append[key]);
         }
     }
+
+    if (alt) {
+        for (let [ key, val ] of Object.entries(append)) {
+            let src = `src/main/${key}.js`;
+            if (!fs.existsSync(src)) {
+                logger.log('missing:', src);
+                continue;
+            }
+            fs.mkdirSync(`alt/main`, { recursive: true });
+            let body = fs.readFileSync(src);
+            fs.writeFileSync(`alt/main/${key}.js`, body + val);
+        }
+    }
 };
 
 // either add module assets to path or require(init.js)
@@ -288,14 +303,14 @@ function initModule(mod, file, dir) {
             const path = mod.dir + '/' + dir + '/' + file;
             try {
                 const body = fs.readFileSync(path);
-                // console.log({ inject: code, file, opt });
+                logger.log({ inject: code, file, opt });
                 if (opt.first) {
                     append[code] = body.toString() + '\n' + append[code];
                 } else {
                     append[code] += body.toString() + '\n';
                 }
             } catch (e) {
-                console.log({ missing_file: path, dir, mod });
+                logger.log({ missing_file: path, dir, mod });
             }
         },
         onload(fn) {
@@ -430,6 +445,10 @@ function generateDevices() {
     let dstr = JSON.stringify(devs);
     util.mkdir(PATH.join(dir,"src","pack"));
     fs.writeFileSync(PATH.join(dir,"src","pack","kiri-devs.js"), `export const devices = ${dstr};`);
+    if (alt) {
+        fs.mkdirSync('alt/pack', { recursive: true });
+        fs.writeFileSync(PATH.join(dir,"alt","pack","kiri-devs.js"), `export const devices = ${dstr};`);
+    }
 }
 
 function minify(code) {
@@ -526,7 +545,13 @@ function fixedmap(prefix, map) {
 // HTTP 307 redirect
 function redir(path, type) {
     return (req, res, next) => {
-        http.redirect(res, path, type);
+        let query = req.url.split('?')[1];
+        let rpath = path;
+        if (query && path.indexOf('?') < 0) {
+            rpath += `?${query}`;
+        }
+        // console.log({ redir: req.url, to: path, query, new_path: rpath });
+        http.redirect(res, rpath, type);
     }
 }
 

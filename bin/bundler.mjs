@@ -3,11 +3,21 @@ import path from 'path';
 import uglify from 'uglify-js';
 import { Buffer } from 'buffer';
 
-const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bundle.config.json', 'utf8'));
-const compress = process.env.UGLIFY ? true : false
+const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bin/bundle.config.json', 'utf8'));
+const { inputs, outputs, excludes, compress } = cfg;
+const envcomp = process.env.COMPRESS ? JSON.parse(process.env.COMPRESS) : undefined;
+const debug = process.env.DEBUG;
 
 // --- recursive directory walker (follows symlinks safely) ---
 function* walk(dir, seen = new Set()) {
+    dir = path.normalize(dir);
+    if (excludes.indexOf(dir) >= 0) {
+        return;
+    }
+    if (!fs.existsSync(dir)) {
+        return;
+    }
+
     const real = fs.realpathSync(dir);
     if (seen.has(real)) {
         return;
@@ -25,13 +35,19 @@ function* walk(dir, seen = new Set()) {
 
 // --- collect all files according to config ---
 let entries = [];
-for (const input of cfg.inputs) {
+let virtMap = new Set();
+for (const input of inputs) {
     const root = input.root;
     const prefix = input.prefix || '';
     for (const file of walk(root)) {
         const rel = path.relative(root, file).replace(/\\/g, '/');
         const virt = prefix ? `${prefix}/${rel}` : rel;
-        entries.push({ file, virt });
+        if (virtMap.has(virt)) {
+            console.log('pre-existing', virt, rel, root);
+        } else {
+            entries.push({ file, virt });
+            virtMap.add(virt);
+        }
     }
 }
 
@@ -40,28 +56,54 @@ const dataParts = [];
 const entryMeta = [];
 let offset = 0;
 let cache = new Map();
+let compEnable = (envcomp ?? compress);
+let cacheDir = cfg.cacheDir ?? ".bcache";
+
+if (compEnable) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+}
+
+function fileTime(path) {
+    try {
+        return (fs.statSync(path).ctimeMs/1000) | 0;
+    } catch (e) {
+        return 0;
+    }
+}
 
 for (const { file, virt } of entries) {
+    if (excludes.indexOf(file) >= 0) {
+        continue;
+    }
     let record = cache.get(file);
     if (record) {
-        // console.log({ dup: file });
+        if (debug) console.log({ alias: virt, from: file });
         entryMeta.push({ ...record, virt });
     } else {
+        if (debug) console.log({ write: virt, from: file });
         let data = fs.readFileSync(file);
-        if (compress && file.endsWith("js")) {
-            console.log('compress', file);
-            data = uglify.minify(data.toString(), {
-                compress: {
-                    merge_vars: false,
-                    unused: false
+        if (compEnable && file.endsWith("js")) {
+            let cpath = path.resolve(cacheDir, file);
+            if (fileTime(cpath) > fileTime(file)) {
+                data = fs.readFileSync(cpath);
+                console.log('cached', file);
+            } else {
+                console.log('compress', file);
+                data = uglify.minify(data.toString(), {
+                    compress: {
+                        merge_vars: false,
+                        unused: false
+                    }
+                });
+                // console.log({ to: typeof(data), data });
+                if (!data.code) {
+                    if (debug) console.log({ skip: file });
+                    continue;
                 }
-            });
-            // console.log({ to: typeof(data), data });
-            if (!data.code) {
-                console.log({ skip: file });
-                continue;
+                data = Buffer.from(data.code);
+                fs.mkdirSync(path.dirname(cpath), { recursive: true });
+                fs.writeFileSync(cpath, data);
             }
-            data = Buffer.from(data.code);
         }
         record = { virt, offset, length: data.length };
         cache.set(file, record);
@@ -99,7 +141,7 @@ const header = Buffer.concat([count, ...headerParts]);
 const full = Buffer.concat([header, ...dataParts]);
 
 // --- write final bundle ---
-const outPath = cfg.outputs.bundle || './bundle.bin';
+const outPath = outputs.bundle || './bundle.bin';
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, full); // ⚡ write raw binary
 
