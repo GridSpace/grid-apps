@@ -1635,7 +1635,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     print.addPrintPoints(preout, output);
 
     // bridge layer fan change
-    if (!isBelt && preout.length && slice.isBridgeLayer) {
+    if (preout.length && slice.isBridgeLayer) {
         preout[0].fan = Math.round(fanSpeed / 3);
         preout.peek().fan = fanSpeed;
     }
