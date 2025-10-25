@@ -11,6 +11,7 @@ import { edges as meshEdges } from './edges.js';
 import { group as meshGroup } from './group.js';
 import { model as meshModel } from './model.js';
 import { sketch as meshSketch } from './sketch.js';
+import { script } from './script.js';
 import { newPolygon } from '../geo/polygon.js';
 import { THREE } from '../ext/three.js';
 import { $, $C, h } from '../moto/webui.js';
@@ -771,11 +772,12 @@ let add = {
     },
 
     cube() {
+        const [ x,y,z ] = [ ...arguments ];
         const box = new THREE.BoxGeometry(1,1,1).toNonIndexed();
         const vert = box.attributes.position.array;
         const nmdl = new meshModel({ file: "box", mesh: vert });
         const ngrp = api.group.new([ nmdl ]);
-        ngrp.scale(10, 10, 10).floor();
+        ngrp.scale(x ?? 10, y ?? 10, z ?? 10).floor();
         selection.set([ nmdl ]);
         return ngrp;
     },
@@ -1515,8 +1517,8 @@ const api = {
     },
 
     clear() {
-        for (let group of group.list()) {
-            group.remove(group);
+        for (let grp of group.list()) {
+            group.remove(grp);
         }
     },
 
@@ -1644,6 +1646,8 @@ const api = {
     pattern,
 
     prefs,
+
+    script,
 
     selection,
 

@@ -383,7 +383,7 @@ function menu_item(text, fn, short, id) {
 
 // create html elements
 function ui_build() {
-    let { bind, div, input, hr, label } = h;
+    let { bind, div, input, hr, label, textarea } = h;
     let { file, selection, mode, tool, sketch, prefs, add } = api;
     let trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
     let eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
@@ -402,6 +402,7 @@ function ui_build() {
                 menu_item('Export', file.export, 'X'),
                 hr(),
                 menu_item('Slicer', api.kirimoto),
+                menu_item('Script', api.script.toggle),
                 hr(),
                 menu_item('Close', window.close),
             ])
@@ -578,6 +579,10 @@ function ui_build() {
             div({ id: 'sketchtools', class: "tools sketch-on" }),
             div({ id: 'objecttools', class: "tools sketch-off" }),
             div({ id: 'logger', onmouseover() { log.show() } }),
+        ]),
+        div({ id: 'script', class: "hide" }, [
+            div({ id: 'script-header', _: "script" }),
+            textarea({ id: 'script-editor', rows: 20, cols: 60 }),
         ]),
         div({ id: 'grouplist' }),
         div({ id: 'selectlist' }),

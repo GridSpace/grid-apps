@@ -224,7 +224,11 @@ function space_init(data) {
             if (evt.key === '?') {
                 return api.welcome(version);
             }
-            let { shiftKey, metaKey, ctrlKey, code } = evt;
+            let { shiftKey, metaKey, ctrlKey, code, target } = evt;
+            if (target.nodeName === 'TEXTAREA') {
+                api.script.changed();
+                return;
+            }
             switch (code) {
                 case 'Digit1':
                     return api.mode.sketch();
@@ -286,7 +290,26 @@ function space_init(data) {
             }
         },
         'keydown', evt => {
-            let { shiftKey, metaKey, ctrlKey, code } = evt;
+            let { shiftKey, metaKey, ctrlKey, code, target } = evt;
+            if (target.nodeName === 'TEXTAREA') {
+                if (code === 'Tab') {
+                    estop(evt);
+                    const start = target.selectionStart;
+                    const end = target.selectionEnd;
+                    const val = target.value;
+                    const upto = val.slice(0, start);
+                    const col = start - upto.lastIndexOf('\n') - 1;
+                    const tab = '    '.substring(col % 4);
+                    target.value = val.slice(0, start) + tab + val.slice(end);
+                    target.selectionStart = target.selectionEnd = start + tab.length;
+                }
+                if (code === 'Enter' && metaKey) {
+                    api.script.execute();
+                } else {
+                    api.script.changed();
+                }
+                return;
+            }
             let once = keyOnce[code];
             if (once) {
                 delete keyOnce[code];
