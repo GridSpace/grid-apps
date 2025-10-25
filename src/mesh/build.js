@@ -582,7 +582,7 @@ function ui_build() {
         ]),
         div({ id: 'script', class: "hide" }, [
             div({ id: 'script-header', _: "script" }),
-            textarea({ id: 'script-editor', rows: 20, cols: 60 }),
+            textarea({ id: 'script-editor', rows: 30, cols: 60 }),
         ]),
         div({ id: 'grouplist' }),
         div({ id: 'selectlist' }),
