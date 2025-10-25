@@ -1530,6 +1530,10 @@ details[open] summary::after {
     border-radius: 3px;
     text-align: center;
 }
+.dark #op-add-list > div:hover {
+    color: black;
+    background-color: var(--blue-2) !important;
+}
 #op-add-list > div:hover {
     background-color: var(--blue-4);
 }
@@ -1537,9 +1541,6 @@ details[open] summary::after {
     position: absolute;
     right: 0;
     top: 0;
-}
-#cam-lathe:hover {
-    background-color: rgba(0,0,0,0) !important;
 }
 
 #progress {
