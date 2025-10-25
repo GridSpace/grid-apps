@@ -771,6 +771,48 @@ let add = {
         api.modal.bound.genvrt.focus();
     },
 
+    plane() {
+        const [ x,y ] = [ ...arguments ];
+        const box = new THREE.PlaneGeometry(1,1).toNonIndexed();
+        const vert = box.attributes.position.array;
+        const nmdl = new meshModel({ file: "plane", mesh: vert });
+        nmdl._loft = function(plane) {
+            function uv(v) {
+                let m = new Set();
+                let g = [...v].group(3).filter(a => {
+                    let k = a.map(v => v.round(5)).join('-');
+                    if (m.has(k)) return false;
+                    m.add(k); return true;
+                });
+                return [ g[0], g[1], g[3], g[2] ];
+            };
+            let s0 = uv(vert);
+            let s1 = uv(plane.attributes.position.array);
+            let v = [];
+            for (let i=0; i<4; i++) {
+                let p0 = [ s0[i], s0[(i+1)%4] ];
+                let p1 = [ s1[i], s1[(i+1)%4] ];
+                v.push(...p1[1]);
+                v.push(...p0[1]);
+                v.push(...p0[0]);
+                v.push(...p1[0]);
+                v.push(...p1[1]);
+                v.push(...p0[0]);
+            }
+            let pa = [...plane.attributes.position.array];
+            v.push(...pa.group(3).reverse().flat());
+            v.push(...vert);
+            const nmdl = new meshModel({ file: "loft", mesh: v.toFloat32() });
+            const ngrp = api.group.new([ nmdl ]);
+            selection.set([ nmdl ]);
+            return ngrp;
+        };
+        const ngrp = api.group.new([ nmdl ]);
+        ngrp.scale(x ?? 10, y ?? 10, 1).floor();
+        selection.set([ nmdl ]);
+        return ngrp;
+    },
+
     cube() {
         const [ x,y,z ] = [ ...arguments ];
         const box = new THREE.BoxGeometry(1,1,1).toNonIndexed();
