@@ -305,7 +305,7 @@ export function meshToSTEPWithFaces(triangles, options = {}) {
         }
     }
 
-    console.log(`[v3] Merged ${totalFaces} triangles into ${surfaces.length} faces`);
+    console.log(`[v4] Merged ${totalFaces} triangles into ${surfaces.length} faces`);
 
     // Generate STEP file
     let step = `ISO-10303-21;
@@ -390,6 +390,40 @@ DATA;
         }
 
         return vertexMap.get(key);
+    }
+
+    // Build global edge map - each unique edge gets one EDGE_CURVE
+    const edgeMap = new Map();
+
+    function getOrCreateEdge(v1, v2, stepBuffer) {
+        // Create consistent key regardless of vertex order
+        const key1 = `${v1.pointId},${v2.pointId}`;
+        const key2 = `${v2.pointId},${v1.pointId}`;
+
+        let edgeData = edgeMap.get(key1) || edgeMap.get(key2);
+
+        if (!edgeData) {
+            const dx = v2.x - v1.x;
+            const dy = v2.y - v1.y;
+            const dz = v2.z - v1.z;
+            const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            const edgeCurveId = id++;
+            const lineId = id++;
+            const vectorId = id++;
+            const directionId = id++;
+
+            stepBuffer.append = stepBuffer.append || '';
+            stepBuffer.append += `#${directionId}=DIRECTION('',(${(dx / len).toFixed(6)},${(dy / len).toFixed(6)},${(dz / len).toFixed(6)}));\n`;
+            stepBuffer.append += `#${vectorId}=VECTOR('',#${directionId},${len.toFixed(6)});\n`;
+            stepBuffer.append += `#${lineId}=LINE('',#${v1.pointId},#${vectorId});\n`;
+            stepBuffer.append += `#${edgeCurveId}=EDGE_CURVE('',#${v1.vpId},#${v2.vpId},#${lineId},.T.);\n`;
+
+            edgeData = { edgeCurveId, v1, v2, len };
+            edgeMap.set(key1, edgeData);
+        }
+
+        return edgeData;
     }
 
     // Advanced B-rep shape representation
@@ -514,35 +548,48 @@ DATA;
 
             // Create edges - for holes (outlineIdx > 0), use opposite orientation
             const isHole = outlineIdx > 0;
-            const edgeOrientation = isHole ? '.F.' : '.T.';
+
+            // Buffer for edge geometry (needs to be written before ORIENTED_EDGEs)
+            const edgeBuffer = {};
+            const orientedEdgeData = []; // Store oriented edge info to write after EDGE_CURVEs
 
             for (let i = 0; i < vertices.length; i++) {
                 const v1 = vertices[i];
                 const v2 = vertices[(i + 1) % vertices.length];
 
-                const dx = v2.x - v1.x;
-                const dy = v2.y - v1.y;
-                const dz = v2.z - v1.z;
-                const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                // Get or create shared edge
+                const edgeData = getOrCreateEdge(v1, v2, edgeBuffer);
 
-                if (len < 1e-10) {
+                if (edgeData.len < 1e-10) {
                     console.warn(`Warning: Degenerate edge in surface ${surfaceIdx}, outline ${outlineIdx}`);
                     continue;
                 }
 
+                // Determine orientation - check if edge is stored in same direction we're traversing
+                const sameDirection = (edgeData.v1.pointId === v1.pointId && edgeData.v2.pointId === v2.pointId);
+                let edgeOrientation;
+
+                if (isHole) {
+                    // For holes, flip the orientation
+                    edgeOrientation = sameDirection ? '.F.' : '.T.';
+                } else {
+                    // For outer boundary, use natural orientation
+                    edgeOrientation = sameDirection ? '.T.' : '.F.';
+                }
+
                 const orientedEdgeId = id++;
-                const edgeCurveId = id++;
-                const lineId = id++;
-                const vectorId = id++;
-                const directionId = id++;
-
                 orientedEdgeIds.push(orientedEdgeId);
+                orientedEdgeData.push({ orientedEdgeId, edgeCurveId: edgeData.edgeCurveId, edgeOrientation });
+            }
 
-                faceStepData += `#${directionId}=DIRECTION('',(${(dx / len).toFixed(6)},${(dy / len).toFixed(6)},${(dz / len).toFixed(6)}));\n`;
-                faceStepData += `#${vectorId}=VECTOR('',#${directionId},${len.toFixed(6)});\n`;
-                faceStepData += `#${lineId}=LINE('',#${v1.pointId},#${vectorId});\n`;
-                faceStepData += `#${edgeCurveId}=EDGE_CURVE('',#${v1.vpId},#${v2.vpId},#${lineId},.T.);\n`;
-                faceStepData += `#${orientedEdgeId}=ORIENTED_EDGE('',*,*,#${edgeCurveId},${edgeOrientation});\n`;
+            // Write edge geometry first (EDGE_CURVEs must exist before ORIENTED_EDGEs reference them)
+            if (edgeBuffer.append) {
+                faceStepData += edgeBuffer.append;
+            }
+
+            // Now write ORIENTED_EDGEs
+            for (const oed of orientedEdgeData) {
+                faceStepData += `#${oed.orientedEdgeId}=ORIENTED_EDGE('',*,*,#${oed.edgeCurveId},${oed.edgeOrientation});\n`;
             }
 
             if (orientedEdgeIds.length === 0) {
@@ -608,7 +655,8 @@ DATA;
     }
 
     // Now write CLOSED_SHELL with only the faces that were actually created
-    console.log(`[v3] Created ${createdFaceIds.length} faces for CLOSED_SHELL (expected ${surfaces.length})`);
+    console.log(`[v4] Created ${createdFaceIds.length} faces for CLOSED_SHELL (expected ${surfaces.length})`);
+    console.log(`[v4] Shared ${edgeMap.size} unique edges across all faces`);
     step += `#${closedShellId}=CLOSED_SHELL('',(${createdFaceIds.map(fid => `#${fid}`).join(',')}));\n`;
 
     // Append all the face geometry
