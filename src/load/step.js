@@ -305,7 +305,7 @@ export function meshToSTEPWithFaces(triangles, options = {}) {
         }
     }
 
-    console.log(`Merged ${totalFaces} triangles into ${surfaces.length} faces`);
+    console.log(`[v3] Merged ${totalFaces} triangles into ${surfaces.length} faces`);
 
     // Generate STEP file
     let step = `ISO-10303-21;
@@ -512,13 +512,13 @@ DATA;
                 allVertices = vertices;
             }
 
-            // For holes, reverse the vertex order to get opposite winding
-            const orderedVertices = outlineIdx === 0 ? vertices : vertices.slice().reverse();
+            // Create edges - for holes (outlineIdx > 0), use opposite orientation
+            const isHole = outlineIdx > 0;
+            const edgeOrientation = isHole ? '.F.' : '.T.';
 
-            // Create edges
-            for (let i = 0; i < orderedVertices.length; i++) {
-                const v1 = orderedVertices[i];
-                const v2 = orderedVertices[(i + 1) % orderedVertices.length];
+            for (let i = 0; i < vertices.length; i++) {
+                const v1 = vertices[i];
+                const v2 = vertices[(i + 1) % vertices.length];
 
                 const dx = v2.x - v1.x;
                 const dy = v2.y - v1.y;
@@ -542,7 +542,7 @@ DATA;
                 faceStepData += `#${vectorId}=VECTOR('',#${directionId},${len.toFixed(6)});\n`;
                 faceStepData += `#${lineId}=LINE('',#${v1.pointId},#${vectorId});\n`;
                 faceStepData += `#${edgeCurveId}=EDGE_CURVE('',#${v1.vpId},#${v2.vpId},#${lineId},.T.);\n`;
-                faceStepData += `#${orientedEdgeId}=ORIENTED_EDGE('',*,*,#${edgeCurveId},.T.);\n`;
+                faceStepData += `#${orientedEdgeId}=ORIENTED_EDGE('',*,*,#${edgeCurveId},${edgeOrientation});\n`;
             }
 
             if (orientedEdgeIds.length === 0) {
@@ -608,6 +608,7 @@ DATA;
     }
 
     // Now write CLOSED_SHELL with only the faces that were actually created
+    console.log(`[v3] Created ${createdFaceIds.length} faces for CLOSED_SHELL (expected ${surfaces.length})`);
     step += `#${closedShellId}=CLOSED_SHELL('',(${createdFaceIds.map(fid => `#${fid}`).join(',')}));\n`;
 
     // Append all the face geometry
