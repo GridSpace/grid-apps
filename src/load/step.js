@@ -277,7 +277,31 @@ export function meshToSTEPWithFaces(triangles, options = {}) {
         if (connectedFaces.length > 0) {
             // Generate outline(s) for this surface
             const outlines = tool.generateOutlines(connectedFaces);
-            surfaces.push({ faces: connectedFaces, outlines });
+
+            if (outlines.length > 1) {
+                console.log(`Surface with ${connectedFaces.length} faces has ${outlines.length} outlines:`);
+                outlines.forEach((outline, idx) => {
+                    console.log(`  Outline ${idx}: ${outline.length} vertices`);
+                });
+            }
+
+            // Sort outlines by area (largest first = outer boundary)
+            // Use shoelace formula to calculate signed area
+            const outlinesWithArea = outlines.map(outline => {
+                let area = 0;
+                for (let i = 0; i < outline.length; i++) {
+                    const p1 = outline[i];
+                    const p2 = outline[(i + 1) % outline.length];
+                    area += (p1.x * p2.y - p2.x * p1.y);
+                }
+                return { outline, area: Math.abs(area) };
+            });
+
+            // Sort by area descending (largest = outer boundary)
+            outlinesWithArea.sort((a, b) => b.area - a.area);
+            const sortedOutlines = outlinesWithArea.map(o => o.outline);
+
+            surfaces.push({ faces: connectedFaces, outlines: sortedOutlines });
         }
     }
 
@@ -383,71 +407,168 @@ DATA;
 
     step += `#${closedShellId}=CLOSED_SHELL('',(${faceIds.map(fid => `#${fid}`).join(',')}));\n`;
 
+    // Helper function to merge co-linear edges in an outline
+    function mergeColinearEdges(outline) {
+        if (outline.length < 3) return outline;
+
+        const tolerance = 1e-6;
+
+        // Helper to check if three points are co-linear
+        function areColinear(p1, p2, p3) {
+            const v1 = new Vector3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z);
+            const v2 = new Vector3(p3.x - p2.x, p3.y - p2.y, p3.z - p2.z);
+
+            const len1 = v1.length();
+            const len2 = v2.length();
+
+            if (len1 < tolerance || len2 < tolerance) return true;
+
+            v1.normalize();
+            v2.normalize();
+
+            // Check if vectors are parallel (dot product close to 1 or -1)
+            const dot = Math.abs(v1.dot(v2));
+            return dot > 1 - tolerance;
+        }
+
+        // Mark vertices to keep
+        const keep = new Array(outline.length).fill(true);
+
+        // Check each vertex to see if it's on a straight line
+        for (let i = 0; i < outline.length; i++) {
+            const prev = outline[(i - 1 + outline.length) % outline.length];
+            const curr = outline[i];
+            const next = outline[(i + 1) % outline.length];
+
+            if (areColinear(prev, curr, next)) {
+                keep[i] = false;
+            }
+        }
+
+        // Build merged array with only kept vertices
+        const merged = [];
+        for (let i = 0; i < outline.length; i++) {
+            if (keep[i]) {
+                merged.push(outline[i]);
+            }
+        }
+
+        return merged.length >= 3 ? merged : outline;
+    }
+
     // Create each merged face
     for (let surfaceIdx = 0; surfaceIdx < surfaces.length; surfaceIdx++) {
         const surface = surfaces[surfaceIdx];
         const faceId = faceIds[surfaceIdx];
 
-        // For now, use the first outline (main boundary)
-        // TODO: handle holes (additional outlines)
-        const outline = surface.outlines[0];
-
-        if (!outline || outline.length < 3) {
-            console.warn(`Skipping invalid surface ${surfaceIdx} with ${outline?.length || 0} vertices`);
+        if (!surface.outlines || surface.outlines.length === 0) {
+            console.warn(`Skipping invalid surface ${surfaceIdx} with no outlines`);
             continue;
         }
 
-        const faceOuterBoundId = id++;
-        const edgeLoopId = id++;
+        // Process all outlines: first is outer boundary, rest are holes
+        const boundIds = [];
+        let allVertices = [];
 
-        // Create edges for this face outline
-        const orientedEdgeIds = [];
-        const vertices = [];
+        for (let outlineIdx = 0; outlineIdx < surface.outlines.length; outlineIdx++) {
+            let outline = surface.outlines[outlineIdx];
 
-        // Get vertices and create vertex records
-        for (let i = 0; i < outline.length; i++) {
-            const pt = outline[i];
-            const vertex = getOrCreateVertex(pt.x, pt.y, pt.z);
-            vertices.push(vertex);
-        }
-
-        // Create edges
-        for (let i = 0; i < vertices.length; i++) {
-            const v1 = vertices[i];
-            const v2 = vertices[(i + 1) % vertices.length];
-
-            const dx = v2.x - v1.x;
-            const dy = v2.y - v1.y;
-            const dz = v2.z - v1.z;
-            const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-            if (len < 1e-10) {
-                console.warn(`Warning: Degenerate edge in surface ${surfaceIdx}`);
+            if (!outline || outline.length < 3) {
+                console.warn(`Skipping invalid outline ${outlineIdx} in surface ${surfaceIdx}`);
                 continue;
             }
 
-            const orientedEdgeId = id++;
-            const edgeCurveId = id++;
-            const lineId = id++;
-            const vectorId = id++;
-            const directionId = id++;
+            // Merge co-linear edges
+            const originalLength = outline.length;
+            outline = mergeColinearEdges(outline);
 
-            orientedEdgeIds.push(orientedEdgeId);
+            if (originalLength !== outline.length) {
+                console.log(`  Merged outline ${outlineIdx}: ${originalLength} -> ${outline.length} vertices`);
+            }
 
-            step += `#${directionId}=DIRECTION('',(${(dx / len).toFixed(6)},${(dy / len).toFixed(6)},${(dz / len).toFixed(6)}));\n`;
-            step += `#${vectorId}=VECTOR('',#${directionId},${len.toFixed(6)});\n`;
-            step += `#${lineId}=LINE('',#${v1.pointId},#${vectorId});\n`;
-            step += `#${edgeCurveId}=EDGE_CURVE('',#${v1.vpId},#${v2.vpId},#${lineId},.T.);\n`;
-            step += `#${orientedEdgeId}=ORIENTED_EDGE('',*,*,#${edgeCurveId},.T.);\n`;
+            if (outline.length < 3) {
+                console.warn(`Outline ${outlineIdx} in surface ${surfaceIdx} has < 3 vertices after merging`);
+                continue;
+            }
+
+            const boundId = id++;
+            const edgeLoopId = id++;
+
+            // Create edges for this outline
+            const orientedEdgeIds = [];
+            const vertices = [];
+
+            // Get vertices and create vertex records
+            for (let i = 0; i < outline.length; i++) {
+                const pt = outline[i];
+                const vertex = getOrCreateVertex(pt.x, pt.y, pt.z);
+                vertices.push(vertex);
+            }
+
+            // Store vertices from first outline for normal calculation
+            if (outlineIdx === 0) {
+                allVertices = vertices;
+            }
+
+            // For holes, reverse the vertex order to get opposite winding
+            const orderedVertices = outlineIdx === 0 ? vertices : vertices.slice().reverse();
+
+            // Create edges
+            for (let i = 0; i < orderedVertices.length; i++) {
+                const v1 = orderedVertices[i];
+                const v2 = orderedVertices[(i + 1) % orderedVertices.length];
+
+                const dx = v2.x - v1.x;
+                const dy = v2.y - v1.y;
+                const dz = v2.z - v1.z;
+                const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                if (len < 1e-10) {
+                    console.warn(`Warning: Degenerate edge in surface ${surfaceIdx}, outline ${outlineIdx}`);
+                    continue;
+                }
+
+                const orientedEdgeId = id++;
+                const edgeCurveId = id++;
+                const lineId = id++;
+                const vectorId = id++;
+                const directionId = id++;
+
+                orientedEdgeIds.push(orientedEdgeId);
+
+                step += `#${directionId}=DIRECTION('',(${(dx / len).toFixed(6)},${(dy / len).toFixed(6)},${(dz / len).toFixed(6)}));\n`;
+                step += `#${vectorId}=VECTOR('',#${directionId},${len.toFixed(6)});\n`;
+                step += `#${lineId}=LINE('',#${v1.pointId},#${vectorId});\n`;
+                step += `#${edgeCurveId}=EDGE_CURVE('',#${v1.vpId},#${v2.vpId},#${lineId},.T.);\n`;
+                step += `#${orientedEdgeId}=ORIENTED_EDGE('',*,*,#${edgeCurveId},.T.);\n`;
+            }
+
+            if (orientedEdgeIds.length === 0) {
+                console.warn(`No valid edges in outline ${outlineIdx} of surface ${surfaceIdx}`);
+                continue;
+            }
+
+            step += `#${edgeLoopId}=EDGE_LOOP('',(${orientedEdgeIds.map(eid => `#${eid}`).join(',')}));\n`;
+
+            // First outline is FACE_OUTER_BOUND, subsequent ones are holes (FACE_BOUND)
+            if (outlineIdx === 0) {
+                step += `#${boundId}=FACE_OUTER_BOUND('',#${edgeLoopId},.T.);\n`;
+            } else {
+                step += `#${boundId}=FACE_BOUND('',#${edgeLoopId},.T.);\n`;
+            }
+
+            boundIds.push(boundId);
         }
 
-        step += `#${edgeLoopId}=EDGE_LOOP('',(${orientedEdgeIds.map(eid => `#${eid}`).join(',')}));\n`;
-        step += `#${faceOuterBoundId}=FACE_OUTER_BOUND('',#${edgeLoopId},.T.);\n`;
+        if (boundIds.length === 0 || allVertices.length < 3) {
+            console.warn(`Skipping surface ${surfaceIdx} - no valid bounds`);
+            continue;
+        }
 
-        // Calculate face normal from first three vertices
-        const v0 = new Vector3(vertices[0].x, vertices[0].y, vertices[0].z);
-        const v1 = new Vector3(vertices[1].x, vertices[1].y, vertices[1].z);
-        const v2 = new Vector3(vertices[2].x, vertices[2].y, vertices[2].z);
+        // Calculate face normal from first three vertices of outer boundary
+        const v0 = new Vector3(allVertices[0].x, allVertices[0].y, allVertices[0].z);
+        const v1 = new Vector3(allVertices[1].x, allVertices[1].y, allVertices[1].z);
+        const v2 = new Vector3(allVertices[2].x, allVertices[2].y, allVertices[2].z);
 
         const edge1 = v1.clone().sub(v0);
         const edge2 = v2.clone().sub(v0);
@@ -455,14 +576,14 @@ DATA;
 
         // Calculate face center for plane origin
         let centerX = 0, centerY = 0, centerZ = 0;
-        for (let vertex of vertices) {
+        for (let vertex of allVertices) {
             centerX += vertex.x;
             centerY += vertex.y;
             centerZ += vertex.z;
         }
-        centerX /= vertices.length;
-        centerY /= vertices.length;
-        centerZ /= vertices.length;
+        centerX /= allVertices.length;
+        centerY /= allVertices.length;
+        centerZ /= allVertices.length;
 
         const centerPointId = id++;
         step += `#${centerPointId}=CARTESIAN_POINT('',(${centerX.toFixed(6)},${centerY.toFixed(6)},${centerZ.toFixed(6)}));\n`;
@@ -478,7 +599,8 @@ DATA;
         step += `#${axisPlacementId}=AXIS2_PLACEMENT_3D('',#${centerPointId},#${normalDirId},#${refDirId});\n`;
         step += `#${planeId}=PLANE('',#${axisPlacementId});\n`;
 
-        step += `#${faceId}=ADVANCED_FACE('',(#${faceOuterBoundId}),#${planeId},.T.);\n`;
+        // Create ADVANCED_FACE with all bounds (outer + holes)
+        step += `#${faceId}=ADVANCED_FACE('',(${boundIds.map(bid => `#${bid}`).join(',')}),#${planeId},.T.);\n`;
     }
 
     // Product definition shape

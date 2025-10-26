@@ -613,7 +613,6 @@ const file = {
                         .map(r => { return { x:r[0], y:r[1], z:r[2] } })
                         .group(3)
                         .map(f => { return { v1: f[0], v2: f[1], v3: f[2] } });
-                    console.log({ rec, tris });
                     varr.push(...tris);
                 }
                 return meshToSTEPWithFaces(varr);
