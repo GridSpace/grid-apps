@@ -383,7 +383,7 @@ function menu_item(text, fn, short, id) {
 
 // create html elements
 function ui_build() {
-    let { bind, div, input, hr, label, textarea } = h;
+    let { bind, button, div, input, hr, label, span, textarea } = h;
     let { file, selection, mode, tool, sketch, prefs, add } = api;
     let trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
     let eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
@@ -581,8 +581,13 @@ function ui_build() {
             div({ id: 'logger', onmouseover() { log.show() } }),
         ]),
         div({ id: 'script', class: "hide" }, [
-            div({ id: 'script-header', _: "script" }),
-            textarea({ id: 'script-editor', rows: 50, cols: 60 }),
+            div({ id: 'script-header' }, [
+                span("script"),
+                div({ class: "grow" }),
+                button({ _: "run", onclick: api.script.execute }),
+                button({ _: "&times;", class: "close", onclick: api.script.hide })
+            ]),
+            textarea({ id: 'script-editor', rows: 30, cols: 65 }),
         ]),
         div({ id: 'grouplist' }),
         div({ id: 'selectlist' }),

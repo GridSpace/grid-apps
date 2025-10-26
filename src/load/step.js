@@ -3,6 +3,9 @@
 import { tool as MeshTool } from '../mesh/tool.js';
 
 const { Vector3 } = THREE;
+function debug() {
+    if (false) console.log(...arguments);
+}
 
 /**
  * Convert STL triangles to STEP file format
@@ -279,9 +282,9 @@ export function meshToSTEPWithFaces(triangles, options = {}) {
             const outlines = tool.generateOutlines(connectedFaces);
 
             if (outlines.length > 1) {
-                console.log(`Surface with ${connectedFaces.length} faces has ${outlines.length} outlines:`);
+                debug(`Surface with ${connectedFaces.length} faces has ${outlines.length} outlines:`);
                 outlines.forEach((outline, idx) => {
-                    console.log(`  Outline ${idx}: ${outline.length} vertices`);
+                    debug(`  Outline ${idx}: ${outline.length} vertices`);
                 });
             }
 
@@ -305,7 +308,7 @@ export function meshToSTEPWithFaces(triangles, options = {}) {
         }
     }
 
-    console.log(`[v4] Merged ${totalFaces} triangles into ${surfaces.length} faces`);
+    debug(`[v4] Merged ${totalFaces} triangles into ${surfaces.length} faces`);
 
     // Generate STEP file
     let step = `ISO-10303-21;
@@ -519,7 +522,7 @@ DATA;
             outline = mergeColinearEdges(outline);
 
             if (originalLength !== outline.length) {
-                console.log(`  Merged outline ${outlineIdx}: ${originalLength} -> ${outline.length} vertices`);
+                debug(`  Merged outline ${outlineIdx}: ${originalLength} -> ${outline.length} vertices`);
             }
 
             if (outline.length < 3) {
@@ -655,8 +658,8 @@ DATA;
     }
 
     // Now write CLOSED_SHELL with only the faces that were actually created
-    console.log(`[v4] Created ${createdFaceIds.length} faces for CLOSED_SHELL (expected ${surfaces.length})`);
-    console.log(`[v4] Shared ${edgeMap.size} unique edges across all faces`);
+    debug(`[v4] Created ${createdFaceIds.length} faces for CLOSED_SHELL (expected ${surfaces.length})`);
+    debug(`[v4] Shared ${edgeMap.size} unique edges across all faces`);
     step += `#${closedShellId}=CLOSED_SHELL('',(${createdFaceIds.map(fid => `#${fid}`).join(',')}));\n`;
 
     // Append all the face geometry

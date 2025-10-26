@@ -815,7 +815,7 @@ let add = {
     },
 
     cube() {
-        const [ x,y,z ] = [ ...arguments ];
+        const [ x,y,z ] = [ ...arguments ].map(v => parseFloat(v) || undefined);
         const box = new THREE.BoxGeometry(1,1,1).toNonIndexed();
         const vert = box.attributes.position.array;
         const nmdl = new meshModel({ file: "box", mesh: vert });
@@ -1445,6 +1445,7 @@ const prefs = {
             dark: false,
             floor: false,
             grid: true,
+            script: false,
             select: [],
             snap: 1,
             snapon: false,

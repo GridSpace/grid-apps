@@ -144,6 +144,10 @@ button:hover {
 
 /** misc ui **/
 
+.grow {
+    flex-grow: 1;
+}
+
 .hide {
     display: none;
 }
@@ -207,10 +211,6 @@ button:hover {
     gap: 15px;
     border-radius: 6px;
     padding: 4px 8px 4px 8px;
-}
-
-.menu-items .grow {
-    flex-grow: 1;
 }
 
 .menu-items .short {
@@ -630,10 +630,13 @@ button:hover {
 }
 
 #script {
-    margin-left: 5px;
+    margin: 5px 0px 5px 5px;
+    /* margin-top: 5px;
+    margin-left: 5px; */
     flex-direction: column;
     justify-content: end;
     color: white;
+    height: calc(100% - 10px);
 }
 
 #script-header {
@@ -645,12 +648,29 @@ button:hover {
     border-left: 1px solid #999;
     border-right: 1px solid #999;
     flex-direction: row;
+    gap: 3px;
+}
+
+#script-header button {
+    border-radius: 3px;
+}
+
+#script-header .close {
+    font-weight: bold;
+    line-height: 1;
 }
 
 #script-editor {
     color: white;
     background-color: #222;
     outline: none;
+    height: 100%;
+    resize: none;
+}
+
+#script-error {
+    flex-direction: column;
+    font-family: monospace;
 }
 
 /** group/model buttons top/right of workspace **/
