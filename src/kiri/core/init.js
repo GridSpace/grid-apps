@@ -1784,6 +1784,7 @@ function init_two() {
     $('context-duplicate').onclick = duplicateSelection;
     $('context-mirror').onclick = mirrorSelection;
     $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
+    $('context-lefty').onclick = () => { api.event.emit("tool.mesh.lefty") };
     $('context-setfocus').onclick = () => {
         api.event.emit(
             "tool.camera.focus",

@@ -213,6 +213,10 @@ details[open] summary::after {
     transform: rotate(90deg);
 }
 
+.rot90 {
+    transform: rotate(90deg);
+}
+
 /* for bambu mgr dialog */
 .video {
     border: 1px solid #888;
