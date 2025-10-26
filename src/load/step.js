@@ -399,13 +399,9 @@ DATA;
     step += `#${shapeRepId}=ADVANCED_BREP_SHAPE_REPRESENTATION('',(#${manifoldId}),#${geomContextId});\n`;
     step += `#${manifoldId}=MANIFOLD_SOLID_BREP('',#${closedShellId});\n`;
 
-    // Reserve face IDs
-    const faceIds = [];
-    for (let i = 0; i < surfaces.length; i++) {
-        faceIds.push(id++);
-    }
-
-    step += `#${closedShellId}=CLOSED_SHELL('',(${faceIds.map(fid => `#${fid}`).join(',')}));\n`;
+    // We'll write the CLOSED_SHELL after creating faces
+    // Track which face IDs are actually created
+    const createdFaceIds = [];
 
     // Helper function to merge co-linear edges in an outline
     function mergeColinearEdges(outline) {
@@ -456,15 +452,21 @@ DATA;
         return merged.length >= 3 ? merged : outline;
     }
 
+    // Buffer to collect face geometry before writing CLOSED_SHELL
+    let faceStepData = '';
+
     // Create each merged face
     for (let surfaceIdx = 0; surfaceIdx < surfaces.length; surfaceIdx++) {
         const surface = surfaces[surfaceIdx];
-        const faceId = faceIds[surfaceIdx];
 
         if (!surface.outlines || surface.outlines.length === 0) {
             console.warn(`Skipping invalid surface ${surfaceIdx} with no outlines`);
             continue;
         }
+
+        // Allocate face ID now (only for valid surfaces)
+        const faceId = id++;
+        createdFaceIds.push(faceId);
 
         // Process all outlines: first is outer boundary, rest are holes
         const boundIds = [];
@@ -536,11 +538,11 @@ DATA;
 
                 orientedEdgeIds.push(orientedEdgeId);
 
-                step += `#${directionId}=DIRECTION('',(${(dx / len).toFixed(6)},${(dy / len).toFixed(6)},${(dz / len).toFixed(6)}));\n`;
-                step += `#${vectorId}=VECTOR('',#${directionId},${len.toFixed(6)});\n`;
-                step += `#${lineId}=LINE('',#${v1.pointId},#${vectorId});\n`;
-                step += `#${edgeCurveId}=EDGE_CURVE('',#${v1.vpId},#${v2.vpId},#${lineId},.T.);\n`;
-                step += `#${orientedEdgeId}=ORIENTED_EDGE('',*,*,#${edgeCurveId},.T.);\n`;
+                faceStepData += `#${directionId}=DIRECTION('',(${(dx / len).toFixed(6)},${(dy / len).toFixed(6)},${(dz / len).toFixed(6)}));\n`;
+                faceStepData += `#${vectorId}=VECTOR('',#${directionId},${len.toFixed(6)});\n`;
+                faceStepData += `#${lineId}=LINE('',#${v1.pointId},#${vectorId});\n`;
+                faceStepData += `#${edgeCurveId}=EDGE_CURVE('',#${v1.vpId},#${v2.vpId},#${lineId},.T.);\n`;
+                faceStepData += `#${orientedEdgeId}=ORIENTED_EDGE('',*,*,#${edgeCurveId},.T.);\n`;
             }
 
             if (orientedEdgeIds.length === 0) {
@@ -548,13 +550,13 @@ DATA;
                 continue;
             }
 
-            step += `#${edgeLoopId}=EDGE_LOOP('',(${orientedEdgeIds.map(eid => `#${eid}`).join(',')}));\n`;
+            faceStepData += `#${edgeLoopId}=EDGE_LOOP('',(${orientedEdgeIds.map(eid => `#${eid}`).join(',')}));\n`;
 
             // First outline is FACE_OUTER_BOUND, subsequent ones are holes (FACE_BOUND)
             if (outlineIdx === 0) {
-                step += `#${boundId}=FACE_OUTER_BOUND('',#${edgeLoopId},.T.);\n`;
+                faceStepData += `#${boundId}=FACE_OUTER_BOUND('',#${edgeLoopId},.T.);\n`;
             } else {
-                step += `#${boundId}=FACE_BOUND('',#${edgeLoopId},.T.);\n`;
+                faceStepData += `#${boundId}=FACE_BOUND('',#${edgeLoopId},.T.);\n`;
             }
 
             boundIds.push(boundId);
@@ -562,6 +564,8 @@ DATA;
 
         if (boundIds.length === 0 || allVertices.length < 3) {
             console.warn(`Skipping surface ${surfaceIdx} - no valid bounds`);
+            // Remove the face ID we allocated since we're not creating this face
+            createdFaceIds.pop();
             continue;
         }
 
@@ -586,22 +590,28 @@ DATA;
         centerZ /= allVertices.length;
 
         const centerPointId = id++;
-        step += `#${centerPointId}=CARTESIAN_POINT('',(${centerX.toFixed(6)},${centerY.toFixed(6)},${centerZ.toFixed(6)}));\n`;
+        faceStepData += `#${centerPointId}=CARTESIAN_POINT('',(${centerX.toFixed(6)},${centerY.toFixed(6)},${centerZ.toFixed(6)}));\n`;
 
         const planeId = id++;
         const axisPlacementId = id++;
         const normalDirId = id++;
         const refDirId = id++;
 
-        step += `#${normalDirId}=DIRECTION('',(${normal.x.toFixed(6)},${normal.y.toFixed(6)},${normal.z.toFixed(6)}));\n`;
+        faceStepData += `#${normalDirId}=DIRECTION('',(${normal.x.toFixed(6)},${normal.y.toFixed(6)},${normal.z.toFixed(6)}));\n`;
         const refDir = edge1.normalize();
-        step += `#${refDirId}=DIRECTION('',(${refDir.x.toFixed(6)},${refDir.y.toFixed(6)},${refDir.z.toFixed(6)}));\n`;
-        step += `#${axisPlacementId}=AXIS2_PLACEMENT_3D('',#${centerPointId},#${normalDirId},#${refDirId});\n`;
-        step += `#${planeId}=PLANE('',#${axisPlacementId});\n`;
+        faceStepData += `#${refDirId}=DIRECTION('',(${refDir.x.toFixed(6)},${refDir.y.toFixed(6)},${refDir.z.toFixed(6)}));\n`;
+        faceStepData += `#${axisPlacementId}=AXIS2_PLACEMENT_3D('',#${centerPointId},#${normalDirId},#${refDirId});\n`;
+        faceStepData += `#${planeId}=PLANE('',#${axisPlacementId});\n`;
 
         // Create ADVANCED_FACE with all bounds (outer + holes)
-        step += `#${faceId}=ADVANCED_FACE('',(${boundIds.map(bid => `#${bid}`).join(',')}),#${planeId},.T.);\n`;
+        faceStepData += `#${faceId}=ADVANCED_FACE('',(${boundIds.map(bid => `#${bid}`).join(',')}),#${planeId},.T.);\n`;
     }
+
+    // Now write CLOSED_SHELL with only the faces that were actually created
+    step += `#${closedShellId}=CLOSED_SHELL('',(${createdFaceIds.map(fid => `#${fid}`).join(',')}));\n`;
+
+    // Append all the face geometry
+    step += faceStepData;
 
     // Product definition shape
     const prodDefShapeId = id++;
