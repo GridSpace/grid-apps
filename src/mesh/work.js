@@ -16,6 +16,7 @@ import { polygons } from '../geo/polygons.js';
 import { CSG } from '../geo/csg.js';
 import { util } from './util.js';
 import { tool as meshTool } from './tool.js';
+import { meshToSTEP } from '../load/step.js';
 
 const { Triangle, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
 
@@ -604,6 +605,18 @@ const file = {
             vtot += (vs.length / 3);
         }
         switch (format) {
+            case "step":
+                let varr = [];
+                for (let rec of recs) {
+                    let tris = rec.varr
+                        .group(3)
+                        .map(r => { return { x:r[0], y:r[1], z:r[2] } })
+                        .group(3)
+                        .map(f => { return { v1: f[0], v2: f[1], v3: f[2] } });
+                    console.log({ rec, tris });
+                    varr.push(...tris);
+                }
+                return meshToSTEP(varr);
             case "obj":
                 let p = 1;
                 let obj = [header];

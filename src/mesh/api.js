@@ -1009,7 +1009,8 @@ let file = {
                 ]),
                 h.div([
                     h.button({ _: "download OBJ", onclick() { doit('obj') } }),
-                    h.button({ _: "download STL", onclick() { doit('stl') } })
+                    h.button({ _: "download STL", onclick() { doit('stl') } }),
+                    h.button({ _: "download STEP", onclick() { doit('step') } }),
                 ])
             ]) ]
         });
