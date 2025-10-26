@@ -80,6 +80,7 @@ const selection = {
         selected = objects.map(o => o.models ? o.models : o).flat();
         tools = toolist || [];
         meshUtil.defer(selection.update);
+        return api.selection;
     },
 
     // @param group {MeshObject}
@@ -1028,7 +1029,7 @@ const tool = {
             return log('nothing to merge');
         }
         log(`merging ${models.length} models`).pin();
-        worker.model_merge(models.map(m => {
+        return worker.model_merge(models.map(m => {
             return { id: m.id, matrix: m.matrix }
         }))
         .then(data => {
@@ -1039,6 +1040,7 @@ const tool = {
             api.selection.visible(false);
             api.selection.set([group]);
             log('merge complete').unpin();
+            return group;
         });
     },
 
@@ -1118,7 +1120,7 @@ const tool = {
             return log('nothing to subtract');
         }
         log(`subtract ${models.length} models`).pin();
-        worker.model_subtract(models.map(m => {
+        return worker.model_subtract(models.map(m => {
             return { id: m.id, tool: m.tool() }
         }))
         .then(data => {
@@ -1128,6 +1130,7 @@ const tool = {
             })]).promote();
             api.selection.delete();
             api.selection.set([group]);
+            return group;
         })
         .catch(error => {
             log(`subtract error: ${error}`);
@@ -1150,7 +1153,7 @@ const tool = {
         for (let m of models) {
             nm.push(m.duplicate({ select: dup_sel, shift: dup_shift }));
         }
-        tool.regroup(nm);
+        return tool.regroup(nm);
     },
 
     mirror() {

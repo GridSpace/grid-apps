@@ -26,6 +26,13 @@ export const script = {
     },
     execute() {
         let cmd = localStorage.script || `console.log('no script')`;
-        if (cmd) eval(`{ \n ${cmd} \n }`);
+        if (cmd) {
+            cmd = [
+                '(async () => {',
+                cmd,
+                '})();'
+            ].join('\n');
+            eval(`{ \n ${cmd} \n }`);
+        }
     }
 };
