@@ -16,7 +16,7 @@ import { polygons } from '../geo/polygons.js';
 import { CSG } from '../geo/csg.js';
 import { util } from './util.js';
 import { tool as meshTool } from './tool.js';
-import { meshToSTEP } from '../load/step.js';
+import { meshToSTEPWithFaces } from '../load/step.js';
 
 const { Triangle, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
 
@@ -616,7 +616,7 @@ const file = {
                     console.log({ rec, tris });
                     varr.push(...tris);
                 }
-                return meshToSTEP(varr);
+                return meshToSTEPWithFaces(varr);
             case "obj":
                 let p = 1;
                 let obj = [header];

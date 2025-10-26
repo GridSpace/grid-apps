@@ -1,5 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { tool as MeshTool } from '../mesh/tool.js';
+
 const { Vector3 } = THREE;
 
 /**
@@ -205,6 +207,270 @@ DATA;
 
         const centerPointId = id++;
         step += `#${centerPointId}=CARTESIAN_POINT('',(${centerX.toFixed(6)},${centerY.toFixed(6)},${centerZ.toFixed(6)}));\n`;
+
+        step += `#${normalDirId}=DIRECTION('',(${normal.x.toFixed(6)},${normal.y.toFixed(6)},${normal.z.toFixed(6)}));\n`;
+        const refDir = edge1.normalize();
+        step += `#${refDirId}=DIRECTION('',(${refDir.x.toFixed(6)},${refDir.y.toFixed(6)},${refDir.z.toFixed(6)}));\n`;
+        step += `#${axisPlacementId}=AXIS2_PLACEMENT_3D('',#${centerPointId},#${normalDirId},#${refDirId});\n`;
+        step += `#${planeId}=PLANE('',#${axisPlacementId});\n`;
+
+        step += `#${faceId}=ADVANCED_FACE('',(#${faceOuterBoundId}),#${planeId},.T.);\n`;
+    }
+
+    // Product definition shape
+    const prodDefShapeId = id++;
+    step += `#${prodDefShapeId}=PRODUCT_DEFINITION_SHAPE('','',#${productDefId});\n`;
+    step += `#${id++}=SHAPE_DEFINITION_REPRESENTATION(#${prodDefShapeId},#${shapeRepId});\n`;
+
+    step += `ENDSEC;\nEND-ISO-10303-21;\n`;
+
+    return step;
+}
+
+/**
+ * Convert STL triangles to STEP file format with face merging
+ * Groups co-planar connected triangles into larger faces
+ *
+ * @param {Array} triangles - Array of triangle objects with vertices: [{v1, v2, v3}, ...]
+ *                           where v1, v2, v3 are {x, y, z} objects or Vector3 instances
+ * @param {Object} options - Optional parameters
+ * @param {string} options.productName - Name for the STEP product (default: 'mesh')
+ * @param {string} options.units - Units: 'mm', 'cm', 'm', 'inch' (default: 'mm')
+ * @param {number} options.angleTolerance - Angle tolerance in degrees for co-planarity (default: 1)
+ * @returns {string} STEP file content as a string
+ */
+export function meshToSTEPWithFaces(triangles, options = {}) {
+    const productName = options.productName || 'mesh';
+    const units = options.units || 'mm';
+    const angleTolerance = options.angleTolerance || 1;
+    const radianTolerance = angleTolerance * (Math.PI / 180);
+
+    // Convert triangles to flat vertex array for MeshTool
+    const vertices = [];
+    for (const tri of triangles) {
+        const v1 = tri.v1 || tri.vertices[0];
+        const v2 = tri.v2 || tri.vertices[1];
+        const v3 = tri.v3 || tri.vertices[2];
+
+        vertices.push(
+            v1.x, v1.y, v1.z,
+            v2.x, v2.y, v2.z,
+            v3.x, v3.y, v3.z
+        );
+    }
+
+    // Use MeshTool to index faces and find adjacency
+    const tool = new MeshTool();
+    tool.index(vertices);
+
+    const totalFaces = triangles.length;
+    const processed = {};
+    const surfaces = [];
+
+    // Find all connected surfaces
+    for (let i = 0; i < totalFaces; i++) {
+        if (processed[i]) continue;
+
+        // Find all connected co-planar faces starting from this face
+        const connectedFaces = tool.findConnectedSurface([i], radianTolerance, undefined, processed);
+
+        if (connectedFaces.length > 0) {
+            // Generate outline(s) for this surface
+            const outlines = tool.generateOutlines(connectedFaces);
+            surfaces.push({ faces: connectedFaces, outlines });
+        }
+    }
+
+    console.log(`Merged ${totalFaces} triangles into ${surfaces.length} faces`);
+
+    // Generate STEP file
+    let step = `ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('STL to STEP Conversion with Face Merging'),'2;1');
+FILE_NAME('${productName}.step','${new Date().toISOString()}',(''),(''),'stl-to-step','','');
+FILE_SCHEMA(('AUTOMOTIVE_DESIGN'));
+ENDSEC;
+DATA;
+`;
+
+    let id = 1;
+
+    // Units mapping
+    const unitMultiplier = {
+        'mm': '.MILLI.',
+        'cm': '.CENTI.',
+        'm': '',
+        'inch': '.INCH.'
+    };
+    const unitPrefix = unitMultiplier[units] || '.MILLI.';
+
+    // Units and context
+    const lengthUnit = id++;
+    const planeAngleUnit = id++;
+    const solidAngleUnit = id++;
+
+    step += `#${lengthUnit}=(LENGTH_UNIT()NAMED_UNIT(*)SI_UNIT(${unitPrefix},.METRE.));\n`;
+    step += `#${planeAngleUnit}=(NAMED_UNIT(*)PLANE_ANGLE_UNIT()SI_UNIT($,.RADIAN.));\n`;
+    step += `#${solidAngleUnit}=(NAMED_UNIT(*)SI_UNIT($,.STERADIAN.)SOLID_ANGLE_UNIT());\n`;
+
+    const uncertainty = id++;
+    step += `#${uncertainty}=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.E-07),#${lengthUnit},'distance_accuracy_value','confusion accuracy');\n`;
+
+    // Geometric representation context
+    const geomContextId = id++;
+    step += `#${geomContextId}=(GEOMETRIC_REPRESENTATION_CONTEXT(3)GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#${uncertainty}))GLOBAL_UNIT_ASSIGNED_CONTEXT((#${lengthUnit},#${planeAngleUnit},#${solidAngleUnit}))REPRESENTATION_CONTEXT('ID1','3D'));\n`;
+
+    // Application context
+    const appContext = id++;
+    step += `#${appContext}=APPLICATION_CONTEXT('configuration controlled 3d designs of mechanical parts and assemblies');\n`;
+
+    const appProtocol = id++;
+    step += `#${appProtocol}=APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',1998,#${appContext});\n`;
+
+    // Product definition
+    const productId = id++;
+    step += `#${productId}=PRODUCT('${productName}','${productName}','',(#${appContext}));\n`;
+
+    const productDefFormId = id++;
+    step += `#${productDefFormId}=PRODUCT_DEFINITION_FORMATION('','',#${productId});\n`;
+
+    const productDefCtx = id++;
+    step += `#${productDefCtx}=PRODUCT_DEFINITION_CONTEXT('part definition',#${appContext},'design');\n`;
+
+    const productDefId = id++;
+    step += `#${productDefId}=PRODUCT_DEFINITION('design','',#${productDefFormId},#${productDefCtx});\n`;
+
+    // Shape representation - reserve ID
+    const shapeRepId = id++;
+
+    // Build vertex map and IDs
+    const vertexMap = new Map();
+    const cartesianPointIds = new Map();
+    const vertexPointIds = new Map();
+
+    function getOrCreateVertex(x, y, z) {
+        const key = `${x.toFixed(6)},${y.toFixed(6)},${z.toFixed(6)}`;
+
+        if (!vertexMap.has(key)) {
+            // Create cartesian point
+            const pointId = id++;
+            step += `#${pointId}=CARTESIAN_POINT('',(${x.toFixed(6)},${y.toFixed(6)},${z.toFixed(6)}));\n`;
+            cartesianPointIds.set(key, pointId);
+
+            // Create vertex point
+            const vpId = id++;
+            step += `#${vpId}=VERTEX_POINT('',#${pointId});\n`;
+            vertexPointIds.set(key, vpId);
+
+            vertexMap.set(key, { pointId, vpId, x, y, z });
+        }
+
+        return vertexMap.get(key);
+    }
+
+    // Advanced B-rep shape representation
+    const manifoldId = id++;
+    const closedShellId = id++;
+
+    step += `#${shapeRepId}=ADVANCED_BREP_SHAPE_REPRESENTATION('',(#${manifoldId}),#${geomContextId});\n`;
+    step += `#${manifoldId}=MANIFOLD_SOLID_BREP('',#${closedShellId});\n`;
+
+    // Reserve face IDs
+    const faceIds = [];
+    for (let i = 0; i < surfaces.length; i++) {
+        faceIds.push(id++);
+    }
+
+    step += `#${closedShellId}=CLOSED_SHELL('',(${faceIds.map(fid => `#${fid}`).join(',')}));\n`;
+
+    // Create each merged face
+    for (let surfaceIdx = 0; surfaceIdx < surfaces.length; surfaceIdx++) {
+        const surface = surfaces[surfaceIdx];
+        const faceId = faceIds[surfaceIdx];
+
+        // For now, use the first outline (main boundary)
+        // TODO: handle holes (additional outlines)
+        const outline = surface.outlines[0];
+
+        if (!outline || outline.length < 3) {
+            console.warn(`Skipping invalid surface ${surfaceIdx} with ${outline?.length || 0} vertices`);
+            continue;
+        }
+
+        const faceOuterBoundId = id++;
+        const edgeLoopId = id++;
+
+        // Create edges for this face outline
+        const orientedEdgeIds = [];
+        const vertices = [];
+
+        // Get vertices and create vertex records
+        for (let i = 0; i < outline.length; i++) {
+            const pt = outline[i];
+            const vertex = getOrCreateVertex(pt.x, pt.y, pt.z);
+            vertices.push(vertex);
+        }
+
+        // Create edges
+        for (let i = 0; i < vertices.length; i++) {
+            const v1 = vertices[i];
+            const v2 = vertices[(i + 1) % vertices.length];
+
+            const dx = v2.x - v1.x;
+            const dy = v2.y - v1.y;
+            const dz = v2.z - v1.z;
+            const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (len < 1e-10) {
+                console.warn(`Warning: Degenerate edge in surface ${surfaceIdx}`);
+                continue;
+            }
+
+            const orientedEdgeId = id++;
+            const edgeCurveId = id++;
+            const lineId = id++;
+            const vectorId = id++;
+            const directionId = id++;
+
+            orientedEdgeIds.push(orientedEdgeId);
+
+            step += `#${directionId}=DIRECTION('',(${(dx / len).toFixed(6)},${(dy / len).toFixed(6)},${(dz / len).toFixed(6)}));\n`;
+            step += `#${vectorId}=VECTOR('',#${directionId},${len.toFixed(6)});\n`;
+            step += `#${lineId}=LINE('',#${v1.pointId},#${vectorId});\n`;
+            step += `#${edgeCurveId}=EDGE_CURVE('',#${v1.vpId},#${v2.vpId},#${lineId},.T.);\n`;
+            step += `#${orientedEdgeId}=ORIENTED_EDGE('',*,*,#${edgeCurveId},.T.);\n`;
+        }
+
+        step += `#${edgeLoopId}=EDGE_LOOP('',(${orientedEdgeIds.map(eid => `#${eid}`).join(',')}));\n`;
+        step += `#${faceOuterBoundId}=FACE_OUTER_BOUND('',#${edgeLoopId},.T.);\n`;
+
+        // Calculate face normal from first three vertices
+        const v0 = new Vector3(vertices[0].x, vertices[0].y, vertices[0].z);
+        const v1 = new Vector3(vertices[1].x, vertices[1].y, vertices[1].z);
+        const v2 = new Vector3(vertices[2].x, vertices[2].y, vertices[2].z);
+
+        const edge1 = v1.clone().sub(v0);
+        const edge2 = v2.clone().sub(v0);
+        const normal = edge1.clone().cross(edge2).normalize();
+
+        // Calculate face center for plane origin
+        let centerX = 0, centerY = 0, centerZ = 0;
+        for (let vertex of vertices) {
+            centerX += vertex.x;
+            centerY += vertex.y;
+            centerZ += vertex.z;
+        }
+        centerX /= vertices.length;
+        centerY /= vertices.length;
+        centerZ /= vertices.length;
+
+        const centerPointId = id++;
+        step += `#${centerPointId}=CARTESIAN_POINT('',(${centerX.toFixed(6)},${centerY.toFixed(6)},${centerZ.toFixed(6)}));\n`;
+
+        const planeId = id++;
+        const axisPlacementId = id++;
+        const normalDirId = id++;
+        const refDirId = id++;
 
         step += `#${normalDirId}=DIRECTION('',(${normal.x.toFixed(6)},${normal.y.toFixed(6)},${normal.z.toFixed(6)}));\n`;
         const refDir = edge1.normalize();
