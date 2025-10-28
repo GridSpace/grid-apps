@@ -27,6 +27,8 @@ Kiri:Moto and Mesh:Tool are completely open source and free for use without rest
 # Documentation
 [Documentation](https://docs.grid.space/) -- Could really use help with this  
 
+Mostly correct AI generated documentation can be found at [DeepWiki](https://deepwiki.com/GridSpace/grid-apps).
+
 Docs are build with [Docusaurus](https://docusaurus.io/) and served using [GitHub Pages](https://pages.github.com/).
 
 You can build and view the docs locally with:
