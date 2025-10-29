@@ -40,13 +40,6 @@ export class Slope {
         return this;
     }
 
-    invert() {
-        this.dx = -this.dx;
-        this.dy = -this.dy;
-        this.angle = Math.atan2(this.dy, this.dx) * RAD2DEG;
-        return this;
-    }
-
     toUnit() {
         let max = Math.max(ABS(this.dx), ABS(this.dy));
         this.dx = this.dx / max;
