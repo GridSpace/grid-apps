@@ -12,6 +12,7 @@ const { sliceConnect, sliceDedup } = slicer;
 const { config } = base;
 const timing = false;
 const zDecimal = 3;
+const epsilon = 10e-5;
 
 const begin = function () {
     if (timing) console.time(...arguments);
@@ -94,7 +95,7 @@ export class Slicer {
                 countZ(p3.z);
             }
             // use co-flat and co-line detection to adjust slice Z
-            if (p1.z === p2.z && p2.z === p3.z) {
+            if (Math.abs(p1.z - p2.z) < epsilon && Math.abs(p2.z - p3.z) < epsilon) {
                 // detect zFlat faces to avoid slicing directly on them
                 let zkey = p1.z.toFixed(zDecimal),
                     area = Math.abs(util.area2(p1, p2, p3)) / 2;
