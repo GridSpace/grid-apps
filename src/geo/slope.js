@@ -60,13 +60,6 @@ export class Slope {
         return this;
     }
 
-    invert() {
-        this.dx = -this.dx;
-        this.dy = -this.dy;
-        this.angle = 180 - this.angle;
-        return this;
-    }
-
     angleDiff(s2,sign) {
         const n1 = this.angle;
         const n2 = s2.angle;

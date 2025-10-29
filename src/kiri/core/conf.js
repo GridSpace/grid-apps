@@ -573,7 +573,6 @@ export const conf = {
                 camTabsMidline: false,
                 camTabsWidth: 5,
                 camTolerance: 0,
-                camTolerance: 0,
                 camToolInit: true,
                 camTraceDogbone: false,
                 camTraceDown: 0,
