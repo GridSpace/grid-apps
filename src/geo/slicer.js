@@ -12,6 +12,8 @@ import { polygons } from '../geo/polygons.js';
 import { newPoint } from '../geo/point.js';
 import { config } from '../geo/base.js';
 
+const epsilon = 10e-5;
+
 function dval(v, dv) {
     return v !== undefined ? v : dv;
 }
@@ -75,7 +77,7 @@ export async function slice(points, options = {}) {
         // used to calculate buckets (rough sum of z span)
         zSum += (Math.abs(p1.z - p2.z) + Math.abs(p2.z - p3.z) + Math.abs(p3.z - p1.z));
         // use co-flat and co-line detection to adjust slice Z
-        if (p1.z === p2.z && p2.z === p3.z && p1.z >= zMin) {
+        if (Math.abs(p1.z - p2.z) < epsilon && Math.abs(p2.z - p3.z) < epsilon && p1.z >= zMin) {
             // detect faces co-planar with Z and sum the enclosed area
             let zkey = p1.z,
                 area = Math.abs(base.util.area2(p1,p2,p3)) / 2;
