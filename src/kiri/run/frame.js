@@ -51,6 +51,9 @@
 
         parse: (data, type) => { send({ parse: data, type })},
 
+	//update widget with id widget_id from STL data:
+        update: (data, type, widget_id) => { send({ update: data, type, widget_id })},
+
         get: (scope) => { send({ get: scope })},
 
         setMode: (mode) => { send({ mode }) },

@@ -76,12 +76,19 @@ window.addEventListener('message', msg => {
         let bin = data.parse;
         let widget;
         switch ((data.type || 'stl').toLowerCase()) {
+            case 'ast':  //FreeCAD saves STL as ASCII when usint .ast extension
             case 'stl':
+		//in case stl is ASCII, this fails:
                 if (!bin.buffer) bin = new Float32Array(bin).buffer;
-                new load.STL().parse(bin, vertices => {
-                    platform.add(widget = newWidget().loadVertices(vertices));
-                    send({event: "parsed", data: [ widget.id ]});
-                });
+		//and we must not continue without any data at all, so revert:
+		if(bin.byteLength == 0) {
+		    bin = data.parse;
+		}
+		//arrow function is never called. Traditional works just fine:
+                let vertices = new load.STL().parse(bin);
+                platform.add(widget = newWidget().loadVertices(vertices));
+                send({event: "parsed", data: [ widget.id ]});
+
                 break;
             case 'obj':
                 // todo
@@ -100,6 +107,32 @@ window.addEventListener('message', msg => {
                 break;
         }
     }
+
+
+    //uses data.widget_id to update widget from STL
+    if (data.update) {
+
+        let bin = data.update;
+        let widget;
+        switch ((data.type || 'stl').toLowerCase()) {
+            case 'ast':  //FreeCAD saves STL as ASCII when usint .ast extension
+            case 'stl':
+		//in case stl is ASCII, this fails:
+                if (!bin.buffer) bin = new Float32Array(bin).buffer;
+		//and we must not continue without any data at all, so revert:
+		if(bin.byteLength == 0) {
+		    bin = data.parse;
+		}
+                let widget = api.widgets.map()[data.widget_id];
+                let vertices = new load.STL().parse(bin);
+                api.widgets.replace(vertices, widget);
+                send({event: "updated", data: [ widget.id ]});
+                break;
+        }
+    }
+
+
+
 
     if (data.load) {
         platform.load(data.load, (verts, widget) => {
