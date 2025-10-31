@@ -162,10 +162,20 @@ export class Topo {
     async sliceGPU(onupdate) {
         const { angle, linear, offStart, offEnd, resolution, tool, unit, vertices, zBottom } = this;
 
+        // invert tool Z offset for gpu code
         let gputool = tool.slice();
         for (let i=0; i<gputool.length; i+= 3) {
             gputool[i+2] *= -1;
         }
+
+        console.time('swap XZ vertices');
+        // swap XZ vertices for gpu code
+        for (let i=0; i<vertices.length; i+= 3) {
+            let tmp = vertices[i+2];
+            vertices[i+2] = vertices[i+0];
+            vertices[i+0] = tmp;
+        }
+        console.timeEnd('swap XZ vertices');
 
         let gpu = await self.get_raster_gpu();
         let tickperstep = Math.round(this.step / resolution);
@@ -180,7 +190,7 @@ export class Topo {
             zBottom,
             resolution,
             bounds,
-            (pct, msg) => { console.log({ pct, msg }) }
+            { onProgress(pct, msg) { onupdate(pct/100) } }
         );
 
         let { numRotations, pointsPerLine, pathData } = output;
