@@ -7,7 +7,6 @@ import { sliceConnect } from '../../../geo/slicer.js';
 import { newSlice } from '../../core/slice.js';
 import { Tool } from './tool.js';
 import { Slicer as topo_slicer } from './slicer_topo.js';
-import { RasterPath } from '../../../gpu/raster.js';
 
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
@@ -163,17 +162,19 @@ export class Topo {
     async sliceGPU(onupdate) {
         const { angle, linear, offStart, offEnd, resolution, tool, unit, vertices, zBottom } = this;
 
-        let gpu = new RasterPath({ workerName: "/lib/gpu/raster-worker.js" });
-        await gpu.init();
-        await gpu.initWorkerPool();
+        let gputool = tool.slice();
+        for (let i=0; i<gputool.length; i+= 3) {
+            gputool[i+2] *= -1;
+        }
 
+        let gpu = await self.get_raster_gpu();
         let tickperstep = Math.round(this.step / resolution);
         let bounds = this.bounds.clone();
         bounds.min.x += offStart * unit;
         bounds.max.x -= offEnd * unit;
         let output = await gpu.generateRadialToolpath(
             vertices,
-            tool,
+            gputool,
             angle,
             tickperstep,
             zBottom,
@@ -182,8 +183,6 @@ export class Topo {
             (pct, msg) => { console.log({ pct, msg }) }
         );
 
-        // console.log({ tool, output, tickperstep });
-        // const axis = new THREE.Vector3(1, 0, 0);
         let { numRotations, pointsPerLine, pathData } = output;
         let degPerRow = 360 / numRotations;
         let slices = this.gpu_slices = [];
@@ -193,10 +192,6 @@ export class Topo {
         for (let i=0; i<numRotations; i++) {
             let lineData = pathData.slice(i * pointsPerLine, i * pointsPerLine + pointsPerLine);
             let points = Array.from(lineData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
-            // let points = Array.from(lineData).map((v,i) => [ i * xmult + xoff, 0, v ]).flat().toFloat32();
-            // let rot = new THREE.Matrix4().makeRotationAxis(axis, (Math.PI / numRotations * 2) * i);
-            // new THREE.BufferAttribute(points, 3).applyMatrix4(rot);
-            // points = Array.from(points).group(3).map((v,i) => newPoint(v[0], v[1], v[2]));
             rows.push(points);
         }
         if (linear) {
@@ -211,7 +206,6 @@ export class Topo {
             for (let i=0; i<pointsPerLine; i++) {
                 let slice = newSlice(i);
                 let points = rows.map(row => row[i]);
-                // points.push(points[0].setA(points[0].a - 360));
                 if (i % 2 === 1) points.reverse();
                 slice.index = i;
                 slice.camLines = [ newPolygon(points).setOpen() ];
