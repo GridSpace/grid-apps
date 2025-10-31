@@ -7,6 +7,7 @@ import { sliceConnect } from '../../../geo/slicer.js';
 import { newSlice } from '../../core/slice.js';
 import { Tool } from './tool.js';
 import { Slicer as topo_slicer } from './slicer_topo.js';
+import { RasterPath } from '../../../gpu/raster.js';
 
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
@@ -24,6 +25,7 @@ export class Topo {
         let { state, op, onupdate, ondone } = opt;
         let { widget, settings, tabs } = opt.state;
         let { controller, process } = settings;
+        let { webGPU } = controller;
 
         let axis = op.axis.toLowerCase(),
             tool = new Tool(settings, op.tool),
@@ -65,11 +67,14 @@ export class Topo {
         this.lineColor = state.settings.controller.dark ? 0xffff00 : 0x555500;
         this.offStart = op.offStart ?? 0;
         this.offEnd = op.offEnd ?? 0;
+        this.bounds  = bounds;
+        this.gpu = webGPU ?? false;
 
         onupdate(0, "lathe");
 
         const range = this.range = { min: Infinity, max: -Infinity };
         const slices = this.sliced = await this.slice(scale(onupdate, 0.25, 0));
+
         for (let slice of slices) {
             range.min = Math.min(range.min, slice.z);
             range.max = Math.max(range.max, slice.z);
@@ -91,7 +96,6 @@ export class Topo {
         const { vertices, resolution, tabverts, zoff, offStart, offEnd, tool, unit } = this;
         const { minions } = self.kiri_worker;
         const range = this.range = { min: Infinity, max: -Infinity };
-        const box = this.box = new THREE.Box2();
 
         // swap XZ in shared array
         for (let i = 0, l = vertices.length; i < l; i += 3) {
@@ -118,6 +122,11 @@ export class Topo {
 
         // re-create shared vertex array for workers
         this.vertices = [].appendAll(vertices).appendAll(tabverts).toFloat32().toShared();
+
+        // rp.rasterizeMesh(vertices, resolution).then(rpo => console.log({ rpo }));
+        if (this.gpu) {
+            return await this.sliceGPU(onupdate);
+        }
 
         const zSpan = range.max - range.min;
         const shards = Math.ceil(Math.min(25, vertices.length / 27000));
@@ -149,6 +158,73 @@ export class Topo {
         } else {
             return await this.sliceWorker(onupdate);
         }
+    }
+
+    async sliceGPU(onupdate) {
+        const { angle, linear, offStart, offEnd, resolution, tool, unit, vertices, zBottom } = this;
+
+        let gpu = new RasterPath({ workerName: "/lib/gpu/raster-worker.js" });
+        await gpu.init();
+        await gpu.initWorkerPool();
+
+        let tickperstep = Math.round(this.step / resolution);
+        let bounds = this.bounds.clone();
+        bounds.min.x += offStart * unit;
+        bounds.max.x -= offEnd * unit;
+        let output = await gpu.generateRadialToolpath(
+            vertices,
+            tool,
+            angle,
+            tickperstep,
+            zBottom,
+            resolution,
+            bounds,
+            (pct, msg) => { console.log({ pct, msg }) }
+        );
+
+        // console.log({ tool, output, tickperstep });
+        // const axis = new THREE.Vector3(1, 0, 0);
+        let { numRotations, pointsPerLine, pathData } = output;
+        let degPerRow = 360 / numRotations;
+        let slices = this.gpu_slices = [];
+        let xmult = tickperstep * resolution;
+        let xoff = bounds.min.x;
+        let rows = [];
+        for (let i=0; i<numRotations; i++) {
+            let lineData = pathData.slice(i * pointsPerLine, i * pointsPerLine + pointsPerLine);
+            let points = Array.from(lineData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
+            // let points = Array.from(lineData).map((v,i) => [ i * xmult + xoff, 0, v ]).flat().toFloat32();
+            // let rot = new THREE.Matrix4().makeRotationAxis(axis, (Math.PI / numRotations * 2) * i);
+            // new THREE.BufferAttribute(points, 3).applyMatrix4(rot);
+            // points = Array.from(points).group(3).map((v,i) => newPoint(v[0], v[1], v[2]));
+            rows.push(points);
+        }
+        if (linear) {
+            for (let i=0; i<rows.length; i++) {
+                let slice = newSlice(i);
+                slice.index = i;
+                slice.camLines = [ newPolygon(rows[i]).setOpen() ];
+                if (i % 2 === 1) slice.camLines[0].reverse();
+                slices.push(slice);
+            }
+        } else {
+            for (let i=0; i<pointsPerLine; i++) {
+                let slice = newSlice(i);
+                let points = rows.map(row => row[i]);
+                // points.push(points[0].setA(points[0].a - 360));
+                if (i % 2 === 1) points.reverse();
+                slice.index = i;
+                slice.camLines = [ newPolygon(points).setOpen() ];
+                slices.push(slice);
+            }
+        }
+        for (let slice of slices) {
+            slice.output()
+                .setLayer("lathe", { line: this.lineColor })
+                .addPoly(slice.camLines[0].clone().applyRotations());
+        }
+        // console.log({ webGPU: output, slices });
+        return slices;
     }
 
     async sliceWorker(onupdate) {
@@ -215,11 +291,17 @@ export class Topo {
 
     async lathe(onupdate) {
         const { minions } = self.kiri_worker;
-        if (minions?.running > 1) {
+        if (this.gpu) {
+            return await this.latheGPU(onupdate);
+        } else if (minions?.running > 1) {
             return await this.latheMinions(onupdate);
         } else {
             return await this.latheWorker(onupdate);
         }
+    }
+
+    async latheGPU(onupdate) {
+        return this.gpu_slices;
     }
 
     lathePath(slices, tool) {

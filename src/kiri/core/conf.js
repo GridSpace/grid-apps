@@ -943,6 +943,7 @@ export const conf = {
             threaded: true,
             units: "mm",
             view: null,
+            webGPU: false,
             zoomSpeed: 1.0,
         },
         // default hidden ui groups

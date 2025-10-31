@@ -578,6 +578,8 @@ function rewriteHtmlVersion(req, res, next) {
     if ([
         "/kiri/",
         "/mesh/",
+        "/lib/gpu/raster.js",
+        "/lib/gpu/raster-worker.js",
         "/lib/mesh/work.js",
         "/lib/kiri/run/worker.js",
         "/lib/kiri/run/minion.js",

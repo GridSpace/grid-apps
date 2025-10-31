@@ -142,26 +142,27 @@ function booleanSave() {
     if (control.antiAlias != ui.antiAlias.checked) {
         api.show.alert('Page Reload Required to Change Aliasing');
     }
-    control.shiny = ui.shiny.checked;
+    control.antiAlias = ui.antiAlias.checked;
+    control.assembly = ui.assembly.checked;
+    control.autoLayout = ui.autoLayout.checked;
+    control.autoSave = ui.autoSave.checked;
+    control.dark = ui.dark.checked;
+    control.devel = ui.devel.checked;
     control.drawer = ui.drawer.checked;
+    control.exportOcto = ui.exportOcto.checked;
+    control.exportPreview = ui.exportPreview.checked;
+    control.exportThumb = ui.exportThumb.checked;
+    control.freeLayout = ui.freeLayout.checked;
+    control.healMesh = ui.healMesh.checked;
+    control.ortho = ui.ortho.checked;
+    control.reverseZoom = ui.reverseZoom.checked;
     control.scrolls = ui.scrolls.checked;
+    control.shiny = ui.shiny.checked;
     control.showOrigin = ui.showOrigin.checked;
     control.showRulers = ui.showRulers.checked;
-    control.autoLayout = ui.autoLayout.checked;
-    control.freeLayout = ui.freeLayout.checked;
     control.spaceRandoX = ui.spaceRandoX.checked;
-    control.autoSave = ui.autoSave.checked;
-    control.antiAlias = ui.antiAlias.checked;
-    control.reverseZoom = ui.reverseZoom.checked;
-    control.dark = ui.dark.checked;
-    control.exportOcto = ui.exportOcto.checked;
-    control.exportThumb = ui.exportThumb.checked;
-    control.exportPreview = ui.exportPreview.checked;
-    control.healMesh = ui.healMesh.checked;
     control.threaded = setThreaded(ui.threaded.checked);
-    control.assembly = ui.assembly.checked;
-    control.ortho = ui.ortho.checked;
-    control.devel = ui.devel.checked;
+    control.webGPU = ui.webGPU.checked;
     space.view.setZoom(control.reverseZoom, control.zoomSpeed);
     // platform.layout();
     api.conf.save();
@@ -1063,6 +1064,7 @@ function init_one() {
         healMesh:         newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
         threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:THREED}),
         assembly:         newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:THREED}),
+        webGPU:           newBoolean(LANG.pt_wgpu_s, booleanSave, {title: LANG.pt_wgpu_l, modes:THREED}),
 
         prefadd:          uc.checkpoint($('prefs-add')),
 
@@ -1630,20 +1632,22 @@ function init_two() {
         space.platform.setZOff(0.05);
 
         // restore UI state from settings
+        ui.antiAlias.checked = control.antiAlias;
+        ui.assembly.checked = control.assembly;
+        ui.autoLayout.checked = control.autoLayout;
+        ui.autoSave.checked = control.autoSave;
+        ui.devel.checked = control.devel;
+        ui.freeLayout.checked = control.freeLayout;
+        ui.healMesh.checked = control.healMesh;
+        ui.ortho.checked = control.ortho;
+        ui.reverseZoom.checked = control.reverseZoom;
         ui.showOrigin.checked = control.showOrigin;
         ui.showRulers.checked = control.showRulers;
         ui.showSpeeds.checked = control.showSpeeds;
-        ui.freeLayout.checked = control.freeLayout;
-        ui.autoLayout.checked = control.autoLayout;
         ui.spaceRandoX.checked = control.spaceRandoX;
-        ui.antiAlias.checked = control.antiAlias;
-        ui.reverseZoom.checked = control.reverseZoom;
-        ui.autoSave.checked = control.autoSave;
-        ui.healMesh.checked = control.healMesh;
         ui.threaded.checked = setThreaded(control.threaded);
-        ui.assembly.checked = control.assembly;
-        ui.ortho.checked = control.ortho;
-        ui.devel.checked = control.devel;
+        ui.webGPU.checked = control.webGPU;
+
         lineTypeSave();
         detailSave();
         updateStats();
