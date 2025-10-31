@@ -112,6 +112,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         toolDiamMove,
         plungeRate = process.camFastFeedZ,
         feedRate,
+        lastOp,
         lastTool,
         lastPush,
         lastPoint,
@@ -268,6 +269,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         if (dz < 0 && speed > plungeRate) {
             speed = plungeRate;
         }
+        // if (options?.type !== 'lerp') console.log( point, currentOp.type );
         layerOut.mode = currentOp;
         if (lasering) {
             let power = emit ? laserPower : 0;
@@ -333,7 +335,13 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.factor speed scale factor
      */
     function camOut(point, emit = 1, opts) {
-        // console.trace({point, emit, opts})
+        let lop = lastOp;
+        lastOp = currentOp;
+        if (lop?.type === 'index' && lop !== currentOp ) {
+            // console.log('post index first point', point);
+            camOut(point.clone().setZ(lastPoint.z).setA(lastPoint.a), 1);
+        }
+
         let {
             center = {},
             clockwise = true,
@@ -370,7 +378,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 for (let a of lerp) {
                     let lp = point.clone().setA(a);
                     // console.log(lp.a, lp.x, lp.y, lp.z);
-                    lastPoint = layerPush(
+                    layerPush(
                         lp,
                         emit,
                         rate,
@@ -403,10 +411,11 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             layerPush(point.clone().setZ(stockz + 1), 0, 0, tool);
             // change to cutting move for remainder of plunge
             emit = 1;
+            isMove = false;
         }
 
         // drop points too close together
-        if (!isLathe && !isArc && deltaXY < 0.001 && point.z === lastPoint.z) {
+        if (!isLathe && !isArc && deltaXY < 0.001 && point.z === lastPoint.z && point.a === lastPoint.a) {
             // console.trace(["drop dup",lastPoint,point]);
             return;
         }
@@ -420,6 +429,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 emit = 1;
                 isMove = false;
             } else if (deltaZ <= -tolerance) {
+                console.log({ deltaZ, tolerance });
                 // move over before descending
                 layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
                 // new pos for plunge calc
@@ -1096,7 +1106,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     if (lastPoint && newOutput.length) {
         let lastLayer = newOutput.filter(layer => Array.isArray(layer)).peek();
         if (Array.isArray(lastLayer)) {
-            print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
+            printPoint = lastPoint.clone();
+            if (printPoint.z < zmax_outer) printPoint.setZ(zmax_outer);
+            print.addOutput(lastLayer, printPoint, 0, 0, tool);
+            // print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
         }
     }
     // console.log("prepare output", newOutput);

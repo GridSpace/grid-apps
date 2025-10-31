@@ -169,6 +169,7 @@ export function cam_export(print, online) {
     function moveTo(out, opt = {}) {
         let laser = out.type === 'laser';
         let newpos = out.point;
+        console.log(mode.type, out.point);
 
         // no point == dwell
         // out.speed = time to dwell in ms
@@ -425,7 +426,9 @@ export function cam_export(print, online) {
                 toolz[out.tool] = ctool;
             }
             point = out.point;
-            if (!point || point.mod) return;
+            if (!point || point.mod) {
+                return;
+            }
             // ensure not point is modified twice
             point.mod = 1;
             if (isOffset) {
