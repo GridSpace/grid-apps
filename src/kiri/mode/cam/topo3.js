@@ -38,7 +38,7 @@ export class Topo {
             boundsY = maxY - minY,
             inside = contour.inside,
             density = 1 + (contour.reduction || 0),
-            resolution = tolerance ? tolerance : 1 / Math.sqrt(animesh / (boundsX * boundsY)),
+            resolution = (tolerance ? tolerance : 1 / Math.sqrt(animesh / (boundsX * boundsY))).round(5),
             tool = new Tool(settings, contour.tool),
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
