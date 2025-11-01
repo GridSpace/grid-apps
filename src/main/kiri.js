@@ -6,12 +6,29 @@ import '../add/three.js';
 import '../kiri/core/lang.js';
 import '../kiri/core/lang-en.js';
 
+import { broker } from '../moto/broker.js';
 import { run } from '../kiri/core/init.js';
 
+let traceload = location.search.indexOf('traceload') > 0;
 let load = [];
+
+if (traceload) {
+    broker.subscribe([
+        "init.one",
+        "init.two",
+        "init.lang",
+        "init-done",
+        "load-done",
+    ], (msg, topic) => {
+        console.log(topic, '->', msg);
+    })
+}
 
 function safeExec(fn) {
     try {
+        if (traceload) {
+            console.log('kiri | exec |', fn);
+        }
         fn(kiri.api);
     } catch (error) {
         console.log('load error', fn, error);
