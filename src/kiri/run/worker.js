@@ -71,7 +71,10 @@ self.uuid = ((Math.random() * Date.now()) | 0).toString(36);
 self.get_raster_gpu = async function() {
     let gpu = self.raster_gpu;
     if (!gpu) {
-        gpu = self.raster_gpu = new RasterPath({ workerName: "/lib/gpu/raster-worker.js" });
+        gpu = self.raster_gpu = new RasterPath({
+            workerName: "/lib/gpu/raster-worker.js",
+            quiet: true
+        });
         await gpu.init();
         await gpu.initWorkerPool();
     }
