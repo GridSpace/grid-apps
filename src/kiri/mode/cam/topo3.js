@@ -90,7 +90,7 @@ export class Topo {
         // used by Pocket -> Contour
         this.tolerance = resolution;
 
-        if (tabs) {
+        if (tabsOn) {
             clipTab.appendAll(tabs.map(tab => {
                 let ctab = POLY.expand([tab.poly], toolDiameter / 2);
                 ctab.forEach(ct => ct.z = tab.dim.z / 2 + tab.pos.z);
@@ -209,7 +209,7 @@ export class Topo {
                 if (poly.length > 1) {
                     lines.push(poly);
                 }
-                if (!inside && clipTab.length)
+                if (!inside && tabsOn && clipTab.length)
                 for (let poly of lines) {
                     for (let p of poly.points) {
                         for (let clip of clipTab) {
