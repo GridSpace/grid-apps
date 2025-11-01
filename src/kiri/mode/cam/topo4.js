@@ -190,7 +190,7 @@ export class Topo {
             zBottom,
             resolution,
             bounds,
-            { onProgress(pct, msg) { onupdate(pct/100) } }
+            { onProgress(pct) { onupdate(pct/100) } }
         );
 
         let { numRotations, pointsPerLine, pathData } = output;

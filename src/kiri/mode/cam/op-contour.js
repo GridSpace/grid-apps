@@ -8,7 +8,7 @@ import { newPolygon } from '../../../geo/polygon.js';
 import { tip2tipEmit } from '../../../geo/paths.js';
 
 function createFilter(op, origin, axis) {
-    console.log({ origin, axis });
+    // console.log({ origin, axis });
     let ok = () => true;
     let filter = slices => slices;
     let filterString = op.filter?.map(l => l.trim()).join('\n');

@@ -19,6 +19,7 @@ export class Topo {
         let { widget, settings, tshadow, tabs } = opt.state;
 
         let { controller, process } = settings,
+            { webGPU } = controller,
             animesh = parseInt(controller.animesh || 100) * 2500,
             axis = contour.axis.toLowerCase(),
             contourX = axis === "x",
@@ -46,7 +47,6 @@ export class Topo {
             maxangle = contour.angle,
             curvesOnly = contour.curves,
             bridge = contour.bridging || 0,
-            // R2A = 180 / Math.PI,
             stepsX = Math.ceil(boundsX / resolution),
             stepsY = Math.ceil(boundsY / resolution),
             widtopo = widget.topo,
@@ -105,6 +105,128 @@ export class Topo {
             // if (clipTab) output.setLayer("clip.tab", { line: 0xff0000 }).addPolys(clipTab);
             if (clipTo) output.setLayer("clip.to", { line: 0x00dd00 }).addPolys(clipTo);
             newslices.push(debug);
+        }
+
+        if (webGPU) {
+            // invert tool Z offset for gpu code
+            let gputool = toolOffset.slice();
+            for (let i=0; i<gputool.length; i+= 3) {
+                gputool[i+2] *= -1;
+            }
+
+            const vertices = widget.getGeoVertices({ unroll: true, translate: true });
+            const wbounds = widget.getBoundingBox();
+            if (!inside) {
+                wbounds.expandByVector({ x: toolDiameter/2, y: toolDiameter/2, z: 0 });
+            }
+
+            if (contourY) {
+                console.time('swap XY vertices');
+                // swap XY vertices
+                for (let i=0; i<vertices.length; i+= 3) {
+                    let tmp = vertices[i+1];
+                    vertices[i+1] = vertices[i+0];
+                    vertices[i+0] = tmp;
+                }
+                console.timeEnd('swap XY vertices');
+            }
+
+            let gpu = await self.get_raster_gpu();
+            let xStep = density;
+            let yStep = Math.round(toolStep / resolution);
+            let epsilon = 10e-5;
+            let terrain = await gpu.rasterizeMesh(vertices, tolerance, 0, wbounds);
+            let { positions } = terrain;
+            let output = await gpu.generatePlanarToolpath(
+                positions,
+                gputool,
+                xStep,
+                yStep,
+                zBottom - 1,
+                resolution,
+                {
+                    terrainBounds: wbounds,
+                    onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
+                }
+            );
+            let { numScanlines, pointsPerLine, pathData } = output;
+            let xmult = xStep * resolution;
+            let ymult = yStep * resolution;
+            let xoff = wbounds.min.x;
+            let yoff = wbounds.min.y;
+            let slices = [];
+            function calcPoint(x, y, z, tx, ty) {
+                let p = newPoint(x, y, z);
+                p.tx = tx;
+                p.ty = ty;
+                return p;
+            }
+            for (let i=0; i<numScanlines; i++) {
+                let lineStart = i * pointsPerLine;
+                let lineData = pathData.slice(lineStart, lineStart + pointsPerLine);
+                let points = contourY
+                    ? Array.from(lineData).map((v,j) => calcPoint(i * ymult + yoff, j * xmult + xoff, v, i * xStep, j * yStep))
+                    : Array.from(lineData).map((v,j) => calcPoint(j * xmult + xoff, i * ymult + yoff, v, j * xStep, i * yStep))
+                    ;
+                let slice = newSlice(i);
+                let poly = newPolygon().setOpen();
+                let lines = slice.camLines = [ ];
+                let skip = 0;
+                let lp;
+                for (let p of points) {
+                    if (inside && positions[p.ty * terrain.gridWidth + p.tx] < zBottom - epsilon) {
+                        if (poly.length > 1) {
+                            lines.push(poly);
+                            poly = newPolygon().setOpen();
+                        } else if (poly.length === 1) {
+                            poly = newPolygon().setOpen();
+                        }
+                        lp = undefined;
+                        skip = 0;
+                        continue;
+                    }
+                    if (p.z < zBottom - epsilon) {
+                        lp = p;
+                        if (poly.length === 0) {
+                            skip++;
+                            continue;
+                        }
+                        if (poly.length > 1) {
+                            skip = 0;
+                            p.z = zBottom;
+                            poly.push(p);
+                            lines.push(poly);
+                            poly = newPolygon().setOpen();
+                            continue;
+                        }
+                    } else if (lp && skip && poly.length === 0) {
+                        lp.z = zBottom;
+                        poly.push(lp);
+                    }
+                    poly.push(lp = p);
+                    skip = 0;
+                }
+                if (poly.length > 1) {
+                    lines.push(poly);
+                }
+                if (!inside && clipTab.length)
+                for (let poly of lines) {
+                    for (let p of poly.points) {
+                        for (let clip of clipTab) {
+                            if (p.z < clip.z && p.isInPolygon(clip)) {
+                                p.z = clip.z;
+                                break;
+                            }
+                        }
+                    }
+                }
+                slices.push(slice);
+                if (inside) {
+                    onupdate(i, numScanlines);
+                }
+            }
+            ondone(slices);
+            return this;
         }
 
         const probe = this.probe = new Probe({

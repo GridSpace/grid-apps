@@ -429,7 +429,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 emit = 1;
                 isMove = false;
             } else if (deltaZ <= -tolerance) {
-                console.log({ deltaZ, tolerance });
+                console.log({ deltaZ, tolerance, iscontour });
                 // move over before descending
                 layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
                 // new pos for plunge calc

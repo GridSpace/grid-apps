@@ -65,6 +65,9 @@ self.alert = function(o) {
 
 self.uuid = ((Math.random() * Date.now()) | 0).toString(36);
 
+/**
+ * @returns {RasterPath}
+ */
 self.get_raster_gpu = async function() {
     let gpu = self.raster_gpu;
     if (!gpu) {
