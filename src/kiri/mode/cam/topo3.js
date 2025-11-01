@@ -135,7 +135,7 @@ export class Topo {
             let xStep = density;
             let yStep = Math.round(toolStep / resolution);
             let epsilon = 10e-5;
-            let terrain = await gpu.rasterizeMesh(vertices, tolerance, 0, wbounds);
+            let terrain = await gpu.rasterizeMesh(vertices, resolution, 0, wbounds);
             let { positions } = terrain;
             let output = await gpu.generatePlanarToolpath(
                 positions,
