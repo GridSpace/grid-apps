@@ -163,10 +163,13 @@ export class Topo {
         const { angle, linear, offStart, offEnd, resolution, tool, unit, vertices, zBottom } = this;
 
         // invert tool Z offset for gpu code
-        let gputool = tool.slice();
-        for (let i=0; i<gputool.length; i+= 3) {
-            gputool[i+2] *= -1;
+        let toolBounds = new THREE.Box3();
+        let toolPos = tool.slice();
+        for (let i=0; i<toolPos.length; i+= 3) {
+            toolPos[i+2] *= -1;
+            toolBounds.expandByPoint({ x: toolPos[i], y: toolPos[i+1], z: toolPos[i+2] });
         }
+        let toolData = { positions: toolPos, bounds: toolBounds };
 
         console.time('swap XZ vertices');
         // swap XZ vertices for gpu code
@@ -176,30 +179,40 @@ export class Topo {
             vertices[i+0] = tmp;
         }
         console.timeEnd('swap XZ vertices');
+        // let bbox = new THREE.Box3().setFromArray(vertices);
+        // console.log({ bbox, bounds });
 
-        let gpu = await self.get_raster_gpu();
-        let tickperstep = Math.round(this.step / resolution);
-        let bounds = this.bounds.clone();
-        bounds.min.x += offStart * unit;
-        bounds.max.x -= offEnd * unit;
-        let output = await gpu.generateRadialToolpath(
-            vertices,
-            gputool,
-            angle,
-            tickperstep,
-            zBottom,
+        let gpu = await self.get_raster_gpu({
+            mode: "radial",
             resolution,
-            bounds,
-            { onProgress(pct) { onupdate(pct/100) } }
-        );
+            rotationStep: angle
+        });
+        let tickperstep = Math.round(this.step / resolution);
+        let boundsOverride = this.bounds.clone();
+        boundsOverride.min.x += offStart * unit;
+        boundsOverride.max.x -= offEnd * unit;
+        let terrainData = await gpu.rasterizeModel({
+            triangles: vertices,
+            boundsOverride
+        });
+        console.log({ terrainData });
+        let output = await gpu.generateToolpaths({
+            terrainData,
+            toolData,
+            xStep: 1,
+            yStep: this.step,
+            zFloor: zBottom,
+            onProgress(pct) { onupdate(pct/100) }
+        });
+        console.log({ output });
 
-        let { numRotations, pointsPerLine, pathData } = output;
-        let degPerRow = 360 / numRotations;
+        let { numScanlines, pointsPerLine, pathData } = output;
+        let degPerRow = 360 / numScanlines;
         let slices = this.gpu_slices = [];
         let xmult = tickperstep * resolution;
-        let xoff = bounds.min.x;
+        let xoff = toolData.bounds.min.x;
         let rows = [];
-        for (let i=0; i<numRotations; i++) {
+        for (let i=0; i<numScanlines; i++) {
             let lineData = pathData.slice(i * pointsPerLine, i * pointsPerLine + pointsPerLine);
             let points = Array.from(lineData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
             rows.push(points);

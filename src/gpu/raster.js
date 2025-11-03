@@ -1,1 +1,1 @@
-../../node_modules/@gridspace/raster-path/src/index.js
+../../../gs-raster-path/build/raster-path.js

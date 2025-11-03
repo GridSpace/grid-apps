@@ -68,16 +68,18 @@ self.uuid = ((Math.random() * Date.now()) | 0).toString(36);
 /**
  * @returns {RasterPath}
  */
-self.get_raster_gpu = async function() {
-    let gpu = self.raster_gpu;
-    if (!gpu) {
-        gpu = self.raster_gpu = new RasterPath({
-            workerName: "/lib/gpu/raster-worker.js",
-            quiet: true
-        });
-        await gpu.init();
-        await gpu.initWorkerPool();
-    }
+self.get_raster_gpu = async function({ mode, resolution, rotationStep }) {
+    console.log({ mode, resolution, rotationStep });
+    let gpu = new RasterPath({
+        mode,
+        resolution,
+        rotationStep,
+        workerName: "/lib/gpu/raster-worker.js",
+        maxWorkers: 20,
+        quiet: false,
+        debug: true,
+    });
+    await gpu.init();
     return gpu;
 };
 

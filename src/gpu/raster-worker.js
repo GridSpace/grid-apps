@@ -1,1 +1,1 @@
-../../node_modules/@gridspace/raster-path/src/web/webgpu-worker.js
+../../../gs-raster-path/build/webgpu-worker.js

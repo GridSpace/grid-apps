@@ -108,11 +108,15 @@ export class Topo {
         }
 
         if (webGPU) {
+            console.log({ tool });
             // invert tool Z offset for gpu code
-            let gputool = toolOffset.slice();
-            for (let i=0; i<gputool.length; i+= 3) {
-                gputool[i+2] *= -1;
+            let toolBounds = new THREE.Box3();
+            let toolPos = tool.profile.slice();
+            for (let i=0; i<toolPos.length; i+= 3) {
+                toolPos[i+2] *= -1;
+                toolBounds.expandByPoint({ x: toolPos[i], y: toolPos[i+1], z: toolPos[i+2] });
             }
+            let toolData = { positions: toolPos, bounds: toolBounds };
 
             const vertices = widget.getGeoVertices({ unroll: true, translate: true });
             const wbounds = widget.getBoundingBox();
@@ -131,24 +135,25 @@ export class Topo {
                 console.timeEnd('swap XY vertices');
             }
 
-            let gpu = await self.get_raster_gpu();
+            let gpu = await self.get_raster_gpu({
+                mode: "planar",
+                resolution
+            });
             let xStep = density;
             let yStep = Math.round(toolStep / resolution);
             let epsilon = 10e-5;
-            let terrain = await gpu.rasterizeMesh(vertices, resolution, 0, wbounds);
-            let { positions } = terrain;
-            let output = await gpu.generatePlanarToolpath(
-                positions,
-                gputool,
+            let terrainData = await gpu.rasterizeModel({
+                triangles: vertices,
+                boundsOverride: wbounds
+            });
+            let output = await gpu.generateToolpaths({
+                terrainData,
+                toolData,
                 xStep,
                 yStep,
-                zBottom - 1,
-                resolution,
-                {
-                    terrainBounds: wbounds,
-                    onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
-                }
-            );
+                zFloor: zBottom - 1,
+                onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
+            });
             let { numScanlines, pointsPerLine, pathData } = output;
             let xmult = xStep * resolution;
             let ymult = yStep * resolution;
