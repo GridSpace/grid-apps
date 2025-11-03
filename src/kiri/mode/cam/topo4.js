@@ -171,23 +171,21 @@ export class Topo {
         }
         let toolData = { positions: toolPos, bounds: toolBounds };
 
-        console.time('swap XZ vertices');
+        // console.time('swap XZ vertices');
         // swap XZ vertices for gpu code
         for (let i=0; i<vertices.length; i+= 3) {
             let tmp = vertices[i+2];
             vertices[i+2] = vertices[i+0];
             vertices[i+0] = tmp;
         }
-        console.timeEnd('swap XZ vertices');
-        // let bbox = new THREE.Box3().setFromArray(vertices);
-        // console.log({ bbox, bounds });
+        // console.timeEnd('swap XZ vertices');
 
         let gpu = await self.get_raster_gpu({
             mode: "radial",
             resolution,
             rotationStep: angle
         });
-        let tickperstep = Math.round(this.step / resolution);
+        let xStep = Math.max(1, Math.round(this.step / resolution));
         let boundsOverride = this.bounds.clone();
         boundsOverride.min.x += offStart * unit;
         boundsOverride.max.x -= offEnd * unit;
@@ -195,26 +193,24 @@ export class Topo {
             triangles: vertices,
             boundsOverride
         });
-        console.log({ terrainData });
         let output = await gpu.generateToolpaths({
             terrainData,
             toolData,
-            xStep: 1,
-            yStep: this.step,
+            xStep,
+            yStep: 1,
             zFloor: zBottom,
             onProgress(pct) { onupdate(pct/100) }
         });
-        console.log({ output });
 
         let { numScanlines, pointsPerLine, pathData } = output;
         let degPerRow = 360 / numScanlines;
         let slices = this.gpu_slices = [];
-        let xmult = tickperstep * resolution;
-        let xoff = toolData.bounds.min.x;
+        let xmult = resolution * xStep;
+        let xoff = output.generationBounds.min.x;
         let rows = [];
         for (let i=0; i<numScanlines; i++) {
             let lineData = pathData.slice(i * pointsPerLine, i * pointsPerLine + pointsPerLine);
-            let points = Array.from(lineData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
+            let points = Array.from(lineData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow - 90));
             rows.push(points);
         }
         if (linear) {
