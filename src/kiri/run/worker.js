@@ -69,7 +69,6 @@ self.uuid = ((Math.random() * Date.now()) | 0).toString(36);
  * @returns {RasterPath}
  */
 self.get_raster_gpu = async function({ mode, resolution, rotationStep }) {
-    console.log({ mode, resolution, rotationStep });
     let gpu = new RasterPath({
         mode,
         resolution,

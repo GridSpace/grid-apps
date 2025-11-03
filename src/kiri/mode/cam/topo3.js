@@ -108,7 +108,6 @@ export class Topo {
         }
 
         if (webGPU) {
-            console.log({ tool });
             // invert tool Z offset for gpu code
             let toolBounds = new THREE.Box3();
             let toolPos = tool.profile.slice();
@@ -155,6 +154,7 @@ export class Topo {
                 onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
             });
             let { numScanlines, pointsPerLine, pathData } = output;
+            let { positions, gridWidth } = terrainData;
             let xmult = xStep * resolution;
             let ymult = yStep * resolution;
             let xoff = wbounds.min.x;
@@ -179,7 +179,7 @@ export class Topo {
                 let skip = 0;
                 let lp;
                 for (let p of points) {
-                    if (inside && positions[p.ty * terrain.gridWidth + p.tx] < zBottom - epsilon) {
+                    if (inside && positions[p.ty * gridWidth + p.tx] < zBottom - epsilon) {
                         if (poly.length > 1) {
                             lines.push(poly);
                             poly = newPolygon().setOpen();

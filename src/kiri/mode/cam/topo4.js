@@ -71,8 +71,9 @@ export class Topo {
 
         onupdate(0, "lathe");
 
+        const parts = webGPU ? [ 0.8, 0.2 ] : [ 0.25, 0.75 ];
         const range = this.range = { min: Infinity, max: -Infinity };
-        const slices = this.sliced = await this.slice(scale(onupdate, 0.25, 0));
+        const slices = this.sliced = await this.slice(scale(onupdate, parts[0], 0));
 
         for (let slice of slices) {
             range.min = Math.min(range.min, slice.z);
@@ -82,7 +83,7 @@ export class Topo {
                 .addPolys(slice.topPolys());
         }
 
-        const lathe = await this.lathe(scale(onupdate, 0.75, 0.25));
+        const lathe = await this.lathe(scale(onupdate, parts[1], parts[0]));
 
         onupdate(1, "lathe");
         ondone(lathe);
@@ -191,7 +192,8 @@ export class Topo {
         boundsOverride.max.x -= offEnd * unit;
         let terrainData = await gpu.rasterizeModel({
             triangles: vertices,
-            boundsOverride
+            boundsOverride,
+            onProgress(pct) { onupdate(pct/100) }
         });
         let output = await gpu.generateToolpaths({
             terrainData,
