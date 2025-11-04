@@ -109,10 +109,12 @@ export class Topo {
 
         if (webGPU) {
             // invert tool Z offset for gpu code
-            let toolBounds = new THREE.Box3();
+            let toolBounds = new THREE.Box3()
+                .expandByPoint({ x: -toolDiameter/2, y: -toolDiameter/2, z: 0 })
+                .expandByPoint({ x: toolDiameter/2, y: toolDiameter/2, z: 0 });
             let toolPos = tool.profile.slice();
             for (let i=0; i<toolPos.length; i+= 3) {
-                toolPos[i+2] *= -1;
+                // toolPos[i+2] = -toolPos[i+2];
                 toolBounds.expandByPoint({ x: toolPos[i], y: toolPos[i+1], z: toolPos[i+2] });
             }
             let toolData = { positions: toolPos, bounds: toolBounds };
@@ -139,7 +141,7 @@ export class Topo {
                 resolution
             });
             let xStep = density;
-            let yStep = Math.round(toolStep / resolution);
+            let yStep = Math.ceil(toolStep / resolution);
             let epsilon = 10e-5;
             let terrainData = await gpu.rasterizeModel({
                 triangles: vertices,
@@ -153,6 +155,7 @@ export class Topo {
                 zFloor: zBottom - 1,
                 onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
             });
+            gpu.terminate();
             let { numScanlines, pointsPerLine, pathData } = output;
             let { positions, gridWidth } = terrainData;
             let xmult = xStep * resolution;

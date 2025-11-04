@@ -34,7 +34,7 @@ self.kiri.load(api => {
     }).map(v => `${v.substring(1)}FF`);
 
     let local_port = 5309;
-    let local_url = `http://localhost:${local_port}`;
+    let local_url = `ws://localhost:${local_port}`;
     let sequence_id = (Math.random() * 0xfff) | 0;
     let user_id = ((Math.random() * 0xfffffff) | 0).toString();
     let init = false;

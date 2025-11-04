@@ -60,10 +60,11 @@ export class Topo {
         this.maxo = tool.profileDim.maxo * resolution;
         this.diam = tool.fluteDiameter();
         this.unit = tool.unitScale();
+        this.units = controller.units === 'in' ? 25.4 : 1
         this.zoff = widget.track.top || 0;
         this.leave = op.leave || 0;
         this.linear = op.linear || false;
-        this.lineColor = state.settings.controller.dark ? 0xffff00 : 0x555500;
+        this.lineColor = controller.dark ? 0xffff00 : 0x555500;
         this.offStart = op.offStart ?? 0;
         this.offEnd = op.offEnd ?? 0;
         this.bounds  = bounds;
@@ -93,7 +94,7 @@ export class Topo {
     }
 
     async slice(onupdate) {
-        const { vertices, resolution, tabverts, zoff, offStart, offEnd, tool, unit } = this;
+        const { vertices, resolution, tabverts, zoff, offStart, offEnd, units } = this;
         const { minions } = self.kiri_worker;
         const range = this.range = { min: Infinity, max: -Infinity };
 
@@ -108,8 +109,8 @@ export class Topo {
         }
 
         // add tool diameter to slice min/max range to fully carve part
-        range.min += offStart * unit;
-        range.max -= offEnd * unit;
+        range.min += offStart * units;
+        range.max -= offEnd * units;
         range.max += resolution * 2;
 
         // merge in tab vertices here so they don't affect slice range / dimensions
@@ -161,14 +162,18 @@ export class Topo {
     }
 
     async sliceGPU(onupdate) {
-        const { angle, linear, offStart, offEnd, resolution, tool, unit, vertices, zBottom } = this;
+        const { angle, diam, linear, offStart, offEnd, resolution, tool, units, vertices, zBottom } = this;
 
         // invert tool Z offset for gpu code
-        let toolBounds = new THREE.Box3();
+        let toolBounds = new THREE.Box3()
+            .expandByPoint({ x: -this.diam/2, y: -diam/2, z: 0 })
+            .expandByPoint({ x: this.diam/2, y: diam/2, z: 0 });
         let toolPos = tool.slice();
-        for (let i=0; i<toolPos.length; i+= 3) {
-            toolPos[i+2] *= -1;
-            toolBounds.expandByPoint({ x: toolPos[i], y: toolPos[i+1], z: toolPos[i+2] });
+        let minz = Infinity;
+        for (let i=0; i<toolPos.length; i += 3) {
+            // toolPos[i+2] = -toolPos[i+2];
+            toolBounds.expandByPoint({ x: 0, y: 0, z: toolPos[i+2] });
+            minz = Math.min(minz,toolPos[i+2]);
         }
         let toolData = { positions: toolPos, bounds: toolBounds };
 
@@ -188,8 +193,8 @@ export class Topo {
         });
         let xStep = Math.max(1, Math.round(this.step / resolution));
         let boundsOverride = this.bounds.clone();
-        boundsOverride.min.x += offStart * unit;
-        boundsOverride.max.x -= offEnd * unit;
+        boundsOverride.min.x += offStart * units;
+        boundsOverride.max.x -= offEnd * units;
         let terrainData = await gpu.rasterizeModel({
             triangles: vertices,
             boundsOverride,
@@ -203,6 +208,7 @@ export class Topo {
             zFloor: zBottom,
             onProgress(pct) { onupdate(pct/100) }
         });
+        gpu.terminate();
 
         let { numScanlines, pointsPerLine, pathData } = output;
         let degPerRow = 360 / numScanlines;
@@ -212,7 +218,7 @@ export class Topo {
         let rows = [];
         for (let i=0; i<numScanlines; i++) {
             let lineData = pathData.slice(i * pointsPerLine, i * pointsPerLine + pointsPerLine);
-            let points = Array.from(lineData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow - 90));
+            let points = Array.from(lineData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
             rows.push(points);
         }
         if (linear) {
