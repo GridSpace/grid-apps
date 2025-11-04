@@ -688,7 +688,7 @@ export async function holes(settings, widget, individual, rec, onProgress) {
     let opts = { each: onEach, progress: (num, total) => onProgress(num / total * 0.5, "slice") };
     await slicer.slice(indices, opts);
     let shadowedDrills = false;
-    // console.log("slices",slices)
+
     for (let [i, slice] of slices.entries()) {
         for (let top of slice.tops) {
             // console.log("slicing",slice.z,top)
@@ -698,13 +698,13 @@ export async function holes(settings, widget, individual, rec, onProgress) {
                 continue;
             }
             for (let poly of inner) {
-                if (poly.points.length < 7) continue;
-
+                if (poly.points.length < 7) {
+                    continue;
+                }
                 let center = poly.calcCircleCenter();
                 center.area = poly.area();
                 center.overlapping = [center];
                 center.depth = 0;
-                // console.log("center",center)
                 if (poly.circularity() < 0.98) {
                     // if not circular, don't add to holes
                     continue;
@@ -717,8 +717,7 @@ export async function holes(settings, widget, individual, rec, onProgress) {
                 let overlap = false;
                 for (let [i, circle] of circles.entries()) {
                     let dist = circle.distTo2D(center);
-
-                    // //if on the same xy point, 
+                    // if on the same xy point,
                     if (dist <= centerDiff) {
                         // console.log("overlap",center,circle);
                         circle.overlapping.push(center);
@@ -732,12 +731,10 @@ export async function holes(settings, widget, individual, rec, onProgress) {
         }
         onProgress(0.5 + (i / slices.length * 0.25), "recognize circles");
     }
-
     let drills = [];
 
     for (let [i, c] of circles.entries()) {
         let overlapping = c.overlapping;
-
         let last = overlapping.shift();
         while (overlapping.length) {
             let circ = overlapping.shift();
