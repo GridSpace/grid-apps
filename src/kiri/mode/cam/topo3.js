@@ -143,21 +143,23 @@ export class Topo {
             let xStep = density;
             let yStep = Math.ceil(toolStep / resolution);
             let epsilon = 10e-5;
-            let terrainData = await gpu.rasterizeModel({
+            await gpu.loadTool({
+                sparseData: toolData
+            });
+            let terrain = await gpu.loadTerrain({
                 triangles: vertices,
                 boundsOverride: wbounds
             });
+            let { gridWidth, positions } = terrain;
             let output = await gpu.generateToolpaths({
-                terrainData,
-                toolData,
                 xStep,
                 yStep,
                 zFloor: zBottom - 1,
                 onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
             });
             gpu.terminate();
+
             let { numScanlines, pointsPerLine, pathData } = output;
-            let { positions, gridWidth } = terrainData;
             let xmult = xStep * resolution;
             let ymult = yStep * resolution;
             let xoff = wbounds.min.x;

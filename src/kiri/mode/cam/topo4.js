@@ -22,7 +22,7 @@ export class Topo {
 
     async generate(opt = {}) {
         let { state, op, onupdate, ondone } = opt;
-        let { widget, settings, tabs } = opt.state;
+        let { widget, settings, tabs, color } = state;
         let { controller, process } = settings;
         let { webGPU } = controller;
 
@@ -64,7 +64,7 @@ export class Topo {
         this.zoff = widget.track.top || 0;
         this.leave = op.leave || 0;
         this.linear = op.linear || false;
-        this.lineColor = controller.dark ? 0xffff00 : 0x555500;
+        this.lineColor = color;//controller.dark ? 0xffff00 : 0x555500;
         this.offStart = op.offStart ?? 0;
         this.offEnd = op.offEnd ?? 0;
         this.bounds  = bounds;
@@ -79,9 +79,6 @@ export class Topo {
         for (let slice of slices) {
             range.min = Math.min(range.min, slice.z);
             range.max = Math.max(range.max, slice.z);
-            slice.output()
-                .setLayer("lathe", { line: 0x888888 })
-                .addPolys(slice.topPolys());
         }
 
         const lathe = await this.lathe(scale(onupdate, parts[1], parts[0]));
@@ -195,14 +192,15 @@ export class Topo {
         let boundsOverride = this.bounds.clone();
         boundsOverride.min.x += offStart * units;
         boundsOverride.max.x -= offEnd * units;
-        let terrainData = await gpu.rasterizeModel({
+        await gpu.loadTool({
+            sparseData: toolData
+        });
+        await gpu.loadTerrain({
             triangles: vertices,
             boundsOverride,
             onProgress(pct) { onupdate(pct/100) }
         });
         let output = await gpu.generateToolpaths({
-            terrainData,
-            toolData,
             xStep,
             yStep: 1,
             zFloor: zBottom,
@@ -210,15 +208,14 @@ export class Topo {
         });
         gpu.terminate();
 
-        let { numScanlines, pointsPerLine, pathData } = output;
-        let degPerRow = 360 / numScanlines;
+        let { numStrips, strips } = output;
+        let degPerRow = 360 / numStrips;
         let slices = this.gpu_slices = [];
         let xmult = resolution * xStep;
-        let xoff = output.generationBounds.min.x;
+        let xoff = boundsOverride.min.x;
         let rows = [];
-        for (let i=0; i<numScanlines; i++) {
-            let lineData = pathData.slice(i * pointsPerLine, i * pointsPerLine + pointsPerLine);
-            let points = Array.from(lineData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
+        for (let i=0; i<numStrips; i++) {
+            let points = Array.from(strips[i].pathData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
             rows.push(points);
         }
         if (linear) {

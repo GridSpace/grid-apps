@@ -54,6 +54,7 @@ self.kiri.load(api => {
                 return;
             }
             let ws_url = api.onshape ? `ws://${local_host}/bambu` : "/bambu";
+            console.log({ bambu_ws_url: ws_url });
             let ws = socket.ws = new WebSocket(ws_url);
             ws.onerror = (error) => {
                 socket.open = false;
