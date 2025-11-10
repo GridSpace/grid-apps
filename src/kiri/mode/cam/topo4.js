@@ -229,6 +229,7 @@ export class Topo {
                 slices.push(slice);
             }
         } else {
+            let { pointsPerLine } = strips[0];
             for (let i=0; i<pointsPerLine; i++) {
                 let slice = newSlice(i);
                 let points = rows.map(row => row[i]);

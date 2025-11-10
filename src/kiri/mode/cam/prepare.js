@@ -56,8 +56,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
 
     if (widget.camops.length === 0 || widget.meta.disabled) return;
 
-    let device = settings.device,
-        process = settings.process,
+    let { device, process } = settings,
         isIndexed = process.camStockIndexed,
         startCenter = process.camOriginCenter,
         alignTop = settings.controller.alignTop,
@@ -65,7 +64,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         stockz = stock.z * (isIndexed ? 0.5 : 1),
         outer = settings.bounds || widget.getPositionBox(),
         outerz = outer.max.z,
-        slices = widget.slices,
+        // slices = widget.slices,
         zclear = (process.camZClearance || 1),
         zmax_force = process.camForceZMax || false,
         zmax_outer = stockz + zclear,
@@ -75,13 +74,14 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         boundsz = isIndexed ? stock.z / 2 : bounds.max.z + ztOff,
         zadd = !isIndexed ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
         zmax = outerz + zclear + (process.camOriginOffZ || 0),
+        zsafe = isIndexed ? Math.hypot(bounds.dim.y, bounds.dim.z) / 2 + zclear : zmax,
         wmpos = widget.track.pos,
         wmx = wmpos.x,
         wmy = wmpos.y,
         originx = (startCenter ? 0 : -stock.x / 2) + (process.camOriginOffX || 0),
         originy = (startCenter ? 0 : -stock.y / 2) + (process.camOriginOffY || 0),
         origin = newPoint(originx + wmx, originy + wmy, zmax),
-        output = print.output,
+        // output = print.output,
         easeDown = process.camEaseDown,
         easeAngle = process.camEaseAngle,
         depthFirst = process.camDepthFirst,
@@ -94,13 +94,12 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         drillDown = 0,
         drillLift = 0,
         drillDwell = 0,
-        drillThru = 0,
         lasering = false,
         laserPower = 0,
         newOutput = print.output || [],
         layerOut = [],
         printPoint,
-        isNewMode,
+        // isNewMode,
         isPocket,
         isContour,
         isRough,
@@ -188,11 +187,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         laserPower = power;
     }
 
-    function setDrill(down, lift, dwell, thru) {
+    function setDrill(down, lift, dwell) {
         drillDown = down;
         drillLift = lift;
         drillDwell = dwell;
-        drillThru = thru;
     }
 
     function emitDrills(polys) {
@@ -337,6 +335,17 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     function camOut(point, emit = 1, opts) {
         let lop = lastOp;
         lastOp = currentOp;
+
+        // on operation changes:
+        // 1. move to safe z of current point preserving angle
+        // 2. move to safe z of new point preserving old angle
+        // 3. move to safe z of new point with new angle
+        if (lop !== currentOp && lastPoint) {
+            camOut(lastPoint.clone().setZ(zsafe).setA(lastPoint.a), 1);
+            camOut(point.clone().setZ(zsafe).setA(lastPoint.a), 1);
+            camOut(point.clone().setZ(zsafe), 1);
+        }
+
         if (lop?.type === 'index' && lop !== currentOp ) {
             // console.log('post index first point', point);
             camOut(point.clone().setZ(lastPoint.z).setA(lastPoint.a), 1);
@@ -710,6 +719,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         bounds,
         zclear,
         zmax,
+        zsafe,
         lastPoint: () => { return lastPoint }
     };
 
