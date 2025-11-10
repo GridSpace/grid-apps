@@ -395,7 +395,7 @@ function ui_build() {
             div('File'),
             div({ class: "menu-items" }, [
                 input({
-                    id: "import", type: "file", class: ["hide"], multiple: true,
+                    id: "import", type: "file", class: ["hide"], multiple: true, accept:".stl,.obj",
                     onchange(evt) { broker.send.load_files(evt.target.files) }
                 }),
                 menu_item('Import', file.import, 'I'),

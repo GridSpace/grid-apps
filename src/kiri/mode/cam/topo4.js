@@ -179,6 +179,7 @@ export class Topo {
         for (let i=0; i<vertices.length; i+= 3) {
             let tmp = vertices[i+2];
             vertices[i+2] = vertices[i+0];
+            vertices[i+1] = -vertices[i+1];
             vertices[i+0] = tmp;
         }
         // console.timeEnd('swap XZ vertices');
@@ -186,7 +187,8 @@ export class Topo {
         let gpu = await self.get_raster_gpu({
             mode: "radial",
             resolution,
-            rotationStep: angle
+            rotationStep: angle,
+            radialRotationOffset: 90
         });
         let xStep = Math.max(1, Math.round(this.step / resolution));
         let boundsOverride = this.bounds.clone();
