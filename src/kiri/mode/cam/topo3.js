@@ -7,6 +7,7 @@ import { newSlice } from '../../core/slice.js';
 import { Slicer as topo_slicer } from './slicer_topo.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { Tool } from './tool.js';
+import { poly2polyEmit } from '../../../geo/paths.js';
 
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
@@ -42,7 +43,7 @@ export class Topo {
             tool = new Tool(settings, contour.tool),
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
-            toolStep = toolDiameter * contour.step, //tool.contourOffset(contour.step),
+            toolStep = toolDiameter * contour.step,
             leave = contour.leave || 0,
             maxangle = contour.angle,
             curvesOnly = contour.curves,
@@ -75,12 +76,7 @@ export class Topo {
             clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter / 2 + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
             gridDelta = Math.floor(partOff / resolution),
-            debug = false,
-            debug_clips = debug && true,
-            debug_topo = debug && true,
-            debug_topo_lines = debug && true,
-            debug_topo_shells = debug && true,
-            time = Date.now;
+            debug_clips = false;
 
         if (tolerance === 0 && !topoCache) {
             console.log(widget.id, 'topo auto tolerance', resolution.round(4));
@@ -142,7 +138,7 @@ export class Topo {
             });
             let xStep = density;
             let yStep = Math.ceil(toolStep / resolution);
-            let epsilon = 10e-5;
+            let epsilon = 10e-4;
             await gpu.loadTool({
                 sparseData: toolData
             });
@@ -180,7 +176,7 @@ export class Topo {
                     ;
                 let slice = newSlice(i);
                 let poly = newPolygon().setOpen();
-                let lines = slice.camLines = [ ];
+                let lines = [ ];
                 let skip = 0;
                 let lp;
                 for (let p of points) {
@@ -216,9 +212,11 @@ export class Topo {
                     poly.push(lp = p);
                     skip = 0;
                 }
+                // require two points or more
                 if (poly.length > 1) {
                     lines.push(poly);
                 }
+                // raize output points when inside tab boundaries
                 if (!inside && tabsOn && clipTab.length)
                 for (let poly of lines) {
                     for (let p of poly.points) {
@@ -230,6 +228,49 @@ export class Topo {
                         }
                     }
                 }
+                // drop interior points along a continuous slope
+                for (let poly of lines) {
+                    let { points } = poly;
+                    let merged = [ points[0] ];
+                    let lp = points[1];
+                    let dz = points[0].z - lp.z;
+                    for (let i=2; i<points.length; i++) {
+                        let np = points[i];
+                        let ndz = np.z - lp.z;
+                        if (Math.abs(dz - ndz) > epsilon) {
+                            // slope changed
+                            merged.push(lp);
+                            dz = ndz;
+                        } else if (curvesOnly && Math.abs(ndz) < epsilon) {
+                            // add empty points as path separators
+                            merged.push(undefined);
+                        }
+                        lp = np;
+                    }
+                    if (merged.peek() !== lp) {
+                        merged.push(lp);
+                    }
+                    poly.points = merged;
+                }
+                // drop flat regions when enabled
+                if (curvesOnly) {
+                    let nulines = [];
+                    for (let poly of lines) {
+                        let { points } = poly;
+                        let newp = [];
+                        for (let p of points) {
+                            if (p) {
+                                newp.push(p);
+                            } else if (newp.length) {
+                                nulines.push(newPolygon(newp).setOpen());
+                                newp = [];
+                            }
+                        }
+                        nulines.push(newPolygon(newp).setOpen());
+                    }
+                    lines = nulines.filter(p => p.perimeter() > toolStep);
+                }
+                slice.camLines = lines;
                 slices.push(slice);
                 if (inside) {
                     onupdate(i, numScanlines);
@@ -659,9 +700,9 @@ export class Trace {
             console.log(...arguments);
         }
 
-        const push_point = this.push_point = function (x, y, z) {
+        this.push_point = function (x, y, z) {
             const newP = newPoint(x, y, z);
-            const lastP = lastPP;//trace.last();
+            const lastP = lastPP;
 
             if (lastP) {
                 const dl = (x - lastP.x) || (y - lastP.y);
@@ -678,7 +719,6 @@ export class Trace {
                     }
                     if (curvesOnly) {
                         const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
-                        // const dz = lastPP.z - z;
                         const angle = Math.atan2(Math.abs(dz), dv) * RAD2DEG;
                         if (angle > maxangle) {
                             end_poly();

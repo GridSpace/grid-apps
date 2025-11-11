@@ -321,10 +321,10 @@ self.lang['en-us'] = {
     pt_heal_l:      ["attempt to heal non-manifold meshes during slicing. may increase slicing time. enables a warning when non-manifold geometries are detected."],
     pt_thrd_s:      "threaded",
     pt_thrd_l:      ["use parallel processing when browser supports nested workers. may increase memory pressure on larger models. disable if you are getting out of memory errors"],
-    pt_assy_s:      "assembly",
+    pt_assy_s:      "web asm",
     pt_assy_l:      ["use web assembly when supported by browser. if you experience artifacts or memory errors, try disabling this."],
     pt_wgpu_s:      "web gpu",
-    pt_wgpu_l:      ["use web gpu when supported by browser"],
+    pt_wgpu_l:      ["use web gpu when supported by browser. if you experience artifacts or memory errors, try disabling this."],
 
     xp_menu:        "exports",
 

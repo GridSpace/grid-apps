@@ -12,10 +12,8 @@ export function cam_export(print, online) {
     const widget = print.widgets[0];
     if (!widget) return;
 
-    console.log({ cam_export: print });
-
     const { settings } = print;
-    const { device, tools } = settings;
+    const { device } = settings;
 
     let i,
         time = 0,
@@ -169,7 +167,6 @@ export function cam_export(print, online) {
     function moveTo(out, opt = {}) {
         let laser = out.type === 'laser';
         let newpos = out.point;
-        console.log(mode.type, out.point);
 
         // no point == dwell
         // out.speed = time to dwell in ms

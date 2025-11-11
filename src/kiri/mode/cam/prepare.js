@@ -64,7 +64,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         stockz = stock.z * (isIndexed ? 0.5 : 1),
         outer = settings.bounds || widget.getPositionBox(),
         outerz = outer.max.z,
-        // slices = widget.slices,
         zclear = (process.camZClearance || 1),
         zmax_force = process.camForceZMax || false,
         zmax_outer = stockz + zclear,
@@ -81,7 +80,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         originx = (startCenter ? 0 : -stock.x / 2) + (process.camOriginOffX || 0),
         originy = (startCenter ? 0 : -stock.y / 2) + (process.camOriginOffY || 0),
         origin = newPoint(originx + wmx, originy + wmy, zmax),
-        // output = print.output,
         easeDown = process.camEaseDown,
         easeAngle = process.camEaseAngle,
         depthFirst = process.camDepthFirst,
@@ -99,7 +97,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         newOutput = print.output || [],
         layerOut = [],
         printPoint,
-        // isNewMode,
         isPocket,
         isContour,
         isRough,
@@ -263,8 +260,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      */
     function layerPush(point, emit, speed, tool, options) {
         const { type, center, arcPoints } = options ?? {};
-        const dz = (point && lastPush && lastPush.point) ? point.z - lastPush.point.z : 0;
-        if (dz < 0 && speed > plungeRate) {
+        const dz = (point && lastPush?.point) ? point.z - lastPush.point.z : 0;
+        if (dz < -0.05 && speed > plungeRate) {
             speed = plungeRate;
         }
         // if (options?.type !== 'lerp') console.log( point, currentOp.type );
@@ -320,7 +317,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             p.x + wmx,
             p.y + wmy,
             p.z + zadd
-        ).setA(p.a ?? lastPoint?.a);
+        ).setA(p.a ?? lastPoint?.a).annotate({ slice: p.slice });
     }
 
     /**
@@ -359,14 +356,12 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             factor = 1,
         } = opts ?? {}
 
-        // console.log({radius})
         const isArc = emit == 2 || emit == 3;
+        const pointA = point.a;
 
         // apply widget movement pos
-        const pointA = point.a;
         point = applyWidgetMovement(point);
 
-        // console.log(point.z);
         if (nextIsMove) {
             emit = 0;
             nextIsMove = false;
@@ -429,6 +424,9 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             return;
         }
 
+        // no jump moves in contour mode to adjacent slice points
+        let steady = lastPoint && currentOp.type === 'contour' && Math.abs(point.slice - lastPoint.slice) < 4;
+
         // convert short planar moves to cuts in some cases
         if (hasDelta && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
             let iscontour = tolerance > 0;
@@ -438,7 +436,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 emit = 1;
                 isMove = false;
             } else if (deltaZ <= -tolerance) {
-                console.log({ deltaZ, tolerance, iscontour });
                 // move over before descending
                 layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
                 // new pos for plunge calc
@@ -450,7 +447,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             } else if (point.z < lastPoint.z) {
                 layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
             }
-        } else if (isMove) {
+        } else if (isMove && !steady) {
             // for longer moves, check the terrain to see if we need to go up and over
             const bigXY = (deltaXY > moveLen && !lasering);
             const bigZ = (deltaZ > toolDiam / 2 && deltaXY > tolerance);
@@ -497,13 +494,15 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // set new plunge rate
+        let tmprate;
+        if (false)
         if (!lasering && !isLathe && deltaZ < -tolerance) {
             let threshold = Math.min(deltaXY / 2, absDeltaZ),
                 modifier = threshold / absDeltaZ;
             if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
                 // use modifier to speed up long XY move plunge rates
                 // console.log('modifier', modifier);
-                rate = Math.max(
+                tmprate = Math.max(
                     plungeRate,
                     Math.round(plungeRate + ((feedRate - plungeRate) * modifier))
                 );
@@ -511,7 +510,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 let L = Math.hypot(deltaXY, absDeltaZ);
                 let limXY = feedRate * L / deltaXY;
                 let limZ  = plungeRate  * L / Math.abs(deltaZ);
-                rate = Math.min(feedRate, limXY, limZ);
+                tmprate = Math.min(feedRate, limXY, limZ);
+                console.log({ rate_override: rate, was: rate });
                 // let zps = len / absDeltaZ;
                 // rate = Math.max(
                 //     plungeRate,
@@ -527,7 +527,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             lastPoint = layerPush(
                 point,
                 clockwise ? 2 : 3,
-                rate,
+                tmprate ?? rate,
                 tool,
                 {
                     center,
@@ -542,7 +542,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             lastPoint = layerPush(
                 point,
                 emit,
-                rate,
+                tmprate ?? rate,
                 tool
             );
         }

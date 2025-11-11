@@ -127,6 +127,12 @@ class Point {
         return p;
     }
 
+    // annotate instance with other field data (see clone())
+    annotate(obj = {}) {
+        Object.assign(this, obj);
+        return this;
+    }
+
     slopeTo(p) {
         return newSlope(this, p);
     }
