@@ -108,7 +108,8 @@ const LISTS = {
     regaxis: [
         { name: "X" },
         { name: "Y" },
-        { name: "-" }
+        { name: "-" },
+        { name: "=" }
     ],
     regpoints: [
         { name: "2" },

@@ -19,6 +19,7 @@ class OpRegister extends CamOp {
 
         let tool = new Tool(settings, op.tool);
         let sliceOut = this.sliceOut = [];
+        let axis = op.axis.toLowerCase();
 
         updateToolDiams(tool.fluteDiameter());
 
@@ -42,7 +43,7 @@ class OpRegister extends CamOp {
             return;
         }
 
-        switch (op.axis.toLowerCase()) {
+        switch (axis) {
             case "x":
                 if (op.points == 3) {
                     pathPoints.push(newPoint(boundMinX - cutOffset, centerY, 0));
@@ -64,6 +65,7 @@ class OpRegister extends CamOp {
                 }
                 break;
             case "-":
+            case "=":
                 let halfOffset = toolOffset / 2,
                     loopMinX = boundMinX - cutOffset,
                     loopMaxX = boundMaxX + cutOffset,
@@ -84,7 +86,7 @@ class OpRegister extends CamOp {
                 }
                 function rept(count, step, fn) {
                     while (count-- > 0) {
-                        fn(step, count === 0);
+                        fn(step, count);
                         step = -step;
                     }
                 }
@@ -93,9 +95,16 @@ class OpRegister extends CamOp {
                     addSlices(slice);
                     sliceOut.push(slice);
                     start(z);
-                    rept(4, halfOffset, oy => {
+                    rept(4, halfOffset, (oy, count) => {
                         move(0, -oy);
-                        move(deltaX, 0);
+                        if (axis === '=' && count % 2 === 1) {
+                            move(deltaX/2, 0);
+                            move(0, oy/2);
+                            move(0, -oy/2);
+                            move(deltaX/2, 0);
+                        } else {
+                            move(deltaX, 0);
+                        }
                     });
                     rept(4, halfOffset, ox => {
                         move(ox, 0);
@@ -136,11 +145,10 @@ class OpRegister extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state } = this;
-        let { settings, widget, addSlices, updateToolDiams } = state;
+        let { op } = this;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
-        if (op.axis === '-') {
+        if (op.axis === '-' || op.axis === '=') {
             setTool(op.tool, op.feed, op.rate);
             setSpindle(op.spindle);
             for (let slice of this.sliceOut) {
