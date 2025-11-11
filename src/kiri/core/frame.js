@@ -121,11 +121,15 @@ window.addEventListener('message', msg => {
                 if (!bin.buffer) bin = new Float32Array(bin).buffer;
 		//and we must not continue without any data at all, so revert:
 		if(bin.byteLength == 0) {
-		    bin = data.parse;
+		    bin = data.update;
 		}
                 let widget = api.widgets.map()[data.widget_id];
                 let vertices = new load.STL().parse(bin);
                 api.widgets.replace(vertices, widget);
+		//there is an issue with the position of the widget left:
+		//it jumps 50% to the right and its movement is restricted
+		//means it is not possible to freely move the widget in the workspace anymore
+		//duplicating the widget fixes this in a magic way
                 send({event: "updated", data: [ widget.id ]});
                 break;
         }
