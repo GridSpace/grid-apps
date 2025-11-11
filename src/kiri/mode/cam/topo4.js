@@ -206,7 +206,7 @@ export class Topo {
             xStep,
             yStep: 1,
             zFloor: zBottom,
-            onProgress(pct) { onupdate(pct/100) }
+            onProgress(i,j) { onupdate(i/j) }
         });
         gpu.terminate();
 
