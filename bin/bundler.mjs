@@ -39,8 +39,18 @@ function* walk(dir, seen = new Set()) {
 let entries = [];
 let virtMap = new Set();
 for (const input of inputs) {
-    const root = input.root;
-    const prefix = input.prefix || '';
+    const { root, prefix, src, dst } = input;
+
+    if (src && dst) {
+        if (virtMap.has(dst)) {
+            console.log('pre-existing', dst);
+        } else {
+            entries.push({ file: src, virt: dst });
+            virtMap.add(dst);
+        }
+    }
+
+    if (root)
     for (const file of walk(root)) {
         const rel = path.relative(root, file).replace(/\\/g, '/');
         const virt = prefix ? `${prefix}/${rel}` : rel;
@@ -115,6 +125,7 @@ for (const { file, virt } of entries) {
         entryMeta.push(record);
         dataParts.push(data);
         offset += data.length;
+        if (debug) console.log('write', virt, data.length);
     }
 }
 

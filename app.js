@@ -204,6 +204,17 @@ function init(mod) {
             fs.mkdirSync(`alt/main`, { recursive: true });
             let body = fs.readFileSync(src);
             fs.writeFileSync(`alt/main/${key}.js`, body + val);
+            if (true) {
+                // packed
+                src= `src/pack/${key}-main.js`;
+                if (!fs.existsSync(src)) {
+                    logger.log('missing:', src);
+                    continue;
+                }
+                fs.mkdirSync(`alt/pack`, { recursive: true });
+                body = fs.readFileSync(src);
+                fs.writeFileSync(`alt/pack/${key}-main.js`, body + val);
+            }
         }
     }
 };
