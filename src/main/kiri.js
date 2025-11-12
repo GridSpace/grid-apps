@@ -37,7 +37,8 @@ function safeExec(fn) {
 
 function checkReady() {
     if (document.readyState === 'complete') {
-        console.log(`kiri | boot ctrl | ` + (navigator.serviceWorker.controller ? true : false));
+        let bootctrl = navigator.serviceWorker.controller;
+        console.log(`kiri | boot ctrl | ` + (bootctrl ? true : false));
         kiri.api = run();
         self.$ = kiri.api.web.$;
         for (let fn of load) {
@@ -45,6 +46,18 @@ function checkReady() {
         }
         load = undefined;
         kiri.api.event.emit('load-done', stats);
+        if (bootctrl) {
+            $('install').classList.add('hide');
+            $('uninstall').classList.remove('hide');
+            $('uninstall').onclick = () => {
+                bootctrl.postMessage({ clear: true, disable: true });
+                location.reload();
+            }
+        } else {
+            $('install').onclick = () => {
+                location.replace('/boot');
+            }
+        }
     }
 }
 

@@ -3,8 +3,10 @@ import path from 'path';
 import uglify from 'uglify-js';
 import { Buffer } from 'buffer';
 
+const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
 const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bin/bundle.config.json', 'utf8'));
 const { inputs, outputs, excludes, compress } = cfg;
+const excludePre = (excludes ?? []).filter(s => s.indexOf('*') >= 0).map(s => s.replaceAll('*',''));
 const envcomp = process.env.COMPRESS ? JSON.parse(process.env.COMPRESS) : undefined;
 const debug = process.env.DEBUG;
 
@@ -65,7 +67,7 @@ if (compEnable) {
 
 function fileTime(path) {
     try {
-        return (fs.statSync(path).ctimeMs/1000) | 0;
+        return (fs.statSync(path).ctimeMs / 1000) | 0;
     } catch (e) {
         return 0;
     }
@@ -73,6 +75,9 @@ function fileTime(path) {
 
 for (const { file, virt } of entries) {
     if (excludes.indexOf(file) >= 0) {
+        continue;
+    }
+    if (excludePre.filter(ex => file.startsWith(ex)).length) {
         continue;
     }
     let record = cache.get(file);
@@ -86,7 +91,7 @@ for (const { file, virt } of entries) {
             let cpath = path.resolve(cacheDir, file);
             if (fileTime(cpath) > fileTime(file)) {
                 data = fs.readFileSync(cpath);
-                console.log('cached', file);
+                // console.log('cached', file);
             } else {
                 console.log('compress', file);
                 data = uglify.minify(data.toString(), {
@@ -141,7 +146,7 @@ const header = Buffer.concat([count, ...headerParts]);
 const full = Buffer.concat([header, ...dataParts]);
 
 // --- write final bundle ---
-const outPath = outputs.bundle || './bundle.bin';
+const outPath = (outputs.bundle || './bundle.bin').replace('{version}', version);
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, full); // ⚡ write raw binary
 

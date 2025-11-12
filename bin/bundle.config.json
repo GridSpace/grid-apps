@@ -1,7 +1,7 @@
 {
     "compress": false,
     "outputs": {
-      "bundle": "./web/boot/bundle.bin"
+      "bundle": "./web/boot/bundle-{version}.bin"
     },
     "inputs": [
       { "root": "web", "prefix": "" },
@@ -12,6 +12,6 @@
     ],
     "excludes": [
         "src/pack",
-        "web/boot/bundle.bin"
+        "web/boot/bundle*"
     ]
 }

@@ -27,6 +27,7 @@ self.lang['en-us'] = {
     hide:           "hide",         // left render pop menu (invisible)
     home:           "home",
     import:         "import",
+    install:        "install",
     language:       "language",
     left:           "left",
     machines:       "machines",     // device or machine
@@ -58,6 +59,7 @@ self.lang['en-us'] = {
     tools:          "tools",        // CAM tool menu button
     top:            "top",
     type:           "type",         // CAM tool type
+    uninstall:      "uninstall",
     version:        "version",
     view:           "view",         // left view pop menu
     wire:           "wire",         // left render pop menu

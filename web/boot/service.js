@@ -1,11 +1,10 @@
 // --- configurable ---
 const CACHE_VERSION = 'boot-001';
-const BUNDLE_URL = '/boot/bundle.bin';
 const VERSION_KEY = '/__version__';
 
 let loaded = 0;
 let mode = 'cached';
-let currentVersion = null;
+let BUNDLE_URL = '/boot/bundle.bin';
 
 // --- logging ---
 const log = (...a) => console.log('[SW]', ...a);
@@ -30,6 +29,7 @@ self.addEventListener('message', e => {
         unregister();
     } else if (version !== undefined) {
         mode = 'cached';
+        BUNDLE_URL = `/boot/bundle-${version}.bin`;
         log('version', version);
         ensureVersion(version);
     }
