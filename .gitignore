@@ -1,6 +1,8 @@
 .DS_Store
+.bache
 .docusaurus
 .env
+alt
 app.json
 build
 data
@@ -13,4 +15,4 @@ pack
 package-lock.json
 three.js
 tmp
-web/boot/bundle.bin
+web/boot/bundle*

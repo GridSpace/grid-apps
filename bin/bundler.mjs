@@ -42,7 +42,9 @@ for (const input of inputs) {
     const { root, prefix, src, dst } = input;
 
     if (src && dst) {
-        if (virtMap.has(dst)) {
+        if (!fs.existsSync(src)) {
+            console.log({ src_missing: src });
+        } else if (virtMap.has(dst)) {
             console.log('pre-existing', dst);
         } else {
             entries.push({ file: src, virt: dst });

@@ -66,7 +66,7 @@ const rec = {
     logOverride,
     minify: isProd,      // false for dev, true for prod
     platform: 'browser',
-    sourcemap: !isProd,  // true for dev, false for prod
+    sourcemap: false,
     target: 'es2020',
 };
 
