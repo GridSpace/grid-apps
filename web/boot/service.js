@@ -1,5 +1,5 @@
 // --- configurable ---
-const CACHE_VERSION = 'boot-003';
+const CACHE_VERSION = 'boot';
 const VERSION_KEY = '/__version__';
 const cacheOpen = caches.open(CACHE_VERSION);
 
@@ -10,20 +10,18 @@ let BUNDLE_URL = '/boot/bundle.bin';
 
 // --- logging ---
 const log = (...a) => console.log('[SW]', ...a);
-self.addEventListener('install', e => log('install'));
-self.addEventListener('activate', e => log('activate'));
-// self.addEventListener('fetch', e => log('fetch', e.request.url));
-
 log('cache version', CACHE_VERSION);
 
 // --- lifecycle ---
+self.addEventListener('install', _install);
+self.addEventListener('activate', _activate);
+self.addEventListener('fetch', _fetch);
 self.skipWaiting();
-self.addEventListener('activate', e => e.waitUntil(clients.claim()));
 
 // --- mode control ---
 self.addEventListener('message', e => {
     const data = e.data || {};
-    const { debug, clear, disable, version } = data;
+    const { clear, disable, version } = data;
     debug = data.debug ?? debug;
     if (clear) {
         clearCache();
@@ -37,15 +35,51 @@ self.addEventListener('message', e => {
         BUNDLE_URL = `/boot/bundle-${version}.bin`;
         log('version', version);
         ensureVersion(version);
+    } else if (data.mode) {
+        mode = data.mode;
     }
 });
+
+async function _install(e) {
+    log('install');
+    if (e.addRoutes) {
+        for (let pre of ["font","mesh","kiri","lib","wasm"]) {
+            e.addRoutes({
+                condition: { urlPattern: new URLPattern({ pathname: `/${pre}/.*` }) },
+                source: { cacheName: CACHE_VERSION }
+            });
+        }
+    }
+}
+
+async function _activate(event) {
+    log('activate');
+    event.waitUntil(clients.claim())
+}
 
 // --- unregister current service worker ---
 async function unregister() {
     await self.registration.unregister();
 }
 
-// --- erase existing cache ---
+// --- cache helpers ---
+async function cacheGetText(key) {
+    const cache = await cacheOpen;
+    const entry = await cache.match(key);
+    if (entry) {
+        return entry.text();
+    } else {
+        return undefined;
+    }
+}
+
+async function cachePutText(key, value) {
+    const cache = await cacheOpen;
+    return cache.put( key, new Response(String(value), {
+        headers: { 'Content-Type': 'text/plain' }
+    }) );
+}
+
 async function clearCache() {
     log('clearing cache');
     await caches.delete(CACHE_VERSION);
@@ -56,24 +90,21 @@ async function ensureVersion(incomingVersion) {
     const cache = await cacheOpen;
     let needPreload = false;
 
-    const existing = await cache.match(VERSION_KEY);
+    const existing = await cacheGetText(VERSION_KEY);
     if (!existing) {
         log('no version stored → preload');
         needPreload = true;
     } else {
-        const stored = await existing.text();
-        if (stored !== incomingVersion) {
-            log(`mismatch ${stored} ≠ ${incomingVersion} → preload`);
+        // const stored = await existing.text();
+        if (existing !== incomingVersion) {
+            log(`mismatch ${existing} ≠ ${incomingVersion} → preload`);
             needPreload = true;
         }
     }
 
     if (needPreload) {
         await preloadBundle();
-        await cache.put(
-            VERSION_KEY,
-            new Response(String(incomingVersion), { headers: { 'Content-Type': 'text/plain' } })
-        );
+        await cachePutText(VERSION_KEY, incomingVersion);
         broadcast(`preload added ${loaded} files`);
     } else {
         broadcast('preload cached');
@@ -97,9 +128,11 @@ async function fetch_safe(req) {
 }
 
 // --- fetch handler ---
-self.addEventListener('fetch', e => {
+async function _fetch(e) {
     const { request } = e;
     const url = new URL(request.url);
+
+    if (debug) log({ method: request.method, url: request.url });
 
     if (request.method !== 'GET') return;
 
@@ -115,7 +148,7 @@ self.addEventListener('fetch', e => {
     } else {
         e.respondWith(fromCacheOrNetwork(request));
     }
-});
+}
 
 // --- helpers ---
 function appendURL(url, append) {
@@ -126,8 +159,10 @@ async function redirectOr404(path) {
     const cache = await cacheOpen;
     const hit = await cache.match(path, { ignoreSearch: true });
     if (hit) {
+        if (debug) log('REDIRECT', path);
         return Response.redirect(path, 302);
     } else {
+        if (debug) log('404', path);
         return new Response('Not Found', { status: 404, statusText: 'Not Found' });
     }
 }
@@ -136,9 +171,10 @@ async function fromCacheOrNetwork(req) {
     const cache = await cacheOpen;
     const hit = await cache.match(req, { ignoreSearch: true });
     if (hit) {
+        if (debug) log('CACHE HIT', req.url);
         return hit;
     }
-    if (debug) log('CACHE MISS');
+    if (debug) log('CACHE MISS', req.url);
     const net = await fetch_safe(req);
     cache.put(req, net.clone());
     log(`put: ${net.url}`);
