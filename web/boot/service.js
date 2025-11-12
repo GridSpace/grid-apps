@@ -1,8 +1,10 @@
 // --- configurable ---
-const CACHE_VERSION = 'boot-001';
+const CACHE_VERSION = 'boot-003';
 const VERSION_KEY = '/__version__';
+const cacheOpen = caches.open(CACHE_VERSION);
 
 let loaded = 0;
+let debug = false;
 let mode = 'cached';
 let BUNDLE_URL = '/boot/bundle.bin';
 
@@ -12,6 +14,8 @@ self.addEventListener('install', e => log('install'));
 self.addEventListener('activate', e => log('activate'));
 // self.addEventListener('fetch', e => log('fetch', e.request.url));
 
+log('cache version', CACHE_VERSION);
+
 // --- lifecycle ---
 self.skipWaiting();
 self.addEventListener('activate', e => e.waitUntil(clients.claim()));
@@ -19,7 +23,8 @@ self.addEventListener('activate', e => e.waitUntil(clients.claim()));
 // --- mode control ---
 self.addEventListener('message', e => {
     const data = e.data || {};
-    const { clear, disable, version } = data;
+    const { debug, clear, disable, version } = data;
+    debug = data.debug ?? debug;
     if (clear) {
         clearCache();
     }
@@ -48,7 +53,7 @@ async function clearCache() {
 
 // --- version check and preload ---
 async function ensureVersion(incomingVersion) {
-    const cache = await caches.open(CACHE_VERSION);
+    const cache = await cacheOpen;
     let needPreload = false;
 
     const existing = await cache.match(VERSION_KEY);
@@ -79,7 +84,7 @@ async function ensureVersion(incomingVersion) {
 async function fetch_safe(req) {
     const res = await fetch(req);
     if (res.redirected) {
-        log({ was_redirected_cloning: res.url });
+        log({ redirect_clone: res.url });
         // clone into a fresh non-redirect response
         const clone = res.clone();
         return new Response(await clone.blob(), {
@@ -99,7 +104,7 @@ self.addEventListener('fetch', e => {
     if (request.method !== 'GET') return;
 
     if (mode == 'transparent') {
-        e.respondWith(fetch_safe(e.request));
+        e.respondWith(fetch(e.request));
         return;
     }
 
@@ -118,7 +123,7 @@ function appendURL(url, append) {
 }
 
 async function redirectOr404(path) {
-    const cache = await caches.open(CACHE_VERSION);
+    const cache = await cacheOpen;
     const hit = await cache.match(path, { ignoreSearch: true });
     if (hit) {
         return Response.redirect(path, 302);
@@ -128,11 +133,12 @@ async function redirectOr404(path) {
 }
 
 async function fromCacheOrNetwork(req) {
-    const cache = await caches.open(CACHE_VERSION);
+    const cache = await cacheOpen;
     const hit = await cache.match(req, { ignoreSearch: true });
     if (hit) {
         return hit;
     }
+    if (debug) log('CACHE MISS');
     const net = await fetch_safe(req);
     cache.put(req, net.clone());
     log(`put: ${net.url}`);
@@ -154,7 +160,7 @@ const sec_headers = {
 // --- preload & unpack bundle ---
 async function preloadBundle() {
     loaded = 0;
-    const cache = await caches.open(CACHE_VERSION);
+    const cache = await cacheOpen;
     const res = await fetch(BUNDLE_URL, { cache: 'no-store' });
     const buf = await res.arrayBuffer();
     const files = await unpackBundle(buf);

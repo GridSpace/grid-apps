@@ -103,7 +103,7 @@
         "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
         "dryrun": "gs-app-server --debug --single --alt --dryrun",
         "dev": "npm run pack-dev && gs-app-server --debug --single",
-        "prod": "npm run pack-prod && npm run webpack-src prod && gs-app-server",
+        "prod": "npm run pack-prod && gs-app-server",
         "start": "npm run prebuild prod && electron .",
         "start-dev": "npm run prebuild prod && electron . --devel",
         "start-dbg": "npm run prebuild && electron . --debugg",
