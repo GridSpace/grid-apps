@@ -26,6 +26,7 @@ self.lang['fr-fr'] = {
     ghost:          "translucide",  // left render pop menu (wireframe)
     hide:           "cacher",       // left render pop menu (invisible)
     home:           "origine",
+    info:           "info",         // info menu
     import:         "importer",
     install:        "installer",
     language:       "langue",
@@ -40,7 +41,7 @@ self.lang['fr-fr'] = {
     profs:          "profils",      // right menu "profiles"
     prefs:          "préférences",  // right menu "preferences"
     preview:        "prévisualiser",
-    quit:           "quitter",          // quit/exit the application (electron)
+    quit:           "quitter",      // quit/exit the application (electron)
     recent:         "récent",
     rename:         "renommer",
     render:         "rendu",        // left render pop menu

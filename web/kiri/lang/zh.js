@@ -21,10 +21,11 @@ self.lang['zh'] = {
     filter:         "筛选",
     front:          "前面",
     fullscreen:     "全屏",
-    help:           "帮助",
     ghost:          "透明",       // 左侧渲染弹出菜单（线框）
+    help:           "帮助",
     hide:           "隐藏",       // 左侧渲染弹出菜单（不可见）
     home:           "主页",
+    info:           "信息",       // info menu
     import:         "导入",
     install:        "安装",
     language:       "语言",
@@ -39,7 +40,7 @@ self.lang['zh'] = {
     profs:          "配置",       // 右侧菜单"配置"
     prefs:          "偏好",       // 右侧菜单"偏好设置"
     preview:        "预览",
-    quit:           "退出",               // quit/exit the application (electron)
+    quit:           "退出",       // quit/exit the application (electron)
     recent:         "最近",
     rename:         "重命名",
     render:         "渲染",       // 左侧渲染弹出菜单

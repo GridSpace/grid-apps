@@ -22,10 +22,11 @@ self.lang['en-us'] = {
     filter:         "filter",
     front:          "front",
     fullscreen:     "fullscreen",
-    help:           "help",
     ghost:          "ghost",        // left render pop menu (wireframe)
+    help:           "help",
     hide:           "hide",         // left render pop menu (invisible)
     home:           "home",
+    info:           "info",         // info menu
     import:         "import",
     install:        "install",
     language:       "language",

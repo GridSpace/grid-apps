@@ -3,13 +3,13 @@
 self.lang['pt'] =
 self.lang['pt-pt'] = {
     // common keys and menus
-    animate:        "animar",      // CAM animate button
-    arrange:        "organizar",      // layout workspace objects
+    animate:        "animar",       // CAM animate button
+    arrange:        "organizar",    // layout workspace objects
     axis:           "eixo",         // left object scale pop menu
     back:           "voltar",
-    clear:          "limpar",        // clear workspace (remove all objects)
+    clear:          "limpar",       // clear workspace (remove all objects)
     copy:           "copiar",
-    clone:          "clonar",        // create duplicate
+    clone:          "clonar",       // create duplicate
     delete:         "excluir",
     detail:         "detalhe",
     done:           "pronto",
@@ -23,47 +23,48 @@ self.lang['pt-pt'] = {
     front:          "frente",
     fullscreen:     "ecrã completo",
     help:           "ajuda",
-    ghost:          "fantasma",        // left render pop menu (wireframe)
-    hide:           "ocultar",         // left render pop menu (invisible)
+    ghost:          "fantasma",     // left render pop menu (wireframe)
+    hide:           "ocultar",      // left render pop menu (invisible)
     home:           "início",
+    info:           "info",         // info menu
     import:         "importar",
     install:        "instalar",
     language:       "idioma",
     left:           "esquerda",
     machines:       "máquinas",     // device or machine
-    mesh:           "malha",             // mesh editing
+    mesh:           "malha",        // mesh editing
     metric:         "métrico",
     name:           "nome",
-    new:            "novo",          // file new
-    off:            "desligado",              // turn something off (like a lightbulb)
-    on:             "ligado",           // turn something on (like a lightbulb)
-    profs:          "perfis",     // right menu "profiles"
-    prefs:          "preferências",  // right menu "preferences"
+    new:            "novo",         // file new
+    off:            "desligado",    // turn something off (like a lightbulb)
+    on:             "ligado",       // turn something on (like a lightbulb)
+    profs:          "perfis",       // right menu "profiles"
+    prefs:          "preferências", // right menu "preferences"
     preview:        "pré-visualizar",
-    quit:           "sair",             // quit/exit the application (electron)
+    quit:           "sair",         // quit/exit the application (electron)
     recent:         "recente",
     rename:         "renomear",
-    render:         "renderizar",       // left render pop menu
+    render:         "renderizar",   // left render pop menu
     reset:          "redefinir",
     right:          "direita",
-    rotate:         "rodar",       // left rotate pop menu
+    rotate:         "rodar",        // left rotate pop menu
     save:           "guardar",
-    scale:          "escalar",        // left object scale pop menu
+    scale:          "escalar",      // left object scale pop menu
     select:         "seleccionar",
     setup:          "configurar",
     settings:       "definições",
     size:           "tamanho",
     slice:          "fatiar",
-    solid:          "sólido",        // view type pop menu
+    solid:          "sólido",       // view type pop menu
     start:          "iniciar",
     tool:           "ferramenta",
-    tools:          "ferramentas",        // CAM tool menu button
+    tools:          "ferramentas",  // CAM tool menu button
     top:            "topo",
     type:           "tipo",         // CAM tool type
     uninstall:      "desinstalar",
     version:        "versão",
-    view:           "visualizar",         // left view pop menu
-    wire:           "aramado",         // left render pop menu
+    view:           "visualizar",   // left view pop menu
+    wire:           "aramado",      // left render pop menu
     volume:         "volume",       // device build area
 
     acct_xpo:       ["faça uma cópia de segurança do seu dispositivo","e perfis de dispositivo com a opção","de incluir objectos e posições","do espaço de trabalho"],
@@ -93,14 +94,14 @@ self.lang['pt-pt'] = {
     dm_appp:        "Preferências da Aplicação",
 
     // CAM Tool Dialog
-    td_tyem:        "topo",          // end mill
-    td_tybm:        "esférico",         // ball mill
-    td_tytm:        "cónico",        // taper mill
-    td_tydr:        "broca",           // drill
+    td_tyem:        "topo",         // end mill
+    td_tybm:        "esférico",     // ball mill
+    td_tytm:        "cónico",       // taper mill
+    td_tydr:        "broca",        // drill
     td_tonm:        "ferramenta #",
     td_shft:        "haste",        // endmill shaft specs
-    td_flut:        "canelura",        // endmill flute specs
-    td_tapr:        "conicidade",        // endmill taper specs
+    td_flut:        "canelura",     // endmill flute specs
+    td_tapr:        "conicidade",   // endmill taper specs
 
     // DEVICE dialog groups
     dv_gr_dev:      "dispositivo",

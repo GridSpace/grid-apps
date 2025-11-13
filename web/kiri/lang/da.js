@@ -3,13 +3,13 @@
 self.lang['da'] =
 self.lang['da-dk'] = {
     // common keys and menus
-    animate:        "animer",      // CAM animate button
-    arrange:        "arranger",      // layout workspace objects
+    animate:        "animer",       // CAM animate button
+    arrange:        "arranger",     // layout workspace objects
     axis:           "akse",         // left object scale pop menu
     back:           "tilbage",
-    clear:          "ryd",        // clear workspace (remove all objects)
+    clear:          "ryd",          // clear workspace (remove all objects)
     copy:           "kopier",
-    clone:          "klon",           // create duplicate
+    clone:          "klon",         // create duplicate
     delete:         "slet",
     detail:         "detaljer",
     done:           "færdig",
@@ -23,30 +23,30 @@ self.lang['da-dk'] = {
     front:          "front",
     fullscreen:     "fuld skærm",
     help:           "hjælp",
-    ghost:          "spøgelse",        // left render pop menu (wireframe)
-    hide:           "skjul",         // left render pop menu (invisible)
+    ghost:          "spøgelse",     // left render pop menu (wireframe)
+    hide:           "skjul",        // left render pop menu (invisible)
     home:           "hjem",
     import:         "importer",
     install:        "installer",
     language:       "sprog",
     left:           "venstre",
     machines:       "maskiner",     // device or machine
-    mesh:           "mesh",             // mesh editing
+    mesh:           "mesh",         // mesh editing
     metric:         "måleenhed",
     name:           "navn",
-    new:            "ny",              // file new
-    off:            "fra",              // turn something off (like a lightbulb)
-    on:             "til",              // turn something on (like a lightbulb)
-    profs:          "profiler",          // right menu "profiles"
-    prefs:          "præferencer",        // left menu "preferences"
+    new:            "ny",           // file new
+    off:            "fra",          // turn something off (like a lightbulb)
+    on:             "til",          // turn something on (like a lightbulb)
+    profs:          "profiler",     // right menu "profiles"
+    prefs:          "præferencer",  // left menu "preferences"
     preview:        "forhåndsvisning",
-    quit:           "afslut",           // quit/exit the application (electron)
+    quit:           "afslut",       // quit/exit the application (electron)
     recent:         "nylig",
     rename:         "omdøb",
     render:         "render",       // left render pop menu
     reset:          "nulstil",
     right:          "højre",
-    rotate:         "roter",       // left rotate pop menu
+    rotate:         "roter",        // left rotate pop menu
     save:           "gem",
     scale:          "skala",        // left object scale pop menu
     select:         "vælg",
@@ -57,14 +57,14 @@ self.lang['da-dk'] = {
     solid:          "solid",        // view type pop menu
     start:          "start",
     tool:           "værktøj",
-    tools:          "værktøjer",        // CAM tool menu button
+    tools:          "værktøjer",    // CAM tool menu button
     top:            "top",
     type:           "type",         // CAM tool type
     uninstall:      "afinstaller",
     version:        "version",
-    view:           "vis",         // left view pop menu
+    view:           "vis",          // left view pop menu
     wire:           "tråd",         // left render pop menu
-    volume:         "volumen",       // device build area
+    volume:         "volumen",      // device build area
 
     acct_xpo: ["lav en sikkerhedskopi af din enhed","og enhedsprofiler med mulighed for at","medtage arbejdsområdeobjekter og positioner"],
 
@@ -93,14 +93,14 @@ self.lang['da-dk'] = {
     dm_appp:        "programindstillinger",
 
     // CAM Tool Dialog
-    td_tyem:        "ende",          // end mill
-    td_tybm:        "kugle",         // ball mill
-    td_tytm:        "konisk",        // taper mill
-    td_tydr:        "bor",           // drill
+    td_tyem:        "ende",         // end mill
+    td_tybm:        "kugle",        // ball mill
+    td_tytm:        "konisk",       // taper mill
+    td_tydr:        "bor",          // drill
     td_tonm:        "værktøj #",
     td_shft:        "skaft",        // endmill shaft specs
-    td_flut:        "spånrille",        // endmill flute specs
-    td_tapr:        "konisk",        // endmill taper specs
+    td_flut:        "spånrille",    // endmill flute specs
+    td_tapr:        "konisk",       // endmill taper specs
 
     // DEVICE dialog groups
     dv_gr_dev: "enhed",

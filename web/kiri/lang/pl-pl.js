@@ -25,6 +25,7 @@ self.lang['pl-pl'] = {
     ghost:          "szkielet",     // left render pop menu (wireframe)
     hide:           "ukryj",        // left render pop menu (invisible)
     home:           "początek",
+    info:           "info",         // info menu
     import:         "import",
     install:        "instaluj",
     language:       "język",
@@ -39,7 +40,7 @@ self.lang['pl-pl'] = {
     profs:          "profile",      // right menu "profiles"
     prefs:          "preferencje",  // right menu "preferences"
     preview:        "podgląd",
-    quit:           "zakończ",          // quit/exit the application (electron)
+    quit:           "zakończ",      // quit/exit the application (electron)
     recent:         "ostatnie",
     rename:         "zmień nazwę",
     render:         "renderuj",     // left render pop menu
