@@ -624,6 +624,7 @@ function rewriteHtmlVersion(req, res, next) {
             }
             body += data;
             res.setHeader('Content-Length', Buffer.byteLength(body));
+            res.setHeader('Content-Type', "application/javascript; charset=utf-8");
             real_write.call(res, body);
             real_end.call(res);
         };

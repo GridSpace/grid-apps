@@ -14,15 +14,6 @@ const devel = process.argv.slice(2).map(v => v.replaceAll('-', '')).indexOf('dev
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = true;
 
-// console.log({ appDir, usrDir, logDir, datDir, basDir });
-// console.log({ argv: process.argv, debug, devel });
-// console.log({
-//     cwd: process.cwd(),
-//     dir: require('fs').readdirSync('.'),
-//     out: require('fs').readdirSync(appDir),
-//     ___: require('fs').readdirSync(basDir)
-// });
-
 server({
     port: 5309,
     apps: basDir,
