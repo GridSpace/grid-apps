@@ -228,6 +228,10 @@ self.lang['da-dk'] = {
     mo_lazr: "laser skæring",
     mo_cncm: "CNC fræsning",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Enhed",
+    mi_prof:        "Profil",
+
     // SETUP
     su_menu: "setup",
     su_devi: "enheder",
@@ -261,6 +265,11 @@ self.lang['da-dk'] = {
     ws_menu: "vis",
     ws_save: "gem",
     ws_cler: "ryd",
+
+    // RIGHT PANEL
+    rp_objs:        "objekter",
+    rp_rngs:        "områder",
+    rp_opls:        "operationsliste",
 
     // OPTIONS
     op_menu: "brugerflade",
@@ -849,7 +858,7 @@ self.lang['da-dk'] = {
     or_offy_l: "udgangspunkt forskydning Y",
 
     // CAM ORIGIN
-    co_menu: "udgangspunkt",
+    or_menu: "udgangspunkt",
     co_offx_s: "forskydning x",
     co_offx_l: ["forskyd udgangspunkt langs x akse","i arbejdsområde enheder"],
     co_offy_s: "forskydning y",
@@ -979,5 +988,25 @@ self.lang['da-dk'] = {
     sa_opzo_s: "z forskydning",
     sa_opzo_l: ["z lag forskydning","næsten altid 0.0","0.0-1.0 i millimeter"],
     sa_opaa_s: "anti alias",
-    sa_opaa_l: ["aktiver anti-aliasing","producerer større filer","kan sløre detaljer"]
+    sa_opaa_l: ["aktiver anti-aliasing","producerer større filer","kan sløre detaljer"],
+
+    // EXPORT DIALOG
+    ex_job:         "job",
+    ex_fnam:        "filnavn",
+    ex_fsiz:        "filstørrelse (bytes)",
+    ex_time:        "tidsestimat (h:m:s)",
+    ex_matl:        "materiale",
+    ex_dens:        "filamenttæthed (g/cm^3)",
+    ex_fuse:        "filament brugt (mm)",
+    ex_wght:        "printet vægt (g)",
+    ex_gcpv:        "gcode forhåndsvisning",
+    ex_dwnl:        "download",
+    ex_bamb:        "send til bambu",
+    ex_octo:        "octoprint",
+    ex_host:        "vært",
+    ex_akey:        "nøgle",
+    ex_rsnm:        "harpiks brugt ML",
+    ex_layr:        "lag",
+    ex_ptim:        "printtid",
+    ex_segs:        "segmenter"
 };

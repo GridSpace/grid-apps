@@ -228,6 +228,10 @@ self.lang['fr-fr'] = {
     mo_lazr:        "Découpe Laser",
     mo_cncm:        "Fraisage CNC",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Périphérique",
+    mi_prof:        "Profil",
+
     // SETUP
     su_menu:        "configuration",
     su_devi:        "Appareils",
@@ -261,6 +265,11 @@ self.lang['fr-fr'] = {
     ws_menu:        "vue",
     ws_save:        "Sauvegarder",
     ws_cler:        "Effacer",
+
+    // RIGHT PANEL
+    rp_objs:        "objets",
+    rp_rngs:        "plages",
+    rp_opls:        "liste des opérations",
 
     // OPTIONS
     op_menu:        "interface",
@@ -849,7 +858,7 @@ self.lang['fr-fr'] = {
     or_offy_l:      "décalage d'origine Y",
 
     // CAM ORIGIN
-    co_menu:        "origine",
+    or_menu:        "origine",
     co_offx_s:      "décalage x",
     co_offx_l:      ["décaler l'origine le long de l'axe x","en unités d'espace de travail"],
     co_offy_s:      "décalage y",
@@ -979,5 +988,25 @@ self.lang['fr-fr'] = {
     sa_opzo_s:      "décalage z",
     sa_opzo_l:      ["décalage de couche z","presque toujours 0.0","0.0-1.0 en millimètres"],
     sa_opaa_s:      "anti-crénelage",
-    sa_opaa_l:      ["activer l'anti-crénelage","produit des fichiers plus volumineux","peut flouter les détails"]
+    sa_opaa_l:      ["activer l'anti-crénelage","produit des fichiers plus volumineux","peut flouter les détails"],
+
+    // EXPORT DIALOG
+    ex_job:         "travail",
+    ex_fnam:        "nom de fichier",
+    ex_fsiz:        "taille du fichier (octets)",
+    ex_time:        "estimation du temps (h:m:s)",
+    ex_matl:        "matériau",
+    ex_dens:        "densité du filament (g/cm^3)",
+    ex_fuse:        "filament utilisé (mm)",
+    ex_wght:        "poids imprimé (g)",
+    ex_gcpv:        "aperçu gcode",
+    ex_dwnl:        "télécharger",
+    ex_bamb:        "envoyer à bambu",
+    ex_octo:        "octoprint",
+    ex_host:        "hôte",
+    ex_akey:        "clé",
+    ex_rsnm:        "résine utilisée ML",
+    ex_layr:        "couches",
+    ex_ptim:        "temps d'impression",
+    ex_segs:        "segments"
 };

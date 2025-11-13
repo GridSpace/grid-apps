@@ -228,6 +228,10 @@ self.lang['en-us'] = {
     mo_lazr:        "Laser Cut",
     mo_cncm:        "CNC Mill",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Device",
+    mi_prof:        "Profile",
+
     // SETUP
     su_menu:        "setup",
     su_devi:        "Devices",
@@ -261,6 +265,11 @@ self.lang['en-us'] = {
     ws_menu:        "view",
     ws_save:        "Save",
     ws_cler:        "Clear",
+
+    // RIGHT PANEL
+    rp_objs:        "objects",
+    rp_rngs:        "ranges",
+    rp_opls:        "operation list",
 
     // OPTIONS
     op_menu:        "interface",
@@ -849,7 +858,7 @@ self.lang['en-us'] = {
     or_offy_l:      "origin offset Y",
 
     // CAM ORIGIN
-    co_menu:        "origin",
+    or_menu:        "origin",
     co_offx_s:      "offset x",
     co_offx_l:      ["offset origin along x axis","in workspace units"],
     co_offy_s:      "offset y",
@@ -979,5 +988,25 @@ self.lang['en-us'] = {
     sa_opzo_s:      "z offset",
     sa_opzo_l:      ["z layer offset","almost always 0.0","0.0-1.0 in millimeters"],
     sa_opaa_s:      "anti alias",
-    sa_opaa_l:      ["enable anti-aliasing","produces larger files","can blur details"]
+    sa_opaa_l:      ["enable anti-aliasing","produces larger files","can blur details"],
+
+    // EXPORT DIALOG
+    ex_job:         "job",
+    ex_fnam:        "file name",
+    ex_fsiz:        "file size (bytes)",
+    ex_time:        "time estimate (h:m:s)",
+    ex_matl:        "material",
+    ex_dens:        "filament density (g/cm^3)",
+    ex_fuse:        "filament used (mm)",
+    ex_wght:        "printed weight (g)",
+    ex_gcpv:        "gcode preview",
+    ex_dwnl:        "download",
+    ex_bamb:        "send to bambu",
+    ex_octo:        "octoprint",
+    ex_host:        "host",
+    ex_akey:        "key",
+    ex_rsnm:        "resin used ML",
+    ex_layr:        "layers",
+    ex_ptim:        "print time",
+    ex_segs:        "segments"
 };

@@ -661,7 +661,7 @@ self.kiri.load(api => {
         }
     });
 
-    api.event.on("load-done", function() {
+    api.event.on("init-done", function() {
         if (init) {
             return;
         }

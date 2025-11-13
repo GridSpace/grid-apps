@@ -227,6 +227,10 @@ self.lang['pl-pl'] = {
     mo_lazr:        "Cięcie laserowe",
     mo_cncm:        "Frezowanie CNC",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Urządzenie",
+    mi_prof:        "Profil",
+
     // SETUP
     su_menu:        "konfiguracja",
     su_devi:        "Urządzenia",
@@ -260,6 +264,11 @@ self.lang['pl-pl'] = {
     ws_menu:        "widok",
     ws_save:        "Zapisz",
     ws_cler:        "Wyczyść",
+
+    // RIGHT PANEL
+    rp_objs:        "obiekty",
+    rp_rngs:        "zakresy",
+    rp_opls:        "lista operacji",
 
     // OPTIONS
     op_menu:        "interfejs",
@@ -848,7 +857,7 @@ self.lang['pl-pl'] = {
     or_offy_l:      "przesunięcie odniesienia Y",
 
     // CAM ORIGIN
-    co_menu:        "odniesienie",
+    or_menu:        "odniesienie",
     co_offx_s:      "przesunięcie x",
     co_offx_l:      ["przesuń odniesienie wzdłuż osi x","w jednostkach przestrzeni roboczej"],
     co_offy_s:      "przesunięcie y",
@@ -978,5 +987,25 @@ self.lang['pl-pl'] = {
     sa_opzo_s:      "przesunięcie z",
     sa_opzo_l:      ["przesunięcie warstwy z","prawie zawsze 0.0","0.0-1.0 w milimetrach"],
     sa_opaa_s:      "antyaliasing",
-    sa_opaa_l:      ["włącz antyaliasing","tworzy większe pliki","może rozmyć szczegóły"]
+    sa_opaa_l:      ["włącz antyaliasing","tworzy większe pliki","może rozmyć szczegóły"],
+
+    // EXPORT DIALOG
+    ex_job:         "zadanie",
+    ex_fnam:        "nazwa pliku",
+    ex_fsiz:        "rozmiar pliku (bajty)",
+    ex_time:        "szacowany czas (h:m:s)",
+    ex_matl:        "materiał",
+    ex_dens:        "gęstość filamentu (g/cm^3)",
+    ex_fuse:        "użyty filament (mm)",
+    ex_wght:        "waga wydruku (g)",
+    ex_gcpv:        "podgląd gcode",
+    ex_dwnl:        "pobierz",
+    ex_bamb:        "wyślij do bambu",
+    ex_octo:        "octoprint",
+    ex_host:        "host",
+    ex_akey:        "klucz",
+    ex_rsnm:        "użyta żywica ML",
+    ex_layr:        "warstwy",
+    ex_ptim:        "czas druku",
+    ex_segs:        "segmenty"
 };

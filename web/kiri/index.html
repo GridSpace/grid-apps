@@ -92,7 +92,7 @@
         <div class="f-row top-menu">
             <span>
                 <i class="fas fa-folder"></i>
-                <label>files</label>
+                <label lk="fe_menu">files</label>
                 <div class="top-menu-drop top-menu-right">
                     <div class="content">
                         <div id="file-new">
@@ -120,7 +120,7 @@
             </span>
             <span>
                 <i class="fas fa-eye"></i>
-                <label>view</label>
+                <label lk="vu_menu">view</label>
                 <div class="top-menu-drop top-menu-right">
                     <div class="content">
                         <div id="view-home">
@@ -158,7 +158,7 @@
             </span>
             <span>
                 <i class="fas fa-code-branch"></i>
-                <label>mode</label>
+                <label lk="mo_menu">mode</label>
                 <div class="top-menu-drop top-menu-right">
                     <div class="content">
                         <div id="mode-fdm">
@@ -195,7 +195,7 @@
             </span>
             <span>
                 <i class="fas fa-cog"></i>
-                <label>setup</label>
+                <label lk="su_menu">setup</label>
                 <div class="top-menu-drop top-menu-right">
                     <div class="content">
                         <div id="set-device">
@@ -421,8 +421,8 @@
             <!-- vertical separation between workspace and right tray -->
             <div id="panel-right" class="f-col j-start settings">
                 <div id="mode-info">
-                    <div><label>Device</label><span id="mode-device"></span></div>
-                    <div><label>Profile</label><span id="mode-profile"></span></div>
+                    <div><label lk="mi_devi">Device</label><span id="mode-device"></span></div>
+                    <div><label lk="mi_prof">Profile</label><span id="mode-profile"></span></div>
                 </div>
                 <div class="set2-group f-col">
                     <details open>
@@ -633,27 +633,27 @@
         <div id="mod-x-any" class="mod-print mdialog f-col">
             <div class="f-row gap4">
                 <div class="f-col grow">
-                    <div class="header"><label>job</label></div>
+                    <div class="header"><label lk="ex_job">job</label></div>
                     <div id="print-info" class="f-col box">
-                        <div><label>file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
-                        <div><label>file size (bytes)</label><input id="print-filesize" size="12" disabled="true" /></div>
-                        <div><label>time estimate (h:m:s)</label><input id="output-time" size="12" disabled="true" /></div>
+                        <div><label lk="ex_fnam">file name</label><input id="print-filename" size="20" spellcheck="false" /></div>
+                        <div><label lk="ex_fsiz">file size (bytes)</label><input id="print-filesize" size="12" disabled="true" /></div>
+                        <div><label lk="ex_time">time estimate (h:m:s)</label><input id="output-time" size="12" disabled="true" /></div>
                     </div>
                 </div>
                 <div id="print-filament" class="f-col">
-                    <div class="header"><label>material</label></div>
+                    <div class="header"><label lk="ex_matl">material</label></div>
                     <div class="f-col box">
-                        <div><label>filament density (g/cm^3)</label><input id="print-density" size="12" value="1.25" /></div>
-                        <div><label>filament used (mm)</label><input id="print-length" size="12" disabled="true" /></div>
-                        <div><label>printed weight (g)</label><input id="print-weight" size="12" disabled="true" /></div>
+                        <div><label lk="ex_dens">filament density (g/cm^3)</label><input id="print-density" size="12" value="1.25" /></div>
+                        <div><label lk="ex_fuse">filament used (mm)</label><input id="print-length" size="12" disabled="true" /></div>
+                        <div><label lk="ex_wght">printed weight (g)</label><input id="print-weight" size="12" disabled="true" /></div>
                     </div>
                 </div>
             </div>
-            <div id="code-preview-head" class="header"><label>gcode preview</label></div>
+            <div id="code-preview-head" class="header"><label lk="ex_gcpv">gcode preview</label></div>
             <div id="code-preview" class="f-col box">
                 <div><textarea id="code-preview-textarea"></textarea></div>
             </div>
-            <div class="header"><label>download</label></div>
+            <div class="header"><label lk="ex_dwnl">download</label></div>
             <div class="f-row box">
                 <button id="print-download" class="grow">gcode</button>
                 <button id="print-palette" class="grow">palette</button>
@@ -661,7 +661,7 @@
                 <button id="print-3mf" class="grow">3mf</button>
             </div>
             <div id="bambu-output" class="f-col">
-                <div class="header"><label>send to bambu</label></div>
+                <div class="header"><label lk="ex_bamb">send to bambu</label></div>
                 <div class="f-row box gap4 a-center">
                     <label class="grow0 pad3">printer</label>
                     <select id="print-bambu-device"></select>
@@ -675,8 +675,8 @@
             <div id="send-to-octoprint" class="f-col box">
                 <div class="grow f-row">
                     <div class="f-col grow">
-                        <div id="ophost"><label>host</label><input id="octo-host" size="20" placeholder="http(s)://host:port" /></div>
-                        <div id="opapik"><label>key</label><input id="octo-apik" size="20" /></div>
+                        <div id="ophost"><label lk="ex_host">host</label><input id="octo-host" size="20" placeholder="http(s)://host:port" /></div>
+                        <div id="opapik"><label lk="ex_akey">key</label><input id="octo-apik" size="20" /></div>
                     </div>
                     <button id="print-octoprint">send</button>
                 </div>
@@ -684,25 +684,25 @@
             </div>
         </div>
         <div id="mod-x-sla" class="mod-print mdialog f-col">
-            <div class="header"><label>export</label></div>
+            <div class="header"><label lk="export">export</label></div>
             <div id="print-info" class="f-col box">
-                <div><label>file name</label><input id="print-filename-sla" size="20" spellcheck="false" /></div>
+                <div><label lk="ex_fnam">file name</label><input id="print-filename-sla" size="20" spellcheck="false" /></div>
                 <div><label>resin used ML</label><input id="print-volume" size="10" spellcheck="false" /></div>
                 <div><label>layers</label><input id="print-layers" size="10" spellcheck="false" /></div>
                 <div><label>print time</label><input id="print-time" size="10" spellcheck="false" /></div>
             </div>
-            <div class="header"><label>download</label></div>
+            <div class="header"><label lk="ex_dwnl">download</label></div>
             <div class="f-row box">
-                <button id="print-sla" class="grow">download</button>
+                <button id="print-sla" class="grow" lk="ex_dwnl">download</button>
             </div>
         </div>
         <div id="mod-x-laser" class="mod-print mdialog f-col">
-            <div class="header"><label>export</label></div>
+            <div class="header"><label lk="export">export</label></div>
             <div id="print-info" class="f-col box">
-                <div><label>file name</label><input id="print-filename-laser" size="20" spellcheck="false" /></div>
+                <div><label lk="ex_fnam">file name</label><input id="print-filename-laser" size="20" spellcheck="false" /></div>
                 <div><label>segments</label><input id="print-lines" size="12" disabled="true" /></div>
             </div>
-            <div class="header"><label>download</label></div>
+            <div class="header"><label lk="ex_dwnl">download</label></div>
             <div class="f-row box">
                 <button id="print-svg" class="grow">svg</button>
                 <button id="print-dxf" class="grow">dxf</button>

@@ -227,6 +227,10 @@ self.lang['zh'] = {
     mo_lazr:        "激光切割",
     mo_cncm:        "CNC铣削",
 
+    // MODE INFO (right panel)
+    mi_devi:        "设备",
+    mi_prof:        "配置",
+
     // 设置
     su_menu:        "设置",
     su_devi:        "设备",
@@ -260,6 +264,11 @@ self.lang['zh'] = {
     ws_menu:        "视图",
     ws_save:        "保存",
     ws_cler:        "清除",
+
+    // RIGHT PANEL
+    rp_objs:        "对象",
+    rp_rngs:        "范围",
+    rp_opls:        "操作列表",
 
     // 选项
     op_menu:        "界面",
@@ -400,7 +409,6 @@ self.lang['zh'] = {
     fl_menu:        "基础",
     fl_lahi_s:      "层高",
     fl_lahi_l:      ["每个切片的高度","单位：毫米","应该 >= 切片高度"],
-    fl_rate_s:      "外壳速度",
     fl_rate_s:      "外壳速度",
     fl_rate_l:      ["外壳打印最大速度","单位：毫米/秒"],
     fl_frat_s:      "填充速度",
@@ -849,7 +857,7 @@ self.lang['zh'] = {
     or_offy_l:      "原点Y偏移",
 
     // CAM 原点
-    co_menu:        "原点",
+    or_menu:        "原点",
     co_offx_s:      "X偏移",
     co_offx_l:      ["沿X轴偏移原点","单位：工作区单位"],
     co_offy_s:      "Y偏移",
@@ -979,5 +987,25 @@ self.lang['zh'] = {
     sa_opzo_s:      "Z偏移",
     sa_opzo_l:      ["Z层偏移","几乎总是0.0","0.0-1.0（毫米）"],
     sa_opaa_s:      "抗锯齿",
-    sa_opaa_l:      ["启用抗锯齿","产生更大的文件","可能模糊细节"]
+    sa_opaa_l:      ["启用抗锯齿","产生更大的文件","可能模糊细节"],
+
+    // EXPORT DIALOG
+    ex_job:         "任务",
+    ex_fnam:        "文件名",
+    ex_fsiz:        "文件大小 (字节)",
+    ex_time:        "时间估计 (h:m:s)",
+    ex_matl:        "材料",
+    ex_dens:        "材料密度 (g/cm^3)",
+    ex_fuse:        "已用材料 (mm)",
+    ex_wght:        "打印重量 (g)",
+    ex_gcpv:        "G代码预览",
+    ex_dwnl:        "下载",
+    ex_bamb:        "发送到拓竹",
+    ex_octo:        "OctoPrint",
+    ex_host:        "主机",
+    ex_akey:        "密钥",
+    ex_rsnm:        "树脂用量 ML",
+    ex_layr:        "层数",
+    ex_ptim:        "打印时间",
+    ex_segs:        "段数"
 };

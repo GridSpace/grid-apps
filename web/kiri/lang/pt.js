@@ -228,6 +228,10 @@ self.lang['pt-pt'] = {
     mo_lazr:        "Corte Laser",
     mo_cncm:        "Fresadora CNC",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Dispositivo",
+    mi_prof:        "Perfil",
+
     // SETUP
     su_menu:        "configurar",
     su_devi:        "Dispositivos",
@@ -261,6 +265,11 @@ self.lang['pt-pt'] = {
     ws_menu:        "visualizar",
     ws_save:        "Guardar",
     ws_cler:        "Limpar",
+
+    // RIGHT PANEL
+    rp_objs:        "objectos",
+    rp_rngs:        "intervalos",
+    rp_opls:        "lista de operações",
 
     // OPTIONS
     op_menu:        "interface",
@@ -849,7 +858,7 @@ self.lang['pt-pt'] = {
     or_offy_l:      "desvio de origem Y",
 
     // CAM ORIGIN
-    co_menu:        "origem",
+    or_menu:        "origem",
     co_offx_s:      "desvio x",
     co_offx_l:      ["desviar origem ao longo do eixo x","em unidades de espaço de trabalho"],
     co_offy_s:      "desvio y",
@@ -979,5 +988,25 @@ self.lang['pt-pt'] = {
     sa_opzo_s:      "desvio z",
     sa_opzo_l:      ["desvio de camada z","quase sempre 0.0","0.0-1.0 em milímetros"],
     sa_opaa_s:      "anti-aliasing",
-    sa_opaa_l:      ["activar anti-aliasing","produz ficheiros maiores","pode desfocar detalhes"]
+    sa_opaa_l:      ["activar anti-aliasing","produz ficheiros maiores","pode desfocar detalhes"],
+
+    // EXPORT DIALOG
+    ex_job:         "trabalho",
+    ex_fnam:        "nome do ficheiro",
+    ex_fsiz:        "tamanho do ficheiro (bytes)",
+    ex_time:        "estimativa de tempo (h:m:s)",
+    ex_matl:        "material",
+    ex_dens:        "densidade do filamento (g/cm^3)",
+    ex_fuse:        "filamento usado (mm)",
+    ex_wght:        "peso impresso (g)",
+    ex_gcpv:        "pré-visualização gcode",
+    ex_dwnl:        "transferir",
+    ex_bamb:        "enviar para bambu",
+    ex_octo:        "octoprint",
+    ex_host:        "anfitrião",
+    ex_akey:        "chave",
+    ex_rsnm:        "resina usada ML",
+    ex_layr:        "camadas",
+    ex_ptim:        "tempo de impressão",
+    ex_segs:        "segmentos"
 };

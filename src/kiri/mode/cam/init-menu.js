@@ -105,7 +105,7 @@ export function menu() {
     separator:           newBlank({ class:"set-sep", driven }),
     camEaseAngle:        newInput(LANG.ou_eang_s, {title:LANG.ou_eang_l, convert:toFloat, bound:bound(0.1,85), show:() => ui.camEaseDown.checked}),
     camFullEngage:       newInput(LANG.ou_feng_s, {title:LANG.ou_feng_l, convert:toFloat, bound:bound(0.1,1.0)}),
-    _____:               newGroup(LANG.co_menu, $('cam-origin'), { modes:CAM, driven, separator }),
+    _____:               newGroup(LANG.or_menu, $('cam-origin'), { modes:CAM, driven, separator }),
     camOriginTop:        newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l}),
     camOriginCenter:     newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
     separator:           newBlank({ class:"set-sep", driven }),

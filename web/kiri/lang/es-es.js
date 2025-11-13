@@ -228,6 +228,10 @@ self.lang['es-es'] = {
     mo_lazr:        "Corte láser",
     mo_cncm:        "Fresado CNC",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Dispositivo",
+    mi_prof:        "Perfil",
+
     // SETUP
     su_menu:        "configuración",
     su_devi:        "Dispositivos",
@@ -261,6 +265,11 @@ self.lang['es-es'] = {
     ws_menu:        "vista",
     ws_save:        "Guardar",
     ws_cler:        "Limpiar",
+
+    // RIGHT PANEL
+    rp_objs:        "objetos",
+    rp_rngs:        "rangos",
+    rp_opls:        "lista de operaciones",
 
     // OPTIONS
     op_menu:        "interfaz",
@@ -849,7 +858,7 @@ self.lang['es-es'] = {
     or_offy_l:      "desplazamiento de origen Y",
 
     // CAM ORIGIN
-    co_menu:        "origen",
+    or_menu:        "origen",
     co_offx_s:      "desplazamiento x",
     co_offx_l:      ["desplazar origen a lo largo del eje x","en unidades de espacio de trabajo"],
     co_offy_s:      "desplazamiento y",
@@ -979,5 +988,25 @@ self.lang['es-es'] = {
     sa_opzo_s:      "desplazamiento z",
     sa_opzo_l:      ["desplazamiento de capa z","casi siempre 0.0","0.0-1.0 en milímetros"],
     sa_opaa_s:      "antialiasing",
-    sa_opaa_l:      ["habilitar antialiasing","produce archivos más grandes","puede difuminar detalles"]
+    sa_opaa_l:      ["habilitar antialiasing","produce archivos más grandes","puede difuminar detalles"],
+
+    // EXPORT DIALOG
+    ex_job:         "trabajo",
+    ex_fnam:        "nombre de archivo",
+    ex_fsiz:        "tamaño de archivo (bytes)",
+    ex_time:        "estimación de tiempo (h:m:s)",
+    ex_matl:        "material",
+    ex_dens:        "densidad de filamento (g/cm^3)",
+    ex_fuse:        "filamento usado (mm)",
+    ex_wght:        "peso impreso (g)",
+    ex_gcpv:        "vista previa gcode",
+    ex_dwnl:        "descargar",
+    ex_bamb:        "enviar a bambu",
+    ex_octo:        "octoprint",
+    ex_host:        "host",
+    ex_akey:        "clave",
+    ex_rsnm:        "resina usada ML",
+    ex_layr:        "capas",
+    ex_ptim:        "tiempo de impresión",
+    ex_segs:        "segmentos"
 };

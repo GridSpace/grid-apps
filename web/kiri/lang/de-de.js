@@ -228,6 +228,10 @@ self.lang['de-de'] = {
     mo_lazr:        "Laser-Schnitt",
     mo_cncm:        "CNC-Fräsen",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Gerät",
+    mi_prof:        "Profil",
+
     // SETUP
     su_menu:        "Setup",
     su_devi:        "Geräte",
@@ -261,6 +265,11 @@ self.lang['de-de'] = {
     ws_menu:        "Ansicht",
     ws_save:        "Speichern",
     ws_cler:        "Leeren",
+
+    // RIGHT PANEL
+    rp_objs:        "Objekte",
+    rp_rngs:        "Bereiche",
+    rp_opls:        "Operationsliste",
 
     // OPTIONS
     op_menu:        "Interface",
@@ -849,7 +858,7 @@ self.lang['de-de'] = {
     or_offy_l:      "Nullpunkt Offset Y",
 
     // CAM ORIGIN
-    co_menu:        "Nullpunkt",
+    or_menu:        "Nullpunkt",
     co_offx_s:      "Offset X",
     co_offx_l:      ["Nullpunkt entlang X-Achse offsetieren","in Arbeitsbereich-Einheiten"],
     co_offy_s:      "Offset Y",
@@ -979,5 +988,25 @@ self.lang['de-de'] = {
     sa_opzo_s:      "Z-Offset",
     sa_opzo_l:      ["Z-Schicht-Offset","fast immer 0.0","0.0-1.0 in mm"],
     sa_opaa_s:      "Anti-Alias",
-    sa_opaa_l:      ["Anti-Aliasing aktivieren","produziert größere Dateien","kann Details verwischen"]
+    sa_opaa_l:      ["Anti-Aliasing aktivieren","produziert größere Dateien","kann Details verwischen"],
+
+    // EXPORT DIALOG
+    ex_job:         "Auftrag",
+    ex_fnam:        "Dateiname",
+    ex_fsiz:        "Dateigröße (Bytes)",
+    ex_time:        "Zeitschätzung (h:m:s)",
+    ex_matl:        "Material",
+    ex_dens:        "Filamentdichte (g/cm^3)",
+    ex_fuse:        "Filamentverbrauch (mm)",
+    ex_wght:        "Druckgewicht (g)",
+    ex_gcpv:        "GCode-Vorschau",
+    ex_dwnl:        "Herunterladen",
+    ex_bamb:        "An Bambu senden",
+    ex_octo:        "OctoPrint",
+    ex_host:        "Host",
+    ex_akey:        "Schlüssel",
+    ex_rsnm:        "Harzverbrauch ML",
+    ex_layr:        "Schichten",
+    ex_ptim:        "Druckzeit",
+    ex_segs:        "Segmente"
 };
