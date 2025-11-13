@@ -242,6 +242,13 @@ details[open] summary::after {
     font-size: larger;
 }
 
+#app-help-me {
+    position: absolute;
+    top: 3px;
+    right: -2px;
+    font-size: 10px;
+}
+
 /** dark conversion */
 .dark button[disabled] {
     color: #888;
