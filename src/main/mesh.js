@@ -99,6 +99,7 @@ function init() {
 
     // for electron
     self.mesh = { api };
+    self.electron = navigator.userAgent.includes('Electron');
 }
 
 // restore space layout and view from previous session

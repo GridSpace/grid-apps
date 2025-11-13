@@ -5,6 +5,7 @@ exports.default = async function notarizing(context) {
     const { electronPlatformName, appOutDir } = context;
 
     if (process.env.SKIPNOT || electronPlatformName !== 'darwin') {
+        console.log('SKIP NOTARIZING');
         return;
     }
 

@@ -39,14 +39,19 @@ function checkReady() {
     if (document.readyState === 'complete') {
         let bootctrl = navigator.serviceWorker.controller;
         console.log(`kiri | boot ctrl | ` + (bootctrl ? true : false));
-        kiri.api = run();
-        self.$ = kiri.api.web.$;
+        let api = kiri.api = run();
+        self.$ = api.web.$;
         for (let fn of load) {
             safeExec(fn);
         }
         load = undefined;
-        kiri.api.event.emit('load-done', stats);
-        if (bootctrl) {
+        api.event.emit('load-done', stats);
+        if (api.electron) {
+            $('install').classList.add('hide');
+            $('app-quit').classList.remove('hide');
+            $('app-name-text').innerText = "More Info";
+            $('top-sep').style.display = 'flex';
+        } else if (bootctrl) {
             $('install').classList.add('hide');
             $('uninstall').classList.remove('hide');
             $('uninstall').onclick = () => {

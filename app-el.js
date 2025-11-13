@@ -9,8 +9,8 @@ const appDir = path.join(usrDir, 'gapp');
 const cnfDir = path.join(appDir, 'conf');
 const logDir = path.join(appDir, 'logs');
 const datDir = path.join(appDir, 'data');
-const debug = process.argv.slice(2).map(v => v.replaceAll('-', '')).contains('debugg');
-const devel = process.argv.slice(2).map(v => v.replaceAll('-', '')).contains('devel');
+const debug = process.argv.slice(2).map(v => v.replaceAll('-', '')).indexOf('debugg') >= 0;
+const devel = process.argv.slice(2).map(v => v.replaceAll('-', '')).indexOf('devel') >= 0;
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = true;
 
@@ -40,23 +40,31 @@ function createWindow() {
         width: 1600,
         height: 900,
         webPreferences: {
+            // contextIsolation: true,
+            // nodeIntegration: false,
+            // sandbox: true,
+            // preload: undefined
+            // nodeIntegration: true,
+            // contextIsolation: false
             // preload: path.join(__dirname, 'preload.js')
         }
     });
 
+    const { webContents } = mainWindow;
+
     mainWindow.loadURL('http://localhost:5309/kiri');
 
     // default normal url navigation or page opens to happen outside Electron
-    mainWindow.webContents.setWindowOpenHandler((details) => {
+    webContents.setWindowOpenHandler((details) => {
         // console.log('EXTERNAL', details);
         shell.openExternal(details.url);
         return { action: 'deny' }
     });
 
     // prevent "other" urls from opening inside Electron (alerts are problematic)
-    mainWindow.webContents.on('will-navigate', (event, url) => {
+    webContents.on('will-navigate', (event, url) => {
         // console.log('DIVERT', url);
-        if (url.endsWith('/kiri')  || url.endsWith('/kiri/')) {
+        if (url.endsWith('/kiri') || url.endsWith('/kiri/')) {
             return;
         }
         if (url.endsWith('/mesh') || url.endsWith('/mesh/')) {
@@ -66,9 +74,13 @@ function createWindow() {
         shell.openExternal(url);
     });
 
+    webContents.on('did-finish-load', () => {
+        mainWindow.webContents.executeJavaScript(`{ let x = document.getElementById('app-quit'); if (x) { x.onclick = () => window.close() } }; null;`);
+    });
+
     if (devel) {
         console.log("opening developer tools");
-        mainWindow.webContents.openDevTools();
+        webContents.openDevTools();
     }
 }
 
@@ -77,9 +89,7 @@ app.on('ready', () => {
 });
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+    app.quit();
 });
 
 app.on('activate', () => {

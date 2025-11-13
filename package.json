@@ -82,39 +82,39 @@
         "webpack-cli": "^5.1.4"
     },
     "scripts": {
-        "setup": "npm run setup-mods && npm i && npm run clean && npm run webpack-ext",
-        "setup-mods": "cd mods && npm i",
-        "build": "npm run prebuild && electron-builder",
-        "build-nopublish": "npm run prebuild && electron-builder --publish never",
         "build-debug": "npm run prebuild && DEBUG=electron-builder electron-builder",
-        "build-linux": "npm run build -- --linux --x64",
         "build-linux-arm": "npm run build -- --linux --arm64",
-        "build-win": "npm run build -- --win --x64",
-        "build-win-arm": "npm run build -- --win --arm64",
-        "build-mac": "npm run build -- --mac --arm64",
+        "build-linux": "npm run build -- --linux --x64",
         "build-mac-intel": "npm run build -- --mac --x64",
-        "bundle": "COMPRESS=1 npm run bundle:prod",
-        "bundle:dev": "node bin/bundler.mjs",
+        "build-mac": "npm run build -- --mac --arm64",
+        "build-nopublish": "npm run prebuild && electron-builder --publish never",
+        "build-win-arm": "npm run build -- --win --arm64",
+        "build-win": "npm run build -- --win --x64",
+        "build": "npm run prebuild && electron-builder",
+        "bundle:dev": "node bin/bundler.mjs bin/bundle.config.json",
         "bundle:prod": "node bin/bundler.mjs bin/bundle-prod.config.json",
+        "bundle": "COMPRESS=1 npm run bundle:prod",
         "clean": "rm -rf alt build data dist src/pack src.old tmp web.old .bcache",
-        "docs-dev": "docusaurus start --config conf/docusaurus.config.js",
-        "docs-build": "docusaurus build --config conf/docusaurus.config.js",
-        "docs-serve": "docusaurus serve --config conf/docusaurus.config.js",
-        "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
-        "dryrun": "gs-app-server --debug --single --alt --dryrun",
         "dev": "npm run pack-dev && gs-app-server --debug --single",
-        "prod": "npm run pack-prod && gs-app-server",
-        "start": "npm run prebuild prod && electron .",
-        "start-dev": "npm run prebuild prod && electron . --devel",
-        "start-dbg": "npm run prebuild && electron . --debugg",
-        "start-ddb": "npm run prebuild && electron . --devel --debugg",
-        "mk-links": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > conf/links.csv",
+        "docs-build": "docusaurus build --config conf/docusaurus.config.js",
+        "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
+        "docs-dev": "docusaurus start --config conf/docusaurus.config.js",
+        "docs-serve": "docusaurus serve --config conf/docusaurus.config.js",
+        "dryrun": "gs-app-server --debug --single --alt --dryrun",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
-        "prebuild": "npm run setup && npm run webpack-src prod && node bin/electron-pre.js",
-        "postbuild": "node bin/electron-post.js",
-        "preinstall": "node bin/install-pre.js",
+        "mk-links": "find src web -type l | xargs -I{} sh -c 'echo \"{},$(readlink {})\"' > conf/links.csv",
         "pack-dev": "npm run dryrun && npm run webpack-src && npm run dryrun && npm run bundle:dev",
         "pack-prod": "npm run dryrun && npm run webpack-src prod && npm run dryrun && npm run bundle",
+        "postbuild": "node bin/electron-post.js",
+        "prebuild": "npm run setup && npm run pack-dev prod && node bin/electron-pre.js",
+        "preinstall": "node bin/install-pre.js",
+        "prod": "npm run pack-prod && gs-app-server",
+        "setup-mods": "cd mods && npm i",
+        "setup": "npm run setup-mods && npm i && npm run clean && npm run webpack-ext",
+        "start-dbg": "npm run prebuild && electron . --debugg",
+        "start-ddb": "npm run prebuild && electron . --devel --debugg",
+        "start-dev": "npm run prebuild prod && electron . --devel",
+        "start": "npm run prebuild prod && electron .",
         "webpack-ext": "npm run webpack-three && npm run webpack-zip",
         "webpack-src": "node bin/esbuild.config.mjs",
         "webpack-three": "npx webpack --config bin/webpack-three-esm.js",
@@ -128,52 +128,17 @@
         "artifactName": "KiriMoto-${os}-${arch}.${ext}",
         "files": [
             {
-                "from": "tmp/src",
-                "to": "src",
+                "from": "tmp",
+                "to": "",
                 "filter": [
                     "**/*"
                 ]
             },
-            {
-                "from": "tmp/web",
-                "to": "web",
-                "filter": [
-                    "**/*"
-                ]
-            },
-            {
-                "from": "tmp/mod",
-                "to": "mod",
-                "filter": [
-                    "**/*"
-                ]
-            },
-            {
-                "from": "tmp/mod/node_modules",
-                "to": "mod/node_modules",
-                "filter": [
-                    "**/*"
-                ]
-            },
-            {
-                "from": "tmp/mods",
-                "to": "mods",
-                "filter": [
-                    "**/*"
-                ]
-            },
-            {
-                "from": "tmp/mods/node_modules",
-                "to": "mods/node_modules",
-                "filter": [
-                    "**/*"
-                ]
-            },
+            "app-el.js",
+            "app.js",
             "bin/*",
             "conf/**/*",
             "data/cache/**/*",
-            "app-el.js",
-            "app.js",
             "package.json"
         ],
         "extraFiles": [],
