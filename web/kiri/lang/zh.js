@@ -39,6 +39,7 @@ self.lang['zh'] = {
     profs:          "配置",       // 右侧菜单"配置"
     prefs:          "偏好",       // 右侧菜单"偏好设置"
     preview:        "预览",
+    quit:           "退出",               // quit/exit the application (electron)
     recent:         "最近",
     rename:         "重命名",
     render:         "渲染",       // 左侧渲染弹出菜单

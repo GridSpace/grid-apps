@@ -40,6 +40,7 @@ self.lang['de-de'] = {
     profs:          "Profile",          // right menu "profiles"
     prefs:          "Einstellungen",    // right menu "preferences"
     preview:        "Vorschau",
+    quit:           "Beenden",          // quit/exit the application (electron)
     recent:         "Letzte Objekte",
     rename:         "Umbenennen",
     render:         "Rendern",          // left render pop menu

@@ -40,6 +40,7 @@ self.lang['da-dk'] = {
     profs:          "profiler",          // right menu "profiles"
     prefs:          "præferencer",        // left menu "preferences"
     preview:        "forhåndsvisning",
+    quit:           "afslut",           // quit/exit the application (electron)
     recent:         "nylig",
     rename:         "omdøb",
     render:         "render",       // left render pop menu

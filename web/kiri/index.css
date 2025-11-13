@@ -223,6 +223,10 @@ details[open] summary::after {
     border-radius: 3px;
 }
 
+.nocap {
+    text-transform: none !important;
+}
+
 /* container for entire page / app */
 #app {
     position: fixed;

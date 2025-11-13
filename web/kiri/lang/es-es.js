@@ -40,6 +40,7 @@ self.lang['es-es'] = {
     profs:          "perfiles",     // right menu "profiles"
     prefs:          "preferencias", // right menu "preferences"
     preview:        "vista previa",
+    quit:           "salir",            // quit/exit the application (electron)
     recent:         "reciente",
     rename:         "renombrar",
     render:         "renderizar",   // left render pop menu
