@@ -682,6 +682,7 @@ export async function fdm_prepare(widgets, settings, update) {
 
             for (let rec of layer) {
                 overate = rec.overate >= 0 ? rec.overate : overate;
+                let bmult = params.firstLayerBeltFact ?? 1;
                 let brate = params.firstLayerRate || firstLayerRate;
                 let point = rec.point;
                 let belty = rec.belty = -point.y + (point.z * belt.slope);
@@ -695,6 +696,8 @@ export async function fdm_prepare(widgets, settings, update) {
                     // apply base speed to segments touching belt
                     rec.speed = params.firstLayerRate || Math.min(rec.speed, lowrate);
                     rec.fan = params.firstLayerFanSpeed;
+                    // apply base flowrate multiplier to segments touching belt
+                    rec.emit *= bmult;
                     minx = Math.min(minx, point.x, lastout.point.x);
                     maxx = Math.max(maxx, point.x, lastout.point.x);
                     maxy = Math.max(maxy, point.y);
