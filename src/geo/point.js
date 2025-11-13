@@ -127,6 +127,12 @@ class Point {
         return p;
     }
 
+    // annotate instance with other field data (see clone())
+    annotate(obj = {}) {
+        Object.assign(this, obj);
+        return this;
+    }
+
     slopeTo(p) {
         return newSlope(this, p);
     }
@@ -439,10 +445,6 @@ class Point {
      */
     isEqual(p) {
         return this === p || (this.x === p.x && this.y === p.y && this.z === p.z);
-    }
-
-    isEqual2D(p) {
-        return this === p || (this.x === p.x && this.y === p.y);
     }
 
     /**

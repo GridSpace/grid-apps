@@ -22,11 +22,13 @@ self.lang['en-us'] = {
     filter:         "filter",
     front:          "front",
     fullscreen:     "fullscreen",
-    help:           "help",
     ghost:          "ghost",        // left render pop menu (wireframe)
+    help:           "help",
     hide:           "hide",         // left render pop menu (invisible)
     home:           "home",
+    info:           "info",         // info menu
     import:         "import",
+    install:        "install",
     language:       "language",
     left:           "left",
     machines:       "machines",     // device or machine
@@ -39,6 +41,7 @@ self.lang['en-us'] = {
     profs:          "profiles",     // right menu "profiles"
     prefs:          "preferences",  // right menu "preferences"
     preview:        "preview",
+    quit:           "quit",         // quit/exit the application (electron)
     recent:         "recent",
     rename:         "rename",
     render:         "render",       // left render pop menu
@@ -58,6 +61,7 @@ self.lang['en-us'] = {
     tools:          "tools",        // CAM tool menu button
     top:            "top",
     type:           "type",         // CAM tool type
+    uninstall:      "uninstall",
     version:        "version",
     view:           "view",         // left view pop menu
     wire:           "wire",         // left render pop menu
@@ -225,6 +229,10 @@ self.lang['en-us'] = {
     mo_lazr:        "Laser Cut",
     mo_cncm:        "CNC Mill",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Device",
+    mi_prof:        "Profile",
+
     // SETUP
     su_menu:        "setup",
     su_devi:        "Devices",
@@ -258,6 +266,11 @@ self.lang['en-us'] = {
     ws_menu:        "view",
     ws_save:        "Save",
     ws_cler:        "Clear",
+
+    // RIGHT PANEL
+    rp_objs:        "objects",
+    rp_rngs:        "ranges",
+    rp_opls:        "operation list",
 
     // OPTIONS
     op_menu:        "interface",
@@ -321,8 +334,10 @@ self.lang['en-us'] = {
     pt_heal_l:      ["attempt to heal non-manifold meshes during slicing. may increase slicing time. enables a warning when non-manifold geometries are detected."],
     pt_thrd_s:      "threaded",
     pt_thrd_l:      ["use parallel processing when browser supports nested workers. may increase memory pressure on larger models. disable if you are getting out of memory errors"],
-    pt_assy_s:      "assembly",
+    pt_assy_s:      "web asm",
     pt_assy_l:      ["use web assembly when supported by browser. if you experience artifacts or memory errors, try disabling this."],
+    pt_wgpu_s:      "web gpu",
+    pt_wgpu_l:      ["use web gpu when supported by browser. if you experience artifacts or memory errors, try disabling this."],
 
     xp_menu:        "exports",
 
@@ -844,7 +859,7 @@ self.lang['en-us'] = {
     or_offy_l:      "origin offset Y",
 
     // CAM ORIGIN
-    co_menu:        "origin",
+    or_menu:        "origin",
     co_offx_s:      "offset x",
     co_offx_l:      ["offset origin along x axis","in workspace units"],
     co_offy_s:      "offset y",
@@ -974,5 +989,25 @@ self.lang['en-us'] = {
     sa_opzo_s:      "z offset",
     sa_opzo_l:      ["z layer offset","almost always 0.0","0.0-1.0 in millimeters"],
     sa_opaa_s:      "anti alias",
-    sa_opaa_l:      ["enable anti-aliasing","produces larger files","can blur details"]
+    sa_opaa_l:      ["enable anti-aliasing","produces larger files","can blur details"],
+
+    // EXPORT DIALOG
+    ex_job:         "job",
+    ex_fnam:        "file name",
+    ex_fsiz:        "file size (bytes)",
+    ex_time:        "time estimate (h:m:s)",
+    ex_matl:        "material",
+    ex_dens:        "filament density (g/cm^3)",
+    ex_fuse:        "filament used (mm)",
+    ex_wght:        "printed weight (g)",
+    ex_gcpv:        "gcode preview",
+    ex_dwnl:        "download",
+    ex_bamb:        "send to bambu",
+    ex_octo:        "octoprint",
+    ex_host:        "host",
+    ex_akey:        "key",
+    ex_rsnm:        "resin used ML",
+    ex_layr:        "layers",
+    ex_ptim:        "print time",
+    ex_segs:        "segments"
 };

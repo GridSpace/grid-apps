@@ -22,8 +22,9 @@ export class Topo {
 
     async generate(opt = {}) {
         let { state, op, onupdate, ondone } = opt;
-        let { widget, settings, tabs } = opt.state;
+        let { widget, settings, tabs, color } = state;
         let { controller, process } = settings;
+        let { webGPU } = controller;
 
         let axis = op.axis.toLowerCase(),
             tool = new Tool(settings, op.tool),
@@ -59,26 +60,28 @@ export class Topo {
         this.maxo = tool.profileDim.maxo * resolution;
         this.diam = tool.fluteDiameter();
         this.unit = tool.unitScale();
+        this.units = controller.units === 'in' ? 25.4 : 1
         this.zoff = widget.track.top || 0;
         this.leave = op.leave || 0;
         this.linear = op.linear || false;
-        this.lineColor = state.settings.controller.dark ? 0xffff00 : 0x555500;
+        this.lineColor = color;//controller.dark ? 0xffff00 : 0x555500;
         this.offStart = op.offStart ?? 0;
         this.offEnd = op.offEnd ?? 0;
+        this.bounds  = bounds;
+        this.gpu = webGPU ?? false;
 
         onupdate(0, "lathe");
 
+        const parts = webGPU ? [ 0.8, 0.2 ] : [ 0.25, 0.75 ];
         const range = this.range = { min: Infinity, max: -Infinity };
-        const slices = this.sliced = await this.slice(scale(onupdate, 0.25, 0));
+        const slices = this.sliced = await this.slice(scale(onupdate, parts[0], 0));
+
         for (let slice of slices) {
             range.min = Math.min(range.min, slice.z);
             range.max = Math.max(range.max, slice.z);
-            slice.output()
-                .setLayer("lathe", { line: 0x888888 })
-                .addPolys(slice.topPolys());
         }
 
-        const lathe = await this.lathe(scale(onupdate, 0.75, 0.25));
+        const lathe = await this.lathe(scale(onupdate, parts[1], parts[0]));
 
         onupdate(1, "lathe");
         ondone(lathe);
@@ -88,10 +91,9 @@ export class Topo {
     }
 
     async slice(onupdate) {
-        const { vertices, resolution, tabverts, zoff, offStart, offEnd, tool, unit } = this;
+        const { vertices, resolution, tabverts, zoff, offStart, offEnd, units } = this;
         const { minions } = self.kiri_worker;
         const range = this.range = { min: Infinity, max: -Infinity };
-        const box = this.box = new THREE.Box2();
 
         // swap XZ in shared array
         for (let i = 0, l = vertices.length; i < l; i += 3) {
@@ -104,8 +106,8 @@ export class Topo {
         }
 
         // add tool diameter to slice min/max range to fully carve part
-        range.min += offStart * unit;
-        range.max -= offEnd * unit;
+        range.min += offStart * units;
+        range.max -= offEnd * units;
         range.max += resolution * 2;
 
         // merge in tab vertices here so they don't affect slice range / dimensions
@@ -118,6 +120,11 @@ export class Topo {
 
         // re-create shared vertex array for workers
         this.vertices = [].appendAll(vertices).appendAll(tabverts).toFloat32().toShared();
+
+        // rp.rasterizeMesh(vertices, resolution).then(rpo => console.log({ rpo }));
+        if (this.gpu) {
+            return await this.sliceGPU(onupdate);
+        }
 
         const zSpan = range.max - range.min;
         const shards = Math.ceil(Math.min(25, vertices.length / 27000));
@@ -149,6 +156,96 @@ export class Topo {
         } else {
             return await this.sliceWorker(onupdate);
         }
+    }
+
+    async sliceGPU(onupdate) {
+        const { angle, diam, linear, offStart, offEnd, resolution, tool, units, vertices, zBottom } = this;
+
+        // invert tool Z offset for gpu code
+        let toolBounds = new THREE.Box3()
+            .expandByPoint({ x: -this.diam/2, y: -diam/2, z: 0 })
+            .expandByPoint({ x: this.diam/2, y: diam/2, z: 0 });
+        let toolPos = tool.slice();
+        let minz = Infinity;
+        for (let i=0; i<toolPos.length; i += 3) {
+            // toolPos[i+2] = -toolPos[i+2];
+            toolBounds.expandByPoint({ x: 0, y: 0, z: toolPos[i+2] });
+            minz = Math.min(minz,toolPos[i+2]);
+        }
+        let toolData = { positions: toolPos, bounds: toolBounds };
+
+        // console.time('swap XZ vertices');
+        // swap XZ vertices for gpu code
+        for (let i=0; i<vertices.length; i+= 3) {
+            let tmp = vertices[i+2];
+            vertices[i+2] = vertices[i+0];
+            vertices[i+1] = -vertices[i+1];
+            vertices[i+0] = tmp;
+        }
+        // console.timeEnd('swap XZ vertices');
+
+        let gpu = await self.get_raster_gpu({
+            mode: "radial",
+            resolution,
+            rotationStep: angle,
+            radialRotationOffset: 90
+        });
+        let xStep = Math.max(1, Math.round(this.step / resolution));
+        let boundsOverride = this.bounds.clone();
+        boundsOverride.min.x += offStart * units;
+        boundsOverride.max.x -= offEnd * units;
+        await gpu.loadTool({
+            sparseData: toolData
+        });
+        await gpu.loadTerrain({
+            triangles: vertices,
+            boundsOverride,
+            onProgress(pct) { onupdate(pct/100) }
+        });
+        let output = await gpu.generateToolpaths({
+            xStep,
+            yStep: 1,
+            zFloor: zBottom,
+            onProgress(i,j) { onupdate(i/j) }
+        });
+        gpu.terminate();
+
+        let { numStrips, strips } = output;
+        let degPerRow = 360 / numStrips;
+        let slices = this.gpu_slices = [];
+        let xmult = resolution * xStep;
+        let xoff = boundsOverride.min.x;
+        let rows = [];
+        for (let i=0; i<numStrips; i++) {
+            let points = Array.from(strips[i].pathData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
+            rows.push(points);
+        }
+        if (linear) {
+            for (let i=0; i<rows.length; i++) {
+                let slice = newSlice(i);
+                slice.index = i;
+                slice.camLines = [ newPolygon(rows[i]).setOpen() ];
+                if (i % 2 === 1) slice.camLines[0].reverse();
+                slices.push(slice);
+            }
+        } else {
+            let { pointsPerLine } = strips[0];
+            for (let i=0; i<pointsPerLine; i++) {
+                let slice = newSlice(i);
+                let points = rows.map(row => row[i]);
+                if (i % 2 === 1) points.reverse();
+                slice.index = i;
+                slice.camLines = [ newPolygon(points).setOpen() ];
+                slices.push(slice);
+            }
+        }
+        for (let slice of slices) {
+            slice.output()
+                .setLayer("lathe", { line: this.lineColor })
+                .addPoly(slice.camLines[0].clone().applyRotations());
+        }
+        // console.log({ webGPU: output, slices });
+        return slices;
     }
 
     async sliceWorker(onupdate) {
@@ -215,11 +312,17 @@ export class Topo {
 
     async lathe(onupdate) {
         const { minions } = self.kiri_worker;
-        if (minions?.running > 1) {
+        if (this.gpu) {
+            return await this.latheGPU(onupdate);
+        } else if (minions?.running > 1) {
             return await this.latheMinions(onupdate);
         } else {
             return await this.latheWorker(onupdate);
         }
+    }
+
+    async latheGPU(onupdate) {
+        return this.gpu_slices;
     }
 
     lathePath(slices, tool) {

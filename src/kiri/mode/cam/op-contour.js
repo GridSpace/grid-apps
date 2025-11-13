@@ -8,7 +8,7 @@ import { newPolygon } from '../../../geo/polygon.js';
 import { tip2tipEmit } from '../../../geo/paths.js';
 
 function createFilter(op, origin, axis) {
-    console.log({ origin, axis });
+    // console.log({ origin, axis });
     let ok = () => true;
     let filter = slices => slices;
     let filterString = op.filter?.map(l => l.trim()).join('\n');
@@ -113,11 +113,11 @@ class OpContour extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut } = this;
-        let { settings, widget } = state;
+        let { settings } = state;
         let { process } = settings;
 
         let { setTolerance, setTool, setSpindle, setPrintPoint } = ops;
-        let { camOut, polyEmit, newLayer, printPoint, lastPoint } = ops;
+        let { camOut, newLayer, printPoint, lastPoint } = ops;
         let { bounds, zmax } = ops;
 
         let toolDiam = this.toolDiam;
@@ -136,9 +136,9 @@ class OpContour extends CamOp {
             if (!slice.camLines) {
                 continue;
             }
-            let polys = [], poly, emit;
+            let polys = [], poly;
             slice.camLines.forEach(function (poly) {
-                if (depthFirst) poly = poly.clone(true);
+                if (depthFirst) poly = poly.clone(true).annotate({ slice: slice.index + 1 });
                 polys.push({ first: poly.first(), last: poly.last(), poly: poly });
             });
             if (depthFirst) {
@@ -150,7 +150,7 @@ class OpContour extends CamOp {
                         poly.reverse();
                     }
                     poly.forEachPoint(function (point, pidx) {
-                        camOut(point.clone(), pidx > 0, stepover);
+                        camOut(point.clone(), pidx > 0, { moveLen: stepover });
                     }, false);
                 });
                 newLayer();
@@ -164,7 +164,7 @@ class OpContour extends CamOp {
                     poly.reverse();
                 }
                 poly.forEachPoint(function (point, pidx) {
-                    camOut(point.clone(), pidx > 0, stepover);
+                    camOut(point.clone().annotate({ slice: poly.slice }), pidx > 0, { moveLen: stepover });
                 }, false);
                 newLayer();
                 return lastPoint();

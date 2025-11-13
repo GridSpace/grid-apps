@@ -37,7 +37,7 @@ class OpLathe extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices } = state;
+        let { addSlices, color } = state;
         let filter = createFilter(op);
         this.topo = await topo4_generate({
             op,

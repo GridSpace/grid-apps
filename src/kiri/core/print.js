@@ -56,8 +56,8 @@ class Print {
         // drop duplicates (usually intruced by FDM bisections)
         if (lastPoint && point && !arc && type !== 'lerp') {
             // nested due to uglify confusing browser
-            const { x, y, z } = lastPoint;
-            if (point.x == x && point.y == y && point.z == z && lastEmit == emit) {
+            const { x, y, z, a } = lastPoint;
+            if (point.x == x && point.y == y && point.z == z && point.a == z && lastEmit == emit) {
                 return lastOut;
             }
         }

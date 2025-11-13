@@ -31,13 +31,13 @@ let oversion;
 let dversion;
 let lastmod;
 let logger;
+let single;
 let debug;
 let http;
 let util;
 let dir;
 let log;
 let pre;
-let alt;
 
 const EventEmitter = require('events');
 class AppEmitter extends EventEmitter {}
@@ -65,9 +65,9 @@ function init(mod) {
     startTime = time();
     lastmod = mod.util.lastmod;
     logger = mod.log;
-    alt = ENV.alt;
     pre = ENV.pre || mod.meta.pre;
     debug = ENV.debug || mod.meta.debug;
+    single = ENV.single;
     oversion = ENV.over || mod.meta.over;
     crossOrigin = ENV.xorigin || mod.meta.xorigin || false;
     serviceWorker = (ENV.service || mod.meta.service) !== false;
@@ -76,13 +76,9 @@ function init(mod) {
     dir = mod.dir;
     log = mod.log;
 
-    if (ENV.single) console.log({ cwd: process.cwd(), env: ENV });
+    if (single) console.log({ cwd: process.cwd(), env: ENV });
     dversion = debug ? `_${version}` : version;
     forceUseCache = ENV.cache ? true : false;
-
-    if (!ENV.electron) {
-        generateDevices();
-    }
 
     if (pre) {
         for (let [k,v] of Object.entries(productionMap)) {
@@ -142,7 +138,8 @@ function init(mod) {
             return "reload";
         });
     }
-    mod.add(rewriteHtmlVersion);
+    mod.add(addAppHeaders);
+    mod.static("/lib/", "alt");
     mod.static("/lib/", "src");
     mod.static("/obj/", "web/obj");
     mod.static("/font/", "web/font");
@@ -156,7 +153,7 @@ function init(mod) {
     function load_modules(root, force) {
         lastmod(`${dir}/${root}`) && fs.readdirSync(`${dir}/${root}`).forEach(mdir => {
             const modpath = `${root}/${mdir}`;
-            if (dir.charAt(0) === '.' && !ENV.single) return;
+            if (dir.charAt(0) === '.' && !single) return;
             const stats = fs.lstatSync(`${mod.dir}/${modpath}`);
             if (!(stats.isDirectory() || stats.isSymbolicLink())) return;
             if (util.isfile(PATH.join(mod.dir,modpath,".disable"))) return;
@@ -194,17 +191,26 @@ function init(mod) {
         }
     }
 
-    if (alt) {
-        for (let [ key, val ] of Object.entries(append)) {
-            let src = `src/main/${key}.js`;
-            if (!fs.existsSync(src)) {
-                logger.log('missing:', src);
-                continue;
-            }
-            fs.mkdirSync(`alt/main`, { recursive: true });
-            let body = fs.readFileSync(src);
-            fs.writeFileSync(`alt/main/${key}.js`, body + val);
+    // create alt artifacts with module extensions
+    logger.log('creating artifacts', Object.keys(append));
+    for (let [ key, val ] of Object.entries(append)) {
+        let src = `src/main/${key}.js`;
+        if (!fs.existsSync(src)) {
+            logger.log('missing', src);
+            continue;
         }
+        fs.mkdirSync(`alt/main`, { recursive: true });
+        let body = fs.readFileSync(src);
+        fs.writeFileSync(`alt/main/${key}.js`, body + val);
+
+        src= `src/pack/${key}-main.js`;
+        if (!fs.existsSync(src)) {
+            logger.log('missing', src);
+            continue;
+        }
+        fs.mkdirSync(`alt/pack`, { recursive: true });
+        body = fs.readFileSync(src);
+        fs.writeFileSync(`alt/pack/${key}-main.js`, body + val);
     }
 };
 
@@ -303,7 +309,7 @@ function initModule(mod, file, dir) {
             const path = mod.dir + '/' + dir + '/' + file;
             try {
                 const body = fs.readFileSync(path);
-                logger.log({ inject: code, file, opt });
+                if (debug && !single) logger.log({ inject: code, file, opt });
                 if (opt.first) {
                     append[code] = body.toString() + '\n' + append[code];
                 } else {
@@ -426,28 +432,6 @@ function serveWasm(req, res, next) {
         res.end(fs.readFileSync(path));
     } else {
         next();
-    }
-}
-
-// pack/concat device script strings to inject into /code/ scripts
-function generateDevices() {
-    let root = PATH.join(dir,"src","kiri","dev");
-    let devs = {};
-    fs.readdirSync(root).forEach(type => {
-        let map = devs[type] = devs[type] || {};
-        fs.readdirSync(PATH.join(root,type)).forEach(device => {
-            let deviceName = device.endsWith('.json')
-                ? device.substring(0,device.length-5)
-                : device;
-            map[deviceName] = JSON.parse(fs.readFileSync(PATH.join(root,type,device)));
-        });
-    });
-    let dstr = JSON.stringify(devs);
-    util.mkdir(PATH.join(dir,"src","pack"));
-    fs.writeFileSync(PATH.join(dir,"src","pack","kiri-devs.js"), `export const devices = ${dstr};`);
-    if (alt) {
-        fs.mkdirSync('alt/pack', { recursive: true });
-        fs.writeFileSync(PATH.join(dir,"alt","pack","kiri-devs.js"), `export const devices = ${dstr};`);
     }
 }
 
@@ -574,10 +558,12 @@ function cookieValue(cookie,key) {
     }
 }
 
-function rewriteHtmlVersion(req, res, next) {
+function addAppHeaders(req, res, next) {
     if ([
         "/kiri/",
         "/mesh/",
+        "/lib/gpu/raster.js",
+        "/lib/gpu/raster-worker.js",
         "/lib/mesh/work.js",
         "/lib/kiri/run/worker.js",
         "/lib/kiri/run/minion.js",
@@ -586,36 +572,6 @@ function rewriteHtmlVersion(req, res, next) {
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
     }
-    if ([
-        "/lib/main/kiri.js",
-        "/lib/main/mesh.js"
-    ].indexOf(req.app.path) >= 0) {
-        addCorsHeaders(req, res);
-        // const data = append[req.app.path.split('/')[3].split('.')[0]];
-        const data = append[req.app.path.split('.')[0].split('/').pop()];
-
-        if (!data) return next();
-        if (debug) logger.log({ append: req.app.path, data: data.length });
-
-        const real_write = res.write;
-        const real_end = res.end;
-        let body = '';
-
-        res.write = function (chunk, encoding) {
-            body += chunk.toString(encoding);
-        };
-
-        res.end = function (chunk, encoding) {
-            if (chunk) {
-                body += chunk.toString(encoding);
-            }
-            body += data;
-            res.setHeader('Content-Length', Buffer.byteLength(body));
-            real_write.call(res, body);
-            real_end.call(res);
-        };
-    }
-
     next();
 }
 

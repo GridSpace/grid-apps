@@ -383,7 +383,7 @@ function menu_item(text, fn, short, id) {
 
 // create html elements
 function ui_build() {
-    let { bind, div, input, hr, label } = h;
+    let { bind, button, div, input, hr, label, span, textarea } = h;
     let { file, selection, mode, tool, sketch, prefs, add } = api;
     let trash = FontAwesome.icon({ prefix: "fas", iconName: "trash" }).html[0];
     let eye_open = FontAwesome.icon({ prefix: "fas", iconName: "eye" }).html[0];
@@ -395,13 +395,14 @@ function ui_build() {
             div('File'),
             div({ class: "menu-items" }, [
                 input({
-                    id: "import", type: "file", class: ["hide"], multiple: true,
+                    id: "import", type: "file", class: ["hide"], multiple: true, accept:".stl,.obj",
                     onchange(evt) { broker.send.load_files(evt.target.files) }
                 }),
                 menu_item('Import', file.import, 'I'),
                 menu_item('Export', file.export, 'X'),
                 hr(),
                 menu_item('Slicer', api.kirimoto),
+                menu_item('Script', api.script.toggle),
                 hr(),
                 menu_item('Close', window.close),
             ])
@@ -578,6 +579,15 @@ function ui_build() {
             div({ id: 'sketchtools', class: "tools sketch-on" }),
             div({ id: 'objecttools', class: "tools sketch-off" }),
             div({ id: 'logger', onmouseover() { log.show() } }),
+        ]),
+        div({ id: 'script', class: "hide" }, [
+            div({ id: 'script-header' }, [
+                span("script"),
+                div({ class: "grow" }),
+                button({ _: "run", onclick: api.script.execute }),
+                button({ _: "&times;", class: "close", onclick: api.script.hide })
+            ]),
+            textarea({ id: 'script-editor', rows: 30, cols: 65 }),
         ]),
         div({ id: 'grouplist' }),
         div({ id: 'selectlist' }),

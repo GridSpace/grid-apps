@@ -134,6 +134,7 @@ export function menu() {
     firstLayerFanSpeed:  newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:toInt,   bound:bound(0,255), show:isBelt}),
     firstLayerYOffset:   newInput(LANG.fl_zoff_s, {title:LANG.fl_zoff_l, convert:toFloat, show:isBelt}),
     firstLayerFlatten:   newInput(LANG.fl_flat_s, {title:LANG.fl_flat_l, convert:toFloat, show:isBelt}),
+    firstLayerBeltFact:  newInput(LANG.fl_mult_s, {title:LANG.fl_mult_l, convert:toFloat, bound:bound(0, 2), show:isBelt}),
     firstLayerRate:      newInput(LANG.fl_rate_s, {title:LANG.fl_rate_l, convert:toFloat}),
     firstLayerFillRate:  newInput(LANG.fl_frat_s, {title:LANG.fl_frat_l, convert:toFloat, show:isNotBelt}),
     separator:           newBlank({ class:"set-sep", driven, show:isBelt }),

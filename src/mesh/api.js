@@ -11,6 +11,7 @@ import { edges as meshEdges } from './edges.js';
 import { group as meshGroup } from './group.js';
 import { model as meshModel } from './model.js';
 import { sketch as meshSketch } from './sketch.js';
+import { script } from './script.js';
 import { newPolygon } from '../geo/polygon.js';
 import { THREE } from '../ext/three.js';
 import { $, $C, h } from '../moto/webui.js';
@@ -79,6 +80,7 @@ const selection = {
         selected = objects.map(o => o.models ? o.models : o).flat();
         tools = toolist || [];
         meshUtil.defer(selection.update);
+        return api.selection;
     },
 
     // @param group {MeshObject}
@@ -770,12 +772,55 @@ let add = {
         api.modal.bound.genvrt.focus();
     },
 
+    plane() {
+        const [ x,y ] = [ ...arguments ];
+        const box = new THREE.PlaneGeometry(1,1).toNonIndexed();
+        const vert = box.attributes.position.array;
+        const nmdl = new meshModel({ file: "plane", mesh: vert });
+        nmdl._loft = function(plane) {
+            function uv(v) {
+                let m = new Set();
+                let g = [...v].group(3).filter(a => {
+                    let k = a.map(v => v.round(5)).join('-');
+                    if (m.has(k)) return false;
+                    m.add(k); return true;
+                });
+                return [ g[0], g[1], g[3], g[2] ];
+            };
+            let s0 = uv(vert);
+            let s1 = uv(plane.attributes.position.array);
+            let v = [];
+            for (let i=0; i<4; i++) {
+                let p0 = [ s0[i], s0[(i+1)%4] ];
+                let p1 = [ s1[i], s1[(i+1)%4] ];
+                v.push(...p1[1]);
+                v.push(...p0[1]);
+                v.push(...p0[0]);
+                v.push(...p1[0]);
+                v.push(...p1[1]);
+                v.push(...p0[0]);
+            }
+            let pa = [...plane.attributes.position.array];
+            v.push(...pa.group(3).reverse().flat());
+            v.push(...vert);
+            const nmdl = new meshModel({ file: "loft", mesh: v.toFloat32() });
+            const ngrp = api.group.new([ nmdl ]);
+            selection.set([ nmdl ]);
+            return ngrp;
+        };
+        const ngrp = api.group.new([ nmdl ]);
+        ngrp.scale(x ?? 10, y ?? 10, 1).floor();
+        selection.set([ nmdl ]);
+        return ngrp;
+    },
+
     cube() {
+        const [ x,y,z ] = [ ...arguments ].map(v => parseFloat(v) || undefined);
         const box = new THREE.BoxGeometry(1,1,1).toNonIndexed();
         const vert = box.attributes.position.array;
         const nmdl = new meshModel({ file: "box", mesh: vert });
         const ngrp = api.group.new([ nmdl ]);
-        ngrp.scale(10, 10, 10).floor();
+        ngrp.scale(x ?? 10, y ?? 10, z ?? 10).floor();
         selection.set([ nmdl ]);
         return ngrp;
     },
@@ -964,7 +1009,8 @@ let file = {
                 ]),
                 h.div([
                     h.button({ _: "download OBJ", onclick() { doit('obj') } }),
-                    h.button({ _: "download STL", onclick() { doit('stl') } })
+                    h.button({ _: "download STL", onclick() { doit('stl') } }),
+                    h.button({ _: "download STEP", onclick() { doit('step') } }),
                 ])
             ]) ]
         });
@@ -984,7 +1030,7 @@ const tool = {
             return log('nothing to merge');
         }
         log(`merging ${models.length} models`).pin();
-        worker.model_merge(models.map(m => {
+        return worker.model_merge(models.map(m => {
             return { id: m.id, matrix: m.matrix }
         }))
         .then(data => {
@@ -995,6 +1041,7 @@ const tool = {
             api.selection.visible(false);
             api.selection.set([group]);
             log('merge complete').unpin();
+            return group;
         });
     },
 
@@ -1074,7 +1121,7 @@ const tool = {
             return log('nothing to subtract');
         }
         log(`subtract ${models.length} models`).pin();
-        worker.model_subtract(models.map(m => {
+        return worker.model_subtract(models.map(m => {
             return { id: m.id, tool: m.tool() }
         }))
         .then(data => {
@@ -1084,6 +1131,7 @@ const tool = {
             })]).promote();
             api.selection.delete();
             api.selection.set([group]);
+            return group;
         })
         .catch(error => {
             log(`subtract error: ${error}`);
@@ -1106,7 +1154,7 @@ const tool = {
         for (let m of models) {
             nm.push(m.duplicate({ select: dup_sel, shift: dup_shift }));
         }
-        tool.regroup(nm);
+        return tool.regroup(nm);
     },
 
     mirror() {
@@ -1397,6 +1445,7 @@ const prefs = {
             dark: false,
             floor: false,
             grid: true,
+            script: false,
             select: [],
             snap: 1,
             snapon: false,
@@ -1515,8 +1564,8 @@ const api = {
     },
 
     clear() {
-        for (let group of group.list()) {
-            group.remove(group);
+        for (let grp of group.list()) {
+            group.remove(grp);
         }
     },
 
@@ -1644,6 +1693,8 @@ const api = {
     pattern,
 
     prefs,
+
+    script,
 
     selection,
 

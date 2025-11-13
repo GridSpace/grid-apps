@@ -49,6 +49,24 @@ function onLayFlatSelect() {
     // endIt();
 }
 
+function onLeftySelect() {
+    // Project the face normal onto the XY plane (ignore Z component)
+    let projectedNormal = new Vector3(lastface.normal.x, lastface.normal.y, 0).normalize();
+
+    // Target direction on XY plane (negative Y axis)
+    let targetDir = new Vector3(0, -1, 0);
+
+    // Calculate angle between projected normal and target
+    let angle = Math.atan2(
+        projectedNormal.x * targetDir.y - projectedNormal.y * targetDir.x, // cross product Z component
+        projectedNormal.x * targetDir.x + projectedNormal.y * targetDir.y  // dot product
+    );
+
+    // Create quaternion for Z-axis rotation only
+    let q = new Quaternion().setFromAxisAngle(ZAXIS, angle);
+    api.selection.rotate(q);
+}
+
 function onFaceUpSelect() {
     api.event.emit('tool.mesh.face-normal', lastface.normal);
     // endIt();
@@ -102,6 +120,12 @@ api.event.on('tool.mesh.face-up', () => {
 api.event.on('tool.mesh.lay-flat', () => {
     opName = 'lay flat';
     onDone = onLayFlatSelect;
+    startIt();
+});
+
+api.event.on('tool.mesh.lefty', () => {
+    opName = 'align y axis';
+    onDone = onLeftySelect;
     startIt();
 });
 

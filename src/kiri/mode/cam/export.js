@@ -12,10 +12,8 @@ export function cam_export(print, online) {
     const widget = print.widgets[0];
     if (!widget) return;
 
-    console.log({ cam_export: print });
-
     const { settings } = print;
-    const { device, tools } = settings;
+    const { device } = settings;
 
     let i,
         time = 0,
@@ -425,7 +423,9 @@ export function cam_export(print, online) {
                 toolz[out.tool] = ctool;
             }
             point = out.point;
-            if (!point || point.mod) return;
+            if (!point || point.mod) {
+                return;
+            }
             // ensure not point is modified twice
             point.mod = 1;
             if (isOffset) {

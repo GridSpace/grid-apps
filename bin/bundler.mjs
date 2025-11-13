@@ -3,8 +3,10 @@ import path from 'path';
 import uglify from 'uglify-js';
 import { Buffer } from 'buffer';
 
+const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
 const cfg = JSON.parse(fs.readFileSync(process.argv[2] || './bin/bundle.config.json', 'utf8'));
 const { inputs, outputs, excludes, compress } = cfg;
+const excludePre = (excludes ?? []).filter(s => s.indexOf('*') >= 0).map(s => s.replaceAll('*',''));
 const envcomp = process.env.COMPRESS ? JSON.parse(process.env.COMPRESS) : undefined;
 const debug = process.env.DEBUG;
 
@@ -37,8 +39,20 @@ function* walk(dir, seen = new Set()) {
 let entries = [];
 let virtMap = new Set();
 for (const input of inputs) {
-    const root = input.root;
-    const prefix = input.prefix || '';
+    const { root, prefix, src, dst } = input;
+
+    if (src && dst) {
+        if (!fs.existsSync(src)) {
+            console.log({ src_missing: src });
+        } else if (virtMap.has(dst)) {
+            console.log('pre-existing', dst);
+        } else {
+            entries.push({ file: src, virt: dst });
+            virtMap.add(dst);
+        }
+    }
+
+    if (root)
     for (const file of walk(root)) {
         const rel = path.relative(root, file).replace(/\\/g, '/');
         const virt = prefix ? `${prefix}/${rel}` : rel;
@@ -65,7 +79,7 @@ if (compEnable) {
 
 function fileTime(path) {
     try {
-        return (fs.statSync(path).ctimeMs/1000) | 0;
+        return (fs.statSync(path).ctimeMs / 1000) | 0;
     } catch (e) {
         return 0;
     }
@@ -73,6 +87,9 @@ function fileTime(path) {
 
 for (const { file, virt } of entries) {
     if (excludes.indexOf(file) >= 0) {
+        continue;
+    }
+    if (excludePre.filter(ex => file.startsWith(ex)).length) {
         continue;
     }
     let record = cache.get(file);
@@ -86,7 +103,7 @@ for (const { file, virt } of entries) {
             let cpath = path.resolve(cacheDir, file);
             if (fileTime(cpath) > fileTime(file)) {
                 data = fs.readFileSync(cpath);
-                console.log('cached', file);
+                // console.log('cached', file);
             } else {
                 console.log('compress', file);
                 data = uglify.minify(data.toString(), {
@@ -110,6 +127,7 @@ for (const { file, virt } of entries) {
         entryMeta.push(record);
         dataParts.push(data);
         offset += data.length;
+        if (debug) console.log('write', virt, data.length);
     }
 }
 
@@ -141,7 +159,7 @@ const header = Buffer.concat([count, ...headerParts]);
 const full = Buffer.concat([header, ...dataParts]);
 
 // --- write final bundle ---
-const outPath = outputs.bundle || './bundle.bin';
+const outPath = (outputs.bundle || './bundle.bin').replace('{version}', version);
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, full); // ⚡ write raw binary
 

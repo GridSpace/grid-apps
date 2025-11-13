@@ -143,6 +143,7 @@ export const api = {
     dialog,
     doit,
     event,
+    electron: navigator.userAgent.includes('Electron'),
     feature,
     function: functions,
     group,
