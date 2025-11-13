@@ -31,6 +31,7 @@ let oversion;
 let dversion;
 let lastmod;
 let logger;
+let single;
 let debug;
 let http;
 let util;
@@ -66,6 +67,7 @@ function init(mod) {
     logger = mod.log;
     pre = ENV.pre || mod.meta.pre;
     debug = ENV.debug || mod.meta.debug;
+    single = ENV.single;
     oversion = ENV.over || mod.meta.over;
     crossOrigin = ENV.xorigin || mod.meta.xorigin || false;
     serviceWorker = (ENV.service || mod.meta.service) !== false;
@@ -74,7 +76,7 @@ function init(mod) {
     dir = mod.dir;
     log = mod.log;
 
-    if (ENV.single) console.log({ cwd: process.cwd(), env: ENV });
+    if (single) console.log({ cwd: process.cwd(), env: ENV });
     dversion = debug ? `_${version}` : version;
     forceUseCache = ENV.cache ? true : false;
 
@@ -151,7 +153,7 @@ function init(mod) {
     function load_modules(root, force) {
         lastmod(`${dir}/${root}`) && fs.readdirSync(`${dir}/${root}`).forEach(mdir => {
             const modpath = `${root}/${mdir}`;
-            if (dir.charAt(0) === '.' && !ENV.single) return;
+            if (dir.charAt(0) === '.' && !single) return;
             const stats = fs.lstatSync(`${mod.dir}/${modpath}`);
             if (!(stats.isDirectory() || stats.isSymbolicLink())) return;
             if (util.isfile(PATH.join(mod.dir,modpath,".disable"))) return;
@@ -190,11 +192,11 @@ function init(mod) {
     }
 
     // create alt artifacts with module extensions
-    logger.log('create alt artifacts');
+    logger.log('creating artifacts', Object.keys(append));
     for (let [ key, val ] of Object.entries(append)) {
         let src = `src/main/${key}.js`;
         if (!fs.existsSync(src)) {
-            logger.log('missing:', src);
+            logger.log('missing', src);
             continue;
         }
         fs.mkdirSync(`alt/main`, { recursive: true });
@@ -203,7 +205,7 @@ function init(mod) {
 
         src= `src/pack/${key}-main.js`;
         if (!fs.existsSync(src)) {
-            logger.log('missing:', src);
+            logger.log('missing', src);
             continue;
         }
         fs.mkdirSync(`alt/pack`, { recursive: true });
@@ -307,7 +309,7 @@ function initModule(mod, file, dir) {
             const path = mod.dir + '/' + dir + '/' + file;
             try {
                 const body = fs.readFileSync(path);
-                logger.log({ inject: code, file, opt });
+                if (debug && !single) logger.log({ inject: code, file, opt });
                 if (opt.first) {
                     append[code] = body.toString() + '\n' + append[code];
                 } else {
