@@ -2,6 +2,91 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
+# Release 4.3
+
+## General
+
+* add lathe mode for CAM operations
+* add volumetric flow calculations for FDM
+* improve bundler with better dependency tracking
+* migrate to ESM module format across codebase
+* improve arc support in gcode generation
+
+## FDM
+
+* add scarf seams for better surface finish
+* add hole compensation feature
+* add spiral layer start option
+* overhaul thin wall detection and handling
+* improve volumetric flow rate controls
+* add retraction tuning for better print quality
+
+## CAM
+
+* add lathe operation support with threading
+* improve arc support for smoother toolpaths
+* add drill from stock top option
+* improve tab positioning and generation
+* enhance surface selection and filtering
+* add 4th axis lathe debug and testing mode
+* improve tool path optimization
+
+## Devices
+
+* add new machine profiles
+* improve device profile management
+
+
+# Release 4.2
+
+## CAM
+
+* add arc support to gcode output for smoother paths
+* add drill from stock top feature
+* improve contour operations
+* fix animation issues with shared tool numbers
+* enhance trace operations with arc support
+* improve pocket smoothing algorithms
+
+## FDM
+
+* improve support generation
+* add new retraction options
+* enhance layer time controls
+
+## General
+
+* improve gcode arc import and export
+* fix file loading edge cases
+* update device profiles
+
+
+# Release 4.1
+
+## CAM
+
+* improve drill operations and positioning
+* fix multi-part drilling bugs
+* enhance trace line selection
+* add dogbone support to trace ops
+* improve pocket operation reliability
+* fix trace selection with flip operations
+
+## FDM
+
+* add RatRig machine profiles
+* improve Bambu Lab device control integration
+* enhance support placement algorithms
+* fix belt mode support generation
+
+## General
+
+* improve file import handling
+* fix workspace restore for complex projects
+* enhance mobile touch interactions
+* update machine profiles for popular devices
+
+
 # Release 4.0 (2024-01-21)
 
 * major UI refactor
