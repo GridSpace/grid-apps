@@ -59,9 +59,7 @@
 
 * `B` rapid moves should be max of terrain zmax and last cut layer height (roughing)
 * `B` feed rate for next tool set before tool change (push/pop feed rates?)
-* `B` tab cuts cause loss of direction, parenting, depth, and it's hard to fix
 * `B` tabs do not properly track widget mirror events
-* `B` tabs are not cut to exact height
 * `B` contour does not honor clip to stock
 
 * `F` add lathe step down to eliminate the need for roughing

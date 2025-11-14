@@ -775,14 +775,33 @@ export async function holes(settings, widget, individual, rec, onProgress) {
     return drills;
 }
 
-function cutTabs(tabs, offset, z, inter) {
-    tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z / 2).map(tab => tab.off).flat();
-    return cutPolys(tabs, offset, z, false);
+function cutTabs(tabs, offset) {
+    let out = [];
+    for (let tab of tabs) {
+        tab.top = tab.pos.z + tab.dim.z / 2;
+    }
+    for (let poly of offset) {
+        let polyZ = poly.getZ();
+        let cut = tabs.filter(tab => tab.top >= polyZ);
+        let lo = poly.cut(cut.map(tab => tab.off).flat(), false);
+        let hi = [];
+        for (let tab of cut) {
+            hi.appendAll(POLY.setZ(poly.cut(tab.off, true), tab.top));
+        }
+        if (hi.length) {
+            let heal = healPolys([ ...lo, ...hi ], false);
+            POLY.setWinding(heal, poly.isClockwise());
+            out.push(...heal);
+        } else {
+            out.push(poly);
+        }
+    }
+    return out;
 }
 
-function cutPolys(polys, offset, z, inter) {
+function cutPolys(polys, offset) {
     let noff = [];
-    offset.forEach(op => noff.appendAll(op.cut(POLY.union(polys, 0, true), inter)));
+    offset.forEach(op => noff.appendAll(op.cut(POLY.union(polys, 0, true))));
     return healPolys(noff);
 }
 
@@ -799,7 +818,17 @@ function contourPolys(widget, polys) {
     }
 }
 
-function healPolys(noff) {
+function dedup(arr, same) {
+    const out = [];
+    let prev;
+    for (const x of arr) {
+        if (!prev || !same(prev, x)) out.push(x);
+        prev = x;
+    }
+    return out;
+}
+
+function healPolys(noff, sameZ = true) {
     for (let p of noff) {
         if (p.appearsClosed()) {
             p.points.pop();
@@ -818,29 +847,29 @@ function healPolys(noff) {
                     let s2 = ntmp[j];
                     if (!s2) continue;
                     // require polys at same Z to heal
-                    if (Math.abs(s1.getZ() - s2.getZ()) > 0.01) {
+                    if (sameZ && Math.abs(s1.getZ() - s2.getZ()) > 0.01) {
                         continue;
                     }
                     if (!(s1.open && s2.open)) continue;
                     if (s1.last().isMergable2D(s2.first())) {
-                        s1.addPoints(s2.points.slice(1));
+                        s1.addPoints(s2.points);
                         ntmp[j] = null;
                         continue outer;
                     }
                     if (s2.last().isMergable2D(s1.first())) {
-                        s2.addPoints(s1.points.slice(1));
+                        s2.addPoints(s1.points);
                         ntmp[i] = null;
                         continue outer;
                     }
                     if (s1.first().isMergable2D(s2.first())) {
                         s1.reverse();
-                        s1.addPoints(s2.points.slice(1));
+                        s1.addPoints(s2.points);
                         ntmp[j] = null;
                         continue outer;
                     }
                     if (s1.last().isMergable2D(s2.last())) {
                         s2.reverse();
-                        s1.addPoints(s2.points.slice(1));
+                        s1.addPoints(s2.points);
                         ntmp[j] = null;
                         continue outer;
                     }
@@ -854,9 +883,14 @@ function healPolys(noff) {
         }
         // close poly if head meets tail
         for (let poly of noff) {
-            if (poly.open && poly.first().isMergable2D(poly.last())) {
-                poly.points.pop();
-                poly.open = false;
+            poly.points = dedup(poly.points, (a,b) => a.isMergable3D(b));
+            if (poly.open) {
+                if (poly.first().isMergable3D(poly.last())) {
+                    poly.points.pop();
+                    poly.open = false;
+                } else if (poly.first().isMergable2D(poly.last())) {
+                    poly.open = false;
+                }
             }
         }
     }
