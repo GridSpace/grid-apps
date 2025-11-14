@@ -47,7 +47,7 @@ class OpDrill extends CamOp {
             slice.camLines = [poly];
 
             slice.output()
-                .setLayer("drill", { face: color, line: color })
+                .setLayer(state.layername, { face: color, line: color })
                 .addPolys(slice.camLines);
             addSlices(slice);
             sliceOut.push(slice);

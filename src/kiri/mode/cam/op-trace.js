@@ -92,7 +92,7 @@ class OpTrace extends CamOp {
             }
             POLY.setWinding(slice.camLines, offset === "outside" ? !cutdir : cutdir, false);
             slice.output()
-                .setLayer("trace follow", {line: color}, false)
+                .setLayer(state.layername, {line: color}, false)
                 .addPolys(slice.camLines)
         }
         function clearZnew(polys, z, down) {
@@ -154,7 +154,7 @@ class OpTrace extends CamOp {
                         .setLayer("trace poly", {line: 0x1188ff}, false)
                         .addPolys([ poly ])
                     slice.output()
-                        .setLayer("trace", {line: color}, false)
+                        .setLayer(state.layername, {line: color}, false)
                         .addPolys(slice.camLines)
                     progress(zpro, "trace");
                     zpro += zinc;

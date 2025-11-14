@@ -65,7 +65,7 @@ class OpRough extends CamOp {
                 }
                 slice.camLines = polys;
                 slice.output()
-                    .setLayer("roughing", {face: color, line: color})
+                    .setLayer(state.layername, {face: color, line: color})
                     .addPolys(slice.camLines);
                 addSlices(slice);
                 camFaces.push(slice);
@@ -279,7 +279,7 @@ class OpRough extends CamOp {
 
         slices.forEach(slice => {
             slice.output()
-                .setLayer("roughing", {face: color, line: color})
+                .setLayer(state.layername, {face: color, line: color})
                 .addPolys(slice.camLines);
         });
         this.sliceOut = slices.filter(slice => slice.camLines);
