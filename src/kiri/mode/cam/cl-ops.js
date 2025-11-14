@@ -207,7 +207,7 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: UC.toInt, show: hasSpindle }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: UC.toFloat, bound: UC.bound(0.01, 1.0) }),
-        stepz: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: UC.toFloat, bound: UC.bound(0, 100.0) }),
+        stepz: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: UC.toFloat, units: true, bound: UC.bound(0, 100.0) }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: UC.toInt, units: true }),
         down: UC.newInput(LANG.cc_loff_s, { title: LANG.cc_loff_l, convert: UC.toFloat, units: true }),
         inset: UC.newInput(LANG.cc_lxyo_s, { title: LANG.cc_lxyo_l, convert: UC.toFloat, units: true, show: () => !env.popOp.level.rec.stock }),
