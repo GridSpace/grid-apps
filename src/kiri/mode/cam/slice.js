@@ -310,8 +310,11 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             workover.bottom_z = isIndexed ? valz.ov_botz : bottom_stock + valz.ov_botz;
             workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
         }
-        // state.workarea = workover;
+        let { note, type } = op.op;
+        let named = note ? note.split(' ').filter(v => v.charAt(0) === '#') : [];
+        let layername = named.length ? named : (note ? `${type} (${note})` : type);
         Object.assign(state, {
+            layername,
             zBottom,
             zThru,
             ztOff,

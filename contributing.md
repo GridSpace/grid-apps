@@ -11,13 +11,6 @@ This is a community driven project, and we welcome any contributions you'd like 
 - Run `npm run setup`
 - Run `npm run dev`
 
-## Running Docs Locally
-
-- Ensure you have [node](https://nodejs.org/en/download/), or an equivalent installed
-- Clone the [repository](https://github.com/GridSpace/grid-apps)
-- Run `npm run setup`
-- Run `npm run docs-dev`
-
 
 ## How to add a new machine
 

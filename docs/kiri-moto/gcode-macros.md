@@ -35,6 +35,7 @@ description: Variable Substitutions and Expressions in GCode Macros
 - \{pos_y\} = last output Y position
 - \{pos_z\} = last output Z position
 - \{progress\} = 0-100% state of print output
+- \{remain_time\} = print time remaining in minutes
 - \{tool\} | \{nozzle\} = current tool in use
 - \{tool_count\} = number of tools used in print
 - \{tool_used\__n_\} = whether tool # _n_ is used in print

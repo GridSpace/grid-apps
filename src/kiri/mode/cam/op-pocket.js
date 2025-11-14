@@ -135,7 +135,7 @@ class OpPocket extends CamOp {
                         });
                     }
                     slice.output()
-                        .setLayer("pocket", {line: color}, false)
+                        .setLayer(state.layername, {line: color}, false)
                         .addPolys(slice.camLines)
                     if (debug && shadow) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)

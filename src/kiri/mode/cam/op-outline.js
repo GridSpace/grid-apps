@@ -212,7 +212,7 @@ class OpOutline extends CamOp {
                 .setLayer("slice", {line: 0xaaaa00}, false)
                 .addPolys(slice.topPolys())
             slice.output()
-                .setLayer("outline", {face: color, line: color})
+                .setLayer(state.layername, {face: color, line: color})
                 .addPolys(slice.camLines);
         }
 
