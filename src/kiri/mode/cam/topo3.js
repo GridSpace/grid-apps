@@ -129,6 +129,13 @@ export class Topo {
                     vertices[i+1] = vertices[i+0];
                     vertices[i+0] = tmp;
                 }
+                ['min','max'].forEach(ext => {
+                    ext = wbounds[ext];
+                    let tmp = ext.x;
+                    ext.x = ext.y;
+                    ext.y = tmp;
+                });
+                console.log({ wbounds });
                 console.timeEnd('swap XY vertices');
             }
 
