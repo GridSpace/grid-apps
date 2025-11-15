@@ -91,6 +91,7 @@ function init(mod) {
             req.url = req.url.substring(pre.length);
             req.app.path = req.app.path.substring(pre.length);
             req.app.ispre = true;
+            // console.log('MATCH1', dir, cookie, req.url);
             return true;
         }
         let cookie = cookieValue(req.headers.cookie, "version") || '';
@@ -99,9 +100,12 @@ function init(mod) {
             vmatch = [ vmatch ];
         }
         if (vmatch.indexOf("*") >= 0) {
+            // console.log('MATCH2', dir, cookie, req.url);
             return true;
         }
-        return vmatch.indexOf(cookie) >= 0;
+        let match = vmatch.indexOf(cookie) >= 0;
+        // console.log('MATCH3', dir, cookie, req.url);
+        return match;
     });
 
     mod.on.testv((version) => {
@@ -194,23 +198,23 @@ function init(mod) {
     // create alt artifacts with module extensions
     logger.log('creating artifacts', Object.keys(append));
     for (let [ key, val ] of Object.entries(append)) {
-        let src = `src/main/${key}.js`;
+        let src = `${dir}/src/main/${key}.js`;
         if (!fs.existsSync(src)) {
             logger.log('missing', src);
             continue;
         }
-        fs.mkdirSync(`alt/main`, { recursive: true });
+        fs.mkdirSync(`${dir}/alt/main`, { recursive: true });
         let body = fs.readFileSync(src);
-        fs.writeFileSync(`alt/main/${key}.js`, body + val);
+        fs.writeFileSync(`${dir}/alt/main/${key}.js`, body + val);
 
-        src= `src/pack/${key}-main.js`;
+        src= `${dir}/src/pack/${key}-main.js`;
         if (!fs.existsSync(src)) {
             logger.log('missing', src);
             continue;
         }
-        fs.mkdirSync(`alt/pack`, { recursive: true });
+        fs.mkdirSync(`${dir}/alt/pack`, { recursive: true });
         body = fs.readFileSync(src);
-        fs.writeFileSync(`alt/pack/${key}-main.js`, body + val);
+        fs.writeFileSync(`${dir}/alt/pack/${key}-main.js`, body + val);
     }
 };
 
