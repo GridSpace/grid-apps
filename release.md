@@ -2,6 +2,77 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
+# Release 4.4.0
+
+## General
+
+* add version numbering utility script
+* split out help/info menu and language menus
+* move install/uninstall/quit menu to center app menu
+* add help menu visual callout
+* improve language translation coverage
+* improve build and serve workflow for alternate builds
+* update service worker configuration
+* add install/uninstall options in setup menu
+
+## CAM
+
+* implement tab hopping - toolpath goes up and over tab instead of interrupting cut (fixes #207)
+* add GPU accelerated contouring for faster operations
+* add radial GPU raster support (experimental)
+* add new register mode that marks bottom cutout tabs
+* add curves-only support to GPU contour
+* add zsafe and move to safe z at start of new operations
+* fix 'safe' moves during operation changes to be moves, not cuts
+* fix tolerance/resolution for GPU raster mesh calculations
+* fix NullPointerException with tabs in contour
+* improve merge/co-planar point handling
+* add slice layer naming using operation notes (fixes #447)
+* fix level step down units (fixes #446)
+
+## FDM
+
+* document remain_time macro variable (refs #339)
+* re-add base flow rate multiplier for belt mode (fixes #444)
+* fix belt fan control ordering (fixes #438)
+* exclude belt from bridge fan layer
+* add centering feature for fill areas (fixes #448)
+
+## Mesh:Tool
+
+* add STEP export capability
+* add STEP import with face generation
+* improve face generation with inner holes
+* add mesh scripting tool and persistence
+* add plane and plane.loft operations
+* add global edge map and edge reuse for better topology
+* add devel device export option
+
+## Electron
+
+* clean up electron build process
+* merge electron mod into core
+* add service routes when available
+* set proper content-type for appended code bodies
+
+## Dependencies
+
+* update @gridspace/raster-path to latest version with GPU acceleration
+* update @gridspace/app-server for proper fallthrough handling
+* switch from npmjs.org to git repos for @gridspace packages
+* update WebGPU implementation
+
+## Bug Fixes
+
+* fix Bambu Lab local URL and module load order
+* fix progress reporting for raster operations
+* fix GPU lathe progress and contour API usage
+* fix tool offsets when using GPU acceleration
+* fix indexed rotations epsilon value for accurate zflat calculation
+* fix traceload debug option
+* sanitize topo3 resolution to avoid GPU floating-point errors
+
+
 # Release 4.3
 
 ## General

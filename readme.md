@@ -9,27 +9,27 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/GridSpace/grid-apps)
 ![GitHub](https://img.shields.io/github/license/GridSpace/grid-apps)
 
-
 # Community
 
-[Discord](https://discord.com/invite/suyCCgr) -- Live Chat  
-[Forums](https://forum.grid.space/) -- Long Form and Archival Discussion  
-[BlueSky](https://bsky.app/profile/grid.space) -- Like the Good 'Ol Days  
-[YouTube](https://www.youtube.com/c/gridspace) -- Content when I have time  
+[Discord](https://discord.com/invite/suyCCgr) -- Live Chat
+[Forums](https://forum.grid.space/) -- Long Form and Archival Discussion
+[YouTube](https://www.youtube.com/c/gridspace) -- Content when I have time
 
 # Free and Open Source
 
-Kiri:Moto and Mesh:Tool are completely open source and free for use without restriction. Over 12 years in development, this passion project has grown well beyond its original scope. It has consumed most of my free time for many years. Please consider donating to support continued development GitHub sponsorship or PayPal.  
+Kiri:Moto and Mesh:Tool are completely open source and free for use without restriction. Over 13 years in development, this passion project has grown well beyond its original scope. It has consumed most of my free time for many years. Please consider donating to support continued development GitHub sponsorship or PayPal.
 
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/GridSpace)](https://github.com/sponsors/GridSpace)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://paypal.me/gridspace3d?locale.x=en_US)
 
 # Documentation
-[Documentation](https://docs.grid.space/) -- Could really use help with this  
+
+[Documentation](https://docs.grid.space/) -- Could really use help with this
 
 Docs are build with [Docusaurus](https://docusaurus.io/) and served using [GitHub Pages](https://pages.github.com/).
 
 You can build and view the docs locally with:
+
 ```
 git clone git@github.com:GridSpace/grid-apps.git
 cd grid-apps
@@ -44,7 +44,6 @@ npm run docs-dev
 [`Kiri:Moto`](https://grid.space/kiri) is a browser-based Slicer for 3D printers, CNC mills, and Laser cutters
 
 [`Mesh:Tool`](https://grid.space/mesh) is a browser-based mesh repair and editing tool
-
 
 # Electron Builds (Desktop Binaries)
 
@@ -61,7 +60,6 @@ chmod 755 KiriMoto-linux-x86_64.AppImage
 ```
 
 The Windows and Mac binaries are not signed, so you will need to jump through a few safety hoops to get them to open the first time.
-
 
 # Linux / Mac Developers
 
