@@ -74,8 +74,8 @@ self.get_raster_gpu = async function({ mode, resolution, rotationStep }) {
         resolution,
         rotationStep,
         workerName: "/lib/gpu/raster-worker.js",
-        quiet: false,
-        debug: true,
+        quiet: true,
+        debug: false,
     });
     await gpu.init();
     return gpu;

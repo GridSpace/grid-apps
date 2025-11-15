@@ -7,7 +7,6 @@ import { newSlice } from '../../core/slice.js';
 import { Slicer as topo_slicer } from './slicer_topo.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { Tool } from './tool.js';
-import { poly2polyEmit } from '../../../geo/paths.js';
 
 const RAD2DEG = 180 / Math.PI;
 const DEG2RAD = Math.PI / 180;
@@ -122,7 +121,7 @@ export class Topo {
             }
 
             if (contourY) {
-                console.time('swap XY vertices');
+                // console.time('swap XY vertices');
                 // swap XY vertices
                 for (let i=0; i<vertices.length; i+= 3) {
                     let tmp = vertices[i+1];
@@ -135,8 +134,7 @@ export class Topo {
                     ext.x = ext.y;
                     ext.y = tmp;
                 });
-                console.log({ wbounds });
-                console.timeEnd('swap XY vertices');
+                // console.timeEnd('swap XY vertices');
             }
 
             let gpu = await self.get_raster_gpu({
