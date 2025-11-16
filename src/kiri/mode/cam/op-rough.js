@@ -19,7 +19,7 @@ class OpRough extends CamOp {
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
         let { ztOff, zMax, shadowAt, isIndexed} = state;
         let { workarea } = state;
-        let { process, stock } = settings;
+        let { controller, process, stock } = settings;
 
         if (op.down <= 0) {
             throw `invalid step down "${op.down}"`;
@@ -206,20 +206,6 @@ class OpRough extends CamOp {
                 }
             }
 
-            if (tabs) {
-                tabs.forEach(tab => {
-                    tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
-                });
-                offset = cutTabs(tabs, offset, slice.z);
-            }
-
-            if (!offset) return;
-
-            if (process.camStockClipTo && stock.x && stock.y && stock.center) {
-                let rect = newPolygon().centerRectangle(stock.center, stock.x, stock.y);
-                offset = cutPolys([rect], offset, slice.z, true);
-            }
-
             // elimate double inset on inners
             offset.forEach(op => {
                 if (op.inner) {
@@ -236,24 +222,42 @@ class OpRough extends CamOp {
                 }
             });
 
+            if (process.camStockClipTo && stock.x && stock.y && stock.center) {
+                let rect = newPolygon().centerRectangle(stock.center, stock.x + 0.001, stock.y + 0.001);
+                offset = cutPolys([rect], offset, slice.z, true);
+            }
+
+            if (tabs) {
+                tabs.forEach(tab => {
+                    tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
+                });
+                offset = cutTabs(tabs, offset);
+            }
+
+            if (!offset) return;
+
             slice.camLines = offset;
             if (roughLeaveZ) {
-                // offset roughing in Z as well to minimize
-                // tool marks on curved surfaces
+                // offset roughing in Z as well to minimize tool marks on curved surfaces
                 // const roughLeaveZ = 1 * Math.min(roughDown, roughLeave / 2);
-                slice.camLines.forEach(p => {
-                    p.setZ(p.getZ() + roughLeaveZ);
-                });
+                for (let poly of slice.camLines) {
+                    for (let point of poly.points) point.z += roughLeaveZ;
+                }
             }
-            if (false) slice.output()
-                .setLayer("slice", {line: 0xaaaa00}, true)
-                .addPolys(slice.topPolys())
-                // .setLayer("top shadow", {line: 0x0000aa})
-                // .addPolys(tshadow)
-                // .setLayer("rough shadow", {line: 0x00aa00})
-                // .addPolys(shadow)
-                .setLayer("rough shell", {line: 0xaa0000})
-                .addPolys(shell);
+            if (controller.devel) {
+                slice.output()
+                    .setLayer("tabs clip", {line: 0xaa00aa}, true)
+                    .addPolys(tabs.map(tab => tab.off).flat());
+                slice.output()
+                    .setLayer("slice", {line: 0xaaaa00}, true)
+                    .addPolys(slice.topPolys())
+                    // .setLayer("top shadow", {line: 0x0000aa})
+                    // .addPolys(tshadow)
+                    // .setLayer("rough shadow", {line: 0x00aa00})
+                    // .addPolys(shadow)
+                    .setLayer("shadow clip", {line: 0xaa0000})
+                    .addPolys(shell);
+            }
             progress(0.5 + 0.5 * (index / slices.length));
         });
 
