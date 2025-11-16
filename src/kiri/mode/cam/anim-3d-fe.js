@@ -19,6 +19,7 @@ let meshes = {},
     speed,
     origin,
     color = 0,
+    dark = false,
     A2R = Math.PI / 180;
 
 export function animate_clear2(api) {
@@ -35,6 +36,7 @@ export function animate_clear2(api) {
 export function animate2(api, delay) {
     let alert = api.alerts.show("building animation");
     let settings = api.conf.get();
+    dark = settings.controller.dark;
     client.animate_setup2(settings, data => {
         handleUpdate(data);
         if (data) {
@@ -89,7 +91,7 @@ Object.assign(client, {
 
     animate_setup2(settings, ondone) {
         initPathMesh();
-        color = settings.controller.dark ? 0x888888 : 0;
+        color = dark ? 0x888888 : 0;
         material = material ?? new THREE.MeshPhongMaterial({
             flatShading: true,
             transparent: false,
@@ -113,7 +115,7 @@ function initPathMesh() {
         max = 10000,
         rot = new THREE.Euler(0,0,0),
         geo = new THREE.BufferGeometry(),
-        mat = new THREE.LineBasicMaterial({ color: 0xffff00 }),
+        mat = new THREE.LineBasicMaterial({ color: dark ? 0xffff00 : 0x771100 }),
         pos = new Float32Array(max * 6),
         lines = new THREE.LineSegments(geo, mat),
         vec = new THREE.Vector3(0,0,0),

@@ -17,9 +17,10 @@ class OpOutline extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, widget, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
+        let { settings, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
         let { updateToolDiams, tabs, cutTabs, cutPolys, workarea, zMax, shadowAt } = state;
         let { process, stock } = settings;
+        let { controller } = settings;
 
         if (op.down <= 0) {
             throw `invalid step down "${op.down}"`;
@@ -191,7 +192,7 @@ class OpOutline extends CamOp {
                 tabs.forEach(tab => {
                     tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
                 });
-                offset = cutTabs(tabs, offset, slice.z);
+                offset = cutTabs(tabs, offset);
             }
 
             if (process.camStockClipTo && stock.x && stock.y && stock.center) {
@@ -208,9 +209,12 @@ class OpOutline extends CamOp {
 
         // project empty up and render
         for (let slice of slices) {
-            if (false) slice.output()
+            if (controller.devel) slice.output()
                 .setLayer("slice", {line: 0xaaaa00}, false)
                 .addPolys(slice.topPolys())
+            if (controller.devel) slice.output()
+                .setLayer("shadow", {line: 0x557799}, false)
+                .addPolys(slice.shadow)
             slice.output()
                 .setLayer(state.layername, {face: color, line: color})
                 .addPolys(slice.camLines);

@@ -801,7 +801,7 @@ function cutTabs(tabs, offset) {
 
 function cutPolys(polys, offset) {
     let noff = [];
-    offset.forEach(op => noff.appendAll(op.cut(POLY.union(polys, 0, true))));
+    offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), true) ));
     return healPolys(noff);
 }
 
