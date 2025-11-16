@@ -338,7 +338,9 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         // 2. move to safe z of new point preserving old angle
         // 3. move to safe z of new point with new angle
         if (lop && lop !== currentOp && lastPoint) {
-            camOut(lastPoint.clone().setZ(zsafe).setA(lastPoint.a), 0);
+            // compensate for applyWidgetMovement() applied to lastPoint
+            let lpo = lastPoint.clone().move({ x: -wmx, y: -wmy, z: -zadd });
+            camOut(lpo.clone().setZ(zsafe).setA(lastPoint.a), 0);
             camOut(point.clone().setZ(zsafe).setA(lastPoint.a), 0);
             camOut(point.clone().setZ(zsafe), 0);
         }
