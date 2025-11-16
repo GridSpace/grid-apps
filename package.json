@@ -110,7 +110,7 @@
         "pack-dev": "npm run webpack-src && npm run dryrun && npm run bundle:dev",
         "pack-prod": "npm run webpack-src prod && npm run dryrun && npm run bundle",
         "postbuild": "node bin/electron-post.js",
-        "prebuild": "export ELECTRON_BUILD=1 && npm run setup && npm run pack-dev && node bin/electron-pre.js",
+        "prebuild": "npm run setup && ELECTRON_BUILD=1 npm run pack-dev && node bin/electron-pre.js",
         "preinstall": "node bin/install-pre.js",
         "prod": "npm run pack-prod && gs-app-server",
         "setup-mods": "cd mods && npm i",
