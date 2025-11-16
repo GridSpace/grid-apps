@@ -319,6 +319,8 @@ self.lang['de-de'] = {
     op_unit_l:      ["Arbeitsbereich-Einheiten beeinflussen","Geschwindigkeiten und Distanzen"],
     op_anim_s:      "Animieren",
     op_anim_l:      ["Animations-Mesh-Dichte","höher ist dichter","benötigt mehr Speicher","und ist langsamer"],
+    op_mani_s:      "mannigfaltig",
+    op_mani_l:      ["im indizierten Materialvorrat-Modus","boolesche Visualisierung verwenden","dies ist sehr rechenintensiv","und wahrscheinlich sehr langsam"],
     op_exgl_l:      ["Grid:Local Geräte im Export-Dialog anzeigen","inkludiert Grid:Bots und OctoPrint Plugins"],
     op_exgh_l:      ["Legacy Grid:Host lokale Netzwerkunterstützung"],
     op_exop_l:      ["Legacy OctoPrint lokale Netzwerkunterstützung","Grid:Space OctoPrint Plugin empfohlen"],
