@@ -19,13 +19,11 @@ class OpPocket extends CamOp {
 
     async slice(progress) {
         const pocket = this;
-        const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
         let { ov_botz, ov_conv } = op;
         let { settings, widget, addSlices, zBottom, zThru, tabs, color } = state;
         let { updateToolDiams, cutTabs, healPolys, shadowAt, workarea } = state;
-        let { process } = settings;
         zBottom = ov_botz ? workarea.bottom_stock + ov_botz : zBottom;
         // generate tracing offsets from chosen features
         let sliceOut;
@@ -36,6 +34,8 @@ class OpPocket extends CamOp {
         let cutdir = ov_conv;
         let engrave = contour && op.engrave;
         let zTop = workarea.top_z;
+        let devel = settings.controller.devel;
+        let smoothVal = (smooth ?? 0) / 10;
         if (contour) {
             down = 0;
             this.topo = await Topo({
@@ -48,6 +48,7 @@ class OpPocket extends CamOp {
                 },
                 contour: {
                     tool,
+                    step: toolOver,
                     tolerance,
                     inside: true,
                     axis: "-"
@@ -92,14 +93,14 @@ class OpPocket extends CamOp {
                     let clip = [], shadow;
                     if (contour) {
                         if (smooth) {
-                            clip = POLY.offset(POLY.offset([ poly ], smooth), -smooth);
+                            clip = POLY.offset(POLY.offset([ poly ], smoothVal), -smoothVal);
                         } else {
                             clip = [ poly ];
                         }
                     } else {
                         shadow = shadowAt(z);
                         if (smooth) {
-                            shadow = POLY.setZ(POLY.offset(POLY.offset(shadow, smooth), -smooth), z);
+                            shadow = POLY.setZ(POLY.offset(POLY.offset(shadow, smoothVal), -smoothVal), z);
                         }
                         POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
                         if (op.outline) {
@@ -137,9 +138,9 @@ class OpPocket extends CamOp {
                     slice.output()
                         .setLayer(state.layername, {line: color}, false)
                         .addPolys(slice.camLines)
-                    if (debug && shadow) slice.output()
+                    if (devel && shadow) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)
-                        .addPolys(shadow)
+                        .addPolys(shadow);
                     if (!contour) {
                         progress(zpro, "pocket");
                     }
@@ -168,17 +169,17 @@ class OpPocket extends CamOp {
         outline = POLY.setWinding(outline, cutdir, false);
         outline = healPolys(outline);
         if (smooth) {
-            outline = POLY.offset(POLY.offset(outline, smooth), -smooth);
+            outline = POLY.offset(POLY.offset(outline, smoothVal), -smoothVal);
         }
         if (outline.length) {
             // option to skip interior features (holes, pillars)
             if (op.outline) {
                 POLY.clearInner(outline);
             }
-            if (debug) newSliceOut(zmin).output()
+            clearZ(outline, zmin + 0.0001, down);
+            if (devel && sliceOut?.length) sliceOut[0].output()
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)
-            clearZ(outline, zmin + 0.0001, down);
             progress(1, "pocket");
         }
     }
