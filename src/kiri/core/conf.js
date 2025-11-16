@@ -932,6 +932,7 @@ export const conf = {
             freeLayout: true,
             healMesh: false,
             lineType: "path",
+            manifold: false,
             ortho: false,
             reverseZoom: true,
             scrolls: true,

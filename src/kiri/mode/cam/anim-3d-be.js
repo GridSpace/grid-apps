@@ -21,7 +21,6 @@ let nextMeshID = 1,
     toolMesh,
     toolRadius,
     toolUpdateMsg,
-    showStock = false,
     animateClear = false,
     animating = false,
     renderDone = false,
@@ -36,11 +35,11 @@ export function init(worker) {
 
     dispatch.animate_setup2 = function (data, send) {
         const { settings } = data;
-        const { process } = settings;
+        const { controller, process } = settings;
         const print = worker.current.print;
         const density = parseInt(settings.controller.animesh) * 1000;
         const isIndexed = process.camStockIndexed;
-
+console.log({ controller });
         pathIndex = 0;
         path = print.output.flat();
         tools = settings.tools;
@@ -61,14 +60,14 @@ export function init(worker) {
         const sliceCount = parseInt(settings.controller.animesh || 2000) / 100;
         const sliceWidth = stock.x / sliceCount;
 
-        if (showStock)
+        if (controller.manifold)
         for (let i = 0; i < sliceCount; i++) {
             let xmin = -(x / 2) + (i * sliceWidth) + sliceWidth / 2;
             let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, 0);
             stockSlices.push(slice);
             slice.updateMesh([]);
             slice.send(send);
-            // send({ mesh_move: { id: slice.id, pos: { x:0, y:0, z: stock.z/2} } });
+            // send.data({ mesh_move: { id: slice.id, pos: { x:0, y:0, z: stock.z/2} } });
         }
 
         send.done();
@@ -175,7 +174,7 @@ function renderPath(send) {
         const sp = next.speed;
         const moves = [];
         for (let i = 0, x = lp.x, y = lp.y, z = lp.z, a = lp.a; i < st; i++) {
-            moves.push({ x, y, z, a, md: sd, dx, dy, dz, sp });
+            moves.push({ x, y, z, a, md: sd, dx, dy, dz, da, sp });
             x += mx;
             y += my;
             z += mz;
@@ -202,11 +201,11 @@ function renderMoves(id, moves, send, seed = 0) {
         if (!pos) {
             throw `no pos @ ${index} of ${moves.length}`;
         }
-        const { dx, dy, dz, sp, md } = pos;
+        const { dx, dy, dz, da, sp, md } = pos;
         toolMove(pos);
         // console.log('renderMoves', {id, moves, seed});
         let subs = 0;
-        if (dx || dy || dz < 0)
+        if (dx || dy || dz < 0 || da)
             for (let slice of stockSlices) {
                 if (slice.bounds.intersectsBox(toolMesh.bounds)) {
                     slice.subtractTool(toolMesh);

@@ -155,6 +155,7 @@ function booleanSave() {
     control.freeLayout = ui.freeLayout.checked;
     control.healMesh = ui.healMesh.checked;
     control.ortho = ui.ortho.checked;
+    control.manifold = ui.manifold.checked;
     control.reverseZoom = ui.reverseZoom.checked;
     control.scrolls = ui.scrolls.checked;
     control.shiny = ui.shiny.checked;
@@ -1046,6 +1047,7 @@ function init_one() {
         showSpeeds:       newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
         shiny:            newBoolean(LANG.op_shny_s, booleanSave, {title:LANG.op_shny_l, modes:FDM}),
         lineType:         newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
+        manifold:         newBoolean(LANG.op_mani_s, booleanSave, {title: LANG.op_mani_l, modes:CAM}, "manifold"),
         animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
         units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM}, "units"),
         edgeangle:        newInput(LANG.op_spoa_s, {title:LANG.op_spoa_l, convert:toFloat, size:3}),
@@ -1639,6 +1641,7 @@ function init_two() {
         ui.devel.checked = control.devel;
         ui.freeLayout.checked = control.freeLayout;
         ui.healMesh.checked = control.healMesh;
+        ui.manifold.checked = control.manifold;
         ui.ortho.checked = control.ortho;
         ui.reverseZoom.checked = control.reverseZoom;
         ui.showOrigin.checked = control.showOrigin;
