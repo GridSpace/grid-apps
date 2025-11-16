@@ -2,10 +2,13 @@ const fs = require('fs-extra');
 const path = require('path');
 const server = require('@gridspace/app-server');
 
+const altTmp = path.join('tmp','alt');
+fs.copySync("alt", altTmp, { dereference: true });
+
 // deref src, web, mod for windows
 const srcTmp = path.join('tmp','src');
 fs.copySync("src", srcTmp, { dereference: true, filter:(src) => {
-    return src.indexOf('web/pack') < 0;
+    return true || src.indexOf('src/main') < 0;
 } });
 
 const webTmp = path.join('tmp','web');

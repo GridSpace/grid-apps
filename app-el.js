@@ -32,7 +32,7 @@ function createWindow() {
         height: 900,
         webPreferences: {
             // contextIsolation: true,
-            // nodeIntegration: false,
+            // nodeIntegration: true,
             // sandbox: true,
             // preload: undefined
             // nodeIntegration: true,

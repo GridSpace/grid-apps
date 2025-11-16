@@ -15,6 +15,10 @@ const license = require_fresh('./src/moto/license.js');
 const version = license.version || "rogue";
 const netdb = require('@gridspace/net-level-client');
 const PATH = require('path');
+const isElectron = !!process.versions.electron ||
+    process.env.ELECTRON_RUN_AS_NODE === '1' ||
+    process.env.ELECTRON_NO_ATTACH === '1' ||
+    process.env.ELECTRON_BUILD === '1';
 
 const append = { mesh:'', kiri:'' };
 const code = {};
@@ -32,6 +36,7 @@ let dversion;
 let lastmod;
 let logger;
 let single;
+let dryrun;
 let debug;
 let http;
 let util;
@@ -61,12 +66,14 @@ netdb.create = async function(map = {}) {
 
 function init(mod) {
     const ENV = mod.env;
+    const inElectron = isElectron || ENV.electron;
 
     startTime = time();
     lastmod = mod.util.lastmod;
     logger = mod.log;
     pre = ENV.pre || mod.meta.pre;
     debug = ENV.debug || mod.meta.debug;
+    dryrun = ENV.dryrun;
     single = ENV.single;
     oversion = ENV.over || mod.meta.over;
     crossOrigin = ENV.xorigin || mod.meta.xorigin || false;
@@ -91,6 +98,7 @@ function init(mod) {
             req.url = req.url.substring(pre.length);
             req.app.path = req.app.path.substring(pre.length);
             req.app.ispre = true;
+            // console.log('MATCH1', dir, cookie, req.url);
             return true;
         }
         let cookie = cookieValue(req.headers.cookie, "version") || '';
@@ -99,9 +107,12 @@ function init(mod) {
             vmatch = [ vmatch ];
         }
         if (vmatch.indexOf("*") >= 0) {
+            // console.log('MATCH2', dir, cookie, req.url);
             return true;
         }
-        return vmatch.indexOf(cookie) >= 0;
+        let match = vmatch.indexOf(cookie) >= 0;
+        // console.log('MATCH3', dir, cookie, req.url);
+        return match;
     });
 
     mod.on.testv((version) => {
@@ -159,8 +170,14 @@ function init(mod) {
             if (util.isfile(PATH.join(mod.dir,modpath,".disable"))) return;
             const isDebugMod = util.isfile(PATH.join(mod.dir,modpath,".debug"));
             const isElectronMod = util.isfile(PATH.join(mod.dir,modpath,".electron"));
-            if (force || (ENV.electron && !isElectronMod)) return;
-            if (force || (!ENV.electron && isElectronMod && !isDebugMod)) return;
+            if (inElectron && !isElectronMod) {
+                logger.log({ skip_non_electron_mod: modpath });
+                return;
+            }
+            if (!inElectron && isElectronMod && !isDebugMod) {
+                logger.log({ skip_electron_mod: modpath });
+                return;
+            }
             try {
                 loadModule(mod, modpath);
             } catch (error) {
@@ -192,25 +209,30 @@ function init(mod) {
     }
 
     // create alt artifacts with module extensions
-    logger.log('creating artifacts', Object.keys(append));
-    for (let [ key, val ] of Object.entries(append)) {
-        let src = `src/main/${key}.js`;
-        if (!fs.existsSync(src)) {
-            logger.log('missing', src);
-            continue;
+    if (dryrun || !isElectron) {
+        logger.log('creating artifacts', Object.keys(append));
+        for (let [ key, val ] of Object.entries(append)) {
+            // append mains
+            let src = `${dir}/src/main/${key}.js`;
+            if (!fs.existsSync(src)) {
+                logger.log('missing', src);
+                continue;
+            }
+            fs.mkdirSync(`${dir}/alt/main`, { recursive: true });
+            let body = fs.readFileSync(src);
+            fs.writeFileSync(`${dir}/alt/main/${key}.js`, body + val);
+            // append packed mains
+            src= `${dir}/src/pack/${key}-main.js`;
+            if (!fs.existsSync(src)) {
+                logger.log('missing', src);
+                continue;
+            }
+            fs.mkdirSync(`${dir}/alt/pack`, { recursive: true });
+            body = fs.readFileSync(src);
+            fs.writeFileSync(`${dir}/alt/pack/${key}-main.js`, body + val);
         }
-        fs.mkdirSync(`alt/main`, { recursive: true });
-        let body = fs.readFileSync(src);
-        fs.writeFileSync(`alt/main/${key}.js`, body + val);
-
-        src= `src/pack/${key}-main.js`;
-        if (!fs.existsSync(src)) {
-            logger.log('missing', src);
-            continue;
-        }
-        fs.mkdirSync(`alt/pack`, { recursive: true });
-        body = fs.readFileSync(src);
-        fs.writeFileSync(`alt/pack/${key}-main.js`, body + val);
+    } else {
+        logger.log('skipping artifacts');
     }
 };
 
@@ -276,11 +298,9 @@ function initModule(mod, file, dir) {
                 const [ path, file ] = [ ...arguments ];
                 if (lastmod(file)) {
                     code[path] = fs.readFileSync(file);
-                    // console.log({ CODE: path, file });
                 } else if (lastmod(mod.dir + '/' + file)) {
                     const alt = mod.dir + '/' + file;
                     code[path] = fs.readFileSync(alt);
-                    // console.log({ CODE: path, alt });
                 } else {
                     console.log({ MISSING_CODE: path, file });
                 }
