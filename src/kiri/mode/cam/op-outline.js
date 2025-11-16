@@ -40,6 +40,8 @@ class OpOutline extends CamOp {
         let indices = slicer.interval(op.down, intopt);
         let trueShadow = process.camTrueShadow === true;
         let lastShadowZ;
+        let stockClip;
+
         // shift out first (top-most) slice
         indices.shift();
         // add flats to shadow
@@ -188,16 +190,16 @@ class OpOutline extends CamOp {
                 addDogbones(offset, toolDiam / 5);
             }
 
+            if (process.camStockClipTo && stock.x && stock.y && stock.center) {
+                stockClip = newPolygon().centerRectangle(stock.center, stock.x + 0.001, stock.y + 0.001);
+                offset = cutPolys([stockClip], offset, slice.z, true);
+            }
+
             if (tabs) {
                 tabs.forEach(tab => {
                     tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
                 });
                 offset = cutTabs(tabs, offset);
-            }
-
-            if (process.camStockClipTo && stock.x && stock.y && stock.center) {
-                let rect = newPolygon().centerRectangle({x:0,y:0}, stock.x, stock.y);
-                offset = cutPolys([rect], offset, slice.z, true);
             }
 
             // offset.xout(`slice ${slice.z}`);
@@ -215,6 +217,9 @@ class OpOutline extends CamOp {
             if (controller.devel) slice.output()
                 .setLayer("shadow", {line: 0x557799}, false)
                 .addPolys(slice.shadow)
+            if (controller.devel && stockClip) slice.output()
+                .setLayer("stock clip", {line: 0x557799}, false)
+                .addPolys([ stockClip ])
             slice.output()
                 .setLayer(state.layername, {face: color, line: color})
                 .addPolys(slice.camLines);
