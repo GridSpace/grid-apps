@@ -15,11 +15,12 @@ class OpRough extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, slicer, addSlices, unsafe, color } = state;
+        let { settings, slicer, addSlices, unsafe, color, widget } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
         let { ztOff, zMax, shadowAt, isIndexed} = state;
         let { workarea } = state;
         let { controller, process, stock } = settings;
+        let center_off = widget.track.pos ?? { x: 0, y: 0, z: 0};
 
         if (op.down <= 0) {
             throw `invalid step down "${op.down}"`;
@@ -223,7 +224,10 @@ class OpRough extends CamOp {
             });
 
             if (process.camStockClipTo && stock.x && stock.y && stock.center) {
-                let rect = newPolygon().centerRectangle(stock.center, stock.x + 0.001, stock.y + 0.001);
+                let { center } = stock;
+                let x = center.x - center_off.x;
+                let y = center.y - center_off.y;
+                let rect = newPolygon().centerRectangle({ x, y }, stock.x + 0.001, stock.y + 0.001);
                 offset = cutPolys([rect], offset, slice.z, true);
             }
 
@@ -245,7 +249,7 @@ class OpRough extends CamOp {
                 }
             }
             if (controller.devel) {
-                slice.output()
+                if (tabs) slice.output()
                     .setLayer("tabs clip", {line: 0xaa00aa}, true)
                     .addPolys(tabs.map(tab => tab.off).flat());
                 slice.output()

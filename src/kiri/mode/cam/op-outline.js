@@ -17,10 +17,11 @@ class OpOutline extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
+        let { settings, slicer, addSlices, tshadow, thruHoles, unsafe, color, widget } = state;
         let { updateToolDiams, tabs, cutTabs, cutPolys, workarea, zMax, shadowAt } = state;
         let { process, stock } = settings;
         let { controller } = settings;
+        let center_off = widget.track.pos ?? { x: 0, y: 0, z: 0};
 
         if (op.down <= 0) {
             throw `invalid step down "${op.down}"`;
@@ -191,7 +192,10 @@ class OpOutline extends CamOp {
             }
 
             if (process.camStockClipTo && stock.x && stock.y && stock.center) {
-                stockClip = newPolygon().centerRectangle(stock.center, stock.x + 0.001, stock.y + 0.001);
+                let { center } = stock;
+                let x = center.x - center_off.x;
+                let y = center.y - center_off.y;
+                stockClip = newPolygon().centerRectangle({ x, y }, stock.x + 0.001, stock.y + 0.001);
                 offset = cutPolys([stockClip], offset, slice.z, true);
             }
 
