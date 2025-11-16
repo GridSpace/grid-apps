@@ -39,7 +39,7 @@ export function init(worker) {
         const print = worker.current.print;
         const density = parseInt(settings.controller.animesh) * 1000;
         const isIndexed = process.camStockIndexed;
-console.log({ controller });
+
         pathIndex = 0;
         path = print.output.flat();
         tools = settings.tools;

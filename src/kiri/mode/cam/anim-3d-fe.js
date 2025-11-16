@@ -20,6 +20,7 @@ let meshes = {},
     origin,
     color = 0,
     dark = false,
+    manifold = false,
     A2R = Math.PI / 180;
 
 export function animate_clear2(api) {
@@ -37,6 +38,7 @@ export function animate2(api, delay) {
     let alert = api.alerts.show("building animation");
     let settings = api.conf.get();
     dark = settings.controller.dark;
+    manifold = settings.controller.manifold;
     client.animate_setup2(settings, data => {
         handleUpdate(data);
         if (data) {
@@ -52,7 +54,8 @@ export function animate2(api, delay) {
             speed: anim.speed,
             trans: anim.trans,
             model: anim.model,
-            shade: anim.shade
+            shade: anim.shade,
+            path: anim.path
         });
         Object.assign(label, {
             progress: anim.progress,
@@ -62,6 +65,14 @@ export function animate2(api, delay) {
             z: anim.valz,
             a: anim.vala
         });
+
+        if (manifold) {
+            anim.trans.classList.remove('hide');
+            // anim.shade.classList.remove('hide');
+        } else {
+            anim.trans.classList.add('hide');
+            // anim.shade.classList.add('hide');
+        }
 
         updateSpeed(0);
         setTimeout(step, delay || 0);
@@ -76,6 +87,7 @@ export function animate2(api, delay) {
         button.trans.onclick = toggleTrans;
         button.model.onclick = toggleModel;
         button.shade.onclick = toggleStock;
+        button.path.onclick = togglePath;
         button.play.style.display = '';
         button.pause.style.display = 'none';
 
@@ -119,7 +131,8 @@ function initPathMesh() {
         pos = new Float32Array(max * 6),
         lines = new THREE.LineSegments(geo, mat),
         vec = new THREE.Vector3(0,0,0),
-        ang = new THREE.Vector3(1,0,0);
+        ang = new THREE.Vector3(1,0,0),
+        show = api.local.get('cam.anim.path') ?? true;
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     let track = lineTracker = {
         xro(p) {
@@ -159,9 +172,15 @@ function initPathMesh() {
             lines.setRotationFromEuler(rot);
         },
         visible(bool) {
-            if (bool !== lines.visible) {
+            if (show && bool !== lines.visible) {
                 lines.visible = bool;
+            } else if (!show) {
+                lines.visible = false;
             }
+        },
+        show(bool) {
+            show = bool;
+            lines.visible = bool;
         }
     }
     space.world.add(lines);
@@ -207,8 +226,15 @@ function toggleModel(ev, bool) {
 }
 
 function toggleStock(ev, bool, set) {
-    set !== false && api.local.toggle('cam.anim.stock', bool);
-    return api.event.emit('cam.stock.toggle', bool ?? undefined);
+    bool = api.local.toggle('cam.anim.stock', bool);
+    for (let [ id, mesh ] of Object.entries(meshes)) {
+        if (id >= 0) mesh.visible = bool;
+    }
+}
+
+function togglePath(ev, bool, set) {
+    bool = api.local.toggle('cam.anim.path', bool);
+    lineTracker?.show(bool);
 }
 
 function toggleTrans(ev, bool) {
