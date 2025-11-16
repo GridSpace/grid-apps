@@ -58,6 +58,10 @@ function checkReady() {
                 bootctrl.postMessage({ clear: true, disable: true });
                 location.reload();
             }
+        } else if (api.onshape) {
+            $('install').classList.add('hide');
+            $('uninstall').classList.add('hide');
+            $('app-quit').classList.add('hide');
         } else {
             $('install').onclick = () => {
                 location.replace('/boot');
