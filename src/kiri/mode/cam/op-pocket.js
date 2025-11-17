@@ -38,23 +38,14 @@ class OpPocket extends CamOp {
         let smoothVal = (smooth ?? 0) / 10;
         if (contour) {
             down = 0;
-            this.topo = await Topo({
-                // onupdate: (update, msg) => {
-                onupdate: (index, total, msg) => {
-                    progress((index / total) * 0.9, msg);
-                },
-                ondone: (slices) => {
-                    // console.log({ contour: slices });
-                },
-                contour: {
-                    tool,
-                    step: toolOver,
-                    tolerance,
-                    inside: true,
-                    axis: "-"
-                },
-                state: state
-            });
+            this.contour = {
+                axis: "-",
+                inside: true,
+                nogpu: true,
+                step: toolOver,
+                tolerance,
+                tool,
+            };
         }
         updateToolDiams(toolDiam);
         if (tabs) {
@@ -70,7 +61,7 @@ class OpPocket extends CamOp {
             sliceOut.push(slice);
             return slice;
         }
-        function clearZ(polys, z, down) {
+        async function clearZ(polys, z, down) {
             if (down) {
                 // adjust step down to a value <= down that
                 // ends on the lowest z specified
@@ -131,7 +122,7 @@ class OpPocket extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     if (contour) {
-                        slice.camLines = pocket.conform(slice.camLines, op.refine, engrave, pct => {
+                        slice.camLines = await pocket.conform(slice.camLines, op.refine, engrave, pct => {
                             progress(0.9 + (zpro + zinc * pct) * 0.1, "conform");
                         });
                     }
@@ -176,7 +167,7 @@ class OpPocket extends CamOp {
             if (op.outline) {
                 POLY.clearInner(outline);
             }
-            clearZ(outline, zmin + 0.0001, down);
+            await clearZ(outline, zmin + 0.0001, down);
             if (devel && sliceOut?.length) sliceOut[0].output()
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)
@@ -185,7 +176,21 @@ class OpPocket extends CamOp {
     }
 
     // mold cam output lines to the surface of the topo offset by tool geometry
-    conform(camLines, refine, engrave, progress) {
+    async conform(camLines, refine, engrave, progress) {
+        if (!this.topo) {
+            console.log('deferred topo');
+            this.topo = await Topo({
+                // onupdate: (update, msg) => {
+                onupdate: (index, total, msg) => {
+                    progress((index / total) * 0.9, msg);
+                },
+                ondone: (slices) => {
+                    // console.log({ contour: slices });
+                },
+                contour: this.contour,
+                state: this.state
+            });
+        }
         const topo = this.topo;
         // re-segment polygon to a higher resolution
         const hirez = camLines.map(p => p.segment(topo.tolerance * 2));
