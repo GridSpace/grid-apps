@@ -684,19 +684,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     // make top start offset configurable
     printPoint = firstPoint || origin;
 
-    // accumulated data for depth-first optimizations
-    // let depthData = {
-    //     rough: [],
-    //     outline: [],
-    //     roughDiam: 0,
-    //     outlineDiam: 0,
-    //     contourx: [],
-    //     contoury: [],
-    //     trace: [],
-    //     drill: [],
-    //     layer: 0,
-    // };
-
     let ops = {
         stock,
         setTool,

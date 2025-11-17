@@ -237,9 +237,9 @@ class OpOutline extends CamOp {
         let { op, state, sliceOut } = this;
         let { setTool, setSpindle, setPrintPoint } = ops;
         let { polyEmit, depthOutlinePath } = ops;
-        let { camOut, newLayer, printPoint } = ops;
-        let { settings, widget } = state;
-        let { process, controller } = settings;
+        let { newLayer, printPoint } = ops;
+        let { settings } = state;
+        let { process } = settings;
 
         let easeDown = process.camEaseDown;
         let toolDiam = this.toolDiam;

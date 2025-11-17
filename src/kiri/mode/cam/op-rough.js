@@ -297,15 +297,13 @@ class OpRough extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut, camFaces } = this;
-        let { setTool, setSpindle, setPrintPoint, sliceOutput, polyEmit } = ops;
-        let { camOut, newLayer, printPoint } = ops;
+        let { setTool, setSpindle, setPrintPoint, sliceOutput, polyEmit, newLayer, printPoint } = ops;
         let { settings } = state;
         let { process } = settings;
 
         let easeDown = process.camEaseDown;
         let cutdir = op.ov_conv;
         let depthFirst = process.camDepthFirst && !state.isIndexed;
-        let depthData = [];
 
         setTool(op.tool, op.rate, op.plunge);
         setSpindle(op.spindle);

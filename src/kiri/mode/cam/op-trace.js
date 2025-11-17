@@ -295,7 +295,6 @@ class OpTrace extends CamOp {
 
     prepare(ops, progress) {
         let { op, state } = this;
-        let { settings } = state;
         let { setTool, setSpindle } = ops;
 
         setTool(op.tool, op.rate);

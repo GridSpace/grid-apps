@@ -22,7 +22,7 @@ class OpPocket extends CamOp {
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
         let { ov_botz, ov_conv } = op;
-        let { settings, widget, addSlices, zBottom, zThru, tabs, color } = state;
+        let { settings, widget, addSlices, zBottom, tabs, color } = state;
         let { updateToolDiams, cutTabs, healPolys, shadowAt, workarea } = state;
         zBottom = ov_botz ? workarea.bottom_stock + ov_botz : zBottom;
         // generate tracing offsets from chosen features
