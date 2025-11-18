@@ -158,31 +158,31 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let shadows = {};
     let slicer;
     let state = {
-        settings,
-        widget,
+        addSlices,
         bounds,
-        tabs,
-        cutTabs,
-        cutPolys,
+        color,
+        computeShadows,
         contourPolys,
+        cutPolys,
+        cutTabs,
+        dark,
         healPolys,
+        isIndexed,
+        ops: opList,
+        setAxisIndex,
+        settings,
         shadowAt,
         slicer,
-        addSlices,
-        isIndexed,
-        setAxisIndex,
-        updateToolDiams,
+        tabs,
+        unsafe,
         updateSlicer,
-        computeShadows,
+        updateToolDiams,
+        widget,
         zBottom,
+        zMax,
         zThru,
         ztOff,
-        zMax,
-        zTop,
-        unsafe,
-        color,
-        dark,
-        ops: opList
+        zTop
     };
     let tracker = setSliceTracker({ rotation: 0 });
 
