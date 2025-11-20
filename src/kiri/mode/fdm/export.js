@@ -291,8 +291,9 @@ export function fdm_export(print, online, ondone, ondebug) {
         append(`; Bed type: ${bedType}`);
         append(`; Target: ${filter[mode]}`);
         // inject thumbnail preview
-        if (exportThumb && worker.snap) {
-            let { width, height, url } = worker.snap;
+        let { current } = self.kiri_worker ?? {};
+        if (exportThumb && current?.snap) {
+            let { width, height, url } = current.snap;
             let data = url.substring(url.indexOf(',') + 1);
             append(`; thumbnail begin ${width} ${height} ${data.length}`);
             for (let i=0; i<data.length; i += 78) {
