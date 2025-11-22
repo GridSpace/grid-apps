@@ -554,16 +554,15 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * output an array of slices that form a pocket
      * used by rough and pocket ops, does not support arcs
      *
-     * @param {Slice[]} top-down Z stack of slices
-     * @param {*} opts
+     * @param {Slice[]} slices top-down Z stack of slices
+     * @param {boolean} cutdir true=CW false=CCW
+     * @param {boolean} depthFirst prioritize cut depth in pockets by nesting
      */
-    function sliceOutput(sliceOut, opts = {}) {
-        const { cutdir, depthFirst, easeDown, progress } = opts;
-
+    function pocket({ slices, cutdir, depthFirst, easeDown, progress }) {
         let total = 0;
         let depthData = [];
 
-        for (let slice of sliceOut) {
+        for (let slice of slices) {
             let polys = [], t = [], c = [];
             POLY.flatten(slice.camLines).forEach(function (poly) {
                 let child = poly.parent;
@@ -590,7 +589,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 }, { swapdir: false });
                 newLayer();
             }
-            progress(++total, sliceOut.length);
+            progress(++total, slices.length);
         }
 
         // crucially returns true for -0 as well as other negative #s
@@ -695,6 +694,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         getPrintPoint() { return printPoint },
         lastPoint: () => { return lastPoint },
         newLayer,
+        pocket,
         poly2polyEmit,
         polyEmit,
         printPoint,
@@ -704,7 +704,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         setSpindle,
         setTolerance,
         setTool,
-        sliceOutput,
         stock,
         tip2tipEmit,
         zclear,

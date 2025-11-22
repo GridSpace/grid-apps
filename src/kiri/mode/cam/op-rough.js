@@ -297,7 +297,7 @@ class OpRough extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut, camFaces } = this;
-        let { setTool, setSpindle, setPrintPoint, sliceOutput, polyEmit, newLayer, printPoint } = ops;
+        let { setTool, setSpindle, setPrintPoint, pocket, polyEmit, newLayer, printPoint } = ops;
         let { settings } = state;
         let { process } = settings;
 
@@ -331,11 +331,12 @@ class OpRough extends CamOp {
 
         // output the roughing passes
         setPrintPoint(printPoint);
-        sliceOutput(sliceOut, {
+        pocket({
             cutdir,
             depthFirst,
             easeDown: op.down && easeDown ? 0.001 : 0,
-            progress: (n,m) => progress(n/m, "routing")
+            progress: (n,m) => progress(n/m, "routing"),
+            slices: sliceOut
         });
     }
 }

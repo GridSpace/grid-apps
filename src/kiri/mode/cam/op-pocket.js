@@ -242,7 +242,7 @@ class OpPocket extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, pockets } = this;
-        let { setTool, setSpindle, setTolerance, sliceOutput, getPrintPoint } = ops;
+        let { getPrintPoint , pocket, setTool, setSpindle, setTolerance } = ops;
         let { process } = state.settings;
 
         setTool(op.tool, op.rate);
@@ -275,11 +275,12 @@ class OpPocket extends CamOp {
             }
             if (min.pocket) {
                 min.pocket.used = true;
-                sliceOutput(min.pocket, {
+                pocket({
                     cutdir: op.ov_conv,
                     depthFirst: process.camDepthFirst && !state.isIndexed,
                     easeDown: op.down && process.easeDown ? op.down : 0,
-                    progress: (n,m) => progress(n/m, "pocket")
+                    progress: (n,m) => progress(n/m, "pocket"),
+                    slices: min.pocket
                 });
             } else {
                 break;
