@@ -144,7 +144,7 @@ export function traceHoverUp(int, ev) {
 
 export function traceToggle(obj, skip) {
     let material = obj.material[0] || obj.material;
-    if (!material) return;
+    if (!(material && obj.trace)) return;
     let { color, colorSave } = material;
     let { widget, poly } = obj.trace;
     let areas = env.poppedRec.areas;

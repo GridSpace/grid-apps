@@ -143,7 +143,7 @@ async function _fetch(e) {
 
     if (url.pathname.endsWith("/")) {
         return e.respondWith(redirectOr404(appendURL(url, 'index.html').pathname));
-    } else if (url.pathname.indexOf(".") < 0) {
+    } else if (url.pathname.indexOf(".") < 0 || url.pathname.endsWith("/boot")) {
         return e.respondWith(redirectOr404(appendURL(url, '/index.html').pathname));
     } else {
         e.respondWith(fromCacheOrNetwork(request));
