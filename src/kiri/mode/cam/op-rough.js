@@ -235,7 +235,6 @@ class OpRough extends CamOp {
                 tabs.forEach(tab => {
                     tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
                 });
-                offset = cutTabs(tabs, offset);
             }
 
             if (!offset) return;
@@ -286,6 +285,9 @@ class OpRough extends CamOp {
         }
 
         slices.forEach(slice => {
+            if (slice.camLines && tabs) {
+                slice.camLines = cutTabs(tabs, slice.camLines);
+            }
             slice.output()
                 .setLayer(state.layername, {face: color, line: color})
                 .addPolys(slice.camLines);
