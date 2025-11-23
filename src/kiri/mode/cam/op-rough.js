@@ -37,6 +37,12 @@ class OpRough extends CamOp {
 
         updateToolDiams(toolDiam);
 
+        if (tabs) {
+            tabs.forEach(tab => {
+                tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
+            });
+        }
+
         // clear the stock above the area to be roughed out
         if (workarea.top_z > workarea.top_part && !cutThruBypass) {
             let shadow = state.shadow.base.clone();
@@ -59,9 +65,6 @@ class OpRough extends CamOp {
                 slice.z = z;
                 let polys = POLY.setZ(facing.clone(true), slice.z + roughLeaveZ);
                 if (tabs) {
-                    tabs.forEach(tab => {
-                        tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
-                    });
                     polys = cutTabs(tabs, polys, slice.z);
                 }
                 slice.camLines = polys;
@@ -229,12 +232,6 @@ class OpRough extends CamOp {
                 let y = center.y - center_off.y;
                 let rect = newPolygon().centerRectangle({ x, y }, stock.x + 0.001, stock.y + 0.001);
                 offset = cutPolys([rect], offset, slice.z, true);
-            }
-
-            if (tabs) {
-                tabs.forEach(tab => {
-                    tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
-                });
             }
 
             if (!offset) return;
