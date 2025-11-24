@@ -172,16 +172,12 @@ class OpOutline extends CamOp {
                     let stepover = toolDiam * op.step;
                     let wideCuts = [] //accumulator for wide cuts
                     for (let c = (op.steps || 1); c > 0; c--){
-                        offset.slice().forEach(op => {
-                            // clone removes inners but the real solution is
-                            // to limit expanded shells to through holes
-                            let wideCut = POLY.expand([op.clone(true)], stepover*c, slice.z, [], 1);
-                            wideCut.forEach(cut =>{ //set order of cuts when wide
-                                cut.order = c
-                                if(cut.inner) cut.inner.forEach(inn =>{ inn.order = c })
-                            });
-                            wideCuts.push(...wideCut)
+                        let wideCut = POLY.expand(offset.clone(true), stepover * c, slice.z, [], 1);
+                        wideCut.forEach(cut =>{ //set order of cuts when wide
+                            cut.order = c
+                            if(cut.inner) cut.inner.forEach(inn =>{ inn.order = c })
                         });
+                        wideCuts.push(...wideCut)
                     }
                     offset.appendAll(wideCuts);
                 }
