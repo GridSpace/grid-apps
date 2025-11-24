@@ -140,8 +140,8 @@ function pointHoverUp(int, ev) {
         x += stock.x / 2;
         y += stock.y / 2;
     }
-    process.camOriginOffX = x;
-    process.camOriginOffY = y;
+    process.camOriginOffX = x - stock.center.x;
+    process.camOriginOffY = y - stock.center.y;
     process.camOriginOffZ = z;
     api.settings.update_fields(process);
     api.platform.update_origin();

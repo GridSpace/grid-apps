@@ -337,8 +337,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         // 1. move to safe z of current point preserving angle
         // 2. move to safe z of new point preserving old angle
         // 3. move to safe z of new point with new angle
-        if (lop !== currentOp && lastPoint) {
-            camOut(lastPoint.clone().setZ(zsafe).setA(lastPoint.a), 0);
+        if (lop && lop !== currentOp && lastPoint) {
+            // compensate for applyWidgetMovement() applied to lastPoint
+            let lpo = lastPoint.clone().move({ x: -wmx, y: -wmy, z: -zadd });
+            camOut(lpo.clone().setZ(zsafe).setA(lastPoint.a), 0);
             camOut(point.clone().setZ(zsafe).setA(lastPoint.a), 0);
             camOut(point.clone().setZ(zsafe), 0);
         }
@@ -552,16 +554,15 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * output an array of slices that form a pocket
      * used by rough and pocket ops, does not support arcs
      *
-     * @param {Slice[]} top-down Z stack of slices
-     * @param {*} opts
+     * @param {Slice[]} slices top-down Z stack of slices
+     * @param {boolean} cutdir true=CW false=CCW
+     * @param {boolean} depthFirst prioritize cut depth in pockets by nesting
      */
-    function sliceOutput(sliceOut, opts = {}) {
-        const { cutdir, depthFirst, easeDown, progress } = opts;
-
+    function pocket({ slices, cutdir, depthFirst, easeDown, progress }) {
         let total = 0;
         let depthData = [];
 
-        for (let slice of sliceOut) {
+        for (let slice of slices) {
             let polys = [], t = [], c = [];
             POLY.flatten(slice.camLines).forEach(function (poly) {
                 let child = poly.parent;
@@ -588,7 +589,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 }, { swapdir: false });
                 newLayer();
             }
-            progress(++total, sliceOut.length);
+            progress(++total, slices.length);
         }
 
         // crucially returns true for -0 as well as other negative #s
@@ -682,45 +683,32 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     // make top start offset configurable
     printPoint = firstPoint || origin;
 
-    // accumulated data for depth-first optimizations
-    // let depthData = {
-    //     rough: [],
-    //     outline: [],
-    //     roughDiam: 0,
-    //     outlineDiam: 0,
-    //     contourx: [],
-    //     contoury: [],
-    //     trace: [],
-    //     drill: [],
-    //     layer: 0,
-    // };
-
     let ops = {
-        stock,
-        setTool,
-        setDrill,
-        setSpindle,
-        setTolerance,
-        setPrintPoint,
-        setLasering,
-        getPrintPoint() { return printPoint },
-        printPoint,
-        newLayer,
         addGCode,
+        bounds,
         camOut,
-        polyEmit,
-        poly2polyEmit,
-        tip2tipEmit,
-        depthRoughPath,
         depthOutlinePath,
-        sliceOutput,
+        depthRoughPath,
         emitDrills,
         emitTrace,
-        bounds,
+        getPrintPoint() { return printPoint },
+        lastPoint: () => { return lastPoint },
+        newLayer,
+        pocket,
+        poly2polyEmit,
+        polyEmit,
+        printPoint,
+        setDrill,
+        setLasering,
+        setPrintPoint,
+        setSpindle,
+        setTolerance,
+        setTool,
+        stock,
+        tip2tipEmit,
         zclear,
         zmax,
         zsafe,
-        lastPoint: () => { return lastPoint }
     };
 
     let opSum = 0;

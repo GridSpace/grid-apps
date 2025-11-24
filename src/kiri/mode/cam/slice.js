@@ -119,6 +119,10 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         ondone(msg);
     }
 
+    function alert(msg) {
+        onupdate(null,null,msg);
+    }
+
     if (unsafe) {
         console.log("disabling overhang safeties");
     }
@@ -135,20 +139,20 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         let maxDelta = 1e-3;
 
         if (stock.x + maxDelta < (bounds.max.x - bounds.min.x)) {
-            return error('stock X too small for part. resize stock or use offset stock');
+            alert('stock X too small for part');
         }
 
         if (stock.y + maxDelta < (bounds.max.y - bounds.min.y)) {
-            return error('stock Y too small for part. resize stock or use offset stock');
+            alert('stock Y too small for part');
         }
 
         if (stock.z + maxDelta < (bounds.max.z - bounds.min.z)) {
-            return error('stock Z too small for part. resize stock or use offset stock');
+            alert('stock Z too small for part');
         }
     }
 
     if (zMin >= bounds.max.z) {
-        return error(`invalid z bottom ${(zMin / units).round(3)} >= bounds z max ${(zMax / units).round(3)}`);
+        alert(`invalid z bottom ${(zMin / units).round(3)} >= bounds z max ${(zMax / units).round(3)}`);
     }
 
     let mark = Date.now();
@@ -158,31 +162,31 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let shadows = {};
     let slicer;
     let state = {
-        settings,
-        widget,
+        addSlices,
         bounds,
-        tabs,
-        cutTabs,
-        cutPolys,
+        color,
+        computeShadows,
         contourPolys,
+        cutPolys,
+        cutTabs,
+        dark,
         healPolys,
+        isIndexed,
+        ops: opList,
+        setAxisIndex,
+        settings,
         shadowAt,
         slicer,
-        addSlices,
-        isIndexed,
-        setAxisIndex,
-        updateToolDiams,
+        tabs,
+        unsafe,
         updateSlicer,
-        computeShadows,
+        updateToolDiams,
+        widget,
         zBottom,
+        zMax,
         zThru,
         ztOff,
-        zMax,
-        zTop,
-        unsafe,
-        color,
-        dark,
-        ops: opList
+        zTop
     };
     let tracker = setSliceTracker({ rotation: 0 });
 
@@ -801,7 +805,7 @@ function cutTabs(tabs, offset) {
 
 function cutPolys(polys, offset) {
     let noff = [];
-    offset.forEach(op => noff.appendAll(op.cut(POLY.union(polys, 0, true))));
+    offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), true) ));
     return healPolys(noff);
 }
 

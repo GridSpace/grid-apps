@@ -319,6 +319,8 @@ self.lang['pt-pt'] = {
     op_unit_l:      ["unidades de espaço de trabalho afecta","velocidades e distâncias"],
     op_anim_s:      "animar",
     op_anim_l:      ["densidade da malha de animação","mais alto é mais denso","usa mais memória","e é mais lento"],
+    op_mani_s:      "variedade",
+    op_mani_l:      ["no modo de material indexado","usar visualização booleana","isso é muito caro","e provavelmente muito lento"],
     op_exgl_l:      ["mostrar dispositivos Grid:Local no diálogo de exportação","inclui Grid:Bots e plugins OctoPrint"],
     op_exgh_l:      ["suporte de rede local Grid:Host legado"],
     op_exop_l:      ["suporte de rede local OctoPrint legado","plugin Grid:Space OctoPrint recomendado"],

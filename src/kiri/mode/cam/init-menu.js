@@ -58,6 +58,7 @@ export function menu() {
             anim.trans    = newButton(null,null,{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency",class:"padleft"}),
             anim.model    = newButton(null,null,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model"}),
             anim.shade    = newButton(null,null,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
+            anim.path     = newButton(null,null,{icon:'<i class="fa-solid fa-draw-polygon"></i>',title:"path"}),
         ])
     },
 

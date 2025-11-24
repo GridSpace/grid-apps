@@ -318,6 +318,8 @@ self.lang['pl-pl'] = {
     op_unit_l:      ["jednostki przestrzeni roboczej wpływają","na prędkości i odległości"],
     op_anim_s:      "animuj",
     op_anim_l:      ["gęstość siatki animacji","wyższa jest bardziej gęsta","zajmuje więcej pamięci","i jest wolniejsza"],
+    op_mani_s:      "rozmaitość",
+    op_mani_l:      ["w trybie indeksowanego materiału","użyj wizualizacji boolowskiej","to jest bardzo kosztowne","i prawdopodobnie bardzo wolne"],
     op_exgl_l:      ["pokaż urządzenia Grid:Local w oknie dialogowym eksportu","zawiera Grid:Bots i wtyczki OctoPrint"],
     op_exgh_l:      ["starsze wsparcie sieci lokalnej Grid:Host"],
     op_exop_l:      ["starsze wsparcie sieci lokalnej OctoPrint","zalecana wtyczka Grid:Space OctoPrint"],

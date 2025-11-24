@@ -102,7 +102,7 @@ export class Topo {
             newslices.push(debug);
         }
 
-        if (webGPU) {
+        if (webGPU && !contour.nogpu) {
             // invert tool Z offset for gpu code
             let toolBounds = new THREE.Box3()
                 .expandByPoint({ x: -toolDiameter/2, y: -toolDiameter/2, z: 0 })
@@ -137,8 +137,9 @@ export class Topo {
                 // console.timeEnd('swap XY vertices');
             }
 
+            let trace = contour.trace;
             let gpu = await self.get_raster_gpu({
-                mode: "planar",
+                mode: trace ? "tracing" : "planar",
                 resolution
             });
             let xStep = density;

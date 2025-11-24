@@ -17,9 +17,11 @@ class OpOutline extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, widget, slicer, addSlices, tshadow, thruHoles, unsafe, color } = state;
+        let { settings, slicer, addSlices, tshadow, thruHoles, unsafe, color, widget } = state;
         let { updateToolDiams, tabs, cutTabs, cutPolys, workarea, zMax, shadowAt } = state;
         let { process, stock } = settings;
+        let { controller } = settings;
+        let center_off = widget.track.pos ?? { x: 0, y: 0, z: 0};
 
         if (op.down <= 0) {
             throw `invalid step down "${op.down}"`;
@@ -39,6 +41,8 @@ class OpOutline extends CamOp {
         let indices = slicer.interval(op.down, intopt);
         let trueShadow = process.camTrueShadow === true;
         let lastShadowZ;
+        let stockClip;
+
         // shift out first (top-most) slice
         indices.shift();
         // add flats to shadow
@@ -168,16 +172,12 @@ class OpOutline extends CamOp {
                     let stepover = toolDiam * op.step;
                     let wideCuts = [] //accumulator for wide cuts
                     for (let c = (op.steps || 1); c > 0; c--){
-                        offset.slice().forEach(op => {
-                            // clone removes inners but the real solution is
-                            // to limit expanded shells to through holes
-                            let wideCut = POLY.expand([op.clone(true)], stepover*c, slice.z, [], 1);
-                            wideCut.forEach(cut =>{ //set order of cuts when wide
-                                cut.order = c
-                                if(cut.inner) cut.inner.forEach(inn =>{ inn.order = c })
-                            });
-                            wideCuts.push(...wideCut)
+                        let wideCut = POLY.expand(offset.clone(true), stepover * c, slice.z, [], 1);
+                        wideCut.forEach(cut =>{ //set order of cuts when wide
+                            cut.order = c
+                            if(cut.inner) cut.inner.forEach(inn =>{ inn.order = c })
                         });
+                        wideCuts.push(...wideCut)
                     }
                     offset.appendAll(wideCuts);
                 }
@@ -187,16 +187,19 @@ class OpOutline extends CamOp {
                 addDogbones(offset, toolDiam / 5);
             }
 
+            if (process.camStockClipTo && stock.x && stock.y && stock.center) {
+                let { center } = stock;
+                let x = center.x - center_off.x;
+                let y = center.y - center_off.y;
+                stockClip = newPolygon().centerRectangle({ x, y }, stock.x + 0.001, stock.y + 0.001);
+                offset = cutPolys([stockClip], offset, slice.z, true);
+            }
+
             if (tabs) {
                 tabs.forEach(tab => {
                     tab.off = POLY.expand([tab.poly], toolDiam / 2).flat();
                 });
-                offset = cutTabs(tabs, offset, slice.z);
-            }
-
-            if (process.camStockClipTo && stock.x && stock.y && stock.center) {
-                let rect = newPolygon().centerRectangle({x:0,y:0}, stock.x, stock.y);
-                offset = cutPolys([rect], offset, slice.z, true);
+                offset = cutTabs(tabs, offset);
             }
 
             // offset.xout(`slice ${slice.z}`);
@@ -208,9 +211,15 @@ class OpOutline extends CamOp {
 
         // project empty up and render
         for (let slice of slices) {
-            if (false) slice.output()
+            if (controller.devel) slice.output()
                 .setLayer("slice", {line: 0xaaaa00}, false)
                 .addPolys(slice.topPolys())
+            if (controller.devel) slice.output()
+                .setLayer("shadow", {line: 0x557799}, false)
+                .addPolys(slice.shadow)
+            if (controller.devel && stockClip) slice.output()
+                .setLayer("stock clip", {line: 0x557799}, false)
+                .addPolys([ stockClip ])
             slice.output()
                 .setLayer(state.layername, {face: color, line: color})
                 .addPolys(slice.camLines);
@@ -224,9 +233,9 @@ class OpOutline extends CamOp {
         let { op, state, sliceOut } = this;
         let { setTool, setSpindle, setPrintPoint } = ops;
         let { polyEmit, depthOutlinePath } = ops;
-        let { camOut, newLayer, printPoint } = ops;
-        let { settings, widget } = state;
-        let { process, controller } = settings;
+        let { newLayer, printPoint } = ops;
+        let { settings } = state;
+        let { process } = settings;
 
         let easeDown = process.camEaseDown;
         let toolDiam = this.toolDiam;

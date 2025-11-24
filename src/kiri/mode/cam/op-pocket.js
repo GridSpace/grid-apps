@@ -19,13 +19,11 @@ class OpPocket extends CamOp {
 
     async slice(progress) {
         const pocket = this;
-        const debug = false;
         let { op, state } = this;
         let { tool, rate, down, plunge, expand, contour, smooth, tolerance } = op;
         let { ov_botz, ov_conv } = op;
-        let { settings, widget, addSlices, zBottom, zThru, tabs, color } = state;
+        let { settings, widget, addSlices, zBottom, tabs, color } = state;
         let { updateToolDiams, cutTabs, healPolys, shadowAt, workarea } = state;
-        let { process } = settings;
         zBottom = ov_botz ? workarea.bottom_stock + ov_botz : zBottom;
         // generate tracing offsets from chosen features
         let sliceOut;
@@ -36,24 +34,18 @@ class OpPocket extends CamOp {
         let cutdir = ov_conv;
         let engrave = contour && op.engrave;
         let zTop = workarea.top_z;
+        let devel = settings.controller.devel;
+        let smoothVal = (smooth ?? 0) / 10;
         if (contour) {
             down = 0;
-            this.topo = await Topo({
-                // onupdate: (update, msg) => {
-                onupdate: (index, total, msg) => {
-                    progress((index / total) * 0.9, msg);
-                },
-                ondone: (slices) => {
-                    // console.log({ contour: slices });
-                },
-                contour: {
-                    tool,
-                    tolerance,
-                    inside: true,
-                    axis: "-"
-                },
-                state: state
-            });
+            this.contour = {
+                axis: "-",
+                inside: true,
+                nogpu: true,
+                step: toolOver,
+                tolerance,
+                tool,
+            };
         }
         updateToolDiams(toolDiam);
         if (tabs) {
@@ -69,7 +61,7 @@ class OpPocket extends CamOp {
             sliceOut.push(slice);
             return slice;
         }
-        function clearZ(polys, z, down) {
+        async function clearZ(polys, z, down) {
             if (down) {
                 // adjust step down to a value <= down that
                 // ends on the lowest z specified
@@ -92,14 +84,14 @@ class OpPocket extends CamOp {
                     let clip = [], shadow;
                     if (contour) {
                         if (smooth) {
-                            clip = POLY.offset(POLY.offset([ poly ], smooth), -smooth);
+                            clip = POLY.offset(POLY.offset([ poly ], smoothVal), -smoothVal);
                         } else {
                             clip = [ poly ];
                         }
                     } else {
                         shadow = shadowAt(z);
                         if (smooth) {
-                            shadow = POLY.setZ(POLY.offset(POLY.offset(shadow, smooth), -smooth), z);
+                            shadow = POLY.setZ(POLY.offset(POLY.offset(shadow, smoothVal), -smoothVal), z);
                         }
                         POLY.subtract([ poly ], shadow, clip, undefined, undefined, 0);
                         if (op.outline) {
@@ -130,16 +122,16 @@ class OpPocket extends CamOp {
                     }
                     POLY.setWinding(slice.camLines, cutdir, false);
                     if (contour) {
-                        slice.camLines = pocket.conform(slice.camLines, op.refine, engrave, pct => {
+                        slice.camLines = await pocket.conform(slice.camLines, op.refine, engrave, pct => {
                             progress(0.9 + (zpro + zinc * pct) * 0.1, "conform");
                         });
                     }
                     slice.output()
                         .setLayer(state.layername, {line: color}, false)
                         .addPolys(slice.camLines)
-                    if (debug && shadow) slice.output()
+                    if (devel && shadow) slice.output()
                         .setLayer("pocket shadow", {line: 0xff8811}, false)
-                        .addPolys(shadow)
+                        .addPolys(shadow);
                     if (!contour) {
                         progress(zpro, "pocket");
                     }
@@ -168,23 +160,37 @@ class OpPocket extends CamOp {
         outline = POLY.setWinding(outline, cutdir, false);
         outline = healPolys(outline);
         if (smooth) {
-            outline = POLY.offset(POLY.offset(outline, smooth), -smooth);
+            outline = POLY.offset(POLY.offset(outline, smoothVal), -smoothVal);
         }
         if (outline.length) {
             // option to skip interior features (holes, pillars)
             if (op.outline) {
                 POLY.clearInner(outline);
             }
-            if (debug) newSliceOut(zmin).output()
+            await clearZ(outline, zmin + 0.0001, down);
+            if (devel && sliceOut?.length) sliceOut[0].output()
                 .setLayer("pocket area", {line: 0x1188ff}, false)
                 .addPolys(outline)
-            clearZ(outline, zmin + 0.0001, down);
             progress(1, "pocket");
         }
     }
 
     // mold cam output lines to the surface of the topo offset by tool geometry
-    conform(camLines, refine, engrave, progress) {
+    async conform(camLines, refine, engrave, progress) {
+        if (!this.topo) {
+            console.log('deferred topo');
+            this.topo = await Topo({
+                // onupdate: (update, msg) => {
+                onupdate: (index, total, msg) => {
+                    progress((index / total) * 0.9, msg);
+                },
+                ondone: (slices) => {
+                    // console.log({ contour: slices });
+                },
+                contour: this.contour,
+                state: this.state
+            });
+        }
         const topo = this.topo;
         // re-segment polygon to a higher resolution
         const hirez = camLines.map(p => p.segment(topo.tolerance * 2));
@@ -236,7 +242,7 @@ class OpPocket extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, pockets } = this;
-        let { setTool, setSpindle, setTolerance, sliceOutput, getPrintPoint } = ops;
+        let { getPrintPoint , pocket, setTool, setSpindle, setTolerance } = ops;
         let { process } = state.settings;
 
         setTool(op.tool, op.rate);
@@ -269,11 +275,12 @@ class OpPocket extends CamOp {
             }
             if (min.pocket) {
                 min.pocket.used = true;
-                sliceOutput(min.pocket, {
+                pocket({
                     cutdir: op.ov_conv,
                     depthFirst: process.camDepthFirst && !state.isIndexed,
                     easeDown: op.down && process.easeDown ? op.down : 0,
-                    progress: (n,m) => progress(n/m, "pocket")
+                    progress: (n,m) => progress(n/m, "pocket"),
+                    slices: min.pocket
                 });
             } else {
                 break;

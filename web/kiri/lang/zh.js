@@ -318,6 +318,8 @@ self.lang['zh'] = {
     op_unit_l:      ["工作区单位影响","速度和距离"],
     op_anim_s:      "动画",
     op_anim_l:      ["动画网格密度","更高则更密集","占用更多内存","速度更慢"],
+    op_mani_s:      "流形",
+    op_mani_l:      ["在索引材料模式下","使用布尔可视化","这非常昂贵","而且可能非常慢"],
     op_exgl_l:      ["在导出对话框中显示Grid:Local设备","包括Grid:Bots和OctoPrint插件"],
     op_exgh_l:      ["传统Grid:Host本地网络支持"],
     op_exop_l:      ["传统OctoPrint本地网络支持","推荐使用Grid:Space OctoPrint插件"],

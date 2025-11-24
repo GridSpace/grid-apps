@@ -163,19 +163,19 @@ function platformUpdateTopZ() {
             const wzmax = bounds.max.z;
             const zdelta = process.camZOffset || 0;
             switch (process.camZAnchor) {
-               case 'top':
-                   widget.setTopZ(stock.z - zdelta);
-                   break;
-               case 'middle':
-                   if (widget.isIndexed) {
-                       widget.setTopZ(zdelta);
-                   } else {
-                       widget.setTopZ(stock.z - (stock.z - wzmax) / 2 + zdelta);
-                   }
-                   break;
-               case 'bottom':
-                   widget.setTopZ(wzmax + zdelta);
-                   break;
+                case 'top':
+                    widget.setTopZ(stock.z - zdelta, true);
+                    break;
+                case 'middle':
+                    if (widget.isIndexed) {
+                        widget.setTopZ(zdelta, true);
+                    } else {
+                        widget.setTopZ(stock.z - (stock.z - wzmax) / 2 + zdelta, true);
+                    }
+                    break;
+                case 'bottom':
+                    widget.setTopZ(wzmax + zdelta, true);
+                    break;
             }
         } else {
             widget.setTopZ(0);

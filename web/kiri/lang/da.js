@@ -318,6 +318,8 @@ self.lang['da-dk'] = {
     op_unit_l: ["arbejdsområde enheder påvirker","hastigheder og distancer"],
     op_anim_s: "animer",
     op_anim_l: ["animation mesh tæthed","højere er mere tæt","tager mere hukommelse","og er langsommere"],
+    op_mani_s: "mangfoldig",
+    op_mani_l: ["i indekseret materiale tilstand","brug boolesk visualisering","dette er meget dyrt","og sandsynligvis meget langsom"],
     op_exgl_l: ["vis Grid:Local enheder i eksport dialog","inkluderer Grid:Bots og OctoPrint plugins"],
     op_exgh_l: ["legacy Grid:Host lokalt netværk support"],
     op_exop_l: ["legacy OctoPrint lokalt netværk support","Grid:Space OctoPrint plugin anbefalet"],
