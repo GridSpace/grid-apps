@@ -138,8 +138,8 @@ function duplicate() {
         const bb = mesh.getBoundingBox();
         const ow = widget;
         const nw = api.widgets.new().loadGeometry(mesh.geometry.clone());
-        nw.meta.file = ow.meta.file;
-        nw.meta.vertices = ow.meta.vertices;
+        //meta should be cloned entirely to also copy additional data attached here:
+	nw.meta = ow.meta;
         nw.anno = ow.annotations();
         nw.move(bb.max.x - bb.min.x + 1, 0, 0);
         api.platform.add(nw, true);
