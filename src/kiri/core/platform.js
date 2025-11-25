@@ -11,6 +11,7 @@ import { Packer } from './pack.js';
 
 import { COLOR, MODES } from './consts.js';
 import { THREE } from '../../ext/three.js';
+import { decodeToolCSV } from '../mode/cam/tools.js';
 
 const V0 = new THREE.Vector3(0,0,0);
 
@@ -754,6 +755,7 @@ function platformLoadFiles(files, group) {
             iskmz = lower.endsWith(".kmz"),
             isini = lower.endsWith(".ini"),
             isgbr = lower.endsWith(".gbr"),
+            iscsv = lower.endsWith(".csv"),
             israw = lower.endsWith(".raw") || lower.indexOf('.') < 0,
             isset = lower.endsWith(".b64") || lower.endsWith(".km"),
             isgcode = lower.endsWith(".gcode") || lower.endsWith(".nc");
@@ -810,7 +812,11 @@ function platformLoadFiles(files, group) {
                         }
                     });
             }
-            } else if (is3mf) {
+            }else if(iscsv){
+                let [success, result] = decodeToolCSV(data.textDecode('utf-8'));
+                if(!success) api.show.alert("Error: "+result)
+                else api.settings.import(result, true);
+            }else if (is3mf) {
                 let odon = function(models) {
                     let msg = api.show.alert('Adding Objects');
                     for (let model of models) {

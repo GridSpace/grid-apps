@@ -233,9 +233,113 @@ function setToolChanged(changed) {
     api.ui.toolsSave.disabled = !changed;
 }
 
+function generateToolCSV(){
+    
+    let {tools} = api.conf.get();
+
+    let header = [
+        'api_version',
+        'id',
+        'number',
+        'type',
+        'name',
+        'metric',
+        'shaft_diam',
+        'shaft_len',
+        'flute_diam',
+        'flute_len',
+        'taper_tip',
+        'order',
+    ].join(',');
+    
+    let acc = header + '\n';
+    
+    for(let [i,t] of tools.entries()) {
+        acc += 
+        [
+            i == 0 ? api.version : '',
+            t.id,
+            t.number,
+            t.type,
+            t.name,
+            t.metric ? 'true' : 'false',
+            t.shaft_diam,
+            t.shaft_len,
+            t.flute_diam,
+            t.flute_len,
+            t.taper_tip,
+            t.order,
+        ].join(',') + (i == tools.length - 1 ? '' : '\n');
+    }
+
+    return acc;
+}
+
+export function decodeToolCSV(data){
+
+    let apiVer;
+    try{
+        apiVer = data.split('\n')[1].split(',')[0];
+
+    }catch( err ){
+        console.log(err)
+        return [false, "malformed csv: cannot determine api version"];
+    }
+
+    // will need to implement logic in the future if the tool API changes
+    // console.log("got api version", apiVer)
+
+    try{
+        //get and parse tools line by line
+        let tools = data.split( '\n' ).slice( 1 ).map( line => {
+            let [ver,id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip] = line.split(',');
+            // console.log({ver,id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip})
+            return {
+                id: parseInt( id ),
+                type: type.toString(),
+                number: parseInt(number),
+                name: name.toString(),
+                metric: metric == 'true'? true : ( metric == 'false' ? false : null ),
+                shaft_diam: parseFloat(shaft_diam),
+                shaft_len: parseFloat(shaft_len),
+                flute_diam: parseFloat(flute_diam),
+                flute_len: parseFloat(flute_len),
+                taper_tip: parseFloat(taper_tip),
+            }
+        })
+
+        let IDs = new Set();
+
+        for(let tool of tools){
+            //check  tool IDs
+            if( tool.id == NaN ) throw "id must be a number";
+            if( IDs.has(tool.id) ) throw "tool ids must be unique";
+            IDs.add(tool.id);
+            // check remaining fields
+            if( toolNames.indexOf(tool.type) == -1 ) throw "tool type must be one of " + toolNames.join(', ');
+            if( tool.number == NaN ) throw "number must be a number";
+            if( tool.metric == null ) throw "metric must be a boolean";
+            if( tool.shaft_diam == NaN ) throw "shaft_diam must be a number";
+            if( tool.shaft_len == NaN ) throw "shaft_len must be a number";
+            if( tool.flute_diam == NaN ) throw "flute_diam must be a number";
+            if( tool.flute_len == NaN ) throw "flute_len must be a number";
+            if( tool.taper_tip == NaN ) throw "taper_tip must be a number";
+        }
+
+        return [true, {
+            version: apiVer,
+            tools,
+            time: Date.now()
+        }];
+
+    }catch(err){
+        return [ false, "malformed csv: " + err ];
+    }
+}
+
 export function showTools() {
-    if (api.mode.get_id() !== MODES.CAM) return;
-    setconf.sync.get().then(_showTools);
+    if ( api.mode.get_id() !== MODES.CAM ) return;
+    setconf.sync.get().then( _showTools );
 }
 
 function _showTools() {
@@ -323,6 +427,15 @@ function _showTools() {
                 time: Date.now()
             };
             api.util.download(api.util.b64enc(record), `${name}.km`);
+        });
+    };
+    ui.toolsImportCSV.onclick = (ev) => api.event.import(ev);
+    ui.toolsExportCSV.onclick = () => {
+        api.uc.prompt("Export Tools Filename", "tools").then(name => {
+            if (!name) {
+                return;
+            }
+            api.util.download(generateToolCSV(), `${name}.csv`);
         });
     };
 
