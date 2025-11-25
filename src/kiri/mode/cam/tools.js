@@ -238,7 +238,6 @@ function generateToolCSV(){
     let {tools} = api.conf.get();
 
     let header = [
-        'api_version',
         'id',
         'number',
         'type',
@@ -250,6 +249,7 @@ function generateToolCSV(){
         'flute_len',
         'taper_tip',
         'order',
+        'api_version='+ api.version,
     ].join(',');
     
     let acc = header + '\n';
@@ -257,11 +257,11 @@ function generateToolCSV(){
     for(let [i,t] of tools.entries()) {
         acc += 
         [
-            i == 0 ? api.version : '',
+            
             t.id,
             t.number,
             t.type,
-            t.name,
+            escapeCSV(t.name),
             t.metric ? 'true' : 'false',
             t.shaft_diam,
             t.shaft_len,
@@ -275,25 +275,70 @@ function generateToolCSV(){
     return acc;
 }
 
+function escapeCSV(x) {
+    if (x == null) return "";
+    x = x.toString();
+    return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x;
+  }
+  
+
+  function splitCSVLine(text) {
+    const line = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+
+        if (char === '"') {
+            // doubled quotes inside quoted sections
+            if (inQuotes && i + 1 < text.length && text[i + 1] === '"') {
+                current += '"';
+                i++;
+            }
+            else {
+                inQuotes = !inQuotes;
+            }
+        }
+        else if(char === ',') {
+            if(!inQuotes) {
+                line.push(current);
+                current = "";
+            }else{
+                current += ',';
+            }
+        }else{
+            current += char;
+        }
+    }
+
+    line.push(current);
+
+    return line;
+}
+
 export function decodeToolCSV(data){
 
     let apiVer;
     try{
-        apiVer = data.split('\n')[1].split(',')[0];
-
+        apiVer = data.split('\n')[0].split(',')[11].split('=')[1];
     }catch( err ){
         console.log(err)
         return [false, "malformed csv: cannot determine api version"];
     }
 
     // will need to implement logic in the future if the tool API changes
-    // console.log("got api version", apiVer)
+    console.log("got api version", apiVer)
 
     try{
         //get and parse tools line by line
-        let tools = data.split( '\n' ).slice( 1 ).map( line => {
-            let [ver,id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip] = line.split(',');
-            // console.log({ver,id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip})
+        let tools = data.split( '\n' )
+        .slice( 1 )
+        .filter( line => line.length > 0 )
+        .map( line => {
+            console.log(splitCSVLine( line ))
+            let [id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip, order,] = splitCSVLine( line );
+            console.log({id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip})
             return {
                 id: parseInt( id ),
                 type: type.toString(),
@@ -305,6 +350,7 @@ export function decodeToolCSV(data){
                 flute_diam: parseFloat(flute_diam),
                 flute_len: parseFloat(flute_len),
                 taper_tip: parseFloat(taper_tip),
+                order: parseInt(order),
             }
         })
 
@@ -317,13 +363,14 @@ export function decodeToolCSV(data){
             IDs.add(tool.id);
             // check remaining fields
             if( toolNames.indexOf(tool.type) == -1 ) throw "tool type must be one of " + toolNames.join(', ');
-            if( tool.number == NaN ) throw "number must be a number";
-            if( tool.metric == null ) throw "metric must be a boolean";
-            if( tool.shaft_diam == NaN ) throw "shaft_diam must be a number";
-            if( tool.shaft_len == NaN ) throw "shaft_len must be a number";
-            if( tool.flute_diam == NaN ) throw "flute_diam must be a number";
-            if( tool.flute_len == NaN ) throw "flute_len must be a number";
-            if( tool.taper_tip == NaN ) throw "taper_tip must be a number";
+            if( Number.isNaN(tool.number) ) throw "number must be a number";
+            if( Number.isNaN(tool.metric) ) throw "metric must be a boolean";
+            if( Number.isNaN(tool.shaft_diam) ) throw "shaft_diam must be a number";
+            if( Number.isNaN(tool.shaft_len) ) throw "shaft_len must be a number";
+            if( Number.isNaN(tool.flute_diam) ) throw "flute_diam must be a number";
+            if( Number.isNaN(tool.flute_len) ) throw "flute_len must be a number";
+            if( Number.isNaN(tool.taper_tip) ) throw "taper_tip must be a number";
+            if( Number.isNaN(tool.order) ) throw "order must be a number";
         }
 
         return [true, {
