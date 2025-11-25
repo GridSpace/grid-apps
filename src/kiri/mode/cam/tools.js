@@ -233,9 +233,20 @@ function setToolChanged(changed) {
     api.ui.toolsSave.disabled = !changed;
 }
 
+/**
+ * generateToolCSV generates a CSV string containing all the tools in the
+ * settings object. The CSV string will have the following format:
+ *
+ * id,number,type,name,metric,shaft_diam,shaft_len,flute_diam,flute_len,taper_tip,order,api_version
+ *
+ * Each line of the CSV string will represent a single tool, with the above
+ * fields listed in order. The 'api_version' field will be set to the current
+ * version of the Kiri API.
+ *
+ * @return {string} the generated CSV string
+ */
 function generateToolCSV(){
-    
-    let {tools} = api.conf.get();
+    let { tools } = api.conf.get();
 
     let header = [
         'id',
@@ -253,11 +264,9 @@ function generateToolCSV(){
     ].join(',');
     
     let acc = header + '\n';
-    
-    for(let [i,t] of tools.entries()) {
+    for( let [i,t] of tools.entries() ) {
         acc += 
         [
-            
             t.id,
             t.number,
             t.type,
@@ -269,19 +278,38 @@ function generateToolCSV(){
             t.flute_len,
             t.taper_tip,
             t.order,
-        ].join(',') + (i == tools.length - 1 ? '' : '\n');
+        ].join(',') + ( i == tools.length - 1 ? '' : '\n' );
     }
 
     return acc;
 }
 
+
+/**
+ * Escapes a string for use in a CSV file.
+ *
+ * If the string contains a comma or newline, it will be wrapped in
+ * double quotes and any double quotes inside the string will be
+ * replaced with two double quotes.
+ *
+ * @param {string} x - The string to escape
+ * @returns {string} - The escaped string
+ */
 function escapeCSV(x) {
     if (x == null) return "";
     x = x.toString();
     return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x;
   }
   
-
+/**
+ * Splits a line of CSV into an array of strings.
+ *
+ * This function will handle quoted sections with double quotes inside,
+ * and will split on commas outside of quoted sections.
+ *
+ * @param {string} text - The line of CSV to split
+ * @returns {string[]} - The array of strings split from the text
+ */
   function splitCSVLine(text) {
     const line = [];
     let current = "";
@@ -289,7 +317,6 @@ function escapeCSV(x) {
 
     for (let i = 0; i < text.length; i++) {
         const char = text[i];
-
         if (char === '"') {
             // doubled quotes inside quoted sections
             if (inQuotes && i + 1 < text.length && text[i + 1] === '"') {
@@ -311,12 +338,18 @@ function escapeCSV(x) {
             current += char;
         }
     }
-
     line.push(current);
-
     return line;
 }
-
+/**
+ * 
+ * @param {string} data
+ * decodeToolCSV takes a CSV string containing tool data and returns an object
+ * containing an array of tool objects and the version of the API used to generate
+ * the CSV. The object returned will be in the format of [true, {tools,  time, version}]
+ * 
+ * If the CSV is malformed in any way, decodeToolCSV will return a tuple of [false, errMessage] 
+ */
 export function decodeToolCSV(data){
 
     let apiVer;
@@ -328,7 +361,7 @@ export function decodeToolCSV(data){
     }
 
     // will need to implement logic in the future if the tool API changes
-    console.log("got api version", apiVer)
+    // console.log("got api version", apiVer)
 
     try{
         //get and parse tools line by line
@@ -336,26 +369,24 @@ export function decodeToolCSV(data){
         .slice( 1 )
         .filter( line => line.length > 0 )
         .map( line => {
-            console.log(splitCSVLine( line ))
             let [id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip, order,] = splitCSVLine( line );
-            console.log({id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip})
+            // console.log({id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip, order})
             return {
                 id: parseInt( id ),
-                type: type.toString(),
-                number: parseInt(number),
-                name: name.toString(),
+                type,
+                number: parseInt( number ),
+                name,
                 metric: metric == 'true'? true : ( metric == 'false' ? false : null ),
-                shaft_diam: parseFloat(shaft_diam),
-                shaft_len: parseFloat(shaft_len),
-                flute_diam: parseFloat(flute_diam),
-                flute_len: parseFloat(flute_len),
-                taper_tip: parseFloat(taper_tip),
-                order: parseInt(order),
+                shaft_diam: parseFloat( shaft_diam ),
+                shaft_len: parseFloat( shaft_len ),
+                flute_diam: parseFloat( flute_diam ),
+                flute_len: parseFloat( flute_len ),
+                taper_tip: parseFloat( taper_tip ),
+                order: parseInt( order ),
             }
         })
 
         let IDs = new Set();
-
         for(let tool of tools){
             //check  tool IDs
             if( tool.id == NaN ) throw "id must be a number";
