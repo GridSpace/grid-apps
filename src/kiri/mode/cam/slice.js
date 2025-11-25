@@ -119,6 +119,10 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         ondone(msg);
     }
 
+    function alert(msg) {
+        onupdate(null,null,msg);
+    }
+
     if (unsafe) {
         console.log("disabling overhang safeties");
     }
@@ -135,20 +139,20 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         let maxDelta = 1e-3;
 
         if (stock.x + maxDelta < (bounds.max.x - bounds.min.x)) {
-            return error('stock X too small for part. resize stock or use offset stock');
+            alert('stock X too small for part');
         }
 
         if (stock.y + maxDelta < (bounds.max.y - bounds.min.y)) {
-            return error('stock Y too small for part. resize stock or use offset stock');
+            alert('stock Y too small for part');
         }
 
         if (stock.z + maxDelta < (bounds.max.z - bounds.min.z)) {
-            return error('stock Z too small for part. resize stock or use offset stock');
+            alert('stock Z too small for part');
         }
     }
 
     if (zMin >= bounds.max.z) {
-        return error(`invalid z bottom ${(zMin / units).round(3)} >= bounds z max ${(zMax / units).round(3)}`);
+        alert(`invalid z bottom ${(zMin / units).round(3)} >= bounds z max ${(zMax / units).round(3)}`);
     }
 
     let mark = Date.now();
@@ -158,31 +162,31 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let shadows = {};
     let slicer;
     let state = {
-        settings,
-        widget,
+        addSlices,
         bounds,
-        tabs,
-        cutTabs,
-        cutPolys,
+        color,
+        computeShadows,
         contourPolys,
+        cutPolys,
+        cutTabs,
+        dark,
         healPolys,
+        isIndexed,
+        ops: opList,
+        setAxisIndex,
+        settings,
         shadowAt,
         slicer,
-        addSlices,
-        isIndexed,
-        setAxisIndex,
-        updateToolDiams,
+        tabs,
+        unsafe,
         updateSlicer,
-        computeShadows,
+        updateToolDiams,
+        widget,
         zBottom,
+        zMax,
         zThru,
         ztOff,
-        zMax,
-        zTop,
-        unsafe,
-        color,
-        dark,
-        ops: opList
+        zTop
     };
     let tracker = setSliceTracker({ rotation: 0 });
 
@@ -310,8 +314,11 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             workover.bottom_z = isIndexed ? valz.ov_botz : bottom_stock + valz.ov_botz;
             workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
         }
-        // state.workarea = workover;
+        let { note, type } = op.op;
+        let named = note ? note.split(' ').filter(v => v.charAt(0) === '#') : [];
+        let layername = named.length ? named : (note ? `${type} (${note})` : type);
         Object.assign(state, {
+            layername,
             zBottom,
             zThru,
             ztOff,
@@ -688,7 +695,7 @@ export async function holes(settings, widget, individual, rec, onProgress) {
     let opts = { each: onEach, progress: (num, total) => onProgress(num / total * 0.5, "slice") };
     await slicer.slice(indices, opts);
     let shadowedDrills = false;
-    // console.log("slices",slices)
+
     for (let [i, slice] of slices.entries()) {
         for (let top of slice.tops) {
             // console.log("slicing",slice.z,top)
@@ -698,13 +705,13 @@ export async function holes(settings, widget, individual, rec, onProgress) {
                 continue;
             }
             for (let poly of inner) {
-                if (poly.points.length < 7) continue;
-
+                if (poly.points.length < 7) {
+                    continue;
+                }
                 let center = poly.calcCircleCenter();
                 center.area = poly.area();
                 center.overlapping = [center];
                 center.depth = 0;
-                // console.log("center",center)
                 if (poly.circularity() < 0.98) {
                     // if not circular, don't add to holes
                     continue;
@@ -717,8 +724,7 @@ export async function holes(settings, widget, individual, rec, onProgress) {
                 let overlap = false;
                 for (let [i, circle] of circles.entries()) {
                     let dist = circle.distTo2D(center);
-
-                    // //if on the same xy point, 
+                    // if on the same xy point,
                     if (dist <= centerDiff) {
                         // console.log("overlap",center,circle);
                         circle.overlapping.push(center);
@@ -732,12 +738,10 @@ export async function holes(settings, widget, individual, rec, onProgress) {
         }
         onProgress(0.5 + (i / slices.length * 0.25), "recognize circles");
     }
-
     let drills = [];
 
     for (let [i, c] of circles.entries()) {
         let overlapping = c.overlapping;
-
         let last = overlapping.shift();
         while (overlapping.length) {
             let circ = overlapping.shift();
@@ -775,14 +779,33 @@ export async function holes(settings, widget, individual, rec, onProgress) {
     return drills;
 }
 
-function cutTabs(tabs, offset, z, inter) {
-    tabs = tabs.filter(tab => z < tab.pos.z + tab.dim.z / 2).map(tab => tab.off).flat();
-    return cutPolys(tabs, offset, z, false);
+function cutTabs(tabs, offset) {
+    let out = [];
+    for (let tab of tabs) {
+        tab.top = tab.pos.z + tab.dim.z / 2;
+    }
+    for (let poly of offset) {
+        let polyZ = poly.getZ();
+        let cut = tabs.filter(tab => tab.top >= polyZ);
+        let lo = poly.cut(cut.map(tab => tab.off).flat(), false);
+        let hi = [];
+        for (let tab of cut) {
+            hi.appendAll(POLY.setZ(poly.cut(tab.off, true), tab.top));
+        }
+        if (hi.length) {
+            let heal = healPolys([ ...lo, ...hi ], false);
+            POLY.setWinding(heal, poly.isClockwise());
+            out.push(...heal);
+        } else {
+            out.push(poly);
+        }
+    }
+    return out;
 }
 
-function cutPolys(polys, offset, z, inter) {
+function cutPolys(polys, offset) {
     let noff = [];
-    offset.forEach(op => noff.appendAll(op.cut(POLY.union(polys, 0, true), inter)));
+    offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), true) ));
     return healPolys(noff);
 }
 
@@ -799,7 +822,17 @@ function contourPolys(widget, polys) {
     }
 }
 
-function healPolys(noff) {
+function dedup(arr, same) {
+    const out = [];
+    let prev;
+    for (const x of arr) {
+        if (!prev || !same(prev, x)) out.push(x);
+        prev = x;
+    }
+    return out;
+}
+
+function healPolys(noff, sameZ = true) {
     for (let p of noff) {
         if (p.appearsClosed()) {
             p.points.pop();
@@ -818,29 +851,29 @@ function healPolys(noff) {
                     let s2 = ntmp[j];
                     if (!s2) continue;
                     // require polys at same Z to heal
-                    if (Math.abs(s1.getZ() - s2.getZ()) > 0.01) {
+                    if (sameZ && Math.abs(s1.getZ() - s2.getZ()) > 0.01) {
                         continue;
                     }
                     if (!(s1.open && s2.open)) continue;
                     if (s1.last().isMergable2D(s2.first())) {
-                        s1.addPoints(s2.points.slice(1));
+                        s1.addPoints(s2.points);
                         ntmp[j] = null;
                         continue outer;
                     }
                     if (s2.last().isMergable2D(s1.first())) {
-                        s2.addPoints(s1.points.slice(1));
+                        s2.addPoints(s1.points);
                         ntmp[i] = null;
                         continue outer;
                     }
                     if (s1.first().isMergable2D(s2.first())) {
                         s1.reverse();
-                        s1.addPoints(s2.points.slice(1));
+                        s1.addPoints(s2.points);
                         ntmp[j] = null;
                         continue outer;
                     }
                     if (s1.last().isMergable2D(s2.last())) {
                         s2.reverse();
-                        s1.addPoints(s2.points.slice(1));
+                        s1.addPoints(s2.points);
                         ntmp[j] = null;
                         continue outer;
                     }
@@ -854,9 +887,14 @@ function healPolys(noff) {
         }
         // close poly if head meets tail
         for (let poly of noff) {
-            if (poly.open && poly.first().isMergable2D(poly.last())) {
-                poly.points.pop();
-                poly.open = false;
+            poly.points = dedup(poly.points, (a,b) => a.isMergable3D(b));
+            if (poly.open) {
+                if (poly.first().isMergable3D(poly.last())) {
+                    poly.points.pop();
+                    poly.open = false;
+                } else if (poly.first().isMergable2D(poly.last())) {
+                    poly.open = false;
+                }
             }
         }
     }

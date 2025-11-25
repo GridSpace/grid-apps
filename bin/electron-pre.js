@@ -2,30 +2,30 @@ const fs = require('fs-extra');
 const path = require('path');
 const server = require('@gridspace/app-server');
 
+const altTmp = path.join('tmp','alt');
+fs.copySync("alt", altTmp, { dereference: true });
+
 // deref src, web, mod for windows
 const srcTmp = path.join('tmp','src');
-fs.copySync("src", srcTmp, { dereference: true });
+fs.copySync("src", srcTmp, { dereference: true, filter:(src) => {
+    return true || src.indexOf('src/main') < 0;
+} });
 
 const webTmp = path.join('tmp','web');
-fs.copySync("web", webTmp, { dereference: true });
+fs.copySync("web", webTmp, { dereference: true, filter:(src) => {
+    return src.indexOf('web/boot') < 0;
+} });
 
 const modTmp = path.join('tmp','mod');
 if (fs.existsSync("mod"))
 fs.copySync("mod", modTmp, { dereference: true, filter:(src,dst) => {
-    const ok =
-        src === 'mod' ||
-        src.indexOf('mod/standalone') === 0 ||
-        src.indexOf('mod/node_modules') === 0;
+    const ok = src === 'mod' || src.indexOf('mod/standalone') === 0;
     return ok;
 } });
 
 const modsTmp = path.join('tmp','mods');
 fs.copySync("mods", modsTmp, { dereference: true, filter:(src,dst) => {
-    const ok =
-        src === 'mods' ||
-        src.indexOf('mods/bambu') === 0 ||
-        src.indexOf('mods/electron') === 0 ||
-        src.indexOf('mods/node_modules') === 0;
+    const ok = src === 'mods' || src.indexOf('mods/bambu') === 0;
     return ok;
 } });
 

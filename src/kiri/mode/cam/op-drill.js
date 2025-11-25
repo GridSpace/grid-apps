@@ -14,8 +14,8 @@ class OpDrill extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { settings, addSlices, widget, updateToolDiams } = state;
-        let { zBottom, zThru, thruHoles, color } = state;
-        let { drills, drillThrough } = op
+        let { color } = state;
+        let { drills } = op
 
         let drillTool = new Tool(settings, op.tool),
             drillToolDiam = drillTool.fluteDiameter(),
@@ -47,7 +47,7 @@ class OpDrill extends CamOp {
             slice.camLines = [poly];
 
             slice.output()
-                .setLayer("drill", { face: color, line: color })
+                .setLayer(state.layername, { face: color, line: color })
                 .addPolys(slice.camLines);
             addSlices(slice);
             sliceOut.push(slice);
@@ -55,11 +55,10 @@ class OpDrill extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state } = this;
-        let { settings, widget, addSlices, updateToolDiams } = state;
+        let { op } = this;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
         setTool(op.tool, undefined, op.rate);
-        setDrill(op.down, op.lift, op.dwell, op.thru);
+        setDrill(op.down, op.lift, op.dwell);
         setSpindle(op.spindle);
         emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
     }

@@ -218,207 +218,6 @@ function exportGCodeDialog(gcode, sections, info, names) {
         ajax.send(form);
     }
 
-    function gridhost_tracker(host,key) {
-        ajax(host+"/api/check?key="+key, function(data) {
-            data = js2o(data);
-            console.log(data);
-            if (!(data.done || data.error)) {
-                setTimeout(function() { gridhost_tracker(host,key) }, 1000);
-            }
-        });
-    }
-
-    function gridlocal_probe(ev, devs) {
-        if (ev && ev.code !== 'Enter') return;
-
-        if (!devs && api.probe.local(gridlocal_probe)) return;
-
-        grid_local = devs;
-
-        let gdev = localGet('grid-local');
-        let gloc = $('grid-local');
-        let html = [];
-        for (let uuid in devs) {
-            gdev = gdev || uuid;
-            let dev = devs[uuid];
-            let sel = uuid === gdev ? ' selected' : '';
-            html.push(`<option id="gl-${uuid}" value="${uuid}" ${sel}>${dev.stat.device.name}</option>`);
-        }
-
-        if (html.length) {
-            gloc.innerHTML = html.join('\n');
-            gloc.onchange = (ev) => {
-                localSet('grid-local', gloc.options[gloc.selectedIndex].value);
-            };
-            $('send-to-gridhead').style.display = 'flex';
-            $('send-to-gridspool').style.display = 'flex';
-        } else {
-            $('send-to-gridhead').style.display = '';
-            $('send-to-gridspool').style.display = '';
-        }
-    }
-
-    function sendto_gridlocal() {
-        let uuid = $('grid-local').value;
-        let dev = grid_local[uuid];
-        if (dev) {
-            let file = $('print-filename').value;
-            fetch(
-                `${api.probe.live}/api/grid_send?uuid=${uuid}&file=${encodeURIComponent(file + "." + fileext)}`,
-                {method: "POST", body: gcode}
-            )
-            .then(t => t.text())
-            .then(t => {
-                api.stats.add(`ua_${api.mode.get_lower()}_print_local_ok`);
-                console.log({grid_spool_said: t});
-            })
-            .catch(e => {
-                api.stats.add(`ua_${api.mode.get_lower()}_print_local_err`);
-                console.log({grid_local_spool_error: e});
-            })
-            .finally(() => {
-                api.modal.hide();
-            });
-        }
-    }
-
-    function admin_gridlocal() {
-        let dev = grid_local[$('grid-local').value];
-        if (dev && dev.stat && dev.stat.device) {
-            let dsd = dev.stat.device;
-            window.open(`http://${dsd.addr[0]}:${dsd.port || 4080}`, "_grid_admin");
-        }
-    }
-
-    function gridhost_probe(ev, set_host) {
-        if (ev && ev.code !== 'Enter') return;
-        if (!(grid_host && grid_apik)) return;
-
-        if (set_host) grid_host.value = set_host;
-
-        let xhtr = new XMLHttpRequest(),
-            host = grid_host.value,
-            apik = grid_apik.value,
-            target = grid_target.value;
-
-        if (!apik) $('gpapik').style.display = 'none';
-
-        if (!host && api.probe.grid(gridhost_probe)) return;
-
-        if (!host) return;
-
-        xhtr.onreadystatechange = function() {
-            if (xhtr.readyState === 4) {
-                if (xhtr.status >= 200 && xhtr.status < 300) {
-                    localSet('grid-host', host);
-                    localSet('grid-apik', apik);
-                    let res = JSON.parse(xhtr.responseText);
-                    let sel = false;
-                    let match = false;
-                    let first = null;
-                    let html = [];
-                    grid_targets = {};
-                    for (let key in res) {
-                        first = first || key;
-                        if (!localGet('grid-target')) {
-                            localSet('grid-target', key);
-                            sel = true;
-                        } else {
-                            sel = localGet('grid-target') === key;
-                        }
-                        match = match || sel;
-                        grid_targets[html.length] = key;
-                        html.push(
-                            "<option id='gpo-'" + key + " value='" +key + "'" +
-                            (sel ? " selected" : "") +
-                            ">" +
-                            (res[key].comment || key) +
-                            "</option>"
-                        );
-                    }
-                    if (!match) {
-                        localSet('grid-target', first);
-                    }
-                    grid_target.innerHTML = html.join('\n');
-                } else if (xhtr.status === 401) {
-                    $('gpapik').style.display = '';
-                } else {
-                    local.removeItem('grid-host');
-                    local.removeItem('grid-apik');
-                    console.log("invalid grid:host url");
-                }
-            }
-        };
-
-        xhtr.open("GET", host + "/api/active?key=" + apik);
-        xhtr.send();
-    }
-
-    function sendto_gridhost() {
-        if (!(grid_host && grid_apik)) return;
-
-        let xhtr = new XMLHttpRequest(),
-            host = grid_host.value,
-            apik = grid_apik.value,
-            target = localGet('grid-target') || '';
-
-        if (target === '') {
-            api.show.alert('invalid or missing target');
-            return;
-        }
-        if (host.indexOf("http") !== 0) {
-            api.show.alert("host missing protocol (http:// or https://)");
-            return;
-        }
-        if (host.indexOf("://") < 0) {
-            api.show.alert("host:port malformed");
-            return;
-        }
-        if (api.const.SECURE && !api.util.isSecure(host)) {
-            api.show.alert("host must begin with 'https' on a secure site");
-            return;
-        }
-
-        localSet('grid-host', host.trim());
-        localSet('grid-apik', apik.trim());
-
-        xhtr.onreadystatechange = function() {
-            if (xhtr.readyState === 4) {
-                let status = xhtr.status;
-                api.stats.add(`ua_${api.mode.get_lower()}_print_grid_${status}`);
-                if (status >= 200 && status < 300) {
-                    let json = js2o(xhtr.responseText);
-                    gridhost_tracker(host,json.key);
-                    api.ajax(host+"/api/wait?key="+json.key, function(data) {
-                        data = js2o(data);
-                        console.log(data);
-                        api.show.alert("print to "+target+": "+data.status, 600);
-                    });
-                } else {
-                    api.show.alert("grid:host error\nstatus: "+status+"\nmessage: "+xhtr.responseText, 10000);
-                }
-                api.show.progress(0);
-            }
-        };
-        xhtr.upload.addEventListener('progress', function(evt) {
-            api.show.progress(evt.loaded/evt.total, "sending");
-        });
-        filename = $('print-filename').value;
-        xhtr.open("POST",
-            host + "/api/print?" +
-            "filename=" + filename +
-            "&target=" + target +
-            "&key=" + apik +
-            "&time=" + Math.round(info.time) +
-            "&length=" + Math.round(info.distance) +
-            "&image=" + filename
-        );
-        xhtr.setRequestHeader("Content-Type", "text/plain");
-        let snapshot = api.view.snapshot;
-        xhtr.send(snapshot ? [gcode,snapshot].join("\0") : gcode);
-        api.modal.hide();
-    }
-
     function download() {
         filename = $('print-filename').value;
         api.util.download(gcode, filename + "." + fileext);
@@ -463,8 +262,6 @@ function exportGCodeDialog(gcode, sections, info, names) {
         let set = api.conf.get();
         let fdm = MODE === MODES.FDM;
         let octo = set.controller.exportOcto && MODE !== MODES.CAM;
-        let ghost = set.controller.exportGhost;
-        let local = set.controller.exportLocal;
         let preview = set.controller.exportPreview;
         $('code-preview-head').style.display = preview ? '' : 'none';
         $('code-preview').style.display = preview ? '' : 'none';
@@ -484,8 +281,6 @@ function exportGCodeDialog(gcode, sections, info, names) {
         // persist fields when changed
         bindField('octo-host', 'octo-host');
         bindField('octo-apik', 'octo-apik');
-        bindField('grid-host', 'grid-host');
-        bindField('grid-apik', 'grid-apik');
 
         // in cam mode, show zip file option
         let downloadZip = $('print-zip');
@@ -699,35 +494,9 @@ function exportGCodeDialog(gcode, sections, info, names) {
                 $('ophost').style.display = 'none';
                 $('opapik').style.display = 'none';
                 $('oph1nt').style.display = 'none';
-                $('send-to-gridhost').style.display = 'none';
             }
             octo_host.value = localGet('octo-host') || '';
             octo_apik.value = localGet('octo-apik') || '';
-        } catch (e) { console.log(e) }
-
-        // grid:host setup
-        $('send-to-hosthead').style.display = ghost ? '' : 'none';
-        $('send-to-gridhost').style.display = ghost ? '' : 'none';
-        if (ghost) try {
-            $('print-gridhost').onclick = sendto_gridhost;
-            $('grid-host').onkeyup = gridhost_probe;
-            $('grid-apik').onkeyup = gridhost_probe;
-            grid_host = $('grid-host');
-            grid_apik = $('grid-apik');
-            grid_target = $('grid-target');
-            grid_target.onchange = function(ev) {
-                localSet('grid-target', grid_targets[grid_target.selectedIndex]);
-            };
-            grid_host.value = localGet('grid-host') || '';
-            grid_apik.value = localGet('grid-apik') || '';
-            gridhost_probe();
-        } catch (e) { console.log(e) }
-
-        // grid:local setup
-        if (local) try {
-            gridlocal_probe();
-            $('print-gridlocal').onclick = sendto_gridlocal;
-            $('admin-gridlocal').onclick = admin_gridlocal;
         } catch (e) { console.log(e) }
 
         // preview of the generated GCODE (first 64k max)

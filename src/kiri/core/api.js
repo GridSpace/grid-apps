@@ -9,7 +9,7 @@ import { client as work } from './client.js';
 import { consts, COLOR as color, LISTS as lists } from './consts.js';
 import { device, devices } from './devices.js';
 import { catalog, dialog, event, group, help, hide, image } from './main.js';
-import { modal, mode, probe, process, show, space, util, view } from './main.js';
+import { modal, mode, process, show, space, util, view } from './main.js';
 import { local as dataLocal } from '../../data/local.js';
 import { noop, ajax, o2js, js2o } from './utils.js';
 import { functions } from './function.js';
@@ -96,6 +96,7 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
         put: (key, val) => localSet(key, val),
         set: (key, val) => localSet(key, val),
         setItem: (key, val) => localSet(key, val),
+        removeItem: (key) => localRemove(key)
     },
     tweak = {
         line_precision(v) { api.work.config({ base: { clipperClean: v } }) },
@@ -119,6 +120,11 @@ function localSet(key, val) {
     return val;
 }
 
+function localRemove(key) {
+    let sloc = api.conf.get().local;
+    return delete sloc[key];
+}
+
 export const api = {
     ajax,
     beta,
@@ -137,6 +143,7 @@ export const api = {
     dialog,
     doit,
     event,
+    electron: navigator.userAgent.includes('Electron'),
     feature,
     function: functions,
     group,
@@ -156,7 +163,6 @@ export const api = {
     o2js,
     onkey,
     platform,
-    probe,
     process,
     sdb: dataLocal,
     selection,

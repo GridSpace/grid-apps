@@ -22,11 +22,13 @@ self.lang['en-us'] = {
     filter:         "filter",
     front:          "front",
     fullscreen:     "fullscreen",
-    help:           "help",
     ghost:          "ghost",        // left render pop menu (wireframe)
+    help:           "help",
     hide:           "hide",         // left render pop menu (invisible)
     home:           "home",
+    info:           "info",         // info menu
     import:         "import",
+    install:        "install",
     language:       "language",
     left:           "left",
     machines:       "machines",     // device or machine
@@ -39,6 +41,7 @@ self.lang['en-us'] = {
     profs:          "profiles",     // right menu "profiles"
     prefs:          "preferences",  // right menu "preferences"
     preview:        "preview",
+    quit:           "quit",         // quit/exit the application (electron)
     recent:         "recent",
     rename:         "rename",
     render:         "render",       // left render pop menu
@@ -58,6 +61,7 @@ self.lang['en-us'] = {
     tools:          "tools",        // CAM tool menu button
     top:            "top",
     type:           "type",         // CAM tool type
+    uninstall:      "uninstall",
     version:        "version",
     view:           "view",         // left view pop menu
     wire:           "wire",         // left render pop menu
@@ -225,6 +229,10 @@ self.lang['en-us'] = {
     mo_lazr:        "Laser Cut",
     mo_cncm:        "CNC Mill",
 
+    // MODE INFO (right panel)
+    mi_devi:        "Device",
+    mi_prof:        "Profile",
+
     // SETUP
     su_menu:        "setup",
     su_devi:        "Devices",
@@ -258,6 +266,11 @@ self.lang['en-us'] = {
     ws_menu:        "view",
     ws_save:        "Save",
     ws_cler:        "Clear",
+
+    // RIGHT PANEL
+    rp_objs:        "objects",
+    rp_rngs:        "ranges",
+    rp_opls:        "operation list",
 
     // OPTIONS
     op_menu:        "interface",
@@ -306,6 +319,8 @@ self.lang['en-us'] = {
     op_unit_l:      ["workspace units affects","speeds and distances"],
     op_anim_s:      "animate",
     op_anim_l:      ["animation mesh density","higher is more dense","takes more memory","and is slower"],
+    op_mani_s:      "manifold",
+    op_mani_l:      ["in stock indexed mode","use boolean visualiation","this is very expensive","and likely very slow"],
     op_exgl_l:      ["show Grid:Local devices in export dialog","includes Grid:Bots and OctoPrint plugins"],
     op_exgh_l:      ["legacy Grid:Host local network support"],
     op_exop_l:      ["legacy OctoPrint local network support","Grid:Space OctoPrint plugin recommended"],
@@ -321,8 +336,10 @@ self.lang['en-us'] = {
     pt_heal_l:      ["attempt to heal non-manifold meshes during slicing. may increase slicing time. enables a warning when non-manifold geometries are detected."],
     pt_thrd_s:      "threaded",
     pt_thrd_l:      ["use parallel processing when browser supports nested workers. may increase memory pressure on larger models. disable if you are getting out of memory errors"],
-    pt_assy_s:      "assembly",
+    pt_assy_s:      "web asm",
     pt_assy_l:      ["use web assembly when supported by browser. if you experience artifacts or memory errors, try disabling this."],
+    pt_wgpu_s:      "web gpu",
+    pt_wgpu_l:      ["use web gpu when supported by browser. if you experience artifacts or memory errors, try disabling this."],
 
     xp_menu:        "exports",
 
@@ -356,17 +373,21 @@ self.lang['en-us'] = {
     ad_thin_l:      ["detect and fill gaps","between shell walls"],
 
     // FDM SHELLS
-    sl_line_s:      "shell width",
+    sl_line_s:      "line width",
     sl_line_l:      ["extrusion width in millimeters","0 = nozzle diameter"],
     sl_ordr_s:      "shell order",
     sl_ordr_l:      ["output shell order","inside to outside","or outside to inside","affects surface quality"],
     sl_strt_s:      "start point",
     sl_strt_l:      ["layer starting point","last = where last layer ended","center = part center","origin = device origin","random = yolo"],
+    sl_ofin_s:      "shell inner offset",
+    sl_ofin_l:      ["inner hole perimeter offset","in millimeters"],
+    sl_ofot_s:      "shell outer offset",
+    sl_ofot_l:      ["outer wall perimeter offset","in millimeters"],
 
     // FDM SOLID
     fs_menu:        "solid fill",
-    fi_over_s:      "shell overlap",
-    fi_over_l:      ["overlap with shell and other fill","for improved extrusion bonding","as fraction of nozzle diameter","0.0 - 2.0"],
+    fi_over_s:      "fill overlap",
+    fi_over_l:      ["overlap between shells and solid or sparse infill. can improve bonding to shells","as fraction of line width","0.0 - 1.0"],
     fi_angl_s:      "start angle",
     fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
     fi_grow_s:      "area expand",
@@ -650,6 +671,10 @@ self.lang['en-us'] = {
     ci_face_l:      "select face to rotate facing up",
     ci_line_s:      "linear",
     ci_line_l:      "make linear passes along X then rotate Y",
+    ci_laso_s:      "offset start",
+    ci_laso_l:      ["x offet from left of part. negative values are outside of the part. in workspace units"],
+    ci_laeo_s:      "offset end",
+    ci_laeo_l:      ["x offet from right of part. negative values are outside of the part. in workspace units"],
 
     // CNC LASER On/Off Operations (Carvera)
     cl_powr_s:      "power",
@@ -670,10 +695,6 @@ self.lang['en-us'] = {
     cl_minz_l:      ["lowest Z band position"],
     cl_maxz_s:      "max z height",
     cl_maxz_l:      ["highest Z band position. when set to 0, uses the highest Z point of the workspace"],
-
-
-
-
 
     // CNC CUTOUT TABS
     ct_menu:        "tabs",
@@ -840,7 +861,7 @@ self.lang['en-us'] = {
     or_offy_l:      "origin offset Y",
 
     // CAM ORIGIN
-    co_menu:        "origin",
+    or_menu:        "origin",
     co_offx_s:      "offset x",
     co_offx_l:      ["offset origin along x axis","in workspace units"],
     co_offy_s:      "offset y",
@@ -860,10 +881,12 @@ self.lang['en-us'] = {
     ad_rdwl_l:      ["time between re-engaging","filament and movement","in milliseconds"],
     ad_scst_s:      "shell coast",
     ad_scst_l:      ["non-printing end","of perimeter shells","in millimeters"],
-    ad_msol_s:      "min area",
-    ad_msol_l:      ["minimum area (mm^2)","required to keep solid","must be > 0.1"],
+    ad_msol_s:      "area filter",
+    ad_msol_l:      ["minimum area (mm^2)","bridges and flats less than this are culled"],
     ad_mins_s:      "min speed",
     ad_mins_l:      ["minimum speed","for short segments"],
+    ad_maxf_s:      "max flowrate",
+    ad_maxf_l:      ["maximum volumetric flowrate supported by this print head and filament","in millimeters^3 / second"],
     ad_scar_s:      "scarf length",
     ad_scar_l:      ["ease up length for scarf joint. disables arc detection","0 = disabled"],
     ad_spol_s:      "short path",
@@ -968,5 +991,25 @@ self.lang['en-us'] = {
     sa_opzo_s:      "z offset",
     sa_opzo_l:      ["z layer offset","almost always 0.0","0.0-1.0 in millimeters"],
     sa_opaa_s:      "anti alias",
-    sa_opaa_l:      ["enable anti-aliasing","produces larger files","can blur details"]
+    sa_opaa_l:      ["enable anti-aliasing","produces larger files","can blur details"],
+
+    // EXPORT DIALOG
+    ex_job:         "job",
+    ex_fnam:        "file name",
+    ex_fsiz:        "file size (bytes)",
+    ex_time:        "time estimate (h:m:s)",
+    ex_matl:        "material",
+    ex_dens:        "filament density (g/cm^3)",
+    ex_fuse:        "filament used (mm)",
+    ex_wght:        "printed weight (g)",
+    ex_gcpv:        "gcode preview",
+    ex_dwnl:        "download",
+    ex_bamb:        "send to bambu",
+    ex_octo:        "octoprint",
+    ex_host:        "host",
+    ex_akey:        "key",
+    ex_rsnm:        "resin used ML",
+    ex_layr:        "layers",
+    ex_ptim:        "print time",
+    ex_segs:        "segments"
 };

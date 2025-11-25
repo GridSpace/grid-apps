@@ -5,38 +5,37 @@
 import { CSG } from '../../../geo/csg.js';
 import { Tool } from './tool.js';
 
-let nextMeshID = 1;
-let stock, center, rez;
-let path, pathIndex, tool, tools, last;
-
-let stockZ;
-let stockIndexMsg = false;
-let stockSlices;
-let stockIndex;
-let startTime;
-
-let toolID = -1;
-let toolMesh;
-let toolRadius;
-let toolUpdateMsg;
-
-let animateClear = false;
-let animating = false;
-let moveDist = 0;
-let renderDist = 0;
-let renderDone = false;
-let renderPause = 10;
-let renderSteps = 0;
-let renderSpeed = 0;
-let indexCount = 0;
-let updates = 0;
+let nextMeshID = 1,
+    stock,
+    path,
+    pathIndex,
+    tool,
+    tools,
+    last,
+    stockZ,
+    stockIndexMsg = false,
+    stockSlices,
+    stockIndex,
+    startTime,
+    toolID = -1,
+    toolMesh,
+    toolRadius,
+    toolUpdateMsg,
+    animateClear = false,
+    animating = false,
+    renderDone = false,
+    renderSteps = 0,
+    renderSpeed = 0,
+    indexCount = 0,
+    updates = 0,
+    maxR;
 
 export function init(worker) {
     const { dispatch } = worker;
 
     dispatch.animate_setup2 = function (data, send) {
         const { settings } = data;
-        const { process } = settings;
+        const { controller, process } = settings;
         const print = worker.current.print;
         const density = parseInt(settings.controller.animesh) * 1000;
         const isIndexed = process.camStockIndexed;
@@ -45,8 +44,6 @@ export function init(worker) {
         path = print.output.flat();
         tools = settings.tools;
         stock = settings.stock;
-        rez = 1 / Math.sqrt(density / (stock.x * stock.y));
-
         tool = null;
         last = null;
         animating = false;
@@ -56,25 +53,27 @@ export function init(worker) {
         startTime = 0;
         updates = 0;
         stockZ = isIndexed ? 0 : stock.z;
+        maxR = Math.hypot(stock.y, stock.z);
 
         stockSlices = [];
         const { x, y, z } = stock;
         const sliceCount = parseInt(settings.controller.animesh || 2000) / 100;
         const sliceWidth = stock.x / sliceCount;
+
+        if (controller.manifold)
         for (let i = 0; i < sliceCount; i++) {
             let xmin = -(x / 2) + (i * sliceWidth) + sliceWidth / 2;
             let slice = new Stock(sliceWidth, y, z).translate(xmin, 0, 0);
             stockSlices.push(slice);
             slice.updateMesh([]);
             slice.send(send);
-            // send({ mesh_move: { id: slice.id, pos: { x:0, y:0, z: stock.z/2} } });
+            // send.data({ mesh_move: { id: slice.id, pos: { x:0, y:0, z: stock.z/2} } });
         }
 
         send.done();
     };
 
     dispatch.animate2 = function (data, send) {
-        renderPause = data.pause || renderPause;
         renderSpeed = data.speed || 0;
         if (animating) {
             return send.done();
@@ -126,7 +125,6 @@ function renderPath(send) {
         return;
     }
     pathIndex++;
-    // console.log(next.point.z);
 
     if (next.tool && (!tool || tool.getID() !== next.tool.getID())) {
         // on real tool change, go to safe Z first
@@ -143,44 +141,50 @@ function renderPath(send) {
     }
 
     const id = toolID;
-    const rezstep = rez * 2;
+    const rezstep = Math.min(tool.maxDiameter(), 1) / 4;
+    // console.log({ rezstep });
+
     if (last) {
+        // console.log(last.point, next.point);
         const lp = last.point, np = next.point;
         last = next;
+
+        // render move line on client
+        send.data({ line: [ lp, np ]});
+
         // dwell ops have no point
         if (!np || !lp) {
             return renderPath(send);
         }
+
         let dx = np.x - lp.x,
             dy = np.y - lp.y,
             dz = np.z - lp.z,
-            da = Math.abs((np.a || 0) - (lp.a || 0)),
-            dr = (da / 360) * (2 * Math.PI * Math.max(np.z, lp.z)),
-            dist = Math.sqrt(dx * dx + dy * dy + dz * dz + dr * dr);
+            da = (np.a ?? 0) - (lp.a ?? 0), // delta rotation degrees
+            AD = maxR * 2, // arc diameter @ max z
+            dr = (Math.abs(da) / 360) * AD, // delta rotation arc
+            dist = Math.max(Math.hypot(dx, dy, dz), dr); // motion distance
 
-        moveDist += dist;
-
-        // skip moves that are less than grid resolution
-        if (moveDist < rezstep) {
-            // console.log('skip', moveDist, rezstep, next);
-            renderPath(send);
-            return;
-        }
-
+        // console.log({ dz, da, AD, dr, dist });
+        // sub-divide long moves for animation and better boolean ops
         const md = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz), dr);
-        const st = Math.ceil(md / rezstep);
-        const mx = dx / st, my = dy / st, mz = dz / st;
-        // const sd = Math.sqrt(mx*mx + my*my + mz*mz + dr*dr);
-        const sd = Math.sqrt(mx * mx + my * my + Math.min(1, mz * mz) + dr * dr);
+        const st = Math.ceil(md / rezstep); // steps
+        const mx = dx / st, my = dy / st, mz = dz / st, ma = da / st;
+        const sd = Math.sqrt(mx * mx + my * my + mz * mz + ma * ma);
+        const sp = next.speed;
         const moves = [];
-        for (let i = 0, x = lp.x, y = lp.y, z = lp.z; i < st; i++) {
-            moves.push({ x, y, z, a: lp.a, md: sd, dx, dy, dz });
+        for (let i = 0, x = lp.x, y = lp.y, z = lp.z, a = lp.a; i < st; i++) {
+            moves.push({ x, y, z, a, md: sd, dx, dy, dz, da, sp });
             x += mx;
             y += my;
             z += mz;
+            a += ma;
         }
-        moveDist = 0;
-        moves.push({ ...next.point, md: sd });
+        // console.log({ dist: md, steps: st, speed: next.speed, moves });
+
+        // push last point
+        moves.push({ ...next.point, md: sd, sp });
+        // console.log(...moves);
         renderMoves(id, moves, send);
     } else {
         last = next;
@@ -197,26 +201,25 @@ function renderMoves(id, moves, send, seed = 0) {
         if (!pos) {
             throw `no pos @ ${index} of ${moves.length}`;
         }
-        const { dx, dy, dz } = pos;
+        const { dx, dy, dz, da, sp, md } = pos;
         toolMove(pos);
         // console.log('renderMoves', {id, moves, seed});
         let subs = 0;
-        if (dx || dy || dz < 0)
+        if (dx || dy || dz < 0 || da)
             for (let slice of stockSlices) {
                 if (slice.bounds.intersectsBox(toolMesh.bounds)) {
                     slice.subtractTool(toolMesh);
                     subs++;
                 }
             }
-        // console.log({ index, subs });
-        renderDist += pos.md;
         // pause renderer at specified offsets
-        if (renderSpeed && renderDist >= renderSpeed) {
-            renderDist = 0;
+        if (renderSpeed) {
+            let time = sp ? (md / sp) * 60000 : 10;
+            // console.log({ time, ...pos });
             renderUpdate(send);
             setTimeout(() => {
                 renderMoves(id, moves, send, index + 1);
-            }, renderPause);
+            }, time / renderSpeed);
             return;
         }
     }

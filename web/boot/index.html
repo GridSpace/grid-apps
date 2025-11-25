@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Kiri:Moto (loading)</title>
+    <style>
+        body {
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            position: fixed;
+            align-items: center;
+            flex-direction: column;
+            justify-content: center;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+    </style>
+    <script type="module">
+        import { version } from '/lib/moto/license.js';
+        (async () => {
+            const reg = await navigator.serviceWorker.register('/boot/service.js', { scope: '/' });
+            await reg.update();
+            await navigator.serviceWorker.ready;
+
+            if (!navigator.serviceWorker.controller) {
+                console.log('No controller → reloading under SW control');
+                location.reload();
+                return;
+            }
+
+            // turn url params into key/value map
+            const map = Object.fromEntries(
+                (location.search || location.hash).slice(1).split('&')
+                .map(v => v.split('='))
+                .map(([k, v = true]) => [k, v])
+            );
+            if (map.debug) {
+                console.log({ map });
+            }
+
+            navigator.serviceWorker.controller.postMessage({
+                clear: map.clear,
+                disable: map.disable,
+                version: map.version || version
+            });
+
+            navigator.serviceWorker.addEventListener('message', e => {
+                console.log('[SM]', e.data);
+                    setTimeout(() => {
+                        if (map.mesh) {
+                        location.replace('/mesh/index.html');
+                    } else {
+                        location.replace('/kiri/index.html');
+                    }
+                }, map.delay || 10);
+            });
+        })();
+    </script>
+</head>
+
+<body>Booting Grid.Space</body>
+
+</html>

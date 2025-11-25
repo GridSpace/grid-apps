@@ -140,7 +140,8 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         fillOffset = lineWidth * fillOffsetMult,
         clipOffset = process.sliceSupportOffset,
         sliceFillAngle = process.sliceFillAngle,
-        supportDensity = process.sliceSupportDensity;
+        supportDensity = process.sliceSupportDensity,
+        { sliceCompInner, sliceCompOuter } = process;
 
     // override globals used by vopt()
     isFlat = controller.lineType === "flat";
@@ -230,6 +231,8 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         useAssembly,
         post: 'FDM',
         post_args: {
+            compInner: sliceCompInner,
+            compOuter: sliceCompOuter,
             shellOffset,
             fillOffset,
             clipOffset,
@@ -495,7 +498,6 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         // just the top/bottom special solid layers or range defined solid layers
         forSlices(0.15, 0.2, slice => {
             let range = slice.params;
-            let spaceMult = slice.index === 0 ? process.firstLayerLineMult || 1 : 1;
             let isBottom = slice.index < bottomLayers;
             let isTop = topLayers && slice.index > slices.length - topLayers - 1;
             let isTopBase = isTop && slice.index === slices.length - topLayers;
@@ -503,7 +505,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             let isSolid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
             let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
             if (solidWidth) {
-                let fillSpace = fillSpacing * spaceMult * solidWidth;
+                let fillSpace = fillSpacing * solidWidth;
                 doSolidLayerFill(slice, fillSpace, sliceFillAngle);
             }
             if (slice.index === slices.length - 1) {
@@ -752,8 +754,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 let params = slice.params || process;
                 let first = slice.index === 0;
                 let solidWidth = params.sliceFillWidth || 1;
-                let spaceMult = first ? params.firstLayerLineMult || 1 : 1;
-                let fillSpace = fillSpacing * spaceMult * solidWidth;
+                let fillSpace = fillSpacing * solidWidth;
                 let solidMinArea = params.sliceSolidMinArea;
                 doSolidsFill(slice, fillSpace, sliceFillAngle, solidMinArea, promises);
                 sliceFillAngle = (sliceFillAngle + 90.0) % 360;

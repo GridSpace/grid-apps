@@ -334,6 +334,7 @@ class MeshModel extends meshObject {
     rename(file) {
         this.file = file;
         this.sync();
+        return this;
     }
 
     // sync to worker and indexeddb for page restoration or worker ops

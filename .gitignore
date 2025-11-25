@@ -1,6 +1,8 @@
 .DS_Store
+.bache
 .docusaurus
 .env
+alt
 app.json
 build
 data
@@ -9,7 +11,8 @@ jszip-esm.js
 logs
 mod
 node_modules
+pack
 package-lock.json
 three.js
 tmp
-pack
+web/boot/bundle*

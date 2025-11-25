@@ -34,7 +34,7 @@ self.kiri.load(api => {
     }).map(v => `${v.substring(1)}FF`);
 
     let local_port = 5309;
-    let local_url = `http://localhost:${local_port}`;
+    let local_host = `localhost:${local_port}`;
     let sequence_id = (Math.random() * 0xfff) | 0;
     let user_id = ((Math.random() * 0xfffffff) | 0).toString();
     let init = false;
@@ -53,7 +53,8 @@ self.kiri.load(api => {
             if (socket.ws) {
                 return;
             }
-            let ws_url = api.onshape ? `${local_url}/bambu` : "/bambu";
+            let ws_url = api.onshape ? `ws://${local_host}/bambu` : "/bambu";
+            console.log({ bambu_ws_url: ws_url });
             let ws = socket.ws = new WebSocket(ws_url);
             ws.onerror = (error) => {
                 socket.open = false;
@@ -1288,7 +1289,7 @@ self.kiri.load(api => {
 
     function send(filename, gcode, start) {
         const spool = print_ams_select;
-        const baseUrl = api.onshape ? `${local_url}/api/bambu_send` : "/api/bambu_send";
+        const baseUrl = api.onshape ? `http://${local_host}/api/bambu_send` : "/api/bambu_send";
         const url = new URL(baseUrl, window.location.origin);
         url.searchParams.append('host', host);
         url.searchParams.append('code', password);

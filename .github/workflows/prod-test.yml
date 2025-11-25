@@ -3,6 +3,8 @@ name: Test NPM Production Build
 on:
   # Runs on pushes targeting the default branch
   push:
+    paths:
+        - '!docs/**'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -24,4 +26,4 @@ jobs:
         run: npm run setup
 
       - name: dry run production build
-        run: npm run prod-dryrun
+        run: npm run dryrun-prod

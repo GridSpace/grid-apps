@@ -41,6 +41,11 @@ class MeshGroup extends meshObject {
         return box3;
     }
 
+    rename(name) {
+        this.name = name;
+        return this;
+    }
+
     // @param model {MeshModel}
     add(model) {
         model.group = this;

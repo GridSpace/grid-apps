@@ -2,6 +2,162 @@
 
 Full docs @ https://docs.grid.space/projects/kiri-moto
 
+# Release 4.4.0
+
+## General
+
+* add version numbering utility script
+* split out help/info menu and language menus
+* move install/uninstall/quit menu to center app menu
+* add help menu visual callout
+* improve language translation coverage
+* improve build and serve workflow for alternate builds
+* update service worker configuration
+* add install/uninstall options in setup menu
+
+## CAM
+
+* implement tab hopping - toolpath goes up and over tab instead of interrupting cut (fixes #207)
+* add GPU accelerated contouring for faster operations
+* add radial GPU raster support (experimental)
+* add new register mode that marks bottom cutout tabs
+* add curves-only support to GPU contour
+* add zsafe and move to safe z at start of new operations
+* fix 'safe' moves during operation changes to be moves, not cuts
+* fix tolerance/resolution for GPU raster mesh calculations
+* fix NullPointerException with tabs in contour
+* improve merge/co-planar point handling
+* add slice layer naming using operation notes (fixes #447)
+* fix level step down units (fixes #446)
+
+## FDM
+
+* document remain_time macro variable (refs #339)
+* re-add base flow rate multiplier for belt mode (fixes #444)
+* fix belt fan control ordering (fixes #438)
+* exclude belt from bridge fan layer
+* add centering feature for fill areas (fixes #448)
+
+## Mesh:Tool
+
+* add STEP export capability
+* add STEP import with face generation
+* improve face generation with inner holes
+* add mesh scripting tool and persistence
+* add plane and plane.loft operations
+* add global edge map and edge reuse for better topology
+* add devel device export option
+
+## Electron
+
+* clean up electron build process
+* merge electron mod into core
+* add service routes when available
+* set proper content-type for appended code bodies
+
+## Dependencies
+
+* update @gridspace/raster-path to latest version with GPU acceleration
+* update @gridspace/app-server for proper fallthrough handling
+* switch from npmjs.org to git repos for @gridspace packages
+* update WebGPU implementation
+
+## Bug Fixes
+
+* fix Bambu Lab local URL and module load order
+* fix progress reporting for raster operations
+* fix GPU lathe progress and contour API usage
+* fix tool offsets when using GPU acceleration
+* fix indexed rotations epsilon value for accurate zflat calculation
+* fix traceload debug option
+* sanitize topo3 resolution to avoid GPU floating-point errors
+
+
+# Release 4.3
+
+## General
+
+* add lathe mode for CAM operations
+* add volumetric flow calculations for FDM
+* improve bundler with better dependency tracking
+* migrate to ESM module format across codebase
+* improve arc support in gcode generation
+
+## FDM
+
+* add scarf seams for better surface finish
+* add hole compensation feature
+* add spiral layer start option
+* overhaul thin wall detection and handling
+* improve volumetric flow rate controls
+* add retraction tuning for better print quality
+
+## CAM
+
+* add lathe operation support with threading
+* improve arc support for smoother toolpaths
+* add drill from stock top option
+* improve tab positioning and generation
+* enhance surface selection and filtering
+* add 4th axis lathe debug and testing mode
+* improve tool path optimization
+
+## Devices
+
+* add new machine profiles
+* improve device profile management
+
+
+# Release 4.2
+
+## CAM
+
+* add arc support to gcode output for smoother paths
+* add drill from stock top feature
+* improve contour operations
+* fix animation issues with shared tool numbers
+* enhance trace operations with arc support
+* improve pocket smoothing algorithms
+
+## FDM
+
+* improve support generation
+* add new retraction options
+* enhance layer time controls
+
+## General
+
+* improve gcode arc import and export
+* fix file loading edge cases
+* update device profiles
+
+
+# Release 4.1
+
+## CAM
+
+* improve drill operations and positioning
+* fix multi-part drilling bugs
+* enhance trace line selection
+* add dogbone support to trace ops
+* improve pocket operation reliability
+* fix trace selection with flip operations
+
+## FDM
+
+* add RatRig machine profiles
+* improve Bambu Lab device control integration
+* enhance support placement algorithms
+* fix belt mode support generation
+
+## General
+
+* improve file import handling
+* fix workspace restore for complex projects
+* enhance mobile touch interactions
+* update machine profiles for popular devices
+
+
 # Release 4.0 (2024-01-21)
 
 * major UI refactor

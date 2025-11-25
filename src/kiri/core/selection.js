@@ -189,7 +189,7 @@ function rotate(x, y, z) {
     space.update();
 }
 
-function merge() {
+function merge({ deleteMerged = true }) {
     let sel = widgets();
     if (sel.length === 0) {
         sel = api.widgets.all();
@@ -207,7 +207,7 @@ function merge() {
         }
     });
     let w = api.platform.load_verts([], obj, "merged");
-    api.platform.delete(sel);
+    if (deleteMerged) api.platform.delete(sel);
     api.platform.select(w);
 }
 
@@ -234,7 +234,7 @@ function isolateBodies(){
         if(bodies.length ==1){
             api.platform.select(widget);
         }else{
-            console.log(bodies,Array.from(bodies.entries()))
+            // console.log(bodies,Array.from(bodies.entries()))
             for(let [i,verts] of bodies.entries()){
                 let w = api.platform.load_verts([], verts, `isolate ${i} of ${ widget.anno.file}`);
                 api.platform.select(w)

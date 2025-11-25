@@ -17,6 +17,7 @@ import { version } from '../../moto/license.js';
 import { Widget, newWidget } from '../core/widget.js';
 import { load } from "../../load/png.js";
 import { JSZip } from '../../ext/jszip-esm.js';
+import { RasterPath } from '../../gpu/raster.js';
 
 import { CAM } from '../mode/cam/driver-be.js';
 import { DRAG } from '../mode/drag/driver.js';
@@ -63,6 +64,22 @@ self.alert = function(o) {
 };
 
 self.uuid = ((Math.random() * Date.now()) | 0).toString(36);
+
+/**
+ * @returns {RasterPath}
+ */
+self.get_raster_gpu = async function({ mode, resolution, rotationStep }) {
+    let gpu = new RasterPath({
+        mode,
+        resolution,
+        rotationStep,
+        workerName: "/lib/gpu/raster-worker.js",
+        quiet: true,
+        debug: false,
+    });
+    await gpu.init();
+    return gpu;
+};
 
 function minhandler(msg) {
     let data = msg.data;

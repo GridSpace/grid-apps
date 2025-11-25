@@ -213,10 +213,18 @@ details[open] summary::after {
     transform: rotate(90deg);
 }
 
+.rot90 {
+    transform: rotate(90deg);
+}
+
 /* for bambu mgr dialog */
 .video {
     border: 1px solid #888;
     border-radius: 3px;
+}
+
+.nocap {
+    text-transform: none !important;
 }
 
 /* container for entire page / app */
@@ -305,7 +313,6 @@ details[open] summary::after {
 }
 .dark #render-tools .pop,
 .dark #render-tools svg,
-.dark #lang-pop,
 .dark .pop-tics > div,
 .dark #top,
 .dark #top .content,
@@ -372,7 +379,6 @@ details[open] summary::after {
     background-color: #333;
     border: 1px solid #888;
 }
-.dark #lang-pop > div:hover,
 .dark #oplist > div:hover,
 .dark #op-add:hover {
     background-color: var(--blue-1);
@@ -587,12 +593,6 @@ details[open] summary::after {
 }
 #app-name-pop .content {
     text-align: center;
-}
-#app-lang {
-    justify-content: flex-end;
-}
-#app-lang:hover #lang-pop {
-    display: flex;
 }
 
 #app,div {
@@ -934,35 +934,6 @@ details[open] summary::after {
 #undo:hover, #redo:hover {
     color: black;
     background-color: rgba(0,0,0,0.2);
-}
-
-#lang-hold {
-    background-color: transparent;
-    position: absolute;
-    top: -35px;
-    left: -35px;
-    right: -35px;
-    bottom: -35px;
-}
-#lang-pop {
-    display: none;
-    position: absolute;
-    right: calc(100% + 2px);
-    top: 0;
-    padding: 1px;
-    text-align: right;
-    align-items: stretch;
-    white-space: nowrap;
-    background-color: #fff;
-    border: 1px solid var(--blue-2);
-    border-radius: 4px;
-    flex-direction: column;
-}
-#lang-pop > div {
-    padding: 2px 7px 2px 7px;
-}
-#lang-pop > div:hover {
-    background-color: var(--blue-4);
 }
 
 #mid {
@@ -1375,10 +1346,16 @@ details[open] summary::after {
 }
 #camops {
     display: flex;
-    padding: 5px 0 0 0;
+    padding: 0 0 0 0;
+}
+#oplist {
+    max-height: calc(70vh - 200px);
+    min-height: 0;
+    overflow-y: auto;
+    padding-top: 1px;
 }
 .cam-pop-op {
-    top: 50%;
+    top: 0;
     right: calc(100% + 4px);
     text-align: left;
     position: absolute;
@@ -1524,6 +1501,10 @@ details[open] summary::after {
     border-radius: 3px;
     text-align: center;
 }
+.dark #op-add-list > div:hover {
+    color: black;
+    background-color: var(--blue-2) !important;
+}
 #op-add-list > div:hover {
     background-color: var(--blue-4);
 }
@@ -1531,9 +1512,6 @@ details[open] summary::after {
     position: absolute;
     right: 0;
     top: 0;
-}
-#cam-lathe:hover {
-    background-color: rgba(0,0,0,0) !important;
 }
 
 #progress {

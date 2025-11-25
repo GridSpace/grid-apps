@@ -1,0 +1,17 @@
+{
+    "compress": false,
+    "outputs": {
+      "bundle": "./web/boot/bundle-{version}.bin"
+    },
+    "inputs": [
+      { "root": "web", "prefix": "" },
+      { "root": "alt", "prefix": "lib"},
+      { "root": "src", "prefix": "lib"},
+      { "root": "src/wasm", "prefix": "wasm" },
+      { "root": "src/wasm", "prefix": "lib/kiri/wasm" }
+    ],
+    "excludes": [
+        "src/pack",
+        "web/boot/bundle*"
+    ]
+}

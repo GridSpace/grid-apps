@@ -473,10 +473,12 @@ class Widget {
 
     /**
      * moves top of widget to given Z
+     * only non-zero in CAM mode
      *
      * @param {number} z position
+     * @param {boolean} cam mode
      */
-    setTopZ(z) {
+    setTopZ(z, cam) {
         let mesh = this.mesh,
             track = this.track,
             mbb = mesh.getBoundingBox(),
@@ -488,7 +490,7 @@ class Widget {
             track.top = mbz;
         }
         // difference between top of stock/bounds and top of widget (cam mode)
-        track.tzoff = mbz - z;
+        track.tzoff = cam ? mbz - z : 0;
         this._updateMeshPosition();
     }
 
@@ -503,8 +505,7 @@ class Widget {
     }
 
     _move(x, y, z, abs) {
-        let mesh = this.mesh,
-            mat = this.getMaterial(),
+        let mat = this.getMaterial(),
             pos = this.track.pos;
         // do not allow moves in pure slice view
         if (!mat.visible) return;
@@ -528,13 +529,10 @@ class Widget {
             track = this.track,
             tzoff = track.tzoff,
             top = track.top,
-            tz = tzoff !== top ? -tzoff : 0,
+            tz = -tzoff,
             { x, y, z } = track.pos;
         if (track.indexed) {
             let rad = track.indexRad;
-            let ln = track.box.d / 2;
-            let dx = Math.sin(rad) * ln;
-            let dy = ln - Math.cos(rad) * ln;
             this.mesh.rotation.x = -rad;
             z = top;
         } else {
@@ -782,9 +780,11 @@ class Widget {
         }
         if (set) {
             let dark = this.api.space.is_dark();
+            let cam = this.api.mode.is_cam();
+            let color = dark && !cam ? 0xffffff : 0;
             let angle = this.api.conf.get().controller.edgeangle || 20;
             let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
-            let material = new THREE.LineBasicMaterial({ color: 0 });
+            let material = new THREE.LineBasicMaterial({ color });
             this.outline = new THREE.LineSegments(edges, material);
             this.outline.renderOrder = -20;
             mesh.add(this.outline);

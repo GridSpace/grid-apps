@@ -9,6 +9,7 @@ import { selectHoles } from './cl-hole.js';
 import { selectHelical } from './cl-helical.js';
 import { surfaceAdd } from './cl-surface.js';
 import { traceAdd } from './cl-trace.js';
+import { opRender } from './client.js';
 
 const { MODES } = api.const;
 const { uc: UC } = api;
@@ -206,7 +207,7 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: UC.toInt, show: hasSpindle }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: UC.toFloat, bound: UC.bound(0.01, 1.0) }),
-        stepz: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: UC.toFloat, bound: UC.bound(0, 100.0) }),
+        stepz: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: UC.toFloat, units: true, bound: UC.bound(0, 100.0) }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: UC.toInt, units: true }),
         down: UC.newInput(LANG.cc_loff_s, { title: LANG.cc_loff_l, convert: UC.toFloat, units: true }),
         inset: UC.newInput(LANG.cc_lxyo_s, { title: LANG.cc_lxyo_l, convert: UC.toFloat, units: true, show: () => !env.popOp.level.rec.stock }),
@@ -282,7 +283,7 @@ export function createPopOps() {
         plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: UC.toInt, units: true }),
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: UC.toFloat, units: true }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: UC.toFloat, bound: UC.bound(0.01, 1.0), show: () => env.popOp.outline.rec.wide }),
-        steps: UC.newInput(LANG.cc_sovc_s, { title: LANG.cc_sovc_l, convert: UC.toInt, bound: UC.bound(1, 5), show: () => env.popOp.outline.rec.wide }),
+        steps: UC.newInput(LANG.cc_sovc_s, { title: LANG.cc_sovc_l, convert: UC.toInt, bound: UC.bound(1, 500), show: () => env.popOp.outline.rec.wide }),
         sep: UC.newBlank({ class: "pop-sep" }),
         top: UC.newBoolean(LANG.co_clrt_s, undefined, { title: LANG.co_clrt_l }),
         inside: UC.newBoolean(LANG.co_olin_s, undefined, { title: LANG.co_olin_l, show: (op) => { return !op.inputs.outside.checked } }),
@@ -349,7 +350,9 @@ export function createPopOps() {
         tolerance: 'camTolerance',
         filter: 'camContourFilter',
         leave: 'camContourLeave',
-        linear: 'camLatheLinear'
+        linear: 'camLatheLinear',
+        offStart: 'camLatheOffStart',
+        offEnd: 'camLatheOffEnd'
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         // axis:      UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
@@ -359,6 +362,9 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: UC.toFloat, bound: UC.bound(0.01, 100.0) }),
         angle: UC.newInput(LANG.cc_sang_s, { title: LANG.cc_sang_l, convert: UC.toFloat, bound: UC.bound(0.01, 180.0) }),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        offStart: UC.newInput(LANG.ci_laso_s, { title: LANG.ci_laso_l, convert: UC.toFloat}),
+        offEnd: UC.newInput(LANG.ci_laeo_s, { title: LANG.ci_laeo_l, convert: UC.toFloat}),
         sep: UC.newBlank({ class: "pop-sep" }),
         tolerance: UC.newInput(LANG.ou_toll_s, { title: LANG.ou_toll_l, convert: UC.toFloat, bound: UC.bound(0, 10.0), units: true, round: 4 }),
         leave: UC.newInput(LANG.cf_leav_s, { title: LANG.cf_leav_l, convert: UC.toFloat, bound: UC.bound(0, 100) }),

@@ -28,10 +28,10 @@ class OpLevel extends CamOp {
 
         let points = [];
         let clear = op.stock ?
-            [ newPolygon().centerRectangle({x:0,y:0,z:0}, stock.x, stock.y) ] :
+            [ newPolygon().centerRectangle({x:0,y:0,z:0}, stock.x + toolDiam/2, stock.y) ] :
             POLY.outer(POLY.offset(tshadow, toolDiam * (op.inset || 0)));
 
-        POLY.fillArea(clear, 90, stepOver, points);
+        POLY.fillArea(clear, 1090, stepOver, points);
 
         let layers = this.layers = [];
         for (let z of zList) {

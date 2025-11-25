@@ -10,7 +10,7 @@ import { Layers } from '../../core/layers.js';
 import { Stack } from '../../core/stack.js';
 import { updateStock } from './cl-stock.js';
 import { createPopOps } from './cl-ops.js';
-import { tabAdd, tabDone, tabClear, restoreTabs, rotateTabs, updateTabs, clearTabs } from './cl-tab.js';
+import { tabAdd, tabDone, tabClear, restoreTabs, rotateTabs, updateTabs, clearTabs, mirrorTabs } from './cl-tab.js';
 import { traceOn, traceDone, unselectTraces } from './cl-trace.js';
 import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
 import { surfaceOn, surfaceDone } from './cl-surface.js';
@@ -29,6 +29,7 @@ const { widgets: WIDGETS } = api;
 class Client {
     animVer = 0;
     camStock;
+    showStock = true;
     current;
     currentIndex;
     flipping;
@@ -320,6 +321,7 @@ export function opRender() {
             el.classList.add("disabled");
         }
         bounds.push(el);
+        let parent = $('camops');
         let timer = null;
         let inside = true;
         let popped = false;
@@ -329,14 +331,14 @@ export function opRender() {
         }
         el.rec = rec;
         el.unpop = () => {
-            let pos = [...el.childNodes].indexOf(poprec.div);
+            let pos = [...parent.childNodes].indexOf(poprec.div);
             if (pos >= 0) {
-                el.removeChild(poprec.div);
+                parent.removeChild(poprec.div);
             }
             popped = false;
         };
         function onEnter(ev) {
-            if ((surfaceOn || traceOn) && env.poppedRec != rec) {
+            if ((clock || surfaceOn || traceOn) && env.poppedRec != rec) {
                 return;
             }
             if (popped && env.poppedRec != rec) {
@@ -351,22 +353,24 @@ export function opRender() {
             popped = true;
             poprec.use(rec);
             env.hoveredOp = el;
-            if (!clock) {
-                // offset Y position of pop div by % of Y screen location of button
-                el.appendChild(poprec.div);
-                poprec.addNote();
-                const { innerHeight } = window;
-                const brect = ev.target.getBoundingClientRect();
-                const prect = poprec.div.getBoundingClientRect();
-                const pcty = (brect.top / innerHeight) * 0.9;
-                const offpx = -pcty * prect.height;
-                poprec.div.style.transform = `translateY(${offpx}px)`;
-            }
+            // offset Y position of pop div by % of Y screen location of button
+            parent.appendChild(poprec.div);
+            poprec.addNote();
+            const { innerHeight } = window;
+            const brect = ev.target.getBoundingClientRect();
+            const prect = parent.getBoundingClientRect();
+            const Prect = poprec.div.getBoundingClientRect();
+            const tdiff = prect.top - brect.top;
+            const botoff = innerHeight - (brect.top + Prect.height);
+            const offpx = -tdiff + (botoff < 0 ? botoff : -Prect.height/3);
+            poprec.div.style.transform = `translateY(${offpx}px)`;
+            poprec.div.onmouseenter = () => { inside = true };
+            poprec.div.onmouseleave = onLeave;
             // option click event appears latent
             // and overides the sticky settings
             setTimeout(() => {
                 UC.setSticky(false);
-            }, 0);
+            }, 10);
         }
         function onLeave(ev) {
             inside = false;
@@ -637,7 +641,8 @@ export function init() {
     });
 
     api.event.on("cam.stock.toggle", (bool) => {
-        env.camStock && (env.camStock.visible = bool ?? !env.camStock.visible);
+        env.showStock = bool ?? !env.showStock;
+        updateStock();
     });
 
     api.event.on("boolean.click", api.platform.update_bounds);

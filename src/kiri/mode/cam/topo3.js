@@ -16,9 +16,10 @@ export class Topo {
 
     async generate(opt = {}) {
         let { state, contour, onupdate, ondone } = opt;
-        let { widget, settings, tshadow, center, tabs, color } = opt.state;
+        let { widget, settings, tshadow, tabs } = opt.state;
 
         let { controller, process } = settings,
+            { webGPU } = controller,
             animesh = parseInt(controller.animesh || 100) * 2500,
             axis = contour.axis.toLowerCase(),
             contourX = axis === "x",
@@ -37,16 +38,15 @@ export class Topo {
             boundsY = maxY - minY,
             inside = contour.inside,
             density = 1 + (contour.reduction || 0),
-            resolution = tolerance ? tolerance : 1 / Math.sqrt(animesh / (boundsX * boundsY)),
+            resolution = (tolerance ? tolerance : 1 / Math.sqrt(animesh / (boundsX * boundsY))).round(5),
             tool = new Tool(settings, contour.tool),
             toolOffset = tool.generateProfile(resolution).profile,
             toolDiameter = tool.fluteDiameter(),
-            toolStep = toolDiameter * contour.step, //tool.contourOffset(contour.step),
+            toolStep = toolDiameter * contour.step,
             leave = contour.leave || 0,
             maxangle = contour.angle,
             curvesOnly = contour.curves,
             bridge = contour.bridging || 0,
-            // R2A = 180 / Math.PI,
             stepsX = Math.ceil(boundsX / resolution),
             stepsY = Math.ceil(boundsY / resolution),
             widtopo = widget.topo,
@@ -75,12 +75,7 @@ export class Topo {
             clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter / 2 + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
             gridDelta = Math.floor(partOff / resolution),
-            debug = false,
-            debug_clips = debug && true,
-            debug_topo = debug && true,
-            debug_topo_lines = debug && true,
-            debug_topo_shells = debug && true,
-            time = Date.now;
+            debug_clips = false;
 
         if (tolerance === 0 && !topoCache) {
             console.log(widget.id, 'topo auto tolerance', resolution.round(4));
@@ -90,7 +85,7 @@ export class Topo {
         // used by Pocket -> Contour
         this.tolerance = resolution;
 
-        if (tabs) {
+        if (tabsOn) {
             clipTab.appendAll(tabs.map(tab => {
                 let ctab = POLY.expand([tab.poly], toolDiameter / 2);
                 ctab.forEach(ct => ct.z = tab.dim.z / 2 + tab.pos.z);
@@ -105,6 +100,190 @@ export class Topo {
             // if (clipTab) output.setLayer("clip.tab", { line: 0xff0000 }).addPolys(clipTab);
             if (clipTo) output.setLayer("clip.to", { line: 0x00dd00 }).addPolys(clipTo);
             newslices.push(debug);
+        }
+
+        if (webGPU && !contour.nogpu) {
+            // invert tool Z offset for gpu code
+            let toolBounds = new THREE.Box3()
+                .expandByPoint({ x: -toolDiameter/2, y: -toolDiameter/2, z: 0 })
+                .expandByPoint({ x: toolDiameter/2, y: toolDiameter/2, z: 0 });
+            let toolPos = tool.profile.slice();
+            for (let i=0; i<toolPos.length; i+= 3) {
+                // toolPos[i+2] = -toolPos[i+2];
+                toolBounds.expandByPoint({ x: toolPos[i], y: toolPos[i+1], z: toolPos[i+2] });
+            }
+            let toolData = { positions: toolPos, bounds: toolBounds };
+
+            const vertices = widget.getGeoVertices({ unroll: true, translate: true });
+            const wbounds = widget.getBoundingBox();
+            if (!inside) {
+                wbounds.expandByVector({ x: toolDiameter/2, y: toolDiameter/2, z: 0 });
+            }
+
+            if (contourY) {
+                // console.time('swap XY vertices');
+                // swap XY vertices
+                for (let i=0; i<vertices.length; i+= 3) {
+                    let tmp = vertices[i+1];
+                    vertices[i+1] = vertices[i+0];
+                    vertices[i+0] = tmp;
+                }
+                ['min','max'].forEach(ext => {
+                    ext = wbounds[ext];
+                    let tmp = ext.x;
+                    ext.x = ext.y;
+                    ext.y = tmp;
+                });
+                // console.timeEnd('swap XY vertices');
+            }
+
+            let trace = contour.trace;
+            let gpu = await self.get_raster_gpu({
+                mode: trace ? "tracing" : "planar",
+                resolution
+            });
+            let xStep = density;
+            let yStep = Math.ceil(toolStep / resolution);
+            let epsilon = 10e-4;
+            await gpu.loadTool({
+                sparseData: toolData
+            });
+            let terrain = await gpu.loadTerrain({
+                triangles: vertices,
+                boundsOverride: wbounds
+            });
+            let { gridWidth, positions } = terrain;
+            let output = await gpu.generateToolpaths({
+                xStep,
+                yStep,
+                zFloor: zBottom - 1,
+                onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
+            });
+            gpu.terminate();
+
+            let { numScanlines, pointsPerLine, pathData } = output;
+            let xmult = xStep * resolution;
+            let ymult = yStep * resolution;
+            let xoff = wbounds.min.x;
+            let yoff = wbounds.min.y;
+            let slices = [];
+            function calcPoint(x, y, z, tx, ty) {
+                let p = newPoint(x, y, z);
+                p.tx = tx;
+                p.ty = ty;
+                return p;
+            }
+            for (let i=0; i<numScanlines; i++) {
+                let lineStart = i * pointsPerLine;
+                let lineData = pathData.slice(lineStart, lineStart + pointsPerLine);
+                let points = contourY
+                    ? Array.from(lineData).map((v,j) => calcPoint(i * ymult + yoff, j * xmult + xoff, v, i * xStep, j * yStep))
+                    : Array.from(lineData).map((v,j) => calcPoint(j * xmult + xoff, i * ymult + yoff, v, j * xStep, i * yStep))
+                    ;
+                let slice = newSlice(i);
+                let poly = newPolygon().setOpen();
+                let lines = [ ];
+                let skip = 0;
+                let lp;
+                for (let p of points) {
+                    if (inside && positions[p.ty * gridWidth + p.tx] < zBottom - epsilon) {
+                        if (poly.length > 1) {
+                            lines.push(poly);
+                            poly = newPolygon().setOpen();
+                        } else if (poly.length === 1) {
+                            poly = newPolygon().setOpen();
+                        }
+                        lp = undefined;
+                        skip = 0;
+                        continue;
+                    }
+                    if (p.z < zBottom - epsilon) {
+                        lp = p;
+                        if (poly.length === 0) {
+                            skip++;
+                            continue;
+                        }
+                        if (poly.length > 1) {
+                            skip = 0;
+                            p.z = zBottom;
+                            poly.push(p);
+                            lines.push(poly);
+                            poly = newPolygon().setOpen();
+                            continue;
+                        }
+                    } else if (lp && skip && poly.length === 0) {
+                        lp.z = zBottom;
+                        poly.push(lp);
+                    }
+                    poly.push(lp = p);
+                    skip = 0;
+                }
+                // require two points or more
+                if (poly.length > 1) {
+                    lines.push(poly);
+                }
+                // raize output points when inside tab boundaries
+                if (!inside && tabsOn && clipTab.length)
+                for (let poly of lines) {
+                    for (let p of poly.points) {
+                        for (let clip of clipTab) {
+                            if (p.z < clip.z && p.isInPolygon(clip)) {
+                                p.z = clip.z;
+                                break;
+                            }
+                        }
+                    }
+                }
+                // drop interior points along a continuous slope
+                for (let poly of lines) {
+                    let { points } = poly;
+                    let merged = [ points[0] ];
+                    let lp = points[1];
+                    let dz = points[0].z - lp.z;
+                    for (let i=2; i<points.length; i++) {
+                        let np = points[i];
+                        let ndz = np.z - lp.z;
+                        if (Math.abs(dz - ndz) > epsilon) {
+                            // slope changed
+                            merged.push(lp);
+                            dz = ndz;
+                        } else if (curvesOnly && Math.abs(ndz) < epsilon) {
+                            // add empty points as path separators
+                            merged.push(undefined);
+                        }
+                        lp = np;
+                    }
+                    if (merged.peek() !== lp) {
+                        merged.push(lp);
+                    }
+                    poly.points = merged;
+                }
+                // drop flat regions when enabled
+                if (curvesOnly) {
+                    let nulines = [];
+                    for (let poly of lines) {
+                        let { points } = poly;
+                        let newp = [];
+                        for (let p of points) {
+                            if (p) {
+                                newp.push(p);
+                            } else if (newp.length) {
+                                nulines.push(newPolygon(newp).setOpen());
+                                newp = [];
+                            }
+                        }
+                        nulines.push(newPolygon(newp).setOpen());
+                    }
+                    lines = nulines.filter(p => p.perimeter() > toolStep);
+                }
+                slice.camLines = lines;
+                slices.push(slice);
+                if (inside) {
+                    onupdate(i, numScanlines);
+                }
+            }
+            ondone(slices);
+            return this;
         }
 
         const probe = this.probe = new Probe({
@@ -177,8 +356,7 @@ export class Topo {
             clipTabZ: clipTab ? clipTab.map(t => t.z) : undefined,
             tabHeight,
             newslices,
-            leave,
-            color
+            leave
         }, (i, l, p) => {
             onupdate(l / 2 + i / 2, l, p);
         });
@@ -304,7 +482,7 @@ export class Topo {
 
         const { minX, maxX, minY, maxY, boundsX, boundsY, stepsX, stepsY } = params;
         const { gridDelta, resolution, density, partOff, toolStep, contourX, contourY } = params;
-        const { clipTo, clipTab, clipTabZ, tabHeight, newslices, color, leave } = params;
+        const { clipTo, clipTab, clipTabZ, tabHeight, newslices, leave } = params;
 
         let stepsTaken = 0,
             stepsTotal = 0;
@@ -370,11 +548,8 @@ export class Topo {
                     gridy
                 }, segments => {
                     if (segments.length > 0) {
-                        let slice = newSlice(gridx);
+                        let slice = newSlice(x);
                         slice.camLines = segments;
-                        slice.output()
-                            .setLayer("contour y", { face: color, line: color })
-                            .addPolys(segments);
                         slicesY.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour y");
@@ -399,11 +574,8 @@ export class Topo {
                     gridy
                 }, segments => {
                     if (segments.length > 0) {
-                        let slice = newSlice(gridy);
+                        let slice = newSlice(y);
                         slice.camLines = segments;
-                        slice.output()
-                            .setLayer("contour x", { face: color, line: color })
-                            .addPolys(segments);
                         slicesX.push(slice);
                     }
                     onupdate(++stepsTaken, stepsTotal, "contour x");
@@ -534,9 +706,9 @@ export class Trace {
             console.log(...arguments);
         }
 
-        const push_point = this.push_point = function (x, y, z) {
+        this.push_point = function (x, y, z) {
             const newP = newPoint(x, y, z);
-            const lastP = lastPP;//trace.last();
+            const lastP = lastPP;
 
             if (lastP) {
                 const dl = (x - lastP.x) || (y - lastP.y);
@@ -553,7 +725,6 @@ export class Trace {
                     }
                     if (curvesOnly) {
                         const dv = contourX ? Math.abs(lastP.x - x) : Math.abs(lastP.y - y);
-                        // const dz = lastPP.z - z;
                         const angle = Math.atan2(Math.abs(dz), dv) * RAD2DEG;
                         if (angle > maxangle) {
                             end_poly();

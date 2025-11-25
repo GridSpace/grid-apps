@@ -26,7 +26,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         { extrudeAbs } = device,
         { exportThumb } = controller,
         { extrudeMM, extrudePerMM } = FDM,
-        extused = Object.keys(print.extruders).map(v => parseInt(v)),
         timeFactor = (device.gcodeTime || 1) * 1.5,
         decimals = config.gcode_decimals || 4,
         zMoveMax = device.deviceZMax || 0,
@@ -49,7 +48,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         last = null,
         zpos = 0,
         bmax = 0,
-        blastz = 0,
         belt_add_y = (process.firstLayerYOffset || 0) - (belty || 0),
         oloops = process.outputLoops || 0,
         zhop = process.zHopDistance || 0, // range
@@ -58,10 +56,8 @@ export function fdm_export(print, online, ondone, ondebug) {
         retDist = process.outputRetractDist || 0, // range
         retSpeed = process.outputRetractSpeed * 60 || 1, // range
         retDwell = process.outputRetractDwell || 0, // range
-        timeDwell = retDwell / 1000,
         scarfZ = process.outputScarfLength ? true : false,
         arcDist = isBelt || scarfZ ? 0 : (process.arcTolerance || 0),
-        arcMin = 1,
         arcRes = 20,
         arcDev = 0.5,
         arcMax = 40,
@@ -85,7 +81,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         fanSpeedSave = undefined,
         fanSpeedBase = 0,
         fanSpeed = 0,
-        lastType = undefined,
         lastNozzleTemp = nozzleTemp,
         lastBedTemp = bedTemp,
         lastFanSpeed = fanSpeed,
@@ -169,7 +164,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         retDist = params.outputRetractDist || 0; // range
         retSpeed = params.outputRetractSpeed * 60 || 1; // range
         retDwell = params.outputRetractDwell || 0; // range
-        timeDwell = retDwell / 1000;
         nozzleTemp = layer === 0 ?
             params.firstLayerNozzleTemp || params.outputTemp :
             params.outputTemp || params.firstLayerNozzleTemp;
@@ -297,8 +291,9 @@ export function fdm_export(print, online, ondone, ondebug) {
         append(`; Bed type: ${bedType}`);
         append(`; Target: ${filter[mode]}`);
         // inject thumbnail preview
-        if (exportThumb && worker.snap) {
-            let { width, height, url } = worker.snap;
+        let { current } = self.kiri_worker ?? {};
+        if (exportThumb && current?.snap) {
+            let { width, height, url } = current.snap;
             let data = url.substring(url.indexOf(',') + 1);
             append(`; thumbnail begin ${width} ${height} ${data.length}`);
             for (let i=0; i<data.length; i += 78) {
@@ -470,7 +465,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         if (isBelt) {
             let zheight = path ? path.height || 0 : 0;
             epos.x = originCenter ? -pos.x : device.bedWidth - pos.x;
-            epos.z = blastz = pos.z * icos;
+            epos.z = pos.z * icos;
             epos.y = -pos.y + epos.z * bcos + belt_add_y;
             lout = epos;
         }
@@ -613,6 +608,9 @@ export function fdm_export(print, online, ondone, ondebug) {
         for (pidx=0; pidx<path.length; pidx++) {
             out = path[pidx];
             speedMMM = (out.speed || process.outputFeedrate) * 60; // range
+            if (!isBelt) {
+                fanSpeed = out.fan ?? fanSpeed;
+            }
 
             // hint to controller that we're working on a specific object
             // so that gcode between start/stop comments can be cancelled
@@ -634,7 +632,7 @@ export function fdm_export(print, online, ondone, ondebug) {
 
             // emit comment on output type chage
             if (last && out.type !== last.type) {
-                lastType = subst.feature = out.type;
+                subst.feature = out.type;
                 if (gcodeFeature && gcodeFeature.length) {
                     appendAllSub(gcodeFeature);
                 } else {
@@ -687,10 +685,10 @@ export function fdm_export(print, online, ondone, ondebug) {
             // in belt mode, fan can change per segment (for base)
             if (isBelt) {
                 setTempFanSpeed(out.fan);
-                if (fanSpeed !== lastFanSpeed) {
-                    appendAllSub(gcodeFan);
-                    lastFanSpeed = fanSpeed;
-                }
+            }
+            if (fanSpeed !== lastFanSpeed) {
+                appendAllSub(gcodeFan);
+                lastFanSpeed = fanSpeed;
             }
 
             if (lastp && out.emit) {
@@ -751,7 +749,6 @@ export function fdm_export(print, online, ondone, ondebug) {
                             }
 
                             // if new point is off the arc
-                            // if (deem || depm || desp || dc > arcDist || cc.r < arcMin || cc.r > arcMax || dist > cc.r) {
                             if (deem || depm || desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault || !arcValid()) {
                                 // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcDist, dist > cc.r, cc.r > arcMax, radFault];
                                 if (arcQ.length === 4) {

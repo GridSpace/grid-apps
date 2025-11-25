@@ -56,8 +56,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
 
     if (widget.camops.length === 0 || widget.meta.disabled) return;
 
-    let device = settings.device,
-        process = settings.process,
+    let { device, process } = settings,
         isIndexed = process.camStockIndexed,
         startCenter = process.camOriginCenter,
         alignTop = settings.controller.alignTop,
@@ -65,7 +64,6 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         stockz = stock.z * (isIndexed ? 0.5 : 1),
         outer = settings.bounds || widget.getPositionBox(),
         outerz = outer.max.z,
-        slices = widget.slices,
         zclear = (process.camZClearance || 1),
         zmax_force = process.camForceZMax || false,
         zmax_outer = stockz + zclear,
@@ -75,13 +73,13 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         boundsz = isIndexed ? stock.z / 2 : bounds.max.z + ztOff,
         zadd = !isIndexed ? stock.z - boundsz : alignTop ? outerz - boundsz : 0,
         zmax = outerz + zclear + (process.camOriginOffZ || 0),
+        zsafe = isIndexed ? Math.hypot(bounds.dim.y, bounds.dim.z) / 2 + zclear : zmax,
         wmpos = widget.track.pos,
         wmx = wmpos.x,
         wmy = wmpos.y,
         originx = (startCenter ? 0 : -stock.x / 2) + (process.camOriginOffX || 0),
         originy = (startCenter ? 0 : -stock.y / 2) + (process.camOriginOffY || 0),
         origin = newPoint(originx + wmx, originy + wmy, zmax),
-        output = print.output,
         easeDown = process.camEaseDown,
         easeAngle = process.camEaseAngle,
         depthFirst = process.camDepthFirst,
@@ -94,13 +92,11 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         drillDown = 0,
         drillLift = 0,
         drillDwell = 0,
-        drillThru = 0,
         lasering = false,
         laserPower = 0,
         newOutput = print.output || [],
         layerOut = [],
         printPoint,
-        isNewMode,
         isPocket,
         isContour,
         isRough,
@@ -112,6 +108,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         toolDiamMove,
         plungeRate = process.camFastFeedZ,
         feedRate,
+        lastOp,
         lastTool,
         lastPush,
         lastPoint,
@@ -187,11 +184,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         laserPower = power;
     }
 
-    function setDrill(down, lift, dwell, thru) {
+    function setDrill(down, lift, dwell) {
         drillDown = down;
         drillLift = lift;
         drillDwell = dwell;
-        drillThru = thru;
     }
 
     function emitDrills(polys) {
@@ -264,10 +260,11 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      */
     function layerPush(point, emit, speed, tool, options) {
         const { type, center, arcPoints } = options ?? {};
-        const dz = (point && lastPush && lastPush.point) ? point.z - lastPush.point.z : 0;
-        if (dz < 0 && speed > plungeRate) {
+        const dz = (point && lastPush?.point) ? point.z - lastPush.point.z : 0;
+        if (dz < -0.05 && speed > plungeRate) {
             speed = plungeRate;
         }
+        // if (options?.type !== 'lerp') console.log( point, currentOp.type );
         layerOut.mode = currentOp;
         if (lasering) {
             let power = emit ? laserPower : 0;
@@ -320,7 +317,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             p.x + wmx,
             p.y + wmy,
             p.z + zadd
-        ).setA(p.a ?? lastPoint?.a);
+        ).setA(p.a ?? lastPoint?.a).annotate({ slice: p.slice });
     }
 
     /**
@@ -333,7 +330,26 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * @param {number} opts.factor speed scale factor
      */
     function camOut(point, emit = 1, opts) {
-        // console.trace({point, emit, opts})
+        let lop = lastOp;
+        lastOp = currentOp;
+
+        // on operation changes:
+        // 1. move to safe z of current point preserving angle
+        // 2. move to safe z of new point preserving old angle
+        // 3. move to safe z of new point with new angle
+        if (lop && lop !== currentOp && lastPoint) {
+            // compensate for applyWidgetMovement() applied to lastPoint
+            let lpo = lastPoint.clone().move({ x: -wmx, y: -wmy, z: -zadd });
+            camOut(lpo.clone().setZ(zsafe).setA(lastPoint.a), 0);
+            camOut(point.clone().setZ(zsafe).setA(lastPoint.a), 0);
+            camOut(point.clone().setZ(zsafe), 0);
+        }
+
+        if (lop?.type === 'index' && lop !== currentOp ) {
+            // console.log('post index first point', point);
+            camOut(point.clone().setZ(lastPoint.z).setA(lastPoint.a), 1);
+        }
+
         let {
             center = {},
             clockwise = true,
@@ -342,14 +358,12 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             factor = 1,
         } = opts ?? {}
 
-        // console.log({radius})
         const isArc = emit == 2 || emit == 3;
+        const pointA = point.a;
 
         // apply widget movement pos
-        const pointA = point.a;
         point = applyWidgetMovement(point);
 
-        // console.log(point.z);
         if (nextIsMove) {
             emit = 0;
             nextIsMove = false;
@@ -370,7 +384,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 for (let a of lerp) {
                     let lp = point.clone().setA(a);
                     // console.log(lp.a, lp.x, lp.y, lp.z);
-                    lastPoint = layerPush(
+                    layerPush(
                         lp,
                         emit,
                         rate,
@@ -403,16 +417,20 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             layerPush(point.clone().setZ(stockz + 1), 0, 0, tool);
             // change to cutting move for remainder of plunge
             emit = 1;
+            isMove = false;
         }
 
         // drop points too close together
-        if (!isLathe && !isArc && deltaXY < 0.001 && point.z === lastPoint.z) {
+        if (!isLathe && !isArc && deltaXY < 0.001 && point.z === lastPoint.z && point.a === lastPoint.a) {
             // console.trace(["drop dup",lastPoint,point]);
             return;
         }
 
+        // no jump moves in contour mode to adjacent slice points
+        let steady = lastPoint && currentOp.type === 'contour' && Math.abs(point.slice - lastPoint.slice) < 4;
+
         // convert short planar moves to cuts in some cases
-        if (hasDelta && !isRough && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
+        if (hasDelta && !isArc && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
             let iscontour = tolerance > 0;
             let isflat = absDeltaZ < 0.001;
             // restrict this to contouring
@@ -431,7 +449,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             } else if (point.z < lastPoint.z) {
                 layerPush(point.clone().setZ(lastPoint.z), 0, 0, tool);
             }
-        } else if (isMove) {
+        } else if (isMove && !steady) {
             // for longer moves, check the terrain to see if we need to go up and over
             const bigXY = (deltaXY > moveLen && !lasering);
             const bigZ = (deltaZ > toolDiam / 2 && deltaXY > tolerance);
@@ -478,13 +496,15 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         }
 
         // set new plunge rate
+        let tmprate;
+        if (false)
         if (!lasering && !isLathe && deltaZ < -tolerance) {
             let threshold = Math.min(deltaXY / 2, absDeltaZ),
                 modifier = threshold / absDeltaZ;
             if (synthPlunge && threshold && modifier && deltaXY > tolerance) {
                 // use modifier to speed up long XY move plunge rates
                 // console.log('modifier', modifier);
-                rate = Math.max(
+                tmprate = Math.max(
                     plungeRate,
                     Math.round(plungeRate + ((feedRate - plungeRate) * modifier))
                 );
@@ -492,7 +512,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 let L = Math.hypot(deltaXY, absDeltaZ);
                 let limXY = feedRate * L / deltaXY;
                 let limZ  = plungeRate  * L / Math.abs(deltaZ);
-                rate = Math.min(feedRate, limXY, limZ);
+                tmprate = Math.min(feedRate, limXY, limZ);
+                console.log({ rate_override: rate, was: rate });
                 // let zps = len / absDeltaZ;
                 // rate = Math.max(
                 //     plungeRate,
@@ -508,7 +529,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             lastPoint = layerPush(
                 point,
                 clockwise ? 2 : 3,
-                rate,
+                tmprate ?? rate,
                 tool,
                 {
                     center,
@@ -523,7 +544,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
             lastPoint = layerPush(
                 point,
                 emit,
-                rate,
+                tmprate ?? rate,
                 tool
             );
         }
@@ -533,16 +554,15 @@ export function prepEach(widget, settings, print, firstPoint, update) {
      * output an array of slices that form a pocket
      * used by rough and pocket ops, does not support arcs
      *
-     * @param {Slice[]} top-down Z stack of slices
-     * @param {*} opts
+     * @param {Slice[]} slices top-down Z stack of slices
+     * @param {boolean} cutdir true=CW false=CCW
+     * @param {boolean} depthFirst prioritize cut depth in pockets by nesting
      */
-    function sliceOutput(sliceOut, opts = {}) {
-        const { cutdir, depthFirst, easeDown, progress } = opts;
-
+    function pocket({ slices, cutdir, depthFirst, easeDown, progress }) {
         let total = 0;
         let depthData = [];
 
-        for (let slice of sliceOut) {
+        for (let slice of slices) {
             let polys = [], t = [], c = [];
             POLY.flatten(slice.camLines).forEach(function (poly) {
                 let child = poly.parent;
@@ -569,7 +589,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
                 }, { swapdir: false });
                 newLayer();
             }
-            progress(++total, sliceOut.length);
+            progress(++total, slices.length);
         }
 
         // crucially returns true for -0 as well as other negative #s
@@ -663,44 +683,32 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     // make top start offset configurable
     printPoint = firstPoint || origin;
 
-    // accumulated data for depth-first optimizations
-    // let depthData = {
-    //     rough: [],
-    //     outline: [],
-    //     roughDiam: 0,
-    //     outlineDiam: 0,
-    //     contourx: [],
-    //     contoury: [],
-    //     trace: [],
-    //     drill: [],
-    //     layer: 0,
-    // };
-
     let ops = {
-        stock,
-        setTool,
-        setDrill,
-        setSpindle,
-        setTolerance,
-        setPrintPoint,
-        setLasering,
-        getPrintPoint() { return printPoint },
-        printPoint,
-        newLayer,
         addGCode,
+        bounds,
         camOut,
-        polyEmit,
-        poly2polyEmit,
-        tip2tipEmit,
-        depthRoughPath,
         depthOutlinePath,
-        sliceOutput,
+        depthRoughPath,
         emitDrills,
         emitTrace,
-        bounds,
+        getPrintPoint() { return printPoint },
+        lastPoint: () => { return lastPoint },
+        newLayer,
+        pocket,
+        poly2polyEmit,
+        polyEmit,
+        printPoint,
+        setDrill,
+        setLasering,
+        setPrintPoint,
+        setSpindle,
+        setTolerance,
+        setTool,
+        stock,
+        tip2tipEmit,
         zclear,
         zmax,
-        lastPoint: () => { return lastPoint }
+        zsafe,
     };
 
     let opSum = 0;
@@ -973,8 +981,8 @@ export function prepEach(widget, settings, print, firstPoint, update) {
 
 
                     let arcPoints = arcToPath(from, to, arcPreviewRes, { clockwise, center })
-                    .map(applyWidgetMovement);
-                    
+                        .map(applyWidgetMovement);
+
                     // console.log({arcPoints})
 
                     camOut(from, 1);
@@ -1096,7 +1104,10 @@ export function prepEach(widget, settings, print, firstPoint, update) {
     if (lastPoint && newOutput.length) {
         let lastLayer = newOutput.filter(layer => Array.isArray(layer)).peek();
         if (Array.isArray(lastLayer)) {
-            print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
+            printPoint = lastPoint.clone();
+            if (printPoint.z < zmax_outer) printPoint.setZ(zmax_outer);
+            print.addOutput(lastLayer, printPoint, 0, 0, tool);
+            // print.addOutput(lastLayer, printPoint = lastPoint.clone().setZ(zmax_outer), 0, 0, tool);
         }
     }
     // console.log("prepare output", newOutput);

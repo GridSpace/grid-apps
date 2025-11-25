@@ -908,6 +908,7 @@ export class Polygon {
      * todo make more efficient
      *
      * @param {Boolean} deep
+     * @param {String[]} fields to copy beyond class fields
      * @returns {Polygon}
      */
     clone(deep, fields) {
@@ -2145,6 +2146,7 @@ export class Polygon {
         return null;
     }
 
+    // annotate instance with other field data (see clone())
     annotate(obj = {}) {
         Object.assign(this, obj);
         return this;

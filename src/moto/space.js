@@ -98,7 +98,6 @@ let WIN = self.window || {},
     fontColor = '#333333',
     fontScale = 1.4, // computed relative to grid size
     rulerColor,
-    axisColor,
     axesOn = true,
     volumeOn = true,
     viewControl,
@@ -388,7 +387,6 @@ function setPlatformColor(color) {
 function setFont(options) {
     if (options.color) fontColor = options.color;
     if (options.scale) fontScale = options.scale;
-    if (options.axisColor) axisColor = options.axisColor;
     if (options.rulerColor) rulerColor = options.rulerColor;
     updateRulers();
 }

@@ -142,28 +142,28 @@ function booleanSave() {
     if (control.antiAlias != ui.antiAlias.checked) {
         api.show.alert('Page Reload Required to Change Aliasing');
     }
-    control.shiny = ui.shiny.checked;
+    control.antiAlias = ui.antiAlias.checked;
+    control.assembly = ui.assembly.checked;
+    control.autoLayout = ui.autoLayout.checked;
+    control.autoSave = ui.autoSave.checked;
+    control.dark = ui.dark.checked;
+    control.devel = ui.devel.checked;
     control.drawer = ui.drawer.checked;
+    control.exportOcto = ui.exportOcto.checked;
+    control.exportPreview = ui.exportPreview.checked;
+    control.exportThumb = ui.exportThumb.checked;
+    control.freeLayout = ui.freeLayout.checked;
+    control.healMesh = ui.healMesh.checked;
+    control.ortho = ui.ortho.checked;
+    control.manifold = ui.manifold.checked;
+    control.reverseZoom = ui.reverseZoom.checked;
     control.scrolls = ui.scrolls.checked;
+    control.shiny = ui.shiny.checked;
     control.showOrigin = ui.showOrigin.checked;
     control.showRulers = ui.showRulers.checked;
-    control.autoLayout = ui.autoLayout.checked;
-    control.freeLayout = ui.freeLayout.checked;
     control.spaceRandoX = ui.spaceRandoX.checked;
-    control.autoSave = ui.autoSave.checked;
-    control.antiAlias = ui.antiAlias.checked;
-    control.reverseZoom = ui.reverseZoom.checked;
-    control.dark = ui.dark.checked;
-    control.exportOcto = ui.exportOcto.checked;
-    control.exportGhost = ui.exportGhost.checked;
-    control.exportLocal = ui.exportLocal.checked;
-    control.exportThumb = ui.exportThumb.checked;
-    control.exportPreview = ui.exportPreview.checked;
-    control.healMesh = ui.healMesh.checked;
     control.threaded = setThreaded(ui.threaded.checked);
-    control.assembly = ui.assembly.checked;
-    control.ortho = ui.ortho.checked;
-    control.devel = ui.devel.checked;
+    control.webGPU = ui.webGPU.checked;
     space.view.setZoom(control.reverseZoom, control.zoomSpeed);
     // platform.layout();
     api.conf.save();
@@ -904,7 +904,6 @@ function init_one() {
             xany:               $('mod-x-any'),
             xsla:               $('mod-x-sla'),
             xlaser:             $('mod-x-laser'),
-            local:              $('mod-local'),
             don8:               $('mod-don8'),
             any:                $('mod-any'),
         },
@@ -1048,6 +1047,7 @@ function init_one() {
         showSpeeds:       newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
         shiny:            newBoolean(LANG.op_shny_s, booleanSave, {title:LANG.op_shny_l, modes:FDM}),
         lineType:         newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
+        manifold:         newBoolean(LANG.op_mani_s, booleanSave, {title: LANG.op_mani_l, modes:CAM}, "manifold"),
         animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
         units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM}, "units"),
         edgeangle:        newInput(LANG.op_spoa_s, {title:LANG.op_spoa_l, convert:toFloat, size:3}),
@@ -1058,8 +1058,6 @@ function init_one() {
         spaceRandoX:      newBoolean(LANG.op_spcx_s, booleanSave, {title:LANG.op_spcx_l, show:isBelt}),
         spaceLayout:      newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:toFloat, size:3, units}),
         _____:            newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
-        exportLocal:      newBoolean(`Grid:Local`, booleanSave, {title:LANG.op_exgl_l}),
-        exportGhost:      newBoolean(`Grid:Host`, booleanSave, {title:LANG.op_exgh_l}),
         exportOcto:       newBoolean(`OctoPrint`, booleanSave, {title:LANG.op_exop_l}),
         exportThumb:      newBoolean(`Thumbnail`, booleanSave, {modes:FDM}),
         exportPreview:    newBoolean(`Code Preview`, booleanSave),
@@ -1068,6 +1066,7 @@ function init_one() {
         healMesh:         newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
         threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:THREED}),
         assembly:         newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:THREED}),
+        webGPU:           newBoolean(LANG.pt_wgpu_s, booleanSave, {title: LANG.pt_wgpu_l, modes:THREED}),
 
         prefadd:          uc.checkpoint($('prefs-add')),
 
@@ -1635,20 +1634,23 @@ function init_two() {
         space.platform.setZOff(0.05);
 
         // restore UI state from settings
+        ui.antiAlias.checked = control.antiAlias;
+        ui.assembly.checked = control.assembly;
+        ui.autoLayout.checked = control.autoLayout;
+        ui.autoSave.checked = control.autoSave;
+        ui.devel.checked = control.devel;
+        ui.freeLayout.checked = control.freeLayout;
+        ui.healMesh.checked = control.healMesh;
+        ui.manifold.checked = control.manifold;
+        ui.ortho.checked = control.ortho;
+        ui.reverseZoom.checked = control.reverseZoom;
         ui.showOrigin.checked = control.showOrigin;
         ui.showRulers.checked = control.showRulers;
         ui.showSpeeds.checked = control.showSpeeds;
-        ui.freeLayout.checked = control.freeLayout;
-        ui.autoLayout.checked = control.autoLayout;
         ui.spaceRandoX.checked = control.spaceRandoX;
-        ui.antiAlias.checked = control.antiAlias;
-        ui.reverseZoom.checked = control.reverseZoom;
-        ui.autoSave.checked = control.autoSave;
-        ui.healMesh.checked = control.healMesh;
         ui.threaded.checked = setThreaded(control.threaded);
-        ui.assembly.checked = control.assembly;
-        ui.ortho.checked = control.ortho;
-        ui.devel.checked = control.devel;
+        ui.webGPU.checked = control.webGPU;
+
         lineTypeSave();
         detailSave();
         updateStats();
@@ -1789,6 +1791,7 @@ function init_two() {
     $('context-duplicate').onclick = duplicateSelection;
     $('context-mirror').onclick = mirrorSelection;
     $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
+    $('context-lefty').onclick = () => { api.event.emit("tool.mesh.lefty") };
     $('context-setfocus').onclick = () => {
         api.event.emit(
             "tool.camera.focus",

@@ -15,6 +15,7 @@
 * `P` move all persisted / workspace settings/data to IndexedDB (LS limitations)
 * `P` faster ray intersect https://github.com/gkjohnson/three-mesh-bvh/
 * `P` try material clipping planes for slice range selection
+* `P` switch png lib to https://github.com/photopea/UPNG.js
 
 * `F` edit in Mesh:Tool
 * `F` custom device vars for profiles / ranges / gcode
@@ -31,10 +32,7 @@
 * `B` multi-extruder rendering of raft fails to offset the rest of the print
 * `B` multi-extruder purge blocks fail to generate properly for rafts
 
-* `F` new parameter to cap output flow rate (on printer device)
 * `F` new parameters for bridging speed / bridge fan control
-* `F` new base paremeter for hole and perimeter compensation
-* `F` new parameters for inner / outer perimeter compensation
 * `F` convert ranges to z offsets while continuing to show layer #
 * `F` support pillar top/bottom should conform to part
 * `F` more explicit line width control with ranges and min/max adaptive
@@ -61,9 +59,7 @@
 
 * `B` rapid moves should be max of terrain zmax and last cut layer height (roughing)
 * `B` feed rate for next tool set before tool change (push/pop feed rates?)
-* `B` tab cuts cause loss of direction, parenting, depth, and it's hard to fix
 * `B` tabs do not properly track widget mirror events
-* `B` tabs are not cut to exact height
 * `B` contour does not honor clip to stock
 
 * `F` add lathe step down to eliminate the need for roughing

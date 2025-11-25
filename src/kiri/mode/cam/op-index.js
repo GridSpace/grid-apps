@@ -25,7 +25,7 @@ export class OpIndex extends CamOp {
     }
 
     prepare(ops, progress) {
-        const { lastPoint, zmax, zclear, camOut, stock } = ops;
+        const { lastPoint, zmax, zclear, camOut, stock, newLayer } = ops;
         let last = lastPoint();
         if (last) {
             // max point of stock corner radius when rotating (safe z when indexing)
@@ -34,7 +34,7 @@ export class OpIndex extends CamOp {
             // move above rotating stock
             camOut(last = last.clone().setZ(zmove), 0);
             // issue rotation command
-            camOut(last = last.clone().setY(0).setA(this.degrees), 0);
+            camOut(last = last.clone().setZ(zmove).setA(this.degrees), 0);
         }
     }
 }

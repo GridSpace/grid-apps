@@ -99,6 +99,7 @@ function init() {
 
     // for electron
     self.mesh = { api };
+    self.electron = navigator.userAgent.includes('Electron');
 }
 
 // restore space layout and view from previous session
@@ -187,7 +188,11 @@ async function restore_space() {
         // hide loading curtain
         $d('curtain','none');
         // restore handles visibility
-        handles.setEnabled(api.prefs.map.space.bounds);
+        handles.setEnabled(api.prefs.map.space.bounds ?? false);
+        // restore script if was showing
+        if (api.prefs.map.space.script) {
+            api.script.show();
+        }
         if (api.prefs.map.info.welcome !== false) {
             api.welcome(version);
         }
@@ -224,7 +229,11 @@ function space_init(data) {
             if (evt.key === '?') {
                 return api.welcome(version);
             }
-            let { shiftKey, metaKey, ctrlKey, code } = evt;
+            let { shiftKey, metaKey, ctrlKey, code, target } = evt;
+            if (target.nodeName === 'TEXTAREA') {
+                api.script.changed();
+                return;
+            }
             switch (code) {
                 case 'Digit1':
                     return api.mode.sketch();
@@ -286,7 +295,26 @@ function space_init(data) {
             }
         },
         'keydown', evt => {
-            let { shiftKey, metaKey, ctrlKey, code } = evt;
+            let { shiftKey, metaKey, ctrlKey, code, target } = evt;
+            if (target.nodeName === 'TEXTAREA') {
+                if (code === 'Tab') {
+                    estop(evt);
+                    const start = target.selectionStart;
+                    const end = target.selectionEnd;
+                    const val = target.value;
+                    const upto = val.slice(0, start);
+                    const col = start - upto.lastIndexOf('\n') - 1;
+                    const tab = '    '.substring(col % 4);
+                    target.value = val.slice(0, start) + tab + val.slice(end);
+                    target.selectionStart = target.selectionEnd = start + tab.length;
+                }
+                if (code === 'Enter' && metaKey) {
+                    api.script.execute();
+                } else {
+                    api.script.changed();
+                }
+                return;
+            }
             let once = keyOnce[code];
             if (once) {
                 delete keyOnce[code];
@@ -471,7 +499,7 @@ function space_init(data) {
             } else if (sketch_item) {
                 sketch_item.toggle();
             } else {
-                console.log('unknown selection');
+                // console.log('unknown selection');
             }
         } else {
             // return objects upSelect can choose from

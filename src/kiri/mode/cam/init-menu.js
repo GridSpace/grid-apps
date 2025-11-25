@@ -58,6 +58,7 @@ export function menu() {
             anim.trans    = newButton(null,null,{icon:'<i class="fa-solid fa-border-none"></i>',title:"transparency",class:"padleft"}),
             anim.model    = newButton(null,null,{icon:'<i class="fa-solid fa-eye"></i>',title:"show model"}),
             anim.shade    = newButton(null,null,{icon:'<i class="fa-solid fa-cube"></i>',title:"stock box"}),
+            anim.path     = newButton(null,null,{icon:'<i class="fa-solid fa-draw-polygon"></i>',title:"path"}),
         ])
     },
 
@@ -105,7 +106,7 @@ export function menu() {
     separator:           newBlank({ class:"set-sep", driven }),
     camEaseAngle:        newInput(LANG.ou_eang_s, {title:LANG.ou_eang_l, convert:toFloat, bound:bound(0.1,85), show:() => ui.camEaseDown.checked}),
     camFullEngage:       newInput(LANG.ou_feng_s, {title:LANG.ou_feng_l, convert:toFloat, bound:bound(0.1,1.0)}),
-    _____:               newGroup(LANG.co_menu, $('cam-origin'), { modes:CAM, driven, separator }),
+    _____:               newGroup(LANG.or_menu, $('cam-origin'), { modes:CAM, driven, separator }),
     camOriginTop:        newBoolean(LANG.or_topp_s, onBooleanClick, {title:LANG.or_topp_l}),
     camOriginCenter:     newBoolean(LANG.or_cntr_s, onBooleanClick, {title:LANG.or_cntr_l}),
     separator:           newBlank({ class:"set-sep", driven }),

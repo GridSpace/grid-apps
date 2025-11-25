@@ -7,16 +7,10 @@ This is a community driven project, and we welcome any contributions you'd like 
 ## Running Locally
 
 - Ensure you have [node](https://nodejs.org/en/download/), or an equivalent installed
-- Clone the [repository](https://github.com/GridSpace/grid-apps)
-- Run `npm run setup`
-- Run `npm run dev`
-
-## Running Docs Locally
-
-- Ensure you have [node](https://nodejs.org/en/download/), or an equivalent installed
-- Clone the [repository](https://github.com/GridSpace/grid-apps)
-- Run `npm run setup`
-- Run `npm run docs-dev`
+- Clone the [repository](https://github.com/GridSpace/grid-apps) from https://github.com/GridSpace/grid-apps
+- `npm run setup`
+- `npm run dev`
+- Open browser [http://localhost:8080/kiri](http://localhost:8080/kiri)
 
 
 ## How to add a new machine

@@ -1,5 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { FDM } from './driver-be.js';
 import { base, util } from '../../../geo/base.js';
 import { poly2polyEmit, tip2tipEmit } from '../../../geo/paths.js';
 import { newBounds } from '../../../geo/bounds.js';
@@ -45,8 +46,6 @@ export async function fdm_prepare(widgets, settings, update) {
         shield,
         output = [],
         layerout = [];
-
-    let lastLayerStart = null;
 
     // compute bounds if missing
     if (!bounds) {
@@ -553,12 +552,9 @@ export async function fdm_prepare(widgets, settings, update) {
                 offset,
                 layerout,
                 {
-                    routeAround: process.outputAvoidGaps,
-                    seedPoint: printPoint.sub(offset),
-                    params, // range parameters
                     first: slice.index === 0,
-                    support: slice.widget.support,
                     onBelt: beltStart,
+                    params, // range parameters
                     pretract: (wipeDist) => {
                         if (!(lastLayer && lastLayer.length)) {
                             return;
@@ -573,7 +569,11 @@ export async function fdm_prepare(widgets, settings, update) {
                                 print.addOutput(lastLayer, endpoint, null, null, lastOut.tool);
                             }
                         }
-                    }
+                    },
+                    routeAround: process.outputAvoidGaps,
+                    seedPoint: printPoint.sub(offset),
+                    support: slice.widget.support,
+                    zmax,
                 }
             );
             layerout.print_time = printPoint.layer_time;
@@ -682,8 +682,8 @@ export async function fdm_prepare(widgets, settings, update) {
 
             for (let rec of layer) {
                 overate = rec.overate >= 0 ? rec.overate : overate;
+                let bmult = params.firstLayerBeltFact ?? 1;
                 let brate = params.firstLayerRate || firstLayerRate;
-                let bmult = params.firstLayerPrintMult || params.firstLayerPrintMult;
                 let point = rec.point;
                 let belty = rec.belty = -point.y + (point.z * belt.slope);
                 let lowrate = belty <= thresh ? brate : overate || brate;
@@ -695,8 +695,9 @@ export async function fdm_prepare(widgets, settings, update) {
                 if (rec.emit && belty <= thresh && lastout && Math.abs(lastout.belty - belty) < 0.01) {
                     // apply base speed to segments touching belt
                     rec.speed = params.firstLayerRate || Math.min(rec.speed, lowrate);
-                    rec.emit *= bmult;
                     rec.fan = params.firstLayerFanSpeed;
+                    // apply base flowrate multiplier to segments touching belt
+                    rec.emit *= bmult;
                     minx = Math.min(minx, point.x, lastout.point.x);
                     maxx = Math.max(maxx, point.x, lastout.point.x);
                     maxy = Math.max(maxy, point.y);
@@ -795,10 +796,22 @@ export async function fdm_prepare(widgets, settings, update) {
     }
 };
 
+
+/**
+ * Output and route Slice (shell,fill) paths for a single Slice
+ *
+ * @param {*} print Print output Object
+ * @param {*} slice current slice being Output
+ * @param {*} startPoint starting point for this layer
+ * @param {*} offset start point offset
+ * @param {*} output output prebuffer
+ * @param {*} opt options
+ */
 function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     const { settings } = print;
     const { device } = settings;
     const { bedWidth, bedDepth, bedRound } = device;
+    const { extrudePerMM } = FDM;
 
     let preout = [],
         process = opt.params || settings.process,
@@ -807,6 +820,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         scarfLength = process.outputScarfLength || 0,
         minLayerTime = process.outputMinLayerTime || 0,
         nozzleSize = process.sliceLineWidth || device.extruders[extruder].extNozzle,
+        nozzles = device.extruders.map(e => e.extNozzle),
         firstLayer = (opt.first || false) && !opt.support,
         thinWall = nozzleSize * (opt.thinWall || 1.75),
         retractDist = opt.retractOver || (nozzleSize * 5),
@@ -815,17 +829,20 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         shellOrder = {"out-in":-1,"in-out":1,"alternate":-2}[process.sliceShellOrder] || -1,
         sparseMult = process.outputSparseMult,
         coastDist = process.outputCoastDist || 0,
+        fanSpeed = process.outputFanSpeed,
         firstShellSpeed = process.firstLayerRate,
         firstFillSpeed = process.firstLayerFillRate,
-        firstPrintMult = process.firstLayerPrintMult,
         finishSpeed = firstLayer ? firstShellSpeed : (opt.speed || process.outputFinishrate),
         printSpeed = opt.speed || (firstLayer ? firstShellSpeed : process.outputFeedrate),
         fillSpeed = opt.speed || opt.fillSpeed || (firstLayer ? firstFillSpeed || firstShellSpeed : process.outputFeedrate),
-        infillSpeed = process.sliceFillRate || opt.infillSpeed || fillSpeed || printSpeed,
+        infillSpeed = opt.infillSpeed || fillSpeed || printSpeed,
         moveSpeed = process.outputSeekrate,
+        minSpeed = process.outputMinSpeed,
         origin = startPoint.add(offset),
         zhop = process.zHopDistance || 0,
+        zmax = opt.zmax,
         antiBacklash = process.antiBacklash,
+        maxFlowRate = process.outputMaxFlowrate,
         wipeDist = process.outputRetractWipe || 0,
         isBelt = device.bedBelt,
         bedOffset = originCenter ? {
@@ -849,11 +866,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         shellOrder = -shellOrder;
     }
 
-    // update fill speed when solids detected
-    if (slice.finishSolids) {
-        fillSpeed = process.sliceSolidRate || finishSpeed;
-    }
-
     // on flats layers also slow down shell print speed
     if (slice.isFlatsLayer) {
         printSpeed = finishSpeed || printSpeed;
@@ -862,13 +874,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     // override: adapt bridge layer speed
     if (slice.isBridgeLayer) {
         fillSpeed /= 2;
-    }
-
-    // apply first layer extrusion multipliers
-    if (firstLayer) {
-        fillMult *= firstPrintMult;
-        shellMult *= firstPrintMult;
-        sparseMult *= firstPrintMult;
+        printSpeed /= 2;
     }
 
     function retract() {
@@ -1100,9 +1106,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                 coast: firstLayer ? 0 : coastDist,
                 extrude: numOrDefault(opt.extrude, shellMult),
                 nozzleSize,
-                rate: finishShell ? finishSpeed : printSpeed,
-                scarf,
-                tool: extruder,
                 onfirst: (firstPoint, preout) => {
                     let from = seedPoint || startPoint;
                     if (from.distTo2D(firstPoint) > retractDist) {
@@ -1111,7 +1114,11 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
                         }
                     }
                     seedPoint = null;
-                }
+                },
+                rate: finishShell ? finishSpeed : printSpeed,
+                scarf,
+                tool: extruder,
+                zmax
             });
             lastPoly = slice.lastPoly = poly;
         }
@@ -1591,16 +1598,34 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         if (!p.emit) continue;
         let mms = p.speed ?? 1;
         let dst = lp?.distTo2D(p.point) ?? 0;
+        lp = p.point;
         if (dst) {
             tt += (dst/mms);
             td += dst;
+            p.dst = dst;
         }
-        lp = p.point;
     }
     if (minLayerTime && tt < minLayerTime) {
         let fact = tt / minLayerTime;
         for (let p of preout) {
-            if (p.emit) p.speed *= fact;
+            if (p.emit) {
+                p.speed = Math.max(p.speed * fact, minSpeed);
+            }
+        }
+    }
+
+    // apply speed damping when output exceeds volumetric flowrate cap
+    if (maxFlowRate) {
+        for (let p of preout) {
+            if (p.emit && p.dst) {
+                let vfr = nozzles[p.tool] * slice.height * p.speed;
+                if (vfr > maxFlowRate) {
+                    let old = p.speed;
+                    let damp = maxFlowRate / vfr;
+                    p.speed = p.speed * damp;
+                    // console.log({ vfr, damp, old, new: p.speed });
+                }
+            }
         }
     }
 
@@ -1611,6 +1636,12 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
 
     // add offset points to total print
     print.addPrintPoints(preout, output);
+
+    // bridge layer fan change
+    if (preout.length && slice.isBridgeLayer) {
+        preout[0].fan = Math.round(fanSpeed / 3);
+        preout.peek().fan = fanSpeed;
+    }
 
     // create next layer start point and annotate
     // with print time for previous layer (hack to
