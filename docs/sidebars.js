@@ -35,6 +35,7 @@ const sidebars = {
                 id: "kiri-moto/CAM/index",
               },
               items: [
+                "kiri-moto/CAM/interface",
                 "kiri-moto/CAM/processOpts",
                 "kiri-moto/CAM/machines",
                 "kiri-moto/CAM/tools",

@@ -2,6 +2,8 @@ name: 'docs-publish'
 on:
   push:
     branches: [ master ]
+    paths:
+        - 'docs/**'
   workflow_dispatch:
 
 

@@ -8,12 +8,12 @@ const config = {
   useTabs: false,
   bracketSpacing: true,
   objectWrap: "preserve",
-  tabWidth: 4,
-  semi: false,
-  singleQuote: true,
+  tabWidth: 2,
+  semi: true,
+  singleQuote: false,
   bracketSameLine: true,
   arrowParens: "always",
-  endOfLine: "crlf"
+  endOfLine: "lf"
 }
 
 module.exports = config

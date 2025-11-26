@@ -7,7 +7,28 @@ module.exports = {
   favicon: 'img/gs-logo.png',
   staticDirectories: ['./docs/static/'],
   // ...
-  plugins: [require.resolve('docusaurus-lunr-search')],
+  plugins: [
+    require.resolve('docusaurus-lunr-search'),
+    ['@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          // /docs/oldDoc -> /docs/newDoc
+          {
+            to: '/kiri-moto',
+            from: '/projects/kiri-moto',
+          },
+          // Redirect from multiple old paths to the new path
+          {
+            to: '/gridbot',
+            from: '/projects/gridbot',
+          },
+          {
+            to: '/mesh-tool',
+            from: '/projects/mesh-tool',
+          },
+        ],
+      }],
+  ],
   presets: [
     [
       '@docusaurus/preset-classic',

@@ -5,3 +5,14 @@
 .navbar .navbar__items {
   height: 4.5rem;
 }
+
+.carouselWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.carouselWrapper .carousel-root {
+  width: fit-content;
+  max-width: 20rem;
+}
