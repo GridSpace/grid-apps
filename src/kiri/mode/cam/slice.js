@@ -594,7 +594,7 @@ export function cylinder_poly_find(widget, face) {
     let zmid = (zmin + zmax) / 2;
     let cylVerts = new Float32Array(faces.length * 9);
     let opts = {
-        dedup: false,
+        dedup: true,
         edges: false,
         over: true
     };
