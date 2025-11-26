@@ -87,7 +87,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             bottom_z, bottom_cut
         }, 3);
 
-        // console.log({ track, bounds, stock, workarea });
+        // console.log({ bounds, stock, track, workarea });
 
         return structuredClone(workarea);
     };
@@ -96,7 +96,8 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     var_compute();
 
     if (tabs) {
-        // make tab polygons
+        // create tab polygons. defer offset to each op
+        // since it's dependent on selected tool diameter
         tabs.forEach(tab => {
             let zero = newPoint(0, 0, 0),
                 point = newPoint(tab.pos.x, tab.pos.y, tab.pos.z),
@@ -110,8 +111,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
                 .map(v => newPoint(v.x, v.y, v.z));
             poly.move(point);
             tab.poly = poly;
-            // tslice.output().setLayer("tabs", 0xff0000).addPoly(poly);
-            // sliceAll.push(tslice);
         });
     }
 

@@ -104,7 +104,6 @@ function cylinderShow(onProgress,onDone){
             cyls[face] = faces;
             CAM.cylinder_show(widget);
         }
-        
         onDone({faces:Object.keys(cyls).map(v => parseInt(v)),error});
     });
 }

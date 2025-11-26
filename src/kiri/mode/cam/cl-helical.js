@@ -3,7 +3,9 @@ import { CAM } from "./driver-fe.js";
 import { clearPops, env } from "./client.js";
 
 let alert, lastWidget;
+
 export let helicalOn = false;
+
 export function selectHelical() {
     if (helicalOn) {
         return helicalDone();
@@ -25,6 +27,7 @@ export function selectHelical() {
                 }
         }
     });
+
     helicalOn = env.hoveredOp;
     helicalOn.classList.add("editing");
     api.feature.on_mouse_up = (obj, ev) => {
