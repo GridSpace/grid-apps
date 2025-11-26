@@ -9,8 +9,7 @@ export let holeSelOn = false;
 export let lastSelHoles;
 let holeGeo =  new THREE.CylinderGeometry(1,1,1,20);
 let holeMaterial = new THREE.MeshPhongMaterial(  );
-let holeMesh;
-let activeDrills;
+let alert;
 
 /**
  * Client side function to select holes in widgets for CAM operations.
@@ -25,7 +24,7 @@ export async function selectHoles(individual) {
         return selectHolesDone();
     }
     clearPops();
-    let alert = api.show.alert("analyzing parts...");
+    alert = api.show.alert("analyzing parts...");
     holeSelOn = env.hoveredOp;
     holeSelOn.classList.add("editing");
     api.feature.hover = true;
@@ -37,12 +36,12 @@ export async function selectHoles(individual) {
     /**
      * creates a mesh for a hole and adds it to a widget
      * @param {Object3D} widget - widget to add the hole mesh to
-     * @param {Object} drill - {depth,selected} object of the hole
+     * @param {Object} drills - {depth,selected}[] object of the hole
      * @returns {Mesh} the created mesh
      */
     function createHoleMesh(widget,drills){
-        if(holeMesh) holeMesh.dispose()
-        holeMesh = new THREE.InstancedMesh(holeGeo, holeMaterial,drills.length);
+        if(widget.holeMesh) widget.holeMesh.dispose()
+        widget.holeMesh = new THREE.InstancedMesh(holeGeo, holeMaterial,drills.length);
         let baseMx = new THREE.Matrix4()
 
         for(let [i,drill] of drills.entries()){
@@ -53,13 +52,13 @@ export async function selectHoles(individual) {
             mx.multiply( new THREE.Matrix4().makeTranslation(drill.x, drill.y, drill.z-depth/2));
             mx.multiply( new THREE.Matrix4().makeRotationX(Math.PI / 2))
             mx.multiply( new THREE.Matrix4().makeScale(diam /2, depth,diam /2));
-            holeMesh.setMatrixAt(i, mx);
-            holeMesh.setColorAt(i, new THREE.Color(color));
+            widget.holeMesh.setMatrixAt(i, mx);
+            widget.holeMesh.setColorAt(i, new THREE.Color(color));
             drill.widgetID = widget.id
         }
-        widget.mesh.add(holeMesh);
-        widget.adds.push(holeMesh); // for click detection
-        return holeMesh
+        widget.mesh.add(widget.holeMesh);
+        widget.adds.push(widget.holeMesh); // for click detection
+        return widget.holeMesh
     }
     let meshesCached = widgets.every(widget => env.poppedRec.drills[widget.id] != undefined)
     if (individual && meshesCached) {
@@ -67,7 +66,7 @@ export async function selectHoles(individual) {
         api.hide.alert(alert);
         api.widgets.for(widget => {
             if (widget.adds) {
-                let drills = activeDrills = env.poppedRec.drills[widget.id];
+                let drills  = env.poppedRec.drills[widget.id];
                 createHoleMesh(widget, drills);
             }
         })
@@ -102,15 +101,10 @@ export async function selectHoles(individual) {
                 api.widgets.for(widget => {
                     const { holes } = centers.find(center => center.id == widget.id);
                     // console.log(holes)
-                    if (!holes || !holes.length) unselectHoles(holes);
                     createHoleMesh(widget, holes);
                     //add hole data to record
                     env.poppedRec.drills = env.poppedRec.drills ?? {};
-                    env.poppedRec.drills[widget.id] = activeDrills =  holes;
-                    //give widget access to an array of drill records that refrence it
-                    //so that it can be cleared when widget is rotated or mirrored etc.
-                    if (!widget.drills) { widget.drills = [] };
-                    widget.drills.push(holes);
+                    env.poppedRec.drills[widget.id] =  holes;
                 })
             }
         );
@@ -136,21 +130,23 @@ export function selectHolesHover(data) {
 
 export function selectHolesHoverUp(int, ev) {
     if (!int) return; //if not a hole mesh return
-    let { instanceId } = int;
-    selectHoleToggle(instanceId);
+    let { instanceId, object } = int;
+    selectHoleToggle(instanceId, object);
 }
 
 /**
  * Toggle the selection of a hole mesh and update its color
  * @param {Object3D} mesh - the hole mesh to toggle
  */
-export function selectHoleToggle(id) {
+export function selectHoleToggle(id,mesh) {
+
     if (id === undefined) return
-    if(activeDrills[id].selected !== undefined){
-        activeDrills[id].selected = !activeDrills[id].selected
-        holeMesh.setColorAt(id, new THREE.Color(activeDrills[id].selected ? 0xFF0000 : 0x39e366));
-        holeMesh.instanceColor.needsUpdate = true
-    }
+    let widget = mesh.parent.widget;
+    if(env.poppedRec.drills[widget.id][id].selected !== undefined){
+        env.poppedRec.drills[widget.id][id].selected = !env.poppedRec.drills[widget.id][id].selected
+        widget.holeMesh.setColorAt(id, new THREE.Color(env.poppedRec.drills[widget.id][id].selected ? 0xFF0000 : 0x39e366));
+        widget.holeMesh.instanceColor.needsUpdate = true
+    } 
 }
 
 /**
@@ -161,6 +157,7 @@ export function selectHoleToggle(id) {
 export function clearHolesRec(widget) {
     if (widget.adds) {
         widget.adds.length = 0 //clear adds array
+        delete env.poppedRec.drills[widget.id]
     }
 }
 
@@ -187,11 +184,4 @@ export function selectHolesDone() {
             widget.mesh.remove(add);
         }
     });
-}
-
-export function unselectHoles(widget) {
-    if (!widget.holes) return
-    widget.holes.forEach(hole => {
-        hole.selected = false
-    })
 }
