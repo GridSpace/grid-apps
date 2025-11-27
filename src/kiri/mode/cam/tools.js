@@ -389,7 +389,7 @@ export function decodeToolCSV(data){
         let IDs = new Set();
         for(let tool of tools){
             //check  tool IDs
-            if( tool.id == NaN ) throw "id must be a number";
+            if( Number.isNAN(tool.id) ) throw "id must be a number";
             if( IDs.has(tool.id) ) throw "tool ids must be unique";
             IDs.add(tool.id);
             // check remaining fields
