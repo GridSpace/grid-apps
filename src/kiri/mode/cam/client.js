@@ -16,6 +16,10 @@ import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
 import { surfaceOn, surfaceDone } from './cl-surface.js';
 import { helicalOn, helicalDone } from './cl-helical.js';
 import { originSelectDone } from './cl-origin.js';
+import { Widget, newWidget } from '../../core/widget.js';
+import { space } from '../../../moto/space.js';
+
+const { BufferGeometryUtils } = THREE;
 
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
@@ -606,6 +610,20 @@ export function init() {
         updateStock();
         opRender();
         api.uc.setVisible($('layer-animate'), env.isAnimate && env.isCamMode);
+
+        if (!env.isCamMode) {
+            return;
+        }
+
+        // remove tab synth
+        api.widgets.filter((widget) => {
+            if (widget.track.synth) {
+                space.world.remove(widget.mesh);
+                Widget.Groups.remove(widget);
+            }
+            return !widget.track.synth
+        });
+
     });
 
     api.event.on("settings.saved", (settings) => {
@@ -786,8 +804,25 @@ export function init() {
 
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
-        if (env.isCamMode) {
-            clearPops();
+        if (!env.isCamMode) {
+            return;
+        }
+        clearPops();
+        for (let group of Widget.Groups.list()) {
+            let root = group[0];
+            for (let tab of Object.values(root.tabs)) {
+                let geo = tab.box.geometry.clone();
+                if (geo.index) geo = geo.toNonIndexed();
+                geo.translate(tab.x, tab.y, tab.z);
+                let bbg = BufferGeometryUtils.mergeGeometries([ geo ]);
+                let sw = newWidget(null, group);
+                let fwp = group[0].track.pos;
+                sw.loadGeometry(bbg);
+                sw._move(fwp.x, fwp.y, fwp.z);
+                api.widgets.add(sw);
+                sw.track.synth = true;
+                sw.track.indexed = root.track.indexed;
+            }
         }
     });
 

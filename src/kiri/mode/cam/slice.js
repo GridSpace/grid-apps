@@ -20,6 +20,10 @@ import { CAM } from './driver-be.js';
  * @param {Function} output
  */
 export async function cam_slice(settings, widget, onupdate, ondone) {
+    if (widget.track.synth) return ondone();
+
+    let tabW = widget.group.filter(w => w != widget);
+
     let proc = settings.process,
         sliceAll = widget.slices = [],
         camOps = widget.camops = [],
@@ -189,6 +193,30 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     };
     let tracker = setSliceTracker({ rotation: 0 });
 
+    async function updateTab(tab) {
+        tab.setAxisIndex(isIndexed ? -axisIndex : 0)
+        let ts = new cam_slicer(tab);
+        let si = Object.keys(ts.zList).map(k => parseFloat(k));
+        si = [ ...si.map(v => v-0.01), ...si.map(v => v+0.01) ];
+        let zt = Math.max(...si);
+        let zb = Math.min(...si);
+        let shadow;
+        await ts.slice(si, { each: data => {
+            if (shadow) {
+                shadow = POLY.union([...shadow, ...data.polys]);
+            } else {
+                shadow = data.polys;
+            }
+        }});
+        return {
+            top: zt,
+            poly: shadow[0],
+            pos: { z: (zt+zb)/2 },
+            dim: { z: (zt-zb) },
+            NEW: true
+        }
+    }
+
     function updateSlicer() {
         slicer = state.slicer = new cam_slicer(widget);
     }
@@ -231,10 +259,14 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         return shadows[z] = POLY.setZ(shadow, z);
     }
 
-    function setAxisIndex(degrees = 0, absolute = true) {
+    async function setAxisIndex(degrees = 0, absolute = true) {
         axisIndex = absolute ? degrees : (axisIndex || 0) + degrees;
         axisRotation = (Math.PI / 180) * axisIndex;
         widget.setAxisIndex(isIndexed ? -axisIndex : 0);
+        state.tabs = tabs = [];
+        for (let tab of tabW) {
+            tabs.push(await updateTab(tab));
+        }
         return isIndexed ? -axisIndex : 0;
     }
 
@@ -299,7 +331,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     // call slice() function on all ops in order
-    setAxisIndex();
+    await setAxisIndex();
     updateSlicer();
     for (let op of opList) {
         let weight = op.weight();
@@ -325,12 +357,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             zTop,
             workarea: workover
         });
-        // console.log({
-        //     op,
-        //     workover,
-        //     bounds: structuredClone(bounds),
-        //     stock: structuredClone(stock)
-        // });
         await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
