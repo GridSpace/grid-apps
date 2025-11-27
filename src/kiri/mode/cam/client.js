@@ -810,6 +810,7 @@ export function init() {
         clearPops();
         for (let group of Widget.Groups.list()) {
             let root = group[0];
+            if (root.tabs)
             for (let tab of Object.values(root.tabs)) {
                 let geo = tab.box.geometry.clone();
                 if (geo.index) geo = geo.toNonIndexed();

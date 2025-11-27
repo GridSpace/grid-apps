@@ -26,7 +26,7 @@ export async function cam_prepare(widall, settings, update) {
     print.output = [];
 
     let point;
-    widgets.forEach((widget, index) => {
+    widgets.filter(w => !w.isSynth()).forEach((widget, index) => {
         point = prepEach(widget, settings, print, point, (progress, msg) => {
             update((index * weight + progress * weight) * 0.75, msg || "prepare");
         });
@@ -337,7 +337,7 @@ export function prepEach(widget, settings, print, firstPoint, update) {
         // 1. move to safe z of current point preserving angle
         // 2. move to safe z of new point preserving old angle
         // 3. move to safe z of new point with new angle
-        if (lop && lop !== currentOp && lastPoint) {
+        if (lop !== currentOp && lastPoint) {
             // compensate for applyWidgetMovement() applied to lastPoint
             let lpo = lastPoint.clone().move({ x: -wmx, y: -wmy, z: -zadd });
             camOut(lpo.clone().setZ(zsafe).setA(lastPoint.a), 0);

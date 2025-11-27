@@ -332,6 +332,10 @@ class Widget {
         moto.space.refresh();
     }
 
+    isSynth() {
+        return this.track.synth ?? false;
+    }
+
     isVisible() {
         return this.getMaterial().visible;
     }
