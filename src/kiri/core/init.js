@@ -922,6 +922,7 @@ function init_one() {
         toolsClose:         $('tools-close'),
         toolsImport:        $('tools-import'),
         toolsExport:        $('tools-export'),
+        toolsExportCSV:     $('tools-export-csv'),
         toolSelect:         $('tool-select'),
         toolAdd:            $('tool-add'),
         toolCopy:           $('tool-dup'),

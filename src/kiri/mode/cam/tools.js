@@ -233,9 +233,191 @@ function setToolChanged(changed) {
     api.ui.toolsSave.disabled = !changed;
 }
 
+/**
+ * generateToolCSV generates a CSV string containing all the tools in the
+ * settings object. The CSV string will have the following format:
+ *
+ * id,number,type,name,metric,shaft_diam,shaft_len,flute_diam,flute_len,taper_tip,order,api_version
+ *
+ * Each line of the CSV string will represent a single tool, with the above
+ * fields listed in order. The 'api_version' field will be set to the current
+ * version of the Kiri API.
+ *
+ * @return {string} the generated CSV string
+ */
+function generateToolCSV(){
+    let { tools } = api.conf.get();
+
+    let header = [
+        'id',
+        'number',
+        'type',
+        'name',
+        'metric',
+        'shaft_diam',
+        'shaft_len',
+        'flute_diam',
+        'flute_len',
+        'taper_tip',
+        'order',
+        'api_version='+ api.version,
+    ].join(',');
+    
+    let acc = header + '\n';
+    for( let [i,t] of tools.entries() ) {
+        acc += 
+        [
+            t.id,
+            t.number,
+            t.type,
+            escapeCSV(t.name),
+            t.metric ? 'true' : 'false',
+            t.shaft_diam,
+            t.shaft_len,
+            t.flute_diam,
+            t.flute_len,
+            t.taper_tip,
+            t.order,
+        ].join(',') + ( i == tools.length - 1 ? '' : '\n' );
+    }
+
+    return acc;
+}
+
+
+/**
+ * Escapes a string for use in a CSV file.
+ *
+ * If the string contains a comma or newline, it will be wrapped in
+ * double quotes and any double quotes inside the string will be
+ * replaced with two double quotes.
+ *
+ * @param {string} x - The string to escape
+ * @returns {string} - The escaped string
+ */
+function escapeCSV(x) {
+    if (x == null) return "";
+    x = x.toString();
+    return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x;
+  }
+  
+/**
+ * Splits a line of CSV into an array of strings.
+ *
+ * This function will handle quoted sections with double quotes inside,
+ * and will split on commas outside of quoted sections.
+ *
+ * @param {string} text - The line of CSV to split
+ * @returns {string[]} - The array of strings split from the text
+ */
+  function splitCSVLine(text) {
+    const line = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '"') {
+            // doubled quotes inside quoted sections
+            if (inQuotes && i + 1 < text.length && text[i + 1] === '"') {
+                current += '"';
+                i++;
+            }
+            else {
+                inQuotes = !inQuotes;
+            }
+        }
+        else if(char === ',') {
+            if(!inQuotes) {
+                line.push(current);
+                current = "";
+            }else{
+                current += ',';
+            }
+        }else{
+            current += char;
+        }
+    }
+    line.push(current);
+    return line;
+}
+/**
+ * 
+ * @param {string} data
+ * decodeToolCSV takes a CSV string containing tool data and returns an object
+ * containing an array of tool objects and the version of the API used to generate
+ * the CSV. The object returned will be in the format of [true, {tools,  time, version}]
+ * 
+ * If the CSV is malformed in any way, decodeToolCSV will return a tuple of [false, errMessage] 
+ */
+export function decodeToolCSV(data){
+
+    let apiVer;
+    try{
+        apiVer = data.split('\n')[0].split(',')[11].split('=')[1];
+    }catch( err ){
+        console.log(err)
+        return [false, "malformed csv: cannot determine api version"];
+    }
+
+    // will need to implement logic in the future if the tool API changes
+    // console.log("got api version", apiVer)
+
+    try{
+        //get and parse tools line by line
+        let tools = data.split( '\n' )
+        .slice( 1 )
+        .filter( line => line.length > 0 )
+        .map( line => {
+            let [id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip, order,] = splitCSVLine( line );
+            // console.log({id, number, type, name, metric, shaft_diam, shaft_len, flute_diam, flute_len, taper_tip, order})
+            return {
+                id: parseInt( id ),
+                type,
+                number: parseInt( number ),
+                name,
+                metric: metric == 'true'? true : ( metric == 'false' ? false : null ),
+                shaft_diam: parseFloat( shaft_diam ),
+                shaft_len: parseFloat( shaft_len ),
+                flute_diam: parseFloat( flute_diam ),
+                flute_len: parseFloat( flute_len ),
+                taper_tip: parseFloat( taper_tip ),
+                order: parseInt( order ),
+            }
+        })
+
+        let IDs = new Set();
+        for(let tool of tools){
+            //check  tool IDs
+            if( Number.isNaN(tool.id) ) throw "id must be a number";
+            if( IDs.has(tool.id) ) throw "tool ids must be unique";
+            IDs.add(tool.id);
+            // check remaining fields
+            if( toolNames.indexOf(tool.type) == -1 ) throw "tool type must be one of " + toolNames.join(', ');
+            if( Number.isNaN(tool.number) ) throw "number must be a number";
+            if( Number.isNaN(tool.metric) ) throw "metric must be a boolean";
+            if( Number.isNaN(tool.shaft_diam) ) throw "shaft_diam must be a number";
+            if( Number.isNaN(tool.shaft_len) ) throw "shaft_len must be a number";
+            if( Number.isNaN(tool.flute_diam) ) throw "flute_diam must be a number";
+            if( Number.isNaN(tool.flute_len) ) throw "flute_len must be a number";
+            if( Number.isNaN(tool.taper_tip) ) throw "taper_tip must be a number";
+            if( Number.isNaN(tool.order) ) throw "order must be a number";
+        }
+
+        return [true, {
+            version: apiVer,
+            tools,
+            time: Date.now()
+        }];
+
+    }catch(err){
+        return [ false, "malformed csv: " + err ];
+    }
+}
+
 export function showTools() {
-    if (api.mode.get_id() !== MODES.CAM) return;
-    setconf.sync.get().then(_showTools);
+    if ( api.mode.get_id() !== MODES.CAM ) return;
+    setconf.sync.get().then( _showTools );
 }
 
 function _showTools() {
@@ -313,16 +495,21 @@ function _showTools() {
     };
     ui.toolsImport.onclick = (ev) => api.event.import(ev);
     ui.toolsExport.onclick = () => {
+        let csv = ui.toolsExportCSV.checked;
         api.uc.prompt("Export Tools Filename", "tools").then(name => {
             if (!name) {
                 return;
             }
-            const record = {
-                version: api.version,
-                tools: api.conf.get().tools,
-                time: Date.now()
-            };
-            api.util.download(api.util.b64enc(record), `${name}.km`);
+            if (csv) {
+                api.util.download(generateToolCSV(), `${name}.csv`);
+            }else{
+                const record = {
+                    version: api.version,
+                    tools: api.conf.get().tools,
+                    time: Date.now()
+                };
+                api.util.download(api.util.b64enc(record), `${name}.km`);
+            }
         });
     };
 
