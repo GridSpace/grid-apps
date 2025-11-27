@@ -389,7 +389,7 @@ export function decodeToolCSV(data){
         let IDs = new Set();
         for(let tool of tools){
             //check  tool IDs
-            if( Number.isNAN(tool.id) ) throw "id must be a number";
+            if( Number.isNaN(tool.id) ) throw "id must be a number";
             if( IDs.has(tool.id) ) throw "tool ids must be unique";
             IDs.add(tool.id);
             // check remaining fields
@@ -495,25 +495,21 @@ function _showTools() {
     };
     ui.toolsImport.onclick = (ev) => api.event.import(ev);
     ui.toolsExport.onclick = () => {
+        let csv = ui.toolsExportCSV.checked;
         api.uc.prompt("Export Tools Filename", "tools").then(name => {
             if (!name) {
                 return;
             }
-            const record = {
-                version: api.version,
-                tools: api.conf.get().tools,
-                time: Date.now()
-            };
-            api.util.download(api.util.b64enc(record), `${name}.km`);
-        });
-    };
-    ui.toolsImportCSV.onclick = (ev) => api.event.import(ev);
-    ui.toolsExportCSV.onclick = () => {
-        api.uc.prompt("Export Tools Filename", "tools").then(name => {
-            if (!name) {
-                return;
+            if (csv) {
+                api.util.download(generateToolCSV(), `${name}.csv`);
+            }else{
+                const record = {
+                    version: api.version,
+                    tools: api.conf.get().tools,
+                    time: Date.now()
+                };
+                api.util.download(api.util.b64enc(record), `${name}.km`);
             }
-            api.util.download(generateToolCSV(), `${name}.csv`);
         });
     };
 
