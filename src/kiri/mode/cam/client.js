@@ -18,6 +18,7 @@ import { helicalOn, helicalDone } from './cl-helical.js';
 import { originSelectDone } from './cl-origin.js';
 import { Widget, newWidget } from '../../core/widget.js';
 import { space } from '../../../moto/space.js';
+import { recreateTabs } from './cl-tab.js';
 
 const { BufferGeometryUtils } = THREE;
 
@@ -808,6 +809,7 @@ export function init() {
             return;
         }
         clearPops();
+        recreateTabs();
         for (let group of Widget.Groups.list()) {
             let root = group[0];
             if (root.tabs)

@@ -99,25 +99,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     // initial setup
     var_compute();
 
-    if (tabs) {
-        // create tab polygons. defer offset to each op
-        // since it's dependent on selected tool diameter
-        tabs.forEach(tab => {
-            let zero = newPoint(0, 0, 0),
-                point = newPoint(tab.pos.x, tab.pos.y, tab.pos.z),
-                poly = newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y),
-                [rx, ry, rz, rw] = tab.rot,
-                m4 = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion(rx, ry, rz, rw)
-                );
-            poly.points = poly.points
-                .map(p => new THREE.Vector3(p.x, p.y, p.z).applyMatrix4(m4))
-                .map(v => newPoint(v.x, v.y, v.z));
-            poly.move(point);
-            tab.poly = poly;
-        });
-    }
-
     function error(msg) {
         ondone(msg);
     }
