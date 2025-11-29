@@ -27,7 +27,7 @@ class OpArea extends CamOp {
 
         let areaTool = new Tool(settings, tool);
         let toolDiam = areaTool.fluteDiameter();
-        let toolOver = toolDiam * over;
+        let toolOver = areaTool.hasTaper() ? over : toolDiam * over;
         let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_stock;
         let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : workarea.bottom_stock;
 
