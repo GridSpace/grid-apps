@@ -1,39 +1,41 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { OpXRay } from './op-xray.js';
-import { OpShadow } from './op-shadow.js';
-import { OpLevel } from './op-level.js';
-import { OpRough } from './op-rough.js';
-import { OpOutline } from './op-outline.js';
-import { OpContour } from './op-contour.js';
-import { OpPocket } from './op-pocket.js';
-import { OpLathe } from './op-lathe.js';
-import { OpTrace } from './op-trace.js';
-import { OpDrill } from './op-drill.js';
-import { OpRegister } from './op-register.js';
-import { OpLaserOn } from './op-laser-on.js';
-import { OpLaserOff } from './op-laser-off.js';
-import { OpGCode } from './op-gcode.js';
-import { OpIndex } from './op-index.js';
 import { CamOp } from './op.js';
+import { OpArea } from './op-area.js';
+import { OpContour } from './op-contour.js';
+import { OpDrill } from './op-drill.js';
+import { OpGCode } from './op-gcode.js';
 import { OpHelical } from './op-helical.js';
+import { OpIndex } from './op-index.js';
+import { OpLaserOff } from './op-laser-off.js';
+import { OpLaserOn } from './op-laser-on.js';
+import { OpLathe } from './op-lathe.js';
+import { OpLevel } from './op-level.js';
+import { OpOutline } from './op-outline.js';
+import { OpPocket } from './op-pocket.js';
+import { OpRegister } from './op-register.js';
+import { OpRough } from './op-rough.js';
+import { OpShadow } from './op-shadow.js';
+import { OpTrace } from './op-trace.js';
+import { OpXRay } from './op-xray.js';
 
 export const ops = {
-    "xray":      OpXRay,
-    "shadow":    OpShadow,
-    "level":     OpLevel,
-    "rough":     OpRough,
-    "outline":   OpOutline,
+    "area":      OpArea,
     "contour":   OpContour,
-    "pocket":    OpPocket,
-    "lathe":     OpLathe,
-    "trace":     OpTrace,
     "drill":     OpDrill,
-    "register":  OpRegister,
-    "helical":   OpHelical,
-    "laser on":  OpLaserOn,
-    "laser off": OpLaserOff,
+    "flip":      CamOp,
     "gcode":     OpGCode,
+    "helical":   OpHelical,
     "index":     OpIndex,
-    "flip":      CamOp
+    "laser off": OpLaserOff,
+    "laser on":  OpLaserOn,
+    "lathe":     OpLathe,
+    "level":     OpLevel,
+    "outline":   OpOutline,
+    "pocket":    OpPocket,
+    "register":  OpRegister,
+    "rough":     OpRough,
+    "shadow":    OpShadow,
+    "trace":     OpTrace,
+    "xray":      OpXRay
 };

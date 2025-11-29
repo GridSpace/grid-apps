@@ -139,7 +139,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         alert(`invalid z bottom ${(zMin / units).round(3)} >= bounds z max ${(zMax / units).round(3)}`);
     }
 
-    let mark = Date.now();
     let opList = [];
     let opSum = 0;
     let opTot = 0;
@@ -158,6 +157,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         isIndexed,
         ops: opList,
         setAxisIndex,
+        setToolDiam,
         settings,
         shadowAt,
         slicer,
@@ -209,6 +209,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         });
     }
 
+    function setToolDiam(toolDiam) {
+        updateToolDiams(toolDiam);
+        if (tabs) {
+            tabs.forEach(tab => {
+                tab.off = POLY.expand([ tab.poly ], toolDiam / 2).flat();
+            });
+        }
+    }
+
     function updateToolDiams(toolDiam) {
         minToolDiam = Math.min(minToolDiam, toolDiam);
         maxToolDiam = Math.max(maxToolDiam, toolDiam);
@@ -233,9 +242,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         if (minZabove) {
             // const merge = shadow.length;
             // const plus = shadows[minZabove].length;
-            // const mark = Date.now();
             shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true);
-            // console.log({merge, plus, equals: shadow.length, time: Date.now() - mark});
         }
         return shadows[z] = POLY.setZ(shadow, z);
     }
@@ -654,7 +661,7 @@ export function cylinder_poly_find(widget, face) {
  */
 export async function holes(settings, widget, individual, rec, onProgress) {
 
-    let { tool, mark, precision } = rec //TODO: display some visual difference if mark is selected
+    let { tool, precision } = rec //TODO: display some visual difference if mark is selected
     let toolDiam = new Tool(settings, tool).fluteDiameter()
     let diam = individual ? 1 : toolDiam; // sets default diameter when select individual used
 
