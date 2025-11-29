@@ -4,7 +4,7 @@ self.kiri.load(api => {
         let deviceExport = api.device.export;
         api.device.export = (exp, name, opt = {}) => {
             const { event, record } = opt;
-            if (event && event.shiftKey & api.const.LOCAL) {
+            if (event && event.shiftKey) {
                 const { code, process, profiles } = record;
                 fetch("/api/postDevice", {
                     method: "POST",
@@ -12,7 +12,7 @@ self.kiri.load(api => {
                 })
                 .then(r => r.text())
                 .then(t => {
-                    // console.log({server_said: t});
+                    console.log({server_said: t});
                     api.show.alert('profile saved to server');
                 });
             } else {

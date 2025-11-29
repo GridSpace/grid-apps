@@ -2024,6 +2024,18 @@ details[open] summary::after {
     width: 100%;
     /* background-color: #f8f8f8; */
 }
+#device-action {
+    align-items: center;
+}
+#device-action a {
+    right: 0;
+    position: absolute;
+    border-bottom: 1px dotted;
+}
+#device-action a:hover {
+    color: #888;
+    border-bottom: 1px transparent;
+}
 #device-action button, #tool-action button {
     flex-direction: column;
     justify-content: center;

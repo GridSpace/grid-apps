@@ -1,9 +1,9 @@
 // back end for device export in dev mode
 module.exports = function(server) {
-    server.inject("kiri", "kiri.js");
     if (!server.env.debug) {
         return;
     }
+    server.inject("kiri", "kiri.js");
     const fs = require('fs');
     server.api.postDevice = (req, res, next) => {
         server.handler.decodePost(req, res, () => {
@@ -16,7 +16,7 @@ module.exports = function(server) {
             }
             const { mode } = device;
             const { deviceName } = device;
-            const path = `${server.const.rootdir}/src/kiri-dev/${mode.toLowerCase()}/${deviceName.replace(/\ /g,'.')}`;
+            const path = `${server.const.rootdir}/src/kiri/dev/${mode.toLowerCase()}/${deviceName.replace(/\ /g,'.')}`;
             // console.log({ mode, device, process, path });
             fs.writeFileSync(path, JSON.stringify(device, undefined, 4));
             res.end('profile saved');
