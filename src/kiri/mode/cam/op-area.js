@@ -106,6 +106,11 @@ class OpArea extends CamOp {
 
             newArea();
 
+            if (outline) {
+                // remove inner voids when processing outline only
+                area.inner = undefined;
+            }
+
             if (mode === 'clear') {
                 let zs = down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
                 let zroc = 0;
@@ -118,12 +123,6 @@ class OpArea extends CamOp {
                     let outs = [];
                     let clip = [];
                     let shadow = shadowAt(z);
-                    if (outline) {
-                        // remove shadow inner when processing outline only
-                        // clone to prevent corrupting shadowAt cache
-                        shadow = shadow.clone(true);
-                        for (let poly of shadow) poly.inner = undefined;
-                    }
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
                         count: 999, outs, flat: true, z, minArea: 0
@@ -163,9 +162,6 @@ class OpArea extends CamOp {
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 let lzo;
-                if (outline) {
-                    area.inner = undefined;
-                }
                 for (let z of zs) {
                     let slice = newLayer();
                     let layers = slice.output();
@@ -218,16 +214,20 @@ class OpArea extends CamOp {
                 area: undefined
             };
             for (let area of areas.filter(p => !p.used)) {
+                // skip devel / debug only areas
                 let topPolys = area[0].camLines;
                 if (!topPolys) continue;
+                // select poly with largest area
                 let poly = topPolys.slice().sort((a,b) => b.area() - a.area())[0];
                 if (!poly) continue;
+                // compute move distance to top poly for efficient routing
                 let find = poly.findClosestPointTo(printPoint);
                 if (find.distance < min.dist) {
                     min.area = area;
                     min.dist = find.distance;
                 }
             }
+            // if we have a next-closest top poly, pocket that
             if (min.area) {
                 min.area.used = true;
                 console.log({ area: min.area });
