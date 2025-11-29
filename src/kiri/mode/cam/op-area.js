@@ -20,7 +20,7 @@ class OpArea extends CamOp {
     async slice(progress) {
         const pocket = this;
         let { op, state } = this;
-        let { tool, mode, down, over, follow, expand, offset, outline, smooth, tolerance } = op;
+        let { tool, mode, down, over, follow, expand, tr_off, sr_typ, outline, refine, smooth, tolerance } = op;
         let { ov_topz, ov_botz, ov_conv } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
@@ -166,10 +166,10 @@ class OpArea extends CamOp {
                     let slice = newLayer();
                     let layers = slice.output();
                     let outs = [];
-                    if (offset === 'none') {
+                    if (tr_off === 'none') {
                         outs = [ area.clone().setZ(z) ];
                     } else {
-                        POLY.offset([ area ], offset === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
+                        POLY.offset([ area ], tr_off === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
                             count: 1, outs, flat: true, z, minArea: 0
                         });
                     }
@@ -191,7 +191,12 @@ class OpArea extends CamOp {
                 progress(proc, 'trace');
             } else
             if (mode === 'surface') {
+                if (sr_typ === 'linear') {
 
+                } else
+                if (sr_typ === 'offset') {
+
+                }
             }
         }
 

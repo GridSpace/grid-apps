@@ -126,6 +126,10 @@ const LISTS = {
         { name: "clear" },
         { name: "trace" },
         { name: "surface" }
+    ],
+    surftyp: [
+        { name: "linear" },
+        { name: "offset" },
     ]
 };
 
