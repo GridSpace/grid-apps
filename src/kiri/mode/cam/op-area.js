@@ -47,25 +47,26 @@ class OpArea extends CamOp {
             polys.push(newPolygon().fromArray(arr));
         }
 
-        // gather surface selections
-        let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
-        let faces = CAM.surface_find(widget, (op.surfaces[widget.id] ?? []), (follow ?? edgeangle ?? 5) * DEG2RAG);
-        let fpoly = [];
-        for (let face of faces) {
-            let i = face * 9;
-            fpoly.push(newPolygon()
-                .add(vert[i++], vert[i++], vert[i++])
-                .add(vert[i++], vert[i++], vert[i++])
-                .add(vert[i++], vert[i++], vert[i++])
-            );
-        }
-
         // connect open poly edge segments into closed loops (when possible)
         // surface and edge selections produce open polygons by default
         polys = POLY.nest(healPolys(polys));
 
-        // add in surface areas
-        polys.push(...POLY.union(fpoly, 0.0001, true));
+        // gather surface selections
+        let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
+        let faces = CAM.surface_find(widget, (op.surfaces[widget.id] ?? []), (follow ?? edgeangle ?? 5) * DEG2RAG);
+        let fpoly = [];
+        let fminz = Infinity;
+        for (let face of faces) {
+            let i = face * 9;
+            fpoly.push(newPolygon()
+                .add(vert[i++], vert[i++], fminz = Math.min(fminz, vert[i++]))
+                .add(vert[i++], vert[i++], fminz = Math.min(fminz, vert[i++]))
+                .add(vert[i++], vert[i++], fminz = Math.min(fminz, vert[i++]))
+            );
+        }
+
+        // add in unioned surface areas
+        polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), fminz));
 
         // expand selections (flattens z variable polys)
         if (Math.abs(expand) > 0) {
