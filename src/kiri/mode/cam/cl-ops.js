@@ -661,8 +661,13 @@ export function createPopOps() {
     function isTrace() {
         return env.poppedRec.mode === 'trace';
     }
+
     function isSurface() {
         return env.poppedRec.mode === 'surface';
+    }
+
+    function isSurfaceLinear() {
+        return env.poppedRec.mode === 'surface' && env.poppedRec.sr_typ === 'linear';
     }
 
     createPopOp('area', {
@@ -670,7 +675,8 @@ export function createPopOps() {
         tool: 'camAreaTool',
         mode: 'camAreaMode',
         tr_off: 'camAreaTrace',
-        sr_typ: 'camAreaSurface',
+        sr_type: 'camAreaSurface',
+        sr_angle: 'camAreaAngle',
         over: 'camAreaOver',
         down: 'camAreaDown',
         rate: 'camAreaSpeed',
@@ -687,7 +693,7 @@ export function createPopOps() {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         mode: UC.newSelect(LANG.mo_menu, {}, "opmode"),
         tr_off: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: isTrace }, "traceoff"),
-        sr_typ: UC.newSelect("pattern", { title: "pattern", show: isSurface }, "surftyp"),
+        sr_type: UC.newSelect("pattern", { title: "pattern", show: isSurface }, "surftyp"),
         sep: UC.newBlank({ class: "pop-sep" }),
         menu: UC.newRow([
             UC.newButton("edge", traceAdd),
@@ -696,7 +702,8 @@ export function createPopOps() {
         outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l, show: () => isClear() || isTrace() }),
         expand: UC.newInput(LANG.cp_xpnd_s, { title: LANG.cp_xpnd_l, convert: toFloat, units }),
         sep: UC.newBlank({ class: "pop-sep" }),
-        over: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.001, 100.0), units, show: () => isClear() || isSurface() }),
+        sr_angle: UC.newInput("step angle", { title: "step angle", convert: toFloat, bound: UC.bound(0, 360), show: isSurfaceLinear }),
+        over: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.001, 100.0), show: () => isClear() || isSurface() }),
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, bound: UC.bound(0, 100.0), units, show: () => isClear() || isTrace() }),
         sep: UC.newBlank({ class: "pop-sep", show: isSurface }),
         refine: UC.newInput(LANG.cp_refi_s, { title: LANG.cp_refi_l, convert: toInt, show: isSurface }),

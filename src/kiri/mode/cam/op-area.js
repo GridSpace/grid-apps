@@ -20,7 +20,7 @@ class OpArea extends CamOp {
     async slice(progress) {
         const pocket = this;
         let { op, state } = this;
-        let { tool, mode, down, over, follow, expand, tr_off, sr_typ, outline, refine, smooth, tolerance } = op;
+        let { tool, mode, down, over, follow, expand, outline, refine, smooth } = op;
         let { ov_topz, ov_botz, ov_conv } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
@@ -158,6 +158,7 @@ class OpArea extends CamOp {
                 progress(proc, 'clear');
             } else
             if (mode === 'trace') {
+                let { tr_type  } = op;
                 let zs = down ? base_util.lerp(zTop, bounds.min.z, down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
@@ -166,10 +167,11 @@ class OpArea extends CamOp {
                     let slice = newLayer();
                     let layers = slice.output();
                     let outs = [];
-                    if (tr_off === 'none') {
-                        outs = [ area.clone().setZ(z) ];
+                    if (tr_type === 'none') {
+                        area = area.clone(true);
+                        outs = [ zs.length > 1 ? area.setZ(z) : area ];
                     } else {
-                        POLY.offset([ area ], tr_off === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
+                        POLY.offset([ area ], tr_type === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
                             count: 1, outs, flat: true, z, minArea: 0
                         });
                     }
@@ -191,10 +193,12 @@ class OpArea extends CamOp {
                 progress(proc, 'trace');
             } else
             if (mode === 'surface') {
-                if (sr_typ === 'linear') {
+                let { sr_type, sr_angle, tolerance } = op;
 
+                if (sr_type === 'linear') {
+                    console.log({ sr_angle });
                 } else
-                if (sr_typ === 'offset') {
+                if (sr_type === 'offset') {
 
                 }
             }

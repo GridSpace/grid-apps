@@ -428,6 +428,7 @@ export const conf = {
                 camAreaMode: "clear",
                 camAreaTrace: "none",
                 camAreaSurface: "linear",
+                camAreaAngle: 0,
                 camAreaOver: 0.4,
                 camAreaDown: 1,
                 camAreaSpeed: 1000,
