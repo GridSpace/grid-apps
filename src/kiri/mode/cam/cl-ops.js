@@ -651,4 +651,48 @@ export function createPopOps() {
     };
 
     createPopOp('|', {}).inputs = {};
+
+    createPopOp('area', {
+        spindle: 'camAreaSpindle',
+        tool: 'camAreaTool',
+        mode: 'camAreaMode',
+        over: 'camAreaOver',
+        down: 'camAreaDown',
+        rate: 'camAreaSpeed',
+        plunge: 'camAreaPlunge',
+        expand: 'camAreaExpand',
+        smooth: 'camAreaSmooth',
+        refine: 'camAreaRefine',
+        ov_topz: 0,
+        ov_botz: 0,
+        ov_conv: '~camConventional',
+        tolerance: 'camTolerance',
+    }).inputs = {
+        tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
+        mode: UC.newSelect(LANG.mo_menu, {}, "opmode"),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: UC.toInt, show: hasSpindle }),
+        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: UC.toInt, units: true }),
+        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: UC.toInt, units: true }),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        over: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: UC.toFloat, bound: UC.bound(0.01, 1.0) }),
+        down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: UC.toFloat, units: true }),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        expand: UC.newInput(LANG.cp_xpnd_s, { title: LANG.cp_xpnd_l, convert: UC.toFloat, units: true }),
+        refine: UC.newInput(LANG.cp_refi_s, { title: LANG.cp_refi_l, convert: UC.toInt }),
+        smooth: UC.newInput(LANG.cp_smoo_s, { title: LANG.cp_smoo_l, convert: UC.toInt }),
+        tolerance: UC.newInput(LANG.ou_toll_s, { title: LANG.ou_toll_l, convert: UC.toFloat, bound: UC.bound(0, 10.0), units: true, round: 4 }),
+        exp: UC.newExpand("overrides"),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: UC.toFloat, units: true }),
+        ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: UC.toFloat, units: true }),
+        ov_conv: UC.newBoolean(LANG.ou_conv_s, undefined, { title: LANG.ou_conv_l }),
+        exp_end: UC.endExpand(),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        menu: UC.newRow([
+            UC.newButton("edge", traceAdd),
+            UC.newButton("surface", surfaceAdd),
+        ], { class: "ext-buttons f-row" }),
+    };
+
 }

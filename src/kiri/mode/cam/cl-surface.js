@@ -16,9 +16,10 @@ export function surfaceAdd(ev) {
         return surfaceDone();
     }
     clearPops();
+    let { surfaces, follow } = env.poppedRec;
+    let { edgeangle } = api.conf.get().controller;
     alert = api.show.alert("analyzing surfaces...", 1000);
-    let surfaces = env.poppedRec.surfaces;
-    let radians = env.poppedRec.follow * DEG2RAD;
+    let radians = (follow ?? edgeangle) * DEG2RAD;
     CAM.surface_prep(env.currentIndex * RAD2DEG, () => {
         api.hide.alert(alert);
         alert = api.show.alert("[esc] cancels surface selection");

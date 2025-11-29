@@ -189,6 +189,15 @@ const opAddHelical = () => {
     opAdd(rec);
 };
 
+const opAddArea = () => {
+    traceDone();
+    surfaceDone();
+    let rec = env.popOp.area.new();
+    rec.areas = { /* widget.id: [ polygons... ] */ };
+    rec.surfaces = { /* widget.id: [ faces... ] */ };
+    opAdd(rec);
+};
+
 const opAddContour = (axis) => {
     let rec = env.popOp.contour.new();
     rec.axis = axis.toUpperCase();
@@ -517,6 +526,10 @@ export function opRender() {
 
 export function init() {
 
+    if (api.devel.enabled) {
+        $('op:area').classList.remove('hide');
+    }
+
     api.event.on('tool.mesh.face-normal', normal => {
         // console.log({ env.poppedRec });
         env.poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
@@ -764,6 +777,7 @@ export function init() {
             case "trace": return opAddTrace();
             case "pocket": return opAddPocket();
             case "helical": return opAddHelical();
+            case "area": return opAddArea();
             case "flip":
                 // only one flip op permitted
                 for (let op of env.current.process.ops) {
