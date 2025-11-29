@@ -119,8 +119,9 @@ class OpArea extends CamOp {
                     let clip = [];
                     let shadow = shadowAt(z);
                     if (outline) {
-                        shadow = shadow.clone(true);
                         // remove shadow inner when processing outline only
+                        // clone to prevent corrupting shadowAt cache
+                        shadow = shadow.clone(true);
                         for (let poly of shadow) poly.inner = undefined;
                     }
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
@@ -137,6 +138,8 @@ class OpArea extends CamOp {
                         // terminate z descent when no further output possible
                         break outer;
                     }
+                    // cut tabs when present
+                    if (tabs) outs = cutTabs(tabs, outs);
                     slice.camLines = outs;
                     zroc += zinc;
                     lzo = z;
@@ -178,6 +181,8 @@ class OpArea extends CamOp {
                         // terminate z descent when no further output possible
                         break;
                     }
+                    // cut tabs when present
+                    if (tabs) outs = cutTabs(tabs, outs);
                     slice.camLines = outs;
                     zroc += zinc;
                     lzo = z;
@@ -199,7 +204,7 @@ class OpArea extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, areas } = this;
-        let { getPrintPoint , pocket, setTool, setSpindle, setTolerance } = ops;
+        let { getPrintPoint , pocket, setTool, setSpindle } = ops;
         let { process } = state.settings;
 
         setTool(op.tool, op.rate);
@@ -213,12 +218,10 @@ class OpArea extends CamOp {
                 area: undefined
             };
             for (let area of areas.filter(p => !p.used)) {
-                console.log({ area });
                 let topPolys = area[0].camLines;
                 if (!topPolys) continue;
                 let poly = topPolys.slice().sort((a,b) => b.area() - a.area())[0];
                 if (!poly) continue;
-                console.log({ poly, printPoint });
                 let find = poly.findClosestPointTo(printPoint);
                 if (find.distance < min.dist) {
                     min.area = area;
