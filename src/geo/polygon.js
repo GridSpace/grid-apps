@@ -70,7 +70,7 @@ export class Polygon {
         return bounds;
     }
 
-    getBound3D() {
+    getBounds3D() {
         let bounds = new THREE.Box3();
         for (let point of this.points) {
             bounds.expandByPoint(point);

@@ -229,19 +229,10 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             return cached;
         }
         // find closest shadow above and use to speed up delta shadow gen
-        let minZabove;
         let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
-        for (let zkey of zover) {
-            if (minZabove && zkey < minZabove) {
-                minZabove = zkey;
-            } else {
-                minZabove = zkey;
-            }
-        }
+        let minZabove = Math.min(Infinity, ...zover);
         let shadow = computeShadowAt(widget, z, minZabove);
-        if (minZabove) {
-            // const merge = shadow.length;
-            // const plus = shadows[minZabove].length;
+        if (minZabove < Infinity) {
             shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true);
         }
         return shadows[z] = POLY.setZ(shadow, z);

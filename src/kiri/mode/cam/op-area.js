@@ -22,13 +22,16 @@ class OpArea extends CamOp {
         let { op, state } = this;
         let { tool, mode, down, over, follow, expand, plunge, smooth, tolerance } = op;
         let { ov_topz, ov_botz, ov_conv } = op;
-        let { settings, widget, zBottom, tabs, color } = state;
+        let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
 
         let areaTool = new Tool(settings, tool);
         let toolDiam = areaTool.fluteDiameter();
+        let toolOver = toolDiam * over;
+        let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_stock;
+        let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : workarea.bottom_stock;
 
-        zBottom = ov_botz ? workarea.bottom_stock + ov_botz : zBottom;
+        console.log({ workarea, zTop, zBottom });
 
         setToolDiam(toolDiam);
 
@@ -83,12 +86,42 @@ class OpArea extends CamOp {
 
         // process each area separately
         for (let area of polys) {
-            let bounds = area.getBound3D();
-            console.log({ area, bounds });
+            let bounds = area.getBounds3D();
 
             if (devel) newGroup().output()
-                .setLayer("areas", { line: 0xff8800 }, false)
-                .addPolys(polys);
+                .setLayer("area", { line: 0xff8800 }, false)
+                .addPolys([ area ]);
+
+            if (mode === 'clear') {
+                let zs = base_util.lerp(zTop, zBottom, down);
+                console.log({ area, bounds, zs });
+                for (let z of zs) {
+                    let layers = newGroup().output();
+                    let outs = [];
+                    let clip = [];
+                    let shadow = shadowAt(z);
+                    POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
+                    POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
+                        count: 1, outs, flat: true, z, minArea: 0
+                    });
+                    if (outs.length === 0) {
+                        break;
+                    }
+                    layers
+                        .setLayer("shadow", { line: 0x0088ff }, false)
+                        .addPolys(shadow);
+                    layers
+                        .setLayer("clear", { line: 0x88ff00 }, false)
+                        .addPolys(outs);
+                }
+
+            } else
+            if (mode === 'trace') {
+
+            } else
+            if (mode === 'surface') {
+
+            }
         }
 
         addSlices(groups);

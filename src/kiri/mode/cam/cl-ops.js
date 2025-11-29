@@ -678,7 +678,7 @@ export function createPopOps() {
         plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
         sep: UC.newBlank({ class: "pop-sep" }),
         over: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.001, 100.0), units }),
-        down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, bound: UC.bound(0, 100), units }),
+        down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, bound: UC.bound(0.001, 100.0), units }),
         sep: UC.newBlank({ class: "pop-sep" }),
         expand: UC.newInput(LANG.cp_xpnd_s, { title: LANG.cp_xpnd_l, convert: toFloat, units }),
         refine: UC.newInput(LANG.cp_refi_s, { title: LANG.cp_refi_l, convert: toInt }),

@@ -425,7 +425,7 @@ export const conf = {
                 camArcTolerance: 0.15,
                 camAreaSpindle: 1000,
                 camAreaTool: 1000,
-                camAreaType: "clear",
+                camAreaMode: "clear",
                 camAreaOver: 0.4,
                 camAreaDown: 1,
                 camAreaSpeed: 1000,
