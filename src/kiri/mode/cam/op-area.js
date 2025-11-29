@@ -20,7 +20,7 @@ class OpArea extends CamOp {
     async slice(progress) {
         const pocket = this;
         let { op, state } = this;
-        let { tool, mode, down, over, follow, expand, plunge, smooth, tolerance } = op;
+        let { tool, mode, down, over, follow, expand, offset, outline, smooth, tolerance } = op;
         let { ov_topz, ov_botz, ov_conv } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
@@ -29,7 +29,7 @@ class OpArea extends CamOp {
         let toolDiam = areaTool.fluteDiameter();
         let toolOver = areaTool.hasTaper() ? over : toolDiam * over;
         let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_stock;
-        let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : workarea.bottom_stock;
+        let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : workarea.bottom_part;
 
         console.log({ workarea, zTop, zBottom });
 
@@ -98,6 +98,8 @@ class OpArea extends CamOp {
         let proc = 0;
         let pinc = 1 / polys.length;
         for (let area of polys) {
+            let bounds = area.getBounds3D();
+
             if (devel) newLayer().output()
                 .setLayer("area", { line: 0xff8800 }, false)
                 .addPolys([ area ]);
@@ -105,25 +107,39 @@ class OpArea extends CamOp {
             newArea();
 
             if (mode === 'clear') {
-                let zs = base_util.lerp(zTop, zBottom, down);
+                let zs = down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
+                let lzo;
+                outer: for (;;)
                 for (let z of zs) {
                     let slice = newLayer();
                     let layers = slice.output();
                     let outs = [];
                     let clip = [];
                     let shadow = shadowAt(z);
+                    if (outline) {
+                        shadow = shadow.clone(true);
+                        // remove shadow inner when processing outline only
+                        for (let poly of shadow) poly.inner = undefined;
+                    }
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
                         count: 999, outs, flat: true, z, minArea: 0
                     });
                     if (outs.length === 0) {
+                        if (bounds && lzo > bounds.min.z) {
+                            // try a bottom layer matching bottom of selection
+                            zs = [ bounds.min.z ];
+                            bounds = undefined;
+                            continue outer;
+                        }
                         // terminate z descent when no further output possible
-                        break;
+                        break outer;
                     }
                     slice.camLines = outs;
                     zroc += zinc;
+                    lzo = z;
                     progress(proc + (pinc * zroc), 'clear');
                     if (devel) layers
                         .setLayer("shadow", { line: 0x0088ff }, false)
@@ -131,12 +147,47 @@ class OpArea extends CamOp {
                     layers
                         .setLayer("clear", { line: 0x88ff00 }, false)
                         .addPolys(outs);
+                    // of the last output still cuts, we need an escape
+                    if (z === zs.peek()) {
+                        break outer;
+                    }
                 }
                 proc += pinc;
                 progress(proc, 'clear');
             } else
             if (mode === 'trace') {
-
+                let zs = down ? base_util.lerp(zTop, bounds.min.z, down) : [ bounds.min.z ];
+                let zroc = 0;
+                let zinc = 1 / zs.length;
+                let lzo;
+                if (outline) {
+                    area.inner = undefined;
+                }
+                for (let z of zs) {
+                    let slice = newLayer();
+                    let layers = slice.output();
+                    let outs = [];
+                    if (offset === 'none') {
+                        outs = [ area.clone().setZ(z) ];
+                    } else {
+                        POLY.offset([ area ], offset === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
+                            count: 1, outs, flat: true, z, minArea: 0
+                        });
+                    }
+                    if (outs.length === 0) {
+                        // terminate z descent when no further output possible
+                        break;
+                    }
+                    slice.camLines = outs;
+                    zroc += zinc;
+                    lzo = z;
+                    progress(proc + (pinc * zroc), 'trace');
+                    layers
+                        .setLayer("trace", { line: 0x88ff00 }, false)
+                        .addPolys(outs);
+                }
+                proc += pinc;
+                progress(proc, 'trace');
             } else
             if (mode === 'surface') {
 
@@ -154,6 +205,7 @@ class OpArea extends CamOp {
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
 
+        // process areas as pockets
         while (areas?.length) {
             let printPoint = getPrintPoint();
             let min = {

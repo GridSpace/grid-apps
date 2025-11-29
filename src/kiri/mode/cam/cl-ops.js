@@ -654,10 +654,22 @@ export function createPopOps() {
 
     createPopOp('|', {}).inputs = {};
 
+    function isClear() {
+        return env.poppedRec.mode === 'clear';
+    }
+
+    function isTrace() {
+        return env.poppedRec.mode === 'trace';
+    }
+    function isSurface() {
+        return env.poppedRec.mode === 'surface';
+    }
+
     createPopOp('area', {
         spindle: 'camAreaSpindle',
         tool: 'camAreaTool',
         mode: 'camAreaMode',
+        offset: 'camAreaOffset',
         over: 'camAreaOver',
         down: 'camAreaDown',
         rate: 'camAreaSpeed',
@@ -665,6 +677,7 @@ export function createPopOps() {
         expand: 'camAreaExpand',
         smooth: 'camAreaSmooth',
         refine: 'camAreaRefine',
+        outline: 'camAreaOutline',
         ov_topz: 0,
         ov_botz: 0,
         ov_conv: '~camConventional',
@@ -672,29 +685,34 @@ export function createPopOps() {
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         mode: UC.newSelect(LANG.mo_menu, {}, "opmode"),
+        offset: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: isTrace }, "traceoff"),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        menu: UC.newRow([
+            UC.newButton("edge", traceAdd),
+            UC.newButton("surface", surfaceAdd),
+        ], { class: "ext-buttons f-row" }),
+        outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l, show: () => isClear() || isTrace() }),
+        expand: UC.newInput(LANG.cp_xpnd_s, { title: LANG.cp_xpnd_l, convert: toFloat, units }),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        over: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.001, 100.0), units, show: isClear }),
+        down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, bound: UC.bound(0, 100.0), units, show: () => isClear() || isTrace() }),
+        sep: UC.newBlank({ class: "pop-sep", show: isSurface }),
+        refine: UC.newInput(LANG.cp_refi_s, { title: LANG.cp_refi_l, convert: toInt, show: isSurface }),
+        smooth: UC.newInput(LANG.cp_smoo_s, { title: LANG.cp_smoo_l, convert: toInt, show: isSurface }),
+        tolerance: UC.newInput(LANG.ou_toll_s, { title: LANG.ou_toll_l, convert: toFloat, bound: UC.bound(0, 10.0), units, round: 4, show: isSurface }),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        exp: UC.newExpand("feeds & speeds"),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
         plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
-        sep: UC.newBlank({ class: "pop-sep" }),
-        over: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.001, 100.0), units }),
-        down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, bound: UC.bound(0.001, 100.0), units }),
-        sep: UC.newBlank({ class: "pop-sep" }),
-        expand: UC.newInput(LANG.cp_xpnd_s, { title: LANG.cp_xpnd_l, convert: toFloat, units }),
-        refine: UC.newInput(LANG.cp_refi_s, { title: LANG.cp_refi_l, convert: toInt }),
-        smooth: UC.newInput(LANG.cp_smoo_s, { title: LANG.cp_smoo_l, convert: toInt }),
-        tolerance: UC.newInput(LANG.ou_toll_s, { title: LANG.ou_toll_l, convert: toFloat, bound: UC.bound(0, 10.0), units, round: 4 }),
+        exp_end: UC.endExpand(),
         exp: UC.newExpand("overrides"),
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
         ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
         ov_conv: UC.newBoolean(LANG.ou_conv_s, undefined, { title: LANG.ou_conv_l }),
         exp_end: UC.endExpand(),
-        sep: UC.newBlank({ class: "pop-sep" }),
-        menu: UC.newRow([
-            UC.newButton("edge", traceAdd),
-            UC.newButton("surface", surfaceAdd),
-        ], { class: "ext-buttons f-row" }),
     };
 
 }
