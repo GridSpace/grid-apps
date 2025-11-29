@@ -50,9 +50,10 @@ class OpArea extends CamOp {
         // gather surface selections
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
         let faces = CAM.surface_find(widget, (op.surfaces[widget.id] ?? []), (follow ?? edgeangle ?? 5) * DEG2RAG);
+        let fpoly = [];
         for (let face of faces) {
             let i = face * 9;
-            polys.push(newPolygon()
+            fpoly.push(newPolygon()
                 .add(vert[i++], vert[i++], vert[i++])
                 .add(vert[i++], vert[i++], vert[i++])
                 .add(vert[i++], vert[i++], vert[i++])
@@ -62,6 +63,9 @@ class OpArea extends CamOp {
         // connect open poly edge segments into closed loops (when possible)
         // surface and edge selections produce open polygons by default
         polys = POLY.nest(healPolys(polys));
+
+        // add in surface areas
+        polys.push(...POLY.union(fpoly, 0.0001, true));
 
         // expand selections (flattens z variable polys)
         if (Math.abs(expand) > 0) {
