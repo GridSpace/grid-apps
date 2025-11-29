@@ -37,12 +37,20 @@ class OpArea extends CamOp {
 
         // selected area polygons: surfaces and edges
         let { devel, edgeangle } = settings.controller;
-        let groups = [];
+        let stack = [];
+        let areas = this.areas = [ stack ];
         let polys = [];
 
-        function newGroup() {
-            groups.push(newSlice());
-            return groups.peek();
+        function newArea() {
+            if (stack.length) {
+                stack = [];
+                areas.push(stack);
+            }
+        }
+
+        function newLayer() {
+            stack.push(newSlice());
+            return stack.peek();
         }
 
         // gather area selections
@@ -90,27 +98,31 @@ class OpArea extends CamOp {
         let proc = 0;
         let pinc = 1 / polys.length;
         for (let area of polys) {
-            if (devel) newGroup().output()
+            if (devel) newLayer().output()
                 .setLayer("area", { line: 0xff8800 }, false)
                 .addPolys([ area ]);
+
+            newArea();
 
             if (mode === 'clear') {
                 let zs = base_util.lerp(zTop, zBottom, down);
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 for (let z of zs) {
-                    let layers = newGroup().output();
+                    let slice = newLayer();
+                    let layers = slice.output();
                     let outs = [];
                     let clip = [];
                     let shadow = shadowAt(z);
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
-                        count: 1, outs, flat: true, z, minArea: 0
+                        count: 999, outs, flat: true, z, minArea: 0
                     });
                     if (outs.length === 0) {
                         // terminate z descent when no further output possible
                         break;
                     }
+                    slice.camLines = outs;
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'clear');
                     if (devel) layers
@@ -131,16 +143,51 @@ class OpArea extends CamOp {
             }
         }
 
-        addSlices(groups);
+        addSlices(areas.flat());
     }
 
     prepare(ops, progress) {
-        let { op, state, pockets } = this;
+        let { op, state, areas } = this;
         let { getPrintPoint , pocket, setTool, setSpindle, setTolerance } = ops;
         let { process } = state.settings;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
+
+        while (areas?.length) {
+            let printPoint = getPrintPoint();
+            let min = {
+                dist: Infinity,
+                area: undefined
+            };
+            for (let area of areas.filter(p => !p.used)) {
+                console.log({ area });
+                let topPolys = area[0].camLines;
+                if (!topPolys) continue;
+                let poly = topPolys.slice().sort((a,b) => b.area() - a.area())[0];
+                if (!poly) continue;
+                console.log({ poly, printPoint });
+                let find = poly.findClosestPointTo(printPoint);
+                if (find.distance < min.dist) {
+                    min.area = area;
+                    min.dist = find.distance;
+                }
+            }
+            if (min.area) {
+                min.area.used = true;
+                console.log({ area: min.area });
+                pocket({
+                    cutdir: op.ov_conv,
+                    depthFirst: process.camDepthFirst,
+                    easeDown: op.down && process.easeDown ? op.down : 0,
+                    progress: (n,m) => progress(n/m, "area"),
+                    slices: min.area.filter(slice => slice.camLines)
+                });
+            } else {
+                break;
+            }
+        }
+
     }
 }
 
