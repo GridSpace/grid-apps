@@ -67,6 +67,8 @@ class OpArea extends CamOp {
                 .add(vert[i++], vert[i++], fminz = Math.min(fminz, vert[i++]))
             );
         }
+        // remove invalid edges (eg. when vertical walls are the only selection)
+        fpoly = fpoly.filter(p => p.area() > 0.001);
 
         // add in unioned surface areas
         polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), fminz));
@@ -85,16 +87,17 @@ class OpArea extends CamOp {
         }
 
         // process each area separately
+        let proc = 0;
+        let pinc = 1 / polys.length;
         for (let area of polys) {
-            let bounds = area.getBounds3D();
-
             if (devel) newGroup().output()
                 .setLayer("area", { line: 0xff8800 }, false)
                 .addPolys([ area ]);
 
             if (mode === 'clear') {
                 let zs = base_util.lerp(zTop, zBottom, down);
-                console.log({ area, bounds, zs });
+                let zroc = 0;
+                let zinc = 1 / zs.length;
                 for (let z of zs) {
                     let layers = newGroup().output();
                     let outs = [];
@@ -105,16 +108,20 @@ class OpArea extends CamOp {
                         count: 1, outs, flat: true, z, minArea: 0
                     });
                     if (outs.length === 0) {
+                        // terminate z descent when no further output possible
                         break;
                     }
-                    layers
+                    zroc += zinc;
+                    progress(proc + (pinc * zroc), 'clear');
+                    if (devel) layers
                         .setLayer("shadow", { line: 0x0088ff }, false)
                         .addPolys(shadow);
                     layers
                         .setLayer("clear", { line: 0x88ff00 }, false)
                         .addPolys(outs);
                 }
-
+                proc += pinc;
+                progress(proc, 'clear');
             } else
             if (mode === 'trace') {
 
