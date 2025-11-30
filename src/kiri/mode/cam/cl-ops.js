@@ -699,7 +699,7 @@ export function createPopOps() {
             UC.newButton("edge", traceAdd),
             UC.newButton("surface", surfaceAdd),
         ], { class: "ext-buttons f-row" }),
-        outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l, show: () => isClear() || isTrace() }),
+        outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l }),
         expand: UC.newInput(LANG.cp_xpnd_s, { title: LANG.cp_xpnd_l, convert: toFloat, units }),
         sep: UC.newBlank({ class: "pop-sep" }),
         sr_angle: UC.newInput("step angle", { title: "step angle", convert: toFloat, bound: UC.bound(0, 360), show: isSurfaceLinear }),
