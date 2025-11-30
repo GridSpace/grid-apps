@@ -80,22 +80,19 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         { camStockOffset, camStockIndexed, camZClearance } = process,
         stock = settings.stock || {},
         stockZ = stock.z * (camStockIndexed ? 0.5 : 1),
-        outer = settings.bounds || widget.getPositionBox(), // dup of bounds?
-        outerZ = outer.max.z, // dup of boundsZ?
         stockZClear = stockZ + camZClearance,
         widgetTrackTop = widget.track.top,
         widgetTopToStock = stockZ - widgetTrackTop,
         bounds = widget.getBoundingBox(),
         boundsZ = camStockIndexed ? stock.z / 2 : bounds.max.z + widgetTopToStock,
-        zMax = outerZ + camZClearance + (camOriginOffZ || 0) + widgetTopToStock,
-        zSafe = camStockIndexed ? Math.hypot(bounds.dim.y, bounds.dim.z) / 2 + camZClearance : zMax,
+        zSafe = camStockIndexed ? Math.hypot(stock.y, stock.z) / 2 + camZClearance : stockZClear,
         wmpos = widget.track.pos,
         wmx = wmpos.x,
         wmy = wmpos.y,
-        wmz = !camStockIndexed ? stock.z - boundsZ : alignTop ? outerZ - boundsZ : 0,
+        wmz = !camStockIndexed ? stock.z - boundsZ : alignTop ? 0 : 0,
         originx = (camOriginCenter ? 0 : -stock.x / 2) + (camOriginOffX || 0),
         originy = (camOriginCenter ? 0 : -stock.y / 2) + (camOriginOffY || 0),
-        origin = newPoint(originx, originy, zMax),
+        origin = newPoint(originx, originy, zSafe),
         arcRadians = toRadians(camArcResolution),
         arcEnabled = camArcEnabled && camArcTolerance > 0 && arcRadians > 0,
         currentOp,
@@ -131,9 +128,11 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 z: data.z,
                 tops: data.tops,
             };
-        }) : zMax,
+        }) : zSafe,
         tolerance = 0;
-console.log({ zSafe, stockZ, outerZ, boundsZ, wmz });
+
+    // console.log({ zSafe, stockZ, boundsZ, wmz });
+
     function newLayer(op) {
         if (layerOut.length || layerOut.mode) {
             newOutput.push(layerOut);
@@ -473,7 +472,7 @@ console.log({ zSafe, stockZ, outerZ, boundsZ, wmz });
                     clearz = maxz;
                 let zIsBelow = point.z <= maxz;
                 if (camForceZMax) {
-                    clearz = maxz = zMax;// + zadd;
+                    clearz = maxz = zSafe;
                     zIsBelow = true;
                 }
                 // up if any point between higher than start/outline, go up first
@@ -1051,7 +1050,6 @@ console.log({ zSafe, stockZ, outerZ, boundsZ, wmz });
         setTool,
         tip2tipEmit,
         widget,
-        zMax,
         zSafe,
     };
 
@@ -1082,7 +1080,7 @@ console.log({ zSafe, stockZ, outerZ, boundsZ, wmz });
         }
     }
 
-    // last layer/move is to zMax
+    // last layer/move is to zSafe
     // re-inject that point into the last layer generated
     if (printPoint && newOutput.length) {
         let lastLayer = newOutput.filter(layer => Array.isArray(layer)).peek();
