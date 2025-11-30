@@ -287,7 +287,7 @@ export function opRender() {
     oplist.forEach((rec, i) => {
         let title = '';
         let clock = rec.type === '|';
-        let label = clock ? `` : rec.mode ?? rec.type;
+        let label = clock ? `` : (rec.mode ? rec.type + ' ' + rec.mode : rec.type);
         let clazz = notime ? ["draggable", "notime"] : ["draggable"];
         let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
         if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }

@@ -14,7 +14,7 @@ class OpRegister extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, widget, bounds, addSlices, zMax, zThru, color } = state;
+        let { addSlices, bounds, color, settings, widget, zThru } = state;
         let { updateToolDiams } = state;
 
         let tool = new Tool(settings, op.tool);
@@ -23,21 +23,22 @@ class OpRegister extends CamOp {
 
         updateToolDiams(tool.fluteDiameter());
 
-        let { stock } = settings,
-        toolZ = widget.track.pos.z,
-        boundMinX = bounds.min.x,
-        boundMaxX = bounds.max.x,
-        boundMinY = bounds.min.y,
-        boundMaxY = bounds.max.y,
-        toolOffset = tool.fluteDiameter() * 2,
-        centerX = (boundMinX + boundMaxX) / 2,
-        centerY = (boundMinY + boundMaxY) / 2,
-        cutDepth = op.thru || zThru || 0,
-        pathPoints = [],
-        stockToSurfaceOffset = stock.z - bounds.max.z,
-        startZ = bounds.max.z + stockToSurfaceOffset + toolZ,
-        endZ = toolZ - cutDepth,
-        cutOffset = op.offset;
+        let { stock } = settings;
+        let { pos } = widget.track;
+        let toolZ = pos.z,
+            boundMinX = bounds.min.x,
+            boundMaxX = bounds.max.x,
+            boundMinY = bounds.min.y,
+            boundMaxY = bounds.max.y,
+            toolOffset = tool.fluteDiameter() * 2,
+            centerX = (boundMinX + boundMaxX) / 2,
+            centerY = (boundMinY + boundMaxY) / 2,
+            cutDepth = op.thru || zThru || 0,
+            pathPoints = [],
+            stockToSurfaceOffset = stock.z - bounds.max.z,
+            startZ = bounds.max.z + stockToSurfaceOffset + toolZ,
+            endZ = toolZ - cutDepth,
+            cutOffset = op.offset;
 
         if (!(stock.x && stock.y && stock.z)) {
             return;
@@ -146,7 +147,7 @@ class OpRegister extends CamOp {
 
     prepare(ops, progress) {
         let { op } = this;
-        let { setTool, setSpindle, setDrill, emitDrills } = ops;
+        let { emitDrills, setDrill, setSpindle, setTool } = ops;
 
         if (op.axis === '-' || op.axis === '=') {
             setTool(op.tool, op.feed, op.rate);

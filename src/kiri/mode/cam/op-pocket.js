@@ -242,7 +242,7 @@ class OpPocket extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, pockets } = this;
-        let { getPrintPoint , pocket, setTool, setSpindle, setTolerance } = ops;
+        let { pocket, setTool, setSpindle, setTolerance } = ops;
         let { process } = state.settings;
 
         setTool(op.tool, op.rate);
@@ -255,36 +255,15 @@ class OpPocket extends CamOp {
         // eliminate empty pockets
         pockets = pockets.filter(p => p.length);
 
-        // pockets is an [ array of an [ array of slices ] ]
-        // each top level array is a pocket containing a [ z layer array of slices ]
-        // follow each pocket to the next closest one from previous exit
-        for (;;) {
-            let printPoint = getPrintPoint();
-            let min = {
-                dist: Infinity,
-                pocket: undefined
-            };
-            for (let pocket of pockets.filter(p => !p.used)) {
-                let poly = pocket[0].camLines.slice().sort((a,b) => b.area() - a.area())[0];
-                if (!poly) continue;
-                let find = poly.findClosestPointTo(printPoint);
-                if (find.distance < min.dist) {
-                    min.pocket = pocket;
-                    min.dist = find.distance;
-                }
-            }
-            if (min.pocket) {
-                min.pocket.used = true;
-                pocket({
-                    cutdir: op.ov_conv,
-                    depthFirst: process.camDepthFirst && !state.isIndexed,
-                    easeDown: op.down && process.easeDown ? op.down : 0,
-                    progress: (n,m) => progress(n/m, "pocket"),
-                    slices: min.pocket
-                });
-            } else {
-                break;
-            }
+        // naive output order
+        for (let slices of pockets) {
+            pocket({
+                cutdir: op.ov_conv,
+                depthFirst: process.camDepthFirst && !state.isIndexed,
+                easeDown: op.down && process.easeDown ? op.down : 0,
+                progress: (n,m) => progress(n/m, "pocket"),
+                slices
+            });
         }
     }
 }

@@ -231,24 +231,22 @@ class OpOutline extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, sliceOut } = this;
-        let { setTool, setSpindle, setPrintPoint } = ops;
-        let { polyEmit, depthOutlinePath } = ops;
-        let { newLayer, printPoint } = ops;
         let { settings } = state;
         let { process } = settings;
+        let { depthOutlinePath, newLayer, polyEmit, printPoint, setTool, setSpindle } = ops;
 
-        let easeDown = process.camEaseDown;
-        let toolDiam = this.toolDiam;
         let cutdir = op.ov_conv;
         let depthFirst = process.camDepthFirst;
         let depthData = [];
+        let easeDown = process.camEaseDown;
+        let toolDiam = this.toolDiam;
 
         setTool(op.tool, op.rate, op.plunge);
         setSpindle(op.spindle);
 
-        // printpoint becomes NaN in engine mode. not sure why but this fixes it
-        if(Object.values(printPoint).some(v=>Number.isNaN(v))){
-            printPoint = newPoint(0,0,0);
+        // printPoint becomes NaN in engine mode
+        if (Object.values(printPoint).some(v => Number.isNaN(v))) {
+            printPoint = newPoint(0, 0, 0);
         }
 
         for (let slice of sliceOut) {
@@ -308,8 +306,6 @@ class OpOutline extends CamOp {
                 printPoint = depthOutlinePath(printPoint, 0, flatLevels, toolDiam, polyEmit, true, ease);
             }
         }
-
-        setPrintPoint(printPoint);
     }
 }
 

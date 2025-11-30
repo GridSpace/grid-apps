@@ -240,20 +240,13 @@ export class OpHelical extends CamOp {
     }
 
     async prepare(ops, progress) {
-        let {
-            setTool,
-            setSpindle,
-            polyEmit,
-            setPrintPoint,
-            getPrintPoint,
-        } = ops;
+        let { polyEmit, printPoint, setTool, setSpindle } = ops;
         let { tool, spindle, rate, feed } = this.op;
 
         setTool(tool, feed, rate);
         setSpindle(spindle);
 
-        let [polys] = this.sliceOut.map((s) => s.camLines);
-        let pp = getPrintPoint();
+        let [ polys ] = this.sliceOut.map((s) => s.camLines);
         polys = polys.slice();
 
         for (;;) {
@@ -265,7 +258,7 @@ export class OpHelical extends CamOp {
 
             for (let i = 0; i < polys.length; i++) {
                 if (!polys[i]) continue;
-                if ((dist = polys[i].first().distTo2D(pp)) < closestDist) {
+                if ((dist = polys[i].first().distTo2D(printPoint)) < closestDist) {
                     closestDist = dist;
                     closest = polys[i];
                     closestI = i;
@@ -275,9 +268,7 @@ export class OpHelical extends CamOp {
             if (!closest) break;
             poly = polys[closestI]
             polys[closestI] = null;
-            pp = polyEmit(poly, 0, 1, poly.points[0])
+            printPoint = polyEmit(poly, 0, 1, poly.points[0])
         }
-
-        setPrintPoint(pp);
     }
 }

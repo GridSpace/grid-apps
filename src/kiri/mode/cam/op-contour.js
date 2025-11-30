@@ -85,6 +85,7 @@ class OpContour extends CamOp {
         let { color, addSlices, settings, updateToolDiams } = state;
         let filter = createFilter(op, settings.origin, op.axis.toLowerCase());
         let toolDiam = this.toolDiam = new Tool(settings, op.tool).fluteDiameter();
+
         updateToolDiams(toolDiam);
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
@@ -107,6 +108,7 @@ class OpContour extends CamOp {
             contour: op,
             state: state
         });
+
         // computed if set to 0
         this.tolerance = topo.tolerance;
     }
@@ -116,10 +118,10 @@ class OpContour extends CamOp {
         let { settings } = state;
         let { process } = settings;
 
-        let { setTolerance, setTool, setSpindle, setPrintPoint } = ops;
-        let { camOut, newLayer, printPoint, lastPoint } = ops;
-        let { bounds, zmax } = ops;
+        let { setTolerance, setTool, setSpindle } = ops;
+        let { widget, camOut, newLayer, zmax } = ops;
 
+        let bounds = widget.getBoundingBox();
         let toolDiam = this.toolDiam;
         let stepover = toolDiam * op.step * 2;
         let depthFirst = process.camDepthFirst;
@@ -129,7 +131,7 @@ class OpContour extends CamOp {
         setSpindle(op.spindle);
         setTolerance(this.tolerance);
 
-        printPoint = newPoint(bounds.min.x, bounds.min.y, zmax);
+        let printPoint = newPoint(bounds.min.x, bounds.min.y, zmax);
 
         for (let slice of sliceOut) {
             // ignore debug slices
@@ -158,20 +160,17 @@ class OpContour extends CamOp {
         }
 
         if (depthFirst) {
-            printPoint = tip2tipEmit(depthData, printPoint, function (el, point, count) {
+            tip2tipEmit(depthData, printPoint, function (el, point, count) {
                 let poly = el.poly;
                 if (poly.last() === point) {
                     poly.reverse();
                 }
                 poly.forEachPoint(function (point, pidx) {
-                    camOut(point.clone().annotate({ slice: poly.slice }), pidx > 0, { moveLen: stepover });
+                    camOut(printPoint = point.clone().annotate({ slice: poly.slice }), pidx > 0, { moveLen: stepover });
                 }, false);
                 newLayer();
-                return lastPoint();
             });
         }
-
-        setPrintPoint(printPoint);
     }
 }
 

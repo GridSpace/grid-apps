@@ -14,12 +14,12 @@ class OpLevel extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, addSlices, updateToolDiams } = state;
-        let { zMax, ztOff, color, tshadow } = state;
+        let { addSlices, color, settings, tshadow, updateToolDiams, zMax, ztOff } = state;
         let { stock } = settings;
 
         let toolDiam = new Tool(settings, op.tool).fluteDiameter();
         let stepOver = this.stepOver = toolDiam * op.step;
+        let wpos = state.widget.track.pos;
         let zTop = zMax + ztOff;
         let zBot = zTop - op.down;
         let zList = op.stepz ? util.lerp(zTop, zBot, op.stepz) : [ zBot ];
@@ -28,7 +28,7 @@ class OpLevel extends CamOp {
 
         let points = [];
         let clear = op.stock ?
-            [ newPolygon().centerRectangle({x:0,y:0,z:0}, stock.x + toolDiam/2, stock.y) ] :
+            [ newPolygon().centerRectangle({x:-wpos.x,y:-wpos.y,z:wpos.z}, stock.x + toolDiam/2, stock.y) ] :
             POLY.outer(POLY.offset(tshadow, toolDiam * (op.inset || 0)));
 
         POLY.fillArea(clear, 1090, stepOver, points);
@@ -50,7 +50,7 @@ class OpLevel extends CamOp {
 
     prepare(ops, progress) {
         let { op, layers, stepOver } = this;
-        let { setTool, setSpindle, printPoint, setPrintPoint } = ops;
+        let { setTool, setSpindle, printPoint } = ops;
         let { newLayer, tip2tipEmit, camOut } = ops;
 
         setTool(op.tool, op.rate);
@@ -68,7 +68,6 @@ class OpLevel extends CamOp {
             });
             newLayer();
         }
-        setPrintPoint(printPoint);
     }
 }
 

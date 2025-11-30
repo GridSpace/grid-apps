@@ -29,38 +29,42 @@ class OpDrill extends CamOp {
             if (!drill.selected) {
                 return
             }
+
             let slice = newSlice(0);
             if (op.mark) {
                 // replace depth with single down peck
                 drill.depth = op.down
             }
+
             drill.zBottom = drill.z - drill.depth;
             // for thru holes, follow z thru when set
             if ((op.thru > 0)) {
                 drill.zBottom -= op.thru;
             }
+
             const poly = newPolygon()
             poly.points.push(newPoint(drill.x, drill.y, drill.z))
             poly.points.push(newPoint(drill.x, drill.y, drill.zBottom))
-            // poly.points.pop();
+
             slice.camTrace = { tool: op.tool, rate: op.feed, plunge: op.rate };
             slice.camLines = [poly];
-
             slice.output()
                 .setLayer(state.layername, { face: color, line: color })
                 .addPolys(slice.camLines);
+
             addSlices(slice);
             sliceOut.push(slice);
         });
     }
 
     prepare(ops, progress) {
-        let { op } = this;
+        let { op, sliceOut } = this;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
+
         setTool(op.tool, undefined, op.rate);
         setDrill(op.down, op.lift, op.dwell);
         setSpindle(op.spindle);
-        emitDrills(this.sliceOut.map(slice => slice.camLines).flat());
+        emitDrills(sliceOut.map(slice => slice.camLines).flat());
     }
 }
 

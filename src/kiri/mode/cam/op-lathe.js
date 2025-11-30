@@ -57,7 +57,7 @@ class OpLathe extends CamOp {
         let { op, state, slices, topo } = this;
         let { settings } = state;
 
-        let { setTool, setSpindle, setPrintPoint } = ops;
+        let { setTool, setSpindle } = ops;
         let { camOut, newLayer, printPoint } = ops;
         let { zmax } = ops;
 
@@ -111,8 +111,6 @@ class OpLathe extends CamOp {
         // camOut(last = last.clone().setA(amax), 0);
         newLayer();
         ops.addGCode([`G0 Z${zmax.round(2)}`, `G0 A${amax}`, "G92 A0"]);
-
-        setPrintPoint(last);
     }
 }
 

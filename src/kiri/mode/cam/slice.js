@@ -296,7 +296,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         opTot += opList.peek().weight();
     }
 
-    // determing # of steps and step weighting for progress bar
+    // determine # of steps and step weighting for progress bar
     for (let op of activeOps) {
         if (op.type === '|') {
             break;
