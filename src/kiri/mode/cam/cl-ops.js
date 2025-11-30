@@ -667,14 +667,14 @@ export function createPopOps() {
     }
 
     function isSurfaceLinear() {
-        return env.poppedRec.mode === 'surface' && env.poppedRec.sr_typ === 'linear';
+        return env.poppedRec.mode === 'surface' && env.poppedRec.sr_type === 'linear';
     }
 
     createPopOp('area', {
         spindle: 'camAreaSpindle',
         tool: 'camAreaTool',
         mode: 'camAreaMode',
-        tr_off: 'camAreaTrace',
+        tr_type: 'camAreaTrace',
         sr_type: 'camAreaSurface',
         sr_angle: 'camAreaAngle',
         over: 'camAreaOver',
@@ -692,7 +692,7 @@ export function createPopOps() {
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         mode: UC.newSelect(LANG.mo_menu, {}, "opmode"),
-        tr_off: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: isTrace }, "traceoff"),
+        tr_type: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: isTrace }, "traceoff"),
         sr_type: UC.newSelect("pattern", { title: "pattern", show: isSurface }, "surftyp"),
         sep: UC.newBlank({ class: "pop-sep" }),
         menu: UC.newRow([
