@@ -20,6 +20,10 @@ import { CAM } from './driver-be.js';
  * @param {Function} output
  */
 export async function cam_slice(settings, widget, onupdate, ondone) {
+    if (widget.track.synth) return ondone();
+
+    let tabW = widget.group.filter(w => w != widget);
+
     let proc = settings.process,
         sliceAll = widget.slices = [],
         camOps = widget.camops = [],
@@ -87,33 +91,13 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             bottom_z, bottom_cut
         }, 3);
 
-        // console.log({ track, bounds, stock, workarea });
+        // console.log({ bounds, stock, track, workarea });
 
         return structuredClone(workarea);
     };
 
     // initial setup
     var_compute();
-
-    if (tabs) {
-        // make tab polygons
-        tabs.forEach(tab => {
-            let zero = newPoint(0, 0, 0),
-                point = newPoint(tab.pos.x, tab.pos.y, tab.pos.z),
-                poly = newPolygon().centerRectangle(zero, tab.dim.x, tab.dim.y),
-                [rx, ry, rz, rw] = tab.rot,
-                m4 = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion(rx, ry, rz, rw)
-                );
-            poly.points = poly.points
-                .map(p => new THREE.Vector3(p.x, p.y, p.z).applyMatrix4(m4))
-                .map(v => newPoint(v.x, v.y, v.z));
-            poly.move(point);
-            tab.poly = poly;
-            // tslice.output().setLayer("tabs", 0xff0000).addPoly(poly);
-            // sliceAll.push(tslice);
-        });
-    }
 
     function error(msg) {
         ondone(msg);
@@ -155,7 +139,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         alert(`invalid z bottom ${(zMin / units).round(3)} >= bounds z max ${(zMax / units).round(3)}`);
     }
 
-    let mark = Date.now();
     let opList = [];
     let opSum = 0;
     let opTot = 0;
@@ -174,6 +157,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         isIndexed,
         ops: opList,
         setAxisIndex,
+        setToolDiam,
         settings,
         shadowAt,
         slicer,
@@ -190,6 +174,30 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     };
     let tracker = setSliceTracker({ rotation: 0 });
 
+    async function updateTab(tab) {
+        tab.setAxisIndex(isIndexed ? -axisIndex : 0)
+        let ts = new cam_slicer(tab);
+        let si = Object.keys(ts.zList).map(k => parseFloat(k));
+        si = [ ...si.map(v => v-0.01), ...si.map(v => v+0.01) ];
+        let zt = Math.max(...si);
+        let zb = Math.min(...si);
+        let shadow;
+        await ts.slice(si, { each: data => {
+            if (shadow) {
+                shadow = POLY.union([...shadow, ...data.polys]);
+            } else {
+                shadow = data.polys;
+            }
+        }});
+        return {
+            top: zt,
+            poly: shadow[0],
+            pos: { z: (zt+zb)/2 },
+            dim: { z: (zt-zb) },
+            NEW: true
+        }
+    }
+
     function updateSlicer() {
         slicer = state.slicer = new cam_slicer(widget);
     }
@@ -199,6 +207,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         await new OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
             // console.log('reshadow', progress.round(3));
         });
+    }
+
+    function setToolDiam(toolDiam) {
+        updateToolDiams(toolDiam);
+        if (tabs) {
+            tabs.forEach(tab => {
+                tab.off = POLY.expand([ tab.poly ], toolDiam / 2).flat();
+            });
+        }
     }
 
     function updateToolDiams(toolDiam) {
@@ -212,30 +229,23 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             return cached;
         }
         // find closest shadow above and use to speed up delta shadow gen
-        let minZabove;
         let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
-        for (let zkey of zover) {
-            if (minZabove && zkey < minZabove) {
-                minZabove = zkey;
-            } else {
-                minZabove = zkey;
-            }
-        }
+        let minZabove = Math.min(Infinity, ...zover);
         let shadow = computeShadowAt(widget, z, minZabove);
-        if (minZabove) {
-            // const merge = shadow.length;
-            // const plus = shadows[minZabove].length;
-            // const mark = Date.now();
+        if (minZabove < Infinity) {
             shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true);
-            // console.log({merge, plus, equals: shadow.length, time: Date.now() - mark});
         }
         return shadows[z] = POLY.setZ(shadow, z);
     }
 
-    function setAxisIndex(degrees = 0, absolute = true) {
+    async function setAxisIndex(degrees = 0, absolute = true) {
         axisIndex = absolute ? degrees : (axisIndex || 0) + degrees;
         axisRotation = (Math.PI / 180) * axisIndex;
         widget.setAxisIndex(isIndexed ? -axisIndex : 0);
+        state.tabs = tabs = [];
+        for (let tab of tabW) {
+            tabs.push(await updateTab(tab));
+        }
         return isIndexed ? -axisIndex : 0;
     }
 
@@ -300,7 +310,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     // call slice() function on all ops in order
-    setAxisIndex();
+    await setAxisIndex();
     updateSlicer();
     for (let op of opList) {
         let weight = op.weight();
@@ -326,12 +336,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             zTop,
             workarea: workover
         });
-        // console.log({
-        //     op,
-        //     workover,
-        //     bounds: structuredClone(bounds),
-        //     stock: structuredClone(stock)
-        // });
         await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
         });
@@ -595,7 +599,7 @@ export function cylinder_poly_find(widget, face) {
     let zmid = (zmin + zmax) / 2;
     let cylVerts = new Float32Array(faces.length * 9);
     let opts = {
-        dedup: false,
+        dedup: true,
         edges: false,
         over: true
     };
@@ -648,7 +652,7 @@ export function cylinder_poly_find(widget, face) {
  */
 export async function holes(settings, widget, individual, rec, onProgress) {
 
-    let { tool, mark, precision } = rec //TODO: display some visual difference if mark is selected
+    let { tool, precision } = rec //TODO: display some visual difference if mark is selected
     let toolDiam = new Tool(settings, tool).fluteDiameter()
     let diam = individual ? 1 : toolDiam; // sets default diameter when select individual used
 

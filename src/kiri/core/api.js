@@ -73,6 +73,9 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
         redo: noop  // do.js
     },
     devel = {
+        get enabled() {
+            return settings.ctrl().devel;
+        },
         xray(layers, raw) {
             let proc = api.conf.get().process,
                 size = proc.sliceHeight || proc.slaSlice || 1,

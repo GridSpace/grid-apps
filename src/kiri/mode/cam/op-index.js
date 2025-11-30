@@ -17,7 +17,7 @@ export class OpIndex extends CamOp {
             throw 'index op requires indexed stock';
         }
         let { widget, updateSlicer, computeShadows, setAxisIndex } = state;
-        this.degrees = setAxisIndex(op.degrees, op.absolute);
+        this.degrees = await setAxisIndex(op.degrees, op.absolute);
         // force recompute of topo
         widget.topo = undefined;
         updateSlicer();

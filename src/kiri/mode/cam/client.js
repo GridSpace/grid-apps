@@ -16,6 +16,11 @@ import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
 import { surfaceOn, surfaceDone } from './cl-surface.js';
 import { helicalOn, helicalDone } from './cl-helical.js';
 import { originSelectDone } from './cl-origin.js';
+import { Widget, newWidget } from '../../core/widget.js';
+import { space } from '../../../moto/space.js';
+import { recreateTabs } from './cl-tab.js';
+
+const { BufferGeometryUtils } = THREE;
 
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
@@ -184,6 +189,15 @@ const opAddHelical = () => {
     opAdd(rec);
 };
 
+const opAddArea = () => {
+    traceDone();
+    surfaceDone();
+    let rec = env.popOp.area.new();
+    rec.areas = { /* widget.id: [ polygons... ] */ };
+    rec.surfaces = { /* widget.id: [ faces... ] */ };
+    opAdd(rec);
+};
+
 const opAddContour = (axis) => {
     let rec = env.popOp.contour.new();
     rec.axis = axis.toUpperCase();
@@ -273,7 +287,7 @@ export function opRender() {
     oplist.forEach((rec, i) => {
         let title = '';
         let clock = rec.type === '|';
-        let label = clock ? `` : rec.type;
+        let label = clock ? `` : rec.mode ?? rec.type;
         let clazz = notime ? ["draggable", "notime"] : ["draggable"];
         let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
         if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
@@ -512,6 +526,10 @@ export function opRender() {
 
 export function init() {
 
+    if (api.devel.enabled) {
+        $('op:area').classList.remove('hide');
+    }
+
     api.event.on('tool.mesh.face-normal', normal => {
         // console.log({ env.poppedRec });
         env.poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
@@ -606,6 +624,20 @@ export function init() {
         updateStock();
         opRender();
         api.uc.setVisible($('layer-animate'), env.isAnimate && env.isCamMode);
+
+        if (!env.isCamMode) {
+            return;
+        }
+
+        // remove tab synth
+        api.widgets.filter((widget) => {
+            if (widget.track.synth) {
+                space.world.remove(widget.mesh);
+                Widget.Groups.remove(widget);
+            }
+            return !widget.track.synth
+        });
+
     });
 
     api.event.on("settings.saved", (settings) => {
@@ -745,6 +777,7 @@ export function init() {
             case "trace": return opAddTrace();
             case "pocket": return opAddPocket();
             case "helical": return opAddHelical();
+            case "area": return opAddArea();
             case "flip":
                 // only one flip op permitted
                 for (let op of env.current.process.ops) {
@@ -786,8 +819,27 @@ export function init() {
 
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
-        if (env.isCamMode) {
-            clearPops();
+        if (!env.isCamMode) {
+            return;
+        }
+        clearPops();
+        recreateTabs();
+        for (let group of Widget.Groups.list()) {
+            let root = group[0];
+            if (root.tabs)
+            for (let tab of Object.values(root.tabs)) {
+                let geo = tab.box.geometry.clone();
+                if (geo.index) geo = geo.toNonIndexed();
+                geo.translate(tab.x, tab.y, tab.z);
+                let bbg = BufferGeometryUtils.mergeGeometries([ geo ]);
+                let sw = newWidget(null, group);
+                let fwp = group[0].track.pos;
+                sw.loadGeometry(bbg);
+                sw._move(fwp.x, fwp.y, fwp.z);
+                api.widgets.add(sw);
+                sw.track.synth = true;
+                sw.track.indexed = root.track.indexed;
+            }
         }
     });
 

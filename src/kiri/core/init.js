@@ -1579,16 +1579,6 @@ function init_two() {
         api.event.emit('load.lib', lib);
     });
 
-    // load CSS extensions
-    if (SETUP.ss) SETUP.ss.forEach(function(style) {
-        style = style.charAt(0) === '/' ? style : `/kiri/style-${style}`;
-        let ss = DOC.createElement('link');
-        ss.setAttribute("type", "text/css");
-        ss.setAttribute("rel", "stylesheet");
-        ss.setAttribute("href", `${style}.css?${version}`);
-        DOC.body.appendChild(ss);
-    });
-
     // override stored settings
     if (SETUP.v) SETUP.v.forEach(function(kv) {
         kv = kv.split('=');

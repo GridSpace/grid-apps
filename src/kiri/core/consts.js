@@ -121,6 +121,15 @@ const LISTS = {
         { name: "adaptive" },
         { name: "legacy 1" },
         { name: "legacy 2" }
+    ],
+    opmode: [
+        { name: "clear" },
+        { name: "trace" },
+        { name: "surface" }
+    ],
+    surftyp: [
+        { name: "linear" },
+        { name: "offset" },
     ]
 };
 

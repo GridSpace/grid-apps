@@ -70,6 +70,18 @@ export class Polygon {
         return bounds;
     }
 
+    getBounds3D(bounds = new THREE.Box3()) {
+        for (let point of this.points) {
+            bounds.expandByPoint(point);
+        }
+        if (this.inner) {
+            for (let i of this.inner) {
+                i.getBounds3D(bounds);
+            }
+        }
+        return bounds;
+    }
+
     toPath2D(offset) {
         return paths.pointsToPath(this.points, offset, this.open);
     }
@@ -985,7 +997,13 @@ export class Polygon {
     }
 
     minZ() {
-        return Math.min(...this.points.map(p => p.z));
+        let minZ = Math.min(...this.points.map(p => p.z));
+        if (this.inner) {
+            for (let i of this.inner) {
+                minZ = Math.min(minZ, i.minZ());
+            }
+        }
+        return minZ;
     }
 
     avgZ() {

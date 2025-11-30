@@ -87,6 +87,12 @@ export function addWidgetTab(widget, rec) {
     }
 }
 
+export function recreateTabs() {
+    let widgets = api.widgets.all();
+    for (let w of widgets) clearTabs(w, true);
+    restoreTabs(widgets);
+}
+
 export function restoreTabs(widgets) {
     widgets.forEach(widget => {
         const tabs = api.widgets.annotate(widget.id).tab || [];
