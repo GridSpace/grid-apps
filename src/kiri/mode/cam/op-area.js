@@ -84,6 +84,8 @@ class OpArea extends CamOp {
         // add in unioned surface areas
         polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), fminz));
 
+        // todo: implement `refine` and `smooth`
+
         // expand selections (flattens z variable polys)
         if (Math.abs(expand) > 0) {
             let nupolys = polys.filter(p => p.open); // set aside open
@@ -225,7 +227,7 @@ class OpArea extends CamOp {
                     paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
                 } else
                 if (sr_type === 'offset') {
-                    // progressive inset from perimeter
+                    // todo: progressive inset from perimeter
                     console.log({ sr_offset: toolOver });
                 }
 
@@ -258,6 +260,8 @@ class OpArea extends CamOp {
                     onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
                 });
                 raster.terminate();
+
+                // todo: port clever bits from topo3 for inside/outside detection and tab clipping
 
                 // convert terrain raster output back to open polylines
                 for (let path of output.paths) {
@@ -347,7 +351,6 @@ class OpArea extends CamOp {
 function scanBoxAtAngle(box2, angle, step) {
     const cx = (box2.min.x + box2.max.x) * 0.5;
     const cy = (box2.min.y + box2.max.y) * 0.5;
-
     const w = box2.max.x - box2.min.x;
     const h = box2.max.y - box2.min.y;
 
@@ -370,13 +373,11 @@ function scanBoxAtAngle(box2, angle, step) {
 
     const halfSpan = step * (count - 1) * 0.5;
     const halfD = extentD * 0.5;
-
     const rays = [];
 
     for (let i = 0; i < count; i++) {
         // offset along normal
         const o = -halfSpan + i * step;
-
         const ox = cx + nx * o;
         const oy = cy + ny * o;
 
@@ -387,10 +388,8 @@ function scanBoxAtAngle(box2, angle, step) {
         const by = oy + dy * halfD;
 
         rays.push({
-            origin: new THREE.Vector2(ox, oy),
             a: new THREE.Vector2(ax, ay),
             b: new THREE.Vector2(bx, by),
-            length: extentD
         });
     }
 

@@ -222,7 +222,7 @@ export class Topo {
                 if (poly.length > 1) {
                     lines.push(poly);
                 }
-                // raize output points when inside tab boundaries
+                // raise output points when inside tab boundaries
                 if (!inside && tabsOn && clipTab.length)
                 for (let poly of lines) {
                     for (let p of poly.points) {
