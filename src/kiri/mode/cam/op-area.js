@@ -7,10 +7,9 @@ import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { util as base_util } from '../../../geo/base.js';
-import { calc_normal, calc_vertex } from '../../../geo/paths.js';
 import { CAM } from './driver-be.js';
 
-const DEG2RAG = Math.PI / 180;
+const DEG2RAD = Math.PI / 180;
 const clib = self.ClipperLib;
 const ctyp = clib.ClipType;
 const ptyp = clib.PolyType;
@@ -22,7 +21,6 @@ class OpArea extends CamOp {
     }
 
     async slice(progress) {
-        const pocket = this;
         let { op, state } = this;
         let { tool, mode, down, over, follow, expand, outline, refine, smooth } = op;
         let { ov_topz, ov_botz, ov_conv } = op;
@@ -35,6 +33,7 @@ class OpArea extends CamOp {
         let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_stock;
         let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : workarea.bottom_part;
 
+        // also updates tab offsets
         setToolDiam(toolDiam);
 
         // selected area polygons: surfaces and edges
@@ -67,7 +66,7 @@ class OpArea extends CamOp {
 
         // gather surface selections
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
-        let faces = CAM.surface_find(widget, (op.surfaces[widget.id] ?? []), (follow ?? edgeangle ?? 5) * DEG2RAG);
+        let faces = CAM.surface_find(widget, (op.surfaces[widget.id] ?? []), (follow ?? edgeangle ?? 5) * DEG2RAD);
         let fpoly = [];
         let fminz = Infinity;
         for (let face of faces) {
@@ -208,7 +207,7 @@ class OpArea extends CamOp {
                 // prepare paths
                 if (sr_type === 'linear') {
                     // scan the area bounding box with rays at defined angle
-                    let scan = scanBoxAtAngle(bounds, sr_angle * DEG2RAG, toolOver);
+                    let scan = scanBoxAtAngle(bounds, sr_angle * DEG2RAD, toolOver);
                     let lines = scan.map(line => {
                         let { a, b } = line;
                         return [ newPoint(a.x, a.y, 0).toClipper(), newPoint(b.x, b.y, 0).toClipper() ]
