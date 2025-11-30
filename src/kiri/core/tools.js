@@ -54,7 +54,7 @@ function onLeftySelect() {
     let projectedNormal = new Vector3(lastface.normal.x, lastface.normal.y, 0).normalize();
 
     // Target direction on XY plane (negative Y axis)
-    let targetDir = new Vector3(0, -1, 0);
+    let targetDir = new Vector3(-1, 0, 0);
 
     // Calculate angle between projected normal and target
     let angle = Math.atan2(
