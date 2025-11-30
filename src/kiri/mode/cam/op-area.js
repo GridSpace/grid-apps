@@ -2,8 +2,8 @@
 
 import { CamOp } from './op.js';
 import { Tool } from './tool.js';
-import { generate as Topo } from './topo3.js';
 import { newSlice } from '../../core/slice.js';
+import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { util as base_util } from '../../../geo/base.js';
@@ -11,6 +11,10 @@ import { calc_normal, calc_vertex } from '../../../geo/paths.js';
 import { CAM } from './driver-be.js';
 
 const DEG2RAG = Math.PI / 180;
+const clib = self.ClipperLib;
+const ctyp = clib.ClipType;
+const ptyp = clib.PolyType;
+const cfil = clib.PolyFillType;
 
 class OpArea extends CamOp {
     constructor(state, op) {
@@ -30,8 +34,6 @@ class OpArea extends CamOp {
         let toolOver = areaTool.hasTaper() ? over : toolDiam * over;
         let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_stock;
         let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : workarea.bottom_part;
-
-        console.log({ workarea, zTop, zBottom });
 
         setToolDiam(toolDiam);
 
@@ -195,11 +197,72 @@ class OpArea extends CamOp {
             if (mode === 'surface') {
                 let { sr_type, sr_angle, tolerance } = op;
 
+                let resolution = tolerance || 0.05;
+                let raster = await self.get_raster_gpu({ mode: "tracing", resolution });
+                let paths = [];
+
+                // prepare paths
                 if (sr_type === 'linear') {
-                    console.log({ sr_angle });
+                    // scan the area bounding box with rays at defined angle
+                    let scan = scanBoxAtAngle(bounds, sr_angle * DEG2RAG, toolOver);
+                    let lines = scan.map(line => {
+                        let { a, b } = line;
+                        return [ newPoint(a.x, a.y, 0).toClipper(), newPoint(b.x, b.y, 0).toClipper() ]
+                    });
+                    // use clipper to clip lines to the area polygon
+                    let clip = new clib.Clipper();
+                    let ctre = new clib.PolyTree();
+                    clip.AddPaths(lines, ptyp.ptSubject, false);
+                    clip.AddPaths(POLY.toClipper([ area ]), ptyp.ptClip, true);
+                    if (clip.Execute(ctyp.ctIntersection, ctre, cfil.pftNonZero, cfil.pftEvenOdd)) {
+                        for (let node of ctre.m_AllPolys) {
+                            paths.push(POLY.fromClipperNode(node, 0));
+                        }
+                    }
+                    // convert resulting poly lines to raster float32 array groups
+                    paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
                 } else
                 if (sr_type === 'offset') {
+                    // progressive inset from perimeter
+                    console.log({ sr_offset: toolOver });
+                }
 
+                // prepare tool mesh points
+                let toolBounds = new THREE.Box3()
+                    .expandByPoint({ x: -toolDiam/2, y: -toolDiam/2, z: 0 })
+                    .expandByPoint({ x: toolDiam/2, y: toolDiam/2, z: 0 });
+                let toolPos = areaTool.generateProfile(resolution).profile.slice();
+                for (let i=0; i<toolPos.length; i+= 3) {
+                    toolBounds.expandByPoint({ x: toolPos[i], y: toolPos[i+1], z: toolPos[i+2] });
+                }
+                let toolData = { positions: toolPos, bounds: toolBounds };
+
+                // prepare terrain and raster paths over terrain
+                let vertices = widget.getGeoVertices({ unroll: true, translate: true });
+                let wbounds = bounds.clone().expandByVector({ x: toolDiam/2, y: toolDiam/2, z: 0 });
+                wbounds.min.z = zBottom;
+                wbounds.max.z = zTop;
+                await raster.loadTool({
+                    sparseData: toolData
+                });
+                await raster.loadTerrain({
+                    triangles: vertices,
+                    boundsOverride: wbounds
+                });
+                let output = await raster.generateToolpaths({
+                    paths,
+                    step: toolOver / 2,
+                    zFloor: zBottom - 1,
+                    onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
+                });
+                raster.terminate();
+
+                // convert terrain raster output back to open polylines
+                for (let path of output.paths) {
+                    path = newPolygon().fromArray([1, ...path]);
+                    newLayer().output()
+                        .setLayer("linear", { line: 0x00ff00 }, false)
+                        .addPolys([ path ]);
                 }
             }
         }
@@ -253,6 +316,62 @@ class OpArea extends CamOp {
         }
 
     }
+}
+
+// box2: THREE.Box2
+// angle: radians (direction of each scan ray)
+// step: spacing between parallel rays (world units)
+function scanBoxAtAngle(box2, angle, step) {
+    const cx = (box2.min.x + box2.max.x) * 0.5;
+    const cy = (box2.min.y + box2.max.y) * 0.5;
+
+    const w = box2.max.x - box2.min.x;
+    const h = box2.max.y - box2.min.y;
+
+    // ray direction
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+
+    // normal between rays (perpendicular to ray dir)
+    const nx = -dy;
+    const ny = dx;
+
+    // extent of the box along the normal
+    const extentN = Math.abs(nx) * w + Math.abs(ny) * h;
+
+    // length of each ray across the box (along ray dir)
+    const extentD = Math.abs(dx) * w + Math.abs(dy) * h;
+
+    // how many rays to cover the box; +1 so edges are covered
+    const count = Math.max(1, Math.ceil(extentN / step) + 1);
+
+    const halfSpan = step * (count - 1) * 0.5;
+    const halfD = extentD * 0.5;
+
+    const rays = [];
+
+    for (let i = 0; i < count; i++) {
+        // offset along normal
+        const o = -halfSpan + i * step;
+
+        const ox = cx + nx * o;
+        const oy = cy + ny * o;
+
+        // segment endpoints for this ray inside (or slightly outside) the box
+        const ax = ox - dx * halfD;
+        const ay = oy - dy * halfD;
+        const bx = ox + dx * halfD;
+        const by = oy + dy * halfD;
+
+        rays.push({
+            origin: new THREE.Vector2(ox, oy),
+            a: new THREE.Vector2(ax, ay),
+            b: new THREE.Vector2(bx, by),
+            length: extentD
+        });
+    }
+
+    return rays;
 }
 
 export { OpArea };
