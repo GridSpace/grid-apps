@@ -40,6 +40,7 @@ class OpArea extends CamOp {
         // selected area polygons: surfaces and edges
         let { devel, edgeangle } = settings.controller;
         let stack = [];
+        let surfaces = this.surfaces = [];
         let areas = this.areas = [ stack ];
         let polys = [];
 
@@ -199,6 +200,7 @@ class OpArea extends CamOp {
 
                 let resolution = tolerance || 0.05;
                 let raster = await self.get_raster_gpu({ mode: "tracing", resolution });
+                let surface = [];
                 let paths = [];
 
                 // prepare paths
@@ -260,10 +262,14 @@ class OpArea extends CamOp {
                 // convert terrain raster output back to open polylines
                 for (let path of output.paths) {
                     path = newPolygon().fromArray([1, ...path]);
+                    surface.push(path);
                     newLayer().output()
                         .setLayer("linear", { line: 0x00ff00 }, false)
                         .addPolys([ path ]);
                 }
+
+                // output this surface
+                surfaces.push(surface);
             }
         }
 
@@ -271,16 +277,35 @@ class OpArea extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state, areas } = this;
-        let { getPrintPoint , pocket, setTool, setSpindle } = ops;
+        let { op, state, areas, surfaces } = this;
+        let { getPrintPoint, newLayer, pocket, polyEmit, setTool, setSpindle, tip2tipEmit } = ops;
         let { process } = state.settings;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
 
+        let printPoint = getPrintPoint();
+
+        // process surface paths
+        for (let surface of surfaces) {
+            let array = surface.map(poly => { return {
+                el: poly,
+                first: poly.first(),
+                last: poly.last()
+            } });
+            tip2tipEmit(array, printPoint, (next, first, count) => {
+                printPoint = polyEmit(next.el, 0, 1, printPoint, {});
+                newLayer();
+            });
+        }
+
+        // skip areas when processing surfaces
+        if (surfaces.length) {
+            return;
+        }
+
         // process areas as pockets
         while (areas?.length) {
-            let printPoint = getPrintPoint();
             let min = {
                 dist: Infinity,
                 area: undefined
@@ -302,7 +327,6 @@ class OpArea extends CamOp {
             // if we have a next-closest top poly, pocket that
             if (min.area) {
                 min.area.used = true;
-                console.log({ area: min.area });
                 pocket({
                     cutdir: op.ov_conv,
                     depthFirst: process.camDepthFirst,
@@ -314,7 +338,6 @@ class OpArea extends CamOp {
                 break;
             }
         }
-
     }
 }
 
