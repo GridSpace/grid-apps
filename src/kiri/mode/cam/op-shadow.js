@@ -96,7 +96,7 @@ class OpShadow extends CamOp {
         state.center = tshadow[0].bounds.center();
         state.tshadow = tshadow;    // true shadow (base of part)
         state.terrain = terrain;    // stack of shadow slices stored in tops
-        state.tslices = tslices;    // raw slicer 'data' layer outputs
+        // state.tslices = tslices;    // raw slicer 'data' layer outputs
         state.skipTerrain = skipTerrain;
 
         // TODO: refactor ops to use a unified shadow object

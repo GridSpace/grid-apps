@@ -103,7 +103,7 @@ class OpPocket extends CamOp {
                     }
                     let slice = newSliceOut(z);
                     let count = engrave ? 1 : 999;
-                    slice.camTrace = { tool, rate, plunge };
+                    // slice.camTrace = { tool, rate, plunge };
                     if (toolDiam) {
                         const offs = contour ?
                             [ expand || (-0.02), -toolOver ] :

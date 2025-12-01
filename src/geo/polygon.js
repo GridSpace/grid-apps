@@ -737,6 +737,157 @@ export class Polygon {
     }
 
     /**
+     * Detect and annotate arc sequences in polygon points.
+     * When an arc is detected, the first point is annotated with arc metadata
+     * and intermediate points remain in the array but should be skipped during emission.
+     *
+     * @param {Object} opts - detection options
+     * @param {number} opts.tolerance - arc detection tolerance (default 0.1)
+     * @param {number} opts.arcRes - arc resolution in radians (default 0.1)
+     * @param {number} opts.minPoints - minimum points to consider an arc (default 4)
+     * @returns {Polygon} this polygon with arc annotations
+     */
+    detectArcs(opts = {}) {
+        const {
+            tolerance = 0.1,
+            arcRes = 0.1,
+            minPoints = 4
+        } = opts;
+
+        const points = this.points;
+        const length = points.length;
+
+        if (length < minPoints) {
+            return this;
+        }
+
+        // Clear any existing arc annotations
+        for (let p of points) {
+            delete p.arc;
+        }
+
+        let arcQueue = [];
+        let arcCenters = [];
+
+        // Iterate through points looking for arc sequences
+        for (let i = 0; i < length; i++) {
+            const p1 = points[i];
+            const p2 = points[(i + 1) % length];
+            const p3 = points[(i + 2) % length];
+
+            // Skip if we've reached the end of an open polygon
+            if (this.open && i >= length - 2) {
+                break;
+            }
+
+            const dist = p1.distTo2D(p2);
+
+            // Start or continue building arc queue
+            if (dist > 0.001) {
+                arcQueue.push(p1);
+
+                if (arcQueue.length >= 3) {
+                    // Calculate center from last 3 points
+                    const last3 = arcQueue.slice(-3);
+                    const center = util.center2d(last3[0], last3[1], last3[2], 1);
+
+                    if (center && !center.hasNaN?.()) {
+                        const prevCenter = arcCenters.peek();
+
+                        if (!prevCenter) {
+                            arcCenters.push(center);
+                        } else {
+                            // Check if center is consistent with previous
+                            const dx = center.x - prevCenter.x;
+                            const dy = center.y - prevCenter.y;
+                            const centerDist = Math.hypot(dx, dy);
+
+                            if (centerDist < tolerance) {
+                                arcCenters.push(center);
+                            } else {
+                                // Center changed, check if we have enough points for an arc
+                                if (arcQueue.length >= minPoints) {
+                                    this._annotateArc(arcQueue, arcCenters, arcRes);
+                                }
+                                // Start new potential arc
+                                arcQueue = [p1];
+                                arcCenters = [];
+                            }
+                        }
+                    } else {
+                        // Invalid center, check if we accumulated an arc
+                        if (arcQueue.length >= minPoints && arcCenters.length >= minPoints - 2) {
+                            this._annotateArc(arcQueue, arcCenters, arcRes);
+                        }
+                        arcQueue = [];
+                        arcCenters = [];
+                    }
+                }
+            }
+        }
+
+        // Handle any remaining arc at end
+        if (arcQueue.length >= minPoints && arcCenters.length >= minPoints - 2) {
+            this._annotateArc(arcQueue, arcCenters, arcRes);
+        }
+
+        return this;
+    }
+
+    /**
+     * Internal helper to annotate a detected arc sequence
+     * @private
+     */
+    _annotateArc(arcQueue, arcCenters, arcRes) {
+        if (arcQueue.length < 4 || arcCenters.length < 2) {
+            return;
+        }
+
+        // Calculate average center
+        const avgCenter = {
+            x: arcCenters.reduce((sum, c) => sum + c.x, 0) / arcCenters.length,
+            y: arcCenters.reduce((sum, c) => sum + c.y, 0) / arcCenters.length
+        };
+
+        // Determine arc direction (clockwise or counter-clockwise)
+        const p0 = arcQueue[0];
+        const p1 = arcQueue[1];
+        const vec1 = { x: p1.x - p0.x, y: p1.y - p0.y };
+        const vec2 = { x: avgCenter.x - p0.x, y: avgCenter.y - p0.y };
+        const cross = vec1.x * vec2.y - vec1.y * vec2.x;
+        const clockwise = cross < 0;
+
+        // Verify arc consistency by checking angular resolution
+        let validArc = true;
+        for (let i = 1; i < arcQueue.length - 1; i++) {
+            const curr = arcQueue[i];
+            const next = arcQueue[i + 1];
+            const dist = curr.distTo2D(next);
+            const radius = Math.hypot(curr.x - avgCenter.x, curr.y - avgCenter.y);
+
+            if (radius > 0) {
+                const angle = 2 * Math.asin(Math.min(1, dist / (2 * radius)));
+                if (Math.abs(angle) > arcRes) {
+                    validArc = false;
+                    break;
+                }
+            }
+        }
+
+        if (validArc) {
+            // Annotate first point with arc data
+            const firstPoint = arcQueue[0];
+            const endPoint = arcQueue.peek();
+
+            firstPoint.arc = {
+                center: newPoint(avgCenter.x, avgCenter.y, firstPoint.z),
+                clockwise,
+                skip: arcQueue.length - 1  // number of points to skip
+            };
+        }
+    }
+
+    /**
      * add points forming a rectangle around a center point
      *
      * @param {Point} center
@@ -1265,7 +1416,6 @@ export class Polygon {
 
                 if (deltaZFullMove > deltaZ) {
                     // Too long: easing along full path would overshoot depth, synth intermediate point at target Z.
-                    //
                     // XXX: please check my super basic trig - this should follow from `last` to `next` up until the
                     //      intersect at the target Z distance.
                     fn(last.followTo(next, dist2next * deltaZ / deltaZFullMove).setZ(next.z), offset++);

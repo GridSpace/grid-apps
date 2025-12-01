@@ -17,7 +17,7 @@ class OpTrace extends CamOp {
     async slice(progress) {
         const debug = false;
         let { op, state } = this;
-        let { tool, rate, down, plunge, offset, offover, thru } = op;
+        let { tool, down, offset, offover, thru } = op;
         let { ov_conv } = op;
         let { settings, widget, addSlices, zThru, tabs, workarea } = state;
         let { updateToolDiams, cutTabs, cutPolys, healPolys, color, shadowAt } = state;
@@ -78,7 +78,6 @@ class OpTrace extends CamOp {
             }
             let z = poly.getZ();
             let slice = newSliceOut(z);
-            slice.camTrace = { tool, rate, plunge };
             if (tabs) {
                 slice.camLines = cutTabs(tabs, [poly], z);
             } else {
@@ -131,7 +130,6 @@ class OpTrace extends CamOp {
                     }
                     let count = 999;
                     let slice = newSliceOut(z);
-                    slice.camTrace = { tool, rate, plunge };
                     if (toolDiam) {
                         const offs = [ -toolDiam / 2, -toolOver ];
                         POLY.offset(clip, offs, {
@@ -294,13 +292,15 @@ class OpTrace extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state } = this;
-        let { setTool, setSpindle } = ops;
+        let { op } = this;
+        let { emitTraces, setTool, setSpindle } = ops;
+        let { tool, rate, plunge } = op;
 
-        setTool(op.tool, op.rate);
+        setTool(tool, rate, plunge);
         setSpindle(op.spindle);
+
         for (let slice of this.sliceOut) {
-            ops.emitTrace(slice);
+            emitTraces(slice.camLines);
         }
     }
 }
