@@ -8,7 +8,7 @@ import { render } from '../../core/render.js';
 import { newPrint } from '../../core/print.js';
 import { Tool } from './tool.js';
 
-const debug = true;
+const debug = false;
 
 /**
  * DRIVER PRINT CONTRACT

@@ -707,7 +707,7 @@ export function createPopOps() {
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, bound: UC.bound(0, 100.0), units, show: () => isClear() || isTrace() }),
         sep: UC.newBlank({ class: "pop-sep", show: isSurface }),
         refine: UC.newInput(LANG.cp_refi_s, { title: LANG.cp_refi_l, convert: toInt, show: isSurface }),
-        smooth: UC.newInput(LANG.cp_smoo_s, { title: LANG.cp_smoo_l, convert: toInt, show: isSurface }),
+        smooth: UC.newInput(LANG.cp_smoo_s, { title: LANG.cp_smoo_l, convert: toInt, xshow: isSurface }),
         tolerance: UC.newInput(LANG.ou_toll_s, { title: LANG.ou_toll_l, convert: toFloat, bound: UC.bound(0, 10.0), units, round: 4, show: isSurface }),
         sep: UC.newBlank({ class: "pop-sep" }),
         exp: UC.newExpand("feeds & speeds"),

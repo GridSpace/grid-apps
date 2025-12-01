@@ -28,6 +28,7 @@ class OpArea extends CamOp {
         let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
 
         let areaTool = new Tool(settings, tool);
+        let smoothVal = (smooth ?? 0) / 10;
         let toolDiam = areaTool.fluteDiameter();
         let toolOver = areaTool.hasTaper() ? over : toolDiam * over;
         let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_stock;
@@ -83,7 +84,9 @@ class OpArea extends CamOp {
         // add in unioned surface areas
         polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), fminz));
 
-        // todo: implement `refine` and `smooth`
+        // smoothing for jaggies usually caused by vertical walls
+        if (smoothVal)
+        polys = polys.map(poly => POLY.offset(POLY.offset([ poly ], smoothVal), -smoothVal)).flat();
 
         // expand selections (flattens z variable polys)
         if (Math.abs(expand) > 0) {
