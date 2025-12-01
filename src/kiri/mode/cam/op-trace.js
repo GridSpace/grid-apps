@@ -219,7 +219,7 @@ class OpTrace extends CamOp {
         switch (op.mode) {
             case "follow":
                 let routed = [];
-                poly2polyEmit(polys, newPoint(0,0,0), (poly, index, count, spoint) => {
+                poly2polyEmit(polys, newPoint(0,0,0), (poly) => {
                     routed.push(poly);
                 });
                 let output = [];

@@ -268,7 +268,7 @@ export class OpHelical extends CamOp {
             if (!closest) break;
             poly = polys[closestI]
             polys[closestI] = null;
-            printPoint = polyEmit(poly, 0, 1, poly.points[0])
+            printPoint = polyEmit(poly);
         }
     }
 }

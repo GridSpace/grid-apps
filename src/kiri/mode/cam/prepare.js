@@ -75,21 +75,29 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         { alignTop } = settings.controller,
         { camArcEnabled, camArcResolution, camArcTolerance } = process,
         { camDepthFirst, camEaseAngle, camEaseDown } = process,
+        { camStockX, camStockY, camStockZ, camStockIndexed, camStockOffset } = process,
         { camForceZMax, camFullEngage, camInnerFirst, camOriginCenter } = process,
-        { camOriginOffX, camOriginOffY, camOriginOffZ } = process,
-        { camStockOffset, camStockIndexed, camZClearance } = process,
-        stock = settings.stock || {},
+        { camOriginOffX, camOriginOffY, camOriginOffZ, camZClearance } = process,
+        bounds = widget.getBoundingBox(),
+        stock = camStockOffset ? {
+            x: bounds.dim.x + camStockX,
+            y: bounds.dim.y + camStockY,
+            z: bounds.dim.z + camStockZ,
+        } : {
+            x: camStockX,
+            y: camStockY,
+            z: camStockZ
+        },
         stockZ = stock.z * (camStockIndexed ? 0.5 : 1),
         stockZClear = stockZ + camZClearance,
         widgetTrackTop = widget.track.top,
         widgetTopToStock = stockZ - widgetTrackTop,
-        bounds = widget.getBoundingBox(),
         boundsZ = camStockIndexed ? stock.z / 2 : bounds.max.z + widgetTopToStock,
-        zSafe = camStockIndexed ? Math.hypot(stock.y, stock.z) / 2 + camZClearance : stockZClear,
         wmpos = widget.track.pos,
         wmx = wmpos.x,
         wmy = wmpos.y,
         wmz = !camStockIndexed ? stock.z - boundsZ : alignTop ? 0 : 0,
+        zSafe = camStockIndexed ? Math.hypot(stock.y, stock.z) / 2 + camZClearance : stockZClear,
         originx = (camOriginCenter ? 0 : -stock.x / 2) + (camOriginOffX || 0),
         originy = (camOriginCenter ? 0 : -stock.y / 2) + (camOriginOffY || 0),
         origin = newPoint(originx, originy, zSafe),
@@ -109,25 +117,18 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         lastPush,
         lasering = false,
         laserPower = 0,
-        maxToolDiam = widget.maxToolDiam,
         newOutput = print.output || [],
+        nextIsMove = true,
         plungeRate = process.camFastFeedZ,
         printPoint,
         tool,
         toolType,
         toolDiam,
         toolDiamMove,
-        nextIsMove = true,
-        synthPlunge = false,
         spindle = 0,
         spindleMax = device.spindleMax,
-        terrain = widget.terrain ? widget.terrain.map(data => {
-            return {
-                z: data.z,
-                tops: data.tops,
-            };
-        }) : zSafe,
-        tolerance = 0;
+        tolerance = 0,
+        easeDzPerMm = Math.tan(camEaseAngle * Math.PI / 180);
 
     if (debug) console.log({ zSafe, wmx, wmy, wmz });
 
@@ -241,6 +242,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 break;
             }
         }
+        setNextIsMove();
         points.forEach(function (point, index) {
             newLayer();
             camOut(point);
@@ -298,7 +300,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             print.addOutput(layerOut, point, emit, speed, tool, { type, center });
         }
         lastPush = { point, emit, speed, tool };
-        printPoint = point ?? printPoint;
+        printPoint = (point ?? printPoint).clone();
         return point;
     }
 
@@ -336,6 +338,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * @param {0|1|2|3} emit G0, G1, G2, G3
      * @param {number} opts.moveLen typically = tool diameter used to trigger terrain detection
      * @param {number} opts.factor speed scale factor
+     * @return {Point} translated emitted point
      */
     function camOut(point, emit = 1, opts) {
         let lop = lastOp;
@@ -447,36 +450,13 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             const bigXY = (deltaXY > moveLen && !lasering);
             const bigZ = (deltaZ > toolDiam / 2 && deltaXY > tolerance);
             const midZ = (tolerance && absDeltaZ >= tolerance) && !isContour;
-
             if (bigXY || bigZ || midZ) {
-                let maxz = getZClearPath(
-                        terrain,
-                        printPoint.x,
-                        printPoint.y,
-                        point.x,
-                        point.y,
-                        Math.max(point.z, printPoint.z),
-                        0, // zadd,
-                        maxToolDiam / 2,
-                        camZClearance
-                    ),
-                    maxZdelta = Math.max(maxz - point.z, maxz - printPoint.z),
-                    mustGoUp = maxZdelta > tolerance,
-                    clearz = maxz;
-                let zFromInStock = printPoint.z < maxz;
-                if (camForceZMax) {
-                    clearz = maxz = zSafe;
-                    zFromInStock = true;
-                }
-                if (debug) console.log({ maxz, maxZdelta, tolerance, fromz: printPoint.z, toz: point.z });
+                let upNover = camForceZMax || printPoint.z < stockZ;
+                if (debug) console.log({ fromz: printPoint.z, toz: point.z });
                 // up if any point between higher than start/outline, go up first
-                if (mustGoUp || zFromInStock) {
-                    if (zFromInStock) {
-                        if (debug) console.log('zFromInStock', maxz - point.z, { camForceZMax });
-                        layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
-                        newLayer();
-                    }
-                    if (debug) console.log('mustGoUp || zFromInStock', { mustGoUp, zFromInStock });
+                if (upNover) {
+                    if (debug) console.log('upNover', { camForceZMax });
+                    layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
                     layerPush(point.clone().setZ(zSafe), 0, 0, tool);
                     newLayer();
                     // new pos for plunge calc
@@ -504,6 +484,8 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             rate,
             tool
         );
+
+        return point;
     }
 
     /**
@@ -537,10 +519,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 depthData.push(polys);
             } else {
                 // if not depth first, output the polys in slice order
-                poly2polyEmit(polys, printPoint, function (poly, index, count) {
-                    setNextIsMove();
-                    poly.forEachPoint(point => camOut(point.clone()), poly.isClosed(), index);
-                }, { swapdir: false });
+                poly2polyEmit(polys, printPoint, polyEmit, { swapdir: false });
                 newLayer();
             }
             progress(++total, slices.length);
@@ -585,15 +564,10 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * the polygon if that point is not the current position.
      *
      * @param {Polygon} poly - the polygon to output
-     * @param {number} index - unused
-     * @param {number} count - 1 to set engage factor
-     * @param {Point} fromPoint - the point to rapid move from
-     * @param {boolean} ops.cutFromLast - whether to emit a 1 when moving from last point. Defaults to false
-     * @returns {Point} - the last point of the polygon
+     * @param {number} index - optional: starting point index
+     * @returns {Point} - the last point emitted (in widget coordinates)
      */
-    function polyEmit(poly, index, count, fromPoint, ops = {}) {
-        let cutFromLast = ops.cutFromLast ?? false;
-
+    function polyEmit(poly, index) {
         let points = poly.points;
         if (index) {
             points = [...points.slice(index), ...points.slice(0,index)];
@@ -604,10 +578,35 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             points.push(point0);
         }
 
-        fromPoint = fromPoint || printPoint;
         setNextIsMove();
 
-        let lastOut = fromPoint;
+        // poly points are in untranslated widget space
+        // so we need to translate printPoint into widget coordinates
+        let startPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
+
+        // calculate ease down for poly path output
+        if (camEaseDown && startPoint.z > point0.z) {
+            let zat = startPoint.z;
+            let nupoints = [];
+            let lp;
+            for (let i=0; ; i++) {
+                let ii = i % points.length;
+                let pt = points[ii];
+                if (zat <= pt.z) {
+                    nupoints.push(...points.slice(ii), ...points.slice(0,ii));
+                    points = nupoints;
+                    break;
+                }
+                if (i > 0) {
+                    let dd = lp.distTo2D(pt);
+                    zat = Math.max(pt.z, zat - (dd * easeDzPerMm));
+                }
+                lp = pt.clone().setZ(zat);
+                nupoints.push(lp);
+            }
+        }
+
+        let lastOut;
         for (let point of points) {
             camOut(lastOut = point.clone());
         }
@@ -683,12 +682,13 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         // limit level search to polys matching winding (inside vs outside)
         level = level.filter(p => p.isClockwise() === dir);
         // omit polys that match bottom level polys unless level above is cleared
-        start = poly2polyEmit(level, start, (poly, index, count, fromPoint) => {
+        start = poly2polyEmit(level, start, (poly, index) => {
             poly.level_emit = true;
+            let fromPoint = printPoint.clone();
             if (ease) {
                 fromPoint.z += ease;
             }
-            fromPoint = polyEmit(poly, index, count, fromPoint);
+            fromPoint = polyEmit(poly, index);
             if (ease) {
                 fromPoint.z += ease;
             }
@@ -743,6 +743,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         isContour = currentOp.type === 'contour' || (isPocket && currentOp.contour);
         let weight = op.weight();
         newLayer(op.op);
+        ops.printPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
         op.prepare(ops, (progress, message) => {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);
         });
@@ -771,51 +772,4 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
     print.output = newOutput;
 
     return printPoint;
-};
-
-/**
- * return tool Z clearance height for a line segment movement path
- */
-function getZClearPath(terrain, x1, y1, x2, y2, z, zadd, off, over) {
-    // when terrain skipped, top + pass used
-    if (terrain > 0) {
-        return terrain;
-    }
-    let maxz = z;
-    let check = [];
-    for (let i = 0; i < terrain.length; i++) {
-        let data = terrain[i];
-        check.push(data);
-        if (data.z + zadd < z) {
-            break;
-        }
-    }
-    check.reverse();
-    let p1 = newPoint(x1, y1);
-    let p2 = newPoint(x2, y2);
-    for (let i = 0; i < check.length; i++) {
-        let data = check[i];
-        let int = data.tops.map(p => p.intersections(p1, p2, true)).flat();
-        if (int.length) {
-            maxz = Math.max(maxz, data.z + zadd + over);
-            continue;
-        }
-        let s1 = p1.slopeTo(p2).toUnit().normal();
-        let s2 = p2.slopeTo(p1).toUnit().normal();
-        let pa = p1.projectOnSlope(s1, off);
-        let pb = p2.projectOnSlope(s1, off);
-        int = data.tops.map(p => p.intersections(pa, pb, true)).flat();
-        if (int.length) {
-            maxz = Math.max(maxz, data.z + zadd + over);
-            continue;
-        }
-        pa = p1.projectOnSlope(s2, off);
-        pb = p2.projectOnSlope(s2, off);
-        int = data.tops.map(p => p.intersections(pa, pb, true)).flat();
-        if (int.length) {
-            maxz = Math.max(maxz, data.z + zadd + over);
-            continue;
-        }
-    }
-    return maxz;
 }

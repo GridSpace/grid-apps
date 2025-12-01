@@ -297,8 +297,8 @@ class OpArea extends CamOp {
                 first: poly.first(),
                 last: poly.last()
             } });
-            tip2tipEmit(array, printPoint, (next, first, count) => {
-                printPoint = polyEmit(next.el, 0, 1, printPoint, {});
+            tip2tipEmit(array, printPoint, (next) => {
+                printPoint = polyEmit(next.el);
                 newLayer();
             });
         }

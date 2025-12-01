@@ -25,19 +25,17 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let tabW = widget.group.filter(w => w != widget);
 
     let proc = settings.process,
-        sliceAll = widget.slices = [],
         camOps = widget.camops = [],
+        sliceAll = widget.slices = [],
         isIndexed = proc.camStockIndexed;
 
     let stock, bounds, track,
-        camZTop, camZBottom, camZThru, wztop, ztOff, zbOff,
-        zBottom, zMin, zMax, zThru, zTop,
-        minToolDiam, maxToolDiam, dark, color, tabs, unsafe, units,
         axisRotation, axisIndex,
-        part_size,
+        zBottom, zMin, zMax, zThru, zTop,
+        camZTop, camZBottom, camZThru, wztop, ztOff, zbOff,
+        minToolDiam, maxToolDiam, dark, color, tabs, unsafe, units,
         bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z, bottom_cut,
-        top_stock, top_part, top_gap, top_z,
-        workarea;
+        top_stock, top_part, top_gap, top_z, workarea;
 
     axisRotation = axisIndex = undefined;
     dark = settings.controller.dark;
@@ -71,7 +69,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         zMax = bounds.max.z;
         zThru = camZThru;
         zTop = zMax + ztOff;
-        part_size = bounds.dim;
         bottom_gap = zbOff;
         bottom_part = 0;
         bottom_stock = -bottom_gap;
