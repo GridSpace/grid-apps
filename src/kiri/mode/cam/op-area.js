@@ -62,7 +62,7 @@ class OpArea extends CamOp {
 
         // connect open poly edge segments into closed loops (when possible)
         // surface and edge selections produce open polygons by default
-        polys = POLY.nest(healPolys(polys));
+        polys = POLY.nest(healPolys(polys, false));
 
         // gather surface selections
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
@@ -311,7 +311,7 @@ class OpArea extends CamOp {
                 dist: Infinity,
                 area: undefined
             };
-            for (let area of areas.filter(p => !p.used)) {
+            for (let area of areas.filter(p => p.length && !p.used)) {
                 // skip devel / debug only areas
                 let topPolys = area[0].camLines;
                 if (!topPolys) continue;

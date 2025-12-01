@@ -173,7 +173,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             tool = new Tool(settings, toolID);
             toolType = tool.getType();
             toolDiam = tool.fluteDiameter();
-            toolDiamMove = toolType === 'endmill' ? toolDiam : tolerance * 2;
+            toolDiamMove = toolType === 'endmill' ? toolDiam * 1.5 : tolerance * 2;
             lastTool = toolID;
         }
         feedRate = feed || feedRate || plunge;
@@ -243,7 +243,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
         points.forEach(function (point, index) {
             newLayer();
-            camOut(point, 1);
+            camOut(point);
             if (index > 0 && index < points.length - 1) {
                 newLayer();
                 if (dwell) camDwell(dwell);
@@ -309,6 +309,10 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             time,
             tool
         );
+    }
+
+    function setNextIsMove() {
+        nextIsMove = true;
     }
 
     /**
@@ -390,7 +394,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         let deltaXY = printPoint.distTo2D(point),
             deltaZ = point.z - printPoint.z,
             absDeltaZ = Math.abs(deltaZ),
-            hasDelta = deltaXY >= 0.001 && absDeltaZ >= 0.001,
+            hasDeltaXYZ = deltaXY >= 0.001 && absDeltaZ >= 0.001,
             isMove = (emit === 0),
             isCut = (emit !== 0);
 
@@ -414,14 +418,12 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         // no jump moves in contour mode to adjacent slice points
-        let steady = currentOp.type === 'contour' && Math.abs(point.slice - printPoint.slice) < 4;
+        let csteady = currentOp.type === 'contour' && Math.abs(point.slice - printPoint.slice) < 4;
 
         // convert short planar moves to cuts in some cases
-        if (hasDelta && isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
-            let iscontour = tolerance > 0;
-            let isflat = absDeltaZ < 0.001;
+        if (isMove && hasDeltaXYZ && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
             // restrict this to contouring
-            if (isflat || (iscontour && absDeltaZ <= tolerance)) {
+            if (absDeltaZ < 0.001 || (tolerance > 0 && absDeltaZ <= tolerance)) {
                 emit = 1;
                 isMove = false;
             } else if (deltaZ <= -tolerance) {
@@ -440,7 +442,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
                 newLayer();
             }
-        } else if (isMove && !steady) {
+        } else if (isMove && !csteady) {
             // for longer moves, check the terrain to see if we need to go up and over
             const bigXY = (deltaXY > moveLen && !lasering);
             const bigZ = (deltaZ > toolDiam / 2 && deltaXY > tolerance);
@@ -448,34 +450,34 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
             if (bigXY || bigZ || midZ) {
                 let maxz = getZClearPath(
-                    terrain,
-                    printPoint.x,
-                    printPoint.y,
-                    point.x,
-                    point.y,
-                    Math.max(point.z, printPoint.z),
-                    0, // zadd,
-                    maxToolDiam / 2,
-                    camZClearance
-                ),
+                        terrain,
+                        printPoint.x,
+                        printPoint.y,
+                        point.x,
+                        point.y,
+                        Math.max(point.z, printPoint.z),
+                        0, // zadd,
+                        maxToolDiam / 2,
+                        camZClearance
+                    ),
                     maxZdelta = Math.max(maxz - point.z, maxz - printPoint.z),
-                    mustGoUp = maxZdelta >= tolerance,
+                    mustGoUp = maxZdelta > tolerance,
                     clearz = maxz;
-                let zIsBelow = point.z <= maxz;
+                let zFromInStock = printPoint.z < maxz;
                 if (camForceZMax) {
                     clearz = maxz = zSafe;
-                    zIsBelow = true;
+                    zFromInStock = true;
                 }
+                if (debug) console.log({ maxz, maxZdelta, tolerance, fromz: printPoint.z, toz: point.z });
                 // up if any point between higher than start/outline, go up first
-                if (mustGoUp || zIsBelow) {
-                    const zClearance = clearz + (camStockIndexed ? 0 : widgetTopToStock);
-                    if (zIsBelow) {
-                        if (debug) console.log('zIsBelow');
-                        layerPush(printPoint.clone().setZ(zClearance), 0, 0, tool);
+                if (mustGoUp || zFromInStock) {
+                    if (zFromInStock) {
+                        if (debug) console.log('zFromInStock', maxz - point.z, { camForceZMax });
+                        layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
                         newLayer();
                     }
-                    if (debug) console.log('mustGoUp || zIsBelow');
-                    layerPush(point.clone().setZ(zClearance), 0, 0, tool);
+                    if (debug) console.log('mustGoUp || zFromInStock', { mustGoUp, zFromInStock });
+                    layerPush(point.clone().setZ(zSafe), 0, 0, tool);
                     newLayer();
                     // new pos for plunge calc
                     deltaXY = 0;
@@ -536,10 +538,8 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             } else {
                 // if not depth first, output the polys in slice order
                 poly2polyEmit(polys, printPoint, function (poly, index, count) {
-                    poly.forEachPoint(function (point, pidx, points, offset) {
-                        // scale speed of first cutting poly since it engages the full bit
-                        camOut(point.clone(), offset !== 0, undefined, count === 1 ? camFullEngage : 1);
-                    }, poly.isClosed(), index);
+                    setNextIsMove();
+                    poly.forEachPoint(point => camOut(point.clone()), poly.isClosed(), index);
                 }, { swapdir: false });
                 newLayer();
             }
@@ -605,10 +605,11 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         fromPoint = fromPoint || printPoint;
+        setNextIsMove();
 
         let lastOut = fromPoint;
         for (let point of points) {
-            camOut(lastOut = point.clone(), cutFromLast && point === point0 ? 0 : 1);
+            camOut(lastOut = point.clone());
         }
 
         if (camDepthFirst) {
@@ -719,6 +720,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         printPoint,
         setDrill,
         setLasering,
+        setNextIsMove,
         setSpindle,
         setTolerance,
         setTool,
@@ -732,7 +734,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
     for (let op of widget.camops) {
         setTolerance(0);
-        nextIsMove = true;
+        setNextIsMove();
         currentOp = op.op;
         isIndex = currentOp.type === 'index';
         isLathe = currentOp.type === 'lathe';
