@@ -788,24 +788,20 @@ export class Polygon {
 
     /**
      * Try to detect an arc starting at the given index
+     * Uses a greedy approach: grow the arc as long as possible, then validate
      * @private
      * @returns {Object|null} arc data or null if no arc detected
      */
     _detectArcAt(startIdx, points, length, tolerance, arcRes, minPoints) {
-        let arcPoints = [];
-        let centers = [];
+        // Greedy approach: collect as many points as possible that might form an arc
+        let candidates = [];
 
-        // Don't wrap around - treat all polygons as open for arc detection
-        // We can include the last point in an arc, just can't start one there
-
-        // Try to grow arc as long as points maintain consistent center
         for (let idx = startIdx; idx < length; idx++) {
             const p1 = points[idx];
 
-            // Need next point to check for duplicates and continue
+            // Last point - add and done
             if (idx >= length - 1) {
-                // Last point - add it and stop
-                arcPoints.push(p1);
+                candidates.push(p1);
                 break;
             }
 
@@ -813,110 +809,128 @@ export class Polygon {
 
             // Skip duplicate points
             if (p1.distTo2D(p2) < 0.001) {
-                console.log('skip dup');
                 break;
             }
 
-            arcPoints.push(p1);
+            candidates.push(p1);
 
-            // Need at least 3 points to calculate center
-            if (arcPoints.length >= 3) {
-                // Use 3 well-spaced points for stable center calculation
-                // Avoid using first/last when they're close (near-complete circles)
-                let p1Idx = 0;
-                let p2Idx = Math.floor(arcPoints.length / 2);
-                let p3Idx = arcPoints.length - 1;
+            // Stop if we've collected enough to test
+            if (candidates.length >= minPoints) {
+                // Try to validate the arc with current candidates
+                const arcData = this._validateArc(candidates, tolerance, arcRes, minPoints);
 
-                // If first and last are very close, use different points
-                if (arcPoints[p1Idx].distTo2D(arcPoints[p3Idx]) < tolerance * 2) {
-                    // Use quarter positions instead
-                    p1Idx = Math.floor(arcPoints.length * 0.25);
-                    p2Idx = Math.floor(arcPoints.length * 0.5);
-                    p3Idx = Math.floor(arcPoints.length * 0.75);
-                }
-
-                const center = util.center2d(
-                    arcPoints[p1Idx],
-                    arcPoints[p2Idx],
-                    arcPoints[p3Idx],
-                    1
-                );
-
-                if (!center || center.hasNaN?.()) {
-                    // Can't calculate valid center, arc ends
+                if (!arcData) {
+                    // Current set doesn't form valid arc, back up one point
+                    candidates.pop();
                     break;
                 }
-
-                // Check if center is consistent with previous centers
-                if (centers.length > 0) {
-                    const prevCenter = centers[centers.length - 1];
-
-                    const dx = center.x - prevCenter.x;
-                    const dy = center.y - prevCenter.y;
-                    const centerDist = Math.hypot(dx, dy);
-
-                    // Center diverged too much, arc ends here
-                    if (centerDist > tolerance) {
-                        break;
-                    }
-
-                    // Also check radius consistency
-                    const radiusDiff = Math.abs(center.r - prevCenter.r);
-                    if (radiusDiff > tolerance) {
-                        break;
-                    }
-                }
-
-                centers.push(center);
             }
         }
 
-        // Need minimum points to form an arc
-        if (arcPoints.length < minPoints || centers.length < 2) {
+        // Final validation with all collected candidates
+        return this._validateArc(candidates, tolerance, arcRes, minPoints);
+    }
+
+    /**
+     * Validate if a set of points forms a valid arc
+     * @private
+     */
+    _validateArc(arcPoints, tolerance, arcRes, minPoints) {
+        if (arcPoints.length < minPoints) {
             return null;
         }
 
-        // Use the most recent center (most points = best fit)
-        const bestCenter = centers[centers.length - 1];
+        // Calculate center using well-distributed points
+        const center = this._findBestCenter(arcPoints, tolerance);
+        if (!center) {
+            return null;
+        }
 
-        // Validate arc by checking radius consistency for all points
+        // Check if all points lie on the circle within tolerance
         let maxRadiusError = 0;
+        let sumRadiusError = 0;
+
         for (let i = 0; i < arcPoints.length; i++) {
             const p = arcPoints[i];
-            const radius = Math.hypot(p.x - bestCenter.x, p.y - bestCenter.y);
-            const radiusError = Math.abs(radius - bestCenter.r);
-            maxRadiusError = Math.max(maxRadiusError, radiusError);
+            const radius = Math.hypot(p.x - center.x, p.y - center.y);
+            const radiusError = Math.abs(radius - center.r);
 
-            // Check if point is on the arc (within tolerance)
-            if (radiusError > tolerance) {
+            maxRadiusError = Math.max(maxRadiusError, radiusError);
+            sumRadiusError += radiusError;
+
+            // Hard limit on any single point
+            if (radiusError > tolerance * 2) {
                 return null;
             }
+        }
 
-            // Check angular resolution between consecutive points
-            if (i < arcPoints.length - 1) {
-                const next = arcPoints[i + 1];
-                const dist = p.distTo2D(next);
+        // Check average error is reasonable
+        const avgRadiusError = sumRadiusError / arcPoints.length;
+        if (avgRadiusError > tolerance) {
+            return null;
+        }
+
+        // Check angular resolution (don't want points too far apart)
+        for (let i = 0; i < arcPoints.length - 1; i++) {
+            const curr = arcPoints[i];
+            const next = arcPoints[i + 1];
+            const dist = curr.distTo2D(next);
+            const radius = Math.hypot(curr.x - center.x, curr.y - center.y);
+
+            if (radius > 0) {
                 const angle = 2 * Math.asin(Math.min(1, dist / (2 * radius)));
-
                 if (Math.abs(angle) > arcRes) {
                     return null;
                 }
             }
         }
 
-        // Determine arc direction (clockwise vs counter-clockwise)
+        // Determine arc direction
         const p0 = arcPoints[0];
         const p1 = arcPoints[Math.min(1, arcPoints.length - 1)];
         const vec1 = { x: p1.x - p0.x, y: p1.y - p0.y };
-        const vec2 = { x: bestCenter.x - p0.x, y: bestCenter.y - p0.y };
+        const vec2 = { x: center.x - p0.x, y: center.y - p0.y };
         const cross = vec1.x * vec2.y - vec1.y * vec2.x;
         const clockwise = cross < 0;
 
         return {
-            center: newPoint(bestCenter.x, bestCenter.y, p0.z),
+            center: newPoint(center.x, center.y, p0.z),
             clockwise,
-            skip: arcPoints.length - 1  // skip intermediate points, end point is not skipped
+            skip: arcPoints.length - 1
         };
+    }
+
+    /**
+     * Find the best-fit center for a set of arc points
+     * @private
+     */
+    _findBestCenter(arcPoints, tolerance) {
+        const len = arcPoints.length;
+
+        // Use 3 well-spaced points for initial center calculation
+        let idx1 = 0;
+        let idx2 = Math.floor(len / 2);
+        let idx3 = len - 1;
+
+        // If first and last are very close (near-circle), use different points
+        if (arcPoints[idx1].distTo2D(arcPoints[idx3]) < tolerance * 2) {
+            idx1 = Math.floor(len * 0.25);
+            idx2 = Math.floor(len * 0.5);
+            idx3 = Math.floor(len * 0.75);
+        }
+
+        const center = util.center2d(
+            arcPoints[idx1],
+            arcPoints[idx2],
+            arcPoints[idx3],
+            1
+        );
+
+        if (!center || center.hasNaN?.() || !isFinite(center.r)) {
+            return null;
+        }
+
+        return center;
     }
 
     /**
