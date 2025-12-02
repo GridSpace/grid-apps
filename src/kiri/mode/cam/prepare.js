@@ -413,11 +413,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             isCut = (emit !== 0),
             isArc = (emit > 1);
 
-        // translate arc points into workspace coordinates
-        if (isArc) {
-            center = applyWidgetMovement(center);
-        }
-
         // when rapid pluge could cut thru stock:
         //  * rapid to just above stock
         //  * continue plunge as cut
@@ -521,7 +516,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             emit,
             rate,
             tool,
-            isArc ? { center } : undefined
+            isArc ? { center: applyWidgetMovement(center) } : undefined
         );
 
         return point;
@@ -664,6 +659,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         let lastOut;
 
+        // console.log(points);
         if (arcing) {
             let skip = 0;
             let type;
@@ -679,9 +675,12 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                     let { arc } = point;
                     skip = arc.skip;
                     type = arc.clockwise ? 2 : 3;
-                    center = arc.center;
+                    center = arc.center.clone().move({ x: -point.x, y: -point.y });
                 }
                 camOut(lastOut);
+            }
+            if (type) {
+                console.log('ENDED WITH ARC', skip);
             }
         } else {
             for (let point of points) {

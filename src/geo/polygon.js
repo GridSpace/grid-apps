@@ -766,125 +766,147 @@ export class Polygon {
             delete p.arc;
         }
 
-        let arcQueue = [];
-        let arcCenters = [];
+        let i = 0;
+        while (i < length) {
+            // Try to detect arc starting at position i
+            const arcData = this._detectArcAt(i, points, length, tolerance, arcRes, minPoints);
 
-        // Iterate through points looking for arc sequences
-        for (let i = 0; i < length; i++) {
-            const p1 = points[i];
-            const p2 = points[(i + 1) % length];
-            const p3 = points[(i + 2) % length];
+            if (arcData) {
+                // Annotate the starting point
+                points[i].arc = arcData;
+                // Skip past the arc points
+                i += arcData.skip + 1; // +1 to move to point after arc end
+            } else {
+                i++;
+            }
 
-            // Skip if we've reached the end of an open polygon
-            if (this.open && i >= length - 2) {
+            // Stop at end of open polygon
+            if (this.open && i >= length - 1) {
                 break;
             }
-
-            const dist = p1.distTo2D(p2);
-
-            // Start or continue building arc queue
-            if (dist > 0.001) {
-                arcQueue.push(p1);
-
-                if (arcQueue.length >= 3) {
-                    // Calculate center from last 3 points
-                    const last3 = arcQueue.slice(-3);
-                    const center = util.center2d(last3[0], last3[1], last3[2], 1);
-
-                    if (center && !center.hasNaN?.()) {
-                        const prevCenter = arcCenters.peek();
-
-                        if (!prevCenter) {
-                            arcCenters.push(center);
-                        } else {
-                            // Check if center is consistent with previous
-                            const dx = center.x - prevCenter.x;
-                            const dy = center.y - prevCenter.y;
-                            const centerDist = Math.hypot(dx, dy);
-
-                            if (centerDist < tolerance) {
-                                arcCenters.push(center);
-                            } else {
-                                // Center changed, check if we have enough points for an arc
-                                if (arcQueue.length >= minPoints) {
-                                    this._annotateArc(arcQueue, arcCenters, arcRes);
-                                }
-                                // Start new potential arc
-                                arcQueue = [p1];
-                                arcCenters = [];
-                            }
-                        }
-                    } else {
-                        // Invalid center, check if we accumulated an arc
-                        if (arcQueue.length >= minPoints && arcCenters.length >= minPoints - 2) {
-                            this._annotateArc(arcQueue, arcCenters, arcRes);
-                        }
-                        arcQueue = [];
-                        arcCenters = [];
-                    }
-                }
-            }
-        }
-
-        // Handle any remaining arc at end
-        if (arcQueue.length >= minPoints && arcCenters.length >= minPoints - 2) {
-            this._annotateArc(arcQueue, arcCenters, arcRes);
         }
 
         return this;
     }
 
     /**
-     * Internal helper to annotate a detected arc sequence
+     * Try to detect an arc starting at the given index
      * @private
+     * @returns {Object|null} arc data or null if no arc detected
      */
-    _annotateArc(arcQueue, arcCenters, arcRes) {
-        if (arcQueue.length < 4 || arcCenters.length < 2) {
-            return;
+    _detectArcAt(startIdx, points, length, tolerance, arcRes, minPoints) {
+        let arcPoints = [];
+        let centers = [];
+
+        // Try to grow arc as long as points maintain consistent center
+        for (let offset = 0; offset < length - 2; offset++) {
+            const idx = (startIdx + offset) % length;
+            const p1 = points[idx];
+            const p2 = points[(idx + 1) % length];
+            const p3 = points[(idx + 2) % length];
+
+            // Skip duplicate points
+            if (p1.distTo2D(p2) < 0.001) {
+                break;
+            }
+
+            arcPoints.push(p1);
+
+            // Need at least 3 points to calculate center
+            if (arcPoints.length >= 3) {
+                const center = util.center2d(
+                    arcPoints[arcPoints.length - 3],
+                    arcPoints[arcPoints.length - 2],
+                    arcPoints[arcPoints.length - 1],
+                    1
+                );
+
+                if (!center || center.hasNaN?.()) {
+                    // Can't calculate valid center, arc ends
+                    break;
+                }
+
+                // Check if center is consistent with previous centers
+                if (centers.length > 0) {
+                    const avgCenter = {
+                        x: centers.reduce((sum, c) => sum + c.x, 0) / centers.length,
+                        y: centers.reduce((sum, c) => sum + c.y, 0) / centers.length
+                    };
+
+                    const dx = center.x - avgCenter.x;
+                    const dy = center.y - avgCenter.y;
+                    const centerDist = Math.hypot(dx, dy);
+
+                    // Center diverged too much, arc ends here
+                    if (centerDist > tolerance) {
+                        break;
+                    }
+
+                    // Also check radius consistency
+                    const avgRadius = centers.reduce((sum, c) => sum + c.r, 0) / centers.length;
+                    const radiusDiff = Math.abs(center.r - avgRadius);
+                    if (radiusDiff > tolerance) {
+                        break;
+                    }
+                }
+
+                centers.push(center);
+            }
+
+            // Check if we should stop (reached end of polygon or open poly limit)
+            if (offset >= length - 3) {
+                break;
+            }
         }
 
-        // Calculate average center
+        // Need minimum points to form an arc
+        if (arcPoints.length < minPoints || centers.length < 2) {
+            return null;
+        }
+
+        // Calculate average center from all detected centers
         const avgCenter = {
-            x: arcCenters.reduce((sum, c) => sum + c.x, 0) / arcCenters.length,
-            y: arcCenters.reduce((sum, c) => sum + c.y, 0) / arcCenters.length
+            x: centers.reduce((sum, c) => sum + c.x, 0) / centers.length,
+            y: centers.reduce((sum, c) => sum + c.y, 0) / centers.length,
+            r: centers.reduce((sum, c) => sum + c.r, 0) / centers.length
         };
 
-        // Determine arc direction (clockwise or counter-clockwise)
-        const p0 = arcQueue[0];
-        const p1 = arcQueue[1];
+        // Validate arc by checking angular resolution and radius consistency
+        for (let i = 0; i < arcPoints.length; i++) {
+            const p = arcPoints[i];
+            const radius = Math.hypot(p.x - avgCenter.x, p.y - avgCenter.y);
+            const radiusError = Math.abs(radius - avgCenter.r);
+
+            // Check if point is on the arc (within tolerance)
+            if (radiusError > tolerance) {
+                return null;
+            }
+
+            // Check angular resolution between consecutive points
+            if (i < arcPoints.length - 1) {
+                const next = arcPoints[i + 1];
+                const dist = p.distTo2D(next);
+                const angle = 2 * Math.asin(Math.min(1, dist / (2 * radius)));
+
+                if (Math.abs(angle) > arcRes) {
+                    return null;
+                }
+            }
+        }
+
+        // Determine arc direction (clockwise vs counter-clockwise)
+        const p0 = arcPoints[0];
+        const p1 = arcPoints[1];
         const vec1 = { x: p1.x - p0.x, y: p1.y - p0.y };
         const vec2 = { x: avgCenter.x - p0.x, y: avgCenter.y - p0.y };
         const cross = vec1.x * vec2.y - vec1.y * vec2.x;
         const clockwise = cross < 0;
 
-        // Verify arc consistency by checking angular resolution
-        let validArc = true;
-        for (let i = 1; i < arcQueue.length - 1; i++) {
-            const curr = arcQueue[i];
-            const next = arcQueue[i + 1];
-            const dist = curr.distTo2D(next);
-            const radius = Math.hypot(curr.x - avgCenter.x, curr.y - avgCenter.y);
-
-            if (radius > 0) {
-                const angle = 2 * Math.asin(Math.min(1, dist / (2 * radius)));
-                if (Math.abs(angle) > arcRes) {
-                    validArc = false;
-                    break;
-                }
-            }
-        }
-
-        if (validArc) {
-            // Annotate first point with arc data
-            const firstPoint = arcQueue[0];
-            const endPoint = arcQueue.peek();
-
-            firstPoint.arc = {
-                center: newPoint(avgCenter.x, avgCenter.y, firstPoint.z),
-                clockwise,
-                skip: arcQueue.length - 1  // number of points to skip
-            };
-        }
+        return {
+            center: newPoint(avgCenter.x, avgCenter.y, p0.z),
+            clockwise,
+            skip: arcPoints.length - 1  // skip intermediate points, end point is not skipped
+        };
     }
 
     /**
