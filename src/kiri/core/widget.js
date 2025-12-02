@@ -711,7 +711,7 @@ class Widget {
         }
         // used by CAM.shadowAt()
         this.cache.geo = pos;
-        this.cache.shadow = undefined;
+        delete this.cache.shadow;
         return pos;
     }
 
@@ -841,9 +841,9 @@ class Widget {
     }
 
     shadowAt(z) {
-        let shadows = this.shadows;
+        let shadows = this.cache.shadows;
         if (!shadows) {
-            shadows = this.shadows = {};
+            shadows = this.cache.shadows = {};
         }
         let cached = shadows[z];
         if (cached) {

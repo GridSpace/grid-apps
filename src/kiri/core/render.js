@@ -187,19 +187,19 @@ async function path(levels, update, opts = {}) {
                 if (arrowAll || lastOut.emit !== out.emit) {
                     heads.push({p1: lastOutPoint, p2: outPoint});
                 }
-                if (isCAM && (out.emit == 2 || out.emit == 3)) { // cam arc emit
-                    // checks if a new poly should be started
-                    if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
-                        current = newPolygon().setOpen();
-                        current.push(lastOutPoint);
-                        current.color = color(out);
-                        pushPrint(out.tool, current);
-                    }
-                    out.arcPoints.forEach(p => {
-                        current.push(p);
-                    })
-                    current.push(outPoint);
-                } else if (out.emit) {
+                // if (isCAM && (out.emit == 2 || out.emit == 3)) { // cam arc emit
+                //     // checks if a new poly should be started
+                //     if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
+                //         current = newPolygon().setOpen();
+                //         current.push(lastOutPoint);
+                //         current.color = color(out);
+                //         pushPrint(out.tool, current);
+                //     }
+                //     out.arcPoints.forEach(p => {
+                //         current.push(p);
+                //     })
+                // } else
+                if (out.emit) {
                     // explicity G1 in CAM mode
                     // just a non-move in other modes
                     // checks if a new poly should be started

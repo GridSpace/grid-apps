@@ -7,8 +7,9 @@ import { polygons as POLY } from '../../../geo/polygons.js';
 import { render } from '../../core/render.js';
 import { newPrint } from '../../core/print.js';
 import { Tool } from './tool.js';
+import { newPolygon } from '../../../geo/polygon.js';
 
-const debug = true;
+const debug = false;
 const debug_push = false;
 
 /**
@@ -108,14 +109,12 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         drillLift = 0,
         drillDwell = 0,
         feedRate,
-        isPocket,
         isRough,
         isLathe,
         isIndex,
         layerOut = [],
         lastOp,
         lastTool,
-        lastPush,
         lasering = false,
         laserPower = 0,
         newOutput = print.output || [],
@@ -306,7 +305,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         } else {
             print.addOutput(layerOut, point, emit, speed, tool, { type, center });
         }
-        lastPush = { point, emit, speed, tool };
         printPoint = (point ?? printPoint).clone();
         return point;
     }
@@ -342,9 +340,10 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
     /**
      * emit a cut or move operation from the current location to a new location
      * @param {Point} point destination for move in widget coordinate space
-     * @param {0|1|2|3} emit G0, G1, G2, G3
+     * @param {-1|0|1|2|3} emit ignore, G0, G1, G2, G3
      * @param {number} opts.moveLen typically = tool diameter used to trigger terrain detection
      * @param {number} opts.factor speed scale factor
+     * @param {Object} opts.arcCenter arc center parameter
      * @return {Point} translated emitted point
      */
     function camOut(point, emit = 1, opts) {
@@ -374,7 +373,8 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             factor = 1,
             feed = feedRate,
             moveLen = toolDiamMove,
-            moveOnly = false
+            moveOnly = false,
+            arcCenter,
         } = opts ?? {};
         let pointA = point.a;
         let rate = feed * factor;
@@ -410,7 +410,13 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             deltaZ = point.z - printPoint.z,
             absDeltaZ = Math.abs(deltaZ),
             isMove = (emit === 0 || emit === false),
-            isCut = (emit !== 0);
+            isCut = (emit !== 0),
+            isArc = (emit > 1);
+
+        // translate arc points into workspace coordinates
+        if (isArc) {
+            arcCenter = applyWidgetMovement(arcCenter);
+        }
 
         // when rapid pluge could cut thru stock:
         //  * rapid to just above stock
@@ -426,7 +432,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         // drop points too close together
-        if (deltaXY < 0.001 && point.z === printPoint.z && point.a === printPoint.a) {
+        if (!isArc && deltaXY < 0.001 && point.z === printPoint.z && point.a === printPoint.a) {
             // console.trace(["drop dup",printPoint,point]);
             return;
         }
@@ -514,7 +520,8 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             point,
             emit,
             rate,
-            tool
+            tool,
+            isArc ? { arcCenter } : undefined
         );
 
         return point;
@@ -600,9 +607,20 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * @returns {Point} - the last point emitted (in widget coordinates)
      */
     function polyEmit(poly, index) {
+        let arcing = camArcEnabled && !contouring;
         let points = poly.points;
         if (index) {
             points = [...points.slice(index), ...points.slice(0,index)];
+        }
+
+        // run arc detection when enabled
+        if (arcing) {
+            poly = newPolygon(points).setOpen(poly.isOpen()).detectArcs({
+                tolerance: camArcTolerance,
+                arcRes: camArcResolution,
+                minPoints: 5
+            });
+            points = poly.points;
         }
 
         // we skip ease-down logic in contouring mode
@@ -645,8 +663,30 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         let lastOut;
-        for (let point of points) {
-            camOut(lastOut = point.clone());
+
+        if (arcing) {
+            let skip = 0;
+            for (let point of points) {
+                if (skip > 0) {
+                    camOut(lastOut = point.clone(), -1, { factor: 0.2 });
+                    skip--;
+                    continue;
+                }
+                let { arc } = point;
+                if (arc) {
+                    skip = arc.skip;
+                    camOut(lastOut = point.clone(), arc.clockwise ? 2 : 3, {
+                        arcCenter: arc.center,
+                        factor: 0.2
+                    });
+                } else {
+                    camOut(lastOut = point.clone());
+                }
+            }
+        } else {
+            for (let point of points) {
+                camOut(lastOut = point.clone());
+            }
         }
 
         if (camDepthFirst) {
@@ -780,7 +820,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         isIndex = currentOp.type === 'index';
         isLathe = currentOp.type === 'lathe';
         isRough = currentOp.type === 'rough';
-        isPocket = currentOp.type === 'pocket';
         let weight = op.weight();
         newLayer(op.op);
         ops.printPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });

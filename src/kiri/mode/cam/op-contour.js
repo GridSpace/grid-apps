@@ -124,7 +124,6 @@ class OpContour extends CamOp {
         let bounds = widget.getBoundingBox();
         let toolDiam = this.toolDiam;
         let stepover = toolDiam * op.step * 2;
-        let depthFirst = process.camDepthFirst;
         let depthData = [];
 
         setTool(op.tool, op.rate, process.camFastFeedZ);
@@ -141,37 +140,22 @@ class OpContour extends CamOp {
             }
             let polys = [], poly;
             slice.camLines.forEach((poly) => {
-                if (depthFirst) poly = poly.clone(true).annotate({ slice: slice.index + 1 });
+                poly = poly.clone(true).annotate({ slice: slice.index + 1 });
                 polys.push({ first: poly.first(), last: poly.last(), poly: poly });
             });
-            if (depthFirst) {
-                depthData.appendAll(polys);
-            } else {
-                tip2tipEmit(polys, printPoint, (el, point) => {
-                    poly = el.poly;
-                    if (poly.last() === point) {
-                        poly.reverse();
-                    }
-                    poly.forEachPoint((point, pidx) => {
-                        camOut(point.clone(), pidx > 0 ? 1 : 0, { moveLen: stepover });
-                    }, false);
-                });
-                newLayer();
-            }
+            depthData.appendAll(polys);
         }
 
-        if (depthFirst) {
-            tip2tipEmit(depthData, printPoint, (el, point) => {
-                let poly = el.poly;
-                if (poly.last() === point) {
-                    poly.reverse();
-                }
-                poly.forEachPoint((point, pidx) => {
-                    camOut(point.clone().annotate({ slice: poly.slice }), pidx > 0 ? 1 : 0, { moveLen: stepover });
-                }, false);
-                newLayer();
-            });
-        }
+        tip2tipEmit(depthData, printPoint, (el, point) => {
+            let poly = el.poly;
+            if (poly.last() === point) {
+                poly.reverse();
+            }
+            poly.forEachPoint((point, pidx) => {
+                camOut(point.clone().annotate({ slice: poly.slice }), pidx > 0 ? 1 : 0, { moveLen: stepover });
+            }, false);
+            newLayer();
+        });
     }
 }
 
