@@ -659,7 +659,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         let lastOut;
 
-        console.log(points);
+        console.log('poop',points);
         if (arcing) {
             let skip = 0;
             let type;

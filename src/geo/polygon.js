@@ -767,7 +767,9 @@ export class Polygon {
         }
 
         let i = 0;
-        while (i < length) {
+        // Don't try to detect arcs starting at the last point
+        // (not enough points remaining to form a valid arc)
+        while (i < length - 1) {
             // Try to detect arc starting at position i
             const arcData = this._detectArcAt(i, points, length, tolerance, arcRes, minPoints);
 
@@ -778,11 +780,6 @@ export class Polygon {
                 i += arcData.skip + 1; // +1 to move to point after arc end
             } else {
                 i++;
-            }
-
-            // Stop at end of open polygon
-            if (this.open && i >= length - 1) {
-                break;
             }
         }
 
@@ -799,17 +796,11 @@ export class Polygon {
         let centers = [];
 
         // Don't wrap around - treat all polygons as open for arc detection
-        const maxOffset = length - startIdx - 1;
+        // Stop before the last point to prevent annotation of final point
+        const maxIdx = length - 1;
 
         // Try to grow arc as long as points maintain consistent center
-        for (let offset = 0; offset <= maxOffset; offset++) {
-            const idx = startIdx + offset;
-
-            // Need at least 2 more points ahead to continue
-            if (idx >= length - 1) {
-                break;
-            }
-
+        for (let idx = startIdx; idx < maxIdx; idx++) {
             const p1 = points[idx];
             const p2 = points[idx + 1];
 
@@ -822,12 +813,26 @@ export class Polygon {
 
             // Need at least 3 points to calculate center
             if (arcPoints.length >= 3) {
-                // Use first, middle, and last points for better stability with high-density points
-                const first = arcPoints[0];
-                const mid = arcPoints[Math.floor(arcPoints.length / 2)];
-                const last = arcPoints[arcPoints.length - 1];
+                // Use 3 well-spaced points for stable center calculation
+                // Avoid using first/last when they're close (near-complete circles)
+                let p1Idx = 0;
+                let p2Idx = Math.floor(arcPoints.length / 2);
+                let p3Idx = arcPoints.length - 1;
 
-                const center = util.center2d(first, mid, last, 1);
+                // If first and last are very close, use different points
+                if (arcPoints[p1Idx].distTo2D(arcPoints[p3Idx]) < tolerance * 2) {
+                    // Use quarter positions instead
+                    p1Idx = Math.floor(arcPoints.length * 0.25);
+                    p2Idx = Math.floor(arcPoints.length * 0.5);
+                    p3Idx = Math.floor(arcPoints.length * 0.75);
+                }
+
+                const center = util.center2d(
+                    arcPoints[p1Idx],
+                    arcPoints[p2Idx],
+                    arcPoints[p3Idx],
+                    1
+                );
 
                 if (!center || center.hasNaN?.()) {
                     // Can't calculate valid center, arc ends
