@@ -523,7 +523,6 @@ class Print {
             let axes = {};
             let { point, prevPoint, center } = processLine(line, axes);
             let arcPoints = arcToPath(prevPoint, point, 64, { clockwise: g2, center }) ?? [];
-
             for (let point of arcPoints) {
                 outputPoint(point, prevPoint, 1, {});
                 prevPoint = point;

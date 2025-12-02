@@ -518,8 +518,8 @@ export function shapeToPath(shape, points, closed) {
 /**
  * Generate a list of points approximating a circular arc.
  * @param {Point} start - the starting point of the arc.
- * @param {Point} end - the ending point of the arc.
- * @param {number} [arcdivs= 24] - the number of lines to use to represent PI radians
+ * @param {Point} end - the ending point of the arc (not included).
+ * @param {number} [arcdivs = 24] - the number of lines to use to represent PI radians
  * @param {number} opts.radius - the radius of the arc. If undefined, will use the start and end points to infer the radius.
  * @param {boolean} opts.clockwise - whether the arc is clockwise or counter-clockwise. generating the points.
  * @return {Array<Point>} an array of points representing the arc.

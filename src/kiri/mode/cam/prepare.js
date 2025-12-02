@@ -678,7 +678,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 if (type) {
                     // terminate arc early (caused by ease eating points)
                     skip = point === lastP ? 0 : skip - 1;
-                    camOut(lastOut, skip ? -1 : type, { center, factor: 0.2 });
+                    camOut(lastOut, skip ? -1 : type, { center, xfactor: xfactors[0] });
                     if (!skip) center = type = undefined;
                     continue;
                 } else if (point.arc) {
@@ -686,6 +686,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                     skip = arc.skip;
                     type = arc.clockwise ? 2 : 3;
                     center = arc.center.clone().move({ x: -point.x, y: -point.y });
+                    xfactors.push(xfactors.shift());
                 }
                 camOut(lastOut);
             }
@@ -701,6 +702,9 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         return lastOut;
     }
+
+    // debug arc creation with visual speed cues
+    let xfactors = [0.2,0.5];
 
     function depthRoughPath(start, depth, levels, tops, emitter, fit, ease) {
         let level = levels[depth];
