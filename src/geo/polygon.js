@@ -772,7 +772,6 @@ export class Polygon {
         while (i < length - minPoints + 1) {
             // Try to detect arc starting at position i
             const arcData = this._detectArcAt(i, points, length, tolerance, arcRes, minPoints);
-            console.log({ test_at: i, arcData });
 
             if (arcData) {
                 // Annotate the starting point
@@ -797,16 +796,24 @@ export class Polygon {
         let centers = [];
 
         // Don't wrap around - treat all polygons as open for arc detection
-        // Stop before the last point to prevent annotation of final point
-        const maxIdx = length - 1;
+        // We can include the last point in an arc, just can't start one there
 
         // Try to grow arc as long as points maintain consistent center
-        for (let idx = startIdx; idx < maxIdx; idx++) {
+        for (let idx = startIdx; idx < length; idx++) {
             const p1 = points[idx];
+
+            // Need next point to check for duplicates and continue
+            if (idx >= length - 1) {
+                // Last point - add it and stop
+                arcPoints.push(p1);
+                break;
+            }
+
             const p2 = points[idx + 1];
 
             // Skip duplicate points
             if (p1.distTo2D(p2) < 0.001) {
+                console.log('skip dup');
                 break;
             }
 

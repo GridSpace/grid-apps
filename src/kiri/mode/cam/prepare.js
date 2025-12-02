@@ -666,9 +666,9 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         let lastOut;
 
-        console.log('XXX',points);
         // disable arcing when eased b/c it can cause arc misses
         if (arcing) {
+            // console.log('arc points',points);
             let skip = 0;
             let type;
             let center;
