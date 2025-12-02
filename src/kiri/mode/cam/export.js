@@ -256,6 +256,11 @@ export function cam_export(print, online) {
             return;
         }
 
+        // skip arc points for display only
+        if (out.emit === -1) {
+            return;
+        }
+
         let dx = opt.dx || newpos.x - pos.x,
             dy = opt.dy || newpos.y - pos.y,
             dz = opt.dz || newpos.z - pos.z,

@@ -343,7 +343,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * @param {-1|0|1|2|3} emit ignore, G0, G1, G2, G3
      * @param {number} opts.moveLen typically = tool diameter used to trigger terrain detection
      * @param {number} opts.factor speed scale factor
-     * @param {Object} opts.arcCenter arc center parameter
+     * @param {Object} opts.center arc center parameter
      * @return {Point} translated emitted point
      */
     function camOut(point, emit = 1, opts) {
@@ -374,7 +374,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             feed = feedRate,
             moveLen = toolDiamMove,
             moveOnly = false,
-            arcCenter,
+            center,
         } = opts ?? {};
         let pointA = point.a;
         let rate = feed * factor;
@@ -415,7 +415,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         // translate arc points into workspace coordinates
         if (isArc) {
-            arcCenter = applyWidgetMovement(arcCenter);
+            center = applyWidgetMovement(center);
         }
 
         // when rapid pluge could cut thru stock:
@@ -521,7 +521,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             emit,
             rate,
             tool,
-            isArc ? { arcCenter } : undefined
+            isArc ? { center } : undefined
         );
 
         return point;
@@ -615,7 +615,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         // run arc detection when enabled
         if (arcing) {
-            poly = newPolygon(points).setOpen(poly.isOpen()).detectArcs({
+            poly = newPolygon(points).setOpenValue(poly.open).detectArcs({
                 tolerance: camArcTolerance,
                 arcRes: camArcResolution,
                 minPoints: 5
@@ -666,22 +666,22 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         if (arcing) {
             let skip = 0;
+            let type;
+            let center;
             for (let point of points) {
-                if (skip > 0) {
-                    camOut(lastOut = point.clone(), -1, { factor: 0.2 });
-                    skip--;
+                lastOut = point.clone();
+                if (type) {
+                    skip = skip - 1;
+                    camOut(lastOut, skip ? -1 : type, { center, factor: 0.2 });
+                    if (!skip) center = type = undefined;
                     continue;
-                }
-                let { arc } = point;
-                if (arc) {
+                } else if (point.arc) {
+                    let { arc } = point;
                     skip = arc.skip;
-                    camOut(lastOut = point.clone(), arc.clockwise ? 2 : 3, {
-                        arcCenter: arc.center,
-                        factor: 0.2
-                    });
-                } else {
-                    camOut(lastOut = point.clone());
+                    type = arc.clockwise ? 2 : 3;
+                    center = arc.center;
                 }
+                camOut(lastOut);
             }
         } else {
             for (let point of points) {
