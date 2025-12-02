@@ -798,12 +798,20 @@ export class Polygon {
         let arcPoints = [];
         let centers = [];
 
+        // Don't wrap around - treat all polygons as open for arc detection
+        const maxOffset = length - startIdx - 1;
+
         // Try to grow arc as long as points maintain consistent center
-        for (let offset = 0; offset < length - 2; offset++) {
-            const idx = (startIdx + offset) % length;
+        for (let offset = 0; offset <= maxOffset; offset++) {
+            const idx = startIdx + offset;
+
+            // Need at least 2 more points ahead to continue
+            if (idx >= length - 1) {
+                break;
+            }
+
             const p1 = points[idx];
-            const p2 = points[(idx + 1) % length];
-            const p3 = points[(idx + 2) % length];
+            const p2 = points[idx + 1];
 
             // Skip duplicate points
             if (p1.distTo2D(p2) < 0.001) {
@@ -814,12 +822,12 @@ export class Polygon {
 
             // Need at least 3 points to calculate center
             if (arcPoints.length >= 3) {
-                const center = util.center2d(
-                    arcPoints[arcPoints.length - 3],
-                    arcPoints[arcPoints.length - 2],
-                    arcPoints[arcPoints.length - 1],
-                    1
-                );
+                // Use first, middle, and last points for better stability with high-density points
+                const first = arcPoints[0];
+                const mid = arcPoints[Math.floor(arcPoints.length / 2)];
+                const last = arcPoints[arcPoints.length - 1];
+
+                const center = util.center2d(first, mid, last, 1);
 
                 if (!center || center.hasNaN?.()) {
                     // Can't calculate valid center, arc ends
@@ -828,13 +836,10 @@ export class Polygon {
 
                 // Check if center is consistent with previous centers
                 if (centers.length > 0) {
-                    const avgCenter = {
-                        x: centers.reduce((sum, c) => sum + c.x, 0) / centers.length,
-                        y: centers.reduce((sum, c) => sum + c.y, 0) / centers.length
-                    };
+                    const prevCenter = centers[centers.length - 1];
 
-                    const dx = center.x - avgCenter.x;
-                    const dy = center.y - avgCenter.y;
+                    const dx = center.x - prevCenter.x;
+                    const dy = center.y - prevCenter.y;
                     const centerDist = Math.hypot(dx, dy);
 
                     // Center diverged too much, arc ends here
@@ -843,19 +848,13 @@ export class Polygon {
                     }
 
                     // Also check radius consistency
-                    const avgRadius = centers.reduce((sum, c) => sum + c.r, 0) / centers.length;
-                    const radiusDiff = Math.abs(center.r - avgRadius);
+                    const radiusDiff = Math.abs(center.r - prevCenter.r);
                     if (radiusDiff > tolerance) {
                         break;
                     }
                 }
 
                 centers.push(center);
-            }
-
-            // Check if we should stop (reached end of polygon or open poly limit)
-            if (offset >= length - 3) {
-                break;
             }
         }
 
@@ -864,18 +863,16 @@ export class Polygon {
             return null;
         }
 
-        // Calculate average center from all detected centers
-        const avgCenter = {
-            x: centers.reduce((sum, c) => sum + c.x, 0) / centers.length,
-            y: centers.reduce((sum, c) => sum + c.y, 0) / centers.length,
-            r: centers.reduce((sum, c) => sum + c.r, 0) / centers.length
-        };
+        // Use the most recent center (most points = best fit)
+        const bestCenter = centers[centers.length - 1];
 
-        // Validate arc by checking angular resolution and radius consistency
+        // Validate arc by checking radius consistency for all points
+        let maxRadiusError = 0;
         for (let i = 0; i < arcPoints.length; i++) {
             const p = arcPoints[i];
-            const radius = Math.hypot(p.x - avgCenter.x, p.y - avgCenter.y);
-            const radiusError = Math.abs(radius - avgCenter.r);
+            const radius = Math.hypot(p.x - bestCenter.x, p.y - bestCenter.y);
+            const radiusError = Math.abs(radius - bestCenter.r);
+            maxRadiusError = Math.max(maxRadiusError, radiusError);
 
             // Check if point is on the arc (within tolerance)
             if (radiusError > tolerance) {
@@ -896,14 +893,14 @@ export class Polygon {
 
         // Determine arc direction (clockwise vs counter-clockwise)
         const p0 = arcPoints[0];
-        const p1 = arcPoints[1];
+        const p1 = arcPoints[Math.min(1, arcPoints.length - 1)];
         const vec1 = { x: p1.x - p0.x, y: p1.y - p0.y };
-        const vec2 = { x: avgCenter.x - p0.x, y: avgCenter.y - p0.y };
+        const vec2 = { x: bestCenter.x - p0.x, y: bestCenter.y - p0.y };
         const cross = vec1.x * vec2.y - vec1.y * vec2.x;
         const clockwise = cross < 0;
 
         return {
-            center: newPoint(avgCenter.x, avgCenter.y, p0.z),
+            center: newPoint(bestCenter.x, bestCenter.y, p0.z),
             clockwise,
             skip: arcPoints.length - 1  // skip intermediate points, end point is not skipped
         };
