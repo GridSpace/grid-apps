@@ -242,11 +242,15 @@ class OpPocket extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, pockets } = this;
-        let { pocket, setTool, setSpindle, setTolerance } = ops;
+        let { pocket, setContouring, setTool, setSpindle, setTolerance } = ops;
         let { process } = state.settings;
 
         setTool(op.tool, op.rate);
         setSpindle(op.spindle);
+
+        if (op.contour) {
+            setContouring(true);
+        }
 
         if (this.topo) {
             setTolerance(this.topo.tolerance);

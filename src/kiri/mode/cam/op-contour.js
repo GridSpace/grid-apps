@@ -118,7 +118,7 @@ class OpContour extends CamOp {
         let { settings } = state;
         let { process } = settings;
 
-        let { setTolerance, setTool, setSpindle } = ops;
+        let { polyEmit, setContouring, setTolerance, setTool, setSpindle } = ops;
         let { widget, camOut, newLayer, zmax } = ops;
 
         let bounds = widget.getBoundingBox();
@@ -129,6 +129,7 @@ class OpContour extends CamOp {
 
         setTool(op.tool, op.rate, process.camFastFeedZ);
         setSpindle(op.spindle);
+        setContouring(true);
         setTolerance(this.tolerance);
 
         let printPoint = newPoint(bounds.min.x, bounds.min.y, zmax);
@@ -139,20 +140,20 @@ class OpContour extends CamOp {
                 continue;
             }
             let polys = [], poly;
-            slice.camLines.forEach(function (poly) {
+            slice.camLines.forEach((poly) => {
                 if (depthFirst) poly = poly.clone(true).annotate({ slice: slice.index + 1 });
                 polys.push({ first: poly.first(), last: poly.last(), poly: poly });
             });
             if (depthFirst) {
                 depthData.appendAll(polys);
             } else {
-                printPoint = tip2tipEmit(polys, printPoint, function (el, point, count) {
+                tip2tipEmit(polys, printPoint, (el, point) => {
                     poly = el.poly;
                     if (poly.last() === point) {
                         poly.reverse();
                     }
-                    poly.forEachPoint(function (point, pidx) {
-                        camOut(point.clone(), pidx > 0, { moveLen: stepover });
+                    poly.forEachPoint((point, pidx) => {
+                        camOut(point.clone(), pidx > 0 ? 1 : 0, { moveLen: stepover });
                     }, false);
                 });
                 newLayer();
@@ -160,13 +161,13 @@ class OpContour extends CamOp {
         }
 
         if (depthFirst) {
-            tip2tipEmit(depthData, printPoint, function (el, point, count) {
+            tip2tipEmit(depthData, printPoint, (el, point) => {
                 let poly = el.poly;
                 if (poly.last() === point) {
                     poly.reverse();
                 }
-                poly.forEachPoint(function (point, pidx) {
-                    camOut(printPoint = point.clone().annotate({ slice: poly.slice }), pidx > 0, { moveLen: stepover });
+                poly.forEachPoint((point, pidx) => {
+                    camOut(point.clone().annotate({ slice: poly.slice }), pidx > 0 ? 1 : 0, { moveLen: stepover });
                 }, false);
                 newLayer();
             });

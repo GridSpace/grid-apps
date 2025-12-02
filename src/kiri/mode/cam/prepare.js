@@ -8,7 +8,8 @@ import { render } from '../../core/render.js';
 import { newPrint } from '../../core/print.js';
 import { Tool } from './tool.js';
 
-const debug = false;
+const debug = true;
+const debug_push = false;
 
 /**
  * DRIVER PRINT CONTRACT
@@ -101,13 +102,13 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         originx = (camOriginCenter ? 0 : -stock.x / 2) + (camOriginOffX || 0),
         originy = (camOriginCenter ? 0 : -stock.y / 2) + (camOriginOffY || 0),
         origin = newPoint(originx, originy, zSafe),
+        contouring = false,
         currentOp,
         drillDown = 0,
         drillLift = 0,
         drillDwell = 0,
         feedRate,
         isPocket,
-        isContour,
         isRough,
         isLathe,
         isIndex,
@@ -128,6 +129,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         spindle = 0,
         spindleMax = device.spindleMax,
         tolerance = 0,
+        easeThrottle = (90 - Math.min(90, camEaseAngle)) / 180,
         easeDzPerMm = Math.tan(camEaseAngle * Math.PI / 180);
 
     if (debug) console.log({ zSafe, wmx, wmy, wmz });
@@ -156,10 +158,14 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
     }
 
+    function setContouring(bool) {
+        contouring = bool;
+    }
+
     // non-zero means contouring
     function setTolerance(dist) {
         tolerance = dist;
-        if (isContour) {
+        if (contouring) {
             // avoid moves to safe Z when contouring short steps
             toolDiamMove = currentOp.step * toolDiam * 1.5;
         }
@@ -263,12 +269,13 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      */
     function layerPush(point, emit, speed, tool, options) {
         const { type, center } = options ?? {};
-        const dz = (point && lastPush?.point) ? point.z - lastPush.point.z : 0;
-        if (dz < -0.05 && (speed === 0 || speed > plungeRate)) {
-            speed = plungeRate;
-        }
-        if (debug && options?.type !== 'lerp') {
-            console.log(currentOp.type, ...[point.x,point.y,point.z,point.a??0].map(v => v.toFixed(3)));
+        if (debug_push && options?.type !== 'lerp') {
+            console.log(
+                currentOp.type,
+                emit | 0,
+                speed | 0,
+                ...[point.x,point.y,point.z,point.a??0].map(v => v.toFixed(3))
+            );
         }
         layerOut.mode = currentOp;
         if (lasering) {
@@ -363,9 +370,14 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             nextIsMove = false;
         }
 
-        let { moveLen = toolDiamMove, factor = 1, moveOnly = false } = opts ?? {}
+        let {
+            factor = 1,
+            feed = feedRate,
+            moveLen = toolDiamMove,
+            moveOnly = false
+        } = opts ?? {};
         let pointA = point.a;
-        let rate = feedRate * factor;
+        let rate = feed * factor;
 
         // carry rotation forward when not overridden
         if (pointA !== undefined && printPoint.a !== undefined) {
@@ -397,8 +409,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         let deltaXY = printPoint.distTo2D(point),
             deltaZ = point.z - printPoint.z,
             absDeltaZ = Math.abs(deltaZ),
-            hasDeltaXYZ = deltaXY >= 0.001 && absDeltaZ >= 0.001,
-            isMove = (emit === 0),
+            isMove = (emit === 0 || emit === false),
             isCut = (emit !== 0);
 
         // when rapid pluge could cut thru stock:
@@ -421,23 +432,32 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         // no jump moves in contour mode to adjacent slice points
-        let csteady = currentOp.type === 'contour' && Math.abs(point.slice - printPoint.slice) < 4;
+        let csteady = true
+            && contouring
+            && Math.abs(point.slice - printPoint.slice) < 4
+            && absDeltaZ < moveLen
+            ;
 
-        // convert short planar moves to cuts in some cases
-        if (isMove && hasDeltaXYZ && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
-            // restrict this to contouring
-            if (absDeltaZ < 0.001 || (tolerance > 0 && absDeltaZ <= tolerance)) {
+        if (isMove && contouring && deltaZ > moveLen) {
+            if (debug) console.log('contouring Z step', deltaZ);
+            layerPush(printPoint.clone().setZ(point.z), 0, 0, tool);
+            newLayer();
+        } else
+        if (isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
+            // convert short planar moves to cuts in some cases
+            if (absDeltaZ < 0.01 || (tolerance > 0 && absDeltaZ <= tolerance)) {
                 emit = 1;
+                isCut = true;
                 isMove = false;
-            } else if (deltaZ <= -tolerance) {
+            } else
+            // move over before descending
+            if (deltaZ <= -tolerance) {
                 if (debug) console.log('over before descend');
-                // move over before descending
                 layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
-                // new pos for plunge calc
-                deltaXY = 0;
                 newLayer();
             }
-        } else if (isMove && isLathe) {
+        } else
+        if (isMove && isLathe) {
             if (point.z > printPoint.z) {
                 layerPush(printPoint.clone().setZ(point.z), 0, 0, tool);
                 newLayer();
@@ -445,31 +465,30 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
                 newLayer();
             }
-        } else if (isMove && !csteady) {
+        } else
+        if (isMove && !csteady) {
             // for longer moves, check the terrain to see if we need to go up and over
-            const bigXY = (deltaXY > moveLen && !lasering);
-            const bigZ = (deltaZ > toolDiam / 2 && deltaXY > tolerance);
-            const midZ = (tolerance && absDeltaZ >= tolerance) && !isContour;
+            const bigXY = (deltaXY > moveLen && !lasering && !contouring);
+            const bigZ = (absDeltaZ > toolDiam / 2 && deltaXY > tolerance);
+            const midZ = (tolerance && absDeltaZ >= tolerance) && !contouring;
             if (bigXY || bigZ || midZ) {
-                let upNover = camForceZMax || printPoint.z < stockZ;
                 if (debug) console.log({ fromz: printPoint.z, toz: point.z });
-                // up if any point between higher than start/outline, go up first
-                if (upNover) {
+                if (camForceZMax || printPoint.z < stockZ) {
                     if (debug) console.log('upNover', { camForceZMax });
                     layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
                     layerPush(point.clone().setZ(zSafe), 0, 0, tool);
                     newLayer();
-                    // new pos for plunge calc
-                    deltaXY = 0;
                     // when plunge goes below stock, convert to cut
-                    if (emit === 0 && point.z < stockZ) {
+                    if (point.z < stockZ) {
                         if (debug) console.log('emit === 0 && point.z < stockZ');
                         layerPush(point.clone().setZ(stockZ + 0.1), 0, 0, tool);
                         newLayer();
                         emit = 1;
+                        rate = plungeRate;
                     }
                 }
-            } else if (isRough && deltaZ < 0) {
+            } else
+            if (isRough && deltaZ < 0) {
                 if (debug) console.log('isRough && deltaZ < 0');
                 layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
                 newLayer();
@@ -478,6 +497,15 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         if (moveOnly) {
             return;
+        }
+
+        // plunge safety catch
+        if (deltaZ < 0 && !contouring) {
+            if (debug) console.log('deltaZ snap', rate, plungeRate);
+            emit = 1;
+            isCut = true;
+            isMove = false;
+            rate = plungeRate;
         }
 
         layerOut.mode = currentOp;
@@ -577,38 +605,43 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             points = [...points.slice(index), ...points.slice(0,index)];
         }
 
-        let point0 = points[0];
-        if (poly.isClosed()) {
-            points.push(point0);
-        }
-
-        setNextIsMove();
-        camOut(point0, 0, { moveOnly: true });
-
-        // poly points are in untranslated widget space
-        // so we need to translate printPoint into widget coordinates
-        let startPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
-
-        // calculate ease down for poly path output
-        if (camEaseDown && startPoint.z > point0.z) {
-            let zat = startPoint.z;
-            let nupoints = [];
-            let lp;
-            for (let i=0; ; i++) {
-                let ii = i % points.length;
-                let pt = points[ii];
-                if (zat <= pt.z) {
-                    nupoints.push(...points.slice(ii), ...points.slice(0,ii));
-                    points = nupoints;
-                    break;
-                }
-                if (i > 0) {
-                    let dd = lp.distTo2D(pt);
-                    zat = Math.max(pt.z, zat - (dd * easeDzPerMm));
-                }
-                lp = pt.clone().setZ(zat);
-                nupoints.push(lp);
+        // we skip ease-down logic in contouring mode
+        if (!contouring) {
+            let point0 = points[0];
+            if (poly.isClosed()) {
+                points.push(point0);
             }
+
+            setNextIsMove();
+            if (camEaseDown) {
+                camOut(point0, 0, { moveOnly: true });
+                setContouring(true);
+            }
+
+            // poly points are in untranslated widget space
+            // so we need to translate printPoint into widget coordinates
+            let startPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
+
+            // calculate ease down for poly path output
+            if (camEaseDown && startPoint.z > point0.z) {
+                let easeFeed = plungeRate + ((feedRate - plungeRate) * easeThrottle);
+                let zat = startPoint.z;
+                let lp;
+                for (let i=0; ; i++) {
+                    let ii = i % points.length;
+                    let pt = points[ii];
+                    if (zat <= pt.z) {
+                        break;
+                    }
+                    if (i > 0) {
+                        let dd = lp.distTo2D(pt);
+                        zat = Math.max(pt.z, zat - (dd * easeDzPerMm));
+                    }
+                    lp = pt.clone().setZ(zat);
+                    camOut(lp, 1, { feed: easeFeed });
+                }
+            }
+            setContouring(false);
         }
 
         let lastOut;
@@ -723,6 +756,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         poly2polyEmit,
         polyEmit,
         printPoint,
+        setContouring,
         setDrill,
         setLasering,
         setNextIsMove,
@@ -738,6 +772,8 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
     let opTot = widget.camops.map(op => op.weight()).reduce((a, v) => a + v);
 
     for (let op of widget.camops) {
+        contouring = false;
+        lasering = false;
         setTolerance(0);
         setNextIsMove();
         currentOp = op.op;
@@ -745,7 +781,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         isLathe = currentOp.type === 'lathe';
         isRough = currentOp.type === 'rough';
         isPocket = currentOp.type === 'pocket';
-        isContour = currentOp.type === 'contour' || (isPocket && currentOp.contour);
         let weight = op.weight();
         newLayer(op.op);
         ops.printPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
