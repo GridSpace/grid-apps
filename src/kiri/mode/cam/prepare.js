@@ -264,7 +264,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
     function layerPush(point, emit, speed, tool, options) {
         const { type, center } = options ?? {};
         const dz = (point && lastPush?.point) ? point.z - lastPush.point.z : 0;
-        if (dz < -0.05 && speed > plungeRate) {
+        if (dz < -0.05 && (speed === 0 || speed > plungeRate)) {
             speed = plungeRate;
         }
         if (debug && options?.type !== 'lerp') {
@@ -334,7 +334,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
     /**
      * emit a cut or move operation from the current location to a new location
-     * @param {Point} point destination for move
+     * @param {Point} point destination for move in widget coordinate space
      * @param {0|1|2|3} emit G0, G1, G2, G3
      * @param {number} opts.moveLen typically = tool diameter used to trigger terrain detection
      * @param {number} opts.factor speed scale factor
@@ -344,7 +344,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         let lop = lastOp;
         lastOp = currentOp;
 
-        // translate point into workspace coordinates
+        // translate widget point into workspace coordinates
         point = applyWidgetMovement(point);
 
         // on operation changes:
@@ -363,7 +363,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             nextIsMove = false;
         }
 
-        let { moveLen = toolDiamMove, factor = 1 } = opts ?? {}
+        let { moveLen = toolDiamMove, factor = 1, moveOnly = false } = opts ?? {}
         let pointA = point.a;
         let rate = feedRate * factor;
 
@@ -464,7 +464,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                     // when plunge goes below stock, convert to cut
                     if (emit === 0 && point.z < stockZ) {
                         if (debug) console.log('emit === 0 && point.z < stockZ');
-                        layerPush(point.clone().setZ(stockZ + 1), 0, 0, tool);
+                        layerPush(point.clone().setZ(stockZ + 0.1), 0, 0, tool);
                         newLayer();
                         emit = 1;
                     }
@@ -474,6 +474,10 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
                 newLayer();
             }
+        }
+
+        if (moveOnly) {
+            return;
         }
 
         layerOut.mode = currentOp;
@@ -579,6 +583,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         setNextIsMove();
+        camOut(point0, 0, { moveOnly: true });
 
         // poly points are in untranslated widget space
         // so we need to translate printPoint into widget coordinates
