@@ -602,10 +602,15 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * @returns {Point} - the last point emitted (in widget coordinates)
      */
     function polyEmit(poly, index) {
+        let eased = 0;
         let arcing = camArcEnabled && !contouring;
         let points = poly.points;
         if (index) {
             points = [...points.slice(index), ...points.slice(0,index)];
+        }
+
+        if (!contouring && poly.isClosed()) {
+            points.push(points[0].clone());
         }
 
         // run arc detection when enabled
@@ -618,25 +623,22 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             points = poly.points;
         }
 
-        // we skip ease-down logic in contouring mode
-        if (!contouring) {
-            let point0 = points[0];
-            if (poly.isClosed()) {
-                points.push(point0);
-            }
+        setNextIsMove();
 
-            setNextIsMove();
-            if (camEaseDown) {
-                camOut(point0, 0, { moveOnly: true });
-                setContouring(true);
-            }
+        // we skip ease-down logic in contouring mode
+        if (!contouring && camEaseDown) {
+            let point0 = points[0];
+
+            // perform "up and over" and get a new printPoint without "emit"
+            camOut(point0, 0, { moveOnly: true });
+            setContouring(true);
 
             // poly points are in untranslated widget space
             // so we need to translate printPoint into widget coordinates
             let startPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
 
             // calculate ease down for poly path output
-            if (camEaseDown && startPoint.z > point0.z) {
+            if (startPoint.z > point0.z) {
                 let easeFeed = plungeRate + ((feedRate - plungeRate) * easeThrottle);
                 let zat = startPoint.z;
                 let lp;
@@ -644,6 +646,9 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                     let ii = i % points.length;
                     let pt = points[ii];
                     if (zat <= pt.z) {
+                        // rotate points to start at end of ease
+                        points = [...points.slice(i), ...points.slice(0,i)];
+                        eased = i;
                         break;
                     }
                     if (i > 0) {
@@ -654,20 +659,25 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                     camOut(lp, 1, { feed: easeFeed });
                 }
             }
+
+            // resume normal emit rules
             setContouring(false);
         }
 
         let lastOut;
 
-        console.log('poop',points);
+        console.log('XXX',points);
+        // disable arcing when eased b/c it can cause arc misses
         if (arcing) {
             let skip = 0;
             let type;
             let center;
+            let lastP = points.peek();
             for (let point of points) {
                 lastOut = point.clone();
                 if (type) {
-                    skip = skip - 1;
+                    // terminate arc early (caused by ease eating points)
+                    skip = point === lastP ? 0 : skip - 1;
                     camOut(lastOut, skip ? -1 : type, { center, factor: 0.2 });
                     if (!skip) center = type = undefined;
                     continue;
@@ -678,9 +688,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                     center = arc.center.clone().move({ x: -point.x, y: -point.y });
                 }
                 camOut(lastOut);
-            }
-            if (type) {
-                console.log('ENDED WITH ARC', skip);
             }
         } else {
             for (let point of points) {

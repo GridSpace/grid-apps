@@ -767,11 +767,12 @@ export class Polygon {
         }
 
         let i = 0;
-        // Don't try to detect arcs starting at the last point
-        // (not enough points remaining to form a valid arc)
-        while (i < length - 1) {
+        // Process all points except we can't start an arc at the last point
+        // because we need at least minPoints to form an arc
+        while (i < length - minPoints + 1) {
             // Try to detect arc starting at position i
             const arcData = this._detectArcAt(i, points, length, tolerance, arcRes, minPoints);
+            console.log({ test_at: i, arcData });
 
             if (arcData) {
                 // Annotate the starting point
