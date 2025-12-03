@@ -98,7 +98,9 @@ class OpArea extends CamOp {
                     nupolys.push(...expanded.flat());
                 }
             }
-            polys = nupolys;
+            // polys = nupolys;
+            // re-merge after expansion in case it produces overlap
+            polys = POLY.union(nupolys, 0.00001, true);
         }
 
         // process each area separately
@@ -285,7 +287,7 @@ class OpArea extends CamOp {
     prepare(ops, progress) {
         let { op, state, areas, surfaces } = this;
         let { newLayer, pocket, polyEmit, printPoint, tip2tipEmit } = ops;
-        let { setContouring, setSpindle, setTool } = ops;
+        let { setContouring, setNextIsMove, setSpindle, setTool } = ops;
         let { process } = state.settings;
 
         setTool(op.tool, op.rate);
@@ -300,11 +302,14 @@ class OpArea extends CamOp {
                     first: poly.first(),
                     last: poly.last()
                 } });
-                tip2tipEmit(array, printPoint, (next) => {
+                tip2tipEmit(array, printPoint, (next, point) => {
+                    setNextIsMove();
+                    if (next.last === point) next.el.reverse();
                     printPoint = polyEmit(next.el);
                     newLayer();
                 });
             }
+            setContouring(false);
             // skip areas when processing surfaces
             return;
         }
