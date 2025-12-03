@@ -1454,7 +1454,8 @@ export class Polygon {
     }
 
     /**
-     * returns intersections sorted by closest to lp1
+     * given two endpoints of a line
+     * find all intersections sorted by closest to lp1
      */
     intersections(lp1, lp2, deep) {
         let list = [];

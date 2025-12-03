@@ -109,16 +109,16 @@ class OpArea extends CamOp {
         for (let area of polys) {
             let bounds = area.getBounds3D();
 
-            if (devel) newLayer().output()
-                .setLayer("area", { line: 0xff8800 }, false)
-                .addPolys([ area ]);
-
-            newArea();
-
             if (outline) {
                 // remove inner voids when processing outline only
                 area.inner = undefined;
             }
+
+            newLayer().output()
+                .setLayer("area", { line: 0xff8800 }, false)
+                .addPolys([ area ]);
+
+            newArea();
 
             if (mode === 'clear') {
                 let zs = down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];

@@ -126,6 +126,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         toolType,
         toolDiam,
         toolDiamMove,
+        travelBounds,
         spindle = 0,
         spindleMax = device.spindleMax,
         tolerance = 0,
@@ -324,7 +325,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * @param {Point} p - point to move
      * @return {Point} new point with offset applied
      */
-    function applyWidgetMovement(p) {
+    function toWorkCoords(p) {
         return newPoint(
             p.x + wmx,
             p.y + wmy,
@@ -332,6 +333,14 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         )
         .setA(p.a ?? printPoint?.a)
         .annotate({ slice: p.slice });
+    }
+
+    function toWidgetCoords(p) {
+        return newPoint(
+            p.x - wmx,
+            p.y - wmy,
+            p.z - wmz
+        )
     }
 
     /**
@@ -348,7 +357,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         lastOp = currentOp;
 
         // translate widget point into workspace coordinates
-        point = applyWidgetMovement(point);
+        point = toWorkCoords(point);
 
         let {
             factor = 1,
@@ -458,6 +467,20 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 newLayer();
             }
         } else
+        // check move against a known boundary (pocketing)
+        if (isMove && travelBounds) {
+            for (let poly of travelBounds) {
+                let ints = poly.intersections(
+                    toWidgetCoords(printPoint),
+                    toWidgetCoords(point)
+                );
+                if (ints.length) {
+                    if (debug) console.log({ ints, poly, deltaXY, deltaZ });
+                    upAndOver = "bounds";
+                    break;
+                }
+            }
+        } else
         // for longer moves, check the terrain to see if we need to go up and over
         if (isMove) {
             const bigXY = (deltaXY > shortCut && !lasering);
@@ -473,7 +496,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         if (upAndOver) {
-            if (debug) console.log('upAndOver', { camForceZMax });
+            if (debug) console.log('upAndOver', { upAndOver, camForceZMax });
             layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
             layerPush(point.clone().setZ(zSafe), 0, 0, tool);
             newLayer();
@@ -505,10 +528,18 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             emit,
             rate,
             tool,
-            isArc ? { center: applyWidgetMovement(center) } : undefined
+            isArc ? { center: toWorkCoords(center) } : undefined
         );
 
         return point;
+    }
+
+    function setTravelBoundary(polys) {
+        travelBounds = polys;
+    }
+
+    function clearTravelBoundary() {
+        travelBounds = undefined;
     }
 
     /**
@@ -519,7 +550,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * @param {boolean} cutdir true=CW false=CCW
      * @param {boolean} depthFirst prioritize cut depth in pockets by nesting
      */
-    function pocket({ slices, cutdir, depthFirst, easeDown, progress }) {
+    function pocket({ slices, cutdir, depthFirst, progress }) {
         let total = 0;
         let depthData = [];
 
@@ -554,13 +585,19 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         if (depthFirst) {
             descend(depthData);
+            clearTravelBoundary();
         }
     }
 
     function descend(stack, inside) {
         if (stack.length === 0) return;
         let flat = stack[0].filter(poly => !poly.marked);
-        if (inside) flat = flat.filter(p => p.isNested(inside));
+        if (inside) {
+            flat = flat.filter(p => p.isNested(inside));
+            setTravelBoundary([ inside ]);
+        } else {
+            setTravelBoundary(POLY.union(flat, 0, true));
+        }
         flat.sort((a,b) => b.area() - a.area());
         emit_flat(flat);
         for (let poly of flat) {
