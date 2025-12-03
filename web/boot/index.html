@@ -43,6 +43,7 @@
             }
 
             navigator.serviceWorker.controller.postMessage({
+                mode: map.mode,
                 clear: map.clear,
                 disable: map.disable,
                 version: map.version || version

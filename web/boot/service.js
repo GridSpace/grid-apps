@@ -142,9 +142,9 @@ async function _fetch(e) {
     }
 
     if (url.pathname.endsWith("/")) {
-        return e.respondWith(redirectOr404(appendURL(url, 'index.html').pathname));
-    } else if (url.pathname.indexOf(".") < 0) {
-        return e.respondWith(redirectOr404(appendURL(url, '/index.html').pathname));
+        return e.respondWith(redirectToUrl(appendURL(url, 'index.html').pathname, request));
+    } else if (url.pathname.indexOf(".") < 0 || url.pathname.endsWith("/boot")) {
+        return e.respondWith(redirectToUrl(appendURL(url, '/index.html').pathname, request));
     } else {
         e.respondWith(fromCacheOrNetwork(request));
     }
@@ -155,16 +155,9 @@ function appendURL(url, append) {
     return new URL(url.origin + url.pathname + append + url.search);
 }
 
-async function redirectOr404(path) {
-    const cache = await cacheOpen;
-    const hit = await cache.match(path, { ignoreSearch: true });
-    if (hit) {
-        if (debug) log('REDIRECT', path);
-        return Response.redirect(path, 302);
-    } else {
-        if (debug) log('404', path);
-        return new Response('Not Found', { status: 404, statusText: 'Not Found' });
-    }
+async function redirectToUrl(path, request) {
+    if (debug) log('REDIRECT', path);
+    return Response.redirect(path, 302);
 }
 
 async function fromCacheOrNetwork(req) {
