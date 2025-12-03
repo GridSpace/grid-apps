@@ -31,7 +31,9 @@ class OpRough extends CamOp {
         let roughLeave = op.leave || 0;
         let roughLeaveZ = op.leavez || 0;
         let roughStock = op.all && isIndexed;
-        let toolDiam = new Tool(settings, op.tool).fluteDiameter();
+        let roughTool = new Tool(settings, op.tool);
+        let stepOver = roughTool.getStepSize(op.step);
+        let toolDiam = roughTool.fluteDiameter();
         let trueShadow = process.camTrueShadow === true;
         let cutThruBypass = op.down > workarea.top_stock - workarea.bottom_part;
 
@@ -46,11 +48,10 @@ class OpRough extends CamOp {
         // clear the stock above the area to be roughed out
         if (workarea.top_z > workarea.top_part && !cutThruBypass) {
             let shadow = state.shadow.base.clone();
-            let step = toolDiam * op.step;
             let inset = roughStock ?
-                POLY.offset([ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ], step) :
-                POLY.offset(shadow, roughIn ? step : step + roughLeave + toolDiam / 2);
-            let facing = POLY.offset(inset, -step, { count: 999, flat: true });
+                POLY.offset([ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ], stepOver) :
+                POLY.offset(shadow, roughIn ? stepOver : stepOver + roughLeave + toolDiam / 2);
+            let facing = POLY.offset(inset, -stepOver, { count: 999, flat: true });
             let zdiv = ztOff / roughDown;
             let zstep = (zdiv % 1 > 0) ? ztOff / (Math.floor(zdiv) + 1) : roughDown;
             if (ztOff === 0) {
@@ -185,8 +186,8 @@ class OpRough extends CamOp {
             let nest = POLY.setZ(POLY.nest(flat), slice.z);
 
             // inset offset array by 1/2 diameter then by tool overlap %
-            offset = POLY.offset(nest, [-(toolDiam / 2 + roughLeave), -toolDiam * op.step], {
-                minArea: Math.min(0.01, toolDiam * op.step / 4),
+            offset = POLY.offset(nest, [-(toolDiam / 2 + roughLeave), -stepOver], {
+                minArea: Math.min(0.01, stepOver / 4),
                 z: slice.z,
                 count: 999,
                 flat: true,

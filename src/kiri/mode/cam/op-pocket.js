@@ -30,7 +30,7 @@ class OpPocket extends CamOp {
         let pockets = this.pockets = [];
         let camTool = new Tool(settings, tool);
         let toolDiam = camTool.fluteDiameter();
-        let toolOver = toolDiam * op.step;
+        let toolOver = camTool.getStepSize(op.step);
         let cutdir = ov_conv;
         let engrave = contour && op.engrave;
         let zTop = workarea.top_z;
@@ -249,11 +249,11 @@ class OpPocket extends CamOp {
         setSpindle(op.spindle);
 
         if (op.contour) {
-            setContouring(true);
+            setContouring(true, this.contour.step);
         }
 
         if (this.topo) {
-            setTolerance(this.topo.tolerance);
+            setTolerance(this.contour.step);
         }
 
         // eliminate empty pockets

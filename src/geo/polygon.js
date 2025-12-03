@@ -2019,9 +2019,10 @@ export class Polygon {
         });
 
         return {
-            point: closest,
             distance: mindist,
-            index: index
+            point: closest,
+            index: index,
+            poly: this
         };
     }
 

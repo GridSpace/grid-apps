@@ -15,6 +15,7 @@ class Tool {
             this.tool.number = number >= 0 ? number : this.tool.number;
             this.tool.id = id >= 0 ? id : this.tool.id;
         }
+        this.work_units = settings.controller.units === 'mm' ? 1 : 25.4;
     }
 
     getID() {
@@ -31,6 +32,12 @@ class Tool {
 
     getNumber() {
         return this.tool.number;
+    }
+
+    // for taper tips, returns value in tool units
+    // otherwise returns a fraction of the flute diameter in tool units
+    getStepSize(frac) {
+        return (this.hasTaper() ? frac : this.fluteDiameter() * (frac ?? 1)) * this.work_units;
     }
 
     isMetric() {

@@ -30,7 +30,7 @@ class OpArea extends CamOp {
         let areaTool = new Tool(settings, tool);
         let smoothVal = (smooth ?? 0) / 10;
         let toolDiam = areaTool.fluteDiameter();
-        let toolOver = areaTool.hasTaper() ? over : toolDiam * over;
+        let toolOver = areaTool.getStepSize(over);
         let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_z;
         let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : Math.max(workarea.bottom_z, workarea.bottom_part);
 

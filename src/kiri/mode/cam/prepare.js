@@ -11,6 +11,7 @@ import { newPolygon } from '../../../geo/polygon.js';
 
 const debug = false;
 const debug_push = false;
+const CLOSEST_TO_PP = -999;
 
 /**
  * DRIVER PRINT CONTRACT
@@ -157,21 +158,17 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
     }
 
-    function setContouring(bool) {
+    function setContouring(bool, step) {
         contouring = bool;
-    }
-
-    // non-zero means contouring
-    function setTolerance(dist) {
-        tolerance = dist;
-        if (contouring) {
-            // avoid moves to safe Z when contouring short steps
-            toolDiamMove = currentOp.step * toolDiam * 1.5;
-        }
+        toolDiamMove = step ?? tool.getStepSize(currentOp.step) * 2;
     }
 
     function setSpindle(speed) {
         spindle = Math.min(speed, spindleMax);
+    }
+
+    function setTolerance(dist) {
+        tolerance = dist;
     }
 
     function setTool(toolID, feed, plunge) {
@@ -179,7 +176,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             tool = new Tool(settings, toolID);
             toolType = tool.getType();
             toolDiam = tool.fluteDiameter();
-            toolDiamMove = toolType === 'endmill' ? toolDiam * 1.5 : tolerance * 2;
+            toolDiamMove = (tool.hasTaper() ? tolerance ?? toolDiam : toolDiam) * 2;
             lastTool = toolID;
         }
         feedRate = feed || feedRate || plunge;
@@ -341,7 +338,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * emit a cut or move operation from the current location to a new location
      * @param {Point} point destination for move in widget coordinate space
      * @param {-1|0|1|2|3} emit ignore, G0, G1, G2, G3
-     * @param {number} opts.moveLen typically = tool diameter used to trigger terrain detection
+     * @param {number} opts.shortCut used to convert short moves to cuts
      * @param {number} opts.factor speed scale factor
      * @param {Object} opts.center arc center parameter
      * @return {Point} translated emitted point
@@ -352,6 +349,16 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         // translate widget point into workspace coordinates
         point = applyWidgetMovement(point);
+
+        let {
+            factor = 1,
+            feed = feedRate,
+            shortCut = toolDiamMove,
+            moveOnly = false,
+            center,
+        } = opts ?? {};
+        let pointA = point.a;
+        let rate = feed * factor;
 
         // on operation changes:
         // 1. move to safe z of current point preserving angle
@@ -364,20 +371,12 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             newLayer();
         }
 
+        // consume forced next move flag and convert to move
+        // this is usually set right before a `polyEmit`
         if (nextIsMove) {
             emit = 0;
             nextIsMove = false;
         }
-
-        let {
-            factor = 1,
-            feed = feedRate,
-            moveLen = toolDiamMove,
-            moveOnly = false,
-            center,
-        } = opts ?? {};
-        let pointA = point.a;
-        let rate = feed * factor;
 
         // carry rotation forward when not overridden
         if (pointA !== undefined && printPoint.a !== undefined) {
@@ -410,54 +409,46 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             deltaZ = point.z - printPoint.z,
             absDeltaZ = Math.abs(deltaZ),
             isMove = (emit === 0 || emit === false),
-            isCut = (emit !== 0),
-            isArc = (emit > 1);
+            isArc = (emit > 1),
+            upAndOver = false;
 
+        // contouring logic
+        if (isMove && contouring) {
+            if (deltaXY > toolDiamMove) {
+                upAndOver = true;
+            } else if (absDeltaZ < 0.01) {
+                if (debug) console.log('contour move as cut');
+                emit = 1;
+            } else if (absDeltaZ < 0.001) {
+                if (debug) console.log('contour up for travel');
+                layerPush(printPoint.clone().move({ z: 0.1 }), 0, 0, tool);
+                layerPush(point.clone().move({ z: 0.1 }), 0, 0, tool);
+            }
+        } else
         // when rapid pluge could cut thru stock:
         //  * rapid to just above stock
         //  * continue plunge as cut
-        if (deltaZ < 0 && printPoint.z > stockZ && point.z < stockZ && isMove) {
+        if (isMove && deltaZ < 0 && printPoint.z > stockZ && point.z < stockZ) {
             if (debug) console.log('detected plunge cut as rapid move', printPoint.z, stockZ, point.z);
             layerPush(point.clone().setZ(zSafe), 0, 0, tool);
             // change to cutting move for remainder of plunge
             emit = 1;
-            isCut = true;
-            isMove = false;
-            newLayer();
-        }
-
-        // drop points too close together
-        if (!isArc && deltaXY < 0.001 && point.z === printPoint.z && point.a === printPoint.a) {
-            // console.trace(["drop dup",printPoint,point]);
-            return;
-        }
-
-        // no jump moves in contour mode to adjacent slice points
-        let csteady = true
-            && contouring
-            && Math.abs(point.slice - printPoint.slice) < 4
-            && absDeltaZ < moveLen
-            ;
-
-        if (isMove && contouring && deltaZ > moveLen) {
-            if (debug) console.log('contouring Z step', deltaZ);
-            layerPush(printPoint.clone().setZ(point.z), 0, 0, tool);
             newLayer();
         } else
-        if (isMove && deltaXY <= moveLen && deltaZ <= 0 && !lasering) {
-            // convert short planar moves to cuts in some cases
+        // convert short planar moves to cuts when not lasering
+        if (isMove && deltaXY <= shortCut && deltaZ <= 0 && !lasering) {
+            // but only if the z plunge is not too far
             if (absDeltaZ < 0.01 || (tolerance > 0 && absDeltaZ <= tolerance)) {
                 emit = 1;
-                isCut = true;
-                isMove = false;
             } else
-            // move over before descending
+            // otherwise move over before descending
             if (deltaZ <= -tolerance) {
                 if (debug) console.log('over before descend');
                 layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
                 newLayer();
             }
         } else
+        // when moving in lathe mode ...
         if (isMove && isLathe) {
             if (point.z > printPoint.z) {
                 layerPush(printPoint.clone().setZ(point.z), 0, 0, tool);
@@ -467,32 +458,32 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 newLayer();
             }
         } else
-        if (isMove && !csteady) {
-            // for longer moves, check the terrain to see if we need to go up and over
-            const bigXY = (deltaXY > moveLen && !lasering && !contouring);
-            const bigZ = (absDeltaZ > toolDiam / 2 && deltaXY > tolerance);
-            const midZ = (tolerance && absDeltaZ >= tolerance) && !contouring;
+        // for longer moves, check the terrain to see if we need to go up and over
+        if (isMove) {
+            const bigXY = (deltaXY > shortCut && !lasering);
+            const bigZ  = (absDeltaZ > toolDiam / 2 && deltaXY > tolerance);
+            const midZ  = (tolerance && absDeltaZ >= tolerance);
             if (bigXY || bigZ || midZ) {
                 if (debug) console.log({ fromz: printPoint.z, toz: point.z });
+                // for big moves inside stock...
                 if (camForceZMax || printPoint.z < stockZ) {
-                    if (debug) console.log('upNover', { camForceZMax });
-                    layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
-                    layerPush(point.clone().setZ(zSafe), 0, 0, tool);
-                    newLayer();
-                    // when plunge goes below stock, convert to cut
-                    if (point.z < stockZ) {
-                        if (debug) console.log('emit === 0 && point.z < stockZ');
-                        layerPush(point.clone().setZ(stockZ + 0.1), 0, 0, tool);
-                        newLayer();
-                        emit = 1;
-                        rate = plungeRate;
-                    }
+                    upAndOver = true;
                 }
-            } else
-            if (isRough && deltaZ < 0) {
-                if (debug) console.log('isRough && deltaZ < 0');
-                layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
+            }
+        }
+
+        if (upAndOver) {
+            if (debug) console.log('upAndOver', { camForceZMax });
+            layerPush(printPoint.clone().setZ(zSafe), 0, 0, tool);
+            layerPush(point.clone().setZ(zSafe), 0, 0, tool);
+            newLayer();
+            // when plunge goes below stock, convert to cut
+            if (point.z < stockZ) {
+                if (debug) console.log('point.z < stockZ');
+                layerPush(point.clone().setZ(stockZ + 0.1), 0, 0, tool);
                 newLayer();
+                emit = 1;
+                rate = plungeRate;
             }
         }
 
@@ -504,8 +495,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         if (deltaZ < 0 && !contouring) {
             if (debug) console.log('deltaZ snap', rate, plungeRate);
             emit = 1;
-            isCut = true;
-            isMove = false;
             rate = plungeRate;
         }
 
@@ -536,11 +525,10 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         for (let slice of slices) {
             let polys = [], t = [], c = [];
-            POLY.flatten(slice.camLines).forEach(function (poly) {
+            POLY.flatten(slice.camLines).forEach((poly) => {
                 let child = poly.parent;
                 if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
                 if (child) c.push(poly); else t.push(poly);
-                poly.layer = depthData.layer;
                 polys.push(poly);
             });
 
@@ -565,18 +553,33 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         if (depthFirst) {
-            // get inside vals (the positive ones)
-            let ins = depthData.map(a => a.filter(p => !isNeg(p.depth)));
-            let itops = ins.map(level => {
-                return POLY.nest(level.filter(poly => poly.depth === 0).clone());
-            });
-            // get outside vals (the negative ones)
-            let outs = depthData.map(a => a.filter(p => isNeg(p.depth)));
-            let otops = outs.map(level => {
-                return POLY.nest(level.filter(poly => poly.depth === 0).clone());
-            });
-            depthRoughPath(printPoint, 0, ins, itops, polyEmit, false, easeDown);
-            depthRoughPath(printPoint, 0, outs, otops, polyEmit, false, easeDown);
+            descend(depthData);
+        }
+    }
+
+    function descend(stack, inside) {
+        if (stack.length === 0) return;
+        let flat = stack[0].filter(poly => !poly.marked);
+        if (inside) flat = flat.filter(p => p.isNested(inside));
+        flat.sort((a,b) => b.area() - a.area());
+        emit_flat(flat);
+        for (let poly of flat) {
+            descend(stack.slice(1), poly);
+        }
+    }
+
+    function emit_flat(flat) {
+        for (let poly of flat) {
+            if (!poly.marked) {
+                polyEmit(poly, CLOSEST_TO_PP);
+                poly.marked = true;
+                let wpp = getWidgetPrintPoint();
+                let candidates = flat.filter(p => p.isNested(poly))
+                    .map(p => p.findClosestPointTo(wpp))
+                    .sort((a,b) => a.distance - b.distance)
+                    .map(rec => rec.poly);
+                emit_flat(candidates);
+            }
         }
     }
 
@@ -586,6 +589,10 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             weight: camInnerFirst
         });
         newLayer();
+    }
+
+    function getWidgetPrintPoint() {
+        return printPoint.clone().move({ x: -wmx, y: -wmy });
     }
 
     /**
@@ -605,6 +612,11 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         let eased = 0;
         let arcing = camArcEnabled && !contouring;
         let points = poly.points;
+
+        if (index === CLOSEST_TO_PP) {
+            let found = poly.findClosestPointTo(getWidgetPrintPoint());
+            index = found.index;
+        }
         if (index) {
             points = [...points.slice(index), ...points.slice(0,index)];
         }
@@ -666,9 +678,9 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         let lastOut;
 
-        // disable arcing when eased b/c it can cause arc misses
+        // arc output must handle shortened arcs from ease-down
+        // future support for 3d helical arcs will fix this
         if (arcing) {
-            // console.log('arc points',points);
             let skip = 0;
             let type;
             let center;
@@ -705,42 +717,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
     // debug arc creation with visual speed cues
     let xfactors = [0.2,0.5];
-
-    function depthRoughPath(start, depth, levels, tops, emitter, fit, ease) {
-        let level = levels[depth];
-        if (!(level && level.length)) {
-            return start;
-        }
-        let ltops = tops[depth];
-        let fitted = fit ? ltops.filter(poly => poly.isInside(fit, 0.05)) : ltops;
-        let ftops = fitted.filter(top => !top.level_emit);
-        if (ftops.length > 1) {
-            ftops = POLY.route(ftops, start);
-        }
-
-        function roughTopEmit(top, index, count, start) {
-            top.level_emit = true;
-            let inside = level.filter(poly => poly.isInside(top));
-            if (ease) {
-                start.z += ease;
-            }
-            start = poly2polyEmit(inside, start, emitter, { mark: "emark", perm: true, swapdir: false });
-            if (ease) {
-                start.z += ease;
-            }
-            start = depthRoughPath(start, depth + 1, levels, tops, emitter, top, ease);
-            return start;
-        }
-
-        // output fragments (due to tabs) last
-        let frag = ftops.filter(p => p.open);
-        let full = ftops.filter(p => !p.open);
-
-        poly2polyEmit(full, start, roughTopEmit, { mark: "emark", swapdir: false });
-        poly2polyEmit(frag, start, roughTopEmit, { mark: "emark", swapdir: false });
-
-        return start;
-    }
 
     function depthOutlinePath(start, depth, levels, radius, emitter, dir, ease) {
         let bottm = depth < levels.length - 1 ? levels[levels.length - 1] : null;
@@ -798,7 +774,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         addGCode,
         camOut,
         depthOutlinePath,
-        depthRoughPath,
         emitDrills,
         emitTraces,
         newLayer,
