@@ -17,9 +17,10 @@ class OpRough extends CamOp {
         let { op, state } = this;
         let { settings, slicer, addSlices, unsafe, color, widget } = state;
         let { updateToolDiams, thruHoles, tabs, cutTabs, cutPolys } = state;
-        let { ztOff, zMax, shadowAt, isIndexed} = state;
+        let { ztOff, zMax, shadowAt, isIndexed, tshadow } = state;
         let { workarea } = state;
         let { controller, process, stock } = settings;
+        let { devel } = controller;
         let center_off = widget.track.pos ?? { x: 0, y: 0, z: 0};
 
         if (op.down <= 0) {
@@ -139,8 +140,12 @@ class OpRough extends CamOp {
             if (data.z > workarea.top_z) {
                 return;
             }
+            if (devel) data.slice.output()
+                .setLayer("shadow", {line: 0x0066aa})
+                .addPolys(shadow);
             data.shadow = trueShadow ? shadowAt(data.z, lsz) : shadow.clone(true);
             data.slice.shadow = data.shadow;
+            data.slice.tool_shadow = POLY.offset(data.shadow, toolDiam / 2);
             slices.push(data.slice);
             lsz = data.z;
             progress(0.25 + 0.25 * (++cnt / tot));
@@ -245,17 +250,17 @@ class OpRough extends CamOp {
                     for (let point of poly.points) point.z += roughLeaveZ;
                 }
             }
-            if (controller.devel) {
-                if (tabs) slice.output()
+            if (devel) {
+                if (tabs.length) slice.output()
                     .setLayer("tabs clip", {line: 0xaa00aa}, true)
                     .addPolys(tabs.map(tab => tab.off).flat());
                 slice.output()
                     .setLayer("slice", {line: 0xaaaa00}, true)
                     .addPolys(slice.topPolys())
-                    // .setLayer("top shadow", {line: 0x0000aa})
-                    // .addPolys(tshadow)
-                    // .setLayer("rough shadow", {line: 0x00aa00})
-                    // .addPolys(shadow)
+                    .setLayer("top shadow", {line: 0x0066aa})
+                    .addPolys(tshadow)
+                    .setLayer("rough shadow", {line: 0x00aa00})
+                    .addPolys(shadow)
                     .setLayer("shadow clip", {line: 0xaa0000})
                     .addPolys(shell);
             }

@@ -559,6 +559,8 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         for (let slice of slices) {
             let polys = [], t = [], c = [];
+            // use shadow + tool radius offset when available (roughing)
+            polys.shadow = slice.tool_shadow;
             POLY.flatten(slice.camLines).forEach((poly) => {
                 let child = poly.parent;
                 if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
@@ -594,8 +596,11 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
     function descend(stack, inside) {
         if (stack.length === 0) return;
+        let shadow = stack[0].shadow;
         let flat = stack[0].filter(poly => !poly.marked);
-        if (inside) {
+        if (shadow) {
+            setTravelBoundary(shadow);
+        } else if (inside) {
             flat = flat.filter(p => p.isNested(inside));
             setTravelBoundary([ inside ]);
         } else {
