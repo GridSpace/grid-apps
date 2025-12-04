@@ -245,6 +245,7 @@ class OpArea extends CamOp {
                         let { a, b } = line;
                         return [ newPoint(a.x, a.y, 0).toClipper(), newPoint(b.x, b.y, 0).toClipper() ]
                     });
+                    console.log({ sr_type, scan, lines });
                     // use clipper to clip lines to the area polygon
                     let clip = new clib.Clipper();
                     let ctre = new clib.PolyTree();
@@ -259,8 +260,12 @@ class OpArea extends CamOp {
                     paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
                 } else
                 if (sr_type === 'offset') {
-                    // todo: progressive inset from perimeter
-                    console.log({ sr_offset: toolOver });
+                    // progressive inset from perimeter
+                    POLY.offset([ area ], [ -toolDiam / 2, -toolOver ], {
+                        count: 999, outs: paths, flat: true, z: 0, minArea: 0
+                    });
+                    paths.forEach(poly => poly.isClosed() && poly.push(poly.first()));
+                    paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
                 }
 
                 // prepare tool mesh points
@@ -298,6 +303,7 @@ class OpArea extends CamOp {
                 // convert terrain raster output back to open polylines
                 for (let path of output.paths) {
                     path = newPolygon().fromArray([1, ...path]);
+                    if (op.refine) path.refine(op.refine);
                     surface.push(path);
                     newLayer().output()
                         .setLayer(rename ?? "linear", { line: 0x00ff00 }, false)

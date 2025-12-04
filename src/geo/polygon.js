@@ -5,7 +5,7 @@
 import { base, config, earcut, util } from './base.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 import { newBounds } from './bounds.js';
-import { paths } from './paths.js';
+import { calc_normal, calc_vertex, paths } from './paths.js';
 import { newPoint, pointFromClipper } from './point.js';
 import { polygons as POLY } from './polygons.js';
 
@@ -2565,6 +2565,37 @@ export class Polygon {
         return this;
     }
 
+    // walk points noting z deltas and smoothing z sawtooth patterns
+    // used to smooth low-rez surface contouring
+    refine(passes = 0) {
+        for (let j = 0; j < passes; j++) {
+            let points = this.points,
+                length = points.length,
+                sn = [], // segment normals
+                vn = []; // vertex normals
+            for (let i = 0; i < length; i++) {
+                let p1 = points[i];
+                let p2 = points[(i + 1) % length];
+                sn.push(calc_normal(p1, p2));
+            }
+            for (let i = 0; i < length; i++) {
+                let n1 = sn[(i + length - 1) % length];
+                let n2 = sn[i];
+                let vi = calc_vertex(n1, n2, 1);
+                vn.push(vi);
+                let vl = Math.abs(1 - vi.vl).round(2);
+                // vl should be close to zero on smooth / continuous curves
+                // factoring out hard turns, we smooth the z using the weighted
+                // z values of the points before and after the current point
+                if (vl === 0) {
+                    let p0 = points[(i + length - 1) % length];
+                    let p1 = points[i];
+                    let p2 = points[(i + 1) % length];
+                    p1.z = (p0.z + p2.z + p1.z) / 3;
+                }
+            }
+        }
+    }
 }
 
 export function slopeDiff(s1, s2) {

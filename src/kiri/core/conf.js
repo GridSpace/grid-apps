@@ -434,6 +434,7 @@ export const conf = {
                 camAreaSpeed: 1000,
                 camAreaPlunge: 100,
                 camAreaExpand: 0,
+                camAreaRefine: 0,
                 camAreaSmooth: 1,
                 camAreaOutline: false,
                 camContourAngle: 85,
