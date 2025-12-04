@@ -852,20 +852,22 @@ class Widget {
         // find closest shadow above and use to speed up delta shadow gen
         let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
         let minZabove = Math.min(Infinity, ...zover);
-        let shadow = computeShadowAt(this, z, minZabove);
+        let shadow = this.#computeShadowAt(this, z, minZabove);
         if (minZabove < Infinity) {
             shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true);
         }
         return shadows[z] = POLY.setZ(shadow, z);
     }
-}
 
-// union triangles > z (opt cap < ztop) into polygon(s)
-function computeShadowAt(widget, z, ztop) {
-    const geo = widget.cache.geo;
-    const length = geo.length;
-    // cache faces with normals up
-    if (!widget.cache.shadow) {
+    #ensureShadowCache() {
+        // cache faces with normals up
+        if (this.cache.shadow) {
+            return;
+        }
+        const geo = this.cache.geo;
+        const length = geo.length;
+        const bounds = this.getBoundingBox();
+        // const stack = [];
         const faces = [];
         for (let i = 0, ip = 0; i < length; i += 3) {
             const a = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
@@ -875,58 +877,64 @@ function computeShadowAt(widget, z, ztop) {
             if (n.z > 0.001) {
                 faces.push(a, b, c);
             }
+            // const minZ = Math.min(a.z, b.z, c.z);
+            // const maxZ = Math.max(a.z, b.z, c.z);
         }
-        widget.cache.shadow = faces;
+        this.cache.shadow = faces;
     }
-    const found = [];
-    const faces = widget.cache.shadow;
-    for (let i = 0; i < faces.length;) {
-        const a = faces[i++];
-        const b = faces[i++];
-        const c = faces[i++];
-        let where = undefined;
-        if (ztop && a.z > ztop && b.z > ztop && c.z > ztop) {
-            // skip faces over top threshold
-            continue;
-        }
-        if (a.z < z && b.z < z && c.z < z) {
-            // skip faces under threshold
-            continue;
-        } else if (a.z > z && b.z > z && c.z > z) {
-            found.push([a, b, c]);
-        } else {
-            // check faces straddling threshold
-            const where = { under: [], over: [], on: [] };
-            checkOverUnderOn(newPoint(a.x, a.y, a.z), z, where);
-            checkOverUnderOn(newPoint(b.x, b.y, b.z), z, where);
-            checkOverUnderOn(newPoint(c.x, c.y, c.z), z, where);
-            if (where.on.length === 0 && (where.over.length === 2 || where.under.length === 2)) {
-                // compute two point intersections and construct line
-                let line = intersectPoints(where.over, where.under, z);
-                if (line.length === 2) {
-                    if (where.over.length === 2) {
-                        found.push([where.over[1], line[0], line[1]]);
-                        found.push([where.over[0], where.over[1], line[0]]);
+
+    // union triangles > z (opt cap < ztop) into polygon(s)
+    #computeShadowAt(z, ztop) {
+        this.#ensureShadowCache();
+        const found = [];
+        const faces = this.cache.shadow;
+        for (let i = 0; i < faces.length;) {
+            const a = faces[i++];
+            const b = faces[i++];
+            const c = faces[i++];
+            if (ztop && a.z > ztop && b.z > ztop && c.z > ztop) {
+                // skip faces over top threshold
+                continue;
+            }
+            if (a.z < z && b.z < z && c.z < z) {
+                // skip faces under threshold
+                continue;
+            } else if (a.z > z && b.z > z && c.z > z) {
+                found.push([a, b, c]);
+            } else {
+                // check faces straddling threshold
+                const where = { under: [], over: [], on: [] };
+                checkOverUnderOn(newPoint(a.x, a.y, a.z), z, where);
+                checkOverUnderOn(newPoint(b.x, b.y, b.z), z, where);
+                checkOverUnderOn(newPoint(c.x, c.y, c.z), z, where);
+                if (where.on.length === 0 && (where.over.length === 2 || where.under.length === 2)) {
+                    // compute two point intersections and construct line
+                    let line = intersectPoints(where.over, where.under, z);
+                    if (line.length === 2) {
+                        if (where.over.length === 2) {
+                            found.push([where.over[1], line[0], line[1]]);
+                            found.push([where.over[0], where.over[1], line[0]]);
+                        } else {
+                            found.push([where.over[0], line[0], line[1]]);
+                        }
                     } else {
-                        found.push([where.over[0], line[0], line[1]]);
+                        console.log({ msg: "invalid ips", line: line, where: where });
                     }
-                } else {
-                    console.log({ msg: "invalid ips", line: line, where: where });
                 }
             }
         }
+
+        let polys = found.map(a => {
+            return newPolygon()
+                .add(a[0].x, a[0].y, a[0].z)
+                .add(a[1].x, a[1].y, a[1].z)
+                .add(a[2].x, a[2].y, a[2].z);
+        });
+
+        polys = POLY.union(polys, 0, true);
+
+        return polys;
     }
-
-    let polys = found.map(a => {
-        return newPolygon()
-            .add(a[0].x, a[0].y, a[0].z)
-            .add(a[1].x, a[1].y, a[1].z)
-            .add(a[2].x, a[2].y, a[2].z);
-    });
-
-    polys = POLY.union(polys, 0, true);
-
-    return polys;
 }
 
 // Widget Grouping API
