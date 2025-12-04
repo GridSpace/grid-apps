@@ -130,6 +130,11 @@ const LISTS = {
     surftyp: [
         { name: "linear" },
         { name: "offset" },
+    ],
+    direction: [
+        { name: "climb" },
+        { name: "conventional" },
+        { name: "alternating" },
     ]
 };
 

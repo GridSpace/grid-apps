@@ -22,8 +22,8 @@ class OpArea extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, mode, down, over, follow, expand, outline, refine, smooth } = op;
-        let { ov_topz, ov_botz, ov_conv } = op;
+        let { tool, mode, down, over, follow, expand, outline, smooth } = op;
+        let { ov_topz, ov_botz, direction } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
 

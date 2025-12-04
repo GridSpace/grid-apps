@@ -828,6 +828,8 @@ self.lang['en-us'] = {
     ou_feng_l:      "speed scale (0.1-1) when endmill is fully engaged on a new cut. stepped over cuts when the endmill is less than fully engaged run at a factor of 1 relative to output speed. typically this relates to roughing or any operation with step over.",
     ou_eang_s:      "ease angle",
     ou_eang_l:      "descent angle for ease down in degrees",
+    ou_dire_s:      "milling",
+    ou_dire_l:      ["milling direction","climb, conventional, alternating"],
 
     // CAM STOCK
     cs_menu:        "stock",

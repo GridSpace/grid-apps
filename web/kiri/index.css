@@ -189,7 +189,9 @@ th, tr, td, label {
     white-space: nowrap;
 }
 details summary {
+    display: flex;
     list-style: none;
+    padding-left: 0 !important;
 }
 details summary::-webkit-details-marker {
     display: none;
@@ -2431,8 +2433,8 @@ details[open] summary::after {
 }
 .var-row input {
     /* flex: 1 1 auto;   */
-    min-width: 0;    
-    max-width: 7ch; 
+    min-width: 0;
+    max-width: 7ch;
     margin-right: 0;
     margin-bottom: 1px;
     padding-bottom: 1px;
