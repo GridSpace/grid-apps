@@ -35,7 +35,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         camZTop, camZBottom, camZThru, wztop, ztOff, zbOff,
         minToolDiam, maxToolDiam, dark, color, tabs, unsafe, units,
         bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z, bottom_cut,
-        top_stock, top_part, top_gap, top_z, workarea;
+        top_stock, top_part, top_gap, top_z, workarea, tool;
 
     axisRotation = axisIndex = undefined;
     dark = settings.controller.dark;
@@ -49,17 +49,20 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     // allow recomputing later if widget or settings changes
     const var_compute = () => {
         let { camStockX, camStockY, camStockZ, camStockOffset } = proc;
+        ({ camZTop, camZBottom, camZThru } = proc);
         bounds = widget.getBoundingBox();
+        let pos = widget.track.pos;
         stock = camStockOffset ? {
             x: bounds.dim.x + camStockX,
             y: bounds.dim.y + camStockY,
             z: bounds.dim.z + camStockZ,
+            center: newPoint(pos.x, pos.y, pos.z)
         } : {
             x: camStockX,
             y: camStockY,
-            z: camStockZ
+            z: camStockZ,
+            center: newPoint(pos.x, pos.y, pos.z)
         };
-        ({ camZTop, camZBottom, camZThru } = proc);
         track = widget.track;
         wztop = track.top;
         ztOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (stock.z - wztop);
@@ -158,6 +161,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         shadowAt(z) { return widget.shadowAt(z) },
         slicer,
         tabs,
+        tool,
         unsafe,
         updateSlicer,
         updateToolDiams,
@@ -306,11 +310,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             workover.bottom_z = isIndexed ? valz.ov_botz : bottom_stock + valz.ov_botz;
             workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
         }
+        if (valz.tool) {
+            tool = new Tool(settings, valz.tool);
+        }
         let { note, type } = op.op;
         let named = note ? note.split(' ').filter(v => v.charAt(0) === '#') : [];
         let layername = named.length ? named : (note ? `${type} (${note})` : type);
         Object.assign(state, {
             layername,
+            tool,
             zBottom,
             zThru,
             ztOff,
@@ -331,31 +339,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     // reindex
     sliceAll.forEach((slice, index) => slice.index = index);
 
-    // used in printSetup()
-    // used in CAM.prepare.getZClearPath()
-    // add tabs to terrain tops so moves avoid them
-    if (tabs) {
-        state.terrain.forEach(slab => {
-            tabs.forEach(tab => {
-                if (tab.pos.z + tab.dim.z / 2 >= slab.z) {
-                    let all = [...slab.tops, tab.poly];
-                    slab.tops = POLY.union(all, 0, true);
-                    // slab.slice.output()
-                    //     .setLayer("debug-tabs", {line: 0x880088, thin: true })
-                    //     .addPolys(POLY.setZ(slab.tops.clone(true), slab.z), { thin: true });
-                }
-            });
-        });
-    }
-
-    // add shadow perimeter to terrain to catch outside moves off part
-    let tabpoly = tabs ? tabs.map(tab => tab.poly) : [];
-    let allpoly = POLY.union([...state.shadow.base, ...tabpoly], 0, true);
-    let shadowOff = maxToolDiam < 0 ? allpoly :
-        POLY.offset(allpoly, [minToolDiam / 2, maxToolDiam / 2], { count: 2, flat: true, minArea: 0 });
-    state.terrain.forEach(level => level.tops.appendAll(shadowOff));
-
-    widget.terrain = state.skipTerrain ? null : state.terrain;
     widget.minToolDiam = minToolDiam;
     widget.maxToolDiam = maxToolDiam;
 

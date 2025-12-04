@@ -23,7 +23,7 @@ class OpArea extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { tool, mode, down, over, follow, expand, outline, smooth } = op;
-        let { ov_topz, ov_botz, direction } = op;
+        let { ov_topz, ov_botz, direction, rename } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
 
@@ -33,6 +33,8 @@ class OpArea extends CamOp {
         let toolOver = areaTool.getStepSize(over);
         let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_z;
         let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : Math.max(workarea.bottom_z, workarea.bottom_part);
+        let shadowBase = state.shadow.base;
+        let thruHoles = state.shadow.holes;
 
         // also updates tab offsets
         setToolDiam(toolDiam);
@@ -132,6 +134,20 @@ class OpArea extends CamOp {
                     let outs = [];
                     let clip = [];
                     let shadow = await shadowAt(z);
+                    // for roughing backward compatability
+                    if (op.omitthru) {
+                        shadow = shadow.clone(true);
+                        for (let poly of shadow.filter(p => p.inner)) {
+                            poly.inner = poly.inner.filter(inner => {
+                                for (let ho of thruHoles) {
+                                    if (inner.isEquivalent(ho)) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            });
+                        }
+                    }
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
                         count: 999, outs, flat: true, z, minArea: 0
@@ -147,16 +163,27 @@ class OpArea extends CamOp {
                         break outer;
                     }
                     // cut tabs when present
-                    if (tabs) outs = cutTabs(tabs, outs);
+                    if (tabs.length) outs = cutTabs(tabs, outs);
+                    // for roughing backward compatability
+                    if (op.leave_z) {
+                        for (let out of outs)
+                            for (let p of out)
+                                p.z += op.leave_z;
+                    }
+                    if (op.leave_xy) {
+                        outs = outs.map(poly => poly.expand(-op.leave_xy)).flat();
+                    }
                     slice.camLines = outs;
                     zroc += zinc;
                     lzo = z;
                     progress(proc + (pinc * zroc), 'clear');
                     if (devel) layers
-                        .setLayer("shadow", { line: 0x0088ff }, false)
+                        .setLayer("base", { line: 0xff0000 }, false)
+                        .addPolys(shadowBase)
+                        .setLayer("shadow", { line: 0x00ff00 }, false)
                         .addPolys(shadow);
                     layers
-                        .setLayer("clear", { line: 0x88ff00 }, false)
+                        .setLayer(rename ?? "clear", { line: 0x88ff00 }, false)
                         .addPolys(outs);
                     // of the last output still cuts, we need an escape
                     if (z === zs.peek()) {
@@ -171,7 +198,6 @@ class OpArea extends CamOp {
                 let zs = down ? base_util.lerp(zTop, bounds.min.z, down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
-                let lzo;
                 for (let z of zs) {
                     let slice = newLayer();
                     let layers = slice.output();
@@ -192,10 +218,9 @@ class OpArea extends CamOp {
                     if (tabs) outs = cutTabs(tabs, outs);
                     slice.camLines = outs;
                     zroc += zinc;
-                    lzo = z;
                     progress(proc + (pinc * zroc), 'trace');
                     layers
-                        .setLayer("trace", { line: 0x88ff00 }, false)
+                        .setLayer(rename ?? "trace", { line: 0x88ff00 }, false)
                         .addPolys(outs);
                 }
                 proc += pinc;
@@ -272,7 +297,7 @@ class OpArea extends CamOp {
                     path = newPolygon().fromArray([1, ...path]);
                     surface.push(path);
                     newLayer().output()
-                        .setLayer("linear", { line: 0x00ff00 }, false)
+                        .setLayer(rename ?? "linear", { line: 0x00ff00 }, false)
                         .addPolys([ path ]);
                 }
 

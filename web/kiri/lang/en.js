@@ -538,10 +538,6 @@ self.lang['en-us'] = {
     cr_clst_l:      ["in indexed mode, clear entire stock area, not just to part periemter"],
     cr_clrt_s:      "clear top",
     cr_clrt_l:      ["run a clearing pass over","the bounding area of the part","at z = 0"],
-    cr_clrp_s:      "clear voids",
-    cr_clrp_l:      ["mill out through pockets","instead of just the outline"],
-    cr_clrf_s:      "clear faces",
-    cr_clrf_l:      ["interpolate step down to","clear any detected flat areas"],
     cr_olin_s:      "inside only",
     cr_olin_l:      ["limit cutting to","inside part boundaries"],
 

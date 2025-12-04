@@ -120,12 +120,10 @@ export function menu() {
         newButton("reset", originReset),
     ], { class: "ext-buttons f-row" }),
     _____:               newGroup(LANG.op_xprt_s, $('cam-expert'), { group:"cam_expert", modes:CAM, marker: false, driven, separator }),
-    camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, show: () => !ui.camTrueShadow.checked }),
-    camTrueShadow:       newBoolean(LANG.cx_true_s, onBooleanClick, {title:LANG.cx_true_l, show: () => !ui.camExpertFast.checked }),
-    separator:           newBlank({ class:"set-sep", driven }),
-    camArcEnabled:       newBoolean(LANG.cx_arce_s, onBooleanClick, {title:LANG.cx_arce_l}),
+    camArcEnabled:       newBoolean(LANG.cx_arce_s, onBooleanClick, { title:LANG.cx_arce_l }),
     camArcTolerance:     newInput(LANG.cx_arct_s, {title:LANG.cx_arct_l, convert:toFloat, bound:bound(0,100), units, trigger, show:() => ui.camArcEnabled.checked}),
     camArcResolution:    newInput(LANG.cx_arcr_s, {title:LANG.cx_arcr_l, convert:toFloat, bound:bound(0,180), trigger, show:() => ui.camArcEnabled.checked}),
+    camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, { title:LANG.cx_fast_l }),
 
     };
 };
