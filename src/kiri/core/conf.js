@@ -540,7 +540,6 @@ export const conf = {
                 camOutlineWide: false,
                 camPocketContour: false,
                 camPocketDown: 1,
-                camPocketEngrave: false,
                 camPocketExpand: 0,
                 camPocketFollow: 5,
                 camPocketOutline: false,
