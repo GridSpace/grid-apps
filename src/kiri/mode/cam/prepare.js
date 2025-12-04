@@ -850,15 +850,15 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
     for (let op of widget.camops) {
         contouring = false;
         lasering = false;
-        currentOp = op.op;
-        isIndex = currentOp.type === 'index';
-        isLathe = currentOp.type === 'lathe';
+        let cop = currentOp = op.op;
+        isIndex = cop.type === 'index';
+        isLathe = cop.type === 'lathe';
         let weight = op.weight();
-        newLayer(currentOp);
+        newLayer(cop);
         setTolerance(0);
         setNextIsMove();
-        if (op.tool) setTool(op.tool, op.rate ?? feedRate, op.plunge ?? plungeRate);
-        if (op.spindle) setSpindle(op.spindle);
+        if (cop.tool) setTool(cop.tool, cop.rate ?? feedRate, cop.plunge ?? plungeRate);
+        if (cop.spindle) setSpindle(cop.spindle);
         // set printPoint in widget coordinate space
         ops.printPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
         op.prepare(ops, (progress, message) => {
