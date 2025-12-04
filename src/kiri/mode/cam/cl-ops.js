@@ -140,7 +140,7 @@ export function createPopOp(type, map) {
             }
         },
         addNote: () => {
-            if (!op.note && type !== 'flip') {
+            if (!op.note && type !== 'flip' && !op.rec.deprecated) {
                 const divid = `div-${++seed}`;
                 const noteid = `note-${++seed}`;
                 const div = document.createElement('div');
@@ -264,12 +264,8 @@ export function createPopOps() {
         rate: 'camOutlineSpeed',
         plunge: 'camOutlinePlunge',
         dogbones: 'camOutlineDogbone',
-        omitvoid: 'camOutlineOmitVoid',
         omitthru: 'camOutlineOmitThru',
-        outside: 'camOutlineOut',
-        inside: 'camOutlineIn',
         wide: 'camOutlineWide',
-        top: 'camOutlineTop',
         ov_topz: 0,
         ov_botz: 0,
         ov_conv: '~camConventional',
@@ -283,13 +279,8 @@ export function createPopOps() {
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 1.0), show: () => env.popOp.outline.rec.wide }),
         steps: UC.newInput(LANG.cc_sovc_s, { title: LANG.cc_sovc_l, convert: toInt, bound: UC.bound(1, 500), show: () => env.popOp.outline.rec.wide }),
         sep: UC.newBlank({ class: "pop-sep" }),
-        top: UC.newBoolean(LANG.co_clrt_s, undefined, { title: LANG.co_clrt_l }),
-        inside: UC.newBoolean(LANG.co_olin_s, undefined, { title: LANG.co_olin_l, show: (op) => { return !op.inputs.outside.checked } }),
-        outside: UC.newBoolean(LANG.co_olot_s, undefined, { title: LANG.co_olot_l, show: (op) => { return !op.inputs.inside.checked } }),
-        sep: UC.newBlank({ class: "pop-sep" }),
-        omitthru: UC.newBoolean(LANG.co_omit_s, undefined, { title: LANG.co_omit_l, xshow: (op) => { return op.inputs.outside.checked } }),
-        omitvoid: UC.newBoolean(LANG.co_omvd_s, undefined, { title: LANG.co_omvd_l, xshow: (op) => { return op.inputs.outside.checked } }),
-        wide: UC.newBoolean(LANG.co_wide_s, undefined, { title: LANG.co_wide_l, show: (op) => { return !op.inputs.inside.checked } }),
+        omitthru: UC.newBoolean(LANG.co_omit_s, undefined, { title: LANG.co_omit_l }),
+        wide: UC.newBoolean(LANG.co_wide_s, undefined, { title: LANG.co_wide_l }),
         dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, { title: LANG.co_dogb_l, show: (op) => { return !op.inputs.wide.checked } }),
         sep: UC.newBlank({ class: "pop-sep" }),
         exp: UC.newExpand("overrides"),

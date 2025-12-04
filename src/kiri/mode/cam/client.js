@@ -531,10 +531,6 @@ export function opRender() {
 
 export function init() {
 
-    if (api.devel.enabled) {
-        $('op:area').classList.remove('hide');
-    }
-
     api.event.on('tool.mesh.face-normal', normal => {
         // console.log({ env.poppedRec });
         env.poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);

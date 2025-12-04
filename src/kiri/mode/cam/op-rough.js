@@ -10,6 +10,8 @@ class OpRough extends CamOp {
         super(state, op);
     }
 
+    // todo: cutThruBypass
+
     async slice(progress) {
         let { op, state } = this;
         let { shadow, tool, widget } = state;

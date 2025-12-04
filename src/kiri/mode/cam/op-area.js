@@ -1,5 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+// todo: surface offset pattern
+// todo: trace dogbones, merge overlap
+
 import { CamOp } from './op.js';
 import { Tool } from './tool.js';
 import { newSlice } from '../../core/slice.js';

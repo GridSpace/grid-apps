@@ -78,12 +78,10 @@ class OpShadow extends CamOp {
         // TODO: refactor ops to use a unified shadow object
         state.shadow = {
             base: shadowBase,       // computed shadow union at base of part
-            // identify through holes which are inner/child polygons
-            // on the bottom-most layer of the shadow stack (tshadow, index == 0)
             holes: shadowBase.map(p => p.inner || []).flat(),
+            skip: skipTerrain,
+            slices: slices,         // legacy / transitional
             stack: terrain,         // stack of shadow slices
-            slices: slices,        // raw slicer 'data' objects
-            skip: skipTerrain
         };
 
     }

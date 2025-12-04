@@ -326,9 +326,13 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             zTop,
             workarea: workover
         });
+        let operr;
         await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
-        });
+        }).catch(e => operr = e);
+        if (operr) {
+            return error(operr);
+        }
         // update tracker rotation for next slice output() visualization
         tracker.rotation = isIndexed ? axisRotation : 0;
         camOps.push(op);

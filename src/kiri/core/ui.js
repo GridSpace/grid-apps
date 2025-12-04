@@ -434,6 +434,7 @@ function newDiv(opt = {}) {
     (opt.addto || addTo).appendChild(div);
     if (opt.addto) lastDiv = addTo = div;
     if (opt.class) div.setAttribute('class', opt.class);
+    if (opt.content) div.innerHTML = opt.content;
     if (opt.group !== false) {
         lastGroup?.push(div);
         div._group = groupName;
