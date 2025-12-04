@@ -110,7 +110,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         drillLift = 0,
         drillDwell = 0,
         feedRate,
-        isRough,
         isLathe,
         isIndex,
         layerOut = [],
@@ -170,6 +169,10 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
     function setTolerance(dist) {
         tolerance = dist;
+    }
+
+    function getTool() {
+        return tool;
     }
 
     function setTool(toolID, feed, plunge) {
@@ -813,6 +816,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         depthOutlinePath,
         emitDrills,
         emitTraces,
+        getTool,
         newLayer,
         pocket,
         poly2polyEmit,
@@ -831,19 +835,31 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
     };
 
     let opSum = 0;
-    let opTot = widget.camops.map(op => op.weight()).reduce((a, v) => a + v);
+    let opTot = 0;
+
+    // pre-flight check of ops
+    for (let op of widget.camops) {
+        opTot += op.weight();
+        // ensure tool related parameters are available
+        // for the first index call when no tool is specified
+        if (!tool && op.op.tool) {
+            setTool(op.op.tool);
+        }
+    }
 
     for (let op of widget.camops) {
         contouring = false;
         lasering = false;
-        setTolerance(0);
-        setNextIsMove();
         currentOp = op.op;
         isIndex = currentOp.type === 'index';
         isLathe = currentOp.type === 'lathe';
-        isRough = currentOp.type === 'rough';
         let weight = op.weight();
-        newLayer(op.op);
+        newLayer(currentOp);
+        setTolerance(0);
+        setNextIsMove();
+        if (op.tool) setTool(op.tool, op.rate ?? feedRate, op.plunge ?? plungeRate);
+        if (op.spindle) setSpindle(op.spindle);
+        // set printPoint in widget coordinate space
         ops.printPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
         op.prepare(ops, (progress, message) => {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);

@@ -293,11 +293,7 @@ class OpTrace extends CamOp {
 
     prepare(ops, progress) {
         let { op } = this;
-        let { emitTraces, setTool, setSpindle } = ops;
-        let { tool, rate, plunge } = op;
-
-        setTool(tool, rate, plunge);
-        setSpindle(op.spindle);
+        let { emitTraces } = ops;
 
         for (let slice of this.sliceOut) {
             emitTraces(slice.camLines);

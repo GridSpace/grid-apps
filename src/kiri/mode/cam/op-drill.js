@@ -67,7 +67,6 @@ class OpDrill extends CamOp {
 
         setTool(op.tool, undefined, op.rate);
         setDrill(op.down, op.lift, op.dwell);
-        setSpindle(op.spindle);
         emitDrills(sliceOut.map(slice => slice.camLines).flat());
     }
 }

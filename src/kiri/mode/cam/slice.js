@@ -199,10 +199,9 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     async function computeShadows() {
-        // widget.shadows = {};
-        console.log('compute shadows');
+        // console.log('(re)compute shadows');
         await new OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
-            // console.log('reshadow', progress.round(3));
+            // console.log('reshadowing', progress.round(3));
         });
     }
 

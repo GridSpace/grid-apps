@@ -12,6 +12,7 @@ let nextMeshID = 1,
     tool,
     tools,
     last,
+    settings,
     stockZ,
     stockIndexMsg = false,
     stockSlices,
@@ -34,10 +35,10 @@ export function init(worker) {
     const { dispatch } = worker;
 
     dispatch.animate_setup2 = function (data, send) {
-        const { settings } = data;
+        settings = data.settings;
+
         const { controller, process } = settings;
-        const print = worker.current.print;
-        const density = parseInt(settings.controller.animesh) * 1000;
+        const { print } = worker.current;
         const isIndexed = process.camStockIndexed;
 
         pathIndex = 0;
@@ -141,7 +142,7 @@ function renderPath(send) {
     }
 
     const id = toolID;
-    const rezstep = Math.min(tool.maxDiameter(), 1) / 4;
+    const rezstep = tool ? Math.min(tool.maxDiameter(), 1) / 4 : 1;
     // console.log({ rezstep });
 
     if (last) {
@@ -273,7 +274,7 @@ function toolUpdate(toolid, send) {
     if (tool) {
         send.data({ mesh_del: toolID });
     }
-    tool = new Tool({ tools }, toolid);
+    tool = new Tool(settings, toolid);
     const Instance = CSG.Instance();
     const slen = tool.shaftLength() || 15;
     const srad = tool.shaftDiameter() / 2;

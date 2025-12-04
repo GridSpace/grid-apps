@@ -9,14 +9,16 @@ const asLines = false;
 
 let stock, center, grid, gridX, gridY, rez;
 let path, pathIndex, tool, tools, last, toolID = 1;
+let settings;
 
 export function init(worker) {
     const { dispatch } = worker;
 
     dispatch.animate_setup = function(data, send) {
-        const { settings } = data;
+        settings = data.settings;
+
         const { process } = settings;
-        const print = worker.current.print;
+        const { print } = worker.current;
         const density = parseInt(settings.controller.animesh) * 1000;
 
         pathIndex = 0;
@@ -287,7 +289,7 @@ function updateTool(toolobj, send) {
     if (tool) {
         send.data({ mesh_del: toolID });
     }
-    tool = new Tool({ tools }, toolobj.getID());
+    tool = new Tool(settings, toolobj.getID());
     tool.generateProfile(rez);
     const flen = tool.fluteLength() || 15;
     const slen = tool.shaftLength() || 15;

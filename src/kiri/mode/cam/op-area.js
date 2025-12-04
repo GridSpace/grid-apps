@@ -287,11 +287,8 @@ class OpArea extends CamOp {
     prepare(ops, progress) {
         let { op, state, areas, surfaces } = this;
         let { newLayer, pocket, polyEmit, printPoint, tip2tipEmit } = ops;
-        let { setContouring, setNextIsMove, setSpindle, setTool } = ops;
+        let { setContouring, setNextIsMove } = ops;
         let { process } = state.settings;
-
-        setTool(op.tool, op.rate);
-        setSpindle(op.spindle);
 
         // process surface paths
         if (surfaces.length) {

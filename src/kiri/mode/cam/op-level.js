@@ -50,13 +50,10 @@ class OpLevel extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, layers, stepOver } = this;
-        let { setTool, setSpindle, printPoint } = ops;
+        let { layers, stepOver } = this;
+        let { printPoint } = ops;
         let { newLayer, tip2tipEmit, camOut } = ops;
-        let { rate, spindle, tool } = op;
 
-        setTool(tool, rate);
-        setSpindle(spindle);
         for (let lines of layers) {
             lines = lines.map(p => { return { first: p.first(), last: p.last(), poly: p } });
             printPoint = tip2tipEmit(lines, printPoint, (el, point, count) => {
