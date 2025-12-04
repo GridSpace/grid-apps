@@ -265,14 +265,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
 
     let activeOps = proc.ops.filter(op => !op.disabled);
 
-    // silently preface op list with OpShadow
     if (isIndexed) {
+        // preface op list with OpIndex
         if (activeOps.length === 0 || activeOps[0].type !== 'index') {
             opList.push(new OPS.index(state, { type: "index", index: 0 }));
             opTot += opList.peek().weight();
 
         }
     } else {
+        // preface op list with OpShadow
         opList.push(new OPS.shadow(state, { type: "shadow", silent: true }));
         opTot += opList.peek().weight();
     }

@@ -94,7 +94,7 @@ class OpTrace extends CamOp {
                 .setLayer(state.layername, {line: color}, false)
                 .addPolys(slice.camLines)
         }
-        function clearZnew(polys, z, down) {
+        async function clearZnew(polys, z, down) {
             if (down) {
                 // adjust step down to a value <= down that
                 // ends on the lowest z specified
@@ -107,7 +107,7 @@ class OpTrace extends CamOp {
                 // newPocket();
                 for (let z of zs) {
                     let clip = [], shadow;
-                    shadow = shadowAt(z);
+                    shadow = await shadowAt(z);
                     // for cases where the shadow IS the poly like
                     // with lettering without a bounding frame, clip
                     // will fail and we need to restore the matching poly
@@ -286,7 +286,7 @@ class OpTrace extends CamOp {
                     (zmap[z] = zmap[z] || []).appendAll(poly);
                 }
                 for (let [zv, polys] of Object.entries(zmap)) {
-                    clearZnew(polys, parseFloat(zv), down);
+                    await clearZnew(polys, parseFloat(zv), down);
                 }
         }
     }

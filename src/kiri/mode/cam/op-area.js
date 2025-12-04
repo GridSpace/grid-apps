@@ -131,7 +131,7 @@ class OpArea extends CamOp {
                     let layers = slice.output();
                     let outs = [];
                     let clip = [];
-                    let shadow = shadowAt(z);
+                    let shadow = await shadowAt(z);
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
                         count: 999, outs, flat: true, z, minArea: 0

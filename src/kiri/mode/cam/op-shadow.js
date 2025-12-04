@@ -30,7 +30,6 @@ class OpShadow extends CamOp {
 
         let realOps = ops.map(rec => rec.op).filter(op => op);
         let trueShadow = state.settings.process.camTrueShadow === true;
-
         let minStepDown = realOps
             .map(op => (op.down || 3) / (trueShadow ? 1 : 3))
             .reduce((a,v) => Math.min(a, v, 1));
@@ -47,14 +46,13 @@ class OpShadow extends CamOp {
             tzindex = [ tzindex.pop() ];
         }
 
-        let lsz; // only shadow up to bottom of last shadow for progressive union
         let cnt = 0;
         let tot = 0;
 
         // terrain is the "shadow stack" where index 0 = top of part
         // thus array.length -1 = bottom of part
-        let terrain = await slicer.slice(tzindex, { each: data => {
-            let shadow = trueShadow ? shadowAt(data.z, lsz) : [];
+        let terrain = await slicer.slice(tzindex, { each: async data => {
+            let shadow = trueShadow ? await shadowAt(data.z) : [];
             tshadow = POLY.union(tshadow.slice().appendAll(data.tops).appendAll(shadow), 0.01, true);
             tslices.push(data.slice);
             // capture current shadow for this slice
@@ -81,7 +79,6 @@ class OpShadow extends CamOp {
                 //     .setLayer("lines2", {line: 0x444488, thin: true })
                 //     .addLines(p2, { thin: true });
             }
-            lsz = data.z;
             progress(0.5 + 0.5 * (++cnt / tot));
         }, progress: (index, total) => {
             tot = total;

@@ -840,7 +840,7 @@ class Widget {
         this.mesh.visible = false;
     }
 
-    shadowAt(z) {
+    async shadowAt(z) {
         let shadows = this.cache.shadows;
         if (!shadows) {
             shadows = this.cache.shadows = {};
@@ -861,7 +861,7 @@ class Widget {
 }
 
 // union triangles > z (opt cap < ztop) into polygon(s)
-export function computeShadowAt(widget, z, ztop) {
+function computeShadowAt(widget, z, ztop) {
     const geo = widget.cache.geo;
     const length = geo.length;
     // cache faces with normals up

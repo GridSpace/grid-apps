@@ -236,15 +236,18 @@ export class Slicer {
                 // console.log({ oneach: slice, ...track });
             }));
         }
-        const data = (await Promise.all(promises)).flat();
 
-        data.sort((a, b) => b.z - a.z).forEach((rec, i) => {
+        const data = (await Promise.all(promises)).flat();
+        data.sort((a, b) => b.z - a.z);
+
+        for (let i=0; i<data.length; i++) {
+            let rec = data[i];
             rec.tops = rec.polys;
             rec.slice = newSlice(rec.z).addTops(rec.tops);
             if (opt.each) {
-                opt.each(rec, i, data.length);
+                await opt.each(rec, i, data.length);
             }
-        });
+        }
 
         if (threaded) minions.broadcast("cam_slice_cleanup");
         end("slicing");

@@ -128,10 +128,9 @@ class OpRough extends CamOp {
         indices = indices.filter(v => v >= workarea.bottom_z);
         // console.log('indices', ...indices, {zBottom});
 
-        let lsz;
         let cnt = 0;
         let tot = 0;
-        await slicer.slice(indices, { each: data => {
+        await slicer.slice(indices, { each: async data => {
             shadow = unsafe ? data.tops : POLY.union(shadow.slice().appendAll(data.tops), 0.01, true);
             if (flats.indexOf(data.z) >= 0) {
                 // exclude flats injected to complete shadow
@@ -141,13 +140,12 @@ class OpRough extends CamOp {
                 return;
             }
             if (devel) data.slice.output()
-                .setLayer("shadow", {line: 0x0066aa})
+                .setLayer("shadow", {line: 0x00aabb})
                 .addPolys(shadow);
-            data.shadow = trueShadow ? shadowAt(data.z, lsz) : shadow.clone(true);
+            data.shadow = trueShadow ? await shadowAt(data.z) : shadow.clone(true);
             data.slice.shadow = data.shadow;
             data.slice.tool_shadow = POLY.offset(data.shadow, toolDiam / 2);
             slices.push(data.slice);
-            lsz = data.z;
             progress(0.25 + 0.25 * (++cnt / tot));
         }, progress: (index, total) => {
             tot = total;
