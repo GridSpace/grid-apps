@@ -246,7 +246,7 @@ export async function slice(points, options = {}) {
  * @param {number} z offset
  * @param {Obejct} where
  */
-function checkUnderOverOn(p, z, where) {
+export function checkOverUnderOn(p, z, where) {
     let delta = p.z - z;
     if (Math.abs(delta) < config.precision_slice_z) { // on
         where.on.push(p);
@@ -266,7 +266,7 @@ function checkUnderOverOn(p, z, where) {
  * @param {number} z offset
  * @returns {Point} intersection point
  */
-function intersectPoints(over, under, z) {
+export function intersectPoints(over, under, z) {
     let ip = [];
     for (let i = 0; i < over.length; i++) {
         for (let j = 0; j < under.length; j++) {
@@ -279,7 +279,7 @@ function intersectPoints(over, under, z) {
 /**
  * Ensure points are unique with a cache/key algorithm
  */
-function getCachedPoint(phash, p) {
+export function getCachedPoint(phash, p) {
     let cached = phash[p.key];
     if (!cached) {
         phash[p.key] = p;
@@ -301,7 +301,7 @@ function getCachedPoint(phash, p) {
  * @param {boolean} [edge]
  * @returns {Line}
  */
-function makeZLine(phash, p1, p2, coplanar, edge) {
+export function makeZLine(phash, p1, p2, coplanar, edge) {
     p1 = getCachedPoint(phash, p1);
     p2 = getCachedPoint(phash, p2);
     let line = newOrderedLine(p1,p2);
@@ -336,9 +336,9 @@ export async function sliceZ(z, points, options = {}) {
         p2 = points[i++];
         p3 = points[i++];
         let where = {under: [], over: [], on: []};
-        checkUnderOverOn(p1, z, where);
-        checkUnderOverOn(p2, z, where);
-        checkUnderOverOn(p3, z, where);
+        checkOverUnderOn(p1, z, where);
+        checkOverUnderOn(p2, z, where);
+        checkOverUnderOn(p3, z, where);
         if (where.under.length === 3 || where.over.length === 3) {
             // does not intersect (all 3 above or below)
         } else if (where.on.length === 2) {
@@ -871,7 +871,5 @@ export const slicer = {
     slice,
     sliceZ,
     slicePost: {},
-    sliceDedup: removeDuplicateLines,
     sliceConnect
 }
-

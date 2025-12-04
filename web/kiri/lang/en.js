@@ -513,10 +513,10 @@ self.lang['en-us'] = {
 
     // CNC COMMON
     cc_menu:        "limits",
-    cc_rapd_s:      "xy feed",
-    cc_rapd_l:      ["max xy moves feedrate","in workspace units / minute"],
-    cc_rzpd_s:      "z feed",
-    cc_rzpd_l:      ["max z moves feedrate","in workspace units / minute"],
+    cc_rapd_s:      "feed rate",
+    cc_rapd_l:      ["max xy cutting feedrate","in workspace units / minute"],
+    cc_rzpd_s:      "plunge rate",
+    cc_rzpd_l:      ["max z cutting plunge rate","in workspace units / minute"],
 
     // CNC LEVELING
     cc_loff_s:      "z offset",

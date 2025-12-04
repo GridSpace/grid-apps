@@ -9,7 +9,7 @@ import { polygons as POLY } from '../../../geo/polygons.js';
 import { setSliceTracker } from '../../core/slice.js';
 import { ops as OPS } from './ops.js';
 import { Tool } from './tool.js';
-import { Slicer as cam_slicer } from './slicer.js';
+import { Slicer as cam_slicer } from './slicer_cam.js';
 import { CAM } from './driver-be.js';
 
 /**

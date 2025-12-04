@@ -2,12 +2,12 @@
 
 import { base } from '../../geo/base.js';
 import { avgc } from './utils.js';
-import { verticesToPoints } from '../../geo/points.js';
 import { util as mesh_util } from '../../mesh/util.js';
-import { Slicer as cam_slicer } from '../mode/cam/slicer.js';
+import { verticesToPoints } from '../../geo/points.js';
 import { newPoint } from '../../geo/point.js';
 import { newPolygon } from '../../geo/polygon.js';
 import { polygons as POLY } from '../../geo/polygons.js';
+import { checkOverUnderOn, intersectPoints } from '../../geo/slicer.js';
 
 const { inRange, time } = base.util;
 const solid_opacity = 1.0;
@@ -874,14 +874,12 @@ export function computeShadowAt(widget, z, ztop) {
             const n = THREE.computeFaceNormal(a, b, c);
             if (n.z > 0.001) {
                 faces.push(a, b, c);
-                // faces.push(newPoint(...a), newPoint(...b), newPoint(...c));
             }
         }
         widget.cache.shadow = faces;
     }
     const found = [];
     const faces = widget.cache.shadow;
-    const { checkOverUnderOn, intersectPoints } = cam_slicer;
     for (let i = 0; i < faces.length;) {
         const a = faces[i++];
         const b = faces[i++];
