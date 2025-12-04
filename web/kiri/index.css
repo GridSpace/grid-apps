@@ -438,6 +438,9 @@ details[open] summary::after {
 .dark .widopt {
     background-color: #222;
 }
+.dark #camops summary {
+    background-color: var(--blue-0);
+}
 
 /* top menu bar, drop menus */
 #top, #app-name {
@@ -1399,6 +1402,9 @@ details[open] summary::after {
 }
 #camops .set-sep {
     margin-bottom: 4px;
+}
+#camops summary {
+    background-color: var(--blue-4);
 }
 #oplist .clock:hover {
     background-color: var(--blue-2);

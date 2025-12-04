@@ -670,6 +670,8 @@ export function createPopOps() {
         return env.poppedRec.mode === 'surface' && env.poppedRec.sr_type === 'linear';
     }
 
+    const open = true;
+
     createPopOp('area', {
         spindle: 'camAreaSpindle',
         tool: 'camAreaTool',
@@ -710,13 +712,13 @@ export function createPopOps() {
         smooth: UC.newInput(LANG.cp_smoo_s, { title: LANG.cp_smoo_l, convert: toInt, xshow: isSurface }),
         tolerance: UC.newInput(LANG.ou_toll_s, { title: LANG.ou_toll_l, convert: toFloat, bound: UC.bound(0, 10.0), units, round: 4, show: isSurface }),
         sep: UC.newBlank({ class: "pop-sep" }),
-        exp: UC.newExpand("feeds & speeds"),
+        exp: UC.newExpand("feeds & speeds", { open }),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
         plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
         exp_end: UC.endExpand(),
-        exp: UC.newExpand("overrides"),
+        exp: UC.newExpand("overrides", { open }),
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
         ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),

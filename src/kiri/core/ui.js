@@ -444,9 +444,10 @@ function newDiv(opt = {}) {
     return div;
 }
 
-function newExpand(label, opt = {}, opteach = {}) {
+function newExpand(label, opt = {}) {
     let div = DOC.createElement('details');
     div.setAttribute('class', opt.class || 'f-col');
+    if (opt.open) div.setAttribute('open', true);
     addModeControls(div, opt);
 
     let summary = DOC.createElement('summary');
