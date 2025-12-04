@@ -268,6 +268,7 @@ export class Polygon {
     // generate a trace path around the inside of a polygon
     // including inner polys. return the noodle and the remainder
     // of the polygon with the noodle removed (for the next pass)
+    // todo: relocate this code to post.js
     noodle(width) {
         let clone = this.clone(true);
         let ins = clone.offset(width) ?? [];
@@ -278,6 +279,7 @@ export class Polygon {
 
     // generate center crossing point cloud
     // only used for fdm thin-wall type 1 (fdm/post.js)
+    // todo: relocate this code to post.js
     centers(step, z, min, max, opt = {}) {
         let cloud = [],
             bounds = this.bounds,
@@ -2323,7 +2325,8 @@ export class Polygon {
     // for turning a poly with an inner offset into a
     // 3d mesh if and only if the inner has the same
     // circularity and <= num points
-    // primarily used to make chamfers
+    // primarily used to make chamfers in mesh:tool
+    // todo: relocate
     ribbonMesh(swap) {
         if (!(this.inner && this.inner.length === 1)) {
             return undefined;
@@ -2594,6 +2597,44 @@ export class Polygon {
                     p1.z = (p0.z + p2.z + p1.z) / 3;
                 }
             }
+        }
+    }
+
+    addDogbones(dist, reverse) {
+        let poly = this;
+        let open = poly.open;
+        let isCW = poly.isClockwise();
+        if (reverse || poly.parent) isCW = !isCW;
+        let oldpts = poly.points.slice();
+        let lastpt = oldpts[oldpts.length - 1];
+        let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
+        let length = oldpts.length + (open ? 0 : 1);
+        let newpts = [];
+        for (let i = 0; i < length; i++) {
+            let nextpt = oldpts[i % oldpts.length];
+            let nextsl = lastpt.slopeTo(nextpt).toUnit();
+            let adiff = lastsl.angleDiff(nextsl, true);
+            let bdiff = ((adiff < 0 ? (180 - adiff) : (180 + adiff)) / 2) + 180;
+            if (!open || (i > 1 && i < length)) {
+                if (isCW && adiff > 45) {
+                    let newa = newSlopeFromAngle(lastsl.angle + bdiff);
+                    newpts.push(lastpt.projectOnSlope(newa, dist));
+                    newpts.push(lastpt.clone());
+                } else if (!isCW && adiff < -45) {
+                    let newa = newSlopeFromAngle(lastsl.angle - bdiff);
+                    newpts.push(lastpt.projectOnSlope(newa, dist));
+                    newpts.push(lastpt.clone());
+                }
+            }
+            lastsl = nextsl;
+            lastpt = nextpt;
+            if (i < oldpts.length) {
+                newpts.push(nextpt);
+            }
+        }
+        poly.points = newpts;
+        if (poly.inner) {
+            poly.inner.forEach(inner => inner.addDogbones(dist, true));
         }
     }
 }

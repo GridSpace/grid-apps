@@ -349,46 +349,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     ondone();
 };
 
-export function addDogbones(poly, dist, reverse) {
-    if (Array.isArray(poly)) {
-        return poly.forEach(p => addDogbones(p, dist));
-    }
-    let open = poly.open;
-    let isCW = poly.isClockwise();
-    if (reverse || poly.parent) isCW = !isCW;
-    let oldpts = poly.points.slice();
-    let lastpt = oldpts[oldpts.length - 1];
-    let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
-    let length = oldpts.length + (open ? 0 : 1);
-    let newpts = [];
-    for (let i = 0; i < length; i++) {
-        let nextpt = oldpts[i % oldpts.length];
-        let nextsl = lastpt.slopeTo(nextpt).toUnit();
-        let adiff = lastsl.angleDiff(nextsl, true);
-        let bdiff = ((adiff < 0 ? (180 - adiff) : (180 + adiff)) / 2) + 180;
-        if (!open || (i > 1 && i < length)) {
-            if (isCW && adiff > 45) {
-                let newa = newSlopeFromAngle(lastsl.angle + bdiff);
-                newpts.push(lastpt.projectOnSlope(newa, dist));
-                newpts.push(lastpt.clone());
-            } else if (!isCW && adiff < -45) {
-                let newa = newSlopeFromAngle(lastsl.angle - bdiff);
-                newpts.push(lastpt.projectOnSlope(newa, dist));
-                newpts.push(lastpt.clone());
-            }
-        }
-        lastsl = nextsl;
-        lastpt = nextpt;
-        if (i < oldpts.length) {
-            newpts.push(nextpt);
-        }
-    }
-    poly.points = newpts;
-    if (poly.inner) {
-        addDogbones(poly.inner, dist, true);
-    }
-};
-
 export async function traces(settings, widget) {
     if (widget.traces) {
         return false;

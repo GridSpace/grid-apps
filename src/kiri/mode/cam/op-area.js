@@ -206,9 +206,11 @@ class OpArea extends CamOp {
                     let layers = slice.output();
                     let outs = [];
                     if (tr_type === 'none') {
+                        // todo: move this out of the zs loop and only setZ when needed
                         area = area.clone(true);
                         outs = [ zs.length > 1 ? area.setZ(z) : area ];
                     } else {
+                        // todo: move this out of the zs loop
                         POLY.offset([ area ], tr_type === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
                             count: 1, outs, flat: true, z, minArea: 0
                         });
@@ -217,6 +219,8 @@ class OpArea extends CamOp {
                         // terminate z descent when no further output possible
                         break;
                     }
+                    // add dogbones when specified
+                    if (op.dogbones) outs.forEach(out => out.addDogbones(toolDiam / 5, op.revbones));
                     // cut tabs when present
                     if (tabs) outs = cutTabs(tabs, outs);
                     slice.camLines = outs;

@@ -17,21 +17,23 @@ class OpOutline extends CamOp {
         let shadowBase = shadow.base;
         let areas = POLY.expand(shadowBase, tool.fluteDiameter() / 2);
         let cutout = {
-            rename: op.rename ?? "outline",
-            spindle: op.spindle,
-            tool: op.tool,
-            rate: op.rate,
-            plunge: op.plunge,
-            mode: 'trace',
-            tr_type: 'none',
+            areas: { [widget.id]: areas.map(p => p.toArray()) },
+            dogbones: op.dogbones,
             down: op.down,
             expand: 0,
-            smooth: 1,
+            mode: 'trace',
             outline: !op.omitthru,
             ov_botz: op.ov_botz,
             ov_topz: op.ov_topz,
-            areas: { [widget.id]: areas.map(p => p.toArray()) },
-            surfaces: {}
+            plunge: op.plunge,
+            rate: op.rate,
+            rename: op.rename ?? "outline",
+            revbones: op.revbones,
+            smooth: 1,
+            spindle: op.spindle,
+            surfaces: {},
+            tool: op.tool,
+            tr_type: 'none',
         };
         this.op_cutout = new OpArea(state, cutout);
         return this.op_cutout.slice(progress);
