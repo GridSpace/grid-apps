@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-const HPI = Math.PI / 2;
 const RAD2DEG = 180 / Math.PI;
+const DEG2RAD = Math.PI / 180;
 
 class Tool {
     constructor(settings, id, number) {
@@ -49,7 +49,8 @@ class Tool {
     }
 
     fluteLength() {
-        return this.unitScale() * this.tool.flute_len;
+        let len = this.unitScale() * this.tool.flute_len;
+        return this.isTaperBall() ? len + this.getTaperBallExtent() : len;
     }
 
     fluteDiameter() {
@@ -73,13 +74,20 @@ class Tool {
         return diam ? diam * step : step;
     }
 
-    setTaperLengthFromAngle(angle) {
-        const rad = (this.flute_diam - this.taper_tip) / 2;
-        return this.flute_len = calcTaperLength(rad, angle);
-    }
+    // setTaperLengthFromAngle(angle) {
+    //     const rad = (this.flute_diam - this.taper_tip) / 2;
+    //     return this.flute_len = calcTaperLength(rad, angle);
+    // }
 
     getTaperAngle() {
         return calcTaperAngle((this.flute_diam - this.taper_tip) / 2, this.flute_len);
+    }
+
+    getTaperBallExtent() {
+        let rad = this.tipDiameter() / 2;
+        let ang = this.getTaperAngle() * DEG2RAD;
+        console.log({ rad, ang });
+        return calcTaperBallExtent(rad, ang);
     }
 
     shaftLength() {
@@ -109,12 +117,16 @@ class Tool {
         return this.tool.type === "tapermill";
     }
 
+    isTaperBall() {
+        return this.tool.type === "taperball";
+    }
+
     isDrill() {
         return this.tool.type === "drill";
     }
 
     hasTaper() {
-        return this.isTaperMill();
+        return this.isTaperMill() || this.isTaperBall();
     }
 
     /**
@@ -129,53 +141,69 @@ class Tool {
     generateProfile(resolution) {
         // generate tool profile
         let ball = this.isBallMill(),
+            taperball = this.isTaperBall(),
             taper = this.hasTaper(),
             drill = this.isDrill(),
             tip_diameter = this.tipDiameter(),
-            drill_tip_length = this.drillTipLength(),
-            shaft_offset = this.fluteLength(),
             flute_diameter = this.fluteDiameter(),
+            flute_length = this.fluteLength(),
+            flute_radius = flute_diameter / 2,
             shaft_diameter = Math.max(flute_diameter, this.shaftDiameter()),
             max_diameter = Math.max(flute_diameter, shaft_diameter),
-            shaft_pix_float = max_diameter / resolution,
-            shaft_pix_int = Math.round(shaft_pix_float),
-            shaft_radius_pix_float = shaft_pix_float / 2,
-            flute_radius = flute_diameter / 2,
-            flute_pix_float = flute_diameter / resolution,
-            flute_radius_pix_float = flute_pix_float / 2,
-            tip_pix_float = tip_diameter / resolution,
-            tip_radius_pix_float = tip_pix_float / 2,
-            tip_max_radius_offset = flute_radius_pix_float - tip_radius_pix_float,
-            profile_pix_iter = shaft_pix_int + (1 - shaft_pix_int % 2),
-            toolCenter = (shaft_pix_int - (shaft_pix_int % 2)) / 2,
+            taper_ball_add = taper ? this.getTaperBallExtent() : 0,
+            pix_taper_ball_add = taper_ball_add / resolution,
+            pix_shaft_dia_float = max_diameter / resolution,
+            pix_shaft_dia_int = Math.round(pix_shaft_dia_float),
+            pix_shaft_rad_float = pix_shaft_dia_float / 2,
+            pix_flute_dia_float = flute_diameter / resolution,
+            pix_flute_rad_float = pix_flute_dia_float / 2,
+            pix_tip_dia_float = tip_diameter / resolution,
+            pix_tip_rad_float = pix_tip_dia_float / 2,
+            tip_max_radius_offset = pix_flute_rad_float - pix_tip_rad_float,
+            pix_profile_iter = pix_shaft_dia_int + (1 - pix_shaft_dia_int % 2),
+            toolCenter = (pix_shaft_dia_int - (pix_shaft_dia_int % 2)) / 2,
             toolOffset = [],
             larger_shaft = shaft_diameter - flute_diameter > 0.001,
-            rpixsq = flute_radius_pix_float * flute_radius_pix_float,
+            ball_radius = taperball ? tip_diameter / 2 : 0,
+            pix_ball_rad_float = taperball ? pix_tip_rad_float : 0,
+            taper_length = taperball ? flute_length - ball_radius : flute_length,
             maxo = -Infinity;
-
+console.log({ flute_length, flute_radius, tip_diameter, taper_ball_add });
         // for each point in tool profile, check inside radius
-        for (let x = 0; x < profile_pix_iter; x++) {
-            for (let y = 0; y < profile_pix_iter; y++) {
+        for (let x = 0; x < pix_profile_iter; x++) {
+            for (let y = 0; y < pix_profile_iter; y++) {
                 let dx = x - toolCenter,
                     dy = y - toolCenter,
                     dist_from_center = Math.sqrt(dx * dx + dy * dy);
-                if (dist_from_center <= flute_radius_pix_float) { // if xy point inside flute radius
+                if (dist_from_center <= pix_flute_rad_float) { // if xy point inside flute radius
                     maxo = Math.max(maxo, dx, dy);
                     // flute offset points
                     let z_offset = 0;
                     if (ball) {
-                        let rd = dist_from_center * dist_from_center;
-                        z_offset = Math.sqrt(rpixsq - rd) * resolution - flute_radius;
-                        // z_offset = (1 - Math.cos((dist_from_center / flute_radius_pix_float) * HPI)) * -flute_radius;
-                    } else if (taper && dist_from_center >= tip_radius_pix_float) {// if tapered and not in the flat tip radius
-                        z_offset = ((dist_from_center - tip_radius_pix_float) / tip_max_radius_offset) * -shaft_offset;
+                        let ball_rad_sq = dist_from_center * dist_from_center;
+                        let ball_rpixsq = pix_flute_rad_float * pix_flute_rad_float;
+                        z_offset = Math.sqrt(ball_rpixsq - ball_rad_sq) * resolution - flute_radius;
+                    } else if (taperball) {
+                        // taperball: spherical tip, conical above
+                        if (dist_from_center <= pix_taper_ball_add) {
+                            // inside ball radius - spherical surface
+                            let ball_rad_sq = dist_from_center * dist_from_center;
+                            let ball_rpixsq = pix_ball_rad_float * pix_ball_rad_float;
+                            z_offset = Math.sqrt(ball_rpixsq - ball_rad_sq) * resolution;
+                        } else {
+                            // outside ball radius - conical taper
+                            z_offset = ((dist_from_center - pix_tip_rad_float) / tip_max_radius_offset) * -taper_length;
+                        }
+                    } else if (taper && dist_from_center >= pix_tip_rad_float) {
+                        // if tapered and not in the flat tip radius
+                        z_offset = ((dist_from_center - pix_tip_rad_float) / tip_max_radius_offset) * -flute_length;
                     } else if (drill) {
                         z_offset = -dist_from_center / 45;
                     }
                     toolOffset.push(dx, dy, z_offset);
-                } else if (shaft_offset && larger_shaft && dist_from_center <= shaft_radius_pix_float) {
+                } else if (flute_length && larger_shaft && dist_from_center <= pix_shaft_rad_float) {
                     // shaft offset points
-                    toolOffset.push(dx, dy, -shaft_offset);
+                    toolOffset.push(dx, dy, -flute_length);
                 }
             }
         }
@@ -187,7 +215,7 @@ class Tool {
         this.profile = profile;
         this.profileDim = {
             size: shaft_diameter,
-            pix: profile_pix_iter + 2,
+            pix: pix_profile_iter + 2,
             maxo
         };
 
@@ -197,19 +225,24 @@ class Tool {
 
 function calcTaperAngle(rad, len) {
     return (Math.atan(rad / len) * RAD2DEG);
-};
+}
 
 function calcTaperLength(rad, angle) {
     return (rad / Math.tan(angle));
-};
+}
+
+function calcTaperBallExtent(rad, angle) {
+    return rad * (1 - Math.sin(angle * 2));
+}
 
 function getToolDiameter(settings, id) {
     return new Tool(settings, id).fluteDiameter();
-};
+}
 
 export {
     Tool,
     calcTaperAngle,
+    calcTaperBallExtent,
     calcTaperLength,
     getToolDiameter
 };

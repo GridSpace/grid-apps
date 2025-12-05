@@ -4,7 +4,7 @@ import { $ } from '../../../moto/webui.js';
 import { api } from '../../core/api.js';
 import { consts } from '../../core/consts.js';
 import { settings as setconf } from '../../core/settings.js';
-import { calcTaperLength, calcTaperAngle } from './tool.js';
+import { Tool, calcTaperAngle, calcTaperBallExtent, calcTaperLength } from './tool.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -12,8 +12,7 @@ let { MODES } = consts,
     DOC = document,
     selectedTool = null,
     editTools = null,
-    maxTool = 0,
-    toolNames = ['endmill','ballmill','tapermill','drill'];
+    maxTool = 0;
 
 function settings() {
     return api.conf.get();
@@ -60,17 +59,19 @@ function selectTool(tool) {
         toolTaperTip: ui.toolTaperTip,
     });
 
-    if (tool.type === 'tapermill') {
+    if (tool.type === 'tapermill' || tool.type === 'taperball') {
+        const ballRadius = tool.type === 'taperball' ? tool.taper_tip / 2 : 0;
+        const taperLen = tool.flute_len - ballRadius;
         ui.toolTaperAngle.value =
             selectedTool.taper_angle =
-            calcTaperAngle( (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len ).round(1);
+            calcTaperAngle( (tool.flute_diam - tool.taper_tip) / 2, taperLen ).round(1);
     } else if (tool === 'drill') {
         ui.toolTaperAngle.value = selectedTool.taper_angle = 90;
     } else {
         ui.toolTaperAngle.value = selectedTool.taper_angle = 0;
     }
 
-    renderTool(tool);
+    renderTool2(tool);
 }
 
 export function updateTool(ev) {
@@ -105,7 +106,7 @@ export function updateTool(ev) {
     selectedTool.name = changed.toolName;
     selectedTool.type = changed.toolType;
     selectedTool.number = changed.toolNum;
-    selectedTool.metric = changed.metric;
+    selectedTool.metric = changed.toolMetric;
     selectedTool.shaft_diam = changed.toolShaftDiam;
     selectedTool.shaft_len = changed.toolShaftLen;
     selectedTool.flute_diam = changed.toolFluteDiam;
@@ -113,18 +114,21 @@ export function updateTool(ev) {
     selectedTool.taper_angle = changed.toolTaperAngle;
     selectedTool.taper_tip = changed.toolTaperTip;
 
-    if (selectedTool.type === 'tapermill') {
+    if (selectedTool.type === 'tapermill' || selectedTool.type === 'taperball') {
         const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
+        const ballRadius = selectedTool.type === 'taperball' ? selectedTool.taper_tip / 2 : 0;
+
         if (ev && ev.target === ui.toolTaperAngle) {
             const angle = parseFloat(ev.target.value || 5);
             const len = calcTaperLength(rad, angle * DEG2RAD);
-            selectedTool.flute_len = len;
+            selectedTool.flute_len = len + ballRadius;
             ui.toolTaperAngle.value = angle.round(1);
             ui.toolFluteLen.value = selectedTool.flute_len.round(4);
         } else {
+            const taperLen = selectedTool.flute_len - ballRadius;
             ui.toolTaperAngle.value =
                 selectedTool.taper_angle =
-                calcTaperAngle(rad, selectedTool.flute_len).round(1);
+                calcTaperAngle(rad, taperLen).round(1);
         }
     } else {
         ui.toolTaperAngle.value = selectedTool.taper_angle = 0;
@@ -132,7 +136,7 @@ export function updateTool(ev) {
 
     renderTools();
     setToolChanged(true);
-    renderTool(selectedTool);
+    renderTool2(selectedTool);
 }
 
 function otag(o) {
@@ -157,11 +161,12 @@ function otag(o) {
 function renderTool(tool) {
     const { ui } = api;
     let type = selectedTool.type;
-    let taper = type=== 'tapermill'
-    let drill = type === 'drill'
-    const drillAngleRad = 140 * Math.PI / 180
-    ui.toolTaperAngle.disabled = taper ? undefined : 'true';
-    ui.toolTaperTip.disabled = taper ? undefined : 'true';
+    let taper = type === 'tapermill';
+    let taperball = type === 'taperball';
+    let drill = type === 'drill';
+    const drillAngleRad = 140 * Math.PI / 180;
+    ui.toolTaperAngle.disabled = (taper || taperball) ? undefined : 'true';
+    ui.toolTaperTip.disabled = (taper || taperball) ? undefined : 'true';
     $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
     setTimeout(() => {
         let svg = $('tool-svg'),
@@ -210,6 +215,33 @@ function renderTool(tool) {
                 `L ${dim.w - off.x - taper_off} ${yoff + flute_len}`,
                 `L ${dim.w - off.x - flute_off} ${yoff}`,
                 `z`
+            ].join('\n')}});
+        } else if (taperball) {
+            // taper ball: taper body + ball tip at bottom
+            let yoff = off.y + shaft_len;
+            let ball_radius = tool.taper_tip / 2;
+            let ball_radius_pix = ball_radius * units;
+            let taper_len_pix = flute_len - ball_radius_pix;
+            let yball = yoff + taper_len_pix;
+            let rad = ball_radius_pix;
+            let xstart = off.x + flute_off;
+            let xend = dim.w - off.x - flute_off;
+            let xtip_left = off.x + taper_off;
+            let xtip_right = dim.w - off.x - taper_off;
+
+            // draw taper trapezoid down to where ball starts
+            parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
+                `M ${xstart} ${yoff}`,
+                `L ${xtip_left} ${yball}`,
+                `L ${xtip_right} ${yball}`,
+                `L ${xend} ${yoff}`,
+                `z`
+            ].join('\n')}});
+
+            // draw ball arc at bottom
+            parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
+                `M ${xtip_left} ${yball}`,
+                `A ${rad} ${rad} 0 0 0 ${xtip_right} ${yball}`,
             ].join('\n')}});
         } else if(drill){
             const x1 = off.x + flute_off,
@@ -272,6 +304,79 @@ function renderTool(tool) {
                 // `L ${off.x + flute_off} ${yoff}`
             ].join('\n')}})
         }
+        svg.innerHTML = otag(parts);
+    }, 10);
+}
+
+function renderTool2(tool) {
+    const { ui } = api;
+    $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
+    setTimeout(() => {
+        let svg = $('tool-svg');
+        let pad = 10;
+        let dim = { w: svg.clientWidth, h: svg.clientHeight };
+        let max = { w: dim.w - pad * 2, h: dim.h - pad * 2 };
+        let off = { x: pad, y: pad };
+
+        // Create Tool instance and generate profile
+        const toolInst = new Tool(settings(), tool.id);
+        const resolution = (toolInst.maxDiameter() / toolInst.unitScale()) / 20;
+        toolInst.generateProfile(resolution);
+
+        const profile = toolInst.profile;
+        const { pix } = toolInst.profileDim;
+        const center = Math.floor(pix / 2);
+
+        console.log({ profile });
+
+        // Extract cross-section at y=0 (center line)
+        // Profile is stored as [dx, dy, z_offset, dx, dy, z_offset, ...]
+        let crossSection = [];
+        for (let i = 0; i < profile.length; i += 3) {
+            let dx = profile[i];
+            let dy = profile[i + 1];
+            let z = profile[i + 2];
+
+            // Only take points where dy is approximately 0 (center line)
+            if (Math.abs(dy) < 0.01) {
+                crossSection.push({ x: dx * resolution, z });
+            }
+        }
+
+        // Find bounds
+        let minZ = Math.min(...crossSection.map(p => p.z), -toolInst.fluteLength());
+        let maxZ = Math.max(...crossSection.map(p => p.z), 0);
+        let minX = Math.min(...crossSection.map(p => p.x));
+        let maxX = Math.max(...crossSection.map(p => p.x));
+
+        let zRange = maxZ - minZ;
+        let xRange = maxX - minX;
+
+        // Scale to fit
+        let scale = Math.min(max.h / zRange, max.w / xRange);
+
+        console.log(JSON.stringify({ scale, minX, maxX, xRange, minZ, maxZ, zRange }));
+
+        // Draw vertical lines for each point
+        let parts = [];
+        let stroke = "#777777";
+        let stroke_width = 1;
+
+        crossSection.forEach(p => {
+            let x = off.x + (p.x - minX) * scale;
+            let y1 = off.y + max.h;  // bottom (tip of tool)
+            let y2 = off.y + max.h - (p.z - minZ) * scale;
+
+            parts.push({ line: {
+                x1: x,
+                y1: y1,
+                x2: x,
+                y2: y2,
+                stroke,
+                stroke_width
+            }});
+        });
+
         svg.innerHTML = otag(parts);
     }, 10);
 }

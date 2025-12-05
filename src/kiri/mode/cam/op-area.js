@@ -254,7 +254,6 @@ class OpArea extends CamOp {
                         let { a, b } = line;
                         return [ newPoint(a.x, a.y, 0).toClipper(), newPoint(b.x, b.y, 0).toClipper() ]
                     });
-                    console.log({ sr_type, scan, lines });
                     // use clipper to clip lines to the area polygon
                     let clip = new clib.Clipper();
                     let ctre = new clib.PolyTree();

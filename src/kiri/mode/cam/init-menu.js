@@ -40,7 +40,7 @@ export function menu() {
     /** Tool Editor Menu */
 
     _____:               uc.setGroup($('tool-details')),
-    toolName:            newInput('name', { title:'tool name', id: 'tool-name', size:0 }),
+    toolName:            newInput('name', { title:'tool name', id: 'tool-name', size: 0, text: true }),
     toolType:            newSelect('type', { title: 'tool type', id: 'tool-type', action:updateTool }, "camtool"),
     toolNum:             newInput('tool #', { title:'tool number', id: 'tool-num', convert: toInt }),
     toolMetric:          newBoolean('metric', updateTool, { title: 'metric', id: 'tool-metric' }),

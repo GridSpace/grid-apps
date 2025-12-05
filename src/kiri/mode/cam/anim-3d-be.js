@@ -287,6 +287,16 @@ function toolUpdate(toolid, send) {
         mesh = cylinder(tlen - frad * 2, frad, frad, 20, true)
             .add(sphere(frad, 20).translate(0, 0, -(tlen - frad * 2) / 2))
             .add(cylinder(slen, srad, srad, 20, true).translate(0, 0, flen / 2));
+    } else if (tool.isTaperBall()) {
+        const trad = Math.max(tool.tipDiameter() / 2, 0.001);
+        const brad = trad; // ball radius equals tip radius
+        const taperLen = flen - brad; // taper length excludes ball
+        // shaft at top
+        mesh = cylinder(slen, srad, srad, 20, true).translate(0, 0, slen / 2)
+            // taper cone in middle
+            .add(cylinder(taperLen, trad, frad, 20, true).translate(0, 0, -taperLen / 2))
+            // ball at bottom
+            .add(sphere(brad, 20).translate(0, 0, -(taperLen + brad)));
     } else if (tool.isTaperMill()) {
         const trad = Math.max(tool.tipDiameter() / 2, 0.001);
         mesh = cylinder(slen, srad, srad, 20, true).translate(0, 0, slen / 2)
