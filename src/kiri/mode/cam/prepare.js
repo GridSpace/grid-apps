@@ -66,7 +66,7 @@ export async function cam_prepare(widgets, settings, update) {
             moves: true,
             other: "moving",
             action: "milling",
-            maxspeed: settings.process.camFastFeed || 6000
+            // maxspeed: settings.process.camFastFeed || 6000
         }
     );
 };

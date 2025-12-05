@@ -29,7 +29,7 @@ class OpRough extends CamOp {
             shadowBase = [ newPolygon().centerRectangle(stock.center, stock.x, stock.y) ];
         }
 
-        let areas = POLY.expand(shadowBase, tool.fluteDiameter() / 2);
+        let areas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001));
 
         let rough = {
             rename: op.rename ?? "rough",
@@ -41,7 +41,7 @@ class OpRough extends CamOp {
             over: op.step,
             down: op.down,
             expand: 0,
-            smooth: 1,
+            smooth: 0,
             outline: true,
             omitthru: op.omitthru,
             leave_xy: op.leave,
