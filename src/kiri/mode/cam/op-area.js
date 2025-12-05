@@ -174,7 +174,7 @@ class OpArea extends CamOp {
                                 p.z += op.leave_z;
                     }
                     if (op.leave_xy) {
-                        outs = outs.map(poly => poly.expand(-op.leave_xy)).flat();
+                        outs = outs.map(poly => poly.offset(-op.leave_xy)).flat();
                     }
                     slice.camLines = outs;
                     zroc += zinc;

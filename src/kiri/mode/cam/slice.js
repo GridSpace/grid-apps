@@ -329,7 +329,10 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         let operr;
         await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
-        }).catch(e => operr = e);
+        }).catch(e => {
+            operr = e;
+            console.trace(e);
+        });
         if (operr) {
             return error(operr);
         }

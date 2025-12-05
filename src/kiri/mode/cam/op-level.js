@@ -14,7 +14,7 @@ class OpLevel extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices, color, settings, tshadow, updateToolDiams, zMax, ztOff } = state;
+        let { addSlices, color, settings, shadow, updateToolDiams, zMax, ztOff } = state;
         let { down, tool, step, stepz, inset } = op;
         let { stock } = settings;
 
@@ -30,7 +30,7 @@ class OpLevel extends CamOp {
         let points = [];
         let clear = op.stock ?
             [ newPolygon().centerRectangle({x:-wpos.x,y:-wpos.y,z:wpos.z}, stock.x + toolDiam/2, stock.y) ] :
-            POLY.outer(POLY.offset(tshadow, toolDiam * (inset || 0)));
+            POLY.outer(POLY.offset(shadow.base, toolDiam * (inset || 0)));
 
         POLY.fillArea(clear, 1090, stepOver, points);
 
