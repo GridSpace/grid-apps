@@ -608,7 +608,7 @@ function newText(label, options) {
 function newInput(label, opt = {}) {
     let row = newDiv(opt),
         hide = opt.hide,
-        size = opt.size || 5,
+        size = opt.size ?? 5,
         height = opt.height || 0,
         ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
         action = opt.action || bindTo || inputAction;
@@ -632,6 +632,7 @@ function newInput(label, opt = {}) {
     row.style.display = hide ? 'none' : '';
     if (opt.disabled) ip.setAttribute("disabled", "true");
     if (opt.title) row.setAttribute("title", opt.title);
+    if (opt.id) ip.setAttribute("id", opt.id);
     if (opt.convert) ip.convert = opt.convert.bind(ip);
     if (opt.bound) ip.bound = opt.bound;
     if (opt.action) action = opt.action;
@@ -739,6 +740,7 @@ function newSelect(label, options = {}, source) {
     }
     row.setAttribute("class", "var-row");
     row.style.display = hide ? 'none' : '';
+    if (options.id) ip.setAttribute("id", options.id);
     if (options.convert) ip.convert = options.convert.bind(ip);
     if (options.disabled) ip.setAttribute("disabled", "true");
     if (options.title) row.setAttribute("title", options.title);

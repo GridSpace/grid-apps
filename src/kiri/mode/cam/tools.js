@@ -35,25 +35,104 @@ function renderTools() {
 function selectTool(tool) {
     const { ui } = api;
     selectedTool = tool;
-    ui.toolName.value = tool.name;
-    ui.toolNum.value = tool.number;
-    ui.toolFluteDiam.value = tool.flute_diam;
-    ui.toolFluteLen.value = tool.flute_len;
-    ui.toolShaftDiam.value = tool.shaft_diam;
-    ui.toolShaftLen.value = tool.shaft_len;
-    ui.toolTaperTip.value = tool.taper_tip || 0;
-    ui.toolMetric.checked = tool.metric;
-    ui.toolType.selectedIndex = toolNames.indexOf(tool.type);
-    if (tool === 'tapermill') {
-        ui.toolTaperAngle.value = calcTaperAngle(
-            (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
-        ).round(1);
-    } else if(tool === 'drill'){
-        ui.toolTaperAngle.value = 118;
+
+    api.util.rec2ui({
+        toolName: selectedTool.name,
+        toolType: selectedTool.type,
+        toolNum: selectedTool.number,
+        toolMetric: selectedTool.metric,
+        toolShaftDiam: selectedTool.shaft_diam,
+        toolShaftLen: selectedTool.shaft_len,
+        toolFluteDiam: selectedTool.flute_diam,
+        toolFluteLen: selectedTool.flute_len,
+        toolTaperAngle: selectedTool.taper_angle,
+        toolTaperTip: selectedTool.taper_tip,
+    },{
+        toolName: ui.toolName,
+        toolType: ui.toolType,
+        toolNum: ui.toolNum,
+        toolMetric: ui.toolMetric,
+        toolShaftDiam: ui.toolShaftDiam,
+        toolShaftLen: ui.toolShaftLen,
+        toolFluteDiam: ui.toolFluteDiam,
+        toolFluteLen: ui.toolFluteLen,
+        toolTaperAngle: ui.toolTaperAngle,
+        toolTaperTip: ui.toolTaperTip,
+    });
+
+    if (tool.type === 'tapermill') {
+        ui.toolTaperAngle.value =
+            selectedTool.taper_angle =
+            calcTaperAngle( (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len ).round(1);
+    } else if (tool === 'drill') {
+        ui.toolTaperAngle.value = selectedTool.taper_angle = 90;
     } else {
-        ui.toolTaperAngle.value = 0;
+        ui.toolTaperAngle.value = selectedTool.taper_angle = 0;
     }
+
     renderTool(tool);
+}
+
+export function updateTool(ev) {
+    const { ui } = api;
+
+    let changed = {
+        toolName: selectedTool.name,
+        toolType: selectedTool.type,
+        toolNum: selectedTool.number,
+        toolMetric: selectedTool.metric,
+        toolShaftDiam: selectedTool.shaft_diam,
+        toolShaftLen: selectedTool.shaft_len,
+        toolFluteDiam: selectedTool.flute_diam,
+        toolFluteLen: selectedTool.flute_len,
+        toolTaperAngle: selectedTool.taper_angle,
+        toolTaperTip: selectedTool.taper_tip,
+    };
+
+    api.util.ui2rec(changed,{
+        toolName: ui.toolName,
+        toolType: ui.toolType,
+        toolNum: ui.toolNum,
+        toolMetric: ui.toolMetric,
+        toolShaftDiam: ui.toolShaftDiam,
+        toolShaftLen: ui.toolShaftLen,
+        toolFluteDiam: ui.toolFluteDiam,
+        toolFluteLen: ui.toolFluteLen,
+        toolTaperAngle: ui.toolTaperAngle,
+        toolTaperTip: ui.toolTaperTip,
+    });
+
+    selectedTool.name = changed.toolName;
+    selectedTool.type = changed.toolType;
+    selectedTool.number = changed.toolNum;
+    selectedTool.metric = changed.metric;
+    selectedTool.shaft_diam = changed.toolShaftDiam;
+    selectedTool.shaft_len = changed.toolShaftLen;
+    selectedTool.flute_diam = changed.toolFluteDiam;
+    selectedTool.flute_len = changed.toolFluteLen;
+    selectedTool.taper_angle = changed.toolTaperAngle;
+    selectedTool.taper_tip = changed.toolTaperTip;
+
+    if (selectedTool.type === 'tapermill') {
+        const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
+        if (ev && ev.target === ui.toolTaperAngle) {
+            const angle = parseFloat(ev.target.value || 5);
+            const len = calcTaperLength(rad, angle * DEG2RAD);
+            selectedTool.flute_len = len;
+            ui.toolTaperAngle.value = angle.round(1);
+            ui.toolFluteLen.value = selectedTool.flute_len.round(4);
+        } else {
+            ui.toolTaperAngle.value =
+                selectedTool.taper_angle =
+                calcTaperAngle(rad, selectedTool.flute_len).round(1);
+        }
+    } else {
+        ui.toolTaperAngle.value = selectedTool.taper_angle = 0;
+    }
+
+    renderTools();
+    setToolChanged(true);
+    renderTool(selectedTool);
 }
 
 function otag(o) {
@@ -195,37 +274,6 @@ function renderTool(tool) {
         }
         svg.innerHTML = otag(parts);
     }, 10);
-}
-
-export function updateTool(ev) {
-    const { ui } = api;
-    selectedTool.name = ui.toolName.value;
-    selectedTool.number = parseInt(ui.toolNum.value);
-    selectedTool.flute_diam = parseFloat(ui.toolFluteDiam.value);
-    selectedTool.flute_len = parseFloat(ui.toolFluteLen.value);
-    selectedTool.shaft_diam = parseFloat(ui.toolShaftDiam.value);
-    selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value);
-    selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value);
-    selectedTool.metric = ui.toolMetric.checked;
-    selectedTool.type = toolNames[ui.toolType.selectedIndex];
-    if (selectedTool.type === 'tapermill') {
-        const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
-        if (ev && ev.target === ui.toolTaperAngle) {
-            const angle = parseFloat(ev.target.value);
-            const len = calcTaperLength(rad, angle * DEG2RAD);
-            selectedTool.flute_len = len;
-            ui.toolTaperAngle.value = angle.round(1);
-            ui.toolFluteLen.value = selectedTool.flute_len.round(4);
-        } else {
-            ui.toolTaperAngle.value = calcTaperAngle(rad, selectedTool.flute_len).round(1);
-        }
-    } else {
-        ui.toolTaperAngle.value = 0;
-    }
-    renderTools();
-    ui.toolSelect.selectedIndex = selectedTool.order;
-    setToolChanged(true);
-    renderTool(selectedTool);
 }
 
 function setToolChanged(changed) {

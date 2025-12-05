@@ -2,6 +2,7 @@
 
 import { api } from '../../core/api.js';
 import { originReset, originSelect } from './cl-origin.js';
+import { updateTool } from './tools.js';
 
 let LANG = api.language.current;
 let { CAM } = api.const.MODES,
@@ -32,7 +33,36 @@ function zAnchorSave() {
 export function menu() {
     let anim = ui.anim = {};
 
+    uc.setGroup($('tool-details'));
+
     return {
+
+    /** Tool Editor Menu */
+
+    _____:               uc.setGroup($('tool-details')),
+    toolName:            newInput('name', { title:'tool name', id: 'tool-name', size:0 }),
+    toolType:            newSelect('type', { title: 'tool type', id: 'tool-type', action:updateTool }, "camtool"),
+    toolNum:             newInput('tool #', { title:'tool number', id: 'tool-num', convert: toInt }),
+    toolMetric:          newBoolean('metric', updateTool, { title: 'metric', id: 'tool-metric' }),
+    _____:               newGroup(LANG.td_shft),
+    toolShaftDiam:       newInput('diameter', { convert: toFloat }),
+    toolShaftLen:        newInput('length', { convert: toFloat }),
+    _____:               newGroup(LANG.td_flut),
+    toolFluteDiam:       newInput('diameter', { convert: toFloat }),
+    toolFluteLen:        newInput('length', { convert: toFloat }),
+    _____:               newGroup(LANG.td_tapr),
+    toolTaperAngle:      newInput('angle', { convert: toFloat }),
+    toolTaperTip:        newInput('tip', { convert: toFloat }),
+    // toolTaperAngle:     $('tool-tangle'),
+
+    toolsSave:          $('tools-save'),
+    toolsClose:         $('tools-close'),
+    toolsImport:        $('tools-import'),
+    toolsExport:        $('tools-export'),
+    toolSelect:         $('tool-select'),
+    toolAdd:            $('tool-add'),
+    toolCopy:           $('tool-dup'),
+    toolDelete:         $('tool-del'),
 
     /** Animation Bar */
 
