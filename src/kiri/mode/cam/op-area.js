@@ -137,6 +137,7 @@ class OpArea extends CamOp {
                     let outs = [];
                     let clip = [];
                     let shadow = await shadowAt(z);
+                    let tool_shadow =  POLY.offset(shadow, [ toolDiam / 2 - 0.01 ], { count: 1, z });
                     // for roughing backward compatability
                     if (op.omitthru) {
                         shadow = shadow.clone(true);
@@ -176,6 +177,7 @@ class OpArea extends CamOp {
                     if (op.leave_xy) {
                         outs = outs.map(poly => poly.offset(-op.leave_xy)).flat();
                     }
+                    slice.tool_shadow = tool_shadow;
                     slice.camLines = outs;
                     zroc += zinc;
                     lzo = z;
@@ -184,7 +186,9 @@ class OpArea extends CamOp {
                         .setLayer("base", { line: 0xff0000 }, false)
                         .addPolys(shadowBase)
                         .setLayer("shadow", { line: 0x00ff00 }, false)
-                        .addPolys(shadow);
+                        .addPolys(shadow)
+                        .setLayer("tool shadow", { line: 0x44ff88 }, false)
+                        .addPolys(tool_shadow);
                     layers
                         .setLayer(rename ?? "clear", { line: 0x88ff00 }, false)
                         .addPolys(outs);

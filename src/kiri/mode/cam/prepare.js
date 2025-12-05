@@ -560,7 +560,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         for (let slice of slices) {
             let polys = [], t = [], c = [];
             // use shadow + tool radius offset when available (roughing)
-            polys.shadow = slice.tool_shadow;
             POLY.flatten(slice.camLines).forEach((poly) => {
                 let child = poly.parent;
                 if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
@@ -574,9 +573,12 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             POLY.setWinding(c, !cutdir);
 
             if (depthFirst) {
+                polys = POLY.nest(polys,true,true);
+                polys.tool_shadow = POLY.flatten(slice.tool_shadow.clone(true));
                 depthData.push(polys);
             } else {
                 // if not depth first, output the polys in slice order
+                setTravelBoundary(shadow);
                 poly2polyEmit(polys, printPoint, polyEmit, { swapdir: false });
                 newLayer();
             }
@@ -590,42 +592,51 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
 
         if (depthFirst) {
             descend(depthData);
-            clearTravelBoundary();
         }
+
+        clearTravelBoundary();
     }
 
     function descend(stack, inside) {
         if (stack.length === 0) return;
-        let shadow = stack[0].shadow;
-        let flat = stack[0].filter(poly => !poly.marked);
-        if (shadow) {
-            setTravelBoundary(shadow);
-        } else if (inside) {
+        let tops = stack[0];
+        let flat = tops.filter(poly => !poly.marked);
+        if (flat.length === 0) return;
+        if (inside) {
             flat = flat.filter(p => p.isNested(inside));
-            setTravelBoundary([ inside ]);
-        } else {
-            setTravelBoundary(POLY.union(flat, 0, true));
         }
-        flat.sort((a,b) => b.area() - a.area());
-        emit_flat(flat);
-        for (let poly of flat) {
-            descend(stack.slice(1), poly);
+
+        setTravelBoundary(tops.tool_shadow);
+
+        for (;;) {
+            let wpp = getWidgetPrintPoint();
+            let poly = flat.filter(poly => !poly.marked)
+                .map(p => p.findClosestPointTo(wpp))
+                .sort((a,b) => a.distance - b.distance)
+                .map(rec => rec.poly)[0];
+
+            if (poly) {
+                let output = [];
+                emit_flat([ poly ], output);
+                for (let poly of output) {
+                    polyEmit(poly, CLOSEST_TO_PP);
+                }
+                descend(stack.slice(1), poly);
+            } else {
+                return;
+            }
         }
     }
 
-    function emit_flat(flat) {
-        for (let poly of flat) {
-            if (!poly.marked) {
-                polyEmit(poly, CLOSEST_TO_PP);
-                poly.marked = true;
-                let wpp = getWidgetPrintPoint();
-                let candidates = flat.filter(p => p.isNested(poly))
-                    .map(p => p.findClosestPointTo(wpp))
-                    .sort((a,b) => a.distance - b.distance)
-                    .map(rec => rec.poly);
-                emit_flat(candidates);
-            }
-        }
+    function emit_flat(flat, output) {
+        flat = flat.filter(p => !p.marked);
+        if (!flat.length) return;
+        flat.sort((a,b) => a.area() - b.area());
+        let next = flat[0];
+        next.marked = true;
+        if (next.inner) emit_flat(next.inner, output);
+        output.push(next);
+        emit_flat(flat, output);
     }
 
     function emitTraces(camLines) {
