@@ -634,8 +634,9 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         flat.sort((a,b) => a.area() - b.area());
         let next = flat[0];
         next.marked = true;
+        if (!camInnerFirst) output.push(next);
         if (next.inner) emit_flat(next.inner, output);
-        output.push(next);
+        if (camInnerFirst) output.push(next);
         emit_flat(flat, output);
     }
 
