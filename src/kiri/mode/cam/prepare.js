@@ -78,6 +78,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         { alignTop } = settings.controller,
         { camArcEnabled, camArcResolution, camArcTolerance } = process,
         { camDepthFirst, camEaseAngle, camEaseDown } = process,
+        { camFastFeed, camFastFeedZ } = process,
         { camStockX, camStockY, camStockZ, camStockIndexed, camStockOffset } = process,
         { camForceZMax, camFullEngage, camInnerFirst, camOriginCenter } = process,
         { camOriginOffX, camOriginOffY, camOriginOffZ, camZClearance } = process,
@@ -119,7 +120,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         laserPower = 0,
         newOutput = print.output || [],
         nextIsMove = true,
-        plungeRate = process.camFastFeedZ,
+        plungeRate = camFastFeedZ,
         printPoint,
         tool,
         toolType,
@@ -183,8 +184,8 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
             toolDiamMove = (tool.hasTaper() ? tolerance ?? toolDiam : toolDiam) * 2;
             lastTool = toolID;
         }
-        feedRate = feed || feedRate || plunge;
-        plungeRate = Math.min(feedRate || plunge, plunge || plungeRate || feedRate);
+        feedRate = Math.min(camFastFeed, feed || feedRate || plunge);
+        plungeRate = Math.min(camFastFeed, feedRate || plunge, plunge || plungeRate || feedRate);
         if (debug) console.log({ setTool: toolID, feed, plunge, plungeRate });
     }
 

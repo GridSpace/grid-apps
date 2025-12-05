@@ -29,13 +29,13 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         sliceAll = widget.slices = [],
         isIndexed = proc.camStockIndexed;
 
-    let stock, bounds, track,
-        axisRotation, axisIndex,
-        zBottom, zMin, zMax, zThru, zTop,
-        camZTop, camZBottom, camZThru, wztop, ztOff, zbOff,
-        minToolDiam, maxToolDiam, dark, color, tabs, unsafe, units,
+    let axisRotation, axisIndex,
+        bounds, dark, color, stock, tabs, track, tool, unsafe, units, workarea,
+        camZTop, camZBottom, camZThru, minToolDiam, maxToolDiam,
         bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z, bottom_cut,
-        top_stock, top_part, top_gap, top_z, workarea, tool;
+        top_stock, top_part, top_gap, top_z,
+        zBottom, zMin, zMax, zThru, zTop,
+        ztOff, zbOff, wztop;
 
     axisRotation = axisIndex = undefined;
     dark = settings.controller.dark;
@@ -635,7 +635,7 @@ export async function holes(settings, widget, individual, rec, onProgress) {
     for (let [i, slice] of slices.entries()) {
         for (let top of slice.tops) {
             // console.log("slicing",slice.z,top)
-            slice.shadow = widget.shadowAt(slice.z);
+            slice.shadow = await widget.shadowAt(slice.z);
             let inner = top.inner;
             if (!inner) { //no holes
                 continue;

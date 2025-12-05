@@ -228,6 +228,7 @@ class OpArea extends CamOp {
                     // cut tabs when present
                     if (tabs) outs = cutTabs(tabs, outs);
                     slice.camLines = outs;
+                    slice.tool_shadow = POLY.offset(await shadowAt(z), [ toolDiam / 2 - 0.01 ], { count: 1, z });
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'trace');
                     layers
