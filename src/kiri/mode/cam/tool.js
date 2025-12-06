@@ -49,8 +49,7 @@ class Tool {
     }
 
     fluteLength() {
-        let len = this.unitScale() * this.tool.flute_len;
-        return this.isTaperBall() ? len + this.getTaperBallExtent() : len;
+        return this.unitScale() * this.tool.flute_len;
     }
 
     fluteDiameter() {
@@ -80,13 +79,13 @@ class Tool {
     // }
 
     getTaperAngle() {
-        return calcTaperAngle((this.flute_diam - this.taper_tip) / 2, this.flute_len);
+        let { flute_diam, flute_len, taper_tip } = this.tool;
+        return calcTaperAngle((flute_diam - taper_tip) / 2, flute_len);
     }
 
     getTaperBallExtent() {
         let rad = this.tipDiameter() / 2;
         let ang = this.getTaperAngle() * DEG2RAD;
-        console.log({ rad, ang });
         return calcTaperBallExtent(rad, ang);
     }
 
@@ -164,11 +163,9 @@ class Tool {
             toolCenter = (pix_shaft_dia_int - (pix_shaft_dia_int % 2)) / 2,
             toolOffset = [],
             larger_shaft = shaft_diameter - flute_diameter > 0.001,
-            ball_radius = taperball ? tip_diameter / 2 : 0,
             pix_ball_rad_float = taperball ? pix_tip_rad_float : 0,
-            taper_length = taperball ? flute_length - ball_radius : flute_length,
             maxo = -Infinity;
-console.log({ flute_length, flute_radius, tip_diameter, taper_ball_add });
+
         // for each point in tool profile, check inside radius
         for (let x = 0; x < pix_profile_iter; x++) {
             for (let y = 0; y < pix_profile_iter; y++) {
@@ -185,14 +182,16 @@ console.log({ flute_length, flute_radius, tip_diameter, taper_ball_add });
                         z_offset = Math.sqrt(ball_rpixsq - ball_rad_sq) * resolution - flute_radius;
                     } else if (taperball) {
                         // taperball: spherical tip, conical above
-                        if (dist_from_center <= pix_taper_ball_add) {
+                        if (dist_from_center <= pix_taper_ball_add * 2) {
                             // inside ball radius - spherical surface
                             let ball_rad_sq = dist_from_center * dist_from_center;
-                            let ball_rpixsq = pix_ball_rad_float * pix_ball_rad_float;
-                            z_offset = Math.sqrt(ball_rpixsq - ball_rad_sq) * resolution;
+                            let ball_rpixsq = pix_flute_rad_float * pix_flute_rad_float;
+                            z_offset = Math.sqrt(ball_rpixsq - ball_rad_sq) * resolution - flute_radius;
                         } else {
                             // outside ball radius - conical taper
-                            z_offset = ((dist_from_center - pix_tip_rad_float) / tip_max_radius_offset) * -taper_length;
+                            // z_offset = ((dist_from_center - pix_taper_ball_add) / tap_max_radius_offset) * -taper_length;
+                            z_offset = ((dist_from_center - pix_tip_rad_float) / tip_max_radius_offset) * -flute_length;
+                            // z_offset = 0;
                         }
                     } else if (taper && dist_from_center >= pix_tip_rad_float) {
                         // if tapered and not in the flat tip radius

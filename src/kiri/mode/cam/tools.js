@@ -320,14 +320,12 @@ function renderTool2(tool) {
 
         // Create Tool instance and generate profile
         const toolInst = new Tool(settings(), tool.id);
-        const resolution = (toolInst.maxDiameter() / toolInst.unitScale()) / 20;
+        const resolution = (toolInst.maxDiameter() / toolInst.unitScale()) / 50;
         toolInst.generateProfile(resolution);
 
         const profile = toolInst.profile;
         const { pix } = toolInst.profileDim;
         const center = Math.floor(pix / 2);
-
-        console.log({ profile });
 
         // Extract cross-section at y=0 (center line)
         // Profile is stored as [dx, dy, z_offset, dx, dy, z_offset, ...]
@@ -355,7 +353,9 @@ function renderTool2(tool) {
         // Scale to fit
         let scale = Math.min(max.h / zRange, max.w / xRange);
 
-        console.log(JSON.stringify({ scale, minX, maxX, xRange, minZ, maxZ, zRange }));
+        let x = { scale, minZ, maxZ, zRange };
+        for (let k of Object.keys(x)) x[k] = x[k].round(2);
+        console.log(x);
 
         // Draw vertical lines for each point
         let parts = [];
@@ -369,8 +369,8 @@ function renderTool2(tool) {
 
             parts.push({ line: {
                 x1: x,
-                y1: y1,
                 x2: x,
+                y1: y1,
                 y2: y2,
                 stroke,
                 stroke_width
