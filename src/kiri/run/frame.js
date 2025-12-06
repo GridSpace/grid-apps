@@ -26,6 +26,13 @@
         }
     }
 
+    function dispatchMessage(msg) {
+        let { origin, source, target, data } = msg;
+        if (source.window === cwin) {
+            recv(msg);
+        }
+    }
+
     let API = KIRI.frame = {
         setFrame: (io, target) => {
             let type = typeof(io);
@@ -35,12 +42,12 @@
                 case 'object': setFrame(io); break;
                 default: throw `invalid frame type ${type}`;
             }
-            window.addEventListener('message', msg => {
-                let { origin, source, target, data } = msg;
-                if (source.window === cwin) {
-                    recv(msg);
-                }
-            });
+
+	    //changed eventListener to a named function here:
+	    //adding eventListeners with anonymous functions is bad practice
+	    //as it is impossible to prevent them from being more than once!
+ 	    window.removeEventListener('message', dispatchMessage);
+	    window.addEventListener('message', dispatchMessage);
         },
 
         send: send,
