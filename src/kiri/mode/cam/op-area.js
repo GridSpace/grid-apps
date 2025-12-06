@@ -190,7 +190,7 @@ class OpArea extends CamOp {
                         .setLayer("tool shadow", { line: 0x44ff88 }, false)
                         .addPolys(tool_shadow);
                     layers
-                        .setLayer(rename ?? "clear", { line: 0x88ff00 }, false)
+                        .setLayer(rename ?? "clear", { line: color }, false)
                         .addPolys(outs);
                     // of the last output still cuts, we need an escape
                     if (z === zs.peek()) {
@@ -232,7 +232,7 @@ class OpArea extends CamOp {
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'trace');
                     layers
-                        .setLayer(rename ?? "trace", { line: 0x88ff00 }, false)
+                        .setLayer(rename ?? "trace", { line: color }, false)
                         .addPolys(outs);
                 }
                 proc += pinc;
@@ -314,7 +314,7 @@ class OpArea extends CamOp {
                     if (op.refine) path.refine(op.refine);
                     surface.push(path);
                     newLayer().output()
-                        .setLayer(rename ?? "linear", { line: 0x00ff00 }, false)
+                        .setLayer(rename ?? "linear", { line: color }, false)
                         .addPolys([ path ]);
                 }
 

@@ -579,7 +579,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                 depthData.push(polys);
             } else {
                 // if not depth first, output the polys in slice order
-                setTravelBoundary(shadow);
+                setTravelBoundary(slice.tool_shadow.clone(true));
                 poly2polyEmit(polys, printPoint, polyEmit, { swapdir: false });
                 newLayer();
             }
