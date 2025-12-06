@@ -62,6 +62,7 @@ const POLYS = {
     outer,
     points,
     rayIntersect,
+    reconnect,
     renest,
     route,
     setWinding,
@@ -1110,6 +1111,94 @@ export function route(polys, start) {
         }
     }
     return routed.map(r => r.poly);
+}
+
+function dedup(arr, same) {
+    const out = [];
+    let prev;
+    for (const x of arr) {
+        if (!prev || !same(prev, x)) out.push(x);
+        prev = x;
+    }
+    return out;
+}
+
+/**
+ * Given an array of Polygons, attempt to reconnect open polygons
+ * into longer chains. If the chains close, emit a closed Polygon.
+ * Closed polygons are ignored and passed into the output.
+ *
+ * @param {Polygon[]} polys polygons
+ * @param {boolean} sameZ require open polygons to share endpoints with the same Z
+ * @returns array of connected or closed polygons
+ */
+export function reconnect(polys, sameZ = true) {
+    for (let p of polys) {
+        if (p.appearsClosed()) {
+            p.points.pop();
+            p.setClosed();
+        }
+    }
+    if (polys.length > 1) {
+        let heal = 0;
+        // heal/rejoin open segments that share endpoints
+        outer: for (; ; heal++) {
+            let ntmp = polys, tlen = ntmp.length;
+            for (let i = 0; i < tlen; i++) {
+                let s1 = ntmp[i];
+                if (!s1) continue;
+                for (let j = i + 1; j < tlen; j++) {
+                    let s2 = ntmp[j];
+                    if (!s2) continue;
+                    // require polys at same Z to heal
+                    if (sameZ && Math.abs(s1.getZ() - s2.getZ()) > 0.01) {
+                        continue;
+                    }
+                    if (!(s1.open && s2.open)) continue;
+                    if (s1.last().isMergable2D(s2.first())) {
+                        s1.addPoints(s2.points);
+                        ntmp[j] = null;
+                        continue outer;
+                    }
+                    if (s2.last().isMergable2D(s1.first())) {
+                        s2.addPoints(s1.points);
+                        ntmp[i] = null;
+                        continue outer;
+                    }
+                    if (s1.first().isMergable2D(s2.first())) {
+                        s1.reverse();
+                        s1.addPoints(s2.points);
+                        ntmp[j] = null;
+                        continue outer;
+                    }
+                    if (s1.last().isMergable2D(s2.last())) {
+                        s2.reverse();
+                        s1.addPoints(s2.points);
+                        ntmp[j] = null;
+                        continue outer;
+                    }
+                }
+            }
+            break;
+        }
+        if (heal > 0) {
+            // cull nulls
+            polys = polys.filter(o => o);
+        }
+        // close poly if head meets tail
+        for (let poly of polys) {
+            poly.points = dedup(poly.points, (a,b) => a.isMergable3D(b));
+            if (poly.open) {
+                if (poly.first().isMergable3D(poly.last())) {
+                    poly.points.pop();
+                    poly.open = false;
+                } else if (poly.first().isMergable2D(poly.last())) {
+                    poly.open = false;
+                }
+            }
+        }
+    }
+    return polys;
 }
 
 export const polygons = POLYS;

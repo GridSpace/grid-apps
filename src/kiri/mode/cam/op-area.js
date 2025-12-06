@@ -28,7 +28,7 @@ class OpArea extends CamOp {
         let { tool, mode, down, over, follow, expand, outline, smooth } = op;
         let { ov_topz, ov_botz, direction, rename } = op;
         let { settings, widget, tabs, color } = state;
-        let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
+        let { addSlices, setToolDiam, cutTabs, shadowAt, workarea } = state;
 
         let areaTool = new Tool(settings, tool);
         let smoothVal = (smooth ?? 0) / 10;
@@ -68,7 +68,7 @@ class OpArea extends CamOp {
 
         // connect open poly edge segments into closed loops (when possible)
         // surface and edge selections produce open polygons by default
-        polys = POLY.nest(healPolys(polys, false));
+        polys = POLY.nest(POLY.reconnect(polys, false));
 
         // gather surface selections
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));

@@ -1,10 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base, util } from '../../../geo/base.js';
+import { util } from '../../../geo/base.js';
 import { newLine } from '../../../geo/line.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
-import { newSlopeFromAngle } from '../../../geo/slope.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { setSliceTracker } from '../../core/slice.js';
 import { ops as OPS } from './ops.js';
@@ -152,7 +151,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         cutPolys,
         cutTabs,
         dark,
-        healPolys,
         isIndexed,
         ops: opList,
         setAxisIndex,
@@ -730,7 +728,7 @@ function cutTabs(tabs, offset) {
             hi.appendAll(POLY.setZ(poly.cut(tab.off, true), tab.top));
         }
         if (hi.length) {
-            let heal = healPolys([ ...lo, ...hi ], false);
+            let heal = POLY.reconnect([ ...lo, ...hi ], false);
             POLY.setWinding(heal, poly.isClockwise());
             out.push(...heal);
         } else {
@@ -743,7 +741,7 @@ function cutTabs(tabs, offset) {
 function cutPolys(polys, offset) {
     let noff = [];
     offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), true) ));
-    return healPolys(noff);
+    return POLY.reconnect(noff);
 }
 
 function contourPolys(widget, polys) {
@@ -757,83 +755,4 @@ function contourPolys(widget, polys) {
             if (firstHit) point.z = firstHit.point.z;
         }
     }
-}
-
-function dedup(arr, same) {
-    const out = [];
-    let prev;
-    for (const x of arr) {
-        if (!prev || !same(prev, x)) out.push(x);
-        prev = x;
-    }
-    return out;
-}
-
-function healPolys(noff, sameZ = true) {
-    for (let p of noff) {
-        if (p.appearsClosed()) {
-            p.points.pop();
-            p.setClosed();
-        }
-    }
-    if (noff.length > 1) {
-        let heal = 0;
-        // heal/rejoin open segments that share endpoints
-        outer: for (; ; heal++) {
-            let ntmp = noff, tlen = ntmp.length;
-            for (let i = 0; i < tlen; i++) {
-                let s1 = ntmp[i];
-                if (!s1) continue;
-                for (let j = i + 1; j < tlen; j++) {
-                    let s2 = ntmp[j];
-                    if (!s2) continue;
-                    // require polys at same Z to heal
-                    if (sameZ && Math.abs(s1.getZ() - s2.getZ()) > 0.01) {
-                        continue;
-                    }
-                    if (!(s1.open && s2.open)) continue;
-                    if (s1.last().isMergable2D(s2.first())) {
-                        s1.addPoints(s2.points);
-                        ntmp[j] = null;
-                        continue outer;
-                    }
-                    if (s2.last().isMergable2D(s1.first())) {
-                        s2.addPoints(s1.points);
-                        ntmp[i] = null;
-                        continue outer;
-                    }
-                    if (s1.first().isMergable2D(s2.first())) {
-                        s1.reverse();
-                        s1.addPoints(s2.points);
-                        ntmp[j] = null;
-                        continue outer;
-                    }
-                    if (s1.last().isMergable2D(s2.last())) {
-                        s2.reverse();
-                        s1.addPoints(s2.points);
-                        ntmp[j] = null;
-                        continue outer;
-                    }
-                }
-            }
-            break;
-        }
-        if (heal > 0) {
-            // cull nulls
-            noff = noff.filter(o => o);
-        }
-        // close poly if head meets tail
-        for (let poly of noff) {
-            poly.points = dedup(poly.points, (a,b) => a.isMergable3D(b));
-            if (poly.open) {
-                if (poly.first().isMergable3D(poly.last())) {
-                    poly.points.pop();
-                    poly.open = false;
-                } else if (poly.first().isMergable2D(poly.last())) {
-                    poly.open = false;
-                }
-            }
-        }
-    }
-    return noff;
 }
