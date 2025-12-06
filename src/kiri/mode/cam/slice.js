@@ -160,6 +160,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         settings,
         shadowAt(z) { return widget.shadowAt(z) },
         slicer,
+        stock,
         tabs,
         tool,
         unsafe,

@@ -14,7 +14,7 @@ class OpRough extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { shadow, tool, widget } = state;
+        let { shadow, stock, tool, widget } = state;
         let { workarea } = state;
 
         let cutThruBypass = op.down > workarea.top_stock - workarea.bottom_part;
