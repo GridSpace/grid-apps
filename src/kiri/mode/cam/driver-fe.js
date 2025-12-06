@@ -82,12 +82,7 @@ function holes(indiv, rec, onProgress, onDone) {
     })
 };
 
-function cylinderShow(onProgress,onDone){
-    kiri.client.sync();
-    const settings = api.conf.get();
-}
-
- function cylinderToggle(widget, face, onDone){
+function cylinderToggle(widget, face, onDone) {
     let cyls = widget._cylinders = widget._cylinders || {};
     for (let [root, faces] of Object.entries(cyls)) {
         if (faces.contains(face)) { // if a face group contains the selected face
@@ -99,16 +94,16 @@ function cylinderShow(onProgress,onDone){
         }
     }
     //send 
-    api.client.send("cam_cylinder_find", { id: widget.id, face }, ({faces,error}) => {
+    api.client.send("cam_cylinder_find", { id: widget.id, face }, ({ faces, error }) => {
         if (faces?.length) {
             cyls[face] = faces;
             CAM.cylinder_show(widget);
         }
-        onDone({faces:Object.keys(cyls).map(v => parseInt(v)),error});
+        onDone({ faces: Object.keys(cyls).map(v => parseInt(v)), error });
     });
 }
 
- function cylinderClear(widget){
+function cylinderClear(widget) {
     widget.selectFaces([]);
     widget._cylinders = {};
 }

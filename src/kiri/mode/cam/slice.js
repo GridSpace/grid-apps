@@ -1,15 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { util } from '../../../geo/base.js';
+import { CAM } from './driver-be.js';
 import { newLine } from '../../../geo/line.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
+import { ops as OPS } from './ops.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { setSliceTracker } from '../../core/slice.js';
-import { ops as OPS } from './ops.js';
-import { Tool } from './tool.js';
 import { Slicer as cam_slicer } from './slicer_cam.js';
-import { CAM } from './driver-be.js';
+import { Tool } from './tool.js';
+import { util } from '../../../geo/base.js';
 
 /**
  * DRIVER SLICE CONTRACT

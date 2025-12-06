@@ -3,10 +3,10 @@
 import { api } from '../../core/api.js';
 import { env, clearPops } from './client.js';
 import { CAM } from './driver-fe.js';
-import { lastTrace, setLastTrace } from './cl-trace.js';
 
 export let holeSelOn = false;
 export let lastSelHoles;
+
 let holeGeo =  new THREE.CylinderGeometry(1,1,1,20);
 let holeMaterial = new THREE.MeshPhongMaterial(  );
 let alert;
