@@ -2,6 +2,7 @@
 
 import { api } from '../../core/api.js';
 import { originReset, originSelect } from './cl-origin.js';
+import { updateTool } from './tools.js';
 
 let LANG = api.language.current;
 let { CAM } = api.const.MODES,
@@ -32,7 +33,36 @@ function zAnchorSave() {
 export function menu() {
     let anim = ui.anim = {};
 
+    uc.setGroup($('tool-details'));
+
     return {
+
+    /** Tool Editor Menu */
+
+    _____:               uc.setGroup($('tool-details')),
+    toolName:            newInput('name', { title:'tool name', id: 'tool-name', size: 0, text: true }),
+    toolType:            newSelect('type', { title: 'tool type', id: 'tool-type', action:updateTool }, "camtool"),
+    toolNum:             newInput('tool #', { title:'tool number', id: 'tool-num', convert: toInt }),
+    toolMetric:          newBoolean('metric', updateTool, { title: 'metric', id: 'tool-metric' }),
+    _____:               newGroup(LANG.td_shft),
+    toolShaftDiam:       newInput('diameter', { convert: toFloat }),
+    toolShaftLen:        newInput('length', { convert: toFloat }),
+    _____:               newGroup(LANG.td_flut),
+    toolFluteDiam:       newInput('diameter', { convert: toFloat }),
+    toolFluteLen:        newInput('length', { convert: toFloat }),
+    _____:               newGroup(LANG.td_tapr),
+    toolTaperAngle:      newInput('angle', { convert: toFloat }),
+    toolTaperTip:        newInput('tip', { convert: toFloat }),
+    // toolTaperAngle:     $('tool-tangle'),
+
+    toolsSave:          $('tools-save'),
+    toolsClose:         $('tools-close'),
+    toolsImport:        $('tools-import'),
+    toolsExport:        $('tools-export'),
+    toolSelect:         $('tool-select'),
+    toolAdd:            $('tool-add'),
+    toolCopy:           $('tool-dup'),
+    toolDelete:         $('tool-del'),
 
     /** Animation Bar */
 
@@ -92,8 +122,9 @@ export function menu() {
     camZBottom:          newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:toFloat, units, trigger}),
     camZThru:            newInput(LANG.ou_ztru_s, {title:LANG.ou_ztru_l, convert:toFloat, bound:bound(0.0,100), units }),
     camZClearance:       newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:toFloat, bound:bound(0.01,100), units }),
-    camFastFeedZ:        newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:toFloat, units}),
+    separator:           newBlank({ class:"set-sep", driven }),
     camFastFeed:         newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:toFloat, units}),
+    camFastFeedZ:        newInput(LANG.cc_rzpd_s, {title:LANG.cc_rzpd_l, convert:toFloat, units}),
     _____:               newGroup(LANG.ou_menu, $('cam-output'), { modes:CAM, driven, separator, group:"cam-output" }),
     camConventional:     newBoolean(LANG.ou_conv_s, onBooleanClick, {title:LANG.ou_conv_l}),
     camEaseDown:         newBoolean(LANG.cr_ease_s, onBooleanClick, {title:LANG.cr_ease_l}),
@@ -119,12 +150,10 @@ export function menu() {
         newButton("reset", originReset),
     ], { class: "ext-buttons f-row" }),
     _____:               newGroup(LANG.op_xprt_s, $('cam-expert'), { group:"cam_expert", modes:CAM, marker: false, driven, separator }),
-    camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, {title:LANG.cx_fast_l, show: () => !ui.camTrueShadow.checked }),
-    camTrueShadow:       newBoolean(LANG.cx_true_s, onBooleanClick, {title:LANG.cx_true_l, show: () => !ui.camExpertFast.checked }),
-    separator:           newBlank({ class:"set-sep", driven }),
-    camArcEnabled:       newBoolean(LANG.cx_arce_s, onBooleanClick, {title:LANG.cx_arce_l}),
+    camArcEnabled:       newBoolean(LANG.cx_arce_s, onBooleanClick, { title:LANG.cx_arce_l }),
     camArcTolerance:     newInput(LANG.cx_arct_s, {title:LANG.cx_arct_l, convert:toFloat, bound:bound(0,100), units, trigger, show:() => ui.camArcEnabled.checked}),
     camArcResolution:    newInput(LANG.cx_arcr_s, {title:LANG.cx_arcr_l, convert:toFloat, bound:bound(0,180), trigger, show:() => ui.camArcEnabled.checked}),
+    camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, { title:LANG.cx_fast_l }),
 
     };
 };

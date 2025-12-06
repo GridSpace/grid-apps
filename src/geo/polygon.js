@@ -5,7 +5,7 @@
 import { base, config, earcut, util } from './base.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 import { newBounds } from './bounds.js';
-import { paths } from './paths.js';
+import { calc_normal, calc_vertex, paths } from './paths.js';
 import { newPoint, pointFromClipper } from './point.js';
 import { polygons as POLY } from './polygons.js';
 
@@ -268,6 +268,7 @@ export class Polygon {
     // generate a trace path around the inside of a polygon
     // including inner polys. return the noodle and the remainder
     // of the polygon with the noodle removed (for the next pass)
+    // todo: relocate this code to post.js
     noodle(width) {
         let clone = this.clone(true);
         let ins = clone.offset(width) ?? [];
@@ -278,6 +279,7 @@ export class Polygon {
 
     // generate center crossing point cloud
     // only used for fdm thin-wall type 1 (fdm/post.js)
+    // todo: relocate this code to post.js
     centers(step, z, min, max, opt = {}) {
         let cloud = [],
             bounds = this.bounds,
@@ -734,6 +736,203 @@ export class Polygon {
             }
         });
         return recs;
+    }
+
+    /**
+     * Detect and annotate arc sequences in polygon points.
+     * When an arc is detected, the first point is annotated with arc metadata
+     * and intermediate points remain in the array but should be skipped during emission.
+     *
+     * @param {Object} opts - detection options
+     * @param {number} opts.tolerance - arc detection tolerance (default 0.1)
+     * @param {number} opts.arcRes - arc resolution in radians (default 0.1)
+     * @param {number} opts.minPoints - minimum points to consider an arc (default 4)
+     * @returns {Polygon} this polygon with arc annotations
+     */
+    detectArcs(opts = {}) {
+        const {
+            tolerance = 0.1,
+            arcRes = 0.1,
+            minPoints = 4
+        } = opts;
+
+        const points = this.points;
+        const length = points.length;
+
+        if (length < minPoints) {
+            return this;
+        }
+
+        // Clear any existing arc annotations
+        for (let p of points) {
+            delete p.arc;
+        }
+
+        let i = 0;
+        // Process all points except we can't start an arc at the last point
+        // because we need at least minPoints to form an arc
+        while (i < length - minPoints + 1) {
+            // Try to detect arc starting at position i
+            const arcData = this._detectArcAt(i, points, length, tolerance, arcRes, minPoints);
+
+            if (arcData) {
+                // Annotate the starting point
+                points[i].arc = arcData;
+                // Skip past the arc points
+                i += arcData.skip + 1; // +1 to move to point after arc end
+            } else {
+                i++;
+            }
+        }
+
+        return this;
+    }
+
+    /**
+     * Try to detect an arc starting at the given index
+     * Uses a greedy approach: grow the arc as long as possible, then validate
+     * @private
+     * @returns {Object|null} arc data or null if no arc detected
+     */
+    _detectArcAt(startIdx, points, length, tolerance, arcRes, minPoints) {
+        // Greedy approach: collect as many points as possible that might form an arc
+        let candidates = [];
+
+        for (let idx = startIdx; idx < length; idx++) {
+            const p1 = points[idx];
+
+            // Last point - add and done
+            if (idx >= length - 1) {
+                candidates.push(p1);
+                break;
+            }
+
+            const p2 = points[idx + 1];
+
+            // Skip duplicate points
+            if (p1.distTo2D(p2) < 0.001) {
+                break;
+            }
+
+            candidates.push(p1);
+
+            // Stop if we've collected enough to test
+            if (candidates.length >= minPoints) {
+                // Try to validate the arc with current candidates
+                const arcData = this._validateArc(candidates, tolerance, arcRes, minPoints);
+
+                if (!arcData) {
+                    // Current set doesn't form valid arc, back up one point
+                    candidates.pop();
+                    break;
+                }
+            }
+        }
+
+        // Final validation with all collected candidates
+        return this._validateArc(candidates, tolerance, arcRes, minPoints);
+    }
+
+    /**
+     * Validate if a set of points forms a valid arc
+     * @private
+     */
+    _validateArc(arcPoints, tolerance, arcRes, minPoints) {
+        if (arcPoints.length < minPoints) {
+            return null;
+        }
+
+        // Calculate center using well-distributed points
+        const center = this._findBestCenter(arcPoints, tolerance);
+        if (!center) {
+            return null;
+        }
+
+        // Check if all points lie on the circle within tolerance
+        let maxRadiusError = 0;
+        let sumRadiusError = 0;
+
+        for (let i = 0; i < arcPoints.length; i++) {
+            const p = arcPoints[i];
+            const radius = Math.hypot(p.x - center.x, p.y - center.y);
+            const radiusError = Math.abs(radius - center.r);
+
+            maxRadiusError = Math.max(maxRadiusError, radiusError);
+            sumRadiusError += radiusError;
+
+            // Hard limit on any single point
+            if (radiusError > tolerance * 2) {
+                return null;
+            }
+        }
+
+        // Check average error is reasonable
+        const avgRadiusError = sumRadiusError / arcPoints.length;
+        if (avgRadiusError > tolerance) {
+            return null;
+        }
+
+        // Check angular resolution (don't want points too far apart)
+        for (let i = 0; i < arcPoints.length - 1; i++) {
+            const curr = arcPoints[i];
+            const next = arcPoints[i + 1];
+            const dist = curr.distTo2D(next);
+            const radius = Math.hypot(curr.x - center.x, curr.y - center.y);
+
+            if (radius > 0) {
+                const angle = 2 * Math.asin(Math.min(1, dist / (2 * radius)));
+                if (Math.abs(angle) > arcRes) {
+                    return null;
+                }
+            }
+        }
+
+        // Determine arc direction
+        const p0 = arcPoints[0];
+        const p1 = arcPoints[Math.min(1, arcPoints.length - 1)];
+        const vec1 = { x: p1.x - p0.x, y: p1.y - p0.y };
+        const vec2 = { x: center.x - p0.x, y: center.y - p0.y };
+        const cross = vec1.x * vec2.y - vec1.y * vec2.x;
+        const clockwise = cross < 0;
+
+        return {
+            center: newPoint(center.x, center.y, p0.z),
+            clockwise,
+            skip: arcPoints.length - 1
+        };
+    }
+
+    /**
+     * Find the best-fit center for a set of arc points
+     * @private
+     */
+    _findBestCenter(arcPoints, tolerance) {
+        const len = arcPoints.length;
+
+        // Use 3 well-spaced points for initial center calculation
+        let idx1 = 0;
+        let idx2 = Math.floor(len / 2);
+        let idx3 = len - 1;
+
+        // If first and last are very close (near-circle), use different points
+        if (arcPoints[idx1].distTo2D(arcPoints[idx3]) < tolerance * 2) {
+            idx1 = Math.floor(len * 0.25);
+            idx2 = Math.floor(len * 0.5);
+            idx3 = Math.floor(len * 0.75);
+        }
+
+        const center = util.center2d(
+            arcPoints[idx1],
+            arcPoints[idx2],
+            arcPoints[idx3],
+            1
+        );
+
+        if (!center || center.hasNaN?.() || !isFinite(center.r)) {
+            return null;
+        }
+
+        return center;
     }
 
     /**
@@ -1226,77 +1425,6 @@ export class Polygon {
         return false;
     }
 
-    /**
-     * Ease down along the polygonal path.
-     *
-     * 1. Travel from fromPoint to closest point on polygon, to rampZ above that that point,
-     * 2. ease-down starts, following the polygonal path, decreasing Z at a fixed slope until target Z is hit,
-     * 3. then the rest of the path is completed and repeated at target Z until touchdown point is reached.
-     * 4. this function should probably move to CAM prepare since it's only called from there
-     *
-     * possibly no longer used anywhere
-     */
-    forEachPointEaseDown(fn, fromPoint, degrees = 45) {
-        let index = this.findClosestPointTo(fromPoint).index,
-            fromZ = fromPoint.z,
-            offset = 0,
-            points = this.points,
-            length = points.length,
-            touch = -1, // first point to touch target z
-            targetZ = points[0].z,
-            dist2next,
-            last,
-            next,
-            done;
-
-        // Slope for computations.
-        const slope = Math.tan((degrees * Math.PI) / 180);
-        // Z height above polygon Z from which to start the ease-down.
-        // Machine will travel from "fromPoint" to "nearest point x, y, z' => with z' = point z + rampZ",
-        // then start the ease down along path.
-        const rampZ = 2.0;
-        while (true) {
-            next = points[index % length];
-            if (last && next.z < fromZ) {
-                // When "in Ease-Down" (ie. while target Z not yet reached) - follow path while slowly decreasing Z.
-                let deltaZ = fromZ - next.z;
-                dist2next = last.distTo2D(next);
-                let deltaZFullMove = dist2next * slope;
-
-                if (deltaZFullMove > deltaZ) {
-                    // Too long: easing along full path would overshoot depth, synth intermediate point at target Z.
-                    //
-                    // XXX: please check my super basic trig - this should follow from `last` to `next` up until the
-                    //      intersect at the target Z distance.
-                    fn(last.followTo(next, dist2next * deltaZ / deltaZFullMove).setZ(next.z), offset++);
-                } else {
-                    // Ok: execute full move at desired slope.
-                    next = next.clone().setZ(fromZ - deltaZFullMove);
-                }
-
-                fromZ = next.z;
-            } else if (offset === 0 && next.z < fromZ) {
-                // First point, move to rampZ height above next.
-                let deltaZ = fromZ - next.z;
-                fromZ = next.z + Math.min(deltaZ, rampZ)
-                next = next.clone().setZ(fromZ);
-            }
-            last = next;
-            fn(next, offset++);
-            if ((index % length) === touch) {
-                break;
-            }
-            if (touch < 0 && next.z <= targetZ) {
-                // Save touch-down index so as to be able to "complete" the full cut at target Z,
-                // i.e. keep following the path loop until the touch down point is reached again.
-                touch = ((index + length) % length);
-            }
-            index++;
-        }
-
-        return last;
-    }
-
     forEachPoint(fn, close, start) {
         let index = start || 0,
             points = this.points,
@@ -1328,7 +1456,8 @@ export class Polygon {
     }
 
     /**
-     * returns intersections sorted by closest to lp1
+     * given two endpoints of a line
+     * find all intersections sorted by closest to lp1
      */
     intersections(lp1, lp2, deep) {
         let list = [];
@@ -1893,9 +2022,10 @@ export class Polygon {
         });
 
         return {
-            point: closest,
             distance: mindist,
-            index: index
+            point: closest,
+            index: index,
+            poly: this
         };
     }
 
@@ -2195,7 +2325,8 @@ export class Polygon {
     // for turning a poly with an inner offset into a
     // 3d mesh if and only if the inner has the same
     // circularity and <= num points
-    // primarily used to make chamfers
+    // primarily used to make chamfers in mesh:tool
+    // todo: relocate
     ribbonMesh(swap) {
         if (!(this.inner && this.inner.length === 1)) {
             return undefined;
@@ -2437,6 +2568,75 @@ export class Polygon {
         return this;
     }
 
+    // walk points noting z deltas and smoothing z sawtooth patterns
+    // used to smooth low-rez surface contouring
+    refine(passes = 0) {
+        for (let j = 0; j < passes; j++) {
+            let points = this.points,
+                length = points.length,
+                sn = [], // segment normals
+                vn = []; // vertex normals
+            for (let i = 0; i < length; i++) {
+                let p1 = points[i];
+                let p2 = points[(i + 1) % length];
+                sn.push(calc_normal(p1, p2));
+            }
+            for (let i = 0; i < length; i++) {
+                let n1 = sn[(i + length - 1) % length];
+                let n2 = sn[i];
+                let vi = calc_vertex(n1, n2, 1);
+                vn.push(vi);
+                let vl = Math.abs(1 - vi.vl).round(2);
+                // vl should be close to zero on smooth / continuous curves
+                // factoring out hard turns, we smooth the z using the weighted
+                // z values of the points before and after the current point
+                if (vl === 0) {
+                    let p0 = points[(i + length - 1) % length];
+                    let p1 = points[i];
+                    let p2 = points[(i + 1) % length];
+                    p1.z = (p0.z + p2.z + p1.z) / 3;
+                }
+            }
+        }
+    }
+
+    addDogbones(dist, reverse) {
+        let poly = this;
+        let open = poly.open;
+        let isCW = poly.isClockwise();
+        if (reverse || poly.parent) isCW = !isCW;
+        let oldpts = poly.points.slice();
+        let lastpt = oldpts[oldpts.length - 1];
+        let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
+        let length = oldpts.length + (open ? 0 : 1);
+        let newpts = [];
+        for (let i = 0; i < length; i++) {
+            let nextpt = oldpts[i % oldpts.length];
+            let nextsl = lastpt.slopeTo(nextpt).toUnit();
+            let adiff = lastsl.angleDiff(nextsl, true);
+            let bdiff = ((adiff < 0 ? (180 - adiff) : (180 + adiff)) / 2) + 180;
+            if (!open || (i > 1 && i < length)) {
+                if (isCW && adiff > 45) {
+                    let newa = newSlopeFromAngle(lastsl.angle + bdiff);
+                    newpts.push(lastpt.projectOnSlope(newa, dist));
+                    newpts.push(lastpt.clone());
+                } else if (!isCW && adiff < -45) {
+                    let newa = newSlopeFromAngle(lastsl.angle - bdiff);
+                    newpts.push(lastpt.projectOnSlope(newa, dist));
+                    newpts.push(lastpt.clone());
+                }
+            }
+            lastsl = nextsl;
+            lastpt = nextpt;
+            if (i < oldpts.length) {
+                newpts.push(nextpt);
+            }
+        }
+        poly.points = newpts;
+        if (poly.inner) {
+            poly.inner.forEach(inner => inner.addDogbones(dist, true));
+        }
+    }
 }
 
 export function slopeDiff(s1, s2) {

@@ -157,7 +157,7 @@ export function selectHoleToggle(id,mesh) {
 export function clearHolesRec(widget) {
     if (widget.adds) {
         widget.adds.length = 0 //clear adds array
-        delete env.poppedRec.drills[widget.id]
+        if (env.poppedRec?.drills) delete env.poppedRec.drills[widget.id]
     }
 }
 

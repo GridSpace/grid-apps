@@ -473,7 +473,7 @@ class Print {
             };
         }
 
-        function outputPoint(point,lastP,emit,{center,arcPoints,retract}) {
+        function outputPoint(point,lastP,emit,{retract}) {
             // non-move in a new plane means burp out
             // the old sequence and start a new one
             if (newlayer || (autolayer && seq.z != point.z)) {
@@ -508,7 +508,7 @@ class Print {
                 }
             }
             // add point to current sequence
-            scope.addOutput(seq, point, emit, pos.F, tool,{retract,arcPoints});
+            scope.addOutput(seq, point, emit, pos.F, tool, {retract});
             scope.lastPos = Object.assign({}, pos);
             scope.lastPosE = pos.E;
         }
@@ -520,19 +520,14 @@ class Print {
          * @param {number} index - The line number of the g-code file that contains the G2 or G3 command.
          */
         function G2G3(g2, line, index) {
-            const axes = {};
-            const {point, prevPoint, center} = processLine(line,axes);
-
-            // console.log(structuredClone({point,prevPoint,center}));
-
-            let arcPoints = arcToPath( prevPoint, point, 64,{ clockwise:g2,center}) ?? []
-            let emit = g2 ? 2 : 3;
-
-            // console.log("clone point",structuredClone({point,prevPoint,center,arcPoints,emit}));
-            // console.log("pointer point",{point,prevPoint,center,arcPoints,emit});
-
-            outputPoint(point,prevPoint,emit,{center,arcPoints});
-            // scope.addOutput(seq, point, emit, pos.F, tool,{center,arcPoints});
+            let axes = {};
+            let { point, prevPoint, center } = processLine(line, axes);
+            let arcPoints = arcToPath(prevPoint, point, 64, { clockwise: g2, center }) ?? [];
+            for (let point of arcPoints) {
+                outputPoint(point, prevPoint, 1, {});
+                prevPoint = point;
+            }
+            outputPoint(point, prevPoint, 1, {});
         }
 
         function G0G1(g0, line) {

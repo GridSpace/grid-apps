@@ -4,7 +4,7 @@ import { $ } from '../../../moto/webui.js';
 import { api } from '../../core/api.js';
 import { consts } from '../../core/consts.js';
 import { settings as setconf } from '../../core/settings.js';
-import { calcTaperLength, calcTaperAngle } from './tool.js';
+import { Tool, calcTaperAngle, calcTaperBallExtent, calcTaperLength } from './tool.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -12,8 +12,7 @@ let { MODES } = consts,
     DOC = document,
     selectedTool = null,
     editTools = null,
-    maxTool = 0,
-    toolNames = ['endmill','ballmill','tapermill','drill'];
+    maxTool = 0;
 
 function settings() {
     return api.conf.get();
@@ -35,25 +34,108 @@ function renderTools() {
 function selectTool(tool) {
     const { ui } = api;
     selectedTool = tool;
-    ui.toolName.value = tool.name;
-    ui.toolNum.value = tool.number;
-    ui.toolFluteDiam.value = tool.flute_diam;
-    ui.toolFluteLen.value = tool.flute_len;
-    ui.toolShaftDiam.value = tool.shaft_diam;
-    ui.toolShaftLen.value = tool.shaft_len;
-    ui.toolTaperTip.value = tool.taper_tip || 0;
-    ui.toolMetric.checked = tool.metric;
-    ui.toolType.selectedIndex = toolNames.indexOf(tool.type);
-    if (tool === 'tapermill') {
-        ui.toolTaperAngle.value = calcTaperAngle(
-            (tool.flute_diam - tool.taper_tip) / 2, tool.flute_len
-        ).round(1);
-    } else if(tool === 'drill'){
-        ui.toolTaperAngle.value = 118;
+
+    api.util.rec2ui({
+        toolName: selectedTool.name,
+        toolType: selectedTool.type,
+        toolNum: selectedTool.number,
+        toolMetric: selectedTool.metric,
+        toolShaftDiam: selectedTool.shaft_diam,
+        toolShaftLen: selectedTool.shaft_len,
+        toolFluteDiam: selectedTool.flute_diam,
+        toolFluteLen: selectedTool.flute_len,
+        toolTaperAngle: selectedTool.taper_angle,
+        toolTaperTip: selectedTool.taper_tip,
+    },{
+        toolName: ui.toolName,
+        toolType: ui.toolType,
+        toolNum: ui.toolNum,
+        toolMetric: ui.toolMetric,
+        toolShaftDiam: ui.toolShaftDiam,
+        toolShaftLen: ui.toolShaftLen,
+        toolFluteDiam: ui.toolFluteDiam,
+        toolFluteLen: ui.toolFluteLen,
+        toolTaperAngle: ui.toolTaperAngle,
+        toolTaperTip: ui.toolTaperTip,
+    });
+
+    if (tool.type === 'tapermill' || tool.type === 'taperball') {
+        const taperLen = tool.flute_len;
+        ui.toolTaperAngle.value =
+            selectedTool.taper_angle =
+            calcTaperAngle( (tool.flute_diam - tool.taper_tip) / 2, taperLen ).round(1);
+    } else if (tool === 'drill') {
+        ui.toolTaperAngle.value = selectedTool.taper_angle = 90;
     } else {
-        ui.toolTaperAngle.value = 0;
+        ui.toolTaperAngle.value = selectedTool.taper_angle = 0;
     }
+
     renderTool(tool);
+}
+
+export function updateTool(ev) {
+    const { ui } = api;
+
+    let changed = {
+        toolName: selectedTool.name,
+        toolType: selectedTool.type,
+        toolNum: selectedTool.number,
+        toolMetric: selectedTool.metric,
+        toolShaftDiam: selectedTool.shaft_diam,
+        toolShaftLen: selectedTool.shaft_len,
+        toolFluteDiam: selectedTool.flute_diam,
+        toolFluteLen: selectedTool.flute_len,
+        toolTaperAngle: selectedTool.taper_angle,
+        toolTaperTip: selectedTool.taper_tip,
+    };
+
+    api.util.ui2rec(changed,{
+        toolName: ui.toolName,
+        toolType: ui.toolType,
+        toolNum: ui.toolNum,
+        toolMetric: ui.toolMetric,
+        toolShaftDiam: ui.toolShaftDiam,
+        toolShaftLen: ui.toolShaftLen,
+        toolFluteDiam: ui.toolFluteDiam,
+        toolFluteLen: ui.toolFluteLen,
+        toolTaperAngle: ui.toolTaperAngle,
+        toolTaperTip: ui.toolTaperTip,
+    });
+
+    selectedTool.name = changed.toolName;
+    selectedTool.type = changed.toolType;
+    selectedTool.number = changed.toolNum;
+    selectedTool.metric = changed.toolMetric;
+    selectedTool.shaft_diam = changed.toolShaftDiam;
+    selectedTool.shaft_len = changed.toolShaftLen;
+    selectedTool.flute_diam = changed.toolFluteDiam;
+    selectedTool.flute_len = changed.toolFluteLen;
+    selectedTool.taper_angle = changed.toolTaperAngle;
+    selectedTool.taper_tip = changed.toolTaperTip;
+
+    if (selectedTool.type === 'tapermill' || selectedTool.type === 'taperball') {
+        const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
+        const ballRadius = selectedTool.type === 'taperball' ? selectedTool.taper_tip / 2 : 0;
+
+        if (ev && ev.target === ui.toolTaperAngle) {
+            const angle = parseFloat(ev.target.value || 5);
+            const len = calcTaperLength(rad, angle * DEG2RAD);
+            selectedTool.flute_len = len + ballRadius;
+            ui.toolTaperAngle.value = angle.round(1);
+            ui.toolFluteLen.value = selectedTool.flute_len.round(4);
+        } else {
+            const taperLen = selectedTool.flute_len - ballRadius;
+            ui.toolTaperAngle.value =
+                selectedTool.taper_angle =
+                calcTaperAngle(rad, taperLen).round(1);
+        }
+    } else {
+        ui.toolTaperAngle.value = selectedTool.taper_angle = 0;
+    }
+
+    renderTools();
+    setToolChanged(true);
+    renderTool(selectedTool);
 }
 
 function otag(o) {
@@ -77,155 +159,87 @@ function otag(o) {
 
 function renderTool(tool) {
     const { ui } = api;
-    let type = selectedTool.type;
-    let taper = type=== 'tapermill'
-    let drill = type === 'drill'
-    const drillAngleRad = 140 * Math.PI / 180
-    ui.toolTaperAngle.disabled = taper ? undefined : 'true';
-    ui.toolTaperTip.disabled = taper ? undefined : 'true';
     $('tool-view').innerHTML = '<svg id="tool-svg" width="100%" height="100%"></svg>';
     setTimeout(() => {
-        let svg = $('tool-svg'),
-            pad = 10,
-            dim = { w: svg.clientWidth, h: svg.clientHeight },
-            max = { w: dim.w - pad * 2, h: dim.h - pad * 2},
-            off = { x: pad, y: pad },
-            isBall = type === "ballmill",
-            shaft_fill = "#cccccc",
-            flute_fill = "#dddddd",
-            stroke = "#777777",
-            stroke_width = 3,
-            stroke_thin = stroke_width / 2,
-            shaft = tool.shaft_len || 1,
-            flute = tool.flute_len || 1,
-            drillTip = drill ?  0.5 * tool.flute_diam * Math.sin(drillAngleRad) : 0,
-            total_len = shaft + flute+drillTip,
-            units = dim.h / total_len,
-            shaft_len = (shaft / total_len) * max.h,
-            flute_len = (flute / total_len) * max.h,
-            drill_tip_len = (drillTip / total_len) * max.h,
-            shaft_diam = tool.shaft_diam * units,
-            flute_diam = tool.flute_diam * units,
-            // total_wid = Math.max(flute_diam, shaft_diam),
-            shaft_off = (max.w - shaft_diam) / 2,
-            flute_off = (max.w - flute_diam) / 2,
-            taper_off = (max.w - (tool.taper_tip || 0) * units) / 2,
-            parts = [
-                // shaft rectangle
-                { rect: {
-                    x: off.x + shaft_off,
-                    y: off.y,
-                    width: max.w - shaft_off * 2,
-                    height: shaft_len,
-                    fill: shaft_fill,
-                    stroke_width,
-                    stroke
-                } }
-            ];
-        if (taper) {
-            let yoff = off.y + shaft_len;
-            // let mid = dim.w / 2;
-            parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
-                `M ${off.x + flute_off} ${yoff}`,
-                `L ${off.x + taper_off} ${yoff + flute_len}`,
-                `L ${dim.w - off.x - taper_off} ${yoff + flute_len}`,
-                `L ${dim.w - off.x - flute_off} ${yoff}`,
-                `z`
-            ].join('\n')}});
-        } else if(drill){
-            const x1 = off.x + flute_off,
-            y1 = off.y + shaft_len,
-            x2 = dim.w - off.x - flute_off,
-            y2 = y1 + flute_len,
-            xMid = dim.w / 2
+        let svg = $('tool-svg');
+        let pad = 10;
+        let dim = { w: svg.clientWidth, h: svg.clientHeight };
+        let max = { w: dim.w - pad * 2, h: dim.h - pad * 2 };
+        let off = { x: pad, y: pad };
 
-            parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
-                `M ${x1} ${y1}`, //move to top left
-                `L ${x1} ${y2}`, //line to bottom left
-                `L ${xMid} ${y2+drill_tip_len}`, //line to bottom mid point
-                `L ${x2} ${y2}`, //line to bottom right
-                `L ${x2} ${y1}`, //line to top right
-                `z`
-            ].join('\n')}});
-            //add drill flute lines
-            parts.push({ line: {
-                x1, y1, x2, y2: (y1 + y2) / 2,
-                stroke, stroke_width: stroke_thin
-            } });
-            parts.push({ line: {
-                x1, y1: (y1 + y2) / 2, x2, y2,
-                stroke, stroke_width: stroke_thin
-            } });
-        } else {
-            let fl = isBall ? flute_len - flute_diam/2 : flute_len;
-            let x1 = off.x + flute_off;
-            let y1 = off.y + shaft_len;
-            let x2 = x1 + max.w - flute_off * 2;
-            let y2 = y1 + fl;
-            // flute rectangle
-            parts.push({ rect: {
-                x: off.x + flute_off,
-                y: off.y + shaft_len,
-                width: max.w - flute_off * 2,
-                height: fl,
-                fill: flute_fill,
-                stroke_width,
-                stroke,
-            } });
-            // hatch "fill" flute
-            parts.push({ line: { x1, y1, x2, y2, stroke, stroke_width: stroke_thin } });
-            parts.push({ line: {
-                x1: (x1 + x2) / 2, y1, x2, y2: (y1 + y2) / 2,
-                stroke, stroke_width: stroke_thin
-            } });
-            parts.push({ line: {
-                x1, y1: (y1 + y2) / 2, x2: (x1 + x2) / 2, y2,
-                stroke, stroke_width: stroke_thin
-            } });
+        // Create Tool instance and generate profile
+        const toolInst = new Tool(settings(), tool.id);
+        const resolution = (toolInst.maxDiameter() / toolInst.unitScale()) / 100;
+        toolInst.generateProfile(resolution);
+
+        const profile = toolInst.profile;
+        const { pix } = toolInst.profileDim;
+
+        // Extract cross-section at y=0 (center line)
+        // Profile is stored as [dx, dy, z_offset, dx, dy, z_offset, ...]
+        let crossSection = [];
+        for (let i = 0; i < profile.length; i += 3) {
+            let dx = profile[i];
+            let dy = profile[i + 1];
+            let  z = profile[i + 2];
+            // Only take points where dy is approximately 0 (center line)
+            if (Math.abs(dy) < 0.01) {
+                crossSection.push({ x: dx * resolution, z });
+            }
         }
-        if (isBall) {
-            let rad = (max.w - flute_off * 2) / 2;
-            let xend = dim.w - off.x - flute_off;
-            let yoff = off.y + shaft_len + flute_len + stroke_width/2 - flute_diam/2;
-            parts.push({path: {stroke_width, stroke, fill:flute_fill, d:[
-                `M ${off.x + flute_off} ${yoff}`,
-                `A ${rad} ${rad} 0 0 0 ${xend} ${yoff}`,
-                // `L ${off.x + flute_off} ${yoff}`
-            ].join('\n')}})
-        }
+
+        // Section lengths
+        let slen = toolInst.shaftLength();
+        let flen = toolInst.fluteLength();
+
+        // Find bounds
+        let minZ = Math.min(...crossSection.map(p => p.z), -(slen + flen));
+        let maxZ = Math.max(...crossSection.map(p => p.z), 0);
+        let minX = Math.min(...crossSection.map(p => p.x));
+        let maxX = Math.max(...crossSection.map(p => p.x));
+        let zRange = maxZ - minZ;
+        let xRange = maxX - minX;
+
+        // Scale to fit
+        let scale = Math.min(max.h / zRange, max.w / xRange);
+
+        // Center horizontally if tool is narrower than viewport
+        let xOffset = off.x + (max.w - xRange * scale) / 2;
+
+        // Draw vertical lines for each point
+        let parts = [];
+        let stroke_width = 1;
+
+        crossSection.forEach(p => {
+            let x  = xOffset + (p.x - minX) * scale;
+            let y1 = dim.h - off.y - (maxZ - p.z) * scale;   // tip point
+            let y2 = dim.h - off.y - (flen) * scale;         // top flute
+            let y3 = dim.h - off.y - (slen + flen) * scale;  // top shaft
+
+            // flute
+            parts.push({ line: {
+                x1: x,
+                x2: x,
+                y1: y1,
+                y2: y2,
+                stroke: "#999999",
+                stroke_width
+            }});
+
+            // shaft
+            parts.push({ line: {
+                x1: x,
+                x2: x,
+                y1: y2,
+                y2: y3,
+                stroke: "#666666",
+                stroke_width
+            }});
+
+        });
+
         svg.innerHTML = otag(parts);
     }, 10);
-}
-
-export function updateTool(ev) {
-    const { ui } = api;
-    selectedTool.name = ui.toolName.value;
-    selectedTool.number = parseInt(ui.toolNum.value);
-    selectedTool.flute_diam = parseFloat(ui.toolFluteDiam.value);
-    selectedTool.flute_len = parseFloat(ui.toolFluteLen.value);
-    selectedTool.shaft_diam = parseFloat(ui.toolShaftDiam.value);
-    selectedTool.shaft_len = parseFloat(ui.toolShaftLen.value);
-    selectedTool.taper_tip = parseFloat(ui.toolTaperTip.value);
-    selectedTool.metric = ui.toolMetric.checked;
-    selectedTool.type = toolNames[ui.toolType.selectedIndex];
-    if (selectedTool.type === 'tapermill') {
-        const rad = (selectedTool.flute_diam - selectedTool.taper_tip) / 2;
-        if (ev && ev.target === ui.toolTaperAngle) {
-            const angle = parseFloat(ev.target.value);
-            const len = calcTaperLength(rad, angle * DEG2RAD);
-            selectedTool.flute_len = len;
-            ui.toolTaperAngle.value = angle.round(1);
-            ui.toolFluteLen.value = selectedTool.flute_len.round(4);
-        } else {
-            ui.toolTaperAngle.value = calcTaperAngle(rad, selectedTool.flute_len).round(1);
-        }
-    } else {
-        ui.toolTaperAngle.value = 0;
-    }
-    renderTools();
-    ui.toolSelect.selectedIndex = selectedTool.order;
-    setToolChanged(true);
-    renderTool(selectedTool);
 }
 
 function setToolChanged(changed) {

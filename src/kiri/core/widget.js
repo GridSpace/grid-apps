@@ -2,8 +2,12 @@
 
 import { base } from '../../geo/base.js';
 import { avgc } from './utils.js';
-import { verticesToPoints } from '../../geo/points.js';
 import { util as mesh_util } from '../../mesh/util.js';
+import { verticesToPoints } from '../../geo/points.js';
+import { newPoint } from '../../geo/point.js';
+import { newPolygon } from '../../geo/polygon.js';
+import { polygons as POLY } from '../../geo/polygons.js';
+import { checkOverUnderOn, intersectPoints } from '../../geo/slicer.js';
 
 const { inRange, time } = base.util;
 const solid_opacity = 1.0;
@@ -707,7 +711,7 @@ class Widget {
         }
         // used by CAM.shadowAt()
         this.cache.geo = pos;
-        this.cache.shadow = undefined;
+        delete this.cache.shadow;
         return pos;
     }
 
@@ -834,6 +838,115 @@ class Widget {
 
     hide() {
         this.mesh.visible = false;
+    }
+
+    async shadowAt(z) {
+        let shadows = this.cache.shadows;
+        if (!shadows) {
+            shadows = this.cache.shadows = {};
+        }
+        let cached = shadows[z];
+        if (cached) {
+            return cached;
+        }
+        // find closest shadow above and use to speed up delta shadow gen
+        let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
+        let minZabove = Math.min(Infinity, ...zover);
+        let shadow = this.#computeShadowAt(z, minZabove);
+        if (minZabove < Infinity) {
+            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true);
+        }
+        return shadows[z] = POLY.setZ(shadow, z);
+    }
+
+    #ensureShadowCache() {
+        // cache faces with normals up
+        if (this.cache.shadow) {
+            return;
+        }
+        const geo = this.cache.geo;
+        const length = geo.length;
+        const bounds = this.getBoundingBox();
+        const stack = {};
+        // const faces = [];
+        for (let i = Math.floor(bounds.min.z); i <= Math.ceil(bounds.max.z); i++) {
+            stack[i] = [];
+        }
+        for (let i = 0, ip = 0; i < length; i += 3) {
+            const a = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
+            const b = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
+            const c = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
+            const n = THREE.computeFaceNormal(a, b, c);
+            if (n.z < 0.001) {
+                continue;
+                // faces.push(a, b, c);
+            }
+            const minZ = Math.floor(Math.min(a.z, b.z, c.z));
+            const maxZ = Math.ceil(Math.max(a.z, b.z, c.z));
+            for (let z = minZ; z <= maxZ; z++) {
+                stack[z].push(a, b, c);
+            }
+        }
+        this.cache.shadow = stack;
+    }
+
+    // union triangles > z (opt cap < ztop) into polygon(s)
+    #computeShadowAt(z, ztop) {
+        this.#ensureShadowCache();
+        const found = [];
+        const stack = this.cache.shadow;
+        let minZ = Math.floor(z);
+        let maxZ = Math.ceil(z);
+        let slices = [];
+        for (let sz = minZ; sz <= maxZ; sz++) {
+            slices.push(stack[sz] ?? []);
+        }
+        for (let faces of slices)
+        for (let i = 0; i < faces.length; ) {
+            const a = faces[i++];
+            const b = faces[i++];
+            const c = faces[i++];
+            if (ztop && a.z > ztop && b.z > ztop && c.z > ztop) {
+                // skip faces over top threshold
+                continue;
+            }
+            if (a.z < z && b.z < z && c.z < z) {
+                // skip faces under threshold
+                continue;
+            } else if (a.z >= z && b.z >= z && c.z >= z) {
+                found.push([a, b, c]);
+            } else {
+                // check faces straddling threshold
+                const where = { under: [], over: [], on: [] };
+                checkOverUnderOn(newPoint(a.x, a.y, a.z), z, where);
+                checkOverUnderOn(newPoint(b.x, b.y, b.z), z, where);
+                checkOverUnderOn(newPoint(c.x, c.y, c.z), z, where);
+                if (where.on.length === 0 && (where.over.length === 2 || where.under.length === 2)) {
+                    // compute two point intersections and construct line
+                    let line = intersectPoints(where.over, where.under, z);
+                    if (line.length === 2) {
+                        if (where.over.length === 2) {
+                            found.push([where.over[1], line[0], line[1]]);
+                            found.push([where.over[0], where.over[1], line[0]]);
+                        } else {
+                            found.push([where.over[0], line[0], line[1]]);
+                        }
+                    } else {
+                        console.log({ msg: "invalid ips", line: line, where: where });
+                    }
+                }
+            }
+        }
+
+        let polys = found.map(a => {
+            return newPolygon()
+                .add(a[0].x, a[0].y, a[0].z)
+                .add(a[1].x, a[1].y, a[1].z)
+                .add(a[2].x, a[2].y, a[2].z);
+        });
+        polys = POLY.union(polys, 0, true);
+
+        return polys;
     }
 }
 

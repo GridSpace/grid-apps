@@ -14,22 +14,23 @@ class OpLevel extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices, color, settings, tshadow, updateToolDiams, zMax, ztOff } = state;
+        let { addSlices, color, settings, shadow, updateToolDiams, zMax, ztOff } = state;
+        let { down, tool, step, stepz, inset } = op;
         let { stock } = settings;
 
-        let toolDiam = new Tool(settings, op.tool).fluteDiameter();
-        let stepOver = this.stepOver = toolDiam * op.step;
+        let toolDiam = new Tool(settings, tool).fluteDiameter();
+        let stepOver = this.stepOver = toolDiam * step;
         let wpos = state.widget.track.pos;
         let zTop = zMax + ztOff;
-        let zBot = zTop - op.down;
-        let zList = op.stepz ? util.lerp(zTop, zBot, op.stepz) : [ zBot ];
+        let zBot = zTop - down;
+        let zList = stepz && down ? util.lerp(zTop, zBot, stepz) : [ zBot ];
 
         updateToolDiams(toolDiam);
 
         let points = [];
         let clear = op.stock ?
             [ newPolygon().centerRectangle({x:-wpos.x,y:-wpos.y,z:wpos.z}, stock.x + toolDiam/2, stock.y) ] :
-            POLY.outer(POLY.offset(tshadow, toolDiam * (op.inset || 0)));
+            POLY.outer(POLY.offset(shadow.base, toolDiam * (inset || 0)));
 
         POLY.fillArea(clear, 1090, stepOver, points);
 
@@ -49,12 +50,10 @@ class OpLevel extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, layers, stepOver } = this;
-        let { setTool, setSpindle, printPoint } = ops;
+        let { layers, stepOver } = this;
+        let { printPoint } = ops;
         let { newLayer, tip2tipEmit, camOut } = ops;
 
-        setTool(op.tool, op.rate);
-        setSpindle(op.spindle);
         for (let lines of layers) {
             lines = lines.map(p => { return { first: p.first(), last: p.last(), poly: p } });
             printPoint = tip2tipEmit(lines, printPoint, (el, point, count) => {

@@ -434,6 +434,7 @@ function newDiv(opt = {}) {
     (opt.addto || addTo).appendChild(div);
     if (opt.addto) lastDiv = addTo = div;
     if (opt.class) div.setAttribute('class', opt.class);
+    if (opt.content) div.innerHTML = opt.content;
     if (opt.group !== false) {
         lastGroup?.push(div);
         div._group = groupName;
@@ -444,9 +445,10 @@ function newDiv(opt = {}) {
     return div;
 }
 
-function newExpand(label, opt = {}, opteach = {}) {
+function newExpand(label, opt = {}) {
     let div = DOC.createElement('details');
     div.setAttribute('class', opt.class || 'f-col');
+    if (opt.open) div.setAttribute('open', true);
     addModeControls(div, opt);
 
     let summary = DOC.createElement('summary');
@@ -606,7 +608,7 @@ function newText(label, options) {
 function newInput(label, opt = {}) {
     let row = newDiv(opt),
         hide = opt.hide,
-        size = opt.size || 5,
+        size = opt.size ?? 5,
         height = opt.height || 0,
         ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
         action = opt.action || bindTo || inputAction;
@@ -630,6 +632,7 @@ function newInput(label, opt = {}) {
     row.style.display = hide ? 'none' : '';
     if (opt.disabled) ip.setAttribute("disabled", "true");
     if (opt.title) row.setAttribute("title", opt.title);
+    if (opt.id) ip.setAttribute("id", opt.id);
     if (opt.convert) ip.convert = opt.convert.bind(ip);
     if (opt.bound) ip.bound = opt.bound;
     if (opt.action) action = opt.action;
@@ -737,6 +740,7 @@ function newSelect(label, options = {}, source) {
     }
     row.setAttribute("class", "var-row");
     row.style.display = hide ? 'none' : '';
+    if (options.id) ip.setAttribute("id", options.id);
     if (options.convert) ip.convert = options.convert.bind(ip);
     if (options.disabled) ip.setAttribute("disabled", "true");
     if (options.title) row.setAttribute("title", options.title);

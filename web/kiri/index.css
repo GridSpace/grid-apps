@@ -189,7 +189,9 @@ th, tr, td, label {
     white-space: nowrap;
 }
 details summary {
+    display: flex;
     list-style: none;
+    padding-left: 0 !important;
 }
 details summary::-webkit-details-marker {
     display: none;
@@ -437,6 +439,9 @@ details[open] summary::after {
 }
 .dark .widopt {
     background-color: #222;
+}
+.dark #camops summary {
+    background-color: var(--blue-0);
 }
 
 /* top menu bar, drop menus */
@@ -1399,6 +1404,9 @@ details[open] summary::after {
 }
 #camops .set-sep {
     margin-bottom: 4px;
+}
+#camops summary {
+    background-color: var(--blue-4);
 }
 #oplist .clock:hover {
     background-color: var(--blue-2);
@@ -2425,14 +2433,14 @@ details[open] summary::after {
 }
 .var-row input {
     /* flex: 1 1 auto;   */
-    min-width: 0;    
-    max-width: 7ch; 
+    min-width: 0;
+    max-width: 7ch;
     margin-right: 0;
     margin-bottom: 1px;
     padding-bottom: 1px;
     padding-top: 1px;
 }
-.var-row #tool-name{
+.var-row #tool-name {
     max-width: 15ch;
 }
 .var-row button {

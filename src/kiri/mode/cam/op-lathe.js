@@ -54,22 +54,13 @@ class OpLathe extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state, slices, topo } = this;
-        let { settings } = state;
+        let { op, slices, topo } = this;
+        let { camOut, newLayer, zSafe } = ops;
 
-        let { setTool, setSpindle } = ops;
-        let { camOut, newLayer, printPoint } = ops;
-        let { zmax } = ops;
-
-        let toolDiam = new Tool(settings, op.tool).fluteDiameter();
-        let stepover = toolDiam * op.step * 2;
         let rez = topo.resolution;
 
-        setTool(op.tool, op.rate, op.plunge);
-        setSpindle(op.spindle);
-
         // start top center, X = 0, Y = 0 closest to 4th axis chuck
-        printPoint = newPoint(0, 0, zmax);
+        camOut(newPoint(0, 0, zSafe), 0);
 
         for (let slice of slices) {
             // ignore debug slices
@@ -90,14 +81,14 @@ class OpLathe extends CamOp {
                             return;
                         }
                         if (latent) {
-                            camOut(latent, true, stepover);
+                            camOut(latent, 1);
                             latent = undefined;
                         }
                     }
-                    camOut(last = point.clone(), pidx > 0, stepover);
+                    camOut(last = point.clone(), pidx > 0 ? 1 : 0);
                 }, false);
                 if (latent) {
-                    camOut(latent, true, stepover);
+                    camOut(latent, 1);
                 }
             }
 
@@ -110,7 +101,7 @@ class OpLathe extends CamOp {
         // camOut(last = last.clone().setZ(zmax), 0);
         // camOut(last = last.clone().setA(amax), 0);
         newLayer();
-        ops.addGCode([`G0 Z${zmax.round(2)}`, `G0 A${amax}`, "G92 A0"]);
+        ops.addGCode([`G0 Z${zSafe.round(2)}`, `G0 A${amax}`, "G92 A0"]);
     }
 }
 

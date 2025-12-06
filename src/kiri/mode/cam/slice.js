@@ -9,7 +9,7 @@ import { polygons as POLY } from '../../../geo/polygons.js';
 import { setSliceTracker } from '../../core/slice.js';
 import { ops as OPS } from './ops.js';
 import { Tool } from './tool.js';
-import { Slicer as cam_slicer } from './slicer.js';
+import { Slicer as cam_slicer } from './slicer_cam.js';
 import { CAM } from './driver-be.js';
 
 /**
@@ -25,19 +25,17 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let tabW = widget.group.filter(w => w != widget);
 
     let proc = settings.process,
-        sliceAll = widget.slices = [],
         camOps = widget.camops = [],
+        sliceAll = widget.slices = [],
         isIndexed = proc.camStockIndexed;
 
-    let stock, bounds, track,
-        camZTop, camZBottom, camZThru, wztop, ztOff, zbOff,
-        zBottom, zMin, zMax, zThru, zTop,
-        minToolDiam, maxToolDiam, dark, color, tabs, unsafe, units,
-        axisRotation, axisIndex,
-        part_size,
+    let axisRotation, axisIndex,
+        bounds, dark, color, stock, tabs, track, tool, unsafe, units, workarea,
+        camZTop, camZBottom, camZThru, minToolDiam, maxToolDiam,
         bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z, bottom_cut,
         top_stock, top_part, top_gap, top_z,
-        workarea;
+        zBottom, zMin, zMax, zThru, zTop,
+        ztOff, zbOff, wztop;
 
     axisRotation = axisIndex = undefined;
     dark = settings.controller.dark;
@@ -51,17 +49,20 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     // allow recomputing later if widget or settings changes
     const var_compute = () => {
         let { camStockX, camStockY, camStockZ, camStockOffset } = proc;
+        ({ camZTop, camZBottom, camZThru } = proc);
         bounds = widget.getBoundingBox();
+        let pos = widget.track.pos;
         stock = camStockOffset ? {
             x: bounds.dim.x + camStockX,
             y: bounds.dim.y + camStockY,
             z: bounds.dim.z + camStockZ,
+            center: newPoint(pos.x, pos.y, pos.z)
         } : {
             x: camStockX,
             y: camStockY,
-            z: camStockZ
+            z: camStockZ,
+            center: newPoint(pos.x, pos.y, pos.z)
         };
-        ({ camZTop, camZBottom, camZThru } = proc);
         track = widget.track;
         wztop = track.top;
         ztOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (stock.z - wztop);
@@ -71,7 +72,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         zMax = bounds.max.z;
         zThru = camZThru;
         zTop = zMax + ztOff;
-        part_size = bounds.dim;
         bottom_gap = zbOff;
         bottom_part = 0;
         bottom_stock = -bottom_gap;
@@ -142,7 +142,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let opList = [];
     let opSum = 0;
     let opTot = 0;
-    let shadows = {};
     let slicer;
     let state = {
         addSlices,
@@ -159,9 +158,10 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         setAxisIndex,
         setToolDiam,
         settings,
-        shadowAt,
+        shadowAt(z) { return widget.shadowAt(z) },
         slicer,
         tabs,
+        tool,
         unsafe,
         updateSlicer,
         updateToolDiams,
@@ -203,9 +203,9 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     async function computeShadows() {
-        shadows = {};
+        // console.log('(re)compute shadows');
         await new OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
-            // console.log('reshadow', progress.round(3));
+            // console.log('reshadowing', progress.round(3));
         });
     }
 
@@ -221,21 +221,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     function updateToolDiams(toolDiam) {
         minToolDiam = Math.min(minToolDiam, toolDiam);
         maxToolDiam = Math.max(maxToolDiam, toolDiam);
-    }
-
-    function shadowAt(z) {
-        let cached = shadows[z];
-        if (cached) {
-            return cached;
-        }
-        // find closest shadow above and use to speed up delta shadow gen
-        let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
-        let minZabove = Math.min(Infinity, ...zover);
-        let shadow = computeShadowAt(widget, z, minZabove);
-        if (minZabove < Infinity) {
-            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true);
-        }
-        return shadows[z] = POLY.setZ(shadow, z);
     }
 
     async function setAxisIndex(degrees = 0, absolute = true) {
@@ -284,14 +269,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
 
     let activeOps = proc.ops.filter(op => !op.disabled);
 
-    // silently preface op list with OpShadow
     if (isIndexed) {
+        // preface op list with OpIndex
         if (activeOps.length === 0 || activeOps[0].type !== 'index') {
             opList.push(new OPS.index(state, { type: "index", index: 0 }));
             opTot += opList.peek().weight();
 
         }
     } else {
+        // preface op list with OpShadow
         opList.push(new OPS.shadow(state, { type: "shadow", silent: true }));
         opTot += opList.peek().weight();
     }
@@ -324,11 +310,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             workover.bottom_z = isIndexed ? valz.ov_botz : bottom_stock + valz.ov_botz;
             workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
         }
+        if (valz.tool) {
+            tool = new Tool(settings, valz.tool);
+        }
         let { note, type } = op.op;
         let named = note ? note.split(' ').filter(v => v.charAt(0) === '#') : [];
         let layername = named.length ? named : (note ? `${type} (${note})` : type);
         Object.assign(state, {
             layername,
+            tool,
             zBottom,
             zThru,
             ztOff,
@@ -336,9 +326,16 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             zTop,
             workarea: workover
         });
+        let operr;
         await op.slice((progress, message) => {
             onupdate((opSum + (progress * weight)) / opTot, message || op.type());
+        }).catch(e => {
+            operr = e;
+            console.trace(e);
         });
+        if (operr) {
+            return error(operr);
+        }
         // update tracker rotation for next slice output() visualization
         tracker.rotation = isIndexed ? axisRotation : 0;
         camOps.push(op);
@@ -349,75 +346,10 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     // reindex
     sliceAll.forEach((slice, index) => slice.index = index);
 
-    // used in printSetup()
-    // used in CAM.prepare.getZClearPath()
-    // add tabs to terrain tops so moves avoid them
-    if (tabs) {
-        state.terrain.forEach(slab => {
-            tabs.forEach(tab => {
-                if (tab.pos.z + tab.dim.z / 2 >= slab.z) {
-                    let all = [...slab.tops, tab.poly];
-                    slab.tops = POLY.union(all, 0, true);
-                    // slab.slice.output()
-                    //     .setLayer("debug-tabs", {line: 0x880088, thin: true })
-                    //     .addPolys(POLY.setZ(slab.tops.clone(true), slab.z), { thin: true });
-                }
-            });
-        });
-    }
-
-    // add shadow perimeter to terrain to catch outside moves off part
-    let tabpoly = tabs ? tabs.map(tab => tab.poly) : [];
-    let allpoly = POLY.union([...state.shadow.base, ...tabpoly], 0, true);
-    let shadowOff = maxToolDiam < 0 ? allpoly :
-        POLY.offset(allpoly, [minToolDiam / 2, maxToolDiam / 2], { count: 2, flat: true, minArea: 0 });
-    state.terrain.forEach(level => level.tops.appendAll(shadowOff));
-
-    widget.terrain = state.skipTerrain ? null : state.terrain;
     widget.minToolDiam = minToolDiam;
     widget.maxToolDiam = maxToolDiam;
 
     ondone();
-};
-
-export function addDogbones(poly, dist, reverse) {
-    if (Array.isArray(poly)) {
-        return poly.forEach(p => addDogbones(p, dist));
-    }
-    let open = poly.open;
-    let isCW = poly.isClockwise();
-    if (reverse || poly.parent) isCW = !isCW;
-    let oldpts = poly.points.slice();
-    let lastpt = oldpts[oldpts.length - 1];
-    let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
-    let length = oldpts.length + (open ? 0 : 1);
-    let newpts = [];
-    for (let i = 0; i < length; i++) {
-        let nextpt = oldpts[i % oldpts.length];
-        let nextsl = lastpt.slopeTo(nextpt).toUnit();
-        let adiff = lastsl.angleDiff(nextsl, true);
-        let bdiff = ((adiff < 0 ? (180 - adiff) : (180 + adiff)) / 2) + 180;
-        if (!open || (i > 1 && i < length)) {
-            if (isCW && adiff > 45) {
-                let newa = newSlopeFromAngle(lastsl.angle + bdiff);
-                newpts.push(lastpt.projectOnSlope(newa, dist));
-                newpts.push(lastpt.clone());
-            } else if (!isCW && adiff < -45) {
-                let newa = newSlopeFromAngle(lastsl.angle - bdiff);
-                newpts.push(lastpt.projectOnSlope(newa, dist));
-                newpts.push(lastpt.clone());
-            }
-        }
-        lastsl = nextsl;
-        lastpt = nextpt;
-        if (i < oldpts.length) {
-            newpts.push(nextpt);
-        }
-    }
-    poly.points = newpts;
-    if (poly.inner) {
-        addDogbones(poly.inner, dist, true);
-    }
 };
 
 export async function traces(settings, widget) {
@@ -703,7 +635,7 @@ export async function holes(settings, widget, individual, rec, onProgress) {
     for (let [i, slice] of slices.entries()) {
         for (let top of slice.tops) {
             // console.log("slicing",slice.z,top)
-            slice.shadow = computeShadowAt(widget, slice.z, 0);
+            slice.shadow = await widget.shadowAt(slice.z);
             let inner = top.inner;
             if (!inner) { //no holes
                 continue;
@@ -903,75 +835,4 @@ function healPolys(noff, sameZ = true) {
         }
     }
     return noff;
-}
-
-// union triangles > z (opt cap < ztop) into polygon(s)
-export function computeShadowAt(widget, z, ztop) {
-    const geo = widget.cache.geo;
-    const length = geo.length;
-    // cache faces with normals up
-    if (!widget.cache.shadow) {
-        const faces = [];
-        for (let i = 0, ip = 0; i < length; i += 3) {
-            const a = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
-            const b = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
-            const c = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
-            const n = THREE.computeFaceNormal(a, b, c);
-            if (n.z > 0.001) {
-                faces.push(a, b, c);
-                // faces.push(newPoint(...a), newPoint(...b), newPoint(...c));
-            }
-        }
-        widget.cache.shadow = faces;
-    }
-    const found = [];
-    const faces = widget.cache.shadow;
-    const { checkOverUnderOn, intersectPoints } = cam_slicer;
-    for (let i = 0; i < faces.length;) {
-        const a = faces[i++];
-        const b = faces[i++];
-        const c = faces[i++];
-        let where = undefined;
-        if (ztop && a.z > ztop && b.z > ztop && c.z > ztop) {
-            // skip faces over top threshold
-            continue;
-        }
-        if (a.z < z && b.z < z && c.z < z) {
-            // skip faces under threshold
-            continue;
-        } else if (a.z > z && b.z > z && c.z > z) {
-            found.push([a, b, c]);
-        } else {
-            // check faces straddling threshold
-            const where = { under: [], over: [], on: [] };
-            checkOverUnderOn(newPoint(a.x, a.y, a.z), z, where);
-            checkOverUnderOn(newPoint(b.x, b.y, b.z), z, where);
-            checkOverUnderOn(newPoint(c.x, c.y, c.z), z, where);
-            if (where.on.length === 0 && (where.over.length === 2 || where.under.length === 2)) {
-                // compute two point intersections and construct line
-                let line = intersectPoints(where.over, where.under, z);
-                if (line.length === 2) {
-                    if (where.over.length === 2) {
-                        found.push([where.over[1], line[0], line[1]]);
-                        found.push([where.over[0], where.over[1], line[0]]);
-                    } else {
-                        found.push([where.over[0], line[0], line[1]]);
-                    }
-                } else {
-                    console.log({ msg: "invalid ips", line: line, where: where });
-                }
-            }
-        }
-    }
-
-    let polys = found.map(a => {
-        return newPolygon()
-            .add(a[0].x, a[0].y, a[0].z)
-            .add(a[1].x, a[1].y, a[1].z)
-            .add(a[2].x, a[2].y, a[2].z);
-    });
-
-    polys = POLY.union(polys, 0, true);
-
-    return polys;
 }

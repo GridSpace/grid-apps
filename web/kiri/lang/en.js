@@ -513,10 +513,10 @@ self.lang['en-us'] = {
 
     // CNC COMMON
     cc_menu:        "limits",
-    cc_rapd_s:      "xy feed",
-    cc_rapd_l:      ["max xy moves feedrate","in workspace units / minute"],
-    cc_rzpd_s:      "z feed",
-    cc_rzpd_l:      ["max z moves feedrate","in workspace units / minute"],
+    cc_rapd_s:      "feed rate",
+    cc_rapd_l:      ["max xy cutting feedrate","in workspace units / minute"],
+    cc_rzpd_s:      "plunge rate",
+    cc_rzpd_l:      ["max z cutting plunge rate","in workspace units / minute"],
 
     // CNC LEVELING
     cc_loff_s:      "z offset",
@@ -538,10 +538,6 @@ self.lang['en-us'] = {
     cr_clst_l:      ["in indexed mode, clear entire stock area, not just to part periemter"],
     cr_clrt_s:      "clear top",
     cr_clrt_l:      ["run a clearing pass over","the bounding area of the part","at z = 0"],
-    cr_clrp_s:      "clear voids",
-    cr_clrp_l:      ["mill out through pockets","instead of just the outline"],
-    cr_clrf_s:      "clear faces",
-    cr_clrf_l:      ["interpolate step down to","clear any detected flat areas"],
     cr_olin_s:      "inside only",
     cr_olin_l:      ["limit cutting to","inside part boundaries"],
 
@@ -553,18 +549,10 @@ self.lang['en-us'] = {
     co_dogb_l:      ["insert dogbone cuts","into inside corners"],
     co_dogr_s:      "reverse bones",
     co_dogr_l:      ["reverse dogbone direction"],
-    co_clrt_s:      "clear top",
-    co_clrt_l:      ["cut starting at the top of stock","when stock is enabled"],
     co_wide_s:      "wide cutout",
     co_wide_l:      ["widen outside cutout paths","for deep cuts in hard material"],
-    co_olin_s:      "inside only",
-    co_olin_l:      ["limit cutting to","inside part boundaries"],
-    co_olot_s:      "outside only",
-    co_olot_l:      ["limit cutting to","exterior part boundaries","which can be thought of","as the shadow outline"],
     co_omit_s:      "omit through",
     co_omit_l:      "eliminate thru holes",
-    co_omvd_s:      "omit pocket",
-    co_omvd_l:      "eliminate interior pockets",
     co_olen_s:      "enable",
     co_olen_l:      "enabled outline cutting",
 
@@ -601,8 +589,6 @@ self.lang['en-us'] = {
     cp_refi_l:      ["number of refining passes to perform on contoured polylines. meant to address Z delta sawtoothing caused by faced geometries whereas smoothing handles XY. values > 10 work well for gently contoured geometries with significant Z movement."],
     cp_cont_s:      "contour",
     cp_cont_l:      ["ignore interior voids and features"],
-    cp_engr_s:      "engrave",
-    cp_engr_l:      ["sets up a single pass around the perimeter of the selected area. also useful for 3D laser marking"],
     cp_outl_s:      "outline only",
     cp_outl_l:      ["ignore interior voids and features"],
 
@@ -828,6 +814,8 @@ self.lang['en-us'] = {
     ou_feng_l:      "speed scale (0.1-1) when endmill is fully engaged on a new cut. stepped over cuts when the endmill is less than fully engaged run at a factor of 1 relative to output speed. typically this relates to roughing or any operation with step over.",
     ou_eang_s:      "ease angle",
     ou_eang_l:      "descent angle for ease down in degrees",
+    ou_dire_s:      "milling",
+    ou_dire_l:      ["milling direction","climb, conventional, alternating"],
 
     // CAM STOCK
     cs_menu:        "stock",

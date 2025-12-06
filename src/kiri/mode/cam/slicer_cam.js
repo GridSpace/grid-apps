@@ -1,15 +1,19 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base, util } from '../../../geo/base.js';
+import { util } from '../../../geo/base.js';
 import { decode, decodePointArray } from '../../core/codec.js';
-import { newLine, newOrderedLine } from '../../../geo/line.js';
+import { newLine } from '../../../geo/line.js';
 import { newPoint } from '../../../geo/point.js';
 import { newSlice } from '../../core/slice.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
-import { slicer } from '../../../geo/slicer.js';
+import {
+    checkOverUnderOn,
+    intersectPoints,
+    makeZLine,
+    removeDuplicateLines,
+    sliceConnect,
+} from '../../../geo/slicer.js';
 
-const { sliceConnect, sliceDedup } = slicer;
-const { config } = base;
 const timing = false;
 const zDecimal = 3;
 const epsilon = 10e-5;
@@ -232,15 +236,18 @@ export class Slicer {
                 // console.log({ oneach: slice, ...track });
             }));
         }
-        const data = (await Promise.all(promises)).flat();
 
-        data.sort((a, b) => b.z - a.z).forEach((rec, i) => {
+        const data = (await Promise.all(promises)).flat();
+        data.sort((a, b) => b.z - a.z);
+
+        for (let i=0; i<data.length; i++) {
+            let rec = data[i];
             rec.tops = rec.polys;
             rec.slice = newSlice(rec.z).addTops(rec.tops);
             if (opt.each) {
-                opt.each(rec, i, data.length);
+                await opt.each(rec, i, data.length);
             }
-        });
+        }
 
         if (threaded) minions.broadcast("cam_slice_cleanup");
         end("slicing");
@@ -339,7 +346,7 @@ export class Slicer {
 
         if (dedup) {
             // console.log({ z, dedup: lines, points });
-            lines = sliceDedup(lines, debug);
+            lines = removeDuplicateLines(lines, debug);
         }
 
         return lines.length ? {
@@ -403,78 +410,3 @@ export class Slicer {
         return array.map(v => parseFloat(v.toFixed(zDecimal)));
     }
 }
-
-/**
- * given a point, append to the correct
- * 'where' objec tarray (on, over or under)
- *
- * @param {Point} p
- * @param {number} z offset
- * @param {Obejct} where
- */
-function checkOverUnderOn(p, z, where) {
-    let delta = p.z - z;
-    if (Math.abs(delta) < config.precision_slice_z) { // on
-        where.on.push(p);
-    } else if (delta < 0) { // under
-        where.under.push(p);
-    } else { // over
-        where.over.push(p);
-    }
-}
-
-/**
- * Given a point over and under a z offset, calculate
- * and return the intersection point on that z plane
- *
- * @param {Point} over
- * @param {Point} under
- * @param {number} z offset
- * @returns {Point} intersection point
- */
-function intersectPoints(over, under, z) {
-    let ip = [];
-    for (let i = 0; i < over.length; i++) {
-        for (let j = 0; j < under.length; j++) {
-            ip.push(over[i].intersectZ(under[j], z));
-        }
-    }
-    return ip;
-}
-
-/**
- * Ensure points are unique with a cache/key algorithm
- */
-function getCachedPoint(phash, p) {
-    let cached = phash[p.key];
-    if (!cached) {
-        phash[p.key] = p;
-        return p;
-    }
-    return cached;
-}
-
-/**
- * Given two points and hints about their edges,
- * return a new Line object with points sorted
- * lexicographically by key.  This allows for future
- * line de-duplication and joins.
- *
- * @param {Object} phash
- * @param {Point} p1
- * @param {Point} p2
- * @param {boolean} [coplanar]
- * @param {boolean} [edge]
- * @returns {Line}
- */
-function makeZLine(phash, p1, p2, coplanar, edge) {
-    p1 = getCachedPoint(phash, p1.clone());
-    p2 = getCachedPoint(phash, p2.clone());
-    let line = newOrderedLine(p1, p2);
-    line.coplanar = coplanar || false;
-    line.edge = edge || false;
-    return line;
-}
-
-Slicer.checkOverUnderOn = checkOverUnderOn;
-Slicer.intersectPoints = intersectPoints;

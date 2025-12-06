@@ -518,27 +518,22 @@ export function shapeToPath(shape, points, closed) {
 /**
  * Generate a list of points approximating a circular arc.
  * @param {Point} start - the starting point of the arc.
- * @param {Point} end - the ending point of the arc.
- * @param {number} [arcdivs= 24] - the number of lines to use to represent PI radians
- * @param {number} opts.radius - the radius of the arc. If undefined, will use the
- *     start and end points to infer the radius.
- * @param {boolean} opts.clockwise - whether the arc is clockwise or counter-clockwise.
- *     generating the points.
- *
+ * @param {Point} end - the ending point of the arc (not included).
+ * @param {number} [arcdivs = 24] - the number of lines to use to represent PI radians
+ * @param {number} opts.radius - the radius of the arc. If undefined, will use the start and end points to infer the radius.
+ * @param {boolean} opts.clockwise - whether the arc is clockwise or counter-clockwise. generating the points.
  * @return {Array<Point>} an array of points representing the arc.
  */
 export function arcToPath(start, end, arcdivs = 24, opts) {
-
     let { clockwise, center, radius } = opts;
 
-    // @type {Point}
     if (end.x === undefined && end.x === undefined && center === undefined) {
         // bambu generates loop z or wipe loop arcs in place
         // console.log({ skip_empty_arc: rec });
         return;
     }
 
-    if(arcdivs <= 2){
+    if (arcdivs <= 2) {
         return [start.clone(), end.clone()];
     }
 
@@ -573,9 +568,9 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
     let a2 = Math.atan2(center.y - end.y, center.x - end.x) + Math.PI;
     let ad = base.util.thetaDiff(a1, a2, clockwise); // angle difference in radians
     let samePoint = Math.abs(ad) < 0.001
-    let ofFull =  Math.abs(ad)/(2*Math.PI);
-    let steps =  samePoint? arcdivs : Math.max(Math.floor( arcdivs * ofFull),4);
-    let step =  (samePoint? (Math.PI*2)*(clockwise? -1 : 1) : ad) / steps;
+    let ofFull = Math.abs(ad) / (2 * Math.PI);
+    let steps = samePoint ? arcdivs : Math.max(Math.floor(arcdivs * ofFull), 4);
+    let step = (samePoint ? (Math.PI * 2) * (clockwise ? -1 : 1) : ad) / steps;
     let zStart = start.z;
     let zStep = -dz / steps;
     let rot = a1;
@@ -597,6 +592,7 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
         zStart += zStep;
         rot += step;
     }
+
     // console.log(arr,start,end);
     return arr
 }

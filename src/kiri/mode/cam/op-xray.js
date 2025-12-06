@@ -2,7 +2,7 @@
 
 import { CamOp } from './op.js';
 import { newSlice } from '../../core/slice.js';
-import { Slicer } from './slicer.js';
+import { Slicer } from './slicer_cam.js';
 
 class OpXRay extends CamOp {
     constructor(state, op) {

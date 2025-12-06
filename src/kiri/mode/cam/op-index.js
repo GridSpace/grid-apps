@@ -25,12 +25,12 @@ export class OpIndex extends CamOp {
     }
 
     prepare(ops, progress) {
-        const { zmax, zsafe, camOut } = ops;
+        let { zmax, zsafe, camOut, printPoint } = ops;
         // max point of stock corner radius when rotating (safe z when indexing)
-        const ztop = Math.max(zsafe, zmax);
+        let ztop = Math.max(zsafe, zmax);
         // move above rotating stock
-        camOut(last = last.clone().setZ(ztop), 0);
+        camOut(printPoint = printPoint.clone().setZ(ztop), 0);
         // issue rotation command
-        camOut(last = last.clone().setZ(ztop).setA(this.degrees), 0);
+        camOut(printPoint = printPoint.clone().setZ(ztop).setA(this.degrees), 0);
     }
 }

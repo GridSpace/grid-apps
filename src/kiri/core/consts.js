@@ -130,6 +130,18 @@ const LISTS = {
     surftyp: [
         { name: "linear" },
         { name: "offset" },
+    ],
+    direction: [
+        { name: "climb" },
+        { name: "conventional" },
+        { name: "alternating" },
+    ],
+    camtool: [
+        { name: "flat end",   id: "endmill" },
+        { name: "ball end",   id: "ballmill" },
+        { name: "taper tip",  id: "tapermill" },
+        { name: "taper ball", id: "taperball" },
+        { name: "drill bit",  id: "drill" },
     ]
 };
 

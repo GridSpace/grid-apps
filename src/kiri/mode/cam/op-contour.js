@@ -83,10 +83,13 @@ class OpContour extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { color, addSlices, settings, updateToolDiams } = state;
+        let conTool = new Tool(settings, op.tool);
         let filter = createFilter(op, settings.origin, op.axis.toLowerCase());
-        let toolDiam = this.toolDiam = new Tool(settings, op.tool).fluteDiameter();
+        let toolDiam = this.toolDiam = conTool.fluteDiameter();
+        this.toolStep = conTool.getStepSize(op.step);
 
         updateToolDiams(toolDiam);
+
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
@@ -114,21 +117,19 @@ class OpContour extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state, sliceOut } = this;
+        let { op, state, sliceOut, toolStep } = this;
         let { settings } = state;
         let { process } = settings;
 
-        let { setTolerance, setTool, setSpindle } = ops;
+        let { polyEmit, setContouring, setTolerance, setTool } = ops;
         let { widget, camOut, newLayer, zmax } = ops;
 
         let bounds = widget.getBoundingBox();
         let toolDiam = this.toolDiam;
-        let stepover = toolDiam * op.step * 2;
-        let depthFirst = process.camDepthFirst;
         let depthData = [];
 
         setTool(op.tool, op.rate, process.camFastFeedZ);
-        setSpindle(op.spindle);
+        setContouring(true, toolStep);
         setTolerance(this.tolerance);
 
         let printPoint = newPoint(bounds.min.x, bounds.min.y, zmax);
@@ -139,38 +140,21 @@ class OpContour extends CamOp {
                 continue;
             }
             let polys = [], poly;
-            slice.camLines.forEach(function (poly) {
-                if (depthFirst) poly = poly.clone(true).annotate({ slice: slice.index + 1 });
+            slice.camLines.forEach((poly) => {
+                poly = poly.clone(true).annotate({ slice: slice.index + 1 });
                 polys.push({ first: poly.first(), last: poly.last(), poly: poly });
             });
-            if (depthFirst) {
-                depthData.appendAll(polys);
-            } else {
-                printPoint = tip2tipEmit(polys, printPoint, function (el, point, count) {
-                    poly = el.poly;
-                    if (poly.last() === point) {
-                        poly.reverse();
-                    }
-                    poly.forEachPoint(function (point, pidx) {
-                        camOut(point.clone(), pidx > 0, { moveLen: stepover });
-                    }, false);
-                });
-                newLayer();
-            }
+            depthData.appendAll(polys);
         }
 
-        if (depthFirst) {
-            tip2tipEmit(depthData, printPoint, function (el, point, count) {
-                let poly = el.poly;
-                if (poly.last() === point) {
-                    poly.reverse();
-                }
-                poly.forEachPoint(function (point, pidx) {
-                    camOut(printPoint = point.clone().annotate({ slice: poly.slice }), pidx > 0, { moveLen: stepover });
-                }, false);
-                newLayer();
-            });
-        }
+        tip2tipEmit(depthData, printPoint, (el, point) => {
+            let poly = el.poly;
+            if (poly.last() === point) {
+                poly.reverse();
+            }
+            polyEmit(poly);
+            newLayer();
+        });
     }
 }
 

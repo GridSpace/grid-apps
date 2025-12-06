@@ -47,11 +47,12 @@ async function path(levels, update, opts = {}) {
         return [];
     }
 
+    const isCAM = is_cam();
     const dark = is_dark();
     const tools = opts.tools || {};
     const flat = opts.flat;
     const thin = opts.thin && !flat;
-    const ckspeed = opts.speed !== false;
+    const ckspeed = isCAM || opts.speed !== false;
     const headColor = 0x888888;
     const moveColor = opts.move >= 0 ? opts.move : (dark ? 0x666666 : 0xaaaaaa);
     const printColor = opts.print >= 0 ? opts.print : 0x777700;
@@ -186,27 +187,7 @@ async function path(levels, update, opts = {}) {
                 if (arrowAll || lastOut.emit !== out.emit) {
                     heads.push({p1: lastOutPoint, p2: outPoint});
                 }
-                const op = outPoint, lp = lastOutPoint;
-                // const moved = Math.max(
-                //     Math.abs(op.x - lp.x),
-                //     Math.abs(op.y - lp.y),
-                //     Math.abs(op.z - lp.z));
-                // if (moved < 0.0001) return;
-                if (is_cam() && (out.emit == 2 || out.emit == 3 )) { // cam arc emit
-                    // checks if a new poly should be started
-                    if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
-                        current = newPolygon().setOpen();
-                        current.push(lastOutPoint);
-                        current.color = color(out);
-                        pushPrint(out.tool, current);
-                    }
-                    out.arcPoints.forEach(p => {
-                        current.push(p);
-                    })
-                    current.push(outPoint);
-                } else if (out.emit) {
-                    // explicity G1 in CAM mode
-                    // just a non-move in other modes
+                if (out.emit) {
                     // checks if a new poly should be started
                     if (!lastOut.emit || (ckspeed && out.speed !== lastOut.speed) || lastEnd) {
                         current = newPolygon().setOpen();

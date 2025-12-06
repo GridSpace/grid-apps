@@ -1,5 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+// todo: surface offset pattern
+// todo: trace dogbones, merge overlap
+
 import { CamOp } from './op.js';
 import { Tool } from './tool.js';
 import { newSlice } from '../../core/slice.js';
@@ -22,16 +25,19 @@ class OpArea extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, mode, down, over, follow, expand, outline, refine, smooth } = op;
-        let { ov_topz, ov_botz, ov_conv } = op;
+        let { tool, mode, down, over, follow, expand, outline, smooth } = op;
+        let { ov_topz, ov_botz, direction, rename } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, healPolys, shadowAt, workarea } = state;
 
         let areaTool = new Tool(settings, tool);
+        let smoothVal = (smooth ?? 0) / 10;
         let toolDiam = areaTool.fluteDiameter();
-        let toolOver = areaTool.hasTaper() ? over : toolDiam * over;
-        let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_stock;
-        let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : workarea.bottom_part;
+        let toolOver = areaTool.getStepSize(over);
+        let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_z;
+        let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : Math.max(workarea.bottom_z, workarea.bottom_part);
+        let shadowBase = state.shadow.base;
+        let thruHoles = state.shadow.holes;
 
         // also updates tab offsets
         setToolDiam(toolDiam);
@@ -62,7 +68,7 @@ class OpArea extends CamOp {
 
         // connect open poly edge segments into closed loops (when possible)
         // surface and edge selections produce open polygons by default
-        polys = POLY.nest(healPolys(polys));
+        polys = POLY.nest(healPolys(polys, false));
 
         // gather surface selections
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
@@ -83,7 +89,9 @@ class OpArea extends CamOp {
         // add in unioned surface areas
         polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), fminz));
 
-        // todo: implement `refine` and `smooth`
+        // smoothing for jaggies usually caused by vertical walls
+        if (smoothVal)
+        polys = polys.map(poly => POLY.offset(POLY.offset([ poly ], smoothVal), -smoothVal)).flat();
 
         // expand selections (flattens z variable polys)
         if (Math.abs(expand) > 0) {
@@ -95,7 +103,9 @@ class OpArea extends CamOp {
                     nupolys.push(...expanded.flat());
                 }
             }
-            polys = nupolys;
+            // polys = nupolys;
+            // re-merge after expansion in case it produces overlap
+            polys = POLY.union(nupolys, 0.00001, true);
         }
 
         // process each area separately
@@ -104,16 +114,16 @@ class OpArea extends CamOp {
         for (let area of polys) {
             let bounds = area.getBounds3D();
 
-            if (devel) newLayer().output()
-                .setLayer("area", { line: 0xff8800 }, false)
-                .addPolys([ area ]);
-
-            newArea();
-
             if (outline) {
                 // remove inner voids when processing outline only
                 area.inner = undefined;
             }
+
+            newLayer().output()
+                .setLayer("area", { line: 0xff8800 }, false)
+                .addPolys([ area ]);
+
+            newArea();
 
             if (mode === 'clear') {
                 let zs = down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
@@ -126,7 +136,22 @@ class OpArea extends CamOp {
                     let layers = slice.output();
                     let outs = [];
                     let clip = [];
-                    let shadow = shadowAt(z);
+                    let shadow = await shadowAt(z);
+                    let tool_shadow =  POLY.offset(shadow, [ toolDiam / 2 - 0.01 ], { count: 1, z });
+                    // for roughing backward compatability
+                    if (op.omitthru) {
+                        shadow = shadow.clone(true);
+                        for (let poly of shadow.filter(p => p.inner)) {
+                            poly.inner = poly.inner.filter(inner => {
+                                for (let ho of thruHoles) {
+                                    if (inner.isEquivalent(ho)) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            });
+                        }
+                    }
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
                         count: 999, outs, flat: true, z, minArea: 0
@@ -142,16 +167,30 @@ class OpArea extends CamOp {
                         break outer;
                     }
                     // cut tabs when present
-                    if (tabs) outs = cutTabs(tabs, outs);
+                    if (tabs.length) outs = cutTabs(tabs, outs);
+                    // for roughing backward compatability
+                    if (op.leave_z) {
+                        for (let out of outs)
+                            for (let p of out)
+                                p.z += op.leave_z;
+                    }
+                    if (op.leave_xy) {
+                        outs = outs.map(poly => poly.offset(-op.leave_xy)).flat();
+                    }
+                    slice.tool_shadow = tool_shadow;
                     slice.camLines = outs;
                     zroc += zinc;
                     lzo = z;
                     progress(proc + (pinc * zroc), 'clear');
                     if (devel) layers
-                        .setLayer("shadow", { line: 0x0088ff }, false)
-                        .addPolys(shadow);
+                        .setLayer("base", { line: 0xff0000 }, false)
+                        .addPolys(shadowBase)
+                        .setLayer("shadow", { line: 0x00ff00 }, false)
+                        .addPolys(shadow)
+                        .setLayer("tool shadow", { line: 0x44ff88 }, false)
+                        .addPolys(tool_shadow);
                     layers
-                        .setLayer("clear", { line: 0x88ff00 }, false)
+                        .setLayer(rename ?? "clear", { line: 0x88ff00 }, false)
                         .addPolys(outs);
                     // of the last output still cuts, we need an escape
                     if (z === zs.peek()) {
@@ -166,15 +205,16 @@ class OpArea extends CamOp {
                 let zs = down ? base_util.lerp(zTop, bounds.min.z, down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
-                let lzo;
                 for (let z of zs) {
                     let slice = newLayer();
                     let layers = slice.output();
                     let outs = [];
                     if (tr_type === 'none') {
+                        // todo: move this out of the zs loop and only setZ when needed
                         area = area.clone(true);
                         outs = [ zs.length > 1 ? area.setZ(z) : area ];
                     } else {
+                        // todo: move this out of the zs loop
                         POLY.offset([ area ], tr_type === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
                             count: 1, outs, flat: true, z, minArea: 0
                         });
@@ -183,14 +223,16 @@ class OpArea extends CamOp {
                         // terminate z descent when no further output possible
                         break;
                     }
+                    // add dogbones when specified
+                    if (op.dogbones) outs.forEach(out => out.addDogbones(toolDiam / 5, op.revbones));
                     // cut tabs when present
                     if (tabs) outs = cutTabs(tabs, outs);
                     slice.camLines = outs;
+                    slice.tool_shadow = POLY.offset(await shadowAt(z), [ toolDiam / 2 - 0.01 ], { count: 1, z });
                     zroc += zinc;
-                    lzo = z;
                     progress(proc + (pinc * zroc), 'trace');
                     layers
-                        .setLayer("trace", { line: 0x88ff00 }, false)
+                        .setLayer(rename ?? "trace", { line: 0x88ff00 }, false)
                         .addPolys(outs);
                 }
                 proc += pinc;
@@ -226,8 +268,12 @@ class OpArea extends CamOp {
                     paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
                 } else
                 if (sr_type === 'offset') {
-                    // todo: progressive inset from perimeter
-                    console.log({ sr_offset: toolOver });
+                    // progressive inset from perimeter
+                    POLY.offset([ area ], [ -toolDiam / 2, -toolOver ], {
+                        count: 999, outs: paths, flat: true, z: 0, minArea: 0
+                    });
+                    paths.forEach(poly => poly.isClosed() && poly.push(poly.first()));
+                    paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
                 }
 
                 // prepare tool mesh points
@@ -265,9 +311,10 @@ class OpArea extends CamOp {
                 // convert terrain raster output back to open polylines
                 for (let path of output.paths) {
                     path = newPolygon().fromArray([1, ...path]);
+                    if (op.refine) path.refine(op.refine);
                     surface.push(path);
                     newLayer().output()
-                        .setLayer("linear", { line: 0x00ff00 }, false)
+                        .setLayer(rename ?? "linear", { line: 0x00ff00 }, false)
                         .addPolys([ path ]);
                 }
 
@@ -281,29 +328,28 @@ class OpArea extends CamOp {
 
     prepare(ops, progress) {
         let { op, state, areas, surfaces } = this;
-        let { getPrintPoint, newLayer, pocket, polyEmit, setTool, setSpindle, tip2tipEmit } = ops;
+        let { newLayer, pocket, polyEmit, printPoint, tip2tipEmit } = ops;
+        let { setContouring, setNextIsMove } = ops;
         let { process } = state.settings;
 
-        setTool(op.tool, op.rate);
-        setSpindle(op.spindle);
-
-        let printPoint = getPrintPoint();
-
         // process surface paths
-        for (let surface of surfaces) {
-            let array = surface.map(poly => { return {
-                el: poly,
-                first: poly.first(),
-                last: poly.last()
-            } });
-            tip2tipEmit(array, printPoint, (next, first, count) => {
-                printPoint = polyEmit(next.el, 0, 1, printPoint, {});
-                newLayer();
-            });
-        }
-
-        // skip areas when processing surfaces
         if (surfaces.length) {
+            setContouring(true);
+            for (let surface of surfaces) {
+                let array = surface.map(poly => { return {
+                    el: poly,
+                    first: poly.first(),
+                    last: poly.last()
+                } });
+                tip2tipEmit(array, printPoint, (next, point) => {
+                    setNextIsMove();
+                    if (next.last === point) next.el.reverse();
+                    printPoint = polyEmit(next.el);
+                    newLayer();
+                });
+            }
+            setContouring(false);
+            // skip areas when processing surfaces
             return;
         }
 
@@ -313,7 +359,7 @@ class OpArea extends CamOp {
                 dist: Infinity,
                 area: undefined
             };
-            for (let area of areas.filter(p => !p.used)) {
+            for (let area of areas.filter(p => p.length && !p.used)) {
                 // skip devel / debug only areas
                 let topPolys = area[0].camLines;
                 if (!topPolys) continue;

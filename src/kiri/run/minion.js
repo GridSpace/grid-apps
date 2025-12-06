@@ -12,7 +12,7 @@ import { doTopShells } from '../mode/fdm/post.js';
 import { newPoint } from '../../geo/point.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 import { sliceZ, sliceConnect } from '../../geo/slicer.js';
-import { Slicer as cam_slicer } from '../mode/cam/slicer.js';
+import { Slicer as cam_slicer } from '../mode/cam/slicer_cam.js';
 import { Slicer as topo_slicer } from '../mode/cam/slicer_topo.js';
 import { Probe, Trace, raster_slice } from '../mode/cam/topo3.js';
 import { Topo as Topo4, rotatePoints } from '../mode/cam/topo4.js';

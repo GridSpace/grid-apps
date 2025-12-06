@@ -21,9 +21,11 @@ class OpDrill extends CamOp {
             drillToolDiam = drillTool.fluteDiameter(),
             sliceOut = this.sliceOut = [];
 
+        const allDrills = drills[widget.id] ?? []
+        if (allDrills.length === 0) return;
+
         updateToolDiams(drillToolDiam);
 
-        const allDrills = drills[widget.id] ?? []
         // drill points to use center (average of all points) of the polygon
         allDrills.forEach((drill) => {
             if (!drill.selected) {
@@ -61,9 +63,10 @@ class OpDrill extends CamOp {
         let { op, sliceOut } = this;
         let { setTool, setSpindle, setDrill, emitDrills } = ops;
 
+        if (sliceOut.length === 0) return;
+
         setTool(op.tool, undefined, op.rate);
         setDrill(op.down, op.lift, op.dwell);
-        setSpindle(op.spindle);
         emitDrills(sliceOut.map(slice => slice.camLines).flat());
     }
 }
