@@ -60,8 +60,7 @@ function selectTool(tool) {
     });
 
     if (tool.type === 'tapermill' || tool.type === 'taperball') {
-        const ballRadius = tool.type === 'taperball' ? tool.taper_tip / 2 : 0;
-        const taperLen = tool.flute_len - ballRadius;
+        const taperLen = tool.flute_len;
         ui.toolTaperAngle.value =
             selectedTool.taper_angle =
             calcTaperAngle( (tool.flute_diam - tool.taper_tip) / 2, taperLen ).round(1);
@@ -320,7 +319,7 @@ function renderTool2(tool) {
 
         // Create Tool instance and generate profile
         const toolInst = new Tool(settings(), tool.id);
-        const resolution = (toolInst.maxDiameter() / toolInst.unitScale()) / 50;
+        const resolution = (toolInst.maxDiameter() / toolInst.unitScale()) / 100;
         toolInst.generateProfile(resolution);
 
         const profile = toolInst.profile;
