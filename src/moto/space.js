@@ -1417,6 +1417,8 @@ let Space = {
         const maxDistance = viewControl.maxDistance;
         const noKeys = viewControl.noKeys;
         const enabled = viewControl.enabled;
+        const reverseZoom = viewControl.reverseZoom;
+        const zoomSpeed = viewControl.zoomSpeed;
 
         // Swap camera
         const oldCamera = camera;
@@ -1458,6 +1460,8 @@ let Space = {
         viewControl.noKeys = noKeys;
         viewControl.maxDistance = maxDistance;
         viewControl.enabled = enabled;
+        viewControl.reverseZoom = reverseZoom;
+        viewControl.zoomSpeed = zoomSpeed;
         viewControl.setPosition(position);
 
         // Dispose old camera
