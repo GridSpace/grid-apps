@@ -43,12 +43,14 @@ export async function cam_prepare(widgets, settings, update) {
         );
     }
 
+    let index = 0;
     let startPoint;
-    active.forEach((widget, index) => {
-        startPoint = prepare_one(widget, settings, print, startPoint, (progress, msg) => {
+    for (let widget of active) {
+        startPoint = await prepare_one(widget, settings, print, startPoint, (progress, msg) => {
             update((index * weight + progress * weight) * 0.75, msg || "prepare");
         });
-    });
+        index++;
+    }
 
     // prune empty levels
     const output = print.output.filter(level => Array.isArray(level));
@@ -72,7 +74,7 @@ export async function cam_prepare(widgets, settings, update) {
 };
 
 // process `prepare` paths for a single widget
-export function prepare_one(widget, settings, print, firstPoint, update) {
+export async function prepare_one(widget, settings, print, firstPoint, update) {
 
     let { device, process } = settings,
         { alignTop } = settings.controller,
@@ -667,7 +669,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
      * @returns {Point} - the last point emitted (in widget coordinates)
      */
     function polyEmit(poly, index) {
-        let eased = 0;
         let arcing = camArcEnabled && !contouring;
         let points = poly.points;
 
@@ -718,7 +719,6 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
                     if (zat <= pt.z) {
                         // rotate points to start at end of ease
                         points = [...points.slice(i), ...points.slice(0,i)];
-                        eased = i;
                         break;
                     }
                     if (i > 0) {
@@ -879,7 +879,7 @@ export function prepare_one(widget, settings, print, firstPoint, update) {
         if (cop.spindle) setSpindle(cop.spindle);
         // set printPoint in widget coordinate space
         ops.printPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });
-        op.prepare(ops, (progress, message) => {
+        await op.prepare(ops, (progress, message) => {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);
         });
         opSum += weight;
