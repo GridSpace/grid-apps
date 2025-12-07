@@ -1,9 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { util } from '../../../geo/base.js';
-import { fdm_slice, sliceAll } from './slice.js';
+import { fdm_slice, sliceAll, supports } from './slice.js';
 import { fdm_prepare } from './prepare.js';
 import { fdm_export } from './export.js';
+import { codec } from '../../core/codec.js';
 
 // noz = nozzle diameter
 // fil = filament diameter
@@ -26,8 +27,8 @@ function init(worker) {
     worker.dispatch.fdm_support_generate = function(data, send) {
         const { settings } = data;
         const widgets = Object.values(worker.cache);
-        const fresh = widgets.filter(widget => FDM.supports(settings, widget));
-        send.done(kiri.codec.encode(fresh.map(widget => { return {
+        const fresh = widgets.filter(widget => supports(settings, widget));
+        send.done(codec.encode(fresh.map(widget => { return {
             id: widget.id,
             supports: widget.supports,
         } } )));
