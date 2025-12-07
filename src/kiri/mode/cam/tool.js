@@ -37,7 +37,7 @@ class Tool {
     // for taper tips, returns value in tool units
     // otherwise returns a fraction of the flute diameter in tool units
     getStepSize(frac) {
-        return (this.hasTaper() ? frac : this.fluteDiameter() * (frac ?? 1)) * this.work_units;
+        return (this.hasTaper() ? frac : this.fluteDiameter() * (frac ?? 1));
     }
 
     isMetric() {
