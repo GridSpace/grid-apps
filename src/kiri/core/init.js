@@ -135,7 +135,7 @@ api.event.on("set.threaded", bool => setThreaded(bool));
 
 function booleanSave() {
     let control = settings().controller;
-    let doAlert = ui.ortho.checked !== control.ortho;
+    let setProjection = ui.ortho.checked !== control.ortho;
     if (control.assembly != ui.assembly.checked) {
         client.wasm(ui.assembly.checked);
     }
@@ -171,8 +171,8 @@ function booleanSave() {
     updateStats();
     updateDrawer();
     api.event.emit('boolean.update');
-    if (doAlert) {
-        api.show.alert("change requires page refresh");
+    if (setProjection) {
+        space.view.setProjection(control.ortho ? 'orthographic' : 'perspective');
     }
 }
 

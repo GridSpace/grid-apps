@@ -112,9 +112,11 @@ let WIN = self.window || {},
     platformBelt = false,
     volume,
     camera,
+    cameraType,
     renderer,
     container,
     raycaster,
+    sliderCallback,
     freezeTo,
     freeze,
     isRound = false,
@@ -1282,6 +1284,12 @@ let Space = {
         },
         get ctrl() {
             return viewControl;
+        },
+        setProjection(type) {
+            Space.setProjection(type);
+        },
+        getProjection() {
+            return cameraType;
         }
     },
 
@@ -1355,12 +1363,120 @@ let Space = {
         return ncv;
     },
 
-    internals: () => {
+    internals() {
         return { renderer, camera, platform };
+    },
+
+    isOrtho() {
+        return type === 'orthographic';
+    },
+
+    isPerspective() {
+        return type === 'perspective';
+    },
+
+    setProjection: (type) => {
+        if (!camera || !viewControl || !initialized) {
+            console.warn('Space not initialized');
+            return;
+        }
+        if (type === cameraType) {
+            return; // already set
+        }
+        if (type !== 'orthographic' && type !== 'perspective') {
+            console.warn('Invalid camera type:', type);
+            return;
+        }
+
+        // Save current view state
+        const position = viewControl.getPosition();
+        const target = viewControl.getTarget().clone();
+        const distance = camera.position.distanceTo(target);
+
+        // Create new camera
+        let newCamera;
+        if (type === 'orthographic') {
+            const asp = aspect();
+            // Calculate ortho size based on perspective distance and FOV
+            const size = distance * Math.tan(perspective * Math.PI / 180 / 2);
+            newCamera = new THREE.OrthographicCamera(
+                -size * asp, size * asp, size, -size, 0.1, 100000
+            );
+        } else {
+            newCamera = new THREE.PerspectiveCamera(
+                perspective, aspect(), 0.1, 100000
+            );
+        }
+
+        // Copy camera position
+        newCamera.position.copy(camera.position);
+        newCamera.up.copy(camera.up);
+        newCamera.lookAt(target);
+
+        // Store old control properties
+        const maxDistance = viewControl.maxDistance;
+        const noKeys = viewControl.noKeys;
+        const enabled = viewControl.enabled;
+
+        // Swap camera
+        const oldCamera = camera;
+        camera = newCamera;
+        cameraType = type;
+
+        // Recreate viewControl with new camera and proper callbacks
+        viewControl = new Orbit(camera, container, (position, moved) => {
+            if (platform) {
+                platform.visible = hidePlatformBelow ?
+                    initialized && position.y >= 0 && showPlatform : showPlatform;
+                volume.visible = showVolume && platform.visible;
+            }
+            if (grid.view) {
+                grid.view.visible = hideGridBelow ? platform.visible : showGrid;
+            }
+            if (cameraLight) {
+                cameraLight.position.copy(camera.position);
+            }
+            if (moved && platformOnMove) {
+                clearTimeout(platformMoveTimer);
+                platformMoveTimer = setTimeout(platformOnMove, 500);
+                Space.scene.updateFog();
+            }
+            updateLastAction();
+            updateFocus();
+        }, (val) => {
+            if (camera && grid?.origin?.scale) {
+                grid.origin.scale();
+            }
+            if (camera && viewControl) {
+                // increase intersect line precision on zoom
+                const dist = camera.position.distanceTo(viewControl.target);
+                raycaster.params.Line.threshold = Math.min(1, dist / 100);
+            }
+            updateLastAction();
+            if (sliderCallback) sliderCallback(val);
+        });
+        viewControl.noKeys = noKeys;
+        viewControl.maxDistance = maxDistance;
+        viewControl.enabled = enabled;
+        viewControl.setPosition(position);
+
+        // Dispose old camera
+        THREE.dispose(oldCamera);
+
+        // Update camera-dependent systems
+        if (cameraLight) {
+            cameraLight.position.copy(camera.position);
+        }
+        if (grid?.origin?.scale) {
+            grid.origin.scale();
+        }
+
+        requestRefresh();
     },
 
     init: (domelement, slider, ortho) => {
         container = domelement;
+        sliderCallback = slider;
 
         WORLD.rotation.x = -PI2;
         SCENE.add(WORLD);
@@ -1378,6 +1494,7 @@ let Space = {
         // renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
 
         renderer.localClippingEnabled = true;
+        cameraType = ortho ? 'orthographic' : 'perspective';
         camera = ortho ?
             new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
             new THREE.PerspectiveCamera(perspective, aspect(), 0.1, 100000);
