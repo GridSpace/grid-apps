@@ -767,7 +767,15 @@ function requestRefresh(timeout) {
 
 function onResize() {
     updateLastAction();
-    camera.aspect = aspect();
+    if (camera.isPerspectiveCamera) {
+        camera.aspect = aspect();
+    } else if (camera.isOrthographicCamera) {
+        const asp = aspect();
+        camera.left = -100 * asp;
+        camera.right = 100 * asp;
+        camera.top = 100;
+        camera.bottom = -100;
+    }
     camera.updateProjectionMatrix();
     renderer.setSize(width(), height());
     container.style.width = width();
