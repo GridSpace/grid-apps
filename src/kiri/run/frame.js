@@ -26,6 +26,14 @@
         }
     }
 
+    function onMessage(msg) {
+        let { origin, source, target, data } = msg;
+        console.log({ msg });
+        if (source.window === cwin) {
+            recv(msg);
+        }
+    }
+
     let API = KIRI.frame = {
         setFrame: (io, target) => {
             let type = typeof(io);
@@ -35,12 +43,8 @@
                 case 'object': setFrame(io); break;
                 default: throw `invalid frame type ${type}`;
             }
-            window.addEventListener('message', msg => {
-                let { origin, source, target, data } = msg;
-                if (source.window === cwin) {
-                    recv(msg);
-                }
-            });
+            window.removeEventListener('message', onMessage);
+            window.addEventListener('message', onMessage);
         },
 
         send: send,
