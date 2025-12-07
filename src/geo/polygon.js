@@ -3,10 +3,11 @@
 "use strict";
 
 import { base, config, earcut, util } from './base.js';
+import { calc_normal, calc_vertex, paths } from './paths.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 import { newBounds } from './bounds.js';
-import { calc_normal, calc_vertex, paths } from './paths.js';
 import { newPoint, pointFromClipper } from './point.js';
+import { newSlopeFromAngle } from './slope.js';
 import { polygons as POLY } from './polygons.js';
 
 const { Vector3 } = THREE;

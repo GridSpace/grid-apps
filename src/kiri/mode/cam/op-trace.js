@@ -16,6 +16,7 @@ class OpTrace extends CamOp {
         let { plunge, rate, refine, smooth, spindle, step, steps, thru, tolerance, tool } = op;
         let trace = {
             areas,
+            dogbones: op.dogbone,
             down,
             expand,
             follow,
@@ -28,6 +29,7 @@ class OpTrace extends CamOp {
             rate,
             refine,
             rename: op.rename ?? "trace",
+            revbones: op.revbone,
             smooth,
             spindle,
             step,
