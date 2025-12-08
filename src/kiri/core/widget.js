@@ -789,7 +789,7 @@ class Widget {
         if (set) {
             let dark = this.api.space.is_dark();
             let cam = this.api.mode.is_cam();
-            let color = dark && !cam ? 0xffffff : 0;
+            let color = dark ? 0 : 0x888888;
             let angle = this.api.conf.get().controller.edgeangle || 20;
             let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
             let material = new THREE.LineBasicMaterial({ color });
