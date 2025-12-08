@@ -17,7 +17,7 @@ const clib = self.ClipperLib;
 const ctyp = clib.ClipType;
 const ptyp = clib.PolyType;
 const cfil = clib.PolyFillType;
-const ts_off = 0.1;
+const ts_off = 0.01;
 
 class OpArea extends CamOp {
     constructor(state, op) {

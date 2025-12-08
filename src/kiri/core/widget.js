@@ -913,6 +913,8 @@ class Widget {
             if (a.z < z && b.z < z && c.z < z) {
                 // skip faces under threshold
                 continue;
+            } else if (a.z === z && a.z === b.z && a.z === c.z) {
+                // skip faces coplanar with z (shadow looks up)
             } else if (a.z >= z && b.z >= z && c.z >= z) {
                 found.push([a, b, c]);
             } else {
