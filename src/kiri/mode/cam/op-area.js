@@ -207,7 +207,7 @@ class OpArea extends CamOp {
             } else
             if (mode === 'trace') {
                 let { tr_type  } = op;
-                let zs = down ? base_util.lerp(zTop, bounds.min.z, down) : [ bounds.min.z ];
+                let zs = down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 for (let z of zs) {
@@ -217,7 +217,7 @@ class OpArea extends CamOp {
                     if (tr_type === 'none') {
                         // todo: move this out of the zs loop and only setZ when needed
                         area = area.clone(true);
-                        outs = [ zs.length > 1 ? area.setZ(z) : area ];
+                        outs = [ zs.length > 1 ? area.setZ(z) : clampZ(area, zTop, zBottom) ];
                     } else {
                         // todo: move this out of the zs loop
                         POLY.offset([ area ], tr_type === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
@@ -394,6 +394,19 @@ class OpArea extends CamOp {
             }
         }
     }
+}
+
+function clampZ(poly, min, max) {
+    for (let p of poly.points) {
+        if (p.z < min) p.z = min;
+        else if (p.z > max) p.z = max;
+    }
+    if (poly.inner) {
+        for (let poly of poly.inner) {
+            clampZ(poly, min, max);
+        }
+    }
+    return poly;
 }
 
 // box2: THREE.Box2

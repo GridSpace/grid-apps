@@ -454,6 +454,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         if (isMove && deltaXY <= shortCut && deltaZ <= 0 && !lasering) {
             // but only if the z plunge is not too far
             if (absDeltaZ < 0.01 || (tolerance > 0 && absDeltaZ <= tolerance)) {
+                if (debug) console.log('shortcut', { deltaXY, deltaZ, shortCut });
                 emit = 1;
             } else
             // otherwise move over before descending
