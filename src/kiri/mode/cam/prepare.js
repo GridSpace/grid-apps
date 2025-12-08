@@ -542,7 +542,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     }
 
     function setTravelBoundary(polys) {
-        travelBounds = polys;
+        travelBounds = POLY.flatten(polys);
     }
 
     function clearTravelBoundary() {
@@ -610,8 +610,6 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             flat = flat.filter(p => p.isNested(inside));
         }
 
-        setTravelBoundary(tops.tool_shadow);
-
         for (;;) {
             let wpp = getWidgetPrintPoint();
             let poly = flat.filter(poly => !poly.marked)
@@ -621,6 +619,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
             if (poly) {
                 let output = [];
+                setTravelBoundary(tops.tool_shadow);
                 emit_flat([ poly ], output);
                 for (let poly of output) {
                     polyEmit(poly, CLOSEST_TO_PP);
