@@ -17,6 +17,7 @@ const clib = self.ClipperLib;
 const ctyp = clib.ClipType;
 const ptyp = clib.PolyType;
 const cfil = clib.PolyFillType;
+const ts_off = 0.1;
 
 class OpArea extends CamOp {
     constructor(state, op) {
@@ -56,8 +57,8 @@ class OpArea extends CamOp {
             }
         }
 
-        function newLayer() {
-            stack.push(newSlice());
+        function newLayer(z) {
+            stack.push(newSlice(z));
             return stack.peek();
         }
 
@@ -132,12 +133,10 @@ class OpArea extends CamOp {
                 let lzo;
                 outer: for (;;)
                 for (let z of zs) {
-                    let slice = newLayer();
+                    let slice = newLayer(z);
                     let layers = slice.output();
-                    let outs = [];
-                    let clip = [];
                     let shadow = await shadowAt(z);
-                    let tool_shadow =  POLY.offset(shadow, [ toolDiam / 2 - 0.01 ], { count: 1, z });
+                    let tool_shadow = POLY.offset(shadow, [ toolDiam / 2 - ts_off ], { count: 1, z });
                     // for roughing backward compatability
                     if (op.omitthru) {
                         shadow = shadow.clone(true);
@@ -152,10 +151,14 @@ class OpArea extends CamOp {
                             });
                         }
                     }
+                    // progressive offset of polygons inside area clipped to the shadow
+                    let outs = [];
+                    let clip = [];
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
                         count: 999, outs, flat: true, z, minArea: 0
                     });
+                    // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {
                         if (bounds && lzo > bounds.min.z) {
                             // try a bottom layer matching bottom of selection
@@ -174,10 +177,12 @@ class OpArea extends CamOp {
                             for (let p of out)
                                 p.z += op.leave_z;
                     }
+                    // for roughing backward compatability
                     if (op.leave_xy) {
                         outs = outs.map(poly => poly.offset(-op.leave_xy)).flat();
                     }
-                    slice.tool_shadow = tool_shadow;
+                    // store travel boundary that triggers up and over moves
+                    slice.tool_shadow = [ area, ...tool_shadow ];
                     slice.camLines = outs;
                     zroc += zinc;
                     lzo = z;
@@ -206,7 +211,7 @@ class OpArea extends CamOp {
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 for (let z of zs) {
-                    let slice = newLayer();
+                    let slice = newLayer(z);
                     let layers = slice.output();
                     let outs = [];
                     if (tr_type === 'none') {
@@ -228,7 +233,8 @@ class OpArea extends CamOp {
                     // cut tabs when present
                     if (tabs) outs = cutTabs(tabs, outs);
                     slice.camLines = outs;
-                    slice.tool_shadow = POLY.offset(await shadowAt(z), [ toolDiam / 2 - 0.01 ], { count: 1, z });
+                    // store travel boundary that triggers up and over moves
+                    slice.tool_shadow = [ area, ...POLY.offset(await shadowAt(z), [ toolDiam / 2 - ts_off ], { count: 1, z }) ];
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'trace');
                     layers

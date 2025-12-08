@@ -2,14 +2,13 @@
 
 import { $, h } from '../../../moto/webui.js';
 import { api } from '../../core/api.js';
-import { env } from './client.js';
+import { env, opRender } from './client.js';
 import { Tool } from './tool.js';
 import { opFlip } from './cl-flip.js';
 import { selectHoles } from './cl-hole.js';
 import { selectHelical } from './cl-helical.js';
 import { surfaceAdd } from './cl-surface.js';
 import { traceAdd } from './cl-trace.js';
-import { opRender } from './client.js';
 
 const { MODES } = api.const;
 const { uc: UC } = api;
@@ -682,7 +681,7 @@ export function createPopOps() {
         ov_botz: 0,
         direction: 'camAreaDirection',
     }).inputs = {
-        mode: UC.newSelect(LANG.mo_menu, {}, "opmode"),
+        mode: UC.newSelect(LANG.mo_menu, { post: opRender }, "opmode"),
         tr_type: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: isTrace }, "traceoff"),
         sr_type: UC.newSelect("pattern", { title: "pattern", show: isSurface }, "surftyp"),
         sep: UC.newBlank({ class: "pop-sep" }),

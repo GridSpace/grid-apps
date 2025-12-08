@@ -752,6 +752,9 @@ function newSelect(label, options = {}, source) {
         if (options.trigger) {
             refresh();
         }
+        if (options.post) {
+            options.post();
+        }
     };
     ip.onclick = (ev) => {
         groupSticky = true;

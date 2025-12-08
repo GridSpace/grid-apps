@@ -946,6 +946,11 @@ class Widget {
         });
         polys = POLY.union(polys, 0, true);
 
+        // for a more perfect union, pump shadows to merge very close lines
+        // todo: create clipper only version that avoids round trip thru geo classes
+        polys = POLY.offset(polys, 0.01);
+        polys = POLY.offset(polys, -0.01);
+
         return polys;
     }
 }
