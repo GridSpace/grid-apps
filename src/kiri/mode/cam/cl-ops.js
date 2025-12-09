@@ -14,7 +14,7 @@ const { MODES } = api.const;
 const { uc: UC } = api;
 const { alerts, conf } = api;
 const { current: LANG } = api.language;
-const { toInt, toFloat } = UC;
+const { toInt, toFloat, toFloatArray } = UC;
 
 const units = true;
 let seed = Date.now();

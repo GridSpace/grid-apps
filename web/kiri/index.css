@@ -1412,7 +1412,7 @@ details[open] summary::after {
     background-color: var(--blue-2);
 }
 #oplist > div {
-    padding: 5px 20px 5px 7px !important;
+    padding: 4px 20px 4px 7px !important;
 }
 #oplist > div, .opdiv {
     display: flex;

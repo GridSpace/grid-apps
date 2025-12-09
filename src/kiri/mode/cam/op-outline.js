@@ -15,6 +15,10 @@ class OpOutline extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { shadow, tool, widget } = state;
+        let shadow_base = shadow.base;
+        if (!(shadow_base && shadow_base.length)) {
+            throw 'missing shadow base';
+        }
         let areas = POLY.flatten(POLY.expand(shadow.base, tool.fluteDiameter() / 2 - 0.001));
         let cutout = {
             areas: { [widget.id]: areas.map(p => p.toArray()) },

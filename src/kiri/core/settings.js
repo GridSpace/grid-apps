@@ -241,7 +241,8 @@ function updateFieldsFromSettings(setrec, uirec = api.ui, opt = {}) {
         if (!uirec.hasOwnProperty(key)) {
             continue;
         }
-        let uie = uirec[key], typ = uie ? uie.type : null;
+        let uie = uirec[key],
+            typ = uie ? uie.type : null;
         if (opt.trace) {
             console.log({ key, uie, typ, val });
         }

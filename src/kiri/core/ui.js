@@ -38,6 +38,7 @@ export const UI = {
     bound,
     toInt,
     toFloat,
+    toFloatArray,
     toDegsFloat,
     isSticky,
     setSticky,
@@ -327,11 +328,18 @@ function toInt() {
 function toFloat() {
     let nv = this.value !== '' ? parseFloat(this.value) : null;
     if (nv !== null && this.bound) nv = this.bound(nv);
+    this.value = nv;
     if (this.setv) {
         return this.setv(nv * units);
-    } else {
-        this.value = nv;
     }
+    return nv;
+}
+
+function toFloatArray() {
+    let nv = this.value !== '' ? this.value.split(',').map(v => parseFloat(v)) : null;
+    console.log({ toFloatArray: nv });
+    if (this.bound) nv = nv.map(v => this.bound(v));
+    this.array = nv;
     return nv;
 }
 
@@ -339,10 +347,9 @@ function toDegsFloat(){
     let nv = this.value !== '' ? parseFloat(this.value) : null;
     if (nv !== null && this.bound) nv = this.bound(nv);
     nv = (nv+360)% 360; // bound the val to 0-359.99
+    this.value = nv;
     if (this.setv) {
         return this.setv(nv);
-    } else {
-        this.value = nv;
     }
     return nv;
 }
@@ -610,8 +617,8 @@ function newInput(label, opt = {}) {
         hide = opt.hide,
         size = opt.size ?? 5,
         height = opt.height || 0,
-        ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input'),
-        action = opt.action || bindTo || inputAction;
+        action = opt.action || bindTo || inputAction,
+        ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input');
 
     row.appendChild(newLabel(label));
     row.appendChild(ip);
