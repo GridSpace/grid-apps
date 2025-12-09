@@ -271,7 +271,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     if (isIndexed) {
         // preface op list with OpIndex
         if (activeOps.length === 0 || activeOps[0].type !== 'index') {
-            opList.push(new OPS.index(state, { type: "index", index: 0 }));
+            opList.push(new OPS.index(state, { type: "index", degrees: 0, absolute: true }));
             opTot += opList.peek().weight();
 
         }
@@ -551,6 +551,7 @@ export function cylinder_poly_find(widget, face) {
     if (!poly) throw "slicing returned no poly";
 
     let circular = poly.circularity() > 0.98;
+    // console.log({ zmid, cylVerts, opts, poly, circularity: poly.circularity() });
 
     //throw error if not circular
     if (!circular) throw "faces must be circular";

@@ -233,6 +233,7 @@ export class Topo {
             for (let i=0; i<pointsPerLine; i++) {
                 let slice = newSlice(i);
                 let points = rows.map(row => row[i]);
+                points.push(points[0].clone().setA(-360));
                 if (i % 2 === 1) points.reverse();
                 slice.index = i;
                 slice.camLines = [ newPolygon(points).setOpen() ];

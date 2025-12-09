@@ -178,7 +178,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         return tool;
     }
 
-    function setTool(toolID, feed, plunge) {
+    function setTool(toolID, feed = camFastFeed, plunge = camFastFeedZ) {
         if (toolID !== lastTool) {
             tool = new Tool(settings, toolID);
             toolType = tool.getType();
@@ -273,11 +273,13 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     function layerPush(point, emit, speed, tool, options) {
         const { type, center } = options ?? {};
         if (debug_push && options?.type !== 'lerp') {
+            let rounded = [point.x,point.y,point.z,point.a??0].map(v => v.toFixed(3));
+            if (rounded.filter(v => isNaN(v)).length) console.trace('NaN');
             console.log(
                 currentOp.type,
                 emit | 0,
                 speed | 0,
-                ...[point.x,point.y,point.z,point.a??0].map(v => v.toFixed(3))
+                ...rounded
             );
         }
         layerOut.mode = currentOp;
@@ -347,6 +349,8 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             p.y - wmy,
             p.z - wmz
         )
+        .setA(p.a)
+        .annotate({ slice: p.slice });
     }
 
     /**
@@ -355,7 +359,6 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
      * @param {-1|0|1|2|3} emit ignore, G0, G1, G2, G3
      * @param {number} opts.shortCut used to convert short moves to cuts
      * @param {number} opts.factor speed scale factor
-     * @param {Object} opts.center arc center parameter
      * @return {Point} translated emitted point
      */
     function camOut(point, emit = 1, opts) {
@@ -370,7 +373,6 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             feed = feedRate,
             shortCut = toolDiamMove,
             moveOnly = false,
-            center,
         } = opts ?? {};
         let pointA = point.a;
         let rate = feed * factor;
@@ -395,20 +397,25 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
         // carry rotation forward when not overridden
         if (pointA !== undefined && printPoint.a !== undefined) {
-            let DA = printPoint.a - pointA;
-            let MZ = Math.max(printPoint.z, point.z)
+            let DA = point.a - printPoint.a;
+            let MaxZ = Math.max(printPoint.z, point.z);
             // find rotary arc length
-            let AL = (Math.abs(DA) / 360) * (2 * Math.PI * MZ);
-            if (AL >= 1) {
+            let arcLen = (Math.abs(DA) / 360) * (2 * Math.PI * MaxZ);
+            let steps = Math.ceil(arcLen);
+            // emit interpolated points between printPoint and point
+            if (steps > 2) {
+                // if (point.a === 0 || printPoint.a === 0) console.log({ from: printPoint.clone(), to: point.clone() });
+                let zStep = (point.z - printPoint.z) / steps;
+                let aStep = DA / steps;
+                let lp = printPoint.clone();
                 newLayer();
-                let lerp = base.util.lerp(printPoint.a, pointA, 1);
                 // create interpolated point set for rendering and animation
-                if (debug) console.log({ DA, MZ, AL }, lerp.length);
-                for (let a of lerp) {
-                    let lp = point.clone().setA(a);
-                    if (debug) console.log(lp.a, lp.x, lp.y, lp.z);
+                while (--steps > 0) {
+                    lp.z += zStep;
+                    lp.a += aStep;
+                    // if (false)
                     layerPush(
-                        lp,
+                        lp.clone(),
                         emit,
                         rate,
                         tool,
@@ -424,7 +431,6 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             deltaZ = point.z - printPoint.z,
             absDeltaZ = Math.abs(deltaZ),
             isMove = (emit === 0 || emit === false),
-            isArc = (emit > 1),
             upAndOver = false;
 
         // contouring logic
@@ -534,8 +540,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             point,
             emit,
             rate,
-            tool,
-            isArc ? { center: toWorkCoords(center) } : undefined
+            tool
         );
 
         return point;
@@ -834,6 +839,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         depthOutlinePath,
         emitDrills,
         emitTraces,
+        getLastPoint() { return toWidgetCoords(printPoint) },
         getTool,
         newLayer,
         pocket,
@@ -875,7 +881,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         newLayer(cop);
         setTolerance(0);
         setNextIsMove();
-        if (cop.tool) setTool(cop.tool, cop.rate ?? feedRate, cop.plunge ?? plungeRate);
+        if (cop.tool) setTool(cop.tool, cop.rate || feedRate, cop.plunge || plungeRate);
         if (cop.spindle) setSpindle(cop.spindle);
         // set printPoint in widget coordinate space
         ops.printPoint = printPoint.clone().move({ x: -wmx, y: -wmy, z: -wmz });

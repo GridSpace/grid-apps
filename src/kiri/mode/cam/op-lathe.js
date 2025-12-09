@@ -55,12 +55,14 @@ class OpLathe extends CamOp {
 
     prepare(ops, progress) {
         let { op, slices, topo } = this;
-        let { camOut, newLayer, zSafe } = ops;
+        let { camOut, getLastPoint, newLayer, setContouring, setNextIsMove, zSafe } = ops;
 
         let rez = topo.resolution;
 
         // start top center, X = 0, Y = 0 closest to 4th axis chuck
-        camOut(newPoint(0, 0, zSafe), 0);
+        camOut(newPoint(0, 0, zSafe).setA(0), 0);
+        setContouring(true);
+        setNextIsMove();
 
         for (let slice of slices) {
             // ignore debug slices
@@ -68,27 +70,9 @@ class OpLathe extends CamOp {
                 continue;
             }
 
-            let last;
             for (let path of slice.camLines) {
-                let latent;
-                path.forEachPoint((point, pidx) => {
-                    if (last) {
-                        const dz = Math.abs(last.z - point.z);
-                        if (dz < rez) {
-                            // latent point should still be included in
-                            // preview b/c arcs would look like straight lines
-                            latent = point.clone();
-                            return;
-                        }
-                        if (latent) {
-                            camOut(latent, 1);
-                            latent = undefined;
-                        }
-                    }
-                    camOut(last = point.clone(), pidx > 0 ? 1 : 0);
-                }, false);
-                if (latent) {
-                    camOut(latent, 1);
+                for (let point of path.points) {
+                    camOut(point);
                 }
             }
 
@@ -96,10 +80,8 @@ class OpLathe extends CamOp {
         }
 
         // move to safe height and reset A axis
-        let last = ops.lastPoint();
+        let last = getLastPoint();
         let amax = (Math.round(last.a / 360) * 360).round(2);
-        // camOut(last = last.clone().setZ(zmax), 0);
-        // camOut(last = last.clone().setA(amax), 0);
         newLayer();
         ops.addGCode([`G0 Z${zSafe.round(2)}`, `G0 A${amax}`, "G92 A0"]);
     }
