@@ -221,7 +221,7 @@ class OpArea extends CamOp {
                     } else {
                         // todo: move this out of the zs loop
                         POLY.offset([ area ], tr_type === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
-                            count: 1, outs, flat: true, z, minArea: 0
+                            count: 1, outs, flat: true, z, minArea: 0, open: true
                         });
                     }
                     if (outs.length === 0) {
