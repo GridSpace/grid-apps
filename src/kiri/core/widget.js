@@ -474,6 +474,7 @@ class Widget {
         let rad = deg * (Math.PI / 180);
         if (rad !== this.track.indexRad) {
             this.track.indexRad = rad;
+            this.clearShadows();
             this.setModified();
             this._updateMeshPosition();
         }
@@ -838,6 +839,12 @@ class Widget {
 
     hide() {
         this.mesh.visible = false;
+    }
+
+    clearShadows() {
+        delete this.cache.shadow;
+        delete this.cache.shadows;
+        return this;
     }
 
     async shadowAt(z) {
