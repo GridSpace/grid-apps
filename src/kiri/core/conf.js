@@ -537,6 +537,7 @@ export const conf = {
                 camOutlineIn: false,
                 camOutlineOut: true,
                 camOutlineOmitThru: false,
+                camOutlineOmitVoid: false,
                 camOutlineOver: 0.4,
                 camOutlineOverCount: 1,
                 camOutlinePlunge: 250,

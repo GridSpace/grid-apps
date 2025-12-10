@@ -14,7 +14,7 @@ class OpOutline extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { dogbones, down, inside, omitthru, outside, ov_botz, ov_topz } = op;
+        let { dogbones, down, inside, omitthru, omitvoid, outside, ov_botz, ov_topz } = op;
         let { plunge, rate, rename, revbones, spindle, tool } = op;
         let { shadow, widget } = state;
 
@@ -55,7 +55,7 @@ class OpOutline extends CamOp {
                 drape: true,
                 expand: 0,
                 mode: 'trace',
-                // omitinner: true,
+                omitinner: omitvoid,
                 omitouter: inside,
                 outline: omitthru,
                 omitthru,
