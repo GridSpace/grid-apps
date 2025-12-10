@@ -26,7 +26,7 @@ class OpArea extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, mode, down, drape, over, follow, expand, outline, smooth } = op;
+        let { tool, mode, down, over, follow, expand, outline, smooth } = op;
         let { ov_topz, ov_botz, direction, rename } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, shadowAt, workarea } = state;
@@ -171,6 +171,7 @@ class OpArea extends CamOp {
                     if (op.leave_xy) {
                         outs = outs.map(poly => poly.offset(-op.leave_xy)).flat();
                     }
+                    // support legacy outline features
                     if (op.omitouter) {
                         outs = omitOuter(outs);
                     } else if (op.omitinner) {
@@ -215,8 +216,9 @@ class OpArea extends CamOp {
                         area = area.clone(true);
                         outs = [ zs.length > 1 ? area.setZ(z) : clampZ(area, zTop, zBottom) ];
                     } else {
-                        let offit = drape ? shadow : [ area ];
-                        if (op.omitthru && drape) {
+                        // drape is legacy outline
+                        let offit = op.drape ? shadow : [ area ];
+                        if (op.omitthru && op.drape) {
                             offit = omitMatching(offit, thruHoles);
                         }
                         // todo: move this out of the zs loop
@@ -235,6 +237,7 @@ class OpArea extends CamOp {
                     if (op.dogbones) outs.forEach(out => out.addDogbones(toolDiam / 5, op.revbones));
                     // cut tabs when present
                     if (tabs) outs = cutTabs(tabs, outs);
+                    // support legacy outline features
                     if (op.omitouter) {
                         outs = omitOuter(outs);
                     } else if (op.omitinner) {
