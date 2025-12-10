@@ -79,13 +79,13 @@ class OpTrace extends CamOp {
             let z = poly.getZ();
             let slice = newSliceOut(z);
             slice.camTrace = { tool, rate, plunge };
+            if (camStockClipTo && stockRect) {
+                slice.camLines = cutPolys([stockRect], [poly], z, true);
+            }
             if (tabs) {
-                slice.camLines = cutTabs(tabs, [poly], z);
+                slice.camLines = cutTabs(tabs, slice.camLines, z);
             } else {
                 slice.camLines = [ poly ];
-            }
-            if (camStockClipTo && stockRect) {
-                slice.camLines = cutPolys([stockRect], slice.camLines, z, true);
             }
             if (reContour) {
                 state.contourPolys(widget, slice.camLines);
