@@ -178,7 +178,7 @@ class OpArea extends CamOp {
                         outs = omitInner(outs);
                     }
                     // store travel boundary that triggers up and over moves
-                    slice.tool_shadow = [ area, ...tool_shadow ];
+                    slice.tool_shadow = [ area, ...shadow, ...tool_shadow ];
                     slice.camLines = outs;
                     zroc += zinc;
                     lzo = z;
@@ -245,7 +245,7 @@ class OpArea extends CamOp {
                     }
                     slice.camLines = outs;
                     // store travel boundary that triggers up and over moves
-                    slice.tool_shadow = [ area, ...POLY.offset(shadow, [ toolDiam / 2 - ts_off ], { count: 1, z }) ];
+                    slice.tool_shadow = [ area, ...shadow, ...POLY.offset(shadow, [ toolDiam / 2 - ts_off ], { count: 1, z }) ];
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'trace');
                     layers
