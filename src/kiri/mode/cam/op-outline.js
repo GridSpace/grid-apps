@@ -52,9 +52,13 @@ class OpOutline extends CamOp {
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
                 dogbones,
                 down,
-                edgeonly: true,
+                drape: true,
                 expand: 0,
-                mode: 'clear',
+                mode: 'trace',
+                // omitinner: true,
+                omitouter: inside,
+                outline: omitthru,
+                omitthru,
                 ov_botz,
                 ov_topz,
                 plunge,
@@ -65,6 +69,7 @@ class OpOutline extends CamOp {
                 spindle,
                 surfaces: {},
                 tool,
+                tr_type: 'outside',
             }));
             if (!inside) {
                 // add outline

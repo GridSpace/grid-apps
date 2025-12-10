@@ -26,7 +26,7 @@ class OpArea extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, mode, down, over, follow, edgeonly, expand, outline, smooth } = op;
+        let { tool, mode, down, drape, over, follow, edgeonly, expand, outline, smooth } = op;
         let { ov_topz, ov_botz, direction, rename } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, shadowAt, workarea } = state;
@@ -139,17 +139,7 @@ class OpArea extends CamOp {
                     let tool_shadow = POLY.offset(shadow, [ toolDiam / 2 - ts_off ], { count: 1, z });
                     // for roughing/outline backward compatability
                     if (op.omitthru) {
-                        shadow = shadow.clone(true);
-                        for (let poly of shadow.filter(p => p.inner)) {
-                            poly.inner = poly.inner.filter(inner => {
-                                for (let ho of thruHoles) {
-                                    if (inner.isEquivalent(ho)) {
-                                        return false;
-                                    }
-                                }
-                                return true;
-                            });
-                        }
+                        shadow = omitMatching(shadow, thruHoles);
                     }
                     // progressive offset of polygons inside area clipped to the shadow
                     let outs = [];
@@ -180,6 +170,11 @@ class OpArea extends CamOp {
                     // for roughing backward compatability
                     if (op.leave_xy) {
                         outs = outs.map(poly => poly.offset(-op.leave_xy)).flat();
+                    }
+                    if (op.omitouter) {
+                        outs = omitOuter(outs);
+                    } else if (op.omitinner) {
+                        outs = omitInner(outs);
                     }
                     // store travel boundary that triggers up and over moves
                     slice.tool_shadow = [ area, ...tool_shadow ];
@@ -213,14 +208,19 @@ class OpArea extends CamOp {
                 for (let z of zs) {
                     let slice = newLayer(z);
                     let layers = slice.output();
+                    let shadow = await shadowAt(z);
                     let outs = [];
                     if (tr_type === 'none') {
                         // todo: move this out of the zs loop and only setZ when needed
                         area = area.clone(true);
                         outs = [ zs.length > 1 ? area.setZ(z) : clampZ(area, zTop, zBottom) ];
                     } else {
+                        let offit = drape ? shadow : [ area ];
+                        if (op.omitthru && drape) {
+                            offit = omitMatching(offit, thruHoles);
+                        }
                         // todo: move this out of the zs loop
-                        POLY.offset([ area ], tr_type === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
+                        POLY.offset(offit, tr_type === 'inside' ? [ -toolDiam / 2 ] : [ toolDiam / 2 ], {
                             count: 1, outs, flat: true, z, minArea: 0, open: true
                         });
                     }
@@ -232,9 +232,14 @@ class OpArea extends CamOp {
                     if (op.dogbones) outs.forEach(out => out.addDogbones(toolDiam / 5, op.revbones));
                     // cut tabs when present
                     if (tabs) outs = cutTabs(tabs, outs);
+                    if (op.omitouter) {
+                        outs = omitOuter(outs);
+                    } else if (op.omitinner) {
+                        outs = omitInner(outs);
+                    }
                     slice.camLines = outs;
                     // store travel boundary that triggers up and over moves
-                    slice.tool_shadow = [ area, ...POLY.offset(await shadowAt(z), [ toolDiam / 2 - ts_off ], { count: 1, z }) ];
+                    slice.tool_shadow = [ area, ...POLY.offset(shadow, [ toolDiam / 2 - ts_off ], { count: 1, z }) ];
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'trace');
                     layers
@@ -394,6 +399,36 @@ class OpArea extends CamOp {
             }
         }
     }
+}
+
+function omitOuter(polys) {
+    let inner = [];
+    for (let poly of polys) {
+        if (poly.inner) inner.push(...poly.inner);
+    }
+    return inner;
+}
+
+function omitInner(polys) {
+    for (let poly of polys) {
+        poly.inner = undefined;
+    }
+    return polys;
+}
+
+function omitMatching(target, matches) {
+    target = target.clone(true);
+    for (let poly of target.filter(p => p.inner)) {
+        poly.inner = poly.inner.filter(inner => {
+            for (let ho of matches) {
+                if (inner.isEquivalent(ho)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+    return target;
 }
 
 function clampZ(poly, min, max) {
