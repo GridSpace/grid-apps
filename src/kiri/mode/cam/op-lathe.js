@@ -1,7 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { CamOp } from './op.js';
-import { Tool } from './tool.js';
 import { generate as topo4_generate } from './topo4.js';
 import { newPoint } from '../../../geo/point.js';
 
@@ -55,7 +54,8 @@ class OpLathe extends CamOp {
 
     prepare(ops, progress) {
         let { op, slices, topo } = this;
-        let { camOut, getLastPoint, newLayer, setContouring, setNextIsMove, zSafe } = ops;
+        let { axisreset } = op;
+        let { camOut, newLayer, setContouring, setNextIsMove, zSafe } = ops;
 
         let rez = topo.resolution;
 
@@ -80,10 +80,8 @@ class OpLathe extends CamOp {
         }
 
         // move to safe height and reset A axis
-        let last = getLastPoint();
-        let amax = (Math.round(last.a / 360) * 360).round(2);
         newLayer();
-        ops.addGCode([`G0 Z${zSafe.round(2)}`, `G0 A${amax}`, "G92 A0"]);
+        ops.addGCode([`G0 Z${zSafe.round(2)}`, axisreset.join('\n') ?? "G92.4 A0 R0"]);
     }
 }
 

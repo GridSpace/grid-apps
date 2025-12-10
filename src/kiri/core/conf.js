@@ -511,6 +511,7 @@ export const conf = {
                 camLaserZMax: 0,
                 camLaserZMin: 0,
                 camLatheAngle: 1,
+                camLatheAxisReset: ["G92.4 A0 R0"],
                 camLatheLinear: true,
                 camLatheOver: 0.1,
                 camLatheSpeed: 500,

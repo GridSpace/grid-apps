@@ -159,7 +159,7 @@ export class Topo {
     }
 
     async sliceGPU(onupdate) {
-        const { angle, diam, linear, offStart, offEnd, resolution, tool, units, vertices, zBottom } = this;
+        const { angle, diam, leave, linear, offStart, offEnd, resolution, tool, units, vertices, zBottom } = this;
 
         // invert tool Z offset for gpu code
         let toolBounds = new THREE.Box3()
@@ -217,7 +217,7 @@ export class Topo {
         let xoff = boundsOverride.min.x;
         let rows = [];
         for (let i=0; i<numStrips; i++) {
-            let points = Array.from(strips[i].pathData).map((v,j) => newPoint(j * xmult + xoff, 0, v).setA(-i * degPerRow));
+            let points = Array.from(strips[i].pathData).map((v,j) => newPoint(j * xmult + xoff, 0, v + leave).setA(-i * degPerRow));
             rows.push(points);
         }
         if (linear) {

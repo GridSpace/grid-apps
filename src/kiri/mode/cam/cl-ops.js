@@ -349,10 +349,10 @@ export function createPopOps() {
         leave: 'camContourLeave',
         linear: 'camLatheLinear',
         offStart: 'camLatheOffStart',
-        offEnd: 'camLatheOffEnd'
+        offEnd: 'camLatheOffEnd',
+        axisreset: 'camLatheAxisReset'
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
-        // axis:      UC.newSelect(LANG.cd_axis, {}, "xyaxis"),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
@@ -367,12 +367,12 @@ export function createPopOps() {
         leave: UC.newInput(LANG.cf_leav_s, { title: LANG.cf_leav_l, convert: toFloat, bound: UC.bound(0, 100) }),
         sep: UC.newBlank({ class: "pop-sep" }),
         linear: UC.newBoolean(LANG.ci_line_s, undefined, { title: LANG.ci_line_l }),
-        // filter:    UC.newRow([ UC.newButton(LANG.filter, contourFilter) ], {class:"ext-buttons f-row"})
+        axisreset: UC.newRow([ UC.newButton("axis reset", gcodeEditor('Rotary (A) Axis Reset Macro', 'axisreset')) ], { class: "ext-buttons f-row" })
     };
 
     function canDogBones() {
         if (!env.poppedRec) return false;
-        return env.poppedRec.mode === 'follow';// && env.poppedRec.offset && env.poppedRec.offset !== 'none';
+        return env.poppedRec.mode === 'follow';
     }
 
     function canDogBonesRev() {
