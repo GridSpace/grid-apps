@@ -26,25 +26,29 @@ class OpOutline extends CamOp {
         let ops_list = this.ops_list = [ ];
 
         if (outside) {
-            let areas = POLY.flatten(POLY.expand(shadow.base, state.tool.fluteDiameter() / 2 - 0.001));
+            // let areas = POLY.flatten(POLY.expand(shadow.base, state.tool.fluteDiameter() / 2 - 0.001));
+            let areas = shadow.base.clone(true);
             ops_list.push(new OpArea(state, {
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
                 dogbones,
                 down,
                 expand: 0,
                 mode: 'trace',
-                outline: omitthru,
+                omitthru,
+                // outline: omitthru,
                 ov_botz,
                 ov_topz,
+                over: op.wide ? op.step : 0,
                 plunge,
                 rate,
                 rename: rename ?? "outline",
                 revbones,
                 smooth: 0,
                 spindle,
+                steps: op.wide ? op.steps + 1 : 1,
                 surfaces: {},
                 tool,
-                tr_type: 'none',
+                tr_type: 'outside',
             }));
         } else {
             let areas = shadow.base.clone(true);
@@ -57,8 +61,8 @@ class OpOutline extends CamOp {
                 mode: 'trace',
                 omitinner: omitvoid,
                 omitouter: inside,
-                outline: omitthru,
                 omitthru,
+                // outline: omitthru,
                 ov_botz,
                 ov_topz,
                 plunge,
