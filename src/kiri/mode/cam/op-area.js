@@ -26,7 +26,7 @@ class OpArea extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, mode, down, over, follow, expand, outline, smooth } = op;
+        let { tool, mode, down, over, follow, edgeonly, expand, outline, smooth } = op;
         let { ov_topz, ov_botz, direction, rename } = op;
         let { settings, widget, tabs, color } = state;
         let { addSlices, setToolDiam, cutTabs, shadowAt, workarea } = state;
@@ -137,7 +137,7 @@ class OpArea extends CamOp {
                     let layers = slice.output();
                     let shadow = await shadowAt(z);
                     let tool_shadow = POLY.offset(shadow, [ toolDiam / 2 - ts_off ], { count: 1, z });
-                    // for roughing backward compatability
+                    // for roughing/outline backward compatability
                     if (op.omitthru) {
                         shadow = shadow.clone(true);
                         for (let poly of shadow.filter(p => p.inner)) {
@@ -156,7 +156,7 @@ class OpArea extends CamOp {
                     let clip = [];
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
-                        count: 999, outs, flat: true, z, minArea: 0
+                        count: edgeonly ? 1 : 999, outs, flat: true, z, minArea: 0
                     });
                     // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {

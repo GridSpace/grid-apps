@@ -14,37 +14,72 @@ class OpOutline extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { shadow, tool, widget } = state;
+        let { dogbones, down, inside, omitthru, outside, ov_botz, ov_topz } = op;
+        let { plunge, rate, rename, revbones, spindle, tool } = op;
+        let { shadow, widget } = state;
+
         let shadow_base = shadow.base;
         if (!(shadow_base && shadow_base.length)) {
             throw 'missing shadow base';
         }
-        let areas = POLY.flatten(POLY.expand(shadow.base, tool.fluteDiameter() / 2 - 0.001));
-        let cutout = {
-            areas: { [widget.id]: areas.map(p => p.toArray()) },
-            dogbones: op.dogbones,
-            down: op.down,
-            expand: 0,
-            mode: 'trace',
-            outline: op.omitthru,
-            ov_botz: op.ov_botz,
-            ov_topz: op.ov_topz,
-            plunge: op.plunge,
-            rate: op.rate,
-            rename: op.rename ?? "outline",
-            revbones: op.revbones,
-            smooth: 0,
-            spindle: op.spindle,
-            surfaces: {},
-            tool: op.tool,
-            tr_type: 'none',
-        };
-        this.op_cutout = new OpArea(state, cutout);
-        return this.op_cutout.slice(progress);
+
+        let ops_list = this.ops_list = [ ];
+
+        if (outside) {
+            let areas = POLY.flatten(POLY.expand(shadow.base, state.tool.fluteDiameter() / 2 - 0.001));
+            ops_list.push(new OpArea(state, {
+                areas: { [widget.id]: areas.map(p => p.toArray()) },
+                dogbones,
+                down,
+                expand: 0,
+                mode: 'trace',
+                outline: omitthru,
+                ov_botz,
+                ov_topz,
+                plunge,
+                rate,
+                rename: rename ?? "outline",
+                revbones,
+                smooth: 0,
+                spindle,
+                surfaces: {},
+                tool,
+                tr_type: 'none',
+            }));
+        } else {
+            let areas = shadow.base.clone(true);
+            ops_list.push(new OpArea(state, {
+                areas: { [widget.id]: areas.map(p => p.toArray()) },
+                dogbones,
+                down,
+                edgeonly: true,
+                expand: 0,
+                mode: 'clear',
+                ov_botz,
+                ov_topz,
+                plunge,
+                rate,
+                rename: rename ?? "outline",
+                revbones,
+                smooth: 0,
+                spindle,
+                surfaces: {},
+                tool,
+            }));
+            if (!inside) {
+                // add outline
+            }
+        }
+
+        for (let op of this.ops_list) {
+            await op.slice(progress);
+        }
     }
 
     async prepare(ops, progress) {
-        return this.op_cutout.prepare(ops, progress);
+        for (let op of this.ops_list) {
+            await op.prepare(ops, progress);
+        }
     }
 }
 

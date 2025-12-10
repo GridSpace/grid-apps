@@ -555,6 +555,10 @@ self.lang['en-us'] = {
     co_omit_l:      "eliminate thru holes",
     co_olen_s:      "enable",
     co_olen_l:      "enabled outline cutting",
+    co_olin_s:      "inside only",
+    co_olin_l:      ["limit cutting to","inside part boundaries"],
+    co_olot_s:      "outside only",
+    co_olot_l:      ["limit cutting to","exterior part boundaries","which can be thought of","as the shadow outline"],
 
     // CNC CONTOUR
     cn_menu:        "contour",

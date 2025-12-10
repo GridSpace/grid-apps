@@ -30,8 +30,9 @@ class OpRough extends CamOp {
         }
 
         let areas = POLY.flatten(POLY.expand(shadowBase, tool.fluteDiameter() / 2 - 0.001));
+        let ops_list = this.ops_list = [ ];
 
-        let rough = {
+        ops_list.push(new OpArea(state, {
             rename: op.rename ?? "rough",
             spindle: op.spindle,
             tool: op.tool,
@@ -50,13 +51,10 @@ class OpRough extends CamOp {
             ov_topz: op.ov_topz,
             areas: { [widget.id]: areas.map(p => p.toArray()) },
             surfaces: {}
-        };
-
-        this.op_rough = new OpArea(state, rough);
-        await this.op_rough.slice(progress);
+        }));
 
         if (cutOutside) {
-            let cutout = {
+            ops_list.push(new OpArea(state, {
                 rename: op.rename ?? "rough",
                 spindle: op.spindle,
                 tool: op.tool,
@@ -72,16 +70,18 @@ class OpRough extends CamOp {
                 ov_topz: op.ov_topz,
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
                 surfaces: {}
-            };
-            this.op_cutout = new OpArea(state, cutout);
-            await this.op_cutout.slice(progress);
+            }));
         }
 
+        for (let op of this.ops_list) {
+            await op.slice(progress);
+        }
     }
 
     async prepare(ops, progress) {
-        await this.op_rough.prepare(ops, progress);
-        if (this.op_cutout) await this.op_cutout.prepare(ops, progress);
+        for (let op of this.ops_list) {
+            await op.prepare(ops, progress);
+        }
     }
 }
 
