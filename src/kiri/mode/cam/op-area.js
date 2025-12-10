@@ -164,7 +164,7 @@ class OpArea extends CamOp {
                     // for roughing backward compatability
                     if (op.leave_z) {
                         for (let out of outs)
-                            for (let p of out)
+                            for (let p of out.points)
                                 p.z += op.leave_z;
                     }
                     // for roughing backward compatability
