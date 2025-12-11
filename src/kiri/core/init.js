@@ -992,6 +992,7 @@ function init_one() {
         gcodeSpace:       newBoolean(LANG.dv_tksp_s, onBooleanClick, {title:LANG.dv_tksp_l, modes:CAM_LZR}),
         laserMaxPower:    newInput(LANG.ou_maxp_s, {title:LANG.ou_maxp_l, modes:LASER, size:7, text:true}),
         useLaser:         newBoolean(LANG.dv_lazr_s, onBooleanClick, {title:LANG.dv_lazr_l, modes:CAM}),
+        useIndexed:       newBoolean(LANG.dv_4tha_s, onBooleanClick, {title:LANG.dv_4tha_l, modes:CAM}),
         gcodeFExt:        newInput(LANG.dv_fext_s, {title:LANG.dv_fext_l, modes:CAM_LZR, size:7, text:true}),
         gcodeEd:          newGroup(LANG.dv_gr_gco, $('dg'), {group:"dgcp", inline, modes:GCODE}),
         gcodeMacros:      newRow([
@@ -1009,7 +1010,8 @@ function init_one() {
             (ui.gcodeKnifeUp  = newGCode(LANG.dv_dkof_s, {title:LANG.dv_dkof_l, modes:DRAG,  area:gcode})).button,
             (ui.gcodeChange   = newGCode(LANG.dv_tool_s, {title:LANG.dv_tool_l, modes:FDM_CAM,   area:gcode})).button,
             (ui.gcodeDwell    = newGCode(LANG.dv_dwll_s, {title:LANG.dv_dwll_l, modes:CAM,   area:gcode})).button,
-            (ui.gcodeSpindle  = newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM,   area:gcode, show:() => ui.spindleMax.value > 0})).button
+            (ui.gcodeSpindle  = newGCode(LANG.dv_sspd_s, {title:LANG.dv_sspd_l, modes:CAM,   area:gcode, show:() => ui.spindleMax.value > 0})).button,
+            (ui.gcodeResetA   = newGCode(LANG.dv_resa_s, {title:LANG.dv_resa_l, modes:CAM,   area:gcode, show:() => ui.useIndexed.checked})).button
         ], {class:"ext-buttons f-row gcode-macros"}),
 
         /** Preferences Menu */

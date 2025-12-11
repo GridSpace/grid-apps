@@ -157,6 +157,7 @@ function setDeviceCode(code, devicename) {
         ui.deviceRound.checked = dev.bedRound;
         ui.deviceOrigin.checked = dev.ctOriginCenter || dev.originCenter || dev.bedRound;
         ui.fwRetract.checked = dev.fwRetract;
+        ui.useIndexed.checked = dev.useIndexed;
 
         // add extruder selection buttons
         if (dev.extruders) {
@@ -176,6 +177,7 @@ function setDeviceCode(code, devicename) {
             ui.bedWidth,
             ui.maxHeight,
             ui.useLaser,
+            ui.useIndexed,
             ui.resolutionX,
             ui.resolutionY,
             ui.deviceOrigin,

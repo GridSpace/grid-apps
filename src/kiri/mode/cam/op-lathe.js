@@ -53,11 +53,9 @@ class OpLathe extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, slices, topo } = this;
-        let { axisreset } = op;
+        let { slices, state, topo } = this;
         let { camOut, newLayer, setContouring, setNextIsMove, zSafe } = ops;
-
-        let rez = topo.resolution;
+        let { gcodeResetA } = state.settings.device;
 
         // start top center, X = 0, Y = 0 closest to 4th axis chuck
         camOut(newPoint(0, 0, zSafe).setA(0), 0);
@@ -81,7 +79,7 @@ class OpLathe extends CamOp {
 
         // move to safe height and reset A axis
         newLayer();
-        ops.addGCode([`G0 Z${zSafe.round(2)}`, axisreset.join('\n') ?? "G92.4 A0 R0"]);
+        ops.addGCode([`G0 Z${zSafe.round(2)}`, gcodeResetA.join('\n') ?? "G92.4 A0 R0"]);
     }
 }
 

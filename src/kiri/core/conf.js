@@ -114,6 +114,7 @@ function device_from_code(code,mode) {
         gcodeProc: valueOf(code.proc, ''),
         gcodeDwell: valueOf(code.dwell, []),
         gcodeSpindle: valueOf(code.spindle || cmd.spindle, []),
+        gcodeResetA: valueOf(code.reseta || cmd.reseta, []),
         gcodeChange: valueOf(code['tool-change'], []),
         gcodeFExt: valueOf(code['file-ext'], 'gcode'),
         gcodeSpace: valueOf(code['token-space'], true),
@@ -406,6 +407,7 @@ export const conf = {
                 bedHeight: 2.5,
                 maxHeight: 300,
                 useLaser: false,
+                useIndexed: false,
                 originCenter: false,
                 spindleMax: 0,
                 gcodePre: [],
@@ -415,7 +417,8 @@ export const conf = {
                 gcodeStrip: true,
                 gcodeDwell: ["G4 P{time}"],
                 gcodeChange: ["M6 T{tool}"],
-                gcodeSpindle: ["M3 S{speed}"]
+                gcodeSpindle: ["M3 S{speed}"],
+                gcodeResetA: ["G92.4 A0 R0"]
             },
             // process defaults CAM:Process
             p:{
@@ -511,7 +514,6 @@ export const conf = {
                 camLaserZMax: 0,
                 camLaserZMin: 0,
                 camLatheAngle: 1,
-                camLatheAxisReset: ["G92.4 A0 R0"],
                 camLatheLinear: true,
                 camLatheOver: 0.1,
                 camLatheSpeed: 500,

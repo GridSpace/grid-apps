@@ -162,6 +162,8 @@ self.lang['en-us'] = {
     dv_fext_l:      "file name extension",
     dv_lazr_s:      "enable laser",
     dv_lazr_l:      ["enable laser operations"],
+    dv_4tha_s:      "enable 4th axis",
+    dv_4tha_l:      ["enable 4th axis operations","aka indexed mode"],
 
     dv_dwll_s:      "dwell",
     dv_dwll_l:      "gcode dwell script",
@@ -169,6 +171,8 @@ self.lang['en-us'] = {
     dv_tool_l:      "tool change script",
     dv_sspd_s:      "spindle",
     dv_sspd_l:      "set spindle speed",
+    dv_resa_s:      "reset a",
+    dv_resa_l:      "reset a axis",
     dv_paus_s:      "pause",
     dv_paus_l:      "gcode pause script",
     dv_head_s:      "header",

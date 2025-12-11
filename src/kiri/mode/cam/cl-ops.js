@@ -350,7 +350,6 @@ export function createPopOps() {
         linear: 'camLatheLinear',
         offStart: 'camLatheOffStart',
         offEnd: 'camLatheOffEnd',
-        axisreset: 'camLatheAxisReset'
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         sep: UC.newBlank({ class: "pop-sep" }),
@@ -367,7 +366,6 @@ export function createPopOps() {
         leave: UC.newInput(LANG.cf_leav_s, { title: LANG.cf_leav_l, convert: toFloat, bound: UC.bound(0, 100) }),
         sep: UC.newBlank({ class: "pop-sep" }),
         linear: UC.newBoolean(LANG.ci_line_s, undefined, { title: LANG.ci_line_l }),
-        axisreset: UC.newRow([ UC.newButton("axis reset", gcodeEditor('Rotary (A) Axis Reset Macro', 'axisreset')) ], { class: "ext-buttons f-row" })
     };
 
     function canDogBones() {

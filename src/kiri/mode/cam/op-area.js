@@ -19,6 +19,8 @@ const ptyp = clib.PolyType;
 const cfil = clib.PolyFillType;
 const ts_off = 0.01;
 
+// todo: review tool_shadow. offset both directions for travel inside and outside / between?
+
 class OpArea extends CamOp {
     constructor(state, op) {
         super(state, op);
