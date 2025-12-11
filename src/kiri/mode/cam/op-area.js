@@ -342,7 +342,8 @@ class OpArea extends CamOp {
             }
         }
 
-        addSlices(areas.flat());
+        // return only slices containing ares to mill
+        addSlices(areas.flat().filter(s => s.camLines && s.camLines.length));
     }
 
     prepare(ops, progress) {
