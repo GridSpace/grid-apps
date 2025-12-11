@@ -231,7 +231,7 @@ class OpArea extends CamOp {
                             count: op.steps ?? 1, outs, flat: true, z, minArea: 0, open: true
                         });
                     }
-                    if (outs.length === 0) {
+                    if (outs.length === 0 && !op.drape) {
                         // terminate z descent when no further output possible
                         break;
                     }
