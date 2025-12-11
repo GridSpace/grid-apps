@@ -17,7 +17,7 @@ const clib = self.ClipperLib;
 const ctyp = clib.ClipType;
 const ptyp = clib.PolyType;
 const cfil = clib.PolyFillType;
-const ts_off = 0.01;
+const ts_eps = 0.01;
 
 // todo: review tool_shadow. offset both directions for travel inside and outside / between?
 
@@ -116,6 +116,7 @@ class OpArea extends CamOp {
         let pinc = 1 / polys.length;
         for (let area of polys) {
             let bounds = area.getBounds3D();
+            let ts_off = toolDiam / 2 - ts_eps;
 
             if (outline) {
                 // remove inner voids when processing outline only
@@ -138,7 +139,10 @@ class OpArea extends CamOp {
                     let slice = newLayer(z);
                     let layers = slice.output();
                     let shadow = await shadowAt(z);
-                    let tool_shadow = POLY.offset(shadow, [ toolDiam / 2 - ts_off ], { count: 1, z });
+                    let tool_shadow = [
+                        ...POLY.offset(shadow, [  ts_off ], { count: 1, z }),
+                        ...POLY.offset(shadow, [ -ts_off ], { count: 1, z }),
+                    ];
                     // for roughing/outline backward compatability
                     if (op.omitthru) {
                         shadow = omitMatching(shadow, thruHoles);
@@ -247,7 +251,12 @@ class OpArea extends CamOp {
                     }
                     slice.camLines = outs;
                     // store travel boundary that triggers up and over moves
-                    slice.tool_shadow = [ area, ...shadow, ...POLY.offset(shadow, [ toolDiam / 2 - ts_off ], { count: 1, z }) ];
+                    slice.tool_shadow = [
+                        area,
+                        ...shadow,
+                        ...POLY.offset(shadow, [  ts_off ], { count: 1, z }),
+                        ...POLY.offset(shadow, [ -ts_off ], { count: 1, z }),
+                    ];
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'trace');
                     layers
@@ -341,8 +350,11 @@ class OpArea extends CamOp {
                 surfaces.push(surface);
             }
         }
-
-        // return only slices containing ares to mill
+        // filter out empty slices
+        this.areas = areas = areas.map(area => {
+            return area.filter(slice => slice.camLines && slice.camLines.length);
+        }).filter(a => a.length);
+        // only render slices containing ares to mill
         addSlices(areas.flat().filter(s => s.camLines && s.camLines.length));
     }
 
@@ -379,7 +391,7 @@ class OpArea extends CamOp {
                 dist: Infinity,
                 area: undefined
             };
-            for (let area of areas.filter(p => p.length && !p.used)) {
+            for (let area of areas.filter(p => !p.used)) {
                 // skip devel / debug only areas
                 let topPolys = area[0].camLines;
                 if (!topPolys) continue;
@@ -393,12 +405,13 @@ class OpArea extends CamOp {
                     min.dist = find.distance;
                 }
             }
+
             // if we have a next-closest top poly, pocket that
             if (min.area) {
                 min.area.used = true;
                 pocket({
                     cutdir: op.ov_conv,
-                    depthFirst: process.camDepthFirst,
+                    depthFirst: process.camDepthFirst && !op.drape,
                     easeDown: op.down && process.easeDown ? op.down : 0,
                     progress: (n,m) => progress(n/m, "area"),
                     slices: min.area.filter(slice => slice.camLines)
