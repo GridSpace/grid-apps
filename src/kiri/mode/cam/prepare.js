@@ -600,7 +600,9 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         if (depthFirst) {
-            descend(depthData);
+            for (let i=0; i<depthData.length; i++) {
+                descend(depthData.slice(i));
+            }
         }
 
         clearTravelBoundary();
