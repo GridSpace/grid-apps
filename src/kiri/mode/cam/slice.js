@@ -330,6 +330,9 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             workover.bottom_z = isIndexed ? valz.ov_botz : bottom_stock + valz.ov_botz;
             workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
         }
+        if (-zThru > workover.bottom_z) {
+            alert("Z Thru should be below Z Bottom");
+        }
         if (valz.tool) {
             tool = new Tool(settings, valz.tool);
         }
