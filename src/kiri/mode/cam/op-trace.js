@@ -12,10 +12,11 @@ class OpTrace extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { areas, down, expand, follow, offset, outline, mode, ov_botz, ov_topz } = op;
+        let { areas, direction, down, expand, follow, offset, outline, mode, ov_botz, ov_topz } = op;
         let { plunge, rate, refine, smooth, spindle, step, steps, thru, tolerance, tool } = op;
         let trace = {
             areas,
+            direction,
             dogbones: op.dogbone,
             down,
             expand,

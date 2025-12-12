@@ -73,21 +73,10 @@ class Tool {
         return diam ? diam * step : step;
     }
 
-    // setTaperLengthFromAngle(angle) {
-    //     const rad = (this.flute_diam - this.taper_tip) / 2;
-    //     return this.flute_len = calcTaperLength(rad, angle);
-    // }
-
     getTaperAngle() {
         let { flute_diam, flute_len, taper_tip } = this.tool;
         return calcTaperAngle((flute_diam - taper_tip) / 2, flute_len);
     }
-
-    // getTaperBallExtent() {
-    //     let rad = this.tipDiameter() / 2;
-    //     let ang = this.getTaperAngle() * DEG2RAD;
-    //     return calcTaperBallExtent(rad, ang);
-    // }
 
     shaftLength() {
         return this.unitScale() * this.tool.shaft_len;

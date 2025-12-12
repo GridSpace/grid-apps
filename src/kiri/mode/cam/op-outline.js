@@ -14,8 +14,8 @@ class OpOutline extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { dogbones, down, inside, omitthru, omitvoid, outside, ov_botz, ov_topz } = op;
-        let { plunge, rate, rename, revbones, spindle, tool } = op;
+        let { direction, dogbones, down, inside, omitthru, omitvoid, outside } = op;
+        let { ov_botz, ov_topz, plunge, rate, rename, revbones, spindle, tool } = op;
         let { shadow, widget } = state;
 
         let shadow_base = shadow.base;
@@ -30,6 +30,7 @@ class OpOutline extends CamOp {
             let areas = shadow.base.clone(true);
             ops_list.push(new OpArea(state, {
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
+                direction,
                 dogbones,
                 down,
                 expand: 0,
@@ -54,6 +55,7 @@ class OpOutline extends CamOp {
             let areas = shadow.base.clone(true);
             ops_list.push(new OpArea(state, {
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
+                direction,
                 dogbones,
                 down,
                 drape: true,

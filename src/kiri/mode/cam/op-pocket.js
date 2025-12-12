@@ -10,10 +10,11 @@ class OpPocket extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { contour, down, expand, follow, outline, ov_botz, ov_topz } = op;
+        let { contour, direction, down, expand, follow, outline, ov_botz, ov_topz } = op;
         let { plunge, rate, refine, smooth, spindle, surfaces, tolerance, tool } = op;
         let pocket = {
             areas: {},
+            direction,
             down,
             expand,
             follow,

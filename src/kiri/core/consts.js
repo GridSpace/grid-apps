@@ -134,7 +134,7 @@ const LISTS = {
     direction: [
         { name: "climb" },
         { name: "conventional" },
-        { name: "alternating" },
+        // { name: "alternating" },
     ],
     camtool: [
         { name: "flat end",   id: "endmill" },

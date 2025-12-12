@@ -808,8 +808,6 @@ self.lang['en-us'] = {
     ou_zclr_l:      ["safe travel offset","from top of part","in workspace units"],
     ou_ztru_s:      "z thru",
     ou_ztru_l:      ["extend cutout pass down","in workspace units"],
-    ou_conv_s:      "conventional",
-    ou_conv_l:      ["milling direction","uncheck for 'climb'"],
     ou_depf_s:      "depth first",
     ou_depf_l:      ["optimize pocket cuts","with depth priority"],
     ou_inrf_s:      "inner first",

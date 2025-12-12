@@ -28,10 +28,9 @@ class OpArea extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { tool, mode, down, over, follow, expand, outline, smooth } = op;
-        let { ov_topz, ov_botz, direction, rename } = op;
-        let { settings, widget, tabs, color } = state;
-        let { addSlices, setToolDiam, cutTabs, shadowAt, workarea } = state;
+        let { direction, down, expand, follow, mode, outline, over, rename, smooth, tool } = op;
+        let { addSlices, color, cutTabs, settings } = state;
+        let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
 
         let areaTool = new Tool(settings, tool);
         let smoothVal = (smooth ?? 0) / 10;
@@ -185,6 +184,7 @@ class OpArea extends CamOp {
                         let tab_shadows = tabs.filter(t => t.top >= z).map(t => t.poly);
                         if (tab_shadows) tool_shadow.push(...tab_shadows);
                     }
+                    POLY.setWinding(outs, direction === 'climb');
                     // store travel boundary that triggers up and over moves
                     slice.tool_shadow = [ area, ...shadow, ...tool_shadow ];
                     slice.camLines = outs;
@@ -252,6 +252,7 @@ class OpArea extends CamOp {
                         outs = omitInner(outs);
                     }
                     slice.camLines = outs;
+                    POLY.setWinding(outs, direction === 'climb');
                     // store travel boundary that triggers up and over moves
                     slice.tool_shadow = [
                         area,

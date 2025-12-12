@@ -218,6 +218,7 @@ export function createPopOps() {
 
     createPopOp('rough', {
         tool: 'camRoughTool',
+        direction: 'camMillDirection',
         spindle: 'camRoughSpindle',
         down: 'camRoughDown',
         step: 'camRoughOver',
@@ -230,9 +231,9 @@ export function createPopOps() {
         omitthru: 'camRoughOmitThru',
         ov_topz: 0,
         ov_botz: 0,
-        ov_conv: '~camConventional',
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
+        direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
@@ -250,12 +251,12 @@ export function createPopOps() {
         exp: UC.newExpand("overrides"),
         ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
         ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
-        ov_conv: UC.newBoolean(LANG.ou_conv_s, undefined, { title: LANG.ou_conv_l }),
         exp_end: UC.endExpand(),
     };
 
     createPopOp('outline', {
         tool: 'camOutlineTool',
+        direction: 'camMillDirection',
         spindle: 'camOutlineSpindle',
         step: 'camOutlineOver',
         steps: 'camOutlineOverCount',
@@ -271,9 +272,9 @@ export function createPopOps() {
         wide: 'camOutlineWide',
         ov_topz: 0,
         ov_botz: 0,
-        ov_conv: '~camConventional',
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
+        direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
@@ -294,7 +295,6 @@ export function createPopOps() {
         exp: UC.newExpand("overrides"),
         ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
         ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
-        ov_conv: UC.newBoolean(LANG.ou_conv_s, undefined, { title: LANG.ou_conv_l }),
         exp_end: UC.endExpand(),
     };
 
@@ -385,6 +385,7 @@ export function createPopOps() {
         mode: 'camTraceType',
         offset: 'camTraceOffset',
         spindle: 'camTraceSpindle',
+        direction: 'camMillDirection',
         tool: 'camTraceTool',
         step: 'camTraceOver',
         down: 'camTraceDown',
@@ -402,6 +403,7 @@ export function createPopOps() {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         mode: UC.newSelect(LANG.cu_type_s, { title: LANG.cu_type_l }, "trace"),
         offset: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: () => (env.poppedRec.mode === 'follow') }, "traceoff"),
+        direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
@@ -419,13 +421,13 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
         ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
-        ov_conv: UC.newBoolean(LANG.ou_conv_s, undefined, { title: LANG.ou_conv_l }),
         exp_end: UC.endExpand(),
         sep: UC.newBlank({ class: "pop-sep" }),
         menu: UC.newRow([UC.newButton("select", traceAdd)], { class: "ext-buttons f-row" }),
     };
 
     createPopOp('pocket', {
+        direction: 'camMillDirection',
         spindle: 'camPocketSpindle',
         tool: 'camPocketTool',
         step: 'camPocketOver',
@@ -444,6 +446,7 @@ export function createPopOps() {
         tolerance: 'camTolerance',
     }).inputs = {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
+        direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
@@ -464,7 +467,6 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
         ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
-        ov_conv: UC.newBoolean(LANG.ou_conv_s, undefined, { title: LANG.ou_conv_l }),
         exp_end: UC.endExpand(),
         sep: UC.newBlank({ class: "pop-sep" }),
         menu: UC.newRow([UC.newButton("select", surfaceAdd)], { class: "ext-buttons f-row" }),
@@ -667,6 +669,7 @@ export function createPopOps() {
         spindle: 'camAreaSpindle',
         tool: 'camAreaTool',
         mode: 'camAreaMode',
+        direction: 'camMillDirection',
         tr_type: 'camAreaTrace',
         sr_type: 'camAreaSurface',
         sr_angle: 'camAreaAngle',
@@ -684,7 +687,6 @@ export function createPopOps() {
         revbones: 'camAreaRevbones',
         ov_topz: 0,
         ov_botz: 0,
-        direction: 'camAreaDirection',
     }).inputs = {
         mode: UC.newSelect(LANG.mo_menu, { post: opRender }, "opmode"),
         tr_type: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: isTrace }, "traceoff"),

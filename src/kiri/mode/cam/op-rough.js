@@ -35,6 +35,7 @@ class OpRough extends CamOp {
         ops_list.push(new OpArea(state, {
             rename: op.rename ?? "rough",
             spindle: op.spindle,
+            direction: op.direction,
             tool: op.tool,
             rate: op.rate,
             plunge: op.plunge,
@@ -57,6 +58,7 @@ class OpRough extends CamOp {
             ops_list.push(new OpArea(state, {
                 rename: op.rename ?? "rough",
                 spindle: op.spindle,
+                direction: op.direction === 'climb' ? 'conventional' : 'climb',
                 tool: op.tool,
                 rate: op.rate,
                 plunge: op.plunge,
