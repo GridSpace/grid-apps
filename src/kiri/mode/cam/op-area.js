@@ -28,7 +28,8 @@ class OpArea extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { direction, down, expand, follow, mode, outline, over, rename, smooth, tool } = op;
+        let { direction, down, expand, flats, flatOff, follow } = op;
+        let { mode, outline, over, rename, smooth, tool } = op;
         let { addSlices, color, cutTabs, settings } = state;
         let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
 
@@ -129,7 +130,10 @@ class OpArea extends CamOp {
             newArea();
 
             if (mode === 'clear') {
-                let zs = down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
+                let zMov = flatOff ?? 0;
+                let zs = flats ?
+                    flats.filter(z => z <= zTop && z >= zBottom).map(v => v + zMov ?? 0) :
+                    down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 let lzo;
@@ -152,7 +156,7 @@ class OpArea extends CamOp {
                     let firstOff = -(toolDiam / 2 + (op.leave_xy ?? 0));
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ firstOff, -toolOver ], {
-                        count: op.steps ?? 999, outs, flat: true, z, minArea: 0
+                        count: op.steps ?? 999, outs, flat: true, z: z - zMov, minArea: 0
                     });
                     // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {

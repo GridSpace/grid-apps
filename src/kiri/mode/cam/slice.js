@@ -173,6 +173,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         cutTabs,
         dark,
         isIndexed,
+        newSlicer,
         ops: opList,
         setAxisIndex,
         setToolDiam,
@@ -218,8 +219,12 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         }
     }
 
-    function updateSlicer() {
-        slicer = state.slicer = new cam_slicer(widget);
+    function newSlicer(opts) {
+        return new cam_slicer(widget, opts);
+    }
+
+    function updateSlicer(opts) {
+        return slicer = state.slicer = new cam_slicer(widget, opts);
     }
 
     async function computeShadows() {

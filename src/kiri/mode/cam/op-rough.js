@@ -14,10 +14,8 @@ class OpRough extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { shadow, stock, tool, widget } = state;
-        let { workarea } = state;
+        let { newSlicer, shadow, stock, tool, widget } = state;
 
-        let cutThruBypass = op.down > workarea.top_stock - workarea.bottom_part;
         let cutOutside = !op.inside;
         let shadowBase = shadow.base;
 
@@ -54,9 +52,36 @@ class OpRough extends CamOp {
             surfaces: {}
         }));
 
+        if (op.flats) {
+            let slicer = newSlicer();
+            ops_list.push(new OpArea(state, {
+                rename: op.rename ?? "flats",
+                spindle: op.spindle,
+                direction: op.direction,
+                tool: op.tool,
+                rate: op.rate,
+                plunge: op.plunge,
+                mode: 'clear',
+                over: op.step,
+                down: op.down,
+                expand: 0,
+                smooth: 0,
+                outline: true,
+                omitthru: op.omitthru,
+                leave_xy: op.leave,
+                leave_z: op.leavez,
+                ov_botz: op.ov_botz,
+                ov_topz: op.ov_topz,
+                areas: { [widget.id]: areas.map(p => p.toArray()) },
+                surfaces: {},
+                flats: Object.keys(slicer.zFlat).map(v => parseFloat(v)).sort((a,b) => b-a),
+                flatOff: 0.01
+            }));
+        }
+
         if (cutOutside) {
             ops_list.push(new OpArea(state, {
-                rename: op.rename ?? "rough",
+                rename: op.rename ?? "cutout",
                 spindle: op.spindle,
                 direction: op.direction === 'climb' ? 'conventional' : 'climb',
                 tool: op.tool,

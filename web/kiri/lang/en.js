@@ -544,6 +544,8 @@ self.lang['en-us'] = {
     cr_clrt_l:      ["run a clearing pass over","the bounding area of the part","at z = 0"],
     cr_olin_s:      "inside only",
     cr_olin_l:      ["limit cutting to","inside part boundaries"],
+    cr_clrf_s:      "clear faces",
+    cr_clrf_l:      ["add additional clearing passes","for detected z planar flat areas"],
 
     // CNC OUTLINE
     co_menu:        "outline",

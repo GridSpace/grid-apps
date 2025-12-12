@@ -565,6 +565,7 @@ export const conf = {
                 camRegisterThru: 5,
                 camRoughAll: true,
                 camRoughDown: 2,
+                camRoughFlat: false,
                 camRoughIn: true,
                 camRoughOmitThru: false,
                 camRoughOmitVoid: false,
