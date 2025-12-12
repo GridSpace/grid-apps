@@ -37,8 +37,8 @@ class OpArea extends CamOp {
         let smoothVal = (smooth ?? 0) / 10;
         let toolDiam = areaTool.fluteDiameter();
         let toolOver = areaTool.getStepSize(over);
-        let zTop = ov_topz ? workarea.bottom_stock + ov_topz : workarea.top_z;
-        let zBottom = ov_botz ? workarea.bottom_stock + ov_botz : Math.max(workarea.bottom_z, workarea.bottom_part) + workarea.bottom_cut;
+        let zTop = workarea.top_z;
+        let zBottom = Math.max(workarea.bottom_z, workarea.bottom_part) + workarea.bottom_cut;
         let shadowBase = state.shadow.base;
         let thruHoles = state.shadow.holes;
 
@@ -181,7 +181,7 @@ class OpArea extends CamOp {
                         outs = omitInner(outs);
                     }
                     // add tabs to travel boundaries
-                    if (tabs) {
+                    if (tabs.length) {
                         let tab_shadows = tabs.filter(t => t.top >= z).map(t => t.poly);
                         if (tab_shadows) tool_shadow.push(...tab_shadows);
                     }
@@ -244,7 +244,7 @@ class OpArea extends CamOp {
                     // add dogbones when specified
                     if (op.dogbones) outs.forEach(out => out.addDogbones(toolDiam / 5, op.revbones));
                     // cut tabs when present
-                    if (tabs) outs = cutTabs(tabs, outs);
+                    if (tabs.length) outs = cutTabs(tabs, outs);
                     // support legacy outline features
                     if (op.omitouter) {
                         outs = omitOuter(outs);

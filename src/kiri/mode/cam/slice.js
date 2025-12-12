@@ -21,7 +21,28 @@ import { util } from '../../../geo/base.js';
 export async function cam_slice(settings, widget, onupdate, ondone) {
     if (widget.track.synth) return ondone();
 
+    // get tab widgets
     let tabW = widget.group.filter(w => w != widget);
+    // merge overlapping tabs
+    for (let i=0; i<tabW.length; i++) {
+        for (let j=i+1; j<tabW.length; j++) {
+            let t1 = tabW[i];
+            let t2 = tabW[j];
+            let b1 = t1.mesh.getBoundingBox();
+            let b2 = t2.mesh.getBoundingBox();
+            if (b1.intersectsBox(b2)) {
+                let a = t1.getVertices().array;
+                let b = t2.getVertices().array;
+                let arr = new Float32Array(a.length + b.length);
+                arr.set(a, 0);
+                arr.set(b, a.length);
+                t1.loadVertices(arr);
+                t2.del = true;
+            }
+        }
+    }
+    // filter merged tabs
+    tabW = tabW.filter(tw => !tw.del);
 
     let proc = settings.process,
         camOps = widget.camops = [],
@@ -41,7 +62,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     color = dark ? 0xbbbbbb : 0;
     minToolDiam = Infinity;
     maxToolDiam = -Infinity;
-    tabs = widget.anno.tab;
+    tabs = widget.anno.tab ?? [];
     unsafe = proc.camExpertFast;
     units = settings.controller.units === 'in' ? 25.4 : 1;
 
