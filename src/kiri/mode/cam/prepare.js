@@ -730,7 +730,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                         let dd = lp.distTo2D(pt);
                         zat = Math.max(pt.z, zat - (dd * easeDzPerMm));
                     }
-                    lp = pt.clone().setZ(zat);
+                    lp = pt.clone().setZ(Math.max(pt.z, zat));
                     camOut(lp, 1, { feed: easeFeed });
                 }
             }

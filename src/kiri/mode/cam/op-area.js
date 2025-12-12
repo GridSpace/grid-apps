@@ -180,6 +180,11 @@ class OpArea extends CamOp {
                     } else if (op.omitinner) {
                         outs = omitInner(outs);
                     }
+                    // add tabs to travel boundaries
+                    if (tabs) {
+                        let tab_shadows = tabs.filter(t => t.top >= z).map(t => t.poly);
+                        if (tab_shadows) tool_shadow.push(...tab_shadows);
+                    }
                     // store travel boundary that triggers up and over moves
                     slice.tool_shadow = [ area, ...shadow, ...tool_shadow ];
                     slice.camLines = outs;
@@ -254,6 +259,11 @@ class OpArea extends CamOp {
                         ...POLY.offset(shadow, [  ts_off ], { count: 1, z }),
                         ...POLY.offset(shadow, [ -ts_off ], { count: 1, z }),
                     ];
+                    // add tabs to travel boundaries
+                    if (tabs) {
+                        let tab_shadows = tabs.filter(t => t.top >= z).map(t => t.poly);
+                        if (tab_shadows) slice.tool_shadow.push(...tab_shadows);
+                    }
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'trace');
                     layers
