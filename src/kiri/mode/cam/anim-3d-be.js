@@ -32,7 +32,7 @@ let nextMeshID = 1,
     maxR;
 
 export function init(worker) {
-    const { dispatch } = worker;
+    const { dispatch, minions } = worker;
 
     dispatch.animate_setup2 = function (data, send) {
         settings = data.settings;

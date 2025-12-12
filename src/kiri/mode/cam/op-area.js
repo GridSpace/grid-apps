@@ -150,8 +150,9 @@ class OpArea extends CamOp {
                     // progressive offset of polygons inside area clipped to the shadow
                     let outs = [];
                     let clip = [];
+                    let firstOff = -(toolDiam / 2 + (op.leave_xy ?? 0));
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
-                    POLY.offset(clip, [ -toolDiam / 2, -toolOver ], {
+                    POLY.offset(clip, [ firstOff, -toolOver ], {
                         count: op.steps ?? 999, outs, flat: true, z, minArea: 0
                     });
                     // if we see no offsets, re-check the mesh bottom Z then exit
@@ -172,10 +173,6 @@ class OpArea extends CamOp {
                         for (let out of outs)
                             for (let p of out.points)
                                 p.z += op.leave_z;
-                    }
-                    // for roughing backward compatability
-                    if (op.leave_xy) {
-                        outs = outs.map(poly => poly.offset(-op.leave_xy)).flat();
                     }
                     // support legacy outline features
                     if (op.omitouter) {
