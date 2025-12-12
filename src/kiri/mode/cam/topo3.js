@@ -16,7 +16,7 @@ export class Topo {
 
     async generate(opt = {}) {
         let { state, contour, onupdate, ondone } = opt;
-        let { widget, settings, tshadow, tabs } = opt.state;
+        let { widget, settings, shadow, tabs } = opt.state;
 
         let { controller, process } = settings,
             { webGPU } = controller,
@@ -27,7 +27,6 @@ export class Topo {
             bounds = widget.getBoundingBox().clone(),
             tolerance = contour.tolerance,
             flatness = contour.flatness || (tolerance / 100),
-            shadow = tshadow,
             minX = bounds.min.x,
             maxX = bounds.max.x,
             minY = bounds.min.y,
@@ -72,7 +71,7 @@ export class Topo {
             tabsOn = tabs,
             tabHeight = Math.max(process.camTabsHeight + zBottom, tabsMax),
             clipTab = tabsOn ? [] : null,
-            clipTo = inside ? shadow : POLY.expand(shadow, toolDiameter / 2 + resolution * 3),
+            clipTo = inside ? shadow.base : POLY.expand(shadow.base, toolDiameter / 2 + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
             gridDelta = Math.floor(partOff / resolution),
             debug_clips = false;
