@@ -4,6 +4,7 @@ import { api } from './api.js';
 import { load } from '../../load/file.js';
 import { newWidget } from './widget.js';
 import { VIEWS } from './consts.js';
+import { widgets } from './widgets.js';
 
 // add frame message api listener
 window.addEventListener('message', msg => {
@@ -46,8 +47,20 @@ window.addEventListener('message', msg => {
         case "mode": send({mode: settings.mode()}); break;
         case "device": send({device: settings.dev()}); break;
         case "process": send({process: settings.proc()}); break;
+        case "widgets": send({widgets: widgets.all().map(w => {
+            return {
+                id: w.id,
+                meta: w.meta,
+                track: w.track,
+            }
+        })}); break;
         default: send({all: settings}); break;
 
+    }
+
+    if (data.set) switch (data.set) {
+        case "":
+            break;
     }
 
     if (data.features) {

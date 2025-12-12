@@ -53,9 +53,11 @@
 
         clear: () => { send({ clear: true }) },
 
-        parse: (data, type) => { send({ parse: data, type })},
+        parse: (data, type) => { send({ parse: data, type }) },
 
-        get: (scope) => { send({ get: scope })},
+        get: (scope) => { send({ get: scope }) },
+
+        set: (scope, data) => { send({ set: scope, data })},
 
         setMode: (mode) => { send({ mode }) },
 

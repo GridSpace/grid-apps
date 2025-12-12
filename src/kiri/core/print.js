@@ -352,8 +352,8 @@ class Print {
             // morph = false,
             morph = true,
             bounds = scope.bounds = {
-                max: { x:-Infinity, y:-Infinity, z:-Infinity},
-                min: { x:Infinity, y:Infinity, z:Infinity}
+                max: { x: -Infinity, y: -Infinity, z: -Infinity },
+                min: { x: Infinity, y: Infinity, z: Infinity }
             },
             pos = {
                 X: 0.0,
@@ -390,7 +390,7 @@ class Print {
             hasmoved = false,
             lastG = 'G1';
 
-        const output = scope.output = [ seq ];
+        const output = scope.output = [seq];
         const beltaxis = { X: "X", Y: "Z", Z: "Y", E: "E", F: "F" };
 
         function LOG() {
@@ -407,12 +407,13 @@ class Print {
          */
         function processLine(line, axes) {
             const prevPoint = newPoint(
-                factor * pos.X ,
-                factor * pos.Y ,
+                factor * pos.X,
+                factor * pos.Y,
                 factor * pos.Z + dz
             )
             .add(xoff)
-            .add(off);
+            .add(off)
+            .setA(pos.A);
 
             // apply origin offset
             // for (let layer of output) {
@@ -424,7 +425,7 @@ class Print {
             //     }
             // }
 
-            const point = prevPoint.clone()
+            const point = prevPoint.clone();
 
             line.forEach(tok => {
                 let axis = tok.charAt(0).toUpperCase();
@@ -440,31 +441,30 @@ class Print {
                     pos[axis] = val;
                     if (axis == "X") point.x = factor * pos.X + xoff.x + off.x
                     else if (axis == "Y") point.y = factor * pos.Y + xoff.y + off.y
-                    else if (axis == "Z") point.z = factor * pos.Z + xoff.z + off.z + dz
+                    else if (axis == "Z") point.z = factor * pos.Z + xoff.z + off.z + dz;
                 } else {
-                    // mov[axis] = val;
                     pos[axis] += val;
                 }
-                // console.log("position updated",structuredClone(pos))
             });
+            point.a = pos.A;
 
             let center;
-            if(axes.I !== undefined && axes.J !== undefined) {
+            if (axes.I !== undefined && axes.J !== undefined) {
                 center = newPoint(
-                    factor* axes.I+ xoff.x,
-                    factor* axes.J+ xoff.y,
+                    factor * axes.I + xoff.x,
+                    factor * axes.J + xoff.y,
                     0,
                 );
-            }else if(axes.R !== undefined) {
+            } else if (axes.R !== undefined) {
                 center = newPoint(
-                    factor* Math.cos(axes.R * DEG2RAD),
-                    factor* Math.sin(axes.R * DEG2RAD),
+                    factor * Math.cos(axes.R * DEG2RAD),
+                    factor * Math.sin(axes.R * DEG2RAD),
                     0,
                 );
             }
-            if(center){
+            if (center) {
                 center = center.add(prevPoint);
-                center.setZ((prevPoint.z+point.z)/2+dz);
+                center.setZ((prevPoint.z + point.z) / 2 + dz);
             }
             return {
                 center,
@@ -473,7 +473,7 @@ class Print {
             };
         }
 
-        function outputPoint(point,lastP,emit,{retract}) {
+        function outputPoint(point, lastP, emit, { retract }) {
             // non-move in a new plane means burp out
             // the old sequence and start a new one
             if (newlayer || (autolayer && seq.z != point.z)) {
@@ -508,7 +508,7 @@ class Print {
                 }
             }
             // add point to current sequence
-            scope.addOutput(seq, point, emit, pos.F, tool, {retract});
+            scope.addOutput(seq, point, emit, pos.F, tool, { retract });
             scope.lastPos = Object.assign({}, pos);
             scope.lastPosE = pos.E;
         }
@@ -535,19 +535,11 @@ class Print {
             const axes = {};
 
             lastG = g0 ? 'G0' : 'G1';
-            const {point, prevPoint} = processLine(line,axes);
+            let { point, prevPoint } = processLine(line, axes);
 
             if (morph && belt) {
                 point.y -= point.z * beltfact;
                 point.z *= beltfact;
-            }
-
-            if (pos.A) {
-                let ip = new THREE.Vector3(pos.X, pos.Y, pos.Z)
-                    .applyAxisAngle(XAXIS, -pos.A * DEG2RAD);
-                point.x = ip.x;
-                point.y = ip.y;
-                point.z = ip.z;
             }
 
             const retract = (fdm && pos.E < 0) || undefined;
@@ -567,7 +559,7 @@ class Print {
             // always add moves to the current sequence
             if (moving) {
                 // console.log("move",structuredClone(point))
-                scope.addOutput(seq, point, 0, pos.F, tool,{retract})
+                scope.addOutput(seq, point, 0, pos.F, tool, { retract })
                 scope.lastPos = Object.assign({}, pos);
                 return;
             }
@@ -578,7 +570,32 @@ class Print {
                 seq.height = defh = height = pos.Z;
             }
 
-            outputPoint(point,prevPoint,1,{retract})
+            // interpolate rotational cuts for smooth display
+            if (point.a !== undefined && prevPoint.a !== undefined && point.a !== prevPoint.a) {
+                let dX = point.x - prevPoint.x;
+                let dY = point.y - prevPoint.y;
+                let dZ = point.z - prevPoint.z;
+                let dA = point.a - prevPoint.a;
+                let steps = Math.ceil(Math.abs(dA));
+                if (steps > 2) {
+                    let pc = prevPoint.clone();
+                    let iX = dX / steps;
+                    let iY = dY / steps;
+                    let iZ = dZ / steps;
+                    let iA = dA / steps;
+                    steps--;
+                    while (steps-- > 0) {
+                        pc.x += iX;
+                        pc.y += iY;
+                        pc.z += iZ;
+                        pc.a += iA;
+                        outputPoint(pc.clone(), prevPoint, moving ? 0 : 1, { lerp: true })
+                        prevPoint = pc;
+                    }
+                }
+            }
+
+            outputPoint(point, prevPoint, 1, { retract })
         }
 
         const linemod = cam ? Math.ceil(lines.length / 2500) : 0;
@@ -594,7 +611,7 @@ class Print {
             }
             if (line.indexOf('- LAYER ') > 0) {
                 seq.height = defh;
-                const hd = line.replace('(','').replace(')','').split(' ');
+                const hd = line.replace('(', '').replace(')', '').split(' ');
                 defh = parseFloat(hd[4]);
                 if (fdm) dz = -defh / 2;
                 newlayer = true;
@@ -606,7 +623,7 @@ class Print {
             line = line.trim().split(";")[0].split(" ").filter(v => v);
             if (!line.length) return;
             const c0 = line[0].charAt(0);
-            let cmd = ["X","Y","Z"].indexOf(c0) >= 0 ? lastG : line.shift();
+            let cmd = ["X", "Y", "Z"].indexOf(c0) >= 0 ? lastG : line.shift();
             if (!cmd) return;
             if (cmd.charAt(0) === 'T') {
                 let ext = scope.settings.device.extruders;
