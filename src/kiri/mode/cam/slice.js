@@ -83,6 +83,24 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             z: camStockZ,
             center: newPoint(pos.x, pos.y, pos.z)
         };
+        if (!camStockOffset && axisIndex && isIndexed) {
+            if (axisIndex === 0 || axisIndex === 180) {
+                // do nothing
+            } else if (axisIndex === 90 || axisIndex === 270) {
+                // swap YZ
+                let tmp = stock.y;
+                stock.y = stock.z;
+                stock.z = tmp;
+                stock.center = newPoint(pos.x, pos.z, pos.y);
+            } else {
+                // compute YZ hypotenuse
+                let p = new THREE.Vector2(stock.y, stock.z);
+                let center = new THREE.Vector2(0, 0);
+                p.rotateAround(center, axisRotation);
+                stock.y = p.y;
+                stock.z = p.z;
+            }
+        }
         track = widget.track;
         wztop = track.top;
         ztOff = isIndexed ? (stock.z - bounds.dim.z) / 2 : (stock.z - wztop);
@@ -346,6 +364,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         let layername = named.length ? named : (note ? `${type} (${note})` : type);
         Object.assign(state, {
             layername,
+            stock,
             tool,
             zBottom,
             zThru,
