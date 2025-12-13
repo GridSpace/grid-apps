@@ -3,6 +3,7 @@
 import { base } from '../../geo/base.js';
 import { avgc } from './utils.js';
 import { util as mesh_util } from '../../mesh/util.js';
+import { tool as mesh_tool } from '../../mesh/tool.js';
 import { verticesToPoints } from '../../geo/points.js';
 import { newPoint } from '../../geo/point.js';
 import { newPolygon } from '../../geo/polygon.js';
@@ -158,7 +159,12 @@ class Widget {
      * @param {Float32Array} vertices
      * @returns {Widget}
      */
-    loadVertices(data, options = { index: false }) {
+    loadVertices(data, options = { normalize: false }) {
+        if (options.normalize) {
+            console.time('mesh normalize')
+            data = new mesh_tool({ precision: 0.001 }).normalizeVertices(data).toFloat32();
+            console.timeEnd('mesh normalize');
+        }
         // console.trace({ loadVertices: this.id, worker: this.inWorker, data });
         let vertices,
             autoscale = false;
@@ -859,9 +865,9 @@ class Widget {
         // find closest shadow above and use to speed up delta shadow gen
         let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
         let minZabove = Math.min(Infinity, ...zover);
-        let shadow = this.#computeShadowAt(z, minZabove);
+        let shadow = this.#computeShadowAt(z - 0.01, minZabove);
         if (minZabove < Infinity) {
-            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true);
+            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true, { wasm: false });
         }
         return shadows[z] = POLY.setZ(shadow, z);
     }
@@ -953,7 +959,7 @@ class Widget {
                 .add(a[1].x, a[1].y, a[1].z)
                 .add(a[2].x, a[2].y, a[2].z);
         });
-        polys = POLY.union(polys, 0, true);
+        polys = POLY.union(polys, 0, true, { wasm: false });
 
         // for a more perfect union, pump shadows to merge very close lines
         // todo: create clipper only version that avoids round trip thru geo classes

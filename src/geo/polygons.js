@@ -441,11 +441,10 @@ export function union(polys, minarea, all, opt = {}) {
     let lpre = length(polys);
 
     if (opt.wasm && geo.wasm) {
-        let min = minarea ?? 0.01;
-        // let deepLength = polys.map(p => p.deepLength).reduce((a,v) => a+v);
-        // if (deepLength < 15000)
         try {
-            let out = geo.wasm.js.union(polys, polys[0].getZ()).filter(p => p.area() > min);
+            console.log({ wasm_union: polys, minarea });
+            if (minarea) polys = polys.filter(p => p.area() >= minarea);
+            let out = geo.wasm.js.union(polys, polys[0].getZ());
             opt.changes = length(out) - lpre;
             return out;
         } catch (e) {
@@ -461,10 +460,10 @@ export function union(polys, minarea, all, opt = {}) {
             if (!out[j]) continue;
             union = out[i].union(out[j], minarea, all);
             if (union && union.length) {
-                if (opt.onmerge) {
-                    a = out[i];
-                    b = out[j];
-                }
+                // if (opt.onmerge) {
+                //     a = out[i];
+                //     b = out[j];
+                // }
                 out[i] = null;
                 out[j] = null;
                 if (all) {
@@ -472,9 +471,9 @@ export function union(polys, minarea, all, opt = {}) {
                 } else {
                     out.push(union);
                 }
-                if (opt.onmerge) {
-                    opt.onmerge(a, b, union);
-                }
+                // if (opt.onmerge) {
+                //     opt.onmerge(a, b, union);
+                // }
                 continue outer;
             }
         }
@@ -629,7 +628,7 @@ export function offset(polys, dist, opts = {}) {
         mina = numOrDefault(opts.minArea, 0.1),
         zed = opts.z || 0;
 
-    if (opts.wasm && geo.wasm) {
+    if (opts.wasm && geo.wasm && join === JoinType.jtMiter && fill === FillNonZero && type === EndType.etClosedPolygon) {
         try {
             polys = geo.wasm.js.offset(polys, offs, zed, clean ? config.clipperClean : 0, simple ? 1 : 0);
             if (open.length) polys.appendAll(open);
@@ -651,7 +650,7 @@ export function offset(polys, dist, opts = {}) {
             coff.AddPaths(poly, join, type);
         }
         // perform offset
-        coff.Execute(tree, offs * config.clipper);
+        coff.Execute(tree, (offs * config.clipper) | 0);
         // convert back from clipper output format
         polys = fromClipperTree(tree, zed, null, null, mina);
     }
@@ -660,10 +659,14 @@ export function offset(polys, dist, opts = {}) {
     // if specified, perform offset gap analysis
     if (opts.gaps && polys.length) {
         let oneg = offset(polys, -offs, {
-            fill: opts.fill, join: opts.join, type: opts.type, z: opts.z, minArea: mina
+            fill: opts.fill,
+            join: opts.join,
+            type: opts.type,
+            z: opts.z,
+            minArea: mina
         });
         let suba = [];
-        let diff = subtract(orig, oneg, suba, null, zed);
+        subtract(orig, oneg, suba, null, zed);
         opts.gaps.append(suba, opts.flat);
     }
 

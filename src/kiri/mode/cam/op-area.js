@@ -117,6 +117,13 @@ class OpArea extends CamOp {
         for (let area of polys) {
             let bounds = area.getBounds3D();
             let ts_off = toolDiam / 2 - ts_eps;
+            let offopt = {
+                join: ClipperLib.JoinType.jtRound,
+                clean: true,
+                simple: false,
+                cleanDist: 10,
+                minArea: 0.01,
+            };
 
             if (outline) {
                 // remove inner voids when processing outline only
@@ -143,8 +150,8 @@ class OpArea extends CamOp {
                     let layers = slice.output();
                     let shadow = await shadowAt(z);
                     let tool_shadow = [
-                        ...POLY.offset(shadow, [  ts_off ], { count: 1, z }),
-                        ...POLY.offset(shadow, [ -ts_off ], { count: 1, z }),
+                        ...POLY.offset(shadow, [  ts_off ], { count: 1, z, ...offopt }),
+                        ...POLY.offset(shadow, [ -ts_off ], { count: 1, z, ...offopt }),
                     ];
                     // for roughing/outline backward compatability
                     if (op.omitthru) {
@@ -156,7 +163,7 @@ class OpArea extends CamOp {
                     let firstOff = -(toolDiam / 2 + (op.leave_xy ?? 0));
                     POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
                     POLY.offset(clip, [ firstOff, -toolOver ], {
-                        count: op.steps ?? 999, outs, flat: true, z: z - zMov, minArea: 0
+                        count: op.steps ?? 999, outs, flat: true, z: z - zMov, ...offopt
                     });
                     // if we see no offsets, re-check the mesh bottom Z then exit
                     if (outs.length === 0) {
@@ -261,8 +268,8 @@ class OpArea extends CamOp {
                     slice.tool_shadow = [
                         area,
                         ...shadow,
-                        ...POLY.offset(shadow, [  ts_off ], { count: 1, z }),
-                        ...POLY.offset(shadow, [ -ts_off ], { count: 1, z }),
+                        ...POLY.offset(shadow, [  ts_off ], { count: 1, z, ...offopt }),
+                        ...POLY.offset(shadow, [ -ts_off ], { count: 1, z, ...offopt }),
                     ];
                     // add tabs to travel boundaries
                     if (tabs) {

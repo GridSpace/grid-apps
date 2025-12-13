@@ -28,6 +28,10 @@ class MeshTool {
         return vertices;
     }
 
+    normalizeVertices(vertices, opt) {
+        return this.generateFaces(vertices, opt).unrolled();
+    }
+
     getIndex() {
         if (!this.indexed) {
             throw "missing index";

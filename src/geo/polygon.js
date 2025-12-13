@@ -2070,11 +2070,13 @@ export class Polygon {
      * @returns {?Polygon[]}
      */
     diff(poly) {
-        let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clip = new Clipper(),
+        let clip = new Clipper(),
             tree = new PolyTree(),
             sp1 = this.toClipper(),
-            sp2 = poly.toClipper();
+            sp2 = poly.toClipper(),
+            fillang = this.fillang
+                && this.area() > poly.area()
+                ? this.fillang : poly.fillang;
 
         clip.AddPaths(sp1, PathSubject, true);
         clip.AddPaths(sp2, PathClip, true);
@@ -2116,11 +2118,14 @@ export class Polygon {
      * @returns {?Polygon[]}
      */
     mask(poly, nullOnEquiv, minarea) {
-        let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clip = new Clipper(),
+        let clip = new Clipper(),
             tree = new PolyTree(),
             sp1 = this.toClipper(),
-            sp2 = poly.toClipper();
+            sp2 = poly.toClipper(),
+            fillang = this.fillang
+                && this.area() > poly.area()
+                ? this.fillang : poly.fillang;
+
         clip.AddPaths(sp1, PathSubject, true);
         clip.AddPaths(sp2, PathClip, true);
 
@@ -2258,28 +2263,23 @@ export class Polygon {
     union(poly, min, all) {
         if (!this.overlaps(poly)) return null;
 
-        let fillang = this.fillang && this.area() > poly.area() ? this.fillang : poly.fillang,
-            clip = new Clipper(),
+        let clip = new Clipper(),
             tree = new PolyTree(),
             sp1 = this.toClipper(),
             sp2 = poly.toClipper(),
-            minarea = min ?? 0.1;
+            fillang = this.fillang
+                && this.area() >= poly.area()
+                ? this.fillang : poly.fillang;
 
         clip.AddPaths(sp1, PathSubject, true);
         clip.AddPaths(sp2, PathClip, true);
 
         if (clip.Execute(ClipUnion, tree, FillEvenOdd, FillEvenOdd)) {
-            let union = POLY.fromClipperTreeUnion(tree, poly.getZ(), minarea);
+            let union = POLY.fromClipperTreeUnion(tree, poly.getZ(), min ?? 0);
+            let length = union.length;
             if (all) {
-                if (union.length === 2) {
-                    return null;
-                    // if (this.unionMatch(union) || poly.unionMatch(union)) {
-                    //     return null;
-                    // }
-                }
-                return union;
-            }
-            if (union.length === 1) {
+                return length === 2 ? null : union;
+            } else if (length === 1) {
                 union = union[0];
                 union.fillang = fillang;
                 return union;

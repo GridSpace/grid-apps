@@ -29,8 +29,8 @@ class Point {
 
     toClipper() {
         return {
-            X: this.x * config.clipper,
-            Y: this.y * config.clipper
+            X: (this.x * config.clipper) | 0,
+            Y: (this.y * config.clipper) | 0
         };
     }
 
