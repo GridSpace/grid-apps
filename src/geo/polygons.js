@@ -600,7 +600,7 @@ export function expand(polys, distance, z, out, count, distance2, collector, min
 export function offset(polys, dist, opts = {}) {
     let open = opts.open ? polys.filter(p => p.open) : [];
     if (open.length) {
-        open = open.map(p => paths.pointsToPath(p.points, dist, true));
+        open = open.map(p => paths.pointsToPath(p.points, Array.isArray(dist) ? dist[0] : dist, true));
         open = open.map(p => newPolygon().setOpen().addPoints(p.right));
     }
 
@@ -654,7 +654,6 @@ export function offset(polys, dist, opts = {}) {
         // convert back from clipper output format
         polys = fromClipperTree(tree, zed, null, null, mina);
     }
-
 
     // if specified, perform offset gap analysis
     if (opts.gaps && polys.length) {
