@@ -345,6 +345,10 @@ class OpArea extends CamOp {
                     triangles: vertices,
                     boundsOverride: wbounds
                 });
+                if (paths.length === 0) {
+                    // skip raster if no output generated
+                    continue;
+                }
                 let output = await raster.generateToolpaths({
                     paths,
                     step: toolOver / 2,
