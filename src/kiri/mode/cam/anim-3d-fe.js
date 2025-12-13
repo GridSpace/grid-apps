@@ -111,6 +111,8 @@ Object.assign(client, {
             color: 0x888888,
             side: THREE.DoubleSide
         });
+        api.widgets.setColor(0x0055aa);
+        api.widgets.setOpacity(0.5);
         client.send("animate_setup2", { settings }, ondone);
     },
 

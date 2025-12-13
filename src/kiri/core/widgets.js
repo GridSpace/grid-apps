@@ -82,7 +82,7 @@ function meshes() {
     return out;
 }
 
-function opacity(value) {
+function setOpacity(value) {
     api.widgets.each(w => w.setOpacity(value));
     api.space.update();
 }
@@ -103,16 +103,18 @@ export const widgets = {
     meshes,
     rename,
     replace,
-    opacity,
+    opacity(o)    { setOpacity(o); console.trace('opacity() deprecated') },
     annotate,
     setIndexed,
     setAxisIndex,
-    all()       { return WIDGETS.slice() },
-    add(w)      { return WIDGETS.push(w) },
-    remove(w)   { return WIDGETS.remove(w) },
-    filter(fn)  { return WIDGETS = WIDGETS.filter(fn) },
-    count()     { return WIDGETS.length },
-    each(fn)    { WIDGETS.slice().forEach(widget => fn(widget)) },
-    for(fn)     { widgets.each(fn) },
-    forid(id)   { return WIDGETS.filter(w => w.id === id)[0] }
+    setColor(c,s) { api.widgets.each(widget => widget.setColor(c,undefined,s) )},
+    setOpacity,
+    all()         { return WIDGETS.slice() },
+    add(w)        { return WIDGETS.push(w) },
+    remove(w)     { return WIDGETS.remove(w) },
+    filter(fn)    { return WIDGETS = WIDGETS.filter(fn) },
+    count()       { return WIDGETS.length },
+    each(fn)      { WIDGETS.slice().forEach(widget => fn(widget)) },
+    for(fn)       { widgets.each(fn) },
+    forid(id)     { return WIDGETS.filter(w => w.id === id)[0] }
 };

@@ -361,7 +361,7 @@ function updateSliderMax(set) {
 
 function hideSlices() {
     STACKS.clear();
-    api.widgets.opacity(COLOR.model_opacity);
+    api.widgets.setOpacity(COLOR.model_opacity);
     api.widgets.each(function(widget) {
         widget.setWireframe(false);
     });
@@ -804,7 +804,7 @@ function setViewMode(mode) {
             updateSpeeds();
             setVisibleLayer();
             setWidgetVisibility(true);
-            api.widgets.opacity(1);
+            api.widgets.setOpacity(1);
             api.view.edges(api.local.getBoolean('model.edges'));
             break;
         case VIEWS.SLICE:

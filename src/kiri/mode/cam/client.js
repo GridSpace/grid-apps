@@ -963,7 +963,7 @@ function validateTools(tools) {
 
 function animate() {
     env.isAnimate = true;
-    api.widgets.opacity(env.isParsed ? 0 : 0.75);
+    api.widgets.setOpacity(env.isParsed ? 0 : 0.75);
     api.hide.slider();
     STACKS.clear();
     animFn().animate(api);

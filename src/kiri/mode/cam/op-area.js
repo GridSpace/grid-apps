@@ -132,7 +132,7 @@ class OpArea extends CamOp {
             if (mode === 'clear') {
                 let zMov = flatOff ?? 0;
                 let zs = flats ?
-                    flats.filter(z => z <= zTop && z >= zBottom).map(v => v + (zMov ?? 0)) :
+                    flats.filter(z => z <= zTop && z >= zBottom).map(v => v + zMov) :
                     down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;

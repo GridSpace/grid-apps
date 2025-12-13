@@ -73,7 +73,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
 
     let totalProgress;
 
-    api.widgets.opacity(COLOR.slicing_opacity);
+    api.widgets.setOpacity(COLOR.slicing_opacity);
 
     let segtimes = {},
         segNumber = 0,
@@ -325,12 +325,10 @@ function preparePreview(callback, scale = 1, offset = 0) {
     event.emit('preview.begin', pMode);
 
     if (isCam) {
-        api.widgets.opacity(isDark ? COLOR.cam_preview_opacity_dark : COLOR.cam_preview_opacity);
-        api.widgets.each(widget => {
-            widget.setColor(COLOR.cam_preview);
-        });
+        api.widgets.setOpacity(isDark ? COLOR.cam_preview_opacity_dark : COLOR.cam_preview_opacity);
+        api.widgets.setColor(COLOR.cam_preview);
     } else if (offset === 0) {
-        api.widgets.opacity(COLOR.preview_opacity);
+        api.widgets.setOpacity(COLOR.preview_opacity);
     }
 
     let mark = Date.now(),
@@ -374,7 +372,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
 
         show.progress(0);
         if (!isCam) {
-            api.widgets.opacity(0);
+            api.widgets.setOpacity(0);
         }
 
         if (output.length) {
@@ -463,7 +461,7 @@ function parseCode(code, type) {
 
     event.emit("code.load", {code, type});
     view.set_preview();
-    widgets.opacity(0);
+    widgets.setOpacity(0);
 
     client.parse({code, type, settings}, progress => {
         show.progress(progress, "parsing");

@@ -78,6 +78,13 @@ class Tool {
         return calcTaperAngle((flute_diam - taper_tip) / 2, flute_len);
     }
 
+    getBallTaperParams() {
+        let a = this.getTaperAngle() * DEG2RAD,
+            r = (this.tipDiameter()/2) * (1 + Math.sin(a)) / Math.cos(a),
+            b = r * Math.cos(a);
+        return { a, r, b };
+    }
+
     shaftLength() {
         return this.unitScale() * this.tool.shaft_len;
     }
@@ -152,9 +159,7 @@ class Tool {
             toolOffset = [],
             maxo = -Infinity,
             // ball taper magic
-            a = this.getTaperAngle() * DEG2RAD,
-            r = (tip_dia/2) * (1 + Math.sin(a)) / Math.cos(a),
-            b = r * Math.cos(a),
+            { b, r } = this.getBallTaperParams(),
             pix_b = b / resolution,
             pix_r = r / resolution;
 
