@@ -808,6 +808,9 @@ function keyHandler(evt) {
         case cca('t'):
             Space.view.top();
             break;
+        case cca('F'):
+            Space.view.fit();
+            break;
         case cca('f'):
             Space.view.front();
             cycleInd = 0;
@@ -1244,6 +1247,87 @@ let Space = {
         save:   ()     => { return viewControl.getPosition(true) },
         panTo:  (x,y,z,l,u) => { tweenCamPan(x,y,z,l,u) },
         setZoom: (r,v) => { viewControl.setZoom(r,v) },
+        fit:    (then, opts = {}) => {
+            // Calculate bounding box of all objects in the workspace
+            const box = new THREE.Box3();
+            let hasObjects = false;
+
+            // Recursively expand box for all visible objects with geometry
+            WORLD.traverse(obj => {
+                if (obj.visible && obj.geometry) {
+                    box.expandByObject(obj);
+                    hasObjects = true;
+                }
+            });
+
+            // If no objects, fall back to platform bounds
+            if (!hasObjects) {
+                const pw = psize.width / 2;
+                const pd = psize.depth / 2;
+                const ph = psize.maxz || psize.height;
+                // Set bounds in WORLD local space, then transform to scene
+                const minLocal = new THREE.Vector3(-pw, -pd, 0);
+                const maxLocal = new THREE.Vector3(pw, pd, ph);
+                minLocal.applyMatrix4(WORLD.matrixWorld);
+                maxLocal.applyMatrix4(WORLD.matrixWorld);
+                box.min.copy(minLocal);
+                box.max.copy(maxLocal);
+            }
+
+            // Calculate center and size in scene coordinates
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            // Use the maximum dimension for distance calculation
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            // Calculate desired camera distance based on bounding box
+            const padding = opts.padding || 0.75;
+            let desiredDistance;
+
+            if (camera.isPerspectiveCamera) {
+                // For perspective, calculate distance to fit object in view
+                const fov = camera.fov * (Math.PI / 180);
+                // Use maxDim directly (not half) for more conservative framing
+                desiredDistance = maxDim / Math.tan(fov / 2) * padding;
+            } else {
+                desiredDistance = maxDim * padding;
+            }
+
+            // Get current view angles or use defaults
+            const pos = viewControl.getPosition();
+            const left = opts.left !== undefined ? opts.left : pos.left;
+            const upAngle = opts.up !== undefined ? opts.up : pos.up;
+
+            // Map scene coordinates to pan coordinates
+            // The target position in orbit control is in scene space
+            const newPanX = center.x;
+            const newPanY = center.y;
+            const newPanZ = center.z;
+
+            // First, tween to center the view on the object
+            tweenCam({
+                left,
+                up: upAngle,
+                panX: newPanX,
+                panY: newPanY,
+                panZ: newPanZ,
+                then: () => {
+                    // After centering, adjust zoom to fit
+                    // Calculate the actual current distance after recentering
+                    const currentDist = camera.position.distanceTo(viewControl.getTarget());
+                    const scale = desiredDistance / currentDist;
+
+                    // Apply the zoom adjustment
+                    viewControl.setPosition({ scale });
+                    viewControl.update();
+                    requestRefresh();
+
+                    // Call user's callback if provided
+                    if (then) then();
+                }
+            });
+        },
         setCtrl: (name) => {
             if (name === 'onshape') {
                 viewControl.setMouse(viewControl.mouseOnshape);
