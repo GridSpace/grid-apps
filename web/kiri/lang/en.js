@@ -825,7 +825,7 @@ self.lang['en-us'] = {
     ou_eang_s:      "ease angle",
     ou_eang_l:      "descent angle for ease down in degrees",
     ou_dire_s:      "milling",
-    ou_dire_l:      ["milling direction","climb, conventional, alternating"],
+    ou_dire_l:      ["milling direction","climb, conventional"],
 
     // CAM STOCK
     cs_menu:        "stock",
