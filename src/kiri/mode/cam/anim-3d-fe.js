@@ -134,7 +134,7 @@ function initPathMesh() {
         lines = new THREE.LineSegments(geo, mat),
         vec = new THREE.Vector3(0,0,0),
         ang = new THREE.Vector3(1,0,0),
-        show = api.local.get('cam.anim.path') ?? true;
+        show = (api.local.get('cam.anim.path') ?? 'true') == 'true';
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     let track = lineTracker = {
         xro(p) {
@@ -185,6 +185,7 @@ function initPathMesh() {
             lines.visible = bool;
         }
     }
+    track.show(show);
     space.world.add(lines);
 }
 

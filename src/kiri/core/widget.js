@@ -865,7 +865,7 @@ class Widget {
         // find closest shadow above and use to speed up delta shadow gen
         let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
         let minZabove = Math.min(Infinity, ...zover);
-        let shadow = this.#computeShadowAt(z - 0.01, minZabove);
+        let shadow = this.#computeShadowAt(z - 0.005, minZabove);
         if (minZabove < Infinity) {
             shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true, { wasm: false });
         }
