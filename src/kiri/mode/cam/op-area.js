@@ -353,14 +353,14 @@ class OpArea extends CamOp {
                 });
                 raster.terminate();
 
-                // todo: port clever bits from topo3 for inside/outside detection and tab clipping
-
                 // convert terrain raster output back to open polylines
                 for (let path of output.paths) {
                     path = newPolygon().fromArray([1, ...path]);
                     if (op.refine) path.refine(op.refine);
                     surface.push(path);
-                    newLayer().output()
+                    let slice = newLayer();
+                    slice.camLines = [ path ];
+                    slice.output()
                         .setLayer(rename ?? "linear", { line: color }, false)
                         .addPolys([ path ]);
                 }
@@ -373,6 +373,7 @@ class OpArea extends CamOp {
         this.areas = areas = areas.map(area => {
             return area.filter(slice => slice.camLines && slice.camLines.length);
         }).filter(a => a.length);
+
         // only render slices containing ares to mill
         addSlices(areas.flat().filter(s => s.camLines && s.camLines.length));
     }
