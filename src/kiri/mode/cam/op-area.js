@@ -222,7 +222,7 @@ class OpArea extends CamOp {
             } else
             if (mode === 'trace') {
                 let { tr_type  } = op;
-                let zs = down ? base_util.lerp(zTop, area.minZ(), down) : [ bounds.min.z ];
+                let zs = down ? base_util.lerp(zTop, zBottom || area.minZ(), down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 for (let z of zs) {
@@ -265,7 +265,7 @@ class OpArea extends CamOp {
                     slice.camLines = outs;
                     POLY.setWinding(outs, direction === 'climb');
                     // store travel boundary that triggers up and over moves
-                    let tool_shadow = slice.tool_shadow = shadow;
+                    let tool_shadow = slice.tool_shadow = shadow.clone(true);
                     if (area.isOpen()) {
                         tool_shadow.push(...outs[0].clone().setZ(z).offset_open(toolDiam / 2, 'round'));
                     } else {
