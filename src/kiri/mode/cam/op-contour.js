@@ -109,7 +109,7 @@ class OpContour extends CamOp {
                 }
             },
             contour: op,
-            state: state
+            state
         });
 
         // computed if set to 0

@@ -20,6 +20,7 @@ export class Topo {
 
         let { controller, process } = settings,
             { webGPU } = controller,
+            { workarea } = state,
             animesh = parseInt(controller.animesh || 100) * 2500,
             axis = contour.axis.toLowerCase(),
             contourX = axis === "x",
@@ -31,8 +32,8 @@ export class Topo {
             maxX = bounds.max.x,
             minY = bounds.min.y,
             maxY = bounds.max.y,
-            zBottom = contour.bottom ? state.zBottom : 0,
-            zMin = Math.max(bounds.min.z, zBottom) + 0.0001,
+            zBottom = contour.bottom ? workarea.bottom_z : 0,
+            zMin = workarea.bottom_z + 0.0001, //Math.max(bounds.min.z, zBottom) + 0.0001,
             boundsX = maxX - minX,
             boundsY = maxY - minY,
             inside = contour.inside,
