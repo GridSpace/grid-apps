@@ -49,6 +49,7 @@ class OpOutline extends CamOp {
                 steps: op.wide ? op.steps + 1 : 1,
                 surfaces: {},
                 tool,
+                thru: true,
                 tr_type: 'outside',
             }));
         } else {
@@ -75,6 +76,7 @@ class OpOutline extends CamOp {
                 spindle,
                 surfaces: {},
                 tool,
+                thru: true,
                 tr_type: 'outside',
             }));
             if (!inside) {

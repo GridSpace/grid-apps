@@ -96,7 +96,8 @@ class OpRough extends CamOp {
                 ov_botz: op.ov_botz,
                 ov_topz: op.ov_topz,
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
-                surfaces: {}
+                surfaces: {},
+                thru: true
             }));
         }
 

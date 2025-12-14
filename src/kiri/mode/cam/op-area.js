@@ -222,7 +222,7 @@ class OpArea extends CamOp {
             } else
             if (mode === 'trace') {
                 let { tr_type  } = op;
-                let zs = down ? base_util.lerp(zTop, zBottom || area.minZ(), down) : [ bounds.min.z ];
+                let zs = down ? base_util.lerp(zTop, op.thru ? zBottom : area.minZ(), down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 for (let z of zs) {
