@@ -371,6 +371,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         point = toWorkCoords(point);
 
         let {
+            center,
             factor = 1,
             feed = feedRate,
             shortCut = toolDiamMove,
@@ -545,7 +546,8 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             point,
             emit,
             rate,
-            tool
+            tool,
+            { center }
         );
 
         return point;

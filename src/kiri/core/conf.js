@@ -578,6 +578,7 @@ export const conf = {
                 camRoughStockZ: 0,
                 camRoughTool: 1000,
                 camRoughTop: true,
+                camRoundCorners: true,
                 camStockClipTo: false,
                 camStockIndexed: false,
                 camStockIndexGrid: true,

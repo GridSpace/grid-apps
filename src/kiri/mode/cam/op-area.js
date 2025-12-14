@@ -39,6 +39,7 @@ class OpArea extends CamOp {
         let zBottom = Math.max(workarea.bottom_z, workarea.bottom_part);
         let shadowBase = state.shadow.base;
         let thruHoles = state.shadow.holes;
+        let roundSharps = settings.process.camRoundCorners;
 
         // also updates tab offsets
         setToolDiam(toolDiam);
@@ -116,7 +117,8 @@ class OpArea extends CamOp {
             let bounds = area.getBounds3D();
             let ts_off = toolDiam / 2 - ts_eps;
             let offopt = {
-                join: ClipperLib.JoinType.jtRound,
+                arc: 250,
+                join: roundSharps ? ClipperLib.JoinType.jtRound : undefined,
                 clean: true,
                 simple: false,
                 cleanDist: 10,

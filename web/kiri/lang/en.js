@@ -917,6 +917,8 @@ self.lang['en-us'] = {
     cx_fast_l:      ["disable overhang detection","can be faster and use less","memory with complex models","but fails with overhangs","try enabling if slicing","hangs during shadowing"],
     cx_true_s:      "true shadow",
     cx_true_l:      ["computationally correct shadow","will be slower but produce","better cuts for complex parts"],
+    cx_smof_s:      "rounded corners",
+    cx_smof_l:      ["sharp outside angles","are converted to arcs"],
     cx_arce_s:      "arc output",
     cx_arce_l:      ["EXPERIMENTAL: enable path to arc conversion"],
     cx_arct_s:      "arc tolerance",

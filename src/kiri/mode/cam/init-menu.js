@@ -153,6 +153,7 @@ export function menu() {
     camArcTolerance:     newInput(LANG.cx_arct_s, {title:LANG.cx_arct_l, convert:toFloat, bound:bound(0,100), units, trigger, show:() => ui.camArcEnabled.checked}),
     camArcResolution:    newInput(LANG.cx_arcr_s, {title:LANG.cx_arcr_l, convert:toFloat, bound:bound(0,180), trigger, show:() => ui.camArcEnabled.checked}),
     camExpertFast:       newBoolean(LANG.cx_fast_s, onBooleanClick, { title:LANG.cx_fast_l }),
+    camRoundCorners:     newBoolean(LANG.cx_smof_s, onBooleanClick, { title:LANG.cx_smof_l }),
 
     };
 };
