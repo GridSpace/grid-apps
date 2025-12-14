@@ -52,9 +52,9 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let axisRotation, axisIndex,
         bounds, dark, color, stock, tabs, track, tool, unsafe, units, workarea,
         camZTop, camZBottom, camZThru, minToolDiam, maxToolDiam,
-        bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z,
+        bottom_gap, bottom_part, bottom_stock, bottom_z,
         top_stock, top_part, top_gap, top_z,
-        zBottom, zMin, zMax, zThru, zTop,
+        zBottom, zMin, zMax, zTop,
         ztOff, zbOff, wztop;
 
     axisRotation = axisIndex = undefined;
@@ -108,15 +108,13 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         zBottom = isIndexed ? camZBottom : camZBottom - zbOff;
         zMin = isIndexed ? bounds.min.z : Math.max(bounds.min.z, zBottom);
         zMax = bounds.max.z;
-        zThru = camZThru;
         zTop = zMax + ztOff;
         bottom_gap = zbOff;
         bottom_part = 0;
         bottom_stock = -bottom_gap;
-        bottom_thru = zThru;
         bottom_z = isIndexed ? zBottom : Math.max(
-            (camZBottom ? bottom_stock + camZBottom : bottom_part) - bottom_thru,
-            (camZBottom ? bottom_stock + camZBottom : bottom_stock - bottom_thru)
+            (camZBottom ? bottom_stock + camZBottom : bottom_part),
+            (camZBottom ? bottom_stock + camZBottom : bottom_stock)
         );
         top_stock = zTop;
         top_part = zMax;
@@ -124,7 +122,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         top_z = camZTop ? bottom_stock + camZTop : top_stock;
         workarea = util.round({
             top_stock, top_part, top_gap, top_z,
-            bottom_stock, bottom_part, bottom_gap, bottom_z
+            bottom_stock, bottom_part, bottom_gap, bottom_z,
         }, 3);
 
         // console.log({ bounds, stock, track, workarea });
@@ -205,7 +203,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         widget,
         zBottom,
         zMax,
-        zThru,
         ztOff,
         zTop
     };
@@ -354,9 +351,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         if (ov_botz) {
             workover.bottom_z = isIndexed ? ov_botz : bottom_stock + ov_botz;
         }
-        if (-zThru > workover.bottom_z) {
-            alert("Z Thru should be below Z Bottom");
-        }
         if (valz.tool) {
             tool = new Tool(settings, valz.tool);
         }
@@ -368,7 +362,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             stock,
             tool,
             zBottom,
-            zThru,
             ztOff,
             zMax,
             zTop,

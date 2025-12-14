@@ -14,7 +14,7 @@ class OpRegister extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices, bounds, color, settings, widget, zThru } = state;
+        let { addSlices, bounds, color, settings, widget } = state;
         let { updateToolDiams } = state;
 
         let tool = new Tool(settings, op.tool);
@@ -33,7 +33,7 @@ class OpRegister extends CamOp {
             toolOffset = tool.fluteDiameter() * 2,
             centerX = (boundMinX + boundMaxX) / 2,
             centerY = (boundMinY + boundMaxY) / 2,
-            cutDepth = op.thru || zThru || 0,
+            cutDepth = op.thru || 0,
             pathPoints = [],
             stockToSurfaceOffset = stock.z - bounds.max.z,
             startZ = bounds.max.z + stockToSurfaceOffset + toolZ,
