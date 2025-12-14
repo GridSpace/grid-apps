@@ -602,6 +602,7 @@ export function offset(polys, dist, opts = {}) {
     if (open.length) {
         open = open.map(p => paths.pointsToPath(p.points, Array.isArray(dist) ? dist[0] : dist, true));
         open = open.map(p => newPolygon().setOpen().addPoints(p.right));
+        if (opts.z) open.forEach(p => p.setZ(opts.z));
     }
 
     // do not use clipper to offset open lines

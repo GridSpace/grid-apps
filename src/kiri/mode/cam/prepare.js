@@ -679,12 +679,15 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         let arcing = camArcEnabled && !contouring;
         let points = poly.points;
 
-        if (index === CLOSEST_TO_PP) {
-            let found = poly.findClosestPointTo(getWidgetPrintPoint());
-            index = found.index;
-        }
-        if (index) {
-            points = [...points.slice(index), ...points.slice(0,index)];
+        if (poly.isClosed()) {
+            // only look for the cloests starting point for closed loops
+            if (index === CLOSEST_TO_PP) {
+                let found = poly.findClosestPointTo(getWidgetPrintPoint());
+                index = found.index;
+            }
+            if (index) {
+                points = [...points.slice(index), ...points.slice(0,index)];
+            }
         }
 
         if (!contouring && poly.isClosed()) {
@@ -703,8 +706,8 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
         setNextIsMove();
 
-        // we skip ease-down logic in contouring mode
-        if (!contouring && camEaseDown) {
+        // we skip ease-down logic in contouring mode or for open polys (traces .. maybe later)
+        if (!contouring && camEaseDown && poly.isClosed()) {
             let point0 = points[0];
 
             // perform "up and over" and get a new printPoint without "emit"

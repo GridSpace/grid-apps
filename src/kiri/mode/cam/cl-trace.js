@@ -86,7 +86,7 @@ export function traceDone() {
     env.func.unpop();
     traceOn.classList.remove("editing");
     traceOn = false;
-    api.widgets.opacity(1);
+    api.widgets.setOpacity(1);
     api.hide.alert(alert);
     api.feature.hover = false;
     api.feature.hoverAdds = false;

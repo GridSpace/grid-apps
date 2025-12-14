@@ -2013,14 +2013,22 @@ export class Polygon {
             closest,
             mindist = Infinity;
 
-        this.forEachPoint((point, pos) => {
-            dist = Math.sqrt(point.distToSq2D(target));
-            if (dist < mindist) {
-                index = pos;
-                mindist = dist;
-                closest = point;
-            }
-        });
+        if (this.open) {
+            let d0 = target.distTo2D(this.first());
+            let d1 = target.distTo2D(this.last());
+            mindist = Math.min(d0, d1);
+            closest = d0 < d1 ? this.first() : this.last();
+            index = d0 < d1 ? 0 : this.points.length - 1;
+        } else {
+            this.forEachPoint((point, pos) => {
+                dist = Math.sqrt(point.distToSq2D(target));
+                if (dist < mindist) {
+                    index = pos;
+                    mindist = dist;
+                    closest = point;
+                }
+            });
+        }
 
         return {
             distance: mindist,

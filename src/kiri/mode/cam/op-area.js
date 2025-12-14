@@ -19,8 +19,6 @@ const ptyp = clib.PolyType;
 const cfil = clib.PolyFillType;
 const ts_eps = 0.01;
 
-// todo: review tool_shadow. offset both directions for travel inside and outside / between?
-
 class OpArea extends CamOp {
     constructor(state, op) {
         super(state, op);
@@ -222,7 +220,7 @@ class OpArea extends CamOp {
             } else
             if (mode === 'trace') {
                 let { tr_type  } = op;
-                let zs = down ? base_util.lerp(zTop, zBottom, down) : [ bounds.min.z ];
+                let zs = down ? base_util.lerp(zTop, area.minZ(), down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 for (let z of zs) {
@@ -265,12 +263,16 @@ class OpArea extends CamOp {
                     slice.camLines = outs;
                     POLY.setWinding(outs, direction === 'climb');
                     // store travel boundary that triggers up and over moves
-                    slice.tool_shadow = [
-                        area,
-                        ...shadow,
-                        ...POLY.offset(shadow, [  ts_off ], { count: 1, z, ...offopt }),
-                        ...POLY.offset(shadow, [ -ts_off ], { count: 1, z, ...offopt }),
-                    ];
+                    let tool_shadow = slice.tool_shadow = shadow;
+                    if (area.isOpen()) {
+                        tool_shadow.push(...outs[0].clone().setZ(z).offset_open(toolDiam / 2, 'round'));
+                    } else {
+                        tool_shadow.push(
+                            area,
+                            ...POLY.offset(shadow, [  ts_off ], { count: 1, z, ...offopt }),
+                            ...POLY.offset(shadow, [ -ts_off ], { count: 1, z, ...offopt }),
+                        );
+                    }
                     // add tabs to travel boundaries
                     if (tabs) {
                         let tab_shadows = tabs.filter(t => t.top >= z).map(t => t.poly);
@@ -278,6 +280,13 @@ class OpArea extends CamOp {
                     }
                     zroc += zinc;
                     progress(proc + (pinc * zroc), 'trace');
+                    if (devel) layers
+                        .setLayer("base", { line: 0xff0000 }, false)
+                        .addPolys(shadowBase)
+                        .setLayer("shadow", { line: 0x00ff00 }, false)
+                        .addPolys(shadow)
+                        .setLayer("tool shadow", { line: 0x44ff88 }, false)
+                        .addPolys(tool_shadow);
                     layers
                         .setLayer(rename ?? "trace", { line: color }, false)
                         .addPolys(outs);
@@ -411,6 +420,7 @@ class OpArea extends CamOp {
                 dist: Infinity,
                 area: undefined
             };
+
             for (let area of areas.filter(p => !p.used)) {
                 // skip devel / debug only areas
                 let topPolys = area[0].camLines;
