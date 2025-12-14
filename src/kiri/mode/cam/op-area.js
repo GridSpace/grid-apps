@@ -36,7 +36,7 @@ class OpArea extends CamOp {
         let toolDiam = areaTool.fluteDiameter();
         let toolOver = areaTool.getStepSize(over);
         let zTop = workarea.top_z;
-        let zBottom = Math.max(workarea.bottom_z, workarea.bottom_part) + workarea.bottom_cut;
+        let zBottom = Math.max(workarea.bottom_z, workarea.bottom_part);
         let shadowBase = state.shadow.base;
         let thruHoles = state.shadow.holes;
 

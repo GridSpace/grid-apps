@@ -52,7 +52,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let axisRotation, axisIndex,
         bounds, dark, color, stock, tabs, track, tool, unsafe, units, workarea,
         camZTop, camZBottom, camZThru, minToolDiam, maxToolDiam,
-        bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z, bottom_cut,
+        bottom_gap, bottom_part, bottom_stock, bottom_thru, bottom_z,
         top_stock, top_part, top_gap, top_z,
         zBottom, zMin, zMax, zThru, zTop,
         ztOff, zbOff, wztop;
@@ -118,15 +118,13 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
             (camZBottom ? bottom_stock + camZBottom : bottom_part) - bottom_thru,
             (camZBottom ? bottom_stock + camZBottom : bottom_stock - bottom_thru)
         );
-        bottom_cut = Math.max(bottom_z, -zThru);
         top_stock = zTop;
         top_part = zMax;
         top_gap = ztOff;
         top_z = camZTop ? bottom_stock + camZTop : top_stock;
         workarea = util.round({
             top_stock, top_part, top_gap, top_z,
-            bottom_stock, bottom_part, bottom_gap,
-            bottom_z, bottom_cut
+            bottom_stock, bottom_part, bottom_gap, bottom_z
         }, 3);
 
         // console.log({ bounds, stock, track, workarea });
@@ -346,12 +344,15 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         // apply operation override vars
         let workover = var_compute();
         let valz = op.op;
-        if (valz.ov_topz) {
-            workover.top_z = isIndexed ? valz.ov_topz : bottom_stock + valz.ov_topz;
+        let { ov_topz, ov_botz } = valz;
+        if (ov_botz && ov_botz >= ov_topz) {
+            return error("Z Bottom cannot be above or equal to Z Top");
         }
-        if (valz.ov_botz) {
-            workover.bottom_z = isIndexed ? valz.ov_botz : bottom_stock + valz.ov_botz;
-            workover.bottom_cut = Math.max(workover.bottom_z, -zThru);
+        if (ov_topz) {
+            workover.top_z = isIndexed ? ov_topz : bottom_stock + ov_topz;
+        }
+        if (ov_botz) {
+            workover.bottom_z = isIndexed ? ov_botz : bottom_stock + ov_botz;
         }
         if (-zThru > workover.bottom_z) {
             alert("Z Thru should be below Z Bottom");
