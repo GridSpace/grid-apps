@@ -489,7 +489,7 @@ function omitMatching(target, matches) {
     return target;
 }
 
-function clampZ(poly, min, max) {
+function clampZ(poly, max, min) {
     for (let p of poly.points) {
         if (p.z < min) p.z = min;
         else if (p.z > max) p.z = max;
