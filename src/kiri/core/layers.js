@@ -99,6 +99,9 @@ export class Layers {
 
     // a polygon rendered as a webgl line
     addPolys(polys, options) {
+        if (!polys) {
+            return this;
+        }
         if (!Array.isArray(polys)) {
             throw "polys must be an array";
         }

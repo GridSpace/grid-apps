@@ -74,7 +74,13 @@ export class Topo {
             clipTo = inside ? shadow.base : POLY.expand(shadow.base, toolDiameter / 2 + resolution * 3),
             partOff = inside ? 0 : toolDiameter / 2 + resolution,
             gridDelta = Math.floor(partOff / resolution),
-            debug_clips = false;
+            debug_clips = true;
+
+        if (process.camStockClipTo) {
+            let { stock } = settings;
+            let { center, x, y } = stock;
+            clipTo.push(newPolygon().centerRectangle(center, x, y));
+        }
 
         if (tolerance === 0 && !topoCache) {
             console.log(widget.id, 'topo auto tolerance', resolution.round(4));
@@ -96,7 +102,7 @@ export class Topo {
         if (debug_clips) {
             const debug = newSlice(-1);
             const output = debug.output();
-            // if (clipTab) output.setLayer("clip.tab", { line: 0xff0000 }).addPolys(clipTab);
+            if (clipTab) output.setLayer("clip.tab", { line: 0xff0000 }).addPolys(clipTab);
             if (clipTo) output.setLayer("clip.to", { line: 0x00dd00 }).addPolys(clipTo);
             newslices.push(debug);
         }
@@ -742,15 +748,16 @@ export class Trace {
         const object = this.object = this;
 
         this.inClip = function (clips, checkZ, point) {
+            let ok = 0;
             for (let i = 0; i < clips.length; i++) {
                 let poly = clips[i];
                 let zok = checkZ ? checkZ <= poly.z : true;
                 object.tabZ = poly.z;
                 if (zok && point.isInPolygon(poly)) {
-                    return true;
+                    ok++;
                 }
             }
-            return false;
+            return ok === clips.length;
         }
 
     }
