@@ -553,7 +553,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
     function setTravelBoundary(polys) {
         lastTravelBounds = travelBounds;
-        travelBounds = POLY.flatten(polys);
+        travelBounds = polys ? POLY.flatten(polys) : undefined;
     }
 
     /**
