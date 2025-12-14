@@ -147,8 +147,9 @@ class OpRegister extends CamOp {
 
     prepare(ops, progress) {
         let { op } = this;
-        let { emitDrills, setDrill, setTool } = ops;
+        let { emitDrills, setDrill, setTool, setTravelBoundary } = ops;
 
+        setTravelBoundary();
         if (op.axis === '-' || op.axis === '=') {
             setTool(op.tool, op.feed, op.rate);
             for (let slice of this.sliceOut) {

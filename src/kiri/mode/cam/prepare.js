@@ -116,10 +116,11 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         isLathe,
         isIndex,
         layerOut = [],
-        lastOp,
-        lastTool,
         lasering = false,
         laserPower = 0,
+        lastOp,
+        lastTool,
+        lastTravelBounds,
         newOutput = print.output || [],
         nextIsMove = true,
         plungeRate = camFastFeedZ,
@@ -164,6 +165,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     function setContouring(bool, step) {
         contouring = bool;
         toolDiamMove = step ?? tool.getStepSize(currentOp.step) * 2;
+        if (bool) setTravelBoundary();
     }
 
     function setSpindle(speed) {
@@ -482,7 +484,9 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         } else
         // check move against a known boundary (pocketing)
         if (isMove && travelBounds) {
-            for (let poly of travelBounds) {
+            // travel boundary "hangover" from last area op when traveling between
+            let check = lastTravelBounds ? [...lastTravelBounds, ...travelBounds] : travelBounds;
+            for (let poly of check) {
                 let ints = poly.intersections(
                     toWidgetCoords(printPoint),
                     toWidgetCoords(point)
@@ -493,6 +497,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                     break;
                 }
             }
+            lastTravelBounds = undefined;
         } else
         // for longer moves, check the terrain to see if we need to go up and over
         if (isMove) {
@@ -547,11 +552,8 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     }
 
     function setTravelBoundary(polys) {
+        lastTravelBounds = travelBounds;
         travelBounds = POLY.flatten(polys);
-    }
-
-    function clearTravelBoundary() {
-        travelBounds = undefined;
     }
 
     /**
@@ -604,8 +606,6 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 descend(depthData.slice(i));
             }
         }
-
-        clearTravelBoundary();
     }
 
     function descend(stack, inside) {
