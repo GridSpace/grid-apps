@@ -342,14 +342,14 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         let workover = var_compute();
         let valz = op.op;
         let { ov_topz, ov_botz } = valz;
-        if (ov_botz && ov_botz >= ov_topz) {
-            return error("Z Bottom cannot be above or equal to Z Top");
-        }
         if (ov_topz) {
             workover.top_z = isIndexed ? ov_topz : bottom_stock + ov_topz;
         }
         if (ov_botz) {
             workover.bottom_z = isIndexed ? ov_botz : bottom_stock + ov_botz;
+        }
+        if (workover.bottom_z >= workover.top_z) {
+            return error("Z Bottom cannot be above or equal to Z Top");
         }
         if (valz.tool) {
             tool = new Tool(settings, valz.tool);
