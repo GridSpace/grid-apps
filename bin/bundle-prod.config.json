@@ -4,6 +4,7 @@
       "bundle": "./web/boot/bundle-{version}.bin"
     },
     "inputs": [
+      { "root": "web/boot", "prefix": "boot" },
       { "root": "web/moto", "prefix": "moto" },
       { "root": "web/kiri", "prefix": "kiri" },
       { "root": "web/font", "prefix": "font" },
@@ -14,7 +15,8 @@
       { "src": "src/pack/kiri-work.js", "dst": "lib/kiri/run/worker.js" },
       { "src": "src/pack/kiri-pool.js", "dst": "lib/kiri/run/minion.js" },
       { "src": "src/gpu/raster-worker.js", "dst": "lib/gpu/raster-worker.js" },
-      { "src": "src/ext/tween.js", "dst": "lib/ext/tween.js" }
+      { "src": "src/ext/tween.js", "dst": "lib/ext/tween.js" },
+      { "src": "src/moto/license.js", "dst": "lib/moto/license.js" }
     ],
     "excludes": [
         "src/pack",

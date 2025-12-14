@@ -422,8 +422,8 @@ export const conf = {
             // process defaults CAM:Process
             p:{
                 camArcEnabled: false,
-                camArcResolution: 5,
-                camArcTolerance: 0.15,
+                camArcResolution: 1,
+                camArcTolerance: 0.005,
                 camAreaSpindle: 1000,
                 camAreaTool: 1000,
                 camAreaMode: "clear",

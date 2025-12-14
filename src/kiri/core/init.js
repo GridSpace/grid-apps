@@ -1556,7 +1556,7 @@ function init_two() {
         let scr = DOC.createElement('script');
         scr.setAttribute('async', true);
         scr.setAttribute('defer', true);
-        scr.setAttribute('src',`/code/${lib}.js?${version}`);
+        scr.setAttribute('src',`/code/${lib}.js`);
         DOC.body.appendChild(scr);
         stats.add('load_'+lib);
         api.event.emit('load.lib', lib);
@@ -1835,7 +1835,7 @@ function init_lang() {
         let map = api.language.map(lang);
         let scr = DOC.createElement('script');
         // scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/kiri/lang/${map}.js?${version}`);
+        scr.setAttribute('src',`/kiri/lang/${map}.js`);
         (DOC.body || DOC.head).appendChild(scr);
         stats.set('ll',lang);
         scr.onload = function() {

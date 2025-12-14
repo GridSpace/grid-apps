@@ -378,8 +378,8 @@ const productionMap = {
 };
 
 const redirList = [
-    "/kiri/",
-    "/mesh/"
+    // "/kiri/",
+    // "/mesh/"
 ];
 
 function handleVersion(req, res, next) {
