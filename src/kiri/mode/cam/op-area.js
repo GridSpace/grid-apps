@@ -233,7 +233,7 @@ class OpArea extends CamOp {
                     if (tr_type === 'none') {
                         // todo: move this out of the zs loop and only setZ when needed
                         area = area.clone(true);
-                        outs = [ zs.length > 1 ? area.setZ(z) : clampZ(area, zTop, zBottom) ];
+                        outs = [ zs.length > 1 || op.thru ? area.setZ(z) : clampZ(area, zTop, zBottom) ];
                     } else {
                         // drape is legacy outline
                         let offit = op.drape ? shadow : [ area ];
