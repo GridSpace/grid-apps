@@ -129,7 +129,7 @@ class OpContour extends CamOp {
         let depthData = [];
 
         setTool(op.tool, op.rate, process.camFastFeedZ);
-        setContouring(true, toolStep);
+        setContouring(true, toolStep * 1.5);
         setTolerance(this.tolerance);
 
         let printPoint = newPoint(bounds.min.x, bounds.min.y, zmax);
