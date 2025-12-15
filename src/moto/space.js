@@ -1306,27 +1306,20 @@ let Space = {
             const newPanZ = center.z;
 
             // First, tween to center the view on the object
-            tweenCam({
+            viewControl.setPosition({
                 left,
                 up: upAngle,
                 panX: newPanX,
                 panY: newPanY,
                 panZ: newPanZ,
-                then: () => {
-                    // After centering, adjust zoom to fit
-                    // Calculate the actual current distance after recentering
-                    const currentDist = camera.position.distanceTo(viewControl.getTarget());
-                    const scale = desiredDistance / currentDist;
-
-                    // Apply the zoom adjustment
-                    viewControl.setPosition({ scale });
-                    viewControl.update();
-                    requestRefresh();
-
-                    // Call user's callback if provided
-                    if (then) then();
-                }
             });
+
+            const currentDist = camera.position.distanceTo(viewControl.getTarget());
+            const scale = desiredDistance / currentDist;
+            viewControl.setPosition({ scale });
+            viewControl.update();
+
+            if (then) then();
         },
         setCtrl: (name) => {
             if (name === 'onshape') {

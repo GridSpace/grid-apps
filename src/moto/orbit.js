@@ -227,10 +227,10 @@ class Orbit extends EventDispatcher {
         this.setPosition = function(set) {
             thetaSet = firstValue([set.left, set.theta, thetaSet]);
             phiSet = firstValue([set.up, set.phi, phiSet]);
-            if (set.panX) this.target.x = set.panX;
-            if (set.panY) this.target.y = set.panY;
-            if (set.panZ) this.target.z = set.panZ;
-            if (set.scale) scale = set.scale;
+            if (set.panX !== undefined) this.target.x = set.panX;
+            if (set.panY !== undefined) this.target.y = set.panY;
+            if (set.panZ !== undefined) this.target.z = set.panZ;
+            if (set.scale !== undefined) scale = set.scale;
         };
 
         this.getPosition = function(scaled) {
