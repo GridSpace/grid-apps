@@ -911,6 +911,8 @@ self.lang['en-us'] = {
     ad_pspd_l:      ["polishing speed","in millimeters / second"],
     ad_purg_s:      "purge tower",
     ad_purg_l:      ["purge tower area in mm^2","for multi extruder setups","0 = disabled"],
+    ad_sold_s:      "solidify",
+    ad_sold_l:      ["remove inner voids","treat the model as a solid"],
 
     // CAM EXPERT
     cx_fast_s:      "skip shadow",

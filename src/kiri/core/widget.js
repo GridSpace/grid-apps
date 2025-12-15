@@ -953,6 +953,7 @@ class Widget {
             }
         }
 
+        // map found tris to polygons
         let polys = found.map(a => {
             return newPolygon()
                 .add(a[0].x, a[0].y, a[0].z)
@@ -960,7 +961,7 @@ class Widget {
                 .add(a[2].x, a[2].y, a[2].z);
         });
 
-        // recursively merge grid constrained subsets of triangles
+        // recursively merge grid constrained subsets of polygons
         polys = unionTris(polys);
 
         // for a more perfect union, pump shadows to merge very close lines

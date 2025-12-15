@@ -50,7 +50,7 @@ function fillIsLinear() {
 }
 
 function zIntShow() {
-    return settings().controller.devel;
+    return api.conf.get().controller.devel;
 }
 
 function isBelt() {
@@ -84,7 +84,7 @@ export function menu() {
     sliceShellOrder:     newSelect(LANG.sl_ordr_s, { title:LANG.sl_ordr_l}, "shell"),
     sliceDetectThin:     newSelect(LANG.ad_thin_s, { title: LANG.ad_thin_l, action: thinWallSave }, "thin"),
     outputAlternating:   newBoolean(LANG.ad_altr_s, onBooleanClick, {title:LANG.ad_altr_l}),
-    sliceZInterleave:    newBoolean(LANG.ad_zint_s, onBooleanClick, {title:LANG.ad_zint_l, show:zIntShow}),
+    sliceZInterleave:    newBoolean(LANG.ad_zint_s, onBooleanClick, {title:LANG.ad_zint_l, show:() => zIntShow() }),
     _____:               newGroup(LANG.fs_menu, $('fdm-solid'), { modes:FDM, driven, hideable, separator, group:"fdm-solid" }),
     sliceFillAngle:      newInput(LANG.fi_angl_s, {title:LANG.fi_angl_l, convert:toFloat}),
     sliceFillGrow:       newInput(LANG.fi_grow_s, {title:LANG.fi_grow_l, convert:toFloat}),
@@ -148,7 +148,7 @@ export function menu() {
     separator:           newBlank({ class:"set-sep", driven, show:isNotBelt }),
     outputBrimCount:     newInput(LANG.fl_skrt_s, {title:LANG.fl_skrt_l, convert:toInt,   show:isNotBelt}),
     outputBrimOffset:    newInput(LANG.fl_skro_s, {title:LANG.fl_skro_l, convert:toFloat, show:isNotBelt}),
-    outputRaftSpacing:   newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:toFloat, bound:bound(0.0,3.0), show: () => ui.outputRaft.checked && isNotBelt() }),
+    outputRaftSpacing:   newInput(LANG.fr_spac_s, {title:LANG.fr_spac_l, convert:toFloat, bound:bound(0.0,3.0), show:() => ui.outputRaft.checked && isNotBelt() }),
     separator:           newBlank({ class:"set-sep", driven, show:isNotBelt }),
     outputRaft:          newBoolean(LANG.fr_nabl_s, onBooleanClick, {title:LANG.fr_nabl_l, trigger, show:() => isNotBelt()}),
     _____:               newGroup(LANG.ou_menu, $('fdm-output'), { modes:FDM, driven, hideable, separator, group:"fdm-out" }),
@@ -165,6 +165,7 @@ export function menu() {
     outputRetractWipe:   newInput(LANG.ad_wpln_s, {title:LANG.ad_wpln_l, convert:toFloat, bound:bound(0.0,10)}),
     separator:           newBlank({ class:"set-sep", driven }),
     outputAvoidGaps:     newBoolean(LANG.ad_agap_s, onBooleanClick, {title:LANG.ad_agap_l}),
+    sliceSolidify:       newBoolean(LANG.ad_sold_s, onBooleanClick, {title:LANG.ad_sold_l}),
     separator:           newBlank({ class:"set-sep", driven, show:isBelt }),
     outputBeltFirst:     newBoolean(LANG.ad_lbir_s, onBooleanClick, {title:LANG.ad_lbir_l, show:isBelt}),
     _____:               newGroup(LANG.ad_menu, $('fdm-expert'), { modes:FDM, driven, hideable, separator, group:"fdm-xprt" }),

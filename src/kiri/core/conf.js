@@ -330,6 +330,7 @@ export const conf = {
                 sliceMinHeight: 0,
                 sliceShellOrder: "in-out",
                 sliceShells: 3,
+                sliceSolidify: false,
                 sliceSolidMinArea: 1,
                 sliceSupportAngle: 50,
                 sliceSupportArea: 0.1,

@@ -42,6 +42,11 @@ export function slicePost(data, options) {
         data.tops = POLY.nest(groups);
     }
 
+    // solidfy (remove inners)
+    if (process.sliceSolidify) {
+        data.tops.forEach(poly => poly.inner = undefined);
+    }
+
     // perimeter and inner hole compensation offsets
     if (compInner || compOuter) {
         let inner = POLY.inner(data.tops).flat();
@@ -59,7 +64,7 @@ export function slicePost(data, options) {
         const process = post_args.process;
         if (process.sliceSupportGrow > 0) {
             // expand synth supports here so they can be clipped later
-            data.tops  = POLY.expand(data.tops, process.sliceSupportGrow, data.z, []);
+            data.tops = POLY.expand(data.tops, process.sliceSupportGrow, data.z, []);
         }
         // do not shell synth widgets because
         // they will be clipped against peers later
