@@ -294,6 +294,9 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         }
         sliceAll.appendAll(slices);
         if (addIndexing && axisIndex !== undefined) {
+            for (let slice of slices) {
+                slice.angle = axisIndex;
+            }
             // update slice cam lines to add axis indexing
             for (let slice of slices.filter(s => s.camLines)) {
                 addPolyIndexing(slice.camLines, -axisIndex);

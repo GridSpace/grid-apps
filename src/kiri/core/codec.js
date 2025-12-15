@@ -261,6 +261,7 @@ Slice.prototype.encode = function(state) {
         index: this.index,
         layers: encode(this.layers, state)
     };
+    if (this.angle !== undefined) rv.angle = this.angle;
     // aggressively free memory
     if (freeMem) this.layers = undefined;
     return rv;
@@ -269,6 +270,7 @@ Slice.prototype.encode = function(state) {
 registerDecoder(TYPE.SLICE, function(v, state) {
     let slice = newSlice(v.z, state.mesh ? state.mesh.newGroup() : null);
 
+    if (v.angle !== undefined) slice.angle = v.angle;
     slice.index = v.index;
     slice.layers = decode(v.layers, state)
 
