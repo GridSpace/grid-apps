@@ -442,7 +442,7 @@ export function union(polys, minarea, all, opt = {}) {
 
     if (opt.wasm && geo.wasm) {
         try {
-            console.log({ wasm_union: polys, minarea });
+            // console.log({ wasm_union: polys, minarea });
             if (minarea) polys = polys.filter(p => p.area() >= minarea);
             let out = geo.wasm.js.union(polys, polys[0].getZ());
             opt.changes = length(out) - lpre;
