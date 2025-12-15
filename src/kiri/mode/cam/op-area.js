@@ -115,7 +115,7 @@ class OpArea extends CamOp {
         let pinc = 1 / polys.length;
         for (let area of polys) {
             let bounds = area.getBounds3D();
-            let ts_off = toolDiam / 2 - ts_eps;
+            let ts_off = toolDiam / 2 - ts_eps + (op.leave_xy ?? 0);
             let offopt = {
                 arc: 250,
                 join: roundSharps ? ClipperLib.JoinType.jtRound : undefined,

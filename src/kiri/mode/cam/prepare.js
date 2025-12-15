@@ -484,14 +484,15 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             }
         } else
         // check move against a known boundary (pocketing)
-        if (isMove && travelBounds) {
+        if (isMove && (travelBounds || lastTravelBounds)) {
             // travel boundary "hangover" from last area op when traveling between
-            let check = lastTravelBounds ? [...lastTravelBounds, ...travelBounds] : travelBounds;
+            let check = [];
+            if (travelBounds) check.push(...travelBounds);
+            if (lastTravelBounds) check.push(...lastTravelBounds);
+            let from = toWidgetCoords(printPoint);
+            let to = toWidgetCoords(point);
             for (let poly of check) {
-                let ints = poly.intersections(
-                    toWidgetCoords(printPoint),
-                    toWidgetCoords(point)
-                );
+                let ints = poly.intersections(from, to);
                 if (ints.length) {
                     if (debug) console.log({ ints, poly, deltaXY, deltaZ });
                     upAndOver = "bounds";
