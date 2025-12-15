@@ -631,8 +631,10 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 let output = [];
                 setTravelBoundary(tops.tool_shadow);
                 emit_flat([ poly ], output);
+                let engage = true;
                 for (let poly of output) {
-                    polyEmit(poly, CLOSEST_TO_PP);
+                    polyEmit(poly, CLOSEST_TO_PP, engage);
+                    engage = false;
                 }
                 descend(stack.slice(1), poly);
             } else {
@@ -676,9 +678,10 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
      *
      * @param {Polygon} poly - the polygon to output
      * @param {number} index - optional: starting point index
+     * @param {boolean} engage - optional: true to use camFullEngage speed ramp
      * @returns {Point} - the last point emitted (in widget coordinates)
      */
-    function polyEmit(poly, index) {
+    function polyEmit(poly, index, engage = false) {
         let arcing = camArcEnabled && !contouring;
         let points = poly.points;
 
@@ -748,6 +751,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         }
 
         let lastOut;
+        let opts = engage ? { feed: feedRate * camFullEngage } : {};
 
         // arc output must handle shortened arcs from ease-down
         // future support for 3d helical arcs will fix this
@@ -761,7 +765,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 if (type) {
                     // terminate arc early (caused by ease eating points)
                     skip = point === lastP ? 0 : skip - 1;
-                    camOut(lastOut, skip ? -1 : type, { center, xfactor: xfactors[0] });
+                    camOut(lastOut, skip ? -1 : type, { center, xfactor: xfactors[0], ...opts });
                     if (!skip) center = type = undefined;
                     continue;
                 } else if (point.arc) {
@@ -771,11 +775,11 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                     center = arc.center.clone().move({ x: -point.x, y: -point.y });
                     xfactors.push(xfactors.shift());
                 }
-                camOut(lastOut);
+                camOut(lastOut, 1, opts);
             }
         } else {
             for (let point of points) {
-                camOut(lastOut = point.clone());
+                camOut(lastOut = point.clone(), 1, opts);
             }
         }
 
