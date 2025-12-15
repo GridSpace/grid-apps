@@ -123,7 +123,7 @@ export class Topo {
             const vertices = widget.getGeoVertices({ unroll: true, translate: true });
             const wbounds = widget.getBoundingBox();
             if (!inside) {
-                wbounds.expandByVector({ x: toolDiameter/2, y: toolDiameter/2, z: 0 });
+                wbounds.expandByVector({ x: toolDiameter/2 + resolution, y: toolDiameter/2 + resolution, z: 0 });
             }
 
             if (contourY) {
