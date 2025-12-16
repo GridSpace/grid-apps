@@ -167,7 +167,7 @@ function inCloseRange(val, min, max, precisiom) {
  * @returns {number} v²
  */
 function sqr(v) {
-    return v * v
+    return v * v;
 }
 
 /**

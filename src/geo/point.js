@@ -6,7 +6,19 @@ import { newSlope } from './slope.js';
 
 const { Vector3 } = THREE;
 
+/**
+ * Represents a 3D point with x, y, z coordinates
+ * Also supports optional 'a' property for rotary axis operations
+ * @class
+ */
 class Point {
+    /**
+     * Create a new point
+     * @param {number} [x=0] - X coordinate
+     * @param {number} [y=0] - Y coordinate
+     * @param {number} [z=0] - Z coordinate
+     * @param {string} [key] - Optional cached key for comparison
+     */
     constructor(x = 0, y = 0, z = 0, key) {
         this.x = x;
         this.y = y;
@@ -16,6 +28,11 @@ class Point {
         }
     }
 
+    /**
+     * Get unique string key for this point based on coordinates
+     * Cached for performance in point comparison and hashing
+     * @returns {string} Unique identifier string
+     */
     get key() {
         if (this._key) {
             return this._key;
@@ -27,6 +44,10 @@ class Point {
         ].join('');
     }
 
+    /**
+     * Convert point to Clipper library format (scaled integers)
+     * @returns {{X: number, Y: number}} Clipper point object
+     */
     toClipper() {
         return {
             X: (this.x * config.clipper) | 0,
@@ -34,14 +55,29 @@ class Point {
         };
     }
 
+    /**
+     * Convert point to array format
+     * @returns {number[]} [x, y, z] array
+     */
     toArray() {
         return [ this.x, this.y, this.z ];
     }
 
+    /**
+     * Convert to Three.js Vector3 object
+     * @returns {THREE.Vector3} Three.js vector
+     */
     toVector3() {
         return new Vector3(this.x, this.y, this.z);
     }
 
+    /**
+     * Set all coordinates and invalidate cached key
+     * @param {number} x - X coordinate
+     * @param {number} y - Y coordinate
+     * @param {number} z - Z coordinate
+     * @returns {Point} This point (for chaining)
+     */
     set(x, y, z) {
         this.x = x;
         this.y = y;
@@ -50,26 +86,50 @@ class Point {
         return this;
     }
 
+    /**
+     * Set X coordinate
+     * @param {number} x - X coordinate
+     * @returns {Point} This point (for chaining)
+     */
     setX(x) {
         this.x = x;
         return this;
     }
 
+    /**
+     * Set Y coordinate
+     * @param {number} y - Y coordinate
+     * @returns {Point} This point (for chaining)
+     */
     setY(y) {
         this.y = y;
         return this;
     }
 
+    /**
+     * Set Z coordinate
+     * @param {number} z - Z coordinate
+     * @returns {Point} This point (for chaining)
+     */
     setZ(z) {
         this.z = z;
         return this;
     }
 
+    /**
+     * Set A (rotary axis) coordinate for 4-axis machining
+     * @param {number} a - A axis angle in degrees
+     * @returns {Point} This point (for chaining)
+     */
     setA(a) {
         this.a = a;
         return this;
     }
 
+    /**
+     * Swap X and Z coordinates in place
+     * @returns {Point} This point (for chaining)
+     */
     swapXZ() {
         let p = this,
             t = p.x;
@@ -78,6 +138,10 @@ class Point {
         return this;
     }
 
+    /**
+     * Swap Y and Z coordinates in place
+     * @returns {Point} This point (for chaining)
+     */
     swapYZ() {
         let p = this,
             t = p.y;
@@ -86,6 +150,13 @@ class Point {
         return this;
     }
 
+    /**
+     * Scale coordinates by specified factors
+     * @param {number} [x=1] - X scale factor
+     * @param {number} [y=1] - Y scale factor
+     * @param {number} [z=1] - Z scale factor
+     * @returns {Point} This point (for chaining)
+     */
     scale(x = 1, y = 1, z = 1) {
         this.x *= x;
         this.y *= y;
@@ -93,6 +164,11 @@ class Point {
         return this;
     }
 
+    /**
+     * Create new point with rounded coordinates
+     * @param {number} [precision] - Number of decimal places
+     * @returns {Point} New rounded point
+     */
     round(precision) {
         return newPoint(
             this.x.round(precision),
@@ -100,20 +176,38 @@ class Point {
             this.z.round(precision));
     }
 
+    /**
+     * Associate a facet (triangle) with this point for mesh operations
+     * @param {Object} facet - Triangle/facet object
+     * @returns {Point} This point (for chaining)
+     */
     addFacet(facet) {
         if (!this.group) this.group = [];
         this.group.push(facet);
         return this;
     }
 
+    /**
+     * Invalidate cached key, forcing recalculation on next access
+     * Call after modifying x, y, or z coordinates
+     */
     rekey() {
         this._key = undefined;
     }
 
+    /**
+     * Get string representation of point (same as key)
+     * @returns {string} String representation
+     */
     toString() {
         return this.key;
     }
 
+    /**
+     * Create deep copy of this point
+     * @param {string[]} [keys] - Optional property names to copy to cloned point
+     * @returns {Point} New point with same coordinates
+     */
     clone(keys) {
         let p = newPoint(this.x, this.y, this.z, this._key);
         if (this.a !== undefined) {
@@ -127,20 +221,41 @@ class Point {
         return p;
     }
 
-    // annotate instance with other field data (see clone())
+    /**
+     * Annotate instance with additional field data (see clone())
+     * @param {Object} [obj={}] - Object with properties to add to this point
+     * @returns {Point} This point (for chaining)
+     */
     annotate(obj = {}) {
         Object.assign(this, obj);
         return this;
     }
 
+    /**
+     * Create slope object from this point to another
+     * @param {Point} p - Target point
+     * @returns {Slope} Slope object representing direction
+     */
     slopeTo(p) {
         return newSlope(this, p);
     }
 
+    /**
+     * Create line segment from this point to another
+     * @param {Point} p - Endpoint
+     * @param {string} [k] - Optional key for line
+     * @returns {Line} Line segment
+     */
     lineTo(p, k) {
         return newLine(this, p, k);
     }
 
+    /**
+     * Check if point is near another within specified distance
+     * @param {Point} p - Point to compare
+     * @param {number} dist - Distance threshold
+     * @returns {boolean} True if within distance in both x and y
+     */
     isNear(p, dist) {
         return util.isCloseTo(this.x, p.x, dist) && util.isCloseTo(this.y, p.y, dist);
     }
@@ -157,6 +272,13 @@ class Point {
         return Math.sqrt(this.distToLineSq(p1, p2));
     }
 
+    /**
+     * Calculate 3D distance from this point to infinite line defined by two points
+     * Uses cross product method for true 3D distance
+     * @param {Point} lp1 - First point defining the line
+     * @param {Point} lp2 - Second point defining the line
+     * @returns {number} Perpendicular distance to line
+     */
     distToLine3D(lp1, lp2) {
         // Convert points to vectors
         const p0 = [this.x, this.y, this.z];
@@ -189,19 +311,25 @@ class Point {
     }
 
     /**
-     * used exclusively in new fill code. output does not agree with
-     * old distToLine, but is the only method that seems to work for
-     * fill. using new distToLine as a global replacement breaks support
-     * offset clipping. both need to be investigated and a single line
-     * normal distance needs to be formulated to replace both functions.
+     * Alternative distance-to-line calculation used exclusively in new fill code
+     * NOTE: Output does not agree with distToLine(). This is the only method that works
+     * for fill, but using it as global replacement breaks support offset clipping.
+     * Both need investigation to formulate a single unified line normal distance function.
+     * @param {Point} p1 - First point of line segment
+     * @param {Point} p2 - Second point of line segment
+     * @returns {number} Distance to line
      */
     distToLineNew(p1, p2) {
         return p2l(this, p1, p2);
     }
 
     /**
-     * return square of distance to line connecting points p1, p2
-     * distance is calculated on the perpendicular (normal) to line
+     * Return square of distance to line segment connecting points p1, p2
+     * Distance calculated on perpendicular (normal) to line
+     * Handles endpoints: if perpendicular falls outside segment, returns distance to nearest endpoint
+     * @param {Point} p1 - First point of line segment
+     * @param {Point} p2 - Second point of line segment
+     * @returns {number} Squared distance to line segment
      */
     distToLineSq(p1, p2) {
         let p = this,
@@ -215,6 +343,14 @@ class Point {
         return util.distSqv2(p.x, p.y, p1.x + t * (p2.x - p1.x), p1.y + t * (p2.y - p1.y));
     }
 
+    /**
+     * Check if point is within squared distance to line segment with optimized early exit
+     * Uses bounding box check for fast rejection before calculating actual distance
+     * @param {Point} p1 - First point of line segment
+     * @param {Point} p2 - Second point of line segment
+     * @param {number} dist2 - Squared distance threshold
+     * @returns {boolean} True if within squared distance
+     */
     withinDist2(p1, p2, dist2) {
         let ll2 = p1.distToSq2D(p2),
             dp1 = this.distToSq2D(p1),
@@ -235,10 +371,20 @@ class Point {
         return this.distToLineSq(p1, p2) < dist2;
     }
 
+    /**
+     * Calculate midpoint between this point and another in 2D (preserves this.z)
+     * @param {Point} p2 - Target point
+     * @returns {Point} New midpoint with averaged x,y and this.z
+     */
     midPointTo(p2) {
         return newPoint((this.x + p2.x) / 2, (this.y + p2.y) / 2, this.z);
     }
 
+    /**
+     * Calculate midpoint between this point and another in 3D
+     * @param {Point} p2 - Target point
+     * @returns {Point} New midpoint with averaged x,y,z
+     */
     midPointTo3D(p2) {
         return newPoint(
             (this.x + p2.x) / 2,
@@ -248,7 +394,10 @@ class Point {
     }
 
     /**
-     * non-scale corrected version of follow()
+     * Project point along slope by multiplier (non-scale corrected version of follow())
+     * @param {Slope} slope - Direction slope
+     * @param {number} mult - Distance multiplier
+     * @returns {Point} New projected point
      */
     projectOnSlope(slope, mult) {
         return newPoint(
@@ -257,13 +406,22 @@ class Point {
             this.z);
     }
 
+    /**
+     * Follow direction toward target point by scaled distance
+     * @param {Point} point - Target point
+     * @param {number} mult - Distance multiplier
+     * @returns {Point} New point along line to target
+     */
     followTo(point, mult) {
         return this.follow(this.slopeTo(point), mult);
     }
 
     /**
-     * return a point along the line this from point to p2 offset
-     * by a distance.  positive distances are closer to this point.
+     * Return point along line from this to p2, offset backward by distance
+     * Positive distances move closer to this point (back toward source)
+     * @param {Point} p2 - Target point
+     * @param {number} dist - Offset distance (positive = toward this point)
+     * @returns {Point} Offset point
      */
     offsetPointFrom(p2, dist) {
         let p1 = this,
@@ -276,8 +434,11 @@ class Point {
     }
 
     /**
-     * return a point along the line this from point to p2 offset
-     * by a distance.  positive distances are farther from this point.
+     * Return point along line from this to p2, offset forward by distance
+     * Positive distances move farther from this point (toward p2 and beyond)
+     * @param {Point} p2 - Target point
+     * @param {number} dist - Offset distance (positive = away from this point)
+     * @returns {Point} Offset point
      */
     offsetPointTo(p2, dist) {
         let p1 = this,
@@ -293,6 +454,14 @@ class Point {
         return newPoint(p1.x + ox, p1.y + oy, p2.z, key.NONE);
     }
 
+    /**
+     * Create offset line segment perpendicular to line from this to p2
+     * Returns line shifted by offset distance perpendicular to original direction
+     * Stores original points in np1.op and np2.op properties
+     * @param {Point} p2 - Line endpoint
+     * @param {number} offset - Perpendicular offset distance
+     * @returns {Line} Offset line segment
+     */
     offsetLineTo(p2, offset) {
         let p1 = this,
             dx = p2.x - p1.x,
@@ -307,13 +476,22 @@ class Point {
         return newLine(np1, np2, key.NONE);
     }
 
+    /**
+     * Create new point offset by specified amounts in each dimension
+     * @param {number} x - X offset
+     * @param {number} y - Y offset
+     * @param {number} z - Z offset
+     * @returns {Point} New offset point
+     */
     offset(x, y, z) {
         return newPoint(this.x + x, this.y + y, this.z + z);
     }
 
     /**
-     * checks if a point is inside of a polygon
-     * does not check children/holes
+     * Check if point is inside polygon using ray casting algorithm
+     * Does not check children/holes - use isInPolygon() for full polygon test
+     * @param {Polygon} poly - Polygon to test
+     * @returns {boolean} True if inside polygon boundary
      */
     inPolygon(poly) {
         if (!poly.bounds.containsXY(this.x, this.y)) return false;
@@ -335,8 +513,10 @@ class Point {
     }
 
     /**
-     * returns true if the point is inside of a polygon but
-     * not inside any of it's children
+     * Check if point is inside polygon but not inside any of its holes
+     * Handles arrays of polygons and considers points near edges as inside
+     * @param {Polygon|Polygon[]} poly - Polygon(s) to test
+     * @returns {boolean} True if inside outer polygon but not in holes
      */
     isInPolygon(poly) {
         let point = this,
@@ -358,8 +538,10 @@ class Point {
     }
 
     /**
-     * returns true if the point is inside of a polygon but
-     * not inside any of it's children
+     * Stricter version of isInPolygon - does not consider near-edge points as inside
+     * Point must be truly inside outer polygon and not in any holes
+     * @param {Polygon|Polygon[]} poly - Polygon(s) to test
+     * @returns {boolean} True if strictly inside polygon
      */
     isInPolygonOnly(poly) {
         let point = this,
@@ -383,8 +565,11 @@ class Point {
     }
 
     /**
-     * checks if point is near polygon edge.  distance is squared.
-     * @param {boolean} [inner] process inner polygons
+     * Check if point is near any edge of polygon within squared distance threshold
+     * @param {Polygon} poly - Polygon to test
+     * @param {number} dist2 - Squared distance threshold
+     * @param {boolean} [inner] - If true, also process inner polygons (holes)
+     * @returns {boolean} True if within distance of any edge
      */
     nearPolygon(poly, dist2, inner) {
         // throw new Error("nearPolygon");
@@ -402,15 +587,23 @@ class Point {
     }
 
     /**
-     * returns true if point will not be trimmed later
+     * Check if point will not be trimmed in later offset operations
+     * Used in offset path generation to filter points
+     * @param {Polygon} poly - Polygon boundary
+     * @param {number} offset - Offset distance (positive=outward, negative=inward)
+     * @param {number} mindist2 - Minimum squared distance from edge
+     * @returns {boolean} True if point is safe from trimming
      */
     insideOffset(poly, offset, mindist2) {
         return this.inPolygon(poly) === (offset > 0) && !this.nearPolygon(poly, mindist2);
     }
 
     /**
-     * returns a new point following given slope for given distance
-     * same as projectOnSlope() but scaled
+     * Create new point following given slope for given distance (scale-corrected)
+     * Same as projectOnSlope() but normalizes slope to unit vector first
+     * @param {Slope} slope - Direction slope
+     * @param {number} distance - Distance to travel
+     * @returns {Point} New point along slope
      */
     follow(slope, distance) {
         let ls = distance / Math.sqrt(slope.dx * slope.dx + slope.dy * slope.dy);
@@ -418,8 +611,11 @@ class Point {
     }
 
     /**
-     * for point, return intersecting point on z to next point if points
-     * are on either size of z
+     * Calculate intersection point on plane at height z between this point and p
+     * Used for slicing operations - finds where line crosses Z plane
+     * @param {Point} p - Second point
+     * @param {number} z - Z height of intersection plane
+     * @returns {Point} Intersection point at height z
      */
     intersectZ(p, z) {
         let dx = p.x - this.x,
@@ -429,44 +625,60 @@ class Point {
         return newPoint(this.x + dx * pct, this.y + dy * pct, this.z + dz * pct);
     }
 
+    /**
+     * Test exact equality in 2D (x and y coordinates only)
+     * @param {Point} p - Point to compare
+     * @returns {boolean} True if x and y are exactly equal
+     */
     isEqual2D(p) {
         return this === p || (this.x === p.x && this.y === p.y);
     }
 
     /**
-     * returns true if points are close enough to be considered equivalent
+     * Check if points are close enough to be considered equivalent in 2D
+     * Uses precision_merge_sq threshold for tolerance
+     * @param {Point} p - Point to compare
+     * @returns {boolean} True if within merge threshold
      */
     isMergable2D(p) {
         return this.isEqual2D(p) || (this.distToSq2D(p) < config.precision_merge_sq);
     }
 
     /**
-     * compares 3D point
+     * Test exact equality in 3D (x, y, and z coordinates)
+     * @param {Point} p - Point to compare
+     * @returns {boolean} True if all coordinates are exactly equal
      */
     isEqual(p) {
         return this === p || (this.x === p.x && this.y === p.y && this.z === p.z);
     }
 
     /**
-     * returns true if points are close enough to be considered equivalent
+     * Check if points are close enough to be considered equivalent in 3D
+     * Uses precision_merge_sq threshold for tolerance
+     * @param {Point} p - Point to compare
+     * @returns {boolean} True if within merge threshold
      */
     isMergable3D(p) {
         return this.isEqual(p) || (this.distToSq3D(p) < config.precision_merge_sq);
     }
 
     /**
-     * return true if point is inside 2D square size dist*2 around p
+     * Check if point is inside 2D bounding box centered on p
+     * @param {Point} p - Center point
+     * @param {number} dist - Half-width of box (distance from center to edge)
+     * @returns {boolean} True if inside box
      */
     isInBox(p, dist) {
         return Math.abs(this.x - p.x) < dist && Math.abs(this.y - p.y) < dist;
     }
 
     /**
-     * return min distance from point to a polygon
-     * stops searching if any point is closer than threshold
-     *
-     * @param {Polygon} poly
-     * @param {number} [threshold] stop looking if under threshold
+     * Calculate minimum distance from point to any segment of polygon
+     * Early exit optimization: stops searching if distance falls below threshold
+     * @param {Polygon} poly - Polygon with segments to measure
+     * @param {number} [threshold] - Stop searching if distance drops below this value
+     * @returns {number} Minimum distance to any polygon segment
      */
     distToPolySegments(poly, threshold) {
         let point = this,
@@ -481,8 +693,11 @@ class Point {
     }
 
     /**
-     * @param {Polygon} poly
-     * @param {number} [threshold] stop looking if under threshold
+     * Calculate minimum distance from point to any vertex of polygon
+     * Early exit optimization: stops searching if distance falls below threshold
+     * @param {Polygon} poly - Polygon with vertices to measure
+     * @param {number} [threshold] - Stop searching if distance drops below this value
+     * @returns {number} Minimum distance to any polygon vertex
      */
     distToPolyPoints(poly, threshold) {
         let point = this,
@@ -495,7 +710,11 @@ class Point {
     }
 
     /**
-     * @returns {Point} nearest point (less than max) from array to this point
+     * Find nearest point from array within maximum distance
+     * Skips this point and deleted points (p.del flag)
+     * @param {Point[]} points - Array of candidate points
+     * @param {number} max - Maximum squared distance to consider
+     * @returns {Point|null} Nearest point within max distance, or null if none found
      */
     nearestTo(points, max) {
         if (!max) throw "missing max";
@@ -515,8 +734,10 @@ class Point {
     }
 
     /**
-     * @param {Point[]} points
-     * @return {number} average square dist to cloud of points
+     * Calculate average squared distance to cloud of points
+     * Excludes this point from calculation
+     * @param {Point[]} points - Point cloud
+     * @returns {number} Average squared distance
      */
     averageDistTo(points) {
         let sum = 0.0,
@@ -532,7 +753,9 @@ class Point {
     }
 
     /**
-     * dist to point in 2D
+     * Calculate Euclidean distance to point in 2D
+     * @param {Point} p - Target point
+     * @returns {number} Distance
      */
     distTo2D(p) {
         let dx = this.x - p.x,
@@ -541,7 +764,10 @@ class Point {
     }
 
     /**
-     * square of distance in 2D
+     * Calculate squared distance to point in 2D
+     * Faster than distTo2D() - use when only comparing distances
+     * @param {Point} p - Target point
+     * @returns {number} Squared distance
      */
     distToSq2D(p) {
         let dx = this.x - p.x,
@@ -549,6 +775,11 @@ class Point {
         return dx * dx + dy * dy;
     }
 
+    /**
+     * Calculate Euclidean distance to point in 3D
+     * @param {Point} p - Target point
+     * @returns {number} Distance
+     */
     distTo3D(p) {
         let dx = this.x - p.x,
             dy = this.y - p.y,
@@ -557,7 +788,10 @@ class Point {
     }
 
     /**
-     * square of distance in 3D
+     * Calculate squared distance to point in 3D
+     * Faster than distTo3D() - use when only comparing distances
+     * @param {Point} p - Target point
+     * @returns {number} Squared distance
      */
     distToSq3D(p) {
         let dx = this.x - p.x,
@@ -567,7 +801,11 @@ class Point {
     }
 
     /**
-     * returns true if point is inside triangle described by three points
+     * Check if point is inside triangle using barycentric coordinate test
+     * @param {Point} a - Triangle vertex A
+     * @param {Point} b - Triangle vertex B
+     * @param {Point} c - Triangle vertex C
+     * @returns {boolean} True if inside triangle
      */
     inTriangle(a, b, c) {
         let as_x = this.x - a.x,
@@ -579,22 +817,39 @@ class Point {
     }
 
     /**
-     * returns true if point is on a line described by two points.
-     * test sum of distances p1->this + this->p2 ~= p1->p2 whens
-     * slopes from p1->this same as this->p2
+     * Check if point lies on line segment within precision threshold
+     * Uses perpendicular distance test with precision_point_on_line tolerance
+     * @param {Point} p1 - Line start point
+     * @param {Point} p2 - Line end point
+     * @returns {boolean} True if on line within tolerance
      */
     onLine(p1, p2) {
         return this.distToLine(p1, p2) < config.precision_point_on_line;
     }
 
+    /**
+     * Create new point by adding delta vector
+     * @param {Point} delta - Vector to add
+     * @returns {Point} New point (this + delta)
+     */
     add(delta) {
         return newPoint(this.x + delta.x, this.y + delta.y, this.z + delta.z);
     }
 
+    /**
+     * Create new point by subtracting delta vector
+     * @param {Point} delta - Vector to subtract
+     * @returns {Point} New point (this - delta)
+     */
     sub(delta) {
         return newPoint(this.x - delta.x, this.y - delta.y, this.z - delta.z);
     }
 
+    /**
+     * Move this point by delta vector (mutates in place)
+     * @param {Point} delta - Vector to add
+     * @returns {Point} This point (for chaining)
+     */
     move(delta) {
         this.x += delta.x;
         this.y += delta.y;
@@ -602,7 +857,10 @@ class Point {
         return this;
     }
 
-    // radians rotatition in XY around origin
+    /**
+     * Rotate point in XY plane around origin (mutates in place)
+     * @param {number} angle - Rotation angle in radians
+     */
     rotate(angle) {
         const { x, y } = this;
         this.x = x * Math.cos(angle) - y * Math.sin(angle);
@@ -610,14 +868,34 @@ class Point {
     }
 }
 
+/**
+ * Calculate dot product of two 2D vectors
+ * @private
+ * @param {Object} u - First vector with x,y properties
+ * @param {Object} v - Second vector with x,y properties
+ * @returns {number} Dot product u·v
+ */
 function dot(u, v) {
     return u.x * v.x + u.y * v.y;
 }
 
+/**
+ * Calculate magnitude (length) of 2D vector
+ * @private
+ * @param {Object} v - Vector with x,y properties
+ * @returns {number} Vector magnitude
+ */
 function norm(v) {
     return Math.sqrt(dot(v, v));
 }
 
+/**
+ * Calculate Euclidean distance between two 2D vectors
+ * @private
+ * @param {Object} u - First vector with x,y properties
+ * @param {Object} v - Second vector with x,y properties
+ * @returns {number} Distance
+ */
 function d(u, v) {
     return norm({
         x: u.x - v.x,
@@ -625,6 +903,15 @@ function d(u, v) {
     });
 }
 
+/**
+ * Calculate distance from point to line (used by distToLineNew)
+ * Projects point onto infinite line and returns distance to projection
+ * @private
+ * @param {Point} p - Point to measure from
+ * @param {Point} l1 - First point defining line
+ * @param {Point} l2 - Second point defining line
+ * @returns {number} Perpendicular distance from point to line
+ */
 function p2l(p, l1, l2) {
     let v = {
         x: l2.x - l1.x,
@@ -648,10 +935,24 @@ function p2l(p, l1, l2) {
     return d(p, pb);
 }
 
+/**
+ * Create a new Point instance
+ * @param {number} [x=0] - X coordinate
+ * @param {number} [y=0] - Y coordinate
+ * @param {number} [z=0] - Z coordinate
+ * @param {string} [key] - Optional cached key for comparison
+ * @returns {Point} New point instance
+ */
 function newPoint(x, y, z, key) {
     return new Point(x, y, z, key);
 }
 
+/**
+ * Convert Clipper library point to Point instance
+ * @param {Object} cp - Clipper point with X,Y integer properties (scaled by config.clipper)
+ * @param {number} z - Z coordinate for resulting point
+ * @returns {Point} New point with coordinates scaled back from Clipper format
+ */
 function pointFromClipper(cp, z) {
     return newPoint(cp.X / config.clipper, cp.Y / config.clipper, z);
 }
