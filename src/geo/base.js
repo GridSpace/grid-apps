@@ -5,10 +5,22 @@ import earcut from '../ext/earcut.js';
 
 const round_decimal_precision = 5;
 
+/**
+ * Get current timestamp in milliseconds
+ * @returns {number} Current time from Date.now()
+ */
 function time() {
     return Date.now()
 }
 
+/**
+ * Linear interpolation between two values with maximum increment per step
+ * @param {number} from - Starting value
+ * @param {number} to - Target value
+ * @param {number} maxInc - Maximum increment per step
+ * @param {boolean} [incFrom=false] - Include starting value in output array
+ * @returns {number[]} Array of interpolated values from 'from' to 'to'
+ */
 function lerp(from, to, maxInc, incFrom) {
     let dir = Math.sign(to - from);
     let delta = Math.abs(to - from);
@@ -27,7 +39,12 @@ function lerp(from, to, maxInc, incFrom) {
     return out;
 }
 
-/** track an array of promises as they all complete */
+/**
+ * Track an array of promises as they all complete
+ * @param {Promise[]} promises - Array of promises to wait for
+ * @param {Function} [tracker] - Optional callback(index, total, data) called as each promise resolves
+ * @returns {Promise<void>} Resolves when all promises complete
+ */
 async function pwait(promises, tracker) {
     let count = 0;
     if (tracker)
@@ -39,13 +56,23 @@ async function pwait(promises, tracker) {
     await Promise.all(promises);
 }
 
-/** return a promise that resolves after a given time */
+/**
+ * Return a promise that resolves after a given time
+ * @param {number} time - Delay in milliseconds
+ * @returns {Promise<void>} Promise that resolves after the specified delay
+ */
 function ptimer(time) {
     return new Promise((resolve, reject) => {
         setTimeout(resolve, time);
     });
 }
 
+/**
+ * Return a number or default value if undefined
+ * @param {number} num - Value to check
+ * @param {number} def - Default value to return if num is undefined
+ * @returns {number} The number or default value
+ */
 function numOrDefault(num, def) {
     return num !== undefined ? num : def;
 }
@@ -70,14 +97,35 @@ function doCombinations(a1, a2, arg, fn) {
     return arg;
 }
 
+/**
+ * Test if three points form a clockwise turn
+ * @param {Point} p1 - First point
+ * @param {Point} p2 - Second point
+ * @param {Point} p3 - Third point
+ * @returns {boolean} True if points progress in clockwise direction
+ */
 function isClockwise(p1, p2, p3) {
     return area2(p1, p2, p3) > 0;
 }
 
+/**
+ * Test if three points form a counter-clockwise turn
+ * @param {Point} p1 - First point
+ * @param {Point} p2 - Second point
+ * @param {Point} p3 - Third point
+ * @returns {boolean} True if points progress in counter-clockwise direction
+ */
 function isCounterClockwise(p1, p2, p3) {
     return area2(p1, p2, p3) < 0;
 }
 
+/**
+ * Compute partial area contribution for two points (used in area2 calculation)
+ * @param {Point} p1 - First point
+ * @param {Point} p2 - Second point
+ * @returns {number} Partial area value
+ * @private
+ */
 function pac(p1, p2) {
     return (p2.x - p1.x) * (p2.y + p1.y);
 }
@@ -90,22 +138,45 @@ function area2(p1, p2, p3) {
     return pac(p1, p2) + pac(p2, p3) + pac(p3, p1);
 }
 
+/**
+ * Test if two values are close to each other within a distance threshold
+ * @param {number} v1 - First value
+ * @param {number} v2 - Second value
+ * @param {number} [dist] - Distance threshold (defaults to precision_merge config)
+ * @returns {boolean} True if values are within threshold distance
+ */
 function isCloseTo(v1, v2, dist) {
     return Math.abs(v1 - v2) <= (dist ?? base.config.precision_merge);
 }
 
+/**
+ * Test if a value is within a range, allowing for close-to precision at boundaries
+ * @param {number} val - Value to test
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @param {number} [precisiom] - Precision threshold for boundary comparison
+ * @returns {boolean} True if value is in range or close to boundaries
+ */
 function inCloseRange(val, min, max, precisiom) {
     return (isCloseTo(val, min, precisiom) || val >= min) && (isCloseTo(val, max, precisiom) || val <= max);
 }
 
 /**
- * return square of value
+ * Return square of value
+ * @param {number} v - Value to square
+ * @returns {number} v²
  */
 function sqr(v) {
     return v * v
 }
 
-// radians rotatition around origin
+/**
+ * Rotate a 2D point around the origin by radians
+ * @param {number} x - X coordinate
+ * @param {number} y - Y coordinate
+ * @param {number} radians - Rotation angle in radians
+ * @returns {number[]} Rotated [x, y] coordinates
+ */
 function rotate(x,y,radians) {
     return [
         x * Math.cos(radians) - y * Math.sin(radians),
@@ -116,45 +187,84 @@ function rotate(x,y,radians) {
 const deg2rad = (Math.PI / 180);
 const rad2deg = (180 / Math.PI);
 
+/**
+ * Convert degrees to radians
+ * @param {number} degrees - Angle in degrees
+ * @returns {number} Angle in radians
+ */
 function toRadians(degrees) {
     return degrees * deg2rad;
 }
 
+/**
+ * Convert radians to degrees
+ * @param {number} radians - Angle in radians
+ * @returns {number} Angle in degrees
+ */
 function toDegrees(radians) {
     return radians * rad2deg;
 }
 
 /**
- * return distance between two points
+ * Return 2D distance between two points
+ * @param {Point} p1 - First point
+ * @param {Point} p2 - Second point
+ * @returns {number} Euclidean distance
  */
 function dist2D(p1, p2) {
     return Math.sqrt(distSq(p1, p2));
 }
 
 /**
- * return distance squared between two points
+ * Return squared distance between two points (faster than dist2D, avoids sqrt)
+ * @param {Point} p1 - First point
+ * @param {Point} p2 - Second point
+ * @returns {number} Distance squared
  */
 function distSq(p1, p2) {
     return sqr(p2.x - p1.x) + sqr(p2.y - p1.y)
 }
 
 /**
- * return distance squared between two points
- * enables faster Point.nearPolygon()
+ * Return squared distance between two coordinate pairs (faster variant)
+ * @param {number} x1 - First X coordinate
+ * @param {number} y1 - First Y coordinate
+ * @param {number} x2 - Second X coordinate
+ * @param {number} y2 - Second Y coordinate
+ * @returns {number} Distance squared
  */
 function distSqv2(x1, y1, x2, y2) {
     return sqr(x2 - x1) + sqr(y2 - y1)
 }
 
+/**
+ * Calculate adjusted offset accounting for precision tolerance
+ * @param {number} offset - Offset value
+ * @param {number} precision - Precision threshold
+ * @returns {number} Adjusted offset
+ */
 function offsetPrecision(offset, precision) {
     return Math.abs(offset) - precision;
 }
 
+/**
+ * Test if a value is within a numeric range
+ * @param {*} value - Value to test (will be parsed as float)
+ * @param {number} min - Minimum value (inclusive)
+ * @param {number} max - Maximum value (inclusive)
+ * @returns {boolean} True if value is in range
+ */
 function inRange(value, min, max) {
     let val = parseFloat(value);
     return val >= min && val <= max;
 }
 
+/**
+ * Round a number or all numeric properties of an object to specified decimal places
+ * @param {number|Object} v - Value or object to round
+ * @param {number} [zeros] - Number of decimal places (defaults to round_decimal_precision=5)
+ * @returns {number|Object} Rounded value or object with rounded properties
+ */
 function round(v, zeros) {
     if (typeof v === 'object') {
         for (let [key,val] of Object.entries(v)) {
@@ -170,6 +280,13 @@ function round(v, zeros) {
     return Math.round(v * pow) / pow;
 }
 
+/**
+ * Clamp a value between low and high bounds
+ * @param {number} val - Value to clamp
+ * @param {number} low - Minimum bound
+ * @param {number} hi - Maximum bound
+ * @returns {number} Value clamped to [low, hi] range
+ */
 function clamp(val, low, hi) {
     return Math.max(low, Math.min(hi, val));
 }
@@ -412,9 +529,14 @@ function thetaDiff(n1, n2, clockwise) {
     return diff;
 }
 
-// order array of elements using next closest element comparator
-// used for things like next-closest point walks (fdm thin fill)
-// in future, replace poly2poly and similar with this
+/**
+ * Order array elements by proximity using next-closest element selection
+ * Used for optimized path planning (e.g., FDM thin fill, traveling salesman-style)
+ * @param {Array} array - Array of elements to order
+ * @param {Function} fn - Distance function fn(from, el) => number
+ * @param {*} [from] - Starting element (if not provided, uses first element)
+ * @returns {Array} Reordered array with elements sorted by proximity
+ */
 function orderClosest(array, fn, from) {
     if (!array.length) {
         return array;
@@ -445,10 +567,16 @@ function orderClosest(array, fn, from) {
     return out;
 }
 
-// wrapper for earcut that handles higher order dimensions and finds the
-// two with the greatest delta to pass to the earcut algorith, then returns
-// an unwrapped array in the original dimensions
-// at present, only used by load.obj.parse()
+/**
+ * Wrapper for earcut triangulation that handles higher-dimensional data
+ * Automatically selects the two dimensions with greatest delta for triangulation,
+ * then maps results back to original dimensionality
+ * @param {number[]} array - Flat array of coordinates (length = numPoints * dims)
+ * @param {number[]} [holes] - Hole indices for polygon with holes
+ * @param {number} [dims=2] - Number of dimensions per point (2 or 3)
+ * @param {boolean} [pos=false] - If true, return position indices instead of full coordinates
+ * @returns {number[]} Triangulated vertex array or indices
+ */
 function triangulate(array, holes, dims, pos) {
     let narray;
     let info;
@@ -507,10 +635,20 @@ function triangulate(array, holes, dims, pos) {
     return oa;
 }
 
+/**
+ * Recursively flatten a nested array
+ * @param {Array} arr - Array to flatten (may contain nested arrays)
+ * @returns {Array} Flattened one-dimensional array
+ */
 function flatten(arr) {
     return arr.reduce((acc, val) => Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), [])
 }
 
+/**
+ * Format a number with thousand separators (commas)
+ * @param {number|string} v - Number to format
+ * @returns {string} Formatted string with commas (e.g., "1,234.56")
+ */
 function comma(v) {
     if (!v) return v;
     let [lt, rt] = v.toString().split('.');
