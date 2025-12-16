@@ -135,7 +135,6 @@ api.event.on("set.threaded", bool => setThreaded(bool));
 
 function booleanSave() {
     let control = settings().controller;
-    let setProjection = ui.ortho.checked !== control.ortho;
     if (control.assembly != ui.assembly.checked) {
         client.wasm(ui.assembly.checked);
     }
@@ -171,9 +170,7 @@ function booleanSave() {
     updateStats();
     updateDrawer();
     api.event.emit('boolean.update');
-    if (setProjection) {
-        space.view.setProjection(control.ortho ? 'orthographic' : 'perspective');
-    }
+    space.view.setProjection(control.ortho ? 'orthographic' : 'perspective');
 }
 
 function updateDrawer() {
@@ -1605,6 +1602,7 @@ function init_two() {
         space.view.setZoom(control.reverseZoom, control.zoomSpeed);
         space.platform.setGridZOff(undefined);
         space.platform.setZOff(0.05);
+        space.view.setProjection(control.ortho ? 'orthographic' : 'perspective');
 
         // restore UI state from settings
         ui.antiAlias.checked = control.antiAlias;

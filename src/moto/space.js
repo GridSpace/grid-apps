@@ -1466,7 +1466,7 @@ let Space = {
         }
 
         // Save current view state
-        const position = viewControl.getPosition();
+        const position = viewControl.getPosition(true);
         const target = viewControl.getTarget().clone();
         const distance = camera.position.distanceTo(target);
 
@@ -1477,7 +1477,7 @@ let Space = {
             // Calculate ortho size based on perspective distance and FOV
             const size = distance * Math.tan(perspective * Math.PI / 180 / 2);
             newCamera = new THREE.OrthographicCamera(
-                -size * asp, size * asp, size, -size, 0.1, 100000
+                -size * asp, size * asp, size, -size, -10000, 100000
             );
         } else {
             newCamera = new THREE.PerspectiveCamera(
@@ -1577,7 +1577,7 @@ let Space = {
         renderer.localClippingEnabled = true;
         cameraType = ortho ? 'orthographic' : 'perspective';
         camera = ortho ?
-            new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
+            new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, -10000, 100000) :
             new THREE.PerspectiveCamera(perspective, aspect(), 0.1, 100000);
 
         camera.position.set(0, 200, 340);

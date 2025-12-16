@@ -299,12 +299,24 @@ class Orbit extends EventDispatcher {
             phiSet = null;
             pan.set(0, 0, 0);
 
-            scaleSave *= scale;
-
             if (mode === MODE.ORTHOGRAPHIC) {
-                scope.object.zoom = 1/scale;
+                // For orthographic, constrain zoom based on maxDistance/minDistance
+                // Effective distance is base distance times inverse of zoom
+                let baseDistance = offset.length();
+                let newScaleSave = scaleSave * scale;
+
+                // Clamp scaleSave to maintain reasonable zoom levels
+                // Larger scaleSave = smaller zoom = more zoomed out (like larger distance)
+                // Smaller scaleSave = larger zoom = more zoomed in (like smaller distance)
+                let maxScaleSave = scope.maxDistance / baseDistance;
+                let minScaleSave = scope.minDistance / baseDistance;
+                newScaleSave = Math.max(minScaleSave, Math.min(maxScaleSave, newScaleSave));
+
+                scaleSave = newScaleSave;
+                scope.object.zoom = 1 / scaleSave;
                 scope.object.updateProjectionMatrix();
             } else {
+                scaleSave *= scale;
                 scale = 1;
             }
 
@@ -340,7 +352,9 @@ class Orbit extends EventDispatcher {
         };
 
         function getZoomScale(factor = 1) {
-            return Math.pow(0.95, factor);
+            // Use slower zoom for orthographic mode
+            let base = mode === MODE.ORTHOGRAPHIC ? 0.98 : 0.95;
+            return Math.pow(base, factor);
         }
 
         function onMouseDown(event) {
