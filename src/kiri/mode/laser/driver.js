@@ -10,6 +10,8 @@ import { polygons as POLY } from '../../../geo/polygons.js';
 import { render } from '../../core/render.js';
 import { slicer } from '../../../geo/slicer.js';
 import { newSlice } from '../../core/slice.js';
+import { newPolygon } from '../../../geo/polygon.js';
+import { STL } from '../../../load/stl.js';
 
 export const TYPE = {
     LASER: 0,
@@ -228,9 +230,28 @@ function laser_slice(settings, widget, onupdate, ondone) {
         widget.slices = output.slices.map(data => {
             let { z, lines, groups } = data;
             let tops = POLY.nest(groups);
+            let { ctOutClean, ctOutFilter, ctOutSmooth } = proc;
+            // optional cleaning, smoothing, filtering steps
+            // if we're going to re-export an stl
+            if (ctOutClean) {
+                tops.map(top => top.clean(true));
+                POLY.setZ(tops, z);
+            }
+            // running this here vs at output time seems to cause manifold issues ?!?
+            // if (ctOutSmooth) {
+            //     console.log({ ctOutSmooth });
+            //     tops = POLY.offset(tops, ctOutSmooth);
+            //     tops = POLY.offset(tops, -ctOutSmooth);
+            //     POLY.setZ(tops, z);
+            // }
+            if (ctOutFilter) {
+                tops = tops.filter(top => top.area() > ctOutFilter);
+            }
             // for WireEDM, we commonly omit inner polys because we can't
             // navigate to cut them separately unlike laser, water, drag
-            if (ctOmitInner) tops.forEach(top => delete top.inner);
+            if (ctOmitInner) {
+                tops.forEach(top => delete top.inner);
+            }
             let slice = newSlice(z).addTops(tops);
             slice.index = indices.indexOf(z);
             // create top offsets (even if 0)
@@ -269,6 +290,7 @@ async function laser_prepare(widgets, settings, update) {
         { ctOutStack, ctOutMerged, ctOutKnifeTip, ctOutShaper } = process;
 
     ctOutStack = ctOutStack && isLaser;
+    print.widgets = widgets;
 
     // shim to adapt older code -- should be refactored
     // let pppo = [];
@@ -588,6 +610,49 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
     onpost();
 };
 
+function exportSTL(settings, data) {
+    let { ctSliceHeight, ctOutSmooth } = settings.process;
+    let polys = [];
+    for (let array of data) {
+        let poly;
+        for (let el of array) {
+            let { emit, point } = el;
+            if (emit === 0) {
+                poly = newPolygon().addObj(point);
+                polys.push(poly);
+            } else {
+                poly.addObj(point);
+            }
+        }
+    }
+    if (ctOutSmooth) {
+        polys = polys.map(poly => {
+            let pump = POLY.offset([ poly ], ctOutSmooth);
+            pump = POLY.offset(pump, -ctOutSmooth);
+            return POLY.setZ(pump, poly.getZ());
+        }).flat().filter(v => v);
+    }
+    let layers = {};
+    let mesh = [];
+    for (let poly of polys) {
+        let z = poly.getZ();
+        let layer = layers[z];
+        if (!layer) {
+            layer = layers[z] = [];
+        }
+        layer.push(poly);
+    }
+    for (let rec of Object.entries(layers)) {
+        let [ z, polys ] = rec;
+        polys = POLY.nest(polys);
+        for (let poly of polys) {
+            let ext = poly.setZ(0).extrude(ctSliceHeight, { zadd: parseFloat(z) });
+            mesh = mesh.concat(ext);
+        }
+    }
+    return new STL().encode(mesh);
+}
+
 /**
  *
  */
@@ -867,5 +932,6 @@ export const LASER = {
     export: laser_export,
     exportGCode,
     exportDXF,
-    exportSVG
+    exportSVG,
+    exportSTL
 };

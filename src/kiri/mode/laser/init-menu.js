@@ -35,7 +35,7 @@ export function menu() {
     ctSliceHeightMin:    newInput(LANG.ls_lahm_s, {title:LANG.ls_lahm_l, convert:toFloat, show:() => ui.ctSliceHeight.value == 0 && !ui.ctSliceSingle.checked }),
     separator:           newBlank({ class:"set-sep", driven }),
     ctSliceSingle:       newBoolean(LANG.ls_sngl_s, onBooleanClick, {title:LANG.ls_sngl_l}),
-    ctOmitInner:         newBoolean(LANG.we_omit_s, onBooleanClick, {title:LANG.we_omit_l, modes:WEDM}),
+    ctOmitInner:         newBoolean(LANG.we_omit_s, onBooleanClick, {title:LANG.we_omit_l}),
     _____:               newGroup('surfaces', $('lzr-surface'), { modes:[-1], driven, separator }),
     ctSurfaces: newRow([
         (ui.faceAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
@@ -68,6 +68,10 @@ export function menu() {
     ctOutInches:         newBoolean(LANG.ou_inch_s, onBooleanClick, { title:LANG.ou_inch_l, modes:LASER }),
     ctOutStack:          newBoolean(LANG.ou_stak_s, onBooleanClick, { title:LANG.ou_stak_l, modes:LASER }),
     ctOutShaper:         newBoolean(LANG.ou_shap_s, onBooleanClick, { title:LANG.ou_shap_l, modes:LASER, show:() => ui.ctOutStack.checked }),
+    separator:           newBlank({ class:"set-sep", driven, modes:LASER, show: () => ui.ctOutStack.checked }),
+    ctOutClean:          newBoolean('clean', onBooleanClick, { title:'clean', modes:LASER, show:() => ui.ctOutStack.checked }),
+    ctOutFilter:         newInput('filter', { title:'filter', modes:LASER, convert:toFloat, show:() => ui.ctOutStack.checked }),
+    ctOutSmooth:         newInput('smooth', { title:'smooth', modes:LASER, convert:toFloat, show:() => ui.ctOutStack.checked }),
 
     };
 

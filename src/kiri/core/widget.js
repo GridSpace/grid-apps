@@ -872,8 +872,9 @@ class Widget {
         return shadows[z] = POLY.setZ(shadow, z);
     }
 
+    // create a stack of faces in 1mm increments
+    // the stacks are then used to produce shadowlines
     #ensureShadowCache() {
-        // cache faces with normals up
         if (this.cache.shadow) {
             return;
         }
@@ -881,7 +882,6 @@ class Widget {
         const length = geo.length;
         const bounds = this.getBoundingBox();
         const stack = {};
-        // const faces = [];
         for (let i = Math.floor(bounds.min.z); i <= Math.ceil(bounds.max.z); i++) {
             stack[i] = [];
         }
@@ -892,7 +892,6 @@ class Widget {
             const n = THREE.computeFaceNormal(a, b, c);
             if (n.z < 0.001) {
                 continue;
-                // faces.push(a, b, c);
             }
             const minZ = Math.floor(Math.min(a.z, b.z, c.z));
             const maxZ = Math.ceil(Math.max(a.z, b.z, c.z));
@@ -904,6 +903,7 @@ class Widget {
     }
 
     // union triangles > z (opt cap < ztop) into polygon(s)
+    // slice the triangle stack matchingg z then union the results
     #computeShadowAt(z, ztop) {
         this.#ensureShadowCache();
         const found = [];

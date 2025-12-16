@@ -2403,6 +2403,7 @@ export class Polygon {
     }
 
     // extrude poly (with inner voids) into 3d mesh
+    // todo: zadd broken when poly Z is not 0
     extrude(z = 1, opt = {}) {
         let earcut = this.earcut(); // array of 3-point polygons
 
