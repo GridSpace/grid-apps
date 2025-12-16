@@ -79,7 +79,8 @@ class OpRough extends CamOp {
             }));
         }
 
-        if (cutOutside) {
+        // outside only if we're not clearing all of stock
+        if (cutOutside && !op.all) {
             ops_list.push(new OpArea(state, {
                 rename: op.rename ?? "cutout",
                 spindle: op.spindle,
