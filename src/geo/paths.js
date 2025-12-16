@@ -4,10 +4,14 @@ import { base } from './base.js';
 import { newPoint } from './point.js';
 
 /**
- * emit each element in an array based on
- * the next closest endpoint. arrays contain
- * elements with { first, last } points and
- * may be open polys, unlike poly2polyEmit
+ * Emit each element in array based on next closest endpoint
+ * Uses greedy nearest-neighbor algorithm to minimize travel distance
+ * Arrays contain elements with { first, last } points and may be open paths
+ * Elements are marked with delete flag to avoid reprocessing
+ * @param {Array} array - Array of elements with { first, last } Point properties
+ * @param {Point} startPoint - Starting point for path ordering
+ * @param {Function} emitter - Callback function(element, firstPoint, count)
+ * @returns {Point} Final endpoint after processing all elements
  */
 export function tip2tipEmit(array, startPoint, emitter) {
     let mindist, dist, found, count = 0;
@@ -39,10 +43,20 @@ export function tip2tipEmit(array, startPoint, emitter) {
 }
 
 /**
- * like tip2tipEmit but accepts an array of polygons and the next closest
- * point can be anywhere in the adjacent polygon. should be re-written
- * to be more like outputOrderClosest() and have the option to account for
- * depth in determining distance
+ * Emit polygons in optimal order based on nearest point
+ * Like tip2tipEmit but accepts polygons where next closest point can be anywhere
+ * Handles both open and closed polygons, can reverse open paths for optimal direction
+ * Optionally uses 3D distance weighted by polygon area for depth-aware ordering
+ * @param {Polygon[]} array - Array of polygons to process
+ * @param {Point} startPoint - Starting point for path ordering
+ * @param {Function} emitter - Callback function(polygon, startIndex, count, prevPoint) => Point
+ * @param {Object} [opt={}] - Options object
+ * @param {string} [opt.mark='delete'] - Property name to mark processed polygons
+ * @param {boolean} [opt.swapdir=true] - Allow reversing open paths for better direction
+ * @param {boolean} [opt.weight=false] - Use 3D distance weighted by area squared
+ * @param {boolean} [opt.term=false] - Terminate after finding first match
+ * @param {boolean} [opt.perm=false] - Keep markers permanent (don't undo)
+ * @returns {Point} Final endpoint after processing
  */
 export function poly2polyEmit(array, startPoint, emitter, opt = {}) {
     let marker = opt.mark || 'delete';
@@ -96,6 +110,13 @@ export function poly2polyEmit(array, startPoint, emitter, opt = {}) {
     return startPoint;
 }
 
+/**
+ * Calculate normalized perpendicular (normal) vector for line segment
+ * Returns unit vector perpendicular to p1->p2 (rotated 90 degrees CCW)
+ * @param {Point} p1 - Segment start point
+ * @param {Point} p2 - Segment end point
+ * @returns {Object} Normal data: { dx, dy, p1, p2, len }
+ */
 export function calc_normal(p1, p2) {
     let dx = p2.x - p1.x;
     let dy = p2.y - p1.y;
@@ -106,6 +127,15 @@ export function calc_normal(p1, p2) {
     return ({ dx: dy, dy: -dx, p1, p2, len });
 }
 
+/**
+ * Calculate vertex offset for path endpoints (start or end)
+ * Used for open paths where there's no adjacent segment on one side
+ * @param {Object} n1 - Previous segment normal
+ * @param {Object} n2 - Next segment normal
+ * @param {number} off - Offset distance
+ * @param {boolean} start - True if start vertex, false if end vertex
+ * @returns {Object} Vertex data: { dx, dy, vp }
+ */
 export function end_vertex(n1, n2, off, start) {
     let dx, dy;
     if (start) {
@@ -118,6 +148,18 @@ export function end_vertex(n1, n2, off, start) {
     return { dx, dy, vp: n1.p2 };
 }
 
+/**
+ * Calculate vertex offset at junction of two line segments
+ * Computes miter join offset based on angle between segments
+ * Returns offset direction, turn direction (io), and vertex length (vl)
+ * @param {Object} n1 - Previous segment normal with dx, dy
+ * @param {Object} n2 - Next segment normal with dx, dy
+ * @param {number} off - Offset distance
+ * @param {Point} [vp] - Vertex point (defaults to n1.p2)
+ * @returns {Object} Vertex data: { dx, dy, vp, io, vl }
+ *   - io: cross product (positive = right turn, negative = left turn)
+ *   - vl: vertex length for detecting acute angles
+ */
 export function calc_vertex(n1, n2, off, vp) {
     let dx, dy, io, vl, q, r;
     r = 1 + (n1.dx * n2.dx + n1.dy * n2.dy);
@@ -136,6 +178,12 @@ export function calc_vertex(n1, n2, off, vp) {
     return { dx, dy, vp: vp || n1.p2, io, vl };
 }
 
+/**
+ * Convert vertex record to point on left side of path
+ * Adds offset to original vertex position
+ * @param {Object} rec - Vertex record with { dx, dy, vp }
+ * @returns {Point} Point offset to left
+ */
 export function v2pl(rec) {
     let p = rec.vp.clone();
     p.x += rec.dx;
@@ -144,6 +192,12 @@ export function v2pl(rec) {
     return p;
 }
 
+/**
+ * Convert vertex record to point on right side of path
+ * Subtracts offset from original vertex position
+ * @param {Object} rec - Vertex record with { dx, dy, vp }
+ * @returns {Point} Point offset to right
+ */
 export function v2pr(rec) {
     let p = rec.vp.clone();
     p.x -= rec.dx;
@@ -152,6 +206,22 @@ export function v2pr(rec) {
     return p;
 }
 
+/**
+ * Convert point array to offset path with left/right sides and triangle faces
+ * Generates parallel paths offset from center line with proper miter joints
+ * Handles both open and closed paths, with acute angle splitting
+ * Used for extruding 2D paths into 3D geometry
+ * @param {Point[]} points - Array of points defining centerline path
+ * @param {number} offset - Offset distance (positive/negative for direction)
+ * @param {boolean} open - True for open path, false for closed loop
+ * @param {number} [miter=1.5] - Miter limit ratio for splitting acute angles
+ * @returns {Object} Path data: { left, right, faces, normals, open }
+ *   - left: Array of points on left side
+ *   - right: Array of points on right side
+ *   - faces: Array of points forming triangle mesh
+ *   - normals: Array of normal vectors for each face vertex
+ *   - open: Whether path is open or closed
+ */
 export function pointsToPath(points, offset, open, miter = 1.5) {
     const absoff = Math.abs(offset);
     // calculate segment normals which are used to calculate vertex normals
@@ -324,6 +394,17 @@ export function pointsToPath(points, offset, open, miter = 1.5) {
     return { left, right, faces, normals, open };
 }
 
+/**
+ * Extrude 2D path to 3D geometry with specified height
+ * Generates vertex positions and normals for top, bottom, and side faces
+ * Used for creating 3D representations of 2D toolpaths
+ * @param {Object} path - Path object from pointsToPath with { faces, normals, left, right, open }
+ * @param {number} height - Half-height of extrusion (total height = 2 * height)
+ * @param {number} [z] - Optional Z coordinate for path (sets base Z level)
+ * @returns {Object} 3D geometry: { faces, normals }
+ *   - faces: Float32Array of vertex positions (x,y,z triplets)
+ *   - normals: Float32Array of normal vectors (x,y,z triplets)
+ */
 export function pathTo3D(path, height, z) {
     const { faces, normals, left, right, open } = path;
     const out = [];
@@ -420,8 +501,17 @@ export function pathTo3D(path, height, z) {
     return { faces: out, normals: nrm };
 }
 
-// produces indexed geometry which isn't ideal for rendering because
-// the default threejs generated vertex normals aren't accurate
+/**
+ * Extrude Three.js shape along point path to create tube geometry
+ * Produces indexed geometry (not ideal for rendering - default vertex normals aren't accurate)
+ * Shape profile is swept along path with rotation/translation at each point
+ * @param {THREE.Shape} shape - Three.js shape to extrude (profile cross-section)
+ * @param {Point[]} points - Array of points defining path centerline
+ * @param {boolean} [closed=true] - Whether path is closed loop
+ * @returns {Object} Indexed geometry: { index, faces }
+ *   - index: Array of triangle indices
+ *   - faces: Float32Array of vertex positions
+ */
 export function shapeToPath(shape, points, closed) {
     closed = closed !== undefined ? closed : true;
 
@@ -516,13 +606,17 @@ export function shapeToPath(shape, points, closed) {
 }
 
 /**
- * Generate a list of points approximating a circular arc.
- * @param {Point} start - the starting point of the arc.
- * @param {Point} end - the ending point of the arc (not included).
- * @param {number} [arcdivs = 24] - the number of lines to use to represent PI radians
- * @param {number} opts.radius - the radius of the arc. If undefined, will use the start and end points to infer the radius.
- * @param {boolean} opts.clockwise - whether the arc is clockwise or counter-clockwise. generating the points.
- * @return {Array<Point>} an array of points representing the arc.
+ * Generate array of points approximating circular arc from G-code arc commands
+ * Interpolates arc into line segments for rendering and toolpath generation
+ * Handles full circles (when start equals end) and Z-axis interpolation
+ * @param {Point} start - Arc starting point
+ * @param {Point} end - Arc ending point (not included in output)
+ * @param {number} [arcdivs=24] - Number of line segments per PI radians
+ * @param {Object} opts - Arc parameters
+ * @param {Point} opts.center - Arc center point with .r radius property
+ * @param {number} opts.radius - Arc radius (alternative to center)
+ * @param {boolean} opts.clockwise - True for clockwise (CW/G2), false for CCW (G3)
+ * @returns {Point[]} Array of interpolated points along arc (excluding end point)
  */
 export function arcToPath(start, end, arcdivs = 24, opts) {
     let { clockwise, center, radius } = opts;
@@ -597,7 +691,18 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
     return arr
 }
 
+/**
+ * Dynamically growing Float32Array with efficient memory management
+ * Used for accumulating vertex/normal data when final size is unknown
+ * Automatically expands when capacity reached, optimizes final output
+ * @class
+ */
 export class FloatPacker {
+    /**
+     * Create new float packer with initial size
+     * @param {number} size - Initial array size
+     * @param {number} [factor=1.2] - Growth factor when expanding (clamped to max 1.2)
+     */
     constructor(size, factor) {
         this.size = size;
         this.factor = Math.min(factor || 1.2, 1.1);
@@ -605,6 +710,11 @@ export class FloatPacker {
         this.pos = 0;
     }
 
+    /**
+     * Push multiple float values onto array
+     * Automatically expands array if needed
+     * @param {...number} values - Float values to append
+     */
     push() {
         const array = this.array;
         const size = this.size;
@@ -621,6 +731,11 @@ export class FloatPacker {
         }
     }
 
+    /**
+     * Get final array trimmed to actual size
+     * Uses subarray (view) if >90% full, otherwise copies to save memory
+     * @returns {Float32Array} Array containing only pushed values
+     */
     finalize() {
         if (this.pos / this.size >= 0.9) {
             return this.array.subarray(0, this.pos);
