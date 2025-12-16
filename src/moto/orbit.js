@@ -315,6 +315,7 @@ class Orbit extends EventDispatcher {
                 scaleSave = newScaleSave;
                 scope.object.zoom = 1 / scaleSave;
                 scope.object.updateProjectionMatrix();
+                scale = 1; // Reset scale to prevent accumulation
             } else {
                 scaleSave *= scale;
                 scale = 1;
@@ -468,10 +469,23 @@ class Orbit extends EventDispatcher {
                 delta = -delta;
             }
 
+            // Use delta magnitude as factor for smoother trackpad scrolling
+            // Scale down large deltas more aggressively for smoother control
+            let absDelta = Math.abs(delta);
+            let factor = 1;
+
+            // For typical trackpad deltas (0-20), use linear scaling
+            if (absDelta <= 20) {
+                factor = absDelta / 20;
+            } else {
+                // For larger deltas (mouse wheel clicks), use smaller steps
+                factor = 1 + Math.log(absDelta / 20);
+            }
+
             if (delta > 0) {
-                scope.dollyOut();
+                scope.dollyOut(factor);
             } else if (delta < 0) {
-                scope.dollyIn();
+                scope.dollyIn(factor);
             }
 
             scope.update();

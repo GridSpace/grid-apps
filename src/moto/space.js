@@ -337,7 +337,9 @@ function setPlatformSize(
     } else {
         platform.scale.set(width, depth, height);
     }
-    viewControl.maxDistance = Math.max(width,depth) * 4;
+    let maxDim = Math.max(width,depth);
+    viewControl.minDistance = 1;
+    viewControl.maxDistance = maxDim * 4;
     updatePlatformPosition();
     updateLights();
     if (volume) {
@@ -1491,6 +1493,7 @@ let Space = {
         newCamera.lookAt(target);
 
         // Store old control properties
+        const minDistance = viewControl.minDistance;
         const maxDistance = viewControl.maxDistance;
         const noKeys = viewControl.noKeys;
         const enabled = viewControl.enabled;
@@ -1535,6 +1538,7 @@ let Space = {
             if (sliderCallback) sliderCallback(val);
         });
         viewControl.noKeys = noKeys;
+        viewControl.minDistance = minDistance;
         viewControl.maxDistance = maxDistance;
         viewControl.enabled = enabled;
         viewControl.reverseZoom = reverseZoom;
@@ -1620,6 +1624,7 @@ let Space = {
         });
 
         viewControl.noKeys = true;
+        viewControl.minDistance = 1;
         viewControl.maxDistance = 1000;
 
         SCENE.add(skyAmbient = new THREE.AmbientLight(0x707070));
