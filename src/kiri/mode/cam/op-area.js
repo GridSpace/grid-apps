@@ -46,10 +46,11 @@ class OpArea extends CamOp {
 
         // selected area polygons: surfaces and edges
         let { devel, edgeangle } = settings.controller;
+        let polys = [];
         let stack = [];
         let surfaces = this.surfaces = [];
         let areas = this.areas = [ stack ];
-        let polys = [];
+        let aminz = Infinity;
 
         function newArea() {
             if (stack.length) {
@@ -65,7 +66,9 @@ class OpArea extends CamOp {
 
         // gather area selections
         for (let arr of (op.areas[widget.id] ?? [])) {
-            polys.push(newPolygon().fromArray(arr));
+            let poly = newPolygon().fromArray(arr);
+            aminz = Math.min(aminz, poly.minZ());
+            polys.push(poly);
         }
 
         // connect open poly edge segments into closed loops (when possible)
@@ -76,24 +79,25 @@ class OpArea extends CamOp {
         let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
         let faces = CAM.surface_find(widget, (op.surfaces[widget.id] ?? []), (follow ?? edgeangle ?? 5) * DEG2RAD);
         let fpoly = [];
-        let fminz = Infinity;
         for (let face of faces) {
             let i = face * 9;
             fpoly.push(newPolygon()
-                .add(vert[i++], vert[i++], fminz = Math.min(fminz, vert[i++]))
-                .add(vert[i++], vert[i++], fminz = Math.min(fminz, vert[i++]))
-                .add(vert[i++], vert[i++], fminz = Math.min(fminz, vert[i++]))
+                .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
+                .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
+                .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
             );
         }
         // remove invalid edges (eg. when vertical walls are the only selection)
         fpoly = fpoly.filter(p => p.area() > 0.001);
 
         // add in unioned surface areas
-        polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), fminz));
+        polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), aminz));
 
         // smoothing for jaggies usually caused by vertical walls
-        if (smoothVal)
-        polys = polys.map(poly => POLY.offset(POLY.offset([ poly ], smoothVal), -smoothVal)).flat();
+        if (smoothVal) {
+            polys = polys.map(poly => POLY.offset(POLY.offset([ poly ], smoothVal), -smoothVal)).flat();
+            POLY.setZ(polys, aminz);
+        }
 
         // expand selections (flattens z variable polys)
         if (Math.abs(expand) > 0) {
@@ -144,6 +148,7 @@ class OpArea extends CamOp {
                 let zroc = 0;
                 let zinc = 1 / zs.length;
                 let lzo;
+
                 outer: for (;;)
                 for (let z of zs) {
                     let slice = newLayer(z);
