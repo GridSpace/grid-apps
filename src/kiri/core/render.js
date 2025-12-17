@@ -421,6 +421,9 @@ function color4light(rgb, inc, seg) {
             rgb.b = 1;
             break;
     }
+    rgb.r *= 0.8;
+    rgb.g *= 0.8;
+    rgb.b = 0.4;
 }
 
 function color4light2(rgb, inc, seg) {

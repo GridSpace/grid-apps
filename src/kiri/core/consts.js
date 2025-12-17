@@ -10,10 +10,11 @@ const COLOR = {
     slicing: 0xffaaaa,
     slicing_opacity: 0.5,
     sliced_opacity: 0.0,
-    cam_preview: 0x888888,
+    cam_sliced_opacity: 0.2,
+    cam_preview: 0xdddddd,
+    cam_preview_opacity: 0.2,
+    cam_preview_dark: 0x888888,
     cam_preview_opacity_dark: 0.2,
-    cam_preview_opacity: 0.1,
-    cam_sliced_opacity: 0.2
 };
 
 const LISTS = {

@@ -326,7 +326,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
 
     if (isCam) {
         api.widgets.setOpacity(isDark ? COLOR.cam_preview_opacity_dark : COLOR.cam_preview_opacity);
-        api.widgets.setColor(COLOR.cam_preview);
+        api.widgets.setColor(isDark ? COLOR.cam_preview_dark : COLOR.cam_preview);
     } else if (offset === 0) {
         api.widgets.setOpacity(COLOR.preview_opacity);
     }
