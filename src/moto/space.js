@@ -1293,7 +1293,11 @@ let Space = {
                 // Use maxDim directly (not half) for more conservative framing
                 desiredDistance = maxDim / Math.tan(fov / 2) * padding;
             } else {
-                desiredDistance = maxDim * padding;
+                // For orthographic, calculate equivalent distance
+                // The ortho frustum size is proportional to distance * tan(fov/2)
+                // We want similar framing to perspective mode
+                const fov = perspective * (Math.PI / 180);
+                desiredDistance = maxDim / Math.tan(fov / 2) * padding;
             }
 
             // Get current view angles or use defaults
@@ -1316,9 +1320,19 @@ let Space = {
                 panZ: newPanZ,
             });
 
-            const currentDist = camera.position.distanceTo(viewControl.getTarget());
-            const scale = desiredDistance / currentDist;
-            viewControl.setPosition({ scale });
+            if (camera.isPerspectiveCamera) {
+                const currentDist = camera.position.distanceTo(viewControl.getTarget());
+                const scale = desiredDistance / currentDist;
+                viewControl.setPosition({ scale });
+            } else {
+                // For orthographic, set zoom directly based on viewing size
+                // The camera frustum height is determined by the orthographic bounds
+                // We want the object to fit within the view with padding
+                const currentDist = camera.position.distanceTo(viewControl.getTarget());
+                const targetScaleSave = desiredDistance / currentDist;
+                // Reset scale accumulation and set absolute zoom
+                viewControl.setPosition({ scale: targetScaleSave / viewControl.getPosition(true).scale });
+            }
             viewControl.update();
 
             if (then) then();
