@@ -35,6 +35,7 @@ class OpOutline extends CamOp {
                 down,
                 expand: 0,
                 mode: 'trace',
+                omitinner: omitvoid,
                 omitthru,
                 // outline: omitthru,
                 ov_botz,
