@@ -1700,6 +1700,7 @@ function init_two() {
     };
 
     // bind interface action elements
+    $('export-support-a').onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
     $('mode-device').onclick = api.show.devices;
     $('mode-profile').onclick = settingsLoad;
     $('mode-fdm').onclick = () => api.mode.set('FDM');

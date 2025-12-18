@@ -1690,6 +1690,14 @@ details[open] summary::after {
     font-family: monospace;
     padding-top: 5px;
 }
+#export-support {
+    padding-top: 10px;
+    text-align: center;
+}
+#export-support a {
+    padding: 5px;
+    border-radius: 2px;
+}
 .mod-print {
     background-color: rgba(255,255,255,0.85);
 }
