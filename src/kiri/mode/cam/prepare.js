@@ -434,6 +434,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             deltaZ = point.z - printPoint.z,
             absDeltaZ = Math.abs(deltaZ),
             isMove = (emit === 0 || emit === false),
+            hasBounds = (travelBounds || lastTravelBounds),
             upAndOver = false;
 
         // contouring logic
@@ -460,7 +461,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             newLayer();
         } else
         // convert short planar moves to cuts when not lasering
-        if (isMove && deltaXY <= shortCut && deltaZ <= 0 && !lasering) {
+        if (isMove && !hasBounds && deltaXY <= shortCut && deltaZ <= 0 && !lasering) {
             // but only if the z plunge is not too far
             if (absDeltaZ < 0.01 || (tolerance > 0 && absDeltaZ <= tolerance)) {
                 if (debug) console.log('shortcut', { deltaXY, deltaZ, shortCut });
@@ -484,7 +485,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             }
         } else
         // check move against a known boundary (pocketing)
-        if (isMove && (travelBounds || lastTravelBounds)) {
+        if (isMove && hasBounds) {
             // travel boundary "hangover" from last area op when traveling between
             let check = [];
             if (travelBounds) check.push(...travelBounds);
