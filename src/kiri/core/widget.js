@@ -98,8 +98,11 @@ class Widget {
         this.support = false;
     }
 
-    saveToCatalog(filename) {
-        if (this.grouped) {
+    saveToCatalog(filename, overwrite) {
+        if (!filename) {
+            filename = this.meta.file;
+        }
+        if (this.grouped && !overwrite) {
             return this;
         }
         const widget = this;

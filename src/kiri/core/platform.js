@@ -561,9 +561,16 @@ function platformChanged() {
                     h.div({ class: "widopt" }, [
                         h.button(
                             {
+                                title: "save",
+                                onclick() { w.saveToCatalog(null,true) }
+                            },
+                            [ h.i({ class:"fas fa-save" }) ]
+                        ),
+                        h.button(
+                            {
                                 title: "rename",
-                                onclick() { api.widgets.rename(w)
-                            }},
+                                onclick() { api.widgets.rename(w) }
+                            },
                             [ h.i({ class:"fas fa-pen-to-square" }) ]
                         ),
                         h.button(
