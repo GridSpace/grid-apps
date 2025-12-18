@@ -121,7 +121,7 @@ export async function selectHoles(individual) {
     setTimeout(() => {
         api.hide.alert(escAlert);
     }, 5000);
-    api.widgets.opacity(0.8);
+    api.widgets.setOpacity(0.8);
 }
 
 export function selectHolesHover(data) {
@@ -173,7 +173,7 @@ export function selectHolesDone() {
     env.func.unpop();
     holeSelOn.classList.remove("editing");
     holeSelOn = false;
-    api.widgets.opacity(1);
+    api.widgets.setOpacity(1);
     api.hide.alert(alert);
     api.feature.hover = false;
     api.feature.hoverAdds = false;

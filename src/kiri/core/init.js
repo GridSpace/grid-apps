@@ -1770,6 +1770,7 @@ function init_two() {
             ev => api.space.set_focus(undefined, ev.object.point)
         );
     };
+    $('context-contents').onclick = () => { api.SPACE.view.fit() };
 
     // ui.modal.onclick = api.modal.hide;
     ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
