@@ -500,8 +500,8 @@ function clampZ(poly, max, min) {
         else if (p.z > max) p.z = max;
     }
     if (poly.inner) {
-        for (let poly of poly.inner) {
-            clampZ(poly, min, max);
+        for (let p of poly.inner) {
+            clampZ(p, min, max);
         }
     }
     return poly;
