@@ -341,7 +341,7 @@ self.lang['en-us'] = {
     pt_thrd_s:      "threaded",
     pt_thrd_l:      ["use parallel processing when browser supports nested workers. may increase memory pressure on larger models. disable if you are getting out of memory errors"],
     pt_assy_s:      "web asm",
-    pt_assy_l:      ["use web assembly when supported by browser. if you experience artifacts or memory errors, try disabling this."],
+    pt_assy_l:      ["use web assembly when supported by browser. required for some cnc operations. if you experience artifacts or memory errors, try disabling this."],
     pt_wgpu_s:      "web gpu",
     pt_wgpu_l:      ["use web gpu when supported by browser. if you experience artifacts or memory errors, try disabling this."],
 

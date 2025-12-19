@@ -226,7 +226,7 @@ class OpArea extends CamOp {
                 progress(proc, 'clear');
             } else
             if (mode === 'trace') {
-                let { tr_type  } = op;
+                let { tr_over, tr_type  } = op;
                 let zs = down ? base_util.lerp(zTop, op.thru ? zBottom : Math.max(zBottom, area.minZ()), down) : [ bounds.min.z ];
                 let zroc = 0;
                 let zinc = 1 / zs.length;
@@ -247,8 +247,8 @@ class OpArea extends CamOp {
                         }
                         // todo: move this out of the zs loop
                         let stepping = tr_type === 'inside' ?
-                            [ -toolDiam / 2, -toolOver ] :
-                            [ toolDiam / 2, toolOver ];
+                            ( tr_over ? -tr_over : [ -toolDiam / 2, -toolOver ] ) :
+                            ( tr_over ? tr_over : [ toolDiam / 2, toolOver ] );
                         POLY.offset(offit, stepping, {
                             count: op.steps ?? 1, outs, flat: true, z, minArea: 0, open: true
                         });
