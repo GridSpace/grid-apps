@@ -454,10 +454,9 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         //  * rapid to just above stock
         //  * continue plunge as cut
         if (isMove && deltaZ < 0 && printPoint.z > stockZ && point.z < stockZ) {
-            if (debug) console.log('detected plunge cut as rapid move', printPoint.z, stockZ, point.z);
+            if (debug) console.log('detected plunge cut as rapid move', printPoint.z, point.z);
             layerPush(point.clone().setZ(zSafe), 0, 0, tool);
             // change to cutting move for remainder of plunge
-            emit = 1;
             newLayer();
         } else
         // convert short planar moves to cuts when not lasering
@@ -502,15 +501,16 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             }
             lastTravelBounds = undefined;
         } else
-        // for longer moves, check the terrain to see if we need to go up and over
+        // for longer moves
         if (isMove) {
             const bigXY = (deltaXY > shortCut && !lasering);
             const bigZ  = (absDeltaZ > toolDiam / 2 && deltaXY > tolerance);
             const midZ  = (tolerance && absDeltaZ >= tolerance);
+            const inStock = printPoint.z < stockZ || point.z < stockZ;
             if (bigXY || bigZ || midZ) {
                 if (debug) console.log({ fromz: printPoint.z, toz: point.z });
-                // for big moves inside stock...
-                if (camForceZMax || printPoint.z < stockZ) {
+                // for big moves intersecting stock...
+                if (camForceZMax || inStock) {
                     upAndOver = true;
                 }
             }
@@ -849,6 +849,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     let ops = {
         addGCode,
         camOut,
+        clearTravelBounds() { setTravelBoundary() },
         depthOutlinePath,
         emitDrills,
         emitTraces,
@@ -866,6 +867,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         setSpindle,
         setTolerance,
         setTool,
+        setTravelBoundary,
         tip2tipEmit,
         widget,
         zSafe,

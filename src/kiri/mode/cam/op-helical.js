@@ -13,7 +13,8 @@ export class OpHelical extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { settings, addSlices, widget, updateToolDiams } = state;
+        let { addSlices, color, settings, updateToolDiams, widget } = state;
+        let { stock } = settings
         let {
             cylinders,
             forceStartAng,
@@ -29,8 +30,6 @@ export class OpHelical extends CamOp {
             entry,
             entryOffset,
         } = op;
-        let { color } = state;
-        let { stock } = settings
 
         let tool = new Tool(settings, op.tool),
             toolDiam = tool.fluteDiameter(),
@@ -240,10 +239,11 @@ export class OpHelical extends CamOp {
     }
 
     async prepare(ops, progress) {
-        let { polyEmit, printPoint, setTool } = ops;
+        let { clearTravelBounds, polyEmit, printPoint, setNextIsMove, setTool } = ops;
         let { tool, spindle, rate, feed } = this.op;
 
         setTool(tool, feed, rate);
+        clearTravelBounds();
 
         let [ polys ] = this.sliceOut.map((s) => s.camLines);
         polys = polys.slice();
@@ -267,6 +267,7 @@ export class OpHelical extends CamOp {
             if (!closest) break;
             poly = polys[closestI]
             polys[closestI] = null;
+
             printPoint = polyEmit(poly);
         }
     }
