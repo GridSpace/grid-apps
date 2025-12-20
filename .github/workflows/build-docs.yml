@@ -24,22 +24,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Determine latest rel-x.y branch
-        id: latest
-        run: |
-          latest_branch=$(git branch -r \
-            | sed 's|origin/||' \
-            | grep '^rel-[0-9]\+\.[0-9]\+$' \
-            | sed 's/rel-//' \
-            | sort -V \
-            | tail -n 1)
-          echo "latest=rel-$latest_branch" >> "$GITHUB_OUTPUT"
-
-      - name: Stop if not latest
-        if: steps.latest.outputs.latest != github.ref_name
-        run: |
-          echo "Not latest branch. This is ${{ github.ref_name }}, latest is ${{ steps.latest.outputs.latest }}"
-          exit 0
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
         with:
