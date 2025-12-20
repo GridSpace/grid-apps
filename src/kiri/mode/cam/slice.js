@@ -751,8 +751,8 @@ export async function holes(settings, widget, individual, rec, onProgress) {
         h.selected = (!individual && Math.abs(h.area - area) <= area * 0.05); // for same size selection
     })
 
-    console.log("unfiltered circles",circles);
-    console.log("drills",drills);
+    // console.log("unfiltered circles",circles);
+    // console.log("drills",drills);
 
     drills = drills.filter(drill => drill.depth > 0);
     widget.shadowedDrills = shadowedDrills;
