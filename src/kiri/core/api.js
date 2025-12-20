@@ -21,6 +21,7 @@ import { widgets } from './widgets.js';
 import { updateTool } from '../mode/cam/tools.js';
 import { beta, version } from '../../moto/license.js';
 import { space as SPACE } from '../../moto/space.js';
+import { types as load } from '../../load/file.js';
 
 import { LANG } from './lang.js';
 import { LOCAL, SETUP, SECURE } from './main.js';
@@ -156,6 +157,7 @@ export const api = {
     js2o,
     language: LANG,
     lists,
+    load,
     local,
     modal,
     mode,
