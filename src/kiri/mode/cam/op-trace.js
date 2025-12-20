@@ -37,6 +37,7 @@ class OpTrace extends CamOp {
             surfaces: {},
             tolerance,
             tool,
+            thru,
             tr_over: offover,
             tr_type: offset
         };

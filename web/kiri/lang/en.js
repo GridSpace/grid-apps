@@ -503,7 +503,7 @@ self.lang['en-us'] = {
     cc_sdwn_s:      "step down",
     cc_sdwn_l:      ["step down depth","for each pass","in workspace units","0 to disable"],
     cc_thru_s:      "cut thru",
-    cc_thru_l:      ["additional cut depth below trace bottom"],
+    cc_thru_l:      ["allow trace depth to extend thru","the bottom of the selected area","use with negative Z bottom"],
     cc_offd_s:      "offset",
     cc_offd_l:      ["overrides default offset distance (which is the tool radius) when set to any value but zero"],
     cc_feed_s:      "feed rate",
