@@ -181,6 +181,12 @@ class OpArea extends CamOp {
                         // terminate z descent when no further output possible
                         break outer;
                     }
+                    // support legacy outline features
+                    if (op.omitouter) {
+                        outs = omitOuter(outs);
+                    } else if (op.omitinner) {
+                        outs = omitInner(outs);
+                    }
                     // cut tabs when present
                     if (tabs.length) outs = cutTabs(tabs, outs);
                     // for roughing backward compatability
@@ -188,12 +194,6 @@ class OpArea extends CamOp {
                         for (let out of outs)
                             for (let p of out.points)
                                 p.z += op.leave_z;
-                    }
-                    // support legacy outline features
-                    if (op.omitouter) {
-                        outs = omitOuter(outs);
-                    } else if (op.omitinner) {
-                        outs = omitInner(outs);
                     }
                     // add tabs to travel boundaries
                     if (tabs.length) {
@@ -259,14 +259,14 @@ class OpArea extends CamOp {
                     }
                     // add dogbones when specified
                     if (op.dogbones) outs.forEach(out => out.addDogbones(toolDiam / 5, op.revbones));
-                    // cut tabs when present
-                    if (tabs.length) outs = cutTabs(tabs, outs);
                     // support legacy outline features
                     if (op.omitouter) {
                         outs = omitOuter(outs);
                     } else if (op.omitinner) {
                         outs = omitInner(outs);
                     }
+                    // cut tabs when present
+                    if (tabs.length) outs = cutTabs(tabs, outs);
                     slice.camLines = outs;
                     POLY.setWinding(outs, direction === 'climb');
                     // store travel boundary that triggers up and over moves
