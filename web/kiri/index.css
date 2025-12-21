@@ -90,7 +90,6 @@ div {
     position: relative;
 }
 button.yellow {
-    background-color: #eda;
     border: 1px solid rgba(0,0,255,0.5);
 }
 button.yellow:hover {
@@ -808,6 +807,39 @@ details[open] summary::after {
 }
 .mt10 {
     margin-top: 5px;
+}
+.wassup {
+    background-color: rgba(0,255,100,0.3);
+    border-top: 5px solid rgba(0,255,100,0.5);
+    border-bottom: 5px solid rgba(0,255,100,0.5);
+}
+.wassup:hover {
+    border-top: 5px solid rgba(0,255,100,0.5);
+    border-bottom: 5px solid rgba(0,255,100,0.5);
+}
+.dark .wassup {
+    background-color: rgba(0,255,0,0.2);
+}
+.blurb {
+    max-width: 200px;
+    align-items: flex-end;
+    justify-content: center;
+    text-align: right;
+    padding: 10px 0 10px 0;
+    color: var(--blue-2);
+    gap: 10px;
+}
+.blurb p {
+    margin: 0;
+}
+.dark .blurb p:first-child, .dark .blurb p:last-child {
+    color: #fff;
+}
+.blurb p:first-child, .blurb p:last-child {
+    color: #000;
+}
+.mlr-10 {
+    margin: 0 10px 0 10px;
 }
 
 #curtain {
