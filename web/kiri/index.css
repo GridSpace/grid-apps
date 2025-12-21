@@ -808,16 +808,16 @@ details[open] summary::after {
 .mt10 {
     margin-top: 5px;
 }
-.wassup {
+#wassup {
     background-color: rgba(0,255,100,0.3);
     border-top: 5px solid rgba(0,255,100,0.5);
     border-bottom: 5px solid rgba(0,255,100,0.5);
 }
-.wassup:hover {
+#wassup:hover {
     border-top: 5px solid rgba(0,255,100,0.5);
     border-bottom: 5px solid rgba(0,255,100,0.5);
 }
-.dark .wassup {
+.dark #wassup {
     background-color: rgba(0,255,0,0.2);
 }
 .blurb {

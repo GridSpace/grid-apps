@@ -1772,6 +1772,7 @@ function init_two() {
     };
     $('context-contents').onclick = () => { api.SPACE.view.fit() };
     $('view-fit').onclick = () => { api.SPACE.view.fit() };
+    $('wassup').onmouseover = () => { $('suppopp').classList.remove('hide') };
 
     // ui.modal.onclick = api.modal.hide;
     ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
