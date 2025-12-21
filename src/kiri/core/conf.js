@@ -76,6 +76,9 @@ function device_from_code(code,mode) {
     // presence of internal field indicates already converted
     if (code.internal >= 0) return code;
 
+    // presence of nested code field indicates newer encoding
+    if (code.code) return code.code;
+
     // if (self.navigator) console.log({mode, convert: code});
     let cmd = code.cmd || {},
         set = code.settings || {},
