@@ -254,6 +254,7 @@ const funcs = self.minion = {
     trace_y(data, seq) {
         const { trace } = cache.trace;
         trace.crossY_sync(data.params, slice => {
+            // console.log('w',slice);
             slice = codec.encode(slice);
             reply({ seq, slice });
         });

@@ -33,7 +33,7 @@ export class Topo {
             minY = bounds.min.y,
             maxY = bounds.max.y,
             zBottom = contour.bottom ? workarea.bottom_z : 0,
-            zMin = workarea.bottom_z + 0.0001, //Math.max(bounds.min.z, zBottom) + 0.0001,
+            zMin = workarea.bottom_z + 0.0001,
             boundsX = maxX - minX,
             boundsY = maxY - minY,
             inside = contour.inside,
@@ -474,7 +474,8 @@ export class Topo {
                             ...params,
                             box,
                             lines: rec.lines,
-                            gridx: rec.index
+                            gridx: rec.index,
+                            slice
                         });
 
                         return slice;
@@ -657,7 +658,6 @@ export class Probe {
             let iy = Math.round(ry * (py - minY));
             return data[ix * stepsY + iy] || zMin;
         };
-
     }
 
 }
@@ -848,7 +848,7 @@ export class Trace {
             checkr.y = y;
             // when tabs are on and this point is inside the
             // tab polygon, ensure z is at least tabHeight
-            if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+            if (clipTab && clipTab.length && tv < tabHeight && inClip(clipTab, tv, checkr)) {
                 tv = this.tabZ;
             }
             // if the value is on the floor and inside the clip
@@ -886,7 +886,7 @@ export class Trace {
             checkr.y = y;
             // when tabs are on and this point is inside the
             // tab polygon, ensure z is at least tabHeight
-            if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+            if (clipTab && clipTab.length && tv < tabHeight && inClip(clipTab, tv, checkr)) {
                 tv = this.tabZ;
             }
             // if the value is on the floor and inside the clip
