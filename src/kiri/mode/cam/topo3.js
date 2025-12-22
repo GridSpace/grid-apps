@@ -182,10 +182,7 @@ export class Topo {
             for (let i=0; i<numScanlines; i++) {
                 let lineStart = i * pointsPerLine;
                 let lineData = pathData.slice(lineStart, lineStart + pointsPerLine);
-                let points = contourY
-                    ? Array.from(lineData).map((v,j) => calcPoint(i * ymult + yoff, j * xmult + xoff, v, i * xStep, j * yStep))
-                    : Array.from(lineData).map((v,j) => calcPoint(j * xmult + xoff, i * ymult + yoff, v, j * xStep, i * yStep))
-                    ;
+                let points = Array.from(lineData).map((v,j) => calcPoint(j * xmult + xoff, i * ymult + yoff, v, j * xStep, i * yStep));
                 let slice = newSlice(i);
                 let poly = newPolygon().setOpen();
                 let lines = [ ];
@@ -227,6 +224,12 @@ export class Topo {
                 // require two points or more
                 if (poly.length > 1) {
                     lines.push(poly);
+                }
+                if (contourY) {
+                    for (let poly of lines)
+                    for (let p of poly.points) {
+                        p.swapXY();
+                    }
                 }
                 // raise output points when inside tab boundaries
                 if (!inside && tabsOn && clipTab.length)
