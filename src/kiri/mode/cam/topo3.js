@@ -252,11 +252,11 @@ export class Topo {
                     for (let i=2; i<points.length; i++) {
                         let np = points[i];
                         let ndz = np.z - lp.z;
-                        if (Math.abs(dz - ndz) > epsilon) {
+                        if (Math.abs(dz - ndz) > flatness) {
                             // slope changed
                             merged.push(lp);
                             dz = ndz;
-                        } else if (curvesOnly && Math.abs(ndz) < epsilon) {
+                        } else if (curvesOnly && Math.abs(ndz) < flatness) {
                             // add empty points as path separators
                             merged.push(undefined);
                         }
