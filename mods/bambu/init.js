@@ -150,7 +150,7 @@ module.exports = async (server) => {
     }
 
     async function ftp_open(args = {}) {
-        const client = new Client();
+        const client = new Client(300000); // 5 minute timeout for large files
         const port = parseInt(args.port || 990);
         const host = args.host || "localhost";
         const user = args.user || "bblp";
