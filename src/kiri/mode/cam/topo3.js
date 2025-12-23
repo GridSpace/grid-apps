@@ -725,7 +725,7 @@ export class Trace {
                 const slope = Math.atan2(dz, dl);
                 if (curvesOnly && Math.abs(dz) < flatness) {
                     end_poly(newP);
-                } else if (lastSlope !== undefined && Math.abs(lastSlope - slope) < 0.001) {
+                } else if (lastSlope !== undefined && Math.abs(lastSlope - slope) < flatness) {
                     latent = newP;
                 } else {
                     if (latent) {
