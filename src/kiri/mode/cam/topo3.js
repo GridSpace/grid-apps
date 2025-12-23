@@ -126,9 +126,8 @@ export class Topo {
                 wbounds.expandByVector({ x: toolDiameter/2 + resolution, y: toolDiameter/2 + resolution, z: 0 });
             }
 
+            // swap XY vertices (unswap later after polylines generated)
             if (contourY) {
-                // console.time('swap XY vertices');
-                // swap XY vertices
                 for (let i=0; i<vertices.length; i+= 3) {
                     let tmp = vertices[i+1];
                     vertices[i+1] = vertices[i+0];
@@ -140,7 +139,6 @@ export class Topo {
                     ext.x = ext.y;
                     ext.y = tmp;
                 });
-                // console.timeEnd('swap XY vertices');
             }
 
             let trace = contour.trace;
@@ -151,14 +149,17 @@ export class Topo {
             let xStep = density;
             let yStep = Math.ceil(toolStep / resolution);
             let epsilon = 10e-4;
+            // load the pre-generated tool profile
             await gpu.loadTool({
                 sparseData: toolData
             });
+            // rasterize the terrain to the same resolution
             let terrain = await gpu.loadTerrain({
                 triangles: vertices,
                 boundsOverride: wbounds
             });
             let { gridWidth, positions } = terrain;
+            // generate all scanline points passing tool over terrain
             let output = await gpu.generateToolpaths({
                 xStep,
                 yStep,
@@ -179,6 +180,9 @@ export class Topo {
                 p.ty = ty;
                 return p;
             }
+            // for each toolpath, return a point in part space coordinated
+            // attach to a polyline, and annotate with terrain coordinates
+            // so we can later dertermine if the point is on or off the part
             for (let i=0; i<numScanlines; i++) {
                 let lineStart = i * pointsPerLine;
                 let lineData = pathData.slice(lineStart, lineStart + pointsPerLine);
@@ -186,9 +190,11 @@ export class Topo {
                 let slice = newSlice(i);
                 let poly = newPolygon().setOpen();
                 let lines = [ ];
+                // track z co-planar skipped points for latent emission
                 let skip = 0;
                 let lp;
                 for (let p of points) {
+                    // detect points where no rays intersect the part (off part)
                     if (inside && positions[p.ty * gridWidth + p.tx] < zBottom - epsilon) {
                         if (poly.length > 1) {
                             lines.push(poly);
@@ -200,6 +206,7 @@ export class Topo {
                         skip = 0;
                         continue;
                     }
+                    // off part but we want to return zBottom (outside)
                     if (p.z < zBottom - epsilon) {
                         lp = p;
                         if (poly.length === 0) {
@@ -215,6 +222,7 @@ export class Topo {
                             continue;
                         }
                     } else if (lp && skip && poly.length === 0) {
+                        // latent/last point output
                         lp.z = zBottom;
                         poly.push(lp);
                     }
@@ -225,6 +233,7 @@ export class Topo {
                 if (poly.length > 1) {
                     lines.push(poly);
                 }
+                // fixup/swap when contouring along Y
                 if (contourY) {
                     for (let poly of lines)
                     for (let p of poly.points) {
