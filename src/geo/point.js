@@ -127,6 +127,18 @@ class Point {
     }
 
     /**
+     * Swap X and Y coordinates in place
+     * @returns {Point} This point (for chaining)
+     */
+    swapXY() {
+        let p = this,
+            t = p.x;
+        p.x = p.y;
+        p.y = t;
+        return this;
+    }
+
+    /**
      * Swap X and Z coordinates in place
      * @returns {Point} This point (for chaining)
      */

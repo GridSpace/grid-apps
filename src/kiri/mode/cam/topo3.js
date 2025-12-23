@@ -33,7 +33,7 @@ export class Topo {
             minY = bounds.min.y,
             maxY = bounds.max.y,
             zBottom = contour.bottom ? workarea.bottom_z : 0,
-            zMin = workarea.bottom_z + 0.0001, //Math.max(bounds.min.z, zBottom) + 0.0001,
+            zMin = workarea.bottom_z + 0.0001,
             boundsX = maxX - minX,
             boundsY = maxY - minY,
             inside = contour.inside,
@@ -182,10 +182,7 @@ export class Topo {
             for (let i=0; i<numScanlines; i++) {
                 let lineStart = i * pointsPerLine;
                 let lineData = pathData.slice(lineStart, lineStart + pointsPerLine);
-                let points = contourY
-                    ? Array.from(lineData).map((v,j) => calcPoint(i * ymult + yoff, j * xmult + xoff, v, i * xStep, j * yStep))
-                    : Array.from(lineData).map((v,j) => calcPoint(j * xmult + xoff, i * ymult + yoff, v, j * xStep, i * yStep))
-                    ;
+                let points = Array.from(lineData).map((v,j) => calcPoint(j * xmult + xoff, i * ymult + yoff, v, j * xStep, i * yStep));
                 let slice = newSlice(i);
                 let poly = newPolygon().setOpen();
                 let lines = [ ];
@@ -227,6 +224,12 @@ export class Topo {
                 // require two points or more
                 if (poly.length > 1) {
                     lines.push(poly);
+                }
+                if (contourY) {
+                    for (let poly of lines)
+                    for (let p of poly.points) {
+                        p.swapXY();
+                    }
                 }
                 // raise output points when inside tab boundaries
                 if (!inside && tabsOn && clipTab.length)
@@ -471,7 +474,8 @@ export class Topo {
                             ...params,
                             box,
                             lines: rec.lines,
-                            gridx: rec.index
+                            gridx: rec.index,
+                            slice
                         });
 
                         return slice;
@@ -654,7 +658,6 @@ export class Probe {
             let iy = Math.round(ry * (py - minY));
             return data[ix * stepsY + iy] || zMin;
         };
-
     }
 
 }
@@ -845,7 +848,7 @@ export class Trace {
             checkr.y = y;
             // when tabs are on and this point is inside the
             // tab polygon, ensure z is at least tabHeight
-            if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+            if (clipTab && clipTab.length && tv < tabHeight && inClip(clipTab, tv, checkr)) {
                 tv = this.tabZ;
             }
             // if the value is on the floor and inside the clip
@@ -883,7 +886,7 @@ export class Trace {
             checkr.y = y;
             // when tabs are on and this point is inside the
             // tab polygon, ensure z is at least tabHeight
-            if (clipTab && tv < tabHeight && inClip(clipTab, tv, checkr)) {
+            if (clipTab && clipTab.length && tv < tabHeight && inClip(clipTab, tv, checkr)) {
                 tv = this.tabZ;
             }
             // if the value is on the floor and inside the clip

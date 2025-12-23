@@ -117,6 +117,7 @@ function setDeviceCode(code, devicename) {
     api.event.emit('device.select', devicename);
     try {
         if (typeof(code) === 'string') code = js2o(code) || {};
+        if (code.code) code = code.code;
 
         let mode = api.mode.get(),
             lmode = mode.toLowerCase(),
