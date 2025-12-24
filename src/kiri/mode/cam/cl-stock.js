@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../core/api.js';
-import { env, isDark } from './client.js';
+import { env, isDark } from './init-ui.js';
 import { space as SPACE } from '../../../moto/space.js';
 
 const { ui: UI } = api;

@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../core/api.js';
-import { env, clearPops } from './client.js';
+import { env, clearPops } from './init-ui.js';
 import { CAM } from './driver-fe.js';
 
 export let holeSelOn = false;

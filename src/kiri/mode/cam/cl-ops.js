@@ -2,7 +2,7 @@
 
 import { $, h } from '../../../moto/webui.js';
 import { api } from '../../core/api.js';
-import { env, opRender } from './client.js';
+import { env, opRender } from './init-ui.js';
 import { Tool } from './tool.js';
 import { opFlip } from './cl-flip.js';
 import { selectHoles } from './cl-hole.js';

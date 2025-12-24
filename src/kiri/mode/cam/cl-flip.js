@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../core/api.js';
-import { env, opAdd, opRender } from './client.js';
+import { env, opAdd, opRender } from './init-ui.js';
 import { CAM } from './driver-fe.js';
 import { clearTabs, restoreTabs } from './cl-tab.js';
 import { updateStock } from './cl-stock.js';

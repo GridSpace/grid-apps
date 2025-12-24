@@ -7,7 +7,7 @@ import { local } from '../../data/local.js';
 import { util } from '../../geo/base.js';
 import { MODES } from './consts.js';
 import { LASER as laser_driver } from '../mode/laser/driver.js';
-import { SLA as sla_client } from '../mode/sla/client.js';
+import { SLA as sla_client } from '../mode/sla/init-ui.js';
 import { hash } from '../../ext/md5.js';
 
 let printSeq = parseInt(local['kiri-print-seq'] || local['print-seq'] || "0") + 1;

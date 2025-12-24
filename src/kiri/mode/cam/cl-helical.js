@@ -1,6 +1,6 @@
 import { api } from "../../core/api.js";
 import { CAM } from "./driver-fe.js";
-import { clearPops, env } from "./client.js";
+import { clearPops, env } from "./init-ui.js";
 
 let alert, lastWidget;
 
