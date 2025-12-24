@@ -2,12 +2,11 @@
 
 "use strict";
 
-import { base, config, earcut, util } from './base.js';
-import { calc_normal, calc_vertex, paths } from './paths.js';
+import { base, config, util } from './base.js';
+import { paths } from './paths.js';
 import { ClipperLib } from '../ext/clip2.esm.js';
 import { newBounds } from './bounds.js';
 import { newPoint, pointFromClipper } from './point.js';
-import { newSlopeFromAngle } from './slope.js';
 import { polygons as POLY } from './polygons.js';
 import * as geo from './poly/geo.js';
 import * as arcs from './poly/arcs.js';

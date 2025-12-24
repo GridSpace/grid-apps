@@ -3,7 +3,6 @@
 "use strict";
 
 import { earcut as earcutLib } from '../base.js';
-import { newPolygon } from '../polygon.js';
 import { polygons as POLY } from '../polygons.js';
 
 /**

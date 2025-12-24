@@ -1,6 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base, util } from '../../../geo/base.js';
 import { tip2tipEmit, poly2polyEmit } from '../../../geo/paths.js';
 import { newPoint } from '../../../geo/point.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
