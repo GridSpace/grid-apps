@@ -691,65 +691,10 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
     return arr
 }
 
-/**
- * Dynamically growing Float32Array with efficient memory management
- * Used for accumulating vertex/normal data when final size is unknown
- * Automatically expands when capacity reached, optimizes final output
- * @class
- */
-export class FloatPacker {
-    /**
-     * Create new float packer with initial size
-     * @param {number} size - Initial array size
-     * @param {number} [factor=1.2] - Growth factor when expanding (clamped to max 1.2)
-     */
-    constructor(size, factor) {
-        this.size = size;
-        this.factor = Math.min(factor || 1.2, 1.1);
-        this.array = new Float32Array(size);
-        this.pos = 0;
-    }
-
-    /**
-     * Push multiple float values onto array
-     * Automatically expands array if needed
-     * @param {...number} values - Float values to append
-     */
-    push() {
-        const array = this.array;
-        const size = this.size;
-        const args = arguments.length;
-        if (this.pos + args >= size) {
-            let nusize = ((size * this.factor) | 0) + args;
-            let nuarray = new Float32Array(nusize);
-            nuarray.set(array);
-            this.array = nuarray;
-            this.size = nusize;
-        }
-        for (let i = 0; i < args; i++) {
-            array[this.pos++] = arguments[i];
-        }
-    }
-
-    /**
-     * Get final array trimmed to actual size
-     * Uses subarray (view) if >90% full, otherwise copies to save memory
-     * @returns {Float32Array} Array containing only pushed values
-     */
-    finalize() {
-        if (this.pos / this.size >= 0.9) {
-            return this.array.subarray(0, this.pos);
-        } else {
-            return this.array.slice(0, this.pos);
-        }
-    }
-}
-
 export const paths = {
     tip2tipEmit,
     poly2polyEmit,
     shapeToPath,
     pointsToPath,
-    pathTo3D,
-    FloatPacker
+    pathTo3D
 }

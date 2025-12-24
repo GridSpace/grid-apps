@@ -183,7 +183,6 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         color,
         computeShadows,
         contourPolys,
-        cutPolys,
         cutTabs,
         dark,
         isIndexed,
@@ -782,12 +781,6 @@ function cutTabs(tabs, offset) {
         }
     }
     return out;
-}
-
-function cutPolys(polys, offset) {
-    let noff = [];
-    offset.forEach(op => noff.appendAll( op.cut(POLY.union(polys, 0, true), true) ));
-    return POLY.reconnect(noff);
 }
 
 function contourPolys(widget, polys) {
