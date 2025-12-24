@@ -6,6 +6,7 @@ import { base } from '../../geo/base.js';
 import { local as sdb } from '../../data/local.js';
 import { slider } from './slider.js';
 import { keyboard } from './keyboard.js';
+import { modal } from './modal.js';
 import { space } from '../../moto/space.js';
 import { LOCAL, SETUP } from './main.js';
 import { VIEWS, MODES, SEED } from './consts.js';
@@ -847,6 +848,23 @@ function init_one() {
     ui.settingsSave.onclick = () => {
         settingsSave(undefined, ui.settingsName.value);
     };
+
+    // initialize modal controller
+    modal.init({
+        ui: {
+            modal: ui.modal,
+            modals: ui.modals
+        },
+        onShow: (which) => {
+            api.event.emit('modal.show', which);
+        },
+        onHide: () => {
+            api.event.emit('modal.hide');
+        }
+    });
+
+    // expose modal to API
+    api.modal = modal;
 
     // slider setup
     slider.init({

@@ -4,6 +4,7 @@ import './frame.js';
 import '../../ext/base64.js';
 
 import STACKS from './stacks.js';
+import { modal } from './modal.js';
 
 import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
@@ -49,8 +50,8 @@ stats.set('kiri', version);
 self.kiri_catalog = FILES;
 
 export const dialog = {
-    show: showModal,
-    hide: hideModal,
+    show: (which) => modal.show(which),
+    hide: () => modal.hide(),
     update_process_list: updateProcessList
 };
 
@@ -84,11 +85,8 @@ export const image = {
     convert: loadImageConvert
 };
 
-export const modal = {
-    show: showModal,
-    hide: hideModal,
-    visible: modalShowing
-};
+// Re-export modal singleton methods
+export { modal };
 
 export const mode = {
     get_id() { return MODE },
@@ -172,7 +170,7 @@ export const view = {
 };
 
 // add show() to catalog for API
-FILES.show = showCatalog;
+FILES.show = () => modal.show('files');
 
 // patch broker for api backward compatibility
 EVENT.on = (topic, listener) => {
@@ -604,59 +602,6 @@ function clearWorkspace() {
     platform.delete(selection.meshes());
 }
 
-function modalShowing() {
-    return api.ui.modal.style.display === 'flex';
-}
-
-function showModal(which) {
-    let mod = api.ui.modal,
-        style = mod.style,
-        visible = modalShowing(),
-        info = { pct: 0 };
-
-    // hide all modals befroe showing another
-    Object.keys(api.ui.modals).forEach(name => {
-        api.ui.modals[name].style.display = name === which ? 'flex' : '';
-    });
-
-    function ondone() {
-        api.event.emit('modal.show', which);
-    }
-
-    if (visible) {
-        return ondone();
-    }
-
-    style.height = '0';
-    style.display = 'flex';
-
-    new TWEEN.Tween(info).
-        easing(TWEEN.Easing.Quadratic.InOut).
-        to({ pct: 100 }, 100).
-        onUpdate(() => { style.height = `${info.pct}%` }).
-        onComplete(ondone).
-        start();
-}
-
-function hideModal() {
-    if (!modalShowing()) {
-        return;
-    }
-    let mod = api.ui.modal, style = mod.style, info={pct:100};
-    new TWEEN.Tween(info).
-        easing(TWEEN.Easing.Quadratic.InOut).
-        to({pct:0}, 100).
-        onUpdate(() => { style.height = `${info.pct}%` }).
-        onComplete(() => {
-            style.display = '';
-            api.event.emit('modal.hide');
-        }).
-        start();
-}
-
-function showCatalog() {
-    showModal("files");
-}
 
 function editSettings(e) {
     let current = settings.get(),
@@ -729,7 +674,7 @@ function updateProcessList() {
         load.onclick = (ev) => {
             api.conf.load(undefined, sk);
             updateProcessList();
-            hideModal();
+            modal.hide();
         }
         load.appendChild(DOC.createTextNode(sk));
         if (sk == settings.proc().processName) {
@@ -772,7 +717,7 @@ function showHelpFile(local,then) {
     }
     const LANG = api.language.current;
     $('kiri-version').innerHTML = `${LANG.version} ${version}`;
-    showModal('help');
+    modal.show('help');
     api.event.emit('help.show', local);
 }
 
@@ -881,7 +826,7 @@ function setMode(mode, lock, then) {
     selection.update_bounds(api.widgets.all());
     api.conf.update_fields();
     // because device dialog, if showing, needs to be updated
-    if (modalShowing()) {
+    if (modal.visible()) {
         api.show.devices();
     }
     api.space.restore(null, true);
