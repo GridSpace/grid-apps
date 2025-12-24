@@ -47,6 +47,9 @@ export async function fdm_prepare(widgets, settings, update) {
         output = [],
         layerout = [];
 
+    // wait for safe eval setup
+    await print.ready();
+
     // compute bounds if missing
     if (!bounds) {
         bounds = new THREE.Box3();

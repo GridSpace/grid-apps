@@ -58,6 +58,13 @@ function debug() {
     console.log(...arguments);
 }
 
+function setPrint(print) {
+    if (current.print && current.print !== print) {
+        current.print.disposeSafeEval();
+    }
+    return current.print = print;
+}
+
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
     console.log(o);
@@ -66,7 +73,7 @@ self.alert = function(o) {
 self.uuid = ((Math.random() * Date.now()) | 0).toString(36);
 
 /**
- * @returns {RasterPath}
+ * @returns {RasterPath} instantiated class
  */
 self.get_raster_gpu = async function({ mode, resolution, rotationStep }) {
     let gpu = new RasterPath({
@@ -314,7 +321,7 @@ const dispatch = {
     // purge all sync data
     clear(data, send) {
         // current.snap = null;
-        current.print = null;
+        setPrint(null);
         dispatch.group = wgroup = {};
         dispatch.cache = worker.cache = wcache = {};
         Widget.Groups.clear();
@@ -427,7 +434,7 @@ const dispatch = {
 
         let last = time(), now;
 
-        current.print = null;
+        setPrint(null);
         current.mode = settings.mode.toUpperCase();
 
         widget.anno = data.anno || widget.anno;
@@ -496,7 +503,7 @@ const dispatch = {
             send.data(emit, state.zeros);
         }).then(() => {
             const unitScale = settings.controller.units === 'in' ? (1 / 25.4) : 1;
-            const print = current.print || {};
+            const print = setPrint(current.print || {});
             const minSpeed = (print.minSpeed || 0) * unitScale;
             const maxSpeed = (print.maxSpeed || 0) * unitScale;
 
@@ -571,7 +578,7 @@ const dispatch = {
             z:  origin.z - (process.camOriginOffZ ?? 0)
         };
         const device = settings.device;
-        const print = current.print = newPrint(settings, Object.values(wcache));
+        const print = setPrint(newPrint(settings, Object.values(wcache)));
         const tools = device.extruders;
         const mode = settings.mode;
         const thin = settings.controller.lineType === 'line' || mode !== 'FDM';
@@ -601,7 +608,7 @@ const dispatch = {
                 out.point = newPoint(x,y,z || 0);
             });
         });
-        const print = current.print = newPrint(null, Object.values(wcache));
+        const print = setPrint(newPrint(null, Object.values(wcache)));
         render.path(parsed, progress => {
             send.data({ progress });
         }, { thin:  true })

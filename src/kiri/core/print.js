@@ -2,6 +2,7 @@
 
 import { arcToPath } from '../../geo/paths.js';
 import { consts } from './consts.js';
+import { createVM } from '../../moto/quickjs.js';
 import { newPoint } from '../../geo/point.js';
 import { util } from '../../geo/base.js';
 
@@ -24,6 +25,7 @@ class Print {
         this.tools = {};
         // set to 1 to enable flow rate analysis (console)
         this.debugE = settings ? (settings.controller.devel ? 1 : 0) : 0;
+        this._ready = this.createSafeEval();
     }
 
     setType(type) {
@@ -237,7 +239,26 @@ class Print {
         return output.last().point;
     }
 
+    async ready() {
+        await this._ready;
+    }
+
+    async createSafeEval() {
+        this.safeEval = await createVM();
+        this.safeEval.eval("function range(a,b) { return (a + (layer / layers) * (b-a)) }");
+    }
+
+    disposeSafeEval() {
+        if (this.safeEval) {
+            this.safeEval.dispose();
+        }
+    }
+
     constReplace(str, consts, start, pad, short) {
+        let safeEval = this.safeEval;
+        if (safeEval) {
+            safeEval.setContext(consts);
+        }
         function tryeval(str) {
             try {
                 return eval(`{ ${str} }`)
@@ -269,7 +290,7 @@ class Print {
             }
             eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(4) }`);
             eva.push(`try {( ${tok} )} catch (e) {console.log(e);0}`);
-            let evl = tryeval(eva.join(''));
+            let evl = safeEval ? safeEval.eval(tok) : tryeval(eva.join(''));
             nutok = evl;
             if (pad === 666) {
                 return evl;

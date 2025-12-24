@@ -30,6 +30,9 @@ export async function cam_prepare(widgets, settings, update) {
     const print = self.kiri_worker.current.print = newPrint(settings, active);
     const { origin } = settings;
 
+    // wait for safe eval setup
+    await print.ready();
+
     // cam-specific storage
     print.output = [];
 

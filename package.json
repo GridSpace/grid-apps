@@ -60,6 +60,7 @@
         "mqtt": "^5.10.3",
         "npm": "^11.4.2",
         "prettier": "^3.5.3",
+        "quickjs-emscripten": "^0.20.0",
         "react-responsive-carousel": "^3.2.23",
         "serve-static": "^2.2.0",
         "three": "^0.182.0",
@@ -120,7 +121,8 @@
         "start-ddb": "npm run prebuild && electron . --devel --debugg",
         "start-dev": "npm run prebuild prod && electron . --devel",
         "start": "npm run prebuild && electron .",
-        "webpack-ext": "npm run webpack-three && npm run webpack-zip",
+        "webpack-ext": "npm run webpack-three && npm run webpack-zip && npm run webpack-qjs",
+        "webpack-qjs": "npx webpack --config bin/webpack-quickjs-esm.js",
         "webpack-src": "node bin/esbuild.config.mjs",
         "webpack-three": "npx webpack --config bin/webpack-three-esm.js",
         "webpack-zip": "npx webpack --config bin/webpack-jszip-esm.js"
