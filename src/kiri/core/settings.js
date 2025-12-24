@@ -115,7 +115,7 @@ function updateSettings(opt = {}) {
     if (settings.mode === 'FDM' && api.view.is_slice()) {
         let changes = {};
         let values = process;
-        let { layer_lo, layer_hi, layer_max } = api.var;
+        const { lo: layer_lo, hi: layer_hi, max: layer_max } = api.slider.getRange();
         let range = { lo: layer_lo, hi: layer_hi };
         let add = false;
         if (layer_lo > 0 || layer_hi < layer_max) {
@@ -450,8 +450,8 @@ function updateFieldsFromRange() {
     let match = 0;
     let values = {};
     let restores = Object.clone(overrides);
-    let { layer_lo, layer_hi } = api.var;
-    for (let range of getOverlappingRanges(api.var.layer_lo, api.var.layer_hi)) {
+    const { lo: layer_lo, hi: layer_hi } = api.slider.getRange();
+    for (let range of getOverlappingRanges(layer_lo, layer_hi)) {
         for (let key of Object.keys(range.fields)) {
             values[key] = range.fields[key];
             overrides[key] = settings.process[key];

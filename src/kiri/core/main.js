@@ -314,20 +314,21 @@ function updateSpeeds(maxSpeed, minSpeed) {
 }
 
 function updateSlider() {
-    api.event.emit("slider.set", {
-        start: (api.var.layer_lo / api.var.layer_max),
-        end: (api.var.layer_hi / api.var.layer_max)
-    });
+    const { lo, hi, max } = api.slider.getRange();
+    if (max > 0) {
+        api.slider.updatePosition(lo / max, hi / max);
+    }
     api.conf.update_fields_from_range();
 }
 
 function setVisibleLayer(h, l) {
-    h = h >= 0 ? h : api.var.layer_hi;
-    l = l >= 0 ? l : api.var.layer_lo;
-    api.var.layer_hi = bound(h, 0, api.var.layer_max);
-    api.var.layer_lo = bound(l, 0, h);
-    api.event.emit("slider.label");
-    updateSlider();
+    const { lo, hi, max } = api.slider.getRange();
+    h = h >= 0 ? h : hi;
+    l = l >= 0 ? l : lo;
+    const newHi = bound(h, 0, max);
+    const newLo = bound(l, 0, newHi);
+    api.slider.setRange(newLo, newHi);
+    api.slider.showLabels();
     showSlices();
 }
 
@@ -349,11 +350,11 @@ function setEdges(bool) {
 
 function updateSliderMax(set) {
     let max = STACKS.getRange().tallest - 1;
-    api.var.layer_max = api.ui.sliderMax.innerText = max;
-    if (set || max < api.var.layer_hi) {
-        api.var.layer_hi = api.var.layer_max;
-        api.event.emit("slider.label");
-        updateSlider();
+    api.slider.setMax(max);
+    const { hi } = api.slider.getRange();
+    if (set || max < hi) {
+        api.slider.setRange(max, max);
+        api.slider.showLabels();
     }
 }
 
@@ -387,31 +388,31 @@ function showSlices(layer) {
 
     showSlider();
 
+    const { lo, hi, max } = api.slider.getRange();
+
     if (typeof(layer) === 'string' || typeof(layer) === 'number') {
         layer = parseInt(layer);
     } else {
-        layer = api.var.layer_hi;
+        layer = hi;
     }
 
-    layer = bound(layer, 0, api.var.layer_max);
-    if (layer < api.var.layer_lo) api.var.layer_lo = layer;
-    api.var.layer_hi = layer;
-    api.event.emit("slider.label");
+    layer = bound(layer, 0, max);
+    const newLo = layer < lo ? layer : lo;
+    api.slider.setRange(newLo, layer);
+    api.slider.showLabels();
 
     updateSlider();
-    STACKS.setRange(api.var.layer_lo, api.var.layer_hi);
+    // STACKS.setRange is called by slider callback
 
     SPACE.update();
 }
 
 function showSlider() {
-    api.ui.layers.style.display = 'flex';
-    api.ui.slider.style.display = 'flex';
+    api.slider.show();
 }
 
 function hideSlider() {
-    api.ui.layers.style.display = 'none';
-    api.ui.slider.style.display = 'none';
+    api.slider.hide();
     api.ui.speeds.style.display = 'none';
 }
 

@@ -4,6 +4,7 @@ import { $, $c } from '../../moto/webui.js';
 import { api } from './api.js';
 import { base } from '../../geo/base.js';
 import { local as sdb } from '../../data/local.js';
+import { slider } from './slider.js';
 import { space } from '../../moto/space.js';
 import { LOCAL, SETUP } from './main.js';
 import { VIEWS, MODES, SEED } from './consts.js';
@@ -20,6 +21,7 @@ import { menu as menuCAM } from '../mode/cam/init-menu.js';
 import { menu as menuFDM } from '../mode/fdm/init-menu.js';
 import { menu as menuLaser } from '../mode/laser/init-menu.js';
 import { menu as menuSLA } from '../mode/sla/init-menu.js';
+import STACKS from './stacks.js';
 import './tools.js';
 
 let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
@@ -304,14 +306,20 @@ function keyDownHandler(evt) {
             break;
         case 38: // up arrow
             if (inputHasFocus()) return false;
-            if (evt.metaKey) return api.show.layer(api.var.layer_at+1);
+            if (evt.metaKey) {
+                const { hi } = slider.getRange();
+                return api.show.layer(hi + 1);
+            }
             if (deg) selection.rotate(deg, 0, 0);
             if (move > 0) selection.move(0, move, 0);
             evt.preventDefault();
             break;
         case 40: // down arrow
             if (inputHasFocus()) return false;
-            if (evt.metaKey) return api.show.layer(api.var.layer_at-1);
+            if (evt.metaKey) {
+                const { hi } = slider.getRange();
+                return api.show.layer(hi - 1);
+            }
             if (deg) selection.rotate(-deg, 0, 0);
             if (move > 0) selection.move(0, -move, 0);
             evt.preventDefault();
@@ -364,16 +372,56 @@ function keyHandler(evt) {
     }
     switch (evt.charCode) {
         case cca('`'): api.show.slices(0); break;
-        case cca('0'): api.show.slices(api.var.layer_max); break;
-        case cca('1'): api.show.slices(api.var.layer_max/10); break;
-        case cca('2'): api.show.slices(api.var.layer_max*2/10); break;
-        case cca('3'): api.show.slices(api.var.layer_max*3/10); break;
-        case cca('4'): api.show.slices(api.var.layer_max*4/10); break;
-        case cca('5'): api.show.slices(api.var.layer_max*5/10); break;
-        case cca('6'): api.show.slices(api.var.layer_max*6/10); break;
-        case cca('7'): api.show.slices(api.var.layer_max*7/10); break;
-        case cca('8'): api.show.slices(api.var.layer_max*8/10); break;
-        case cca('9'): api.show.slices(api.var.layer_max*9/10); break;
+        case cca('0'): {
+            const { max } = slider.getRange();
+            api.show.slices(max);
+            break;
+        }
+        case cca('1'): {
+            const { max } = slider.getRange();
+            api.show.slices(max/10);
+            break;
+        }
+        case cca('2'): {
+            const { max } = slider.getRange();
+            api.show.slices(max*2/10);
+            break;
+        }
+        case cca('3'): {
+            const { max } = slider.getRange();
+            api.show.slices(max*3/10);
+            break;
+        }
+        case cca('4'): {
+            const { max } = slider.getRange();
+            api.show.slices(max*4/10);
+            break;
+        }
+        case cca('5'): {
+            const { max } = slider.getRange();
+            api.show.slices(max*5/10);
+            break;
+        }
+        case cca('6'): {
+            const { max } = slider.getRange();
+            api.show.slices(max*6/10);
+            break;
+        }
+        case cca('7'): {
+            const { max } = slider.getRange();
+            api.show.slices(max*7/10);
+            break;
+        }
+        case cca('8'): {
+            const { max } = slider.getRange();
+            api.show.slices(max*8/10);
+            break;
+        }
+        case cca('9'): {
+            const { max } = slider.getRange();
+            api.show.slices(max*9/10);
+            break;
+        }
         case cca('?'):
             api.help.show();
             break;
@@ -434,10 +482,11 @@ function keyHandler(evt) {
             if (api.view.get() === VIEWS.ARRANGE) {
                 api.space.set_focus(selection.widgets());
             }
-            if (api.var.layer_hi == api.var.layer_lo) {
-                api.var.layer_lo = 0;
+            const { lo, hi } = slider.getRange();
+            if (hi === lo) {
+                slider.setRange(0, hi);
             } else {
-                api.var.layer_lo = api.var.layer_hi;
+                slider.setRange(hi, hi);
             }
             api.show.slices();
             break;
@@ -804,25 +853,28 @@ function init_one() {
     space.sky.setColor(controller.dark ? 0 : 0xffffff);
     space.setAntiAlias(controller.antiAlias);
     space.init(container, function (delta) {
-        let vars = api.var;
-        if (vars.layer_max === 0 || !delta) return;
+        const { lo, hi, max } = slider.getRange();
+        if (max === 0 || !delta) return;
         if (controller.reverseZoom) delta = -delta;
-        let same = vars.layer_hi === vars.layer_lo;
-        let track = vars.layer_lo > 0;
+        let same = hi === lo;
+        let track = lo > 0;
+        let newHi = hi;
+        let newLo = lo;
         if (delta > 0) {
-            vars.layer_hi = Math.max(same ? 0 : vars.layer_lo, vars.layer_hi - 1);
+            newHi = Math.max(same ? 0 : lo, hi - 1);
             if (track) {
-                vars.layer_lo = Math.max(0, vars.layer_lo - 1);
+                newLo = Math.max(0, lo - 1);
             }
         } else if (delta < 0) {
-            vars.layer_hi = Math.min(vars.layer_max, vars.layer_hi + 1);
+            newHi = Math.min(max, hi + 1);
             if (track) {
-                vars.layer_lo = Math.min(vars.layer_hi, vars.layer_lo + 1);
+                newLo = Math.min(newHi, lo + 1);
             }
         }
         if (same) {
-            vars.layer_lo = vars.layer_hi;
+            newLo = newHi;
         }
+        slider.setRange(newLo, newHi);
         view.update_slider();
         show.slices();
     }, controller.ortho);
@@ -1086,147 +1138,44 @@ function init_one() {
     };
 
     // slider setup
-    const mobile = space.info.mob;
-    const slbar = mobile ? 80 : 30;
-    const slbar2 = slbar * 2;
-    const slider = ui.sliderRange;
-    const drag = { };
+    slider.init({
+        ui: {
+            layers: ui.layers,
+            slider: ui.slider,
+            sliderRange: ui.sliderRange,
+            sliderHold: ui.sliderHold,
+            sliderMid: ui.sliderMid,
+            sliderLo: ui.sliderLo,
+            sliderHi: ui.sliderHi,
+            sliderMin: ui.sliderMin,
+            sliderMax: ui.sliderMax,
+            sliderZero: $('slider-zero'),
+        },
+        tracker: tracker,
+        mobile: space.info.mob,
+        onLayerChange: (hi, lo) => {
+            api.show.layer(hi, lo);
+        },
+        onStackUpdate: (lo, hi) => {
+            STACKS.setRange(lo, hi);
+        },
+        onSceneUpdate: () => {
+            space.scene.active();
+        }
+    });
 
-    if (mobile) {
-        ui.slider.classList.add('slider-mobile');
-        ui.sliderLo.classList.add('slider-mobile');
-        ui.sliderHi.classList.add('slider-mobile');
-        // add css style for mobile devices
+    // expose slider to API
+    api.slider = slider;
+
+    // add mobile class to body if needed
+    if (space.info.mob) {
         DOC.body.classList.add('mobile');
     }
-
-    function pxToInt(txt) {
-        return txt ? parseInt(txt.substring(0,txt.length-2)) : 0;
-    }
-
-    function sliderUpdate() {
-        let start = drag.low / drag.maxval;
-        let end = (drag.low + drag.mid - slbar) / drag.maxval;
-        api.event.emit('slider.pos', { start, end });
-        api.var.layer_lo = Math.round(start * api.var.layer_max);
-        api.var.layer_hi = Math.round(end * api.var.layer_max);
-        api.show.layer();
-        space.scene.active();
-    }
-
-    function dragit(el, delta) {
-        el.ontouchstart = el.onmousedown = (ev) => {
-            // el.classList.add('sli-drag-el');
-            tracker.style.display = 'block';
-            ev.stopPropagation();
-            let obj = (ev.touches ? ev.touches[0] : ev);
-            drag.width = slider.clientWidth;
-            drag.maxval = drag.width - slbar2;
-            drag.start = obj.screenX;
-            drag.loat = drag.low = pxToInt(ui.sliderHold.style.marginLeft);
-            drag.mdat = drag.mid = ui.sliderMid.clientWidth;
-            drag.hiat = pxToInt(ui.sliderHold.style.marginRight);
-            drag.mdmax = drag.width - slbar - drag.loat;
-            drag.himax = drag.width - slbar - drag.mdat;
-            let cancel_drag = tracker.ontouchend = tracker.onmouseup = (ev) => {
-                // el.classList.remove('sli-drag-el');
-                if (ev) {
-                    ev.stopPropagation();
-                    ev.preventDefault();
-                }
-                slider.onmousemove = undefined;
-                tracker.style.display = 'none';
-            };
-            el.ontouchend = cancel_drag;
-            el.ontouchmove = tracker.ontouchmove = tracker.onmousemove = (ev) => {
-                ev.stopPropagation();
-                ev.preventDefault();
-                if (ev.buttons === 0) {
-                    return cancel_drag();
-                }
-                if (delta) {
-                    let obj = (ev.touches ? ev.touches[0] : ev);
-                    delta(obj.screenX - drag.start);
-                }
-            };
-        };
-    }
-
-    dragit(ui.sliderLo, (delta) => {
-        let midval = drag.mdat - delta;
-        let lowval = drag.loat + delta;
-        if (midval < slbar || lowval < 0) {
-            return;
-        }
-        ui.sliderHold.style.marginLeft = `${lowval}px`;
-        ui.sliderMid.style.width = `${midval}px`;
-        drag.low = lowval;
-        drag.mid = midval;
-        sliderUpdate();
-    });
-    dragit(ui.sliderMid, (delta) => {
-        let loval = drag.loat + delta;
-        let hival = drag.hiat - delta;
-        if (loval < 0 || hival < 0) return;
-        ui.sliderHold.style.marginLeft = `${loval}px`;
-        ui.sliderHold.style.marginRight = `${hival}px`;
-        drag.low = loval;
-        sliderUpdate();
-    });
-    dragit(ui.sliderHi, (delta) => {
-        let midval = drag.mdat + delta;
-        let hival = drag.hiat - delta;
-        if (midval < slbar || midval > drag.mdmax || hival < 0) return;
-        ui.sliderMid.style.width = `${midval}px`;
-        ui.sliderHold.style.marginRight = `${hival}px`;
-        drag.mid = midval;
-        sliderUpdate();
-    });
 
     ui.load.onchange = function(event) {
         api.platform.load_files(event.target.files);
         ui.load.value = ''; // reset so you can re-import the same filee
     };
-
-    ui.sliderMin.onclick = () => {
-        api.show.layer(0,0);
-    }
-
-    ui.sliderMax.onclick = () => {
-        api.show.layer(api.var.layer_max,0);
-    }
-
-    ui.slider.onmouseover = (ev) => {
-        api.event.emit('slider.label');
-    };
-
-    ui.slider.onmouseleave = (ev) => {
-        if (!ev.buttons) api.event.emit('slider.unlabel');
-    };
-
-    api.event.on('slider.unlabel', (values) => {
-    });
-
-    api.event.on('slider.label', (values) => {
-        let digits = api.var.layer_max.toString().length;
-        $('slider-zero').style.width = `${digits}em`;
-        $('slider-max').style.width = `${digits}em`;
-        $('slider-zero').innerText = api.var.layer_lo;
-        $('slider-max').innerText = api.var.layer_hi;
-    });
-
-    api.event.on('slider.set', (values) => {
-        let width = slider.clientWidth;
-        let maxval = width - slbar2;
-        let start = Math.max(0, Math.min(1, values.start));
-        let end = Math.max(start, Math.min(1, values.end));
-        let lowval = start * maxval;
-        let midval = ((end - start) * maxval) + slbar;
-        let hival = maxval - end * maxval;
-        ui.sliderHold.style.marginLeft = `${lowval}px`;
-        ui.sliderMid.style.width = `${midval}px`;
-        ui.sliderHold.style.marginRight = `${hival}px`;
-    });
 
     // store layer preferences
     api.event.on('stack.show', label => {
