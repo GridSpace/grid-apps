@@ -3,7 +3,6 @@
 import './frame.js';
 import '../../ext/base64.js';
 
-import lang from './lang.js';
 import STACKS from './stacks.js';
 
 import { $ } from '../../moto/webui.js';
@@ -26,7 +25,6 @@ import { showTools } from '../mode/cam/tools.js';
 
 let { parseOpt, o2js, js2o, ls2o } = utils,
     { COLOR, MODES, VIEWS } = consts,
-    LANG    = lang.current,
     WIN     = self.window,
     DOC     = self.document,
     LOC     = self.location,
@@ -911,8 +909,5 @@ function downloadBlob(data, filename) {
     $('mod-any').innerHTML = `<a id="_dexport_" href="${url}" download="${filename}">x</a>`;
     $('_dexport_').click();
 }
-
-// prevent safari from exiting full screen mode
-DOC.onkeydown = function (evt) { if (evt.keyCode == 27) evt.preventDefault() }
 
 export { FILES as catalog, LOCAL, SETUP, SECURE };

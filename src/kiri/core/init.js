@@ -38,8 +38,7 @@ let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     FDM_CAM = [ FDM, CAM ],
     proto = location.protocol,
     platformColor,
-    separator = true,
-    hideable = true,
+    statsTimer,
     inline = true,
     driven = true,
     trigger = true,
@@ -183,9 +182,11 @@ function updateStats() {
     if (self.debug !== true) {
         return;
     }
+    console.log('updateStats()');
     let { div, fps, rms, rnfo } = ui.stats;
     div.style.display = 'flex';
-    setInterval(() => {
+    clearTimeout(statsTimer);
+    statsTimer = setInterval(() => {
         const nrms = space.view.getRMS().toFixed(1);
         const nfps = space.view.getFPS().toFixed(1);
         const rend = space.renderInfo();
@@ -1414,18 +1415,6 @@ function init_one() {
     // default show gcode pre
     ui.gcodePre.button.click();
 
-    function mksvg(src) {
-        let svg = DOC.createElement('svg');
-        svg.innerHTML = src;
-        return svg;
-    }
-
-    function mklbl(src) {
-        let lbl = DOC.createElement('label');
-        lbl.innerText = src;
-        return lbl;
-    }
-
     api.platform.update_size();
 
     function mouseOnHover(int, event, ints) {
@@ -1443,6 +1432,11 @@ function init_one() {
         space.mouse.onHover(enable ? mouseOnHover : undefined);
         space.platform.onHover(enable ? platformOnHover : undefined);
     });
+
+    // prevent safari from exiting full screen mode
+    DOC.onkeydown = function (evt) {
+        if (evt.code == 27) evt.preventDefault()
+    }
 
     // block standard browser context menu
     DOC.oncontextmenu = (event) => {

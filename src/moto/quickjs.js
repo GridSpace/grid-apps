@@ -1,3 +1,5 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
 /**
  * QuickJS VM Wrapper
  * Provides a simplified interface for working with QuickJS contexts
