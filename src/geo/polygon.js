@@ -361,32 +361,6 @@ export class Polygon {
     }
 
     /**
-     * Try to detect an arc starting at the given index
-     * Uses a greedy approach: grow the arc as long as possible, then validate
-     * @private
-     * @returns {Object|null} arc data or null if no arc detected
-     */
-    _detectArcAt(startIdx, points, length, tolerance, arcRes, minPoints) {
-        return arcs.detectArcAt(this, startIdx, points, length, tolerance, arcRes, minPoints);
-    }
-
-    /**
-     * Validate if a set of points forms a valid arc
-     * @private
-     */
-    _validateArc(arcPoints, tolerance, arcRes, minPoints) {
-        return arcs.validateArc(this, arcPoints, tolerance, arcRes, minPoints);
-    }
-
-    /**
-     * Find the best-fit center for a set of arc points
-     * @private
-     */
-    _findBestCenter(arcPoints, tolerance) {
-        return arcs.findBestCenter(arcPoints, tolerance);
-    }
-
-    /**
      * add points forming a rectangle around a center point
      *
      * @param {Point} center
