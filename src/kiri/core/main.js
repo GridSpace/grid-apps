@@ -327,7 +327,7 @@ function setVisibleLayer(h, l) {
     l = l >= 0 ? l : lo;
     const newHi = bound(h, 0, max);
     const newLo = bound(l, 0, newHi);
-    api.slider.setRange(newLo, newHi);
+    api.slider.setRange(newLo, newHi); // Notify callbacks (STACKS, scene updates)
     api.slider.showLabels();
     showSlices();
 }

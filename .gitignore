@@ -7,12 +7,13 @@ app.json
 build
 data
 dist
-jszip-esm.js
 logs
 mod
 node_modules
 pack
 package-lock.json
-three.js
+src/ext/jszip-esm.js
+src/ext/quickjs.js
+src/ext/three.js
 tmp
 web/boot/bundle*

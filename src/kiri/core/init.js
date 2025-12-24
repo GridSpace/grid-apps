@@ -5,6 +5,7 @@ import { api } from './api.js';
 import { base } from '../../geo/base.js';
 import { local as sdb } from '../../data/local.js';
 import { slider } from './slider.js';
+import { keyboard } from './keyboard.js';
 import { space } from '../../moto/space.js';
 import { LOCAL, SETUP } from './main.js';
 import { VIEWS, MODES, SEED } from './consts.js';
@@ -237,296 +238,6 @@ function onButtonClick(ev) {
 
 api.event.on('click.button', onButtonClick);
 
-function inputHasFocus() {
-    let active = DOC.activeElement;
-    return active && (active.nodeName === "INPUT" || active.nodeName === "TEXTAREA");
-}
-
-function cca(c) {
-    return c.charCodeAt(0);
-}
-
-function keyUpHandler(evt) {
-    if (api.feature.on_key) {
-        if (api.feature.on_key({up:evt})) return;
-    }
-    for (let handler of api.feature.on_key2) {
-        if (handler({up:evt})) return;
-    }
-    switch (evt.keyCode) {
-        // escape
-        case 27:
-            // blur text input focus
-            DOC.activeElement.blur();
-            // dismiss modals
-            api.modal.hide();
-            // deselect widgets
-            platform.deselect();
-            // hide all dialogs
-            api.dialog.hide();
-            // cancel slicing
-            api.function.cancel();
-            // and send an event (used by FDM client)
-            api.event.emit("key.esc");
-            break;
-    }
-    return false;
-}
-
-function keyDownHandler(evt) {
-    if (api.modal.visible()) {
-        return false;
-    }
-    if (api.feature.on_key) {
-        if (api.feature.on_key({down:evt})) return;
-    }
-    for (let handler of api.feature.on_key2) {
-        if (handler({down:evt})) return;
-    }
-    let move = evt.altKey ? 5 : 0,
-        deg = move ? 0 : -Math.PI / (evt.shiftKey ? 36 : 2);
-    switch (evt.keyCode) {
-        case 8: // apple: delete/backspace
-        case 46: // others: delete
-            if (inputHasFocus()) return false;
-            platform.delete(selection.meshes());
-            evt.preventDefault();
-            break;
-        case 37: // left arrow
-            if (inputHasFocus()) return false;
-            if (deg) selection.rotate(0, 0, -deg);
-            if (move > 0) selection.move(-move, 0, 0);
-            evt.preventDefault();
-            break;
-        case 39: // right arrow
-            if (inputHasFocus()) return false;
-            if (deg) selection.rotate(0, 0, deg);
-            if (move > 0) selection.move(move, 0, 0);
-            evt.preventDefault();
-            break;
-        case 38: // up arrow
-            if (inputHasFocus()) return false;
-            if (evt.metaKey) {
-                const { hi } = slider.getRange();
-                return api.show.layer(hi + 1);
-            }
-            if (deg) selection.rotate(deg, 0, 0);
-            if (move > 0) selection.move(0, move, 0);
-            evt.preventDefault();
-            break;
-        case 40: // down arrow
-            if (inputHasFocus()) return false;
-            if (evt.metaKey) {
-                const { hi } = slider.getRange();
-                return api.show.layer(hi - 1);
-            }
-            if (deg) selection.rotate(-deg, 0, 0);
-            if (move > 0) selection.move(0, -move, 0);
-            evt.preventDefault();
-            break;
-        case 65: // 'a' for select all
-            if (evt.metaKey || evt.ctrlKey) {
-                if (inputHasFocus()) return false;
-                evt.preventDefault();
-                platform.deselect();
-                platform.select_all();
-            }
-            break;
-        case 83: // 's' for save workspace
-            if (evt.ctrlKey) {
-                evt.preventDefault();
-                api.conf.save();
-                console.log("settings saved");
-            } else
-            if (evt.metaKey) {
-                evt.preventDefault();
-                api.space.save();
-                set_ctrl.sync.put();
-            }
-            break;
-        case 76: // 'l' for restore workspace
-            if (evt.metaKey) {
-                evt.preventDefault();
-                api.space.restore();
-            }
-            break;
-    }
-}
-
-function keyHandler(evt) {
-    let handled = true;
-    if (api.modal.visible() || inputHasFocus()) {
-        return false;
-    }
-    if (api.feature.on_key) {
-        if (api.feature.on_key({key:evt})) return;
-    }
-    for (let handler of api.feature.on_key2) {
-        if (handler({key:evt})) return;
-    }
-    if (evt.ctrlKey) {
-        switch (evt.key) {
-            case 'g': return api.group.merge();
-            case 'u': return api.group.split();
-        }
-    }
-    switch (evt.charCode) {
-        case cca('`'): api.show.slices(0); break;
-        case cca('0'): {
-            const { max } = slider.getRange();
-            api.show.slices(max);
-            break;
-        }
-        case cca('1'): {
-            const { max } = slider.getRange();
-            api.show.slices(max/10);
-            break;
-        }
-        case cca('2'): {
-            const { max } = slider.getRange();
-            api.show.slices(max*2/10);
-            break;
-        }
-        case cca('3'): {
-            const { max } = slider.getRange();
-            api.show.slices(max*3/10);
-            break;
-        }
-        case cca('4'): {
-            const { max } = slider.getRange();
-            api.show.slices(max*4/10);
-            break;
-        }
-        case cca('5'): {
-            const { max } = slider.getRange();
-            api.show.slices(max*5/10);
-            break;
-        }
-        case cca('6'): {
-            const { max } = slider.getRange();
-            api.show.slices(max*6/10);
-            break;
-        }
-        case cca('7'): {
-            const { max } = slider.getRange();
-            api.show.slices(max*7/10);
-            break;
-        }
-        case cca('8'): {
-            const { max } = slider.getRange();
-            api.show.slices(max*8/10);
-            break;
-        }
-        case cca('9'): {
-            const { max } = slider.getRange();
-            api.show.slices(max*9/10);
-            break;
-        }
-        case cca('?'):
-            api.help.show();
-            break;
-        case cca('Z'): // reset stored state
-            uc.confirm('clear all settings and preferences?').then(yes => {
-                if (yes) {
-                    sdb.clear();
-                    WIN.location.reload();
-                }
-            });
-            break;
-        case cca('C'): // refresh catalog
-            catalog.refresh();
-            break;
-        case cca('i'): // file import
-            api.event.import();
-            break;
-        case cca('S'): // slice
-        case cca('s'): // slice
-            api.function.slice();
-            break;
-        case cca('P'): // prepare
-        case cca('p'): // prepare
-            if (api.mode.get() !== 'SLA') {
-                // hidden in SLA mode
-                api.function.prepare();
-            }
-            break;
-        case cca('X'): // export
-        case cca('x'): // export
-            api.function.export();
-            break;
-        case cca('g'): // CAM animate
-            api.function.animate();
-            break;
-        case cca('O'): // manual rotation
-            rotateInputSelection();
-            break;
-        case cca('r'): // recent files
-            api.modal.show('files');
-            break;
-        case cca('q'): // preferences
-            api.modal.show('prefs');
-            break;
-        case cca('l'): // device
-            settingsLoad();
-            break;
-        case cca('e'): // device
-            api.show.devices();
-            break;
-        case cca('o'): // tools
-            api.show.tools();
-            break;
-        case cca('c'): // local devices
-            api.show.local();
-            break;
-        case cca('v'): // toggle single slice view mode
-            if (api.view.get() === VIEWS.ARRANGE) {
-                api.space.set_focus(selection.widgets());
-            }
-            const { lo, hi } = slider.getRange();
-            if (hi === lo) {
-                slider.setRange(0, hi);
-            } else {
-                slider.setRange(hi, hi);
-            }
-            api.show.slices();
-            break;
-        case cca('d'): // duplicate object
-            duplicateSelection();
-            break;
-        case cca('m'): // mirror object
-            mirrorSelection();
-            break;
-        case cca('a'):
-            if (api.view.get() === VIEWS.ARRANGE) {
-                // auto arrange items on platform
-                platform.layout();
-                if (!api.conf.get().controller.spaceRandoX) {
-                    api.space.set_focus(selection.widgets());
-                }
-            } else {
-                // go to arrange view
-                api.view.set(VIEWS.ARRANGE);
-            }
-            break;
-        default:
-            api.event.emit('keypress', evt);
-            handled = false;
-            break;
-    }
-    if (handled) {
-        evt.preventDefault();
-        evt.stopPropagation();
-    }
-    return false;
-}
-
-function duplicateSelection() {
-    selection.duplicate();
-}
-
-function mirrorSelection() {
-    selection.mirror();
-}
 
 function keys(o) {
     let key, list = [];
@@ -1154,7 +865,8 @@ function init_one() {
         tracker: tracker,
         mobile: space.info.mob,
         onLayerChange: (hi, lo) => {
-            api.show.layer(hi, lo);
+            // Visualization is handled by the code that calls setRange()
+            // Don't call api.show.layer here as it creates circular dependency
         },
         onStackUpdate: (lo, hi) => {
             STACKS.setRange(lo, hi);
@@ -1166,6 +878,27 @@ function init_one() {
 
     // expose slider to API
     api.slider = slider;
+
+    // initialize keyboard controller
+    keyboard.init({
+        api,
+        platform,
+        selection,
+        slider,
+        space,
+        catalog,
+        sdb,
+        uc,
+        setCtrl: set_ctrl,
+        VIEWS,
+        DOC,
+        WIN,
+        rotateInputSelection,
+        settingsLoad
+    });
+
+    // expose keyboard to API
+    api.keyboard = keyboard;
 
     // add mobile class to body if needed
     if (space.info.mob) {
@@ -1225,9 +958,6 @@ function init_one() {
     };
 
     space.event.addHandlers(self, [
-        'keyup', keyUpHandler,
-        'keydown', keyDownHandler,
-        'keypress', keyHandler,
         'dragover', dragOverHandler,
         'dragleave', dragLeave,
         'drop', dropHandler
@@ -1704,8 +1434,8 @@ function init_two() {
     $('mesh-export-obj').onclick = () => { objectsExport('obj') };
     $('mesh-merge').onclick = selection.merge;
     $('mesh-split').onclick = selection.isolateBodies;
-    $('context-duplicate').onclick = duplicateSelection;
-    $('context-mirror').onclick = mirrorSelection;
+    $('context-duplicate').onclick = selection.duplicate;
+    $('context-mirror').onclick = selection.mirror;
     $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
     $('context-lefty').onclick = () => { api.event.emit("tool.mesh.lefty") };
     $('context-setfocus').onclick = () => {

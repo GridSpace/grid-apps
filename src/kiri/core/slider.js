@@ -68,13 +68,16 @@ class SliderControl {
      * Set layer range (bounds are enforced)
      * @param {number} lo - Lower layer
      * @param {number} hi - Upper layer
+     * @param {boolean} notify - Whether to trigger callbacks (default: true)
      */
-    setRange(lo, hi) {
+    setRange(lo, hi, notify = true) {
         this.#layerLo = Math.max(0, Math.min(hi, lo));
         this.#layerHi = Math.max(this.#layerLo, Math.min(this.#layerMax, hi));
         this.#updateVisuals();
         this.showLabels();
-        this.#notifyChange();
+        if (notify) {
+            this.#notifyChange();
+        }
     }
 
     /**
