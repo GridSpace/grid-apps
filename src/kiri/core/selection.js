@@ -4,6 +4,8 @@ import { api } from './api.js';
 import { space } from '../../moto/space.js';
 import { THREE } from '../../ext/three.js';
 import { tool as MeshTool } from '../../mesh/tool.js';
+import { encode as objEncode } from '../../load/obj.js';
+import { encode as stlEncode } from '../../load/stl.js';
 
 const selectedMeshes = [];
 
@@ -258,61 +260,33 @@ function exportWidgets(format = "stl") {
         facets += geo.attributes.position.count;
     });
     if (format === "obj") {
-        let obj = [];
-        let vpad = 0;
-        for (let out of outs) {
+        let recs = outs.map(out => {
             let meta = out.widget.meta;
             let name = meta.file || 'unnamed';
-            obj.push(`g ${name}`);
             let { position } = out.geo.attributes;
-            let pvals = position.array;
-            for (let i=0, il=position.count; i<il; i += 3) {
-                let pi = i * position.itemSize;
-                obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
-                obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
-                obj.push(`v ${pvals[pi++]} ${pvals[pi++]} ${pvals[pi++]}`);
-                obj.push(`f ${i+1+vpad} ${i+2+vpad} ${i+3+vpad}`);
-            }
-            vpad += position.count;
-        }
-        return obj.join('\n');
+            return { file: name, varr: position.array };
+        });
+        return objEncode(recs);
     }
-    let stl = new Uint8Array(80 + 4 + facets/3 * 50);
-    let dat = new DataView(stl.buffer);
-    let pos = 84;
-    dat.setInt32(80, facets/3, true);
-    for (let out of outs) {
+    let recs = outs.map(out => {
         let { position } = out.geo.attributes;
         let pvals = position.array;
-        for (let i=0, il=position.count; i<il; i += 3) {
-            let pi = i * position.itemSize;
-            let p0 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
-            let p1 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
-            let p2 = new THREE.Vector3(pvals[pi++], pvals[pi++], pvals[pi++]);
-            let norm = THREE.computeFaceNormal(p0, p1, p2);
-            let xo = 0, yo = 0, zo = 0;
-            if (outs.length > 1) {
-                let {x, y, z} = out.widget.track.pos;
-                xo = x;
-                yo = y;
-                zo = z;
+        let varr = pvals;
+
+        // Apply position offset if exporting multiple widgets
+        if (outs.length > 1) {
+            let {x, y, z} = out.widget.track.pos;
+            varr = new Float32Array(pvals.length);
+            for (let i = 0; i < pvals.length; i += 3) {
+                varr[i] = pvals[i] + x;
+                varr[i+1] = pvals[i+1] + y;
+                varr[i+2] = pvals[i+2] + z;
             }
-            dat.setFloat32(pos +  0, norm.x, true);
-            dat.setFloat32(pos +  4, norm.y, true);
-            dat.setFloat32(pos +  8, norm.z, true);
-            dat.setFloat32(pos + 12, p0.x + xo, true);
-            dat.setFloat32(pos + 16, p0.y + yo, true);
-            dat.setFloat32(pos + 20, p0.z + zo, true);
-            dat.setFloat32(pos + 24, p1.x + xo, true);
-            dat.setFloat32(pos + 28, p1.y + yo, true);
-            dat.setFloat32(pos + 32, p1.z + zo, true);
-            dat.setFloat32(pos + 36, p2.x + xo, true);
-            dat.setFloat32(pos + 40, p2.y + yo, true);
-            dat.setFloat32(pos + 44, p2.z + zo, true);
-            pos += 50;
         }
-    }
-    return stl;
+
+        return { file: out.widget.meta.file || 'unnamed', varr };
+    });
+    return stlEncode(recs);
 }
 
 function widgets(orall) {
