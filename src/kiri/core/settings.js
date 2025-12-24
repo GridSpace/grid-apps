@@ -756,11 +756,11 @@ function settingsPrusaConvert(data) {
     });
 }
 
-function setThreaded(bool) {
-    bool = bool ? true : false;
-    settings.controller.threaded = bool;
-    api.event.emit("set.threaded", bool);
-}
+// function setThreaded(bool) {
+//     bool = bool ? true : false;
+//     settings.controller.threaded = bool;
+//     api.event.emit("set.threaded", bool);
+// }
 
 function setEnableWASM(bool) {
     bool = bool ? true : false;
@@ -786,7 +786,8 @@ const apiSet = {
     update_fields: updateFieldsFromSettings,
     update_fields_from_range: updateFieldsFromRange,
     set_enable_wasm: setEnableWASM,
-    set_threaded: setThreaded,
+    // set_threaded: setThreaded,
+    set_threaded() { console.trace('set_threaded deprecated' )},
     restore: restoreSettings,
     export: settingsExport,
     import: settingsImport,

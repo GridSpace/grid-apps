@@ -131,7 +131,7 @@ function setThreaded(bool) {
 // upon restore, seed presets
 api.event.emit('preset', api.conf.dbo());
 
-api.event.on("set.threaded", bool => setThreaded(bool));
+// api.event.on("set.threaded", bool => setThreaded(bool));
 
 function booleanSave() {
     let control = settings().controller;
@@ -161,7 +161,7 @@ function booleanSave() {
     control.showOrigin = ui.showOrigin.checked;
     control.showRulers = ui.showRulers.checked;
     control.spaceRandoX = ui.spaceRandoX.checked;
-    control.threaded = setThreaded(ui.threaded.checked);
+    // control.threaded = setThreaded(ui.threaded.checked);
     control.webGPU = ui.webGPU.checked;
     space.view.setZoom(control.reverseZoom, control.zoomSpeed);
     // platform.layout();
@@ -1044,7 +1044,7 @@ function init_one() {
         _____:            newGroup(LANG.pt_menu, $('prefs-prt'), {inline}),
         detail:           newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
         healMesh:         newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
-        threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:THREED}),
+        // threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:THREED}),
         assembly:         newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:THREED}),
         webGPU:           newBoolean(LANG.pt_wgpu_s, booleanSave, {title: LANG.pt_wgpu_l, modes:THREED}),
 
@@ -1619,9 +1619,10 @@ function init_two() {
         ui.showRulers.checked = control.showRulers;
         ui.showSpeeds.checked = control.showSpeeds;
         ui.spaceRandoX.checked = control.spaceRandoX;
-        ui.threaded.checked = setThreaded(control.threaded);
+        // ui.threaded.checked = setThreaded(control.threaded);
         ui.webGPU.checked = control.webGPU;
 
+        setThreaded(true);
         lineTypeSave();
         detailSave();
         updateStats();
