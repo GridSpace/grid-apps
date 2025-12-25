@@ -79,9 +79,6 @@ export async function init_sync() {
         api.event.alerts(true);
     };
 
-    // enable modal hiding
-    $('mod-x').onclick = api.modal.hide;
-
     if (!SETUP.s) console.log(`kiri | init main | ${version}`);
 
     // send init-done event
@@ -108,20 +105,8 @@ export async function init_sync() {
         },false);
     });
 
-    // dismiss gdpr alert
-    $('gotit').onclick = () => {
-        $('gdpr').style.display = 'none';
-        sdb.gdpr = Date.now();
-    };
-
     // Setup navigation button bindings
     setup_keybd_nav(ui, WIN, LANG);
-
-    // ui.modal.onclick = api.modal.hide;
-    ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
-
-    // add app name hover info
-    $('app-info').innerText = version;
 
     // show topline separator when iframed
     try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { console.log(e) }
@@ -289,4 +274,19 @@ function setup_keybd_nav(ui, WIN, LANG) {
     $('context-contents').onclick = () => { api.SPACE.view.fit() };
     $('view-fit').onclick = () => { api.SPACE.view.fit() };
     $('wassup').onmouseover = () => { $('suppopp').classList.remove('hide') };
+
+    // prevent modal input from propagating to parents
+    ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
+
+    // enable modal hiding
+    $('mod-x').onclick = api.modal.hide;
+
+    // dismiss gdpr alert
+    $('gotit').onclick = () => {
+        $('gdpr').style.display = 'none';
+        sdb.gdpr = Date.now();
+    };
+
+    // add app name hover info
+    $('app-info').innerText = version;
 }

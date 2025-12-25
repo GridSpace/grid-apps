@@ -1,16 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $, h } from '../../moto/webui.js';
-import { api } from './api.js';
 import { ajax, js2o } from '../core/utils.js';
+import { api } from './api.js';
 import { base } from '../../geo/base.js';
-import { load } from '../../load/file.js';
-import { space } from '../../moto/space.js';
-import { Widget, newWidget } from '../core/widget.js';
-import { Packer } from './pack.js';
-
 import { COLOR, MODES } from '../core/consts.js';
+import { load as file_load } from '../../load/file.js';
+import { Packer } from './pack.js';
+import { space } from '../../moto/space.js';
 import { THREE } from '../../ext/three.js';
+import { Widget, newWidget } from '../core/widget.js';
 
 const V0 = new THREE.Vector3(0,0,0);
 
@@ -26,7 +25,7 @@ function get_mode() {
     return api.mode.get_id();
 }
 
-function platformUpdateOrigin(update_bounds = true) {
+function update_origin(update_bounds = true) {
     if (update_bounds) {
         platform.update_bounds();
     }
@@ -106,7 +105,7 @@ function platformUpdateOrigin(update_bounds = true) {
     }
 }
 
-function platformUpdateSize(updateDark = true) {
+function update_size(updateDark = true) {
     const { process, device, controller } = current();
     const { showRulers, units } = controller;
 
@@ -154,7 +153,7 @@ function platformUpdateMidZ() {
     space.platform.setMaxZ(topZ);
 }
 
-function platformUpdateTopZ() {
+function update_top_z() {
     const { process, stock } = current();
     const MODE = get_mode();
     api.widgets.each(widget => {
@@ -209,12 +208,12 @@ function platformUpdateStock() {
     }
 }
 
-function platformSetBounds(bounds) {
+function set_bounds(bounds) {
     setbounds = bounds;
-    return platformUpdateBounds();
+    return update_bounds();
 }
 
-function platformUpdateBounds() {
+function update_bounds() {
     const bounds = setbounds || new THREE.Box3();
     if (!setbounds)
     api.widgets.each(widget => {
@@ -231,17 +230,17 @@ function platformUpdateBounds() {
     }
     current().bounds = bounds;
     platformUpdateStock();
-    platformUpdateTopZ();
+    update_top_z();
     platformUpdateMidZ();
-    platformUpdateOrigin(false);
+    update_origin(false);
     return bounds;
 }
 
-function platformSelectedCount() {
+function selected_count() {
     return api.view.is_arrange() ? api.selection.count() : 0;
 }
 
-function platformUpdateSelected() {
+function update_selected() {
     const settings = current();
 
     const { device } = settings;
@@ -267,7 +266,7 @@ function platformUpdateSelected() {
     }
 }
 
-function platformSelect(widget, shift, recurse = true) {
+function select(widget, shift, recurse = true) {
     const { event, selection, view } = api;
 
     if (!view.is_arrange()) {
@@ -277,7 +276,7 @@ function platformSelect(widget, shift, recurse = true) {
     // apply select to entire group
     if (recurse && widget && widget.group.length > 1) {
         for (let w of widget.group) {
-            platformSelect(w, true, false);
+            select(w, true, false);
         }
         return;
     }
@@ -308,7 +307,7 @@ function platformSelect(widget, shift, recurse = true) {
     space.update();
 }
 
-function platformDeselect(widget, recurse = true) {
+function deselect(widget, recurse = true) {
     const { selection, view } = api;
 
     if (!view.is_arrange()) {
@@ -320,7 +319,7 @@ function platformDeselect(widget, recurse = true) {
     // apply deselect to entire group
     if (recurse && widget && widget.group.length > 1) {
         for (let w of widget.group) {
-            platformDeselect(w, false);
+            deselect(w, false);
         }
         return;
     }
@@ -343,7 +342,7 @@ function platformDeselect(widget, recurse = true) {
     space.update();
 }
 
-function platformLoad(url, onload) {
+function load(url, onload) {
     if (url.toLowerCase().indexOf(".stl") > 0) {
         platform.load_stl(url, onload);
     } else {
@@ -357,8 +356,8 @@ function platformLoad(url, onload) {
     }
 }
 
-function platformLoadSTL(url, onload, formdata, credentials, headers) {
-    new load.STL().load(url, (vertices, filename) => {
+function load_stl(url, onload, formdata, credentials, headers) {
+    new file_load.STL().load(url, (vertices, filename) => {
         if (vertices) {
             let widget = newWidget().loadVertices(vertices);
             widget.meta.file = filename;
@@ -370,9 +369,9 @@ function platformLoadSTL(url, onload, formdata, credentials, headers) {
     }, formdata, 1 / api.view.unit_scale(), credentials, headers);
 }
 
-function platformLoadURL(url, options = {}) {
+function load_url(url, options = {}) {
     platform.group();
-    load.URL.load(url, options).then(objects => {
+    file_load.URL.load(url, options).then(objects => {
         let widgets = [];
         for (let object of objects) {
             let widget = newWidget(undefined, options.group).loadVertices(object.mesh);
@@ -391,12 +390,12 @@ function platformLoadURL(url, options = {}) {
     });
 }
 
-function platformGroup() {
+function group() {
     grouping = true;
 }
 
 // called after all new widgets are loaded to update group positions
-function platformGroupDone(skipLayout) {
+function group_done(skipLayout) {
     grouping = false;
     Widget.Groups.loadDone();
     if (api.feature.drop_layout && !skipLayout) {
@@ -407,7 +406,7 @@ function platformGroupDone(skipLayout) {
 let deferred = [];
 let deferTimeout;
 
-function platformAdd(widget, shift, nolayout, defer) {
+function add(widget, shift, nolayout, defer) {
     api.widgets.add(widget);
     space.world.add(widget.mesh);
     widget.anno = widget.anno || {};
@@ -420,13 +419,13 @@ function platformAdd(widget, shift, nolayout, defer) {
         platform.select(widget, shift);
         platform.update_bounds();
         api.space.auto_save();
-        platformChanged();
+        changed();
         api.event.emit('widget.add', widget);
         if (nolayout) {
             return;
         }
         if (!grouping) {
-            platformGroupDone(nolayout);
+            group_done(nolayout);
             if (!current().controller.autoLayout) {
                 positionNewWidget(widget);
             }
@@ -445,12 +444,12 @@ function platformAddDeferred() {
         }
     }
     if (!grouping) {
-        platformGroupDone(skiplayout);
+        group_done(skiplayout);
     }
     api.event.emit('widget.add', deferred.map(r => r.widget));
     platform.update_bounds();
     api.space.auto_save();
-    platformChanged();
+    changed();
     deferred = [];
 }
 
@@ -511,7 +510,7 @@ function platformDelete(widget, defer) {
         for (let i = 0; i < mc.length; i++) {
             platform.delete(mc[i].widget || mc[i], true);
         }
-        platformDeletePost();
+        delete_post();
         api.event.emit('widget.delete', widget);
         return;
     }
@@ -521,12 +520,12 @@ function platformDelete(widget, defer) {
     Widget.Groups.remove(widget);
     space.world.remove(widget.mesh);
     if (!defer) {
-        platformDeletePost();
+        delete_post();
         api.event.emit('widget.delete', widget);
     }
 }
 
-function platformDeletePost() {
+function delete_post() {
     api.view.update_slider_max();
     platform.update_bounds();
     if (get_mode() !== MODES.FDM) {
@@ -538,11 +537,11 @@ function platformDeletePost() {
         platform.layout();
     }
     api.space.auto_save();
-    platformChanged();
+    changed();
 }
 
 // render list of current widgets
-function platformChanged() {
+function changed() {
     h.bind($('ws-widgets'), api.widgets.all().map(w => {
         let color;
         let file = w.meta.file || 'no name';
@@ -619,7 +618,7 @@ function platformChanged() {
                     //     w.setColor(color, null, false);
                     // },
                     onclick() {
-                        platformSelect(w, true, false);
+                        select(w, true, false);
                         color = w.getColor();
                     }
                 })
@@ -628,13 +627,13 @@ function platformChanged() {
     }));
 }
 
-function platformSelectAll() {
+function select_all() {
     api.widgets.each(widget => {
         platform.select(widget, true, false)
     });
 }
 
-function platformLayout() {
+function layout() {
     const MODE = get_mode();
     const settings = current();
     const { process, device, controller } = settings;
@@ -659,7 +658,7 @@ function platformLayout() {
             gap = gap || ((process.sliceSupportExtra || 0) * 2) + 1;
             // auto resize device to support a larger object
             if (isBelt) {
-                fitDeviceToWidgets();
+                fit();
             }
             break;
     }
@@ -686,7 +685,7 @@ function platformLayout() {
     if (isBelt) {
         gap += process.firstLayerBeltLead || 0;
         const WIDGETS = api.widgets.all();
-        let bounds = platformUpdateBounds(),
+        let bounds = update_bounds(),
             movey = -(device.bedDepth / 2);
         for (let widget of WIDGETS) {
             let ylen = widget.track.box.h;
@@ -737,15 +736,15 @@ function platformLayout() {
     api.event.emit('platform.layout');
 }
 
-function platformLoadWidget(group, vertices, filename) {
+function load_verts(group, vertices, filename) {
     const widget = newWidget(undefined, group).loadVertices(vertices.toFloat32(), true);
     widget.meta.file = filename;
     if (filename) widget.saveToCatalog(filename);
-    platformAdd(widget);
+    add(widget);
     return widget;
 }
 
-function platformLoadFiles(files, group) {
+function load_files(files, group) {
     platform.group();
     let loading = files.length;
     for (let file of files) {
@@ -773,7 +772,7 @@ function platformLoadFiles(files, group) {
                 }
             }
             if (israw) {
-                platformLoadWidget(group, JSON.parse(data));
+                load_verts(group, JSON.parse(data));
                 load_dec();
             } else if (api.feature.on_load && (isstl || isobj || is3mf)) {
                 api.feature.on_load(data, file);
@@ -782,14 +781,14 @@ function platformLoadFiles(files, group) {
                 api.feature.on_add_stl(data, file);
                 load_dec();
             } else if (isstl) {
-                const stl = new load.STL().parse(data, api.view.unit_scale());
-                platformLoadWidget(group, stl, name);
+                const stl = new file_load.STL().parse(data, api.view.unit_scale());
+                load_verts(group, stl, name);
                 load_dec();
             } else if (isobj) {
-                const objs = load.OBJ.parse(data.textDecode('utf-8'));
+                const objs = file_load.OBJ.parse(data.textDecode('utf-8'));
                 const ondn = function() {
                     for (let obj of objs) {
-                        platformLoadWidget(group, obj, obj.name ? `${obj.name}-${name}` : name);
+                        load_verts(group, obj, obj.name ? `${obj.name}-${name}` : name);
                     }
                     load_dec();
                 };
@@ -810,7 +809,7 @@ function platformLoadFiles(files, group) {
                         api.show.progress(progress, "converting");
                     }, vertices => {
                         api.show.progress(0);
-                        let wid = platformLoadWidget(group, vertices, name);
+                        let wid = load_verts(group, vertices, name);
                         if (api.mode.is_cam()) {
                             // attach raw illustration
                             // api.event.emit('cam.parse.gerber', { data: text, mesh: wid.mesh });
@@ -821,13 +820,13 @@ function platformLoadFiles(files, group) {
                 let odon = function(models) {
                     let msg = api.show.alert('Adding Objects');
                     for (let model of models) {
-                        platformLoadWidget(group, model.faces, model.name ? `${model.name}-${name}` : name);
+                        load_verts(group, model.faces, model.name ? `${model.name}-${name}` : name);
                     }
                     load_dec();
                     api.hide.alert(msg);
                 }
                 let msg = api.show.alert('Decoding 3MF');
-                load.TMF.parseAsync(data).then(models => {
+                file_load.TMF.parseAsync(data).then(models => {
                     api.hide.alert(msg);
                     if (models.length > 1 && !group) {
                         api.uc.confirm(`group ${models.length} objects?`).then(ok => {
@@ -846,14 +845,14 @@ function platformLoadFiles(files, group) {
             } else if (issvg) {
                 loadSVGDialog(opt => { 
                     group = group || [];
-                    let svg = load.SVG.parse(data.textDecode('utf-8'), opt);
+                    let svg = file_load.SVG.parse(data.textDecode('utf-8'), opt);
                     let ind = 0;
                     if (svg.length === 0) {
                         api.show.alert(`SVG contains no polylines`, 10);
                         api.show.alert(`Fonts must be converted to paths`, 10);
                     }
                     for (let v of svg) {
-                        platformLoadWidget(group, svg[ind++], ind ? `${name}-${ind}` : name);
+                        load_verts(group, svg[ind++], ind ? `${name}-${ind}` : name);
                     }
                     load_dec();
                 });
@@ -896,7 +895,8 @@ function loadSVGDialog(doit) {
     });
 }
 
-function fitDeviceToWidgets() {
+// resize platform (expand) to fit widgets (belt mode)
+function fit() {
     let maxy = 0;
     api.widgets.each(widget => {
         let wb = widget.mesh.getBoundingBox().clone();
@@ -919,28 +919,28 @@ function fitDeviceToWidgets() {
 
 // extend API (api.platform)
 export const platform = {
-    fit: fitDeviceToWidgets,
-    add: platformAdd,
-    changed: platformChanged,
+    fit,
+    add,
+    changed,
     delete: platformDelete,
-    layout: platformLayout,
-    group: platformGroup,
-    group_done: platformGroupDone,
-    load: platformLoad,
-    load_stl: platformLoadSTL,
-    load_url: platformLoadURL,
-    load_files: platformLoadFiles,
-    load_verts: platformLoadWidget,
-    deselect: platformDeselect,
-    select: platformSelect,
-    select_all: platformSelectAll,
-    selected_count: platformSelectedCount,
-    set_bounds: platformSetBounds,
-    update_origin: platformUpdateOrigin,
-    update_bounds: platformUpdateBounds,
-    update_size: platformUpdateSize,
-    update_top_z: platformUpdateTopZ,
-    update_selected: platformUpdateSelected,
+    layout: layout,
+    group,
+    group_done,
+    load,
+    load_stl,
+    load_url,
+    load_files,
+    load_verts,
+    deselect,
+    select,
+    select_all,
+    selected_count,
+    set_bounds,
+    update_origin,
+    update_bounds,
+    update_size,
+    update_top_z,
+    update_selected,
     update: space.platform.update,
     set_font: space.platform.setFont,
     show_axes: space.platform.showAxes,
