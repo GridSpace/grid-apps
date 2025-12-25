@@ -203,7 +203,7 @@ export function init_input() {
     preferences.updateDrawer();
 
     // api augmentation with local functions
-    api.device.export = settingsOps.deviceExport;
+    api.device.export = settingsOps.export_device;
 
     Object.assign(ui, {
         tracker:            tracker,
@@ -218,9 +218,9 @@ export function init_input() {
         device:           newGroup(LANG.dv_gr_dev, null, {group:"ddev", inline, class:"noshow"}),
 
         _____:            newGroup("workspace", null, {group:"dext", inline}),
-        bedWidth:         newInput('X (width)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.updateDeviceSize}),
-        bedDepth:         newInput('Y (depth)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.updateDeviceSize}),
-        maxHeight:        newInput('Z (height)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.updateDeviceSize}),
+        bedWidth:         newInput('X (width)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.update_device}),
+        bedDepth:         newInput('Y (depth)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.update_device}),
+        maxHeight:        newInput('Z (height)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.update_device}),
         resolutionX:      newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:toInt, size:6, modes:SLA}),
         resolutionY:      newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:toInt, size:6, modes:SLA}),
         _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:NO_WEDM }),
@@ -342,7 +342,7 @@ export function init_input() {
 
     // override old style settings two-button menu
     ui.settingsSave.onclick = () => {
-        settingsOps.settingsSave(undefined, ui.settingsName.value);
+        settingsOps.settings_save(undefined, ui.settingsName.value);
     };
 
     // initialize and expose modal to API
@@ -391,7 +391,7 @@ export function init_input() {
         DOC,
         WIN,
         rotateInputSelection: input_rotate,
-        settingsLoad: settingsOps.settingsLoad
+        settingsLoad: settingsOps.settings_load
     });
 
     // add mobile class to body if needed

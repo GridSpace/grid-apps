@@ -4,11 +4,7 @@ import { $ } from '../../../moto/webui.js';
 import { api } from '../api.js';
 import { settings as set_ctrl } from './manager.js';
 
-function settings() {
-    return api.conf.get();
-}
-
-function deviceExport(exp, name) {
+function export_device(exp, name) {
     name = (name || "device")
         .toLowerCase()
         .replace(/ /g,'_')
@@ -20,7 +16,7 @@ function deviceExport(exp, name) {
     });
 }
 
-function objectsExport(format = "stl") {
+function export_objects(format = "stl") {
     // return selection.export();
     api.uc.confirm("Export Filename", {ok:true, cancel: false}, `selected.${format}`).then(name => {
         if (!name) return;
@@ -31,18 +27,7 @@ function objectsExport(format = "stl") {
     });
 }
 
-function workspaceNew() {
-    api.uc.confirm("Clear Workspace?", {ok:true, cancel: false}).then(value => {
-        if (value === true) {
-            let proc = set_ctrl.proc();
-            proc.ops && (proc.ops.length = 0);
-            proc.op2 && (proc.op2.length = 0);
-            api.platform.clear();
-        }
-    });
-}
-
-function profileExport() {
+function export_profile() {
     const opt = {pre: [
         "<div class='f-col a-center gap5 mlr10'>",
         "  <h3>Workspace Export</h3>",
@@ -73,7 +58,18 @@ function profileExport() {
     });
 }
 
-function settingsSave(ev, name) {
+function new_workspace() {
+    api.uc.confirm("Clear Workspace?", {ok:true, cancel: false}).then(value => {
+        if (value === true) {
+            let proc = set_ctrl.proc();
+            proc.ops && (proc.ops.length = 0);
+            proc.op2 && (proc.op2.length = 0);
+            api.platform.clear();
+        }
+    });
+}
+
+function settings_save(ev, name) {
     if (ev) {
         ev.stopPropagation();
         ev.preventDefault();
@@ -81,7 +77,7 @@ function settingsSave(ev, name) {
 
     api.dialog.hide();
     let mode = api.mode.get(),
-        s = settings(),
+        s = api.conf.get(),
         def = "default",
         cp = s.process,
         pl = s.sproc[mode],
@@ -112,27 +108,22 @@ function settingsSave(ev, name) {
     }
 }
 
-function settingsLoad() {
+function settings_load() {
     api.conf.show();
 }
 
-function updateDeviceSize() {
+function update_platform_size() {
     api.conf.update();
     api.platform.update_size();
     api.platform.update_origin();
 }
 
-async function sync_put() {
-    await set_ctrl.sync.put();
-}
-
 export const settingsOps = {
-    deviceExport,
-    objectsExport,
-    workspaceNew,
-    profileExport,
-    settingsSave,
-    settingsLoad,
-    updateDeviceSize,
-    sync_put
+    export_device,
+    export_objects,
+    export_profile,
+    new_workspace,
+    settings_save,
+    settings_load,
+    update_device: update_platform_size,
 };

@@ -200,7 +200,7 @@ function setup_keybd_nav() {
     ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
     ui.acct.don8.onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
     ui.acct.mesh.onclick = (ev) => { ev.stopPropagation(); WIN.location = "/mesh" };
-    ui.acct.export.onclick = (ev) => { ev.stopPropagation(); settingsOps.profileExport() };
+    ui.acct.export.onclick = (ev) => { ev.stopPropagation(); settingsOps.export_profile() };
     ui.acct.export.title = LANG.acct_xpo;
     ui.func.slice.onclick = (ev) => { ev.stopPropagation(); api.function.slice() };
     ui.func.preview.onclick = (ev) => { ev.stopPropagation(); api.function.print() };
@@ -211,7 +211,7 @@ function setup_keybd_nav() {
 
     $('export-support-a').onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
     $('mode-device').onclick = api.show.devices;
-    $('mode-profile').onclick = settingsOps.settingsLoad;
+    $('mode-profile').onclick = settingsOps.settings_load;
     $('mode-fdm').onclick = () => api.mode.set('FDM');
     $('mode-cam').onclick = () => api.mode.set('CAM');
     $('mode-sla').onclick = () => api.mode.set('SLA');
@@ -223,7 +223,7 @@ function setup_keybd_nav() {
     $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
     $('set-tools').onclick = (ev) => { ev.stopPropagation(); api.show.tools() };
     $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };
-    $('file-new').onclick = (ev) => { ev.stopPropagation(); settingsOps.workspaceNew() };
+    $('file-new').onclick = (ev) => { ev.stopPropagation(); settingsOps.new_workspace() };
     $('file-recent').onclick = () => { api.modal.show('files') };
     $('file-import').onclick = (ev) => { api.event.import(ev); };
     $('view-arrange').onclick = api.platform.layout;
@@ -259,8 +259,8 @@ function setup_keybd_nav() {
     $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
     $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
     $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
-    $('mesh-export-stl').onclick = () => { settingsOps.objectsExport('stl') };
-    $('mesh-export-obj').onclick = () => { settingsOps.objectsExport('obj') };
+    $('mesh-export-stl').onclick = () => { settingsOps.export_objects('stl') };
+    $('mesh-export-obj').onclick = () => { settingsOps.export_objects('obj') };
     $('mesh-merge').onclick = selection.merge;
     $('mesh-split').onclick = selection.isolateBodies;
     $('context-duplicate').onclick = selection.duplicate;
