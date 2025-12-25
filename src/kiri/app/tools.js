@@ -105,29 +105,37 @@ function cleanup() {
 
 api.event.on('key.esc', endIt);
 
-api.event.on('tool.camera.focus', (fn) => {
+function startFocus(fn) {
     opName = 'camera focus';
     onDone = fn;
     startIt();
-});
+}
 
-api.event.on('tool.mesh.face-up', () => {
+function startFaceUp() {
     opName = 'face select';
     onDone = onFaceUpSelect;
     startIt();
-});
+}
 
-api.event.on('tool.mesh.lay-flat', () => {
+function startLayFlat() {
     opName = 'lay flat';
     onDone = onLayFlatSelect;
     startIt();
-});
+}
 
-api.event.on('tool.mesh.lefty', () => {
+function startLeftAlign() {
     opName = 'align y axis';
     onDone = onLeftySelect;
     startIt();
-});
+}
+
+api.event.on('tool.camera.focus', startFocus);
+
+api.event.on('tool.mesh.face-up', startFaceUp);
+
+api.event.on('tool.mesh.lay-flat', startLayFlat);
+
+api.event.on('tool.mesh.lefty', startLeftAlign);
 
 function scale() {
     let cam = space.internals().camera;
@@ -187,4 +195,16 @@ api.event.on('mouse.hover.up', (ev) => {
 });
 
 
-export { onLayFlatSelect, onFaceUpSelect, startIt, endIt, cleanup, scale, onDone };
+export {
+    cleanup,
+    endIt,
+    onDone,
+    onFaceUpSelect,
+    onLayFlatSelect,
+    scale,
+    startFaceUp,
+    startFocus,
+    startIt,
+    startLeftAlign,
+    startLayFlat,
+};

@@ -10,6 +10,7 @@ class SliderControl {
     #layerHi = 0;
     #layerMax = 0;
     #ui;
+    #slider;
     #tracker;
     #mobile;
     #sliderBar;
@@ -39,6 +40,7 @@ class SliderControl {
         }
 
         this.#ui = ui;
+        this.#slider = ui.slider;
         this.#tracker = tracker;
         this.#mobile = mobile;
         this.#sliderBar = mobile ? 80 : 30;
@@ -86,7 +88,7 @@ class SliderControl {
      */
     setMax(max) {
         this.#layerMax = max;
-        this.#ui.sliderMax.innerText = max;
+        this.#slider.max.innerText = max;
         if (max < this.#layerHi) {
             this.#layerHi = max;
             this.showLabels();
@@ -100,7 +102,7 @@ class SliderControl {
      * @param {number} endPercent - End position (0-1)
      */
     updatePosition(startPercent, endPercent) {
-        const width = this.#ui.sliderRange.clientWidth;
+        const width = this.#slider.range.clientWidth;
         const maxval = width - this.#sliderBar2;
         const start = Math.max(0, Math.min(1, startPercent));
         const end = Math.max(start, Math.min(1, endPercent));
@@ -109,9 +111,9 @@ class SliderControl {
         const midval = ((end - start) * maxval) + this.#sliderBar;
         const hival = maxval - end * maxval;
 
-        this.#ui.sliderHold.style.marginLeft = `${lowval}px`;
-        this.#ui.sliderMid.style.width = `${midval}px`;
-        this.#ui.sliderHold.style.marginRight = `${hival}px`;
+        this.#slider.hold.style.marginLeft = `${lowval}px`;
+        this.#slider.mid.style.width = `${midval}px`;
+        this.#slider.hold.style.marginRight = `${hival}px`;
     }
 
     /**
@@ -119,10 +121,10 @@ class SliderControl {
      */
     showLabels() {
         const digits = this.#layerMax.toString().length;
-        this.#ui.sliderZero.style.width = `${digits}em`;
-        this.#ui.sliderMax.style.width = `${digits}em`;
-        this.#ui.sliderZero.innerText = this.#layerLo;
-        this.#ui.sliderMax.innerText = this.#layerHi;
+        this.#slider.min.style.width = `${digits}em`;
+        this.#slider.max.style.width = `${digits}em`;
+        this.#slider.min.innerText = this.#layerLo;
+        this.#slider.max.innerText = this.#layerHi;
     }
 
     /**
@@ -130,7 +132,7 @@ class SliderControl {
      */
     show() {
         this.#ui.layers.style.display = 'flex';
-        this.#ui.slider.style.display = 'flex';
+        this.#slider.div.style.display = 'flex';
     }
 
     /**
@@ -138,20 +140,20 @@ class SliderControl {
      */
     hide() {
         this.#ui.layers.style.display = 'none';
-        this.#ui.slider.style.display = 'none';
+        this.#slider.div.style.display = 'none';
     }
 
     #setupUI() {
         if (this.#mobile) {
-            this.#ui.slider.classList.add('slider-mobile');
-            this.#ui.sliderLo.classList.add('slider-mobile');
-            this.#ui.sliderHi.classList.add('slider-mobile');
+            this.#slider.div.classList.add('slider-mobile');
+            this.#slider.lo.classList.add('slider-mobile');
+            this.#slider.hi.classList.add('slider-mobile');
         }
     }
 
     #bindEvents() {
         // Min/Max buttons
-        this.#ui.sliderMin.onclick = () => {
+        this.#slider.min.onclick = () => {
             this.#layerLo = 0;
             this.#layerHi = 0;
             this.showLabels();
@@ -159,7 +161,7 @@ class SliderControl {
             this.#notifyChange();
         };
 
-        this.#ui.sliderMax.onclick = () => {
+        this.#slider.max.onclick = () => {
             this.#layerLo = this.#layerMax;
             this.#layerHi = this.#layerMax;
             this.showLabels();
@@ -168,24 +170,24 @@ class SliderControl {
         };
 
         // Mouse hover for labels
-        this.#ui.slider.onmouseover = () => {
+        this.#slider.div.onmouseover = () => {
             this.showLabels();
         };
 
-        this.#ui.slider.onmouseleave = (ev) => {
+        this.#slider.div.onmouseleave = (ev) => {
             if (!ev.buttons) {
                 this.hideLabels();
             }
         };
 
         // Drag handlers for the three slider sections
-        this.#bindDrag(this.#ui.sliderLo, this.#handleLoDrag.bind(this));
-        this.#bindDrag(this.#ui.sliderMid, this.#handleMidDrag.bind(this));
-        this.#bindDrag(this.#ui.sliderHi, this.#handleHiDrag.bind(this));
+        this.#bindDrag(this.#slider.lo, this.#handleLoDrag.bind(this));
+        this.#bindDrag(this.#slider.mid, this.#handleMidDrag.bind(this));
+        this.#bindDrag(this.#slider.hi, this.#handleHiDrag.bind(this));
     }
 
     #bindDrag(el, deltaHandler) {
-        const slider = this.#ui.sliderRange;
+        const slider = this.#slider.range;
 
         el.ontouchstart = el.onmousedown = (ev) => {
             this.#tracker.style.display = 'block';
@@ -195,9 +197,9 @@ class SliderControl {
             this.#drag.width = slider.clientWidth;
             this.#drag.maxval = this.#drag.width - this.#sliderBar2;
             this.#drag.start = obj.screenX;
-            this.#drag.loat = this.#drag.low = this.#pxToInt(this.#ui.sliderHold.style.marginLeft);
-            this.#drag.mdat = this.#drag.mid = this.#ui.sliderMid.clientWidth;
-            this.#drag.hiat = this.#pxToInt(this.#ui.sliderHold.style.marginRight);
+            this.#drag.loat = this.#drag.low = this.#pxToInt(this.#slider.hold.style.marginLeft);
+            this.#drag.mdat = this.#drag.mid = this.#slider.mid.clientWidth;
+            this.#drag.hiat = this.#pxToInt(this.#slider.hold.style.marginRight);
             this.#drag.mdmax = this.#drag.width - this.#sliderBar - this.#drag.loat;
             this.#drag.himax = this.#drag.width - this.#sliderBar - this.#drag.mdat;
 
@@ -233,8 +235,8 @@ class SliderControl {
             return;
         }
 
-        this.#ui.sliderHold.style.marginLeft = `${lowval}px`;
-        this.#ui.sliderMid.style.width = `${midval}px`;
+        this.#slider.hold.style.marginLeft = `${lowval}px`;
+        this.#slider.mid.style.width = `${midval}px`;
         this.#drag.low = lowval;
         this.#drag.mid = midval;
         this.#updateFromDrag();
@@ -248,8 +250,8 @@ class SliderControl {
             return;
         }
 
-        this.#ui.sliderHold.style.marginLeft = `${loval}px`;
-        this.#ui.sliderHold.style.marginRight = `${hival}px`;
+        this.#slider.hold.style.marginLeft = `${loval}px`;
+        this.#slider.hold.style.marginRight = `${hival}px`;
         this.#drag.low = loval;
         this.#updateFromDrag();
     }
@@ -262,8 +264,8 @@ class SliderControl {
             return;
         }
 
-        this.#ui.sliderMid.style.width = `${midval}px`;
-        this.#ui.sliderHold.style.marginRight = `${hival}px`;
+        this.#slider.mid.style.width = `${midval}px`;
+        this.#slider.hold.style.marginRight = `${hival}px`;
         this.#drag.mid = midval;
         this.#updateFromDrag();
     }

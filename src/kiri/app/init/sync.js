@@ -10,6 +10,7 @@ import { settings as set_ctrl } from '../conf/manager.js';
 import { settingsOps } from '../conf/settings.js';
 import { space } from '../../../moto/space.js';
 import { VIEWS } from '../../core/consts.js';
+import * as view_tools from '../tools.js';
 
 const DOC = self.document;
 const WIN = self.window;
@@ -201,6 +202,18 @@ function setup_keybd_nav(ui, WIN, LANG) {
     const { selection } = api;
 
     // bind interface action elements
+    ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
+    ui.acct.don8.onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
+    ui.acct.mesh.onclick = (ev) => { ev.stopPropagation(); WIN.location = "/mesh" };
+    ui.acct.export.onclick = (ev) => { ev.stopPropagation(); settingsOps.profileExport() };
+    ui.acct.export.title = LANG.acct_xpo;
+    ui.func.slice.onclick = (ev) => { ev.stopPropagation(); api.function.slice() };
+    ui.func.preview.onclick = (ev) => { ev.stopPropagation(); api.function.print() };
+    ui.func.animate.onclick = (ev) => { ev.stopPropagation(); api.function.animate() };
+    ui.func.export.onclick = (ev) => { ev.stopPropagation(); api.function.export() };
+    // prevent modal input from propagating to parents
+    ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
+
     $('export-support-a').onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
     $('mode-device').onclick = api.show.devices;
     $('mode-profile').onclick = settingsOps.settingsLoad;
@@ -215,18 +228,9 @@ function setup_keybd_nav(ui, WIN, LANG) {
     $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
     $('set-tools').onclick = (ev) => { ev.stopPropagation(); api.show.tools() };
     $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };
-    ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
-    ui.acct.don8.onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
-    ui.acct.mesh.onclick = (ev) => { ev.stopPropagation(); WIN.location = "/mesh" };
-    ui.acct.export.onclick = (ev) => { ev.stopPropagation(); settingsOps.profileExport() };
-    ui.acct.export.title = LANG.acct_xpo;
     $('file-new').onclick = (ev) => { ev.stopPropagation(); settingsOps.workspaceNew() };
     $('file-recent').onclick = () => { api.modal.show('files') };
     $('file-import').onclick = (ev) => { api.event.import(ev); };
-    ui.func.slice.onclick = (ev) => { ev.stopPropagation(); api.function.slice() };
-    ui.func.preview.onclick = (ev) => { ev.stopPropagation(); api.function.print() };
-    ui.func.animate.onclick = (ev) => { ev.stopPropagation(); api.function.animate() };
-    ui.func.export.onclick = (ev) => { ev.stopPropagation(); api.function.export() };
     $('view-arrange').onclick = api.platform.layout;
     $('view-top').onclick = space.view.top;
     $('view-home').onclick = space.view.home;
@@ -238,12 +242,14 @@ function setup_keybd_nav(ui, WIN, LANG) {
         api.widgets.for(w => w.unrotate());
         selection.update_info();
     };
+
     // attach button handlers to support targets
     for (let btn of ["don8pt","don8gh","don8pp"]) {
         $(btn).onclick = (ev) => {
             window.open(ev.target.children[0].href);
         }
     }
+
     // rotation buttons
     let d = (Math.PI / 180);
     $('rot_x_lt').onclick = () => { selection.rotate(-d * $('rot_x').value,0,0) };
@@ -252,6 +258,7 @@ function setup_keybd_nav(ui, WIN, LANG) {
     $('rot_y_gt').onclick = () => { selection.rotate(0, d * $('rot_y').value,0) };
     $('rot_z_lt').onclick = () => { selection.rotate(0,0, d * $('rot_z').value) };
     $('rot_z_gt').onclick = () => { selection.rotate(0,0,-d * $('rot_z').value) };
+
     // rendering options
     $('render-edges').onclick = () => { api.view.edges({ toggle: true }); api.conf.save() };
     $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
@@ -263,20 +270,14 @@ function setup_keybd_nav(ui, WIN, LANG) {
     $('mesh-split').onclick = selection.isolateBodies;
     $('context-duplicate').onclick = selection.duplicate;
     $('context-mirror').onclick = selection.mirror;
-    $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
-    $('context-lefty').onclick = () => { api.event.emit("tool.mesh.lefty") };
+    $('context-layflat').onclick = view_tools.startLayFlat;
+    $('context-lefty').onclick = view_tools.startLeftAlign;
     $('context-setfocus').onclick = () => {
-        api.event.emit(
-            "tool.camera.focus",
-            ev => api.space.set_focus(undefined, ev.object.point)
-        );
+        view_tools.startFocus(ev => api.space.set_focus(undefined, ev.object.point));
     };
-    $('context-contents').onclick = () => { api.SPACE.view.fit() };
-    $('view-fit').onclick = () => { api.SPACE.view.fit() };
+    $('context-contents').onclick = api.const.SPACE.view.fit;
+    $('view-fit').onclick = api.const.SPACE.view.fit;
     $('wassup').onmouseover = () => { $('suppopp').classList.remove('hide') };
-
-    // prevent modal input from propagating to parents
-    ui.modalBox.onclick = (ev) => { ev.stopPropagation() };
 
     // enable modal hiding
     $('mod-x').onclick = api.modal.hide;

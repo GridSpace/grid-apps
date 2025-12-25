@@ -78,12 +78,12 @@ function update_info() {
     });
     if (bounds.min.x === Infinity) {
         if (selectedMeshes.length === 0) {
-            ui.sizeX.value = 0;
-            ui.sizeY.value = 0;
-            ui.sizeZ.value = 0;
-            ui.scaleX.value = 1;
-            ui.scaleY.value = 1;
-            ui.scaleZ.value = 1;
+            ui.size.X.value = 0;
+            ui.size.Y.value = 0;
+            ui.size.Z.value = 0;
+            ui.scale.X.value = 1;
+            ui.scale.Y.value = 1;
+            ui.scale.Z.value = 1;
         }
         return;
     }
@@ -91,12 +91,12 @@ function update_info() {
         dy = bounds.max.y - bounds.min.y,
         dz = bounds.max.z - bounds.min.z,
         scale = api.view.unit_scale();
-    ui.sizeX.value = ui.sizeX.was = (dx / scale).round(2)
-    ui.sizeY.value = ui.sizeY.was = (dy / scale).round(2)
-    ui.sizeZ.value = ui.sizeZ.was = (dz / scale).round(2)
-    ui.scaleX.value = ui.scaleX.was = track.scale.x.round(2);
-    ui.scaleY.value = ui.scaleY.was = track.scale.y.round(2);
-    ui.scaleZ.value = ui.scaleZ.was = track.scale.z.round(2);
+    ui.size.X.value = ui.size.X.was = (dx / scale).round(2)
+    ui.size.Y.value = ui.size.Y.was = (dy / scale).round(2)
+    ui.size.Z.value = ui.size.Z.was = (dz / scale).round(2)
+    ui.scale.X.value = ui.scale.X.was = track.scale.x.round(2);
+    ui.scale.Y.value = ui.scale.Y.was = track.scale.y.round(2);
+    ui.scale.Z.value = ui.scale.Z.was = track.scale.z.round(2);
     update_bounds();
 }
 
@@ -365,13 +365,13 @@ function input_resize(e, ui) {
     let dv = parseFloat(e.target.value || 1),
         pv = parseFloat(e.target.was || 1),
         ra = dv / pv,
-        xv = parseFloat(ui.sizeX.was ?? ui.scaleX.value) || 1,
-        yv = parseFloat(ui.sizeY.was ?? ui.scaleY.value) || 1,
-        zv = parseFloat(ui.sizeZ.was ?? ui.scaleZ.value) || 1,
+        xv = parseFloat(ui.size.X.was ?? ui.scale.X.value) || 1,
+        yv = parseFloat(ui.size.Y.was ?? ui.scale.Y.value) || 1,
+        zv = parseFloat(ui.size.Z.was ?? ui.scale.Z.value) || 1,
         ta = e.target,
-        xc = ui.lockX.checked,
-        yc = ui.lockY.checked,
-        zc = ui.lockZ.checked,
+        xc = ui.lock.X.checked,
+        yc = ui.lock.Y.checked,
+        zc = ui.lock.Z.checked,
         xt = ta === ui.sizeX,
         yt = ta === ui.sizeY,
         zt = ta === ui.sizeZ,
@@ -385,25 +385,25 @@ function input_resize(e, ui) {
         return;
     }
     selection.scale(xr,yr,zr);
-    ui.sizeX.was = ui.sizeX.value = xv * xr;
-    ui.sizeY.was = ui.sizeY.value = yv * yr;
-    ui.sizeZ.was = ui.sizeZ.value = zv * zr;
+    ui.size.X.was = ui.size.X.value = xv * xr;
+    ui.size.Y.was = ui.size.Y.value = yv * yr;
+    ui.size.Z.was = ui.size.Z.value = zv * zr;
 }
 
 function input_scale(e, ui) {
     let dv = parseFloat(e.target.value || 1),
         pv = parseFloat(e.target.was || 1),
         ra = dv / pv,
-        xv = parseFloat(ui.scaleX.was ?? ui.scaleX.value) || 1,
-        yv = parseFloat(ui.scaleY.was ?? ui.scaleY.value) || 1,
-        zv = parseFloat(ui.scaleZ.was ?? ui.scaleY.value) || 1,
+        xv = parseFloat(ui.scale.X.was ?? ui.scale.X.value) || 1,
+        yv = parseFloat(ui.scale.Y.was ?? ui.scale.Y.value) || 1,
+        zv = parseFloat(ui.scale.Z.was ?? ui.scale.Y.value) || 1,
         ta = e.target,
-        xc = ui.lockX.checked,
-        yc = ui.lockY.checked,
-        zc = ui.lockZ.checked,
-        xt = ta === ui.scaleX,
-        yt = ta === ui.scaleY,
-        zt = ta === ui.scaleZ,
+        xc = ui.lock.X.checked,
+        yc = ui.lock.Y.checked,
+        zc = ui.lock.Z.checked,
+        xt = ta === ui.scale.X,
+        yt = ta === ui.scale.Y,
+        zt = ta === ui.scale.Z,
         tl = (xt && xc) || (yt && yc) || (zt && zc),
         xr = ((tl && xc) || (!tl && xt) ? ra : 1),
         yr = ((tl && yc) || (!tl && yt) ? ra : 1),
@@ -414,9 +414,9 @@ function input_scale(e, ui) {
         return;
     }
     selection.scale(xr,yr,zr);
-    ui.scaleX.was = ui.scaleX.value = xv * xr;
-    ui.scaleY.was = ui.scaleY.value = yv * yr;
-    ui.scaleZ.was = ui.scaleZ.value = zv * zr;
+    ui.scale.X.was = ui.scale.X.value = xv * xr;
+    ui.scale.Y.was = ui.scale.Y.value = yv * yr;
+    ui.scale.Z.was = ui.scale.Z.value = zv * zr;
 }
 
 function parse_as_float(e) {
@@ -426,12 +426,12 @@ function parse_as_float(e) {
 function input_binding(ui) {
     // on enter but not on blur
     space.event.onEnterKey([
-        ui.scaleX,        (e) => input_scale(e, ui),
-        ui.scaleY,        (e) => input_scale(e, ui),
-        ui.scaleZ,        (e) => input_scale(e, ui),
-        ui.sizeX,         (e) => input_resize(e, ui),
-        ui.sizeY,         (e) => input_resize(e, ui),
-        ui.sizeZ,         (e) => input_resize(e, ui),
+        ui.scale.X,        (e) => input_scale(e, ui),
+        ui.scale.Y,        (e) => input_scale(e, ui),
+        ui.scale.Z,        (e) => input_scale(e, ui),
+        ui.size.X,         (e) => input_resize(e, ui),
+        ui.size.Y,         (e) => input_resize(e, ui),
+        ui.size.Z,         (e) => input_resize(e, ui),
     ]);
     // on enter and blur
     space.event.onEnterKey([

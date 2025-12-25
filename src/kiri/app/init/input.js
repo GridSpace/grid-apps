@@ -2,6 +2,7 @@
 
 import { $ } from '../../../moto/webui.js';
 import { api } from '../api.js';
+import { bind } from './bind.js';
 import { version } from '../../../moto/license.js';
 import { fileOps } from '../file-ops.js';
 import { init as initCAM } from '../../mode/cam/init-ui.js';
@@ -207,118 +208,8 @@ function init_one() {
         tracker:            tracker,
         container:          container,
 
-        alert: {
-            dialog:         $('alert-area'),
-            text:           $('alert-text')
-        },
-        func: {
-            slice:          $('act-slice'),
-            preview:        $('act-preview'),
-            animate:        $('act-animate'),
-            export:         $('act-export')
-        },
-        label: {
-            slice:          $('label-slice'),
-            preview:        $('label-preview'),
-            animate:        $('label-animate'),
-            export:         $('label-export'),
-        },
-        acct: {
-            help:           $('app-help'),
-            don8:           $('app-don8'),
-            mesh:           $('app-mesh'),
-            export:         $('app-export')
-        },
-        dev: {
-            header:         $('dev-header'),
-            search:         $('dev-search'),
-            filter:         $('dev-filter')
-        },
-        mesh: {
-            name:           $('mesh-name'),
-            points:         $('mesh-points'),
-            faces:          $('mesh-faces'),
-        },
-
-        stats: {
-            fps:            $('fps'),
-            rms:            $('rms'),
-            div:            $('stats'),
-            rnfo:           $('rnfo'),
-        },
-
-        load:               $('load-file'),
-        speeds:             $('speeds'),
-        speedbar:           $('speedbar'),
-        context:            $('context-menu'),
-
-        ltsetup:            $('lt-setup'),
-        ltfile:             $('lt-file'),
-        ltview:             $('lt-view'),
-        ltact:              $('lt-start'),
-        edit:               $('lt-tools'),
-        nozzle:             $('menu-nozzle'),
-
-        modal:              $('modal'),
-        modalBox:           $('modal-box'),
-        modals: {
-            help:           $('mod-help'),
-            setup:          $('mod-setup'),
-            prefs:          $('mod-prefs'),
-            files:          $('mod-files'),
-            saves:          $('mod-saves'),
-            tools:          $('mod-tools'),
-            xany:           $('mod-x-any'),
-            xsla:           $('mod-x-sla'),
-            xlaser:         $('mod-x-laser'),
-            don8:           $('mod-don8'),
-            any:            $('mod-any'),
-        },
-
-        catalog: {
-            body:           $('catalogBody'),
-            list:           $('catalogList'),
-        },
-
-        devices:            $('devices'),
-        deviceAdd:          $('device-add'),
-        deviceDelete:       $('device-del'),
-        deviceRename:       $('device-ren'),
-        deviceExport:       $('device-exp'),
-        deviceSave:         $('device-save'),
-
-        setMenu:            $('set-menu'),
-        settings:           $('settings'),
-        settingsBody:       $('settingsBody'),
-        settingsList:       $('settingsList'),
-
-        slider:             $('slider'),
-        sliderMax:          $('slider-max'),
-        sliderMin:          $('slider-zero'),
-        sliderLo:           $('slider-lo'),
-        sliderMid:          $('slider-mid'),
-        sliderHi:           $('slider-hi'),
-        sliderHold:         $('slider-hold'),
-        sliderRange:        $('slider-center'),
-
-        loading:            $('progress').style,
-        progress:           $('progbar').style,
-        prostatus:          $('progtxt'),
-
-        selection:          $('selection'),
-        sizeX:              $('size_x'),
-        sizeY:              $('size_y'),
-        sizeZ:              $('size_z'),
-        scaleX:             $('scale_x'),
-        scaleY:             $('scale_y'),
-        scaleZ:             $('scale_z'),
-        lockX:              $('lock_x'),
-        lockY:              $('lock_y'),
-        lockZ:              $('lock_z'),
-        stock:              $('stock'),
-        stockWidth:         $('stock-width'),
-        stockDepth:         $('stock-width'),
-        stockHeight:        $('stock-width'),
+        // static html --> ui bindings
+        ...bind(),
 
         /** Device Browser / Editor */
 
@@ -592,19 +483,19 @@ function init_one() {
     input_binding(ui);
 
     $('lab-axis').onclick = () => {
-        ui.lockX.checked =
-        ui.lockY.checked =
-        ui.lockZ.checked = !(
-            ui.lockX.checked ||
-            ui.lockY.checked ||
-            ui.lockZ.checked
+        ui.lock.X.checked =
+        ui.lock.Y.checked =
+        ui.lock.Z.checked = !(
+            ui.lock.X.checked ||
+            ui.lock.Y.checked ||
+            ui.lock.Z.checked
         );
     };
 
     $('scale-reset').onclick = $('lab-scale').onclick = () => {
-        selection.scale(1 / ui.scaleX.was, 1 / ui.scaleY.was, 1 / ui.scaleZ.was);
-        ui.scaleX.value = ui.scaleY.value = ui.scaleZ.value =
-        ui.scaleX.was = ui.scaleY.was = ui.scaleZ.was = 1;
+        selection.scale(1 / ui.scale.X.was, 1 / ui.scale.Y.was, 1 / ui.scale.Z.was);
+        ui.scale.X.value = ui.scale.Y.value = ui.scale.Z.value =
+        ui.scale.X.was = ui.scale.Y.was = ui.scale.Z.was = 1;
     };
 
     $('app-xpnd').onclick = () => {

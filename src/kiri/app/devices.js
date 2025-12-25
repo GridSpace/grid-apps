@@ -213,24 +213,24 @@ function setDeviceCode(code, devicename) {
             e.disabled = !local;
         });
 
-        ui.deviceSave.disabled = !local;
-        ui.deviceDelete.disabled = !local;
-        ui.deviceRename.disabled = !local;
-        ui.deviceExport.disabled = !local;
-        ui.deviceAdd.style.display = mode === 'SLA' ? 'none' : '';
+        ui.devices.save.disabled = !local;
+        ui.devices.delete.disabled = !local;
+        ui.devices.rename.disabled = !local;
+        ui.devices.export.disabled = !local;
+        ui.devices.add.style.display = mode === 'SLA' ? 'none' : '';
 
         if (local) {
-            ui.deviceAdd.innerText = "copy";
-            ui.deviceDelete.style.display = '';
-            ui.deviceRename.style.display = '';
-            ui.deviceExport.style.display = '';
+            ui.devices.add.innerText = "copy";
+            ui.devices.delete.style.display = '';
+            ui.devices.rename.style.display = '';
+            ui.devices.export.style.display = '';
         } else {
-            ui.deviceAdd.innerText = "customize";
-            ui.deviceDelete.style.display = 'none';
-            ui.deviceRename.style.display = 'none';
-            ui.deviceExport.style.display = 'none';
+            ui.devices.add.innerText = "customize";
+            ui.devices.delete.style.display = 'none';
+            ui.devices.rename.style.display = 'none';
+            ui.devices.export.style.display = 'none';
         }
-        ui.deviceAdd.disabled = dev.noclone;
+        ui.devices.add.disabled = dev.noclone;
 
         setconf.update_fields();
         space.platform.setBelt(isBelt());
@@ -301,7 +301,7 @@ function renderDevices(devices) {
 
     event.emit('devices.render', devices);
 
-    ui.deviceSave.onclick = function() {
+    ui.devices.save.onclick = function() {
         event.emit('device.save');
         api.function.clear();
         setconf.save();
@@ -309,18 +309,18 @@ function renderDevices(devices) {
         showDevices();
         api.modal.hide();
     };
-    ui.deviceAdd.onclick = function() {
+    ui.devices.add.onclick = function() {
         api.function.clear();
         cloneDevice();
         showDevices();
     };
-    ui.deviceDelete.onclick = function() {
+    ui.devices.delete.onclick = function() {
         api.function.clear();
         removeLocalDevice(getSelectedDevice());
         selectDevice(getModeDevices()[0]);
         showDevices();
     };
-    ui.deviceRename.onclick = function() {
+    ui.devices.rename.onclick = function() {
         api.uc.prompt(`Rename "${selected}`, selected).then(newname => {
             if (newname) {
                 updateDeviceName(newname);
@@ -332,7 +332,7 @@ function renderDevices(devices) {
             }
         });
     };
-    ui.deviceExport.onclick = function(event) {
+    ui.devices.export.onclick = function(event) {
         const record = {
             version: api.version,
             device: selected,

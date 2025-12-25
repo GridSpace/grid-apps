@@ -1335,7 +1335,7 @@ let Space = {
             }
             viewControl.update();
 
-            if (then) then();
+            if (typeof(then) === 'function') then();
         },
         setCtrl: (name) => {
             if (name === 'onshape') {
