@@ -1,80 +1,90 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import '../../ext/base64.js';
+
 import alerts from './alerts.js';
 import settings from './config/manager.js';
 import STACKS from './stacks.js';
-import { visuals } from './visuals.js';
+import web from '../../moto/webui.js';
 
+import { beta, version } from '../../moto/license.js';
 import { broker } from '../../moto/broker.js';
 import { client as work } from './client.js';
 import { consts, COLOR as color, LISTS as lists } from '../core/consts.js';
 import { device, devices } from './devices.js';
-import { catalog, dialog, event, group, help, hide, image } from './main.js';
-import { modal, mode, process, show, space, util, view } from './main.js';
-import { local as dataLocal } from '../../data/local.js';
-import { noop, ajax, o2js, js2o } from '../core/utils.js';
 import { functions } from './function.js';
+import { group as groupModule } from './groups.js';
+import { help as helpModule } from './help.js';
+import { image as imageModule } from './image.js';
+import { Index } from '../../data/index.js';
+import { LANG } from './lang.js';
+import { local } from './local-storage.js';
+import { local as dataLocal } from '../../data/local.js';
+import { modal } from './modal.js';
+import { mode as modeModule, process as processModule } from './mode.js';
+import { newWidget } from '../core/widget.js';
+import { noop, ajax, o2js, js2o, utils } from '../core/utils.js';
+import { openFiles } from './files.js';
 import { platform } from './platform.js';
 import { selection } from './select.js';
-import { stats } from './stats.js';
-import { newWidget } from '../core/widget.js';
-import { widgets } from '../core/widgets.js';
-import { updateTool } from '../mode/cam/tools.js';
-import { beta, version } from '../../moto/license.js';
+import { settingsUI } from './config/dialog.js';
+import { showDevices } from './devices.js';
+import { showTools } from '../mode/cam/tools.js';
 import { space as SPACE } from '../../moto/space.js';
+import { stats } from './stats.js';
 import { types as load } from '../../load/file.js';
-
-import { LANG } from './lang.js';
-import { LOCAL, SETUP, SECURE } from './main.js';
 import { UI } from './component.js';
+import { updateTool } from '../mode/cam/tools.js';
+import { util as utilModule } from './util.js';
+import { view as viewModule } from './view-state.js';
+import { visuals } from './visuals.js';
+import { widgets } from '../core/widgets.js';
+import { workspace } from './workspace.js';
 
-import web from '../../moto/webui.js';
+// From main.js - environment setup
+let LOC = self.location,
+    SETUP = utils.parseOpt(LOC.search.substring(1)),
+    SECURE = utilModule.isSecure(LOC.protocol),
+    LOCAL = self.debug && !SETUP.remote,
+    EVENT = broker,
+    FILES = openFiles(new Index(SETUP.d ? SETUP.d[0] : 'kiri'));
 
-let UC = UI.prefix('kiri').inputAction(settings.conf.update),
-    und = undefined,
-    clone = Object.clone,
+// todo: fix in widget.js b/c front-end and back-end do not share api
+self.kiri_catalog = FILES;
+FILES.show = () => modal.show('files');
+
+// Broker compatibility patch
+EVENT.on = (topic, listener) => {
+    EVENT.subscribe(topic, listener);
+    return EVENT;
+};
+
+let busyVal = 0,
     isHover = false,
-    feature = {
-        seed: true, // seed profiles on first use
-        meta: true, // show selected widget metadata
-        frame: true, // receive frame events
-        alert_event: false, // emit alerts as events instead of display
-        controls: true, // show or not side menus
-        device_filter: und, // function to limit devices shown
-        drop_group: und, // optional array to group multi drop
-        drop_layout: true, // layout on new drop
-        hoverAdds: false, // when true only searches widget additions
-        on_key: und, // function override default key handlers
-        on_key2: [], // allows for multiple key handlers
-        on_load: und, // function override file drop loads
-        on_add_stl: und, // legacy override stl drop loads
-        on_mouse_up: und, // function intercepts mouse up select
-        on_mouse_down: und, // function intercepts mouse down
-        work_alerts: true, // allow disabling work progress alerts
-        pmode: consts.PMODES.SPEED, // preview modes
-        // hover: false, // when true fires mouse hover events
-        get hover() {
-            return isHover;
-        },
-        set hover(b) {
-            isHover = b;
-            broker.publish("feature.hover", b);
-        }
-    },
-    busyVal = 0,
-    busy = {
+    undef = undefined;
+
+// the big kahuna
+export const api = {
+    ajax,
+    beta,
+    alerts,
+    busy: {
         val() { return busyVal },
         inc() { api.event.emit("busy", ++busyVal) },
         dec() { api.event.emit("busy", --busyVal) }
     },
-    onkey = (fn) => {
-        api.feature.on_key2.push(fn);
+    catalog: FILES,
+    client: work,
+    clip(text) {
+        navigator.clipboard
+            .writeText(text)
+            .catch(err => console.error('Clipboard Error:', err));
     },
-    doit = {
-        undo: noop, // do.js
-        redo: noop  // do.js
-    },
-    devel = {
+    clone: Object.clone,
+    color,
+    conf: settings.conf,
+    const: { LANG, LOCAL, SETUP, SECURE, STACKS, ...consts },
+    devel: {
         get enabled() {
             return settings.ctrl().devel;
         },
@@ -88,110 +98,128 @@ let UC = UI.prefix('kiri').inputAction(settings.conf.update),
             api.function.slice();
         }
     },
-    local = {
-        get: (key) => localGet(key),
-        getItem: (key) => localGet(key),
-        getInt: (key) => parseInt(localGet(key)),
-        getFloat: (key) => parseFloat(localGet(key)),
-        getBoolean: (key, def = true) => {
-            let val = localGet(key);
-            return val === true || val === 'true' || val === def;
-        },
-        toggle: (key, val, def) => localSet(key, val ?? !api.local.getBoolean(key, def)),
-        put: (key, val) => localSet(key, val),
-        set: (key, val) => localSet(key, val),
-        setItem: (key, val) => localSet(key, val),
-        removeItem: (key) => localRemove(key)
-    },
-    tweak = {
-        line_precision(v) { api.work.config({ base: { clipperClean: v } }) },
-        gcode_decimals(v) { api.work.config({ base: { gcode_decimals: v } }) }
-    };
-
-function clip(text) {
-    navigator.clipboard
-        .writeText(text)
-        .catch(err => console.error('Clipboard Error:', err));
-}
-
-function localGet(key) {
-    let sloc = api.conf.get().local;
-    return sloc[key] || api.sdb[key];
-}
-
-function localSet(key, val) {
-    let sloc = api.conf.get().local;
-    sloc[key] = api.sdb[key] = val;
-    return val;
-}
-
-function localRemove(key) {
-    let sloc = api.conf.get().local;
-    return delete sloc[key];
-}
-
-export const api = {
-    ajax,
-    beta,
-    alerts,
-    busy,
-    catalog,
-    client: work,
-    clip,
-    clone,
-    color,
-    conf: settings.conf,
-    const: { LANG, LOCAL, SETUP, SECURE, STACKS, ...consts },
-    devel,
     device,
     devices,
-    dialog,
-    doit,
-    event,
+    dialog: {
+        show: (which) => modal.show(which),
+        hide: () => modal.hide(),
+        update_process_list: settingsUI.update_list
+    },
+    doit: {
+        undo: noop, // do.js
+        redo: noop  // do.js
+    },
+    event: {
+        on(t,l) { return EVENT.on(t,l) },
+        emit(t,m,o) { return EVENT.publish(t,m,o) },
+        bind(t,m,o) { return EVENT.bind(t,m,o) },
+        alerts(clr) { alerts.update(clr) },
+        import: utilModule.loadFile,
+        settings: settingsUI.trigger_event
+    },
     electron: navigator.userAgent.includes('Electron'),
-    feature,
+    feature: {
+        seed: true, // seed profiles on first use
+        meta: true, // show selected widget metadata
+        frame: true, // receive frame events
+        alert_event: false, // emit alerts as events instead of display
+        controls: true, // show or not side menus
+        device_filter: undef, // function to limit devices shown
+        drop_group: undef, // optional array to group multi drop
+        drop_layout: true, // layout on new drop
+        hoverAdds: false, // when true only searches widget additions
+        on_key: undef, // function override default key handlers
+        on_key2: [], // allows for multiple key handlers
+        on_load: undef, // function override file drop loads
+        on_add_stl: undef, // legacy override stl drop loads
+        on_mouse_up: undef, // function intercepts mouse up select
+        on_mouse_down: undef, // function intercepts mouse down
+        work_alerts: true, // allow disabling work progress alerts
+        pmode: consts.PMODES.SPEED, // preview modes
+        // hover: false, // when true fires mouse hover events
+        get hover() {
+            return isHover;
+        },
+        set hover(b) {
+            isHover = b;
+            broker.publish("feature.hover", b);
+        }
+    },
     function: functions,
-    group,
-    help,
-    hide,
-    image,
+    group: groupModule,
+    help: helpModule,
+    hide: {
+        alert(rec, recs) { alerts.hide(...arguments) },
+        import: noop,
+        slider: visuals.hide_slider
+    },
+    image: imageModule,
     js2o,
     language: LANG,
     lists,
     load,
     local,
+    LOCAL,
     modal,
-    mode,
+    mode: modeModule,
     new: {
         widget: newWidget
     },
     noop,
     o2js,
-    onkey,
+    onkey(fn) {
+        api.feature.on_key2.push(fn);
+    },
     platform,
-    process,
+    process: processModule,
     sdb: dataLocal,
+    SECURE,
     selection,
     settings,
-    show,
-    space,
+    SETUP,
+    show: {
+        alert() { return alerts.show(...arguments) },
+        controls() { console.trace('deprecated') },
+        devices: showDevices,
+        import() { api.ui.import.style.display = '' },
+        layer: visuals.set_visible_layer,
+        local() { console.trace('deprecated') },
+        progress: utilModule.setProgress,
+        slices: visuals.show_slices,
+        tools: showTools
+    },
+    space: workspace,
     SPACE,
     stacks: STACKS,
     stats,
     tool: {
         update: updateTool
     },
-    tweak,
-    uc: UC,
-    ui: {},
-    util,
-    var: {
-        layer_lo: 0,
-        layer_hi: 0,
-        layer_max: 0
+    tweak: {
+        line_precision(v) { api.work.config({ base: { clipperClean: v } }) },
+        gcode_decimals(v) { api.work.config({ base: { gcode_decimals: v } }) }
     },
+    uc: UI.prefix('kiri').inputAction(settings.conf.update),
+    ui: {},
+    util: {
+        isSecure: utilModule.isSecure,
+        download: utilModule.download,
+        ui2rec() { api.conf.update_from(...arguments) },
+        rec2ui() { api.conf.update_fields(...arguments) },
+        b64enc(obj) { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
+        b64dec(obj) { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
+    },
+    // var: {
+    //     layer_lo: 0,
+    //     layer_hi: 0,
+    //     layer_max: 0
+    // },
     version,
-    view,
+    view: {
+        ...viewModule,
+        ...visuals,
+        snapshot: null
+    },
     visuals,
     web,
     widgets,

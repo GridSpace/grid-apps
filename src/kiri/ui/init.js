@@ -1,19 +1,9 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { $, $c } from '../../moto/webui.js';
+import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
-import { base } from '../../geo/base.js';
-import { local as sdb } from '../../data/local.js';
-import { slider } from './slider.js';
-import { keyboard } from './keyboard.js';
-import { modal } from './modal.js';
-import { interact } from './interact.js';
-import { space } from '../../moto/space.js';
-import { LOCAL, SETUP } from './main.js';
-import { VIEWS, MODES, SEED } from '../core/consts.js';
 import { beta, version } from '../../moto/license.js';
-import { settings as set_ctrl } from './config/manager.js';
-import STACKS from './stacks.js';
+import { fileOps } from './file-ops.js';
 import { init as initCAM } from '../mode/cam/init-ui.js';
 import { init as initDRAG } from '../mode/drag/init-ui.js';
 import { init as initFDM } from '../mode/fdm/init-ui.js';
@@ -21,12 +11,27 @@ import { init as initLaser } from '../mode/laser/init-ui.js';
 import { init as initSLA } from '../mode/sla/init-ui.js';
 import { init as initWEDM } from '../mode/wedm/init-ui.js';
 import { init as initWJET } from '../mode/wjet/init-ui.js';
+import { interact } from './interact.js';
+import { keyboard } from './keyboard.js';
+import { local as sdb } from '../../data/local.js';
 import { menu as menuCAM } from '../mode/cam/init-menu.js';
 import { menu as menuFDM } from '../mode/fdm/init-menu.js';
 import { menu as menuLaser } from '../mode/laser/init-menu.js';
 import { menu as menuSLA } from '../mode/sla/init-menu.js';
+import { modal } from './modal.js';
+import { navigation } from './navigation.js';
+import { preferences } from './preferences.js';
+import { selectionTools } from './selection-tools.js';
+import { settings as set_ctrl } from './config/manager.js';
+import { settingsOps } from './settings-ops.js';
+import { slider } from './slider.js';
+import { space } from '../../moto/space.js';
+import { VIEWS, MODES, SEED } from '../core/consts.js';
 
-let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
+import STACKS from './stacks.js';
+
+let { LOCAL, SETUP } = api,
+    { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     { client, catalog, platform, selection, stats } = api,
     LANG = api.language.current,
     WIN = self.window,
@@ -80,134 +85,10 @@ function checkSeed(then) {
     return false;
 }
 
-function unitsSave() {
-    api.conf.update({ controller: true });
-    platform.update_size();
-}
-
-function aniMeshSave() {
-    api.conf.update({ controller: true });
-    api.conf.save();
-}
-
-function lineTypeSave() {
-    const sel = ui.lineType.options[ui.lineType.selectedIndex];
-    if (sel) {
-        settings().controller.lineType = sel.value;
-        api.conf.save();
-    }
-}
-
-function detailSave() {
-    let level = ui.detail.options[ui.detail.selectedIndex];
-    if (level) {
-        level = level.value;
-        let rez = base.config.clipperClean;
-        switch (level) {
-            case '100': rez = 50; break;
-            case '75': rez = base.config.clipperClean; break;
-            case '50': rez = 500; break;
-            case '25': rez = 1000; break;
-        }
-        client.config({
-            base: { clipperClean: rez }
-        });
-        settings().controller.detail = level;
-        api.conf.save();
-    }
-}
-
-function speedSave() {
-    settings().controller.showSpeeds = ui.showSpeeds.checked;
-    api.view.update_speeds();
-}
-
-function setThreaded(bool) {
-    if (bool) {
-        client.pool.start();
-    } else {
-        client.pool.stop();
-    }
-    return bool;
-}
-
 // upon restore, seed presets
 api.event.emit('preset', api.conf.dbo());
 
 // api.event.on("set.threaded", bool => setThreaded(bool));
-
-function booleanSave() {
-    let control = settings().controller;
-    if (control.assembly != ui.assembly.checked) {
-        client.wasm(ui.assembly.checked);
-    }
-    if (control.antiAlias != ui.antiAlias.checked) {
-        api.show.alert('Page Reload Required to Change Aliasing');
-    }
-    control.antiAlias = ui.antiAlias.checked;
-    control.assembly = ui.assembly.checked;
-    control.autoLayout = ui.autoLayout.checked;
-    control.autoSave = ui.autoSave.checked;
-    control.dark = ui.dark.checked;
-    control.devel = ui.devel.checked;
-    control.drawer = ui.drawer.checked;
-    control.exportOcto = ui.exportOcto.checked;
-    control.exportPreview = ui.exportPreview.checked;
-    control.exportThumb = ui.exportThumb.checked;
-    control.freeLayout = ui.freeLayout.checked;
-    control.healMesh = ui.healMesh.checked;
-    control.ortho = ui.ortho.checked;
-    control.manifold = ui.manifold.checked;
-    control.reverseZoom = ui.reverseZoom.checked;
-    control.scrolls = ui.scrolls.checked;
-    control.shiny = ui.shiny.checked;
-    control.showOrigin = ui.showOrigin.checked;
-    control.showRulers = ui.showRulers.checked;
-    control.spaceRandoX = ui.spaceRandoX.checked;
-    // control.threaded = setThreaded(ui.threaded.checked);
-    control.webGPU = ui.webGPU.checked;
-    space.view.setZoom(control.reverseZoom, control.zoomSpeed);
-    // platform.layout();
-    api.conf.save();
-    api.platform.update_size();
-    updateStats();
-    updateDrawer();
-    api.event.emit('boolean.update');
-    space.view.setProjection(control.ortho ? 'orthographic' : 'perspective');
-}
-
-function updateDrawer() {
-    const { drawer, scrolls } = settings().controller;
-    $c('app', drawer  ? 'slideshow' : '',   drawer  ? '' : 'slideshow');
-    $c('app', scrolls ? '' : 'hide-scroll', scrolls ? 'hide-scroll' : '');
-}
-
-function updateStats() {
-    if (self.debug !== true) {
-        return;
-    }
-    console.log('updateStats()');
-    let { div, fps, rms, rnfo } = ui.stats;
-    div.style.display = 'flex';
-    clearTimeout(statsTimer);
-    statsTimer = setInterval(() => {
-        const nrms = space.view.getRMS().toFixed(1);
-        const nfps = space.view.getFPS().toFixed(1);
-        const rend = space.renderInfo();
-        const { memory, render } = rend;
-        if (nfps !== fps.innerText) {
-            fps.innerText = nfps;
-        }
-        if (nrms !== rms.innerText) {
-            rms.innerText = nrms;
-        }
-        if (rnfo.offsetParent !== null) {
-            rnfo.innerHTML = Object.entries({ ...memory, ...render, render_ms: nrms, frames_sec: nfps }).map(row => {
-                return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`
-            }).join('');
-        }
-    }, 100);
-}
 
 function onBooleanClick(el) {
     // copy some ui elements to target settings
@@ -239,7 +120,6 @@ function onButtonClick(ev) {
 
 api.event.on('click.button', onButtonClick);
 
-
 function keys(o) {
     let key, list = [];
     for (key in o) { if (o.hasOwnProperty(key)) list.push(key) }
@@ -249,277 +129,6 @@ function keys(o) {
 function clearSelected(children) {
     for (let i=0; i<children.length; i++) {
         children[i].setAttribute('class','');
-    }
-}
-
-function rotateInputSelection() {
-    if (selection.meshes().length === 0) {
-        api.show.alert("select object to rotate");
-        return;
-    }
-    api.uc.prompt("Enter X,Y,Z degrees of rotation","").then(coord => {
-        coord = (coord || '').split(',');
-        let prod = Math.PI / 180,
-            x = parseFloat(coord[0] || 0.0) * prod,
-            y = parseFloat(coord[1] || 0.0) * prod,
-            z = parseFloat(coord[2] || 0.0) * prod;
-        selection.rotate(x, y, z);
-    });
-}
-
-function positionSelection() {
-    if (selection.meshes().length === 0) {
-        api.show.alert("select object to position");
-        return;
-    }
-    let current = settings(),
-        { device, process} = current,
-        center = process.ctOriginCenter || process.camOriginCenter || device.bedRound || device.originCenter,
-        bounds = boundsSelection();
-
-    api.uc.prompt("Enter X,Y coordinates for selection","").then(coord => {
-        coord = (coord || '').split(',');
-        let x = parseFloat(coord[0] || 0.0),
-            y = parseFloat(coord[1] || 0.0),
-            z = parseFloat(coord[2] || 0.0);
-
-        if (!center) {
-            x = x - device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
-            y = y - device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
-        }
-
-        selection.move(x, y, z, true);
-    });
-}
-
-function deviceExport(exp, name) {
-    name = (name || "device")
-        .toLowerCase()
-        .replace(/ /g,'_')
-        .replace(/\./g,'_');
-    uc.prompt("Export Device Filename", name).then(name => {
-        if (name) {
-            api.util.download(exp, `${name}.km`);
-        }
-    });
-}
-
-function objectsExport(format = "stl") {
-    // return selection.export();
-    uc.confirm("Export Filename", {ok:true, cancel: false}, `selected.${format}`).then(name => {
-        if (!name) return;
-        if (name.toLowerCase().indexOf(`.${format}`) < 0) {
-            name = `${name}.${format}`;
-        }
-        api.util.download(selection.export(format), name);
-    });
-}
-
-function workspaceNew() {
-    uc.confirm("Clear Workspace?", {ok:true, cancel: false}).then(value => {
-        if (value === true) {
-            let proc = set_ctrl.proc();
-            proc.ops && (proc.ops.length = 0);
-            proc.op2 && (proc.op2.length = 0);
-            api.platform.clear();
-        }
-    });
-}
-
-function profileExport() {
-    const opt = {pre: [
-        "<div class='f-col a-center gap5 mlr10'>",
-        "  <h3>Workspace Export</h3>",
-        "  <label>This will create a backup of your</label>",
-        "  <label>workspace, devices, and settings</label>",
-        "  <span class='mt10'><input id='excwork' type='checkbox'>&nbsp;Exclude meshes</span>",
-        "</div>"
-    ]};
-    let suggestion = "workspace";
-    let file = api.widgets.all()[0]?.meta.file || '';
-    if (file) {
-        suggestion = `${suggestion}_${file.split('.')[0]}`.replaceAll(' ','_');
-    };
-    uc.confirm("Filename", {ok:true, cancel: false}, suggestion, opt).then(name => {
-        if (!name) return;
-
-        let work = !$('excwork').checked;
-        let json = api.conf.export({work, clear:true});
-
-        client.zip([
-            {name:"workspace.json", data:JSON.stringify(json)}
-        ], progress => {
-            api.show.progress(progress.percent/100, "compressing workspace");
-        }, output => {
-            api.show.progress(0);
-            api.util.download(output, `${name}.kmz`);
-        });
-    });
-}
-
-function settingsSave(ev, name) {
-    if (ev) {
-        ev.stopPropagation();
-        ev.preventDefault();
-    }
-
-    api.dialog.hide();
-    let mode = api.mode.get(),
-        s = settings(),
-        def = "default",
-        cp = s.process,
-        pl = s.sproc[mode],
-        lp = s.cproc[mode],
-        saveAs = (name) => {
-            if (!name) {
-                return;
-            }
-            let np = pl[name] = {};
-            cp.processName = name;
-            pl[name] = Object.clone(cp);
-            for (let k in cp) {
-                if (!cp.hasOwnProperty(k)) continue;
-                np[k] = cp[k];
-            }
-            s.cproc[mode] = name;
-            s.devproc[s.device.deviceName] = name;
-            api.conf.save();
-            api.conf.update();
-            api.event.settings();
-            sync_put();
-        };
-
-    if (name) {
-        saveAs(name);
-    } else {
-        uc.prompt("Save Settings As", cp ? lp || def : def).then(saveAs);
-    }
-}
-
-function settingsLoad() {
-    api.conf.show();
-}
-
-function updateDeviceSize() {
-    api.conf.update();
-    platform.update_size();
-    platform.update_origin();
-}
-
-async function sync_put() {
-    await set_ctrl.sync.put();
-}
-
-function dragOverHandler(evt) {
-    evt.stopPropagation();
-    evt.preventDefault();
-
-    // prevent drop actions when a dialog is open
-    if (api.modal.visible()) {
-        return;
-    }
-
-    evt.dataTransfer.dropEffect = 'copy';
-    let oldcolor = space.platform.setColor(0x00ff00);
-    if (oldcolor !== 0x00ff00) platformColor = oldcolor;
-}
-
-function dragLeave() {
-    space.platform.setColor(platformColor);
-}
-
-function dropHandler(evt) {
-    evt.stopPropagation();
-    evt.preventDefault();
-
-    // prevent drop actions when a dialog is open
-    if (api.modal.visible()) {
-        return;
-    }
-
-    space.platform.setColor(platformColor);
-
-    let files = evt.dataTransfer.files;
-
-    switch (api.feature.drop_group) {
-        case true:
-            return api.platform.load_files(files, []);
-        case false:
-            return api.platform.load_files(files, undefined);
-    }
-
-    if (files.length === 1) {
-        api.platform.load_files(files);
-    } else if (files.length > 1) {
-        uc.confirm(`group ${files.length} files?`).then(yes => {
-            api.platform.load_files(files, yes ? [] : undefined);
-        });
-    }
-}
-
-function loadCatalogFile(e) {
-    api.widgets.load(e.target.getAttribute('load'), function(widget) {
-        platform.add(widget);
-        api.dialog.hide();
-    });
-}
-
-function updateCatalog(files) {
-    let table = ui.catalogList,
-        list = [];
-    table.innerHTML = '';
-    for (let name in files) {
-        list.push({n:name, ln:name.toLowerCase(), v:files[name].vertices, t:files[name].updated});
-    }
-    list.sort(function(a,b) {
-        return a.ln < b.ln ? -1 : 1;
-    });
-    for (let i=0; i<list.length; i++) {
-        let row = DOC.createElement('div'),
-            renm = DOC.createElement('button'),
-            load = DOC.createElement('button'),
-            size = DOC.createElement('button'),
-            del = DOC.createElement('button'),
-            file = list[i],
-            name = file.n,
-            date = new Date(file.t),
-            split = name.split('.'),
-            short = split[0],
-            ext = split[1] ? `.${split[1]}` : '';
-
-        renm.setAttribute('class', 'rename');
-        renm.setAttribute('title', 'rename file');
-        renm.innerHTML = '<i class="far fa-edit"></i>';
-        renm.onclick = () => {
-            api.uc.prompt(`rename file`, short).then(newname => {
-                if (newname && newname !== short) {
-                    catalog.rename(name, `${newname}${ext}`, then => {
-                        api.modal.show('files');
-                    });
-                }
-            });
-        };
-
-        load.setAttribute('load', name);
-        load.setAttribute('title', `file: ${name}\nvertices: ${file.v}\ndate: ${date}`);
-        load.onclick = loadCatalogFile;
-        load.appendChild(DOC.createTextNode(short));
-
-        del.setAttribute('del', name);
-        del.setAttribute('title', "remove '"+name+"'");
-        del.onclick = () => { catalog.deleteFile(name) };
-        del.innerHTML = '<i class="far fa-trash-alt"></i>';
-
-        size.setAttribute("disabled", true);
-        size.setAttribute("class", "label");
-        size.appendChild(DOC.createTextNode(base.util.comma(file.v)));
-
-        row.setAttribute("class", "f-row a-center");
-        row.appendChild(renm);
-        row.appendChild(load);
-        row.appendChild(size);
-        row.appendChild(del);
-        table.appendChild(row);
     }
 }
 
@@ -600,10 +209,10 @@ function init_one() {
     space.platform.onMove(conf.save);
     space.platform.setRound(true);
     space.useDefaultKeys(api.feature.on_key === undefined || api.feature.on_key_defaults);
-    updateDrawer();
+    preferences.updateDrawer();
 
     // api augmentation with local functions
-    api.device.export = deviceExport;
+    api.device.export = settingsOps.deviceExport;
 
     Object.assign(ui, {
         tracker:            tracker,
@@ -726,9 +335,9 @@ function init_one() {
         device:           newGroup(LANG.dv_gr_dev, null, {group:"ddev", inline, class:"noshow"}),
 
         _____:            newGroup("workspace", null, {group:"dext", inline}),
-        bedWidth:         newInput('X (width)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:updateDeviceSize}),
-        bedDepth:         newInput('Y (depth)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:updateDeviceSize}),
-        maxHeight:        newInput('Z (height)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:updateDeviceSize}),
+        bedWidth:         newInput('X (width)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.updateDeviceSize}),
+        bedDepth:         newInput('Y (depth)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.updateDeviceSize}),
+        maxHeight:        newInput('Z (height)', {title:LANG.dv_bedw_l, convert:toFloat, size:6, units, round:2, action:settingsOps.updateDeviceSize}),
         resolutionX:      newInput(LANG.dv_rezx_s, {title:LANG.dv_rezx_l, convert:toInt, size:6, modes:SLA}),
         resolutionY:      newInput(LANG.dv_rezy_s, {title:LANG.dv_rezy_l, convert:toInt, size:6, modes:SLA}),
         _____:            newDiv({ class: "f-col t-body t-inset", addto: $('dev-config'), set:true, modes:NO_WEDM }),
@@ -786,39 +395,39 @@ function init_one() {
         /** Preferences Menu */
 
         _____:            newGroup(LANG.op_menu, $('prefs-gen1'), {inline}),
-        antiAlias:        newBoolean(LANG.op_anta_s, booleanSave, {title:LANG.op_anta_l}),
-        reverseZoom:      newBoolean(LANG.op_invr_s, booleanSave, {title:LANG.op_invr_l}),
-        ortho:            newBoolean(LANG.op_orth_s, booleanSave, {title:LANG.op_orth_l}),
-        dark:             newBoolean(LANG.op_dark_s, booleanSave, {title:LANG.op_dark_l}),
-        drawer:           newBoolean('slide out', booleanSave, {title:'slide out settings drawer'}),
-        scrolls:          newBoolean('scrollbars', booleanSave, {title:'show scrollbars'}),
-        devel:            newBoolean(LANG.op_devl_s, booleanSave, {title:LANG.op_devl_l}),
+        antiAlias:        newBoolean(LANG.op_anta_s, preferences.booleanSave, {title:LANG.op_anta_l}),
+        reverseZoom:      newBoolean(LANG.op_invr_s, preferences.booleanSave, {title:LANG.op_invr_l}),
+        ortho:            newBoolean(LANG.op_orth_s, preferences.booleanSave, {title:LANG.op_orth_l}),
+        dark:             newBoolean(LANG.op_dark_s, preferences.booleanSave, {title:LANG.op_dark_l}),
+        drawer:           newBoolean('slide out', preferences.booleanSave, {title:'slide out settings drawer'}),
+        scrolls:          newBoolean('scrollbars', preferences.booleanSave, {title:'show scrollbars'}),
+        devel:            newBoolean(LANG.op_devl_s, preferences.booleanSave, {title:LANG.op_devl_l}),
         _____:            newGroup(LANG.op_disp, $('prefs-gen2'), {inline}),
-        showOrigin:       newBoolean(LANG.op_shor_s, booleanSave, {title:LANG.op_shor_l}),
-        showRulers:       newBoolean(LANG.op_shru_s, booleanSave, {title:LANG.op_shru_l}),
-        showSpeeds:       newBoolean(LANG.op_sped_s, speedSave, {title:LANG.op_sped_l}),
-        shiny:            newBoolean(LANG.op_shny_s, booleanSave, {title:LANG.op_shny_l, modes:FDM}),
-        lineType:         newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: lineTypeSave, modes:FDM}, "linetype"),
-        manifold:         newBoolean(LANG.op_mani_s, booleanSave, {title: LANG.op_mani_l, modes:CAM}, "manifold"),
-        animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: aniMeshSave, modes:CAM}, "animesh"),
-        units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: unitsSave, modes:CAM}, "units"),
+        showOrigin:       newBoolean(LANG.op_shor_s, preferences.booleanSave, {title:LANG.op_shor_l}),
+        showRulers:       newBoolean(LANG.op_shru_s, preferences.booleanSave, {title:LANG.op_shru_l}),
+        showSpeeds:       newBoolean(LANG.op_sped_s, preferences.speedSave, {title:LANG.op_sped_l}),
+        shiny:            newBoolean(LANG.op_shny_s, preferences.booleanSave, {title:LANG.op_shny_l, modes:FDM}),
+        lineType:         newSelect(LANG.op_line_s, {title: LANG.op_line_l, action: preferences.lineTypeSave, modes:FDM}, "linetype"),
+        manifold:         newBoolean(LANG.op_mani_s, preferences.booleanSave, {title: LANG.op_mani_l, modes:CAM}, "manifold"),
+        animesh:          newSelect(LANG.op_anim_s, {title: LANG.op_anim_l, action: preferences.aniMeshSave, modes:CAM}, "animesh"),
+        units:            newSelect(LANG.op_unit_s, {title: LANG.op_unit_l, action: preferences.unitsSave, modes:CAM}, "units"),
         edgeangle:        newInput(LANG.op_spoa_s, {title:LANG.op_spoa_l, convert:toFloat, size:3}),
         _____:            newGroup(LANG.lo_menu, $('prefs-lay'), {inline}),
-        autoSave:         newBoolean(LANG.op_save_s, booleanSave, {title:LANG.op_save_l}),
-        autoLayout:       newBoolean(LANG.op_auto_s, booleanSave, {title:LANG.op_auto_l}),
-        freeLayout:       newBoolean(LANG.op_free_s, booleanSave, {title:LANG.op_free_l}),
-        spaceRandoX:      newBoolean(LANG.op_spcx_s, booleanSave, {title:LANG.op_spcx_l, show:isBelt}),
+        autoSave:         newBoolean(LANG.op_save_s, preferences.booleanSave, {title:LANG.op_save_l}),
+        autoLayout:       newBoolean(LANG.op_auto_s, preferences.booleanSave, {title:LANG.op_auto_l}),
+        freeLayout:       newBoolean(LANG.op_free_s, preferences.booleanSave, {title:LANG.op_free_l}),
+        spaceRandoX:      newBoolean(LANG.op_spcx_s, preferences.booleanSave, {title:LANG.op_spcx_l, show:isBelt}),
         spaceLayout:      newInput(LANG.op_spcr_s, {title:LANG.op_spcr_l, convert:toFloat, size:3, units}),
         _____:            newGroup(LANG.xp_menu, $('prefs-xpo'), {inline: true}),
-        exportOcto:       newBoolean(`OctoPrint`, booleanSave, {title:LANG.op_exop_l}),
-        exportThumb:      newBoolean(`Thumbnail`, booleanSave, {modes:FDM}),
-        exportPreview:    newBoolean(`Code Preview`, booleanSave),
+        exportOcto:       newBoolean(`OctoPrint`, preferences.booleanSave, {title:LANG.op_exop_l}),
+        exportThumb:      newBoolean(`Thumbnail`, preferences.booleanSave, {modes:FDM}),
+        exportPreview:    newBoolean(`Code Preview`, preferences.booleanSave),
         _____:            newGroup(LANG.pt_menu, $('prefs-prt'), {inline}),
-        detail:           newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: detailSave}, "detail"),
-        healMesh:         newBoolean(LANG.pt_heal_s, booleanSave, {title: LANG.pt_heal_l}),
-        // threaded:         newBoolean(LANG.pt_thrd_s, booleanSave, {title: LANG.pt_thrd_l, modes:THREED}),
-        assembly:         newBoolean(LANG.pt_assy_s, booleanSave, {title: LANG.pt_assy_l, modes:THREED}),
-        webGPU:           newBoolean(LANG.pt_wgpu_s, booleanSave, {title: LANG.pt_wgpu_l, modes:THREED}),
+        detail:           newSelect(LANG.pt_qual_s, {title: LANG.pt_qual_l, action: preferences.detailSave}, "detail"),
+        healMesh:         newBoolean(LANG.pt_heal_s, preferences.booleanSave, {title: LANG.pt_heal_l}),
+        // threaded:         newBoolean(LANG.pt_thrd_s, preferences.booleanSave, {title: LANG.pt_thrd_l, modes:THREED}),
+        assembly:         newBoolean(LANG.pt_assy_s, preferences.booleanSave, {title: LANG.pt_assy_l, modes:THREED}),
+        webGPU:           newBoolean(LANG.pt_wgpu_s, preferences.booleanSave, {title: LANG.pt_wgpu_l, modes:THREED}),
 
         prefadd:          uc.checkpoint($('prefs-add')),
 
@@ -853,7 +462,7 @@ function init_one() {
 
     // override old style settings two-button menu
     ui.settingsSave.onclick = () => {
-        settingsSave(undefined, ui.settingsName.value);
+        settingsOps.settingsSave(undefined, ui.settingsName.value);
     };
 
     // initialize modal controller
@@ -918,8 +527,8 @@ function init_one() {
         VIEWS,
         DOC,
         WIN,
-        rotateInputSelection,
-        settingsLoad
+        rotateInputSelection: selectionTools.rotateInputSelection,
+        settingsLoad: settingsOps.settingsLoad
     });
 
     // expose keyboard to API
@@ -983,97 +592,13 @@ function init_one() {
     };
 
     space.event.addHandlers(self, [
-        'dragover', dragOverHandler,
-        'dragleave', dragLeave,
-        'drop', dropHandler
+        'dragover', fileOps.dragOverHandler,
+        'dragleave', fileOps.dragLeave,
+        'drop', fileOps.dropHandler
     ]);
 
-    function selectionSize(e) {
-        let dv = parseFloat(e.target.value || 1),
-            pv = parseFloat(e.target.was || 1),
-            ra = dv / pv,
-            xv = parseFloat(ui.sizeX.was ?? ui.scaleX.value) || 1,
-            yv = parseFloat(ui.sizeY.was ?? ui.scaleY.value) || 1,
-            zv = parseFloat(ui.sizeZ.was ?? ui.scaleZ.value) || 1,
-            ta = e.target,
-            xc = ui.lockX.checked,
-            yc = ui.lockY.checked,
-            zc = ui.lockZ.checked,
-            xt = ta === ui.sizeX,
-            yt = ta === ui.sizeY,
-            zt = ta === ui.sizeZ,
-            tl = (xt && xc) || (yt && yc) || (zt && zc),
-            xr = ((tl && xc) || (!tl && xt) ? ra : 1),
-            yr = ((tl && yc) || (!tl && yt) ? ra : 1),
-            zr = ((tl && zc) || (!tl && zt) ? ra : 1);
-        // prevent null scale
-        if (xv * xr < 0.1 || yv * yr < 0.1 || zv * zr < 0.1) {
-            api.alerts.show('invalid scale value');
-            return;
-        }
-        selection.scale(xr,yr,zr);
-        ui.sizeX.was = ui.sizeX.value = xv * xr;
-        ui.sizeY.was = ui.sizeY.value = yv * yr;
-        ui.sizeZ.was = ui.sizeZ.value = zv * zr;
-    }
-
-    function selectionScale(e) {
-        let dv = parseFloat(e.target.value || 1),
-            pv = parseFloat(e.target.was || 1),
-            ra = dv / pv,
-            xv = parseFloat(ui.scaleX.was ?? ui.scaleX.value) || 1,
-            yv = parseFloat(ui.scaleY.was ?? ui.scaleY.value) || 1,
-            zv = parseFloat(ui.scaleZ.was ?? ui.scaleY.value) || 1,
-            ta = e.target,
-            xc = ui.lockX.checked,
-            yc = ui.lockY.checked,
-            zc = ui.lockZ.checked,
-            xt = ta === ui.scaleX,
-            yt = ta === ui.scaleY,
-            zt = ta === ui.scaleZ,
-            tl = (xt && xc) || (yt && yc) || (zt && zc),
-            xr = ((tl && xc) || (!tl && xt) ? ra : 1),
-            yr = ((tl && yc) || (!tl && yt) ? ra : 1),
-            zr = ((tl && zc) || (!tl && zt) ? ra : 1);
-        // prevent null scale
-        if (xv * xr < 0.1 || yv * yr < 0.1 || zv * zr < 0.1) {
-            api.alerts.show('invalid scale value');
-            return;
-        }
-        selection.scale(xr,yr,zr);
-        ui.scaleX.was = ui.scaleX.value = xv * xr;
-        ui.scaleY.was = ui.scaleY.value = yv * yr;
-        ui.scaleZ.was = ui.scaleZ.value = zv * zr;
-    }
-
-    function selectionRotate(e) {
-        let val = parseFloat(e.target.value) || 0;
-        e.target.value = val;
-    }
-
-    // on enter but not on blur
-    space.event.onEnterKey([
-        ui.scaleX,        selectionScale,
-        ui.scaleY,        selectionScale,
-        ui.scaleZ,        selectionScale,
-        ui.sizeX,         selectionSize,
-        ui.sizeY,         selectionSize,
-        ui.sizeZ,         selectionSize,
-    ]);
-    // on enter and blur
-    space.event.onEnterKey([
-        ui.toolName,      updateTool,
-        ui.toolNum,       updateTool,
-        ui.toolFluteDiam, updateTool,
-        ui.toolFluteLen,  updateTool,
-        ui.toolShaftDiam, updateTool,
-        ui.toolShaftLen,  updateTool,
-        ui.toolTaperTip,  updateTool,
-        ui.toolTaperAngle, updateTool,
-        $('rot_x'),       selectionRotate,
-        $('rot_y'),       selectionRotate,
-        $('rot_z'),       selectionRotate
-    ], true);
+    // Setup selection transformation bindings
+    selectionTools.setupSelectionBindings(ui);
 
     $('lab-axis').onclick = () => {
         ui.lockX.checked =
@@ -1222,7 +747,7 @@ function init_two() {
         }
 
         platform.deselect();
-        catalog.addFileListener(updateCatalog);
+        catalog.addFileListener(fileOps.updateCatalog);
         space.view.setZoom(control.reverseZoom, control.zoomSpeed);
         space.platform.setGridZOff(undefined);
         space.platform.setZOff(0.05);
@@ -1246,10 +771,10 @@ function init_two() {
         // ui.threaded.checked = setThreaded(control.threaded);
         ui.webGPU.checked = control.webGPU;
 
-        setThreaded(true);
-        lineTypeSave();
-        detailSave();
-        updateStats();
+        preferences.setThreaded(true);
+        preferences.lineTypeSave();
+        preferences.detailSave();
+        preferences.updateStats();
 
         // optional set-and-lock mode (hides mode menu)
         let SETMODE = SETUP.mode ? SETUP.mode[0] : null;
@@ -1269,8 +794,8 @@ function init_two() {
         // default to ARRANGE view mode
         api.view.set(VIEWS.ARRANGE);
 
-        // add ability to override
-        api.show.controls(api.feature.controls);
+        // add ability to override (todo: restore?)
+        // api.show.controls(api.feature.controls);
 
         // update everything dependent on the platform size
         platform.update_size();
@@ -1324,80 +849,8 @@ function init_two() {
         sdb.gdpr = Date.now();
     };
 
-    // bind interface action elements
-    $('export-support-a').onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
-    $('mode-device').onclick = api.show.devices;
-    $('mode-profile').onclick = settingsLoad;
-    $('mode-fdm').onclick = () => api.mode.set('FDM');
-    $('mode-cam').onclick = () => api.mode.set('CAM');
-    $('mode-sla').onclick = () => api.mode.set('SLA');
-    $('mode-laser').onclick = () => api.mode.set('LASER');
-    $('mode-drag').onclick = () => api.mode.set('DRAG');
-    $('mode-wjet').onclick = () => api.mode.set('WJET');
-    $('mode-wedm').onclick = () => api.mode.set('WEDM');
-    $('set-device').onclick = (ev) => { ev.stopPropagation(); api.show.devices() };
-    $('set-profs').onclick = (ev) => { ev.stopPropagation(); api.conf.show() };
-    $('set-tools').onclick = (ev) => { ev.stopPropagation(); api.show.tools() };
-    $('set-prefs').onclick = (ev) => { ev.stopPropagation(); api.modal.show('prefs') };
-    ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
-    ui.acct.don8.onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };
-    ui.acct.mesh.onclick = (ev) => { ev.stopPropagation(); WIN.location = "/mesh" };
-    ui.acct.export.onclick = (ev) => { ev.stopPropagation(); profileExport() };
-    ui.acct.export.title = LANG.acct_xpo;
-    $('file-new').onclick = (ev) => { ev.stopPropagation(); workspaceNew() };
-    $('file-recent').onclick = () => { api.modal.show('files') };
-    $('file-import').onclick = (ev) => { api.event.import(ev); };
-    ui.func.slice.onclick = (ev) => { ev.stopPropagation(); api.function.slice() };
-    ui.func.preview.onclick = (ev) => { ev.stopPropagation(); api.function.print() };
-    ui.func.animate.onclick = (ev) => { ev.stopPropagation(); api.function.animate() };
-    ui.func.export.onclick = (ev) => { ev.stopPropagation(); api.function.export() };
-    $('view-arrange').onclick = api.platform.layout;
-    $('view-top').onclick = space.view.top;
-    $('view-home').onclick = space.view.home;
-    $('view-front').onclick = space.view.front;
-    $('view-back').onclick = space.view.back;
-    $('view-left').onclick = space.view.left;
-    $('view-right').onclick = space.view.right;
-    $('unrotate').onclick = () => {
-        api.widgets.for(w => w.unrotate());
-        selection.update_info();
-    };
-    // attach button handlers to support targets
-    for (let btn of ["don8pt","don8gh","don8pp"]) {
-        $(btn).onclick = (ev) => {
-            window.open(ev.target.children[0].href);
-        }
-    }
-    // rotation buttons
-    let d = (Math.PI / 180);
-    $('rot_x_lt').onclick = () => { selection.rotate(-d * $('rot_x').value,0,0) };
-    $('rot_x_gt').onclick = () => { selection.rotate( d * $('rot_x').value,0,0) };
-    $('rot_y_lt').onclick = () => { selection.rotate(0,-d * $('rot_y').value,0) };
-    $('rot_y_gt').onclick = () => { selection.rotate(0, d * $('rot_y').value,0) };
-    $('rot_z_lt').onclick = () => { selection.rotate(0,0, d * $('rot_z').value) };
-    $('rot_z_gt').onclick = () => { selection.rotate(0,0,-d * $('rot_z').value) };
-    // rendering options
-    $('render-edges').onclick = () => { api.view.edges({ toggle: true }); api.conf.save() };
-    $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
-    $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
-    $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
-    $('mesh-export-stl').onclick = () => { objectsExport('stl') };
-    $('mesh-export-obj').onclick = () => { objectsExport('obj') };
-    $('mesh-merge').onclick = selection.merge;
-    $('mesh-split').onclick = selection.isolateBodies;
-    $('context-duplicate').onclick = selection.duplicate;
-    $('context-mirror').onclick = selection.mirror;
-    $('context-layflat').onclick = () => { api.event.emit("tool.mesh.lay-flat") };
-    $('context-lefty').onclick = () => { api.event.emit("tool.mesh.lefty") };
-    $('context-setfocus').onclick = () => {
-        api.event.emit(
-            "tool.camera.focus",
-            ev => api.space.set_focus(undefined, ev.object.point)
-        );
-    };
-    $('context-contents').onclick = () => { api.SPACE.view.fit() };
-    $('view-fit').onclick = () => { api.SPACE.view.fit() };
-    $('wassup').onmouseover = () => { $('suppopp').classList.remove('hide') };
+    // Setup navigation button bindings
+    navigation.setupNavigation(ui, WIN, LANG);
 
     // ui.modal.onclick = api.modal.hide;
     ui.modalBox.onclick = (ev) => { ev.stopPropagation() };

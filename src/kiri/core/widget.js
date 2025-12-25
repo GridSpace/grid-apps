@@ -21,8 +21,8 @@ let nextId = 0;
 
 function newWidget(id,group) { return new Widget(id,group) }
 
+// todo: fix ui-only path thus this unorthodox binding vs importing api
 function catalog() { return self.kiri_catalog };
-
 function index() { return self.kiri_catalog.index }
 
 class Widget {
