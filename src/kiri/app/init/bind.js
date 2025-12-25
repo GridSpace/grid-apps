@@ -92,6 +92,8 @@ export function bind() {
         settings:           $('settings'),
         settingsBody:       $('settingsBody'),
         settingsList:       $('settingsList'),
+        settingsName:       $('settingsName'),
+        settingsSave:       $('settingsSave'),
 
         slider: {
             div:            $('slider'),

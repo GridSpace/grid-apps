@@ -62,6 +62,8 @@ class KeyboardControl {
 
         this.#bindEvents();
         this.#initialized = true;
+
+        return this;
     }
 
     /**

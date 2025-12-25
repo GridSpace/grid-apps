@@ -29,6 +29,8 @@ class ModalControl {
         this.#onShow = onShow;
         this.#onHide = onHide;
         this.#initialized = true;
+
+        return this;
     }
 
     /**

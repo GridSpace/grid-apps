@@ -12,21 +12,18 @@ import { space } from '../../../moto/space.js';
 import { VIEWS } from '../../core/consts.js';
 import * as view_tools from '../tools.js';
 
+const { SETUP, LOCAL } = api.const;
+const { catalog, client, platform, selection, stats, ui } = api;
+
 const DOC = self.document;
 const WIN = self.window;
-const proto = location.protocol;
-const { SETUP, LOCAL } = api.const;
-const { platform, client, catalog, stats } = api;
 const LANG = api.language.current;
-const ui = api.ui;
 const STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null;
-
-function settings() {
-    return api.conf.get();
-}
 
 // SECOND STAGE INIT AFTER UI RESTORED
 export async function init_sync() {
+    const proto = location.protocol;
+
     api.event.emit('init.two');
 
     // load script extensions
@@ -107,7 +104,7 @@ export async function init_sync() {
     });
 
     // Setup navigation button bindings
-    setup_keybd_nav(ui, WIN, LANG);
+    setup_keybd_nav();
 
     // show topline separator when iframed
     try { if (WIN.self !== WIN.top) $('top-sep').style.display = 'flex' } catch (e) { console.log(e) }
@@ -132,7 +129,7 @@ export async function init_sync() {
 }
 
 function ui_sync() {
-    const current = settings();
+    const current = api.conf.get();
     const control = current.controller;
 
     if (!control.devel) {
@@ -198,9 +195,7 @@ function ui_sync() {
     client.wasm(control.assembly === true);
 }
 
-function setup_keybd_nav(ui, WIN, LANG) {
-    const { selection } = api;
-
+function setup_keybd_nav() {
     // bind interface action elements
     ui.acct.help.onclick = (ev) => { ev.stopPropagation(); api.help.show() };
     ui.acct.don8.onclick = (ev) => { ev.stopPropagation(); api.modal.show('don8') };

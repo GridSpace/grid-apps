@@ -86,7 +86,7 @@ api.event.emit('preset', api.conf.dbo());
 
 // api.event.on("set.threaded", bool => setThreaded(bool));
 
-function onBooleanClick(el) {
+export function onBooleanClick(el) {
     // copy some ui elements to target settings
     let settings = api.conf.get();
     settings.device.bedBelt = ui.deviceBelt.checked && api.mode.is_fdm();
@@ -130,8 +130,17 @@ function isNotBelt() {
     return !isBelt();
 }
 
+function onResize() {
+    if (WIN.innerHeight < 800) {
+        ui.modalBox.classList.add('mh85');
+    } else {
+        ui.modalBox.classList.remove('mh85');
+    }
+    api.view.update_slider();
+}
+
 // MAIN UI INITIALIZATION FUNCTION
-function init_one() {
+export function init_input() {
     let { event, conf, view, show } = api,
         { newBlank, newButton, newBoolean, newGroup, newInput } = uc,
         { newSelect, newRow, newGCode, newDiv, toInt, toFloat } = uc;
@@ -154,19 +163,11 @@ function init_one() {
         tracker = $('tracker'),
         controller = settings().controller;
 
-    WIN.addEventListener("resize", () => {
-        event.emit('resize');
-    });
+    // window resize handlers
+    WIN.addEventListener("resize", onResize);
+    event.on('resize', onResize);
 
-    event.on('resize', () => {
-        if (WIN.innerHeight < 800) {
-            ui.modalBox.classList.add('mh85');
-        } else {
-            ui.modalBox.classList.remove('mh85');
-        }
-        view.update_slider();
-    });
-
+    // configure moto.space
     space.sky.showGrid(false);
     space.sky.setColor(controller.dark ? 0 : 0xffffff);
     space.setAntiAlias(controller.antiAlias);
@@ -326,9 +327,6 @@ function init_one() {
         ...menuSLA(),
 
         layers:             uc.setGroup($("layers")),
-
-        settingsName:       $('settingsName'),
-        settingsSave:       $('settingsSave'),
     });
 
     // run client mode initializations right after UI is bound
@@ -347,8 +345,8 @@ function init_one() {
         settingsOps.settingsSave(undefined, ui.settingsName.value);
     };
 
-    // initialize modal controller
-    modal.init({
+    // initialize and expose modal to API
+    api.modal = modal.init({
         ui: {
             modal: ui.modal,
             modals: ui.modals
@@ -361,23 +359,9 @@ function init_one() {
         }
     });
 
-    // expose modal to API
-    api.modal = modal;
-
-    // slider setup
-    slider.init({
-        ui: {
-            layers: ui.layers,
-            slider: ui.slider,
-            sliderRange: ui.sliderRange,
-            sliderHold: ui.sliderHold,
-            sliderMid: ui.sliderMid,
-            sliderLo: ui.sliderLo,
-            sliderHi: ui.sliderHi,
-            sliderMin: ui.sliderMin,
-            sliderMax: ui.sliderMax,
-            sliderZero: $('slider-zero'),
-        },
+    // initialize and expose slider to API
+    api.slider = slider.init({
+        ui,
         tracker: tracker,
         mobile: space.info.mob,
         onLayerChange: (hi, lo) => {
@@ -392,11 +376,8 @@ function init_one() {
         }
     });
 
-    // expose slider to API
-    api.slider = slider;
-
-    // initialize keyboard controller
-    keyboard.init({
+    // initialize and expose keyboard to API
+    api.keyboard = keyboard.init({
         api,
         platform,
         selection,
@@ -413,65 +394,46 @@ function init_one() {
         settingsLoad: settingsOps.settingsLoad
     });
 
-    // expose keyboard to API
-    api.keyboard = keyboard;
-
     // add mobile class to body if needed
     if (space.info.mob) {
         DOC.body.classList.add('mobile');
     }
 
-    ui.load.onchange = function(event) {
+    ui.load.onchange = (event) => {
         api.platform.load_files(event.target.files);
         ui.load.value = ''; // reset so you can re-import the same filee
     };
 
     // store layer preferences
-    api.event.on('stack.show', label => {
+    api.event.on('stack.show', (label) => {
         let mode = api.mode.get();
         let view = api.view.get();
         api.conf.get().labels[`${mode}-${view}-${label}`] = true;
     });
 
-    api.event.on('stack.hide', label => {
+    api.event.on('stack.hide', (label) => {
         let mode = api.mode.get();
         let view = api.view.get();
         api.conf.get().labels[`${mode}-${view}-${label}`] = false;
     });
 
-    // bind language choices
-    $('lset-en').onclick = function() {
-        sdb.setItem('kiri-lang', 'en-us');
-        api.space.reload();
-    };
-    $('lset-da').onclick = function() {
-        sdb.setItem('kiri-lang', 'da-dk');
-        api.space.reload();
-    };
-    $('lset-de').onclick = function() {
-        sdb.setItem('kiri-lang', 'de-de');
-        api.space.reload();
-    };
-    $('lset-fr').onclick = function() {
-        sdb.setItem('kiri-lang', 'fr-fr');
-        api.space.reload();
-    };
-    $('lset-pl').onclick = function() {
-        sdb.setItem('kiri-lang', 'pl-pl');
-        api.space.reload();
-    };
-    $('lset-pt').onclick = function() {
-        sdb.setItem('kiri-lang', 'pt-pt');
-        api.space.reload();
-    };
-    $('lset-es').onclick = function() {
-        sdb.setItem('kiri-lang', 'es-es');
-        api.space.reload();
-    };
-    $('lset-zh').onclick = function() {
-        sdb.setItem('kiri-lang', 'zh');
-        api.space.reload();
-    };
+    // bind menu language choices
+    let lang_map = [
+        [ 'lset-en', 'en-us' ],
+        [ 'lset-da', 'da-dk' ],
+        [ 'lset-de', 'de-de' ],
+        [ 'lset-fr', 'fr-fr' ],
+        [ 'lset-pl', 'pl-pl' ],
+        [ 'lset-pt', 'pt-pt' ],
+        [ 'lset-es', 'es-es' ],
+        [ 'lset-zh', 'zh' ],
+    ]
+    for (let [ btn, lang ] of lang_map) {
+        $(btn).onclick = () => {
+            sdb.setItem('kiri-lang', lang);
+            api.space.reload();
+        };
+    }
 
     space.event.addHandlers(self, [
         'dragover', fileOps.dragOverHandler,
@@ -576,5 +538,3 @@ function init_one() {
         api.space.restore(resolve) || checkSeed(resolve) || resolve();
     });
 };
-
-export { onBooleanClick, init_one as init_input };

@@ -52,6 +52,8 @@ class SliderControl {
         this.#setupUI();
         this.#bindEvents();
         this.#initialized = true;
+
+        return this;
     }
 
     /**
