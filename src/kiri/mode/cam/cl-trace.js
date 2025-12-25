@@ -1,10 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../../ui/api.js';
+import { api } from '../../app/api.js';
 import { env, clearPops, isDark } from './init-ui.js';
 import { CAM } from './driver-fe.js';
-import { Layers } from '../../ui/layers.js';
-import { Stack } from '../../ui/stack.js';
+import { Layers } from '../../app/layers.js';
+import { Stack } from '../../app/stack.js';
 
 export let traceOn = false;
 export let lastTrace;

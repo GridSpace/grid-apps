@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { base } from '../../../geo/base.js';
-import { Packer } from '../../ui/pack.js';
+import { Packer } from '../../app/pack.js';
 import { newBounds } from '../../../geo/bounds.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPrint } from '../../core/print.js';

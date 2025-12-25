@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../../ui/api.js';
+import { api } from '../../app/api.js';
 
 const state = {
     api: undefined,

@@ -3,13 +3,13 @@
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
-import '../kiri/ui/lang.js';
+import '../kiri/app/lang.js';
 import '../kiri/core/lang-en.js';
 
-import { api } from '../kiri/ui/api.js';
-import { init_lang } from '../kiri/ui/init-lang.js';
-import { init_one } from '../kiri/ui/init-one.js';
-import { init_two } from '../kiri/ui/init-two.js';
+import { api } from '../kiri/app/api.js';
+import { init_lang } from '../kiri/app/init-lang.js';
+import { init_one } from '../kiri/app/init-one.js';
+import { init_two } from '../kiri/app/init-two.js';
 
 let traceload = location.search.indexOf('traceload') > 0;
 let load = [];

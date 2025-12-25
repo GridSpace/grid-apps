@@ -1,13 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../../moto/webui.js';
-import { api } from '../../ui/api.js';
-import { conf } from '../../ui/config/defaults.js';
+import { api } from '../../app/api.js';
+import { conf } from '../../app/config/defaults.js';
 import { util } from '../../../geo/base.js';
-import { client } from '../../ui/client.js';
+import { client } from '../../app/client.js';
 import { addbox, delbox, getlastbox } from '../../core/boxes.js';
-import { Layers } from '../../ui/layers.js';
-import { Stack } from '../../ui/stack.js';
+import { Layers } from '../../app/layers.js';
+import { Stack } from '../../app/stack.js';
 import { Widget, newWidget } from '../../core/widget.js';
 import { space } from '../../../moto/space.js';
 

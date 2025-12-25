@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../../moto/webui.js';
-import { api } from '../../ui/api.js';
+import { api } from '../../app/api.js';
 
 export const SLA = {
     init,

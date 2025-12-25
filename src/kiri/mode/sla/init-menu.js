@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../../ui/api.js';
+import { api } from '../../app/api.js';
 
 let LANG = api.language.current;
 let { SLA } = api.const.MODES,

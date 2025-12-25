@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../moto/webui.js';
-import { api } from '../ui/api.js';
+import { api } from '../app/api.js';
 import { load } from '../../load/file.js';
 import { Widget, newWidget } from './widget.js';
 

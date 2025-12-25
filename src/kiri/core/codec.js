@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { Layers } from '../ui/layers.js';
+import { Layers } from '../app/layers.js';
 import { newPoint } from '../../geo/point.js';
 import { Polygon, newPolygon } from '../../geo/polygon.js';
 import { Slice, newSlice, Top, newTop } from './slice.js';

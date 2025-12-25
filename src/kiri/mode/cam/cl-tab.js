@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../../ui/api.js';
+import { api } from '../../app/api.js';
 import { env, isDark } from './init-ui.js';
 import { addbox, delbox, clearboxes } from '../../core/boxes.js';
 import { traceDone } from './cl-trace.js';

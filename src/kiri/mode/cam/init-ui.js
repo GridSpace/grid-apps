@@ -1,13 +1,13 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../../moto/webui.js';
-import { api } from '../../ui/api.js';
+import { api } from '../../app/api.js';
 import { load } from '../../../load/file.js';
 import { animate as anim_2d, animate_clear as anim_2d_clear } from './anim-2d-fe.js';
 import { animate2 as anim_3d, animate_clear2 as anim_3d_clear } from './anim-3d-fe.js';
 import { space as SPACE } from '../../../moto/space.js';
-import { Layers } from '../../ui/layers.js';
-import { Stack } from '../../ui/stack.js';
+import { Layers } from '../../app/layers.js';
+import { Stack } from '../../app/stack.js';
 import { updateStock } from './cl-stock.js';
 import { createPopOps } from './cl-ops.js';
 import { tabAdd, tabDone, tabClear, restoreTabs, rotateTabs, updateTabs, clearTabs, mirrorTabs } from './cl-tab.js';

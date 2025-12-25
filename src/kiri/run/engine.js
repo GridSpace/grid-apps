@@ -3,9 +3,9 @@
 import '../../add/array.js';
 import '../../add/class.js';
 import '../../add/three.js';
-import { api } from '../ui/api.js';
-import { conf } from '../ui/config/defaults.js';
-import { client } from '../ui/client.js';
+import { api } from '../app/api.js';
+import { conf } from '../app/config/defaults.js';
+import { client } from '../app/client.js';
 import { load } from '../../load/file.js';
 import { newWidget } from '../core/widget.js';
 
