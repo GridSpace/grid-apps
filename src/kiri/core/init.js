@@ -7,6 +7,7 @@ import { local as sdb } from '../../data/local.js';
 import { slider } from './slider.js';
 import { keyboard } from './keyboard.js';
 import { modal } from './modal.js';
+import { interact } from './interact.js';
 import { space } from '../../moto/space.js';
 import { LOCAL, SETUP } from './main.js';
 import { VIEWS, MODES, SEED } from './consts.js';
@@ -1114,21 +1115,34 @@ function init_one() {
 
     api.platform.update_size();
 
-    function mouseOnHover(int, event, ints) {
-        if (!api.feature.hover) return;
-        if (!int) return api.feature.hovers || api.widgets.meshes();
-        api.event.emit('mouse.hover', {int, ints, event, point: int.point, type: 'widget'});
-    }
-
-    function platformOnHover(int, event) {
-        if (!api.feature.hover) return;
-        if (int) api.event.emit('mouse.hover', {point: int, event, type: 'platform'});
-    }
-
-    api.event.on("feature.hover", enable => {
-        space.mouse.onHover(enable ? mouseOnHover : undefined);
-        space.platform.onHover(enable ? platformOnHover : undefined);
+    // initialize interaction controller
+    interact.init({
+        api,
+        space,
+        platform,
+        selection,
+        ui,
+        settings,
+        VIEWS,
+        onHover: (data) => {
+            api.event.emit('mouse.hover', data);
+        },
+        onHoverDown: (data) => {
+            api.event.emit('mouse.hover.down', data);
+        },
+        onHoverUp: (data) => {
+            api.event.emit('mouse.hover.up', data);
+        },
+        onDragDone: (offset) => {
+            api.event.emit('mouse.drag.done', offset);
+        },
+        onSelectionDrag: (delta) => {
+            api.event.emit('selection.drag', delta);
+        }
     });
+
+    // expose interact to API
+    api.interact = interact;
 
     // prevent safari from exiting full screen mode
     DOC.onkeydown = function (evt) {
@@ -1144,93 +1158,6 @@ function init_one() {
             return false;
         }
     };
-
-    space.mouse.downSelect((int, event) => {
-        if (api.feature.on_mouse_down) {
-            if (int) {
-                api.feature.on_mouse_down(int, event);
-                return;
-            }
-        }
-        if (api.feature.hover) {
-            if (int) {
-                return api.event.emit('mouse.hover.down', {int, point: int.point});
-            } else {
-                return selection.meshes();
-            }
-        }
-        // lay flat with meta or ctrl clicking a selected face
-        if (int && (event.ctrlKey || event.metaKey || api.feature.on_face_select)) {
-            let q = new THREE.Quaternion();
-            // find intersecting point, look "up" on Z and rotate to face that
-            q.setFromUnitVectors(int.face.normal, new THREE.Vector3(0,0,-1));
-            selection.rotate(q);
-        }
-        if (api.view.get() !== VIEWS.ARRANGE) {
-            // return no selection in modes other than arrange
-            return null;
-        } else {
-            // return selected meshes for further mouse processing
-            return api.feature.hovers || selection.meshes();
-        }
-    });
-
-    space.mouse.upSelect((object, event) => {
-        if (api.feature.on_mouse_up) {
-            if (event && object) {
-                return api.feature.on_mouse_up(object, event);
-            } else {
-                return api.widgets.meshes();
-            }
-        }
-        if (event && api.feature.hover) {
-            api.event.emit('mouse.hover.up', { object, event });
-            return;
-        }
-        if (event && event.target.nodeName === "CANVAS") {
-            if (object && object.object) {
-                if (object.object.widget) {
-                    platform.select(object.object.widget, event.shiftKey, false);
-                }
-            } else {
-                platform.deselect();
-            }
-        } else {
-            return api.feature.hovers || api.widgets.meshes();
-        }
-    });
-
-    space.mouse.onDrag(function(delta, offset, up = false) {
-        if (api.feature.hover) {
-            return;
-        }
-        if (up) {
-            api.event.emit('mouse.drag.done', offset);
-        }
-        if (delta && ui.freeLayout.checked) {
-            let set = settings();
-            let dev = set.device;
-            let bound = set.bounds_sel;
-            let width = dev.bedWidth/2;
-            let depth = dev.bedDepth/2;
-            let isout = (
-                bound.min.x <= -width ||
-                bound.min.y <= -depth ||
-                bound.max.x >= width ||
-                bound.max.y >= depth
-            );
-            if (!isout) {
-                if (bound.min.x + delta.x <= -width) return;
-                if (bound.min.y + delta.y <= -depth) return;
-                if (bound.max.x + delta.x >= width) return;
-                if (bound.max.y + delta.y >= depth) return;
-            }
-            selection.move(delta.x, delta.y, 0);
-            api.event.emit('selection.drag', delta);
-        } else {
-            return selection.meshes().length > 0;
-        }
-    });
 
     api.space.restore(init_two) || checkSeed(init_two) || init_two();
 };
