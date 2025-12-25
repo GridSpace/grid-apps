@@ -48,7 +48,7 @@ function send(fn, data, onreply, zerocopy) {
 
 // code is running in the browser / client context
 export const client = {
-    send: send,
+    send,
 
     setWorkPath(path) {
         workpath = path;

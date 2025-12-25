@@ -10,7 +10,7 @@ import { settings as set_ctrl } from '../conf/manager.js';
 import { settingsOps } from '../conf/settings.js';
 import { space } from '../../../moto/space.js';
 import { VIEWS } from '../../core/consts.js';
-import * as view_tools from '../tools.js';
+import * as view_tools from '../face-tool.js';
 
 const { SETUP, LOCAL } = api.const;
 const { catalog, client, platform, selection, stats, ui } = api;

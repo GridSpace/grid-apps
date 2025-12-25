@@ -9,7 +9,7 @@ import { selectHoles } from './cl-hole.js';
 import { selectHelical } from './cl-helical.js';
 import { surfaceAdd } from './cl-surface.js';
 import { traceAdd } from './cl-trace.js';
-import { startFaceUp } from '../../app/tools.js';
+import { startFaceUp } from '../../app/face-tool.js';
 
 const { MODES } = api.const;
 const { uc: UC } = api;

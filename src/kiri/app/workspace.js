@@ -71,7 +71,7 @@ function auto_save() {
  * @param {Widget|Array<Widget>} [sel] - Widget(s) to focus on (defaults to all)
  * @param {object} [point] - Optional point {x, y, z} to focus on directly
  */
-function setFocus(sel, point) {
+function set_focus(sel, point) {
     if (point) {
         SPACE.platform.setCenter(point.x, point.z, point.y);
         SPACE.view.setFocus(new THREE.Vector3(point.x, point.y, point.z));
@@ -111,7 +111,7 @@ function setFocus(sel, point) {
  * Shows alert unless quiet=true.
  * @param {boolean} [quiet] - Suppress "workspace saved" alert
  */
-function saveWorkspace(quiet) {
+function save(quiet) {
     api.conf.save();
     const newWidgets = [];
     const oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
@@ -147,7 +147,7 @@ function saveWorkspace(quiet) {
  * @param {boolean} [skip_widget_load] - Skip loading widgets (config only)
  * @returns {boolean} True if widgets were queued for loading
  */
-function restoreWorkspace(ondone, skip_widget_load) {
+function restore(ondone, skip_widget_load) {
     let newset = api.conf.restore(false),
         camera = newset.controller.view,
         toload = ls2o('ws-widgets',[]),
@@ -205,7 +205,7 @@ function restoreWorkspace(ondone, skip_widget_load) {
  * Clear all widgets from workspace.
  * Clears worker cache/memory, selects all widgets, and deletes them.
  */
-function clearWorkspace() {
+function clear() {
     // free up worker cache/mem
     api.client.clear();
     platform.select_all();
@@ -221,12 +221,12 @@ function is_dark() {
 }
 
 export const workspace = {
-    reload,
     auto_save,
-    restore: restoreWorkspace,
-    clear: clearWorkspace,
-    save: saveWorkspace,
-    set_focus: setFocus,
+    clear,
+    is_dark,
+    reload,
+    restore,
+    save,
+    set_focus,
     update: SPACE.update,
-    is_dark
 };
