@@ -41,7 +41,7 @@ import { visuals } from './visuals.js';
 import { widgets } from '../core/widgets.js';
 import { workspace } from './workspace.js';
 
-// From main.js - environment setup
+// environment setup
 let LOC = self.location,
     SETUP = utils.parseOpt(LOC.search.substring(1)),
     SECURE = utilModule.isSecure(LOC.protocol),
@@ -83,7 +83,7 @@ export const api = {
     clone: Object.clone,
     color,
     conf: settings.conf,
-    const: { LANG, LOCAL, SETUP, SECURE, STACKS, ...consts },
+    const: { LANG, LOCAL, SETUP, SECURE, SPACE, STACKS, ...consts },
     devel: {
         get enabled() {
             return settings.ctrl().devel;
@@ -159,7 +159,6 @@ export const api = {
     lists,
     load,
     local,
-    LOCAL,
     modal,
     mode: modeModule,
     new: {
@@ -173,10 +172,8 @@ export const api = {
     platform,
     process: processModule,
     sdb: dataLocal,
-    SECURE,
     selection,
     settings,
-    SETUP,
     show: {
         alert() { return alerts.show(...arguments) },
         controls() { console.trace('deprecated') },
@@ -189,7 +186,6 @@ export const api = {
         tools: showTools
     },
     space: workspace,
-    SPACE,
     stacks: STACKS,
     stats,
     tool: {

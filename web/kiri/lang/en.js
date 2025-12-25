@@ -8,8 +8,9 @@ self.lang['en-us'] = {
     axis:           "axis",         // left object scale pop menu
     back:           "back",
     clear:          "clear",        // clear workspace (remove all objects)
-    copy:           "copy",
     clone:          "clone",        // create duplicate
+    contents:       "contents",
+    copy:           "copy",
     delete:         "delete",
     detail:         "detail",
     done:           "done",

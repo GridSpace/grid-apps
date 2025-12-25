@@ -3,8 +3,8 @@
 import { api } from './api.js';
 import { local as sdb } from '../../data/local.js';
 
+const { SETUP } = api.const;
 const DOC = self.document;
-const { SETUP } = api;
 const stats = api.stats;
 
 // update static html elements with language overrides

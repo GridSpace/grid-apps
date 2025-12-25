@@ -7,7 +7,7 @@ import { addbox, clearboxes } from '../../core/boxes.js';
 
 export let originSelectOn = false;
 
-let { world } = api.SPACE;
+let { world } = api.const.SPACE;
 let alert, lastHover, lastPoints;
 
 export function originSelect() {

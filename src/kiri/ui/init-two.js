@@ -14,7 +14,7 @@ import { VIEWS } from '../core/consts.js';
 const DOC = self.document;
 const WIN = self.window;
 const proto = location.protocol;
-const { SETUP, LOCAL } = api;
+const { SETUP, LOCAL } = api.const;
 const { platform, client, catalog, stats } = api;
 const LANG = api.language.current;
 const ui = api.ui;

@@ -2,7 +2,7 @@
 
 import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
-import { beta, version } from '../../moto/license.js';
+import { version } from '../../moto/license.js';
 import { fileOps } from './file-ops.js';
 import { init as initCAM } from '../mode/cam/init-ui.js';
 import { init as initDRAG } from '../mode/drag/init-ui.js';
@@ -29,13 +29,12 @@ import { VIEWS, MODES, SEED } from '../core/consts.js';
 
 import STACKS from './stacks.js';
 
-let { LOCAL, SETUP } = api,
+let { SETUP } = api.const,
     { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
-    { client, catalog, platform, selection, stats } = api,
+    { catalog, platform, selection, stats } = api,
     DOC = self.document,
     WIN = self.window,
     LANG = api.language.current,
-    STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
     TWOD    = [ LASER, DRAG, WJET, WEDM ],
     TWONED  = [ LASER, DRAG, WJET ],
     THREED  = [ FDM, CAM, SLA ],
@@ -44,7 +43,6 @@ let { LOCAL, SETUP } = api,
     FDM_LZN = [ FDM, ...TWONED ],
     NO_WEDM = [ FDM, CAM, SLA, LASER, DRAG, WJET ],
     FDM_CAM = [ FDM, CAM ],
-    proto = location.protocol,
     inline = true,
     driven = true,
     trigger = true,
@@ -131,7 +129,7 @@ function isNotBelt() {
     return !isBelt();
 }
 
-// MAIN INITIALIZATION FUNCTION
+// MAIN UI INITIALIZATION FUNCTION
 function init_one() {
     let { event, conf, view, show } = api,
         { newBlank, newButton, newBoolean, newGroup, newInput } = uc,
@@ -686,4 +684,4 @@ function init_one() {
     });
 };
 
-export { isBelt, isNotBelt, onBooleanClick, updateTool, init_one };
+export { onBooleanClick, updateTool, init_one };
