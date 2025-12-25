@@ -5,7 +5,7 @@ import { client } from './client.js';
 import { codec } from './codec.js';
 import { space } from '../../moto/space.js';
 import { COLOR, PMODES } from './consts.js';
-import { exportFile } from './export.js';
+import { exportFile } from '../ui/export.js';
 
 let complete = {};
 

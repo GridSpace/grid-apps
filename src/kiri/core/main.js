@@ -16,7 +16,7 @@ import { openFiles } from '../ui/files.js';
 import { platform } from './platform.js';
 import { selection } from './selection.js';
 import { settings } from './settings.js';
-import { showDevices } from './devices.js';
+import { showDevices } from '../ui/devices.js';
 import { space as SPACE } from '../../moto/space.js';
 import { stats } from '../ui/stats.js';
 import { noop, utils } from './utils.js';

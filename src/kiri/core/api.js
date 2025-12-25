@@ -7,7 +7,7 @@ import STACKS from '../ui/stacks.js';
 import { broker } from '../../moto/broker.js';
 import { client as work } from './client.js';
 import { consts, COLOR as color, LISTS as lists } from './consts.js';
-import { device, devices } from './devices.js';
+import { device, devices } from '../ui/devices.js';
 import { catalog, dialog, event, group, help, hide, image } from './main.js';
 import { modal, mode, process, show, space, util, view } from './main.js';
 import { local as dataLocal } from '../../data/local.js';

@@ -1,11 +1,11 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../moto/webui.js';
-import { api } from './api.js';
-import { client } from './client.js';
+import { api } from '../core/api.js';
+import { client } from '../core/client.js';
 import { local } from '../../data/local.js';
 import { util } from '../../geo/base.js';
-import { MODES } from './consts.js';
+import { MODES } from '../core/consts.js';
 import { LASER as laser_driver } from '../mode/laser/driver.js';
 import { SLA as sla_client } from '../mode/sla/init-ui.js';
 import { hash } from '../../ext/md5.js';

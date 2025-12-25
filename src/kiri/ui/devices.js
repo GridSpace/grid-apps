@@ -1,11 +1,11 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $, h } from '../../moto/webui.js';
-import { api } from './api.js';
-import { conf } from './conf.js';
+import { api } from '../core/api.js';
+import { conf } from '../core/conf.js';
 import { space } from '../../moto/space.js';
 import { devices as devlist } from '../../pack/kiri-devs.js';
-import { settings, conf as setconf } from './settings.js';
+import { settings, conf as setconf } from '../core/settings.js';
 
 export const device = {
     clone: cloneDevice,
