@@ -23,6 +23,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
 
     // get tab widgets
     let tabW = widget.group.filter(w => w != widget);
+
     // merge overlapping tabs
     for (let i=0; i<tabW.length; i++) {
         for (let j=i+1; j<tabW.length; j++) {

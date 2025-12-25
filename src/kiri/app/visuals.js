@@ -8,15 +8,35 @@ import STACKS from './stacks.js';
 
 const { COLOR, VIEWS } = consts;
 
-// Note: viewMode is imported dynamically via api.view.get()
+/**
+ * Constrain value to min/max bounds.
+ * @param {number} v - Value to constrain
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @returns {number} Constrained value
+ */
 function bound(v,min,max) {
     return Math.max(min,Math.min(max,v));
 }
 
+/**
+ * Get unit scale factor for coordinate conversion.
+ * Returns 25.4 for CAM mode with inches, 1.0 otherwise (mm).
+ * @returns {number} Unit scale factor
+ */
 function unitScale() {
     return api.mode.is_cam() && settings.ctrl().units === 'in' ? 25.4 : 1;
 }
 
+/**
+ * Update speed color legend for preview mode.
+ * Shows color-coded speed visualization in preview mode for FDM.
+ * Generates 20 color swatches from worker and displays in UI.
+ * Only visible in PREVIEW mode for FDM (not SLA/LASER) when enabled.
+ * Emits 'preview.speeds' event with min/max speeds.
+ * @param {number} [maxSpeed] - Maximum speed value
+ * @param {number} [minSpeed] - Minimum speed value
+ */
 function updateSpeeds(maxSpeed, minSpeed) {
     const { ui } = api;
     const viewMode = api.view.get();
@@ -51,6 +71,11 @@ function updateSpeeds(maxSpeed, minSpeed) {
     }
 }
 
+/**
+ * Update slider visual position and sync settings.
+ * Updates slider thumb positions based on current range.
+ * Synchronizes configuration fields from range values.
+ */
 function updateSlider() {
     const { lo, hi, max } = api.slider.getRange();
     if (max > 0) {
@@ -59,6 +84,13 @@ function updateSlider() {
     api.conf.update_fields_from_range();
 }
 
+/**
+ * Set visible layer range and update visualization.
+ * Bounds values to valid range and updates slider.
+ * Triggers slice visualization update.
+ * @param {number} [h] - High layer (defaults to current hi)
+ * @param {number} [l] - Low layer (defaults to current lo)
+ */
 function setVisibleLayer(h, l) {
     const { lo, hi, max } = api.slider.getRange();
     h = h >= 0 ? h : hi;
@@ -70,11 +102,25 @@ function setVisibleLayer(h, l) {
     showSlices();
 }
 
+/**
+ * Set wireframe rendering mode for all widgets.
+ * Updates 3D scene after applying to all widgets.
+ * @param {boolean} bool - Enable/disable wireframe
+ * @param {number} [color] - Optional wireframe color
+ * @param {number} [opacity] - Optional wireframe opacity
+ */
 function setWireframe(bool, color, opacity) {
     api.widgets.each(function(w) { w.setWireframe(bool, color, opacity) });
     SPACE.update();
 }
 
+/**
+ * Toggle or set edge rendering for all widgets.
+ * If bool.toggle is truthy, toggles the current state.
+ * Otherwise sets edge visibility to bool value.
+ * Persists state to local storage and updates scene.
+ * @param {boolean|object} bool - Enable/disable edges, or {toggle: true} to toggle
+ */
 function setEdges(bool) {
     if (bool && bool.toggle) {
         api.local.toggle('model.edges');
@@ -86,6 +132,12 @@ function setEdges(bool) {
     SPACE.update();
 }
 
+/**
+ * Update slider maximum from stack height.
+ * Sets slider max to tallest stack layer - 1.
+ * If set=true or current hi exceeds new max, resets range to show top layer.
+ * @param {boolean} [set] - Force reset range to max
+ */
 function updateSliderMax(set) {
     let max = STACKS.getRange().tallest - 1;
     api.slider.setMax(max);
@@ -96,6 +148,10 @@ function updateSliderMax(set) {
     }
 }
 
+/**
+ * Hide slice visualization and restore widget rendering.
+ * Clears stack display, restores model opacity, disables wireframe.
+ */
 function hideSlices() {
     STACKS.clear();
     api.widgets.setOpacity(COLOR.model_opacity);
@@ -104,6 +160,10 @@ function hideSlices() {
     });
 }
 
+/**
+ * Show or hide all widgets in 3D scene.
+ * @param {boolean} bool - True to show, false to hide
+ */
 function setWidgetVisibility(bool) {
     api.widgets.each(w => {
         if (bool) {
@@ -115,9 +175,13 @@ function setWidgetVisibility(bool) {
 }
 
 /**
- * hide or show slice-layers and their sub-elements
- *
- * @param {number} [layer]
+ * Show slice layer visualization.
+ * Only works in SLICE/PREVIEW/ANIMATE views (not ARRANGE).
+ * Updates slider range to show specified layer(s).
+ * If no layer specified, shows current hi layer.
+ * Expands range downward if needed (newLo = min(layer, lo)).
+ * Updates slider position and triggers stack visualization.
+ * @param {number|string} [layer] - Layer to show (defaults to current hi)
  */
 function showSlices(layer) {
     const viewMode = api.view.get();
@@ -146,15 +210,26 @@ function showSlices(layer) {
     SPACE.update();
 }
 
+/**
+ * Show layer slider UI element.
+ */
 function showSlider() {
     api.slider.show();
 }
 
+/**
+ * Hide layer slider and speed legend UI elements.
+ */
 function hideSlider() {
     api.slider.hide();
     api.ui.speeds.style.display = 'none';
 }
 
+/**
+ * Synchronize stack label visibility with saved preferences.
+ * Reads visibility state from settings.labels for current mode/view combination.
+ * Applies visibility to all stack labels.
+ */
 function updateStackLabelState() {
     const settings = api.conf.get();
     // match label checkboxes to preference
@@ -165,8 +240,8 @@ function updateStackLabelState() {
 }
 
 export const visuals = {
-    wireframe: setWireframe,
-    edges: setEdges,
+    set_wireframe: setWireframe,
+    set_edges: setEdges,
     unit_scale: unitScale,
     update_speeds: updateSpeeds,
     update_slider: updateSlider,

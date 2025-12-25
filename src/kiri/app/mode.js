@@ -93,8 +93,8 @@ function setMode(mode, lock, then) {
     platform.update_selected();
     selection.update_bounds(api.widgets.all());
     api.conf.update_fields();
-    // because device dialog, if showing, needs to be updated
-    if (modal.visible()) {
+    // if device dialog showing, needs to be refreshed
+    if (modal.is('setup')) {
         api.show.devices();
     }
     api.space.restore(null, true);

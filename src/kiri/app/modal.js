@@ -9,6 +9,7 @@ class ModalControl {
     #ui;
     #onShow;
     #onHide;
+    #showing;
     #initialized = false;
 
     /**
@@ -38,7 +39,15 @@ class ModalControl {
      * @returns {boolean}
      */
     visible() {
-        return this.#ui.modal.style.display === 'flex';
+        return modal.#ui.modal.style.display === 'flex';
+    }
+
+    /**
+     * Check if a specific modal is currently visible
+     * @returns {boolean}
+     */
+    is(name) {
+        return modal.#showing === name;
     }
 
     /**
@@ -46,18 +55,21 @@ class ModalControl {
      * @param {string} which - Name of the modal to show
      */
     show(which) {
-        let mod = this.#ui.modal,
+        let mod = modal.#ui.modal,
             style = mod.style,
-            visible = this.visible(),
+            visible = modal.visible(),
             info = { pct: 0 };
 
         // hide all modals before showing another
-        Object.keys(this.#ui.modals).forEach(name => {
-            this.#ui.modals[name].style.display = name === which ? 'flex' : '';
+        Object.keys(modal.#ui.modals).forEach(name => {
+            console.log({ name, which });
+            modal.#ui.modals[name].style.display = name === which ? 'flex' : '';
         });
 
+        modal.#showing = which;
+
         const ondone = () => {
-            this.#onShow?.(which);
+            modal.#onShow?.(which);
         };
 
         if (visible) {
@@ -79,10 +91,13 @@ class ModalControl {
      * Hide the modal with animation
      */
     hide() {
-        if (!this.visible()) {
+        if (!modal.visible()) {
             return;
         }
-        let mod = this.#ui.modal,
+
+        modal.#showing = undefined;
+
+        let mod = modal.#ui.modal,
             style = mod.style,
             info = { pct: 100 };
 
@@ -92,7 +107,7 @@ class ModalControl {
             onUpdate(() => { style.height = `${info.pct}%` }).
             onComplete(() => {
                 style.display = '';
-                this.#onHide?.();
+                modal.#onHide?.();
             }).
             start();
     }

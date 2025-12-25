@@ -17,13 +17,25 @@ const LOC = self.location;
 const SETUP = parseOpt(LOC.search.substring(1));
 const FILES = openFiles(new Index(SETUP.d ? SETUP.d[0] : 'kiri'));
 
+/** Auto-save timer handle */
 let autoSaveTimer = null;
 
+/**
+ * Reload the application page.
+ * Emits 'reload' event and defers reload until busy count reaches zero.
+ */
 function reload() {
     api.event.emit('reload');
     do_reload(100);
 }
 
+/**
+ * Perform page reload after ensuring async operations complete.
+ * Checks busy state and defers reload until idle.
+ * Retries with exponential backoff (100ms -> 250ms).
+ * @param {number} [time=100] - Initial delay in milliseconds
+ * @private
+ */
 function do_reload(time) {
     // allow time for async saves to complete and busy to to to zero
     setTimeout(() => {
@@ -36,6 +48,11 @@ function do_reload(time) {
     }, time || 100);
 }
 
+/**
+ * Trigger delayed auto-save if enabled.
+ * Debounces saves with 1-second delay.
+ * Only saves if controller.autoSave is enabled.
+ */
 function auto_save() {
     if (!settings.ctrl().autoSave) {
         return;
@@ -46,6 +63,14 @@ function auto_save() {
     }, 1000);
 }
 
+/**
+ * Set camera focus on widgets or point.
+ * If point provided, focuses on that point.
+ * Otherwise calculates centroid of selection (or all widgets if sel undefined/empty).
+ * For CAM indexed mode, uses Z=0 focus height. Otherwise uses half of top_z.
+ * @param {Widget|Array<Widget>} [sel] - Widget(s) to focus on (defaults to all)
+ * @param {object} [point] - Optional point {x, y, z} to focus on directly
+ */
 function setFocus(sel, point) {
     if (point) {
         SPACE.platform.setCenter(point.x, point.z, point.y);
@@ -76,6 +101,16 @@ function setFocus(sel, point) {
     SPACE.view.setFocus(new THREE.Vector3(pos.x, focus_z, -pos.y));
 }
 
+/**
+ * Save workspace state to local storage.
+ * Saves:
+ * - Configuration settings
+ * - Widget list and metadata
+ * - Widget positions and states
+ * Removes stale widget data for deleted widgets.
+ * Shows alert unless quiet=true.
+ * @param {boolean} [quiet] - Suppress "workspace saved" alert
+ */
 function saveWorkspace(quiet) {
     api.conf.save();
     const newWidgets = [];
@@ -100,6 +135,18 @@ function saveWorkspace(quiet) {
     }
 }
 
+/**
+ * Restore workspace from local storage.
+ * Restores:
+ * - Configuration settings
+ * - Camera view position
+ * - All saved widgets from storage
+ * Clears existing platform widgets unless skip_widget_load=true.
+ * Calls ondone callback when complete.
+ * @param {Function} [ondone] - Callback when restore completes
+ * @param {boolean} [skip_widget_load] - Skip loading widgets (config only)
+ * @returns {boolean} True if widgets were queued for loading
+ */
 function restoreWorkspace(ondone, skip_widget_load) {
     let newset = api.conf.restore(false),
         camera = newset.controller.view,
@@ -154,6 +201,10 @@ function restoreWorkspace(ondone, skip_widget_load) {
     return toload.length > 0;
 }
 
+/**
+ * Clear all widgets from workspace.
+ * Clears worker cache/memory, selects all widgets, and deletes them.
+ */
 function clearWorkspace() {
     // free up worker cache/mem
     api.client.clear();
@@ -161,6 +212,10 @@ function clearWorkspace() {
     platform.delete(selection.meshes());
 }
 
+/**
+ * Check if dark mode is enabled.
+ * @returns {boolean} True if dark mode active
+ */
 function is_dark() {
     return settings.ctrl().dark;
 }

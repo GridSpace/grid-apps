@@ -35,7 +35,6 @@ import { stats } from './stats.js';
 import { types as load } from '../../load/file.js';
 import { UI } from './inputs.js';
 import { updateTool } from '../mode/cam/tools.js';
-import { util as utilModule } from './util.js';
 import { view as viewModule } from './viewmode.js';
 import { visuals } from './visuals.js';
 import { widgets } from '../core/widgets.js';
@@ -43,11 +42,11 @@ import { workspace } from './workspace.js';
 
 // environment setup
 let LOC = self.location,
-    SETUP = utils.parseOpt(LOC.search.substring(1)),
-    SECURE = utilModule.isSecure(LOC.protocol),
-    LOCAL = self.debug && !SETUP.remote,
     EVENT = broker,
-    FILES = openFiles(new Index(SETUP.d ? SETUP.d[0] : 'kiri'));
+    SETUP = utils.parseOpt(LOC.search.substring(1)),
+    FILES = openFiles(new Index(SETUP.d ? SETUP.d[0] : 'kiri')),
+    LOCAL = self.debug && !SETUP.remote,
+    SECURE = isSecure(LOC.protocol);
 
 // todo: fix in widget.js b/c front-end and back-end do not share api
 self.kiri_catalog = FILES;
@@ -61,6 +60,27 @@ EVENT.on = (topic, listener) => {
     return EVENT;
 };
 
+/**
+ * Check if protocol is secure (HTTPS).
+ * @param {string} proto - Protocol string (e.g., "https:", "http:")
+ * @returns {boolean} True if protocol starts with "https"
+ */
+function isSecure(proto) {
+    return proto.toLowerCase().indexOf("https") === 0;
+}
+
+/**
+ * Download data as a file using browser download mechanism.
+ * Creates temporary object URL and triggers download via hidden link click.
+ * @param {Blob|ArrayBuffer|string} data - Data to download
+ * @param {string} filename - Filename for download
+ */
+function download(data, filename) {
+    let url = WIN.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
+    $('mod-any').innerHTML = `<a id="_dexport_" href="${url}" download="${filename}">x</a>`;
+    $('_dexport_').click();
+}
+
 /** Busy state counter for tracking active operations */
 let busyVal = 0,
     /** Hover feature flag */
@@ -68,7 +88,10 @@ let busyVal = 0,
     /** Explicit undefined for object defaults */
     undef = undefined;
 
-// the big kahuna
+/**
+ * organize modules for easy use in other modules
+ * without having to know the paths to all of them
+ */
 export const api = {
     ajax,
     beta,
@@ -132,7 +155,7 @@ export const api = {
         emit(t,m,o) { return EVENT.publish(t,m,o) },
         bind(t,m,o) { return EVENT.bind(t,m,o) },
         alerts(clr) { alerts.update(clr) },
-        import: utilModule.loadFile,
+        import() { api.ui.load.click() },
         settings: settingsUI.trigger_event
     },
     electron: navigator.userAgent.includes('Electron'),
@@ -205,7 +228,7 @@ export const api = {
         import() { api.ui.import.style.display = '' },
         layer: visuals.set_visible_layer,
         local() { console.trace('deprecated') },
-        progress: utilModule.setProgress,
+        progress: alerts.progress,
         slices: visuals.show_slices,
         tools: showTools
     },
@@ -222,8 +245,8 @@ export const api = {
     uc: UI.prefix('kiri').inputAction(settings.conf.update),
     ui: {},
     util: {
-        isSecure: utilModule.isSecure,
-        download: utilModule.download,
+        isSecure,
+        download,
         ui2rec() { api.conf.update_from(...arguments) },
         rec2ui() { api.conf.update_fields(...arguments) },
         /**

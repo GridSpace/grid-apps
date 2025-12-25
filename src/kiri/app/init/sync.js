@@ -255,10 +255,10 @@ function setup_keybd_nav() {
     $('rot_z_gt').onclick = () => { selection.rotate(0,0,-d * $('rot_z').value) };
 
     // rendering options
-    $('render-edges').onclick = () => { api.view.edges({ toggle: true }); api.conf.save() };
-    $('render-ghost').onclick = () => { api.view.wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
-    $('render-wire').onclick = () => { api.view.wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
-    $('render-solid').onclick = () => { api.view.wireframe(false, 0, 1); };
+    $('render-edges').onclick = () => { api.view.set_edges({ toggle: true }); api.conf.save() };
+    $('render-ghost').onclick = () => { api.view.set_wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
+    $('render-wire').onclick = () => { api.view.set_wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
+    $('render-solid').onclick = () => { api.view.set_wireframe(false, 0, 1); };
     $('mesh-export-stl').onclick = () => { settingsOps.export_objects('stl') };
     $('mesh-export-obj').onclick = () => { settingsOps.export_objects('obj') };
     $('mesh-merge').onclick = selection.merge;
