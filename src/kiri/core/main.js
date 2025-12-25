@@ -15,7 +15,7 @@ import { local as dataLocal } from '../../data/local.js';
 import { openFiles } from '../ui/files.js';
 import { platform } from './platform.js';
 import { selection } from './selection.js';
-import { settings } from './settings.js';
+import { settings } from '../ui/config/manager.js';
 import { showDevices } from '../ui/devices.js';
 import { space as SPACE } from '../../moto/space.js';
 import { stats } from '../ui/stats.js';

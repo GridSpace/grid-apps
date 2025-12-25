@@ -2,9 +2,9 @@
 
 import { $ } from '../../../moto/webui.js';
 import { api } from '../../core/api.js';
-import { conf } from '../../core/conf.js';
+import { conf } from '../../ui/config/defaults.js';
 import { util } from '../../../geo/base.js';
-import { client } from '../../core/client.js';
+import { client } from '../../ui/client.js';
 import { addbox, delbox, getlastbox } from '../../core/boxes.js';
 import { Layers } from '../../ui/layers.js';
 import { Stack } from '../../ui/stack.js';

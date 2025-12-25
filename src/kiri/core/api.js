@@ -1,11 +1,11 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import alerts from '../ui/alerts.js';
-import settings from './settings.js'
+import settings from '../ui/config/manager.js';
 import STACKS from '../ui/stacks.js';
 
 import { broker } from '../../moto/broker.js';
-import { client as work } from './client.js';
+import { client as work } from '../ui/client.js';
 import { consts, COLOR as color, LISTS as lists } from './consts.js';
 import { device, devices } from '../ui/devices.js';
 import { catalog, dialog, event, group, help, hide, image } from './main.js';

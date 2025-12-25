@@ -1,15 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { $, h } from '../../moto/webui.js';
-import { api } from './api.js';
-import { conf } from './conf.js';
-import { codec } from './codec.js';
-import { consts } from './consts.js';
-import { space } from '../../moto/space.js';
-import { local } from '../../data/local.js';
-import { utils } from './utils.js';
-import { version } from '../../moto/license.js';
-import { JSZip } from '../../ext/jszip-esm.js';
+import { $, h } from '../../../moto/webui.js';
+import { api } from '../../core/api.js';
+import { conf } from './defaults.js';
+import { codec } from '../../core/codec.js';
+import { consts } from '../../core/consts.js';
+import { space } from '../../../moto/space.js';
+import { local } from '../../../data/local.js';
+import { utils } from '../../core/utils.js';
+import { version } from '../../../moto/license.js';
+import { JSZip } from '../../../ext/jszip-esm.js';
 
 const { areEqual, ls2o, js2o } = utils;
 const { COLOR } = consts;

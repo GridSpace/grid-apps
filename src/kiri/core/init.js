@@ -12,7 +12,7 @@ import { space } from '../../moto/space.js';
 import { LOCAL, SETUP } from './main.js';
 import { VIEWS, MODES, SEED } from './consts.js';
 import { beta, version } from '../../moto/license.js';
-import { settings as set_ctrl } from './settings.js';
+import { settings as set_ctrl } from '../ui/config/manager.js';
 import STACKS from '../ui/stacks.js';
 import { init as initCAM } from '../mode/cam/init-ui.js';
 import { init as initDRAG } from '../mode/drag/init-ui.js';

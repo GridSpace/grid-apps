@@ -4,8 +4,8 @@ import '../../add/array.js';
 import '../../add/class.js';
 import '../../add/three.js';
 import { api } from '../core/api.js';
-import { conf } from '../core/conf.js';
-import { client } from '../core/client.js';
+import { conf } from '../ui/config/defaults.js';
+import { client } from '../ui/client.js';
 import { load } from '../../load/file.js';
 import { newWidget } from '../core/widget.js';
 
