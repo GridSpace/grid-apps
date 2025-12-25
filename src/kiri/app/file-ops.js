@@ -62,7 +62,7 @@ function loadCatalogFile(e) {
 }
 
 function updateCatalog(files) {
-    let table = api.ui.catalogList,
+    let table = api.ui.catalog.list,
         list = [];
     table.innerHTML = '';
     for (let name in files) {

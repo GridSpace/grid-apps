@@ -3,7 +3,7 @@
 import { $ } from '../../../moto/webui.js';
 import { api } from '../../app/api.js';
 import { consts } from '../../core/consts.js';
-import { settings as setconf } from '../../app/config/manager.js';
+import { settings as setconf } from '../../app/conf/manager.js';
 import { Tool, calcTaperAngle, calcTaperBallExtent, calcTaperLength } from './tool.js';
 
 const DEG2RAD = Math.PI / 180;

@@ -6,7 +6,7 @@ import { local as SDB } from '../../data/local.js';
 import { openFiles } from './files.js';
 import { platform } from './platform.js';
 import { selection } from './selected.js';
-import { settings } from './config/manager.js';
+import { settings } from './conf/manager.js';
 import { space as SPACE } from '../../moto/space.js';
 import { utils } from '../core/utils.js';
 import { Widget } from '../core/widget.js';

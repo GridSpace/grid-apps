@@ -1,15 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { $ } from '../../moto/webui.js';
-import { api } from './api.js';
-import { beta, version } from '../../moto/license.js';
-import { fileOps } from './file-ops.js';
-import { local as sdb } from '../../data/local.js';
-import { preferences } from './preferences.js';
-import { settings as set_ctrl } from './config/manager.js';
-import { settingsOps } from './config/settings.js';
-import { space } from '../../moto/space.js';
-import { VIEWS } from '../core/consts.js';
+import { $ } from '../../../moto/webui.js';
+import { api } from '../api.js';
+import { beta, version } from '../../../moto/license.js';
+import { fileOps } from '../file-ops.js';
+import { local as sdb } from '../../../data/local.js';
+import { preferences } from '../preferences.js';
+import { settings as set_ctrl } from '../conf/manager.js';
+import { settingsOps } from '../conf/settings.js';
+import { space } from '../../../moto/space.js';
+import { VIEWS } from '../../core/consts.js';
 
 const DOC = self.document;
 const WIN = self.window;

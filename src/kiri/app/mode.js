@@ -6,7 +6,7 @@ import { consts } from '../core/consts.js';
 import { modal } from './modal.js';
 import { platform } from './platform.js';
 import { selection } from './selected.js';
-import { settings } from './config/manager.js';
+import { settings } from './conf/manager.js';
 
 const { MODES, VIEWS } = consts;
 const clone = Object.clone;

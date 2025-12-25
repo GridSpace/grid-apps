@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from './api.js';
-import { local as sdb } from '../../data/local.js';
+import { api } from '../api.js';
+import { local as sdb } from '../../../data/local.js';
 
 const { SETUP } = api.const;
 const DOC = self.document;

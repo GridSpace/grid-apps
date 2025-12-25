@@ -7,9 +7,9 @@ import '../kiri/app/language.js';
 import '../kiri/core/lang-en.js';
 
 import { api } from '../kiri/app/api.js';
-import { init_lang } from '../kiri/app/init-lang.js';
-import { init_input } from '../kiri/app/init-input.js';
-import { init_sync } from '../kiri/app/init-sync.js';
+import { init_lang } from '../kiri/app/init/lang.js';
+import { init_input } from '../kiri/app/init/input.js';
+import { init_sync } from '../kiri/app/init/syn.js';
 
 let traceload = location.search.indexOf('traceload') > 0;
 let load = [];

@@ -2,7 +2,7 @@
 
 import { api } from './api.js';
 import { consts } from '../core/consts.js';
-import { settings } from './config/manager.js';
+import { settings } from './conf/manager.js';
 import { space as SPACE } from '../../moto/space.js';
 import STACKS from './stacks.js';
 

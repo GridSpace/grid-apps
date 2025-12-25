@@ -3,7 +3,7 @@
 import '../../ext/base64.js';
 
 import alerts from './alerts.js';
-import settings from './config/manager.js';
+import settings from './conf/manager.js';
 import STACKS from './stacks.js';
 import web from '../../moto/webui.js';
 
@@ -27,7 +27,7 @@ import { noop, ajax, o2js, js2o, utils } from '../core/utils.js';
 import { openFiles } from './files.js';
 import { platform } from './platform.js';
 import { selection } from './selected.js';
-import { settingsUI } from './config/dialog.js';
+import { settingsUI } from './conf/dialog.js';
 import { showDevices } from './devices.js';
 import { showTools } from '../mode/cam/tools.js';
 import { space as SPACE } from '../../moto/space.js';

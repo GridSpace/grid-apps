@@ -5,7 +5,7 @@ import { api } from './api.js';
 import { consts } from '../core/consts.js';
 import { platform } from './platform.js';
 import { selection } from './selected.js';
-import { settings } from './config/manager.js';
+import { settings } from './conf/manager.js';
 import STACKS from './stacks.js';
 
 const { VIEWS } = consts;

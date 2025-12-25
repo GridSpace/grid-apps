@@ -4,7 +4,7 @@ import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
 import { newWidget } from '../core/widget.js';
 import { platform } from './platform.js';
-import { settings } from './config/manager.js';
+import { settings } from './conf/manager.js';
 
 function loadImageDialog(image, name, force) {
     if (!force && image.byteLength > 2500000) {

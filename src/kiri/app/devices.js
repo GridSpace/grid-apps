@@ -2,10 +2,10 @@
 
 import { $, h } from '../../moto/webui.js';
 import { api } from './api.js';
-import { conf } from './config/defaults.js';
+import { conf } from './conf/defaults.js';
 import { space } from '../../moto/space.js';
 import { devices as devlist } from '../../pack/kiri-devs.js';
-import { settings, conf as setconf } from './config/manager.js';
+import { settings, conf as setconf } from './conf/manager.js';
 
 export const device = {
     clone: cloneDevice,

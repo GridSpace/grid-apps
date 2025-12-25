@@ -2,7 +2,7 @@
 
 import { $ } from '../../../moto/webui.js';
 import { api } from '../../app/api.js';
-import { conf } from '../../app/config/defaults.js';
+import { conf } from '../../app/conf/defaults.js';
 import { util } from '../../../geo/base.js';
 import { client } from '../../app/workers.js';
 import { addbox, delbox, getlastbox } from '../../core/boxes.js';
