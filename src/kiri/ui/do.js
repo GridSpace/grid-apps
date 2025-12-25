@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from './api.js';
+import { api } from '../core/api.js';
 import { space } from '../../moto/space.js';
 
 const { event } = api;

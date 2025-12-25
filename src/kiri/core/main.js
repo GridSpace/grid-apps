@@ -1,10 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import './frame.js';
+import '../ui/frame.js';
 import '../../ext/base64.js';
 
-import STACKS from './stacks.js';
-import { modal } from './modal.js';
+import STACKS from '../ui/stacks.js';
+import { modal } from '../ui/modal.js';
 
 import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
@@ -12,13 +12,13 @@ import { broker } from '../../moto/broker.js';
 import { consts } from './consts.js';
 import { Index } from '../../data/index.js';
 import { local as dataLocal } from '../../data/local.js';
-import { openFiles } from './files.js';
+import { openFiles } from '../ui/files.js';
 import { platform } from './platform.js';
 import { selection } from './selection.js';
 import { settings } from './settings.js';
 import { showDevices } from './devices.js';
 import { space as SPACE } from '../../moto/space.js';
-import { stats } from './stats.js';
+import { stats } from '../ui/stats.js';
 import { noop, utils } from './utils.js';
 import { version } from '../../moto/license.js';
 import { Widget, newWidget } from './widget.js';

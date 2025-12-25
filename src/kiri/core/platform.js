@@ -7,7 +7,7 @@ import { base } from '../../geo/base.js';
 import { load } from '../../load/file.js';
 import { space } from '../../moto/space.js';
 import { Widget, newWidget } from './widget.js';
-import { Packer } from './pack.js';
+import { Packer } from '../ui/pack.js';
 
 import { COLOR, MODES } from './consts.js';
 import { THREE } from '../../ext/three.js';

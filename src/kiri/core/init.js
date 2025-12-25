@@ -4,15 +4,16 @@ import { $, $c } from '../../moto/webui.js';
 import { api } from './api.js';
 import { base } from '../../geo/base.js';
 import { local as sdb } from '../../data/local.js';
-import { slider } from './slider.js';
-import { keyboard } from './keyboard.js';
-import { modal } from './modal.js';
-import { interact } from './interact.js';
+import { slider } from '../ui/slider.js';
+import { keyboard } from '../ui/keyboard.js';
+import { modal } from '../ui/modal.js';
+import { interact } from '../ui/interact.js';
 import { space } from '../../moto/space.js';
 import { LOCAL, SETUP } from './main.js';
 import { VIEWS, MODES, SEED } from './consts.js';
 import { beta, version } from '../../moto/license.js';
 import { settings as set_ctrl } from './settings.js';
+import STACKS from '../ui/stacks.js';
 import { init as initCAM } from '../mode/cam/init-ui.js';
 import { init as initDRAG } from '../mode/drag/init-ui.js';
 import { init as initFDM } from '../mode/fdm/init-ui.js';
@@ -24,8 +25,6 @@ import { menu as menuCAM } from '../mode/cam/init-menu.js';
 import { menu as menuFDM } from '../mode/fdm/init-menu.js';
 import { menu as menuLaser } from '../mode/laser/init-menu.js';
 import { menu as menuSLA } from '../mode/sla/init-menu.js';
-import STACKS from './stacks.js';
-import './tools.js';
 
 let { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     { client, catalog, platform, selection, stats } = api,

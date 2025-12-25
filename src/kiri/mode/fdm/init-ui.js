@@ -6,8 +6,8 @@ import { conf } from '../../core/conf.js';
 import { util } from '../../../geo/base.js';
 import { client } from '../../core/client.js';
 import { addbox, delbox, getlastbox } from '../../core/boxes.js';
-import { Layers } from '../../core/layers.js';
-import { Stack } from '../../core/stack.js';
+import { Layers } from '../../ui/layers.js';
+import { Stack } from '../../ui/stack.js';
 import { Widget, newWidget } from '../../core/widget.js';
 import { space } from '../../../moto/space.js';
 

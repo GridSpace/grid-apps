@@ -2,7 +2,7 @@
 
 import { local } from '../../data/local.js';
 import { broker } from '../../moto/broker.js';
-import { js2o, o2js } from './utils.js';
+import { js2o, o2js } from '../core/utils.js';
 
 class Stats {
     constructor(db) {

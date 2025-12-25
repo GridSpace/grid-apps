@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../moto/webui.js';
-import { api } from './api.js';
+import { api } from '../core/api.js';
 import { Stack } from './stack.js';
 
 let freeMem = true,

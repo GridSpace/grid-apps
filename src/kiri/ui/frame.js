@@ -1,10 +1,10 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from './api.js';
+import { api } from '../core/api.js';
 import { load } from '../../load/file.js';
-import { newWidget } from './widget.js';
-import { VIEWS } from './consts.js';
-import { widgets } from './widgets.js';
+import { newWidget } from '../core/widget.js';
+import { VIEWS } from '../core/consts.js';
+import { widgets } from '../core/widgets.js';
 
 // add frame message api listener
 window.addEventListener('message', msg => {

@@ -1,8 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import alerts from './alerts.js';
+import alerts from '../ui/alerts.js';
 import settings from './settings.js'
-import STACKS from './stacks.js';
+import STACKS from '../ui/stacks.js';
 
 import { broker } from '../../moto/broker.js';
 import { client as work } from './client.js';
@@ -15,7 +15,7 @@ import { noop, ajax, o2js, js2o } from './utils.js';
 import { functions } from './function.js';
 import { platform } from './platform.js';
 import { selection } from './selection.js';
-import { stats } from './stats.js';
+import { stats } from '../ui/stats.js';
 import { newWidget } from './widget.js';
 import { widgets } from './widgets.js';
 import { updateTool } from '../mode/cam/tools.js';
@@ -23,9 +23,9 @@ import { beta, version } from '../../moto/license.js';
 import { space as SPACE } from '../../moto/space.js';
 import { types as load } from '../../load/file.js';
 
-import { LANG } from './lang.js';
+import { LANG } from '../ui/lang.js';
 import { LOCAL, SETUP, SECURE } from './main.js';
-import { UI } from './ui.js';
+import { UI } from '../ui/component.js';
 
 import web from '../../moto/webui.js';
 

@@ -3,7 +3,7 @@
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
-import '../kiri/core/lang.js';
+import '../kiri/ui/lang.js';
 import '../kiri/core/lang-en.js';
 
 import { broker } from '../moto/broker.js';

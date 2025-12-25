@@ -3,8 +3,8 @@
 import { api } from '../../core/api.js';
 import { env, clearPops, isDark } from './init-ui.js';
 import { CAM } from './driver-fe.js';
-import { Layers } from '../../core/layers.js';
-import { Stack } from '../../core/stack.js';
+import { Layers } from '../../ui/layers.js';
+import { Stack } from '../../ui/stack.js';
 
 export let traceOn = false;
 export let lastTrace;
