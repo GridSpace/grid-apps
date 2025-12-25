@@ -3,6 +3,7 @@
 import alerts from './alerts.js';
 import settings from './config/manager.js';
 import STACKS from './stacks.js';
+import { visuals } from './visuals.js';
 
 import { broker } from '../../moto/broker.js';
 import { client as work } from './client.js';
@@ -191,6 +192,7 @@ export const api = {
     },
     version,
     view,
+    visuals,
     web,
     widgets,
     work,

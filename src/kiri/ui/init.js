@@ -534,13 +534,20 @@ function isNotBelt() {
 // MAIN INITIALIZATION FUNCTION
 function init_one() {
     let { event, conf, view, show } = api,
-        { bound, toInt, toFloat } = uc,
         { newBlank, newButton, newBoolean, newGroup, newInput } = uc,
-        { newSelect, newLabel, newValue, newRow, newGCode, newDiv } = uc;
+        { newSelect, newRow, newGCode, newDiv, toInt, toFloat } = uc;
 
     event.emit('init.one');
 
-    // ensure we have settings from last session
+    // restore kiri-init vars
+    let inits = parseInt(sdb.getItem('kiri-init') || stats.get('init') || 0) + 1;
+
+    // update version and init count
+    sdb.setItem('kiri-init', inits);
+    stats.set('init', inits);
+    stats.set('kiri', version);
+
+    // restore settings from last saved session
     conf.restore();
 
     let container = $('container'),
