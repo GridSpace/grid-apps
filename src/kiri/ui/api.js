@@ -1,31 +1,31 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import alerts from '../ui/alerts.js';
-import settings from '../ui/config/manager.js';
-import STACKS from '../ui/stacks.js';
+import alerts from './alerts.js';
+import settings from './config/manager.js';
+import STACKS from './stacks.js';
 
 import { broker } from '../../moto/broker.js';
-import { client as work } from '../ui/client.js';
-import { consts, COLOR as color, LISTS as lists } from './consts.js';
-import { device, devices } from '../ui/devices.js';
+import { client as work } from './client.js';
+import { consts, COLOR as color, LISTS as lists } from '../core/consts.js';
+import { device, devices } from './devices.js';
 import { catalog, dialog, event, group, help, hide, image } from './main.js';
 import { modal, mode, process, show, space, util, view } from './main.js';
 import { local as dataLocal } from '../../data/local.js';
-import { noop, ajax, o2js, js2o } from './utils.js';
+import { noop, ajax, o2js, js2o } from '../core/utils.js';
 import { functions } from './function.js';
 import { platform } from './platform.js';
-import { selection } from './selection.js';
-import { stats } from '../ui/stats.js';
-import { newWidget } from './widget.js';
-import { widgets } from './widgets.js';
+import { selection } from './select.js';
+import { stats } from './stats.js';
+import { newWidget } from '../core/widget.js';
+import { widgets } from '../core/widgets.js';
 import { updateTool } from '../mode/cam/tools.js';
 import { beta, version } from '../../moto/license.js';
 import { space as SPACE } from '../../moto/space.js';
 import { types as load } from '../../load/file.js';
 
-import { LANG } from '../ui/lang.js';
+import { LANG } from './lang.js';
 import { LOCAL, SETUP, SECURE } from './main.js';
-import { UI } from '../ui/component.js';
+import { UI } from './component.js';
 
 import web from '../../moto/webui.js';
 

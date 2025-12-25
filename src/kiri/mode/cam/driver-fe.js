@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../../core/api.js';
+import { api } from '../../ui/api.js';
 import { codec } from '../../core/codec.js';
 
 function surface_prep(index, ondone) {

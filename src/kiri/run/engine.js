@@ -3,7 +3,7 @@
 import '../../add/array.js';
 import '../../add/class.js';
 import '../../add/three.js';
-import { api } from '../core/api.js';
+import { api } from '../ui/api.js';
 import { conf } from '../ui/config/defaults.js';
 import { client } from '../ui/client.js';
 import { load } from '../../load/file.js';

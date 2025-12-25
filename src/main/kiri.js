@@ -7,7 +7,7 @@ import '../kiri/ui/lang.js';
 import '../kiri/core/lang-en.js';
 
 import { broker } from '../moto/broker.js';
-import { run } from '../kiri/core/init.js';
+import { run } from '../kiri/ui/init.js';
 
 let traceload = location.search.indexOf('traceload') > 0;
 let load = [];

@@ -2,14 +2,14 @@
 
 import { $, h } from '../../moto/webui.js';
 import { api } from './api.js';
-import { ajax, js2o } from './utils.js';
+import { ajax, js2o } from '../core/utils.js';
 import { base } from '../../geo/base.js';
 import { load } from '../../load/file.js';
 import { space } from '../../moto/space.js';
-import { Widget, newWidget } from './widget.js';
-import { Packer } from '../ui/pack.js';
+import { Widget, newWidget } from '../core/widget.js';
+import { Packer } from './pack.js';
 
-import { COLOR, MODES } from './consts.js';
+import { COLOR, MODES } from '../core/consts.js';
 import { THREE } from '../../ext/three.js';
 
 const V0 = new THREE.Vector3(0,0,0);

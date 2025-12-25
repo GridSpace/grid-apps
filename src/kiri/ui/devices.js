@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $, h } from '../../moto/webui.js';
-import { api } from '../core/api.js';
+import { api } from './api.js';
 import { conf } from './config/defaults.js';
 import { space } from '../../moto/space.js';
 import { devices as devlist } from '../../pack/kiri-devs.js';

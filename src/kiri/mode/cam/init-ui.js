@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../../moto/webui.js';
-import { api } from '../../core/api.js';
+import { api } from '../../ui/api.js';
 import { load } from '../../../load/file.js';
 import { animate as anim_2d, animate_clear as anim_2d_clear } from './anim-2d-fe.js';
 import { animate2 as anim_3d, animate_clear2 as anim_3d_clear } from './anim-3d-fe.js';

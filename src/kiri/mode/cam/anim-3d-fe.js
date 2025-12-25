@@ -2,7 +2,7 @@
 
 // UI FRONT END ANIMATION CODE for 3D (indexed)
 
-import { api } from '../../core/api.js';
+import { api } from '../../ui/api.js';
 import { space } from '../../../moto/space.js';
 
 const { client } = api;

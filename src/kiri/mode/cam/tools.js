@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../../moto/webui.js';
-import { api } from '../../core/api.js';
+import { api } from '../../ui/api.js';
 import { consts } from '../../core/consts.js';
 import { settings as setconf } from '../../ui/config/manager.js';
 import { Tool, calcTaperAngle, calcTaperBallExtent, calcTaperLength } from './tool.js';

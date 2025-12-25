@@ -1,11 +1,11 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from './api.js';
-import { client } from '../ui/client.js';
-import { codec } from './codec.js';
+import { client } from './client.js';
+import { codec } from '../core/codec.js';
 import { space } from '../../moto/space.js';
-import { COLOR, PMODES } from './consts.js';
-import { exportFile } from '../ui/export.js';
+import { COLOR, PMODES } from '../core/consts.js';
+import { exportFile } from './export.js';
 
 let complete = {};
 

@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../core/api.js';
+import { api } from './api.js';
 import { noop } from '../core/utils.js';
 import { codec } from '../core/codec.js';
 import { Widget } from '../core/widget.js';

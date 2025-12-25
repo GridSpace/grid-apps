@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $, h } from '../../../moto/webui.js';
-import { api } from '../../core/api.js';
+import { api } from '../api.js';
 import { conf } from './defaults.js';
 import { codec } from '../../core/codec.js';
 import { consts } from '../../core/consts.js';

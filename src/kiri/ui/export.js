@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { $ } from '../../moto/webui.js';
-import { api } from '../core/api.js';
+import { api } from './api.js';
 import { client } from './client.js';
 import { local } from '../../data/local.js';
 import { util } from '../../geo/base.js';

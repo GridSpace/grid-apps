@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../core/api.js';
+import { api } from './api.js';
 import { load } from '../../load/file.js';
 import { newWidget } from '../core/widget.js';
 import { VIEWS } from '../core/consts.js';

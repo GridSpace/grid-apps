@@ -1,27 +1,27 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import '../ui/frame.js';
+import './frame.js';
 import '../../ext/base64.js';
 
-import STACKS from '../ui/stacks.js';
-import { modal } from '../ui/modal.js';
+import STACKS from './stacks.js';
+import { modal } from './modal.js';
 
 import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
 import { broker } from '../../moto/broker.js';
-import { consts } from './consts.js';
+import { consts } from '../core/consts.js';
 import { Index } from '../../data/index.js';
 import { local as dataLocal } from '../../data/local.js';
-import { openFiles } from '../ui/files.js';
+import { openFiles } from './files.js';
 import { platform } from './platform.js';
-import { selection } from './selection.js';
-import { settings } from '../ui/config/manager.js';
-import { showDevices } from '../ui/devices.js';
+import { selection } from './select.js';
+import { settings } from './config/manager.js';
+import { showDevices } from './devices.js';
 import { space as SPACE } from '../../moto/space.js';
-import { stats } from '../ui/stats.js';
-import { noop, utils } from './utils.js';
+import { stats } from './stats.js';
+import { noop, utils } from '../core/utils.js';
 import { version } from '../../moto/license.js';
-import { Widget, newWidget } from './widget.js';
+import { Widget, newWidget } from '../core/widget.js';
 import { showTools } from '../mode/cam/tools.js';
 
 let { parseOpt, o2js, js2o, ls2o } = utils,
