@@ -62,7 +62,6 @@ class ModalControl {
 
         // hide all modals before showing another
         Object.keys(modal.#ui.modals).forEach(name => {
-            console.log({ name, which });
             modal.#ui.modals[name].style.display = name === which ? 'flex' : '';
         });
 

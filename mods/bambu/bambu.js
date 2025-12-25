@@ -1,7 +1,5 @@
 self.kiri.load(api => {
 
-    console.log('BAMBU MODULE RUNNING');
-
     const { uc: ui } = api;
     const { $, h } = api.web;
     const defams = ";; DEFINE BAMBU-AMS ";
@@ -1327,4 +1325,4 @@ self.kiri.load(api => {
     setInterval(monitor_keepalive, 5000);
 
     let bblapi = api.bambu = { send, prep_export };
-});
+}, 'Bambu');

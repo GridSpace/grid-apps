@@ -208,9 +208,11 @@ function confirm(message, buttons, input, opt = {}) {
             html.appendAll(opt.post);
         }
         dialog.innerHTML = html.join('');
+        dialog.onclose = () => {
+            feature.on_key = onkey_save;
+        };
         function done(value) {
             dialog.close();
-            feature.on_key = onkey_save;
             if (value !== undefined) {
                 setTimeout(() => { resolve(value) }, 150);
             }

@@ -115,7 +115,15 @@ export const api = {
     clone: Object.clone,
     color,
     conf: settings.conf,
-    const: { LANG, LOCAL, SETUP, SECURE, SPACE, STACKS, ...consts },
+    const: {
+        LANG, LOCAL, SETUP, SECURE, SPACE, STACKS,
+        ...consts,
+        URL: {
+            path: LOC.pathname,
+            hash: LOC.hash.substring(1),
+            query: LOC.search.substring(1)
+        }
+    },
     /**
      * Development/debug utilities
      */
@@ -151,12 +159,14 @@ export const api = {
         redo: noop  // do.js
     },
     event: {
-        on(t,l) { return EVENT.on(t,l) },
-        emit(t,m,o) { return EVENT.publish(t,m,o) },
-        bind(t,m,o) { return EVENT.bind(t,m,o) },
         alerts(clr) { alerts.update(clr) },
+        bind(t,m,o) { return EVENT.bind(t,m,o) },
+        emit(t,m,o) { return EVENT.publish(t,m,o) },
         import() { api.ui.load.click() },
-        settings: settingsUI.trigger_event
+        listeners(topic) { return EVENT.targets(topic) },
+        on(t,l) { return EVENT.on(t,l) },
+        settings: settingsUI.trigger_event,
+        topics() { return EVENT.topics() }
     },
     electron: navigator.userAgent.includes('Electron'),
     /**

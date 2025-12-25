@@ -14,10 +14,12 @@ import { init_sync } from '../kiri/app/init/sync.js';
 let traceload = location.search.indexOf('traceload') > 0;
 let load = [];
 
-function safeExec(fn) {
+function safeExec(fn, name) {
     try {
         if (traceload) {
-            console.log('kiri | exec |', fn);
+            console.log('kiri | exec |', name, fn);
+        } else if (name) {
+            console.log('kiri | load mods |', name);
         }
         fn(kiri.api);
     } catch (error) {
@@ -37,8 +39,8 @@ async function checkReady() {
             await init_input();
             await init_sync();
         }
-        for (let fn of load) {
-            safeExec(fn);
+        for (let [fn, name] of load) {
+            safeExec(fn, name);
         }
         load = undefined;
         api.event.emit('load-done', stats);
@@ -63,12 +65,12 @@ async function checkReady() {
 }
 
 self.kiri = {
-    load(fn) {
+    load(fn, name) {
         // console.log('KIRI LOAD', [...arguments]);
         if (load) {
-            load.push(fn);
+            load.push([fn, name]);
         } else {
-            safeExec(fn);
+            safeExec(fn, name);
         }
     }
 };

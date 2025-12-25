@@ -18,6 +18,10 @@ class Broker {
         return Object.keys(this.#topics);
     }
 
+    targets(topic) {
+        return this.#topics[topic];
+    }
+
     get send() {
         return this.#send;
     }

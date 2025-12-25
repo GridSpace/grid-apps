@@ -253,15 +253,15 @@ class KeyboardControl {
             if (handler({key:evt})) return;
         }
 
-        // Handle Ctrl key combinations
+        // Handle widget grouping (disabled: broken, conflicts with hash settings)
         if (evt.ctrlKey) {
             switch (evt.key) {
-                case 'g': return this.#api.group.merge();
-                case 'u': return this.#api.group.split();
+                // case 'g': return this.#api.group.merge();
+                // case 'u': return this.#api.group.split();
             }
         }
 
-        switch (evt.charCode) {
+        switch (evt.keyCode) {
             case this.#cca('`'): this.#api.show.slices(0); break;
             case this.#cca('0'): {
                 const { max } = this.#slider.getRange();
