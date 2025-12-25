@@ -9,6 +9,7 @@ import { selectHoles } from './cl-hole.js';
 import { selectHelical } from './cl-helical.js';
 import { surfaceAdd } from './cl-surface.js';
 import { traceAdd } from './cl-trace.js';
+import { startFaceUp } from '../../app/tools.js';
 
 const { MODES } = api.const;
 const { uc: UC } = api;
@@ -592,17 +593,13 @@ export function createPopOps() {
         action: UC.newRow([UC.newButton(LANG.edit, gcodeEditor())], { class: "ext-buttons f-row" })
     };
 
-    function angleTowardZUp() {
-        api.event.emit('tool.mesh.face-up');
-    }
-
     createPopOp('index', {
         degrees: 'camIndexAxis',
         absolute: 'camIndexAbs'
     }).inputs = {
         degrees: UC.newInput(LANG.ci_degr_s, { title: LANG.ci_degr_l, convert: toFloat, bound: UC.bound(-360, 360.0) }),
         absolute: UC.newBoolean(LANG.ci_abso_s, undefined, { title: LANG.ci_abso_l }),
-        select: UC.newRow([UC.newButton(LANG.ci_face_s, angleTowardZUp)], { class: "ext-buttons f-row" })
+        select: UC.newRow([UC.newButton(LANG.ci_face_s, startFaceUp)], { class: "ext-buttons f-row" })
     };
 
     const editEnable = gcodeEditor('Laser Enable Script', 'enable');

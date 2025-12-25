@@ -129,14 +129,6 @@ function startLeftAlign() {
     startIt();
 }
 
-api.event.on('tool.camera.focus', startFocus);
-
-api.event.on('tool.mesh.face-up', startFaceUp);
-
-api.event.on('tool.mesh.lay-flat', startLayFlat);
-
-api.event.on('tool.mesh.lefty', startLeftAlign);
-
 function scale() {
     let cam = space.internals().camera;
     let dist = cam.position.distanceTo(pmesh.position);
@@ -144,8 +136,6 @@ function scale() {
         Math.min(0.25, 100 / dist) : dist / 100;
     pmesh.scale.set(scale,scale,scale);
 }
-
-api.event.on("space.view.zoom", scale);
 
 api.event.on('mouse.hover', (ev) => {
     if (!enabled) {
@@ -193,7 +183,6 @@ api.event.on('mouse.hover.up', (ev) => {
     onDone(ev);
     endIt();
 });
-
 
 export {
     cleanup,
