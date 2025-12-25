@@ -33,9 +33,9 @@ import STACKS from './stacks.js';
 let { LOCAL, SETUP } = api,
     { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     { client, catalog, platform, selection, stats } = api,
-    LANG = api.language.current,
-    WIN = self.window,
     DOC = self.document,
+    WIN = self.window,
+    LANG = api.language.current,
     STARTMODE = SETUP.sm && SETUP.sm.length === 1 ? SETUP.sm[0] : null,
     TWOD    = [ LASER, DRAG, WJET, WEDM ],
     TWONED  = [ LASER, DRAG, WJET ],
@@ -46,8 +46,6 @@ let { LOCAL, SETUP } = api,
     NO_WEDM = [ FDM, CAM, SLA, LASER, DRAG, WJET ],
     FDM_CAM = [ FDM, CAM ],
     proto = location.protocol,
-    platformColor,
-    statsTimer,
     inline = true,
     driven = true,
     trigger = true,
@@ -120,17 +118,11 @@ function onButtonClick(ev) {
 
 api.event.on('click.button', onButtonClick);
 
-function keys(o) {
-    let key, list = [];
-    for (key in o) { if (o.hasOwnProperty(key)) list.push(key) }
-    return list.sort();
-}
-
-function clearSelected(children) {
-    for (let i=0; i<children.length; i++) {
-        children[i].setAttribute('class','');
-    }
-}
+// function keys(o) {
+//     let key, list = [];
+//     for (key in o) { if (o.hasOwnProperty(key)) list.push(key) }
+//     return list.sort();
+// }
 
 function isBelt() {
     return api.device.isBelt();
@@ -690,11 +682,13 @@ function init_one() {
         }
     };
 
-    api.space.restore(init_two) || checkSeed(init_two) || init_two();
+    return new Promise(resolve => {
+        api.space.restore(resolve) || checkSeed(resolve) || resolve();
+    });
 };
 
 // SECOND STAGE INIT AFTER UI RESTORED
-function init_two() {
+async function init_two() {
     api.event.emit('init.two');
 
     // load script extensions
@@ -906,40 +900,44 @@ function lang_rewrite() {
 
 // init lang must happen before all other init functions
 function init_lang() {
-    // if a language needs to load, the script is injected and loaded
-    // first.  once this loads, or doesn't, the initialization begins
-    let lang = SETUP.ln ? SETUP.ln[0] : sdb.getItem('kiri-lang') || api.language.get();
-    api.event.emit('init.lang', lang);
-    // inject language script if not english
-    if (lang && lang !== 'en' && lang !== 'en-us') {
-        let map = api.language.map(lang);
-        let scr = DOC.createElement('script');
-        // scr.setAttribute('defer',true);
-        scr.setAttribute('src',`/kiri/lang/${map}.js`);
-        (DOC.body || DOC.head).appendChild(scr);
-        stats.set('ll',lang);
-        scr.onload = function() {
-            api.language.set(map);
-            lang_rewrite();
-            init_one();
-        };
-        scr.onerror = function(err) {
-            console.log({language_load_error: err, lang})
+    return new Promise(resolve => {
+        // if a language needs to load, the script is injected and loaded
+        // first.  once this loads, or doesn't, the initialization begins
+        let lang = SETUP.ln ? SETUP.ln[0] : sdb.getItem('kiri-lang') || api.language.get();
+        api.event.emit('init.lang', lang);
+        // inject language script if not english
+        if (lang && lang !== 'en' && lang !== 'en-us') {
+            let map = api.language.map(lang);
+            let scr = DOC.createElement('script');
+            // scr.setAttribute('defer',true);
+            scr.setAttribute('src',`/kiri/lang/${map}.js`);
+            (DOC.body || DOC.head).appendChild(scr);
+            stats.set('ll',lang);
+            scr.onload = function() {
+                api.language.set(map);
+                lang_rewrite();
+                resolve();
+            };
+            scr.onerror = function(err) {
+                console.log({language_load_error: err, lang})
+                api.language.set();
+                lang_rewrite();
+                resolve();
+            }
+        } else {
+            // set to browser default which will be overridden
+            // by any future script loads (above)
             api.language.set();
             lang_rewrite();
-            init_one();
+            resolve();
         }
-    } else {
-        // set to browser default which will be overridden
-        // by any future script loads (above)
-        api.language.set();
-        lang_rewrite();
-        init_one();
-    }
+    });
 }
 
-export function run() {
+export async function run() {
     client.start();
-    init_lang();
+    await init_lang();
+    await init_one();
+    await init_two();
     return api;
 }

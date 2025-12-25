@@ -35,11 +35,11 @@ function safeExec(fn) {
     }
 }
 
-function checkReady() {
+async function checkReady() {
     if (document.readyState === 'complete') {
         let bootctrl = navigator.serviceWorker.controller;
         console.log(`kiri | boot ctrl | ` + (bootctrl ? true : false));
-        let api = kiri.api = run();
+        let api = kiri.api = await run();
         self.$ = api.web.$;
         for (let fn of load) {
             safeExec(fn);
