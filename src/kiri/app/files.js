@@ -1,6 +1,15 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+/**
+ * Manages file storage in IndexedDB for 3D model vertices.
+ * Supports file operations (put, get, delete, rename), listener notifications,
+ * and deferred loading for externally-stored files.
+ */
 class Files {
+    /**
+     * Create a new Files store
+     * @param {object} indexdb - IndexedDB wrapper instance
+     */
     constructor(indexdb) {
         let store = this;
         this.db = indexdb;
@@ -47,10 +56,21 @@ class Files {
         this.listeners.remove(listener);
     };
 
+    /**
+     * Set handler for deferred file loading.
+     * Deferred files are not stored locally but fetched on-demand.
+     * @param {function} handler - Function(mark, name, callback) to load deferred file
+     */
     setDeferredHandler(handler) {
         this.deferredHandler = handler;
     };
 
+    /**
+     * Register a deferred file placeholder.
+     * File data is not stored locally; the mark is used by the deferred handler to fetch it later.
+     * @param {string} name - Filename
+     * @param {*} mark - Identifier for deferred handler to fetch file (e.g., URL, storage key)
+     */
     putDeferred(name, mark) {
         // triggers refresh callback
         this.files[name] = {
@@ -91,6 +111,13 @@ class Files {
             .catch(ondone);
     };
 
+    /**
+     * Rename a file in the catalog.
+     * Copies vertex data to new key, updates file list, and removes old key.
+     * @param {string} name - Current filename
+     * @param {string} newname - New filename
+     * @param {function} callback - Function({error}) called when complete
+     */
     rename(name, newname, callback) {
         if (!this.files[name]) return callback({error: 'no such file'});
         if (!newname || newname == name) return callback({error: 'invalid new name'});
@@ -146,6 +173,12 @@ class Files {
         if (callback) callback(false);
     };
 
+    /**
+     * Delete files matching a filter function.
+     * @param {function} fn - Filter function(key) returning true to delete
+     * @param {*} [from] - Optional start key for range query
+     * @param {*} [to] - Optional end key for range query
+     */
     deleteFilter(fn, from, to) {
         this.db.keys(keys => {
             for (let key of keys) {
@@ -157,17 +190,30 @@ class Files {
     }
 }
 
+/**
+ * Save file list to IndexedDB and notify listeners.
+ * @param {Files} store - Files instance
+ */
 function saveFileList(store) {
     store.db.put('files', store.files);
     notifyFileListeners(store);
 }
 
+/**
+ * Notify all registered listeners of file list changes.
+ * @param {Files} store - Files instance
+ */
 function notifyFileListeners(store) {
     for (let i=0; i<store.listeners.length; i++) {
         store.listeners[i](store.files);
     }
 }
 
+/**
+ * Factory function to create a new Files instance.
+ * @param {object} indexdb - IndexedDB wrapper instance
+ * @returns {Files} New Files store
+ */
 export const openFiles = function(indexdb) {
     return new Files(indexdb);
 };

@@ -1,31 +1,62 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+/**
+ * UI component factory system.
+ * Creates form elements, dialogs, and manages UI state/visibility.
+ * Supports mode-specific visibility, unit conversion, and hierarchical grouping.
+ */
+
 import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
 
 let DOC = self.document,
+    /** Callback for input changes */
     inputAction = null,
+    /** Previous addTo value for nesting */
     lastAddTo = null,
+    /** Current group array */
     lastGroup = null,
+    /** Last created div container */
     lastDiv = null,
+    /** Current container to add elements to */
     addTo = null,
+    /** Alternative binding target for input actions */
     bindTo = null,
+    /** Map of group name to array of elements */
     groups = {},
+    /** Sticky state prevents auto-hide on blur */
     groupSticky = false,
+    /** Current group name */
     groupName = undefined,
-    heads = {}, // hideable group heads (clickable label)
-    hidden = {}, // hidden groups (by name)
+    /** Collapsible group headers (clickable label) */
+    heads = {},
+    /** Hidden groups by name */
+    hidden = {},
+    /** Elements with mode visibility rules */
     hasModes = [],
+    /** Elements with unit conversion setters */
     setters = [],
+    /** Last mode set for visibility filtering */
     lastMode = null,
+    /** Last expert mode state */
     lastExpert = true,
+    /** Prefix for element IDs */
     prefix = "tab",
+    /** Unit scale multiplier for conversions */
     units = 1,
+    /** Last changed input element */
     lastChange = null,
+    /** Last clicked button */
     lastBtn = null,
+    /** Last clicked text element */
     lastTxt = null,
+    /** Last shown popup */
     lastPop = null;
 
+/**
+ * UI component factory and utilities.
+ * Provides chainable builder pattern and component creation functions.
+ */
 export const UI = {
     prefix: function(pre) { prefix = pre; return UI },
     inputAction: function(fn) { inputAction = fn; return UI },
@@ -84,6 +115,10 @@ export const UI = {
     }
 };
 
+/**
+ * Set hidden group map and refresh visibility.
+ * @param {object} map - Map of group name to hidden boolean
+ */
 function setHidden(map) {
     hidden = map;
     refresh();
@@ -92,6 +127,11 @@ function setHidden(map) {
     }
 }
 
+/**
+ * Attach blur event listener to element(s).
+ * @param {HTMLElement|Array<HTMLElement>} obj - Element or array of elements
+ * @param {function} fn - Blur handler function
+ */
 function onBlur(obj, fn) {
     if (Array.isArray(obj)) {
         for (let o of obj) onBlur(o, fn);
@@ -100,14 +140,34 @@ function onBlur(obj, fn) {
     obj.addEventListener('blur', fn);
 }
 
+/**
+ * Show alert dialog with OK button.
+ * @param {string} message - Alert message
+ * @returns {Promise<boolean>} Resolves when OK clicked
+ */
 function alert(message) {
     return confirm(message, {ok:true});
 }
 
+/**
+ * Show prompt dialog with text input.
+ * @param {string} message - Prompt message
+ * @param {string} value - Default input value
+ * @returns {Promise<string>} Resolves with entered text or undefined if cancelled
+ */
 function prompt(message, value) {
     return confirm(message, {ok:true, cancel:undefined}, value);
 }
 
+/**
+ * Show modal dialog with custom buttons and optional input.
+ * Blocks keyboard events while open.
+ * @param {string} message - Dialog message
+ * @param {object} buttons - Button labels mapped to return values (e.g., {yes: true, no: false})
+ * @param {string|Array<string>} [input] - Optional input field. Array creates textarea with lines.
+ * @param {object} [opt={}] - Options: {pre, post} for additional HTML content
+ * @returns {Promise} Resolves with button value or input value if provided
+ */
 function confirm(message, buttons, input, opt = {}) {
     return new Promise((resolve, reject) => {
         let { feature } = api;
@@ -307,6 +367,12 @@ function addCollapsableElement(parent, options = {}) {
     return row;
 }
 
+/**
+ * Create a value bounding function.
+ * @param {number} low - Minimum value
+ * @param {number} high - Maximum value
+ * @returns {function} Function that clamps value to [low, high] range
+ */
 function bound(low,high) {
     return function(v) {
         if (isNaN(v)) return low;
@@ -314,6 +380,11 @@ function bound(low,high) {
     };
 }
 
+/**
+ * Convert input value to integer.
+ * Bound to input element as `this`. Applies bounds and unit conversion if configured.
+ * @returns {number} Integer value
+ */
 function toInt() {
     let nv = this.value !== '' ? parseInt(this.value) : null;
     if (isNaN(nv)) nv = 0;
@@ -325,6 +396,11 @@ function toInt() {
     return nv;
 }
 
+/**
+ * Convert input value to float.
+ * Bound to input element as `this`. Applies bounds and unit conversion if configured.
+ * @returns {number} Float value
+ */
 function toFloat() {
     let nv = this.value !== '' ? parseFloat(this.value) : null;
     if (nv !== null && this.bound) nv = this.bound(nv);
@@ -335,6 +411,11 @@ function toFloat() {
     return nv;
 }
 
+/**
+ * Convert comma-separated input to float array.
+ * Bound to input element as `this`. Applies bounds to each value.
+ * @returns {Array<number>} Float array
+ */
 function toFloatArray() {
     let nv = this.value !== '' ? this.value.split(',').map(v => parseFloat(v)) : null;
     console.log({ toFloatArray: nv });
@@ -343,6 +424,11 @@ function toFloatArray() {
     return nv;
 }
 
+/**
+ * Convert input value to degrees float (0-360).
+ * Bound to input element as `this`. Normalizes to 0-359.99 range.
+ * @returns {number} Degrees float
+ */
 function toDegsFloat(){
     let nv = this.value !== '' ? parseFloat(this.value) : null;
     if (nv !== null && this.bound) nv = this.bound(nv);
@@ -375,6 +461,12 @@ function newLabel(text, opt = {}) {
     return label;
 }
 
+/**
+ * Create a read-only value display element.
+ * @param {number} [size=6] - Input size attribute
+ * @param {object} [opt={}] - Options: {class}
+ * @returns {HTMLInputElement} Read-only input element
+ */
 function newValue(size = 6, opt = {}) {
     let value = DOC.createElement('input');
     value.setAttribute("size", size);
@@ -452,6 +544,13 @@ function newDiv(opt = {}) {
     return div;
 }
 
+/**
+ * Create a collapsible details/summary element.
+ * Changes addTo context to the details element until endExpand() called.
+ * @param {string} label - Summary label text
+ * @param {object} [opt={}] - Options: {class, open, modes, show, etc.}
+ * @returns {HTMLElement} Details element with collapse() method
+ */
 function newExpand(label, opt = {}) {
     let div = DOC.createElement('details');
     div.setAttribute('class', opt.class || 'f-col');
@@ -474,6 +573,10 @@ function newExpand(label, opt = {}) {
     return div;
 }
 
+/**
+ * End expand context, restoring previous addTo.
+ * @returns {HTMLElement} Restored addTo element
+ */
 function endExpand() {
     addTo = lastAddTo;
     return addTo;
@@ -612,6 +715,15 @@ function newText(label, options) {
     return txt;
 }
 
+/**
+ * Create a labeled input field with automatic validation and unit conversion.
+ * Supports text input or textarea (if height > 1).
+ * Filters non-numeric keys unless opt.text=true.
+ * Triggers action on blur.
+ * @param {string} label - Input label text
+ * @param {object} [opt={}] - Options: {size, height, action, convert, bound, units, round, text, comma, disabled, title, id, trigger, hide}
+ * @returns {HTMLInputElement|HTMLTextAreaElement} Input element with setVisible() method
+ */
 function newInput(label, opt = {}) {
     let row = newDiv(opt),
         hide = opt.hide,
@@ -706,6 +818,12 @@ function addUnits(input, round) {
     return input;
 }
 
+/**
+ * Create a labeled range slider.
+ * @param {string} label - Slider label text
+ * @param {object} options - Options: {min, max, hide, title, action, modes, etc.}
+ * @returns {HTMLInputElement} Range input with setVisible() method
+ */
 function newRange(label, options) {
     let row = newDiv(options),
         ip = DOC.createElement('input'),
@@ -732,6 +850,14 @@ function newRange(label, options) {
     return ip;
 }
 
+/**
+ * Create a labeled select dropdown.
+ * Triggers action on change.
+ * @param {string} label - Select label text
+ * @param {object} [options={}] - Options: {hide, id, convert, disabled, title, action, trigger, post, modes, etc.}
+ * @param {Array|string} source - Option source array or source attribute value
+ * @returns {HTMLSelectElement} Select element with setVisible() method
+ */
 function newSelect(label, options = {}, source) {
     let row = newDiv(options),
         ip = DOC.createElement('select'),
@@ -774,6 +900,14 @@ function newSelect(label, options = {}, source) {
     return ip;
 }
 
+/**
+ * Create a labeled checkbox.
+ * Triggers action on click.
+ * @param {string} label - Checkbox label text
+ * @param {function} [action=bindTo] - Click handler function
+ * @param {object} [opt={}] - Options: {hide, disabled, title, trigger, modes, etc.}
+ * @returns {HTMLInputElement} Checkbox element with setVisible() method
+ */
 function newBoolean(label, action = bindTo, opt = {}) {
     let row = newDiv(opt),
         ip = DOC.createElement('input'),
@@ -828,7 +962,15 @@ function newBlank(options) {
     return row;
 }
 
-// unlike other elements, does not auto-add to a row
+/**
+ * Create a button element.
+ * Unlike other elements, does not auto-add to a row.
+ * Action can be a function or event name string.
+ * @param {string} label - Button label text
+ * @param {function|string} action - Click handler or event name to emit
+ * @param {object} [opt={}] - Options: {class, icon, title, id, modes, etc.}
+ * @returns {HTMLButtonElement} Button element with mode visibility
+ */
 function newButton(label, action, opt = {}) {
     let b = DOC.createElement('button');
 
@@ -866,6 +1008,12 @@ function newButton(label, action, opt = {}) {
     return b;
 }
 
+/**
+ * Create a row container with child elements.
+ * @param {Array<HTMLElement>} children - Child elements to append
+ * @param {object} options - Options: {class, noadd, modes, etc.}
+ * @returns {HTMLElement} Row element
+ */
 function newRow(children, options) {
     let row = addCollapsableElement((options && options.noadd) ? null : addTo);
     if (children) children.forEach(function (c) { row.appendChild(c) });

@@ -13,18 +13,42 @@ import { Widget, newWidget } from '../core/widget.js';
 
 const V0 = new THREE.Vector3(0,0,0);
 
+/** Bounds update callback */
 let setbounds = undefined;
+
+/** Flag indicating if grouping operation is in progress */
 let grouping = false;
+
+/** Maximum Z height of all widgets on platform */
 let topZ = 0;
 
+/**
+ * Get current settings object.
+ * @returns {object} Current configuration
+ */
 function current() {
     return api.conf.get();
 }
 
+/**
+ * Get current mode ID constant.
+ * @returns {number} Mode ID
+ */
 function get_mode() {
     return api.mode.get_id();
 }
 
+/**
+ * Update platform origin position and rulers.
+ * Calculates origin based on mode, device, and process settings:
+ * - FDM: Corner or center based on device.originCenter/bedRound
+ * - CAM: Relative to stock, with optional top origin
+ * - 2D modes (LASER, DRAG, WJET, WEDM): Corner, center, or bounds-based
+ * - Belt: Special Y offset handling
+ * Applies mode-specific origin offsets and updates visual rulers.
+ *
+ * @param {boolean} [update_bounds=true] - Whether to recalculate bounds first
+ */
 function update_origin(update_bounds = true) {
     if (update_bounds) {
         platform.update_bounds();
@@ -105,6 +129,13 @@ function update_origin(update_bounds = true) {
     }
 }
 
+/**
+ * Update platform size and visual appearance.
+ * Sets platform dimensions from device settings, updates grid/rulers,
+ * and applies dark mode styling if enabled.
+ *
+ * @param {boolean} [updateDark=true] - Whether to update dark mode styling
+ */
 function update_size(updateDark = true) {
     const { process, device, controller } = current();
     const { showRulers, units } = controller;
@@ -145,6 +176,10 @@ function update_size(updateDark = true) {
     platform.update_origin();
 }
 
+/**
+ * Update topZ to track maximum Z height of all widgets.
+ * Used for belt mode and other Z-dependent calculations.
+ */
 function platformUpdateMidZ() {
     topZ = 0;
     api.widgets.each(widget => {
@@ -153,6 +188,11 @@ function platformUpdateMidZ() {
     space.platform.setMaxZ(topZ);
 }
 
+/**
+ * Update widget Z positioning based on CAM anchoring settings.
+ * In CAM mode, anchors widgets to top/middle/bottom of stock with offset.
+ * In other modes, resets topZ to 0.
+ */
 function update_top_z() {
     const { process, stock } = current();
     const MODE = get_mode();
@@ -182,6 +222,13 @@ function update_top_z() {
     });
 }
 
+/**
+ * Calculate and update stock dimensions for CAM mode.
+ * Stock dimensions can be absolute or relative (offset from bounds).
+ * Falls back to offset mode if any stock dimension is 0.
+ * Calculates stock center point for origin calculations.
+ * In non-CAM modes, clears stock object.
+ */
 function platformUpdateStock() {
     const settings = current();
     const { bounds, process, mode } = settings;
@@ -208,11 +255,22 @@ function platformUpdateStock() {
     }
 }
 
+/**
+ * Set explicit platform bounds and trigger update.
+ * @param {THREE.Box3} bounds - Bounding box to set
+ * @returns {THREE.Box3} Updated bounds
+ */
 function set_bounds(bounds) {
     setbounds = bounds;
     return update_bounds();
 }
 
+/**
+ * Calculate platform bounds from all widgets or use explicit bounds.
+ * Unions all widget bounding boxes translated by their positions.
+ * Updates stock, top Z, midZ, and origin after calculation.
+ * @returns {THREE.Box3} Calculated or explicit bounds
+ */
 function update_bounds() {
     const bounds = setbounds || new THREE.Box3();
     if (!setbounds)
@@ -236,10 +294,19 @@ function update_bounds() {
     return bounds;
 }
 
+/**
+ * Get count of selected widgets in arrange view.
+ * @returns {number} Selection count (0 if not in arrange view)
+ */
 function selected_count() {
     return api.view.is_arrange() ? api.selection.count() : 0;
 }
 
+/**
+ * Update visual appearance of selected widgets.
+ * Sets selected color and highlights extruder buttons for FDM multi-extruder devices.
+ * Saves widget state after selection.
+ */
 function update_selected() {
     const settings = current();
 
@@ -266,6 +333,15 @@ function update_selected() {
     }
 }
 
+/**
+ * Select a widget on the platform.
+ * Only works in arrange view. Handles group selection recursively.
+ * With shift key, toggles selection. Without shift, replaces selection.
+ * Emits 'widget.select' event and updates UI.
+ * @param {Widget} widget - Widget to select
+ * @param {boolean} shift - Whether shift key is pressed (multi-select)
+ * @param {boolean} [recurse=true] - Whether to recursively select group members
+ */
 function select(widget, shift, recurse = true) {
     const { event, selection, view } = api;
 
@@ -307,6 +383,14 @@ function select(widget, shift, recurse = true) {
     space.update();
 }
 
+/**
+ * Deselect widget(s) on the platform.
+ * Only works in arrange view. Handles group deselection recursively.
+ * If no widget provided, deselects all widgets.
+ * Emits 'widget.deselect' event and updates UI.
+ * @param {Widget} [widget] - Widget to deselect, or undefined to deselect all
+ * @param {boolean} [recurse=true] - Whether to recursively deselect group members
+ */
 function deselect(widget, recurse = true) {
     const { selection, view } = api;
 
@@ -342,6 +426,12 @@ function deselect(widget, recurse = true) {
     space.update();
 }
 
+/**
+ * Load mesh from URL (.stl or raw vertex data).
+ * Detects file type and delegates to load_stl or ajax loader.
+ * @param {string} url - URL to load from
+ * @param {Function} [onload] - Callback(vertices, widget) on load complete
+ */
 function load(url, onload) {
     if (url.toLowerCase().indexOf(".stl") > 0) {
         platform.load_stl(url, onload);
@@ -356,6 +446,14 @@ function load(url, onload) {
     }
 }
 
+/**
+ * Load STL file from URL and add to platform.
+ * @param {string} url - URL to STL file
+ * @param {Function} [onload] - Callback(vertices, widget) on load complete
+ * @param {FormData} [formdata] - Optional form data for POST request
+ * @param {boolean} [credentials] - Include credentials in request
+ * @param {object} [headers] - Additional HTTP headers
+ */
 function load_stl(url, onload, formdata, credentials, headers) {
     new file_load.STL().load(url, (vertices, filename) => {
         if (vertices) {
@@ -369,6 +467,13 @@ function load_stl(url, onload, formdata, credentials, headers) {
     }, formdata, 1 / api.view.unit_scale(), credentials, headers);
 }
 
+/**
+ * Load mesh(es) from URL via file loader.
+ * Supports multiple file formats. Groups loading to prevent intermediate layouts.
+ * Emits 'load.url' event with loaded widgets.
+ * @param {string} url - URL to load from
+ * @param {object} [options={}] - Load options including optional group array
+ */
 function load_url(url, options = {}) {
     platform.group();
     file_load.URL.load(url, options).then(objects => {
@@ -390,11 +495,20 @@ function load_url(url, options = {}) {
     });
 }
 
+/**
+ * Begin group loading mode.
+ * Defers layout and group position updates until group_done() is called.
+ */
 function group() {
     grouping = true;
 }
 
-// called after all new widgets are loaded to update group positions
+/**
+ * Complete group loading and finalize widget positions.
+ * Called after all widgets in a group are loaded.
+ * Triggers layout if drop_layout feature is enabled.
+ * @param {boolean} [skipLayout] - Whether to skip auto-layout
+ */
 function group_done(skipLayout) {
     grouping = false;
     Widget.Groups.loadDone();
@@ -403,9 +517,23 @@ function group_done(skipLayout) {
     }
 }
 
+/** Deferred widget additions pending batch processing */
 let deferred = [];
+
+/** Timeout handle for deferred widget batch processing */
 let deferTimeout;
 
+/**
+ * Add widget to platform and 3D scene.
+ * Can defer addition for batch processing to improve performance.
+ * Initializes widget annotation (extruder assignment).
+ * Updates bounds, triggers save, and positions widget if autoLayout is disabled.
+ * Emits 'widget.add' event.
+ * @param {Widget} widget - Widget to add
+ * @param {boolean} shift - Whether to multi-select (shift key pressed)
+ * @param {boolean} nolayout - Skip layout/positioning
+ * @param {boolean} defer - Batch multiple adds for better performance
+ */
 function add(widget, shift, nolayout, defer) {
     api.widgets.add(widget);
     space.world.add(widget.mesh);
@@ -433,6 +561,12 @@ function add(widget, shift, nolayout, defer) {
     }
 }
 
+/**
+ * Process batch of deferred widget additions.
+ * Called after 150ms timeout to batch multiple rapid additions.
+ * Positions widgets if autoLayout is disabled, then completes grouping.
+ * @private
+ */
 function platformAddDeferred() {
     let skiplayout = false;
     for (let rec of deferred) {
@@ -453,6 +587,14 @@ function platformAddDeferred() {
     deferred = [];
 }
 
+/**
+ * Find non-colliding position for newly added widget.
+ * Uses spiral search pattern radiating from center (0,0).
+ * Tests 360 positions at each radius (10, 20, 30...200mm).
+ * Skips if this is the first widget on platform.
+ * @param {Widget} widget - Widget to position
+ * @private
+ */
 function positionNewWidget(widget) {
     if (api.widgets.count() <= 1) {
         return;
@@ -501,6 +643,15 @@ function positionNewWidget(widget) {
     }
 }
 
+/**
+ * Delete widget(s) from platform.
+ * Handles single widget, array of widgets, or widget records.
+ * Removes from API widget collection, selection, groups, and 3D scene.
+ * Can defer post-processing for batch deletions.
+ * Emits 'widget.delete' event.
+ * @param {Widget|Array<Widget>} widget - Widget(s) to delete
+ * @param {boolean} [defer] - Skip post-processing (for batch operations)
+ */
 function platformDelete(widget, defer) {
     if (!widget) {
         return;
@@ -525,6 +676,11 @@ function platformDelete(widget, defer) {
     }
 }
 
+/**
+ * Post-deletion cleanup and updates.
+ * Updates slider, bounds, layout, selection, triggers save.
+ * @private
+ */
 function delete_post() {
     api.view.update_slider_max();
     platform.update_bounds();
@@ -540,7 +696,11 @@ function delete_post() {
     changed();
 }
 
-// render list of current widgets
+/**
+ * Render widget list UI with action buttons.
+ * Creates interactive widget cards with save/rename/replace/disable/delete buttons.
+ * Highlights widgets on hover. Updates when widgets are added/removed/modified.
+ */
 function changed() {
     h.bind($('ws-widgets'), api.widgets.all().map(w => {
         let color;
@@ -627,12 +787,36 @@ function changed() {
     }));
 }
 
+/**
+ * Select all widgets on platform.
+ * Adds each widget to selection without recursing into groups.
+ */
 function select_all() {
     api.widgets.each(widget => {
         platform.select(widget, true, false)
     });
 }
 
+/**
+ * Arrange widgets on platform using automatic layout.
+ * Behavior varies by mode:
+ * - FDM: 2D bin packing with support spacing. Belt mode uses linear Y layout with optional X randomization.
+ * - SLA: 2D bin packing with support spacing
+ * - CAM/LASER: 2D bin packing with configurable tile spacing
+ *
+ * Belt mode special handling:
+ * - Positions widgets linearly along Y axis
+ * - Adds belt lead spacing
+ * - Optional X randomization for better adhesion
+ * - Auto-expands bed depth if needed
+ *
+ * Standard mode:
+ * - Uses 2D bin packing algorithm (Packer class)
+ * - Grows packing area by 10% if widgets don't fit
+ * - Centers packed layout on platform
+ *
+ * Emits 'platform.layout' event when complete.
+ */
 function layout() {
     const MODE = get_mode();
     const settings = current();
@@ -736,6 +920,14 @@ function layout() {
     api.event.emit('platform.layout');
 }
 
+/**
+ * Create widget from vertex data and add to platform.
+ * Optionally saves to catalog and adds to group.
+ * @param {Array} [group] - Optional group array for grouping multiple widgets
+ * @param {Float32Array|Array} vertices - Vertex data (converted to Float32Array if needed)
+ * @param {string} [filename] - Optional filename for metadata and catalog
+ * @returns {Widget} Created widget
+ */
 function load_verts(group, vertices, filename) {
     const widget = newWidget(undefined, group).loadVertices(vertices.toFloat32(), true);
     widget.meta.file = filename;
@@ -744,6 +936,15 @@ function load_verts(group, vertices, filename) {
     return widget;
 }
 
+/**
+ * Load multiple files from File objects.
+ * Supports: STL, OBJ, 3MF, SVG, PNG, JPG, KMZ, Gerber (.gbr), gcode, raw vertex data.
+ * Also handles settings import (.b64, .km, .ini files).
+ * Groups loading to prevent intermediate layouts.
+ * Prompts user for grouping when multiple objects detected.
+ * @param {Array<File>} files - Array of File objects from file input or drag/drop
+ * @param {Array} [group] - Optional group array for grouping loaded widgets
+ */
 function load_files(files, group) {
     platform.group();
     let loading = files.length;
@@ -868,6 +1069,12 @@ function load_files(files, group) {
     }
 }
 
+/**
+ * Show dialog to configure SVG import settings.
+ * Prompts for extrusion depth, arc resolution, DPI, and nesting.
+ * @param {Function} doit - Callback with options: {soup, resolution, segmin, depth, dpi}
+ * @private
+ */
 function loadSVGDialog(doit) {
     const opt = {pre: [
         "<div class='f-col a-center'>",
@@ -895,7 +1102,12 @@ function loadSVGDialog(doit) {
     });
 }
 
-// resize platform (expand) to fit widgets (belt mode)
+/**
+ * Expand platform bed depth to fit widgets (belt mode only).
+ * Finds maximum Y dimension of all widgets and expands bed if needed.
+ * Adds 10mm padding. Saves original bed depth.
+ * @returns {boolean} True if bed was expanded
+ */
 function fit() {
     let maxy = 0;
     api.widgets.each(widget => {

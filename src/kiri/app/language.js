@@ -1,10 +1,23 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+/**
+ * Global language/translation system.
+ * Stores language maps and tracks the current language selection.
+ */
 const LANG = self.lang = { current: {} };
+
+/** Default language code */
 const KDFL = 'en-us';
 
+/** Currently selected language code from browser */
 let lset = navigator.language.toLocaleLowerCase();
 
+/**
+ * Map language codes to supported language identifiers.
+ * Normalizes short codes (en, fr, de) to full language codes (en-us, fr-fr, de-de).
+ * @param {string} key - Language code (e.g., 'en', 'fr', 'de-de')
+ * @returns {string} Normalized language code or default 'en-us'
+ */
 LANG.map = function(key) {
     if (!key) {
         return KDFL;
@@ -23,10 +36,21 @@ LANG.map = function(key) {
     return KDFL;
 };
 
+/**
+ * Get current browser language setting.
+ * @returns {string} Browser language code
+ */
 LANG.get = function() {
     return lset;
 };
 
+/**
+ * Set language by trying a list of language codes in order.
+ * Falls back to browser language, then English if no arguments provided.
+ * Populates LANG.current with translations, filling missing keys from English.
+ * @param {...string} keys - Language codes to try in order
+ * @returns {string|undefined} Selected language code or undefined if none found
+ */
 LANG.set = function() {
     let map, key, keys = [...arguments];
     // provide default if none given

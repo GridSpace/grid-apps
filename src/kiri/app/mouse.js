@@ -61,6 +61,11 @@ class InteractionControl {
         this.#initialized = true;
     }
 
+    /**
+     * Bind hover event handlers for mouse and platform interactions.
+     * Listens to "feature.hover" event to enable/disable hover functionality.
+     * @private
+     */
     #bindHoverHandlers() {
         // Set up hover handlers
         this.#api.event.on("feature.hover", enable => {
@@ -69,17 +74,40 @@ class InteractionControl {
         });
     }
 
+    /**
+     * Handle mouse hover over widgets.
+     * Returns widget meshes if no intersection, otherwise triggers hover callback.
+     * @private
+     * @param {object} int - Intersection data
+     * @param {Event} event - Mouse event
+     * @param {Array} ints - All intersections
+     */
     #mouseOnHover(int, event, ints) {
         if (!this.#api.feature.hover) return;
         if (!int) return this.#api.feature.hovers || this.#api.widgets.meshes();
         this.#onHover?.({int, ints, event, point: int.point, type: 'widget'});
     }
 
+    /**
+     * Handle mouse hover over platform.
+     * Triggers hover callback with platform intersection point.
+     * @private
+     * @param {object} int - Intersection point
+     * @param {Event} event - Mouse event
+     */
     #platformOnHover(int, event) {
         if (!this.#api.feature.hover) return;
         if (int) this.#onHover?.({point: int, event, type: 'platform'});
     }
 
+    /**
+     * Bind mouse click and drag handlers.
+     * Handles:
+     * - Mouse down: lay-flat (Ctrl/Cmd+click), custom hooks, hover mode
+     * - Mouse up: widget selection/deselection, custom hooks
+     * - Drag: move selected widgets with boundary checking
+     * @private
+     */
     #bindMouseHandlers() {
         // Mouse down handler
         this.#space.mouse.downSelect((int, event) => {

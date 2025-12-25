@@ -6,6 +6,14 @@ import { newWidget } from '../core/widget.js';
 import { platform } from './platform.js';
 import { settings } from './conf/manager.js';
 
+/**
+ * Show image import dialog with conversion options.
+ * Prompts for blur, inversion, base size, and border settings.
+ * Large images (>2.5MB) show a warning before proceeding.
+ * @param {ArrayBuffer} image - PNG image data
+ * @param {string} name - Filename
+ * @param {boolean} [force] - Skip size warning if true
+ */
 function loadImageDialog(image, name, force) {
     if (!force && image.byteLength > 2500000) {
         return api.uc.confirm("Large images may fail to import<br>Consider resizing under 1000 x 1000<br>Proceed with import?").then(ok => {
@@ -46,6 +54,12 @@ function loadImageDialog(image, name, force) {
     });
 }
 
+/**
+ * Convert PNG image to 3D mesh using worker.
+ * Creates height map from pixel brightness and generates vertices.
+ * @param {ArrayBuffer} image - PNG image data
+ * @param {object} [opt={}] - Options: file, blur, base, border, inv_image, inv_alpha
+ */
 function loadImage(image, opt = {}) {
     const info = Object.assign({settings: settings.get(), png:image}, opt);
     api.client.image2mesh(info, progress => {
@@ -58,7 +72,12 @@ function loadImage(image, opt = {}) {
     });
 }
 
-// convert any image type to png
+/**
+ * Convert any image format to PNG before loading.
+ * Uses canvas to convert image blob to PNG data URL.
+ * @param {ArrayBuffer} res - Image data in any format
+ * @param {string} name - Filename
+ */
 function loadImageConvert(res, name) {
     let url = URL.createObjectURL(new Blob([res]));
 

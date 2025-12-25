@@ -5,8 +5,16 @@ import { base } from '../../geo/base.js';
 import { space } from '../../moto/space.js';
 
 const DOC = self.document;
+
+/** Cached platform color before drag-over highlight */
 let platformColor;
 
+/**
+ * Handle file drag-over event.
+ * Changes platform color to green to indicate drop target.
+ * Prevents drop when modal dialogs are open.
+ * @param {DragEvent} evt - Browser drag event
+ */
 function dragOverHandler(evt) {
     evt.stopPropagation();
     evt.preventDefault();
@@ -21,10 +29,22 @@ function dragOverHandler(evt) {
     if (oldcolor !== 0x00ff00) platformColor = oldcolor;
 }
 
+/**
+ * Handle drag-leave event by restoring original platform color.
+ */
 function dragLeave() {
     space.platform.setColor(platformColor);
 }
 
+/**
+ * Handle file drop event.
+ * Restores platform color and loads dropped files.
+ * Handles multi-file drops with optional grouping:
+ * - Single file: loads immediately
+ * - Multiple files: prompts user whether to group
+ * - api.feature.drop_group can override behavior (true=always group, false=never group)
+ * @param {DragEvent} evt - Browser drop event
+ */
 function dropHandler(evt) {
     evt.stopPropagation();
     evt.preventDefault();
@@ -54,6 +74,10 @@ function dropHandler(evt) {
     }
 }
 
+/**
+ * Load a file from the catalog when clicked.
+ * @param {Event} e - Click event from catalog item
+ */
 function loadCatalogFile(e) {
     api.widgets.load(e.target.getAttribute('load'), function(widget) {
         api.platform.add(widget);
@@ -61,6 +85,12 @@ function loadCatalogFile(e) {
     });
 }
 
+/**
+ * Update the catalog UI with current file list.
+ * Builds interactive list with rename, load, and delete buttons for each file.
+ * Sorts files alphabetically (case-insensitive).
+ * @param {object} files - Dictionary of filename -> {vertices, updated} file metadata
+ */
 function updateCatalog(files) {
     let table = api.ui.catalog.list,
         list = [];

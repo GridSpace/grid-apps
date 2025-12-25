@@ -3,11 +3,19 @@
 import { newPolygon, Polygon } from '../../geo/polygon.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 
+/**
+ * Layer management system for 3D visualization.
+ * Organizes geometry (lines, polygons, faces, paths) by layer with color/opacity.
+ * Supports multiple rendering styles: basic lines, webgl lines, filled areas, 3D extrusion paths.
+ */
 export class Layers {
     constructor() {
         this.init();
     }
 
+    /**
+     * Initialize or reset layers, profiles, and statistics.
+     */
     init() {
         this.layers = {};
         this.profiles = {};
@@ -20,21 +28,47 @@ export class Layers {
         };
     }
 
+    /**
+     * Get layer data by layer index.
+     * @param {number} layer - Layer index
+     * @returns {object} Layer data or undefined
+     */
     getLayer(layer) {
         return this.layers[layer];
     }
 
-    // in radians
+    /**
+     * Set rotation for subsequent layers.
+     * @param {number} [x=0] - X rotation in radians
+     * @param {number} [y=0] - Y rotation in radians
+     * @param {number} [z=0] - Z rotation in radians
+     * @returns {Layers} This instance for chaining
+     */
     setRotation(x = 0, y = 0, z = 0) {
         this.rotation = { x, y, z };
         return this;
     }
 
+    /**
+     * Set position offset for subsequent layers.
+     * @param {number} [x=0] - X position
+     * @param {number} [y=0] - Y position
+     * @param {number} [z=0] - Z position
+     * @returns {Layers} This instance for chaining
+     */
     setPosition(x = 0, y = 0, z = 0) {
         this.position = { x, y, z };
         return this;
     }
 
+    /**
+     * Set current layer for subsequent geometry additions.
+     * Creates layer if it doesn't exist.
+     * @param {number} layer - Layer index
+     * @param {number|object} colors - Single color number or {line, face, opacity}
+     * @param {boolean} [off] - If true, marks layer as off/hidden
+     * @returns {Layers} This instance for chaining
+     */
     setLayer(layer, colors, off) {
         let layers = this.layers;
         if (typeof(colors) === 'number') {
@@ -65,13 +99,24 @@ export class Layers {
         return this;
     }
 
-    // add a line segment (two points)
+    /**
+     * Add a single line segment to current layer.
+     * @param {object} p1 - First point {x, y, z}
+     * @param {object} p2 - Second point {x, y, z}
+     * @returns {Layers} This instance for chaining
+     */
     addLine(p1, p2) {
         this.current.lines.push(p1, p2);
         return this;
     }
 
-    // add an array of line segments
+    /**
+     * Add multiple line segments to current layer.
+     * If options provided, converts to open polygons via addPolys.
+     * @param {Array} lines - Array of points (alternating pairs for line segments)
+     * @param {object} [options] - If provided, creates open polygons instead
+     * @returns {Layers} This instance for chaining
+     */
     addLines(lines, options) {
         if (options) {
             // the open option encodes lines as open polygons
@@ -92,12 +137,23 @@ export class Layers {
         return this;
     }
 
-    // an open or closed polygon
+    /**
+     * Add a single polygon to current layer.
+     * @param {Polygon} poly - Polygon to add
+     * @param {object} [options] - Rendering options
+     * @returns {Layers} This instance for chaining
+     */
     addPoly(poly, options) {
         return this.addPolys([ poly ], options);
     }
 
-    // a polygon rendered as a webgl line
+    /**
+     * Add polygons rendered as WebGL lines.
+     * Dispatches to addFlats or addPaths based on options.
+     * @param {Array<Polygon>} polys - Array of polygons
+     * @param {object} [options] - Options: {clean, flat, thin, z, color}
+     * @returns {Layers} This instance for chaining
+     */
     addPolys(polys, options) {
         if (!polys) {
             return this;
@@ -134,8 +190,13 @@ export class Layers {
         return this;
     }
 
-    // add an enclosed 3D polygon earcut into faces
-    // used for FDM solids, bridges, flats debug, CAM hole generation & SLA slice visualization
+    /**
+     * Add enclosed 3D polygon earcut into triangular faces.
+     * Used for FDM solids, bridges, flats debug, CAM hole generation, SLA slice visualization.
+     * @param {Polygon|Array<Polygon>} polys - Polygon(s) to tessellate
+     * @param {object} [options] - Options: {outline} to also draw polygon outline
+     * @returns {Layers} This instance for chaining
+     */
     addAreas(polys, options) {
         const faces = this.current.faces;
         polys = Array.isArray(polys) ? polys : [ polys ];
@@ -151,7 +212,13 @@ export class Layers {
         }
     }
 
-    // add a 2D polyline path (usually FDM extrusion paths)
+    /**
+     * Add 2D polyline paths with width (usually FDM extrusion paths).
+     * Creates flat ribbons with vertex normals for lighting.
+     * @param {Array<Polygon>} polys - Polygons to render as flat ribbons
+     * @param {object} [options] - Options: {offset, outline, color}
+     * @returns {Layers} This instance for chaining
+     */
     addFlats(polys, options) {
         const opts = options || {};
         const offset = opts.offset || 1;
@@ -200,7 +267,14 @@ export class Layers {
         return this;
     }
 
-    // add 3D polyline path (FDM extrusion paths)
+    /**
+     * Add 3D polyline paths with extrusion (FDM extrusion paths).
+     * Creates 3D tubes with vertex normals for lighting.
+     * Supports incremental merging and per-segment color changes.
+     * @param {Array<Polygon>} polys - Polygons to render as 3D tubes
+     * @param {object} [options] - Options: {height, offset, z, color}
+     * @returns {Layers} This instance for chaining
+     */
     addPaths(polys, options) {
         const opts = options || {};
         const height = opts.height || 1;
@@ -259,6 +333,12 @@ export class Layers {
     }
 }
 
+/**
+ * Flatten polygon array or single polygon for rendering.
+ * Clones and flattens nested polygon structures.
+ * @param {Polygon|Array<Polygon>} polys - Polygon(s) to flatten
+ * @returns {Array<Polygon>} Flattened polygon array
+ */
 function flat(polys) {
     if (Array.isArray(polys)) {
         return POLY.flatten(polys.clone(true), [], true);

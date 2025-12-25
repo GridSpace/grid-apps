@@ -2,8 +2,18 @@
 
 import { api } from './api.js';
 
+/**
+ * Active alert records. Each record is an array: [message, timestamp, duration, active]
+ * @type {Array<[string, number, number, boolean]>}
+ */
 let alerts = [];
 
+/**
+ * Display an alert message to the user
+ * @param {string} message - The message to display
+ * @param {number} time - Duration in seconds to show the alert
+ * @returns {Array|undefined} Alert record [message, timestamp, duration, active] or result of update()
+ */
 function show(message, time) {
     if (message === undefined || message === null) {
         return update(true);
@@ -19,6 +29,11 @@ function show(message, time) {
     return rec;
 }
 
+/**
+ * Hide one or more alerts
+ * @param {Array|Array<Array>} rec - Single alert record or array of records to hide
+ * @param {Array<Array>} [recs] - Optional array of alert records (deprecated parameter style)
+ */
 function hide(rec, recs) {
     if (Array.isArray(recs)) {
         for (let r of recs) {
@@ -36,6 +51,11 @@ function hide(rec, recs) {
     }
 }
 
+/**
+ * Update the alert display by filtering expired/inactive alerts and rendering active ones.
+ * Filters alerts by age (based on duration) and active flag, limits display to 5 alerts.
+ * @param {boolean} [clear] - If true, clears all alerts before updating
+ */
 function update(clear) {
     if (clear) {
         alerts = [];

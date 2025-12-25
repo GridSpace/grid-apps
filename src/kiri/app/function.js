@@ -7,8 +7,26 @@ import { space } from '../../moto/space.js';
 import { COLOR, PMODES } from '../core/consts.js';
 import { exportFile } from './export.js';
 
+/**
+ * Tracks completion state of operations to prevent redundant work.
+ * Properties: slice, preview, export
+ */
 let complete = {};
 
+/**
+ * Prepare and execute slicing for all widgets on the platform.
+ * Main slicing function that:
+ * - Takes screenshots for export/preview
+ * - Handles belt mode layout
+ * - Slices each widget sequentially via worker
+ * - Tracks progress across all widgets
+ * - Renders sliced layers to stacks
+ * - Emits slice.begin, slice, slice.end, slice.error events
+ *
+ * @param {function} [callback] - Called when slicing completes
+ * @param {number} [scale=1] - Progress bar scale factor (for chaining operations)
+ * @param {number} [offset=0] - Progress bar offset (for chaining operations)
+ */
 function prepareSlices(callback, scale = 1, offset = 0) {
     const { conf, event, feature, hide, mode, view, platform, show, stacks } = api;
 
@@ -289,6 +307,17 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     sliceNext();
 }
 
+/**
+ * Prepare preview/print visualization.
+ * Generates toolpaths and renders them as 3D lines.
+ * Handles multiple preview modes (speed, filament, layer) via feature.pmode.
+ * Auto-runs slicing first if not already complete.
+ * Emits preview.begin, print, preview.end, preview.error events.
+ *
+ * @param {function} [callback] - Called when preview completes
+ * @param {number} [scale=1] - Progress bar scale factor (for chaining operations)
+ * @param {number} [offset=0] - Progress bar offset (for chaining operations)
+ */
 function preparePreview(callback, scale = 1, offset = 0) {
     const { conf, event, feature, hide, mode, view, platform, show, stacks } = api;
     const widgets = api.widgets.all();
@@ -427,6 +456,10 @@ function preparePreview(callback, scale = 1, offset = 0) {
     });
 }
 
+/**
+ * Prepare animation (requires SharedArrayBuffer support).
+ * Checks for browser support and emits function.animate event.
+ */
 function prepareAnimation() {
     if (!window.SharedArrayBuffer) {
         api.alerts.show("The security context of this");
@@ -437,6 +470,12 @@ function prepareAnimation() {
     api.event.emit("function.animate", {mode: api.conf.get().mode});
 }
 
+/**
+ * Prepare and trigger export.
+ * Auto-runs preview first if not already complete.
+ * Delegates to exportFile() for mode-specific export.
+ * @param {...*} args - Arguments passed through to exportFile()
+ */
 function prepareExport() {
     const settings = api.conf.get();
     const argsave = arguments;
@@ -449,12 +488,23 @@ function prepareExport() {
     exportFile(...argsave);
 }
 
+/**
+ * Cancel running worker operation by restarting the worker.
+ */
 function cancelWorker() {
     if (client.isBusy()) {
         client.restart();
     }
 }
 
+/**
+ * Parse and visualize gcode or other toolpath code.
+ * Sends code to worker for parsing, renders result as 3D preview.
+ * Emits code.load and code.loaded events.
+ *
+ * @param {string} code - Gcode or toolpath text
+ * @param {string} type - Code type identifier (gcode, etc.)
+ */
 function parseCode(code, type) {
     const { conf, event, show, stacks, widgets, view } = api;
     const settings = conf.get();
@@ -479,6 +529,10 @@ function parseCode(code, type) {
     });
 }
 
+/**
+ * Clear operation completion tracking.
+ * Resets complete state so operations can run again.
+ */
 function clear_progress() {
     complete = {};
 }

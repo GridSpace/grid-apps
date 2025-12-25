@@ -10,6 +10,10 @@ import { LASER as laser_driver } from '../mode/laser/driver.js';
 import { SLA as sla_client } from '../mode/sla/init-ui.js';
 import { hash } from '../../ext/md5.js';
 
+/**
+ * Sequential print counter for generating unique export filenames.
+ * Increments with each export and persists in local storage.
+ */
 let printSeq = parseInt(local['kiri-print-seq'] || local['print-seq'] || "0") + 1;
 
 function localGet(key) {
@@ -20,6 +24,12 @@ function localSet(key, val) {
     return api.local.set(key, val);
 }
 
+/**
+ * Main export entry point. Dispatches to mode-specific export handlers.
+ * Extracts widget filenames to use for export filename suggestions.
+ * @param {object} options - Export options (mode-specific)
+ * @returns {*} Result from mode-specific export handler
+ */
 export function exportFile(options) {
     let mode = api.mode.get();
     let names = api.widgets.all().map(w => w.meta ? w.meta.file : undefined)
@@ -39,6 +49,13 @@ export function exportFile(options) {
     }
 }
 
+/**
+ * Export gcode for FDM or CAM modes.
+ * Calls worker to generate gcode, then presents dialog or invokes callback.
+ * @param {function} callback - Optional callback(gcode_string, output_info)
+ * @param {string} mode - Current mode ('FDM' or 'CAM')
+ * @param {string[]} names - Widget filenames for export naming
+ */
 function callExport(callback, mode, names) {
     let alert = api.feature.work_alerts ? api.show.alert("Exporting") : null;
     let gcode = [];
@@ -65,6 +82,12 @@ function callExport(callback, mode, names) {
     });
 }
 
+/**
+ * Export laser/waterjet/drag knife toolpaths.
+ * Worker generates output, then presents export dialog with SVG/DXF/STL/GCode options.
+ * @param {object} options - Export options
+ * @param {string[]} names - Widget filenames for export naming
+ */
 function callExportLaser(options, names) {
     client.export(api.conf.get(), (line) => {
         // engine export uses lines
@@ -79,6 +102,12 @@ function callExportLaser(options, names) {
     });
 }
 
+/**
+ * Export SLA print data.
+ * Worker generates layer images, then delegates to SLA client for download.
+ * @param {object} options - Export options
+ * @param {string[]} names - Widget filenames for export naming
+ */
 function callExportSLA(options, names) {
     client.export(api.conf.get(), (line) => {
         api.show.progress(line.progress, "exporting");
@@ -92,6 +121,12 @@ function callExportSLA(options, names) {
     });
 }
 
+/**
+ * Present laser export dialog with format options (SVG, DXF, STL, GCode).
+ * Sets up UI handlers for downloading in each supported format.
+ * @param {Array} data - Layer data from export worker
+ * @param {string[]} names - Widget filenames for naming suggestion
+ */
 function exportLaserDialog(data, names) {
     localSet('kiri-print-seq', printSeq++);
 
@@ -147,6 +182,11 @@ function exportLaserDialog(data, names) {
     $('print-lg').onclick = download_gcode;
 }
 
+/**
+ * Bind an input field to persist its value to local storage on blur.
+ * @param {string} field - Element ID of the input field
+ * @param {string} varname - Local storage key to save value under
+ */
 function bindField(field, varname) {
     $(field).onblur = function() {
         console.log('save', field, 'to', varname);
@@ -154,6 +194,19 @@ function bindField(field, varname) {
     };
 }
 
+/**
+ * Present gcode export dialog with download/send options.
+ * Complex UI setup that handles:
+ * - Local download of gcode, zip (CAM operations), or 3MF (FDM)
+ * - OctoPrint integration for remote printing
+ * - Bambu printer integration (via api.bambu)
+ * - Print statistics (time, filament, weight)
+ * - Gcode preview
+ * @param {string[]} gcode - Array of gcode lines
+ * @param {object} [sections] - CAM operation sections for zip export
+ * @param {object} info - Export metadata (time, distance, bytes, etc.)
+ * @param {string[]} names - Widget filenames for naming suggestion
+ */
 function exportGCodeDialog(gcode, sections, info, names) {
     localSet('kiri-print-seq', printSeq++);
 
@@ -336,6 +389,13 @@ function exportGCodeDialog(gcode, sections, info, names) {
         // let bnds = settings.bounds;
         // console.log({ wids, bnds });
 
+        /**
+         * Generate 3MF file for Bambu/BambuStudio printers.
+         * Creates ZIP archive with gcode, thumbnails, and metadata.
+         * @param {function} then - Callback to receive generated 3MF blob
+         * @param {string} [ptype='unknown'] - Printer type identifier
+         * @param {number[]} [ams=[0]] - AMS (filament) slot assignments
+         */
         function gen3mf(then, ptype = 'unknown', ams = [0]) {
             let now = new Date();
             let ymd = [

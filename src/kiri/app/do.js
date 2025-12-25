@@ -5,9 +5,19 @@ import { space } from '../../moto/space.js';
 
 const { event } = api;
 
+/**
+ * Undo/Redo action stack. Each entry contains {undo, redo} action records.
+ * @type {Array<{undo: object, redo: object}>}
+ */
 let stack = [];
+
+/** Current position in the undo/redo stack */
 let stpos = 0;
+
+/** Accumulator for drag movements - tracks cumulative x,y offset during selection drag */
 let moved = { x: 0, y: 0 };
+
+/** Message ID for the current undo/redo alert message */
 let msgid;
 
 event.on("init-done", () => {
@@ -31,6 +41,9 @@ let redo = api.doit.redo = function() {
     }
 };
 
+/**
+ * Clear the entire undo/redo stack and reset moved accumulator
+ */
 let clear = api.doit.clear = function() {
     stack = [];
     stpos = 0;
@@ -52,6 +65,13 @@ function message(txt) {
     msgid = api.show.alert(txt);
 }
 
+/**
+ * Execute an action record (undo or redo).
+ * Dispatches based on action type: move, rotate, or scale.
+ * @param {object} rec - Action record with type and action-specific properties
+ * @param {string} rec.type - Action type: 'move', 'rotate', or 'scale'
+ * @param {Array} rec.widgets - Widgets to operate on
+ */
 function action(rec) {
     switch (rec.type) {
         case 'move':
@@ -75,6 +95,11 @@ function action(rec) {
     updateButtons();
 }
 
+/**
+ * Push an undo/redo action pair onto the stack.
+ * Truncates stack at current position (clearing any "future" when adding new action).
+ * @param {object} ur - Action pair with {undo, redo} records
+ */
 function pushActions(ur) {
     stack.length = stpos++;
     stack.push(ur);

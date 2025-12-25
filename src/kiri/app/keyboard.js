@@ -84,6 +84,10 @@ class KeyboardControl {
         return c.charCodeAt(0);
     }
 
+    /**
+     * Bind keyboard event handlers to space.event
+     * @private
+     */
     #bindEvents() {
         this.#space.event.addHandlers(self, [
             'keyup', this.#handleKeyUp.bind(this),
@@ -92,6 +96,13 @@ class KeyboardControl {
         ]);
     }
 
+    /**
+     * Handle keyup events.
+     * Primarily handles Escape key for dismissing modals/dialogs/selections.
+     * @private
+     * @param {KeyboardEvent} evt - Keyboard event
+     * @returns {boolean} False to prevent default
+     */
     #handleKeyUp(evt) {
         // Allow feature hooks to intercept
         if (this.#api.feature.on_key) {
@@ -121,6 +132,14 @@ class KeyboardControl {
         return false;
     }
 
+    /**
+     * Handle keydown events.
+     * Handles arrow keys for movement/rotation, delete key, and Cmd/Ctrl shortcuts.
+     * Arrow keys: rotate (default) or move (with Alt). Shift = smaller rotation.
+     * Meta + Up/Down: navigate layers.
+     * @private
+     * @param {KeyboardEvent} evt - Keyboard event
+     */
     #handleKeyDown(evt) {
         if (this.#api.modal.visible()) {
             return false;
@@ -205,6 +224,21 @@ class KeyboardControl {
         }
     }
 
+    /**
+     * Handle keypress events.
+     * Main keyboard shortcuts for application commands:
+     * - Numbers 0-9: show slice layers (0=all, 1-9=10-90%)
+     * - s/S: slice, p/P: prepare, x/X: export
+     * - a: arrange/layout, v: toggle single slice view
+     * - d: duplicate, m: mirror
+     * - i: import, r: recent files
+     * - e: devices, o: tools, l: load settings
+     * - Z: clear all settings, C: refresh catalog
+     * - Ctrl+g: group, Ctrl+u: ungroup
+     * @private
+     * @param {KeyboardEvent} evt - Keyboard event
+     * @returns {boolean} False to prevent default
+     */
     #handleKeyPress(evt) {
         let handled = true;
         if (this.#api.modal.visible() || this.inputHasFocus()) {

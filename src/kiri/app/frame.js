@@ -1,12 +1,38 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+/**
+ * Frame Message API for iframe integration.
+ *
+ * Enables parent windows to control embedded Kiri:Moto instances via postMessage.
+ * Controlled by api.feature.frame flag.
+ *
+ * Supported message types:
+ * - mode: Set operating mode (FDM, CAM, SLA, LASER, etc.)
+ * - view: Set view mode (ARRANGE, SLICE, PREVIEW, etc.)
+ * - function: Call api.function methods (slice, print, export, etc.)
+ * - event: Subscribe to events
+ * - emit: Emit events
+ * - get: Query state (mode, device, process, widgets)
+ * - set: Update state
+ * - features: Update feature flags
+ * - device/process/controller: Update settings
+ * - parse: Parse and load file data (STL, OBJ, 3MF, SVG)
+ * - load: Load URL
+ * - clear: Clear platform
+ * - alert: Show alert
+ * - progress: Update progress bar
+ */
+
 import { api } from './api.js';
 import { load } from '../../load/file.js';
 import { newWidget } from '../core/widget.js';
 import { VIEWS } from '../core/consts.js';
 import { widgets } from '../core/widgets.js';
 
-// add frame message api listener
+/**
+ * Frame message API listener.
+ * Handles postMessage communication between parent window and embedded Kiri:Moto.
+ */
 window.addEventListener('message', msg => {
     const { conf, event, feature, platform, settings, show } = api;
 

@@ -53,14 +53,19 @@ let LOC = self.location,
 self.kiri_catalog = FILES;
 FILES.show = () => modal.show('files');
 
-// Broker compatibility patch
+/**
+ * Broker compatibility patch - adds 'on' method as alias for subscribe
+ */
 EVENT.on = (topic, listener) => {
     EVENT.subscribe(topic, listener);
     return EVENT;
 };
 
+/** Busy state counter for tracking active operations */
 let busyVal = 0,
+    /** Hover feature flag */
     isHover = false,
+    /** Explicit undefined for object defaults */
     undef = undefined;
 
 // the big kahuna
@@ -68,6 +73,10 @@ export const api = {
     ajax,
     beta,
     alerts,
+    /**
+     * Busy state management for tracking active operations.
+     * Emits 'busy' events when state changes.
+     */
     busy: {
         val() { return busyVal },
         inc() { api.event.emit("busy", ++busyVal) },
@@ -84,10 +93,19 @@ export const api = {
     color,
     conf: settings.conf,
     const: { LANG, LOCAL, SETUP, SECURE, SPACE, STACKS, ...consts },
+    /**
+     * Development/debug utilities
+     */
     devel: {
         get enabled() {
             return settings.ctrl().devel;
         },
+        /**
+         * Enable X-ray view of specific layers for debugging slicing.
+         * Converts layer indices to Z-heights and triggers re-slice.
+         * @param {number|number[]} layers - Layer index or array of indices to view
+         * @param {boolean} [raw] - If true, use raw values without height calculation
+         */
         xray(layers, raw) {
             let proc = api.conf.get().process,
                 size = proc.sliceHeight || proc.slaSlice || 1,
@@ -118,6 +136,10 @@ export const api = {
         settings: settingsUI.trigger_event
     },
     electron: navigator.userAgent.includes('Electron'),
+    /**
+     * Feature flags and hook functions for customizing application behavior.
+     * Many of these are hook points for external integrations or plugins.
+     */
     feature: {
         seed: true, // seed profiles on first use
         meta: true, // show selected widget metadata
@@ -136,7 +158,9 @@ export const api = {
         on_mouse_down: undef, // function intercepts mouse down
         work_alerts: true, // allow disabling work progress alerts
         pmode: consts.PMODES.SPEED, // preview modes
-        // hover: false, // when true fires mouse hover events
+        /**
+         * Hover feature flag. Setting this publishes a "feature.hover" event.
+         */
         get hover() {
             return isHover;
         },
@@ -202,7 +226,17 @@ export const api = {
         download: utilModule.download,
         ui2rec() { api.conf.update_from(...arguments) },
         rec2ui() { api.conf.update_fields(...arguments) },
+        /**
+         * Encode object to base64 string via JSON serialization
+         * @param {*} obj - Object to encode
+         * @returns {string} Base64 encoded string
+         */
         b64enc(obj) { return base64js.fromByteArray(new TextEncoder().encode(JSON.stringify(obj))) },
+        /**
+         * Decode base64 string to object via JSON parsing
+         * @param {string} obj - Base64 encoded string
+         * @returns {*} Decoded object
+         */
         b64dec(obj) { return JSON.parse(new TextDecoder().decode(base64js.toByteArray(obj))) }
     },
     // var: {

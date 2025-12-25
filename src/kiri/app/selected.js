@@ -7,12 +7,21 @@ import { tool as MeshTool } from '../../mesh/tool.js';
 import { encode as objEncode } from '../../load/obj.js';
 import { encode as stlEncode } from '../../load/stl.js';
 
+/**
+ * Array of currently selected widget meshes.
+ * @type {Array}
+ */
 const selectedMeshes = [];
 
 function updateTool(ev) {
     api.tool.update(ev);
 }
 
+/**
+ * Execute function for each unique group represented in selection.
+ * Passes the first widget from each group to the function.
+ * @param {function} fn - Function(widget) to execute for each group
+ */
 function for_groups(fn) {
     let groups = widgets(true).map(w => w.group).uniq();
     for (let group of groups) {
@@ -20,6 +29,12 @@ function for_groups(fn) {
     }
 }
 
+/**
+ * Execute function for each selected widget.
+ * If nothing selected, defaults to all widgets unless noauto=true.
+ * @param {function} fn - Function(widget) to execute
+ * @param {boolean} [noauto] - If true, don't auto-select all widgets when none selected
+ */
 function for_widgets(fn, noauto) {
     let m = selectedMeshes;
     let w = api.widgets.all();
@@ -29,16 +44,32 @@ function for_widgets(fn, noauto) {
     m.slice().forEach(mesh => { fn(mesh.widget) });
 }
 
+/**
+ * Execute function for all widgets with selection status.
+ * @param {function} fn - Function(widget, is_selected) to execute
+ */
 function for_status(fn) {
     api.widgets.all().forEach(w => {
         fn(w, selectedMeshes.contains(w.mesh));
     });
 }
 
+/**
+ * Execute function for each selected mesh.
+ * @param {function} fn - Function(mesh) to execute
+ */
 function for_meshes(fn) {
     selectedMeshes.slice().forEach(mesh => { fn(mesh) });
 }
 
+/**
+ * Move selected widget groups.
+ * Only works in ARRANGE view.
+ * @param {number} x - X offset
+ * @param {number} y - Y offset
+ * @param {number} z - Z offset
+ * @param {boolean} [abs] - If true, use absolute positioning instead of relative
+ */
 function move(x, y, z, abs) {
     if (!api.view.is_arrange()) {
         return;
@@ -51,6 +82,10 @@ function move(x, y, z, abs) {
     api.space.auto_save();
 }
 
+/**
+ * Compute bounding box of all selected meshes.
+ * @returns {THREE.Box3} Bounding box
+ */
 function get_bounds() {
     // Helper to compute bounds of selected meshes
     const THREE = self.THREE;
@@ -65,6 +100,10 @@ function get_bounds() {
     return bounds;
 }
 
+/**
+ * Update UI size/scale info fields based on selected mesh bounds.
+ * Calculates combined bounding box and displays dimensions/scale in UI.
+ */
 function update_info() {
     const ui = api.ui;
     let bounds = new THREE.Box3(), track;
@@ -100,6 +139,12 @@ function update_info() {
     update_bounds();
 }
 
+/**
+ * Update platform bounds and constrain widgets to bed limits.
+ * For belt mode, fits widgets and updates origin.
+ * Automatically moves widgets back into bounds if they exceed bed size.
+ * @param {Array<Widget>} [widgets] - Widgets to bound. Defaults to selected widgets.
+ */
 function update_bounds(widgets) {
     const settings = api.conf.get();
     // update bounds on selection for drag limiting
@@ -149,6 +194,11 @@ function update_bounds(widgets) {
     settings.bounds_sel = bounds_sel;
 }
 
+/**
+ * Duplicate selected widgets with offset.
+ * Only works in ARRANGE view.
+ * New widgets offset by bounding box width + 1 in X direction.
+ */
 function duplicate() {
     if (!api.view.is_arrange()) {
         return;
@@ -167,6 +217,10 @@ function duplicate() {
     });
 }
 
+/**
+ * Mirror selected widgets along X axis.
+ * Only works in ARRANGE view.
+ */
 function mirror() {
     if (!api.view.is_arrange()) {
         return;
@@ -178,6 +232,15 @@ function mirror() {
     api.space.auto_save();
 }
 
+/**
+ * Scale selected widget groups.
+ * Only works in ARRANGE view.
+ * Updates bounds, saves workspace, refreshes info and display.
+ * @param {number} x - X scale factor
+ * @param {number} y - Y scale factor
+ * @param {number} z - Z scale factor
+ * @param {boolean} [last] - If strictly false, skips auto-save
+ */
 function scale() {
     if (!api.view.is_arrange()) {
         return;
@@ -196,6 +259,14 @@ function scale() {
     space.update();
 }
 
+/**
+ * Rotate selected widget groups.
+ * Only works in ARRANGE view.
+ * Updates bounds, saves workspace, refreshes info and display.
+ * @param {number} x - X rotation in radians
+ * @param {number} y - Y rotation in radians
+ * @param {number} z - Z rotation in radians
+ */
 function rotate(x, y, z) {
     if (!api.view.is_arrange()) {
         return;
@@ -209,6 +280,12 @@ function rotate(x, y, z) {
     space.update();
 }
 
+/**
+ * Merge selected widgets into a single widget.
+ * Combines all vertex data from selected widgets into one mesh.
+ * @param {object} options - Options
+ * @param {boolean} [options.deleteMerged=true] - If true, deletes original widgets after merge
+ */
 function merge({ deleteMerged = true }) {
     let sel = widgets();
     if (sel.length === 0) {
@@ -264,6 +341,12 @@ function isolateBodies(){
     }
 }
 
+/**
+ * Export selected widgets to STL or OBJ format.
+ * If multiple widgets, applies position offsets in STL format.
+ * @param {string} [format="stl"] - Export format: "stl" or "obj"
+ * @returns {ArrayBuffer|string} Encoded file data
+ */
 function exportWidgets(format = "stl") {
     let sel = widgets();
     if (sel.length === 0) {
@@ -307,6 +390,11 @@ function exportWidgets(format = "stl") {
     return stlEncode(recs);
 }
 
+/**
+ * Get selected widgets.
+ * @param {boolean} [orall] - If true and nothing selected, returns all widgets
+ * @returns {Array<Widget>} Selected widgets or empty array
+ */
 function widgets(orall) {
     let sel = selectedMeshes.slice().map(m => m.widget);
     return sel.length ? sel : orall ? api.widgets.all() : []
@@ -321,6 +409,11 @@ function settings() {
     return api.conf.get();
 }
 
+/**
+ * Prompt user for rotation angles and rotate selection.
+ * Shows alert if nothing selected.
+ * Accepts comma-separated X,Y,Z degrees.
+ */
 function input_rotate() {
     if (selection.meshes().length === 0) {
         api.show.alert("select object to rotate");
@@ -336,6 +429,12 @@ function input_rotate() {
     });
 }
 
+/**
+ * Prompt user for position coordinates and move selection.
+ * Shows alert if nothing selected.
+ * Accepts comma-separated X,Y coordinates.
+ * Adjusts for center vs corner origin modes.
+ */
 function input_position() {
     if (selection.meshes().length === 0) {
         api.show.alert("select object to position");
@@ -361,6 +460,14 @@ function input_position() {
     });
 }
 
+/**
+ * Handle size input change event.
+ * Calculates scale ratio from size change and applies to selection.
+ * Respects lock checkboxes for proportional scaling.
+ * Prevents scales below 0.1.
+ * @param {Event} e - Input change event
+ * @param {object} ui - UI elements object with size/lock fields
+ */
 function input_resize(e, ui) {
     let dv = parseFloat(e.target.value || 1),
         pv = parseFloat(e.target.was || 1),
@@ -390,6 +497,14 @@ function input_resize(e, ui) {
     ui.size.Z.was = ui.size.Z.value = zv * zr;
 }
 
+/**
+ * Handle scale input change event.
+ * Calculates scale ratio from scale change and applies to selection.
+ * Respects lock checkboxes for proportional scaling.
+ * Prevents scales below 0.1.
+ * @param {Event} e - Input change event
+ * @param {object} ui - UI elements object with scale/lock fields
+ */
 function input_scale(e, ui) {
     let dv = parseFloat(e.target.value || 1),
         pv = parseFloat(e.target.was || 1),
@@ -423,6 +538,11 @@ function parse_as_float(e) {
     e.target.value = parseFloat(e.target.value) || 0;
 }
 
+/**
+ * Bind input handlers to UI elements.
+ * Sets up Enter key handlers for scale, size, tool, and rotation inputs.
+ * @param {object} ui - UI elements object
+ */
 function input_binding(ui) {
     // on enter but not on blur
     space.event.onEnterKey([

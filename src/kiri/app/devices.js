@@ -92,7 +92,11 @@ function selectDevice(devicename) {
     }
 }
 
-// only for local filters
+/**
+ * Clone the current device to create a customizable local copy.
+ * Naming logic: if device already has "My" prefix, appends " copy", otherwise adds "My" prefix.
+ * Only works for local devices (not stock devices).
+ */
 function cloneDevice() {
     let name = `${getSelectedDevice().replace(/\./g,' ')}`;
     let code = api.clone(setconf.get().device);
@@ -113,6 +117,18 @@ function updateLaserState() {
     $('laser-off').style.display = dev.useLaser ? 'flex' : 'none';
 }
 
+/**
+ * Set device configuration from code and initialize device state.
+ * Complex initialization that:
+ * - Parses device code (string or object)
+ * - Fills missing device fields with defaults
+ * - Handles first-time device setup with profiles
+ * - Updates UI elements and platform configuration
+ * - Manages device/process associations
+ * - Emits device.select and device.selected events
+ * @param {string|object} code - Device configuration code or object
+ * @param {string} devicename - Name of the device being set
+ */
 function setDeviceCode(code, devicename) {
     api.event.emit('device.select', devicename);
     try {
@@ -277,6 +293,12 @@ function setDeviceCode(code, devicename) {
     api.event.settings();
 }
 
+/**
+ * Render device selection UI with both stock and custom devices.
+ * Builds device list dropdown, sets up event handlers for save/add/delete/rename/export,
+ * and separates local "My Devices" from "Stock Devices" in the UI.
+ * @param {string[]} devices - Array of stock device names for current mode
+ */
 function renderDevices(devices) {
     let selected = api.device.get() || devices[0],
         features = api.feature,
