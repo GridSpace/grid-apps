@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { selection } from './select.js';
+import { selection } from './selected.js';
 import { Widget } from '../core/widget.js';
 
 function groupMerge() {

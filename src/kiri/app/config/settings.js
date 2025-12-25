@@ -1,8 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { $ } from '../../moto/webui.js';
-import { api } from './api.js';
-import { settings as set_ctrl } from './config/manager.js';
+import { $ } from '../../../moto/webui.js';
+import { api } from '../api.js';
+import { settings as set_ctrl } from './manager.js';
 
 function settings() {
     return api.conf.get();

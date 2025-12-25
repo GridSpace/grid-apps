@@ -11,7 +11,7 @@ import { init as initLaser } from '../mode/laser/init-ui.js';
 import { init as initSLA } from '../mode/sla/init-ui.js';
 import { init as initWEDM } from '../mode/wedm/init-ui.js';
 import { init as initWJET } from '../mode/wjet/init-ui.js';
-import { interact } from './interact.js';
+import { interact } from './mouse.js';
 import { keyboard } from './keyboard.js';
 import { local as sdb } from '../../data/local.js';
 import { menu as menuCAM } from '../mode/cam/init-menu.js';
@@ -20,9 +20,8 @@ import { menu as menuLaser } from '../mode/laser/init-menu.js';
 import { menu as menuSLA } from '../mode/sla/init-menu.js';
 import { modal } from './modal.js';
 import { preferences } from './preferences.js';
-import { selectionTools } from './selection-tools.js';
 import { settings as set_ctrl } from './config/manager.js';
-import { settingsOps } from './settings-ops.js';
+import { settingsOps } from './config/settings.js';
 import { slider } from './slider.js';
 import { space } from '../../moto/space.js';
 import { VIEWS, MODES, SEED } from '../core/consts.js';
@@ -32,6 +31,7 @@ import STACKS from './stacks.js';
 let { SETUP } = api.const,
     { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
     { catalog, platform, selection, stats } = api,
+    { input_binding, input_position, input_rotate } = selection,
     DOC = self.document,
     WIN = self.window,
     LANG = api.language.current,
@@ -516,7 +516,7 @@ function init_one() {
         VIEWS,
         DOC,
         WIN,
-        rotateInputSelection: selectionTools.rotateInputSelection,
+        rotateInputSelection: input_rotate,
         settingsLoad: settingsOps.settingsLoad
     });
 
@@ -587,7 +587,7 @@ function init_one() {
     ]);
 
     // Setup selection transformation bindings
-    selectionTools.setupSelectionBindings(ui);
+    input_binding(ui);
 
     $('lab-axis').onclick = () => {
         ui.lockX.checked =
@@ -684,4 +684,4 @@ function init_one() {
     });
 };
 
-export { onBooleanClick, updateTool, init_one };
+export { onBooleanClick, init_one as init_input };

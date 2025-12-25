@@ -5,7 +5,7 @@ import { api } from './api.js';
 import { local as SDB } from '../../data/local.js';
 import { openFiles } from './files.js';
 import { platform } from './platform.js';
-import { selection } from './select.js';
+import { selection } from './selected.js';
 import { settings } from './config/manager.js';
 import { space as SPACE } from '../../moto/space.js';
 import { utils } from '../core/utils.js';

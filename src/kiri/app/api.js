@@ -9,7 +9,7 @@ import web from '../../moto/webui.js';
 
 import { beta, version } from '../../moto/license.js';
 import { broker } from '../../moto/broker.js';
-import { client as work } from './client.js';
+import { client as workers } from './workers.js';
 import { consts, COLOR as color, LISTS as lists } from '../core/consts.js';
 import { device, devices } from './devices.js';
 import { functions } from './function.js';
@@ -17,8 +17,8 @@ import { group as groupModule } from './groups.js';
 import { help as helpModule } from './help.js';
 import { image as imageModule } from './image.js';
 import { Index } from '../../data/index.js';
-import { LANG } from './lang.js';
-import { local } from './local-storage.js';
+import { LANG } from './language.js';
+import { local } from './local.js';
 import { local as dataLocal } from '../../data/local.js';
 import { modal } from './modal.js';
 import { mode as modeModule, process as processModule } from './mode.js';
@@ -26,17 +26,17 @@ import { newWidget } from '../core/widget.js';
 import { noop, ajax, o2js, js2o, utils } from '../core/utils.js';
 import { openFiles } from './files.js';
 import { platform } from './platform.js';
-import { selection } from './select.js';
+import { selection } from './selected.js';
 import { settingsUI } from './config/dialog.js';
 import { showDevices } from './devices.js';
 import { showTools } from '../mode/cam/tools.js';
 import { space as SPACE } from '../../moto/space.js';
 import { stats } from './stats.js';
 import { types as load } from '../../load/file.js';
-import { UI } from './component.js';
+import { UI } from './inputs.js';
 import { updateTool } from '../mode/cam/tools.js';
 import { util as utilModule } from './util.js';
-import { view as viewModule } from './view-state.js';
+import { view as viewModule } from './viewmode.js';
 import { visuals } from './visuals.js';
 import { widgets } from '../core/widgets.js';
 import { workspace } from './workspace.js';
@@ -74,7 +74,7 @@ export const api = {
         dec() { api.event.emit("busy", --busyVal) }
     },
     catalog: FILES,
-    client: work,
+    client: workers,
     clip(text) {
         navigator.clipboard
             .writeText(text)
@@ -219,7 +219,7 @@ export const api = {
     visuals,
     web,
     widgets,
-    work,
+    work: workers,
 };
 
 // allow widget to straddle client / worker FOR NOW

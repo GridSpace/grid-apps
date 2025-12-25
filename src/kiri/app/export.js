@@ -2,7 +2,7 @@
 
 import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
-import { client } from './client.js';
+import { client } from './workers.js';
 import { local } from '../../data/local.js';
 import { util } from '../../geo/base.js';
 import { MODES } from '../core/consts.js';

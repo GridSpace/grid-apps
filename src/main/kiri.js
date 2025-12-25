@@ -3,13 +3,13 @@
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
-import '../kiri/app/lang.js';
+import '../kiri/app/language.js';
 import '../kiri/core/lang-en.js';
 
 import { api } from '../kiri/app/api.js';
 import { init_lang } from '../kiri/app/init-lang.js';
-import { init_one } from '../kiri/app/init-one.js';
-import { init_two } from '../kiri/app/init-two.js';
+import { init_input } from '../kiri/app/init-input.js';
+import { init_sync } from '../kiri/app/init-sync.js';
 
 let traceload = location.search.indexOf('traceload') > 0;
 let load = [];
@@ -34,8 +34,8 @@ async function checkReady() {
         {
             api.client.start();
             await init_lang();
-            await init_one();
-            await init_two();
+            await init_input();
+            await init_sync();
         }
         for (let fn of load) {
             safeExec(fn);

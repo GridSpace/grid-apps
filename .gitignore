@@ -1,5 +1,7 @@
+*.pem
 .DS_Store
-.bache
+.bcache
+.claude
 .docusaurus
 .env
 alt
@@ -16,4 +18,5 @@ src/ext/jszip-esm.js
 src/ext/quickjs.js
 src/ext/three.js
 tmp
+tmp_*/
 web/boot/bundle*

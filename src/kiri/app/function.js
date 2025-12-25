@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from './api.js';
-import { client } from './client.js';
+import { client } from './workers.js';
 import { codec } from '../core/codec.js';
 import { space } from '../../moto/space.js';
 import { COLOR, PMODES } from '../core/consts.js';

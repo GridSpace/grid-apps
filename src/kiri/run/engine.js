@@ -5,7 +5,7 @@ import '../../add/class.js';
 import '../../add/three.js';
 import { api } from '../app/api.js';
 import { conf } from '../app/config/defaults.js';
-import { client } from '../app/client.js';
+import { client } from '../app/workers.js';
 import { load } from '../../load/file.js';
 import { newWidget } from '../core/widget.js';
 

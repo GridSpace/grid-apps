@@ -9,6 +9,10 @@ import { encode as stlEncode } from '../../load/stl.js';
 
 const selectedMeshes = [];
 
+function updateTool(ev) {
+    api.tool.update(ev);
+}
+
 function for_groups(fn) {
     let groups = widgets(true).map(w => w.group).uniq();
     for (let group of groups) {
@@ -45,6 +49,20 @@ function move(x, y, z, abs) {
     api.event.emit('selection.move', {x, y, z, abs});
     space.update();
     api.space.auto_save();
+}
+
+function get_bounds() {
+    // Helper to compute bounds of selected meshes
+    const THREE = self.THREE;
+    let bounds = new THREE.Box3();
+    selection.for_meshes(mesh => {
+        let box = mesh.getBoundingBox().clone();
+        let pos = mesh.widget.mesh.position;
+        box.min.add(pos);
+        box.max.add(pos);
+        bounds = bounds.union(box);
+    });
+    return bounds;
 }
 
 function update_info() {
@@ -299,19 +317,155 @@ function setDisabled(bool) {
     api.platform.update_selected();
 }
 
+function settings() {
+    return api.conf.get();
+}
+
+function input_rotate() {
+    if (selection.meshes().length === 0) {
+        api.show.alert("select object to rotate");
+        return;
+    }
+    api.uc.prompt("Enter X,Y,Z degrees of rotation","").then(coord => {
+        coord = (coord || '').split(',');
+        let prod = Math.PI / 180,
+            x = parseFloat(coord[0] || 0.0) * prod,
+            y = parseFloat(coord[1] || 0.0) * prod,
+            z = parseFloat(coord[2] || 0.0) * prod;
+        selection.rotate(x, y, z);
+    });
+}
+
+function input_position() {
+    if (selection.meshes().length === 0) {
+        api.show.alert("select object to position");
+        return;
+    }
+    let current = settings(),
+        { device, process} = current,
+        center = process.ctOriginCenter || process.camOriginCenter || device.bedRound || device.originCenter,
+        bounds = selection.get_bounds();
+
+    api.uc.prompt("Enter X,Y coordinates for selection","").then(coord => {
+        coord = (coord || '').split(',');
+        let x = parseFloat(coord[0] || 0.0),
+            y = parseFloat(coord[1] || 0.0),
+            z = parseFloat(coord[2] || 0.0);
+
+        if (!center) {
+            x = x - device.bedWidth/2 + (bounds.max.x - bounds.min.x)/2;
+            y = y - device.bedDepth/2 + (bounds.max.y - bounds.min.y)/2
+        }
+
+        selection.move(x, y, z, true);
+    });
+}
+
+function input_resize(e, ui) {
+    let dv = parseFloat(e.target.value || 1),
+        pv = parseFloat(e.target.was || 1),
+        ra = dv / pv,
+        xv = parseFloat(ui.sizeX.was ?? ui.scaleX.value) || 1,
+        yv = parseFloat(ui.sizeY.was ?? ui.scaleY.value) || 1,
+        zv = parseFloat(ui.sizeZ.was ?? ui.scaleZ.value) || 1,
+        ta = e.target,
+        xc = ui.lockX.checked,
+        yc = ui.lockY.checked,
+        zc = ui.lockZ.checked,
+        xt = ta === ui.sizeX,
+        yt = ta === ui.sizeY,
+        zt = ta === ui.sizeZ,
+        tl = (xt && xc) || (yt && yc) || (zt && zc),
+        xr = ((tl && xc) || (!tl && xt) ? ra : 1),
+        yr = ((tl && yc) || (!tl && yt) ? ra : 1),
+        zr = ((tl && zc) || (!tl && zt) ? ra : 1);
+    // prevent null scale
+    if (xv * xr < 0.1 || yv * yr < 0.1 || zv * zr < 0.1) {
+        api.alerts.show('invalid scale value');
+        return;
+    }
+    selection.scale(xr,yr,zr);
+    ui.sizeX.was = ui.sizeX.value = xv * xr;
+    ui.sizeY.was = ui.sizeY.value = yv * yr;
+    ui.sizeZ.was = ui.sizeZ.value = zv * zr;
+}
+
+function input_scale(e, ui) {
+    let dv = parseFloat(e.target.value || 1),
+        pv = parseFloat(e.target.was || 1),
+        ra = dv / pv,
+        xv = parseFloat(ui.scaleX.was ?? ui.scaleX.value) || 1,
+        yv = parseFloat(ui.scaleY.was ?? ui.scaleY.value) || 1,
+        zv = parseFloat(ui.scaleZ.was ?? ui.scaleY.value) || 1,
+        ta = e.target,
+        xc = ui.lockX.checked,
+        yc = ui.lockY.checked,
+        zc = ui.lockZ.checked,
+        xt = ta === ui.scaleX,
+        yt = ta === ui.scaleY,
+        zt = ta === ui.scaleZ,
+        tl = (xt && xc) || (yt && yc) || (zt && zc),
+        xr = ((tl && xc) || (!tl && xt) ? ra : 1),
+        yr = ((tl && yc) || (!tl && yt) ? ra : 1),
+        zr = ((tl && zc) || (!tl && zt) ? ra : 1);
+    // prevent null scale
+    if (xv * xr < 0.1 || yv * yr < 0.1 || zv * zr < 0.1) {
+        api.alerts.show('invalid scale value');
+        return;
+    }
+    selection.scale(xr,yr,zr);
+    ui.scaleX.was = ui.scaleX.value = xv * xr;
+    ui.scaleY.was = ui.scaleY.value = yv * yr;
+    ui.scaleZ.was = ui.scaleZ.value = zv * zr;
+}
+
+function parse_as_float(e) {
+    e.target.value = parseFloat(e.target.value) || 0;
+}
+
+function input_binding(ui) {
+    // on enter but not on blur
+    space.event.onEnterKey([
+        ui.scaleX,        (e) => input_scale(e, ui),
+        ui.scaleY,        (e) => input_scale(e, ui),
+        ui.scaleZ,        (e) => input_scale(e, ui),
+        ui.sizeX,         (e) => input_resize(e, ui),
+        ui.sizeY,         (e) => input_resize(e, ui),
+        ui.sizeZ,         (e) => input_resize(e, ui),
+    ]);
+    // on enter and blur
+    space.event.onEnterKey([
+        ui.toolName,       updateTool,
+        ui.toolNum,        updateTool,
+        ui.toolFluteDiam,  updateTool,
+        ui.toolFluteLen,   updateTool,
+        ui.toolShaftDiam,  updateTool,
+        ui.toolShaftLen,   updateTool,
+        ui.toolTaperTip,   updateTool,
+        ui.toolTaperAngle, updateTool,
+        $('rot_x'),        parse_as_float,
+        $('rot_y'),        parse_as_float,
+        $('rot_z'),        parse_as_float
+    ], true);
+}
+
 // extend API (api.selection)
 export const selection = {
-    move,
-    merge,
-    isolateBodies,
-    scale,
-    rotate,
-    mirror,
     duplicate,
     for_groups,
     for_meshes,
     for_status,
     for_widgets,
+    get_bounds,
+    input_binding,
+    input_position,
+    input_rotate,
+    isolateBodies,
+    merge,
+    mirror,
+    move,
+    rotate,
+    scale,
     update_bounds,
     update_info,
     widgets,

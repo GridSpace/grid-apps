@@ -5,7 +5,7 @@ import { api } from './api.js';
 import { consts } from '../core/consts.js';
 import { modal } from './modal.js';
 import { platform } from './platform.js';
-import { selection } from './select.js';
+import { selection } from './selected.js';
 import { settings } from './config/manager.js';
 
 const { MODES, VIEWS } = consts;
