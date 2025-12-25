@@ -6,23 +6,13 @@ import '../add/three.js';
 import '../kiri/ui/lang.js';
 import '../kiri/core/lang-en.js';
 
-import { broker } from '../moto/broker.js';
-import { run } from '../kiri/ui/init.js';
+import { api } from '../kiri/ui/api.js';
+import { init_lang } from '../kiri/ui/init-lang.js';
+import { init_one } from '../kiri/ui/init-one.js';
+import { init_two } from '../kiri/ui/init-two.js';
 
 let traceload = location.search.indexOf('traceload') > 0;
 let load = [];
-
-if (traceload) {
-    broker.subscribe([
-        "init.one",
-        "init.two",
-        "init.lang",
-        "init-done",
-        "load-done",
-    ], (msg, topic) => {
-        console.log(topic, '->', msg);
-    })
-}
 
 function safeExec(fn) {
     try {
@@ -39,8 +29,14 @@ async function checkReady() {
     if (document.readyState === 'complete') {
         let bootctrl = navigator.serviceWorker.controller;
         console.log(`kiri | boot ctrl | ` + (bootctrl ? true : false));
-        let api = kiri.api = await run();
+        kiri.api = api;
         self.$ = api.web.$;
+        {
+            api.client.start();
+            await init_lang();
+            await init_one();
+            await init_two();
+        }
         for (let fn of load) {
             safeExec(fn);
         }
