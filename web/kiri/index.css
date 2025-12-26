@@ -420,6 +420,8 @@ details[open] summary::after {
 }
 .dark #rnfo {
     color: #aaa;
+    border: 1px solid rgba(255,255,255,0.25);
+    background-color: rgba(0,0,0,0.75);
 }
 .dark #rnfo label {
     color: #ada;
@@ -2550,8 +2552,8 @@ details[open] summary::after {
     bottom: 100%;
     gap: 3px;
     right: 0;
-    background-color: rgba(255,255,255,0.05);
-    border: 1px solid black;
+    background-color: rgba(255,255,255,0.75);
+    border: 1px solid rgba(0,0,0,0.5);
     border-radius: 3px;
     padding: 5px;
 }

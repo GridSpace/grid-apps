@@ -407,56 +407,17 @@ function showVolume(bool) {
     requestRefresh();
 }
 
-function canvasInMesh(w, h, textAlign, textBaseline, color, size) {
-    let canvas = document.createElement('canvas'),
-        canvasTexture = new THREE.CanvasTexture(canvas),
-        plane = new THREE.PlaneGeometry(w, h),
-        context = canvas.getContext('2d'),
-        scale = 8;
-
-    canvas.width = w * scale;
-    canvas.height = h * scale;
-
-    canvas.addEventListener("webglcontextlost", event => {
-        console.log('WEB GL CONTEXT LOST');
-        event.preventDefault();
-    }, false);
-
-    canvas.addEventListener("webglcontextrestored", event => {
-        console.log('WEB GL CONTEXT RESTORED');
-    }, false);
-
-    try {
-        context.scale(scale, scale);
-    } catch (e) {
-        console.log('unable to create label canvas', e ? e.name : 'unknown');
-        return {};
-    }
-    context.fillStyle = color || fontColor;
-    context.font = `${size}px sans-serif`;
-    context.textAlign = textAlign;
-    context.textBaseline = textBaseline;
-    canvasTexture.minFilter = THREE.LinearFilter;
-
-    // set 'transparent' to false to debug mesh bounds
-    let material = new THREE.MeshBasicMaterial({transparent: true, map: canvasTexture});
-    let mesh = new THREE.Mesh(plane, material);
-
-    return { context, mesh };
-}
-
 /**
  * 3D text renderer for grid labels.
  * Uses bitmap font atlas with shared geometries for memory efficiency.
  */
-let text3d = new Text3D({
+let text3d = self.document ? new Text3D({
     chars: '0123456789-XY',
     charSize: 64,
     kerning: 0.6,
     scaleX: 0.7,
     fontFamily: "'Russo One', sans-serif"
-});
-
+}) : undefined;
 
 function setRulers(
     xon = ruler.xon,
