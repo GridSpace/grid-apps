@@ -264,8 +264,8 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         for (let widget of slicing) {
             // on done
             let key = slicing.length > 1 ?
-                `${widget.id}_${segNumber++}_draw` :
-                `${segNumber++}_draw`
+                `${widget.id}_${segNumber++} draw` :
+                `${segNumber++} draw`
             segtimes[`${key}`] = widget.render(widget.stack);
             // rotate stack for belt beds
             if (widget.belt) {
@@ -385,7 +385,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
         if (message && message !== lastMsg) {
             const mark = Date.now();
             if (lastMsg) {
-                segtimes[`${segNumber++}_${lastMsg}`] = mark - startTime;
+                segtimes[`${segNumber++} ${lastMsg}`] = mark - startTime;
             }
             lastMsg = message;
             startTime = mark;
@@ -403,7 +403,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
         }
 
         if (lastMsg) {
-            segtimes[`${segNumber++}_${lastMsg}`] = Date.now() - startTime;
+            segtimes[`${segNumber++} ${lastMsg}`] = Date.now() - startTime;
         }
 
         show.progress(0);
@@ -429,7 +429,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
                 stack.obj.rotate(widgets[0].belt);
             }
             api.hide.alert(alert);
-            segtimes[`${segNumber}_draw`] = Date.now() - startTime;
+            segtimes[`${segNumber} draw`] = Date.now() - startTime;
         }
 
         // print stats
