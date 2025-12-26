@@ -565,6 +565,11 @@ export function sliceConnect(input, z, opt = {}) {
 
     // emit a polygon if it can be cleaned and still have 2 or more points
     function emit(poly) {
+        let gap = poly.first().distTo2D(poly.last());
+        if (opt.strict && gap > bridgeMax) {
+            if (debug) console.log('drop', gap, poly);
+            return;
+        }
         emitted += poly.length;
         if (!opt.dirty) poly = poly.clean();
         if (poly.length > 2 || true) output.push(poly);

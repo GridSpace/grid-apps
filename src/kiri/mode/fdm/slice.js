@@ -222,6 +222,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
     }
 
     slice(points, {
+        strict: true,
         debug: process.xray,
         xray: process.xray,
         zMin: bounds.min.z,

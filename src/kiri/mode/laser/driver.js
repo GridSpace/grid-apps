@@ -191,6 +191,7 @@ function laser_slice(settings, widget, onupdate, ondone) {
     let indices = [];
 
     slicer.slice(points, {
+        strict: true,
         zMin: bounds.min.z,
         zMax: bounds.max.z,
         zGen(zopt) {
