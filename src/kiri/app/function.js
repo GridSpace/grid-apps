@@ -152,8 +152,8 @@ function prepareSlices(callback, scale = 1, offset = 0) {
                 let mark = Date.now();
                 if (lastMsg) {
                     let key = slicing.length > 1 ?
-                        `${widget.id}_${segNumber++}_${lastMsg}` :
-                        `${segNumber++}_${lastMsg}`
+                        `${widget.id} ${segNumber++} ${lastMsg}` :
+                        `${segNumber++} ${lastMsg}`
                     segtimes[key] = mark - startTime;
                 }
                 lastMsg = msg;
@@ -177,8 +177,8 @@ function prepareSlices(callback, scale = 1, offset = 0) {
                 // update segment time
                 if (lastMsg) {
                     let key = slicing.length > 1 ?
-                        `${widget.id}_${segNumber++}_${lastMsg}` :
-                        `${segNumber++}_${lastMsg}`
+                        `${widget.id} ${segNumber++} ${lastMsg}` :
+                        `${segNumber++} ${lastMsg}`
                     segtimes[`${key}`] = mark - startTime;
                 }
                 event.emit('slice', settings.mode);
