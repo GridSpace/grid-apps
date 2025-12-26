@@ -1,6 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { broker } from './broker.js';
 import { THREE } from '../ext/three.js';
 import { Orbit } from './orbit.js';
 import { Text3D } from './text3d.js';
@@ -462,33 +461,23 @@ function updateRulers() {
         // Canvas is centered at world X=0, canvas width = x + xPadding
         // So world X = (canvasX - canvasWidth/2) = (ruler.xo + i + xPadding/2) - (x + xPadding)/2
         //            = ruler.xo + i - x/2 = ruler.xo + i - w
-        if (platformBelt) {
-            for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
-                const value = (i * factor).round(1).toString();
-                const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
-                label.position.set(ruler.x2 - i, -h - labelSize * 2, zp);
-                label.rotation.x = Math.PI;
-                view.add(label);
-            }
-        } else {
-            for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
-                const value = (i * factor).round(1).toString();
-                const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
-                label.position.set(ruler.xo + i - w, -h - labelSize * 2, zp);
-                label.rotation.x = Math.PI;
-                view.add(label);
-            }
-            for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
-                const value = (i * factor).round(1).toString();
-                const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
-                label.position.set(ruler.xo + i - w, -h - labelSize * 2, zp);
-                label.rotation.x = Math.PI;
-                view.add(label);
-            }
+        for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
+            const value = (i * factor).round(1).toString();
+            const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
+            label.position.set(ruler.xo + i - w, -h - labelSize, zp);
+            label.rotation.x = Math.PI;
+            view.add(label);
+        }
+        for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
+            const value = (i * factor).round(1).toString();
+            const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
+            label.position.set(ruler.xo + i - w, -h - labelSize, zp);
+            label.rotation.x = Math.PI;
+            view.add(label);
         }
 
         // Create X-axis label
-        const xLabel = text3d.createLabel(xlabel, labelSize * 0.75, rulerColor, 'center');
+        const xLabel = text3d.createLabel(xlabel, labelSize, rulerColor, 'center');
         xLabel.position.set(0, -h - labelSize * 3.5, zp);
         xLabel.rotation.x = Math.PI;
         view.add(xLabel);
@@ -503,21 +492,21 @@ function updateRulers() {
         for (let i = 0; i >= ruler.y1; i -= grid.unitMajor) {
             const value = (i * factor).round(1).toString();
             const label = text3d.createLabel(value, labelSize, rulerColor, 'right');
-            label.position.set(-w - labelSize * 2 - 5, -h + ruler.yo + i, zp);
+            label.position.set(-w - labelSize + 3, -h + ruler.yo + i, zp);
             label.rotation.x = Math.PI;
             view.add(label);
         }
         for (let i = 0; i <= ruler.y2; i += grid.unitMajor) {
             const value = (i * factor).round(1).toString();
             const label = text3d.createLabel(value, labelSize, rulerColor, 'right');
-            label.position.set(-w - labelSize * 2 - 5, -h + ruler.yo + i, zp);
+            label.position.set(-w - labelSize + 3, -h + ruler.yo + i, zp);
             label.rotation.x = Math.PI;
             view.add(label);
         }
 
         // Create Y-axis label
-        const yLabel = text3d.createLabel(ylabel, labelSize * 0.75, rulerColor, 'center');
-        yLabel.position.set(-w - labelSize * 5, 0, zp);
+        const yLabel = text3d.createLabel(ylabel, labelSize, rulerColor, 'center');
+        yLabel.position.set(-w - labelSize * 4, 0, zp);
         yLabel.rotation.x = Math.PI;
         view.add(yLabel);
     }
