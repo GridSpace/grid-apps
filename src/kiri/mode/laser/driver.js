@@ -11,7 +11,7 @@ import { render } from '../../core/render.js';
 import { slicer } from '../../../geo/slicer.js';
 import { newSlice } from '../../core/slice.js';
 import { newPolygon } from '../../../geo/polygon.js';
-import { STL } from '../../../load/stl.js';
+import { encode as encodeOBJ } from '../../../load/obj.js';
 
 export const TYPE = {
     LASER: 0,
@@ -610,7 +610,7 @@ function exportElements(settings, output, onpre, onpoly, onpost, onpoint, onlaye
     onpost();
 };
 
-function exportSTL(settings, data) {
+function exportOBJ(settings, data) {
     let { ctSliceHeight, ctOutSmooth } = settings.process;
     let polys = [];
     for (let array of data) {
@@ -633,7 +633,7 @@ function exportSTL(settings, data) {
         }).flat().filter(v => v);
     }
     let layers = {};
-    let mesh = [];
+    let obj = [];
     for (let poly of polys) {
         let z = poly.getZ();
         let layer = layers[z];
@@ -644,13 +644,15 @@ function exportSTL(settings, data) {
     }
     for (let rec of Object.entries(layers)) {
         let [ z, polys ] = rec;
+        let layer = [];
         polys = POLY.nest(polys);
         for (let poly of polys) {
             let ext = poly.setZ(0).extrude(ctSliceHeight, { zadd: parseFloat(z) });
-            mesh = mesh.concat(ext);
+            layer = layer.concat(ext);
         }
+        obj.push({ file:`z-${z}`, varr: layer });
     }
-    return new STL().encode(mesh);
+    return encodeOBJ(obj);
 }
 
 /**
@@ -933,5 +935,5 @@ export const LASER = {
     exportGCode,
     exportDXF,
     exportSVG,
-    exportSTL
+    exportOBJ
 };

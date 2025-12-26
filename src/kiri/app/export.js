@@ -136,9 +136,9 @@ function exportLaserDialog(data, names) {
     const driver = laser_driver;
     const { process } = settings;
     if (process.ctOutStack) {
-        $('print-stl').classList.remove('hide');
+        $('print-obj').classList.remove('hide');
     } else {
-        $('print-stl').classList.add('hide');
+        $('print-obj').classList.add('hide');
     }
 
     function download_svg() {
@@ -155,10 +155,10 @@ function exportLaserDialog(data, names) {
         );
     }
 
-    function download_stl() {
+    function download_obj() {
         api.util.download(
-            driver.exportSTL(settings, data),
-            $('print-filename-laser').value + ".stl"
+            driver.exportOBJ(settings, data),
+            $('print-filename-laser').value + ".obj"
         );
     }
 
@@ -178,7 +178,7 @@ function exportLaserDialog(data, names) {
     $('print-lines').value = util.comma(segments);
     $('print-svg').onclick = download_svg;
     $('print-dxf').onclick = download_dxf;
-    $('print-stl').onclick = download_stl;
+    $('print-obj').onclick = download_obj;
     $('print-lg').onclick = download_gcode;
 }
 

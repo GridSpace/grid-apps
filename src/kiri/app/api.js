@@ -76,7 +76,7 @@ function isSecure(proto) {
  * @param {string} filename - Filename for download
  */
 function download(data, filename) {
-    let url = WIN.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
+    let url = window.URL.createObjectURL(new Blob([data], {type: "octet/stream"}));
     $('mod-any').innerHTML = `<a id="_dexport_" href="${url}" download="${filename}">x</a>`;
     $('_dexport_').click();
 }
