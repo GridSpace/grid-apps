@@ -444,6 +444,129 @@ function canvasInMesh(w, h, textAlign, textBaseline, color, size) {
     return { context, mesh };
 }
 
+/**
+ * Font atlas for 3D text labels.
+ * Generates a texture atlas with characters 0-9, -, X, Y at startup.
+ */
+let fontAtlas = null;
+
+/**
+ * Create bitmap font atlas for grid labels.
+ * Generates texture with characters: 0-9, -, X, Y
+ * @returns {object} Atlas data with texture and UV mapping
+ */
+function createFontAtlas() {
+    const chars = '0123456789-XY';
+    const canvas = DOC.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const charSize = 64;
+
+    canvas.width = charSize * chars.length;
+    canvas.height = charSize;
+
+    // Clear to transparent
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Load Russo One font or fallback to sans-serif
+    ctx.font = `bold ${charSize * 0.8}px 'Russo One', sans-serif`;
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const uvMap = {};
+    for (let i = 0; i < chars.length; i++) {
+        ctx.fillText(chars[i], i * charSize + charSize/2, charSize/2);
+        uvMap[chars[i]] = {
+            uStart: i / chars.length,
+            uEnd: (i + 1) / chars.length
+        };
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
+
+    console.log('Font atlas created', { width: canvas.width, height: canvas.height, chars: chars.length });
+
+    return { texture, uvMap, charSize };
+}
+
+/**
+ * Create 3D text label using bitmap font atlas.
+ * @param {string} text - Text to render
+ * @param {number} size - Character size
+ * @param {string|number} color - Text color (CSS string or hex number)
+ * @param {string} align - Horizontal alignment ('left', 'center', 'right')
+ * @returns {THREE.Group} Group containing character meshes
+ */
+function create3DTextLabel(text, size, color, align = 'center') {
+    if (!fontAtlas) {
+        fontAtlas = createFontAtlas();
+    }
+
+    const { texture, uvMap, charSize } = fontAtlas;
+    const group = new THREE.Group();
+    const charWidth = size * 0.6; // Narrower spacing for better appearance
+    const totalWidth = text.length * charWidth;
+
+    // Convert CSS color string to THREE.Color if needed
+    let threeColor = 0x333333; // default gray
+    if (color) {
+        if (typeof color === 'string') {
+            threeColor = new THREE.Color(color);
+        } else {
+            threeColor = color;
+        }
+    }
+
+    // Calculate starting X based on alignment
+    let startX = 0;
+    if (align === 'center') {
+        startX = -totalWidth / 2;
+    } else if (align === 'right') {
+        startX = -totalWidth;
+    }
+
+    // Create a mesh for each character
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const uvData = uvMap[char];
+
+        if (!uvData) {
+            console.warn('Character not in atlas:', char);
+            continue;
+        }
+
+        // Create plane geometry for this character
+        const geometry = new THREE.PlaneGeometry(charWidth, size);
+        const uvAttr = geometry.attributes.uv;
+
+        // Set UV coordinates to show only this character from atlas
+        // PlaneGeometry UVs: bottom-left, bottom-right, top-left, top-right
+        uvAttr.setXY(0, uvData.uStart, 0); // bottom-left
+        uvAttr.setXY(1, uvData.uEnd, 0);   // bottom-right
+        uvAttr.setXY(2, uvData.uStart, 1); // top-left
+        uvAttr.setXY(3, uvData.uEnd, 1);   // top-right
+
+        const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0.9,
+            color: threeColor,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.x = startX + i * charWidth + charWidth / 2;
+
+        group.add(mesh);
+    }
+
+    return group;
+}
+
 
 function setRulers(
     xon = ruler.xon,
@@ -475,50 +598,82 @@ function updateRulers() {
         oldView = ruler.view,
         view = ruler.view = new THREE.Group();
 
-    if (xon && axesOn) {
-        let xPadding = labelSize * 4,
-            canvas = canvasInMesh(x + xPadding, labelSize * 3, 'center', 'top', rulerColor, labelSize),
-            context = canvas.context,
-            mesh = canvas.mesh;
-            if (!(context && mesh)) return;
+    console.log('updateRulers called', {
+        xon, yon, axesOn, labelSize, rulerColor, factor,
+        x1: ruler.x1, x2: ruler.x2, y1: ruler.y1, y2: ruler.y2,
+        xo: ruler.xo, yo: ruler.yo,
+        originX: grid.origin.x, originY: grid.origin.y
+    });
 
+    if (xon && axesOn) {
+        // Create X-axis numeric labels
+        // Original canvas code draws at canvas X: ruler.xo + i + xPadding/2
+        // Canvas is centered at world X=0, canvas width = x + xPadding
+        // So world X = (canvasX - canvasWidth/2) = (ruler.xo + i + xPadding/2) - (x + xPadding)/2
+        //            = ruler.xo + i - x/2 = ruler.xo + i - w
         if (platformBelt) {
             for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
-                context.fillText((i * factor).round(1).toString(), ruler.x2 - i + xPadding / 2, 0);
+                const value = (i * factor).round(1).toString();
+                const label = create3DTextLabel(value, labelSize, rulerColor, 'center');
+
+                label.position.set(ruler.x2 - i, -h - labelSize * 2, zp);
+                label.rotation.x = Math.PI;
+                view.add(label);
             }
         } else {
             for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
-                context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
+                const value = (i * factor).round(1).toString();
+                const label = create3DTextLabel(value, labelSize, rulerColor, 'center');
+
+                label.position.set(ruler.xo + i - w, -h - labelSize * 2, zp);
+                label.rotation.x = Math.PI;
+                view.add(label);
             }
             for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
-                context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
+                const value = (i * factor).round(1).toString();
+                const label = create3DTextLabel(value, labelSize, rulerColor, 'center');
+
+                label.position.set(ruler.xo + i - w, -h - labelSize * 2, zp);
+                label.rotation.x = Math.PI;
+                view.add(label);
             }
         }
 
-        context.font = (labelSize * 0.75) + 'px sans-serif';
-        context.fillText(xlabel, (x + xPadding) / 2, labelSize * 1.5);
-        mesh.position.set(0, - h - labelSize * 2, zp);
-        view.add(mesh);
+        // Create X-axis label
+        const xLabel = create3DTextLabel(xlabel, labelSize * 0.75, rulerColor, 'center');
+        xLabel.position.set(0, -h - labelSize * 3.5, zp);
+        xLabel.rotation.x = Math.PI;
+        view.add(xLabel);
     }
 
     if (yon && axesOn) {
-        let yPadding = labelSize,
-            canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor, labelSize),
-            context = canvas.context,
-            mesh = canvas.mesh;
-        if (!(context && mesh)) return;
-
+        // Create Y-axis numeric labels
+        // Original canvas code draws at canvas Y: y - (ruler.yo + i) + yPadding/2
+        // Canvas is centered at world Y=0, canvas height = y + yPadding
+        // So world Y = (canvasY - canvasHeight/2) = [y - (ruler.yo + i) + yPadding/2] - (y + yPadding)/2
+        //            = y/2 - ruler.yo - i = h - ruler.yo - i
         for (let i = 0; i >= ruler.y1; i -= grid.unitMajor) {
-            context.fillText((i * factor).round(1), labelSize * 4, y - (ruler.yo + i) + yPadding / 2);
+            const value = (i * factor).round(1).toString();
+            const label = create3DTextLabel(value, labelSize, rulerColor, 'right');
+
+            label.position.set(-w - labelSize * 2 - 5, h - ruler.yo - i, zp);
+            label.rotation.x = Math.PI;
+            view.add(label);
         }
         for (let i = 0; i <= ruler.y2; i += grid.unitMajor) {
-            context.fillText((i * factor).round(1), labelSize * 4, y - (ruler.yo + i) + yPadding / 2);
+            const value = (i * factor).round(1).toString();
+            const label = create3DTextLabel(value, labelSize, rulerColor, 'right');
+
+            label.position.set(-w - labelSize * 2 - 5, h - ruler.yo - i, zp);
+            label.rotation.x = Math.PI;
+            view.add(label);
         }
 
-        context.font = (labelSize * 0.75) + 'px sans-serif';
-        context.fillText(ylabel, labelSize * 1.25, (y + yPadding) / 2);
-        mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
-        view.add(mesh);
+        // Create Y-axis label
+        const yLabel = create3DTextLabel(ylabel, labelSize * 0.75, rulerColor, 'center');
+        yLabel.position.set(-w - labelSize * 5, 0, zp);
+        yLabel.rotation.x = Math.PI;
+        view.add(yLabel);
     }
 
     Space.scene.remove(oldView);

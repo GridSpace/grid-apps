@@ -1230,7 +1230,7 @@ self.kiri.load(api => {
         if (!bound) {
             return;
         }
-        if (devsel.extras?.bbl && !api.ui.deviceSave.disabled) {
+        if (devsel.extras?.bbl && !api.ui.devices.save.disabled) {
             device = devsel;
             printers = devsel.extras.bbl;
             bound.bblman.classList.remove('hide');
