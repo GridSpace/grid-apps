@@ -2536,6 +2536,9 @@ details[open] summary::after {
     flex-direction: column;
     align-items: flex-end;
 }
+#stats hr {
+    width: 100%;
+}
 #stats:hover #rnfo {
     display: grid;
 }

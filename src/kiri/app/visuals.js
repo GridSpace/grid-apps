@@ -262,8 +262,10 @@ function setProgress(value = 0, msg) {
 }
 
 let statsTimer;
+let statsAdd;
 
-function updateStats() {
+function updateStats(add) {
+    statsAdd = add ? { ...add, 'hr': 1 } : {};
     clearTimeout(statsTimer);
     let { div, fps, rms, rnfo } = api.ui.stats;
     if (api.devel.enabled === false) {
@@ -285,8 +287,16 @@ function updateStats() {
             rms.innerText = nrms;
         }
         if (rnfo.offsetParent !== null) {
-            rnfo.innerHTML = Object.entries({ ...memory, ...render, render_ms: nrms, frames_sec: nfps }).map(row => {
-                return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`
+            rnfo.innerHTML = Object.entries({
+                ...statsAdd,
+                ...memory,
+                ...render,
+                render_ms: nrms,
+                frames_sec: nfps
+            }).map(row => {
+                return row[0] === 'hr' ?
+                    '<hr><hr>' :
+                    `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>` ;
             }).join('');
         }
     }, 100);

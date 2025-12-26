@@ -291,6 +291,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         // print stats
         segtimes.total = Date.now() - mark;
         console.log(segtimes);
+        api.visuals.update_stats(segtimes);
         if (callback && typeof callback === 'function') {
             callback();
         }
@@ -428,6 +429,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
         // print stats
         segtimes.total = Date.now() - mark;
         console.log(segtimes);
+        api.visuals.update_stats(segtimes);
 
         event.emit('print', pMode);
         event.emit('preview.end', pMode);
