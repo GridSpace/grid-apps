@@ -6,12 +6,10 @@ import { base } from '../../geo/base.js';
 import { space } from '../../moto/space.js';
 
 let { client, platform } = api;
-let ui, statsTimer;
 
 // Lazy initialization to avoid circular dependencies
 function getUI() {
-    if (!ui) ui = api.ui;
-    return ui;
+    return api.ui;
 }
 
 function settings() {
@@ -107,7 +105,7 @@ function booleanSave() {
     // platform.layout();
     api.conf.save();
     api.platform.update_size();
-    updateStats();
+    api.visuals.update_stats();
     updateDrawer();
     api.event.emit('boolean.update');
     space.view.setProjection(control.ortho ? 'orthographic' : 'perspective');
@@ -119,34 +117,6 @@ function updateDrawer() {
     $c('app', scrolls ? '' : 'hide-scroll', scrolls ? 'hide-scroll' : '');
 }
 
-function updateStats() {
-    if (self.debug !== true) {
-        return;
-    }
-    console.log('updateStats()');
-    const ui = getUI();
-    let { div, fps, rms, rnfo } = ui.stats;
-    div.style.display = 'flex';
-    clearTimeout(statsTimer);
-    statsTimer = setInterval(() => {
-        const nrms = space.view.getRMS().toFixed(1);
-        const nfps = space.view.getFPS().toFixed(1);
-        const rend = space.renderInfo();
-        const { memory, render } = rend;
-        if (nfps !== fps.innerText) {
-            fps.innerText = nfps;
-        }
-        if (nrms !== rms.innerText) {
-            rms.innerText = nrms;
-        }
-        if (rnfo.offsetParent !== null) {
-            rnfo.innerHTML = Object.entries({ ...memory, ...render, render_ms: nrms, frames_sec: nfps }).map(row => {
-                return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`
-            }).join('');
-        }
-    }, 100);
-}
-
 export const preferences = {
     unitsSave,
     aniMeshSave,
@@ -155,6 +125,5 @@ export const preferences = {
     speedSave,
     setThreaded,
     booleanSave,
-    updateDrawer,
-    updateStats
+    updateDrawer
 };

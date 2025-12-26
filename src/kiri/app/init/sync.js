@@ -165,7 +165,7 @@ function ui_sync() {
     preferences.setThreaded(true);
     preferences.lineTypeSave();
     preferences.detailSave();
-    preferences.updateStats();
+    api.visuals.update_stats();
 
     // optional set-and-lock mode (hides mode menu)
     let SETMODE = SETUP.mode ? SETUP.mode[0] : null;

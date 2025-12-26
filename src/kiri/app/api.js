@@ -238,7 +238,7 @@ export const api = {
         import() { api.ui.import.style.display = '' },
         layer: visuals.set_visible_layer,
         local() { console.trace('deprecated') },
-        progress: alerts.progress,
+        progress: visuals.set_progress,
         slices: visuals.show_slices,
         tools: showTools
     },

@@ -119,12 +119,13 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
     let render = settings.render !== false,
         { minions } = self.kiri_worker,
         { process, device, controller } = settings,
+        { devel, assembly, threaded } = controller,
         isBelt = device.bedBelt,
-        isBrick = controller.devel && process.sliceZInterleave,
+        isBrick = devel && process.sliceZInterleave,
         isSynth = widget.track.synth,
         isSupport = widget.track.support,
-        useAssembly = controller.assembly,
-        isConcurrent = controller.threaded && minions.concurrent,
+        useAssembly = assembly,
+        isConcurrent = threaded && minions.concurrent,
         topLayers = process.sliceTopLayers || 0,
         bottomLayers = process.sliceBottomLayers || 0,
         vaseMode = process.sliceFillType === 'vase' && !isSynth,
@@ -343,7 +344,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             if (changes && !isSynth) {
                 healed = true;
                 slice.changes = changes;
-                if (self.debug) {
+                if (devel) {
                     console.log('slice healed', slice.index, slice.z, changes);
                 }
             }

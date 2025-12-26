@@ -1,9 +1,11 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from './api.js';
+import { base } from '../../geo/base.js';
 import { consts } from '../core/consts.js';
 import { settings } from './conf/manager.js';
-import { space as SPACE } from '../../moto/space.js';
+import { space } from '../../moto/space.js';
+
 import STACKS from './stacks.js';
 
 const { COLOR, VIEWS } = consts;
@@ -111,7 +113,7 @@ function setVisibleLayer(h, l) {
  */
 function setWireframe(bool, color, opacity) {
     api.widgets.each(function(w) { w.setWireframe(bool, color, opacity) });
-    SPACE.update();
+    space.update();
 }
 
 /**
@@ -129,7 +131,7 @@ function setEdges(bool) {
     }
     bool = api.local.getBoolean('model.edges');
     api.widgets.each(w => w.setEdges(bool));
-    SPACE.update();
+    space.update();
 }
 
 /**
@@ -207,7 +209,7 @@ function showSlices(layer) {
     updateSlider();
     // STACKS.setRange is called by slider callback
 
-    SPACE.update();
+    space.update();
 }
 
 /**
@@ -239,7 +241,59 @@ function updateStackLabelState() {
     }
 }
 
+/**
+ * Update progress bar display.
+ * In debug mode, also shows progress status message.
+ * @param {number} [value=0] - Progress value (0.0 to 1.0)
+ * @param {string} [msg] - Optional status message to display
+ */
+function setProgress(value = 0, msg) {
+    value = (value * 100).round(4);
+    api.ui.progress.width = value+'%';
+    if (self.debug) {
+        // console.log(msg, value.round(2));
+        api.ui.prostatus.style.display = 'flex';
+        if (msg) {
+            api.ui.prostatus.innerHTML = msg;
+        } else {
+            api.ui.prostatus.innerHTML = '';
+        }
+    }
+}
+
+let statsTimer;
+
+function updateStats() {
+    clearTimeout(statsTimer);
+    let { div, fps, rms, rnfo } = api.ui.stats;
+    if (api.devel.enabled === false) {
+        fps.innerText = '';
+        rms.innerText = '';
+        rnfo.innerHTML = '';
+        return;
+    }
+    div.style.display = 'flex';
+    statsTimer = setInterval(() => {
+        const nrms = space.view.getRMS().toFixed(1);
+        const nfps = space.view.getFPS().toFixed(1);
+        const rend = space.renderInfo();
+        const { memory, render } = rend;
+        if (nfps !== fps.innerText) {
+            fps.innerText = nfps;
+        }
+        if (nrms !== rms.innerText) {
+            rms.innerText = nrms;
+        }
+        if (rnfo.offsetParent !== null) {
+            rnfo.innerHTML = Object.entries({ ...memory, ...render, render_ms: nrms, frames_sec: nfps }).map(row => {
+                return `<div>${row[0]}</div><label>${base.util.comma(row[1])}</label>`
+            }).join('');
+        }
+    }, 100);
+}
+
 export const visuals = {
+    set_progress: setProgress,
     set_wireframe: setWireframe,
     set_edges: setEdges,
     unit_scale: unitScale,
@@ -247,6 +301,7 @@ export const visuals = {
     update_slider: updateSlider,
     update_slider_max: updateSliderMax,
     update_stack_labels: updateStackLabelState,
+    update_stats: updateStats,
     show_slices: showSlices,
     hide_slices: hideSlices,
     show_slider: showSlider,

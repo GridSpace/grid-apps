@@ -82,36 +82,14 @@ function update(clear) {
     }
 }
 
-/**
- * Update progress bar display.
- * In debug mode, also shows progress status message.
- * @param {number} [value=0] - Progress value (0.0 to 1.0)
- * @param {string} [msg] - Optional status message to display
- */
-function progress(value = 0, msg) {
-    value = (value * 100).round(4);
-    api.ui.progress.width = value+'%';
-    if (self.debug) {
-        // console.log(msg, value.round(2));
-        api.ui.prostatus.style.display = 'flex';
-        if (msg) {
-            api.ui.prostatus.innerHTML = msg;
-        } else {
-            api.ui.prostatus.innerHTML = '';
-        }
-    }
-}
-
 export {
     hide,
     show,
-    update,
-    progress
+    update
 };
 
 export default {
     hide,
     show,
-    update,
-    progress
+    update
 };
