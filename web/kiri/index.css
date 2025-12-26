@@ -2615,3 +2615,17 @@ details[open] summary::after {
 .range-detail span {
     flex-grow: 1;
 }
+
+.devel #modal-box {
+    height: 80%;
+}
+.devel #mod-x-any {
+    height: 100%;
+}
+.devel #code-preview {
+    flex-grow: 1;
+}
+.devel #code-preview > div,
+.devel #code-preview-textarea {
+    height: 100%;
+}

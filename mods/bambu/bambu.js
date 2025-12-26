@@ -1253,7 +1253,7 @@ self.kiri.load(api => {
     }
 
     function prep_export(gen3mf, gcode, info, settings) {
-        if (!settings.device.extras?.bbl || api.ui.deviceSave.disabled) {
+        if (!settings.device.extras?.bbl || api.ui.devices.save.disabled) {
             $('bambu-output').style.display = 'none';
             return;
         }

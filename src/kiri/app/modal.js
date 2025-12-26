@@ -60,6 +60,9 @@ class ModalControl {
             visible = modal.visible(),
             info = { pct: 0 };
 
+        // if the dialog needs it, it will re-add it
+        document.body.classList.remove('devel');
+
         // hide all modals before showing another
         Object.keys(modal.#ui.modals).forEach(name => {
             modal.#ui.modals[name].style.display = name === which ? 'flex' : '';

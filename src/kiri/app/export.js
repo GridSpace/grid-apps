@@ -328,7 +328,8 @@ function exportGCodeDialog(gcode, sections, info, names) {
     api.modal.show('xany');
         let set = api.conf.get();
         let fdm = MODE === MODES.FDM;
-        let octo = set.controller.exportOcto && MODE !== MODES.CAM;
+        let cam = MODE === MODES.CAM;
+        let octo = set.controller.exportOcto && !cam;
         let preview = set.controller.exportPreview;
         $('code-preview-head').style.display = preview ? '' : 'none';
         $('code-preview').style.display = preview ? '' : 'none';
@@ -337,8 +338,8 @@ function exportGCodeDialog(gcode, sections, info, names) {
         $('print-filename').value = filename;
         $('print-filesize').value = util.comma(info.bytes);
         $('print-length').value = Math.round(info.distance);
-        if (set.controller.devel) {
-            $('code-preview-textarea').style.height = "30em";
+        if ((fdm || cam) && preview && set.controller.devel) {
+            document.body.classList.add('devel');
         }
         calcTime();
         if (fdm) {
