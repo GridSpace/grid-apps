@@ -451,8 +451,9 @@ function canvasInMesh(w, h, textAlign, textBaseline, color, size) {
  */
 let text3d = new Text3D({
     chars: '0123456789-XY',
-    atlasCharSize: 64,
-    kerning: 0.5, // Tighter spacing than default
+    charSize: 64,
+    kerning: 0.6,
+    scaleX: 0.7,
     fontFamily: "'Russo One', sans-serif"
 });
 
@@ -504,7 +505,6 @@ function updateRulers() {
             for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
                 const value = (i * factor).round(1).toString();
                 const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
-
                 label.position.set(ruler.x2 - i, -h - labelSize * 2, zp);
                 label.rotation.x = Math.PI;
                 view.add(label);
@@ -513,7 +513,6 @@ function updateRulers() {
             for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
                 const value = (i * factor).round(1).toString();
                 const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
-
                 label.position.set(ruler.xo + i - w, -h - labelSize * 2, zp);
                 label.rotation.x = Math.PI;
                 view.add(label);
@@ -521,7 +520,6 @@ function updateRulers() {
             for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
                 const value = (i * factor).round(1).toString();
                 const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
-
                 label.position.set(ruler.xo + i - w, -h - labelSize * 2, zp);
                 label.rotation.x = Math.PI;
                 view.add(label);
@@ -544,7 +542,6 @@ function updateRulers() {
         for (let i = 0; i >= ruler.y1; i -= grid.unitMajor) {
             const value = (i * factor).round(1).toString();
             const label = text3d.createLabel(value, labelSize, rulerColor, 'right');
-
             label.position.set(-w - labelSize * 2 - 5, -h + ruler.yo + i, zp);
             label.rotation.x = Math.PI;
             view.add(label);
@@ -552,7 +549,6 @@ function updateRulers() {
         for (let i = 0; i <= ruler.y2; i += grid.unitMajor) {
             const value = (i * factor).round(1).toString();
             const label = text3d.createLabel(value, labelSize, rulerColor, 'right');
-
             label.position.set(-w - labelSize * 2 - 5, -h + ruler.yo + i, zp);
             label.rotation.x = Math.PI;
             view.add(label);

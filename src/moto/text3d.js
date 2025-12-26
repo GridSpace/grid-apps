@@ -12,20 +12,22 @@ class Text3D {
      * Create a 3D text renderer.
      * @param {object} options - Configuration options
      * @param {string} options.chars - Characters to include in atlas (default: '0123456789-XY')
-     * @param {number} options.atlasCharSize - Size of each character in atlas texture (default: 64)
+     * @param {number} options.charSize - Size of each character in atlas texture (default: 64)
      * @param {number} options.kerning - Character spacing multiplier (default: 0.5, lower = tighter)
-     * @param {string} options.fontFamily - CSS font family string (default: 'Russo One, sans-serif')
+     * @param {number} options.scaleX - Default horizontal scale (default: 1.0)
+     * @param {number} options.scaleY - Default vertical scale (default: 1.0)
+     * @param {string} options.fontFamily - CSS font family string (default: 'sans-serif')
      */
     constructor(options = {}) {
         this.chars = options.chars || '0123456789-XY';
-        this.atlasCharSize = options.atlasCharSize || 64;
+        this.charSize = options.charSize || 64;
         this.kerning = options.kerning !== undefined ? options.kerning : 0.5;
-        this.fontFamily = options.fontFamily || "'Russo One', sans-serif";
-
+        this.scaleX = options.scaleX !== undefined ? options.scaleX : 1.0;
+        this.scaleY = options.scaleY !== undefined ? options.scaleY : 1.0;
+        this.fontFamily = options.fontFamily || "sans-serif";
         this.atlas = null;
         this.geometries = {}; // Cached geometries per character
         this.material = null; // Shared material for all characters
-
         this._initialize();
     }
 
@@ -46,7 +48,7 @@ class Text3D {
     _createAtlas() {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const charSize = this.atlasCharSize;
+        const charSize = this.charSize;
 
         canvas.width = charSize * this.chars.length;
         canvas.height = charSize;
@@ -131,13 +133,17 @@ class Text3D {
      * @param {string|number} color - Text color (CSS string or hex number)
      * @param {string} align - Horizontal alignment ('left', 'center', 'right')
      * @param {number} kerning - Optional kerning override for this label
+     * @param {number} scaleX - Optional horizontal scale override for this label
+     * @param {number} scaleY - Optional vertical scale override for this label
      * @returns {THREE.Group} Group containing character meshes
      */
-    createLabel(text, size, color = 0x333333, align = 'center', kerning) {
+    createLabel(text, size, color = 0x333333, align = 'center', kerning, scaleX, scaleY) {
         const group = new THREE.Group();
         const spacing = kerning !== undefined ? kerning : this.kerning;
-        const charWidth = size * spacing;
-        const totalWidth = text.length * charWidth;
+        const sx = scaleX !== undefined ? scaleX : this.scaleX;
+        const sy = scaleY !== undefined ? scaleY : this.scaleY;
+        const charSpacing = size * spacing * sx; // Distance between character centers (account for width scale)
+        const totalWidth = text.length * charSpacing;
 
         // Convert CSS color string to THREE.Color if needed
         let threeColor = color;
@@ -171,9 +177,9 @@ class Text3D {
 
             const mesh = new THREE.Mesh(geometry, material);
 
-            // Scale and position the unit-sized geometry
-            mesh.scale.set(charWidth, size, 1);
-            mesh.position.x = startX + i * charWidth + charWidth / 2;
+            // Apply size and scale
+            mesh.scale.set(size * sx, size * sy, 1);
+            mesh.position.x = startX + i * charSpacing + charSpacing / 2;
 
             group.add(mesh);
         }
@@ -187,6 +193,32 @@ class Text3D {
      */
     setKerning(kerning) {
         this.kerning = kerning;
+    }
+
+    /**
+     * Update horizontal scale for future labels.
+     * @param {number} scaleX - New horizontal scale value
+     */
+    setScaleX(scaleX) {
+        this.scaleX = scaleX;
+    }
+
+    /**
+     * Update vertical scale for future labels.
+     * @param {number} scaleY - New vertical scale value
+     */
+    setScaleY(scaleY) {
+        this.scaleY = scaleY;
+    }
+
+    /**
+     * Update both scales for future labels.
+     * @param {number} scaleX - New horizontal scale value
+     * @param {number} scaleY - New vertical scale value
+     */
+    setScale(scaleX, scaleY) {
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
     }
 
     /**
