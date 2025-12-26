@@ -12,6 +12,7 @@ import { exportFile } from './export.js';
  * Properties: slice, preview, export
  */
 let complete = {};
+let order;
 
 /**
  * Prepare and execute slicing for all widgets on the platform.
@@ -45,6 +46,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         // in SLA mode, slice and preview are the same thing
         callback = preparePreview;
     }
+
+    order = api.selection.count() ?
+        Object.assign({}, ...api.selection.widgets().map((w,i) => ({[w.id]:i}))) :
+        undefined;
 
     const widgets = api.widgets.all();
     const settings = conf.get();
@@ -371,6 +376,7 @@ function preparePreview(callback, scale = 1, offset = 0) {
     // pass preview mode to worker
     settings.pmode = feature.pmode;
     settings.render = true;
+    settings.order = order;
 
     client.prepare(settings, (progress, message, layer) => {
         if (layer) {

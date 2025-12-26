@@ -28,7 +28,7 @@ export async function cam_prepare(widgets, settings, update) {
     const count = active.length;
     const weight = 1 / count;
     const print = self.kiri_worker.current.print = newPrint(settings, active);
-    const { origin } = settings;
+    const { order, origin } = settings;
 
     // wait for safe eval setup
     await print.ready();
@@ -37,7 +37,11 @@ export async function cam_prepare(widgets, settings, update) {
     print.output = [];
 
     // sort output by distance to origin
-    if (origin) {
+    if (order) {
+        active.sort((a,b) => {
+            return (order[a.id] ?? Infinity) - (order[b.id] ?? Infinity);
+        });
+    } else if (origin) {
         let point = newPoint().move(origin);
         active.sort((w0,w1) =>
             newPoint().move(w0.track.pos).distTo2D(point) -
