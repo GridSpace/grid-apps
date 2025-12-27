@@ -165,9 +165,7 @@ function restore(ondone, skip_widget_load) {
     }
 
     if (skip_widget_load) {
-        if (ondone) {
-            ondone();
-        }
+        ondone && ondone();
         return;
     }
 
@@ -177,8 +175,9 @@ function restore(ondone, skip_widget_load) {
     });
 
     // load any widget by name that was saved to the workspace
-    toload.forEach(function(widgetid) {
-        Widget.loadFromState(widgetid, function(widget) {
+    // after the last widget is loaded, call ondone()
+    for (let widgetid of toload) {
+        Widget.loadFromState(widgetid, (widget) => {
             if (widget) {
                 platform.add(widget, 0, position, true);
                 let ann = api.widgets.annotate(widgetid);
@@ -196,9 +195,12 @@ function restore(ondone, skip_widget_load) {
                 }
             }
         }, position);
-    });
+    };
 
-    return toload.length > 0;
+    // when there is nothing async to load, call ondone()
+    if (toload.length === 0 && ondone) {
+        ondone();
+    }
 }
 
 /**

@@ -25,7 +25,7 @@ import { settings as set_ctrl } from '../conf/manager.js';
 import { settingsOps } from '../conf/settings.js';
 import { slider } from '../slider.js';
 import { space } from '../../../moto/space.js';
-import { VIEWS, MODES, SEED } from '../../core/consts.js';
+import { LAST, MODES, SEED, VIEWS } from '../../core/consts.js';
 
 import STACKS from '../stacks.js';
 
@@ -77,7 +77,11 @@ function checkSeed(then) {
             });
             return true;
         }
+    } else if (sdb[LAST] !== version) {
+        sdb[LAST] = version;
+        api.help.show();
     }
+    then();
     return false;
 }
 
@@ -535,6 +539,6 @@ export function init_input() {
     };
 
     return new Promise(resolve => {
-        api.space.restore(resolve) || checkSeed(resolve) || resolve();
+        api.space.restore(() => checkSeed(resolve));
     });
 };

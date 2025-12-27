@@ -176,10 +176,12 @@ const PATHS = {
     pool: "./minion.js"
 };
 
+const LAST = 'kiri-last';
 const SEED = 'kiri-seed';
 
 export let consts = {
     COLOR,
+    LAST,
     LISTS,
     MODES,
     PATHS,
@@ -189,4 +191,4 @@ export let consts = {
     beltfact: Math.cos(Math.PI / 4)
 };
 
-export { COLOR, LISTS, MODES, VIEWS, PATHS, PMODES, SEED };
+export { COLOR, LAST, LISTS, MODES, VIEWS, PATHS, PMODES, SEED };
