@@ -164,7 +164,7 @@ class SliderControl {
         };
 
         this.#slider.max.onclick = () => {
-            this.#layerLo = this.#layerMax;
+            this.#layerLo = 0;
             this.#layerHi = this.#layerMax;
             this.showLabels();
             this.#updateVisuals();

@@ -145,7 +145,7 @@ function updateSliderMax(set) {
     api.slider.setMax(max);
     const { hi } = api.slider.getRange();
     if (set || max < hi) {
-        api.slider.setRange(max, max);
+        api.slider.setRange(0, max);
         api.slider.showLabels();
     }
 }
