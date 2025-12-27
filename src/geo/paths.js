@@ -2,6 +2,7 @@
 
 import { base } from './base.js';
 import { newPoint } from './point.js';
+import { newPolygon } from './polygon.js';
 
 /**
  * Emit each element in array based on next closest endpoint
@@ -18,28 +19,63 @@ export function tip2tipEmit(array, startPoint, emitter) {
     for (;;) {
         found = null;
         mindist = Infinity;
-        array.forEach(function (el) {
-            if (el.delete) return;
+        for (let el of array) {
+            if (el.delete) continue;
             dist = startPoint.distTo2D(el.first);
             if (dist < mindist) {
                 found = { el: el, first: el.first, last: el.last };
                 mindist = dist;
             }
+            // when heads is set, it's first to first
+            // not first/last to closest first/last
+            if (el.heads) continue;
             dist = startPoint.distTo2D(el.last);
             if (dist < mindist) {
                 found = { el: el, first: el.last, last: el.first };
                 mindist = dist;
             }
-        });
+        }
         if (found) {
             found.el.delete = true;
             startPoint = found.last;
-            emitter(found.el, found.first, ++count);
+            emitter(found.el, found.first, ++count, mindist);
         } else {
             break;
         }
     }
     return startPoint;
+}
+
+/**
+ * Emit each element in array based on next closest endpoint
+ * Uses greedy nearest-neighbor algorithm to minimize travel distance
+ * When polygons are close, a new polygon is injected that joins them
+ * and the next polygon is reversed so that tips would merge on output
+ * @param {Array} paths - Array of elements with { first, last } Point properties
+ * @param {Point} startPoint - Starting point for path ordering
+ * @param {Number} mergeDist - threshold for merging Polygons
+ * @returns {Array} reduced merged Polygon array
+ */
+export function tip2tipJoin(paths, startPoint, mergeDist) {
+    let newp = [];
+    tip2tipEmit(paths.map(path => ({
+        path,
+        last: path.last(),
+        first: path.first()
+    })), startPoint, (next, point, count, dist) => {
+        if (next.last === point) {
+            next.path.reverse();
+        }
+        if (newp.length && dist < mergeDist) {
+            let lastpath = newp.peek();
+            newp.push(newPolygon().addPoints([
+                lastpath.last(),
+                next.path.first()
+            ]));
+        }
+        newp.push(next.path);
+    });
+    return newp;
 }
 
 /**

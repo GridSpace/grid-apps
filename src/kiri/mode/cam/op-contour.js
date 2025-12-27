@@ -122,10 +122,9 @@ class OpContour extends CamOp {
         let { process } = settings;
 
         let { polyEmit, setContouring, setTolerance, setTool } = ops;
-        let { widget, camOut, newLayer, zmax } = ops;
+        let { widget, newLayer, zmax } = ops;
 
         let bounds = widget.getBoundingBox();
-        let toolDiam = this.toolDiam;
         let depthData = [];
 
         setTool(op.tool, op.rate, process.camFastFeedZ);

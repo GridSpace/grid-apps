@@ -10,6 +10,7 @@ import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { util as base_util } from '../../../geo/base.js';
+import { tip2tipJoin } from '../../../geo/paths.js';
 import { CAM } from './driver-be.js';
 
 const DEG2RAD = Math.PI / 180;
@@ -40,6 +41,11 @@ class OpArea extends CamOp {
         let shadowBase = state.shadow.base;
         let thruHoles = state.shadow.holes;
         let roundSharps = settings.process.camRoundCorners;
+
+        // get these once and re-use for each area
+        let vertices = mode === 'surface' ?
+            widget.getGeoVertices({ unroll: true, translate: true }) :
+            undefined;
 
         // also updates tab offsets
         setToolDiam(toolDiam);
@@ -302,7 +308,7 @@ class OpArea extends CamOp {
                 progress(proc, 'trace');
             } else
             if (mode === 'surface') {
-                let { sr_type, sr_angle, tolerance } = op;
+                let { sr_type, sr_angle, sr_alter, tolerance } = op;
 
                 let resolution = tolerance || 0.05;
                 let raster = await self.get_raster_gpu({ mode: "tracing", resolution });
@@ -327,8 +333,14 @@ class OpArea extends CamOp {
                             paths.push(POLY.fromClipperNode(node, 0));
                         }
                     }
-                    // convert resulting poly lines to raster float32 array groups
-                    paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
+                    // in surfacing mode, direction is simply reversal
+                    if (direction === 'climb') {
+                        paths.forEach(path => path.reverse());
+                    }
+                    // optional alternating paths
+                    if (sr_alter) {
+                        paths = tip2tipJoin(paths, paths[0].first(), toolDiam * 4);
+                    }
                 } else
                 if (sr_type === 'offset') {
                     // progressive inset from perimeter
@@ -336,8 +348,11 @@ class OpArea extends CamOp {
                         count: 999, outs: paths, flat: true, z: 0, minArea: 0
                     });
                     paths.forEach(poly => poly.isClosed() && poly.push(poly.first()));
-                    paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
+                    POLY.setWinding(paths.filter(p => p.isClosed()), direction === 'climb');
                 }
+
+                // convert resulting poly lines to raster float32 array groups
+                paths = paths.map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
 
                 // prepare tool mesh points
                 let toolBounds = new THREE.Box3()
@@ -350,7 +365,6 @@ class OpArea extends CamOp {
                 let toolData = { positions: toolPos, bounds: toolBounds };
 
                 // prepare terrain and raster paths over terrain
-                let vertices = widget.getGeoVertices({ unroll: true, translate: true });
                 let wbounds = bounds.clone().expandByVector({ x: toolDiam/2, y: toolDiam/2, z: 0 });
                 wbounds.min.z = zBottom;
                 wbounds.max.z = zTop;
@@ -408,17 +422,11 @@ class OpArea extends CamOp {
         if (surfaces.length) {
             setContouring(true);
             for (let surface of surfaces) {
-                let array = surface.map(poly => { return {
-                    el: poly,
-                    first: poly.first(),
-                    last: poly.last()
-                } });
-                tip2tipEmit(array, printPoint, (next, point) => {
+                for (let poly of surface) {
                     setNextIsMove();
-                    if (next.last === point) next.el.reverse();
-                    printPoint = polyEmit(next.el);
+                    printPoint = polyEmit(poly);
                     newLayer();
-                });
+                }
             }
             setContouring(false);
             // skip areas when processing surfaces

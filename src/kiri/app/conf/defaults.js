@@ -446,6 +446,7 @@ export const conf = {
                 camAreaDogbones: false,
                 camAreaRevbones: false,
                 camAreaOutline: false,
+                camAreaZigZag: true,
                 camContourAngle: 85,
                 camContourBottom: false,
                 camContourBridge: 0,
