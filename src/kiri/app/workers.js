@@ -3,7 +3,7 @@
 import { api } from './api.js';
 import { noop } from '../core/utils.js';
 import { codec } from '../core/codec.js';
-import { Widget } from '../core/widget.js';
+import { Widget } from './widget.js';
 import { newPrint } from '../core/print.js';
 
 // this code runs in kiri's main loop

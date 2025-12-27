@@ -2,7 +2,7 @@
 
 import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
-import { newWidget } from '../core/widget.js';
+import { newWidget } from './widget.js';
 import { platform } from './platform.js';
 import { settings } from './conf/manager.js';
 

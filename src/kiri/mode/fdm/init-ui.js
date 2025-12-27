@@ -8,7 +8,7 @@ import { client } from '../../app/workers.js';
 import { addbox, delbox, getlastbox } from '../../core/boxes.js';
 import { Layers } from '../../app/layers.js';
 import { Stack } from '../../app/stack.js';
-import { Widget, newWidget } from '../../core/widget.js';
+import { Widget, newWidget } from '../../app/widget.js';
 import { space } from '../../../moto/space.js';
 
 const { Matrix4, Vector3, BufferAttribute, BufferGeometryUtils, Raycaster, Euler } = THREE;

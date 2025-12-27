@@ -9,7 +9,7 @@ import { selection } from './selected.js';
 import { settings } from './conf/manager.js';
 import { space as SPACE } from '../../moto/space.js';
 import { utils } from '../core/utils.js';
-import { Widget } from '../core/widget.js';
+import { Widget } from './widget.js';
 import { Index } from '../../data/index.js';
 
 const { o2js, js2o, ls2o, parseOpt } = utils;

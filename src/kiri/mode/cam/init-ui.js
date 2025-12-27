@@ -16,7 +16,7 @@ import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
 import { surfaceOn, surfaceDone } from './cl-surface.js';
 import { helicalOn, helicalDone } from './cl-helical.js';
 import { originSelectDone } from './cl-origin.js';
-import { Widget, newWidget } from '../../core/widget.js';
+import { Widget, newWidget } from '../../app/widget.js';
 import { space } from '../../../moto/space.js';
 import { recreateTabs } from './cl-tab.js';
 

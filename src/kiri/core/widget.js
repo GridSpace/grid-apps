@@ -1,7 +1,5 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base } from '../../geo/base.js';
-import { avgc } from './utils.js';
 import { util as mesh_util } from '../../mesh/util.js';
 import { tool as mesh_tool } from '../../mesh/tool.js';
 import { verticesToPoints } from '../../geo/points.js';
@@ -10,20 +8,12 @@ import { newPolygon } from '../../geo/polygon.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 import { checkOverUnderOn, intersectPoints } from '../../geo/slicer.js';
 
-const { inRange, time } = base.util;
+const sharedArrayClass = self.SharedArrayBuffer || undefined;
+const hasSharedArrays = sharedArrayClass ? true : false;
 const solid_opacity = 1.0;
 const groups = [];
 
-const sharedArrayClass = self.SharedArrayBuffer || undefined;
-const hasSharedArrays = sharedArrayClass ? true : false;
-
 let nextId = 0;
-
-function newWidget(id,group) { return new Widget(id,group) }
-
-// todo: fix ui-only path thus this unorthodox binding vs importing api
-function catalog() { return self.kiri_catalog };
-function index() { return self.kiri_catalog.index }
 
 class Widget {
     constructor(id, group) {
@@ -96,46 +86,6 @@ class Widget {
         };
         // if this is a synthesized support widget
         this.support = false;
-    }
-
-    saveToCatalog(filename, overwrite) {
-        if (!filename) {
-            filename = this.meta.file;
-        }
-        if (this.grouped && !overwrite) {
-            return this;
-        }
-        const widget = this;
-        const mark = time();
-        const vertices = widget.getGeoVertices({ unroll: true }).slice();
-        widget.meta.file = filename;
-        widget.meta.save = mark;
-        catalog().putFile(filename, vertices, () => {
-            console.log("saved mesh ["+(vertices.length/3)+"] time ["+(time()-mark)+"]");
-        });
-        return this;
-    }
-
-    saveState(ondone) {
-        if (!ondone) {
-            clearTimeout(this._save_timer);
-            this._save_timer = setTimeout(() => {
-                this._save_timer = undefined;
-                this.saveState(() => {});
-            }, 1500);
-            return;
-        }
-        const widget = this;
-        index().put('ws-save-'+this.id, {
-            geo: widget.getGeoVertices({ unroll: false }).slice(),
-            track: widget.track,
-            group: this.group.id,
-            meta: this.meta,
-            anno: this.annotations()
-        }, result => {
-            widget.meta.saved = time();
-            if (ondone) ondone();
-        });
     }
 
     annotations() {
@@ -311,23 +261,6 @@ class Widget {
         this.slices = null;
     }
 
-    /**
-     * @param {number} color
-     */
-    setColor(color, settings, save = true) {
-        if (settings) {
-            console.trace('legacy call with settings');
-        }
-        if (Array.isArray(color)) {
-            color = color[this.getExtruder() % color.length];
-        }
-        if (save) {
-            this.color = color;
-        }
-        let material = this.getMaterial();
-        material.color.set(this.meta.disabled ? avgc(0x888888, color, 3) : color);
-    }
-
     getColor() {
         return this.color;
     }
@@ -362,47 +295,6 @@ class Widget {
         }
     }
 
-    getVisualState() {
-        return {
-            edges: this.outline ? true : false,
-            wires: this.wire ? true : false,
-            opacity: this.getMaterial().opacity
-        };
-    }
-
-    setVisualState({ edges, wires, opacity}) {
-        this.cache.vizstate = this.getVisualState();
-        this.setEdges(edges ?? false);
-        this.setWireframe(wires ?? false);
-        this.setOpacity(opacity ?? 1);
-    }
-
-    refreshVisualState() {
-        this.setVisualState(this.getVisualState());
-    }
-
-    restoreVisualState() {
-        if (this.cache.vizstate) {
-            this.setVisualState(this.cache.vizstate);
-        }
-    }
-
-    /**
-     * @param {number} value
-     */
-    setOpacity(value) {
-        const mesh = this.mesh;
-        const mat = this.getMaterial();
-        if (value <= 0.0) {
-            mat.transparent = solid_opacity < 1.0;
-            mat.opacity = solid_opacity;
-            mat.visible = false;
-        } else if (inRange(value, 0.0, solid_opacity)) {
-            mat.transparent = value < 1.0;
-            mat.opacity = value;
-            mat.visible = true;
-        }
-    }
 
     toggleVisibility(bool) {
         const mat = this.getMaterial();
@@ -574,10 +466,10 @@ class Widget {
         let mesh = this.mesh,
             scale = this.track.scale;
         this.bounds = null;
-        this.setWireframe(false);
+        if (this.setWireframe) this.setWireframe(false);
         this.clearSlices();
         mesh.geometry.applyMatrix4(new THREE.Matrix4().makeScale(x, y, z));
-        if (this.outline) {
+        if (this.outline && this.setEdges) {
             this.setEdges(true);
         }
         scale.x *= (x || 1.0);
@@ -593,7 +485,7 @@ class Widget {
         if (center) {
             this.center(false);
         }
-        if (this.outline) {
+        if (this.outline && this.setEdges) {
             this.setEdges(true);
         }
         if ((x || y || z) && this.api && this.api.event) {
@@ -604,7 +496,7 @@ class Widget {
     _rotate(x, y, z, temp) {
         if (!temp) {
             this.bounds = null;
-            this.setWireframe(false);
+            if (this.setWireframe) this.setWireframe(false);
             this.clearSlices();
         }
         let m4 = new THREE.Matrix4();
@@ -633,7 +525,7 @@ class Widget {
         this.roto = [];
         this.center();
         this.setModified();
-        this.refreshVisualState();
+        if (this.refreshVisualState) this.refreshVisualState();
     }
 
     mirror() {
@@ -648,7 +540,7 @@ class Widget {
 
     _mirror() {
         this.clearSlices();
-        this.setWireframe(false);
+        if (this.setWireframe) this.setWireframe(false);
         let geo = this.mesh.geometry, ot = this.track;
         let pos = geo.attributes.position;
         let arr = pos.array;
@@ -782,65 +674,6 @@ class Widget {
         return Date.now() - mark;
     }
 
-    setEdges(set) {
-        if (!(this.api && this.api.conf)) {
-            // missing api features in engine mode
-            return;
-        }
-        let mesh = this.mesh;
-        if (set && set.toggle) {
-            set = this.outline ? false : true;
-        }
-        if (this.outline) {
-            mesh.remove(this.outline);
-            this.outline = null;
-
-        }
-        if (set) {
-            let dark = this.api.space.is_dark();
-            let cam = this.api.mode.is_cam();
-            let color = dark ? 0x444444 : 0x888888;
-            let angle = this.api.conf.get().controller.edgeangle || 20;
-            let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
-            let material = new THREE.LineBasicMaterial({ color });
-            this.outline = new THREE.LineSegments(edges, material);
-            this.outline.renderOrder = -20;
-            mesh.add(this.outline);
-        }
-    }
-
-    setWireframe(set, color, opacity) {
-        if (!(this.api && this.api.conf)) {
-            // missing api features in engine mode
-            return;
-        }
-        let mesh = this.mesh,
-            widget = this;
-        if (this.wire) {
-            this.setOpacity(solid_opacity);
-            mesh.remove(this.wire);
-            this.wire = null;
-        }
-        if (set) {
-            let dark = this.api.space.is_dark();
-            let mat = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                color: dark ? 0xaaaaaa : 0,
-                opacity: 0.5,
-                transparent: true
-            })
-            let wire = widget.wire = new THREE.Mesh(mesh.geometry.shallowClone(), mat);
-            mesh.add(wire);
-        }
-        if (this.api.view.is_arrange()) {
-            this.setColor(this.color);
-        } else {
-            this.setColor(0x888888,undefined,false);
-        }
-        if (opacity !== undefined) {
-            widget.setOpacity(opacity);
-        }
-    }
 
     show() {
         this.mesh.visible = true;
@@ -1076,40 +909,8 @@ const Group = Widget.Groups = {
     }
 };
 
-Widget.loadFromCatalog = function(filename, ondone) {
-    catalog().getFile(filename, function(data) {
-        let widget = newWidget().loadVertices(data);
-        widget.meta.file = filename;
-        ondone(widget);
-    });
-};
-
-Widget.loadFromState = function(id, ondone, move) {
-    index().get('ws-save-'+id, function(data) {
-        if (data) {
-            let vertices = data.geo || data,
-                track = data.track || undefined,
-                group = data.group || id,
-                anno = data.anno || undefined,
-                widget = newWidget(id, Group.forid(group)),
-                meta = data.meta || widget.meta,
-                ptr = widget.loadVertices(vertices);
-            widget.meta = meta;
-            widget.anno = anno || widget.anno;
-            // restore widget position if specified
-            if (move && track && track.pos) {
-                widget.track = track;
-                widget.move(track.pos.x, track.pos.y, track.pos.z, true);
-            }
-            ondone(ptr);
-        } else {
-            ondone(null);
-        }
-    });
-};
-
-Widget.deleteFromState = function(id,ondone) {
-    index().remove('ws-save-'+id, ondone);
-};
+function newWidget(id,group) {
+    return new Widget(id,group);
+}
 
 export { Widget, newWidget };

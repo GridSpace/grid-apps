@@ -25,7 +25,7 @@
 
 import { api } from './api.js';
 import { load } from '../../load/file.js';
-import { newWidget } from '../core/widget.js';
+import { newWidget } from './widget.js';
 import { VIEWS } from '../core/consts.js';
 import { widgets } from '../core/widgets.js';
 

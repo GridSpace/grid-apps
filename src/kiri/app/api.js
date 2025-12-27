@@ -22,7 +22,7 @@ import { local } from './local.js';
 import { local as dataLocal } from '../../data/local.js';
 import { modal } from './modal.js';
 import { mode as modeModule, process as processModule } from './mode.js';
-import { newWidget } from '../core/widget.js';
+import { newWidget } from './widget.js';
 import { noop, ajax, o2js, js2o, utils } from '../core/utils.js';
 import { openFiles } from './files.js';
 import { platform } from './platform.js';

@@ -9,7 +9,7 @@ import { newBounds } from '../../geo/bounds.js';
 import { Packer } from './pack.js';
 import { space } from '../../moto/space.js';
 import { THREE } from '../../ext/three.js';
-import { Widget, newWidget } from '../core/widget.js';
+import { Widget, newWidget } from './widget.js';
 
 const V0 = new THREE.Vector3(0,0,0);
 

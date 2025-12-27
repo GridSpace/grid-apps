@@ -3,7 +3,7 @@
 import { $ } from '../../moto/webui.js';
 import { api } from '../app/api.js';
 import { load } from '../../load/file.js';
-import { Widget, newWidget } from './widget.js';
+import { Widget, newWidget } from '../app/widget.js';
 
 let WIDGETS = [];
 

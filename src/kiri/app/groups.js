@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { selection } from './selected.js';
-import { Widget } from '../core/widget.js';
+import { Widget } from './widget.js';
 
 /**
  * Merge selected widgets into a group.

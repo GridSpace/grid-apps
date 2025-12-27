@@ -7,7 +7,7 @@ import { api } from '../app/api.js';
 import { conf } from '../app/conf/defaults.js';
 import { client } from '../app/workers.js';
 import { load } from '../../load/file.js';
-import { newWidget } from '../core/widget.js';
+import { newWidget } from '../app/widget.js';
 
 class Engine {
     constructor({ workURL, poolURL } = {}) {
