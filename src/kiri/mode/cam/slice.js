@@ -52,7 +52,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
 
     let axisRotation, axisIndex,
         bounds, dark, color, stock, tabs, track, tool, unsafe, units, workarea,
-        camZTop, camZBottom, camZThru, minToolDiam, maxToolDiam,
+        camZTop, camZBottom, minToolDiam, maxToolDiam,
         bottom_gap, bottom_part, bottom_stock, bottom_z,
         top_stock, top_part, top_gap, top_z,
         zBottom, zMin, zMax, zTop,
@@ -70,7 +70,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     // allow recomputing later if widget or settings changes
     const var_compute = () => {
         let { camStockX, camStockY, camStockZ, camStockOffset } = proc;
-        ({ camZTop, camZBottom, camZThru } = proc);
+        ({ camZTop, camZBottom } = proc);
         bounds = widget.getBoundingBox();
         let pos = widget.track.pos;
         stock = camStockOffset ? {
@@ -637,7 +637,7 @@ export async function holes(settings, widget, individual, rec, onProgress) {
         stock = settings.stock || {},
         isIndexed = proc.camStockIndexed,
         track = widget.track,
-        { camZTop, camZBottom, camZThru } = proc,
+        { camZBottom } = proc,
         // widget top z as defined by setTopz()
         wztop = track.top,
         // distance between top of part and top of stock

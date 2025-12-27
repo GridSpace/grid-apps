@@ -585,6 +585,8 @@ self.lang['en-us'] = {
     cf_linx_l:      "linear y-axis finishing",
     cf_liny_s:      "enable x pass",
     cf_liny_l:      "linear x-axis finishing",
+    cf_clip_s:      "clip to stock",
+    cf_clip_l:      ["contour op only","clip cutting paths","to defined stock"],
 
     // CNC TRACE
     cu_menu:        "trace",
@@ -838,8 +840,6 @@ self.lang['en-us'] = {
     cs_hght_l:      ["height (z) in workspace units","0 defaults to part size"],
     cs_offs_s:      "offset",
     cs_offs_l:      ["use width, depth, height","as offsets from max","part size on platform"],
-    cs_clip_s:      "clip to",
-    cs_clip_l:      ["contour op only","clip cutting paths","to defined stock"],
     cs_ishg_s:      "show grid",
     cs_ishg_l:      ["show platform grid in indexed mode"],
     cs_indx_s:      "indexed",

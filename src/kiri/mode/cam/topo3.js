@@ -77,7 +77,7 @@ export class Topo {
             gridDelta = Math.floor(partOff / resolution),
             debug_clips = true;
 
-        if (process.camStockClipTo) {
+        if (contour.clipto) {
             let { stock } = settings;
             let { center, x, y } = stock;
             clipTo.push(newPolygon().centerRectangle(center, x, y));

@@ -28,6 +28,10 @@ function hasSpindle() {
     return env.current.device.spindleMax > 0;
 }
 
+function isWebGPU() {
+    return api.conf.get().controller.webGPU;
+}
+
 function zTop() {
     return api.conf.get().process.camZTop > 0;
 }
@@ -317,6 +321,7 @@ export function createPopOps() {
         bottom: 'camContourBottom',
         curves: 'camContourCurves',
         inside: 'camContourIn',
+        clipto: 'camStockClipTo',
         filter: 'camContourFilter',
         axis: 'X'
     }).inputs = {
@@ -338,6 +343,7 @@ export function createPopOps() {
         curves: UC.newBoolean(LANG.cf_curv_s, undefined, { title: LANG.cf_curv_l }),
         inside: UC.newBoolean(LANG.cf_olin_s, undefined, { title: LANG.cf_olin_l }),
         bottom: UC.newBoolean(LANG.cf_botm_s, undefined, { title: LANG.cf_botm_l, show: (op, conf) => conf ? conf.process.camZBottom : 0 }),
+        clipto: UC.newBoolean(LANG.cf_clip_s, undefined, { title:LANG.cf_clip_l, show: () => !isWebGPU() }),
         filter: UC.newRow([UC.newButton(LANG.filter, contourFilter)], { class: "ext-buttons f-row" })
     };
 

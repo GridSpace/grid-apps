@@ -614,7 +614,6 @@ export const conf = {
                 camZBottom: 0,
                 camZClearance: 1,
                 camZOffset: 0,
-                // camZThru: 0,
                 camZTop: 0,
                 op2: [], // flip ops
                 ops: [], // current ops
