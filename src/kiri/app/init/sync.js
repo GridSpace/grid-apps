@@ -115,6 +115,14 @@ export async function init_sync() {
         sdb.kiri_beta = beta;
     }
 
+    // warn users they are using a development server
+    let devwarn = sdb.kiri_dev;
+    if (location.host === 'dev.grid.space' && devwarn !== version) {
+        api.alerts.show('this is a development server', 10);
+        api.alerts.show('use <a href="https://grid.space/kiri">grid.space</a> for production', 10);
+        sdb.kiri_dev = version;
+    }
+
     // hide url params but preserve version root (when present)
     let wlp = WIN.location.pathname;
     let kio = wlp.indexOf('/kiri/');
