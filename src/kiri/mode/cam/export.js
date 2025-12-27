@@ -416,6 +416,7 @@ export function cam_export(print, online) {
     const isOffset = offset && (offset.x || offset.y || offset.z);
     // remap points as necessary for origins, offsets, inversions
     print.output.forEach(layer => {
+        // console.log(layer);
         if (!Array.isArray(layer)) {
             return;
         }

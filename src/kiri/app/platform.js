@@ -3,9 +3,9 @@
 import { $, h } from '../../moto/webui.js';
 import { ajax, js2o } from '../core/utils.js';
 import { api } from './api.js';
-import { base } from '../../geo/base.js';
 import { COLOR, MODES } from '../core/consts.js';
 import { load as file_load } from '../../load/file.js';
+import { newBounds } from '../../geo/bounds.js';
 import { Packer } from './pack.js';
 import { space } from '../../moto/space.js';
 import { THREE } from '../../ext/three.js';
@@ -611,8 +611,8 @@ function positionNewWidget(widget) {
         x: dim.x / 2,
         y: dim.y / 2
     };
-    const bounds = base.newBounds();
-    const target = base.newBounds();
+    const bounds = newBounds();
+    const target = newBounds();
     const DEG2RAD = Math.PI / 180;
     const WIDGETS = api.widgets.all();
     // look for best position for new widget that doesn't collide

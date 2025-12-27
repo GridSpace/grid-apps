@@ -82,7 +82,8 @@ export async function cam_prepare(widgets, settings, update) {
 // process `prepare` paths for a single widget
 export async function prepare_one(widget, settings, print, firstPoint, update) {
 
-    let { device, process } = settings,
+    let { device, process, stock: set_stock } = settings,
+        { center } = set_stock,
         { alignTop } = settings.controller,
         { camArcEnabled, camArcResolution, camArcTolerance } = process,
         { camDepthFirst, camEaseAngle, camEaseDown } = process,
@@ -143,6 +144,21 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         easeDzPerMm = Math.tan(camEaseAngle * Math.PI / 180);
 
     if (debug) console.log({ zSafe, wmx, wmy, wmz });
+
+    // function d(o) {
+    //     console.log('<-------------------');
+    //     for (let [k,v] of Object.entries(o)) console.log(k,v);
+    //     console.log('------------------->');
+    // }
+
+    // d({
+    //     stock,
+    //     sstck: set_stock,
+    //     center,
+    //     origin,
+    //     wmx,
+    //     wmy
+    // });
 
     function newLayer(op) {
         if (layerOut.length || layerOut.mode) {
@@ -850,7 +866,15 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
     // coming from a previous widget, use previous last point as starting point
     // make top start offset configurable
-    printPoint = firstPoint || origin;
+    if (firstPoint) {
+        // we're coming from another widget. offset compensated below
+        printPoint = firstPoint;
+        // console.log('coming from another widget', { printPoint });
+    } else {
+        // we're the first widget output. offset is center
+        printPoint = origin.clone().move({ x: center.x, y: center.y });
+        // console.log('first widget output', { printPoint });
+    }
 
     let ops = {
         addGCode,
@@ -910,7 +934,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             update((opSum + (progress * weight)) / opTot, message || op.type(), message);
         });
         opSum += weight;
-        if (tool && printPoint) {
+        if (tool && printPoint && cop.type !== 'shadow') {
             newLayer();
             if (!isIndex) {
                 layerPush(printPoint.clone().setZ(stockZClear), 0, 0, tool);
