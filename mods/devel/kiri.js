@@ -1,6 +1,12 @@
 // provides a device export to local disk option
 self.kiri.load(api => {
     api.event.on('load-done', () => {
+        let devwarn = api.sdb.kiri_dev;
+        if (location.host === 'dev.grid.space' && devwarn !== api.version) {
+            api.alerts.show('this is a development server', 10);
+            api.alerts.show('use <a href="https://grid.space/kiri">grid.space</a> for production', 10);
+            api.sdb.kiri_dev = api.version;
+        }
         let deviceExport = api.device.export;
         api.device.export = (exp, name, opt = {}) => {
             const { event, record } = opt;

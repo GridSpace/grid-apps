@@ -111,9 +111,7 @@ export async function init_sync() {
 
     // warn users they are running a beta release
     if (beta && beta > 0 && sdb.kiri_beta != beta) {
-        api.show.alert("CAUTION");
-        api.show.alert("this is a development release");
-        api.show.alert("and may not function properly");
+        api.show.alert('<b style="color:red">caution:</b> beta code ahead', 10);
         sdb.kiri_beta = beta;
     }
 

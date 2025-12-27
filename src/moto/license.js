@@ -6,6 +6,6 @@ const terms = {
     VERSION: "4.6.0"
 };
 
-export const beta = 0;
+export const beta = 4600;
 export const license = terms;
 export const version = terms.VERSION;

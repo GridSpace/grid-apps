@@ -279,6 +279,9 @@ details[open] summary::after {
     background-color: var(--blue-2);
     color: black;
 }
+.dark #alert-border:hover {
+    background-color: rgba(255,255,255,0.7);
+}
 .dark #progress {
     background-color: #333;
     border-top: 1px solid #555;
