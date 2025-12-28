@@ -107,11 +107,33 @@ function setVisibleLayer(h, l) {
 /**
  * Set wireframe rendering mode for all widgets.
  * Updates 3D scene after applying to all widgets.
- * @param {boolean} bool - Enable/disable wireframe
+ * Persists state to local storage.
+ * @param {boolean|object} bool - Enable/disable wireframe, or {toggle: true} to toggle
  * @param {number} [color] - Optional wireframe color
  * @param {number} [opacity] - Optional wireframe opacity
  */
 function setWireframe(bool, color, opacity) {
+    if (bool && bool.toggle) {
+        api.local.toggle('model.wireframe');
+    } else if (typeof bool === 'boolean') {
+        api.local.set('model.wireframe', bool);
+        // Persist color and opacity when explicitly setting wireframe
+        if (color !== undefined) {
+            api.local.set('model.wireframe.color', color);
+        }
+        if (opacity !== undefined) {
+            api.local.set('model.wireframe.opacity', opacity);
+        }
+    }
+    bool = api.local.getBoolean('model.wireframe');
+    // Retrieve saved color/opacity if not provided
+    if (color === undefined) {
+        color = api.local.getInt('model.wireframe.color') || 0;
+    }
+    if (opacity === undefined) {
+        const saved = api.local.getFloat('model.wireframe.opacity');
+        opacity = saved !== null ? saved : (api.space.is_dark() ? 0.25 : 0.5);
+    }
     api.widgets.each((w) => { w.setWireframe(bool, color, opacity) });
     space.update();
 }
@@ -152,14 +174,22 @@ function updateSliderMax(set) {
 
 /**
  * Hide slice visualization and restore widget rendering.
- * Clears stack display, restores model opacity, disables wireframe.
+ * Clears stack display, restores saved wireframe/opacity state.
  */
 function hideSlices() {
     STACKS.clear();
-    api.widgets.setOpacity(COLOR.model_opacity);
-    api.widgets.each(function(widget) {
-        widget.setWireframe(false);
-    });
+    // Restore saved wireframe state instead of forcing wireframe off
+    const wireframe = api.local.getBoolean('model.wireframe');
+    const color = api.local.getInt('model.wireframe.color') || 0;
+    const saved = api.local.getFloat('model.wireframe.opacity');
+    const opacity = saved !== null ? saved : COLOR.model_opacity;
+
+    if (wireframe) {
+        api.widgets.each(widget => widget.setWireframe(wireframe, color, opacity));
+    } else {
+        api.widgets.setOpacity(opacity);
+        api.widgets.each(widget => widget.setWireframe(false));
+    }
 }
 
 /**
@@ -242,6 +272,39 @@ function updateStackLabelState() {
 }
 
 /**
+ * Apply saved visual state to a widget.
+ * Restores edges and wireframe settings from local storage.
+ * Only applies in ARRANGE view mode.
+ * @param {Widget} widget - Widget to apply visual state to
+ */
+function applyVisualState(widget) {
+    const viewMode = api.view.get();
+    // Only apply visual state in ARRANGE mode
+    if (viewMode !== VIEWS.ARRANGE) {
+        return;
+    }
+    const edges = api.local.getBoolean('model.edges');
+    const wireframe = api.local.getBoolean('model.wireframe');
+
+    // Always apply edges setting
+    if (edges) {
+        widget.setEdges(edges);
+    }
+
+    // Apply wireframe and its associated opacity
+    const color = api.local.getInt('model.wireframe.color') || 0;
+    const saved = api.local.getFloat('model.wireframe.opacity');
+    const opacity = saved !== null ? saved : 1;
+
+    if (wireframe) {
+        widget.setWireframe(wireframe, color, opacity);
+    } else if (saved !== null) {
+        // Even if wireframe is off, restore the saved opacity
+        widget.setOpacity(opacity);
+    }
+}
+
+/**
  * Update progress bar display.
  * In debug mode, also shows progress status message.
  * @param {number} [value=0] - Progress value (0.0 to 1.0)
@@ -303,6 +366,7 @@ function updateStats(add) {
 }
 
 export const visuals = {
+    apply_visual_state: applyVisualState,
     hide_slices: hideSlices,
     hide_slider: hideSlider,
     set_edges: setEdges,

@@ -54,8 +54,12 @@ function setViewMode(mode) {
             api.visuals.update_speeds();
             api.visuals.set_visible_layer();
             api.visuals.set_widget_visibility(true);
-            api.widgets.setOpacity(1);
             api.view.set_edges(api.local.getBoolean('model.edges'));
+            api.view.set_wireframe(api.local.getBoolean('model.wireframe'));
+            // Only set opacity to 1 if wireframe is disabled
+            if (!api.local.getBoolean('model.wireframe')) {
+                api.widgets.setOpacity(1);
+            }
             break;
         case VIEWS.SLICE:
             $('act-slice').classList.add('selected');

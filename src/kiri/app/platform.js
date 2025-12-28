@@ -549,6 +549,8 @@ function add(widget, shift, nolayout, defer) {
         api.space.auto_save();
         changed();
         api.event.emit('widget.add', widget);
+        // Apply saved visual state AFTER selection/color to avoid being overwritten
+        api.visuals.apply_visual_state(widget);
         if (nolayout) {
             return;
         }
@@ -581,6 +583,10 @@ function platformAddDeferred() {
         group_done(skiplayout);
     }
     api.event.emit('widget.add', deferred.map(r => r.widget));
+    // Apply visual state to all deferred widgets after they're positioned
+    for (let rec of deferred) {
+        api.visuals.apply_visual_state(rec.widget);
+    }
     platform.update_bounds();
     api.space.auto_save();
     changed();
