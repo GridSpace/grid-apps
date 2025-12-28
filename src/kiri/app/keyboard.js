@@ -258,6 +258,7 @@ class KeyboardControl {
             switch (evt.key) {
                 // case 'g': return this.#api.group.merge();
                 // case 'u': return this.#api.group.split();
+                case 'w': return $('render-edges').onclick();
             }
         }
 
@@ -366,9 +367,6 @@ class KeyboardControl {
             case this.#cca('o'): // tools
                 this.#api.show.tools();
                 break;
-            case this.#cca('c'): // local devices
-                this.#api.show.local();
-                break;
             case this.#cca('v'): // toggle single slice view mode
                 if (this.#api.view.get() === this.#VIEWS.ARRANGE) {
                     this.#api.space.set_focus(this.#selection.widgets());
@@ -398,6 +396,12 @@ class KeyboardControl {
                     // go to arrange view
                     this.#api.view.set(this.#VIEWS.ARRANGE);
                 }
+                break;
+            case this.#cca('w'): // set ghost
+                $('render-ghost').onclick();
+                break;
+            case this.#cca('W'): // set wireframe
+                $('render-wire').onclick();
                 break;
             default:
                 this.#onUnhandledKey(evt);

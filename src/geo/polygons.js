@@ -481,7 +481,11 @@ export function union(polys, minarea, all, opt = {}) {
     }
 
     for (i=0; i<out.length; i++) {
-        if (out[i]) uset.push(out[i]);
+        if (out[i]) {
+            if (!minarea || out[i].area() >= minarea) {
+                uset.push(out[i]);
+            }
+        }
     }
 
     opt.changes = length(uset) - lpre;

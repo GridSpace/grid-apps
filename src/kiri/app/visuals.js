@@ -112,7 +112,7 @@ function setVisibleLayer(h, l) {
  * @param {number} [opacity] - Optional wireframe opacity
  */
 function setWireframe(bool, color, opacity) {
-    api.widgets.each(function(w) { w.setWireframe(bool, color, opacity) });
+    api.widgets.each((w) => { w.setWireframe(bool, color, opacity) });
     space.update();
 }
 
@@ -303,19 +303,19 @@ function updateStats(add) {
 }
 
 export const visuals = {
-    set_progress: setProgress,
-    set_wireframe: setWireframe,
-    set_edges: setEdges,
-    unit_scale: unitScale,
-    update_speeds: updateSpeeds,
-    update_slider: updateSlider,
-    update_slider_max: updateSliderMax,
-    update_stack_labels: updateStackLabelState,
-    update_stats: updateStats,
-    show_slices: showSlices,
     hide_slices: hideSlices,
-    show_slider: showSlider,
     hide_slider: hideSlider,
+    set_edges: setEdges,
+    set_progress: setProgress,
     set_visible_layer: setVisibleLayer,
-    set_widget_visibility: setWidgetVisibility
+    set_widget_visibility: setWidgetVisibility,
+    set_wireframe: setWireframe,
+    show_slices: showSlices,
+    show_slider: showSlider,
+    unit_scale: unitScale,
+    update_slider_max: updateSliderMax,
+    update_slider: updateSlider,
+    update_speeds: updateSpeeds,
+    update_stack_labels: updateStackLabelState,
+    update_stats: updateStats
 };

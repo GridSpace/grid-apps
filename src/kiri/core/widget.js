@@ -703,7 +703,18 @@ class Widget {
         let minZabove = Math.min(Infinity, ...zover);
         let shadow = this.#computeShadowAt(z - 0.005, minZabove);
         if (minZabove < Infinity) {
-            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true, { wasm: false });
+            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0, true, { wasm: false });
+            // cull interior sliver voids
+            for (let poly of shadow) {
+                if (poly.inner) {
+                    poly.inner = poly.inner.filter(inr => {
+                        let A = inr.area();
+                        let P = inr.perimeter();
+                        let R = (2 * A / P);
+                        return R > 0.05;
+                    });
+                }
+            }
         }
         return shadows[z] = POLY.setZ(shadow, z);
     }
