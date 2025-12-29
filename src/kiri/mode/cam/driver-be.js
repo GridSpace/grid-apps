@@ -18,9 +18,9 @@ function surface_prep(widget, index) {
     }
 };
 
-function surface_find(widget, faces, radians) {
+function surface_find(widget, faces, radians, filterZ) {
     surface_prep(widget);
-    return widget.tool.findConnectedSurface(faces, radians || 0, 0.0);
+    return widget.tool.findConnectedSurface(faces, radians, filterZ);
 };
 
 function init(worker) {
