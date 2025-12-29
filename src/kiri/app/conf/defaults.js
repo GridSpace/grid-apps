@@ -519,6 +519,7 @@ export const conf = {
                 camLatheLinear: true,
                 camLatheOver: 0.1,
                 camLatheDown: 0,
+                camLatheExpand: 0,
                 camLatheSpeed: 500,
                 camLatheSpindle: 1000,
                 camLatheTool: 1000,

@@ -139,7 +139,11 @@ export function createPopOp(type, map) {
             for (let inp of Object.values(op.inputs)) {
                 let parent = inp.parentElement;
                 if (parent && parent.setVisible && parent.__opt.show) {
+                    // for normal inputs
                     parent.setVisible(parent.__opt.show(op, api.conf.get()));
+                } else if (inp.__opt?.show) {
+                    // for blanks
+                    inp.setVisible(inp.__opt.show(op, api.conf.get()));
                 }
             }
         },
@@ -353,6 +357,7 @@ export function createPopOps() {
         angle: 'camLatheAngle',
         step: 'camLatheOver',
         down: 'camLatheDown',
+        expand: 'camLatheExpand',
         rate: 'camLatheSpeed',
         tolerance: 'camTolerance',
         filter: 'camContourFilter',
@@ -368,7 +373,9 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         angle: UC.newInput(LANG.cc_sang_s, { title: LANG.cc_sang_l, convert: toFloat, bound: UC.bound(0.01, 180.0) }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 100.0) }),
-        // down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units }),
+        sepDn: UC.newBlank({ class: "pop-sep", show: () => env.poppedRec.down > 0 }),
+        down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units }),
+        expand: UC.newInput(LANG.cl_xpnd_s, { title: LANG.cl_xpnd_l, convert: toFloat, units, show: () => env.poppedRec.down > 0 }),
         sep: UC.newBlank({ class: "pop-sep" }),
         offStart: UC.newInput(LANG.ci_laso_s, { title: LANG.ci_laso_l, convert: toFloat}),
         offEnd: UC.newInput(LANG.ci_laeo_s, { title: LANG.ci_laeo_l, convert: toFloat}),

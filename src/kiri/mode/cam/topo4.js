@@ -42,7 +42,9 @@ export class Topo {
             tolerance = op.tolerance,
             resolution = (tolerance ? tolerance : 1 / Math.sqrt(density / (span.x * span.y))).round(5),
             step = this.step = (tool.traceOffset() * 2) * op.step,
-            angle = this.angle = op.angle || 1;
+            angle = this.angle = op.angle || 1,
+            down = this.down = op.down,
+            expand = this.expand = op.expand;
 
         if (tool.isTaperMill() && step === 0) {
             step = this.step = op.step * tool.unitScale();
@@ -160,6 +162,7 @@ export class Topo {
 
     async sliceGPU(onupdate) {
         const { angle, diam, leave, linear, offStart, offEnd, resolution, tool, units, vertices, zBottom } = this;
+        const { down, expand } = this;
 
         // invert tool Z offset for gpu code
         let toolBounds = new THREE.Box3()
@@ -239,6 +242,40 @@ export class Topo {
                 slice.camLines = [ newPolygon(points).setOpen() ];
                 slices.push(slice);
             }
+        }
+        let maxZ = 0;
+        if (down) {
+            for (let r of rows)
+            for (let p of r) {
+                maxZ = Math.max(maxZ, p.z);
+            }
+            console.log({ maxZ, down, expand });
+            maxZ += expand;
+        }
+        if (down) {
+            for (let slice of slices) {
+                let z = slice.z;
+                let poly = slice.camLines[0].clone();
+                let pMinZ = poly.minZ();
+                let steps = Math.floor((maxZ - pMinZ) / down);
+                let stack = [ poly.clone() ];
+                for (let i=0; i<steps; i++) {
+                    for (let p of poly.points) {
+                        p.z = Math.min(p.z + down, maxZ);
+                    }
+                    stack.push(poly.clone());
+                }
+                stack.reverse();
+                slice.stack = stack.map(poly => {
+                    let slice = newSlice(z);
+                    slice.camLines = [ poly ];
+                    return slice;
+                });
+                // todo: add line to line reversals
+                // todo: add move to maxZ after stack is run
+            }
+            slices = this.gpu_slices = slices.map(slice => slice.stack).flat();
+            slices.forEach((slice,index) => slice.index = index);
         }
         for (let slice of slices) {
             slice.output()

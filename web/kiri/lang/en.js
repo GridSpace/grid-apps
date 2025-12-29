@@ -714,6 +714,10 @@ self.lang['en-us'] = {
     ct_nabl_s:      "auto",
     ct_nabl_l:      ["auto generate radial tabs","projected from part center","using count and angle offset"],
 
+    // CNC LATHE
+    cl_xpnd_s:      "expand",
+    cl_xpnd_l:      ["grow starting radius for step down. radius is defined as the highest Z point measured from the X axis center of the part"],
+
     // OUTPUT
     ou_menu:        "output",
 
