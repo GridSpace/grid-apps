@@ -7,6 +7,7 @@ import { Slice, newSlice, Top, newTop } from './slice.js';
 import { Widget, newWidget } from './widget.js';
 
 const decoders = {};
+const factories = {};
 const freeMem = true;
 
 const TYPE = {
@@ -213,6 +214,11 @@ function decodePointArray2D(array, z, fn) {
     return points;
 }
 
+function setFactory(type, factory) {
+    factories[type] = factory;
+    return codec;
+}
+
 // ----- Widget Codec -----
 
 Widget.prototype.encode = function(state) {
@@ -236,7 +242,8 @@ registerDecoder(TYPE.WIDGET, function(v, state) {
     const id = v.id,
         group = v.group || id,
         track = v.track || undefined,
-        widget = newWidget(id, Widget.Groups.forid(group)),
+        factory = factories[TYPE.WIDGET] ?? newWidget,
+        widget = factory(id, Widget.Groups.forid(group)),
         meta= v.meta || widget.meta,
         anno = v.anno || widget.anno;
 
@@ -480,6 +487,7 @@ registerDecoder(TYPE.LAYERS, function(v, state) {
 });
 
 export const codec = {
+    TYPE,
     encode,
     decode,
     registerDecoder,
@@ -488,10 +496,12 @@ export const codec = {
     decodePointArray,
     encodePointArray2D,
     decodePointArray2D,
+    setFactory,
     toCodable
 };
 
 export {
+    TYPE,
     encode,
     decode,
     registerDecoder,
@@ -500,6 +510,7 @@ export {
     decodePointArray,
     encodePointArray2D,
     decodePointArray2D,
+    setFactory,
     toCodable
 };
 

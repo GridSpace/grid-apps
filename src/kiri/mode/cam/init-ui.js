@@ -792,8 +792,24 @@ export function init() {
 
     // TAB/TRACE BUTTON HANDLERS
     api.event.on("button.click", target => {
-        let process = api.conf.get().process;
+        let { process, stock } = api.conf.get();
         switch (target) {
+            case api.ui.stockPlace:
+                api.uc.prompt("stock x,y,z position", "").then(csv => {
+                    if (csv) {
+                        let [x,y,z] = csv.split(',').map(v => parseInt(v) || 0);
+                        let center = {
+                            x: x ?? 0,
+                            y: y ?? 0,
+                            z: z ?? 0
+                        }
+                        // move widgets based on postion
+                        // more complex than just moving stock
+                        // because stock is based on contents, not the other way
+                        console.log({ x,y,z });
+                    }
+                });
+                return;
             case api.ui.tabAdd:
                 return tabAdd();
             case api.ui.tabDun:

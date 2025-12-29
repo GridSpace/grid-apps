@@ -7,6 +7,7 @@ import { codec } from '../../core/codec.js';
 import { consts } from '../../core/consts.js';
 import { space } from '../../../moto/space.js';
 import { local } from '../../../data/local.js';
+import { newWidget } from '../widget.js';
 import { utils } from '../../core/utils.js';
 import { version } from '../../../moto/license.js';
 import { JSZip } from '../../../ext/jszip-esm.js';
@@ -608,6 +609,7 @@ function settingsImport(data, ask) {
                         work.type = 100;
                     }
                 }
+                codec.setFactory(codec.TYPE.WIDGET, newWidget);
                 codec.decode(data.work).forEach(widget => {
                     api.platform.add(widget, 0, true, true);
                 });

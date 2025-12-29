@@ -114,6 +114,10 @@ export function menu() {
     camStockOffset:      newBoolean(LANG.cs_offs_s, onBooleanClick, {title:LANG.cs_offs_l}),
     camStockIndexed:     newBoolean(LANG.cs_indx_s, onBooleanClick, {title:LANG.cs_indx_l}),
     camStockIndexGrid:   newBoolean(LANG.cs_ishg_s, onBooleanClick, {title:LANG.cs_ishg_l, show:() => ui.camStockIndexed.checked}),
+    // separator:           newBlank({ class:"set-sep", driven }),
+    // camStockManual: newRow([
+    //     (ui.stockPlace = newButton('position', onButtonClick, { })),
+    // ], {class:"ext-buttons f-row"}),
     _____:               newGroup(LANG.cc_menu, $('cam-limits'), { modes:CAM, driven, separator }),
     camZAnchor:          newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, show:() => !ui.camStockIndexed.checked}, "zanchor"),
     camZOffset:          newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:toFloat, units}),

@@ -181,9 +181,13 @@ class Widget {
         return this.loadVertices(...arguments);
     }
 
-    setModified() {
+    setModified(reason) {
         this.modified = true;
         this.boundingBoxNeedsUpdate = true;
+        this.clearShadows();
+        if (reason !== 'axis') {
+            this.cache.geo = undefined;
+        }
         if (this.mesh && this.mesh.geometry) {
             // this fixes ray intersections after the mesh is modified
             this.mesh.geometry.boundingSphere = null;
@@ -355,7 +359,7 @@ class Widget {
         // invalidate cached points
         if (x || y || z) {
             this.points = null;
-            this.setModified();
+            this.setModified('moveMesh');
         }
     }
 
@@ -372,11 +376,11 @@ class Widget {
     }
 
     setAxisIndex(deg) {
+        // console.trace(deg);
         let rad = deg * (Math.PI / 180);
         if (rad !== this.track.indexRad) {
             this.track.indexRad = rad;
-            this.clearShadows();
-            this.setModified();
+            this.setModified('axis');
             this._updateMeshPosition();
         }
     }
@@ -429,7 +433,7 @@ class Widget {
             pos.z += (z || 0);
         }
         if (x || y || z) {
-            this.setModified();
+            this.setModified('_move');
             this._updateMeshPosition();
         }
     }
@@ -475,7 +479,7 @@ class Widget {
         scale.x *= (x || 1.0);
         scale.y *= (y || 1.0);
         scale.z *= (z || 1.0);
-        this.setModified();
+        this.setModified('_scale');
     }
 
     rotate(x, y, z, temp, center = true) {
@@ -514,7 +518,7 @@ class Widget {
             rot.y += (y || 0);
             rot.z += (z || 0);
         }
-        this.setModified();
+        this.setModified('_rotate');
     }
 
     // undo all accumulated rotations
@@ -524,7 +528,7 @@ class Widget {
         });
         this.roto = [];
         this.center();
-        this.setModified();
+        this.setModified('unrotate');
         if (this.refreshVisualState) this.refreshVisualState();
     }
 
@@ -563,7 +567,7 @@ class Widget {
         }
         pos.needsUpdate = true;
         ot.mirror = !ot.mirror;
-        this.setModified();
+        this.setModified('_mirror');
         this.points = null;
     }
 
@@ -586,6 +590,17 @@ class Widget {
 
     getGeoVertices(opt = {}) {
         const { unroll, translate } = opt;
+        let cacheKey = [
+            unroll ? 1 : 0,
+            translate ? 1 : 0,
+            ((this.track.indexRad ?? 0) * 100000) | 0
+        ].join(',');
+        let marked = Date.now();
+        let geoCache = this.cache.geo = (this.cache.geo || {});
+        let cached = geoCache[cacheKey];
+        if (cached) {
+            return cached.pos;
+        }
         let geo = this.mesh.geometry;
         let pos = geo.getAttribute('position');
         // if indexed, return points rotated about X and then offset
@@ -595,6 +610,7 @@ class Widget {
                 .applyMatrix4( new THREE.Matrix4().makeRotationX(-track.indexRad) );
         }
         pos = pos.array;
+        // unroll indexed geometry
         if (geo.index && unroll !== false) {
             let idx = geo.index.array;
             let len = idx.length;
@@ -608,12 +624,8 @@ class Widget {
                 pp2[inc++] = pos[ip];
             }
             pos = pp2;
-        } else if (translate) {
-            pos = pos.slice();
         }
-        // used by CAM.shadowAt()
-        this.cache.geo = pos;
-        delete this.cache.shadow;
+        geoCache[cacheKey] = { pos, marked };
         return pos;
     }
 
@@ -631,7 +643,7 @@ class Widget {
         if (!this.bounds || refresh || this.boundingBoxNeedsUpdate) {
             this.bounds = new THREE.Box3().setFromArray(this.getGeoVertices({
                 translate: true,
-                unroll: false
+                unroll: true
             }));
             this.boundingBoxNeedsUpdate = false;
         }
@@ -701,6 +713,7 @@ class Widget {
         // find closest shadow above and use to speed up delta shadow gen
         let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
         let minZabove = Math.min(Infinity, ...zover);
+        // shift shadow probeline down a fraction to capture z flats with FP noise
         let shadow = this.#computeShadowAt(z - 0.005, minZabove);
         if (minZabove < Infinity) {
             shadow = POLY.union([...shadow, ...shadows[minZabove]], 0, true, { wasm: false });
@@ -725,7 +738,7 @@ class Widget {
         if (this.cache.shadow) {
             return;
         }
-        const geo = this.cache.geo;
+        const geo = this.getGeoVertices({ unroll: true, translate: true });
         const length = geo.length;
         const bounds = this.getBoundingBox();
         const stack = {};
