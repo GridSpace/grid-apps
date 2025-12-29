@@ -29,7 +29,7 @@ class OpArea extends CamOp {
         let { op, state } = this;
         let { direction, down, expand, flats, flatOff, follow } = op;
         let { mode, outline, over, rename, smooth, tool } = op;
-        let { addSlices, color, cutTabs, settings } = state;
+        let { addSlices, axisIndex, color, cutTabs, settings } = state;
         let { shadowAt, setToolDiam, tabs, widget, workarea } = state;
 
         let areaTool = new Tool(settings, tool);
@@ -75,6 +75,10 @@ class OpArea extends CamOp {
             let poly = newPolygon().fromArray(arr);
             aminz = Math.min(aminz, poly.minZ());
             polys.push(poly);
+            if (axisIndex) {
+                // traces come from unrotatead widget edges
+                poly.applyRotations(axisIndex);
+            }
         }
 
         // connect open poly edge segments into closed loops (when possible)

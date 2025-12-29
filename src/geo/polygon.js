@@ -794,11 +794,12 @@ export class Polygon {
         return [this.first().key, this.last().key, this.length].join('~~');
     }
 
-    applyRotations() {
+    applyRotations(deg) {
         for (let point of this.points) {
-            if (point.a) {
+            let angleDeg = deg ?? point.a;
+            if (angleDeg) {
                 let p2 = new Vector3(point.x, point.y, point.z)
-                    .applyAxisAngle(XAXIS, point.a * DEG2RAD);
+                    .applyAxisAngle(XAXIS, angleDeg * DEG2RAD);
                 point.x = p2.x;
                 point.y = p2.y;
                 point.z = p2.z;

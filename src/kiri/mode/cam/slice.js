@@ -180,6 +180,8 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let slicer;
     let state = {
         addSlices,
+        axisIndex,
+        axisRotation,
         bounds,
         color,
         computeShadows,
@@ -261,8 +263,8 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     async function setAxisIndex(degrees = 0, absolute = true) {
-        axisIndex = absolute ? degrees : (axisIndex || 0) + degrees;
-        axisRotation = (Math.PI / 180) * axisIndex;
+        state.axisIndex = axisIndex = absolute ? degrees : (axisIndex || 0) + degrees;
+        state.axisRotation = axisRotation = (Math.PI / 180) * axisIndex;
         widget.setAxisIndex(isIndexed ? -axisIndex : 0);
         state.tabs = tabs = [];
         for (let tab of tabW) {
