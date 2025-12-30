@@ -374,7 +374,7 @@ export function createPopOps() {
         angle: UC.newInput(LANG.cc_sang_s, { title: LANG.cc_sang_l, convert: toFloat, bound: UC.bound(0.01, 180.0) }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 100.0) }),
         sepDn: UC.newBlank({ class: "pop-sep", show: () => env.poppedRec.down > 0 }),
-        down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units }),
+        down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units, show: isWebGPU }),
         expand: UC.newInput(LANG.cl_xpnd_s, { title: LANG.cl_xpnd_l, convert: toFloat, units, show: () => env.poppedRec.down > 0 }),
         sep: UC.newBlank({ class: "pop-sep" }),
         offStart: UC.newInput(LANG.ci_laso_s, { title: LANG.ci_laso_l, convert: toFloat}),
