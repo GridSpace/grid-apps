@@ -61,6 +61,10 @@ function isNotBelt() {
     return !isBelt();
 }
 
+function notFwRetract() {
+    return !api.conf.get().device.fwRetract;
+}
+
 export function menu() {
 
     return {
@@ -160,8 +164,8 @@ export function menu() {
     outputFillMult:      newInput(LANG.ou_flml_s, {title:LANG.ou_exml_l, convert:toFloat, bound:bound(0.0,2.0)}),
     outputSparseMult:    newInput(LANG.ou_spml_s, {title:LANG.ou_exml_l, convert:toFloat, bound:bound(0.0,2.0)}),
     separator:           newBlank({ class:"set-sep", driven }),
-    outputRetractDist:   newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:toFloat}),
-    outputRetractSpeed:  newInput(LANG.ad_rrat_s, {title:LANG.ad_rrat_l, convert:toInt}),
+    outputRetractDist:   newInput(LANG.ad_rdst_s, {title:LANG.ad_rdst_l, convert:toFloat, show:notFwRetract}),
+    outputRetractSpeed:  newInput(LANG.ad_rrat_s, {title:LANG.ad_rrat_l, convert:toInt,   show:notFwRetract}),
     outputRetractWipe:   newInput(LANG.ad_wpln_s, {title:LANG.ad_wpln_l, convert:toFloat, bound:bound(0.0,10)}),
     separator:           newBlank({ class:"set-sep", driven }),
     outputAvoidGaps:     newBoolean(LANG.ad_agap_s, onBooleanClick, {title:LANG.ad_agap_l}),
