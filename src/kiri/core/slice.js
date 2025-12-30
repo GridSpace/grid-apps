@@ -123,9 +123,9 @@ class Slice {
         return slice ? POLY.fingerprintCompare(this.fingerprint(), slice.fingerprint()) : false;
     };
 
-    addTops(polys) {
+    addTops(polys, opt) {
         polys.forEach(p => {
-            this.addTop(p);
+            this.addTop(p, opt);
         });
         return this;
     }
@@ -134,16 +134,23 @@ class Slice {
      * @param {Object | Polygon} data
      * @returns Slice.Top
      */
-    addTop(data) {
+    addTop(data, opt) {
+        let minArea = opt.minArea ?? 0;
         if (data.length) {
             // standard legacy polygon
             let top = new Top(data);
+            if (top.area() < minArea) {
+                return null;
+            }
             this.tops.push(top);
             top.simple = data;
             return top;
         } else {
             // create top object from object bundle passed back by slicePost()
             let top = new Top(data.poly);
+            if (top.area() < minArea) {
+                return null;
+            }
             top.thin_fill = data.thin_fill?.map(p => newPoint(p.x,p.y,p.z));
             top.thin_wall = data.thin_wall;
             top.thin_sort = data.thin_sort;
@@ -152,7 +159,7 @@ class Slice {
             top.fill_off = data.fill_off;
             top.last = data.last;
             top.gaps = data.gaps;
-            top.shells = data.shells;
+            top.shells = data.shells.filter(p => p.area() > minArea);
             top.simple = data.simple;
             this.tops.push(top);
             return top;
@@ -206,6 +213,10 @@ class Top {
 
     constructor(polygon) {
         this.poly = polygon; // outline poly
+    }
+
+    area() {
+        return this.poly.area();
     }
 
     clone(deep) {

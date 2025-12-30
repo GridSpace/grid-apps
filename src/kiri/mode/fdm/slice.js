@@ -337,7 +337,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         return output.slices.map(data => {
             let { z, clip, lines, groups, changes } = data;
             if (!data.tops) return null;
-            let slice = newSlice(z).addTops(data.tops);
+            let slice = newSlice(z).addTops(data.tops, { minArea: 0.1 });
             slice.index = indices.indexOf(z);
             slice.height = heights[slice.index];
             slice.clips = clip;
