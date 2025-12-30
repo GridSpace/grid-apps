@@ -115,6 +115,9 @@ window.addEventListener('message', msg => {
         let bin = data.parse;
         let widget;
         switch ((data.type || 'stl').toLowerCase()) {
+            case 'gcode':
+                api.function.parse(bin, 'gcode');
+                break;
             case 'stl':
                 if (!bin.buffer) bin = new Float32Array(bin).buffer;
                 new load.STL().parse(bin, vertices => {

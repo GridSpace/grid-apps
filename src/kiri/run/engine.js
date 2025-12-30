@@ -123,6 +123,7 @@ class Engine {
         process.camStockX = stock.x;
         process.camStockY = stock.y;
         process.camStockZ = stock.z;
+        if (this.origin) settings.stock.center = origin;
         return this;
     }
 
@@ -131,7 +132,8 @@ class Engine {
     }
 
     setOrigin(x, y, z) {
-        this.settings.origin = { x, y, z };
+        this.origin = { x, y, z };
+        if (this.settings.stock) this.settings.stock.center = { x, y, z };
         return this;
     }
 

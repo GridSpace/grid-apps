@@ -241,7 +241,7 @@ export class Topo {
                     }
                 }
                 // raise output points when inside tab boundaries
-                if (!inside && tabsOn && clipTab.length)
+                if (tabsOn && clipTab.length)
                 for (let poly of lines) {
                     for (let p of poly.points) {
                         for (let clip of clipTab) {

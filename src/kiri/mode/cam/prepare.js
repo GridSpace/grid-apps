@@ -870,10 +870,13 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         // we're coming from another widget. offset compensated below
         printPoint = firstPoint;
         // console.log('coming from another widget', { printPoint });
-    } else {
+    } else if (center) {
         // we're the first widget output. offset is center
         printPoint = origin.clone().move({ x: center.x, y: center.y });
         // console.log('first widget output', { printPoint });
+    } else {
+        console.log({ missing_center_using_origin: origin });
+        printPoint = origin.clone();
     }
 
     let ops = {

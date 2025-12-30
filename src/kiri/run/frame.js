@@ -47,7 +47,7 @@
             window.addEventListener('message', onMessage);
         },
 
-        send: send,
+        send,
 
         load: (load) => { send({ load }) },
 

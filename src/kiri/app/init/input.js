@@ -28,6 +28,7 @@ import { space } from '../../../moto/space.js';
 import { LAST, MODES, SEED, VIEWS } from '../../core/consts.js';
 
 import STACKS from '../stacks.js';
+import '../frame.js';
 
 let { SETUP } = api.const,
     { CAM, SLA, FDM, LASER, DRAG, WJET, WEDM } = MODES,
