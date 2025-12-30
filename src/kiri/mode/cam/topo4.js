@@ -228,7 +228,7 @@ export class Topo {
                 let slice = newSlice(i);
                 slice.index = i;
                 slice.camLines = [ newPolygon(rows[i]).setOpen() ];
-                if (i % 2 === 1) slice.camLines[0].reverse();
+                if (!down && i % 2 === 1) slice.camLines[0].reverse();
                 slices.push(slice);
             }
         } else {
@@ -237,7 +237,7 @@ export class Topo {
                 let slice = newSlice(i);
                 let points = rows.map(row => row[i]);
                 points.push(points[0].clone().setA(-360));
-                if (i % 2 === 1) points.reverse();
+                if (!down && i % 2 === 1) points.reverse();
                 slice.index = i;
                 slice.camLines = [ newPolygon(points).setOpen() ];
                 slices.push(slice);
@@ -249,10 +249,12 @@ export class Topo {
             for (let p of r) {
                 maxZ = Math.max(maxZ, p.z);
             }
-            console.log({ maxZ, down, expand });
             maxZ += expand;
         }
         if (down) {
+            // step "up" points on trace until they max out
+            // then reverse the stack to cut top down
+            let reverse = 0;
             for (let slice of slices) {
                 let z = slice.z;
                 let poly = slice.camLines[0].clone();
@@ -267,12 +269,17 @@ export class Topo {
                 }
                 stack.reverse();
                 slice.stack = stack.map(poly => {
+                    if (reverse++ % 2 === 1) poly.reverse();
                     let slice = newSlice(z);
                     slice.camLines = [ poly ];
                     return slice;
                 });
-                // todo: add line to line reversals
-                // todo: add move to maxZ after stack is run
+                // first move of new stack is to maxZ (problematic)
+                // let first = stack[0].points;
+                // first.splice(0,0,first[0].clone().setZ(maxZ));
+                // last move of stack is to maxZ
+                let last = stack.peek();
+                last.push(last.last().clone().setZ(maxZ));
             }
             slices = this.gpu_slices = slices.map(slice => slice.stack).flat();
             slices.forEach((slice,index) => slice.index = index);

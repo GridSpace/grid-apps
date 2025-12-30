@@ -134,7 +134,7 @@ class Slice {
      * @param {Object | Polygon} data
      * @returns Slice.Top
      */
-    addTop(data, opt) {
+    addTop(data, opt = {}) {
         let minArea = opt.minArea ?? 0;
         if (data.length) {
             // standard legacy polygon
