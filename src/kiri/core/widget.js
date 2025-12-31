@@ -70,7 +70,8 @@ class Widget {
             },
             top: 0, // z top
             mirror: false,
-            indexed: false
+            indexed: false,
+            indexRad: 0
         },
         // used to cache shadow geo
         this.cache = {};
@@ -446,14 +447,20 @@ class Widget {
             tz = -tzoff,
             { x, y, z } = track.pos;
         if (track.indexed) {
-            let rad = track.indexRad;
-            this.mesh.rotation.x = -rad;
+            this.mesh.rotation.x = -track.indexRad;
             z = top;
         } else {
             this.mesh.rotation.x = 0;
             z += tz;
         }
         mesh.position.set(x, y, z);
+        this._updateEdges();
+    }
+
+    _updateEdges() {
+        if (this.outline && this.setEdges) {
+            this.setEdges(true);
+        }
     }
 
     scale(x, y, z) {
@@ -473,9 +480,7 @@ class Widget {
         if (this.setWireframe) this.setWireframe(false);
         this.clearSlices();
         mesh.geometry.applyMatrix4(new THREE.Matrix4().makeScale(x, y, z));
-        if (this.outline && this.setEdges) {
-            this.setEdges(true);
-        }
+        this._updateEdges();
         scale.x *= (x || 1.0);
         scale.y *= (y || 1.0);
         scale.z *= (z || 1.0);
@@ -489,9 +494,7 @@ class Widget {
         if (center) {
             this.center(false);
         }
-        if (this.outline && this.setEdges) {
-            this.setEdges(true);
-        }
+        this._updateEdges();
         if ((x || y || z) && this.api && this.api.event) {
             this.api.event.emit('widget.rotate', {widget: this, x, y, z});
         }
