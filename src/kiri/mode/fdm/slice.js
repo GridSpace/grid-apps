@@ -125,7 +125,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         isSynth = widget.track.synth,
         isSupport = widget.track.support,
         useAssembly = assembly,
-        isConcurrent = threaded && minions.concurrent,
+        isConcurrent = threaded && minions.concurrent && !process.xray,
         topLayers = process.sliceTopLayers || 0,
         bottomLayers = process.sliceBottomLayers || 0,
         vaseMode = process.sliceFillType === 'vase' && !isSynth,
@@ -353,7 +353,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 slice.index = process.xray.shift();
                 slice.lines = lines;
                 slice.groups = groups;
-                slice.xray = process.xray;
+                slice.xray = slice.index;
             }
             return slice;
         }).filter(s => s);

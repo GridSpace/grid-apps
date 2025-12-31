@@ -144,7 +144,9 @@ export const api = {
             layers = Array.isArray(layers) ? layers : [layers];
             proc.xray = layers.map(l => raw ? l : base + l * size - size / 2);
             proc.xrayi = layers.slice();
-            api.function.slice();
+            api.function.slice(
+                // () => SPACE.platform.showGrid(false)
+            );
         }
     },
     device,
