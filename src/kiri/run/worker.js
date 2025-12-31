@@ -775,7 +775,6 @@ const worker = self.kiri_worker = {
 };
 
 // initilize driver mode handlers
-CAM.init(worker);
-FDM.init(worker);
-LASER.init(worker);
-SLA.init(worker);
+for (let driver of Object.values(drivers)) {
+    driver.init(worker);
+}

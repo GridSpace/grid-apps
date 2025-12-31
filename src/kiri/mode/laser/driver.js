@@ -5,7 +5,6 @@ import { Packer } from '../../app/pack.js';
 import { newBounds } from '../../../geo/bounds.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPrint } from '../../core/print.js';
-import { newSlopeFromAngle } from '../../../geo/slope.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { render } from '../../core/render.js';
 import { slicer } from '../../../geo/slicer.js';
@@ -19,6 +18,8 @@ export const TYPE = {
     WJET: 2,
     WEDM: 3
 };
+
+export const FUNC = {};
 
 function init(worker) {
     // console.log({ LASER_INIT: worker });
@@ -97,76 +98,6 @@ function sliceEmitObjects(print, slice, groups, opt = { }) {
 
     return emit;
 };
-
-// convert arc into line segments
-function arc(center, rad, s1, s2, out) {
-    let a1 = s1.angle;
-    let step = 5;
-    let diff = s1.angleDiff(s2, true);
-    let ticks = Math.abs(Math.floor(diff / step));
-    let dir = Math.sign(diff);
-    let off = (diff % step) / 2;
-    if (off == 0) {
-        ticks++;
-    } else {
-        out.push( center.projectOnSlope(s1, rad) );
-    }
-    while (ticks-- > 0) {
-        out.push( center.projectOnSlope(newSlopeFromAngle(a1 + off), rad) );
-        a1 += step * dir;
-    }
-    out.push( center.projectOnSlope(s2, rad) );
-}
-
-// start to the "left" of the first point
-function addKnifeRadii(poly, tipoff) {
-    poly.setClockwise();
-    let oldpts = poly.points.slice();
-
-    // find leftpoint and make that the first point
-    let start = oldpts[0];
-    let startI = 0;
-    let inner = tipoff < 0;
-    tipoff = Math.abs(tipoff);
-    for (let i=1; i<oldpts.length; i++) {
-        let pt = oldpts[i];
-        if (inner && (pt.x > start.x || (pt.x == start.x && pt.y < start.y))) {
-            start = pt;
-            startI = i;
-        } else if (!inner && (pt.x < start.x || (pt.x == start.x && pt.y > start.y))) {
-            start = pt;
-            startI = i;
-        }
-    }
-    if (startI > 0) {
-        oldpts = oldpts.slice(startI,oldpts.length).appendAll(oldpts.slice(0,startI));
-    }
-
-    let lastpt = oldpts[0].clone().move({x:-tipoff,y:0,z:0});
-    let lastsl = lastpt.slopeTo(oldpts[0]).toUnit();
-    let newpts = [ lastpt, lastpt = oldpts[0].clone() ];
-    let tmp;
-    for (let i=1; i<oldpts.length + 1; i++) {
-        let nextpt = oldpts[i % oldpts.length];
-        let nextsl = lastpt.slopeTo(nextpt).toUnit();
-        if (lastsl.angleDiff(nextsl) >= 10) {
-            if (lastpt.distTo2D(nextpt) >= tipoff) {
-                arc(lastpt, tipoff, lastsl, nextsl, newpts);
-            } else {
-                // todo handle short segments
-                // newpts.push(lastpt.projectOnSlope(lastsl, tipoff) );
-                // newpts.push( lastpt.projectOnSlope(nextsl, tipoff) );
-            }
-        }
-        newpts.push(nextpt);
-        lastsl = nextsl;
-        lastpt = nextpt;
-    }
-    newpts.push( tmp = lastpt.projectOnSlope(lastsl, tipoff) );
-    // newpts.push( tmp.clone().move({x:tipoff, y:0, z: 0}) );
-    poly.open = true;
-    poly.points = newpts;
-}
 
 /**
  * DRIVER SLICE CONTRACT
@@ -288,7 +219,8 @@ async function laser_prepare(widgets, settings, update) {
         { ctOutLayer, ctOutTileSpacing, ctSliceSingle } = process,
         { ctOriginCenter, ctOriginBounds } = process,
         { ctOriginOffX, ctOriginOffY } = process,
-        { ctOutStack, ctOutMerged, ctOutKnifeTip, ctOutShaper } = process;
+        { ctOutStack, ctOutMerged, ctOutKnifeTip, ctOutShaper } = process,
+        { generateDragKnifePath } = FUNC;
 
     ctOutStack = ctOutStack && isLaser;
     print.widgets = widgets;
@@ -366,7 +298,8 @@ async function laser_prepare(widgets, settings, update) {
             let gather = [];
             for (let poly of merged) {
                 if (isKnife) {
-                    addKnifeRadii(poly, ctOutKnifeTip);
+                    poly = generateDragKnifePath(poly, ctOutKnifeTip);
+                    // addKnifeRadii(poly, ctOutKnifeTip);
                 }
                 print.PPP(poly, gather, {
                     extrude: poly.depth,
@@ -378,12 +311,15 @@ async function laser_prepare(widgets, settings, update) {
             // output a layer for each slice
             if (isKnife) {
                 for (let slice of widget.slices) {
-                    for (let poly of slice.offset) {
-                        addKnifeRadii(poly, ctOutKnifeTip);
-                        if (poly.inner) poly.inner.forEach(ip => {
-                            addKnifeRadii(ip, -ctOutKnifeTip);
-                        });
-                    }
+                    slice.offset = POLY
+                        .flatten(slice.offset)
+                        .map(poly => generateDragKnifePath(poly, ctOutKnifeTip));
+                    // for (let poly of slice.offset) {
+                    //     addKnifeRadii(poly, ctOutKnifeTip);
+                    //     if (poly.inner) poly.inner.forEach(ip => {
+                    //         addKnifeRadii(ip, -ctOutKnifeTip);
+                    //     });
+                    // }
                 }
             }
             let lastEmit;
