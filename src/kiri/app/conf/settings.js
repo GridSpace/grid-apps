@@ -98,7 +98,7 @@ function settings_save(ev, name) {
             api.conf.save();
             api.conf.update();
             api.event.settings();
-            sync_put();
+            api.settings.sync.put();
         };
 
     if (name) {

@@ -20,7 +20,7 @@ let moved = { x: 0, y: 0 };
 /** Message ID for the current undo/redo alert message */
 let msgid;
 
-event.on("init-done", () => {
+event.on("load-done", () => {
     $('undo').onclick = undo;
     $('redo').onclick = redo;
 });
