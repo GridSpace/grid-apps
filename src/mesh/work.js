@@ -17,6 +17,7 @@ import { CSG } from '../geo/csg.js';
 import { util } from './util.js';
 import { tool as meshTool } from './tool.js';
 import { meshToSTEPWithFaces } from '../load/step.js';
+import { encode as tmfEncode } from '../load/3mf.js';
 import { encode as objEncode } from '../load/obj.js';
 import { encode as stlEncode } from '../load/stl.js';
 
@@ -580,6 +581,10 @@ const file = {
                 return objEncode(recs, header);
             case "stl":
                 return stlEncode(recs, header);
+            case "3mf":
+                send.async();
+                tmfEncode(recs, header).then(data => send.done(data));
+                return;
             default:
                 throw `invalid format "${format}"`;
         }

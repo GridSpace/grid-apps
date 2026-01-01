@@ -1008,9 +1008,10 @@ let file = {
                     h.input({ id: "filename", value: "mesh_export" })
                 ]),
                 h.div([
-                    h.button({ _: "download OBJ", onclick() { doit('obj') } }),
-                    h.button({ _: "download STL", onclick() { doit('stl') } }),
-                    h.button({ _: "download STEP", onclick() { doit('step') } }),
+                    h.button({ _: "3MF", onclick() { doit('3mf') } }),
+                    h.button({ _: "OBJ", onclick() { doit('obj') } }),
+                    h.button({ _: "STL", onclick() { doit('stl') } }),
+                    h.button({ _: "STEP", onclick() { doit('step') } }),
                 ])
             ]) ]
         });

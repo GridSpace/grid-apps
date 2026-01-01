@@ -213,6 +213,133 @@ function extractItems(records) {
 }
 
 /**
+ * Export vertex array(s) to 3MF format
+ * @param {Array} recs - array of {file: string, varr: Float32Array} records
+ * @param {Object} options - encoding options
+ * @param {String} [options.unit='millimeter'] - unit of measurement
+ * @param {String} [options.title='Model'] - model title
+ * @returns {Promise<Blob>} 3MF file as a Blob
+ */
+export async function encode(recs, options = {}) {
+    const {
+        unit = 'millimeter',
+        title = 'Model'
+    } = options;
+
+    // Build the 3D model XML
+    let objectId = 1;
+    let resources = [];
+    let buildItems = [];
+
+    for (let rec of recs) {
+        let { file, varr } = rec;
+        let name = file || `object-${objectId}`;
+
+        // Extract unique vertices and build triangle indices
+        let vertices = [];
+        let triangles = [];
+        let vertexMap = new Map(); // map "x,y,z" -> vertex index
+        let vertexIndex = 0;
+
+        // Process triangles (every 9 floats = 3 vertices = 1 triangle)
+        for (let i = 0; i < varr.length; i += 9) {
+            let triIndices = [];
+
+            // Process 3 vertices per triangle
+            for (let j = 0; j < 3; j++) {
+                let vi = i + j * 3;
+                let x = varr[vi];
+                let y = varr[vi + 1];
+                let z = varr[vi + 2];
+
+                // Create vertex key for deduplication
+                let key = `${x},${y},${z}`;
+                let idx = vertexMap.get(key);
+
+                if (idx === undefined) {
+                    idx = vertexIndex++;
+                    vertexMap.set(key, idx);
+                    vertices.push({ x, y, z });
+                }
+
+                triIndices.push(idx);
+            }
+
+            triangles.push(triIndices);
+        }
+
+        // Generate object XML
+        let objectXml = [`    <object id="${objectId}" name="${name}" type="model">`];
+        objectXml.push('      <mesh>');
+        objectXml.push('        <vertices>');
+
+        for (let v of vertices) {
+            objectXml.push(`          <vertex x="${v.x}" y="${v.y}" z="${v.z}"/>`);
+        }
+
+        objectXml.push('        </vertices>');
+        objectXml.push('        <triangles>');
+
+        for (let tri of triangles) {
+            objectXml.push(`          <triangle v1="${tri[0]}" v2="${tri[1]}" v3="${tri[2]}"/>`);
+        }
+
+        objectXml.push('        </triangles>');
+        objectXml.push('      </mesh>');
+        objectXml.push('    </object>');
+
+        resources.push(objectXml.join('\n'));
+        buildItems.push(`    <item objectid="${objectId}"/>`);
+
+        objectId++;
+    }
+
+    // Construct the complete 3D model XML
+    let modelXml = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        `<model unit="${unit}" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">`,
+        '  <resources>',
+        resources.join('\n'),
+        '  </resources>',
+        '  <build>',
+        buildItems.join('\n'),
+        '  </build>',
+        '</model>'
+    ].join('\n');
+
+    // Create [Content_Types].xml
+    let contentTypes = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">',
+        '  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>',
+        '  <Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>',
+        '</Types>'
+    ].join('\n');
+
+    // Create _rels/.rels
+    let rels = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">',
+        '  <Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>',
+        '</Relationships>'
+    ].join('\n');
+
+    // Create ZIP archive
+    let zip = new JSZip();
+    zip.file('[Content_Types].xml', contentTypes);
+    zip.file('_rels/.rels', rels);
+    zip.file('3D/3dmodel.model', modelXml);
+
+    // Generate the 3MF file as a blob
+    return await zip.generateAsync({
+        type: "uint8array",
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 },
+        streamFiles: true
+    });
+}
+
+/**
  * @param {Object} data binary file
  * @returns {Array} vertex face array
  */
@@ -230,3 +357,4 @@ export function parseAsync(data) {
         resolve(extractItems(models));
     });
 }
+
