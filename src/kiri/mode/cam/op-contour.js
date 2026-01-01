@@ -84,6 +84,7 @@ class OpContour extends CamOp {
     async slice(progress) {
         let { op, state } = this;
         let { color, addSlices, settings, updateToolDiams } = state;
+
         let conTool = new Tool(settings, op.tool);
         let filter = createFilter(op, settings.origin, op.axis.toLowerCase());
         let toolDiam = this.toolDiam = conTool.fluteDiameter();

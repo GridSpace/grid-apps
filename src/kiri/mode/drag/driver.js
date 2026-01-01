@@ -24,13 +24,15 @@ function init(worker) {
  * @returns {Polygon} New polygon with drag knife compensation applied
  */
 function generateDragKnifePath(polygon, knifeOffset, options = {}) {
-    return addKnifeRadii(polygon, knifeOffset);
     const {
-        angleThreshold = 10,    // degrees
-        lookahead = 3,          // vertices
-        overcut = false,
-        overcutDistance = 0.1
+        angleThreshold = 5,      // degrees - minimum angle change to insert arc
+        arcSegmentAngle = 5      // degrees - angle between arc segments
     } = options;
+
+    // Validate inputs
+    if (!knifeOffset || Math.abs(knifeOffset) < 0.001) {
+        return polygon.clone();
+    }
 
     polygon.setClockwise();
     const points = polygon.points;
@@ -42,131 +44,91 @@ function generateDragKnifePath(polygon, knifeOffset, options = {}) {
 
     const DEG2RAD = Math.PI / 180;
     const thresholdRad = angleThreshold * DEG2RAD;
+    const arcSegRad = arcSegmentAngle * DEG2RAD;
 
-    // Helper: Get direction vector from point i to i+1
-    function getDirection(i) {
-        const curr = points[i];
-        const next = points[(i + 1) % len];
-        const dx = next.x - curr.x;
-        const dy = next.y - curr.y;
+    // For closed polygons vs open paths
+    const isClosed = !polygon.open;
+    const numSegments = isClosed ? len : len - 1;
+
+    // Calculate segment directions and angles
+    const segments = [];
+    for (let i = 0; i < numSegments; i++) {
+        const p1 = points[i];
+        const p2 = points[(i + 1) % len];
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
         const length = Math.sqrt(dx * dx + dy * dy);
-        return length > 0 ? { x: dx / length, y: dy / length } : { x: 1, y: 0 };
-    }
 
-    // Helper: Get perpendicular vector (90° counter-clockwise, to the left)
-    function perpLeft(dir) {
-        return { x: -dir.y, y: dir.x };
-    }
-
-    // Helper: Calculate angle change at vertex i
-    function getAngleChange(i) {
-        const prev = points[(i - 1 + len) % len];
-        const curr = points[i];
-        const next = points[(i + 1) % len];
-
-        const v1x = curr.x - prev.x;
-        const v1y = curr.y - prev.y;
-        const v2x = next.x - curr.x;
-        const v2y = next.y - curr.y;
-
-        const len1 = Math.sqrt(v1x * v1x + v1y * v1y);
-        const len2 = Math.sqrt(v2x * v2x + v2y * v2y);
-
-        if (len1 === 0 || len2 === 0) return 0;
-
-        const dot = (v1x * v2x + v1y * v2y) / (len1 * len2);
-        const cross = (v1x * v2y - v1y * v2x) / (len1 * len2);
-
-        return Math.atan2(cross, dot);
-    }
-
-    // Helper: Get smoothed direction using lookahead window
-    function getSmoothedDirection(i) {
-        let sumX = 0, sumY = 0, count = 0;
-
-        for (let j = -lookahead; j <= lookahead; j++) {
-            const idx = (i + j + len) % len;
-            const dir = getDirection(idx);
-            sumX += dir.x;
-            sumY += dir.y;
-            count++;
+        if (length > 0.001) {
+            segments.push({
+                index: i,
+                point: p1,
+                angle: Math.atan2(dy, dx),  // Direction of travel
+                length: length
+            });
         }
-
-        const length = Math.sqrt(sumX * sumX + sumY * sumY);
-        return length > 0 ?
-            { x: sumX / length, y: sumY / length } :
-            { x: 1, y: 0 };
     }
 
-    // Classify each vertex as CURVE or CORNER
-    const types = [];
-    for (let i = 0; i < len; i++) {
-        const angleChange = Math.abs(getAngleChange(i));
-        types[i] = angleChange < thresholdRad ? 'CURVE' : 'CORNER';
+    if (segments.length === 0) {
+        return polygon.clone();
     }
 
-    // Generate compensated toolpath
-    const outputPoints = [];
+    const output = [];
 
-    for (let i = 0; i < len; i++) {
-        const curr = points[i];
-        const type = types[i];
+    // Process each segment
+    for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        const isLastSegment = i === segments.length - 1;
+        const nextSeg = isClosed ? segments[(i + 1) % segments.length] :
+                        isLastSegment ? null : segments[i + 1];
 
-        if (type === 'CURVE') {
-            // Smooth curve section - use averaged direction for offset
-            const smoothDir = getSmoothedDirection(i);
-            const offset = perpLeft(smoothDir);
-            const toolX = curr.x + offset.x * knifeOffset;
-            const toolY = curr.y + offset.y * knifeOffset;
-            outputPoints.push(newPoint(toolX, toolY, curr.z));
+        // Key insight from dragknife-repath:
+        // Offset the point in the DIRECTION OF TRAVEL by knife offset
+        // The knife blade trails behind the rotation axis
+        const offsetX = seg.point.x + Math.cos(seg.angle) * knifeOffset;
+        const offsetY = seg.point.y + Math.sin(seg.angle) * knifeOffset;
+        output.push(newPoint(offsetX, offsetY, seg.point.z));
 
-        } else {
-            // Sharp corner - need pivot arc
-            const angleChange = getAngleChange(i);
-            const dirIn = getDirection((i - 1 + len) % len);
-            const dirOut = getDirection(i);
+        // Check if we need a swivel arc at the end of this segment
+        if (nextSeg) {
+            // Calculate angle change between this segment and the next
+            let angleDiff = nextSeg.angle - seg.angle;
 
-            const offsetIn = perpLeft(dirIn);
-            const offsetOut = perpLeft(dirOut);
+            // Normalize angle difference to [-PI, PI]
+            while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+            while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
 
-            // Tool positions entering and exiting corner
-            const toolInX = curr.x + offsetIn.x * knifeOffset;
-            const toolInY = curr.y + offsetIn.y * knifeOffset;
-            const toolOutX = curr.x + offsetOut.x * knifeOffset;
-            const toolOutY = curr.y + offsetOut.y * knifeOffset;
+            // If angle change exceeds threshold, insert arc to rotate knife
+            if (Math.abs(angleDiff) > thresholdRad) {
+                // The arc is centered at the vertex between segments
+                const vertex = points[(seg.index + 1) % len];
 
-            // Add entry point
-            outputPoints.push(newPoint(toolInX, toolInY, curr.z));
+                // Number of arc segments based on angle change
+                const arcSteps = Math.max(2, Math.ceil(Math.abs(angleDiff) / arcSegRad));
 
-            // For right turns (positive angle), add arc points
-            if (angleChange > 0) {
-                const arcSteps = Math.max(3, Math.ceil(Math.abs(angleChange) / (15 * DEG2RAD)));
-
-                // Optional overcut
-                if (overcut) {
-                    const ocX = curr.x + offsetIn.x * (knifeOffset + overcutDistance);
-                    const ocY = curr.y + offsetIn.y * (knifeOffset + overcutDistance);
-                    outputPoints.push(newPoint(ocX, ocY, curr.z));
-                }
-
-                // Generate arc from offsetIn to offsetOut around curr point
+                // Generate arc from current angle to next angle
                 for (let step = 1; step <= arcSteps; step++) {
                     const t = step / arcSteps;
-                    const angle = Math.atan2(offsetIn.y, offsetIn.x) + angleChange * t;
-                    const arcX = curr.x + Math.cos(angle) * knifeOffset;
-                    const arcY = curr.y + Math.sin(angle) * knifeOffset;
-                    outputPoints.push(newPoint(arcX, arcY, curr.z));
+                    const angle = seg.angle + angleDiff * t;
+                    const arcX = vertex.x + Math.cos(angle) * knifeOffset;
+                    const arcY = vertex.y + Math.sin(angle) * knifeOffset;
+                    output.push(newPoint(arcX, arcY, vertex.z));
                 }
-            } else {
-                // Left turn - blade is on inside, simpler handling
-                // Just move directly to exit position
-                outputPoints.push(newPoint(toolOutX, toolOutY, curr.z));
             }
         }
     }
 
-    // Create new polygon with compensated points
-    const result = newPolygon(outputPoints);
+    // For open paths, add the final point offset in the last segment's direction
+    if (!isClosed && segments.length > 0) {
+        const lastSeg = segments[segments.length - 1];
+        const lastPoint = points[len - 1];
+        const offsetX = lastPoint.x + Math.cos(lastSeg.angle) * knifeOffset;
+        const offsetY = lastPoint.y + Math.sin(lastSeg.angle) * knifeOffset;
+        output.push(newPoint(offsetX, offsetY, lastPoint.z));
+    }
+
+    // Create new polygon with compensated path
+    const result = newPolygon(output);
     result.open = polygon.open;
 
     return result;
