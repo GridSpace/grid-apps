@@ -93,7 +93,7 @@ class OpContour extends CamOp {
         // we need topo for safe travel moves when roughing and outlining
         // not generated when drilling-only. then all z moves use bounds max.
         // also generates x and y contouring when selected
-        let topo = await Topo({
+        let topo = this.topo = await Topo({
             // onupdate: (update, msg) => {
             onupdate: (index, total, msg) => {
                 progress(index / total, msg);
@@ -117,7 +117,7 @@ class OpContour extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state, sliceOut, toolStep } = this;
+        let { op, sliceOut, state, toolStep, topo } = this;
         let { settings } = state;
         let { process } = settings;
 
@@ -128,7 +128,7 @@ class OpContour extends CamOp {
         let depthData = [];
 
         setTool(op.tool, op.rate, process.camFastFeedZ);
-        setContouring(true, toolStep * 1.5);
+        setContouring(true, toolStep * 1.5, topo.coastline);
         setTolerance(this.tolerance);
 
         let printPoint = newPoint(bounds.min.x, bounds.min.y, zmax);

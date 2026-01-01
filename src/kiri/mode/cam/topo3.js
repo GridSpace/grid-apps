@@ -166,6 +166,17 @@ export class Topo {
                 zFloor: zBottom - 1,
                 onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
             });
+            gpu.mode = 'tracing';
+            // create coastline path around part for tip-to-tip travels
+            // convert shadow/clip poly lines to raster float32 array groups
+            let paths = POLY.flatten(clipTo).map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
+            let coastline = await gpu.generateToolpaths({
+                paths,
+                step: toolStep / 2,
+                zFloor: zBottom - 1
+            });
+            this.coastline = coastline.paths.map(arr => newPolygon().fromArray([0,...arr]));
+            console.log({ coastline: this.coastline, clipTo });
             gpu.terminate();
 
             let { numScanlines, pointsPerLine, pathData } = output;

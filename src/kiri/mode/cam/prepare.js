@@ -114,6 +114,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         originx = (camOriginCenter ? 0 : -stock.x / 2) + (camOriginOffX || 0),
         originy = (camOriginCenter ? 0 : -stock.y / 2) + (camOriginOffY || 0),
         origin = newPoint(originx, originy, zSafe),
+        coastline,
         contouring = false,
         currentOp,
         drillDown = 0,
@@ -184,10 +185,17 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         }
     }
 
-    function setContouring(bool, step) {
+    function setContouring(bool, step, coast) {
+        coastline = coast;
         contouring = bool;
         toolDiamMove = step ?? tool.getStepSize(currentOp.step) * 2;
         if (bool) setTravelBoundary();
+        if (coast) {
+            for (let poly of coast) {
+                // poly.points = poly.points.map(pt => toWorkCoords(pt));
+            }
+            console.log({ coast_to_work: coast });
+        }
     }
 
     function setSpindle(speed) {
@@ -377,6 +385,45 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         .annotate({ slice: p.slice });
     }
 
+    function coastlineMove(point) {
+        let from = toWidgetCoords(printPoint);
+        let to = toWidgetCoords(point);
+        if (!coastline || from.distTo2D(to) < 0.01) {
+            return false;
+        }
+        let start = { dist: 1, poly: 0, pt: from };
+        let end = { dist: 1, poly: 1, pt: to };
+        for (let poly of coastline) {
+            let { points } = poly;
+            for (let i=0; i<points.length; i++) {
+                let pt = points[i];
+                if (!pt) {
+                    continue;
+                }
+                let dist = from.distTo2D(pt);
+                if (dist < start.dist) {
+                    start.dist = dist;
+                    start.poly = poly;
+                    start.pos = i;
+                    start.mp = pt;
+                }
+                dist = to.distTo2D(pt);
+                if (dist < end.dist) {
+                    end.dist = dist;
+                    end.poly = poly;
+                    end.pos = i;
+                    end.mp = pt;
+                }
+            }
+        }
+        if (start.poly !== end.poly || start.pos === end.pos) {
+            return false;
+        }
+        let pdist = end.pos - start.pos;
+        console.log({ can_route: [ start, end ], pdist });
+        return true;
+    }
+
     /**
      * emit a cut or move operation from the current location to a new location
      * @param {Point} point destination for move in widget coordinate space
@@ -390,6 +437,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         lastOp = currentOp;
 
         // translate widget point into workspace coordinates
+        let point_in = point;
         point = toWorkCoords(point);
 
         let {
@@ -461,7 +509,9 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
         // contouring logic
         if (isMove && contouring) {
-            if (deltaXY > toolDiamMove) {
+            if (coastline && deltaXY < toolDiamMove * 5 && coastlineMove(point)) {
+                // console.log('coastline move');
+            } else if (deltaXY > toolDiamMove) {
                 upAndOver = true;
             } else if (absDeltaZ < 0.01) {
                 if (debug) console.log('contour move as cut');
