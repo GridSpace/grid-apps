@@ -190,12 +190,6 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         contouring = bool;
         toolDiamMove = step ?? tool.getStepSize(currentOp.step) * 2;
         if (bool) setTravelBoundary();
-        if (coast) {
-            for (let poly of coast) {
-                // poly.points = poly.points.map(pt => toWorkCoords(pt));
-            }
-            console.log({ coast_to_work: coast });
-        }
     }
 
     function setSpindle(speed) {
@@ -385,6 +379,11 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         .annotate({ slice: p.slice });
     }
 
+    /**
+     * when moving between contour endpoints, check if we can
+     * instead route around the bounding area of the contour
+     * whih we call the coastline.
+     */
     function coastlineMove(point) {
         let from = toWidgetCoords(printPoint);
         let to = toWidgetCoords(point);
@@ -397,9 +396,6 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             let { points } = poly;
             for (let i=0; i<points.length; i++) {
                 let pt = points[i];
-                if (!pt) {
-                    continue;
-                }
                 let dist = from.distTo2D(pt);
                 if (dist < start.dist) {
                     start.dist = dist;
@@ -419,8 +415,33 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         if (start.poly !== end.poly || start.pos === end.pos) {
             return false;
         }
-        let pdist = end.pos - start.pos;
-        console.log({ can_route: [ start, end ], pdist });
+        let { poly } = start;
+        let { points } = poly;
+        let pl = poly.length;
+        let sp = start.pos, ep = end.pos;
+        let adist = Math.abs(ep - sp);
+        let bdist = ep > sp ?
+            sp + (pl - ep):
+            ep + (pl - sp);
+        let dir = 1;
+        let dist;
+        if (adist < bdist) {
+            dist = adist;
+            if (ep < sp) {
+                dir = -1;
+            }
+        } else {
+            dist = bdist;
+            if (ep < sp) {
+                ep += pl;
+            } else {
+                sp += pl;
+                dir = -1;
+            }
+        }
+        for (let i=sp, d=0; d < dist; i += dir, d++) {
+            layerPush(toWorkCoords(points[i % pl]), 1, 0, tool);
+        }
         return true;
     }
 
@@ -509,7 +530,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
         // contouring logic
         if (isMove && contouring) {
-            if (coastline && deltaXY < toolDiamMove * 5 && coastlineMove(point)) {
+            if (coastline && deltaXY < 5 && coastlineMove(point)) {
                 // console.log('coastline move');
             } else if (deltaXY > toolDiamMove) {
                 upAndOver = true;

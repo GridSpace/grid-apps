@@ -172,11 +172,10 @@ export class Topo {
             let paths = POLY.flatten(clipTo).map(poly => poly.points.map(p => [ p.x, p.y ]).flat().toFloat32());
             let coastline = await gpu.generateToolpaths({
                 paths,
-                step: toolStep / 2,
-                zFloor: zBottom - 1
+                step: 1,
+                zFloor: zBottom
             });
             this.coastline = coastline.paths.map(arr => newPolygon().fromArray([0,...arr]));
-            console.log({ coastline: this.coastline, clipTo });
             gpu.terminate();
 
             let { numScanlines, pointsPerLine, pathData } = output;

@@ -5,6 +5,7 @@ import { Tool } from './tool.js';
 import { generate as Topo } from './topo3.js';
 import { newPoint } from '../../../geo/point.js';
 import { newPolygon } from '../../../geo/polygon.js';
+import { newSlice } from '../../core/slice.js';
 import { tip2tipEmit } from '../../../geo/paths.js';
 
 function createFilter(op, origin, axis) {
@@ -111,6 +112,14 @@ class OpContour extends CamOp {
             contour: op,
             state
         });
+
+        if (this.debug && topo.coastline) {
+            console.log('coastline', topo.coastline);
+            const dbs = newSlice(-1);
+            const dbo = dbs.output();
+            dbo.setLayer("coastline", { line: 0x0000dd }).addPolys(topo.coastline);
+            addSlices([ dbs ])
+        }
 
         // computed if set to 0
         this.tolerance = topo.tolerance;
