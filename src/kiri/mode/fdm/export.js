@@ -305,7 +305,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         for (let pk in process) {
             appendTok("; ", pk, " = ", process[pk]);
         }
-        append("; --- startup ---");
+        if (pre < 3) append("; --- startup ---");
     }
 
     // looking for ";; PREAMBLE <MODE>" comment
@@ -316,6 +316,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         if (line.indexOf(";; PREAMBLE") === 0) {
             if (line === ';; PREAMBLE OFF') pre = 1;
             else if (line === ';; PREAMBLE END') pre = 2;
+            else if (line === ';; PREAMBLE POST') pre = 3;
             else gcpre.push(pre = 123);
         } else if (line.indexOf(";; AXISMAP ") === 0) {
             let axmap = JSON.parse(line.substring(11).trim());
@@ -984,10 +985,12 @@ export function fdm_export(print, online, ondone, ondebug) {
     subst.time = util.round(time,2);
     subst['print_time'] = subst.time;
 
-    append("; --- shutdown ---");
+    // append("; --- shutdown ---");
     appendAllSub(device.gcodePost);
     append(`; --- filament used: ${subst.material} mm ---`);
     append(`; --- print time: ${time.toFixed(0)}s ---`);
+
+    if (pre === 3) preamble();
 
     // force emit of buffer
     append();

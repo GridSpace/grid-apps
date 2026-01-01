@@ -250,7 +250,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             }
             let { zMin, zMax } = zopt;
             let h1 = sliceHeight;
-            let h0 = sliceHeightBase || h1;
+            let h0 = Math.abs(zMin) < 0.0001 ? (sliceHeightBase || h1) : h1;
             let hm = sliceMinHeight || 0;
             let h = h0;
             let z = h0;
