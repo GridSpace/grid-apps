@@ -443,6 +443,7 @@ export const conf = {
                 camAreaExpand: 0,
                 camAreaRefine: 0,
                 camAreaSmooth: 1,
+                camAreaShadow: false,
                 camAreaDogbones: false,
                 camAreaRevbones: false,
                 camAreaOutline: false,

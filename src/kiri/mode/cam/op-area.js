@@ -35,7 +35,7 @@ class OpArea extends CamOp {
         let areaTool = new Tool(settings, tool);
         let smoothVal = (smooth ?? 0) / 10;
         let toolDiam = areaTool.fluteDiameter();
-        let toolOver = areaTool.getStepSize(over);
+        let toolOver = this.toolOver = areaTool.getStepSize(over);
         let zTop = workarea.top_z;
         let zBottom = workarea.bottom_z;
         let shadowBase = state.shadow.base;
@@ -71,6 +71,7 @@ class OpArea extends CamOp {
         }
 
         // gather area selections
+        if (!op.shadow)
         for (let arr of (op.areas[widget.id] ?? [])) {
             let poly = newPolygon().fromArray(arr);
             aminz = Math.min(aminz, poly.minZ());
@@ -86,22 +87,30 @@ class OpArea extends CamOp {
         polys = POLY.nest(POLY.reconnect(polys, false));
 
         // gather surface selections
-        let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
-        let faces = CAM.surface_find(widget, (op.surfaces[widget.id] ?? []), (follow ?? edgeangle ?? 5) * DEG2RAD);
-        let fpoly = [];
-        for (let face of faces) {
-            let i = face * 9;
-            fpoly.push(newPolygon()
-                .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
-                .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
-                .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
-            );
-        }
-        // remove invalid edges (eg. when vertical walls are the only selection)
-        fpoly = fpoly.filter(p => p.area() > 0.001);
+        if (!op.shadow) {
+            let vert = widget.getGeoVertices({ unroll: true, translate: true }).map(v => v.round(4));
+            let faces = CAM.surface_find(widget, (op.surfaces[widget.id] ?? []), (follow ?? edgeangle ?? 5) * DEG2RAD);
+            let fpoly = [];
+            for (let face of faces) {
+                let i = face * 9;
+                fpoly.push(newPolygon()
+                    .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
+                    .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
+                    .add(vert[i++], vert[i++], aminz = Math.min(aminz, vert[i++]))
+                );
+            }
+            // remove invalid edges (eg. when vertical walls are the only selection)
+            fpoly = fpoly.filter(p => p.area() > 0.001);
 
-        // add in unioned surface areas
-        polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), aminz));
+            // add in unioned surface areas
+            polys.push(...POLY.setZ(POLY.union(fpoly, 0.00001, true), aminz));
+        }
+
+        // use part shadow instead of areas or surfaces
+        if (op.shadow) {
+            console.log({ use_shadow_base: op.shadow });
+            polys.push(...shadowBase.clone(true));
+        }
 
         // smoothing for jaggies usually caused by vertical walls
         if (smoothVal) {
@@ -343,7 +352,7 @@ class OpArea extends CamOp {
                     }
                     // optional alternating paths
                     if (sr_alter) {
-                        paths = tip2tipJoin(paths, paths[0].first(), toolDiam * 4);
+                        paths = tip2tipJoin(paths, paths[0].first(), toolOver * 10);
                     }
                 } else
                 if (sr_type === 'offset') {
@@ -392,6 +401,7 @@ class OpArea extends CamOp {
                 raster.terminate();
 
                 // convert terrain raster output back to open polylines
+                // todo: add leave_z support
                 for (let path of output.paths) {
                     path = newPolygon().fromArray([1, ...path]);
                     if (op.refine) path.refine(op.refine);
@@ -417,14 +427,14 @@ class OpArea extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { op, state, areas, surfaces } = this;
+        let { op, state, areas, surfaces, toolOver } = this;
         let { newLayer, pocket, polyEmit, printPoint, tip2tipEmit } = ops;
         let { setContouring, setNextIsMove } = ops;
         let { process } = state.settings;
 
         // process surface paths
         if (surfaces.length) {
-            setContouring(true);
+            setContouring(true, toolOver * 2);
             for (let surface of surfaces) {
                 for (let poly of surface) {
                     setNextIsMove();

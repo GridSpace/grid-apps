@@ -669,6 +669,10 @@ export function createPopOps() {
         return env.poppedRec.mode === 'trace';
     }
 
+    function isShadow() {
+        return env.poppedRec.shadow;
+    }
+
     function isSurface() {
         return env.poppedRec.mode === 'surface';
     }
@@ -697,6 +701,7 @@ export function createPopOps() {
         follow: 'camAreaFollow',
         refine: 'camAreaRefine',
         outline: 'camAreaOutline',
+        shadow: 'camAreaShadow',
         tolerance: 'camTolerance',
         dogbones: 'camAreaDogbones',
         revbones: 'camAreaRevbones',
@@ -707,33 +712,39 @@ export function createPopOps() {
         tr_type: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: isTrace }, "traceoff"),
         sr_type: UC.newSelect("pattern", { title: "pattern", show: isSurface }, "surftyp"),
         sep: UC.newBlank({ class: "pop-sep" }),
+        exp: UC.newExpand("area selection", { open }),
         menu: UC.newRow([
             UC.newButton("edge", traceAdd),
             UC.newButton("surface", surfaceAdd),
-        ], { class: "ext-buttons f-row" }),
+        ], { class: "ext-buttons f-row", show: () => !isShadow() }),
+        shadow: UC.newBoolean(LANG.cp_shad_s, undefined, { title: LANG.cp_shad_l }),
         outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l }),
+        exp_end: UC.endExpand(),
+        sep: UC.newBlank({ class: "pop-sep" }),
+        exp: UC.newExpand("area modifiers", { }),
         expand: UC.newInput(LANG.cp_xpnd_s, { title: LANG.cp_xpnd_l, convert: toFloat, units }),
         smooth: UC.newInput(LANG.cp_smoo_s, { title: LANG.cp_smoo_l, convert: toInt, xshow: isSurface }),
         follow: UC.newInput(LANG.cp_foll_s, { title: LANG.cp_foll_l, convert: toFloat }),
         tolerance: UC.newInput(LANG.ou_toll_s, { title: LANG.ou_toll_l, convert: toFloat, bound: UC.bound(0, 10.0), units, round: 4, show: isSurface }),
+        exp_end: UC.endExpand(),
         exp: UC.newExpand("tool & stepping", { open }),
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
-        sr_angle: UC.newInput("step angle", { title: "step angle", convert: toFloat, bound: UC.bound(0, 360), show: isSurfaceLinear }),
+        sr_angle: UC.newInput(LANG.ca_sang_s, { title: LANG.ca_sang_l, convert: toFloat, bound: UC.bound(0, 360), show: isSurfaceLinear }),
         over: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.001, 100.0), show: () => isClear() || isSurface() }),
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, bound: UC.bound(0, 100.0), units, show: () => isClear() || isTrace() }),
         refine: UC.newInput(LANG.cp_refi_s, { title: LANG.cp_refi_l, convert: toInt, show: isSurface }),
-        sr_alter: UC.newBoolean("alternate", undefined, { title: "alternate cutting direction", show: isSurfaceLinear }),
+        sr_alter: UC.newBoolean(LANG.ca_altr_s, undefined, { title: LANG.ca_altr_l, show: isSurfaceLinear }),
         dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, { title: LANG.co_dogb_l, show: isTrace }),
         revbones: UC.newBoolean(LANG.co_dogr_s, undefined, { title: LANG.co_dogr_l, show: () => env.poppedRec.dogbones }),
         exp_end: UC.endExpand(),
-        exp: UC.newExpand("feeds & speeds", { open }),
+        exp: UC.newExpand("feeds & speeds", { }),
         sep: UC.newBlank({ class: "pop-sep" }),
         spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
         plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
         exp_end: UC.endExpand(),
-        exp: UC.newExpand("bounds", { open }),
+        exp: UC.newExpand("bounds", { }),
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
         ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),

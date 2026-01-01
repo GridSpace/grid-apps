@@ -2,15 +2,11 @@
 
 import { CamOp } from './op.js';
 import { OpArea } from './op-area.js';
-import { polygons as POLY } from '../../../geo/polygons.js';
-import { newPolygon } from '../../../geo/polygon.js';
 
 class OpOutline extends CamOp {
     constructor(state, op) {
         super(state, op);
     }
-
-    // todo: wide cutout, dogbones
 
     async slice(progress) {
         let { op, state } = this;
@@ -26,7 +22,6 @@ class OpOutline extends CamOp {
         let ops_list = this.ops_list = [ ];
 
         if (outside) {
-            // let areas = POLY.flatten(POLY.expand(shadow.base, state.tool.fluteDiameter() / 2 - 0.001));
             let areas = shadow.base.clone(true);
             ops_list.push(new OpArea(state, {
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
@@ -37,7 +32,6 @@ class OpOutline extends CamOp {
                 mode: 'trace',
                 omitinner: omitvoid,
                 omitthru,
-                // outline: omitthru,
                 ov_botz,
                 ov_topz,
                 over: op.wide ? op.step : 0,
@@ -66,7 +60,6 @@ class OpOutline extends CamOp {
                 omitinner: omitvoid,
                 omitouter: inside,
                 omitthru,
-                // outline: omitthru,
                 ov_botz,
                 ov_topz,
                 plunge,
@@ -80,9 +73,6 @@ class OpOutline extends CamOp {
                 thru: true,
                 tr_type: 'outside',
             }));
-            if (!inside) {
-                // add outline
-            }
         }
 
         for (let op of this.ops_list) {
