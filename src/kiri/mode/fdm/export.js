@@ -26,6 +26,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         { extrudeAbs } = device,
         { exportThumb } = controller,
         { extrudeMM, extrudePerMM } = FDM,
+        { outputInvertX, outputInvertY } = process,
         timeFactor = (device.gcodeTime || 1) * 1.5,
         decimals = config.gcode_decimals || 4,
         zMoveMax = device.deviceZMax || 0,
@@ -471,8 +472,8 @@ export function fdm_export(print, online, ondone, ondebug) {
         if (emit.z) o.append(axis.Z).append(epos.z.toFixed(decimals));
         if (arc) {
             let { x, y } = arc.center;
-            o.push(' I', (x + offset.x - pos.x).toFixed(decimals));
-            o.push(' J', (y + offset.y - pos.y).toFixed(decimals));
+            o.push(' I', x.toFixed(decimals));
+            o.push(' J', y.toFixed(decimals));
         }
         if (debug) {
             if (emit.x) minz.x = Math.min(minz.x, epos.x);
@@ -668,20 +669,19 @@ export function fdm_export(print, online, ondone, ondebug) {
                 continue;
             }
 
-            let x = point.x + offset_x,
-                y = point.y + offset_y,
+            // translate point to workspace coordinates
+            let x = point.x + offset_x + offset.x,
+                y = point.y + offset_y + offset.y,
                 z = point.z;
 
             // adjust for inversions and origin offsets
-            if (process.outputInvertX) x = -x;
-            if (process.outputInvertY) y = -y;
-            if (offset) {
-                x += offset.x;
-                y += offset.y;
-            }
+            if (outputInvertX) x = -x;
+            if (outputInvertY) y = -y;
 
             // G2,G3 arcs
             if (center) {
+                if (outputInvertX) center.x = -center.x;
+                if (outputInvertY) center.y = -center.y;
                 emitMM = extrudeMM(out.distance, emitPerMM, emit);
                 moveTo({ x, y, e: emitMM }, speedMMM, 'arc', {
                     clockwise: out.clockwise,

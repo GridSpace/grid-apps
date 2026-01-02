@@ -213,14 +213,13 @@ class Print {
             if (arc) {
                 arcInfo = arc;
                 // non-emit arc points get -1 for rendering
-                scope.addOutput(output, point, -1, moveSpeed, tool);
-                arcDist += last.distTo2D(point);
+                scope.addOutput(output, point, shellMult, moveSpeed, tool);
+                arcInfo.center.move({ x: -point.x, y: -point.y, z: 0 });
                 last = point;
                 continue;
             } else if (arcInfo) {
                 arcDist += last.distTo2D(point);
-                if (arcInfo.skip-- === 0) {
-                    // last point of arc is arcTo?
+                if (--arcInfo.skip === 0) {
                     arcInfo.distance = arcDist;
                     scope.addOutput(output, point, shellMult, moveSpeed, tool, arcInfo);
                     arcInfo = undefined;
