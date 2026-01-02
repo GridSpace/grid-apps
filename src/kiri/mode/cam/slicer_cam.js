@@ -101,6 +101,11 @@ export class Slicer {
             // use co-flat and co-line detection to adjust slice Z
             if (Math.abs(p1.z - p2.z) < epsilon && Math.abs(p2.z - p3.z) < epsilon) {
                 // detect zFlat faces to avoid slicing directly on them
+                if (opt.zflatup) {
+                    // filter to up-facing flats (more expensive)
+                    let norm = THREE.computeFaceNormal(p1,p2,p3);
+                    if (norm.z < -0.00001) continue;
+                }
                 let zkey = p1.z.toFixed(zDecimal),
                     area = Math.abs(util.area2(p1, p2, p3)) / 2;
                 if (!zFlat[zkey]) {

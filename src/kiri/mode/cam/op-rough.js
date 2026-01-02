@@ -53,7 +53,7 @@ class OpRough extends CamOp {
         }));
 
         if (op.flats) {
-            let slicer = newSlicer();
+            let slicer = newSlicer({ zflatup: true });
             ops_list.push(new OpArea(state, {
                 rename: op.rename ?? "flats",
                 spindle: op.spindle,
