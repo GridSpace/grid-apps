@@ -108,7 +108,6 @@ class OpArea extends CamOp {
 
         // use part shadow instead of areas or surfaces
         if (op.shadow) {
-            console.log({ use_shadow_base: op.shadow });
             polys.push(...shadowBase.clone(true));
         }
 
