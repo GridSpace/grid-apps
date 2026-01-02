@@ -212,12 +212,13 @@ class Print {
             let { arc } = point;
             if (arc) {
                 arcInfo = arc;
-                // non-emit arc points get -1 for rendering
                 scope.addOutput(output, point, shellMult, moveSpeed, tool);
+                // arc center is relative to first point
                 arcInfo.center.move({ x: -point.x, y: -point.y, z: 0 });
                 last = point;
                 continue;
             } else if (arcInfo) {
+                // accumulate and pass to last point to calc FDM E value
                 arcDist += last.distTo2D(point);
                 if (--arcInfo.skip === 0) {
                     arcInfo.distance = arcDist;

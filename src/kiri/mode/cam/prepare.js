@@ -866,6 +866,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                     let { arc } = point;
                     skip = arc.skip;
                     type = arc.clockwise ? 2 : 3;
+                    // arc center is relative to first point
                     center = arc.center.clone().move({ x: -point.x, y: -point.y });
                     xfactors.push(xfactors.shift());
                 }

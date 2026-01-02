@@ -120,6 +120,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         // lenghts of each filament (by nozzle) consumed
         segments = [];
 
+    // build tool use list for this job
     let tools_used = Object.keys(tools);
     for (let tool of tools_used) {
         subst[`tool_used_${tool}`] = true;
@@ -694,6 +695,7 @@ export function fdm_export(print, online, ondone, ondebug) {
                 continue;
             }
 
+            // distance to last point for accumulation and emit calc
             dist = lastp ? lastp.distTo2D(point) : 0;
 
             // re-engage post-retraction before new extrusion
@@ -705,6 +707,8 @@ export function fdm_export(print, online, ondone, ondebug) {
             if (isBelt) {
                 setTempFanSpeed(out.fan);
             }
+
+            // run fan speed macro when value changes
             if (fanSpeed !== lastFanSpeed) {
                 appendAllSub(gcodeFan);
                 lastFanSpeed = fanSpeed;
@@ -741,10 +745,8 @@ export function fdm_export(print, online, ondone, ondebug) {
             if (dist && speedMMM) {
                 time += (dist / speedMMM) * 60 * timeFactor;
             }
-            // if (isNaN(time)) {
-            //     console.log({ layer, path, dist, speedMMM, timeFactor });
-            //     throw "NaN";
-            // }
+
+            // accumulate distance traveled and update macro var
             distance += dist;
             subst.progress = progress = Math.round((distance / totaldistance) * 100);
 
@@ -771,13 +773,6 @@ export function fdm_export(print, online, ondone, ondebug) {
 
         print.total_time -= path.print_time;
         subst.remain_time = Math.ceil(print.total_time / 60);
-    }
-
-    function emitQrec(rec) {
-        let {e, x, y, dist, emitPerMM, speedMMM} = rec;
-        emitMM = extrudeMM(dist, emitPerMM, e);
-        moveTo({x:x, y:y, e:emitMM}, speedMMM);
-        emitted += emitMM;
     }
 
     if (inloops) {
