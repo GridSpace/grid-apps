@@ -958,7 +958,6 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             widget.belt.midy = (bounds.miny + bounds.maxy) / 2;
         }
     }
-
 }
 
 function connect_lines(lines, maxd = Infinity) {
@@ -1878,84 +1877,4 @@ export function supports(settings, widget) {
     console.log(`support generated in ${Date.now() - now} ms`);
     widget.supports = add;
     return add.length > 0;
-};
-
-class Vector3Cache {
-    constructor() {
-        this.cache = {};
-    }
-
-    get(x, y, z) {
-        let key = [x.round(4),y.round(4),z.round(4)].join(',');
-        let val = this.cache[key];
-        if (!val) {
-            val = new THREE.Vector3(x, y, z);
-            this.cache[key] = val;
-        }
-        return val;
-    }
-}
-
-class Coplanars {
-    constructor() {
-        this.cache = {};
-    }
-
-    put(a, b, c, norm) {
-        let key = norm.round(7).toString();
-        let arr = this.cache[key];
-        if (!arr) {
-            arr = [];
-            this.cache[key] = arr;
-        }
-        arr.push([a,b,c]);
-    }
-
-    group(union) {
-        let out = {};
-        for (let norm in this.cache) {
-            let arr = this.cache[norm];
-            let groups = [];
-            for (let face of arr) {
-                let match = undefined;
-                // see if face matches vertices in any group
-                outer: for (let group of groups) {
-                    for (let el of group) {
-                        if (
-                            el.indexOf(face[0]) >= 0 ||
-                            el.indexOf(face[1]) >= 0 ||
-                            el.indexOf(face[2]) >= 0
-                        ) {
-                            match = group;
-                            break outer;
-                        }
-                    }
-                }
-                if (match) {
-                    match.push(face);
-                } else {
-                    groups.push([face]);
-                }
-            }
-            if (union) {
-                // convert groups of faces to contiguous polygon groups
-                groups = groups.map(group => {
-                    let parr = group.map(arr => {
-                        return newPolygon()
-                            .add(arr[0].x, arr[0].y, arr[0].z)
-                            .add(arr[1].x, arr[1].y, arr[1].z)
-                            .add(arr[2].x, arr[2].y, arr[2].z);
-                    });
-                    let union = parr.length === 1 ? parr :
-                        POLY.union(parr, 0, true, {wasm:false});
-                    union.merged = parr.length;
-                    union.face = group[0];
-                    return union;
-                });
-            }
-            out[norm] = groups;
-        }
-        // console.log(out);
-        return out;
-    }
 }

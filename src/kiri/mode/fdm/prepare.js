@@ -848,6 +848,11 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         maxFlowRate = process.outputMaxFlowrate,
         wipeDist = process.outputRetractWipe || 0,
         isBelt = device.bedBelt,
+        { fdmArcEnabled, fdmArcTolerance, fdmArcResolution } = process,
+        arcOpts = {
+            tolerance: fdmArcTolerance,
+            arcRes: fdmArcResolution
+        },
         bedOffset = originCenter ? {
             x: 0,
             y: 0,
@@ -1105,6 +1110,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
             let scarf = (slice.index > 0 && traceNo === 0 && z - startPoint?.z > 1e-3) ? scarfLength : 0;
             startPoint = print.polyPrintPath(poly, startPoint, preout, {
                 accel: finishShell,
+                arcOpts: fdmArcEnabled ? arcOpts : undefined,
                 ccw: opt.shell && process.outputAlternating && slice.index % 2,
                 coast: firstLayer ? 0 : coastDist,
                 extrude: numOrDefault(opt.extrude, shellMult),

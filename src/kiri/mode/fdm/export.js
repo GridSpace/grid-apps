@@ -57,10 +57,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         retSpeed = process.outputRetractSpeed * 60 || 1, // range
         retDwell = process.outputRetractDwell || 0, // range
         scarfZ = process.outputScarfLength ? true : false,
-        arcDist = isBelt || scarfZ ? 0 : (process.arcTolerance || 0),
-        arcRes = 20,
-        arcDev = 0.5,
-        arcMax = 40,
         originCenter = device.originCenter || bedRound,
         offset = originCenter ? {
             x: 0,
@@ -119,7 +115,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         bcos = Math.cos(Math.PI / 4),
         icos = 1 / bcos,
         inloops = 0,
-        arcQ = [],
         minz = { x: Infinity, y: Infinity, z: Infinity },
         // lenghts of each filament (by nozzle) consumed
         segments = [];
@@ -411,7 +406,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         if (!retracted) {
             return;
         }
-        drainQ();
         // console.log({engage:zhop});
         // when enabled, resume previous Z
         if (zhop && pos.z != zpos) moveTo({z:zpos}, seekMMM, "z-hop end");
@@ -445,8 +439,10 @@ export function fdm_export(print, online, ondone, ondebug) {
         moveTo(savePos, rate, comment);
     }
 
-    function moveTo(newpos, rate, comment) {
-        let o = [!rate && !newpos.e ? 'G0' : 'G1'];
+    function moveTo(newpos, rate, comment, arc) {
+        let o = arc ? 
+            [arc.clockwise ? 'G2' : 'G3'] :
+            [!rate && !newpos.e ? 'G0' : 'G1'];
         let emit = { x: false, y: false, z: false };
         if (typeof newpos.x === 'number' && newpos.x !== pos.x) {
             pos.x = newpos.x;
@@ -473,6 +469,11 @@ export function fdm_export(print, online, ondone, ondebug) {
         if (emit.x) o.append(axis.X).append(epos.x.toFixed(decimals));
         if (emit.y) o.append(axis.Y).append(epos.y.toFixed(decimals));
         if (emit.z) o.append(axis.Z).append(epos.z.toFixed(decimals));
+        if (arc) {
+            let { x, y } = arc.center;
+            o.push(' I', (x + offset.x - pos.x).toFixed(decimals));
+            o.push(' J', (y + offset.y - pos.y).toFixed(decimals));
+        }
         if (debug) {
             if (emit.x) minz.x = Math.min(minz.x, epos.x);
             if (emit.y) minz.y = Math.min(minz.y, epos.y);
@@ -608,36 +609,39 @@ export function fdm_export(print, online, ondone, ondebug) {
         // iterate through layer outputs
         for (pidx=0; pidx<path.length; pidx++) {
             out = path[pidx];
-            speedMMM = (out.speed || process.outputFeedrate) * 60; // range
+
+            let { center, emit, point, speed, type, widget } = out;
+
+            speedMMM = (speed || process.outputFeedrate) * 60; // range
             if (!isBelt) {
                 fanSpeed = out.fan ?? fanSpeed;
             }
 
             // hint to controller that we're working on a specific object
             // so that gcode between start/stop comments can be cancelled
-            if (out.widget !== cwidget) {
+            if (widget !== cwidget) {
                 if (cwidget) {
                     append(`; end object id: ${cwidget.track.grid_id}`);
                     isBambu && append('M625');
                 }
-                if (out.widget) {
-                    let off = model_labels.indexOf(out.widget.track.grid_id);
+                if (widget) {
+                    let off = model_labels.indexOf(widget.track.grid_id);
                     let b64 = encodeBitOffset(off);
-                    append(`; start object id: ${out.widget.track.grid_id}`);
+                    append(`; start object id: ${widget.track.grid_id}`);
                     isBambu && append(`M624 ${b64}`);
-                    subst.oid = out.widget.track.grid_id;
-                    subst.oname = out.widget.meta.file;
+                    subst.oid = widget.track.grid_id;
+                    subst.oname = widget.meta.file;
                 }
-                cwidget = out.widget;
+                cwidget = widget;
             }
 
             // emit comment on output type chage
-            if (last && out.type !== last.type) {
-                subst.feature = out.type;
+            if (last && type !== last.type) {
+                subst.feature = type;
                 if (gcodeFeature && gcodeFeature.length) {
                     appendAllSub(gcodeFeature);
                 } else {
-                    append(`; feature ${out.type}`);
+                    append(`; feature ${type}`);
                 }
             }
 
@@ -659,14 +663,14 @@ export function fdm_export(print, online, ondone, ondebug) {
             }
 
             // if no point in output, it's a dwell command
-            if (!out.point) {
+            if (!point) {
                 dwell(out.speed);
                 continue;
             }
 
-            let x = out.point.x + offset_x,
-                y = out.point.y + offset_y,
-                z = out.point.z;
+            let x = point.x + offset_x,
+                y = point.y + offset_y,
+                z = point.z;
 
             // adjust for inversions and origin offsets
             if (process.outputInvertX) x = -x;
@@ -676,10 +680,24 @@ export function fdm_export(print, online, ondone, ondebug) {
                 y += offset.y;
             }
 
-            dist = lastp ? lastp.distTo2D(out.point) : 0;
+            // G2,G3 arcs
+            if (center) {
+                emitMM = extrudeMM(out.distance, emitPerMM, emit);
+                moveTo({ x, y, e: emitMM }, speedMMM, 'arc', {
+                    clockwise: out.clockwise,
+                    center
+                });
+                emitted += emitMM;
+                continue;
+            } else if (emit === -1) {
+                // drop display only
+                continue;
+            }
+
+            dist = lastp ? lastp.distTo2D(point) : 0;
 
             // re-engage post-retraction before new extrusion
-            if (out.emit && retracted) {
+            if (emit && retracted) {
                 unretract();
             }
 
@@ -692,108 +710,16 @@ export function fdm_export(print, online, ondone, ondebug) {
                 lastFanSpeed = fanSpeed;
             }
 
-            if (lastp && out.emit) {
-                if (arcDist) {
-                    let rec = {e:out.emit, x, y, z, dist, emitPerMM, speedMMM};
-                    arcQ.push(rec);
-                    let deem = false; // do arcQ[0] and rec have differing emit values?
-                    let depm = false; // do arcQ[0] and rec have differing emit speeds?
-                    let desp = false; // do arcQ[0] and rec have differing move speeds?
-                    if (arcQ.length > 1) {
-                        let el = arcQ.length;
-                        deem = arcQ[0].e !== rec.e;
-                        depm = arcQ[0].emitPerMM !== rec.emitPerMM;
-                        desp = arcQ[0].speedMMM !== rec.speedMMM;
-                    }
-                    // ondebug({arcQ});
-                    if (arcQ.length > 2) {
-                        let el = arcQ.length;
-                        let e1 = arcQ[0]; // first in arcQ
-                        let e2 = arcQ[Math.floor(el/2)]; // mid in arcQ
-                        let e3 = arcQ[el-1]; // last in arcQ
-                        let e4 = arcQ[el-2]; // second last in arcQ
-                        let e5 = arcQ[el-3]; // third last in arcQ
-                        let cc = util.center2d(e1, e2, e3, 1); // find center
-                        let lr = util.center2d(e3, e4, e5, 1); // find local radius
-                        let dc = 0;
-
-                        let radFault = false;
-                        if (lr) {
-                            let angle = 2 * Math.asin(dist/(2*lr.r));
-                            radFault = Math.abs(angle) > Math.PI * 2 / arcRes; // enforce arcRes(olution)
-                            // if (arcQ.center) {
-                            //     arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
-                            //     let avg = arcQ.rSum / arcQ.center.length;
-                            //     radFault = radFault || Math.abs(avg - lr.r) / avg > arcDev; // eliminate sharps and flats when local rad is out of arcDev(iation)
-                            // }
-                        } else {
-                            radFault = true;
-                        }
-
-                        if (cc) {
-                            if ([cc.x,cc.y,cc.z,cc.r].hasNaN()) {
-                                console.log({cc, e1, e2, e3});
-                            }
-                            if (arcQ.length === 3) {
-                                arcQ.center = [ cc ];
-                                arcQ.xSum = cc.x;
-                                arcQ.ySum = cc.y;
-                                arcQ.rSum = cc.r;
-                            } else {
-                                // check center point delta
-                                arcQ.xSum = arcQ.center.reduce( function (t, v) { return t + v.x }, 0 );
-                                arcQ.ySum = arcQ.center.reduce( function (t, v) { return t + v.y }, 0 );
-                                arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
-                                let dx = cc.x - arcQ.xSum / arcQ.center.length;
-                                let dy = cc.y - arcQ.ySum / arcQ.center.length;
-                                dc = Math.sqrt(dx * dx + dy * dy);
-                            }
-
-                            // if new point is off the arc
-                            if (deem || depm || desp || dc * arcQ.center.length / arcQ.rSum > arcDist || dist > cc.r || cc.r > arcMax || radFault || !arcValid()) {
-                                // let debug = [deem, depm, desp, dc * arcQ.center.length / arcQ.rSum > arcDist, dist > cc.r, cc.r > arcMax, radFault];
-                                if (arcQ.length === 4) {
-                                    // not enough points for an arc, drop first point and recalc center
-                                    emitQrec(arcQ.shift());
-                                    let tc = util.center2d(arcQ[0], arcQ[1], arcQ[2], 1);
-                                    // the new center is invalid as well. drop the first point
-                                    if (!tc) {
-                                        emitQrec(arcQ.shift());
-                                    } else {
-                                        arcQ.center = [ tc ];
-                                        let angle = 2 * Math.asin(arcQ[1].dist/(2*tc.r));
-                                        if (Math.abs(angle) > Math.PI * 2 / arcRes) { // enforce arcRes on initial angle
-                                            emitQrec(arcQ.shift());
-                                        }
-                                    }
-                                } else {
-                                    // enough to consider an arc, emit and start new arc
-                                    let defer = arcQ.pop();
-                                    drainQ();
-                                    // re-add point that was off the last arc
-                                    arcQ.push(defer);
-                                }
-                            } else {
-                                // new point is on the arc
-                                arcQ.center.push(cc);
-                            }
-                        } else {
-                            // drainQ on invalid center
-                            drainQ();
-                        }
-                    }
+            if (lastp && emit) {
+                // emitMM = emitPerMM * emit * dist;
+                emitMM = extrudeMM(dist, emitPerMM, emit);
+                if (scarfZ) {
+                    moveTo({x, y, z:z + path.height/2, e:emitMM}, speedMMM);
                 } else {
-                    // emitMM = emitPerMM * out.emit * dist;
-                    emitMM = extrudeMM(dist, emitPerMM, out.emit);
-                    if (scarfZ) {
-                        moveTo({x, y, z:z + path.height/2, e:emitMM}, speedMMM);
-                    } else {
-                        moveTo({x, y, e:emitMM}, speedMMM);
-                    }
-                    emitted += emitMM;
+                    moveTo({x, y, e:emitMM}, speedMMM);
                 }
+                emitted += emitMM;
             } else {
-                drainQ();
                 if (scarfZ) {
                     moveTo({x, y, z:z + path.height/2}, speedMMM);
                 } else {
@@ -808,7 +734,6 @@ export function fdm_export(print, online, ondone, ondebug) {
 
             // retract filament if point retract flag set
             if (out.retract) {
-                drainQ();
                 retract(zhop);
             }
 
@@ -829,8 +754,8 @@ export function fdm_export(print, online, ondone, ondebug) {
                 lastProgress = progress;
             }
 
-            lastp = out.point;
-            laste = out.emit;
+            lastp = point;
+            laste = emit;
         }
         layer++;
         if (cwidget) {
@@ -843,7 +768,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         while (endloop-- > 0) {
             append(`M808`);
         }
-        drainQ();
 
         print.total_time -= path.print_time;
         subst.remain_time = Math.ceil(print.total_time / 60);
@@ -854,126 +778,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         emitMM = extrudeMM(dist, emitPerMM, e);
         moveTo({x:x, y:y, e:emitMM}, speedMMM);
         emitted += emitMM;
-    }
-
-    function drainQ() {
-        if (!arcDist) {
-            return;
-        }
-        if (arcQ.length > 4) {
-            // ondebug({arcQ});
-            let vec1 = new THREE.Vector2(arcQ[1].x - arcQ[0].x, arcQ[1].y - arcQ[0].y);
-            let vec2 = new THREE.Vector2(arcQ.center[0].x - arcQ[0].x, arcQ.center[0].y - arcQ[0].y);
-            let gc = vec1.cross(vec2) < 0 ? 'G2' : 'G3';
-            let from = arcQ[0];
-            let to = arcQ.peek();
-            arcQ.xSum = arcQ.center.reduce( function (t, v) { return t + v.x }, 0 );
-            arcQ.ySum = arcQ.center.reduce( function (t, v) { return t + v.y }, 0 );
-            arcQ.rSum = arcQ.center.reduce( function (t, v) { return t + v.r }, 0 );
-            let cl = arcQ.center.length;
-            let cc;
-
-            let angle = util.thetaDiff(
-                Math.atan2((from.y - arcQ.ySum / cl), (from.x - arcQ.xSum / cl)),
-                Math.atan2((to.y - arcQ.ySum / cl), (to.x - arcQ.xSum / cl)),
-                gc === "G2"
-            );
-
-            if (Math.abs(angle) <= 3 * Math.PI / 4) {
-                cc = util.center2pr(from, to, arcQ.rSum / cl, gc === "G3");
-            }
-
-            if (!cc) {
-                cc = {x:arcQ.xSum/cl, y:arcQ.ySum/cl, z:arcQ[0].z, r:arcQ.rSum/cl};
-            }
-
-            // first arc point
-            emitQrec(from);
-            // console.log(arcQ.slice(), arcQ.center);
-            // console.log({first: from, last: arcQ.peek(), center: cc});
-            // rest of arc to final point
-            let dist = arcQ.slice(1).map(v => v.dist).reduce((a,v) => a+v);
-            let emit = from.e;//arcQ.slice(1).map(v => v.e).reduce((a,v) => a+v);
-            emit = (from.emitPerMM * emit * dist);
-            outputLength += emit;
-            emitted += emit;
-            if (extrudeAbs) {
-                emit = outputLength;
-            }
-            // XYR form
-            // let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} R${cc.r.toFixed(decimals)} E${emit.toFixed(decimals)}`;
-            // XYIJ form
-            let pre = `${gc} X${to.x.toFixed(decimals)} Y${to.y.toFixed(decimals)} I${(cc.x - pos.x).toFixed(decimals)} J${(cc.y - pos.y).toFixed(decimals)} E${emit.toFixed(decimals)}`;
-            let add = pos.f !== from.speedMMM ? ` E${from.speedMMM}` : '';
-            append(`${pre}${add} ; merged=${cl-1} len=${dist.toFixed(decimals)} cp=${cc.x.round(2)},${cc.y.round(2)}`);
-            pos.x = to.x;
-            pos.y = to.y;
-            pos.z = to.z;
-        } else {
-            for (let rec of arcQ) {
-                emitQrec(rec);
-            }
-        }
-        arcQ.length = 0;
-        arcQ.center = undefined;
-    }
-
-    // comprehensive arc validator
-    function arcValid() {
-        if (arcQ.length < 3) {
-            return false;
-        }
-
-        let globalCenters = []; // see how a point first the curve within the context of the arc's end points.
-
-        for (let i = 0; i < arcQ.length - 2; i++) {
-            let cc = util.center2d(arcQ[0], arcQ[i+1], arcQ[arcQ.length - 1], 1);
-            if (!cc) {
-                return false;
-            }
-            globalCenters.push(cc);
-        }
-
-        let ac = { // average center
-            x:globalCenters.reduce( (t,v) =>  t + v.x , 0) / (globalCenters.length),
-            y:globalCenters.reduce( (t,v) =>  t + v.y , 0) / (globalCenters.length),
-            z:globalCenters.reduce( (t,v) =>  t + v.z , 0) / (globalCenters.length),
-            r:globalCenters.reduce( (t,v) =>  t + v.r , 0) / (globalCenters.length)
-        };
-
-        // make sure centers are within specified tolerance
-        for (let cc of globalCenters) {
-            let dc = Math.sqrt(Math.pow(cc.x - ac.x, 2) + Math.pow(cc.y - ac.y, 2));
-            if (dc / ac.r > arcDist) {
-                return false;
-            }
-        }
-
-        // make sure radii are within specified tolerance
-        for (let point of arcQ) {
-            let rad = Math.sqrt(Math.pow(point.x - ac.x, 2) + Math.pow(point.y - ac.y, 2));
-            if (Math.abs(rad - ac.r) > ac.r * arcDist) {
-                return false;
-            }
-        }
-
-        // enforce arcRes(olution)
-        for (let i = 1; i < arcQ.length; i++) {
-            let angle = 2 * Math.asin(arcQ[i].dist/(2*ac.r));
-            if (Math.abs(angle) > Math.PI * 2 / arcRes) {
-                return false;
-            }
-        }
-
-        // check points in the context of neighbors
-        for (let i = 0; i < arcQ.length - 2; i++) {
-            let cc = util.center2d(arcQ[i], arcQ[i+1], arcQ[i+2], 1);
-            if (!cc || Math.abs((cc.r - ac.r) / cc.r) > arcDev) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     if (inloops) {

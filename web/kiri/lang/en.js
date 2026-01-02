@@ -902,8 +902,6 @@ self.lang['en-us'] = {
     ad_scar_l:      ["ease up length for scarf joint. disables arc detection","0 = disabled"],
     ad_spol_s:      "short path",
     ad_spol_l:      ["polygons shorter than this","will have their print speed","scaled down to min speed","in millimeters"],
-    ad_arct_s:      "arc tolerance",
-    ad_arct_l:      ["convert faceted lines to arcs","center point drift tolerance","when matching arc points","consider values around 0.15","value in millimeters","0 or scarf disables this"],
     ad_zhop_s:      "z hop distance",
     ad_zhop_l:      ["amount to raise z","on retraction moves","in millimeters","0 to disable"],
     ad_abkl_s:      "anti-backlash",

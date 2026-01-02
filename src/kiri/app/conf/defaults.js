@@ -261,7 +261,9 @@ export const conf = {
             // process defaults FDM:Process
             p:{
                 antiBacklash: 0,
-                arcTolerance: 0,
+                fdmArcEnabled: false,
+                fdmArcResolution: 1,
+                fdmArcTolerance: 0.005,
                 firstLayerBedTemp: 0,
                 firstLayerBeltBump: 0,
                 firstLayerBeltLead: 3,

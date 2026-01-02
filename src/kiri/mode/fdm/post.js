@@ -145,6 +145,7 @@ function offset_default(params) {
         return { last, gaps };
     }
 
+    // basic thin wall testing
     const deltaBig = 160;
     const deltaSmall = 20;
 
