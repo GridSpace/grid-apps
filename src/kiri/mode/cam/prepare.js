@@ -131,6 +131,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         lastTravelBounds,
         newOutput = print.output || [],
         nextIsMove = true,
+        nextIsNewOp = false,
         plungeRate = camFastFeedZ,
         printPoint,
         tool,
@@ -354,6 +355,10 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         nextIsMove = true;
     }
 
+    function setChangeOp() {
+        nextIsNewOp = true;
+    }
+
     /**
      * Move a point by the widget's movement offset.
      * @param {Point} p - point to move
@@ -475,11 +480,12 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         // 1. move to safe z of current point preserving angle
         // 2. move to safe z of new point preserving old angle
         // 3. move to safe z of new point with new angle
-        if (lop !== currentOp) {
+        if (nextIsNewOp || lop !== currentOp) {
             layerPush(printPoint.clone().setZ(zSafe).setA(printPoint.a), 0, feedRate, tool);
             layerPush(point.clone().setZ(zSafe).setA(printPoint.a), 0, feedRate, tool);
             layerPush(point.clone().setZ(zSafe), 0, feedRate, tool);
             newLayer();
+            nextIsNewOp = false;
         }
 
         // consume forced next move flag and convert to move
@@ -965,6 +971,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         poly2polyEmit,
         polyEmit,
         printPoint,
+        setChangeOp,
         setContouring,
         setDrill,
         setLasering,

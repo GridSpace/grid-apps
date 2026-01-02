@@ -106,10 +106,12 @@ class OpRough extends CamOp {
             await op.slice(progress);
         }
     }
-
+s
     async prepare(ops, progress) {
+        let { setChangeOp } = ops;
         for (let op of this.ops_list) {
             await op.prepare(ops, progress);
+            setChangeOp();
         }
     }
 }
