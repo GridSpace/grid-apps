@@ -125,6 +125,7 @@ function updateAxisMode(refresh) {
     const showNonIndexed = env.isIndexed ? 'none' : '';
     $('cam-index').style.display = showIndexed;
     $('cam-lathe').style.display = showIndexed;
+    $('cam-loop').style.display = showIndexed;
     $('cam-flip').style.display = showNonIndexed;
     $('cam-reg').style.display = showNonIndexed;
     if (!changed) {
