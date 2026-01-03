@@ -95,7 +95,8 @@ function updateIndex() {
             if (op.absolute) {
                 index = op.degrees
             } else {
-                index += op.degrees;
+                let numloop = op._numloop ?? 1;
+                index += (op.degrees * numloop);
             }
         }
     }
@@ -288,6 +289,8 @@ export function opRender() {
     let bind = {};
     let scale = api.view.unit_scale();
     let notime = false;
+    let inloop = 0;
+    let numloop;
     oplist.forEach((rec, i) => {
         let title = '';
         let clock = rec.type === '|';
@@ -300,22 +303,12 @@ export function opRender() {
             label = `loop ${rec.repeat || 2}x`;
             clazz.push('loop');
             title = ` title="loop: repeat next ${rec.count || 1} operation(s) ${rec.repeat || 2} time(s)"`;
-        }
-
-        // Check if this operation is within N operations after a loop
-        let inLoopRange = false;
-        for (let j = i - 1; j >= 0; j--) {
-            if (oplist[j].type === 'loop') {
-                let loopCount = oplist[j].count || 1;
-                let distanceFromLoop = i - j;
-                if (distanceFromLoop <= loopCount && distanceFromLoop > 0) {
-                    inLoopRange = true;
-                    break;
-                }
-            }
-        }
-        if (inLoopRange) {
+            inloop = rec.count;
+            numloop = rec.repeat;
+        } else if (inloop && !clock) {
             clazz.push('in-loop');
+            rec._numloop = numloop;
+            inloop--;
         }
 
         let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
@@ -375,7 +368,8 @@ export function opRender() {
         let popped = false;
         let poprec = env.popOp[rec.type];
         if (type === 'index' && indexing && !rec.disabled) {
-            index = rec.absolute ? rec.degrees : index + rec.degrees;
+            let numloop = rec._numloop ?? 1;
+            index = rec.absolute ? rec.degrees : index + (rec.degrees * numloop);
         }
         el.rec = rec;
         el.unpop = () => {

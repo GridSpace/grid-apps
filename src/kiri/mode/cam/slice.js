@@ -309,6 +309,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         opList.push(new OPS.xray(state, { type: "xray" }));
     }
 
+    // find index ops
     let activeOps = proc.ops.filter(op => !op.disabled);
 
     if (isIndexed) {
@@ -326,45 +327,27 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
 
     // LOOP EXPANSION - duplicate next N operations M times
     let expandedOps = [];
-    let i = 0;
 
-    while (i < activeOps.length) {
+    for (let i=0; i<activeOps.length; i++) {
         let op = activeOps[i];
-
         if (op.type === 'loop') {
-            let repeatCount = op.repeat || 2;  // M times
-            let opCount = op.count || 1;       // N operations
-
-            // Validate we have enough operations
-            if (i + opCount >= activeOps.length) {
-                return error(`Loop operation requires ${opCount} following operation(s), but only ${activeOps.length - i - 1} available`);
+            let { count, repeat } = op;
+            let remain = activeOps.slice(i+1).filter(op => op.type !== '|');
+            if (remain < count) {
+                return error(`Loop operation requires ${count} following operation(s), but only ${remain.length - i - 1} available`);
             }
-
-            // Extract next N operations
-            let loopOps = activeOps.slice(i + 1, i + 1 + opCount);
-
-            // Check for nested loops
-            for (let loopOp of loopOps) {
-                if (loopOp.type === 'loop') {
-                    return error("Nested loops are not supported");
+            for (let r=1; r<repeat; r++)
+                for (let c=0; c<count; c++) {
+                    let dup = remain[c];
+                    if (dup.type === 'loop') {
+                        return error("Nested loops are not supported");
+                    }
+                    expandedOps.push(dup);
                 }
-            }
-
-            // Duplicate operations M times
-            for (let r = 0; r < repeatCount; r++) {
-                for (let loopOp of loopOps) {
-                    let clonedOp = Object.clone(loopOp);
-                    expandedOps.push(clonedOp);
-                }
-            }
-
-            // Skip the loop operation itself and the N operations
-            i += 1 + opCount;
         } else if (op.type === '|') {
-            break; // Clock operation
+            break;
         } else {
             expandedOps.push(op);
-            i++;
         }
     }
 
