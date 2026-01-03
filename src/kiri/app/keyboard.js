@@ -262,6 +262,10 @@ class KeyboardControl {
             }
         }
 
+        let api = this.#api;
+        let isWireframe = api.local.getBoolean('model.wireframe');
+        let isGhost = api.local.getFloat('model.wireframe.opacity') < 1;
+
         switch (evt.keyCode) {
             case this.#cca('`'): this.#api.show.slices(0); break;
             case this.#cca('0'): {
@@ -398,10 +402,18 @@ class KeyboardControl {
                 }
                 break;
             case this.#cca('w'): // set ghost
-                $('render-ghost').onclick();
+                if (isGhost && !isWireframe) {
+                    $('render-solid').onclick();
+                } else {
+                    $('render-ghost').onclick();
+                }
                 break;
             case this.#cca('W'): // set wireframe
-                $('render-wire').onclick();
+                if (isWireframe) {
+                    $('render-solid').onclick();
+                } else {
+                    $('render-wire').onclick();
+                }
                 break;
             default:
                 this.#onUnhandledKey(evt);
