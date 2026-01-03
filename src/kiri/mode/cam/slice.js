@@ -324,6 +324,52 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         opTot += opList.peek().weight();
     }
 
+    // LOOP EXPANSION - duplicate next N operations M times
+    let expandedOps = [];
+    let i = 0;
+
+    while (i < activeOps.length) {
+        let op = activeOps[i];
+
+        if (op.type === 'loop') {
+            let repeatCount = op.repeat || 2;  // M times
+            let opCount = op.count || 1;       // N operations
+
+            // Validate we have enough operations
+            if (i + opCount >= activeOps.length) {
+                return error(`Loop operation requires ${opCount} following operation(s), but only ${activeOps.length - i - 1} available`);
+            }
+
+            // Extract next N operations
+            let loopOps = activeOps.slice(i + 1, i + 1 + opCount);
+
+            // Check for nested loops
+            for (let loopOp of loopOps) {
+                if (loopOp.type === 'loop') {
+                    return error("Nested loops are not supported");
+                }
+            }
+
+            // Duplicate operations M times
+            for (let r = 0; r < repeatCount; r++) {
+                for (let loopOp of loopOps) {
+                    let clonedOp = Object.clone(loopOp);
+                    expandedOps.push(clonedOp);
+                }
+            }
+
+            // Skip the loop operation itself and the N operations
+            i += 1 + opCount;
+        } else if (op.type === '|') {
+            break; // Clock operation
+        } else {
+            expandedOps.push(op);
+            i++;
+        }
+    }
+
+    activeOps = expandedOps;
+
     // determine # of steps and step weighting for progress bar
     for (let op of activeOps) {
         if (op.type === '|') {

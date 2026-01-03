@@ -165,6 +165,10 @@ const opAddLevel = () => {
     opAdd(env.popOp.level.new());
 };
 
+const opAddLoop = () => {
+    opAdd(env.popOp.loop.new());
+};
+
 const opAddRough = () => {
     opAdd(env.popOp.rough.new());
 };
@@ -287,8 +291,33 @@ export function opRender() {
     oplist.forEach((rec, i) => {
         let title = '';
         let clock = rec.type === '|';
+        let isLoop = rec.type === 'loop';
         let label = clock ? `` : (rec.mode ? rec.type + ' ' + rec.mode : rec.type);
         let clazz = notime ? ["draggable", "notime"] : ["draggable"];
+
+        // Loop operation label and styling
+        if (isLoop) {
+            label = `loop ${rec.repeat || 2}x`;
+            clazz.push('loop');
+            title = ` title="loop: repeat next ${rec.count || 1} operation(s) ${rec.repeat || 2} time(s)"`;
+        }
+
+        // Check if this operation is within N operations after a loop
+        let inLoopRange = false;
+        for (let j = i - 1; j >= 0; j--) {
+            if (oplist[j].type === 'loop') {
+                let loopCount = oplist[j].count || 1;
+                let distanceFromLoop = i - j;
+                if (distanceFromLoop <= loopCount && distanceFromLoop > 0) {
+                    inLoopRange = true;
+                    break;
+                }
+            }
+        }
+        if (inLoopRange) {
+            clazz.push('in-loop');
+        }
+
         let notable = rec.note ? rec.note.split(' ').filter(v => v.charAt(0) === '#') : undefined;
         if (clock) { clazz.push('clock'); title = ` title="end of ops chain\ndrag/drop like an op\nops after this are disabled"` }
         if (notable?.length) {
@@ -755,6 +784,7 @@ export function init() {
             case "laser off": return opAddLaserOff();
             case "gcode": return opAddGCode();
             case "level": return opAddLevel();
+            case "loop": return opAddLoop();
             case "rough": return opAddRough();
             case "outline": return opAddOutline();
             case "contour":

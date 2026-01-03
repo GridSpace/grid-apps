@@ -1448,6 +1448,21 @@ details[open] summary::after {
 #oplist .clock:hover {
     background-color: var(--blue-2);
 }
+#oplist .loop:hover {
+    background-color: rgba(100, 150, 255, 0.35);
+}
+#oplist .in-loop {
+    margin-left: 10px;
+}
+#oplist .in-loop::before {
+    content: "";
+    border: 1px solid var(--blue-2);
+    border-radius: 3px;
+    width: 2px;
+    height: 80%;
+    position: absolute;
+    left: -10px;
+}
 #oplist > div {
     padding: 4px 20px 4px 7px !important;
 }

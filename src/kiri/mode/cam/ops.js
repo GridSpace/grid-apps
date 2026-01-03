@@ -11,6 +11,7 @@ import { OpLaserOff } from './op-laser-off.js';
 import { OpLaserOn } from './op-laser-on.js';
 import { OpLathe } from './op-lathe.js';
 import { OpLevel } from './op-level.js';
+import { OpLoop } from './op-loop.js';
 import { OpOutline } from './op-outline.js';
 import { OpPocket } from './op-pocket.js';
 import { OpRegister } from './op-register.js';
@@ -31,6 +32,7 @@ export const ops = {
     "laser on":  OpLaserOn,
     "lathe":     OpLathe,
     "level":     OpLevel,
+    "loop":      OpLoop,
     "outline":   OpOutline,
     "pocket":    OpPocket,
     "register":  OpRegister,

@@ -794,6 +794,9 @@ function newInput(label, opt = {}) {
             if (opt.trigger) {
                 refresh(opt.trigger === 1 || opt.trigger === true);
             }
+            if (opt.post) {
+                opt.post();
+            }
         });
         if (opt.units) {
             addUnits(ip, opt.round || 3);

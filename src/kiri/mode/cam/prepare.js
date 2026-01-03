@@ -990,6 +990,10 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
     // pre-flight check of ops
     for (let op of widget.camops) {
+        // Skip loop operations (they're expanded during slice)
+        if (op.op.type === 'loop') {
+            continue;
+        }
         opTot += op.weight();
         // ensure tool related parameters are available
         // for the first index call when no tool is specified
@@ -999,6 +1003,10 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     }
 
     for (let op of widget.camops) {
+        // Skip loop operations (they're expanded during slice)
+        if (op.op.type === 'loop') {
+            continue;
+        }
         contouring = false;
         lasering = false;
         let cop = currentOp = op.op;

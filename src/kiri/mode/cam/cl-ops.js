@@ -661,6 +661,14 @@ export function createPopOps() {
 
     createPopOp('|', {}).inputs = {};
 
+    createPopOp('loop', {
+        repeat: 2,
+        count: 1
+    }).inputs = {
+        repeat: UC.newInput('repeat', { title: "repeat count", convert: toInt, bound: UC.bound(1, 100), post: opRender }),
+        count: UC.newInput('operations', { title: "num operations", convert: toInt, bound: UC.bound(1, 20), post: opRender })
+    };
+
     function isClear() {
         return env.poppedRec.mode === 'clear';
     }
