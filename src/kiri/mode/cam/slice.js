@@ -11,6 +11,13 @@ import { Slicer as cam_slicer } from './slicer_cam.js';
 import { Tool } from './tool.js';
 import { util } from '../../../geo/base.js';
 
+// state shared across all widget slicing
+let shared;
+
+export function cam_slice_pre(settings) {
+    shared = { ops: { } };
+}
+
 /**
  * DRIVER SLICE CONTRACT
  *
@@ -306,7 +313,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     if (false) {
-        opList.push(new OPS.xray(state, { type: "xray" }));
+        opList.push({ op: new OPS.xray(state, { type: "xray" }) });
     }
 
     // find index ops
@@ -315,14 +322,14 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     if (isIndexed) {
         // preface op list with OpIndex
         if (activeOps.length === 0 || activeOps[0].type !== 'index') {
-            opList.push(new OPS.index(state, { type: "index", degrees: 0, absolute: true }));
-            opTot += opList.peek().weight();
+            opList.push({ op: new OPS.index(state, { type: "index", degrees: 0, absolute: true }) });
+            opTot += opList.peek().op.weight();
 
         }
     } else {
         // preface op list with OpShadow
-        opList.push(new OPS.shadow(state, { type: "shadow", silent: true }));
-        opTot += opList.peek().weight();
+        opList.push({ op: new OPS.shadow(state, { type: "shadow", silent: true }) });
+        opTot += opList.peek().op.weight();
     }
 
     // LOOP EXPANSION - duplicate next N operations M times
@@ -354,6 +361,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     activeOps = expandedOps;
 
     // determine # of steps and step weighting for progress bar
+    let opos = 0;
     for (let op of activeOps) {
         if (op.type === '|') {
             break;
@@ -361,15 +369,20 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         let opfn = OPS[op.type];
         if (opfn) {
             let opin = new opfn(state, op);
-            opList.push(opin);
             opTot += opin.weight();
+            opos++;
+            let share = shared.ops[opos];
+            if (!share) {
+                share = shared.ops[opos] =  {};
+            }
+            opList.push({ op: opin, share });
         }
     }
 
     // call slice() function on all ops in order
     await setAxisIndex();
     updateSlicer();
-    for (let op of opList) {
+    for (let { op, share } of opList) {
         let weight = op.weight();
         // apply operation override vars
         let workover = var_compute();
@@ -392,6 +405,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         let layername = named.length ? named : (note ? `${type} (${note})` : type);
         Object.assign(state, {
             layername,
+            share,
             stock,
             tool,
             zBottom,

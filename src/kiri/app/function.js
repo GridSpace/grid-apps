@@ -137,6 +137,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         client.rotate(settings);
     }
 
+    function sliceSetup() {
+        client.slicePre(settings, sliceNext);
+    }
+
     function sliceNext() {
         if (toSlice.length) {
             // while more widgets to slice
@@ -309,8 +313,9 @@ function prepareSlices(callback, scale = 1, offset = 0) {
         space.refresh();
     }
 
-    // kick off slicing chain
-    sliceNext();
+    // do any global setup / state management
+    // then kick off slicing chain
+    sliceSetup();
 }
 
 /**

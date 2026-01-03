@@ -420,6 +420,18 @@ const dispatch = {
         send.done({});
     },
 
+    slicePre(data, send) {
+        const { settings } = data;
+        const { mode } = settings;
+        const driver = drivers[mode];
+
+        if (driver.slicePre) {
+            driver.slicePre(settings);
+        }
+
+        send.done();
+    },
+
     slice(data, send) {
         send.data({ update:0.001, updateStatus:"slicing" });
 

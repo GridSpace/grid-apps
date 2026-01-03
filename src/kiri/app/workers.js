@@ -211,6 +211,13 @@ export const client = {
         });
     },
 
+
+    // called once at the beginning of slice operations
+    // setup any global shared state
+    slicePre(settings, callback) {
+        send("slicePre", { settings }, callback);
+    },
+
     // called once for each widget
     slice(settings, widget, callback) {
         send("slice", {

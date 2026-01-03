@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { codec } from '../../core/codec.js';
-import { cam_slice, holes, traces } from './slice.js';
+import { cam_slice_pre, cam_slice, holes, traces } from './slice.js';
 import { cam_prepare } from './prepare.js';
 import { cam_export } from './export.js';
 import { tool as mesh_tool } from '../../../mesh/tool.js';
@@ -114,6 +114,7 @@ export const CAM = {
     init,
     surface_prep,
     surface_find,
+    slicePre: cam_slice_pre,
     slice: cam_slice,
     prepare: cam_prepare,
     export: cam_export

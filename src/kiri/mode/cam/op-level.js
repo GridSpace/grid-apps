@@ -14,9 +14,11 @@ class OpLevel extends CamOp {
 
     async slice(progress) {
         let { op, state } = this;
-        let { addSlices, color, settings, shadow, updateToolDiams, zMax, ztOff } = state;
+        let { addSlices, color, settings, shadow } = state;
+        let { share, updateToolDiams, zMax, ztOff } = state;
         let { down, tool, step, stepz, inset } = op;
         let { stock } = settings;
+        let { center } = stock;
 
         let toolDiam = new Tool(settings, tool).fluteDiameter();
         let stepOver = this.stepOver = toolDiam * step;
@@ -25,11 +27,23 @@ class OpLevel extends CamOp {
         let zBot = zTop - down;
         let zList = stepz && down ? util.lerp(zTop, zBot, stepz) : [ zBot ];
 
+        if (share.ran) {
+            console.log('skip');
+            this.skip = true;
+            return;
+        } else if (op.stock) {
+            share.ran = true;
+        }
+
         updateToolDiams(toolDiam);
 
         let points = [];
         let clear = op.stock ?
-            [ newPolygon().centerRectangle({x:-wpos.x,y:-wpos.y,z:wpos.z}, stock.x + toolDiam/2, stock.y) ] :
+            [ newPolygon().centerRectangle({
+                x: -wpos.x + center.x,
+                y: -wpos.y + center.y,
+                z:  wpos.z + center.z
+            }, stock.x + toolDiam/2, stock.y) ] :
             POLY.outer(POLY.offset(shadow.base, toolDiam * (inset || 0)));
 
         POLY.fillArea(clear, 1090, stepOver, points);
@@ -50,9 +64,13 @@ class OpLevel extends CamOp {
     }
 
     prepare(ops, progress) {
-        let { layers, stepOver } = this;
+        let { layers, skip, stepOver } = this;
         let { printPoint } = ops;
         let { newLayer, tip2tipEmit, camOut } = ops;
+
+        if (skip) {
+            return;
+        }
 
         for (let lines of layers) {
             lines = lines.map(p => { return { first: p.first(), last: p.last(), poly: p } });
