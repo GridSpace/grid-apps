@@ -356,6 +356,9 @@ export function opRender() {
         if (!env.isIndexed && type === 'lathe') {
             rec.disabled = true;
         }
+        if (!env.isIndexed && (type === 'loop' || rec._numloop)) {
+            rec.disabled = true;
+        }
         if (!hasSharedArrays && (type === 'contour' || type === 'lathe')) {
             rec.disabled = true;
         }
