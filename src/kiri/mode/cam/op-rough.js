@@ -102,15 +102,24 @@ class OpRough extends CamOp {
             }));
         }
 
-        for (let op of this.ops_list) {
-            await op.slice(progress);
+        let len = ops_list.length;
+        let per = 1 / len;
+        let bas = 0;
+        for (let op of ops_list) {
+            await op.slice(pct => progress(bas + pct * per));
+            bas += per;
         }
     }
-s
+
     async prepare(ops, progress) {
+        let { ops_list } = this;
         let { setChangeOp } = ops;
-        for (let op of this.ops_list) {
-            await op.prepare(ops, progress);
+        let len = ops_list.length;
+        let per = 1 / len;
+        let bas = 0;
+        for (let op of ops_list) {
+            await op.prepare(ops, pct => progress(bas + pct * per));
+            bas += per;
             setChangeOp();
         }
     }

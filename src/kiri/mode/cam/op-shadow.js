@@ -27,6 +27,7 @@ class OpShadow extends CamOp {
 
     async slice(progress) {
         let state = this.state;
+
         let { addSlices, settings, shadowAt, unsafe, widget, workarea } = state;
         let { devel } = settings.controller;
 
@@ -36,12 +37,10 @@ class OpShadow extends CamOp {
         let skipTerrain = unsafe;
         let terrain = [];
         let tzindex = [];
-        let { bottom_z, top_z } = workarea;
 
         let minZ = Math.floor(bounds.min.z);
         let maxZ = Math.floor(bounds.max.z);
         for (let z = maxZ; z >= minZ; z--) {
-            // if (z <= top_z && z >= bottom_z)
             tzindex.push(z);
         }
 

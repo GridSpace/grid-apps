@@ -13,14 +13,30 @@ export class OpIndex extends CamOp {
 
     async slice() {
         let { op, state } = this;
+
         if (!state.isIndexed) {
             throw 'index op requires indexed stock';
         }
-        let { widget, updateSlicer, computeShadows, setAxisIndex } = state;
-        this.degrees = await setAxisIndex(op.degrees, op.absolute);
+
+        let { lastAxisIndex, widget, updateSlicer, computeShadows, setAxisIndex } = state;
+        let { degrees, absolute } = op;
+
+        if (absolute && lastAxisIndex === degrees) {
+            return console.log('skip redundant absolute index');
+        } else if (!absolute && degrees === 0) {
+            return console.log('skip redundant relative index');
+        }
+
+        this.degrees = await setAxisIndex(degrees, absolute);
+        state.lastAxisIndex = this.degrees;
+
         // force recompute of topo
         widget.topo = undefined;
+
+        // update slicer for new widget geometry
         updateSlicer();
+
+        // recompute shadow from new widget geometry
         await computeShadows();
     }
 

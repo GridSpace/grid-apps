@@ -55,7 +55,8 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     let proc = settings.process,
         camOps = widget.camops = [],
         sliceAll = widget.slices = [],
-        isIndexed = proc.camStockIndexed;
+        isIndexed = proc.camStockIndexed,
+        lastTime = Date.now();
 
     let axisRotation, axisIndex,
         bounds, dark, color, stock, tabs, track, tool, unsafe, units, workarea,
@@ -241,6 +242,17 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         }
     }
 
+    function updateProgress(percent, message) {
+        const mark = Date.now();
+        if (false) console.log({
+            time: ((mark - lastTime)/1000).toFixed(2),
+            pct: ((percent ?? 0) * 100).toFixed(2),
+            msg: message
+        });
+        onupdate(percent, message);
+        lastTime = mark;
+    }
+
     function newSlicer(opts) {
         return new cam_slicer(widget, opts);
     }
@@ -250,9 +262,11 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
     }
 
     async function computeShadows() {
+        console.time('computeShadows');
         await new OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
             // console.log('reshadowing', progress.round(3));
         });
+        console.timeEnd('computeShadows');
     }
 
     function setToolDiam(toolDiam) {
@@ -379,6 +393,11 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         }
     }
 
+    // drop last op if it's type index
+    if (opList.peek().op.op.type === 'index') {
+        opList.pop();
+    }
+
     // call slice() function on all ops in order
     await setAxisIndex();
     updateSlicer();
@@ -416,7 +435,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         });
         let operr;
         await op.slice((progress, message) => {
-            onupdate((opSum + (progress * weight)) / opTot, message || op.type());
+            updateProgress((opSum + (progress * weight)) / opTot, message || op.type());
         }).catch(e => {
             operr = e;
             console.trace(e);
