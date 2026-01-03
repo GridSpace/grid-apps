@@ -395,7 +395,7 @@ class OpArea extends CamOp {
                     paths,
                     step: toolOver / 2,
                     zFloor: zBottom - 1,
-                    onProgress(pct) { console.log({ pct }); onupdate(pct/100, 100) }
+                    onProgress: pct => progress(proc + (pinc * (pct/100)))
                 });
                 raster.terminate();
 
@@ -414,6 +414,9 @@ class OpArea extends CamOp {
 
                 // output this surface
                 surfaces.push(surface);
+
+                proc += pinc;
+                progress(proc);
             }
         }
         // filter out empty slices
