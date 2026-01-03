@@ -725,6 +725,8 @@ self.lang['en-us'] = {
     ca_altr_l:      "alternate direction of travel lines (zigzag)",
     ca_sang_s:      "step angle",
     ca_sang_l:      "crossing angle on the XY plane for contour lines",
+    ca_wall_s:      "walls",
+    ca_wall_l:      ["perform a single pass along vertical faces. leave interior spaces. similar to outline operation"],
 
     // OUTPUT
     ou_menu:        "output",
