@@ -166,7 +166,7 @@ export const api = {
         emit(t,m,o) { return EVENT.publish(t,m,o) },
         import() { api.ui.load.click() },
         listeners(topic) { return EVENT.targets(topic) },
-        on(t,l) { return EVENT.on(t,l) },
+        on(t,l) { EVENT.on(t,l); return api.event },
         settings: settingsUI.trigger_event,
         topics() { return EVENT.topics() }
     },

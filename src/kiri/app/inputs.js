@@ -735,6 +735,14 @@ function newInput(label, opt = {}) {
         ip = height > 1 ? DOC.createElement('textarea') : DOC.createElement('input');
 
     row.appendChild(newLabel(label));
+    if (opt.selector) {
+        let sel = DOC.createElement('button');
+        sel.classList.add('z-select');
+        sel.addEventListener('click', event => opt.selector('click', { input: ip, event, opt }));
+        sel.addEventListener('mouseenter', event => opt.selector('enter', { input: ip, event, opt }));
+        sel.addEventListener('mouseleave', event => opt.selector('leave', { input: ip, event, opt }));
+        row.appendChild(sel);
+    }
     row.appendChild(ip);
     row.setAttribute("class", opt.class || "var-row");
     if (height > 1) {

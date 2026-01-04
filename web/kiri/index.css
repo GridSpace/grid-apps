@@ -1431,6 +1431,11 @@ details[open] summary::after {
     word-break: break-word;
     white-space: normal;
 }
+.z-select {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border-color: rgba(128,128,128,0.5) !important;
+}
 #oplist {
     gap: 3px;
     margin-bottom: 3px;

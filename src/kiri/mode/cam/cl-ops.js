@@ -203,6 +203,70 @@ export function createPopOp(type, map) {
 }
 
 export function createPopOps() {
+
+    const bottom = true;
+    const open = true;
+    const top = true;
+
+    function selector(type, { input, event, opt }) {
+        let which = opt?.top ? 'top' : opt?.bottom ? 'bottom' : 'unknown';
+        let value = parseFloat(input.value);
+        switch (type) {
+            case 'click':
+                let rec = env.poppedRec;
+                let { field } = opt;
+                api.event.emit('cam.zplane.select', { which, onselect(value) {
+                    rec[field] = value;
+                    input.focus();
+                    input.value = value;
+                    input.blur();
+                } } );
+                break;
+            case 'enter':
+                api.event.emit('cam.zplane.show', { which, value });
+                break;
+            case 'leave':
+                api.event.emit('cam.zplane.hide', { which });
+                break;
+        }
+    }
+
+    function isClear() {
+        return env.poppedRec.mode === 'clear';
+    }
+
+    function isTrace() {
+        return env.poppedRec.mode === 'trace';
+    }
+
+    function isShadow() {
+        return env.poppedRec.shadow;
+    }
+
+    function isSurface() {
+        return env.poppedRec.mode === 'surface';
+    }
+
+    function isSurfaceLinear() {
+        return env.poppedRec.mode === 'surface' && env.poppedRec.sr_type === 'linear';
+    }
+
+    function canDogBones() {
+        if (!env.poppedRec) return false;
+        return env.poppedRec.mode === 'follow';
+    }
+
+    function canDogBonesRev() {
+        return canDogBones() && env.poppedRec.dogbone;
+    }
+
+    function zDogSep() {
+        return canDogBones() || zBottom();
+    }
+
+    const ov_topz = { title: LANG.ou_ztop_l, convert: toFloat, units, selector, top, field: "ov_topz" };
+    const ov_botz = { title: LANG.ou_zbot_l, convert: toFloat, units, selector, bottom, field: "ov_botz" };
+
     createPopOp('level', {
         tool: 'camLevelTool',
         spindle: 'camLevelSpindle',
@@ -260,8 +324,8 @@ export function createPopOps() {
         omitthru: UC.newBoolean(LANG.co_omit_s, undefined, { title: LANG.co_omit_l }),
         sep: UC.newBlank({ class: "pop-sep" }),
         exp: UC.newExpand("overrides"),
-        ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
-        ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
+        ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
+        ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
     };
 
@@ -304,8 +368,8 @@ export function createPopOps() {
         revbones: UC.newBoolean(LANG.co_dogr_s, undefined, { title: LANG.co_dogr_l, show: () => env.poppedRec.dogbones }),
         sep: UC.newBlank({ class: "pop-sep" }),
         exp: UC.newExpand("overrides"),
-        ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
-        ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
+        ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
+        ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
     };
 
@@ -386,19 +450,6 @@ export function createPopOps() {
         linear: UC.newBoolean(LANG.ci_line_s, undefined, { title: LANG.ci_line_l }),
     };
 
-    function canDogBones() {
-        if (!env.poppedRec) return false;
-        return env.poppedRec.mode === 'follow';
-    }
-
-    function canDogBonesRev() {
-        return canDogBones() && env.poppedRec.dogbone;
-    }
-
-    function zDogSep() {
-        return canDogBones() || zBottom();
-    }
-
     createPopOp('trace', {
         mode: 'camTraceType',
         offset: 'camTraceOffset',
@@ -437,8 +488,8 @@ export function createPopOps() {
         revbone: UC.newBoolean(LANG.co_dogr_s, undefined, { title: LANG.co_dogr_l, show: canDogBonesRev }),
         exp: UC.newExpand("overrides"),
         sep: UC.newBlank({ class: "pop-sep" }),
-        ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
-        ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
+        ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
+        ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
         sep: UC.newBlank({ class: "pop-sep" }),
         menu: UC.newRow([UC.newButton("select", traceAdd)], { class: "ext-buttons f-row" }),
@@ -483,8 +534,8 @@ export function createPopOps() {
         outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l }),
         exp: UC.newExpand("overrides"),
         sep: UC.newBlank({ class: "pop-sep" }),
-        ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
-        ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
+        ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
+        ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
         sep: UC.newBlank({ class: "pop-sep" }),
         menu: UC.newRow([UC.newButton("select", surfaceAdd)], { class: "ext-buttons f-row" }),
@@ -669,28 +720,6 @@ export function createPopOps() {
         count: UC.newInput('operations', { title: "num operations", convert: toInt, bound: UC.bound(1, 20), post: opRender })
     };
 
-    function isClear() {
-        return env.poppedRec.mode === 'clear';
-    }
-
-    function isTrace() {
-        return env.poppedRec.mode === 'trace';
-    }
-
-    function isShadow() {
-        return env.poppedRec.shadow;
-    }
-
-    function isSurface() {
-        return env.poppedRec.mode === 'surface';
-    }
-
-    function isSurfaceLinear() {
-        return env.poppedRec.mode === 'surface' && env.poppedRec.sr_type === 'linear';
-    }
-
-    const open = true;
-
     createPopOp('area', {
         spindle: 'camAreaSpindle',
         tool: 'camAreaTool',
@@ -756,8 +785,8 @@ export function createPopOps() {
         exp_end: UC.endExpand(),
         exp: UC.newExpand("bounds", { }),
         sep: UC.newBlank({ class: "pop-sep" }),
-        ov_topz: UC.newInput(LANG.ou_ztop_s, { title: LANG.ou_ztop_l, convert: toFloat, units }),
-        ov_botz: UC.newInput(LANG.ou_zbot_s, { title: LANG.ou_zbot_l, convert: toFloat, units }),
+        ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
+        ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
     };
 

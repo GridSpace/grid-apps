@@ -2,23 +2,24 @@
 
 import { $ } from '../../../moto/webui.js';
 import { api } from '../../app/api.js';
-import { load } from '../../../load/file.js';
 import { animate as anim_2d, animate_clear as anim_2d_clear } from './anim-2d-fe.js';
 import { animate2 as anim_3d, animate_clear2 as anim_3d_clear } from './anim-3d-fe.js';
-import { space as SPACE } from '../../../moto/space.js';
-import { Layers } from '../../app/layers.js';
-import { Stack } from '../../app/stack.js';
-import { updateStock } from './cl-stock.js';
 import { createPopOps } from './cl-ops.js';
+import { helicalOn, helicalDone } from './cl-helical.js';
+import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
+import { load } from '../../../load/file.js';
+import { Layers } from '../../app/layers.js';
+import { originSelectDone } from './cl-origin.js';
+import { recreateTabs } from './cl-tab.js';
+import { showZTop, showZBottom, updateStock } from './cl-stock.js';
+import { space as SPACE } from '../../../moto/space.js';
+import { space } from '../../../moto/space.js';
+import { Stack } from '../../app/stack.js';
+import { surfaceOn, surfaceDone } from './cl-surface.js';
 import { tabAdd, tabDone, tabClear, restoreTabs, rotateTabs, updateTabs, clearTabs, mirrorTabs } from './cl-tab.js';
 import { traceOn, traceDone, unselectTraces } from './cl-trace.js';
-import { holeSelOn, selectHolesDone, clearHolesRec } from './cl-hole.js';
-import { surfaceOn, surfaceDone } from './cl-surface.js';
-import { helicalOn, helicalDone } from './cl-helical.js';
-import { originSelectDone } from './cl-origin.js';
 import { Widget, newWidget } from '../../app/widget.js';
-import { space } from '../../../moto/space.js';
-import { recreateTabs } from './cl-tab.js';
+import { zPlaneStart, zPlaneDone } from './cl-zplane.js';
 
 const { BufferGeometryUtils } = THREE;
 
@@ -62,13 +63,28 @@ export function isDark() {
 
 export function clearPops() {
     if (env.func.unpop) env.func.unpop();
+    helicalDone();
     originSelectDone();
     selectHolesDone();
     surfaceDone();
     tabDone();
     traceDone();
-    selectHolesDone();
-    helicalDone();
+    zPlaneDone();
+    // unbind
+    hoverDone();
+}
+
+export function hoverStart(onhover, onhoverup) {
+    clearPops();
+    env.hover = onhover;
+    env.hoverUp = onhoverup;
+    api.feature.hover = true;
+}
+
+export function hoverDone() {
+    env.hover = noop;
+    env.hoverUp = noop;
+    api.feature.hover = false;
 }
 
 function animFn() {
@@ -288,7 +304,6 @@ export function opRender() {
     let mark = Date.now();
     let html = [];
     let bind = {};
-    let scale = api.view.unit_scale();
     let notime = false;
     let inloop = 0;
     let numloop;
@@ -556,10 +571,26 @@ export function opRender() {
     updateStock();
 }
 
+export function zPlaneShow({ which, value }) {
+    if (!value) return;
+    if (which === 'top') showZTop(value); else
+    if (which === 'bottom') showZBottom(value);
+}
+
+export function zPlaneHide({ which }) {
+    updateStock();
+}
+
+export function zPlaneSelect({ which, onselect }) {
+    clearPops();
+    zPlaneStart(which, value => {
+        onselect(parseFloat(value));
+    });
+}
+
 export function init() {
 
     api.event.on('tool.mesh.face-normal', normal => {
-        // console.log({ env.poppedRec });
         env.poppedRec.degrees = (Math.atan2(normal.y, normal.z) * RAD2DEG).round(2);
         env.poppedRec.absolute = true;
         opRender();
@@ -850,17 +881,20 @@ export function init() {
         }
     });
 
-    api.event.on("cam.op.add", opAdd);
+    api.event
+        .on("cam.op.add", opAdd)
+        .on("cam.op.del", opDel)
+        .on("cam.op.render", opRender);
 
-    api.event.on("cam.op.del", opDel);
+    api.event
+        .on("cam.tabs.add", tabAdd)
+        .on("cam.tabs.done", tabDone)
+        .on("cam.tabs.clear", tabClear);
 
-    api.event.on("cam.op.render", opRender);
-
-    api.event.on("cam.tabs.add", tabAdd);
-
-    api.event.on("cam.tabs.done", tabDone);
-
-    api.event.on("cam.tabs.clear", tabClear);
+    api.event
+        .on("cam.zplane.show", zPlaneShow)
+        .on("cam.zplane.hide", zPlaneHide)
+        .on("cam.zplane.select", zPlaneSelect);
 
     // COMMON TAB/TRACE EVENT HANDLERS
     api.event.on("slice.begin", () => {
