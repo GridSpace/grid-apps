@@ -30,6 +30,30 @@ function zAnchorSave() {
     api.platform.update_top_z();
 }
 
+const bottom = true;
+const top = true;
+
+function selector(type, { input, event, opt }) {
+    let which = opt?.top ? 'top' : opt?.bottom ? 'bottom' : 'unknown';
+    let value = parseFloat(input.value);
+    switch (type) {
+        case 'click':
+            api.event.emit('cam.zplane.select', { which, onselect(value) {
+                input.focus();
+                input.value = value;
+                input.blur();
+            } } );
+            break;
+        case 'enter':
+            api.event.emit('cam.zplane.show', { which, value });
+            break;
+        case 'leave':
+            api.event.emit('cam.zplane.hide', { which });
+            break;
+    }
+}
+
+
 export function menu() {
     let anim = ui.anim = {};
 
@@ -121,8 +145,8 @@ export function menu() {
     _____:               newGroup(LANG.cc_menu, $('cam-limits'), { modes:CAM, driven, separator }),
     camZAnchor:          newSelect(LANG.ou_zanc_s, {title: LANG.ou_zanc_l, action:zAnchorSave, show:() => !ui.camStockIndexed.checked}, "zanchor"),
     camZOffset:          newInput(LANG.ou_ztof_s, {title:LANG.ou_ztof_l, convert:toFloat, units}),
-    camZTop:             newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:toFloat, units, trigger}),
-    camZBottom:          newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:toFloat, units, trigger}),
+    camZTop:             newInput(LANG.ou_ztop_s, {title:LANG.ou_ztop_l, convert:toFloat, units, trigger, selector, top }),
+    camZBottom:          newInput(LANG.ou_zbot_s, {title:LANG.ou_zbot_l, convert:toFloat, units, trigger, selector, bottom }),
     camZClearance:       newInput(LANG.ou_zclr_s, {title:LANG.ou_zclr_l, convert:toFloat, bound:bound(0.01,100), units }),
     separator:           newBlank({ class:"set-sep", driven }),
     camFastFeed:         newInput(LANG.cc_rapd_s, {title:LANG.cc_rapd_l, convert:toFloat, units}),

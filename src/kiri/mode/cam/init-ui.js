@@ -19,7 +19,7 @@ import { surfaceOn, surfaceDone } from './cl-surface.js';
 import { tabAdd, tabDone, tabClear, restoreTabs, rotateTabs, updateTabs, clearTabs, mirrorTabs } from './cl-tab.js';
 import { traceOn, traceDone, unselectTraces } from './cl-trace.js';
 import { Widget, newWidget } from '../../app/widget.js';
-import { zPlaneStart, zPlaneDone } from './cl-zplane.js';
+import { zPlaneStart, zPlaneDone, zPlaneSelecting } from './cl-zplane.js';
 
 const { BufferGeometryUtils } = THREE;
 
@@ -582,6 +582,9 @@ export function zPlaneHide({ which }) {
 }
 
 export function zPlaneSelect({ which, onselect }) {
+    if (zPlaneSelecting()) {
+        return zPlaneDone();
+    }
     clearPops();
     zPlaneStart(which, value => {
         onselect(parseFloat(value));
@@ -805,8 +808,6 @@ export function init() {
     };
 
     $('op-add-list').onclick = (ev) => {
-        let settings = api.conf.get();
-        let { process, device } = settings;
         switch (ev.target.innerText.toLowerCase()) {
             case "index": return opAddIndex();
             case "laser on": return opAddLaserOn();

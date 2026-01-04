@@ -10,24 +10,32 @@ let ondone;
 let lastY;
 
 export function zPlaneStart(which, onselect) {
-    alert = api.show.alert("[esc] cancels z plane selection");
     plane = which;
     ondone = onselect;
     hoverStart(onHover, onHoverUp);
+    alert = api.show.alert("[esc] cancels z plane selection", 1000);
 }
 
 export function zPlaneDone() {
     api.hide.alert(alert);
     updateStock();
+    alert = undefined;
+}
+
+export function zPlaneSelecting() {
+    return alert ? true : false;
 }
 
 function onHover(data) {
-    const { int, type, point } = data;
+    const { int, point } = data;
+    if (!int) return;
     if (plane === 'top') showZTop(lastY = point.y); else
     if (plane === 'bottom') showZBottom(lastY = point.y);
 }
 
 function onHoverUp(int) {
-    ondone(lastY);
-    clearPops();
+    if (int) {
+        ondone(lastY);
+        clearPops();
+    }
 }
