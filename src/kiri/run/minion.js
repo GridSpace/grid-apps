@@ -10,6 +10,7 @@ import { base } from '../../geo/base.js';
 import { codec, encode, encodePointArray } from '../core/codec.js';
 import { doTopShells } from '../mode/fdm/post.js';
 import { newPoint } from '../../geo/point.js';
+import { newWidget } from '../core/widget.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 import { sliceZ, sliceConnect } from '../../geo/slicer.js';
 import { Slicer as cam_slicer } from '../mode/cam/slicer_cam.js';
@@ -317,5 +318,18 @@ const funcs = self.minion = {
         const topo4 = Object.assign(new Topo4(), cache.lathe);
         const heights = topo4.lathePath(stmp, tool);
         reply({ seq, heights });
+    },
+
+    // cam widget shadow
+
+    cam_shadow_stack(data, seq) {
+        cache.shadow_stack = data.clear ? undefined : data;
+    },
+
+    cam_shadow_z(data, seq) {
+        let polys = newWidget().computeShadowAtZ(data.z, data.t, cache.shadow_stack);
+        let coded = codec.encode(polys);
+        reply({ seq, data: coded });
     }
+
 };

@@ -1,5 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { decode } from '../core/codec.js';
 import { util as mesh_util } from '../../mesh/util.js';
 import { tool as mesh_tool } from '../../mesh/tool.js';
 import { verticesToPoints } from '../../geo/points.js';
@@ -12,6 +13,7 @@ const sharedArrayClass = self.SharedArrayBuffer || undefined;
 const hasSharedArrays = sharedArrayClass ? true : false;
 const solid_opacity = 1.0;
 const groups = [];
+const debug_shadow = false;
 
 let nextId = 0;
 
@@ -739,8 +741,9 @@ class Widget {
     // the stacks are then used to produce shadowlines
     #ensureShadowCache() {
         if (this.cache.shadow) {
-            return;
+            return this.cache.shadow;
         }
+        if (debug_shadow) console.time('shadow buckets');
         const geo = this.getGeoVertices({ unroll: true, translate: true });
         const length = geo.length;
         const bounds = this.getBoundingBox();
@@ -762,15 +765,54 @@ class Widget {
                 stack[z].push(a, b, c);
             }
         }
-        this.cache.shadow = stack;
+        if (debug_shadow) console.timeEnd('shadow buckets');
+        return this.cache.shadow = stack;
+    }
+
+    async computeShadowStack(zlist, progress) {
+        let shadow_stack = this.cache.shadow_stack;
+        if (!shadow_stack) {
+            shadow_stack = this.cache.shadow_stack = {};
+        }
+        let work = self.kiri_worker;
+        let stack = this.#ensureShadowCache();
+        let plist = [];
+        if (debug_shadow) console.time('seed minion buckets');
+        work.minions.broadcast('cam_shadow_stack', stack);
+        if (debug_shadow) console.timeEnd('seed minion buckets');
+        let pinc = 1 / zlist.length;
+        let pval = 0;
+        for (let z of zlist) {
+            let p = work.minions.queueAsync({
+                cmd: 'cam_shadow_z',
+                z: z - 0.005,
+                t: z + 1
+            }).then(reply => {
+                shadow_stack[z - 0.005] = decode(reply.data);
+                pval += pinc;
+                progress(pval);
+            });
+            plist.push(p);
+        }
+        await Promise.all(plist);
+        work.minions.broadcast('cam_shadow_stack', { clear: true });
+    }
+
+    computeShadowAtZ(z, ztop, cached) {
+        return this.#computeShadowAt(z, ztop, cached);
     }
 
     // union triangles > z (opt cap < ztop) into polygon(s)
     // slice the triangle stack matchingg z then union the results
-    #computeShadowAt(z, ztop) {
-        this.#ensureShadowCache();
+    #computeShadowAt(z, ztop, cached) {
+        let shadow_stack = this.cache.shadow_stack;
+        if (shadow_stack && shadow_stack[z]) {
+            return shadow_stack[z];
+        }
+        let label = `compute shadow ${z.round(2)}`;
+        if (debug_shadow) console.time(label);
         const found = [];
-        const stack = this.cache.shadow;
+        const stack = cached ?? this.#ensureShadowCache();
         let minZ = Math.floor(z);
         let maxZ = Math.ceil(z);
         let slices = [];
@@ -832,6 +874,7 @@ class Widget {
         polys = POLY.offset(polys, 0.01);
         polys = POLY.offset(polys, -0.01);
 
+        if (debug_shadow) console.timeEnd(label);
         return polys;
     }
 }

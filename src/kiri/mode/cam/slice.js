@@ -261,12 +261,10 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         return slicer = state.slicer = new cam_slicer(widget, opts);
     }
 
-    async function computeShadows() {
-        console.time('computeShadows');
-        await new OPS.shadow(state, { type: "shadow", silent: true }).slice(progress => {
-            // console.log('reshadowing', progress.round(3));
-        });
-        console.timeEnd('computeShadows');
+    async function computeShadows(progress) {
+        console.time('compute shadow');
+        await new OPS.shadow(state, { type: "shadow", xsilent: true }).slice(progress);
+        console.timeEnd('compute shadow');
     }
 
     function setToolDiam(toolDiam) {

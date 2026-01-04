@@ -22,7 +22,7 @@ class OpShadow extends CamOp {
     }
 
     weight() {
-        return 0.1;
+        return 3;
     }
 
     async slice(progress) {
@@ -50,6 +50,9 @@ class OpShadow extends CamOp {
             tzindex = [ ];
         }
 
+        // distributed pre-fill shadow layer cache
+        await widget.computeShadowStack(tzindex, prog => progress(prog / 2, 'shadow'));
+
         // terrain is the "shadow stack" where index 0 = top of part
         // thus array.length -1 = bottom of part
         for (let i=0; i<tzindex.length; i++) {
@@ -65,7 +68,7 @@ class OpShadow extends CamOp {
                     .setLayer("shadow", {line: 0x888800, thin: true })
                     .addPolys(shadow, { thin: true });
             }
-            progress(i / tzindex.length);
+            progress(0.5 + i / tzindex.length, 'shadow');
         }
 
         if (devel && slices.length) {

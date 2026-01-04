@@ -8,10 +8,10 @@ export class OpIndex extends CamOp {
     }
 
     weight() {
-        return 0.1;
+        return 3;
     }
 
-    async slice() {
+    async slice(progress) {
         let { op, state } = this;
 
         if (!state.isIndexed) {
@@ -37,7 +37,7 @@ export class OpIndex extends CamOp {
         updateSlicer();
 
         // recompute shadow from new widget geometry
-        await computeShadows();
+        await computeShadows(progress);
     }
 
     prepare(ops, progress) {
