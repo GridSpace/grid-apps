@@ -48,6 +48,7 @@ class OpRough extends CamOp {
             leave_z: op.leavez,
             ov_botz: op.ov_botz,
             ov_topz: op.ov_topz,
+            rotated: true,
             areas: { [widget.id]: areas.map(p => p.toArray()) },
             surfaces: {}
         }));
@@ -72,6 +73,7 @@ class OpRough extends CamOp {
                 leave_z: op.leavez,
                 ov_botz: op.ov_botz,
                 ov_topz: op.ov_topz,
+                rotated: true,
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
                 surfaces: {},
                 flats: Object.keys(slicer.zFlat).map(v => parseFloat(v)).sort((a,b) => b-a),
@@ -96,6 +98,7 @@ class OpRough extends CamOp {
                 outline: !op.omitthru,
                 ov_botz: op.ov_botz,
                 ov_topz: op.ov_topz,
+                rotated: true,
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
                 surfaces: {},
                 thru: true

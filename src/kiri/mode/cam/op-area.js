@@ -76,7 +76,9 @@ class OpArea extends CamOp {
             let poly = newPolygon().fromArray(arr);
             aminz = Math.min(aminz, poly.minZ());
             polys.push(poly);
-            if (axisIndex) {
+            // user-selected traces are not rotated
+            // those based on shadow (outline, rough) are
+            if (!op.rotated && axisIndex) {
                 // traces come from unrotatead widget edges
                 poly.applyRotations(axisIndex);
             }
