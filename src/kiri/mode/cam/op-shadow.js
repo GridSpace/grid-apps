@@ -21,10 +21,6 @@ class OpShadow extends CamOp {
         super(state, op);
     }
 
-    weight() {
-        return 3;
-    }
-
     async slice(progress) {
         let state = this.state;
 
@@ -68,7 +64,7 @@ class OpShadow extends CamOp {
                     .setLayer("shadow", {line: 0x888800, thin: true })
                     .addPolys(shadow, { thin: true });
             }
-            progress(0.5 + i / tzindex.length, 'shadow');
+            progress(0.5 + (i / tzindex.length) * 0.5, 'shadow');
         }
 
         if (devel && slices.length) {

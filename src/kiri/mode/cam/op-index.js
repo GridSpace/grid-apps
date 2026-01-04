@@ -7,10 +7,6 @@ export class OpIndex extends CamOp {
         super(state, op);
     }
 
-    weight() {
-        return 3;
-    }
-
     async slice(progress) {
         let { op, state } = this;
 

@@ -203,13 +203,13 @@ export class Topo {
         await gpu.loadTerrain({
             triangles: vertices,
             boundsOverride,
-            onProgress(pct) { onupdate(pct/100) }
+            onProgress: (pct) => onupdate(pct / 1000)
         });
         let output = await gpu.generateToolpaths({
             xStep,
             yStep: 1,
             zFloor: zBottom,
-            onProgress(i,j) { onupdate(i/j) }
+            onProgress: (i,j) => onupdate(0.1 + i / j)
         });
         gpu.terminate();
 
