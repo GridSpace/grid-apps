@@ -568,6 +568,11 @@ function newExpand(label, opt = {}) {
         div.removeAttribute('open');
     };
 
+    if (opt.hover) {
+        div.addEventListener('mouseenter', event => opt.hover('enter', event));
+        div.addEventListener('mouseleave', event => opt.hover('leave', event));
+    }
+
     lastAddTo = addTo;
     addTo.appendChild(div);
     addTo = div;

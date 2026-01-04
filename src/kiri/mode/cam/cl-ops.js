@@ -10,6 +10,7 @@ import { selectHelical } from './cl-helical.js';
 import { surfaceAdd } from './cl-surface.js';
 import { traceAdd } from './cl-trace.js';
 import { startFaceUp } from '../../app/face-tool.js';
+import { showZBottom, showZTop, updateStock } from './cl-stock.js';
 
 const { MODES } = api.const;
 const { uc: UC } = api;
@@ -265,7 +266,19 @@ export function createPopOps() {
     }
 
     const ov_topz = { title: LANG.ou_ztop_l, convert: toFloat, units, selector, top, field: "ov_topz" };
+
     const ov_botz = { title: LANG.ou_zbot_l, convert: toFloat, units, selector, bottom, field: "ov_botz" };
+
+    const ov_hover = {
+        hover(ie) {
+            if (ie === 'enter') {
+                showZTop(env.poppedRec.ov_topz);
+                showZBottom(env.poppedRec.ov_botz);
+            } else {
+                updateStock();
+            }
+        }
+    };
 
     createPopOp('level', {
         tool: 'camLevelTool',
@@ -323,7 +336,7 @@ export function createPopOps() {
         inside: UC.newBoolean(LANG.cr_olin_s, undefined, { title: LANG.cr_olin_l, show: () => !env.poppedRec.all || env.poppedRec.inside }),
         omitthru: UC.newBoolean(LANG.co_omit_s, undefined, { title: LANG.co_omit_l }),
         sep: UC.newBlank({ class: "pop-sep" }),
-        exp: UC.newExpand("overrides"),
+        exp: UC.newExpand("overrides", ov_hover),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
@@ -367,7 +380,7 @@ export function createPopOps() {
         dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, { title: LANG.co_dogb_l, show: (op) => { return !op.inputs.wide.checked } }),
         revbones: UC.newBoolean(LANG.co_dogr_s, undefined, { title: LANG.co_dogr_l, show: () => env.poppedRec.dogbones }),
         sep: UC.newBlank({ class: "pop-sep" }),
-        exp: UC.newExpand("overrides"),
+        exp: UC.newExpand("overrides", ov_hover),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
@@ -486,7 +499,7 @@ export function createPopOps() {
         merge: UC.newBoolean(LANG.co_merg_s, undefined, { title: LANG.co_merg_l, show: () => !env.popOp.trace.rec.down }),
         dogbone: UC.newBoolean(LANG.co_dogb_s, undefined, { title: LANG.co_dogb_l, show: canDogBones }),
         revbone: UC.newBoolean(LANG.co_dogr_s, undefined, { title: LANG.co_dogr_l, show: canDogBonesRev }),
-        exp: UC.newExpand("overrides"),
+        exp: UC.newExpand("overrides", ov_hover),
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
@@ -532,7 +545,7 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         contour: UC.newBoolean(LANG.cp_cont_s, undefined, { title: LANG.cp_cont_s }),
         outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l }),
-        exp: UC.newExpand("overrides"),
+        exp: UC.newExpand("overrides", ov_hover),
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
@@ -783,7 +796,7 @@ export function createPopOps() {
         rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
         plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
         exp_end: UC.endExpand(),
-        exp: UC.newExpand("bounds", { }),
+        exp: UC.newExpand("bounds", ov_hover),
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
