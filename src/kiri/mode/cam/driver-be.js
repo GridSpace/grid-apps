@@ -116,6 +116,7 @@ export const CAM = {
     surface_find,
     slicePre: cam_slice_pre,
     slice: cam_slice,
+    slicePost: undefined,
     prepare: cam_prepare,
     export: cam_export
 };

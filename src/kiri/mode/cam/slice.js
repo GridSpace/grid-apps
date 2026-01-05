@@ -14,6 +14,11 @@ import { util } from '../../../geo/base.js';
 // state shared across all widget slicing
 let shared;
 
+/**
+ * DRIVER SLICE CONTRACT
+ * 
+ * global slice operation run before individual widget slice() operations
+ */
 export function cam_slice_pre(settings) {
     shared = { ops: { } };
 }
@@ -21,6 +26,8 @@ export function cam_slice_pre(settings) {
 /**
  * DRIVER SLICE CONTRACT
  *
+ * slice operations run per-widget between slicePre and sliceAll
+ * 
  * @param {Object} settings
  * @param {Widget} widget
  * @param {Function} output

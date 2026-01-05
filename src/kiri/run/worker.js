@@ -7,17 +7,17 @@ import '../../add/three.js';
 import { base } from '../../geo/base.js';
 import { codec } from '../core/codec.js';
 import { consts } from '../core/consts.js';
-import { util } from '../../geo/base.js';
-import { newPoint } from '../../geo/point.js';
-import { polygons as POLY } from '../../geo/polygons.js';
-import { newPrint } from '../core/print.js';
-import { render } from '../core/render.js';
-import { wasm_ctrl } from '../../geo/wasm.js';
-import { version } from '../../moto/license.js';
-import { Widget, newWidget } from '../core/widget.js';
-import { load } from "../../load/png.js";
 import { JSZip } from '../../ext/jszip-esm.js';
+import { load } from "../../load/png.js";
+import { newPoint } from '../../geo/point.js';
+import { newPrint } from '../core/print.js';
+import { polygons as POLY } from '../../geo/polygons.js';
 import { RasterPath } from '../../gpu/raster.js';
+import { render } from '../core/render.js';
+import { util } from '../../geo/base.js';
+import { version } from '../../moto/license.js';
+import { wasm_ctrl } from '../../geo/wasm.js';
+import { Widget, newWidget } from '../core/widget.js';
 
 import { CAM } from '../mode/cam/driver-be.js';
 import { DRAG } from '../mode/drag/driver.js';
@@ -482,13 +482,13 @@ const dispatch = {
         });
     },
 
-    sliceAll(data, send) {
+    slicePost(data, send) {
         const { settings } = data;
         const { mode } = settings;
         const driver = drivers[mode];
 
-        if (driver.sliceAll) {
-            driver.sliceAll(settings, send.data);
+        if (driver.slicePost) {
+            driver.slicePost(settings, send.data);
         }
 
         send.done({done: true});

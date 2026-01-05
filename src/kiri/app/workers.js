@@ -237,8 +237,8 @@ export const client = {
 
     // called once after each widget is sliced
     // performs merged actions that consider all widget slice data
-    sliceAll(settings, callback) {
-        send("sliceAll", { settings }, callback);
+    slicePost(settings, callback) {
+        send("slicePost", { settings }, callback);
     },
 
     // turn widget slices into unified path output

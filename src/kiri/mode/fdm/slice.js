@@ -19,7 +19,7 @@ let tracker = util.pwait,
     fat = 1.5,
     COLOR = {
         anchor: { check: 0x999933, face: 0x999933, line: 0x999933, opacity, lopacity, fat },
-        fill: { check: 0x00bb77, face: 0x00bb77, line: 0x00bb77, opacity, lopacity, fat },
+        fill: { check: 0x005588, face: 0x005588, line: 0x005588, opacity, lopacity, fat },
         gaps: { check: 0xaa3366, face: 0xaa3366, line: 0xaa3366, opacity, lopacity, fat },
         infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity, lopacity, fat },
         inset: { line: 0xaaaaaa, check: 0xaaaaaa, face: 0 },
@@ -29,7 +29,7 @@ let tracker = util.pwait,
         thin: { check: 0xbb8800, face: 0xbb8800, line: 0xbb8800, opacity, lopacity, fat },
     },
     COLOR_DARK = Object.assign({}, COLOR, {
-        fill: { check: 0x008855, face: 0x008855, line: 0x008855, opacity, lopacity, fat },
+        fill: { check: 0x005588, face: 0x005588, line: 0x005588, opacity, lopacity, fat },
         infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity, lopacity, fat },
         inset: { line: 0x555555, check: 0x555555 },
         part: { line: 0x777777, check: 0x777777, face: 0  },
@@ -58,7 +58,12 @@ function vopt(opt) {
     return opt;
 }
 
-export function sliceAll(settings, onupdate) {
+/**
+ * DRIVER SLICE CONTRACT
+ * 
+ * global slice operation run after all individual widget slice() complete
+ */
+export function slicePost(settings, onupdate) {
     // future home of brim and anchor generation
     let widgets = Object.values(self.kiri_worker.cache)
         .filter(w => !w.meta.disabled)

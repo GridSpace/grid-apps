@@ -146,8 +146,8 @@ function prepareSlices(callback, scale = 1, offset = 0) {
             // while more widgets to slice
             sliceWidget(toSlice.shift())
         } else {
-            // once all slicing done, run sliceAll() once for all widgets
-            client.sliceAll(settings, sliceDone);
+            // once all slicing done, run slicePost() once for all widgets
+            client.slicePost(settings, sliceDone);
         }
     }
 
