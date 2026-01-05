@@ -265,24 +265,40 @@ export class Topo {
                 // drop interior points along a continuous slope
                 for (let poly of lines) {
                     let { points } = poly;
+                    if (points.length < 2) continue;
                     let merged = [ points[0] ];
-                    let lp = points[1];
-                    let dz = points[0].z - lp.z;
-                    for (let i=2; i<points.length; i++) {
-                        let np = points[i];
-                        let ndz = np.z - lp.z;
-                        if (Math.abs(dz - ndz) > flatness) {
-                            // slope changed
-                            merged.push(lp);
-                            dz = ndz;
-                        } else if (curvesOnly && Math.abs(ndz) < flatness) {
+                    let lastP = points[0];
+                    let latent = null;
+                    let lastSlope = undefined;
+                    for (let i=1; i<points.length; i++) {
+                        let newP = points[i];
+                        const dl = (newP.x - lastP.x) || (newP.y - lastP.y);
+                        const dz = newP.z - lastP.z;
+                        const slope = Math.atan2(dz, dl);
+                        if (curvesOnly && Math.abs(dz) < flatness) {
+                            // end current segment with latent if present
+                            if (latent) {
+                                merged.push(latent);
+                                latent = null;
+                            }
                             // add empty points as path separators
                             merged.push(undefined);
+                            lastSlope = undefined;
+                        } else if (lastSlope !== undefined && Math.abs(lastSlope - slope) < flatness) {
+                            latent = newP;
+                        } else {
+                            if (latent) {
+                                merged.push(latent);
+                                latent = null;
+                            }
+                            merged.push(newP);
+                            lastSlope = slope;
                         }
-                        lp = np;
+                        lastP = newP;
                     }
-                    if (merged.peek() !== lp) {
-                        merged.push(lp);
+                    // add final latent point if present
+                    if (latent && merged.peek() !== latent) {
+                        merged.push(latent);
                     }
                     poly.points = merged;
                 }
