@@ -169,6 +169,8 @@ class OpArea extends CamOp {
                 let zinc = 1 / zs.length;
                 let lzo;
 
+                if (!zs.length) break;
+
                 outer: for (;;)
                 for (let z of zs) {
                     let slice = newLayer(z);

@@ -75,6 +75,7 @@ function checkSeed(then) {
                 setTimeout(() => { api.space.save(true) },500);
                 then();
                 api.help.show();
+                sdb[LAST] = version;
             });
             return true;
         }
