@@ -32,7 +32,7 @@ let meshZTop, meshZBottom;
     meshZBottom.renderOrder = 1;
 }
 
-function getBounds() {
+export function getBounds() {
     const settings = api.conf.get();
     const { stock } = settings;
     const { x, y, z, center } = stock;
