@@ -442,12 +442,10 @@ class Widget {
     }
 
     _updateMeshPosition() {
-        let mesh = this.mesh,
-            track = this.track,
-            tzoff = track.tzoff,
-            top = track.top,
-            tz = -tzoff,
-            { x, y, z } = track.pos;
+        let { cache, mesh, track } = this,
+            { top, tzoff } = track,
+            { x, y, z } = track.pos,
+            tz = -tzoff;
         if (track.indexed) {
             this.mesh.rotation.x = -track.indexRad;
             z = top;
@@ -455,8 +453,12 @@ class Widget {
             this.mesh.rotation.x = 0;
             z += tz;
         }
-        mesh.position.set(x, y, z);
-        this._updateEdges();
+        let { pos } = cache;
+        if (!pos || pos.x !== x || pos.y !==y || pos.z !== z) {
+            mesh.position.set(x, y, z);
+            this._updateEdges();
+            cache.pos = { x, y, z };
+        }
     }
 
     _updateEdges() {

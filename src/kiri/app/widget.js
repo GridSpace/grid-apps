@@ -130,10 +130,16 @@ class Widget extends WidgetCore {
         }
     }
 
-    /**
-     * Set edge rendering
-     */
     setEdges(set) {
+        clearTimeout(this._setimer);
+        if (set === true && this.outline) {
+            this._setimer = setTimeout(() => this._setEdges(set), 10);
+        } else {
+            this._setEdges(set);
+        }
+    }
+
+    _setEdges(set) {
         if (!(this.api && this.api.conf)) {
             // missing api features in engine mode
             return;
@@ -145,7 +151,6 @@ class Widget extends WidgetCore {
         if (this.outline) {
             mesh.remove(this.outline);
             this.outline = null;
-
         }
         if (set) {
             let dark = this.api.space.is_dark();
