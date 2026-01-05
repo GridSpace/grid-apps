@@ -41,9 +41,22 @@ class OpShadow extends CamOp {
         }
 
         if (skipTerrain) {
+            let { stock } = settings;
+            let { center } = stock;
+
             console.log("skipping terrain generation");
-            shadowBase = [ newPolygon() ];
+            shadowBase = [ newPolygon().centerRectangle(center, stock.x, stock.y) ];
             tzindex = [ ];
+
+            state.shadow = {
+                base: shadowBase,       // computed shadow union at base of part
+                holes: [],
+                skip: skipTerrain,
+                slices: [],             // legacy / transitional
+                stack: [],              // stack of shadow slices
+            };
+
+            return;
         }
 
         // distributed pre-fill shadow layer cache

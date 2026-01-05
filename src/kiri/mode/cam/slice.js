@@ -150,6 +150,10 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         onupdate(null,null,msg);
     }
 
+    function shadowAt(z) {
+        return widget.shadowAt(z);
+    }
+
     if (unsafe) {
         console.log("disabling overhang safeties");
     }
@@ -202,7 +206,7 @@ export async function cam_slice(settings, widget, onupdate, ondone) {
         setAxisIndex,
         setToolDiam,
         settings,
-        shadowAt(z) { return widget.shadowAt(z) },
+        shadowAt,
         slicer,
         stock,
         tabs,
