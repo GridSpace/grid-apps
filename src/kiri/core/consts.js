@@ -23,6 +23,11 @@ const LISTS = {
         { name: "out-in" },
         { name: "alternate" }
     ],
+    support: [
+        { name: "disabled" },
+        { name: "automatic" },
+        { name: "manual" },
+    ],
     start: [
         { name: "last" },
         { name: "center" },

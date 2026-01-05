@@ -61,6 +61,10 @@ function isNotBelt() {
     return !isBelt();
 }
 
+function isTree() {
+    return api.conf.proc().sliceSupportTree;
+}
+
 function notFwRetract() {
     return !api.conf.get().device.fwRetract;
 }
@@ -107,23 +111,26 @@ export function menu() {
     outputFanSpeed:      newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:toInt, bound:bound(0,255)}),
     outputMinLayerTime:  newInput(LANG.ou_layt_s, { title:LANG.ou_layt_l, convert:toInt,   bound:bound(0,200) }),
     _____:               newGroup(LANG.sp_menu, $('fdm-support'), { modes:FDM, driven, hideable, separator, group:"fdm-supp" }),
+    sliceSupportType:    newSelect(LANG.sp_type_s, {title:LANG.sp_type_l}, "support"),
     sliceSupportNozzle:  newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, show:isMultiHead}, "extruders"),
+    separator:           newBlank({ class:"set-sep", driven }),
+    sliceSupportAngle:   newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, convert:toFloat, bound:bound(0.0,90.0)}),
     sliceSupportDensity: newInput(LANG.sp_dens_s, {title:LANG.sp_dens_l, convert:toFloat, bound:bound(0.0,1.0)}),
-    sliceSupportSize:    newInput(LANG.sp_size_s, {title:LANG.sp_size_l, convert:toFloat, bound:bound(1.0,200.0)}),
-    sliceSupportOffset:  newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, convert:toFloat, bound:bound(0.0,200.0)}),
+    // sliceSupportSize:    newInput(LANG.sp_size_s, {title:LANG.sp_size_l, convert:toFloat, bound:bound(1.0,200.0)}),
     sliceSupportGap:     newInput(LANG.sp_gaps_s, {title:LANG.sp_gaps_l, convert:toInt,   bound:bound(0,5)}),
+    sliceSupportOffset:  newInput(LANG.sp_offs_s, {title:LANG.sp_offs_l, convert:toFloat, bound:bound(0.0,200.0)}),
     sliceSupportArea:    newInput(LANG.sp_area_s, {title:LANG.sp_area_l, convert:toFloat, bound:bound(0.0,200.0)}),
     sliceSupportExtra:   newInput(LANG.sp_xpnd_s, {title:LANG.sp_xpnd_l, convert:toFloat, bound:bound(0.0,10.0)}),
-    sliceSupportGrow:    newInput(LANG.sp_grow_s, {title:LANG.sp_grow_l, convert:toFloat, bound:bound(0.0,10.0)}),
-    sliceSupportAngle:   newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, convert:toFloat, bound:bound(0.0,90.0)}),
+    // sliceSupportGrow:    newInput(LANG.sp_grow_s, {title:LANG.sp_grow_l, convert:toFloat, bound:bound(0.0,10.0)}),
     sliceSupportSpan:    newInput(LANG.sp_span_s, {title:LANG.sp_span_l, convert:toFloat, bound:bound(0.0,200.0), show:() => ui.sliceSupportEnable.checked }),
     separator:           newBlank({ class:"set-sep", driven }),
-    sliceSupportEnable:  newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, show:isNotBelt}),
-    sliceSupportOutline: newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l}),
+    sliceSupportTree:    newBoolean(LANG.sp_tree_s, onBooleanClick, {title:LANG.sp_tree_s, trigger, show:isNotBelt}),
+    // sliceSupportEnable:  newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, show:isNotBelt}),
+    sliceSupportOutline: newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, show: () => !isTree() }),
     separator:           newBlank({ class:"set-sep", driven }),
     sliceSupportGen:     newRow([
         ui.ssaGen = newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
-    ], { modes: FDM, class: "ext-buttons f-row grow" }),
+    ], { modes: FDM, class: "ext-buttons f-row grow", show: () => !ui.sliceSupportTree.checked }),
     separator:           newBlank({ class:"set-sep", driven }),
     sliceSupportManual: newRow([
         (ui.ssmAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
