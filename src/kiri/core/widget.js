@@ -708,7 +708,7 @@ class Widget {
         return this;
     }
 
-    async shadowAt(z) {
+    async shadowAt(z, pocket) {
         let shadows = this.cache.shadows;
         if (!shadows) {
             shadows = this.cache.shadows = {};
@@ -721,10 +721,11 @@ class Widget {
         let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
         let minZabove = Math.min(Infinity, ...zover);
         // shift shadow probeline down a fraction to capture z flats with FP noise
-        let shadow = this.#computeShadowAt(z - 0.005, minZabove);
+        let shadow = this.#computeShadowAt(z - 0.005, minZabove, undefined, pocket);
         if (minZabove < Infinity) {
             shadow = POLY.union([...shadow, ...shadows[minZabove]], 0, true, { wasm: false });
             // cull interior sliver voids
+            if (!pocket)
             for (let poly of shadow) {
                 if (poly.inner) {
                     poly.inner = poly.inner.filter(inr => {
@@ -741,7 +742,7 @@ class Widget {
 
     // create a stack of faces in 1mm increments
     // the stacks are then used to produce shadowlines
-    #ensureShadowCache() {
+    #ensureShadowCache(pocket) {
         if (this.cache.shadow) {
             return this.cache.shadow;
         }
@@ -758,7 +759,7 @@ class Widget {
             const b = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const c = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const n = THREE.computeFaceNormal(a, b, c);
-            if (n.z < 0.001) {
+            if ((pocket && n.z > -0.001) || (!pocket && n.z < 0.001)) {
                 continue;
             }
             const minZ = Math.floor(Math.min(a.z, b.z, c.z));
@@ -771,13 +772,13 @@ class Widget {
         return this.cache.shadow = stack;
     }
 
-    async computeShadowStack(zlist, progress) {
+    async computeShadowStack(zlist, progress, pocket) {
         let shadow_stack = this.cache.shadow_stack;
         if (!shadow_stack) {
             shadow_stack = this.cache.shadow_stack = {};
         }
         let work = self.kiri_worker;
-        let stack = this.#ensureShadowCache();
+        let stack = this.#ensureShadowCache(pocket);
         let plist = [];
         if (debug_shadow) console.time('seed minion buckets');
         work.minions.broadcast('cam_shadow_stack', stack);
@@ -800,13 +801,14 @@ class Widget {
         work.minions.broadcast('cam_shadow_stack', { clear: true });
     }
 
-    computeShadowAtZ(z, ztop, cached) {
-        return this.#computeShadowAt(z, ztop, cached);
+    // called from minion
+    computeShadowAtZ(z, ztop, cached, pocket) {
+        return this.#computeShadowAt(z, ztop, cached, pocket);
     }
 
     // union triangles > z (opt cap < ztop) into polygon(s)
     // slice the triangle stack matchingg z then union the results
-    #computeShadowAt(z, ztop, cached) {
+    #computeShadowAt(z, ztop, cached, pocket) {
         let shadow_stack = this.cache.shadow_stack;
         if (shadow_stack && shadow_stack[z]) {
             return shadow_stack[z];
@@ -814,7 +816,7 @@ class Widget {
         let label = `compute shadow ${z.round(2)}`;
         if (debug_shadow) console.time(label);
         const found = [];
-        const stack = cached ?? this.#ensureShadowCache();
+        const stack = cached ?? this.#ensureShadowCache(pocket);
         let minZ = Math.floor(z);
         let maxZ = Math.ceil(z);
         let slices = [];

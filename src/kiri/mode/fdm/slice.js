@@ -396,6 +396,22 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
     }
 
     async function onSliceDone(slices) {
+
+        // new auto support demonstrator using cast shadow
+        if (false) {
+            let indices = slices.map(s => s.z);//.sort((a,b) => b-a);
+
+            await widget.computeShadowStack(indices, prog => {}, true);
+
+            for (let slice of slices.slice().sort((a,b) => a.z - b.z)) {
+                let shadow = await widget.shadowAt(slice.z, true);
+                // slice.supports = shadow;
+                slice.output()
+                    .setLayer('shadow', 0xff0000)
+                    .addPolys(shadow);
+            }
+        }
+
         // alert non-manifold parts
         if (healed) {
             onupdate(null, null, "part may not be manifold");
@@ -1735,8 +1751,7 @@ function doSupportFill(args) {
     slice.supports = supports;
 };
 
-function fillSupportPolys(args) {
-    const { promises, polys, lineWidth, density, z, isBelt, angle, outline } = args;
+function fillSupportPolys({ promises, polys, lineWidth, density, z, isBelt, angle, outline }) {
     // calculate fill density
     let spacing = lineWidth * (1 / density);
     polys.forEach(function (poly) {
