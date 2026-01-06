@@ -1,17 +1,130 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { base, util } from '../../../geo/base.js';
-import { newBounds } from '../../../geo/bounds.js';
-import { newPolygon } from '../../../geo/polygon.js';
-import { polygons as POLY } from '../../../geo/polygons.js';
-import { newPoint } from '../../../geo/point.js';
-import { slice, sliceZ } from '../../../geo/slicer.js';
-import { newSlice } from '../../core/slice.js';
-import { fill, fill_fixed } from './fill.js';
-import { getRangeParameters } from './driver.js';
 import { doTopShells } from './post.js';
+import { fill, fill_fixed } from './fill.js';
+import { generateBeltAnchor, embossBeltPooch, finalizeBeltBounds } from './belt.js';
+import { getRangeParameters } from './driver.js';
+import { newPoint } from '../../../geo/point.js';
+import { newPolygon } from '../../../geo/polygon.js';
+import { newSlice } from '../../core/slice.js';
+import { polygons as POLY } from '../../../geo/polygons.js';
+import { slice, sliceZ } from '../../../geo/slicer.js';
 
 const { config } = base;
+
+const CONSTANTS = {
+    // Support fill
+    SUPPORT_FILL_LEGACY_OFFSET: 1000,  // hack to allow old code path detection (line 158)
+    SUPPORT_AUTO_ANGLE_WIDE: 1090,     // auto-angle for wide support polygons (90°)
+    SUPPORT_AUTO_ANGLE_TALL: 1000,     // auto-angle for tall support polygons (0°)
+    SUPPORT_INSET_RATIO: 1/3,          // inset support fill by 33% of line width
+    SUPPORT_CONNECT_DISTANCE_MULT: 2,  // connect fill lines within 2x spacing
+
+    // Minimum areas and thresholds
+    MIN_POLY_AREA: 0.1,                // minimum polygon area in mm²
+    DENSE_INFILL_THRESHOLD: 0.995,     // 99.5% infill triggers solid layer
+    SOLID_LAYER_COVERAGE_THRESHOLD: 0.5, // 50% solid coverage triggers full layer
+
+    // Adaptive slicing
+    ADAPTIVE_SLICE_TOLERANCE: 0.01,    // threshold for adaptive layer height adjustments
+
+    // Belt mode
+    BELT_PRECISION_ROUNDING: 3,        // decimal places for belt touch detection
+    BELT_PEEK_LAYERS: 5,               // layers to check for brim width calculation
+    BELT_ANCHOR_BUMP_SPACING_MULT: 2,  // anchor bump spacing multiplier
+    BELT_MIN_WIDTH_FOR_HATCH: 10,      // minimum width in mm for hatch lines in bumps
+    BELT_HATCH_SPACING: 3,             // hatch line spacing in mm for bumps
+
+    // Pooch (belt text embossing)
+    POOCH_Y_RANGE_MIN: 0,              // minimum Y offset for pooch detection
+    POOCH_Y_RANGE_MAX: 3,              // maximum Y offset for pooch detection
+    POOCH_FLATNESS_TOLERANCE: 0.01,    // flatness tolerance for pooch surface
+    POOCH_WIDTH_TOLERANCE: 1,          // width matching tolerance in mm
+    POOCH_DY_TOLERANCE: 0.1,           // height delta tolerance
+    POOCH_DZ_TOLERANCE: 1,             // length delta tolerance
+    POOCH_TEXT_SCALE_X: 1.2,           // text horizontal scale factor
+    POOCH_TEXT_SCALE_Y: 1,             // text vertical scale factor
+    POOCH_FONT_SIZE: 24,               // font size in pixels
+    POOCH_PIXEL_THRESHOLD: 30,         // brightness threshold for pixel detection
+
+    // Angled fill
+    ANGLED_FILL_ROTATION: 45,          // rotation offset for angled fills
+};
+
+/**
+ * @typedef {Object} SliceParams
+ * @property {number} sliceHeight - Layer height in mm
+ * @property {number} sliceLineWidth - Extrusion width in mm
+ * @property {number} sliceTopLayers - Number of solid top layers
+ * @property {number} sliceBottomLayers - Number of solid bottom layers
+ * @property {number} sliceFillSparse - Infill density (0.0-1.0)
+ * @property {string} sliceFillType - Infill pattern: 'hex', 'grid', 'gyroid', 'triangle', etc.
+ * @property {number} sliceFillAngle - Base infill angle in degrees
+ * @property {number} sliceFillWidth - Solid fill line width multiplier
+ * @property {number} sliceFillGrow - Fill boundary expansion in mm
+ * @property {number} sliceFillOverlap - Fill overlap with shells (0.0-0.8)
+ * @property {number} sliceSolidMinArea - Minimum area in mm² for solid regions
+ * @property {number} sliceSupportDensity - Support fill density (0.0-1.0)
+ * @property {number} sliceSupportFill - Support fill angle (or auto if >= 1000)
+ * @property {number} sliceSupportGap - Gap between support and part in mm
+ * @property {boolean} sliceSupportOutline - Include support perimeter
+ * @property {number} sliceSupportOffset - Support clip offset in mm
+ * @property {number} sliceAdaptive - Enable adaptive layer heights
+ * @property {number} sliceMinHeight - Minimum adaptive layer height in mm
+ * @property {number} firstSliceHeight - First layer height in mm
+ * @property {number} firstLayerBrim - Brim width in mm
+ * @property {number} beltAnchor - Belt anchor length in mm
+ * @property {number} firstLayerBeltLead - Belt lead-in length in mm
+ * @property {number} firstLayerBeltBump - Belt anchor bump height in mm
+ * @property {number} firstLayerFlatten - Belt base flattening height in mm
+ */
+
+/**
+ * @typedef {Object} RenderContext
+ * @property {boolean} isThin - Force thin line rendering
+ * @property {boolean} isFlat - Force flat polygon rendering
+ * @property {number} offset - Line generation offset (typically lineWidth/2)
+ */
+
+/**
+ * @typedef {Object} FillOptions
+ * @property {Object} settings - Global settings object
+ * @property {SliceParams} process - Process parameters
+ * @property {Object} device - Device configuration
+ * @property {number} lineWidth - Extrusion width in mm
+ * @property {number} spacing - Fill line spacing in mm
+ * @property {number} density - Fill density (0.0-1.0)
+ * @property {Object} bounds - Widget bounding box
+ * @property {number} height - Layer height in mm
+ * @property {string} type - Fill pattern type
+ * @property {boolean} cache - Enable fill caching
+ * @property {Promise[]} [promises] - Array for async operations
+ */
+
+/**
+ * @typedef {Object} SupportFillOptions
+ * @property {Slice} slice - Slice to process
+ * @property {number} lineWidth - Extrusion width in mm
+ * @property {number} density - Support density (0.0-1.0)
+ * @property {number} minArea - Minimum polygon area in mm²
+ * @property {boolean} isBelt - Belt printer mode
+ * @property {number} [angle] - Fill angle in degrees (auto if >= 1000)
+ * @property {boolean} outline - Include support outline
+ * @property {number} [gap] - Gap from part surfaces in mm
+ * @property {Promise[]} [promises] - Array for async operations
+ */
+
+/**
+ * @typedef {Object} BeltData
+ * @property {number} slope - Belt angle slope factor
+ * @property {number} cosf - Cosine of belt angle
+ * @property {number} sinf - Sine of belt angle
+ * @property {number} miny - Minimum Y coordinate
+ * @property {number} midy - Middle Y coordinate
+ * @property {boolean} [touch] - Whether slice touches belt
+ * @property {boolean} [anchor] - Whether slice is part of anchor
+ */
 
 let tracker = util.pwait,
     lopacity = 0.6,
@@ -42,18 +155,21 @@ let tracker = util.pwait,
     profileEnd = profile ? console.profileEnd : noop,
     debug = false;
 
-let isThin = false, // force line rendering
-    isFlat = false, // force flat rendering
-    offset = 0;     // poly line generation offsets
-
-function vopt(opt) {
+/**
+ * Apply visualization options based on render context
+ * 
+ * @param {Object} opt - Base options
+ * @param {RenderContext} ctx - Render context
+ * @returns {Object|null} Modified options or null
+ */
+function vopt(opt, ctx) {
     if (opt) {
-        if (isFlat) {
+        if (ctx.isFlat) {
             opt.flat = true;
             opt.outline = true;
             return opt;
         }
-        if (isThin) return null;
+        if (ctx.isThin) return null;
     }
     return opt;
 }
@@ -120,7 +236,7 @@ export function slicePost(settings, onupdate) {
  * @param {Function} onupdate (called with % complete and optional message)
  * @param {Function} ondone (called when complete with an array of Slice objects)
  */
-export function fdm_slice(settings, widget, onupdate, ondone) {
+export function sliceOne(settings, widget, onupdate, ondone) {
     let render = settings.render !== false,
         { minions } = self.kiri_worker,
         { process, device, controller } = settings,
@@ -147,20 +263,24 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         supportDensity = process.sliceSupportDensity,
         { sliceCompInner, sliceCompOuter } = process;
 
-    // override globals used by vopt()
-    isFlat = controller.lineType === "flat";
-    isThin = !isFlat && controller.lineType === "line";
-    offset = lineWidth / 2;
+    // create render context for visualization
+    /** @type {RenderContext} */
+    const renderContext = {
+        isFlat: controller.lineType === "flat",
+        isThin: controller.lineType === "line",
+        offset: lineWidth / 2
+    };
+    renderContext.isThin = !renderContext.isFlat && renderContext.isThin;
 
     // allow overriding support fill auto angle algorithm
     // also causes support fill to be aligned on start boundaries
     // best with angles that are a multiple of 90 degrees
     if (process.sliceSupportFill >= 0) {
         // yes, an ugly hack to allow it to pass through old code paths
-        process.sliceSupportFill += 1000;
+        process.sliceSupportFill += CONSTANTS.SUPPORT_FILL_LEGACY_OFFSET;
     }
 
-    if (isFlat) {
+    if (renderContext.isFlat) {
         Object.values(COLOR).forEach(color => {
             color.flat = true;
             color.line = 1
@@ -230,7 +350,6 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         xray: process.xray,
         zMin: bounds.min.z,
         zMax: bounds.max.z - zCut,
-        // support/synth usually has overlapping boxes
         union: controller.healMesh,
         indices: process.indices || process.xray,
         useAssembly,
@@ -245,87 +364,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             vaseMode,
             process,
         },
-        // z index generator
-        zGen(zopt) {
-            if (process.xray) {
-                return zopt.zIndexes;
-            }
-            let { zMin, zMax } = zopt;
-            let h1 = sliceHeight;
-            let h0 = Math.abs(zMin) < 0.0001 ? (sliceHeightBase || h1) : h1;
-            let hm = sliceMinHeight || 0;
-            let h = h0;
-            let z = h0;
-            let zi = indices; // indices
-            let zh = heights; // heights
-            if (hm) {
-                // adaptive increments based on z indices (var map to legacy code)
-                let zIncFirst = h0;
-                let zInc = h1;
-                let zIncMin = hm;
-                let zHeights = heights;
-                let zIndexes = indices;
-                let zOrdered = Object.values(zopt.zIndexes).map(v => parseFloat(v));
-                // console.log('adaptive slicing', zIncMin, ':', zInc, 'from', zMin, 'to', zMax);
-                let zPos = zIncFirst,
-                    zOI = 0,
-                    zDelta,
-                    zDivMin,
-                    zDivMax,
-                    zStep,
-                    nextZ,
-                    lzp = zPos;
-                // adaptive slice height
-                // first slice/height is fixed from base
-                zHeights.push(zIncFirst);
-                zIndexes.push(zIncFirst);
-                // console.log({zIncFirst, zOrdered})
-                while (zPos < zMax && zOI < zOrdered.length) {
-                    nextZ = zOrdered[zOI++];
-                    if (zPos >= nextZ) {
-                        // console.log('skip',{zPos},'>=',{nextZ});
-                        continue;
-                    }
-                    zDelta = nextZ - zPos;
-                    if (zDelta < zIncMin) {
-                        // console.log('skip',{zDelta},'<',{zIncMin});
-                        continue;
-                    }
-                    zDivMin = Math.floor(zDelta / zIncMin);
-                    zDivMax = Math.floor(zDelta / zInc);
-                    if (zDivMax && zDivMax <= zDivMin) {
-                        if (zDelta % zInc > 0.01) zDivMax++;
-                        zStep = zDelta / zDivMax;
-                        // console.log(`--- zDivMax <= zDivMin ---`, zStep, zDelta % zInc)
-                    } else {
-                        zStep = zDelta;
-                    }
-                    // console.log({nextZ, zPos, zDelta, zStep, zDivMin, zDivMax})
-                    while (zPos < nextZ) {
-                        zHeights.push(zStep);
-                        zIndexes.push(zPos + zStep);
-                        zPos += zStep;
-                        // console.log({D: zPos - lzp, zPos})
-                        // lzp = zPos;
-                    }
-                }
-                // console.log({zIndexes, zHeights});
-            } else {
-                // simple based + fixed increment
-                while (true) {
-                    // reduce slice position by half layer height
-                    let realz = (z - (h / 2)).round(3);
-                    if (realz > zMax) {
-                        break;
-                    }
-                    zh.push(h);
-                    zi.push(realz);
-                    h = h1;
-                    z += h;
-                }
-            }
-            return zi;
-        },
+        zGen,
         // slicer function (worker local or minion distributed)
         slicer(z, points, opts) {
             return (isConcurrent ? minions.sliceZ : sliceZ)(z, points, opts);
@@ -338,7 +377,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         return output.slices.map(data => {
             let { z, clip, lines, groups, changes } = data;
             if (!data.tops) return null;
-            let slice = newSlice(z).addTops(data.tops, { minArea: 0.1 });
+            let slice = newSlice(z).addTops(data.tops, { minArea: CONSTANTS.MIN_POLY_AREA });
             slice.index = indices.indexOf(z);
             slice.height = heights[slice.index];
             slice.clips = clip;
@@ -362,10 +401,97 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         return onSliceDone(slices);
     }).then(ondone);
 
-    async function onSliceDone(slices) {
+    // z index generator
+    function zGen(zopt) {
+        if (process.xray) {
+            return zopt.zIndexes;
+        }
+        let { zMin, zMax } = zopt;
+        let h1 = sliceHeight;
+        let h0 = Math.abs(zMin) < 0.0001 ? (sliceHeightBase || h1) : h1;
+        let hm = sliceMinHeight || 0;
+        let h = h0;
+        let z = h0;
+        let zi = indices; // indices
+        let zh = heights; // heights
+        if (hm) {
+            // adaptive increments based on z indices (var map to legacy code)
+            let zIncFirst = h0;
+            let zInc = h1;
+            let zIncMin = hm;
+            let zHeights = heights;
+            let zIndexes = indices;
+            let zOrdered = Object.values(zopt.zIndexes).map(v => parseFloat(v));
+            // console.log('adaptive slicing', zIncMin, ':', zInc, 'from', zMin, 'to', zMax);
+            let zPos = zIncFirst,
+                zOI = 0,
+                zDelta,
+                zDivMin,
+                zDivMax,
+                zStep,
+                nextZ,
+                lzp = zPos;
+            // adaptive slice height
+            // first slice/height is fixed from base
+            zHeights.push(zIncFirst);
+            zIndexes.push(zIncFirst);
+            // console.log({zIncFirst, zOrdered})
+            while (zPos < zMax && zOI < zOrdered.length) {
+                nextZ = zOrdered[zOI++];
+                if (zPos >= nextZ) {
+                    // console.log('skip',{zPos},'>=',{nextZ});
+                    continue;
+                }
+                zDelta = nextZ - zPos;
+                if (zDelta < zIncMin) {
+                    // console.log('skip',{zDelta},'<',{zIncMin});
+                    continue;
+                }
+                zDivMin = Math.floor(zDelta / zIncMin);
+                zDivMax = Math.floor(zDelta / zInc);
+                if (zDivMax && zDivMax <= zDivMin) {
+                    if (zDelta % zInc > CONSTANTS.ADAPTIVE_SLICE_TOLERANCE) zDivMax++;
+                    zStep = zDelta / zDivMax;
+                    // console.log(`--- zDivMax <= zDivMin ---`, zStep, zDelta % zInc)
+                } else {
+                    zStep = zDelta;
+                }
+                // console.log({nextZ, zPos, zDelta, zStep, zDivMin, zDivMax})
+                while (zPos < nextZ) {
+                    zHeights.push(zStep);
+                    zIndexes.push(zPos + zStep);
+                    zPos += zStep;
+                    // console.log({D: zPos - lzp, zPos})
+                    // lzp = zPos;
+                }
+            }
+            // console.log({zIndexes, zHeights});
+        } else {
+            // simple based + fixed increment
+            while (true) {
+                // reduce slice position by half layer height
+                let realz = (z - (h / 2)).round(3);
+                if (realz > zMax) {
+                    break;
+                }
+                zh.push(h);
+                zi.push(realz);
+                h = h1;
+                z += h;
+            }
+        }
+        return zi;
+    }
 
-        // new auto support demonstrator using cast shadow
-        if (process.sliceSupportType === 'automatic') {
+    async function onSliceDone(slices) {
+        /**
+         * Process automatic shadow-based support generation
+         */
+        async function processAutoSupport() {
+            if (process.sliceSupportType !== 'automatic') {
+                return;
+            }
+
             let stack = slices.slice();
             let indices = stack.map(s => s.z);
             let zAngNorm = Math.sin(process.sliceSupportAngle * Math.PI / 180);
@@ -384,310 +510,40 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                     shadow = POLY.offset(shadow, process.sliceSupportExtra);
                 }
                 slice.supports = shadow;
-                // slice.output()
-                //     .setLayer('shadow', 0xff0000)
-                //     .addPolys(shadow);
             }
         }
 
-        // alert non-manifold parts
-        if (healed) {
-            onupdate(null, null, "part may not be manifold");
-        }
-
-        // remove all empty slices above part but leave below
-        // for multi-part (multi-extruder) setups where the void is ok
-        // also reverse because slicing occurs bottom-up
-        let found = false;
-        slices = slices.reverse().filter(slice => {
-            if (slice.tops.length) {
-                return found = true;
-            } else {
-                return found;
-            }
-        }).reverse();
-
-        // connect slices into linked list for island/bridge projections
-        for (let i=1; i<slices.length; i++) {
-            slices[i-1].up = slices[i];
-            slices[i].down = slices[i-1];
-        }
-
-        widget.slices = slices;
-
-        if (!slices || slices.length === 0) {
-            return;
-        }
-
-        // attach range params to each slice
-        for (let slice of slices) {
-            slice.params = getRangeParameters(process, slice.index);
-        }
-
-        // calculate % complete and call onupdate()
-        function doupdate(index, from, to, msg) {
-            trackupdate(index / slices.length, from, to, msg);
-        }
-
-        function trackupdate(pct, from, to, msg) {
-            onupdate(0.5 + (from + (pct * (to - from))) * 0.5, msg);
-        }
-
-        // for each slice, performe a function and call doupdate()
-        function forSlices(from, to, fn, msg) {
-            slices.forEach(slice => {
-                fn(slice);
-                doupdate(slice.index, from, to, msg)
-            });
-        }
-
-        // do not hint polygon fill longer than a max span length
-        config.hint_len_max = util.sqr(process.sliceBridgeMax);
-
-        // reset for solids, support projections
-        // and other annotations
-        slices.forEach(slice => {
-            slice.widget = widget;
-            slice.extruder = extruder;
-            slice.solids = [];
-        });
-
-        // just the top/bottom special solid layers or range defined solid layers
-        forSlices(0.15, 0.2, slice => {
-            let range = slice.params;
-            let isBottom = slice.index < bottomLayers;
-            let isTop = topLayers && slice.index > slices.length - topLayers - 1;
-            let isTopBase = isTop && slice.index === slices.length - topLayers;
-            let isDense = range.sliceFillSparse > 0.995;
-            let isSolid = (isBottom || ((isTop || isDense) && !vaseMode));
-            let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
-            if (solidWidth) {
-                let fillSpace = fillSpacing * solidWidth;
-                doSolidLayerFill(slice, fillSpace, sliceFillAngle);
-            }
-            if (slice.index === slices.length - 1) {
-                slice.isFlatsLayer = true;
-            }
-            if (isTopBase) {
-                // mark the first top solid supporting layer as a bridge
-                slice.isBridgeLayer = true;
-            }
-            sliceFillAngle = (sliceFillAngle + 90.0) % 360;
-        }, "solid layers");
-
-        // add lead in anchor when specified in belt mode (but not for synths)
-        if (isBelt) {
-            let { cosf, slope } = widget.belt;
-            // find adjusted zero point from slices
-            let smin = Infinity;
-            for (let slice of slices) {
-                let miny = Infinity;
-                for (let poly of slice.topPolys()) {
-                    let y = poly.bounds.maxy;
-                    let z = slice.z;
-                    // at 45 degrees, 1mm in Z is 1mm in Y
-                    let by = (slope * z) - y;
-                    if (by < miny) miny = by;
-                    if (by < smin) smin = by;
+        /**
+         * Process solid layer fills (top/bottom layers)
+         */
+        function processSolidLayers() {
+            forSlices(0.15, 0.2, slice => {
+                let range = slice.params;
+                let isBottom = slice.index < bottomLayers;
+                let isTop = topLayers && slice.index > slices.length - topLayers - 1;
+                let isTopBase = isTop && slice.index === slices.length - topLayers;
+                let isDense = range.sliceFillSparse > CONSTANTS.DENSE_INFILL_THRESHOLD;
+                let isSolid = (isBottom || ((isTop || isDense) && !vaseMode));
+                let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
+                if (solidWidth) {
+                    let fillSpace = fillSpacing * solidWidth;
+                    doSolidLayerFill({ slice, spacing: fillSpace, angle: sliceFillAngle });
                 }
-                // mark slices with tops touching belt
-                slice.belt = { miny, touch: miny.round(3) < sliceHeightBase };
-            }
-            // find max width of first 5 layers for brim additions
-            let start;
-            let minx = Infinity, maxx = -Infinity;
-            let peek = 0;
-            for (let slice of slices) {
-                if (slice.tops.length && peek++ < 5) {
-                    for (let poly of slice.topPolys()) {
-                        minx = Math.min(minx, poly.bounds.minx);
-                        maxx = Math.max(maxx, poly.bounds.maxx);
-                    }
+                if (slice.index === slices.length - 1) {
+                    slice.isFlatsLayer = true;
                 }
-                // find first slice touching belt for start of anchor
-                if (!start && slice.belt.touch) {
-                    start = slice;
+                if (isTopBase) {
+                    // mark the first top solid supporting layer as a bridge
+                    slice.isBridgeLayer = true;
                 }
-            }
-            // ensure we start against a layer with shells
-            while (start && start.up && start.topShells().length === 0) {
-                start = start.up;
-            }
-            // if a brim applies, add that width to anchor
-            let brim = getRangeParameters(process, 0).firstLayerBrim || 0;
-            if (brim) {
-                minx -= brim;
-                maxx += brim;
-            }
-            // array of added top.fill_sparse arrays
-            let adds = [];
-            let step = sliceHeight;
-            let anchorlen = (process.beltAnchor || process.firstLayerBeltLead) * cosf;
-            while (anchorlen && start && anchorlen >= sliceHeight) {
-                let addto = start.down;
-                if (!addto) {
-                    addto = newSlice(start.z - step);
-                    addto.extruder = extruder;
-                    addto.belt = { };
-                    addto.height = start.height;
-                    addto.up = start;
-                    start.down = addto;
-                    slices.splice(0,0,addto);
-                } else if (!addto.belt) {
-                    console.log({addto_missing_belt: addto});
-                    addto.belt = {};
-                }
-                addto.index = -1;
-                addto.belt.anchor = true;
-                // this allows the anchor to print bi-directionally
-                // by removing the forced start-point in print.js
-                addto.belt.touch = false;
-                let z = addto.z;
-                let y = (slope * z) - smin - (lineWidth / 2);
-                let splat = newPolygon().add(minx, y, z).add(maxx, y, z).setOpen();
-                let snew = addto.addTop(splat).fill_sparse = [ splat ];
-                adds.push(snew);
-                start = addto;
-                anchorlen -= (step * slope);
-            }
-            // add anchor bump
-            let bump = process.firstLayerBeltBump;
-            if (bump) {
-                adds = adds.reverse().slice(1, adds.length - 1);
-                let count = 1;
-                for (let add of adds) {
-                    let poly = add[0];
-                    let y = count++ * -start.height * 2;
-                    if (-y > bump) {
-                        count--;
-                        // break;
-                    }
-                    let first = poly.first();
-                    // add up/over/down to anchor line (close = down)
-                    // which completes the bump perimeter
-                    poly.push(poly.last().add({x:0, y, z:0}));
-                    poly.push(poly.first().add({x:0, y, z:0}));
-                    poly.setClosed();
-                    if (count > 2 && maxx - minx > 10) {
-                        // add vertical hatch lines insibe bump shell
-                        let mp = (maxx + minx) / 2;
-                        let dx = (maxx - minx - 2);
-                        dx = (Math.floor(dx / 3) * 3) / 2;
-                        let fy = first.y;
-                        let fz = first.z;
-                        let n2 = lineWidth / 2;
-                        for (let x = mp - dx; x <= mp + dx ; x += 3) {
-                            add.push(newPolygon().add(x, fy - n2, fz).add(x, fy + y + n2, fz).setOpen() );
-                        }
-                    }
-                }
-            }
-            // experimental emboss text on a flat underside of an object
-            // in belt mode only
-            if (process.pooch && self.OffscreenCanvas) {
-                const { length, width, height, text } = process.pooch;
-                let firstZ, firstI, lastZ, lastI, minX = 0, maxX = 0, maxY = 0;
-                // locate suitable flat spot
-                for (let slice of slices) {
-                    let { belt } = slice;
-                    if (!belt.touch) {
-                        continue;
-                    }
-                    let index = slice.index;
-                    let z = slice.z;
-                    outer: for (let poly of slice.topPolys()) {
-                        for (let i=0, p=poly.points, l=p.length; i<l; i++) {
-                            let p0 = p[i];
-                            let p1 = p[(i + 1) % l];
-                            let p0y = z - p0.y;
-                            let p1y = z - p1.y;
-                            let i_ok = lastI ? index - lastI === 1 : true
-                            let y_ok = p0y > 0 && p0y < 3 && Math.abs(p0y - p1y) < 0.01;
-                            let x_ok = Math.abs(width - Math.abs(p1.x - p0.x)) < 1
-                            if (y_ok && x_ok) {
-                                if (i_ok) {
-                                    firstZ = firstZ || z;
-                                    firstI = firstI || index;
-                                    lastZ = z;
-                                    lastI = index;
-                                    minX = Math.min(p0.x, p1.x);
-                                    maxX = Math.max(p0.x, p1.x);
-                                    maxY = p0y;
-                                    break outer;
-                                } else {
-                                    firstZ = lastI = 0;
-                                }
-                            }
-                        }
-                    }
-                }
-                let dy = Math.abs(height - maxY * (1 / Math.sqrt(2)));
-                let dz = Math.abs(length - ((lastZ - firstZ) * Math.sqrt(2)));
-                if (dy < 0.1 && dz < 1) {
-                    // console.log('FOUND', { firstI, lastI, minX, maxX, maxY });
-                    let span = lastI - firstI - 2; // x = down the belt
-                    let tall = width * 2;
-                    let can = new self.OffscreenCanvas(span, tall);
-                    let ctx = can.getContext("2d");
-                    ctx.scale(1.2, 1);
-                    ctx.font = '24px sans-serif';
-                    // ctx.fillStyle = 'black';
-                    ctx.textBaseline = "bottom";
-                    ctx.fillText(text, 1, tall - 1);
-                    let img = ctx.getImageData(0, 0, span, tall).data.buffer;
-                    let rgb = new Uint32Array(img);
-                    // console.log({ img, rgb, p: rgb.filter(v => v) });
-                    for (let x=0; x<span; x++) {
-                        let str = '';
-                        let maxp = 0;
-                        let lines = [];
-                        let start, end;
-                        for (let y=tall-1; y>=0; y--) {
-                            let pix = rgb[y * span + x];
-                            pix = (
-                                ((pix >> 24) & 0xff) +
-                                ((pix >> 16) & 0xff) +
-                                ((pix >>  8) & 0xff)
-                            ) / 3;
-                            str += pix > 30 ? '*' : '-';
-                            maxp = Math.max(maxp, pix);
-                            if (pix > 30) {
-                                if (start >= 0) {
-                                    end = tall - y;
-                                } else {
-                                    start = tall - y;
-                                }
-                            } else {
-                                if (start >= 0 && end > start) {
-                                    lines.push({ start, end });
-                                }
-                                start = end = undefined;
-                            }
-                        }
-                        console.log((x).toString().padStart(2,0),str,maxp | 0,lines);
-                        if (lines.length) {
-                            let slice = slices[firstI + x + 1];
-                            let supps = slice.supports = slice.supports || [];
-                            let z = slice.z;
-                            let y = z - smin - (lineWidth / 2);
-                            for (let line of lines) {
-                                supps.push(newPolygon()
-                                    .add(minX + line.start / 2, y, z)
-                                    .add(minX + line.end / 2, y, z)
-                                    .setOpen()
-                                );
-                            }
-                        }
-                    }
-                }
-            }
+                sliceFillAngle = (sliceFillAngle + 90.0) % 360;
+            }, "solid layers");
         }
 
-        // calculations only relevant when solid layers are used
-        // layer boolean diffs need to be computed to find flat areas to fill
-        // and overhangs that need to be supported. these are stored in flats
-        // and bridges, projected up/down, and merged into an array of solids
-        if (!vaseMode) {
+        /**
+         * Process layer diffs and project solid areas
+         */
+        function processLayerDiffs() {
             profileStart("delta");
             forSlices(0.2, 0.34, slice => {
                 let params = slice.params || process;
@@ -696,6 +552,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 doDiff(slice, { min: solidMinArea, grow: sliceFillGrow });
             }, "layer deltas");
             profileEnd();
+
             profileStart("delta-project");
             forSlices(0.34, 0.35, slice => {
                 let params = slice.params || process;
@@ -705,6 +562,12 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 if (bottomLayers) projectBridges(slice, bottomLayers);
             }, "layer deltas");
             profileEnd();
+        }
+
+        /**
+         * Process solid fill patterns
+         */
+        async function processSolidFills() {
             profileStart("solid-fill")
             let promises = isConcurrent ? [] : undefined;
             forSlices(0.35, promises ? 0.4 : 0.5, slice => {
@@ -713,7 +576,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 let solidWidth = params.sliceFillWidth || 1;
                 let fillSpace = fillSpacing * solidWidth;
                 let solidMinArea = params.sliceSolidMinArea;
-                doSolidsFill(slice, fillSpace, sliceFillAngle, solidMinArea, promises);
+                doSolidsFill({ slice, spacing: fillSpace, angle: sliceFillAngle, minArea: solidMinArea, promises });
                 sliceFillAngle = (sliceFillAngle + 90.0) % 360;
             }, "fill solids");
             // very last layer (top) is set to finish solid rate
@@ -726,9 +589,10 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             profileEnd();
         }
 
-        // for "real" objects, fill the remaining voids with sparse fill
-        // sparse layers only present when non-vase mose and sparse % > 0
-        if (!vaseMode) {
+        /**
+         * Process sparse infill patterns
+         */
+        async function processSparseInfill() {
             let lastType;
             let promises = isConcurrent ? [] : undefined;
             forSlices(0.5, promises ? 0.55 : 0.7, slice => {
@@ -769,8 +633,10 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             }
         }
 
-        // fill all supports (auto and manual)
-        if (supportDensity) {
+        /**
+         * Process support structure fills
+         */
+        async function processSupportFills() {
             profileStart("support-fill");
             let promises = false && isConcurrent ? [] : undefined;
             forSlices(0.8, promises ? 0.88 : 0.9, slice => {
@@ -796,7 +662,10 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             profileEnd();
         }
 
-        if (isBrick) {
+        /**
+         * Process brick/interleave mode slicing
+         */
+        function processBrickMode() {
             let indices = slices.map(s => s.index);
             let first = indices[1];
             let last = indices[indices.length - 2];
@@ -842,35 +711,151 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             slices.forEach((s,i) => s.index = i);
         }
 
+        // calculate % complete and call onupdate()
+        function doupdate(index, from, to, msg) {
+            trackupdate(index / slices.length, from, to, msg);
+        }
+
+        function trackupdate(pct, from, to, msg) {
+            onupdate(0.5 + (from + (pct * (to - from))) * 0.5, msg);
+        }
+
+        // for each slice, performe a function and call doupdate()
+        function forSlices(from, to, fn, msg) {
+            slices.forEach(slice => {
+                fn(slice);
+                doupdate(slice.index, from, to, msg)
+            });
+        }
+
+        // new auto support demonstrator using cast shadow
+        await processAutoSupport();
+
+        // alert non-manifold parts
+        if (healed) {
+            onupdate(null, null, "part may not be manifold");
+        }
+
+        // remove all empty slices above part but leave below
+        // for multi-part (multi-extruder) setups where the void is ok
+        // also reverse because slicing occurs bottom-up
+        let found = false;
+        slices = slices.reverse().filter(slice => {
+            if (slice.tops.length) {
+                return found = true;
+            } else {
+                return found;
+            }
+        }).reverse();
+
+        // connect slices into linked list for island/bridge projections
+        for (let i=1; i<slices.length; i++) {
+            slices[i-1].up = slices[i];
+            slices[i].down = slices[i-1];
+        }
+
+        widget.slices = slices;
+
+        if (!slices || slices.length === 0) {
+            return;
+        }
+
+        // attach range params to each slice
+        for (let slice of slices) {
+            slice.params = getRangeParameters(process, slice.index);
+        }
+
+        // do not hint polygon fill longer than a max span length
+        config.hint_len_max = util.sqr(process.sliceBridgeMax);
+
+        // reset for solids, support projections
+        // and other annotations
+        slices.forEach(slice => {
+            slice.widget = widget;
+            slice.extruder = extruder;
+            slice.solids = [];
+        });
+
+        // process solid layers (top/bottom)
+        processSolidLayers();
+
+        // add lead in anchor when specified in belt mode (but not for synths)
+        if (isBelt) {
+            let { slope } = widget.belt;
+
+            // Generate belt anchor
+            generateBeltAnchor({
+                slices,
+                widget,
+                process,
+                lineWidth,
+                sliceHeight,
+                sliceHeightBase,
+                extruder
+            });
+
+            // Calculate smin for pooch text embossing
+            let smin = Infinity;
+            for (let slice of slices) {
+                if (slice.belt && slice.belt.miny < smin) {
+                    smin = slice.belt.miny;
+                }
+            }
+
+            // Experimental emboss text on flat underside
+            embossBeltPooch({
+                slices,
+                widget,
+                process,
+                lineWidth,
+                smin
+            });
+        }
+
+        // calculations only relevant when solid layers are used
+        // layer boolean diffs need to be computed to find flat areas to fill
+        // and overhangs that need to be supported. these are stored in flats
+        // and bridges, projected up/down, and merged into an array of solids
+        if (!vaseMode) {
+            processLayerDiffs();
+            await processSolidFills();
+        }
+
+        // for "real" objects, fill the remaining voids with sparse fill
+        // sparse layers only present when non-vase mode and sparse % > 0
+        if (!vaseMode) {
+            await processSparseInfill();
+        }
+
+        // fill all supports (auto and manual)
+        if (supportDensity) {
+            await processSupportFills();
+        }
+
+        // brick/interleave mode processing
+        if (isBrick) {
+            processBrickMode();
+        }
+
         // render if not explicitly disabled
         if (render) {
             forSlices(0.9, 1.0, slice => {
                 let params = slice.params || process;
                 doRender(slice, params, {
                     dark: controller.dark,
-                    devel: controller.devel
+                    devel: controller.devel,
+                    renderContext
                 });
             }, "render");
         }
 
         if (isBelt) {
-            let bounds = newBounds();
-            let slice = slices[0];
-            if (slice.tops) {
-                for (let top of slice.tops) {
-                    bounds.merge(top.poly.bounds);
-                }
-            } else if (slice.supports) {
-                for (let poly of slice.supports) {
-                    bounds.merge(poly);
-                }
-            }
-            widget.belt.miny = -bounds.miny;
-            widget.belt.midy = (bounds.miny + bounds.maxy) / 2;
+            finalizeBeltBounds({ slices, widget });
         }
     }
 }
 
+// replace with tip2tipEmit?
 function connect_lines(lines, maxd = Infinity) {
     const newlines = [];
     let op2;
@@ -905,12 +890,22 @@ function bound(v,min,max) {
     return Math.max(min,Math.min(max,v));
 }
 
+/**
+ * Render slice visualization for preview
+ * @param {Slice} slice - Slice to render
+ * @param {SliceParams} params - Slice parameters
+ * @param {Object} opt - Render options
+ * @param {boolean} opt.dark - Use dark color scheme
+ * @param {boolean} opt.devel - Enable development visualization
+ * @param {RenderContext} opt.renderContext - Rendering context
+ */
 function doRender(slice, params, opt = {}) {
-    const { dark, devel } = opt;
+    const { dark, devel, renderContext: ctx } = opt;
     const Color = dark ? COLOR_DARK : COLOR;
     const output = slice.output();
     const height = slice.height / 2;
     const solidWidth = params.sliceFillWidth || 1;
+    const { offset, isThin, isFlat } = ctx;
 
     if (slice.tops) // missing for supports
     slice.tops.forEach(top => {
@@ -920,11 +915,11 @@ function doRender(slice, params, opt = {}) {
 
         if (top.shells?.length) output
             .setLayer("shells", Color.shell)
-            .addPolys(top.shells || [], vopt({ offset, height, clean: true }));
+            .addPolys(top.shells || [], vopt({ offset, height, clean: true }, ctx));
 
         if (isThin && top.thin_wall?.length) output
             .setLayer("walls", Color.thin)
-            .addPolys(top.thin_wall.map(a => a.map(p => newPolygon().centerCircle(p, p.r, 12).setZ(slice.z))).flat(), vopt({ offset, height }));
+            .addPolys(top.thin_wall.map(a => a.map(p => newPolygon().centerCircle(p, p.r, 12).setZ(slice.z))).flat(), vopt({ offset, height }, ctx));
 
         if (!isThin && top.thin_wall?.length) output
             .setLayer("walls", Color.thin)
@@ -934,27 +929,27 @@ function doRender(slice, params, opt = {}) {
                     newPolygon(a.map(p => newPoint(p.x, p.y)))
                         .setZ(slice.z)
                         .closeIf(height)
-                ), vopt({ offset, height }));
+                ), vopt({ offset, height }, ctx));
 
         if (top.fill_lines?.length) output
             .setLayer("solid fill", Color.fill)
-            .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height, z:slice.z }));
+            .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height, z:slice.z }, ctx));
 
         if (!(slice.belt?.anchor)) output
             .setLayer("sparse fill", Color.infill)
-            .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
+            .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }, ctx))
 
         if (slice.belt?.anchor) output
             .setLayer("anchor", Color.anchor)
-            .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }))
+            .addPolys(top.fill_sparse || [], vopt({ offset, height, outline: true, trace:true }, ctx))
 
         if (top.thin_fill?.length) output
             .setLayer("thin fill", Color.thin)
-            .addLines(top.thin_fill, vopt({ offset, height }));
+            .addLines(top.thin_fill, vopt({ offset, height }, ctx));
 
         if (top.gaps?.length && devel) output
             .setLayer("gaps", Color.gaps)
-            .addPolys(top.gaps, vopt({ offset, height, thin: true }));
+            .addPolys(top.gaps, vopt({ offset, height, thin: true }, ctx));
 
         if (isThin && devel && top.fill_off?.length) {
             slice.output()
@@ -981,12 +976,12 @@ function doRender(slice, params, opt = {}) {
 
     if (slice.supports && params.sliceSupportOutline) output
         .setLayer("support", Color.support)
-        .addPolys(slice.supports, vopt({ offset, height }));
+        .addPolys(slice.supports, vopt({ offset, height }, ctx));
 
     if (slice.supports) slice.supports.forEach(poly => {
         if (poly.fill) output
             .setLayer("support", Color.support)
-            .addLines(poly.fill, vopt({ offset, height }));
+            .addLines(poly.fill, vopt({ offset, height }, ctx));
     });
 
     if (slice.xray) {
@@ -1037,7 +1032,16 @@ export function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
  * @param {number} angle
  * @param {number} density
  */
- function doSolidLayerFill(slice, spacing, angle) {
+/**
+ * Create solid fill layer by filling all top polygons with alternating pattern
+ * @param {Object} args - Options object
+ * @param {Slice} args.slice - Slice to fill
+ * @param {number} args.spacing - Fill line spacing in mm
+ * @param {number} args.angle - Fill angle in degrees
+ */
+function doSolidLayerFill(args) {
+    const { slice, spacing, angle } = args;
+
     if (slice.xray) {
         return;
     }
@@ -1298,7 +1302,7 @@ export function projectFlats(slice, count, expand) {
         slice.finishSolids = true;
         slice.isFlatsLayer = true;
         const flats = expand ? POLY.expand(slice.flats, expand) : slice.flats;
-        projectSolid(slice, flats, count, false, true);
+        projectSolid({ slice, polys: flats, count, up: false, first: true });
     }
 };
 
@@ -1312,14 +1316,22 @@ export function projectBridges(slice, count) {
         slice.finishSolids = true;
         slice.isBridgeLayer = true;
     }
-    projectSolid(slice, slice.bridges, count, true, true);
+    projectSolid({ slice, polys: slice.bridges, count, up: true, first: true });
 };
 
 /**
- * fill projected areas and store line data
+ * Fill projected solid areas and store line data
+ * 
+ * @param {Object} args - Options object
+ * @param {Slice} args.slice - Slice to process
+ * @param {number} args.spacing - Fill line spacing in mm
+ * @param {number} args.angle - Fill angle in degrees
+ * @param {number} [args.minArea] - Minimum polygon area in mm² (default: 1)
+ * @param {Promise[]} [args.promises] - Array for async operations
  * @return {boolean} true if filled, false if not
  */
-function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
+function doSolidsFill(args) {
+    const { slice, spacing, angle, minArea, promises: fillQ } = args;
     let minarea = minArea || 1,
         tops = slice.tops,
         solids = slice.solids;
@@ -1381,8 +1393,8 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
             if (false && stop.length) {
                 let top_area = top.poly.areaDeep();
                 let stop_area = stop.map(p => p.areaDeep()).reduce((a,v) => a + v);
-                // if the solid area > 50% of the top area, make entire layer solid
-                if (stop_area / tops_area > 0.5) {
+                // if the solid area > threshold of the top area, make entire layer solid
+                if (stop_area / tops_area > CONSTANTS.SOLID_LAYER_COVERAGE_THRESHOLD) {
                     make_solid_layer = true;
                 }
             }
@@ -1394,7 +1406,7 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
         for (let top of tops) {
             top.solids = [];
         }
-        doSolidLayerFill(slice, spacing, angle);
+        doSolidLayerFill({ slice, spacing, angle });
         return;
     }
 
@@ -1423,18 +1435,37 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
             }
         }
         if (tofill.length > 0) {
-            doFillArea(fillQ, tofill, angle, spacing, newfill);
+            doFillArea({ promises: fillQ, polys: tofill, angle, spacing, output: newfill });
         }
         if (angfill.length > 0) {
             top.fill_lines_ang = {spacing:spacing,list:[],poly:[]};
             for (let af of angfill) {
-                doFillArea(fillQ, [af], af.fillang.angle + 45, spacing, newfill);
+                doFillArea({
+                    promises: fillQ,
+                    polys: [af],
+                    angle: af.fillang.angle + CONSTANTS.ANGLED_FILL_ROTATION,
+                    spacing,
+                    output: newfill
+                });
             }
         }
     }
 }
 
-function doFillArea(fillQ, polys, angle, spacing, output, minLen, maxLen) {
+/**
+ * Fill area with line pattern
+ * 
+ * @param {Object} args - Options object
+ * @param {Promise[]} [args.promises] - Array for async operations
+ * @param {Polygon[]} args.polys - Polygons to fill
+ * @param {number} args.angle - Fill angle in degrees
+ * @param {number} args.spacing - Fill line spacing in mm
+ * @param {Array} args.output - Output array for fill lines
+ * @param {number} [args.minLen] - Minimum line length
+ * @param {number} [args.maxLen] - Maximum line length
+ */
+function doFillArea(args) {
+    const { promises: fillQ, polys, angle, spacing, output, minLen, maxLen } = args;
     if (fillQ) {
         fillQ.push(self.kiri_worker.minions.fill(polys, angle, spacing, output, minLen, maxLen));
     } else {
@@ -1442,7 +1473,52 @@ function doFillArea(fillQ, polys, angle, spacing, output, minLen, maxLen) {
     }
 }
 
-function doSupportFill(args) {
+  /**
+   * Generate support structure fill patterns for a slice
+   *
+   * This function processes support polygons by:
+   * 1. Unioning all support polygons to eliminate overlaps
+   * 2. Clipping supports to avoid collision with the part (using clip offsets)
+   * 3. Applying optional gap spacing from upper/lower layers
+   * 4. Generating hatching fill patterns based on density
+   * 5. Optionally connecting fill lines to reduce travel moves
+   *
+   * Process flow:
+   * - Union: Merge overlapping support regions into unified polygons
+   * - Clip: Subtract part geometry (slice.clips) to prevent support/part collision
+   * - Gap: If gap specified, also subtract clips from adjacent layers for clearance
+   * - Fill: Generate hatching pattern with auto or specified angle
+   * - Connect: Optionally link nearby fill line endpoints to reduce travels
+   *
+   * @param {SupportFillOptions} args - Configuration object
+   * @param {Promise[]} [args.promises] - Array for async fill operations (concurrent mode)
+   * @param {Slice} args.slice - Current slice to process
+   * @param {number} args.lineWidth - Extrusion width in mm (typically nozzle diameter)
+   * @param {number} args.density - Fill density from 0.0 (0%) to 1.0 (100%)
+   *                                 Typical support density is 0.10-0.25 (10-25%)
+   * @param {number} args.minArea - Minimum polygon area in mm² to keep (default: 0.1)
+   *                                 Smaller polygons are filtered out as noise
+   * @param {boolean} args.isBelt - True for belt printer mode (affects auto-angle calculation)
+   * @param {number} [args.angle] - Fill angle in degrees. Special values:
+   *                                 - undefined/null: Auto-calculate based on polygon shape
+   *                                 - >= 1000: Auto-calculate (1000=0° for tall, 1090=90° for wide)
+   *                                 - 0-360: Use specified angle
+   * @param {boolean} args.outline - Include support perimeter outline in output
+   *                                  If false, only interior fill lines are generated
+   * @param {number} [args.gap] - Gap distance in mm between support and part surfaces
+   *                               When specified, subtracts adjacent layer clips for clearance
+   *
+   * @modifies {Slice} slice.supports - Updated with filled support polygons (array of Polygon)
+   *                                     Each polygon has a .fill property with fill lines
+   * @modifies {Slice} slice.supportOutline - Stores support outline polygons
+   *
+   * @see fillSupportPolys - Called internally to generate fill patterns
+   * @see CONSTANTS.SUPPORT_INSET_RATIO - Inset ratio (1/3 of line width)
+   * @see CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE - Auto angle for wide polygons (1090 = 90°)
+   * @see CONSTANTS.SUPPORT_AUTO_ANGLE_TALL - Auto angle for tall polygons (1000 = 0°)
+   * @see CONSTANTS.SUPPORT_CONNECT_DISTANCE_MULT - Distance multiplier for line connection (2x)
+   */
+  function doSupportFill(args) {
     const { promises, slice, lineWidth, density, minArea, isBelt, angle, outline, gap } = args;
     let supports = slice.supports,
         min = minArea || 0.1,
@@ -1480,35 +1556,113 @@ function doSupportFill(args) {
     slice.supports = supports;
 };
 
+/**
+ * Generate fill patterns for individual support polygons
+ *
+ * This is an internal helper function called by doSupportFill() that processes each support
+ * polygon individually to generate the hatching fill patterns. It handles:
+ * - Automatic fill angle calculation based on polygon aspect ratio
+ * - Intelligent inset to prevent perimeter over-extrusion
+ * - Optional line connection to reduce travel moves when no outline is needed
+ *
+ * ## Algorithm Details
+ *
+ * 1. **Spacing Calculation**: Converts density percentage to actual spacing distance
+ *    - Formula: spacing = lineWidth * (1 / density)
+ *    - Example: 0.4mm line × (1 / 0.15) = 2.67mm spacing for 15% density
+ *
+ * 2. **Auto-Angle Selection**: Chooses fill direction based on polygon shape
+ *    - Wide polygons (width/height > 1): Use 1090 (90° horizontal lines)
+ *    - Tall polygons (width/height ≤ 1): Use 1000 (0° vertical lines)
+ *    - Belt mode: Always use 1090 (90°) regardless of aspect ratio
+ *    - Rationale: Aligns fill lines with longest dimension for structural strength
+ *
+ * 3. **Inset Operation**: Shrinks polygon before filling
+ *    - Inset distance: lineWidth × (1/3) = 0.33× line width
+ *    - Purpose: Prevents over-extrusion where fill lines meet perimeter
+ *    - Creates ~0.13mm gap for typical 0.4mm nozzle
+ *
+ * 4. **Fill Generation**: Creates parallel hatching lines at calculated angle
+ *    - Uses doFillArea() to generate scan lines through inset polygon
+ *    - Stores result in poly.fill array
+ *
+ * 5. **Line Connection** (optional): Reduces travel moves
+ *    - Only when outline=false (no support perimeter needed)
+ *    - Connects nearby line endpoints within 2× spacing distance
+ *    - Converts many short lines into fewer longer continuous paths
+ *    - Reduces print time and stringing
+ *
+ * @param {Object} args - Configuration object
+ * @param {Promise[]} [args.promises] - Array for async fill operations (concurrent mode)
+ *                                       Pass same array through all calls for parallelism
+ * @param {Polygon[]} args.polys - Array of support polygons to fill
+ *                                  Must have valid .bounds property for aspect ratio calculation
+ * @param {number} args.lineWidth - Extrusion width in mm (typically 0.4mm for 0.4mm nozzle)
+ * @param {number} args.density - Fill density from 0.0 (0%) to 1.0 (100%)
+ *                                 Typical support values: 0.10-0.25 (10-25%)
+ *                                 Higher density = stronger support but harder to remove
+ * @param {number} args.z - Current Z height in mm (for polygon operations)
+ * @param {boolean} args.isBelt - True for belt printer mode
+ *                                 Forces use of SUPPORT_AUTO_ANGLE_WIDE (1090/90°)
+ * @param {number} [args.angle] - Fill angle in degrees. Special values:
+ *                                 - undefined/null: Auto-calculate based on polygon aspect ratio
+ *                                 - >= 1000: Auto-calculate (1000=0° for tall, 1090=90° for wide)
+ *                                 - 0-360: Use specified angle
+ * @param {boolean} args.outline - Controls line connection behavior:
+ *                                  - true: Keep individual fill lines (for support with perimeter)
+ *                                  - false: Connect nearby lines to reduce travel moves
+ *
+ * @modifies {Polygon} Each poly in polys array gets a new .fill property containing:
+ *                     - Array of Polygon objects representing fill lines
+ *                     - Lines are either individual segments (outline=true) or
+ *                       connected paths (outline=false) for travel reduction
+ * 
+ * @see doSupportFill - Parent function that calls this after clipping/union
+ * @see doFillArea - Lower-level function that generates the actual scan lines
+ * @see connect_lines - Utility that connects nearby line segments
+ * @see CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE - Auto angle for wide polygons (1090 = 90°)
+ * @see CONSTANTS.SUPPORT_AUTO_ANGLE_TALL - Auto angle for tall polygons (1000 = 0°)
+ * @see CONSTANTS.SUPPORT_INSET_RATIO - Inset ratio for fill area (1/3)
+ * @see CONSTANTS.SUPPORT_CONNECT_DISTANCE_MULT - Distance multiplier for line connection (2x)
+ */
+ 
 function fillSupportPolys({ promises, polys, lineWidth, density, z, isBelt, angle, outline }) {
     // calculate fill density
     let spacing = lineWidth * (1 / density);
-    polys.forEach(function (poly) {
+    for (let poly of polys) {
         // calculate angle based on width/height ratio
-        let auto = isBelt || (poly.bounds.width() / poly.bounds.height() > 1) ? 1090 : 1000;
-        // inset support poly for fill lines 33% of nozzle width
-        let inset = POLY.offset([poly], -lineWidth/3, {flat: true, z, wasm: true});
+        let auto = isBelt || (poly.bounds.width() / poly.bounds.height() > 1) ? CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE : CONSTANTS.SUPPORT_AUTO_ANGLE_TALL;
+        // inset support poly for fill lines
+        let inset = POLY.offset([poly], -lineWidth * CONSTANTS.SUPPORT_INSET_RATIO, {flat: true, z, wasm: true});
         // do the fill
         if (inset && inset.length > 0) {
-            doFillArea(promises, inset, angle || auto, spacing, poly.fill = []);
+            doFillArea({
+                angle: angle || auto,
+                output: poly.fill = [],
+                polys: inset,
+                promises,
+                spacing
+            });
             if (!outline && poly.fill.length) {
-                poly.fill = connect_lines(poly.fill, spacing * 2);
+                poly.fill = connect_lines(poly.fill, spacing * CONSTANTS.SUPPORT_CONNECT_DISTANCE_MULT);
             }
         }
-        return true;
-    });
+    }
 }
 
 /**
- *
- * @param {Slice} slice
- * @param {Polygon[]} polys
- * @param {number} count
- * @param {boolean} up
- * @param {boolean} first
- * @returns {*}
+ * Project solid areas up or down through slices
+ * 
+ * @param {Object} args - Options object
+ * @param {Slice} args.slice - Current slice
+ * @param {Polygon[]} args.polys - Polygons to project
+ * @param {number} args.count - Number of layers to project
+ * @param {boolean} args.up - Project upward (true) or downward (false)
+ * @param {boolean} args.first - First projection (hint fill angles)
  */
-function projectSolid(slice, polys, count, up, first) {
+function projectSolid(args) {
+    const { slice, polys, count, up, first } = args;
+
     if (slice && !up && count === 1) {
         slice.isBridgeLayer = true;
     }
@@ -1523,7 +1677,7 @@ function projectSolid(slice, polys, count, up, first) {
     }
     addSolidFills(slice, clones);
     if (count > 0) {
-        if (up) projectSolid(slice.up, polys, count-1, true, false);
-        else projectSolid(slice.down, polys, count-1, false, false);
+        if (up) projectSolid({ slice: slice.up, polys, count: count-1, up: true, first: false });
+        else projectSolid({ slice: slice.down, polys, count: count-1, up: false, first: false });
     }
 }

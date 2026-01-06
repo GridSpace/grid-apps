@@ -1,7 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { util } from '../../../geo/base.js';
-import { fdm_slice, slicePost } from './slice.js';
+import { sliceOne, slicePost } from './slice.js';
 import { fdm_prepare } from './prepare.js';
 import { fdm_export } from './export.js';
 import { codec } from '../../core/codec.js';
@@ -41,7 +41,7 @@ export const FDM = {
     extrudePerMM,
     extrudeMM,
     slicePre: undefined,
-    slice: fdm_slice,
+    slice: sliceOne,
     slicePost: slicePost,
     prepare: fdm_prepare,
     export: fdm_export
