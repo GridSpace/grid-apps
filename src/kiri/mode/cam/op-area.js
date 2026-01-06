@@ -322,6 +322,11 @@ class OpArea extends CamOp {
                 }
                 proc += pinc;
                 progress(proc, 'trace');
+                // legacy outline early termination b/c use of
+                // shadow will cause duplicate output with area
+                if (tr_type === 'outside' && op.drape) {
+                    break;
+                }
             } else
             if (mode === 'surface') {
                 let { sr_type, sr_angle, sr_alter, tolerance } = op;
