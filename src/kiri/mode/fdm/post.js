@@ -23,6 +23,7 @@ export function slicePost(data, options) {
     const { compInner, compOuter, pump } = post_args;
     const { clipOffset, fillOffset, shellOffset  } = post_args;
 
+    // pumping the shells will round sharp edges
     if (pump) {
         let nugroups = [];
         let pump = shellOffset / 10;
@@ -86,6 +87,7 @@ export function slicePost(data, options) {
             useAssembly
         }));
     }
+    // create a fast clip offset polygon based on a simplified part outline
     data.clip = clipOffset ? POLY.offset(nutops.map(t => t.simple), clipOffset) : undefined;
     data.tops = nutops;
     delete data.groups;

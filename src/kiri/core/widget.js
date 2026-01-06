@@ -711,6 +711,11 @@ class Widget {
         return this;
     }
 
+    /**
+     * @param {number} z height for shadow computation
+     * @param {number | undefined} pocket normal value to match faces
+     * @returns {Polygon[]}
+     */
     async shadowAt(z, pocket) {
         let shadows = this.cache.shadows;
         if (!shadows) {
@@ -762,7 +767,8 @@ class Widget {
             const b = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const c = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const n = THREE.computeFaceNormal(a, b, c);
-            if ((pocket && n.z > -0.001) || (!pocket && n.z < 0.001)) {
+            // todo: use pocket to match normal values when set
+            if ((pocket && n.z > -pocket) || (!pocket && n.z < 0.001)) {
                 continue;
             }
             const minZ = Math.floor(Math.min(a.z, b.z, c.z));

@@ -24,7 +24,7 @@ let tracker = util.pwait,
         infill: { check: 0x3322bb, face: 0x3322bb, line: 0x3322bb, opacity, lopacity, fat },
         inset: { line: 0xaaaaaa, check: 0xaaaaaa, face: 0 },
         shell: { check: 0x0077bb, face: 0x0077bb, line: 0x0077bb, opacity, lopacity, fat },
-        support: { check: 0xaa5533, face: 0xaa5533, line: 0xaa5533, opacity, lopacity, fat },
+        support: { check: 0xbbbb00, face: 0xbbbb00, line: 0xbbbb00, opacity, lopacity, fat },
         part: { line: 0x333333, check: 0x333333 },
         thin: { check: 0xbb8800, face: 0xbb8800, line: 0xbb8800, opacity, lopacity, fat },
     },
@@ -239,8 +239,8 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             compInner: sliceCompInner,
             compOuter: sliceCompOuter,
             shellOffset,
-            fillOffset,
-            clipOffset,
+            fillOffset, // distance: top inset for sparse/solid infill
+            clipOffset, // distance: create simpler clip offset for supports
             lineWidth,
             vaseMode,
             process,
@@ -362,49 +362,31 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         return onSliceDone(slices);
     }).then(ondone);
 
-    // shadow used to clip supports in non-belt mode
-    async function doShadow(slices) {
-        if (widget.shadow) {
-            return;
-        }
-        let root = widget.group[0];
-        if (root.shadow) {
-            widget.shadow = root.shadow;
-            return;
-        }
-        // console.log({ doShadow: widget, slices });
-        // create shadow for clipping supports
-        let alltops = widget.group
-            .filter(w => !w.track.synth) // no supports in shadow
-            .map(w => w.slices).flat()
-            .map(s => s.tops).flat().map(t => t.simple);
-        let shadow = isConcurrent ?
-            await minions.union(alltops, 0.1) :
-            POLY.union(alltops, 0.1, true);
-        // expand shadow when requested (support clipping)
-        if (process.sliceSupportExtra) {
-            shadow = POLY.offset(shadow, process.sliceSupportExtra);
-        }
-        widget.shadow = root.shadow = POLY.setZ(shadow, 0);
-        // slices[0].output()
-        //     .setLayer('shadow', { line: 0xff0000, check: 0xff0000 })
-        //     .addPolys(shadow);
-    }
-
     async function onSliceDone(slices) {
 
         // new auto support demonstrator using cast shadow
-        if (false) {
-            let indices = slices.map(s => s.z);//.sort((a,b) => b-a);
+        if (process.sliceSupportType === 'automatic') {
+            let stack = slices.slice();
+            let indices = stack.map(s => s.z);
+            let zAngNorm = Math.sin(process.sliceSupportAngle * Math.PI / 180);
 
-            await widget.computeShadowStack(indices, prog => {}, true);
+            await widget.computeShadowStack(indices, progress => {}, zAngNorm);
 
-            for (let slice of slices.slice().sort((a,b) => a.z - b.z)) {
+            if (process.sliceSupportTree) {
+                stack.sort((a,b) => a.z - b.z); // deltas only
+            } else {
+                stack.sort((a,b) => b.z - a.z); // accumulate deltas
+            }
+
+            for (let slice of stack) {
                 let shadow = await widget.shadowAt(slice.z, true);
-                // slice.supports = shadow;
-                slice.output()
-                    .setLayer('shadow', 0xff0000)
-                    .addPolys(shadow);
+                if (process.sliceSupportExtra) {
+                    shadow = POLY.offset(shadow, process.sliceSupportExtra);
+                }
+                slice.supports = shadow;
+                // slice.output()
+                //     .setLayer('shadow', 0xff0000)
+                //     .addPolys(shadow);
             }
         }
 
@@ -440,11 +422,6 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         // attach range params to each slice
         for (let slice of slices) {
             slice.params = getRangeParameters(process, slice.index);
-        }
-
-        // create shadow for non-belt supports
-        if (!isBelt && supportDensity && process.sliceSupportEnable) {
-            await doShadow(slices);
         }
 
         // calculate % complete and call onupdate()
@@ -792,22 +769,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             }
         }
 
-        // auto support generation
-        if (!isBelt && supportDensity && process.sliceSupportEnable) {
-            doShadow(slices);
-            profileStart("support");
-            let promises = [];
-            forSlices(0.7, 0.75, slice => {
-                promises.push(doSupport(slice, process, widget.shadow, { }));
-            }, "support");
-            await tracker(promises, (i, t) => {
-                trackupdate(i / t, 0.75, 0.8);
-            });
-            profileEnd();
-        }
-
         // fill all supports (auto and manual)
-        // if (!isBelt && supportDensity) {
         if (supportDensity) {
             profileStart("support-fill");
             let promises = false && isConcurrent ? [] : undefined;
@@ -815,10 +777,15 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                 let params = slice.params || process;
                 let density = params.sliceSupportDensity;
                 doSupportFill({
-                    promises, slice, lineWidth, density,
-                    minArea: process.sliceSupportArea, isBelt,
                     angle: process.sliceSupportFill,
-                    outline: process.sliceSupportOutline !== false
+                    density,
+                    gap: process.sliceSupportGap,
+                    isBelt,
+                    lineWidth,
+                    minArea: 0,
+                    outline: process.sliceSupportOutline !== false,
+                    promises,
+                    slice,
                 });
             }, "support");
             if (promises) {
@@ -1457,14 +1424,11 @@ function doSolidsFill(slice, spacing, angle, minArea, fillQ) {
         }
         if (tofill.length > 0) {
             doFillArea(fillQ, tofill, angle, spacing, newfill);
-            // top.fill_lines_norm = {angle:angle,spacing:spacing};
         }
         if (angfill.length > 0) {
             top.fill_lines_ang = {spacing:spacing,list:[],poly:[]};
             for (let af of angfill) {
                 doFillArea(fillQ, [af], af.fillang.angle + 45, spacing, newfill);
-                // top.fill_lines_ang.list.push(af.fillang.angle + 45);
-                // top.fill_lines_ang.poly.push(af.clone());
             }
         }
     }
@@ -1478,175 +1442,11 @@ function doFillArea(fillQ, polys, angle, spacing, output, minLen, maxLen) {
     }
 }
 
-/**
- * calculate external overhangs requiring support
- */
-async function doSupport(slice, proc, shadow, opt = {}) {
-    let { minions } = self.kiri_worker,
-        maxBridge = proc.sliceSupportSpan || 5,
-        minArea = proc.supportMinArea || 0.1,
-        pillarSize = proc.sliceSupportSize,
-        offset = proc.sliceSupportOffset || 0,
-        gap = proc.sliceSupportGap,
-        size = (pillarSize || 1),
-        tops = slice.topPolys(),
-        trimTo = tops;
-
-    let traces = POLY.flatten(slice.topShells().clone(true)),
-        fill = slice.topFill(),
-        points = [],
-        down = slice.down,
-        down_tops = down ? down.topPolys() : null,
-        down_traces = down ? POLY.flatten(down.topShells().clone(true)) : null;
-
-    if (opt.exp && down_tops) {
-        let points = down_tops.map(p => p.deepLength).reduce((a,v)=>a+v);
-        if (points > 200) {
-            // use de-rez'd top shadow instead
-            down_tops = down.topSimples();
-            // de-rez trace polys because it's not that important for supports
-            down_traces = down_traces.map(p => p.clean(true, undefined, config.clipper / 10));
-        }
-    }
-
-    // DEBUG code
-    let SDBG = false;
-    let cks = SDBG ? [] : undefined;
-    let pip = SDBG ? [] : undefined;
-    let pcl = SDBG ? [] : undefined;
-
-    // check if point is supported by layer below
-    function checkPointSupport(point) {
-        if (SDBG) cks.push(point); // DEBUG
-        // skip points close to other support points
-        for (let i=0; i<points.length; i++) {
-            if (point.distTo2D(points[i]) < size/4) return;
-        }
-        let supported = point.isInPolygonOnly(down_tops);
-        if (SDBG && supported) pip.push(point); // DEBUG
-        let dist = false; // DEBUG
-        if (!supported) down_traces.forEach(function(trace) {
-            trace.forEachSegment(function(p1, p2) {
-                if (point.distToLine(p1, p2) < offset) {
-                    dist = true;
-                    return supported = true;
-                }
-            });
-            return supported;
-        });
-        if (SDBG && dist) pcl.push(point); // DEBUG
-        if (!supported) points.push(point);
-    }
-
-    // todo support entire line if both endpoints unsupported
-    // segment line and check if midpoints are supported
-    function checkLineSupport(p1, p2, poly) {
-        let dist, i = 1;
-        if ((dist = p1.distTo2D(p2)) >= maxBridge) {
-            let slope = p1.slopeTo(p2).factor(1/dist),
-                segs = Math.floor(dist / maxBridge) + 1,
-                seglen = dist / segs;
-            while (i < segs) {
-                checkPointSupport(p1.projectOnSlope(slope, i++ * seglen));
-            }
-        }
-        if (poly) checkPointSupport(p2);
-    }
-
-    let supports = [];
-
-    // generate support polys from unsupported points
-    if (slice.down) (function() {
-        // check trace line support needs
-        traces.forEach(function(trace) {
-            trace.forEachSegment(function(p1, p2) { checkLineSupport(p1, p2, true) });
-        });
-
-        // add offset solids to supports (or fill depending)
-        fill.forEachPair(function(p1,p2) { checkLineSupport(p1, p2, false) });
-
-        // skip the rest if no points or supports
-        if (!(points.length || supports.length)) return;
-
-        let pillars = [];
-
-        // for each point, create a bounding rectangle
-        points.forEach(function(point) {
-            pillars.push(newPolygon().centerRectangle(point, size/2, size/2));
-        });
-
-        supports.appendAll(POLY.union(pillars, null, true, { wasm: false }));
-        // merge pillars and replace with convex hull of outer points (aka smoothing)
-        pillars = POLY.union(pillars, null, true, { wasm: false }).forEach(function(pillar) {
-            supports.push(newPolygon().createConvexHull(pillar.points));
-        });
-    })();
-
-    // DEBUG code
-    if (SDBG && down_traces) slice.output()
-        .setLayer('cks', { line: 0xee5533, check: 0xee5533 })
-        .addPolys(cks.map(p => newPolygon().centerRectangle(p, 0.25, 0.25)))
-        .setLayer('pip', { line: 0xdd4422, check: 0xdd4422 })
-        .addPolys(pip.map(p => newPolygon().centerRectangle(p, 0.4, 0.4)))
-        .setLayer('pcl', { line: 0xcc3311, check: 0xcc3311 })
-        .addPolys(pcl.map(p => newPolygon().centerRectangle(p, 0.3, 0.3)))
-        .setLayer('pts', { line: 0xdd33dd, check: 0xdd33dd })
-        .addPolys(points.map(p => newPolygon().centerRectangle(p, 0.8, 0.8)))
-        .setLayer('dtr', { line: 0x0, check: 0x0 })
-        .addPolys(POLY.setZ(down_traces.clone(true),slice.z));
-        ;
-
-    if (supports.length === 0) {
-        return;
-    }
-
-    // then union supports
-    if (supports.length > 10) {
-        supports = await minions.union(supports);
-    } else {
-        supports = POLY.union(supports, null, true, { wasm: false });
-    }
-
-    // clip to top polys
-    supports = POLY.trimTo(supports, shadow);
-
-    let depth = 0;
-    while (down && supports.length > 0) {
-        down.supports = down.supports || [];
-
-        let trimmed = [], culled = [];
-
-        // culled = supports;
-        // clip supports to shell offsets
-        POLY.subtract(supports, down.topSimples(), trimmed, null, slice.z, minArea, { wasm: false });
-
-        // set depth hint on support polys for infill density
-        trimmed.forEach(function(trim) {
-            if (trim.area() < minArea) return;
-            culled.push(trim.setZ(down.z));
-        });
-
-        // exit when no more support polys exist
-        if (culled.length === 0) break;
-
-        // new bridge polys for next pass (skip first layer below)
-        if (depth >= gap) {
-            down.supports.appendAll(culled);
-        }
-
-        supports = culled;
-        down = down.down;
-        depth++;
-    }
-
-}
-
 function doSupportFill(args) {
-    const { promises, slice, lineWidth, density, minArea, isBelt, angle, outline } = args;
+    const { promises, slice, lineWidth, density, minArea, isBelt, angle, outline, gap } = args;
     let supports = slice.supports,
-        nsB = [],
-        nsC = [],
-        min = minArea || 0.1;
+        min = minArea || 0.1,
+        sub;
 
     if (!supports) return;
 
@@ -1654,13 +1454,19 @@ function doSupportFill(args) {
     supports = POLY.setZ(POLY.union(supports, undefined, true, { wasm: false }), slice.z);
 
     // clip supports to slice clip offset (or shell if none)
-    POLY.subtract(supports, slice.clips, nsB, null, slice.z, min, { wasm: false });
-    supports = nsB;
+    POLY.subtract(supports, slice.clips, sub = [], null, slice.z, min, { wasm: false });
+    supports = sub;
 
-    // also trim to lower offsets, if they exist
-    if (slice.down && slice.down.clips) {
-        POLY.subtract(nsB, slice.down.clips, nsC, null, slice.z, min, { wasm: false });
-        supports = nsC;
+    // trim to upper offsets, if they exist
+    if (gap && slice?.up?.clips) {
+        POLY.subtract(supports, slice.up.clips, sub = [], null, slice.z, min, { wasm: false });
+        supports = sub;
+    }
+
+    // trim to lower offsets, if they exist
+    if (gap && slice?.down?.clips) {
+        POLY.subtract(supports, slice.down.clips, sub = [], null, slice.z, min, { wasm: false });
+        supports = sub;
     }
 
     if (supports) {
