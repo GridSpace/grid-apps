@@ -177,7 +177,7 @@ export function init_input() {
     space.sky.showGrid(false);
     space.sky.setColor(controller.dark ? 0 : 0xffffff);
     space.setAntiAlias(controller.antiAlias);
-    space.init(container, function (delta) {
+    space.init(container, (delta) => {
         const { lo, hi, max } = slider.getRange();
         if (max === 0 || !delta) return;
         if (controller.reverseZoom) delta = -delta;
@@ -471,7 +471,7 @@ export function init_input() {
             DOC.body.requestFullscreen();
         } catch (e) {
             event.emit('resize');
-            moto.space.event.onResize();
+            space.event.onResize();
         }
     };
 

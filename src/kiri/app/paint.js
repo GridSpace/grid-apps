@@ -71,21 +71,45 @@ import { THREE } from '../../ext/three.js';
  * @returns {THREE.Material} The modified material
  */
 function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Color(0x4488ff)) {
+    // Initialize userData if it doesn't exist
+    if (!material.userData) {
+        material.userData = {};
+    }
+
+    // Store initial paint points reference
+    material.userData.paintPoints = paintPoints;
+    material.userData.paintColor = paintColor;
+
     material.onBeforeCompile = (shader) => {
         // Store shader reference for later updates
         material.userData.shader = shader;
 
+        // Use updated paint points if they were modified before first compile
+        const currentPoints = material.userData.paintPoints || paintPoints;
+
         // Convert paint points to vec4 array (x, y, z, radius)
-        const points = paintPoints.map(p =>
-            new THREE.Vector4(p.point.x, p.point.y, p.point.z, p.radius)
-        );
+        // Filter out invalid entries
+        const validPoints = currentPoints
+            .filter(p => p && p.point && typeof p.radius === 'number')
+            .map(p => new THREE.Vector4(p.point.x, p.point.y, p.point.z, p.radius));
+
+        // Pad array to exactly 256 elements (shader uniform array size)
+        // THREE.js requires the array length to match the shader declaration
+        const points = new Array(256);
+        for (let i = 0; i < 256; i++) {
+            points[i] = i < validPoints.length ? validPoints[i] : new THREE.Vector4(0, 0, 0, 0);
+        }
+
+        console.log('[Paint Shader] onBeforeCompile called with', validPoints.length, 'valid points');
+        console.log('[Paint Shader] First point:', currentPoints[0]);
 
         // Add uniforms for paint data
         shader.uniforms.paintPoints = { value: points };
-        shader.uniforms.paintCount = { value: points.length };
+        shader.uniforms.paintCount = { value: validPoints.length };
         shader.uniforms.paintColor = { value: paintColor };
 
-        // Pass world position from vertex shader to fragment shader
+        // Pass model position from vertex shader to fragment shader
+        // Paint points are in widget/model space, so we compare against transformed (model space)
         shader.vertexShader = shader.vertexShader.replace(
             `#include <worldpos_vertex>`,
             `
@@ -128,9 +152,14 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             }
 
             if (painted) {
-                // Blend paint color with existing fragment color
-                gl_FragColor.rgb = mix(gl_FragColor.rgb, paintColor, 0.5);
+                // Blend paint color with existing fragment color (increased to 0.7 for visibility)
+                gl_FragColor.rgb = mix(gl_FragColor.rgb, paintColor, 0.7);
             }
+
+            // DEBUG: Uncomment to tint entire mesh when shader is active (proves shader is running)
+            // if (paintCount > 0) {
+            //     gl_FragColor.rgb += vec3(0.3, 0.0, 0.0);  // Add red tint to entire mesh
+            // }
             `
         );
     };
@@ -154,21 +183,36 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
  * @returns {THREE.Material} The modified material
  */
 function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Color(0x4488ff)) {
+    // Initialize userData if it doesn't exist
+    if (!material.userData) {
+        material.userData = {};
+    }
+
+    // Store initial paint points reference
+    material.userData.paintPoints = paintPoints;
+    material.userData.paintColor = paintColor;
+
     material.onBeforeCompile = (shader) => {
         // Store shader reference for later updates
         material.userData.shader = shader;
 
+        // Use updated paint points if they were modified before first compile
+        const currentPoints = material.userData.paintPoints || paintPoints;
+
+        // Filter out invalid entries
+        const validPoints = currentPoints.filter(p => p && p.point && typeof p.radius === 'number');
+
         // Create data texture from paint points
         // Texture is laid out as square grid: width x height >= point count
-        const pointCount = paintPoints.length;
+        const pointCount = validPoints.length;
         const texWidth = Math.ceil(Math.sqrt(pointCount));
         const texHeight = Math.ceil(pointCount / texWidth);
         const data = new Float32Array(texWidth * texHeight * 4);
 
         // Pack paint points into texture data
         // Each point = 4 floats (x, y, z, radius)
-        for (let i = 0; i < paintPoints.length; i++) {
-            const p = paintPoints[i];
+        for (let i = 0; i < validPoints.length; i++) {
+            const p = validPoints[i];
             data[i * 4 + 0] = p.point.x;
             data[i * 4 + 1] = p.point.y;
             data[i * 4 + 2] = p.point.z;
@@ -191,7 +235,8 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
         shader.uniforms.paintTexSize = { value: new THREE.Vector2(texWidth, texHeight) };
         shader.uniforms.paintColor = { value: paintColor };
 
-        // Pass world position from vertex shader to fragment shader
+        // Pass model position from vertex shader to fragment shader
+        // Paint points are in widget/model space, so we compare against transformed (model space)
         shader.vertexShader = shader.vertexShader.replace(
             `#include <worldpos_vertex>`,
             `
@@ -245,9 +290,14 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
             }
 
             if (painted) {
-                // Blend paint color with existing fragment color
-                gl_FragColor.rgb = mix(gl_FragColor.rgb, paintColor, 0.5);
+                // Blend paint color with existing fragment color (increased to 0.7 for visibility)
+                gl_FragColor.rgb = mix(gl_FragColor.rgb, paintColor, 0.7);
             }
+
+            // DEBUG: Uncomment to tint entire mesh when shader is active (proves shader is running)
+            // if (paintCount > 0) {
+            //     gl_FragColor.rgb += vec3(0.3, 0.0, 0.0);  // Add red tint to entire mesh
+            // }
             `
         );
     };
@@ -282,16 +332,32 @@ function addPaintOverlayAuto(material, paintPoints, paintColor = new THREE.Color
  * IMPORTANT: The material must have already been initialized with one of the
  * addPaintOverlay functions before calling this update function.
  *
+ * NOTE: If the shader hasn't been compiled yet (first render not complete),
+ * this will trigger a material update to force recompilation with new points.
+ *
  * @param {THREE.Material} material - Material with paint shader already applied
  * @param {Array<{point: {x,y,z}, radius: number}>} paintPoints - Updated array of paint spheres
  */
 function updatePaintOverlay(material, paintPoints) {
+    // Initialize userData if it doesn't exist
+    if (!material.userData) {
+        material.userData = {};
+    }
+
+    // Store paint points reference in userData for access during shader compilation
+    if (!material.userData.paintPoints) {
+        material.userData.paintPoints = paintPoints;
+    }
+
     // Access the compiled shader uniforms
     // After onBeforeCompile runs once, userData.shader contains the compiled program
     const shader = material.userData?.shader;
 
     if (!shader || !shader.uniforms) {
-        console.warn('updatePaintOverlay: material does not have compiled paint shader');
+        // Shader hasn't compiled yet (first render not complete)
+        // Store the new points and trigger recompile
+        material.userData.paintPoints = paintPoints;
+        material.needsUpdate = true;
         return;
     }
 
@@ -315,13 +381,20 @@ function updatePaintOverlaySimple(shader, paintPoints) {
     const uniforms = shader.uniforms;
 
     // Convert paint points to vec4 array (x, y, z, radius)
-    const points = paintPoints.map(p =>
-        new THREE.Vector4(p.point.x, p.point.y, p.point.z, p.radius)
-    );
+    // Filter out invalid entries
+    const validPoints = paintPoints
+        .filter(p => p && p.point && typeof p.radius === 'number')
+        .map(p => new THREE.Vector4(p.point.x, p.point.y, p.point.z, p.radius));
+
+    // Pad array to exactly 256 elements (shader uniform array size)
+    const points = new Array(256);
+    for (let i = 0; i < 256; i++) {
+        points[i] = i < validPoints.length ? validPoints[i] : new THREE.Vector4(0, 0, 0, 0);
+    }
 
     // Update uniform values
     uniforms.paintPoints.value = points;
-    uniforms.paintCount.value = points.length;
+    uniforms.paintCount.value = validPoints.length;
 
     // Note: No need to set needsUpdate on the material
     // Uniform updates are automatically detected by THREE.js
@@ -334,15 +407,18 @@ function updatePaintOverlaySimple(shader, paintPoints) {
 function updatePaintOverlayTexture(shader, paintPoints) {
     const uniforms = shader.uniforms;
 
+    // Filter out invalid entries
+    const validPoints = paintPoints.filter(p => p && p.point && typeof p.radius === 'number');
+
     // Recreate texture with new paint points
-    const pointCount = paintPoints.length;
+    const pointCount = validPoints.length;
     const texWidth = Math.ceil(Math.sqrt(pointCount));
     const texHeight = Math.ceil(pointCount / texWidth);
     const data = new Float32Array(texWidth * texHeight * 4);
 
     // Pack paint points into texture data
-    for (let i = 0; i < paintPoints.length; i++) {
-        const p = paintPoints[i];
+    for (let i = 0; i < validPoints.length; i++) {
+        const p = validPoints[i];
         data[i * 4 + 0] = p.point.x;
         data[i * 4 + 1] = p.point.y;
         data[i * 4 + 2] = p.point.z;

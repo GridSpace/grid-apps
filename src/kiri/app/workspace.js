@@ -115,7 +115,7 @@ function save(quiet) {
     api.conf.save();
     const newWidgets = [];
     const oldWidgets = js2o(SDB.getItem('ws-widgets'), []);
-    api.widgets.each(function(widget) {
+    api.widgets.each(widget => {
         if (widget.synth) return;
         newWidgets.push(widget.id);
         oldWidgets.remove(widget.id);

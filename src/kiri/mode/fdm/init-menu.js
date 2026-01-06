@@ -41,6 +41,10 @@ function optSelected(sel) {
     return opt ? opt.value : undefined;
 }
 
+function manualSupport() {
+    return api.conf.proc().sliceSupportType === 'manual';
+}
+
 function hasInfill() {
     return optSelected(ui.sliceFillType) !== 'none'
 }
@@ -111,7 +115,7 @@ export function menu() {
     outputFanSpeed:      newInput(LANG.ou_fans_s, {title:LANG.ou_fans_l, convert:toInt, bound:bound(0,255)}),
     outputMinLayerTime:  newInput(LANG.ou_layt_s, { title:LANG.ou_layt_l, convert:toInt,   bound:bound(0,200) }),
     _____:               newGroup(LANG.sp_menu, $('fdm-support'), { modes:FDM, driven, hideable, separator, group:"fdm-supp" }),
-    sliceSupportType:    newSelect(LANG.sp_type_s, {title:LANG.sp_type_l}, "support"),
+    sliceSupportType:    newSelect(LANG.sp_type_s, {title:LANG.sp_type_l, trigger}, "support"),
     sliceSupportNozzle:  newSelect(LANG.sp_nozl_s, {title:LANG.sp_nozl_l, show:isMultiHead}, "extruders"),
     separator:           newBlank({ class:"set-sep", driven }),
     sliceSupportAngle:   newInput(LANG.sp_angl_s, {title:LANG.sp_angl_l, convert:toFloat, bound:bound(0.0,90.0)}),
@@ -127,16 +131,16 @@ export function menu() {
     sliceSupportTree:    newBoolean(LANG.sp_tree_s, onBooleanClick, {title:LANG.sp_tree_s, trigger, show:isNotBelt}),
     // sliceSupportEnable:  newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, show:isNotBelt}),
     sliceSupportOutline: newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, show: () => !isTree() }),
-    separator:           newBlank({ class:"set-sep", driven }),
+    separator:           newBlank({ class:"set-sep", driven, show:manualSupport }),
     sliceSupportGen:     newRow([
         ui.ssaGen = newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
-    ], { modes: FDM, class: "ext-buttons f-row grow", show: () => !ui.sliceSupportTree.checked }),
-    separator:           newBlank({ class:"set-sep", driven }),
+    ], { modes: FDM, class: "ext-buttons f-row grow", show:manualSupport }),
+    // separator:           newBlank({ class:"set-sep", driven }),
     sliceSupportManual: newRow([
         (ui.ssmAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
         (ui.ssmDun = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
         (ui.ssmClr = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
-    ], {class:"ext-buttons f-row"}),
+    ], {class:"ext-buttons f-row", show:manualSupport}),
     _____:               newGroup(LANG.fl_menu, $('fdm-base'), { modes:FDM, driven, hideable, separator, group:"fdm-base" }),
     firstSliceHeight:    newInput(LANG.fl_lahi_s, {title:LANG.fl_lahi_l, convert:toFloat, show:isNotBelt}),
     firstLayerNozzleTemp:newInput(LANG.fl_nozl_s, {title:LANG.fl_nozl_l, convert:toInt,   show:isNotBelt}),

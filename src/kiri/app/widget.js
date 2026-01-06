@@ -49,11 +49,11 @@ class Widget extends WidgetCore {
         }
         const widget = this;
         index().put('ws-save-'+this.id, {
+            anno: this.annotations(),
             geo: widget.getGeoVertices({ unroll: false }).slice(),
-            track: widget.track,
             group: this.group.id,
             meta: this.meta,
-            anno: this.annotations()
+            track: widget.track
         }, result => {
             widget.meta.saved = Date.now();
             if (ondone) ondone();

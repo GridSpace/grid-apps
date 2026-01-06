@@ -113,10 +113,7 @@ class InteractionControl {
         this.#space.mouse.downSelect((int, event) => {
             // Feature hook for custom mouse down handling
             if (this.#api.feature.on_mouse_down) {
-                if (int) {
-                    this.#api.feature.on_mouse_down(int, event);
-                    return;
-                }
+                return this.#api.feature.on_mouse_down(int, event);
             }
 
             // Hover mode handling
@@ -178,9 +175,10 @@ class InteractionControl {
         });
 
         // Drag handler
-        this.#space.mouse.onDrag((delta, offset, up = false) => {
+        this.#space.mouse.onDrag((delta, offset, up = false, int) => {
             if (this.#api.feature.hover) {
-                return;
+                return this.#api.feature?.on_mouse_drag({ delta, offset, up, int });
+                // return;
             }
 
             if (up) {

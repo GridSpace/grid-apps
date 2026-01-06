@@ -127,16 +127,14 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         { devel, assembly, threaded } = controller,
         isBelt = device.bedBelt,
         isBrick = devel && process.sliceZInterleave,
-        isSynth = widget.track.synth,
-        isSupport = widget.track.support,
         useAssembly = assembly,
         isConcurrent = threaded && minions.concurrent && !process.xray,
         topLayers = process.sliceTopLayers || 0,
         bottomLayers = process.sliceBottomLayers || 0,
-        vaseMode = process.sliceFillType === 'vase' && !isSynth,
+        vaseMode = process.sliceFillType === 'vase',
         metadata = widget.anno,
         maxtruder = Math.max(0, device.extruders.length - 1),
-        extruder = Math.min(maxtruder, parseInt(isSynth ? process.sliceSupportNozzle : metadata.extruder || 0)),
+        extruder = Math.min(maxtruder, parseInt(metadata.extruder || 0)),
         sliceHeight = process.sliceHeight,
         sliceHeightBase = (isBelt ? sliceHeight : process.firstSliceHeight) || sliceHeight,
         lineWidth = process.sliceLineWidth || device.extruders[extruder].extNozzle,
@@ -233,7 +231,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         zMin: bounds.min.z,
         zMax: bounds.max.z - zCut,
         // support/synth usually has overlapping boxes
-        union: controller.healMesh || isSynth,
+        union: controller.healMesh,
         indices: process.indices || process.xray,
         useAssembly,
         post: 'FDM',
@@ -245,7 +243,6 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             clipOffset,
             lineWidth,
             vaseMode,
-            isSynth,
             process,
         },
         // z index generator
@@ -331,7 +328,6 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         },
         // slicer function (worker local or minion distributed)
         slicer(z, points, opts) {
-            // opts.debug = opts.debug || isSynth;
             return (isConcurrent ? minions.sliceZ : sliceZ)(z, points, opts);
         },
         onupdate(update) {
@@ -347,7 +343,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             slice.height = heights[slice.index];
             slice.clips = clip;
             // do not warn on merging supports
-            if (changes && !isSynth) {
+            if (changes) {
                 healed = true;
                 slice.changes = changes;
                 if (devel) {
@@ -431,47 +427,8 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         }
 
         // create shadow for non-belt supports
-        if (!isBelt && (isSynth || (!isSynth && supportDensity && process.sliceSupportEnable))) {
+        if (!isBelt && supportDensity && process.sliceSupportEnable) {
             await doShadow(slices);
-        }
-
-        // for synth support widgets, clip/offset to other widgets in group
-        if (isSynth) {
-            for (let slice of slices) {
-                let gap = sliceHeight * process.sliceSupportGap;
-                // clip tops to other widgets in group
-                let tops = slice.topPolys();
-                for (let peer of widget.group) {
-                    // skip self
-                    if (peer === widget || !peer.slices) {
-                        continue;
-                    }
-                    for (let pslice of peer.slices) {
-                        if (Math.abs(Math.abs(pslice.z - slice.z) - gap) > 0.1) {
-                            continue;
-                        }
-                        let clipto = pslice.clips;
-                        if (pslice.supportOutline) {
-                            // merge support outlines into slice clips which
-                            // should only happen when automatic and manual
-                            // supports are used together
-                            clipto.appendAll(pslice.supportOutline);
-                        }
-                        let ntops = [];
-                        POLY.subtract(tops, clipto, ntops, null, slice.z, 0);
-                        tops = ntops;
-                    }
-                    // trim to group's shadow if not in belt mode
-                    if (!isBelt) {
-                        tops = POLY.setZ(POLY.trimTo(tops, widget.shadow), slice.z);
-                    }
-                }
-                slice.tops = [];
-                for (let t of tops) {
-                    slice.addTop(t);
-                }
-                doShells(slice, 1, shellOffset / 2);
-            }
         }
 
         // calculate % complete and call onupdate()
@@ -509,7 +466,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
             let isTop = topLayers && slice.index > slices.length - topLayers - 1;
             let isTopBase = isTop && slice.index === slices.length - topLayers;
             let isDense = range.sliceFillSparse > 0.995;
-            let isSolid = (isBottom || ((isTop || isDense) && !vaseMode)) && !isSynth;
+            let isSolid = (isBottom || ((isTop || isDense) && !vaseMode));
             let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
             if (solidWidth) {
                 let fillSpace = fillSpacing * solidWidth;
@@ -526,7 +483,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         }, "solid layers");
 
         // add lead in anchor when specified in belt mode (but not for synths)
-        if (isBelt && !isSynth) {
+        if (isBelt) {
             let { cosf, slope } = widget.belt;
             // find adjusted zero point from slices
             let smin = Infinity;
@@ -737,7 +694,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         // layer boolean diffs need to be computed to find flat areas to fill
         // and overhangs that need to be supported. these are stored in flats
         // and bridges, projected up/down, and merged into an array of solids
-        if (!vaseMode && !isSynth) {
+        if (!vaseMode) {
             profileStart("delta");
             forSlices(0.2, 0.34, slice => {
                 let params = slice.params || process;
@@ -778,7 +735,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
 
         // for "real" objects, fill the remaining voids with sparse fill
         // sparse layers only present when non-vase mose and sparse % > 0
-        if (!isSynth && !vaseMode) {
+        if (!vaseMode) {
             let lastType;
             let promises = isConcurrent ? [] : undefined;
             forSlices(0.5, promises ? 0.55 : 0.7, slice => {
@@ -817,44 +774,10 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
                     }
                 }
             }
-        } else if (isSynth && isSupport) {
-            // convert synth support widgets into support structure
-            let outline = process.sliceSupportOutline || false;
-            let promises = isConcurrent ? [] : undefined;
-            let resolve = [];
-            forSlices(0.5, promises ? 0.6 : 0.7, slice => {
-                let params = slice.params || process;
-                let density = params.sliceSupportDensity;
-                let supports = slice.topShells();
-                slice.supports = supports;
-                slice.tops = undefined; // remove outline leave only supports
-                let polys = [];
-                if (density) {
-                    if (!outline) {
-                        POLY.expand(supports, lineWidth, slice.z, polys);
-                    } else {
-                        POLY.expand(supports, -lineWidth/4, slice.z, polys);
-                    }
-                }
-                fillSupportPolys({
-                    promises, polys, lineWidth, density, z: slice.z, isBelt,
-                    angle: process.sliceSupportFill
-                });
-                resolve.push({ slice, polys });
-            }, "infill");
-            if (promises) {
-                await tracker(promises, (i, t) => {
-                    trackupdate(i / t, 0.6, 0.7);
-                });
-            }
-            for (let rec of resolve) {
-                let { slice, polys } = rec;
-                rec.supports = polys;
-            }
         }
 
         // auto support generation
-        if (!isBelt && !isSynth && supportDensity && process.sliceSupportEnable) {
+        if (!isBelt && supportDensity && process.sliceSupportEnable) {
             doShadow(slices);
             profileStart("support");
             let promises = [];
@@ -940,7 +863,7 @@ export function fdm_slice(settings, widget, onupdate, ondone) {
         if (render) {
             forSlices(0.9, 1.0, slice => {
                 let params = slice.params || process;
-                doRender(slice, isSynth, params, {
+                doRender(slice, params, {
                     dark: controller.dark,
                     devel: controller.devel
                 });
@@ -999,7 +922,7 @@ function bound(v,min,max) {
     return Math.max(min,Math.min(max,v));
 }
 
-function doRender(slice, isSynth, params, opt = {}) {
+function doRender(slice, params, opt = {}) {
     const { dark, devel } = opt;
     const Color = dark ? COLOR_DARK : COLOR;
     const output = slice.output();
@@ -1013,7 +936,7 @@ function doRender(slice, isSynth, params, opt = {}) {
             .addPolys([top.poly]);
 
         if (top.shells?.length) output
-            .setLayer(isSynth ? "support" : "shells", isSynth ? Color.support : Color.shell)
+            .setLayer("shells", Color.shell)
             .addPolys(top.shells || [], vopt({ offset, height, clean: true }));
 
         if (isThin && top.thin_wall?.length) output
@@ -1031,7 +954,7 @@ function doRender(slice, isSynth, params, opt = {}) {
                 ), vopt({ offset, height }));
 
         if (top.fill_lines?.length) output
-            .setLayer("solid fill", isSynth ? Color.support : Color.fill)
+            .setLayer("solid fill", Color.fill)
             .addLines(top.fill_lines || [], vopt({ offset: offset * solidWidth, height, z:slice.z }));
 
         if (!(slice.belt?.anchor)) output
@@ -1782,104 +1705,4 @@ function projectSolid(slice, polys, count, up, first) {
         if (up) projectSolid(slice.up, polys, count-1, true, false);
         else projectSolid(slice.down, polys, count-1, false, false);
     }
-}
-
-export function supports(settings, widget) {
-    let isBelt = settings.device.bedBelt;
-    let process = settings.process;
-    let size = process.sliceSupportSize;
-    let s9 = size / 9;
-    let s4 = size / 4;
-    let s2 = size * 0.45;
-    let min = 0.01;
-    let geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(widget.vertices, 3));
-    let rad = (Math.PI / 180);
-    let deg = (180 / Math.PI);
-    let angle = rad * settings.process.sliceSupportAngle;
-    let thresh = -Math.sin(angle);
-    let dir = new THREE.Vector3(0,0,-1)
-    let add = [];
-    let mat = new THREE.MeshBasicMaterial();
-    let mesh = new THREE.Mesh(geo, mat);
-    let platform = new THREE.Mesh(
-        new THREE.PlaneGeometry(10000,10000,1), mat
-    );
-    const now = Date.now();
-    // test point
-    function tp(point) {
-        if (point.added) {
-            return;
-        }
-        // omit pillars close to existing pillars
-        for (let added of add) {
-            let p2 = new THREE.Vector2(point.x, point.y);
-            let pm = new THREE.Vector2(added.mid.x, added.mid.y);
-            if (Math.abs(point.z - added.from.z) < s2 && p2.distanceTo(pm) < s4) {
-                return;
-            }
-        }
-        let ray = new THREE.Raycaster(point, dir);
-        let int = ray.intersectObjects([ mesh, platform ], false);
-        if (int && int.length && int[0].distance > 0.5) {
-            let mid = new THREE.Vector3().add(point).add(int[0].point).divideScalar(2);
-            add.push({from: point, to: int[0].point, mid});
-            point.added = true;
-        }
-    }
-    function tf(a, b, c) {
-        let dab = a.distanceTo(b);
-        let dbc = b.distanceTo(c);
-        let dca = c.distanceTo(a);
-        let max = Math.max(dab, dbc, dca);
-        if (max < size) {
-            let min = Math.min(dab, dbc, dca);
-            if (min < s9 && Math.random() < 0.5) {
-                return;
-            }
-            // test midpoint of tri face
-            return tp(new THREE.Vector3().add(a).add(b).add(c).divideScalar(3));
-        }
-        if (dab === max) {
-            let mp = new THREE.Vector3().add(a).add(b).divideScalar(2);
-            tf(mp, b, c);
-            tf(a, mp, c);
-        } else if (dbc === max) {
-            let mp = new THREE.Vector3().add(b).add(c).divideScalar(2);
-            tf(a, mp, c);
-            tf(a, b, mp);
-        } else {
-            let mp = new THREE.Vector3().add(c).add(a).divideScalar(2);
-            tf(a, b, mp);
-            tf(mp, b, c);
-        }
-    }
-
-    let filter = isBelt ? (norm) => {
-        return norm.z <= thresh && norm.y < 0;
-    } : (norm) => {
-        return norm.z < thresh;
-    };
-    let { position } = geo.attributes;
-    let { itemSize, count, array } = position;
-    for (let i = 0; i<count; i += 3) {
-        let ip = i * itemSize;
-        let a = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-        let b = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-        let c = new THREE.Vector3(array[ip++], array[ip++], array[ip++]);
-        let norm = THREE.computeFaceNormal(a,b,c);
-        // limit to downward faces
-        if (!filter(norm)) {
-            continue;
-        }
-        // skip faces on bed
-        if (Math.max(a.z, b.z, c.z) < 0.1) {
-            continue;
-        }
-        // triangulate larger polys and test centers
-        tf(a,b,c);
-    }
-    console.log(`support generated in ${Date.now() - now} ms`);
-    widget.supports = add;
-    return add.length > 0;
 }

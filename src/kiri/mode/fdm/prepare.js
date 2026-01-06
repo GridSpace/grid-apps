@@ -9,7 +9,6 @@ import { newPolygon, Polygon } from '../../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../../geo/polygons.js';
 import { newPrint } from '../../core/print.js';
 import { newSlice } from '../../core/slice.js';
-import { newWidget } from '../../core/widget.js';
 import { render } from '../../core/render.js';
 import { getRangeParameters } from './driver.js';
 
@@ -116,7 +115,7 @@ export async function fdm_prepare(widgets, settings, update) {
             brims = POLY.expand(brims, -extra, zheight, null, 1);
         }
 
-        // if raft is specified
+        // create raft when specified
         if (useRaft) {
             let offset = newPoint(0,0,0),
                 height = nozzle,
@@ -215,39 +214,6 @@ export async function fdm_prepare(widgets, settings, update) {
         bounds.min.y = Math.min(bounds.min.y, bbounds.miny);
         bounds.max.x = Math.max(bounds.max.x, bbounds.maxx);
         bounds.max.y = Math.max(bounds.max.y, bbounds.maxy);
-    }
-
-    // synthesize support widgets when needed
-    // so that they can use a separate extruder
-    // compute zmin for belt purge towers
-    for (let widget of widgets.slice()) {
-        let sslices = [];
-        if (!widget.slices) {
-            console.log('invalid widget', widget);
-            continue;
-        }
-        for (let slice of widget.slices) {
-            zmin = Math.min(zmin, slice.z);
-            zmax = Math.max(zmax, slice.z);
-            if (!slice.supports) {
-                continue;
-            }
-            let sslice = newSlice(slice.z);
-            sslice.extruder = process.sliceSupportNozzle;
-            sslice.supports = slice.supports.slice();
-            sslice.height = slice.height;
-            sslices.push(sslice);
-        }
-        if (sslices.length) {
-            let swidget = newWidget(null,widget.group);
-            swidget.slices = sslices;
-            swidget.support = true;
-            swidget.belt = widget.belt;
-            swidget.track = Object.clone(widget.track);
-            swidget.mesh = { widget: swidget, position: swidget.track.pos };
-            widget.anno.extruder = process.sliceSupportNozzle;
-            widgets.push(swidget);
-        }
     }
 
     let lastPoly;

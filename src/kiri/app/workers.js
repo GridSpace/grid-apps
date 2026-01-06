@@ -19,7 +19,7 @@ let debug = self.debug === true,
     poolpath;
 
 /**
- * @param {Function} fn name of function in kiri.worker
+ * @param {Function} fn name of function in worker
  * @param {Object} data to send to server
  * @param {Function} onreply function to call on reply messages
  * @param {Object[]} zerocopy array of objects to pass using zerocopy
@@ -31,14 +31,17 @@ function send(fn, data, onreply, zerocopy) {
         // track it only when we expect and can handle a reply
         running[seq] = { fn:onreply };
     }
+
     let msg = {
         seq: seq,
         task: fn,
         time: time(),
         data: data
     };
+
     // console.log('client send', msg);
     // if (!fn) { console.trace({empty_fn: data}) };
+
     try {
         worker.postMessage(msg, zerocopy);
     } catch (error) {
@@ -46,9 +49,18 @@ function send(fn, data, onreply, zerocopy) {
     }
 }
 
+// Promise wrapper around send()
+function sendp(fn, data, zerocopy) {
+    return new Promise(resolve => {
+        send(fn, data, resolve, zerocopy);
+    });
+}
+
 // code is running in the browser / client context
 export const client = {
     send,
+
+    sendp,
 
     setWorkPath(path) {
         workpath = path;
@@ -269,7 +281,7 @@ export const client = {
                 ondone(null, reply.error);
             }
             if (reply.debug) {
-                api.event.emit("export.debug", reply.debug);
+                console.log('worker debug', reply.debug);
             }
         });
     },

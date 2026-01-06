@@ -19,7 +19,7 @@ slicer.slicePost.FDM = slicePost;
 export function slicePost(data, options) {
     const { groups, z } = data;
     const { post_args, useAssembly, zIndexes } = options;
-    const { isSynth, process, vaseMode } = post_args;
+    const { process, vaseMode } = post_args;
     const { compInner, compOuter, pump } = post_args;
     const { clipOffset, fillOffset, shellOffset  } = post_args;
 
@@ -60,20 +60,6 @@ export function slicePost(data, options) {
         data.tops = POLY.nest([...inner, ...outer]);
     }
 
-    if (isSynth) {
-        const process = post_args.process;
-        if (process.sliceSupportGrow > 0) {
-            // expand synth supports here so they can be clipped later
-            data.tops = POLY.expand(data.tops, process.sliceSupportGrow, data.z, []);
-        }
-        // do not shell synth widgets because
-        // they will be clipped against peers later
-        // which requires shelling post-clip
-        // but we still need to generate tops
-        delete data.groups;
-        return;
-    }
-
     const index = zIndexes.indexOf(z);
     const range = getRangeParameters(process, index);
     // calculate fractional shells
@@ -87,10 +73,10 @@ export function slicePost(data, options) {
         let trg = shellFrac > 0.5 ? 1 : parts - 1;
         sliceShells += rem >= trg ? 1 : 0;
     }
-    const count = isSynth ? 1 : sliceShells;
+    const count = sliceShells;
     const offset =  shellOffset;
     const fillOff = fillOffset;
-    const thinType = isSynth ? undefined : process.sliceDetectThin;
+    const thinType = process.sliceDetectThin;
     const nutops = [];
     // co-locate shell processing with top generation in slicer
     for (let top of data.tops) {

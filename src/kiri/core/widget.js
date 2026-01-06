@@ -23,6 +23,7 @@ class Widget {
 
         this.id = id || Date.now().toString(36)+(nextId++);
         this.grouped = group ? true : false;
+        // persisted
         this.group = group || [];
         this.group.push(this);
         if (!this.group.id) {
@@ -33,10 +34,8 @@ class Widget {
         }
         // rotation stack (for undo)
         this.roto = [];
-        // added meshes (supports, tabs, etc)
+        // overlay meshes (supports, tabs, etc)
         this.adds = [];
-        // persisted client annotations (cam tabs, fdm supports)
-        this.anno = {};
         // THREE Mesh and points
         this.mesh = null;
         this.points = null;
@@ -48,6 +47,24 @@ class Widget {
         this.settings = null; // used??
         this.modified = true;
         this.boundingBoxNeedsUpdate = true
+        // cache shadow geo
+        this.cache = {};
+        this.stats = {
+            slice_time: 0,
+            load_time: 0,
+            progress: 0
+        };
+        // if this is a synthesized support widget
+        this.support = false;
+        // persisted: client annotations (cam tabs, fdm supports)
+        this.anno = {};
+        // persisted: file meta-data
+        this.meta = {
+            url: null,
+            file: null,
+            saved: false
+        };
+        // persisted: location state
         this.track = {
             // box size for packer
             box: {
@@ -74,21 +91,7 @@ class Widget {
             mirror: false,
             indexed: false,
             indexRad: 0
-        },
-        // used to cache shadow geo
-        this.cache = {};
-        this.stats = {
-            slice_time: 0,
-            load_time: 0,
-            progress: 0
         };
-        this.meta = {
-            url: null,
-            file: null,
-            saved: false
-        };
-        // if this is a synthesized support widget
-        this.support = false;
     }
 
     annotations() {

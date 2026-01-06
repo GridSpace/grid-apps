@@ -969,7 +969,7 @@ function onMouseUp(event) {
 
 function onMouseMove(event) {
     updateLastAction();
-    let int, vis;
+    let int, vis, dragTrack;
 
     const mv = new THREE.Vector2();
     mv.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -990,13 +990,18 @@ function onMouseMove(event) {
             platform.visible = vis;
             if (int && int.length > 0) platformHover(int[0].point);
         }
-    } else if (mouseDragPoint && mouseDrag && mouseDrag()) {
+    } else if (mouseDragPoint && mouseDrag && (dragTrack = mouseDrag())) {
         event.preventDefault();
         let trackTo = alignedTracking ? trackPlane : platform;
         let vis = trackTo.visible;
         trackTo.visible = true;
-        int = intersect([trackTo], false);
-        trackTo.visible = vis;
+        if (dragTrack.length) {
+            int = intersect(dragTrack, false);
+            trackTo = dragTrack[0];
+        } else {
+            int = intersect([trackTo], false);
+            trackTo.visible = vis;
+        }
         if (int.length > 0 && int[0].object === trackTo) {
             let delta = mouseDragPoint.clone().sub(int[0].point);
             let offset = mouseDragStart.clone().sub(int[0].point);
@@ -1010,7 +1015,7 @@ function onMouseMove(event) {
                 x: -offset.x,
                 y: offset.z,
                 z: 0
-            });
+            }, false, int);
             requestRefresh();
         }
     }
