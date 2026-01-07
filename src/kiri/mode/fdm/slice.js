@@ -450,24 +450,52 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             let stack = slices.slice();
             let indices = stack.map(s => s.z);
             let zAngNorm = Math.sin(process.sliceSupportAngle * Math.PI / 180);
+            let manual = process.sliceSupportType === 'manual';
 
             await widget.computeShadowStack(indices, progress => {
-                trackupdate(progress, 0.05, 0.15, "support gen");
+                trackupdate(progress, 0.05, 0.10, "shadow");
             }, zAngNorm);
 
-            stack.sort((a,b) => a.z - b.z); // deltas only
+            // sort bottom up so shadows do not accumulate
+            // since that is done later and clipped to slice.clips
+            stack.sort((a,b) => a.z - b.z);
 
-            // 1. accumulate / union shadow coverage top down
-            // 2. trim to area outside slice.clips
+            // process manual supports if they exist
+            // convert paint points to circles on matching slices
+            let { paint } = widget.anno;
+            if (manual && paint?.length) {
+                let hpi = Math.PI/2;
+                for (let slice of stack) {
+                    let polys = [];
+                    for (let rec of paint) {
+                        let { point, radius } = rec;
+                        let dz = Math.abs(slice.z - point.z);
+                        if (dz < radius) {
+                            // scale radius by distance from point.z
+                            radius = (Math.acos(dz/radius) / hpi) * radius;
+                            polys.push(newPolygon().centerCircle(point, radius, 10));
+                        }
+                    }
+                    slice.shadow = POLY.union(polys, 0, true);
+                }
+            }
 
+            // create automatic shadows supports when on manual paint
+            if (!manual)
             for (let slice of stack) {
                 slice.shadow = await widget.shadowAt(slice.z, true);
             }
 
+            // 1. accumulate / union shadow coverage top down
+            // 2. trim to area outside slice.clips
             let minArea = lineWidth;
             let shadowSum;
+            let length = stack.length;
+            let count = 0;
+
+            // perform accumulation top down
             for (let slice of stack.reverse()) {
-                let { shadow } = slice;
+                let shadow = slice.shadow ?? [];
                 if (process.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, process.sliceSupportExtra);
                 }
@@ -496,7 +524,9 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 shadowSum = shadow;
                 slice.supports = shadow;
                 slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
+                trackupdate((++count/length), 0.10, 0.15, "support");
             }
+
         }
 
         /**

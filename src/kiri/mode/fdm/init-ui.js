@@ -228,7 +228,7 @@ export function init() {
         paint.push(rec);
         updatePaintOverlay(widget.mesh.material[0], paint);
         api.space.update();
-        // api.conf.save();
+        api.conf.save();
 
     };
 
@@ -331,5 +331,6 @@ export function init() {
 }
 
 function clearWidgetSupports(widget) {
+    delete widget.anno.support;
     widget.anno.paint = [];
 }
