@@ -440,9 +440,9 @@ export function sliceOne(settings, widget, onupdate, ondone) {
 
     async function processSlices(slices) {
         /**
-         * Process shadow-based support generation
+         * Process automatic and manual shadow-based support generation
          */
-        async function processAutoSupport() {
+        async function processSupports() {
             if (process.sliceSupportType === 'disabled') {
                 return;
             }
@@ -451,10 +451,6 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             let indices = stack.map(s => s.z);
             let zAngNorm = Math.sin(process.sliceSupportAngle * Math.PI / 180);
             let manual = process.sliceSupportType === 'manual';
-
-            await widget.computeShadowStack(indices, progress => {
-                trackupdate(progress, 0.05, 0.10, "shadow");
-            }, zAngNorm);
 
             // sort bottom up so shadows do not accumulate
             // since that is done later and clipped to slice.clips
@@ -481,9 +477,14 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             }
 
             // create automatic shadows supports when on manual paint
-            if (!manual)
-            for (let slice of stack) {
-                slice.shadow = await widget.shadowAt(slice.z, true);
+            if (!manual) {
+                await widget.computeShadowStack(indices, progress => {
+                    trackupdate(progress, 0.05, 0.10, "shadow");
+                }, zAngNorm);
+
+                for (let slice of stack) {
+                    slice.shadow = await widget.shadowAt(slice.z, true);
+                }
             }
 
             // 1. accumulate / union shadow coverage top down
@@ -787,7 +788,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         }
 
         // new auto support demonstrator using cast shadow
-        await processAutoSupport();
+        await processSupports();
 
         // process solid layers (top/bottom)
         processSolidLayers();

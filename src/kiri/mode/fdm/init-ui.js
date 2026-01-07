@@ -306,7 +306,8 @@ export function init() {
         if (x || y) {
             clearWidgetSupports(widget);
         } else {
-            // todo rotate supports when it's only a Z rotation
+            // rotate supports when rotation is constrained to Z axis
+            rotateWidgetPaint(widget, z);
         }
     });
 
@@ -326,11 +327,29 @@ export function init() {
         if (!(addingSupports && isFdmMode)) {
             return;
         }
-        const { int, type, point, event } = data;
     });
 }
 
 function clearWidgetSupports(widget) {
     delete widget.anno.support;
     widget.anno.paint = [];
+}
+
+function rotateWidgetPaint(widget, angle) {
+    if (!widget.anno.paint?.length) {
+        return;
+    }
+
+    // Z rotation angle in radians
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    // Rotate each paint point around the Z axis
+    for (let paintPoint of widget.anno.paint) {
+        const { point } = paintPoint;
+        const x = point.x;
+        const y = point.y;
+        point.x = x * cos - y * sin;
+        point.y = x * sin + y * cos;
+    }
 }
