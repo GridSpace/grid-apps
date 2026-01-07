@@ -117,7 +117,7 @@ function offset_default(params) {
                 // mark each poly with depth (offset #) starting at 0
                 for (let p of polys) {
                     p.depth = count - onCount;
-                    if (p.fill_off) p.fill_off.forEach(function(pi) {
+                    if (p.fill_off) p.fill_off.forEach((pi) => {
                         // use negative offset for inners
                         pi.depth = -(count - onCount);
                     });
