@@ -87,7 +87,7 @@ export async function fdm_prepare(widgets, settings, update) {
                 });
                 // collect support polygons
                 if (slice.supports)
-                slice.supports.forEach(function(support) {
+                slice.supports.forEach((support) => {
                     tops.push(support.clone());
                 });
             }
@@ -95,7 +95,7 @@ export async function fdm_prepare(widgets, settings, update) {
                 tops = POLY.union(tops,1,true);
             }
             // nest and offset tops
-            POLY.nest(tops).forEach(function(poly) {
+            POLY.nest(tops).forEach((poly) => {
                 let off = poly.offset(-offset + nozzle / 2);
                 if (off) off.forEach(function(brim) {
                     brim.move(widget.track.pos);
@@ -541,7 +541,7 @@ export async function fdm_prepare(widgets, settings, update) {
                     },
                     routeAround: process.outputAvoidGaps,
                     seedPoint: printPoint.sub(offset),
-                    support: slice.widget.support,
+                    support: slice.supports,
                     zmax,
                 }
             );

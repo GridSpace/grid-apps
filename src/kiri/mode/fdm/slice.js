@@ -451,22 +451,49 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             let indices = stack.map(s => s.z);
             let zAngNorm = Math.sin(process.sliceSupportAngle * Math.PI / 180);
 
-            await widget.computeShadowStack(indices, progress => {}, zAngNorm);
+            await widget.computeShadowStack(indices, progress => {
+                trackupdate(progress, 0.05, 0.15, "support gen");
+            }, zAngNorm);
 
-            if (process.sliceSupportTree) {
-                stack.sort((a,b) => a.z - b.z); // deltas only
-            } else {
-                stack.sort((a,b) => b.z - a.z); // accumulate deltas
-            }
+            stack.sort((a,b) => a.z - b.z); // deltas only
 
             // 1. accumulate / union shadow coverage top down
             // 2. trim to area outside slice.clips
 
             for (let slice of stack) {
-                let shadow = await widget.shadowAt(slice.z, true);
+                slice.shadow = await widget.shadowAt(slice.z, true);
+            }
+
+            let minArea = lineWidth;
+            let shadowSum;
+            for (let slice of stack.reverse()) {
+                let { shadow } = slice;
                 if (process.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, process.sliceSupportExtra);
                 }
+                // shadows accumulate down
+                if (shadowSum) {
+                    shadow = POLY.union([...shadow, ...shadowSum], minArea, true);
+                }
+                // trim to slice.clips
+                if (true) {
+                    let rem  = [];
+                    let clips = [
+                        slice.up?.clips,
+                        slice.clips,
+                        slice.down?.clips
+                    ].filter(v => v).flat();
+                    clips = POLY.union(clips, minArea, true);
+                    POLY.subtract(shadow, clips, rem, null, slice.z, minArea, { wasm: false });
+                    shadow = rem;
+                }
+                // pump shadow to clean to clean it up
+                if (true) {
+                    let bump = lineWidth * 2;
+                    shadow = POLY.offset(shadow,  bump, { z: slice.z });
+                    shadow = POLY.offset(shadow, -bump, { z: slice.z });
+                }
+                shadowSum = shadow;
                 slice.supports = shadow;
                 slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
             }
@@ -606,15 +633,13 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 layerSupportFill({
                     angle: process.sliceSupportFill,
                     density,
-                    gap: process.sliceSupportGap,
                     isBelt,
                     lineWidth,
-                    minArea: 0,
                     outline: process.sliceSupportOutline !== false,
                     promises,
                     slice,
                 });
-            }, "support");
+            }, "support fill");
             if (promises) {
                 await tracker(promises, (i, t) => {
                     trackupdate(i / t, 0.88, 0.9);
@@ -689,9 +714,6 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             });
         }
 
-        // new auto support demonstrator using cast shadow
-        await processAutoSupport();
-
         // alert non-manifold parts
         if (healed) {
             onupdate(null, null, "part may not be manifold");
@@ -728,11 +750,14 @@ export function sliceOne(settings, widget, onupdate, ondone) {
 
         // reset for solids, support projections
         // and other annotations
-        slices.forEach(slice => {
+        for (let slice of slices) {
             slice.widget = widget;
             slice.extruder = extruder;
             slice.solids = [];
-        });
+        }
+
+        // new auto support demonstrator using cast shadow
+        await processAutoSupport();
 
         // process solid layers (top/bottom)
         processSolidLayers();
@@ -1434,87 +1459,47 @@ function areaFill({ promises: fillQ, polys, angle, spacing, output, minLen, maxL
     }
 }
 
-  /**
-   * Generate support structure fill patterns for a slice
-   *
-   * This function processes support polygons by:
-   * 1. Unioning all support polygons to eliminate overlaps
-   * 2. Clipping supports to avoid collision with the part (using clip offsets)
-   * 3. Applying optional gap spacing from upper/lower layers
-   * 4. Generating hatching fill patterns based on density
-   * 5. Optionally connecting fill lines to reduce travel moves
-   *
-   * Process flow:
-   * - Union: Merge overlapping support regions into unified polygons
-   * - Clip: Subtract part geometry (slice.clips) to prevent support/part collision
-   * - Gap: If gap specified, also subtract clips from adjacent layers for clearance
-   * - Fill: Generate hatching pattern with auto or specified angle
-   * - Connect: Optionally link nearby fill line endpoints to reduce travels
-   *
-   * @param {SupportFillOptions} args - Configuration object
-   * @param {Promise[]} [args.promises] - Array for async fill operations (concurrent mode)
-   * @param {Slice} args.slice - Current slice to process
-   * @param {number} args.lineWidth - Extrusion width in mm (typically nozzle diameter)
-   * @param {number} args.density - Fill density from 0.0 (0%) to 1.0 (100%)
-   *                                 Typical support density is 0.10-0.25 (10-25%)
-   * @param {number} args.minArea - Minimum polygon area in mm² to keep (default: 0.1)
-   *                                 Smaller polygons are filtered out as noise
-   * @param {boolean} args.isBelt - True for belt printer mode (affects auto-angle calculation)
-   * @param {number} [args.angle] - Fill angle in degrees. Special values:
-   *                                 - undefined/null: Auto-calculate based on polygon shape
-   *                                 - >= 1000: Auto-calculate (1000=0° for tall, 1090=90° for wide)
-   *                                 - 0-360: Use specified angle
-   * @param {boolean} args.outline - Include support perimeter outline in output
-   *                                  If false, only interior fill lines are generated
-   * @param {number} [args.gap] - Gap distance in mm between support and part surfaces
-   *                               When specified, subtracts adjacent layer clips for clearance
-   *
-   * @modifies {Slice} slice.supports - Updated with filled support polygons (array of Polygon)
-   *                                     Each polygon has a .fill property with fill lines
-   * @modifies {Slice} slice.supportOutline - Stores support outline polygons
-   *
-   * @see supportPolyFill - Called internally to generate fill patterns
-   * @see CONSTANTS.SUPPORT_INSET_RATIO - Inset ratio (1/3 of line width)
-   * @see CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE - Auto angle for wide polygons (1090 = 90°)
-   * @see CONSTANTS.SUPPORT_AUTO_ANGLE_TALL - Auto angle for tall polygons (1000 = 0°)
-   * @see CONSTANTS.SUPPORT_CONNECT_DISTANCE_MULT - Distance multiplier for line connection (2x)
-   */
-  function layerSupportFill({ promises, slice, lineWidth, density, minArea, isBelt, angle, outline, gap }) {
-    let supports = slice.supports,
-        min = minArea || 0.1,
-        sub;
-
-    if (!supports) return;
-
-    // union supports
-    supports = POLY.setZ(POLY.union(supports, undefined, true, { wasm: false }), slice.z);
-
-    // clip supports to slice clip offset (or shell if none)
-    POLY.subtract(supports, slice.clips, sub = [], null, slice.z, min, { wasm: false });
-    supports = sub;
-
-    // trim to upper offsets, if they exist
-    if (gap && slice?.up?.clips) {
-        POLY.subtract(supports, slice.up.clips, sub = [], null, slice.z, min, { wasm: false });
-        supports = sub;
-    }
-
-    // trim to lower offsets, if they exist
-    if (gap && slice?.down?.clips) {
-        POLY.subtract(supports, slice.down.clips, sub = [], null, slice.z, min, { wasm: false });
-        supports = sub;
-    }
-
-    if (supports) {
+/**
+ * Generate support structure fill patterns for a slice
+ *
+ * @param {SupportFillOptions} args - Configuration object
+ * @param {Promise[]} [args.promises] - Array for async fill operations (concurrent mode)
+ * @param {Slice} args.slice - Current slice to process
+ * @param {number} args.lineWidth - Extrusion width in mm (typically nozzle diameter)
+ * @param {number} args.density - Fill density from 0.0 (0%) to 1.0 (100%)
+ *                                 Typical support density is 0.10-0.25 (10-25%)
+ * @param {boolean} args.isBelt - True for belt printer mode (affects auto-angle calculation)
+ * @param {number} [args.angle] - Fill angle in degrees. Special values:
+ *                                 - undefined/null: Auto-calculate based on polygon shape
+ *                                 - >= 1000: Auto-calculate (1000=0° for tall, 1090=90° for wide)
+ *                                 - 0-360: Use specified angle
+ * @param {boolean} args.outline - Include support perimeter outline in output
+ *                                  If false, only interior fill lines are generated
+ *
+ * @modifies {Slice} slice.supports - Updated with filled support polygons (array of Polygon)
+ *                                     Each polygon has a .fill property with fill lines
+ *
+ * @see supportPolyFill - Called internally to generate fill patterns
+ * @see CONSTANTS.SUPPORT_INSET_RATIO - Inset ratio (1/3 of line width)
+ * @see CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE - Auto angle for wide polygons (1090 = 90°)
+ * @see CONSTANTS.SUPPORT_AUTO_ANGLE_TALL - Auto angle for tall polygons (1000 = 0°)
+ * @see CONSTANTS.SUPPORT_CONNECT_DISTANCE_MULT - Distance multiplier for line connection (2x)
+ */
+function layerSupportFill({ promises, slice, lineWidth, density, isBelt, angle, outline, gap }) {
+    let polys = slice.supports;
+    if (polys) {
         supportPolyFill({
-            promises, polys: supports, lineWidth, density, z: slice.z, isBelt, angle, outline
+            angle,
+            density,
+            isBelt,
+            lineWidth,
+            outline,
+            polys,
+            promises,
+            z: slice.z
         });
     }
-
-    // re-assign new supports back to slice
-    slice.supportOutline = supports;
-    slice.supports = supports;
-};
+}
 
 /**
  * Generate fill patterns for individual support polygons
@@ -1524,33 +1509,6 @@ function areaFill({ promises: fillQ, polys, angle, spacing, output, minLen, maxL
  * - Automatic fill angle calculation based on polygon aspect ratio
  * - Intelligent inset to prevent perimeter over-extrusion
  * - Optional line connection to reduce travel moves when no outline is needed
- *
- * ## Algorithm Details
- *
- * 1. **Spacing Calculation**: Converts density percentage to actual spacing distance
- *    - Formula: spacing = lineWidth * (1 / density)
- *    - Example: 0.4mm line × (1 / 0.15) = 2.67mm spacing for 15% density
- *
- * 2. **Auto-Angle Selection**: Chooses fill direction based on polygon shape
- *    - Wide polygons (width/height > 1): Use 1090 (90° horizontal lines)
- *    - Tall polygons (width/height ≤ 1): Use 1000 (0° vertical lines)
- *    - Belt mode: Always use 1090 (90°) regardless of aspect ratio
- *    - Rationale: Aligns fill lines with longest dimension for structural strength
- *
- * 3. **Inset Operation**: Shrinks polygon before filling
- *    - Inset distance: lineWidth × (1/3) = 0.33× line width
- *    - Purpose: Prevents over-extrusion where fill lines meet perimeter
- *    - Creates ~0.13mm gap for typical 0.4mm nozzle
- *
- * 4. **Fill Generation**: Creates parallel hatching lines at calculated angle
- *    - Uses doFillArea() to generate scan lines through inset polygon
- *    - Stores result in poly.fill array
- *
- * 5. **Line Connection** (optional): Reduces travel moves
- *    - Only when outline=false (no support perimeter needed)
- *    - Connects nearby line endpoints within 2× spacing distance
- *    - Converts many short lines into fewer longer continuous paths
- *    - Reduces print time and stringing
  *
  * @param {Object} args - Configuration object
  * @param {Promise[]} [args.promises] - Array for async fill operations (concurrent mode)
@@ -1585,13 +1543,14 @@ function areaFill({ promises: fillQ, polys, angle, spacing, output, minLen, maxL
  * @see CONSTANTS.SUPPORT_INSET_RATIO - Inset ratio for fill area (1/3)
  * @see CONSTANTS.SUPPORT_CONNECT_DISTANCE_MULT - Distance multiplier for line connection (2x)
  */
- 
 function supportPolyFill({ promises, polys, lineWidth, density, z, isBelt, angle, outline }) {
     // calculate fill density
     let spacing = lineWidth * (1 / density);
     for (let poly of polys) {
         // calculate angle based on width/height ratio
-        let auto = isBelt || (poly.bounds.width() / poly.bounds.height() > 1) ? CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE : CONSTANTS.SUPPORT_AUTO_ANGLE_TALL;
+        let auto = isBelt || (poly.bounds.width() / poly.bounds.height() > 1) ?
+            CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE :
+            CONSTANTS.SUPPORT_AUTO_ANGLE_TALL;
         // inset support poly for fill lines
         let inset = POLY.offset([poly], -lineWidth * CONSTANTS.SUPPORT_INSET_RATIO, {flat: true, z, wasm: true});
         // do the fill
@@ -1650,23 +1609,6 @@ function projectSolid({ slice, polys, count, up, first }) {
             slice: up ? slice.up : slice.down,
             up
         });
-        // if (up) {
-        //     projectSolid({
-        //         count: count-1,
-        //         first: false,
-        //         polys,
-        //         slice: slice.up,
-        //         up: true
-        //     });
-        // } else {
-        //     projectSolid({
-        //         count: count-1,
-        //         first: false,
-        //         polys,
-        //         slice: slice.down,
-        //         up: false
-        //     });
-        // }
     }
 }
 
