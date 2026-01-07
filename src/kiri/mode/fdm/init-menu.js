@@ -128,13 +128,13 @@ export function menu() {
     // sliceSupportGrow:    newInput(LANG.sp_grow_s, {title:LANG.sp_grow_l, convert:toFloat, bound:bound(0.0,10.0)}),
     sliceSupportSpan:    newInput(LANG.sp_span_s, {title:LANG.sp_span_l, convert:toFloat, bound:bound(0.0,200.0), show:() => ui.sliceSupportEnable.checked }),
     separator:           newBlank({ class:"set-sep", driven }),
-    sliceSupportTree:    newBoolean(LANG.sp_tree_s, onBooleanClick, {title:LANG.sp_tree_s, trigger, show:isNotBelt}),
+    // sliceSupportTree:    newBoolean(LANG.sp_tree_s, onBooleanClick, {title:LANG.sp_tree_s, trigger, show:isNotBelt}),
     // sliceSupportEnable:  newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, show:isNotBelt}),
     sliceSupportOutline: newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, show: () => !isTree() }),
     separator:           newBlank({ class:"set-sep", driven, show:manualSupport }),
-    sliceSupportGen:     newRow([
-        ui.ssaGen = newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
-    ], { modes: FDM, class: "ext-buttons f-row grow", show:manualSupport }),
+    // sliceSupportGen:     newRow([
+    //     ui.ssaGen = newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
+    // ], { modes: FDM, class: "ext-buttons f-row grow", show:manualSupport }),
     // separator:           newBlank({ class:"set-sep", driven }),
     sliceSupportManual: newRow([
         (ui.ssmAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
