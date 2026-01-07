@@ -129,7 +129,7 @@ export function menu() {
     separator:           newBlank({ class:"set-sep", driven, show:manualSupport }),
     sliceSupportManual: newRow([
         (ui.ssmAdd = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-plus"></i>'})),
-        (ui.ssmDun = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-check"></i>'})),
+        (ui.ssmDel = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-minus"></i>'})),
         (ui.ssmClr = newButton(undefined, onButtonClick, {icon:'<i class="fas fa-trash-alt"></i>'}))
     ], {class:"ext-buttons f-row", show:manualSupport}),
     _____:               newGroup(LANG.fl_menu, $('fdm-base'), { modes:FDM, driven, hideable, separator, group:"fdm-base" }),

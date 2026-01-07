@@ -13,6 +13,7 @@ const LANG = api.language.current;
 
 let lastView,
     addingSupports = false,
+    removingSupports = false,
     isFdmMode = false,
     alert = [],
     func = {},
@@ -164,8 +165,8 @@ export function init() {
     api.event.on("button.click", target => {
         switch (target) {
             case api.ui.ssaGen: return func.sgen();
-            case api.ui.ssmAdd: return func.sadd();
-            case api.ui.ssmDun: return func.sdone();
+            case api.ui.ssmAdd: return func.sadd({ remove: false });
+            case api.ui.ssmDel: return func.sadd({ remove: true });
             case api.ui.ssmClr: return func.sclear();
         }
     });
@@ -178,11 +179,15 @@ export function init() {
     }
 
     // manual add supports
-    func.sadd = () => {
+    func.sadd = ({ remove } = { remove: false }) => {
         if (addingSupports) {
-            return func.sdone();
+            func.sdone();
+            if (removingSupports === remove) {
+                return;
+            }
         }
-        alert = api.show.alert("[esc] key cancels support editing", 1000);
+        removingSupports = remove;
+        alert = api.show.alert(`[esc] key cancels ${remove?'removing':'adding'} supports`, 1000);
         api.feature.hover = addingSupports = true;
         api.feature.on_mouse_down = (int) => {
             if (int) {
@@ -193,7 +198,7 @@ export function init() {
         };
         api.feature.on_mouse_drag = ({ int }) => {
             if (int?.length && int[0].face.normal.z < 0) {
-                func.sadd_point(int[0].point, down.widget);
+                func.sadd_point(int[0].point, down.widget, remove);
             }
             return [ down.widget.mesh ];
             // return api.widgets.meshes();
@@ -210,7 +215,7 @@ export function init() {
         api.space.update();
     }
 
-    func.sadd_point = (point, widget) => {
+    func.sadd_point = (point, widget, remove) => {
         let { x, y, z } = point;
         let rec = {
             point: { x, y:-z, z:y },
@@ -221,15 +226,21 @@ export function init() {
         let pt = newPoint(x, -z, y);
         for (let r of paint) {
             let { point } = r;
-            if (newPoint(point.x, point.y, point.z).distTo2D(pt) < 1) {
+            let dist = newPoint(point.x, point.y, point.z).distTo2D(pt);
+            if (remove && dist < 2) {
+                r.delete = true;
+            } else if (dist < 1) {
                 return;
             }
         }
-        paint.push(rec);
+        if (remove) {
+            paint = widget.anno.paint = paint.filter(rec => !rec.delete);
+        } else {
+            paint.push(rec);
+        }
         updatePaintOverlay(widget.mesh.material[0], paint);
         api.space.update();
         api.conf.save();
-
     };
 
     // manual add done
@@ -309,6 +320,7 @@ export function init() {
             // rotate supports when rotation is constrained to Z axis
             rotateWidgetPaint(widget, z);
         }
+        api.conf.save();
     });
 
     api.event.on("mouse.hover.up", func.hoverup = (on = {}) => {
@@ -319,7 +331,7 @@ export function init() {
         if (object && down.z < 0) {
             let { point } = object;
             let { widget } = object.object;
-            func.sadd_point(point, widget);
+            func.sadd_point(point, widget, removingSupports);
         }
     });
 
