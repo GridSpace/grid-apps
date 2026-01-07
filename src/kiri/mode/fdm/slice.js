@@ -1,7 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base, util } from '../../../geo/base.js';
-import { doTopShells } from './post.js';
+import { layerProcessTop } from './post.js';
 import { fill, fill_fixed } from './fill.js';
 import { generateBeltAnchor, embossBeltPooch, finalizeBeltBounds } from './belt.js';
 import { getRangeParameters } from './driver.js';
@@ -10,8 +9,7 @@ import { newPolygon } from '../../../geo/polygon.js';
 import { newSlice } from '../../core/slice.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { slice, sliceZ } from '../../../geo/slicer.js';
-
-const { config } = base;
+import { util } from '../../../geo/base.js';
 
 const CONSTANTS = {
     // Support fill
@@ -176,55 +174,6 @@ function vopt(opt, ctx) {
 
 /**
  * DRIVER SLICE CONTRACT
- * 
- * global slice operation run after all individual widget slice() complete
- */
-export function slicePost(settings, onupdate) {
-    // future home of brim and anchor generation
-    let widgets = Object.values(self.kiri_worker.cache)
-        .filter(w => !w.meta.disabled)
-        .sort((a,b) => {
-            return a.slices[0].z - b.slices[0].z
-        });
-    // assign grid_id which can be embedded in gcode and
-    // used by the controller to cancel objects during print
-    let { bounds } = settings;
-    for (let widget of widgets) {
-        let { pos, box } = widget.track;
-        // calculate top/left coordinate for widget
-        // relative to bounding box for all widgets
-        let tl = {
-            x: Math.round((pos.x - box.w/2 - bounds.min.x) / 10) + 1,
-            y: Math.round((pos.y - box.h/2 - bounds.min.y) / 10) + 1
-        };
-        widget.track.grid_id = tl.x * 100 + tl.y;
-    }
-    // count extruders used
-    let ext = [];
-    for (let w of widgets) {
-        if (w.anno && w.anno.extruder >= 0) {
-            let e = w.anno.extruder;
-            if (ext.indexOf(e) < 0) {
-                ext.push(e);
-            }
-        }
-    }
-    // sort widgets by first slice Z
-    widgets.sort((a,b) => {
-        return a.slices[0].z - b.slices[0].z;
-    });
-    // give first widget a pass since it should have the anchor
-    widgets.shift();
-    // remove anchor slices from other widgets (only with multi-material)
-    if (ext.length > 1) {
-        for (let w of widgets) {
-            w.slices = w.slices.filter(s => s.index >= 0);
-        }
-    }
-};
-
-/**
- * DRIVER SLICE CONTRACT
  *
  * Given a widget and settings object, call functions necessary to produce
  * slices and then the computations using those slices. This function is
@@ -258,7 +207,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         shellOffset = lineWidth,
         fillSpacing = lineWidth,
         fillOffset = lineWidth * fillOffsetMult,
-        clipOffset = process.sliceSupportOffset,
+        clipOffset = process.sliceSupportOffset + lineWidth / 2,
         sliceFillAngle = process.sliceFillAngle,
         supportDensity = process.sliceSupportDensity,
         { sliceCompInner, sliceCompOuter } = process;
@@ -344,6 +293,8 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         }
     }
 
+    // create Slice objects for specified list of Z heights
+    // zGen() produces the list (or empty for slicer auto-detected)
     slice(points, {
         strict: true,
         debug: process.xray,
@@ -372,7 +323,13 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         onupdate(update) {
             return onupdate(0.0 + update * 0.5)
         }
-    }).then((output) => {
+    })
+    .then(decodeSlices)
+    .then(processSlices)
+    .then(ondone);
+
+    // turn slicer raw output into Slice objects
+    function decodeSlices(output) {
         // post process slices and re-incorporate missing meta-data
         return output.slices.map(data => {
             let { z, clip, lines, groups, changes } = data;
@@ -397,9 +354,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             }
             return slice;
         }).filter(s => s);
-    }).then(slices => {
-        return onSliceDone(slices);
-    }).then(ondone);
+    }
 
     // z index generator
     function zGen(zopt) {
@@ -483,9 +438,9 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         return zi;
     }
 
-    async function onSliceDone(slices) {
+    async function processSlices(slices) {
         /**
-         * Process automatic shadow-based support generation
+         * Process shadow-based support generation
          */
         async function processAutoSupport() {
             if (process.sliceSupportType !== 'automatic') {
@@ -504,17 +459,22 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 stack.sort((a,b) => b.z - a.z); // accumulate deltas
             }
 
+            // 1. accumulate / union shadow coverage top down
+            // 2. trim to area outside slice.clips
+
             for (let slice of stack) {
                 let shadow = await widget.shadowAt(slice.z, true);
                 if (process.sliceSupportExtra) {
                     shadow = POLY.offset(shadow, process.sliceSupportExtra);
                 }
                 slice.supports = shadow;
+                slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
             }
         }
 
         /**
-         * Process solid layer fills (top/bottom layers)
+         * Process top and bottom layers or any other
+         * layers detected and marked for solid fill
          */
         function processSolidLayers() {
             forSlices(0.15, 0.2, slice => {
@@ -527,7 +487,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 let solidWidth = isSolid ? range.sliceFillWidth || 1 : 0;
                 if (solidWidth) {
                     let fillSpace = fillSpacing * solidWidth;
-                    doSolidLayerFill({ slice, spacing: fillSpace, angle: sliceFillAngle });
+                    layerMakeSolid({ slice, spacing: fillSpace, angle: sliceFillAngle });
                 }
                 if (slice.index === slices.length - 1) {
                     slice.isFlatsLayer = true;
@@ -544,15 +504,16 @@ export function sliceOne(settings, widget, onupdate, ondone) {
          * Process layer diffs and project solid areas
          */
         function processLayerDiffs() {
+            // boolean diff layers to detect bridges and flats
             profileStart("delta");
             forSlices(0.2, 0.34, slice => {
                 let params = slice.params || process;
                 let solidMinArea = params.sliceSolidMinArea;
                 let sliceFillGrow = params.sliceFillGrow;
-                doDiff(slice, { min: solidMinArea, grow: sliceFillGrow });
+                layerDiff(slice, { min: solidMinArea, grow: sliceFillGrow });
             }, "layer deltas");
             profileEnd();
-
+            // project bridges and flats up and down into part
             profileStart("delta-project");
             forSlices(0.34, 0.35, slice => {
                 let params = slice.params || process;
@@ -560,6 +521,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 bottomLayers = params.sliceBottomLayers || 0;
                 if (topLayers) projectFlats(slice, topLayers);
                 if (bottomLayers) projectBridges(slice, bottomLayers);
+                if (slice.flats) POLY.setZ(slice.flats, slice.z);
             }, "layer deltas");
             profileEnd();
         }
@@ -572,11 +534,10 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             let promises = isConcurrent ? [] : undefined;
             forSlices(0.35, promises ? 0.4 : 0.5, slice => {
                 let params = slice.params || process;
-                let first = slice.index === 0;
                 let solidWidth = params.sliceFillWidth || 1;
                 let fillSpace = fillSpacing * solidWidth;
                 let solidMinArea = params.sliceSolidMinArea;
-                doSolidsFill({ slice, spacing: fillSpace, angle: sliceFillAngle, minArea: solidMinArea, promises });
+                layerFillSolids({ slice, spacing: fillSpace, angle: sliceFillAngle, minArea: solidMinArea, promises });
                 sliceFillAngle = (sliceFillAngle + 90.0) % 360;
             }, "fill solids");
             // very last layer (top) is set to finish solid rate
@@ -601,7 +562,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                     return;
                 }
                 let newType = params.sliceFillType;
-                doSparseLayerFill(slice, {
+                layerSparseFill(slice, {
                     settings,
                     process,
                     device,
@@ -642,7 +603,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             forSlices(0.8, promises ? 0.88 : 0.9, slice => {
                 let params = slice.params || process;
                 let density = params.sliceSupportDensity;
-                doSupportFill({
+                layerSupportFill({
                     angle: process.sliceSupportFill,
                     density,
                     gap: process.sliceSupportGap,
@@ -765,9 +726,6 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             slice.params = getRangeParameters(process, slice.index);
         }
 
-        // do not hint polygon fill longer than a max span length
-        config.hint_len_max = util.sqr(process.sliceBridgeMax);
-
         // reset for solids, support projections
         // and other annotations
         slices.forEach(slice => {
@@ -781,8 +739,6 @@ export function sliceOne(settings, widget, onupdate, ondone) {
 
         // add lead in anchor when specified in belt mode (but not for synths)
         if (isBelt) {
-            let { slope } = widget.belt;
-
             // Generate belt anchor
             generateBeltAnchor({
                 slices,
@@ -841,7 +797,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         if (render) {
             forSlices(0.9, 1.0, slice => {
                 let params = slice.params || process;
-                doRender(slice, params, {
+                layerRender(slice, params, {
                     dark: controller.dark,
                     devel: controller.devel,
                     renderContext
@@ -899,7 +855,7 @@ function bound(v,min,max) {
  * @param {boolean} opt.devel - Enable development visualization
  * @param {RenderContext} opt.renderContext - Rendering context
  */
-function doRender(slice, params, opt = {}) {
+function layerRender(slice, params, opt = {}) {
     const { dark, devel, renderContext: ctx } = opt;
     const Color = dark ? COLOR_DARK : COLOR;
     const output = slice.output();
@@ -961,15 +917,15 @@ function doRender(slice, params, opt = {}) {
     });
 
     if (isThin && devel) {
-        if (slice.solids && slice.solids.length) output
+        if (slice.solids?.length) output
             .setLayer("solids", { face: 0xbbbb00, check: 0xbbbb00 })
             .addAreas(slice.solids);
 
-        if (slice.bridges && slice.bridges.length) output
+        if (slice.bridges?.length) output
             .setLayer("bridges", { face: 0x00cccc, line: 0x00cccc, check: 0x00cccc })
             .addAreas(slice.bridges);
 
-        if (slice.flats && slice.flats.length) output
+        if (slice.flats?.length) output
             .setLayer("flats", { face: 0xaa00aa, line: 0xaa00aa, check: 0xaa00aa })
             .addAreas(slice.flats);
     }
@@ -1005,6 +961,55 @@ function doRender(slice, params, opt = {}) {
 }
 
 /**
+ * DRIVER SLICE CONTRACT
+ * 
+ * global slice operation run after all individual widget slice() complete
+ */
+export function slicePost(settings, onupdate) {
+    // future home of brim and anchor generation
+    let widgets = Object.values(self.kiri_worker.cache)
+        .filter(w => !w.meta.disabled)
+        .sort((a,b) => {
+            return a.slices[0].z - b.slices[0].z
+        });
+    // assign grid_id which can be embedded in gcode and
+    // used by the controller to cancel objects during print
+    let { bounds } = settings;
+    for (let widget of widgets) {
+        let { pos, box } = widget.track;
+        // calculate top/left coordinate for widget
+        // relative to bounding box for all widgets
+        let tl = {
+            x: Math.round((pos.x - box.w/2 - bounds.min.x) / 10) + 1,
+            y: Math.round((pos.y - box.h/2 - bounds.min.y) / 10) + 1
+        };
+        widget.track.grid_id = tl.x * 100 + tl.y;
+    }
+    // count extruders used
+    let ext = [];
+    for (let w of widgets) {
+        if (w.anno && w.anno.extruder >= 0) {
+            let e = w.anno.extruder;
+            if (ext.indexOf(e) < 0) {
+                ext.push(e);
+            }
+        }
+    }
+    // sort widgets by first slice Z
+    widgets.sort((a,b) => {
+        return a.slices[0].z - b.slices[0].z;
+    });
+    // give first widget a pass since it should have the anchor
+    widgets.shift();
+    // remove anchor slices from other widgets (only with multi-material)
+    if (ext.length > 1) {
+        for (let w of widgets) {
+            w.slices = w.slices.filter(s => s.index >= 0);
+        }
+    }
+}
+
+/**
  * Compute offset shell polygons. For FDM, the first offset is usually half
  * of the nozzle width.  Each subsequent offset is a full nozzle width.  User
  * parameters control tweaks to these numbers to allow for better shell bonding.
@@ -1018,9 +1023,9 @@ function doRender(slice, params, opt = {}) {
  * @param {number} fillOffset
  * @param {Obejct} options
  */
-export function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
+export function layerProcessTops(slice, count, offset1, offsetN, fillOffset, opt = {}) {
     for (let top of slice.tops) {
-        doTopShells(slice.z, top, count, offset1, offsetN, fillOffset, opt);
+        layerProcessTop(slice.z, top, count, offset1, offsetN, fillOffset, opt);
     }
 }
 
@@ -1039,9 +1044,7 @@ export function doShells(slice, count, offset1, offsetN, fillOffset, opt = {}) {
  * @param {number} args.spacing - Fill line spacing in mm
  * @param {number} args.angle - Fill angle in degrees
  */
-function doSolidLayerFill(args) {
-    const { slice, spacing, angle } = args;
-
+function layerMakeSolid({ slice, spacing, angle }) {
     if (slice.xray) {
         return;
     }
@@ -1064,7 +1067,7 @@ function doSolidLayerFill(args) {
  * Take output from pluggable sparse infill algorithm and clip to
  * the bounds of the top polygons and their inner solid areas.
  */
-function doSparseLayerFill(slice, options = {}) {
+function layerSparseFill(slice, options = {}) {
     if (slice.xray || options.type === 'none') {
         return;
     }
@@ -1239,7 +1242,7 @@ function doSparseLayerFill(slice, options = {}) {
  * Used to calculate bridges, flats and then solid projections.
  * 'expand' is used for top offsets in SLA mode
  */
-export function doDiff(slice, options = {}) {
+export function layerDiff(slice, options = {}) {
     const { sla, fakedown, grow, min } = options;
     if ((slice.index <= 0 && !fakedown) || slice.xray) {
         return;
@@ -1277,47 +1280,7 @@ export function doDiff(slice, options = {}) {
 
     bridges.appendAll(newBridges);
     flats.appendAll(newFlats);
-};
-
-/**
- *
- *
- * @param {Polygon[]} polys
- */
-function addSolidFills(slice, polys) {
-    if (slice.solids) {
-        slice.solids.appendAll(polys);
-    } else if (polys && polys.length) {
-        console.log({no_solids_in: slice, for: polys})
-    }
-};
-
-/**
- * project bottom flats down
- */
-export function projectFlats(slice, count, expand) {
-    if (!slice.down || !slice.flats) return;
-    // these flats are marked for finishing print speed
-    if (slice.flats?.length) {
-        slice.finishSolids = true;
-        slice.isFlatsLayer = true;
-        const flats = expand ? POLY.expand(slice.flats, expand) : slice.flats;
-        projectSolid({ slice, polys: flats, count, up: false, first: true });
-    }
-};
-
-/**
- * project top bridges up
- */
-export function projectBridges(slice, count) {
-    if (!slice.up || !slice.bridges) return;
-    // these flats are marked for finishing print speed
-    if (slice.bridges?.length) {
-        slice.finishSolids = true;
-        slice.isBridgeLayer = true;
-    }
-    projectSolid({ slice, polys: slice.bridges, count, up: true, first: true });
-};
+}
 
 /**
  * Fill projected solid areas and store line data
@@ -1330,8 +1293,7 @@ export function projectBridges(slice, count) {
  * @param {Promise[]} [args.promises] - Array for async operations
  * @return {boolean} true if filled, false if not
  */
-function doSolidsFill(args) {
-    const { slice, spacing, angle, minArea, promises: fillQ } = args;
+function layerFillSolids({ slice, spacing, angle, minArea, promises: fillQ }) {
     let minarea = minArea || 1,
         tops = slice.tops,
         solids = slice.solids;
@@ -1406,7 +1368,7 @@ function doSolidsFill(args) {
         for (let top of tops) {
             top.solids = [];
         }
-        doSolidLayerFill({ slice, spacing, angle });
+        layerMakeSolid({ slice, spacing, angle });
         return;
     }
 
@@ -1435,12 +1397,12 @@ function doSolidsFill(args) {
             }
         }
         if (tofill.length > 0) {
-            doFillArea({ promises: fillQ, polys: tofill, angle, spacing, output: newfill });
+            areaFill({ promises: fillQ, polys: tofill, angle, spacing, output: newfill });
         }
         if (angfill.length > 0) {
             top.fill_lines_ang = {spacing:spacing,list:[],poly:[]};
             for (let af of angfill) {
-                doFillArea({
+                areaFill({
                     promises: fillQ,
                     polys: [af],
                     angle: af.fillang.angle + CONSTANTS.ANGLED_FILL_ROTATION,
@@ -1464,8 +1426,7 @@ function doSolidsFill(args) {
  * @param {number} [args.minLen] - Minimum line length
  * @param {number} [args.maxLen] - Maximum line length
  */
-function doFillArea(args) {
-    const { promises: fillQ, polys, angle, spacing, output, minLen, maxLen } = args;
+function areaFill({ promises: fillQ, polys, angle, spacing, output, minLen, maxLen }) {
     if (fillQ) {
         fillQ.push(self.kiri_worker.minions.fill(polys, angle, spacing, output, minLen, maxLen));
     } else {
@@ -1512,14 +1473,13 @@ function doFillArea(args) {
    *                                     Each polygon has a .fill property with fill lines
    * @modifies {Slice} slice.supportOutline - Stores support outline polygons
    *
-   * @see fillSupportPolys - Called internally to generate fill patterns
+   * @see supportPolyFill - Called internally to generate fill patterns
    * @see CONSTANTS.SUPPORT_INSET_RATIO - Inset ratio (1/3 of line width)
    * @see CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE - Auto angle for wide polygons (1090 = 90°)
    * @see CONSTANTS.SUPPORT_AUTO_ANGLE_TALL - Auto angle for tall polygons (1000 = 0°)
    * @see CONSTANTS.SUPPORT_CONNECT_DISTANCE_MULT - Distance multiplier for line connection (2x)
    */
-  function doSupportFill(args) {
-    const { promises, slice, lineWidth, density, minArea, isBelt, angle, outline, gap } = args;
+  function layerSupportFill({ promises, slice, lineWidth, density, minArea, isBelt, angle, outline, gap }) {
     let supports = slice.supports,
         min = minArea || 0.1,
         sub;
@@ -1546,7 +1506,7 @@ function doFillArea(args) {
     }
 
     if (supports) {
-        fillSupportPolys({
+        supportPolyFill({
             promises, polys: supports, lineWidth, density, z: slice.z, isBelt, angle, outline
         });
     }
@@ -1617,8 +1577,8 @@ function doFillArea(args) {
  *                     - Lines are either individual segments (outline=true) or
  *                       connected paths (outline=false) for travel reduction
  * 
- * @see doSupportFill - Parent function that calls this after clipping/union
- * @see doFillArea - Lower-level function that generates the actual scan lines
+ * @see layerSupportFill - Parent function that calls this after clipping/union
+ * @see areaFill - Lower-level function that generates the actual scan lines
  * @see connect_lines - Utility that connects nearby line segments
  * @see CONSTANTS.SUPPORT_AUTO_ANGLE_WIDE - Auto angle for wide polygons (1090 = 90°)
  * @see CONSTANTS.SUPPORT_AUTO_ANGLE_TALL - Auto angle for tall polygons (1000 = 0°)
@@ -1626,7 +1586,7 @@ function doFillArea(args) {
  * @see CONSTANTS.SUPPORT_CONNECT_DISTANCE_MULT - Distance multiplier for line connection (2x)
  */
  
-function fillSupportPolys({ promises, polys, lineWidth, density, z, isBelt, angle, outline }) {
+function supportPolyFill({ promises, polys, lineWidth, density, z, isBelt, angle, outline }) {
     // calculate fill density
     let spacing = lineWidth * (1 / density);
     for (let poly of polys) {
@@ -1636,7 +1596,7 @@ function fillSupportPolys({ promises, polys, lineWidth, density, z, isBelt, angl
         let inset = POLY.offset([poly], -lineWidth * CONSTANTS.SUPPORT_INSET_RATIO, {flat: true, z, wasm: true});
         // do the fill
         if (inset && inset.length > 0) {
-            doFillArea({
+            areaFill({
                 angle: angle || auto,
                 output: poly.fill = [],
                 polys: inset,
@@ -1660,24 +1620,79 @@ function fillSupportPolys({ promises, polys, lineWidth, density, z, isBelt, angl
  * @param {boolean} args.up - Project upward (true) or downward (false)
  * @param {boolean} args.first - First projection (hint fill angles)
  */
-function projectSolid(args) {
-    const { slice, polys, count, up, first } = args;
-
+function projectSolid({ slice, polys, count, up, first }) {
     if (slice && !up && count === 1) {
         slice.isBridgeLayer = true;
     }
+
     if (!slice || count <= 0) {
         return;
     }
+
     let clones = polys.clone(true);
     if (first) {
-        clones.forEach(function(p) {
-            p.hintFillAngle();
-        });
+        for (let clone of clones) {
+            clone.hintFillAngle();
+        }
     }
-    addSolidFills(slice, clones);
+
+    if (slice.solids) {
+        slice.solids.appendAll(clones);
+    } else if (clones && clones.length) {
+        console.log({no_solids_in: slice, for: clones})
+    }
+
     if (count > 0) {
-        if (up) projectSolid({ slice: slice.up, polys, count: count-1, up: true, first: false });
-        else projectSolid({ slice: slice.down, polys, count: count-1, up: false, first: false });
+        projectSolid({
+            count: count - 1,
+            first: false,
+            polys,
+            slice: up ? slice.up : slice.down,
+            up
+        });
+        // if (up) {
+        //     projectSolid({
+        //         count: count-1,
+        //         first: false,
+        //         polys,
+        //         slice: slice.up,
+        //         up: true
+        //     });
+        // } else {
+        //     projectSolid({
+        //         count: count-1,
+        //         first: false,
+        //         polys,
+        //         slice: slice.down,
+        //         up: false
+        //     });
+        // }
     }
+}
+
+/**
+ * project bottom flats down into part
+ */
+export function projectFlats(slice, count, expand) {
+    if (!slice.down || !slice.flats) return;
+    // these flats are marked for finishing print speed
+    if (slice.flats?.length) {
+        slice.finishSolids = true;
+        slice.isFlatsLayer = true;
+        const flats = expand ? POLY.expand(slice.flats, expand) : slice.flats;
+        projectSolid({ slice, polys: flats, count, up: false, first: true });
+    }
+}
+
+/**
+ * project top bridges up into part
+ */
+export function projectBridges(slice, count) {
+    if (!slice.up || !slice.bridges) return;
+    // these flats are marked for finishing print speed
+    if (slice.bridges?.length) {
+        slice.finishSolids = true;
+        slice.isBridgeLayer = true;
+    }
+    projectSolid({ slice, polys: slice.bridges, count, up: true, first: true });
 }

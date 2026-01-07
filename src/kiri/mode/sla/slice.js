@@ -5,7 +5,7 @@ import { slicer } from '../../../geo/slicer.js';
 import { newPolygon } from '../../../geo/polygon.js';
 import { polygons as POLY } from '../../../geo/polygons.js';
 import { newSlice, newTop } from '../../core/slice.js';
-import { doShells, doDiff, projectFlats, projectBridges } from '../fdm/slice.js';
+import { layerProcessTops, layerDiff, projectFlats, projectBridges } from '../fdm/slice.js';
 import { PNG } from '../../../ext/pngjs.esm.js';
 import { SLA } from './driver.js';
 
@@ -149,14 +149,14 @@ export function sla_slice(settings, widget, onupdate, ondone) {
         work_remain = work_total;
         forSlices(slices, 5, (slice,index) => {
             if (process.slaShell) {
-                doShells(slice, 2, 0, process.slaShell);
+                layerProcessTops(slice, 2, 0, process.slaShell);
             } else {
-                doShells(slice, 1, 0);
+                layerProcessTops(slice, 1, 0);
             }
         }, "shells");
         forSlices(slices, 10, (slice) => {
             if (slice.synth) return;
-            doDiff(slice, 0.000001, {
+            layerDiff(slice, 0.000001, {
                 sla: true,
                 fakedown: !process.slaOpenBase
             });

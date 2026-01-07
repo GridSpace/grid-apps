@@ -8,7 +8,7 @@ import '../../add/three.js';
 
 import { base } from '../../geo/base.js';
 import { codec, encode, encodePointArray } from '../core/codec.js';
-import { doTopShells } from '../mode/fdm/post.js';
+import { layerProcessTop } from '../mode/fdm/post.js';
 import { newPoint } from '../../geo/point.js';
 import { newWidget } from '../core/widget.js';
 import { polygons as POLY } from '../../geo/polygons.js';
@@ -92,7 +92,7 @@ const funcs = self.minion = {
     topShells(data, seq) {
         let top = codec.decode(data.top, {full: true});
         let {z, count, offset1, offsetN, fillOffset, opt} = data;
-        doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
+        layerProcessTop(z, top, count, offset1, offsetN, fillOffset, opt);
         let state = { zeros: [] };
         reply({ seq, top: codec.encode(top, {full: true}) }, state.zeros);
     },

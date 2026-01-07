@@ -9,14 +9,17 @@ import { slicer } from '../../../geo/slicer.js';
 import { Point } from '../../../geo/point.js';
 import { Slope } from '../../../geo/slope.js';
 
-slicer.slicePost.FDM = slicePost;
+// tell the slicer what to do in FDM mode
+// with slices (post processing). the post
+// processor may depend on worker / minion context
+slicer.slicePost.FDM = slicerPostProcessor;
 
 /**
  * may run in minion or worker context. do not create objects
  * that will not quickly encode in threaded mode. add to existing
  * data object. return is ignored.
  */
-export function slicePost(data, options) {
+function slicerPostProcessor(data, options) {
     const { groups, z } = data;
     const { post_args, useAssembly, zIndexes } = options;
     const { process, vaseMode } = post_args;
@@ -81,7 +84,7 @@ export function slicePost(data, options) {
     const nutops = [];
     // co-locate shell processing with top generation in slicer
     for (let top of data.tops) {
-        nutops.push(doTopShells(z, top, count, offset/2, offset, fillOff, {
+        nutops.push(layerProcessTop(z, top, count, offset/2, offset, fillOff, {
             thinType,
             vaseMode,
             useAssembly
@@ -687,7 +690,7 @@ function trace_noodle(noodle, noodleWidth, minR, midR, maxR, opt = {}) {
  * may run in minion or worker context. performs shell offsetting
  * including thin wall detection when enabled
  */
-export function doTopShells(z, top, count, offset1, offsetN, fillOffset, opt = {}) {
+export function layerProcessTop(z, top, count, offset1, offsetN, fillOffset, opt = {}) {
     // pretend we're a top object in minions
     if (!top.poly) {
         top = { poly: top };
