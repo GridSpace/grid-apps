@@ -11,6 +11,12 @@
  * The shader checks if each fragment falls within any paint sphere and
  * blends the paint color accordingly.
  *
+ * SURFACE FILTERING:
+ * By default, painting is constrained to downward-facing surfaces only (z-normal < 0).
+ * This prevents paint "spill" onto adjacent upward-facing surfaces when painting
+ * support regions. For multi-material coloring or other uses, set
+ * options.onlyDownwardFacing = false to paint all surfaces.
+ *
  * PAINT POINT DATA STRUCTURE:
  * ---------------------------
  * Paint points must be an array of objects with this structure:
@@ -29,11 +35,14 @@
  *
  * USAGE:
  * ------
- * // Initial setup - enable paint overlay:
+ * // Initial setup - enable paint overlay (for support painting, downward-facing only):
  * widget._origMaterial = widget.mesh.material;
  * widget.mesh.material = widget.mesh.material.clone();
  * addPaintOverlayAuto(widget.mesh.material, paintPoints, new THREE.Color(0x4488ff));
  * widget.mesh.material.needsUpdate = true;
+ *
+ * // For multi-material coloring (paint all surfaces):
+ * addPaintOverlayAuto(widget.mesh.material, paintPoints, new THREE.Color(0xff0000), { onlyDownwardFacing: false });
  *
  * // Real-time updates while painting (see updatePaintOverlay function below)
  *
@@ -68,13 +77,18 @@ import { THREE } from '../../ext/three.js';
  * @param {THREE.Material} material - Material to modify (will be mutated via onBeforeCompile)
  * @param {Array<{point: {x,y,z}, radius: number}>} paintPoints - Array of paint spheres
  * @param {THREE.Color} [paintColor] - Color for painted regions (default: light blue)
+ * @param {Object} [options] - Optional configuration
+ * @param {boolean} [options.onlyDownwardFacing=true] - Only paint on downward-facing surfaces (z-normal < 0)
  * @returns {THREE.Material} The modified material
  */
-function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Color(0x4488ff)) {
+function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Color(0x4488ff), options = {}) {
     // Initialize userData if it doesn't exist
     if (!material.userData) {
         material.userData = {};
     }
+
+    // Default: only paint downward-facing surfaces (for support painting)
+    const onlyDownwardFacing = options.onlyDownwardFacing !== undefined ? options.onlyDownwardFacing : true;
 
     // Store initial paint points reference
     material.userData.paintPoints = paintPoints;
@@ -100,13 +114,11 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             points[i] = i < validPoints.length ? validPoints[i] : new THREE.Vector4(0, 0, 0, 0);
         }
 
-        console.log('[Paint Shader] onBeforeCompile called with', validPoints.length, 'valid points');
-        console.log('[Paint Shader] First point:', currentPoints[0]);
-
         // Add uniforms for paint data
         shader.uniforms.paintPoints = { value: points };
         shader.uniforms.paintCount = { value: validPoints.length };
         shader.uniforms.paintColor = { value: paintColor };
+        shader.uniforms.onlyDownwardFacing = { value: onlyDownwardFacing };
 
         // Pass model position from vertex shader to fragment shader
         // Paint points are in widget/model space, so we compare against transformed (model space)
@@ -130,6 +142,7 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             uniform vec4 paintPoints[256];  // (x, y, z, radius)
             uniform int paintCount;
             uniform vec3 paintColor;
+            uniform bool onlyDownwardFacing;
         ` + shader.fragmentShader;
 
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -142,8 +155,9 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             vec3 posDy = dFdy(vWorldPosition);
             vec3 worldNormal = normalize(cross(posDx, posDy));
 
-            // HARDCODED TEST: only paint if normal.z < 0 (downward facing)
-            if (worldNormal.z < 0.0) {
+            // Only paint downward-facing surfaces if option is enabled
+            bool shouldPaint = !onlyDownwardFacing || worldNormal.z < 0.0;
+            if (shouldPaint) {
                 // Check if this fragment is within any paint sphere
                 bool painted = false;
 
@@ -190,13 +204,18 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
  * @param {THREE.Material} material - Material to modify (will be mutated via onBeforeCompile)
  * @param {Array<{point: {x,y,z}, radius: number}>} paintPoints - Array of paint spheres
  * @param {THREE.Color} [paintColor] - Color for painted regions (default: light blue)
+ * @param {Object} [options] - Optional configuration
+ * @param {boolean} [options.onlyDownwardFacing=true] - Only paint on downward-facing surfaces (z-normal < 0)
  * @returns {THREE.Material} The modified material
  */
-function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Color(0x4488ff)) {
+function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Color(0x4488ff), options = {}) {
     // Initialize userData if it doesn't exist
     if (!material.userData) {
         material.userData = {};
     }
+
+    // Default: only paint downward-facing surfaces (for support painting)
+    const onlyDownwardFacing = options.onlyDownwardFacing !== undefined ? options.onlyDownwardFacing : true;
 
     // Store initial paint points reference
     material.userData.paintPoints = paintPoints;
@@ -244,6 +263,7 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
         shader.uniforms.paintCount = { value: pointCount };
         shader.uniforms.paintTexSize = { value: new THREE.Vector2(texWidth, texHeight) };
         shader.uniforms.paintColor = { value: paintColor };
+        shader.uniforms.onlyDownwardFacing = { value: onlyDownwardFacing };
 
         // Pass model position from vertex shader to fragment shader
         // Paint points are in widget/model space, so we compare against transformed (model space)
@@ -268,6 +288,7 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
             uniform int paintCount;
             uniform vec2 paintTexSize;
             uniform vec3 paintColor;
+            uniform bool onlyDownwardFacing;
         ` + shader.fragmentShader;
 
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -280,8 +301,9 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
             vec3 posDy = dFdy(vWorldPosition);
             vec3 worldNormal = normalize(cross(posDx, posDy));
 
-            // HARDCODED TEST: only paint if normal.z < 0 (downward facing)
-            if (worldNormal.z < 0.0) {
+            // Only paint downward-facing surfaces if option is enabled
+            bool shouldPaint = !onlyDownwardFacing || worldNormal.z < 0.0;
+            if (shouldPaint) {
                 bool painted = false;
 
                 // Iterate through paint points stored in texture
@@ -332,13 +354,15 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
  * @param {THREE.Material} material - Material to modify
  * @param {Array<{point: {x,y,z}, radius: number}>} paintPoints - Array of paint spheres
  * @param {THREE.Color} [paintColor] - Color for painted regions
+ * @param {Object} [options] - Optional configuration
+ * @param {boolean} [options.onlyDownwardFacing=true] - Only paint on downward-facing surfaces (z-normal < 0)
  * @returns {THREE.Material} The modified material
  */
-function addPaintOverlayAuto(material, paintPoints, paintColor = new THREE.Color(0x4488ff)) {
+function addPaintOverlayAuto(material, paintPoints, paintColor = new THREE.Color(0x4488ff), options = {}) {
     if (paintPoints.length <= 256) {
-        return addPaintOverlaySimple(material, paintPoints, paintColor);
+        return addPaintOverlaySimple(material, paintPoints, paintColor, options);
     } else {
-        return addPaintOverlayTexture(material, paintPoints, paintColor);
+        return addPaintOverlayTexture(material, paintPoints, paintColor, options);
     }
 }
 
