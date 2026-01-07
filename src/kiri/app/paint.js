@@ -118,6 +118,8 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             `
         );
 
+        // Don't pass normals from vertex shader at all - we'll use fragment shader's normal
+
         shader.vertexShader = `
             varying vec3 vWorldPosition;
         ` + shader.vertexShader;
@@ -135,10 +137,17 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             `
             #include <dithering_fragment>
 
-            // Check if this fragment is within any paint sphere
-            bool painted = false;
+            // Compute world-space normal from position derivatives
+            vec3 posDx = dFdx(vWorldPosition);
+            vec3 posDy = dFdy(vWorldPosition);
+            vec3 worldNormal = normalize(cross(posDx, posDy));
 
-            for (int i = 0; i < 256; i++) {
+            // HARDCODED TEST: only paint if normal.z < 0 (downward facing)
+            if (worldNormal.z < 0.0) {
+                // Check if this fragment is within any paint sphere
+                bool painted = false;
+
+                for (int i = 0; i < 256; i++) {
                 if (i >= paintCount) break;
 
                 vec3 center = paintPoints[i].xyz;
@@ -151,10 +160,11 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
                 }
             }
 
-            if (painted) {
-                // Blend paint color with existing fragment color (increased to 0.7 for visibility)
-                gl_FragColor.rgb = mix(gl_FragColor.rgb, paintColor, 0.7);
-            }
+                if (painted) {
+                    // Blend paint color with existing fragment color (increased to 0.7 for visibility)
+                    gl_FragColor.rgb = mix(gl_FragColor.rgb, paintColor, 0.7);
+                }
+            }  // End normal check
 
             // DEBUG: Uncomment to tint entire mesh when shader is active (proves shader is running)
             // if (paintCount > 0) {
@@ -245,6 +255,8 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
             `
         );
 
+        // Don't pass normals from vertex shader at all - we'll use fragment shader's normal
+
         shader.vertexShader = `
             varying vec3 vWorldPosition;
         ` + shader.vertexShader;
@@ -263,11 +275,18 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
             `
             #include <dithering_fragment>
 
-            bool painted = false;
+            // Compute world-space normal from position derivatives
+            vec3 posDx = dFdx(vWorldPosition);
+            vec3 posDy = dFdy(vWorldPosition);
+            vec3 worldNormal = normalize(cross(posDx, posDy));
 
-            // Iterate through paint points stored in texture
-            // Loop limit must be constant, but we break early when i >= paintCount
-            for (int i = 0; i < 10000; i++) {
+            // HARDCODED TEST: only paint if normal.z < 0 (downward facing)
+            if (worldNormal.z < 0.0) {
+                bool painted = false;
+
+                // Iterate through paint points stored in texture
+                // Loop limit must be constant, but we break early when i >= paintCount
+                for (int i = 0; i < 10000; i++) {
                 if (i >= paintCount) break;
 
                 // Calculate texture coordinates for this point index
@@ -289,10 +308,11 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
                 }
             }
 
-            if (painted) {
-                // Blend paint color with existing fragment color (increased to 0.7 for visibility)
-                gl_FragColor.rgb = mix(gl_FragColor.rgb, paintColor, 0.7);
-            }
+                if (painted) {
+                    // Blend paint color with existing fragment color (increased to 0.7 for visibility)
+                    gl_FragColor.rgb = mix(gl_FragColor.rgb, paintColor, 0.7);
+                }
+            }  // End normal check
 
             // DEBUG: Uncomment to tint entire mesh when shader is active (proves shader is running)
             // if (paintCount > 0) {

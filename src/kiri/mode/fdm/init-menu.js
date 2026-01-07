@@ -130,7 +130,7 @@ export function menu() {
     separator:           newBlank({ class:"set-sep", driven }),
     // sliceSupportTree:    newBoolean(LANG.sp_tree_s, onBooleanClick, {title:LANG.sp_tree_s, trigger, show:isNotBelt}),
     // sliceSupportEnable:  newBoolean(LANG.sp_auto_s, onBooleanClick, {title:LANG.sp_auto_l, show:isNotBelt}),
-    sliceSupportOutline: newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, show: () => !isTree() }),
+    sliceSupportOutline: newBoolean(LANG.sp_outl_s, onBooleanClick, {title:LANG.sp_outl_l, xshow: () => !isTree() }),
     separator:           newBlank({ class:"set-sep", driven, show:manualSupport }),
     // sliceSupportGen:     newRow([
     //     ui.ssaGen = newButton(LANG.sp_detect, onButtonClick, {class: "f-col grow a-center"})
