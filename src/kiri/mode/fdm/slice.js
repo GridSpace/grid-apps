@@ -443,7 +443,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
          * Process shadow-based support generation
          */
         async function processAutoSupport() {
-            if (process.sliceSupportType !== 'automatic') {
+            if (process.sliceSupportType === 'disabled') {
                 return;
             }
 

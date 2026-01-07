@@ -1,5 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { newPoint } from '../../../geo/point.js';
 import { $ } from '../../../moto/webui.js';
 import { api } from '../../app/api.js';
 import { conf } from '../../app/conf/defaults.js';
@@ -14,7 +15,8 @@ let lastView,
     addingSupports = false,
     isFdmMode = false,
     alert = [],
-    func = {};
+    func = {},
+    down;
 
 export function init() {
     const { ui } = api;
@@ -181,17 +183,16 @@ export function init() {
             return func.sdone();
         }
         alert = api.show.alert("[esc] key cancels support editing", 1000);
-        let down;
         api.feature.hover = addingSupports = true;
         api.feature.on_mouse_down = (int) => {
             if (int) {
                 let { point } = int;
-                down = { point, widget: int.object.widget };
+                down = { point, widget: int.object.widget, z: int.face.normal.z };
             }
             return api.widgets.meshes();
         };
         api.feature.on_mouse_drag = ({ int }) => {
-            if (int?.length) {
+            if (int?.length && int[0].face.normal.z < 0) {
                 func.sadd_point(int[0].point, down.widget);
             }
             return [ down.widget.mesh ];
@@ -217,6 +218,13 @@ export function init() {
         };
         // return console.log({ on, widget, point });
         let paint = widget.anno.paint;
+        let pt = newPoint(x, -z, y);
+        for (let r of paint) {
+            let { point } = r;
+            if (newPoint(point.x, point.y, point.z).distTo2D(pt) < 1) {
+                return;
+            }
+        }
         paint.push(rec);
         updatePaintOverlay(widget.mesh.material[0], paint);
         api.space.update();
@@ -307,7 +315,7 @@ export function init() {
             return;
         }
         let { object } = on;
-        if (object) {
+        if (object && down.z < 0) {
             let { point } = object;
             let { widget } = object.object;
             func.sadd_point(point, widget);
