@@ -1,16 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { arcToPath } from '../../geo/paths.js';
-import { consts } from './consts.js';
 import { createVM } from '../../moto/quickjs.js';
 import { newPoint } from '../../geo/point.js';
 import { newPolygon } from '../../geo/polygon.js';
 import { util } from '../../geo/base.js';
 
 const { numOrDefault } = util;
-const { beltfact } = consts;
 
-const XAXIS = new THREE.Vector3(1,0,0);
+const BELTFACT = Math.cos(Math.PI / 4);
 const DEG2RAD = Math.PI / 180;
 
 class Print {
@@ -590,8 +588,8 @@ class Print {
             let { point, prevPoint } = processLine(line, axes);
 
             if (morph && belt) {
-                point.y -= point.z * beltfact;
-                point.z *= beltfact;
+                point.y -= point.z * BELTFACT;
+                point.z *= BELTFACT;
             }
 
             const retract = (fdm && pos.E < 0) || undefined;

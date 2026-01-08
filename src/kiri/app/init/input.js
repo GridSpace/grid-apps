@@ -25,7 +25,7 @@ import { settings as set_ctrl } from '../conf/manager.js';
 import { settingsOps } from '../conf/settings.js';
 import { slider } from '../slider.js';
 import { space } from '../../../moto/space.js';
-import { LAST, MODES, SEED, VIEWS } from '../../core/consts.js';
+import { LAST, MODES, SEED, VIEWS } from '../consts.js';
 
 import STACKS from '../stacks.js';
 import '../frame.js';

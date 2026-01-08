@@ -2,7 +2,7 @@
 
 import { $ } from '../../moto/webui.js';
 import { api } from './api.js';
-import { consts } from '../core/consts.js';
+import { consts } from './consts.js';
 import { platform } from './platform.js';
 import { selection } from './selected.js';
 import { settings } from './conf/manager.js';

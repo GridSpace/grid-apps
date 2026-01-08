@@ -10,7 +10,7 @@ import web from '../../moto/webui.js';
 import { beta, version } from '../../moto/license.js';
 import { broker } from '../../moto/broker.js';
 import { client as workers } from './workers.js';
-import { consts, LISTS as lists } from '../core/consts.js';
+import { consts, LISTS as lists } from './consts.js';
 import { device, devices } from './devices.js';
 import { functions } from './function.js';
 import { group as groupModule } from './groups.js';

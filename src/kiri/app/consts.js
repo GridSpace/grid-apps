@@ -161,11 +161,6 @@ const PMODES = {
     TOOLS: 2
 };
 
-const PATHS = {
-    work: "../lib/kiri/run/worker.js",
-    pool: "./minion.js"
-};
-
 const LAST = 'kiri-last';
 const SEED = 'kiri-seed';
 
@@ -173,11 +168,10 @@ export let consts = {
     LAST,
     LISTS,
     MODES,
-    PATHS,
     PMODES,
     VIEWS,
     SEED,
     beltfact: Math.cos(Math.PI / 4)
 };
 
-export { LAST, LISTS, MODES, VIEWS, PATHS, PMODES, SEED };
+export { LAST, LISTS, MODES, VIEWS, PMODES, SEED };

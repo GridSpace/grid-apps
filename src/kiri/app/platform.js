@@ -3,7 +3,7 @@
 import { $, h } from '../../moto/webui.js';
 import { ajax, js2o } from '../core/utils.js';
 import { api } from './api.js';
-import { MODES } from '../core/consts.js';
+import { MODES } from './consts.js';
 import { colorSchemeRegistry } from './color/schemes.js';
 import { load as file_load } from '../../load/file.js';
 import { newBounds } from '../../geo/bounds.js';

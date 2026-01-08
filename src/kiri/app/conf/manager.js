@@ -4,7 +4,7 @@ import { $, h } from '../../../moto/webui.js';
 import { api } from '../api.js';
 import { conf } from './defaults.js';
 import { codec } from '../../core/codec.js';
-import { consts } from '../../core/consts.js';
+import { consts } from '../consts.js';
 import { space } from '../../../moto/space.js';
 import { local } from '../../../data/local.js';
 import { newWidget } from '../widget.js';

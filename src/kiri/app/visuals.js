@@ -2,7 +2,7 @@
 
 import { api } from './api.js';
 import { base } from '../../geo/base.js';
-import { consts } from '../core/consts.js';
+import { consts } from './consts.js';
 import { colorSchemeRegistry } from './color/schemes.js';
 import { settings } from './conf/manager.js';
 import { space } from '../../moto/space.js';

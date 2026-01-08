@@ -6,7 +6,6 @@ import '../../add/three.js';
 
 import { base } from '../../geo/base.js';
 import { codec } from '../core/codec.js';
-import { consts } from '../core/consts.js';
 import { JSZip } from '../../ext/jszip-esm.js';
 import { load } from "../../load/png.js";
 import { newPoint } from '../../geo/point.js';
@@ -28,6 +27,7 @@ import { WEDM } from '../mode/wedm/driver.js';
 import { WJET } from '../mode/wjet/driver.js';
 
 const { time } = util;
+const POOLPATH = "./minion.js";
 
 let drivers = {
         DRAG,
@@ -114,7 +114,7 @@ const minwork = {
             return;
         }
         for (let i=0; i < concurrent; i++) {
-            let minion = new Worker(poolpath || consts.PATHS.pool, { type: 'module' });
+            let minion = new Worker(poolpath || POOLPATH, { type: 'module' });
             minion.onerror = (error) => {
                 debug({ MINION_ERROR: error });
                 error.preventDefault();

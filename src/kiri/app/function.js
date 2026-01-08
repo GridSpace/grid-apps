@@ -4,7 +4,7 @@ import { api } from './api.js';
 import { client } from './workers.js';
 import { codec } from '../core/codec.js';
 import { space } from '../../moto/space.js';
-import { PMODES } from '../core/consts.js';
+import { PMODES } from './consts.js';
 import { colorSchemeRegistry } from './color/schemes.js';
 import { exportFile } from './export.js';
 

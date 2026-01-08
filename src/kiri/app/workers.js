@@ -6,6 +6,8 @@ import { codec } from '../core/codec.js';
 import { Widget } from './widget.js';
 import { newPrint } from '../core/print.js';
 
+const WORKPATH = "../lib/kiri/run/worker.js";
+
 // this code runs in kiri's main loop
 let debug = self.debug === true,
     time = Date.now,
@@ -92,7 +94,7 @@ export const client = {
             const blob = new Blob([ work ], { type: 'application/javascript' });
             return new Worker(URL.createObjectURL(blob));
         } else {
-            let worker = new Worker(workpath || api.const.PATHS.work, { type: 'module' });
+            let worker = new Worker(workpath || WORKPATH, { type: 'module' });
             worker.onerror = (error) => {
                 console.log({ WORKER_ERROR: error });
                 error.preventDefault();
