@@ -2,7 +2,7 @@
 
 import { api } from '../../../app/api.js';
 import { env, opAdd, opRender } from './init-ui.js';
-import { CAM } from './driver.js';
+import { CAM } from './dispatch.js';
 import { clearTabs, restoreTabs } from './cl-tab.js';
 import { updateStock } from './cl-stock.js';
 

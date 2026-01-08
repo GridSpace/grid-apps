@@ -3,7 +3,7 @@
 import { api } from '../../../app/api.js';
 import { env, clearPops, isDark } from './init-ui.js';
 import { parse } from '../../../../load/svg.js';
-import { CAM } from './driver.js';
+import { CAM } from './dispatch.js';
 import { Layers } from '../../../app/layers.js';
 import { Stack } from '../../../app/stack.js';
 import { newPolygon } from '../../../../geo/polygon.js';

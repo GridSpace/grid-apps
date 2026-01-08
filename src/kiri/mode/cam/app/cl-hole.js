@@ -2,7 +2,7 @@
 
 import { api } from '../../../app/api.js';
 import { env, clearPops } from './init-ui.js';
-import { CAM } from './driver.js';
+import { CAM } from './dispatch.js';
 
 export let holeSelOn = false;
 export let lastSelHoles;
