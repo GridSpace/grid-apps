@@ -1534,9 +1534,10 @@ details[open] summary::after {
     font-size: larger;
 }
 #op-add-pop {
+    pointer-events: all !important;
     position: absolute;
     display: none;
-    top: 0;
+    top: 50%;
     right: 100%;
     transform: translateY(-50%);
 }
@@ -1545,7 +1546,7 @@ details[open] summary::after {
 }
 .op-grid {
     display: grid !important;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: auto;
     align-items: center;
     gap: 5px;
