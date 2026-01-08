@@ -359,7 +359,7 @@ class OpArea extends CamOp {
                         paths.forEach(path => path.reverse());
                     }
                     // optional alternating paths
-                    if (sr_alter) {
+                    if (paths.length && sr_alter) {
                         paths = tip2tipJoin(paths, paths[0].first(), toolOver * 10);
                     }
                 } else
