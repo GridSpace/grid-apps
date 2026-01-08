@@ -3,7 +3,7 @@
 import { api } from '../../app/api.js';
 import { colorSchemeRegistry } from '../../app/color/schemes.js';
 import { env, isDark } from './init-ui.js';
-import { addbox, delbox, clearboxes } from '../../core/boxes.js';
+import { addbox, delbox, clearboxes } from '../../app/boxes.js';
 import { traceDone } from './cl-trace.js';
 import { space as SPACE } from '../../../moto/space.js';
 

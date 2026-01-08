@@ -37,7 +37,7 @@ import { UI } from './inputs.js';
 import { updateTool } from '../mode/cam/tools.js';
 import { view as viewModule } from './view-mode.js';
 import { visuals } from './visuals.js';
-import { widgets } from '../core/widgets.js';
+import { widgets } from './widgets.js';
 import { workspace } from './workspace.js';
 
 // environment setup
