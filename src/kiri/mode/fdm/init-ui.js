@@ -6,7 +6,6 @@ import { api } from '../../app/api.js';
 import { conf } from '../../app/conf/defaults.js';
 import { addPaintOverlayTexture, updatePaintOverlay } from '../../app/paint.js';
 
-const { Matrix4, Vector3, BufferAttribute, BufferGeometryUtils, Raycaster, Euler } = THREE;
 const { VIEWS } = api.const;
 
 const LANG = api.language.current;
@@ -16,7 +15,6 @@ let lastView,
     removingSupports = false,
     isFdmMode = false,
     alert = [],
-    func = {},
     down;
 
 export function init() {
@@ -80,6 +78,13 @@ export function init() {
         ui.fdmRanges.innerHTML = '';
     }
 
+    function onEventFDM(topic, fn) {
+        return api.event.on(topic, function() {
+            if (!isFdmMode) return;
+            fn(...arguments);
+        });
+    }
+
     // re-render ranges menu
     function updateRanges(ranges = []) {
         let html = [];
@@ -134,7 +139,7 @@ export function init() {
     api.event.on("view.set", view => {
         $('top-slider').style.display = 'none';
         lastView = view;
-        func.sdone();
+        supportDone();
         // let ranges = api.conf.get().process.ranges;
         if (isFdmMode) {
             if (lastView === VIEWS.SLICE) {
@@ -164,155 +169,30 @@ export function init() {
 
     api.event.on("button.click", target => {
         switch (target) {
-            case api.ui.ssaGen: return func.sgen();
-            case api.ui.ssmAdd: return func.sadd({ remove: false });
-            case api.ui.ssmDel: return func.sadd({ remove: true });
-            case api.ui.ssmClr: return func.sclear();
+            case api.ui.ssmAdd: return supportStart({ remove: false });
+            case api.ui.ssmDel: return supportStart({ remove: true });
+            case api.ui.ssmClr: return supportClear();
         }
     });
 
-    // auto-detect supports
-    func.sgen = () => {
-        let alerts = [];
-        alerts.push(api.show.alert("analyzing part(s)...", 1000));
-        setTimeout(() => api.hide.alert(undefined,alerts), 2000);
-    }
+    onEventFDM("key.esc", supportDone);
 
-    // manual add supports
-    func.sadd = ({ remove } = { remove: false }) => {
-        if (addingSupports) {
-            func.sdone();
-            if (removingSupports === remove) {
-                return;
-            }
-        }
-        removingSupports = remove;
-        alert = api.show.alert(`[esc] key cancels ${remove?'removing':'adding'} supports`, 1000);
-        api.feature.hover = addingSupports = true;
-        api.feature.on_mouse_down = (int) => {
-            if (int) {
-                let { point } = int;
-                down = { point, widget: int.object.widget, z: int.face.normal.z };
-            }
-            return api.widgets.meshes();
-        };
-        api.feature.on_mouse_drag = ({ int }) => {
-            if (int?.length && int[0].face.normal.z < 0) {
-                func.sadd_point(int[0].point, down.widget, remove);
-            }
-            return [ down.widget.mesh ];
-            // return api.widgets.meshes();
-        };
-        api.widgets.each(w => {
-            let mat = w.cache.mat = w.mesh.material[0];
-            mat = w.mesh.material[0] = mat.clone();
-            mat.needsUpdate = true;
-            if (!w.anno.paint) {
-                w.anno.paint = [];
-            }
-            addPaintOverlayTexture(mat, w.anno.paint, new THREE.Color(0x4488ff));
-        })
-        api.space.update();
-    }
+    onEventFDM("slice.begin", supportDone);
 
-    func.sadd_point = (point, widget, remove) => {
-        let { x, y, z } = point;
-        let rec = {
-            point: { x, y:-z, z:y },
-            radius: 2
-        };
-        // return console.log({ on, widget, point });
-        let paint = widget.anno.paint;
-        let pt = newPoint(x, -z, y);
-        for (let r of paint) {
-            let { point } = r;
-            let dist = newPoint(point.x, point.y, point.z).distTo2D(pt);
-            if (remove && dist < 2) {
-                r.delete = true;
-            } else if (dist < 1) {
-                return;
-            }
-        }
-        if (remove) {
-            paint = widget.anno.paint = paint.filter(rec => !rec.delete);
-        } else {
-            paint.push(rec);
-        }
-        updatePaintOverlay(widget.mesh.material[0], paint);
-        api.space.update();
-        api.conf.save();
-    };
+    // onEventFDM("slice.end", api.noop);
 
-    // manual add done
-    func.sdone = () => {
-        if (!addingSupports) {
-            return;
-        }
-        api.feature.hover = addingSupports = false;
-        api.feature.on_mouse_down = undefined;
-        api.feature.on_mouse_drag = undefined;
-        api.hide.alert(alert);
-        api.widgets.each(w => {
-            w.mesh.material[0] = w.cache.mat;
-            delete w.cache.mat;
-        });
-    }
-
-    // manual supports clear
-    func.sclear = () => {
-        func.sdone();
-        api.widgets.each(w => clearWidgetSupports(w));
-        api.conf.save();
-    }
-
-    api.event.on("slice.begin", () => {
-        if (!isFdmMode) {
-            return;
-        }
-        func.sdone();
+    onEventFDM("selection.scale", () => {
+        clearRanges();
+        supportClear()
     });
 
-    api.event.on("slice.end", () => {
-        if (!isFdmMode) {
-            return;
-        }
-    });
+    // onEventFDM("widget.delete", api.noop);
 
-    api.event.on("key.esc", () => {
-        if (isFdmMode) {
-            func.sdone()
-        }
-    });
+    // onEventFDM("widget.duplicate", api.noop);
 
-    api.event.on("selection.scale", () => {
-        if (isFdmMode) {
-            clearRanges();
-            func.sclear();
-        }
-    });
+    // onEventFDM("widget.mirror", api.noop);
 
-    api.event.on("widget.delete", widget => {
-        if (isFdmMode) {
-            clearRanges();
-        }
-    });
-
-    api.event.on("widget.duplicate", (widget, oldwidget) => {
-        if (!isFdmMode) {
-            return;
-        }
-    });
-
-    api.event.on("widget.mirror", widget => {
-        if (!isFdmMode) {
-            return;
-        }
-    });
-
-    api.event.on("widget.rotate", rot => {
-        if (!isFdmMode) {
-            return;
-        }
+    onEventFDM("widget.rotate", rot => {
         let {widget, x, y, z} = rot;
         if (x || y) {
             clearWidgetSupports(widget);
@@ -323,20 +203,20 @@ export function init() {
         api.conf.save();
     });
 
-    api.event.on("mouse.hover.up", func.hoverup = (on = {}) => {
-        if (!(addingSupports && isFdmMode)) {
+    onEventFDM("mouse.hover.up", (on = {}) => {
+        if (!addingSupports) {
             return;
         }
         let { object } = on;
         if (object && down.z < 0) {
             let { point } = object;
             let { widget } = object.object;
-            func.sadd_point(point, widget, removingSupports);
+            supportUpdate(point, widget, removingSupports);
         }
     });
 
-    api.event.on("mouse.hover", data => {
-        if (!(addingSupports && isFdmMode)) {
+    onEventFDM("mouse.hover", data => {
+        if (!addingSupports) {
             return;
         }
     });
@@ -364,4 +244,91 @@ function rotateWidgetPaint(widget, angle) {
         point.x = x * cos - y * sin;
         point.y = x * sin + y * cos;
     }
+}
+
+// start manual add supports
+function supportStart({ remove } = { remove: false }) {
+    if (addingSupports) {
+        supportDone();
+        if (removingSupports === remove) {
+            return;
+        }
+    }
+    removingSupports = remove;
+    alert = api.show.alert(`[esc] key cancels ${remove?'removing':'adding'} supports`, 1000);
+    api.feature.hover = addingSupports = true;
+    api.feature.on_mouse_down = (int) => {
+        if (int) {
+            let { point } = int;
+            down = { point, widget: int.object.widget, z: int.face.normal.z };
+        }
+        return api.widgets.meshes();
+    };
+    api.feature.on_mouse_drag = ({ int }) => {
+        if (int?.length && int[0].face.normal.z < 0) {
+            supportUpdate(int[0].point, down.widget, remove);
+        }
+        return [ down.widget.mesh ];
+        // return api.widgets.meshes();
+    };
+    api.widgets.each(w => {
+        let mat = w.cache.mat = w.mesh.material[0];
+        mat = w.mesh.material[0] = mat.clone();
+        mat.needsUpdate = true;
+        if (!w.anno.paint) {
+            w.anno.paint = [];
+        }
+        addPaintOverlayTexture(mat, w.anno.paint, new THREE.Color(0x4488ff));
+    })
+    api.space.update();
+}
+
+function supportUpdate(point, widget, remove) {
+    let { x, y, z } = point;
+    let rec = {
+        point: { x, y:-z, z:y },
+        radius: 2
+    };
+    // return console.log({ on, widget, point });
+    let paint = widget.anno.paint;
+    let pt = newPoint(x, -z, y);
+    for (let r of paint) {
+        let { point } = r;
+        let dist = newPoint(point.x, point.y, point.z).distTo2D(pt);
+        if (remove && dist < 2) {
+            r.delete = true;
+        } else if (dist < 1) {
+            return;
+        }
+    }
+    if (remove) {
+        paint = widget.anno.paint = paint.filter(rec => !rec.delete);
+    } else {
+        paint.push(rec);
+    }
+    updatePaintOverlay(widget.mesh.material[0], paint);
+    api.space.update();
+    api.conf.save();
+};
+
+// manual add done
+function supportDone() {
+    if (!addingSupports) {
+        return;
+    }
+    api.feature.hover = addingSupports = false;
+    api.feature.on_mouse_down = undefined;
+    api.feature.on_mouse_drag = undefined;
+    api.hide.alert(alert);
+    api.widgets.each(w => {
+        w.mesh.material[0] = w.cache.mat;
+        delete w.cache.mat;
+    });
+}
+
+// manual supports clear
+function supportClear() {
+    supportDone();
+    api.widgets.each(w => clearWidgetSupports(w));
+    api.conf.save();
 }

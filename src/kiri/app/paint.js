@@ -156,7 +156,7 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             vec3 worldNormal = normalize(cross(posDx, posDy));
 
             // Only paint downward-facing surfaces if option is enabled
-            bool shouldPaint = !onlyDownwardFacing || worldNormal.z < 0.0;
+            bool shouldPaint = !onlyDownwardFacing || worldNormal.z < -0.001;
             if (shouldPaint) {
                 // Check if this fragment is within any paint sphere
                 bool painted = false;
@@ -302,7 +302,7 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
             vec3 worldNormal = normalize(cross(posDx, posDy));
 
             // Only paint downward-facing surfaces if option is enabled
-            bool shouldPaint = !onlyDownwardFacing || worldNormal.z < 0.0;
+            bool shouldPaint = !onlyDownwardFacing || worldNormal.z < -0.001;
             if (shouldPaint) {
                 bool painted = false;
 
