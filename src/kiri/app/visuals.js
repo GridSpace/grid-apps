@@ -3,12 +3,22 @@
 import { api } from './api.js';
 import { base } from '../../geo/base.js';
 import { consts } from '../core/consts.js';
+import { colorSchemeRegistry } from './color/schemes.js';
 import { settings } from './conf/manager.js';
 import { space } from '../../moto/space.js';
 
 import STACKS from './stacks.js';
 
-const { COLOR, VIEWS } = consts;
+const { VIEWS } = consts;
+
+/**
+ * Get current color scheme
+ */
+function getColorScheme() {
+    const mode = api.mode.get_id();
+    const theme = api.space.is_dark() ? 'dark' : 'light';
+    return colorSchemeRegistry.getScheme(mode, theme);
+}
 
 /**
  * Constrain value to min/max bounds.
@@ -182,7 +192,8 @@ function hideSlices() {
     const wireframe = api.local.getBoolean('model.wireframe');
     const color = api.local.getInt('model.wireframe.color') || 0;
     const saved = api.local.getFloat('model.wireframe.opacity');
-    const opacity = saved !== null ? saved : COLOR.model_opacity;
+    const scheme = getColorScheme();
+    const opacity = saved !== null ? saved : (scheme.views.ARRANGE?.model_opacity ?? 1.0);
 
     if (wireframe) {
         api.widgets.each(widget => widget.setWireframe(wireframe, color, opacity));

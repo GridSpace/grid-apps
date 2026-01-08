@@ -12,9 +12,19 @@ import { utils } from '../../core/utils.js';
 import { version } from '../../../moto/license.js';
 import { JSZip } from '../../../ext/jszip-esm.js';
 
+import { colorSchemeRegistry } from '../color/schemes.js';
+
 const { areEqual, ls2o, js2o } = utils;
-const { COLOR } = consts;
 const { clone } = Object;
+
+/**
+ * Get current color scheme
+ */
+function getColorScheme() {
+    const mode = api.mode.get_id();
+    const theme = api.space.is_dark() ? 'dark' : 'light';
+    return colorSchemeRegistry.getScheme(mode, theme);
+}
 
 const localFilterKey ='kiri-gcode-filters';
 const localFilters = js2o(local.getItem(localFilterKey)) || [];
@@ -322,9 +332,10 @@ function updateExtruderFields(device) {
                 onclick() {
                     api.selection.for_widgets(w => {
                         w.anno.extruder = i;
+                        const scheme = getColorScheme();
                         w.setColor(
                             api.selection.contains(w) ?
-                                COLOR.selected : COLOR.deselected,
+                                scheme.widget.selected : scheme.widget.deselected,
                             undefined,
                             false);
                     });
@@ -332,7 +343,7 @@ function updateExtruderFields(device) {
             }),
             h.div({
                 class: "splat",
-                style: `background-color: #${COLOR.deselected[i].toString(16)}`
+                style: `background-color: #${getColorScheme().widget.deselected[i].toString(16)}`
             })
         ])));
     } else {

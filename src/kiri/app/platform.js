@@ -3,7 +3,8 @@
 import { $, h } from '../../moto/webui.js';
 import { ajax, js2o } from '../core/utils.js';
 import { api } from './api.js';
-import { COLOR, MODES } from '../core/consts.js';
+import { MODES } from '../core/consts.js';
+import { colorSchemeRegistry } from './color/schemes.js';
 import { load as file_load } from '../../load/file.js';
 import { newBounds } from '../../geo/bounds.js';
 import { Packer } from './pack.js';
@@ -12,6 +13,15 @@ import { THREE } from '../../ext/three.js';
 import { Widget, newWidget } from './widget.js';
 
 const V0 = new THREE.Vector3(0,0,0);
+
+/**
+ * Get current color scheme
+ */
+function getColorScheme() {
+    const mode = api.mode.get_id();
+    const theme = api.space.is_dark() ? 'dark' : 'light';
+    return colorSchemeRegistry.getScheme(mode, theme);
+}
 
 /** Bounds update callback */
 let setbounds = undefined;
@@ -154,17 +164,18 @@ function update_size(updateDark = true) {
         gridMinor = unitMM ? 5 : 25.4 / 10;
 
     if (updateDark) {
+       const scheme = getColorScheme();
        if (controller.dark) {
            space.platform.set({ light: 0.08 });
            space.platform.setFont({rulerColor:'#888888'});
-           space.platform.setGrid(gridMajor, gridMinor, 0x666666, 0x333333);
+           space.platform.setGrid(gridMajor, gridMinor, scheme.grid.major, scheme.grid.minor);
            space.platform.opacity(0.05);
            space.sky.set({ color: 0, ambient: { intensity: 0.6 } });
            document.body.classList.add('dark');
        } else {
            space.platform.set({ light: 0.08 });
            space.platform.setFont({rulerColor:'#333333'});
-           space.platform.setGrid(gridMajor, gridMinor, 0x999999, 0xcccccc);
+           space.platform.setGrid(gridMajor, gridMinor, scheme.grid.major, scheme.grid.minor);
            space.platform.opacity(0.2);
            space.sky.set({ color: 0xffffff, ambient: { intensity: 1.1 } });
            document.body.classList.remove('dark');
@@ -319,16 +330,18 @@ function update_selected() {
             let b = $(`sel-ext-${i}`);
             if (b) b.classList.remove('pop-sel');
         }
+        const scheme = getColorScheme();
         selection.for_widgets(w => {
-            w.setColor(COLOR.selected);
+            w.setColor(scheme.widget.selected);
             let ext = api.widgets.annotate(w.id).extruder || 0;
             let b = $(`sel-ext-${ext}`);
             if (b) b.classList.add('pop-sel');
             w.saveState();
         }, true);
     } else {
+        const scheme = getColorScheme();
         selection.for_widgets(w => {
-            w.setColor(COLOR.selected);
+            w.setColor(scheme.widget.selected);
         }, true);
     }
 }
@@ -374,7 +387,8 @@ function select(widget, shift, recurse = true) {
         }
         selection.add(widget);
         event.emit('widget.select', widget);
-        widget.setColor(COLOR.selected);
+        const scheme = getColorScheme();
+        widget.setColor(scheme.widget.selected);
         $(`ws-${widget.id}`)?.classList.add('selected');
         selection.update_info();
     }
@@ -420,7 +434,8 @@ function deselect(widget, recurse = true) {
     }
 
     $(`ws-${widget.id}`)?.classList.remove('selected');
-    widget.setColor(COLOR.deselected);
+    const scheme = getColorScheme();
+    widget.setColor(scheme.widget.deselected);
     platform.update_selected();
     selection.update_info();
     space.update();
@@ -753,8 +768,9 @@ function changed() {
                                 onclick() {
                                     let dis = w.meta.disabled = !w.meta.disabled;
                                     let sel = api.selection.contains(w);
+                                    const scheme = getColorScheme();
                                     api.uc.setClass($(`w-en-${w.id}`), "disabled", dis);
-                                    w.setColor(sel ? COLOR.selected : COLOR.deselected, null, false);
+                                    w.setColor(sel ? scheme.widget.selected : scheme.widget.deselected, null, false);
                                 }
                             },
                             [ h.i({ class:"fas fa-ban" }) ]

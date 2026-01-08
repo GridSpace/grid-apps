@@ -4,8 +4,18 @@ import { api } from './api.js';
 import { client } from './workers.js';
 import { codec } from '../core/codec.js';
 import { space } from '../../moto/space.js';
-import { COLOR, PMODES } from '../core/consts.js';
+import { PMODES } from '../core/consts.js';
+import { colorSchemeRegistry } from './color/schemes.js';
 import { exportFile } from './export.js';
+
+/**
+ * Get current color scheme
+ */
+function getColorScheme() {
+    const mode = api.mode.get_id();
+    const theme = api.space.is_dark() ? 'dark' : 'light';
+    return colorSchemeRegistry.getScheme(mode, theme);
+}
 
 /**
  * Tracks completion state of operations to prevent redundant work.
@@ -96,7 +106,8 @@ function prepareSlices(callback, scale = 1, offset = 0) {
 
     let totalProgress;
 
-    api.widgets.setOpacity(COLOR.slicing_opacity);
+    const scheme = getColorScheme();
+    api.widgets.setOpacity(scheme.views.SLICE.slicing_opacity);
 
     let segtimes = {},
         segNumber = 0,
@@ -110,7 +121,8 @@ function prepareSlices(callback, scale = 1, offset = 0) {
     for (let widget of toSlice) {
         widget.belt = null;
         widget.stats.progress = 0;
-        widget.setColor(COLOR.slicing);
+        const scheme = getColorScheme();
+        widget.setColor(0xffaaaa); // slicing color (from old COLOR.slicing)
         let { extruder } = widget.anno;
         if (extruder >= 0) {
             extruders[extruder] = extruder;
@@ -277,9 +289,10 @@ function prepareSlices(callback, scale = 1, offset = 0) {
             }
             if (scale === 1) {
                 // clear wireframe
-                widget.setWireframe(false, COLOR.wireframe, COLOR.wireframe_opacity);
-                widget.setOpacity(camOrLaser ? COLOR.cam_sliced_opacity : COLOR.sliced_opacity);
-                widget.setColor(COLOR.deselected);
+                const scheme = getColorScheme();
+                widget.setWireframe(false, scheme.wireframe.color, scheme.wireframe.opacity);
+                widget.setOpacity(camOrLaser ? scheme.views.SLICE.sliced_opacity ?? 0.2 : scheme.views.PREVIEW?.sliced_opacity ?? 0.0);
+                widget.setColor(scheme.widget.deselected);
                 api.hide.alert(alert);
             }
         }
@@ -365,10 +378,12 @@ function preparePreview(callback, scale = 1, offset = 0) {
     event.emit('preview.begin', pMode);
 
     if (isCam) {
-        api.widgets.setOpacity(isDark ? COLOR.cam_preview_opacity_dark : COLOR.cam_preview_opacity);
-        api.widgets.setColor(isDark ? COLOR.cam_preview_dark : COLOR.cam_preview);
+        const scheme = getColorScheme();
+        api.widgets.setOpacity(scheme.views.PREVIEW.preview_opacity);
+        api.widgets.setColor(scheme.views.PREVIEW.preview);
     } else if (offset === 0) {
-        api.widgets.setOpacity(COLOR.preview_opacity);
+        const scheme = getColorScheme();
+        api.widgets.setOpacity(scheme.views.PREVIEW.preview_opacity);
     }
 
     let mark = Date.now(),

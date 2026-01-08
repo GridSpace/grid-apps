@@ -3,6 +3,7 @@
 import { newPoint } from '../../../geo/point.js';
 import { $ } from '../../../moto/webui.js';
 import { api } from '../../app/api.js';
+import { colorSchemeRegistry } from '../../app/color/schemes.js';
 import { conf } from '../../app/conf/defaults.js';
 import { addPaintOverlayTexture, updatePaintOverlay } from '../../app/paint.js';
 
@@ -271,14 +272,29 @@ function supportStart({ remove } = { remove: false }) {
         return [ down.widget.mesh ];
         // return api.widgets.meshes();
     };
+    // Get paint color from scheme
+    const mode = api.mode.get_id();
+    const theme = api.space.is_dark() ? 'dark' : 'light';
+    const scheme = colorSchemeRegistry.getScheme(mode, theme);
+    const paintColor = scheme.operations?.paint?.overlay ?? 0x4488ff;
+
     api.widgets.each(w => {
+        // Use pushVisualState to track the paint operation
+        w.pushVisualState('paint', {
+            material: w.mesh.material[0],
+            restoreCallback: () => {
+                w.mesh.material[0] = w.cache.mat;
+                delete w.cache.mat;
+            }
+        });
+
         let mat = w.cache.mat = w.mesh.material[0];
         mat = w.mesh.material[0] = mat.clone();
         mat.needsUpdate = true;
         if (!w.anno.paint) {
             w.anno.paint = [];
         }
-        addPaintOverlayTexture(mat, w.anno.paint, new THREE.Color(0x4488ff));
+        addPaintOverlayTexture(mat, w.anno.paint, new THREE.Color(paintColor));
     })
     api.space.update();
 }
@@ -321,8 +337,8 @@ function supportDone() {
     api.feature.on_mouse_drag = undefined;
     api.hide.alert(alert);
     api.widgets.each(w => {
-        w.mesh.material[0] = w.cache.mat;
-        delete w.cache.mat;
+        // Use popVisualState to restore original material
+        w.popVisualState('paint');
     });
 }
 

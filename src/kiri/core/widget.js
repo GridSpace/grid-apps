@@ -49,6 +49,8 @@ class Widget {
         this.boundingBoxNeedsUpdate = true
         // cache shadow geo
         this.cache = {};
+        // geometry version for edge cache invalidation
+        this.geomVersion = 0;
         this.stats = {
             slice_time: 0,
             load_time: 0,
@@ -193,6 +195,7 @@ class Widget {
         this.clearShadows();
         if (reason !== 'axis') {
             this.cache.geo = undefined;
+            this.geomVersion++;  // Increment version to invalidate edge cache
         }
         if (this.mesh && this.mesh.geometry) {
             // this fixes ray intersections after the mesh is modified

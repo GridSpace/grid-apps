@@ -1,21 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-const COLOR = {
-    wireframe: 0x444444,
-    wireframe_opacity: 0.25,
-    selected: [ 0xbbff00, 0xbbee00, 0xbbdd00, 0xbb9900 ],
-    deselected: [ 0xffff00, 0xffdd00, 0xffbb00, 0xff9900 ],
-    model_opacity: 1.0,
-    preview_opacity: 0.0,
-    slicing: 0xffaaaa,
-    slicing_opacity: 0.5,
-    sliced_opacity: 0.0,
-    cam_sliced_opacity: 0.2,
-    cam_preview: 0xdddddd,
-    cam_preview_opacity: 0.2,
-    cam_preview_dark: 0x888888,
-    cam_preview_opacity_dark: 0.2,
-};
+// COLOR table has been migrated to src/kiri/app/color/ scheme system
 
 const LISTS = {
     shell: [
@@ -185,7 +170,6 @@ const LAST = 'kiri-last';
 const SEED = 'kiri-seed';
 
 export let consts = {
-    COLOR,
     LAST,
     LISTS,
     MODES,
@@ -196,4 +180,4 @@ export let consts = {
     beltfact: Math.cos(Math.PI / 4)
 };
 
-export { COLOR, LAST, LISTS, MODES, VIEWS, PATHS, PMODES, SEED };
+export { LAST, LISTS, MODES, VIEWS, PATHS, PMODES, SEED };

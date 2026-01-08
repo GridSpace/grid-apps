@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../../app/api.js';
+import { colorSchemeRegistry } from '../../app/color/schemes.js';
 import { env, isDark } from './init-ui.js';
 import { addbox, delbox, clearboxes } from '../../core/boxes.js';
 import { traceDone } from './cl-trace.js';
@@ -225,9 +226,15 @@ export function tabClear() {
 }
 
 function boxColor() {
-    return isDark() ? 0x00ddff : 0x0000dd;
+    const mode = 3; // CAM mode ID
+    const theme = isDark() ? 'dark' : 'light';
+    const scheme = colorSchemeRegistry.getScheme(mode, theme);
+    return scheme.operations?.tabs?.color ?? (isDark() ? 0x00ddff : 0x0000dd);
 }
 
 function boxOpacity() {
-    return isDark() ? 0.75 : 0.6;
+    const mode = 3; // CAM mode ID
+    const theme = isDark() ? 'dark' : 'light';
+    const scheme = colorSchemeRegistry.getScheme(mode, theme);
+    return scheme.operations?.tabs?.opacity ?? (isDark() ? 0.75 : 0.6);
 }

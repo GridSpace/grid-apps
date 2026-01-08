@@ -3,6 +3,8 @@
 import { Widget as WidgetCore } from '../core/widget.js';
 import { util } from '../../geo/base.js';
 import { avgc } from '../core/utils.js';
+import { colorSchemeRegistry } from './color/schemes.js';
+import { VisualStateManager } from './state/visual.js';
 
 const solid_opacity = 1.0;
 
@@ -14,6 +16,59 @@ function index() { return self.kiri_catalog.index }
  * Adds rendering, persistence, and visual state management
  */
 class Widget extends WidgetCore {
+    constructor(id, group) {
+        super(id, group);
+        // Visual state manager will be initialized when api is available
+        this.visualStateManager = null;
+    }
+
+    /**
+     * Initialize visual state manager (called when api is available)
+     * @private
+     */
+    _initVisualStateManager() {
+        if (this.visualStateManager || !this.api) {
+            return;
+        }
+
+        const mode = this.api.mode.get_id();
+        const theme = this.api.space.is_dark() ? 'dark' : 'light';
+        const scheme = colorSchemeRegistry.getScheme(mode, theme);
+
+        this.visualStateManager = new VisualStateManager(this, scheme, this.api);
+        this.visualStateManager.loadPreferences();
+    }
+
+    /**
+     * Get current color scheme
+     * @private
+     */
+    _getScheme() {
+        if (!this.api) return null;
+        const mode = this.api.mode.get_id();
+        const theme = this.api.space.is_dark() ? 'dark' : 'light';
+        return colorSchemeRegistry.getScheme(mode, theme);
+    }
+
+    /**
+     * Push a temporary visual state (for operations like paint)
+     */
+    pushVisualState(context, state) {
+        this._initVisualStateManager();
+        if (this.visualStateManager) {
+            return this.visualStateManager.pushState(context, state);
+        }
+    }
+
+    /**
+     * Pop a temporary visual state
+     */
+    popVisualState(context) {
+        if (this.visualStateManager) {
+            this.visualStateManager.popState(context);
+        }
+    }
+
     /**
      * Save widget geometry to catalog
      */
@@ -144,25 +199,57 @@ class Widget extends WidgetCore {
             // missing api features in engine mode
             return;
         }
-        let mesh = this.mesh;
+        const mesh = this.mesh;
+
+        // Handle toggle
         if (set && set.toggle) {
             set = this.outline ? false : true;
         }
+
+        // Remove outline (but keep cache)
         if (this.outline) {
             mesh.remove(this.outline);
             this.outline = null;
         }
-        if (set) {
-            let dark = this.api.space.is_dark();
-            let cam = this.api.mode.is_cam();
-            let color = dark ? 0x444444 : 0x888888;
-            let angle = this.api.conf.get().controller.edgeangle || 20;
-            let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
-            let material = new THREE.LineBasicMaterial({ color });
-            this.outline = new THREE.LineSegments(edges, material);
-            this.outline.renderOrder = -20;
-            mesh.add(this.outline);
+
+        if (!set) {
+            return; // Just hide, keep cache
         }
+
+        // Resolve current angle and color
+        const scheme = this._getScheme();
+        const angle = scheme?.edges?.angle ?? this.api.conf.get().controller.edgeangle ?? 20;
+        const color = scheme?.edges?.color ?? 0x888888;
+
+        // Initialize cache if needed
+        if (!this.cache.edges) {
+            this.cache.edges = { geometry: null, angle: null, version: 0 };
+        }
+
+        const cache = this.cache.edges;
+        let edgesGeometry;
+
+        // Check if we can reuse cached geometry
+        if (cache.geometry &&
+            cache.angle === angle &&
+            cache.version === this.geomVersion) {
+            // Reuse cached geometry
+            edgesGeometry = cache.geometry;
+        } else {
+            // Regenerate edges
+            edgesGeometry = new THREE.EdgesGeometry(mesh.geometry, angle);
+
+            // Update cache
+            cache.geometry = edgesGeometry;
+            cache.angle = angle;
+            cache.version = this.geomVersion;
+        }
+
+        // Create outline with cached/new geometry
+        const material = new THREE.LineBasicMaterial({ color });
+        this.outline = new THREE.LineSegments(edgesGeometry, material);
+        this.outline.renderOrder = -20;
+        mesh.add(this.outline);
     }
 
     /**
@@ -181,14 +268,16 @@ class Widget extends WidgetCore {
             this.wire = null;
         }
         if (set) {
-            let dark = this.api.space.is_dark();
-            let mat = new THREE.MeshBasicMaterial({
+            const scheme = this._getScheme();
+            const wireColor = scheme?.wireframe?.color ?? 0xaaaaaa;
+            const wireOpacity = scheme?.wireframe?.opacity ?? 0.5;
+            const mat = new THREE.MeshBasicMaterial({
                 wireframe: true,
-                color: dark ? 0xaaaaaa : 0,
-                opacity: 0.5,
+                color: wireColor,
+                opacity: wireOpacity,
                 transparent: true
-            })
-            let wire = widget.wire = new THREE.Mesh(mesh.geometry.shallowClone(), mat);
+            });
+            const wire = widget.wire = new THREE.Mesh(mesh.geometry.shallowClone(), mat);
             mesh.add(wire);
         }
         if (this.api.view.is_arrange()) {

@@ -10,7 +10,7 @@ import web from '../../moto/webui.js';
 import { beta, version } from '../../moto/license.js';
 import { broker } from '../../moto/broker.js';
 import { client as workers } from './workers.js';
-import { consts, COLOR as color, LISTS as lists } from '../core/consts.js';
+import { consts, LISTS as lists } from '../core/consts.js';
 import { device, devices } from './devices.js';
 import { functions } from './function.js';
 import { group as groupModule } from './groups.js';
@@ -113,7 +113,6 @@ export const api = {
             .catch(err => console.error('Clipboard Error:', err));
     },
     clone: Object.clone,
-    color,
     conf: settings.conf,
     const: {
         LANG, LOCAL, SETUP, SECURE, SPACE, STACKS,
