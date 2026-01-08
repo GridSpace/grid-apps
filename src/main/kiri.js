@@ -4,7 +4,7 @@ import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
 import '../kiri/app/language.js';
-import '../kiri/core/lang-en.js';
+import '../kiri/app/lang-en.js';
 
 import { api } from '../kiri/app/api.js';
 import { init_lang } from '../kiri/app/init/lang.js';
