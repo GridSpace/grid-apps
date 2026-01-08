@@ -8,7 +8,7 @@ import { opFlip } from './cl-flip.js';
 import { selectHoles } from './cl-hole.js';
 import { selectHelical } from './cl-helical.js';
 import { surfaceAdd } from './cl-surface.js';
-import { traceAdd } from './cl-trace.js';
+import { traceAdd, traceClear, traceLoad } from './cl-trace.js';
 import { startFaceUp } from '../../app/face-tool.js';
 import { showZBottom, showZTop, updateStock } from './cl-stock.js';
 
@@ -137,14 +137,21 @@ export function createPopOp(type, map) {
             return rec;
         },
         hideshow: () => {
+            let conf = api.conf.get();
             for (let inp of Object.values(op.inputs)) {
                 let parent = inp.parentElement;
                 if (parent && parent.setVisible && parent.__opt.show) {
                     // for normal inputs
-                    parent.setVisible(parent.__opt.show(op, api.conf.get()));
+                    parent.setVisible(parent.__opt.show(op, conf));
                 } else if (inp.__opt?.show) {
                     // for blanks
-                    inp.setVisible(inp.__opt.show(op, api.conf.get()));
+                    inp.setVisible(inp.__opt.show(op, conf));
+                } else if (inp.children) {
+                    for (let c of inp.children) {
+                        if (c.__opt?.show) {
+                            c.setVisible(c.__opt.show(op, conf));
+                        }
+                    }
                 }
             }
         },
@@ -322,10 +329,6 @@ export function createPopOps() {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
         sep: UC.newBlank({ class: "pop-sep" }),
-        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
-        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
-        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
-        sep: UC.newBlank({ class: "pop-sep" }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 1.0) }),
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units }),
         leave: UC.newInput(LANG.cr_lsto_s, { title: LANG.cr_lsto_l, convert: toFloat, units }),
@@ -336,7 +339,12 @@ export function createPopOps() {
         inside: UC.newBoolean(LANG.cr_olin_s, undefined, { title: LANG.cr_olin_l, show: () => !env.poppedRec.all || env.poppedRec.inside }),
         omitthru: UC.newBoolean(LANG.co_omit_s, undefined, { title: LANG.co_omit_l }),
         sep: UC.newBlank({ class: "pop-sep" }),
-        exp: UC.newExpand("overrides", ov_hover),
+        exp: UC.newExpand("feeds & speeds", { }),
+        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
+        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
+        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
+        exp_end: UC.endExpand(),
+        exp: UC.newExpand("top & bottom", ov_hover),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
@@ -364,9 +372,6 @@ export function createPopOps() {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
         sep: UC.newBlank({ class: "pop-sep" }),
-        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
-        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
-        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 1.0), show: () => env.popOp.outline.rec.wide }),
         steps: UC.newInput(LANG.cc_sovc_s, { title: LANG.cc_sovc_l, convert: toInt, bound: UC.bound(1, 500), show: () => env.popOp.outline.rec.wide }),
@@ -380,7 +385,12 @@ export function createPopOps() {
         dogbones: UC.newBoolean(LANG.co_dogb_s, undefined, { title: LANG.co_dogb_l, show: (op) => { return !op.inputs.wide.checked } }),
         revbones: UC.newBoolean(LANG.co_dogr_s, undefined, { title: LANG.co_dogr_l, show: () => env.poppedRec.dogbones }),
         sep: UC.newBlank({ class: "pop-sep" }),
-        exp: UC.newExpand("overrides", ov_hover),
+        exp: UC.newExpand("feeds & speeds", { }),
+        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
+        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
+        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
+        exp_end: UC.endExpand(),
+        exp: UC.newExpand("top & bottom", ov_hover),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
@@ -487,10 +497,6 @@ export function createPopOps() {
         offset: UC.newSelect(LANG.cc_offs_s, { title: LANG.cc_offs_l, show: () => (env.poppedRec.mode === 'follow') }, "traceoff"),
         direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
         sep: UC.newBlank({ class: "pop-sep" }),
-        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
-        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
-        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
-        sep: UC.newBlank({ class: "pop-sep" }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 1.0), show: (op) => env.popOp.trace.rec.mode === "clear" }),
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units }),
         offover: UC.newInput(LANG.cc_offd_s, { title: LANG.cc_offd_l, convert: toFloat, units, show: () => env.poppedRec.offset !== "none" || env.poppedRec.mode === "clear" }),
@@ -499,13 +505,22 @@ export function createPopOps() {
         merge: UC.newBoolean(LANG.co_merg_s, undefined, { title: LANG.co_merg_l, show: () => !env.popOp.trace.rec.down }),
         dogbone: UC.newBoolean(LANG.co_dogb_s, undefined, { title: LANG.co_dogb_l, show: canDogBones }),
         revbone: UC.newBoolean(LANG.co_dogr_s, undefined, { title: LANG.co_dogr_l, show: canDogBonesRev }),
-        exp: UC.newExpand("overrides", ov_hover),
+        exp: UC.newExpand("feeds & speeds", { }),
+        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
+        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
+        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
+        exp_end: UC.endExpand(),
+        exp: UC.newExpand("top & bottom", ov_hover),
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),
         exp_end: UC.endExpand(),
         sep: UC.newBlank({ class: "pop-sep" }),
-        menu: UC.newRow([UC.newButton("select", traceAdd)], { class: "ext-buttons f-row" }),
+        menu: UC.newRow([
+            UC.newButton("select", traceAdd),
+            // UC.newButton("load", traceLoad, { show: () => env.poppedRec.mode === "follow" }),
+            // UC.newButton("", traceClear, { icon: '<i class="fa fa-trash"></i>' }),
+        ], { class: "ext-buttons f-row", row: true }),
     };
 
     createPopOp('pocket', {
@@ -530,10 +545,6 @@ export function createPopOps() {
         tool: UC.newSelect(LANG.cc_tool, {}, "tools"),
         direction: UC.newSelect(LANG.ou_dire_s, { title: LANG.ou_dire_l }, "direction"),
         sep: UC.newBlank({ class: "pop-sep" }),
-        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
-        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
-        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
-        sep: UC.newBlank({ class: "pop-sep" }),
         step: UC.newInput(LANG.cc_sovr_s, { title: LANG.cc_sovr_l, convert: toFloat, bound: UC.bound(0.01, 1.0) }),
         down: UC.newInput(LANG.cc_sdwn_s, { title: LANG.cc_sdwn_l, convert: toFloat, units, show: () => !env.poppedRec.contour }),
         sep: UC.newBlank({ class: "pop-sep" }),
@@ -545,7 +556,12 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep" }),
         contour: UC.newBoolean(LANG.cp_cont_s, undefined, { title: LANG.cp_cont_s }),
         outline: UC.newBoolean(LANG.cp_outl_s, undefined, { title: LANG.cp_outl_l }),
-        exp: UC.newExpand("overrides", ov_hover),
+        exp: UC.newExpand("feeds & speeds", { }),
+        spindle: UC.newInput(LANG.cc_spnd_s, { title: LANG.cc_spnd_l, convert: toInt, show: hasSpindle }),
+        rate: UC.newInput(LANG.cc_feed_s, { title: LANG.cc_feed_l, convert: toInt, units }),
+        plunge: UC.newInput(LANG.cc_plng_s, { title: LANG.cc_plng_l, convert: toInt, units }),
+        exp_end: UC.endExpand(),
+        exp: UC.newExpand("top & bottom", ov_hover),
         sep: UC.newBlank({ class: "pop-sep" }),
         ov_topz: UC.newInput(LANG.ou_ztop_s, ov_topz),
         ov_botz: UC.newInput(LANG.ou_zbot_s, ov_botz),

@@ -1346,10 +1346,12 @@ details[open] summary::after {
     cursor: pointer;
 }
 .ext-buttons button {
+    display: inline-flex;
+    line-height: 1;
     justify-content: center;
     align-items: center;
     text-align: center;
-    flex-grow: 1;
+    flex: 1 1 0;   /* equal width */
     margin-top: 3px;
     height: 75%;
 }

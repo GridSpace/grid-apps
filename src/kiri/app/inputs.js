@@ -1034,7 +1034,11 @@ function newButton(label, action, opt = {}) {
  */
 function newRow(children, options) {
     let row = addCollapsableElement((options && options.noadd) ? null : addTo);
-    if (children) children.forEach(function (c) { row.appendChild(c) });
+    if (children) {
+        children.forEach((c) => {
+            row.appendChild(c);
+        });
+    };
     addModeControls(row, options);
     if (options && options.class) {
         options.class.split(' ').forEach(ce => {

@@ -2,15 +2,106 @@
 
 import { api } from '../../app/api.js';
 import { env, clearPops, isDark } from './init-ui.js';
+import { parse } from '../../../load/svg.js';
 import { CAM } from './driver-fe.js';
 import { Layers } from '../../app/layers.js';
 import { Stack } from '../../app/stack.js';
+import { newPolygon } from '../../../geo/polygon.js';
 
 export let traceOn = false;
 export let lastTrace;
 
 export function setLastTrace(trace) {
     lastTrace = trace;
+}
+
+export function traceLoad(ev) {
+    let widget = api.widgets.all()[0];
+    if (!widget) return;
+    window.showOpenFilePicker({
+        types: [{
+            description: 'SVG Files',
+            accept: { 'text/svg': ['.svg'] }
+        }],
+        multiple: false
+    }).then(async fileHandle => {
+        const file = await fileHandle[0].getFile()
+        const text = await file.text();          // string
+        // const buf = await file.arrayBuffer(); // binary
+        // const blob = await file.slice();
+        const polys = parse(text, { flat: true, soup: true });
+        const rec = env.poppedRec;
+        rec.areas[widget.id] = polys.map(p => p.toArray());
+        rec.svg = true;
+        traceAdd();
+    }).catch(error => {
+        console.log('no file load', error);
+    });
+}
+
+export function traceClear(ev) {
+    return;
+    api.widgets.for(widget => {
+        unselectTraces(widget, true);
+        widget.traces = [];
+        widget.adds = [];
+    });
+    env.poppedRec.areas = [];
+    env.poppedRec.svg = false;
+    traceDone();
+}
+
+function startTraceAdd(ids) {
+    api.hide.alert(alert);
+    alert = api.show.alert("[esc] cancels trace editing");
+    api.widgets.for(widget => {
+        if (ids.indexOf(widget.id) >= 0) {
+            unselectTraces(widget, true);
+            widget.trace_stack = null;
+        }
+        if (widget.trace_stack) {
+            widget.adds.appendAll(widget.trace_stack.meshes);
+            widget.trace_stack.show();
+            return;
+        }
+        let areas = (env.poppedRec.areas[widget.id] || []);
+        let stack = new Stack(widget.mesh);
+        widget.trace_stack = stack;
+        widget.traces?.forEach(poly => {
+            let match = areas.filter(arr => poly.matches(arr));
+            let layers = new Layers();
+            layers.setLayer("trace", { line: 0xaaaa55, fat: 4, order: -10 }, false).addPoly(poly);
+            stack.addLayers(layers);
+            stack.new_meshes.forEach(mesh => {
+                mesh.trace = { widget, poly };
+                // ensure trace poly singleton from matches
+                if (match.length > 0) {
+                    poly._trace = match[0];
+                } else {
+                    poly._trace = poly.toArray();
+                }
+            });
+            widget.adds.appendAll(stack.new_meshes);
+            // console.log(widget)
+        });
+    });
+    // ensure appropriate traces are toggled matching current record
+    api.widgets.for(widget => {
+        widget.setVisualState({ opacity: 0.25 });
+        let areas = (env.poppedRec.areas[widget.id] || []);
+        let stack = widget.trace_stack;
+        stack.meshes.forEach(mesh => {
+            let { poly } = mesh.trace;
+            let match = areas.filter(arr => poly.matches(arr));
+            if (match.length > 0) {
+                if (!mesh.selected) {
+                    traceToggle(mesh, true);
+                }
+            } else if (mesh.selected) {
+                traceToggle(mesh, true);
+            }
+        });
+    });
 }
 
 export function traceAdd(ev) {
@@ -25,58 +116,16 @@ export function traceAdd(ev) {
     api.feature.hoverAdds = true;
     env.hover = traceHover;
     env.hoverUp = traceHoverUp;
-    CAM.traces((ids) => {
-        api.hide.alert(alert);
-        alert = api.show.alert("[esc] cancels trace editing");
-        api.widgets.for(widget => {
-            if (ids.indexOf(widget.id) >= 0) {
-                unselectTraces(widget, true);
-                widget.trace_stack = null;
-            }
-            if (widget.trace_stack) {
-                widget.adds.appendAll(widget.trace_stack.meshes);
-                widget.trace_stack.show();
-                return;
-            }
-            let areas = (env.poppedRec.areas[widget.id] || []);
-            let stack = new Stack(widget.mesh);
-            widget.trace_stack = stack;
-            widget.traces?.forEach(poly => {
-                let match = areas.filter(arr => poly.matches(arr));
-                let layers = new Layers();
-                layers.setLayer("trace", { line: 0xaaaa55, fat: 4, order: -10 }, false).addPoly(poly);
-                stack.addLayers(layers);
-                stack.new_meshes.forEach(mesh => {
-                    mesh.trace = { widget, poly };
-                    // ensure trace poly singleton from matches
-                    if (match.length > 0) {
-                        poly._trace = match[0];
-                    } else {
-                        poly._trace = poly.toArray();
-                    }
-                });
-                widget.adds.appendAll(stack.new_meshes);
-                // console.log(widget)
-            });
-        });
-        // ensure appropriate traces are toggled matching current record
-        api.widgets.for(widget => {
-            widget.setVisualState({ opacity: 0.25 });
-            let areas = (env.poppedRec.areas[widget.id] || []);
-            let stack = widget.trace_stack;
-            stack.meshes.forEach(mesh => {
-                let { poly } = mesh.trace;
-                let match = areas.filter(arr => poly.matches(arr));
-                if (match.length > 0) {
-                    if (!mesh.selected) {
-                        traceToggle(mesh, true);
-                    }
-                } else if (mesh.selected) {
-                    traceToggle(mesh, true);
-                }
-            });
-        });
-    }, env.poppedRec.select === 'lines');
+    if (env.poppedRec.svg === true) {
+        let widgets = api.widgets.all();
+        for (let [ id, areas ] of Object.entries(env.poppedRec.areas)) {
+            let widget = widgets.filter(w => w.id === id)[0];
+            widget.traces = areas.map(arr => newPolygon().fromArray(arr));
+        }
+        startTraceAdd(Object.keys(env.poppedRec.areas));
+    } else {
+        CAM.traces(startTraceAdd, env.poppedRec.select === 'lines');
+    }
 }
 
 export function traceDone() {
