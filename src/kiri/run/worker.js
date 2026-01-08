@@ -18,13 +18,13 @@ import { version } from '../../moto/license.js';
 import { wasm_ctrl } from '../../geo/wasm.js';
 import { Widget, newWidget } from '../core/widget.js';
 
-import { CAM } from '../mode/cam/driver-be.js';
-import { DRAG } from '../mode/drag/driver.js';
-import { FDM } from '../mode/fdm/driver-be.js';
-import { LASER } from '../mode/laser/driver.js';
-import { SLA } from '../mode/sla/driver.js';
-import { WEDM } from '../mode/wedm/driver.js';
-import { WJET } from '../mode/wjet/driver.js';
+import { CAM } from '../mode/cam/work/init-work.js';
+import { DRAG } from '../mode/drag/init-work.js';
+import { FDM } from '../mode/fdm/work/init-work.js';
+import { LASER } from '../mode/laser/init-work.js';
+import { SLA } from '../mode/sla/work/init-work.js';
+import { WEDM } from '../mode/wedm/init-work.js';
+import { WJET } from '../mode/wjet/init-work.js';
 
 const { time } = util;
 const POOLPATH = "./minion.js";
