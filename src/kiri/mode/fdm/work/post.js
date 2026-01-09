@@ -758,6 +758,9 @@ export function layerProcessTop(z, top, count, offset1, offsetN, fillOffset, opt
         last = [top.poly];
     }
 
+    // renest deep because last[] could be nested
+    last = POLY.renest(last, true);
+
     // generate fill offset poly set from last offset to top.fill_off
     if (fillOffset && last.length > 0) {
         // if gaps present, remove that area from fill inset
@@ -766,7 +769,7 @@ export function layerProcessTop(z, top, count, offset1, offsetN, fillOffset, opt
             POLY.subtract(last, gaps, nulast, null, z);
             last = nulast;
         }
-        last.forEach(function(inner) {
+        last.forEach((inner) => {
             POLY.offset([inner], -fillOffset, {outs: top.fill_off, flat: true, z});
         });
     }

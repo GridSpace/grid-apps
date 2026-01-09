@@ -61,6 +61,7 @@ const POLYS = {
     offset,
     outer,
     points,
+    print,
     rayIntersect,
     reconnect,
     renest,
@@ -210,6 +211,15 @@ export function points(polys) {
  */
 export function renest(polygons, deep) {
     return nest(flatten(polygons, [], true), deep);
+}
+
+export function print(polys, pad = '  ', buf) {
+    buf = buf || [];
+    for (let poly of polys) {
+        buf.push(`${pad} - ${poly.points.length}`);
+        if (poly.inner) print(poly.inner, pad + pad, buf);
+    }
+    return buf;
 }
 
 /**

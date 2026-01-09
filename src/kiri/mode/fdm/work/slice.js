@@ -983,9 +983,9 @@ function layerRender(slice, params, opt = {}) {
         if (isThin && devel && top.fill_off?.length) {
             slice.output()
                 .setLayer('fill inset', Color.inset)
-                .addPolys(top.fill_off);
-                // .setLayer('last', { face: 0, line: 0x008888, check: 0x008888 })
-                // .addPolys(top.last);
+                .addPolys(top.fill_off)
+                .setLayer('last', { face: 0, line: 0x008888, check: 0x008888 })
+                .addPolys(top.last);
         }
     }
 
