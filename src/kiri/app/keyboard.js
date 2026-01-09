@@ -264,7 +264,7 @@ class KeyboardControl {
 
         let api = this.#api;
         let isWireframe = api.local.getBoolean('model.wireframe');
-        let isGhost = api.local.getFloat('model.wireframe.opacity') < 1;
+        let isGhost = !isWireframe && (api.local.getFloat('model.opacity') ?? 1.0) < 1;
 
         switch (evt.keyCode) {
             case this.#cca('`'): this.#api.show.slices(0); break;

@@ -190,8 +190,8 @@ class VisualStateManager {
      */
     setVisualState({ edges, wires, opacity }) {
         this.widget.cache.vizstate = this.getVisualState();
-        this.widget.setEdges(edges ?? false);
-        this.widget.setWireframe(wires ?? false);
+        this.widget._setEdges(edges ?? false);
+        this.widget._setWireframe(wires ?? false);
         if (opacity !== undefined) {
             this.widget.setOpacity(opacity);
         }

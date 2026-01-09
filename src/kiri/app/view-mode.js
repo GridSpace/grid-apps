@@ -54,28 +54,27 @@ function setViewMode(mode) {
             api.visuals.update_speeds();
             api.visuals.set_visible_layer();
             api.visuals.set_widget_visibility(true);
-            api.view.set_edges(api.local.getBoolean('model.edges'));
-            api.view.set_wireframe(api.local.getBoolean('model.wireframe'));
-            // Only set opacity to 1 if wireframe is disabled
-            if (!api.local.getBoolean('model.wireframe')) {
-                api.widgets.setOpacity(1);
-            }
+            // Restore global visual state (opacity, edges, wireframe)
+            api.widgets.each(w => w.applyGlobalVisualState());
             break;
         case VIEWS.SLICE:
             $('act-slice').classList.add('selected');
             api.visuals.update_speeds();
             api.visuals.update_slider_max();
             api.visuals.set_widget_visibility(true);
-            !isCAM && api.view.set_edges(false);
+            // Hide edges without persisting (preserve user preference)
+            !isCAM && api.view.set_edges(false, false);
             break;
         case VIEWS.PREVIEW:
             $('act-preview').classList.add('selected');
             api.visuals.set_widget_visibility(true);
-            !isCAM && api.view.set_edges(false);
+            // Hide edges without persisting (preserve user preference)
+            !isCAM && api.view.set_edges(false, false);
             break;
         case VIEWS.ANIMATE:
             $('act-animate').classList.add('selected');
-            !isCAM && api.view.set_edges(false);
+            // Hide edges without persisting (preserve user preference)
+            !isCAM && api.view.set_edges(false, false);
             break;
         default:
             console.log("invalid view mode: "+mode);

@@ -115,6 +115,25 @@ function setVisibleLayer(h, l) {
 }
 
 /**
+ * Set global opacity for all widgets.
+ * Updates material opacity for all widgets and persists to localStorage.
+ * This is the primary opacity control - all widgets share the same opacity.
+ * @param {number} value - Opacity value (0.0 to 1.0)
+ */
+function setOpacity(value) {
+    api.local.set('model.opacity', value);
+    // Also update old key for backwards compatibility
+    api.local.set('model.wireframe.opacity', value);
+    api.widgets.each(w => {
+        const mat = w.getMaterial();
+        mat.opacity = value;
+        mat.transparent = value < 1.0;
+        mat.visible = value > 0.0;
+    });
+    space.update();
+}
+
+/**
  * Set wireframe rendering mode for all widgets.
  * Updates 3D scene after applying to all widgets.
  * Persists state to local storage.
@@ -144,7 +163,7 @@ function setWireframe(bool, color, opacity) {
         const saved = api.local.getFloat('model.wireframe.opacity');
         opacity = saved !== null ? saved : (api.space.is_dark() ? 0.25 : 0.5);
     }
-    api.widgets.each((w) => { w.setWireframe(bool, color, opacity) });
+    api.widgets.each((w) => { w._setWireframe(bool, color, opacity) });
     space.update();
 }
 
@@ -154,15 +173,18 @@ function setWireframe(bool, color, opacity) {
  * Otherwise sets edge visibility to bool value.
  * Persists state to local storage and updates scene.
  * @param {boolean|object} bool - Enable/disable edges, or {toggle: true} to toggle
+ * @param {boolean} [persist=true] - Whether to save state to local storage
  */
-function setEdges(bool) {
+function setEdges(bool, persist = true) {
     if (bool && bool.toggle) {
         api.local.toggle('model.edges');
+        bool = api.local.getBoolean('model.edges');
     } else {
-        api.local.set('model.edges', bool);
+        if (persist) {
+            api.local.set('model.edges', bool);
+        }
     }
-    bool = api.local.getBoolean('model.edges');
-    api.widgets.each(w => w.setEdges(bool));
+    api.widgets.each(w => w._setEdges(bool));
     space.update();
 }
 
@@ -188,19 +210,8 @@ function updateSliderMax(set) {
  */
 function hideSlices() {
     STACKS.clear();
-    // Restore saved wireframe state instead of forcing wireframe off
-    const wireframe = api.local.getBoolean('model.wireframe');
-    const color = api.local.getInt('model.wireframe.color') || 0;
-    const saved = api.local.getFloat('model.wireframe.opacity');
-    const scheme = getColorScheme();
-    const opacity = saved !== null ? saved : (scheme.views.ARRANGE?.model_opacity ?? 1.0);
-
-    if (wireframe) {
-        api.widgets.each(widget => widget.setWireframe(wireframe, color, opacity));
-    } else {
-        api.widgets.setOpacity(opacity);
-        api.widgets.each(widget => widget.setWireframe(false));
-    }
+    // Restore global visual state
+    api.widgets.each(widget => widget.applyGlobalVisualState());
 }
 
 /**
@@ -284,7 +295,7 @@ function updateStackLabelState() {
 
 /**
  * Apply saved visual state to a widget.
- * Restores edges and wireframe settings from local storage.
+ * Delegates to widget's applyGlobalVisualState method.
  * Only applies in ARRANGE view mode.
  * @param {Widget} widget - Widget to apply visual state to
  */
@@ -294,25 +305,7 @@ function applyVisualState(widget) {
     if (viewMode !== VIEWS.ARRANGE) {
         return;
     }
-    const edges = api.local.getBoolean('model.edges');
-    const wireframe = api.local.getBoolean('model.wireframe');
-
-    // Always apply edges setting
-    if (edges) {
-        widget.setEdges(edges);
-    }
-
-    // Apply wireframe and its associated opacity
-    const color = api.local.getInt('model.wireframe.color') || 0;
-    const saved = api.local.getFloat('model.wireframe.opacity');
-    const opacity = saved !== null ? saved : 1;
-
-    if (wireframe) {
-        widget.setWireframe(wireframe, color, opacity);
-    } else if (saved !== null) {
-        // Even if wireframe is off, restore the saved opacity
-        widget.setOpacity(opacity);
-    }
+    widget.applyGlobalVisualState();
 }
 
 /**
@@ -381,6 +374,7 @@ export const visuals = {
     hide_slices: hideSlices,
     hide_slider: hideSlider,
     set_edges: setEdges,
+    set_opacity: setOpacity,
     set_progress: setProgress,
     set_visible_layer: setVisibleLayer,
     set_widget_visibility: setWidgetVisibility,

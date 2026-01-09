@@ -54,6 +54,19 @@ export async function init_sync() {
         console.log({octoprint:ohost});
     }
 
+    // One-time migration: Initialize model.opacity from existing ghosting state
+    if (api.local.getFloat('model.opacity') === null) {
+        const wireframeOpacity = api.local.getFloat('model.wireframe.opacity');
+        const wireframe = api.local.getBoolean('model.wireframe', false);
+
+        // If ghosting was enabled (wireframe off, opacity < 1), preserve it
+        if (!wireframe && wireframeOpacity !== null && wireframeOpacity < 1) {
+            api.local.set('model.opacity', wireframeOpacity);
+        } else {
+            api.local.set('model.opacity', 1.0);
+        }
+    }
+
     // load workspace from url
     if (SETUP.wrk) {
         set_ctrl.import_url(`${proto}//${SETUP.wrk[0]}`, false);
@@ -262,9 +275,26 @@ function setup_keybd_nav() {
 
     // rendering options
     $('render-edges').onclick = () => { api.view.set_edges({ toggle: true }); api.conf.save() };
-    $('render-ghost').onclick = () => { api.view.set_wireframe(false, 0, api.view.is_arrange() ? 0.4 : 0.25); };
-    $('render-wire').onclick = () => { api.view.set_wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5); };
-    $('render-solid').onclick = () => { api.view.set_wireframe(false, 0, 1); };
+    $('render-ghost').onclick = () => {
+        const opacity = api.view.is_arrange() ? 0.4 : 0.25;
+        api.view.set_wireframe(false);
+        api.visuals.set_opacity(opacity);
+        // Also save to old key for backwards compatibility
+        api.local.set('model.wireframe.opacity', opacity);
+        api.conf.save();
+    };
+    $('render-wire').onclick = () => {
+        api.view.set_wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5);
+        api.visuals.set_opacity(1.0);
+        api.conf.save();
+    };
+    $('render-solid').onclick = () => {
+        api.view.set_wireframe(false);
+        api.visuals.set_opacity(1.0);
+        // Also save to old key for backwards compatibility
+        api.local.set('model.wireframe.opacity', 1.0);
+        api.conf.save();
+    };
     $('mesh-export-stl').onclick = () => { settingsOps.export_objects('stl') };
     $('mesh-export-obj').onclick = () => { settingsOps.export_objects('obj') };
     $('mesh-merge').onclick = selection.merge;

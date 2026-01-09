@@ -290,7 +290,7 @@ function prepareSlices(callback, scale = 1, offset = 0) {
             if (scale === 1) {
                 // clear wireframe
                 const scheme = getColorScheme();
-                widget.setWireframe(false, scheme.wireframe.color, scheme.wireframe.opacity);
+                widget._setWireframe(false, scheme.wireframe.color, scheme.wireframe.opacity);
                 widget.setOpacity(camOrLaser ? scheme.views.SLICE.sliced_opacity ?? 0.2 : scheme.views.PREVIEW?.sliced_opacity ?? 0.0);
                 widget.setColor(scheme.widget.deselected);
                 api.hide.alert(alert);

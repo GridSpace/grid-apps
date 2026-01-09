@@ -148,9 +148,12 @@ class Widget extends WidgetCore {
      */
     setVisualState({ edges, wires, opacity}) {
         this.cache.vizstate = this.getVisualState();
-        this.setEdges(edges ?? false);
-        this.setWireframe(wires ?? false);
-        this.setOpacity(opacity ?? 1);
+        this._setEdges(edges ?? false);
+        this._setWireframe(wires ?? false);
+        // Only set opacity if explicitly provided (don't default to 1)
+        if (opacity !== undefined) {
+            this.setOpacity(opacity);
+        }
     }
 
     /**
@@ -170,6 +173,39 @@ class Widget extends WidgetCore {
     }
 
     /**
+     * Apply global visual state from localStorage to this widget.
+     * Reads opacity, edges, and wireframe settings from global config.
+     * This is the primary method for syncing widget appearance with global preferences.
+     */
+    applyGlobalVisualState() {
+        if (!this.api) {
+            return;
+        }
+
+        const material = this.getMaterial();
+
+        // Apply global opacity
+        const opacity = this.api.local.getFloat('model.opacity') ?? 1.0;
+        material.opacity = opacity;
+        material.transparent = opacity < 1.0;
+        material.visible = opacity > 0.0;
+
+        // Apply global edges
+        const edges = this.api.local.getBoolean('model.edges', false);
+        this._setEdges(edges);
+
+        // Apply global wireframe
+        const wireframe = this.api.local.getBoolean('model.wireframe', false);
+        if (wireframe) {
+            const color = this.api.local.getInt('model.wireframe.color') || 0;
+            const wfOpacity = this.api.local.getFloat('model.wireframe.opacity') ?? 0.5;
+            this._setWireframe(true, color, wfOpacity);
+        } else {
+            this._setWireframe(false);
+        }
+    }
+
+    /**
      * Set material opacity
      */
     setOpacity(value) {
@@ -185,16 +221,23 @@ class Widget extends WidgetCore {
         }
     }
 
+    /**
+     * Set edge rendering - public interface for core widget rotation/scale
+     * Delegates to internal _setEdges method
+     */
     setEdges(set) {
-        clearTimeout(this._setimer);
-        if (set === true && this.outline) {
-            this._setimer = setTimeout(() => this._setEdges(set), 10);
-        } else {
-            this._setEdges(set);
-        }
+        this._setEdges(set);
     }
 
+    /**
+     * Set edge rendering (internal method - use api.view.set_edges for global control)
+     * @private
+     */
     _setEdges(set) {
+        this.__setEdges(set);
+    }
+
+    __setEdges(set) {
         if (!(this.api && this.api.conf)) {
             // missing api features in engine mode
             return;
@@ -253,15 +296,26 @@ class Widget extends WidgetCore {
     }
 
     /**
-     * Set wireframe rendering
+     * Set wireframe rendering - public interface for core widget rotation/scale
+     * Delegates to internal _setWireframe method
      */
     setWireframe(set, color, opacity) {
+        this._setWireframe(set, color, opacity);
+    }
+
+    /**
+     * Set wireframe rendering (internal method - use api.view.set_wireframe for global control)
+     * @private
+     */
+    _setWireframe(set, color, opacity) {
         if (!(this.api && this.api.conf)) {
             // missing api features in engine mode
             return;
         }
         let mesh = this.mesh,
             widget = this;
+        // Save current opacity before removing wire
+        const currentOpacity = this.getMaterial().opacity;
         if (this.wire) {
             this.setOpacity(solid_opacity);
             mesh.remove(this.wire);
@@ -287,6 +341,9 @@ class Widget extends WidgetCore {
         }
         if (opacity !== undefined) {
             widget.setOpacity(opacity);
+        } else if (!set && this.wire === null) {
+            // Restore original opacity when removing wireframe without explicit opacity
+            widget.setOpacity(currentOpacity);
         }
     }
 

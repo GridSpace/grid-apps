@@ -1003,6 +1003,7 @@ export const conf = {
         widget: {},
         // legacy localStorage settings (like octo print)
         local: {
+            'model.opacity': 1.0,
             'model.edges': false,
             'cam.anim.trans': true,
             'cam.anim.model': false,

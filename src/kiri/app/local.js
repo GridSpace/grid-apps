@@ -38,7 +38,12 @@ export const local = {
     get: (key) => localGet(key),
     getItem: (key) => localGet(key),
     getInt: (key) => parseInt(localGet(key)),
-    getFloat: (key) => parseFloat(localGet(key)),
+    getFloat: (key) => {
+        const val = localGet(key);
+        if (val === undefined || val === null) return null;
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? null : parsed;
+    },
     getBoolean: localGetBoolean,
     toggle: (key, val, def) => {
         return localSet(key, val ?? !localGetBoolean(key, def));
