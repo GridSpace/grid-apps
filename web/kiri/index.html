@@ -678,19 +678,39 @@
                     <label class="grow0 pad3">spool</label>
                     <select id="print-bambu-spool"></select>
                     <button id="print-bambu-1" class="grow" disabled>send</button>
-                    <button id="print-bambu-2" class="grow" disabled>send + print</button>
+                    <button id="print-bambu-2" class="grow" disabled>print</button>
                 </div>
             </div>
-            <div id="send-to-octohead" class="header"><label>octoprint</label></div>
-            <div id="send-to-octoprint" class="f-col box">
+            <div id="send-remote-head" class="header"><label>send to print</label></div>
+            <div id="send-remote-print" class="f-col box">
                 <div class="grow f-row">
                     <div class="f-col grow">
-                        <div id="ophost"><label lk="ex_host">host</label><input id="octo-host" size="20" placeholder="http(s)://host:port" /></div>
-                        <div id="opapik"><label lk="ex_akey">key</label><input id="octo-apik" size="20" /></div>
+                        <div id="ophost">
+                            <label lk="ex_host">host</label>
+                            <input id="octo-host" size="20" placeholder="http(s)://host:port" />
+                        </div>
+                        <div id="opapik">
+                            <label lk="ex_akey">key</label>
+                            <input id="octo-apik" size="20" />
+                        </div>
+                        <div id="optype">
+                            <label lk="ex_type">type</label>
+                            <select id="octo-type">
+                                <option selected>moonraker</option>
+                                <option>octoprint</option>
+                            </select>
+                        </div>
                     </div>
-                    <button id="print-octoprint">send</button>
+                    <button id="send-remote">send</button>
+                    <button id="print-remote">print</button>
                 </div>
-                <div id="oph1nt"><label class="hint"><a href="http://docs.octoprint.org/en/master/api/general.html?highlight=cors#cross-origin-requests" target="_help">CORS support</a> must be enabled in API settings</label></div>
+                <div id="oph1nt">
+                    <label class="hint">
+                        check printer
+                        <a href="http://docs.octoprint.org/en/master/api/general.html?highlight=cors#cross-origin-requests" target="_help">CORS</a>
+                        settings
+                    </label>
+                </div>
             </div>
             <div id="export-support" class="f-col">
                 <a id="export-support-a" target="support">this project needs your support!</a>
@@ -757,3 +777,7 @@
 </div>
 </body>
 </html>
+<div id="opapik">
+    <label lk="ex_akey">key</label>
+    <input id="octo-apik" size="20" />
+</div>

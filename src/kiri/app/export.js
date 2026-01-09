@@ -192,6 +192,7 @@ function bindField(field, varname) {
         console.log('save', field, 'to', varname);
         localSet(varname, $(field).value.trim());
     };
+    $(field).onchange = $(field).onblur;
 }
 
 /**
@@ -219,12 +220,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         codeproc = settings.device.gcodeProc,
         octo_host,
         octo_apik,
-        grid_host,
-        grid_apik,
-        grid_target,
-        grid_targets = {},
-        grid_local,
-        grid_uuid;
+        octo_type;
 
     // join gcode array into a string
     gcode = gcode.join('\r\n') + '\r\n';
@@ -240,13 +236,18 @@ function exportGCodeDialog(gcode, sections, info, names) {
             {type:"application/octet-stream"});
     }
 
-    function sendto_octoprint() {
-        if (!(octo_host && octo_apik)) return;
+    function printToHost() {
+        sendToHost(true);
+    }
+
+    function sendToHost(start) {
+        if (!(octo_host && octo_apik && octo_type)) return;
 
         let form = new FormData(),
             ajax = new XMLHttpRequest(),
             host = octo_host.value.toLowerCase(),
-            apik = octo_apik.value;
+            apik = octo_apik.value,
+            type = octo_type.value;
 
         if (host.indexOf("http") !== 0) {
             api.show.alert("host missing protocol (http:// or https://)");
@@ -259,26 +260,37 @@ function exportGCodeDialog(gcode, sections, info, names) {
 
         localSet('octo-host', host.trim());
         localSet('octo-apik', apik.trim());
+        localSet('octo-type', type.trim());
 
         filename = $('print-filename').value;
         form.append("file", getBlob(), filename+"."+fileext);
+        // moonraker upload params
+        // form.append("root", "gcodes");     // optional but recommended
+        // form.append("path", "");           // optional subfolder
+        if (start) form.append("print", "true");      // <-- auto-start
         ajax.onreadystatechange = function() {
+            console.log({ ajax_readyState: ajax.readyState });
             if (ajax.readyState === 4) {
                 let status = ajax.status;
-                api.stats.add(`ua_${api.mode.get_lower()}_print_octo_${status}`);
+                api.stats.add(`ua_${api.mode.get_lower()}_print_send_${status}`);
                 if (status >= 200 && status < 300) {
                     api.modal.hide();
                 } else {
-                    api.show.alert("octoprint error\nstatus: "+status+"\nmessage: "+ajax.responseText);
+                    api.show.alert("send error\nstatus: "+status+"\nmessage: "+ajax.responseText);
                 }
                 api.show.progress(0);
             }
             api.show.progress(0);
         };
-        ajax.upload.addEventListener('progress', function(evt) {
+        ajax.upload.addEventListener('progress', (evt) => {
+            console.log({ ajax_progress: evt });
             api.show.progress(evt.loaded/evt.total, "sending");
         });
-        ajax.open("POST", host+"/api/files/local");
+        if (type === 'moonraker') {
+            ajax.open("POST", host + "/server/files/upload");
+        } else {
+            ajax.open("POST", host + "/api/files/local");
+        }
         if (apik) {
             ajax.setRequestHeader("X-Api-Key", apik);
         }
@@ -349,6 +361,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
         // persist fields when changed
         bindField('octo-host', 'octo-host');
         bindField('octo-apik', 'octo-apik');
+        bindField('octo-type', 'octo-type');
 
         // in cam mode, show zip file option
         let downloadZip = $('print-zip');
@@ -550,21 +563,23 @@ function exportGCodeDialog(gcode, sections, info, names) {
             })
         };
 
-        // octoprint setup
-        $('send-to-octohead').style.display = octo ? '' : 'none';
-        $('send-to-octoprint').style.display = octo ? '' : 'none';
+        // remote host (klipper fluidd / octoprint)
+        $('send-remote-head').style.display = octo ? '' : 'none';
+        $('send-remote-print').style.display = octo ? '' : 'none';
         if (octo) try {
-            $('print-octoprint').onclick = sendto_octoprint;
+            $('send-remote').onclick = sendToHost;
+            $('print-remote').onclick = printToHost;
             octo_host = $('octo-host');
             octo_apik = $('octo-apik');
+            octo_type = $('octo-type');
             if (MODE === MODES.CAM) {
-                $('send-to-octohead').style.display = 'none';
-                $('send-to-octoprint').style.display = 'none';
+                $('send-remote-head').style.display = 'none';
+                $('send-remote-print').style.display = 'none';
             } else {
-                $('send-to-octohead').style.display = '';
-                $('send-to-octoprint').style.display = '';
+                $('send-remote-head').style.display = '';
+                $('send-remote-print').style.display = '';
             }
-            // hide octoprint when hard-coded in the url
+            // hide remote host option when hard-coded in the url
             if (api.const.OCTO) {
                 $('ophost').style.display = 'none';
                 $('opapik').style.display = 'none';
@@ -572,6 +587,7 @@ function exportGCodeDialog(gcode, sections, info, names) {
             }
             octo_host.value = localGet('octo-host') || '';
             octo_apik.value = localGet('octo-apik') || '';
+            octo_type.value = localGet('octo-type') || '';
         } catch (e) { console.log(e) }
 
         // preview of the generated GCODE (first 64k max)
