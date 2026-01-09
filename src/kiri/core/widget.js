@@ -237,6 +237,8 @@ class Widget {
         ]);
         mesh.renderOrder = 1;
         // geometry.computeVertexNormals();
+        // Clear existing groups (e.g., from cloned geometry) before adding new one
+        geometry.clearGroups();
         geometry.addGroup(0, Infinity, 0);
         // mesh.castShadow = true;
         // mesh.receiveShadow = true;
