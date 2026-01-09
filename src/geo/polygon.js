@@ -1224,7 +1224,7 @@ export class Polygon {
     /**
      * find the ratio of area to perimeter which can give provide
      * guidance if this polygon is likely to have a thin cross-section
-     * 
+     *
      * @param {*} deep whether to include inner holes in the calculation
      * @returns ratio
      */

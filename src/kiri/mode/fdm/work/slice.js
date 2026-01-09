@@ -1105,7 +1105,7 @@ export function layerProcessTops(slice, count, offset1, offsetN, fillOffset, opt
 /**
  * Create an entirely solid layer by filling all top polygons
  * with an alternating pattern.
- * 
+ *
  * @param {Object} args - Options object
  * @param {Slice} args.slice - Slice to fill
  * @param {number} args.spacing - Fill line spacing in mm

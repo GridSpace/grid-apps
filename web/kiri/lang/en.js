@@ -1022,6 +1022,7 @@ self.lang['en-us'] = {
     ex_octo:        "remote host",
     ex_host:        "host",
     ex_akey:        "key",
+    ex_type:        "remote print type",
     ex_rsnm:        "resin used ML",
     ex_layr:        "layers",
     ex_ptim:        "print time",
