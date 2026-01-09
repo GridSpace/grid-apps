@@ -30,6 +30,7 @@ export function init() {
         "sliceFillSparse": LANG.fi_pcnt_s,
         "sliceFillGrow": LANG.fi_grow_s,
         "sliceSolidMinArea": LANG.ad_msol_s,
+        "sliceSolidMinThick": LANG.ad_mthk_s,
         "sliceTopLayers": LANG.sl_ltop_s,
         "sliceBottomLayers": LANG.sl_lbot_s,
         "firstLayerRate": LANG.fl_rate_s,

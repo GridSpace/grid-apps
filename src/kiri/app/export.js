@@ -262,12 +262,8 @@ function exportGCodeDialog(gcode, sections, info, names) {
         localSet('octo-apik', apik.trim());
         localSet('octo-type', type.trim());
 
-        filename = $('print-filename').value;
-        form.append("file", getBlob(), filename+"."+fileext);
-        // moonraker upload params
-        // form.append("root", "gcodes");     // optional but recommended
-        // form.append("path", "");           // optional subfolder
-        if (start) form.append("print", "true");      // <-- auto-start
+        filename = $('print-filename').value + "." + fileext;
+        form.append("file", getBlob(), filename);
         ajax.onreadystatechange = function() {
             console.log({ ajax_readyState: ajax.readyState });
             if (ajax.readyState === 4) {
@@ -279,6 +275,16 @@ function exportGCodeDialog(gcode, sections, info, names) {
                     api.show.alert("send error\nstatus: "+status+"\nmessage: "+ajax.responseText);
                 }
                 api.show.progress(0);
+                if (start && type === 'moonraker') {
+                    fetch(`${host}/printer/print/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename })
+                    })
+                    .then(r => r.json())
+                    .then(data => console.log('print start', data))
+                    .catch(err => console.error('print start error', err))
+                }
             }
             api.show.progress(0);
         };

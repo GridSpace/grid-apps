@@ -1222,6 +1222,21 @@ export class Polygon {
     }
 
     /**
+     * find the ratio of area to perimeter which can give provide
+     * guidance if this polygon is likely to have a thin cross-section
+     * 
+     * @param {*} deep whether to include inner holes in the calculation
+     * @returns ratio
+     */
+    thickness(deep) {
+        if (deep) {
+            return 2 * this.areaDeep() / this.perimeterDeep();
+        } else {
+            return 2 * this.area() / this.perimeter();
+        }
+    }
+
+    /**
      * @param {Polygon} poly
      * @returns {boolean}
      */

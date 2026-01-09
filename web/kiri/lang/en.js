@@ -396,7 +396,7 @@ self.lang['en-us'] = {
     fi_over_l:      ["overlap between shells and solid or sparse infill. can improve bonding to shells","as fraction of line width","0.0 - 1.0"],
     fi_angl_s:      "start angle",
     fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
-    fi_grow_s:      "area expand",
+    fi_grow_s:      "expand",
     fi_grow_l:      ["expand projected solids","can help with solid areas","over sparse infill areas","units in millimeters"],
 
     // FDM FILL
@@ -891,8 +891,10 @@ self.lang['en-us'] = {
     ad_rdwl_l:      ["time between re-engaging","filament and movement","in milliseconds"],
     ad_scst_s:      "shell coast",
     ad_scst_l:      ["non-printing end","of perimeter shells","in millimeters"],
-    ad_msol_s:      "area filter",
+    ad_msol_s:      "min area",
     ad_msol_l:      ["minimum area (mm^2)","bridges and flats less than this are culled"],
+    ad_mthk_s:      "min thick",
+    ad_mthk_l:      ["minimum area thickness","which is a ratio of area to perimeter","for layer differences which are used","to find bridges and flat areas","values from 0.0 - 0.5 work best"],
     ad_mins_s:      "min speed",
     ad_mins_l:      ["minimum speed","for short segments"],
     ad_maxf_s:      "max flowrate",

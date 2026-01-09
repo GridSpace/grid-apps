@@ -115,19 +115,20 @@ export function findArcCenters(poly, opt = {}) {
  * @param {Polygon} poly - polygon to analyze (will be mutated with arc annotations)
  * @param {Object} opts - detection options
  * @param {number} opts.tolerance - arc detection tolerance (default 0.1)
- * @param {number} opts.arcRes - arc resolution in radians (default 0.1)
+ * @param {number} opts.arcRes - arc resolution in degrees (default 1)
  * @param {number} opts.minPoints - minimum points to consider an arc (default 4)
  * @returns {Polygon} this polygon with arc annotations
  */
 export function detectArcs(poly, opts = {}) {
     const {
         tolerance = 0.1,
-        arcRes = 0.1,
+        arcRes = 1,
         minPoints = 4
     } = opts;
 
     const points = poly.points;
     const length = points.length;
+    const arcResRadians = arcRes * (Math.PI / 180);
 
     if (length < minPoints) {
         return poly;
@@ -143,7 +144,7 @@ export function detectArcs(poly, opts = {}) {
     // because we need at least minPoints to form an arc
     while (i < length - minPoints + 1) {
         // Try to detect arc starting at position i
-        const arcData = detectArcAt(poly, i, points, length, tolerance, arcRes, minPoints);
+        const arcData = detectArcAt(poly, i, points, length, tolerance, arcResRadians, minPoints);
 
         if (arcData) {
             // Annotate the starting point
@@ -172,7 +173,7 @@ export function detectArcs(poly, opts = {}) {
  * @param {number} minPoints - minimum points for arc
  * @returns {Object|null} arc data or null if no arc detected
  */
-export function detectArcAt(poly, startIdx, points, length, tolerance, arcRes, minPoints) {
+function detectArcAt(poly, startIdx, points, length, tolerance, arcRes, minPoints) {
     // Greedy approach: collect as many points as possible that might form an arc
     let candidates = [];
 
@@ -222,7 +223,7 @@ export function detectArcAt(poly, startIdx, points, length, tolerance, arcRes, m
  * @param {number} minPoints - minimum points for arc
  * @returns {Object|null} arc data or null if invalid
  */
-export function validateArc(poly, arcPoints, tolerance, arcRes, minPoints) {
+function validateArc(poly, arcPoints, tolerance, arcRes, minPoints) {
     if (arcPoints.length < minPoints) {
         return null;
     }
@@ -295,7 +296,7 @@ export function validateArc(poly, arcPoints, tolerance, arcRes, minPoints) {
  * @param {number} tolerance - detection tolerance
  * @returns {Object|null} center with x, y, r properties or null
  */
-export function findBestCenter(arcPoints, tolerance) {
+function findBestCenter(arcPoints, tolerance) {
     const len = arcPoints.length;
 
     // Use 3 well-spaced points for initial center calculation

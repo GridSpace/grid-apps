@@ -541,7 +541,6 @@ export async function fdm_prepare(widgets, settings, update) {
                     },
                     routeAround: process.outputAvoidGaps,
                     seedPoint: printPoint.sub(offset),
-                    support: slice.supports,
                     zmax,
                 }
             );
@@ -780,7 +779,6 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     const { settings } = print;
     const { device } = settings;
     const { bedWidth, bedDepth, bedRound } = device;
-    const { extrudePerMM } = FDM;
 
     let preout = [],
         process = opt.params || settings.process,
@@ -790,7 +788,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         minLayerTime = process.outputMinLayerTime || 0,
         nozzleSize = process.sliceLineWidth || device.extruders[extruder].extNozzle,
         nozzles = device.extruders.map(e => e.extNozzle),
-        firstLayer = (opt.first || false) && !opt.support,
+        firstLayer = (opt.first || false),
         thinWall = nozzleSize * (opt.thinWall || 1.75),
         retractDist = opt.retractOver || (nozzleSize * 5),
         fillMult = opt.mult || process.outputFillMult,
@@ -845,10 +843,12 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
         printSpeed = finishSpeed || printSpeed;
     }
 
-    // override: adapt bridge layer speed
-    if (slice.isBridgeLayer) {
+    // override: adapt bridge layer speed and flats
+    // but not on the first layer which has it's own settings
+    if (slice.index > 0 && (slice.isBridgeLayer || slice.isFlatsLayer)) {
         fillSpeed /= 2;
         printSpeed /= 2;
+        finishSpeed /= 2;
     }
 
     function retract() {
@@ -1444,7 +1444,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     if (slice.tops) {
         out.appendAll(slice.tops);
     }
-    if (opt.support && slice.supports) {
+    if (slice.supports) {
         out.appendAll(slice.supports);
     }
 

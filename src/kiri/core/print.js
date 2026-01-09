@@ -133,7 +133,7 @@ class Print {
             scarf = !poly.open ? (options.scarf ?? 0) : false,
             last = startPoint,
             first = true,
-            { arcOpts, tool, zmax } = options;
+            { arcOpts, tool, zmax, onfirst, onfirstout } = options;
 
         // if short, use calculated print speed based on sliding scale
         if (perimeter < process.outputShortPoly) {
@@ -169,7 +169,7 @@ class Print {
         if (scarf) {
             let epz = Math.max(...poly.points.map(p => p.z));
             let spz = startPoint.z;
-            poly = poly.segment(options.nozzleSize ?? 0.4, false, false, scarf * 2);
+            poly = poly.segment(nozzleSize ?? 0.4, false, false, scarf * 2);
             pp = poly.points;
             let lp, sp = [];
             for (let p of pp) {
@@ -196,6 +196,7 @@ class Print {
         } else if (arcOpts) {
             // annotate arc points
             pp = newPolygon(pp).detectArcs(arcOpts).points;
+            // console.log(arcOpts, pp.map(p => p.arc?.skip).filter(v => v));
         }
 
         // scarf manages its own close point
@@ -210,10 +211,13 @@ class Print {
             let { arc } = point;
             if (arc) {
                 arcInfo = arc;
-                scope.addOutput(output, point, shellMult, moveSpeed, tool);
+                if (first && onfirst) onfirst(point, output);
+                let out = scope.addOutput(output, point, shellMult, moveSpeed, tool);
+                if (first && onfirstout) onfirstout(out);
                 // arc center is relative to first point
                 arcInfo.center.move({ x: -point.x, y: -point.y, z: 0 });
                 last = point;
+                if (first) first = false;
                 continue;
             } else if (arcInfo) {
                 // accumulate and pass to last point to calc FDM E value
@@ -235,14 +239,10 @@ class Print {
                 scope.addOutput(output, point, 0, moveSpeed, tool);
             } else if (first) {
                 // if (point.skip) console.log({ skip: point });
-                if (options.onfirst) {
-                    options.onfirst(point, output);
-                }
+                onfirst && onfirst(point, output);
                 // move to first output point on poly
                 let out = scope.addOutput(output, point, 0, moveSpeed, tool);
-                if (options.onfirstout) {
-                    options.onfirstout(out);
-                }
+                onfirstout && onfirstout(out);
                 first = false;
             } else {
                 let seglen = last.distTo2D(point);
