@@ -156,7 +156,7 @@ export function fdm_export(print, online, ondone, ondebug) {
 
     // smallish band-aid. refactor above to remove redundancy
     function updateParams(layer, params) {
-        // params = getRangeParameters(process, layer);
+        if (!params) params = getRangeParameters(process, layer);
         zhop = params.zHopDistance || 0; // range
         retDist = params.outputRetractDist || 0; // range
         retSpeed = params.outputRetractSpeed * 60 || 1; // range
