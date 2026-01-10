@@ -608,7 +608,9 @@ export async function fdm_prepare(widgets, settings, update) {
         layerout.layer = layerno++;
         update((layerno / cake.length) * 0.5, "prepare");
 
+        // clear for next layer
         layerout = [];
+        layerout.height = sliceHeight;
     }
 
     print.output = output;

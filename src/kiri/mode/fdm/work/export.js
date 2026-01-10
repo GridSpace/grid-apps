@@ -349,6 +349,7 @@ export function fdm_export(print, online, ondone, ondebug) {
         if (line.indexOf('G92') === 0) {
             line.split(";")[0].split(' ').forEach(function (tok) {
                 let val = parseFloat(tok.substring(1) || 0) || 0;
+                if (isNaN(val)) console.log(val, line);
                 switch (tok[0]) {
                     case 'X': pos.x = val; break;
                     case 'Y': pos.y = val; break;
@@ -357,15 +358,17 @@ export function fdm_export(print, online, ondone, ondebug) {
                 }
             });
         }
-        if (line.indexOf('E') > 0) {
-            line.split(";")[0].split(' ').forEach(function (tok) {
+        if (line.indexOf('E') > 0 && line[0] === 'G') {
+            line.split(";")[0].split(' ').forEach((tok) => {
                 // use max E position from gcode-preamble
                 if (tok[0] == 'E') {
+                    let etok = parseFloat(tok.substring(1) || 0);
+                    if (isNaN(etok)) console.log(line);
                     if (extrudeAbs) {
-                        outputLength = Math.max(outputLength, parseFloat(tok.substring(1)) || 0);
+                        outputLength = Math.max(outputLength, etok);
                         emitted = outputLength;
                     } else {
-                        emitted += parseFloat(tok.substring(1) || 0);
+                        emitted += etok;
                     }
                 }
             });
@@ -421,24 +424,6 @@ export function fdm_export(print, online, ondone, ondebug) {
         // optional dwell after re-engaging filament to allow pressure to build
         if (retDwell) dwell(retDwell);
         time += (retDist / retSpeed) * 60 * 2; // retraction time
-    }
-
-    let taxis = new THREE.Vector3( 1, 0, 0 );
-    let tcent = new THREE.Vector2( 0, 0 );
-    let angle = -Math.PI / 4;
-    let savePos = pos;
-
-    function pushPos(newpos, rate, comment) {
-        savePos = Object.clone(pos);
-        moveTo({
-            x: newpos.x + offset.x,
-            y: newpos.y + offset.y,
-            z: newpos.z + offset.z
-        }, rate, comment);
-    }
-
-    function popPos(rate, comment) {
-        moveTo(savePos, rate, comment);
     }
 
     function moveTo(newpos, rate, comment, arc) {
@@ -656,6 +641,7 @@ export function fdm_export(print, online, ondone, ondebug) {
                 extruder = extruders[tool];
                 offset_x = extruder.extOffsetX;
                 offset_y = extruder.extOffsetY;
+
                 emitPerMM = extrudePerMM(
                     lineWidth || extruder.extNozzle,
                     extruder.extFilament,

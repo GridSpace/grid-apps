@@ -10,6 +10,9 @@ import { codec } from '../../../core/codec.js';
 // fil = filament diameter
 // slice = slice height
 function extrudePerMM(noz, fil, slice) {
+    // if (isNaN(noz)) console.trace({ noz });
+    // if (isNaN(fil)) console.trace({ fil });
+    // if (isNaN(slice)) console.trace({ slice });
     // (ratio of nozzle to filament) * (ratio of slice to nozzle)
     return ((Math.PI * util.sqr(noz / 2)) / (Math.PI * util.sqr(fil / 2))) * (slice / noz);
 };
@@ -18,12 +21,14 @@ function extrudePerMM(noz, fil, slice) {
 // perMM = amount extruded per MM (from extrudePerMM)
 // factor = scaling factor (usually 1.0)
 function extrudeMM(dist, perMM, factor) {
+    // if (isNaN(dist)) console.trace({ dist });
+    // if (isNaN(perMM)) console.trace({ perMM });
+    // if (isNaN(factor)) console.trace({ factor });
     return dist * perMM * factor;
 }
 
 // defer loading until client and worker exist
 function init(worker) {
-
     // worker.dispatch.fdm_support_generate = function(data, send) {
     //     const { settings } = data;
     //     const widgets = Object.values(worker.cache);
@@ -33,7 +38,6 @@ function init(worker) {
     //         supports: widget.supports,
     //     } } )));
     // };
-
 }
 
 export const FDM = {
