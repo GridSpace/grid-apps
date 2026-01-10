@@ -493,15 +493,25 @@ export async function fdm_prepare(widgets, settings, update) {
         }
     }
 
-    // establish offsets
+    /**
+     * Establish widget offsets
+     *
+     * For belt printers: Apply trigonometric transformation from Y-axis position
+     * to inclined belt coordinate system using widget.belt properties (cosf, sinf, ypos)
+     *
+     * For normal printers: Use widget position plus any raft offset
+     *
+     * Note: This must run BEFORE support widgets are created, as they inherit
+     * both the offset and belt properties from their parent widget.
+     */
     for (let widget of widgets) {
         let { belt } = widget;
         let offset = Object.clone(widget.track.pos);
         if (isBelt) {
             offset = {
                 x: belt.xpos,
-                y: belt.ypos * belt.cosf,
-                z: belt.ypos * belt.sinf
+                y: belt.ypos * belt.cosf,  // Y component of inclined belt
+                z: belt.ypos * belt.sinf   // Z component of inclined belt
             };
         } else {
             // when rafts used this is non-zero
@@ -510,12 +520,27 @@ export async function fdm_prepare(widgets, settings, update) {
         widget.offset = offset;
     }
 
-    // for any widget with supports, create a new widget for them
+    /**
+     * Extract support structures into separate synthetic widgets
+     *
+     * Support structures use a different extruder (sliceSupportNozzle) and need
+     * to be processed independently. This creates new "virtual" widgets containing
+     * only support geometry.
+     *
+     * CRITICAL for belt mode: Must copy belt properties to maintain proper positioning
+     * - widget.belt: Required for offset calculations if widget list is reprocessed
+     * - slice.belt.anchor: Used to mark layers that touch the belt (line 667)
+     * - slice.belt.touch: Affects print start position logic (line 676)
+     *
+     * Without belt property copying, supports render in incorrect positions because
+     * the belt coordinate transformations (cosf, sinf, ypos) are not applied.
+     */
     for (let widget of widgets.slice()) {
         let slices = [];
         for (let slice of widget.slices) {
             if (slice.supports) {
                 let nslice = newSlice(slice.z);
+                nslice.belt = slice.belt;
                 nslice.height = slice.height;
                 nslice.index = slice.index;
                 nslice.supports = slice.supports;
@@ -527,7 +552,8 @@ export async function fdm_prepare(widgets, settings, update) {
             let nwid = newWidget(null, widget.group);
             nwid.support = true;
             nwid.slices = slices;
-            nwid.offset = widget.offset;
+            nwid.offset = widget.offset;  // inherit calculated offset from parent
+            nwid.belt = widget.belt; // inherit any belt transformations
             widgets.push(nwid);
         }
     }
