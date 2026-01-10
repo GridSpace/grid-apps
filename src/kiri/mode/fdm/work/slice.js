@@ -538,7 +538,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             if (shadowSum) {
                 shadow = POLY.union([...shadow, ...shadowSum], minArea, true);
             }
-            // trim to slice.clips
+            // subtract slice.clips areas (widget boundaries) from shadow projection
             if (true) {
                 let rem  = [];
                 let clips = [
@@ -557,6 +557,17 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 shadow = POLY.offset(shadow, -bump, { z: slice.z });
             }
             shadowSum = shadow;
+            // if belt, clip shadow to belt angle projection along platform
+            if (belt) {
+                let boundsx = bounds.dim.x * 1.1;
+                let boundsy = bounds.dim.y * 1.1;
+                let skewy = slice.z * belt.slope;
+                let clip = newPolygon()
+                    .centerRectangle(newPoint(0, 0, slice.z), boundsx, boundsy)
+                    .move({ x: 0, y: -boundsy / 2 + skewy, z: 0 });
+                shadow = POLY.trimTo(shadow, [ clip ]);
+                // slice.output().setLayer("belt clip", 0xffff00).addPolys([ clip ]);
+            }
             slice.supports = shadow;
             slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
             trackupdate((++count/length), 0.10, 0.15, "support");
