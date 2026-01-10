@@ -267,7 +267,30 @@ function supportStart({ remove } = { remove: false }) {
         return api.widgets.meshes();
     };
     api.feature.on_mouse_drag = ({ int }) => {
-        if (int?.length && int[0].face.normal.z < 0) {
+        // Calculate if surface needs support based on belt mode or normal mode
+        let needsSupport = false;
+        if (int?.length) {
+            const settings = api.conf.get();
+            const normal = int[0].face.normal;
+
+            // Get support angle threshold (how steep before needing support)
+            const supportAngle = settings.process.sliceSupportAngle || 45;
+            const supportThreshold = Math.cos((90 - supportAngle) * Math.PI / 180);
+
+            if (settings.device.bedBelt) {
+                // Belt mode: check if surface will face downward after belt rotation
+                // After rotating by angle θ around X: nz' = ny*sin(θ) + nz*cos(θ)
+                // We want nz' < -threshold (within cone of support angle from down)
+                const angle = (settings.process.sliceAngle || 45) * Math.PI / 180;
+                const rotatedZ = normal.y * Math.sin(angle) + normal.z * Math.cos(angle);
+                needsSupport = rotatedZ < -supportThreshold;
+            } else {
+                // Normal mode: check if normal points downward within support angle cone
+                needsSupport = normal.z < -supportThreshold;
+            }
+        }
+
+        if (needsSupport) {
             supportUpdate(int[0].point, down.widget, remove);
         }
         return [ down.widget.mesh ];
@@ -278,6 +301,12 @@ function supportStart({ remove } = { remove: false }) {
     const theme = api.space.is_dark() ? 'dark' : 'light';
     const scheme = colorSchemeRegistry.getScheme(mode, theme);
     const paintColor = scheme.operations?.paint?.overlay ?? 0x4488ff;
+
+    // Get belt configuration for paint constraint
+    const settings = api.conf.get();
+    const isBelt = settings.device.bedBelt;
+    const beltAngle = isBelt ? (settings.process.sliceAngle || 45) : 0;
+    const supportAngle = settings.process.sliceSupportAngle || 45;
 
     api.widgets.each(w => {
         // Use pushVisualState to track the paint operation
@@ -295,7 +324,11 @@ function supportStart({ remove } = { remove: false }) {
         if (!w.anno.paint) {
             w.anno.paint = [];
         }
-        addPaintOverlayTexture(mat, w.anno.paint, new THREE.Color(paintColor));
+        addPaintOverlayTexture(mat, w.anno.paint, new THREE.Color(paintColor), {
+            beltMode: isBelt,
+            beltAngle: beltAngle * Math.PI / 180,  // Convert to radians
+            supportAngle: settings.process.sliceSupportAngle || 45
+        });
     })
     api.space.update();
 }

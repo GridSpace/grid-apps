@@ -17,6 +17,11 @@
  * support regions. For multi-material coloring or other uses, set
  * options.onlyDownwardFacing = false to paint all surfaces.
  *
+ * BELT PRINTER MODE:
+ * For belt printers, surfaces need support when facing "down the belt slope" rather
+ * than straight down. Set options.beltMode = true and provide options.beltAngle (in radians)
+ * to paint surfaces that face down the angled belt direction.
+ *
  * PAINT POINT DATA STRUCTURE:
  * ---------------------------
  * Paint points must be an array of objects with this structure:
@@ -79,6 +84,9 @@ import { THREE } from '../../ext/three.js';
  * @param {THREE.Color} [paintColor] - Color for painted regions (default: light blue)
  * @param {Object} [options] - Optional configuration
  * @param {boolean} [options.onlyDownwardFacing=true] - Only paint on downward-facing surfaces (z-normal < 0)
+ * @param {boolean} [options.beltMode=false] - Enable belt printer mode (paints surfaces facing down belt slope)
+ * @param {number} [options.beltAngle=0] - Belt angle in radians (only used if beltMode is true)
+ * @param {number} [options.supportAngle=45] - Support angle in degrees (cone around down direction)
  * @returns {THREE.Material} The modified material
  */
 function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Color(0x4488ff), options = {}) {
@@ -89,6 +97,10 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
 
     // Default: only paint downward-facing surfaces (for support painting)
     const onlyDownwardFacing = options.onlyDownwardFacing !== undefined ? options.onlyDownwardFacing : true;
+    const beltMode = options.beltMode || false;
+    const beltAngle = options.beltAngle || 0;
+    const supportAngle = options.supportAngle || 45;
+    const supportThreshold = Math.cos((90 - supportAngle) * Math.PI / 180);
 
     // Store initial paint points reference
     material.userData.paintPoints = paintPoints;
@@ -119,6 +131,9 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
         shader.uniforms.paintCount = { value: validPoints.length };
         shader.uniforms.paintColor = { value: paintColor };
         shader.uniforms.onlyDownwardFacing = { value: onlyDownwardFacing };
+        shader.uniforms.beltMode = { value: beltMode };
+        shader.uniforms.beltAngle = { value: beltAngle };
+        shader.uniforms.supportThreshold = { value: supportThreshold };
 
         // Pass model position from vertex shader to fragment shader
         // Paint points are in widget/model space, so we compare against transformed (model space)
@@ -143,6 +158,9 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             uniform int paintCount;
             uniform vec3 paintColor;
             uniform bool onlyDownwardFacing;
+            uniform bool beltMode;
+            uniform float beltAngle;
+            uniform float supportThreshold;
         ` + shader.fragmentShader;
 
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -156,7 +174,20 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
             vec3 worldNormal = normalize(cross(posDx, posDy));
 
             // Only paint downward-facing surfaces if option is enabled
-            bool shouldPaint = !onlyDownwardFacing || worldNormal.z < -0.001;
+            bool shouldPaint;
+            if (beltMode) {
+                // Belt mode: mesh is rotated, check if normal points toward world down
+                // World down (0,0,-1) appears as (0, -sin(θ), -cos(θ)) in rotated mesh space
+                // Dot product: normal · (0, -sin(θ), -cos(θ)) = -sin(θ)*ny - cos(θ)*nz
+                float sinAngle = sin(beltAngle);
+                float cosAngle = cos(beltAngle);
+                float rotatedZ = worldNormal.y * sinAngle + worldNormal.z * cosAngle;
+                // Check if within support angle cone from down direction (rotatedZ < -threshold)
+                shouldPaint = !onlyDownwardFacing || rotatedZ < -supportThreshold;
+            } else {
+                // Normal mode: check if normal points downward within support angle cone
+                shouldPaint = !onlyDownwardFacing || worldNormal.z < -supportThreshold;
+            }
             if (shouldPaint) {
                 // Check if this fragment is within any paint sphere
                 bool painted = false;
@@ -206,6 +237,9 @@ function addPaintOverlaySimple(material, paintPoints, paintColor = new THREE.Col
  * @param {THREE.Color} [paintColor] - Color for painted regions (default: light blue)
  * @param {Object} [options] - Optional configuration
  * @param {boolean} [options.onlyDownwardFacing=true] - Only paint on downward-facing surfaces (z-normal < 0)
+ * @param {boolean} [options.beltMode=false] - Enable belt printer mode (paints surfaces facing down belt slope)
+ * @param {number} [options.beltAngle=0] - Belt angle in radians (only used if beltMode is true)
+ * @param {number} [options.supportAngle=45] - Support angle in degrees (cone around down direction)
  * @returns {THREE.Material} The modified material
  */
 function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Color(0x4488ff), options = {}) {
@@ -216,6 +250,10 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
 
     // Default: only paint downward-facing surfaces (for support painting)
     const onlyDownwardFacing = options.onlyDownwardFacing !== undefined ? options.onlyDownwardFacing : true;
+    const beltMode = options.beltMode || false;
+    const beltAngle = options.beltAngle || 0;
+    const supportAngle = options.supportAngle || 45;
+    const supportThreshold = Math.cos((90 - supportAngle) * Math.PI / 180);
 
     // Store initial paint points reference
     material.userData.paintPoints = paintPoints;
@@ -264,6 +302,9 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
         shader.uniforms.paintTexSize = { value: new THREE.Vector2(texWidth, texHeight) };
         shader.uniforms.paintColor = { value: paintColor };
         shader.uniforms.onlyDownwardFacing = { value: onlyDownwardFacing };
+        shader.uniforms.beltMode = { value: beltMode };
+        shader.uniforms.beltAngle = { value: beltAngle };
+        shader.uniforms.supportThreshold = { value: supportThreshold };
 
         // Pass model position from vertex shader to fragment shader
         // Paint points are in widget/model space, so we compare against transformed (model space)
@@ -289,6 +330,9 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
             uniform vec2 paintTexSize;
             uniform vec3 paintColor;
             uniform bool onlyDownwardFacing;
+            uniform bool beltMode;
+            uniform float beltAngle;
+            uniform float supportThreshold;
         ` + shader.fragmentShader;
 
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -302,7 +346,20 @@ function addPaintOverlayTexture(material, paintPoints, paintColor = new THREE.Co
             vec3 worldNormal = normalize(cross(posDx, posDy));
 
             // Only paint downward-facing surfaces if option is enabled
-            bool shouldPaint = !onlyDownwardFacing || worldNormal.z < -0.001;
+            bool shouldPaint;
+            if (beltMode) {
+                // Belt mode: mesh is rotated, check if normal points toward world down
+                // World down (0,0,-1) appears as (0, -sin(θ), -cos(θ)) in rotated mesh space
+                // Dot product: normal · (0, -sin(θ), -cos(θ)) = -sin(θ)*ny - cos(θ)*nz
+                float sinAngle = sin(beltAngle);
+                float cosAngle = cos(beltAngle);
+                float rotatedZ = worldNormal.y * sinAngle + worldNormal.z * cosAngle;
+                // Check if within support angle cone from down direction (rotatedZ < -threshold)
+                shouldPaint = !onlyDownwardFacing || rotatedZ < -supportThreshold;
+            } else {
+                // Normal mode: check if normal points downward within support angle cone
+                shouldPaint = !onlyDownwardFacing || worldNormal.z < -supportThreshold;
+            }
             if (shouldPaint) {
                 bool painted = false;
 
