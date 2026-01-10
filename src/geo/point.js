@@ -877,6 +877,7 @@ class Point {
         const { x, y } = this;
         this.x = x * Math.cos(angle) - y * Math.sin(angle);
         this.y = y * Math.cos(angle) + x * Math.sin(angle);
+        return this;
     }
 }
 

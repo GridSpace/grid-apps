@@ -349,6 +349,8 @@ const dispatch = {
         widget.vertices = vertices;
         // restore meta
         widget.meta = data.meta;
+        // restore annotations
+        widget.anno = data.anno;
         // restore tracking object
         widget.track = data.track;
         send.done(data.id);
@@ -449,7 +451,6 @@ const dispatch = {
         setPrint(null);
         current.mode = settings.mode.toUpperCase();
 
-        widget.anno = data.anno || widget.anno;
         widget.settings = settings;
         widget.clearSlices();
 

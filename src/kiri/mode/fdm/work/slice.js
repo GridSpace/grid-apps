@@ -477,8 +477,22 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         stack.sort((a,b) => a.z - b.z);
 
         // process manual supports if they exist
-        // convert paint points to circles on matching slices
         let { paint } = widget.anno;
+        let { belt } = widget;
+        // apply belt transformations, if needed
+        if (belt && paint) {
+            let { dy, angle } = belt;
+            // make a copy we can modify
+            paint = structuredClone(paint);
+            for (let rec of paint) {
+                let { point } = rec;
+                // convert yz plane to xy plane to re-use point utility function
+                let np = newPoint(point.y + dy, point.z, 0).rotate(angle * (Math.PI/180));
+                point.y = np.x;
+                point.z = np.y;
+            }
+        }
+        // convert paint points to circles on matching slices
         if (manual && paint?.length) {
             let hpi = Math.PI/2;
             for (let slice of stack) {

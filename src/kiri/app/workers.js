@@ -200,11 +200,12 @@ export const client = {
             let vertices = widget.getGeoVertices();
             send("sync", {
                 id: widget.id,
-                meta: widget.meta,
+                anno: widget.annotations(),
                 group: widget.group.id,
+                meta: widget.meta,
+                position: widget.mesh.position,
                 track: widget.track,
                 vertices,
-                position: widget.mesh.position,
             }, done => {
                 widget.modified = false;
             });
@@ -236,7 +237,6 @@ export const client = {
     slice(settings, widget, callback) {
         send("slice", {
             id: widget.id,
-            anno: widget.annotations(),
             settings: settings
         }, reply => {
             callback(reply);

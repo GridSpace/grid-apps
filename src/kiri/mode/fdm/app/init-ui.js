@@ -302,8 +302,14 @@ function supportStart({ remove } = { remove: false }) {
 
 function supportUpdate(point, widget, remove) {
     let { x, y, z } = point;
+    let pos = widget.track.pos;
+    // translate from three coordinates to widget coordinates
     let rec = {
-        point: { x, y:-z, z:y },
+        point: {
+            x: x  - pos.x,
+            y: -z - pos.y,
+            z: y  - pos.z
+        },
         radius: 2
     };
     // return console.log({ on, widget, point });
