@@ -368,25 +368,64 @@ export async function fdm_prepare(widgets, settings, update) {
     let purgedFirst = false;
     let lastPurgeTool;
 
-    // generate purge block for given nozzle
+    /**
+     * purge() - Generate purge tower block output for a given tool
+     *
+     * Called in two contexts:
+     * 1. Real purge: When switching tools during printing (using=undefined)
+     * 2. Fill-in: At layer end to maintain unused blocks (using=actual tool index)
+     *
+     * The function consumes one purge block from the track array and generates:
+     * - Outline perimeter (with extrusion)
+     * - Fill pattern (dense for real purges, sparse for fill-ins)
+     * - Retract
+     * - Optional wipe move (outline without extrusion)
+     *
+     * @param {number} nozzle - The extruder index that needs purging/filling
+     * @param {Array} track - Array of available purge block records (mutated via shift())
+     * @param {Array} layer - Output layer array to append print moves to
+     * @param {Point} start - Current print head position
+     * @param {number} z - Z height for this layer
+     * @param {number} using - Optional override tool index:
+     *                         - undefined/negative: real purge (use nozzle param)
+     *                         - >= 0: fill-in mode (use this tool instead)
+     * @param {Object} offset - Position offset for belt printers
+     * @returns {Point} Updated print head position after purge block
+     *
+     * Fill pattern selection:
+     * - Dense fill (rec.full): Used for first layer or real tool changes
+     * - Sparse fill (rec.sparse): Used for fill-ins or consecutive same-tool purges
+     */
     function purge(nozzle, track, layer, start, z, using, offset) {
         if (!outputPurgeTower || extcount < 2) {
             return start;
         }
+        // Get next available purge block (consumes from track array)
         let rec = track.shift();
+
+        // Use sparse fill if: filling someone else's block OR same tool as last purge
         let thin = using >= 0 || lastPurgeTool === nozzle;
+
+        // Actual tool to use: override tool for fill-ins, otherwise the nozzle being purged
         let tool = using >= 0 ? using : nozzle;
+
+        // Detect first layer for special handling
         let first = isBelt ? !purgedFirst && layer.slice.index >= 0 : layer.slice.index === 0;
         let rate = first ? process.firstLayerRate : process.outputFeedrate;
         let wipe = true;
         lastPurgeTool = tool;
+
         if (rec) {
             print.setType('purge tower');
             if (layer.last()) {
                 layer.last().retract = true;
             }
             purgedFirst = purgedFirst || first;
+
+            // Use dense fill for first layer or real purges (when thin=false)
             let purgeOn = first || !thin;
+
+            // Belt printer: scale tower size for negative Z (before belt contact)
             if (isBelt && z < 0) {
                 let scale = 1 - ((z / zmin));
                 mkblok(blokw * scale, blokh);
@@ -394,9 +433,12 @@ export async function fdm_prepare(widgets, settings, update) {
                 rate = (process.outputFeedrate - process.firstLayerRate) * scale + process.firstLayerRate;
                 wipe = false;
             }
+            // Prepare geometry: outline, pause point, and fill pattern (dense or sparse)
             let box = rec.rect.clone().setZ(z);
             let pause = rec.pause.clone().setZ(z);
             let fill = (z >= 0 && purgeOn ? rec.full : rec.sparse).clone().setZ(z);
+
+            // Belt printer: apply Y/Z coordinate transformations
             if (isBelt) {
                 let bmove = {x:0, y:z, z:0};
                 box.move(bmove);
@@ -411,6 +453,8 @@ export async function fdm_prepare(widgets, settings, update) {
                     if (fill) fill.move(bo);
                 }
             }
+
+            // Output sequence: 1. Outline perimeter (with extrusion)
             start = print.polyPrintPath(box, start, layer, {
                 tool,
                 rate,
@@ -418,8 +462,9 @@ export async function fdm_prepare(widgets, settings, update) {
                 open: false,
                 onfirstout: (out => out.overate = (isBelt ? rate : 0))
             });
+
+            // Output sequence: 2. Fill pattern (with extrusion, dense or sparse)
             if (fill && fill.length) {
-                // for pings, split path at 20mm
                 start = print.polyPrintPath(fill, start, layer, {
                     tool,
                     rate,
@@ -428,8 +473,11 @@ export async function fdm_prepare(widgets, settings, update) {
                     onfirst: (point) => { point.purgeOn = purgeOn ? pause : undefined }
                 });
             }
+
+            // Output sequence: 3. Retract after fill
             layer.last().retract = true;
-            // experimental post-retract wipe
+
+            // Output sequence: 4. Post-retract wipe (outline without extrusion)
             if (wipe) start = print.polyPrintPath(box, start, layer, {
                 tool,
                 rate,
@@ -468,6 +516,7 @@ export async function fdm_prepare(widgets, settings, update) {
         for (let slice of widget.slices) {
             if (slice.supports) {
                 let nslice = newSlice(slice.z);
+                nslice.height = slice.height;
                 nslice.index = slice.index;
                 nslice.supports = slice.supports;
                 nslice.extruder = sliceSupportNozzle;
@@ -501,26 +550,55 @@ export async function fdm_prepare(widgets, settings, update) {
         return a.z - b.z;
     });
 
-    let firstTool;
-    let lastWidget;
-    let lastExt;
-    let lastOut;
+    let firstTool;      // First extruder used (determines starting extruder)
+    let lastWidget;     // Last widget printed (for retraction decisions)
+    let lastExt;        // Last extruder used (for minimizing tool changes)
+    let lastOut;        // Last output slice (for tracking state)
 
     print.zmax = zmax;
     print.total_time = 0;
 
-    // walk cake layers bottom up
+    /**
+     * MAIN PRINT LOOP: Walk cake layers bottom up
+     *
+     * The "cake" is a sorted array of layers where each layer contains all slices
+     * at that Z height from all widgets. This loop processes layers in Z order.
+     *
+     * For each layer:
+     * 1. Process all slices using greedy nearest-neighbor with extruder penalties
+     * 2. Generate purge tower blocks on extruder changes
+     * 3. Add optional draft shield around perimeter
+     * 4. Fill any unused purge blocks to maintain tower structure
+     * 5. Append completed layer to output and update progress
+     *
+     * Key optimization: Minimize travel and extruder changes by:
+     * - Prioritizing slices using the same extruder (10000x distance penalty for changes)
+     * - Choosing nearest slice within same-extruder group
+     * - Starting first object with extruder 0 when possible
+     */
     for (let layer of cake) {
-        // track purge blocks generated for each layer
+        // Clone towers array to track available purge blocks for this layer
+        // Each purge block can only be used once per layer
         let track = towers.slice();
 
-        // iterate over layer slices, find closest widget, print, eliminate
+        /**
+         * INNER LOOP: Process all slices in this layer
+         *
+         * Uses greedy nearest-neighbor algorithm with extruder awareness:
+         * - Builds a priority queue of unprinted slices
+         * - Heavily penalizes extruder changes (10000x distance multiplier)
+         * - Selects closest slice with preferred extruder
+         * - Marks as prep'd and removes from consideration
+         * - Repeats until all slices processed (order.length === 0)
+         */
         for (;;) {
+            // Build priority queue of unprinted slices with weighted distances
             let order = [];
-            // select slices of the same extruder type first then distance
+
+            // Evaluate each unprinted slice in this layer
             for (let slice of layer.slices) {
                 if (slice.prep) {
-                    continue;
+                    continue; // Skip already processed slices
                 }
                 let offset = lastOffset = slice.widget.offset;
                 let find = slice.findClosestPointTo(printPoint.sub(offset));
@@ -528,69 +606,91 @@ export async function fdm_prepare(widgets, settings, update) {
                     let ext = slice.extruder;
                     let lex = lastExt;
                     let dst = Math.abs(find.distance);
-                    // penalize extruder swaps
+
+                    // CRITICAL: Heavily penalize extruder changes to minimize purging
+                    // 10000x multiplier makes any same-extruder slice preferred over a swap
                     if (ext !== lex) {
                         dst *= 10000;
                     }
-                    // for first object, penalize extruders other than first
+
+                    // CRITICAL: For first slice in print, prefer extruder 0
+                    // Ensures print starts with primary extruder when possible
                     if (lastExt === undefined && ext > 0) {
                         dst *= 10000;
                     }
+
                     order.push({dst, slice, offset, z: layer.z});
                 }
             }
+
+            // All slices processed for this layer - exit inner loop
             if (order.length === 0) {
                 break;
             }
+
+            // Sort by weighted distance (extruder penalty + travel distance)
             order.sort((a,b) => {
                 return a.dst - b.dst;
             });
+
+            // Select nearest slice (considering extruder penalties)
             let { z, slice, offset } = order[0];
+            // Track the first tool used to determine print starting extruder
             if (firstTool === undefined) {
                 firstTool = slice.extruder;
             }
 
-            // when layers switch between widgets, force retraction
+            // Force retraction when switching between different widgets
+            // Prevents stringing during travel moves between objects
             let forceRetract = lastOut && lastOut.widget !== slice.widget;
             if (forceRetract && output.length) {
-                // selecet last output of last layer
                 output.last().last().retract = true;
             }
 
+            // Get any layer-specific parameter overrides for this slice
             let params = getRangeParameters(process, slice.index);
+
+            // Mark slice as processed so it won't be selected again
             slice.prep = true;
-            // retract between widgets or layers (when set)
+
+            // Retract between widgets within the same layer
             if (layerout.length && slice.widget !== lastWidget) {
                 layerout.last().retract = true;
             }
+
+            // Update layer metadata for this slice
             lastWidget = slice.widget;
             layerout.z = z + slice.height / 2;
             layerout.height = layerout.height || slice.height;
             layerout.slice = slice;
             layerout.params = params;
-            // mark layer as anchor if slice is belt and flag set
-            layerout.anchor = slice.belt && slice.belt.anchor;
-            // detect extruder change and print purge block
+            layerout.anchor = slice.belt && slice.belt.anchor; // Belt anchor flag
+
+            // PURGE TOWER: Generate purge block on extruder change
+            // Only purge when switching to a different extruder
             if (!lastOut || lastOut.extruder !== slice.extruder) {
                 if (slice.extruder >= 0)
                 printPoint = purge(slice.extruder, track, layerout, printPoint, slice.z, undefined, offset);
             }
             let wtb = slice.widget.track.box;
-            let beltStart = slice.belt && slice.belt.touch;// && (widgets.length === 1);
-            // output seek to start point between mesh slices if previous data
+            let beltStart = slice.belt && slice.belt.touch;
+
+            // PRINT THIS SLICE: Generate all toolpaths (shells, infill, etc.)
             print.setType('layer');
             print.setWidget(lastWidget);
             printPoint = slicePrintPath(
                 print,
                 slice,
+                // Belt prints start from far corner, others from current position
                 beltStart ? newPoint(-5000, 5000, 0) : printPoint.sub(offset),
                 offset,
                 layerout,
                 {
                     first: slice.index === 0,
                     onBelt: beltStart,
-                    params, // range parameters
+                    params, // layer-specific parameter overrides
                     pretract: (wipeDist) => {
+                        // Optional wipe move before retraction
                         if (!(lastLayer && lastLayer.length)) {
                             return;
                         }
@@ -610,32 +710,42 @@ export async function fdm_prepare(widgets, settings, update) {
                     zmax,
                 }
             );
+
+            // Update print time statistics
             layerout.print_time = printPoint.layer_time;
             print.total_time += printPoint.layer_time;
             print.setWidget(null);
 
+            // Update state for next iteration
             lastOut = slice;
             lastExt = lastOut.extruder;
             lastPoly = slice.lastPoly;
             lastLayer = layerout;
 
+            // Optional retraction after every layer
             if (params.outputLayerRetract && layerout.length) {
                 layerout.last().retract = true;
             }
         }
+        // End of inner loop - all slices in this layer have been processed
 
-        // clear slice.prep so it can be re-previewed in a different mode
+        /**
+         * POST-PROCESSING: Layer finalization steps
+         */
+
+        // Clear prep flags to allow re-preview in different modes
+        // Only clear real widget slices, not synthesized support widgets
         for (let widget of widgets) {
-            // skip synthesized support widget(s)
             if (!widget.mesh) {
-                continue;
+                continue; // Skip synthesized support widgets
             }
             for (let slice of widget.slices) {
                 slice.prep = false;
             }
         }
 
-        // draft shield
+        // DRAFT SHIELD: Print perimeter around all objects (layers 1+)
+        // Helps contain heat and protects from drafts for better print quality
         if (layerno > 0 && shield && outputDraftShield) {
             print.setType('shield');
             shield = POLY.setZ(shield.clone(), printPoint.z);
@@ -644,7 +754,6 @@ export async function fdm_prepare(widgets, settings, update) {
                 return print.polyPrintPath(poly, startPoint, preout, {
                     onfirst: function(point) {
                         if (preout.length && point.distTo2D(startPoint) > 2) {
-                            // retract between part and shield
                             preout.last().retract = true;
                         }
                     }
@@ -654,27 +763,29 @@ export async function fdm_prepare(widgets, settings, update) {
             layerout.appendAll(preout);
         }
 
-        // if a declared extruder isn't used in a layer, use selected
-        // extruder to fill the relevant purge blocks for later support
+        // FILL UNUSED PURGE BLOCKS: Maintain structural integrity of purge tower
+        // Any purge blocks not used for real tool changes get filled with sparse
+        // infill using the current extruder. This keeps the tower solid for support.
         if (lastOut) track.slice().forEach(ext => {
+            // using=lastExt means "fill with current tool" (sparse fill mode)
             printPoint = purge(ext.extruder, track, layerout, printPoint, lastOut.z, lastExt, lastOffset);
         });
 
-        // if layer produced output, append to output array
+        // Append completed layer to output array
         if (layerout.length) {
             output.append(layerout);
         }
 
-        // retract after last layer
+        // Final retraction after last layer of print
         if (layerno === cake.length - 1 && layerout.length) {
             layerout.last().retract = true;
         }
 
-        // notify progress
+        // Update progress callback (prepare phase is 0-50%)
         layerout.layer = layerno++;
         update((layerno / cake.length) * 0.5, "prepare");
 
-        // clear for next layer
+        // Reset for next layer
         layerout = [];
         layerout.height = sliceHeight;
     }
