@@ -1045,6 +1045,7 @@ export function slicePost(settings, onupdate) {
         .sort((a,b) => {
             return a.slices[0].z - b.slices[0].z
         });
+
     // assign grid_id which can be embedded in gcode and
     // used by the controller to cancel objects during print
     let { bounds } = settings;
@@ -1058,6 +1059,7 @@ export function slicePost(settings, onupdate) {
         };
         widget.track.grid_id = tl.x * 100 + tl.y;
     }
+
     // count extruders used
     let ext = [];
     for (let w of widgets) {
@@ -1068,15 +1070,16 @@ export function slicePost(settings, onupdate) {
             }
         }
     }
+
     // sort widgets by first slice Z
     widgets.sort((a,b) => {
         return a.slices[0].z - b.slices[0].z;
     });
-    // give first widget a pass since it should have the anchor
-    widgets.shift();
+
     // remove anchor slices from other widgets (only with multi-material)
     if (ext.length > 1) {
-        for (let w of widgets) {
+        // give first widget a pass since it should have the anchor
+        for (let w of widgets.slice(1)) {
             w.slices = w.slices.filter(s => s.index >= 0);
         }
     }

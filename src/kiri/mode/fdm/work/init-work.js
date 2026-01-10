@@ -4,7 +4,6 @@ import { util } from '../../../../geo/base.js';
 import { sliceOne, slicePost } from './slice.js';
 import { fdm_prepare } from './prepare.js';
 import { fdm_export } from './export.js';
-import { codec } from '../../../core/codec.js';
 
 // noz = nozzle diameter
 // fil = filament diameter

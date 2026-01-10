@@ -9,6 +9,7 @@ import { newPolygon, Polygon } from '../../../../geo/polygon.js';
 import { polygons as POLY, fillArea } from '../../../../geo/polygons.js';
 import { newPrint } from '../../../core/print.js';
 import { newSlice } from '../../../core/slice.js';
+import { newWidget } from '../../../core/widget.js';
 import { render } from '../../../core/render.js';
 import { getRangeParameters } from '../core/params.js';
 
@@ -25,7 +26,7 @@ export async function fdm_prepare(widgets, settings, update) {
     widgets = widgets.filter(w => !w.track.ignore && !w.meta.disabled);
 
     let { device, process, controller, bounds } = settings,
-        { sliceHeight, firstSliceHeight, firstLayerRate } = process,
+        { sliceHeight, firstSliceHeight, firstLayerRate, sliceSupportNozzle } = process,
         { outputSeekrate, outputDraftShield, outputPurgeTower } = process,
         { bedWidth, bedDepth } = device,
         { lineType } = controller,
@@ -84,11 +85,6 @@ export async function fdm_prepare(widgets, settings, update) {
                 if (slice.tops)
                 slice.tops.forEach(function(top) {
                     tops.push(top.poly.clone());
-                });
-                // collect support polygons
-                if (slice.supports)
-                slice.supports.forEach((support) => {
-                    tops.push(support.clone());
                 });
             }
             if (outputDraftShield) {
@@ -205,6 +201,7 @@ export async function fdm_prepare(widgets, settings, update) {
                 preout.last().retract = true;
             }
         }
+
         // recompute bounds for purge block offsets
         let bbounds = newBounds();
         brims.forEach(brim => {
@@ -224,12 +221,16 @@ export async function fdm_prepare(widgets, settings, update) {
 
     // find max layers (for updates)
     // generate list of used extruders for purge blocks
-    for (let widget of widgets) {
-        let extruder = widget.anno.extruder ?? 0;
+    for (let extruder of widgets.map(w => w.anno.extruder ?? 0)) {
         if (!extruders[extruder]) {
             extruders[extruder] = {};
             extcount++;
         }
+    }
+    // add support tool, if not already used
+    if (!extruders[sliceSupportNozzle]) {
+        extruders[sliceSupportNozzle] = {};
+        extcount++;
     }
 
     // determine size/location of purge blocks
@@ -295,9 +296,17 @@ export async function fdm_prepare(widgets, settings, update) {
     mkblok(blokw, blokh);
 
     // allocate tower space for extruders-1 locations
+    // for example, with colors, you only to swap once
+    // on each layer then start the next layer on the
+    // currently selected tool.
     let towers = extruders.slice(1).map((ext,i) => {
         return ext ? mkrec(i) : ext;
     });
+
+    // console.log({
+    //     extruders: extruders.slice(),
+    //     towers: towers.slice()
+    // });
 
     function linesToPoly(points) {
         let poly = newPolygon().setOpen();
@@ -413,14 +422,31 @@ export async function fdm_prepare(widgets, settings, update) {
         widget.offset = offset;
     }
 
+    // for any widget with supports, create a new widget for them
+    for (let widget of widgets.slice()) {
+        let slices = [];
+        for (let slice of widget.slices) {
+            if (slice.supports) {
+                let nslice = newSlice(slice.z);
+                nslice.index = slice.index;
+                nslice.supports = slice.supports;
+                nslice.extruder = sliceSupportNozzle;
+                slices.push(nslice);
+            }
+        }
+        if (slices.length) {
+            let nwid = newWidget(null, widget.group);
+            nwid.support = true;
+            nwid.slices = slices;
+            nwid.offset = widget.offset;
+            widgets.push(nwid);
+        }
+    }
+
     // create shuffled slice cake by z offset (slice.z + offset.z)
     let cake = [];
     let zrec = {};
     for (let widget of widgets) {
-        // skip synthesized support widget(s)
-        if (!widget.mesh) {
-            continue;
-        }
         for (let slice of widget.slices) {
             slice.widget = widget;
             let z = (slice.z + widget.offset.z).round(2);
@@ -1446,7 +1472,7 @@ function slicePrintPath(print, slice, startPoint, offset, output, opt = {}) {
     if (slice.tops) {
         out.appendAll(slice.tops);
     }
-    if (slice.supports) {
+    if (slice.supports && slice.widget.support) {
         out.appendAll(slice.supports);
     }
 
