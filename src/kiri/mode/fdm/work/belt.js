@@ -48,7 +48,8 @@ const BELT = {
  * @returns {void} Modifies slices array in place
  */
 export function generateBeltAnchor({ slices, widget, process, lineWidth, sliceHeight, sliceHeightBase, extruder }) {
-    let { cosf, slope } = widget.belt;
+    let { belt } = widget;
+    let { cosf, slope } = belt;
 
     // find adjusted zero point from slices
     let smin = Infinity;
@@ -99,6 +100,12 @@ export function generateBeltAnchor({ slices, widget, process, lineWidth, sliceHe
     let adds = [];
     let step = sliceHeight;
     let anchorlen = (process.beltAnchor || process.firstLayerBeltLead) * cosf;
+
+    // offset used in support generation
+    belt.anchor = {
+        added: adds,
+        len: anchorlen
+    };
 
     while (anchorlen && start && anchorlen >= sliceHeight) {
         let addto = start.down;

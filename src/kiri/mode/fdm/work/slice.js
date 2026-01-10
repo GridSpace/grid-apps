@@ -481,7 +481,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         let { belt } = widget;
         // apply belt transformations, if needed
         if (belt && paint) {
-            let { dy, angle } = belt;
+            let { anchor, angle, dy, slope } = belt;
             // make a copy we can modify
             paint = structuredClone(paint);
             for (let rec of paint) {
@@ -490,6 +490,10 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 let np = newPoint(point.y + dy, point.z, 0).rotate(angle * (Math.PI/180));
                 point.y = np.x;
                 point.z = np.y;
+                if (anchor) {
+                    point.y += anchor.len;
+                    point.z += anchor.len;
+                }
             }
         }
         // convert paint points to circles on matching slices
@@ -837,10 +841,6 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             slice.widget = widget;
         }
 
-        // support generation using either
-        // enclosed shadow or manual painted supports
-        await processSupports();
-
         // process solid layers (top/bottom)
         await processSolidLayers();
 
@@ -874,6 +874,10 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 smin
             });
         }
+
+        // support generation using either
+        // enclosed shadow or manual painted supports
+        await processSupports();
 
         // calculations only relevant when solid layers are used
         // layer boolean diffs need to be computed to find flat areas to fill
