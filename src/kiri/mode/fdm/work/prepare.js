@@ -238,6 +238,21 @@ export async function fdm_prepare(widgets, settings, update) {
     let blokh = blokw;
     let blokpos, walkpos, blok;
 
+    /**
+     * mkblok() - Calculate purge tower block positions and layout
+     *
+     * Sets up the geometric layout for purge tower blocks. Each extruder swap requires
+     * a purge block, so we create (extcount-1) blocks arranged either horizontally or
+     * vertically depending on the print bed orientation.
+     *
+     * @param {number} w - width of each purge block
+     * @param {number} h - height of each purge block
+     *
+     * Sets module-level variables:
+     * - blokpos: starting position {x,y} for first block
+     * - walkpos: step vector {x,y} between blocks
+     * - blok: dimensions {x,y} of each block
+     */
     function mkblok(w,h) {
         let count = extcount - 1;
         let gap = nozzle;
@@ -271,6 +286,23 @@ export async function fdm_prepare(widgets, settings, update) {
         }
     }
 
+    /**
+     * mkrec() - Create a purge tower block record for a specific extruder
+     *
+     * Generates the geometry for one purge block including outline, dense fill,
+     * and sparse fill patterns. Position is calculated based on the block index.
+     *
+     * @param {number} i - extruder index in device.extruders array (NOT sparse extruders index)
+     * @param {number} angle - fill pattern angle in degrees (default 45)
+     * @param {number} thin - spacing multiplier for sparse fill (default 6)
+     * @returns {Object} purge block record with:
+     *   - extruder: extruder index
+     *   - diameter: nozzle diameter
+     *   - rect: outer rectangle polygon
+     *   - full: dense fill pattern for first layer or tool changes
+     *   - sparse: sparse fill pattern for maintaining tower structure
+     *   - pause: position for any pause commands
+     */
     function mkrec(i, angle = 45, thin = 6) {
         let exi = device.extruders[i],
             noz = exi.extNozzle,
@@ -296,11 +328,19 @@ export async function fdm_prepare(widgets, settings, update) {
     mkblok(blokw, blokh);
 
     // allocate tower space for extruders-1 locations
-    // for example, with colors, you only to swap once
+    // for example, with colors, you only need to swap once
     // on each layer then start the next layer on the
     // currently selected tool.
-    let towers = extruders.slice(1).map((ext,i) => {
-        return ext ? mkrec(i) : ext;
+    // IMPORTANT: must use actual extruder indices, not array indices,
+    // to handle non-contiguous tool usage (e.g., tool 0 + tool 2)
+    let usedExtruderIndices = [];
+    for (let i = 0; i < extruders.length; i++) {
+        if (extruders[i]) {
+            usedExtruderIndices.push(i);
+        }
+    }
+    let towers = usedExtruderIndices.slice(1).map((extruderIndex, blockIndex) => {
+        return mkrec(extruderIndex, 45 + blockIndex * 90);
     });
 
     // console.log({
