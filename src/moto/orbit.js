@@ -467,14 +467,14 @@ class Orbit extends EventDispatcher {
             if (event.wheelDelta !== undefined) {
                 // Chrome/Safari wheelDelta: scroll up = +120, scroll down = -120
                 // Negate to match deltaY convention
-                delta = -event.wheelDelta;
+                delta = event.wheelDelta;
             } else if (event.detail !== undefined) {
                 // Old Firefox DOMMouseScroll detail: scroll up = -3, scroll down = +3
-                delta = event.detail * 40; // Normalize to pixel values
+                delta = -event.detail * 40; // Normalize to pixel values
             } else if (event.deltaY !== undefined) {
                 // Modern browsers deltaY: scroll up = negative, scroll down = positive
                 // Already matches our convention
-                delta = event.deltaY;
+                delta = -event.deltaY;
                 // Firefox's deltaMode indicates the unit of deltaY
                 // DOM_DELTA_PIXEL (0x00) - pixels
                 // DOM_DELTA_LINE (0x01) - lines (default for Firefox, ~3 units per notch)
