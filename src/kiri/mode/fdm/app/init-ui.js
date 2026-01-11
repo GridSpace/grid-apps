@@ -305,7 +305,7 @@ function supportStart({ remove } = { remove: false }) {
     // Get belt configuration for paint constraint
     const settings = api.conf.get();
     const isBelt = settings.device.bedBelt;
-    const beltAngle = isBelt ? (settings.process.sliceAngle || 45) : 0;
+    const beltAngle = isBelt ? (settings.process.sliceAngle || 45) * Math.PI / 180 : 0;
     const supportAngle = settings.process.sliceSupportAngle || 45;
 
     api.widgets.each(w => {
@@ -326,8 +326,8 @@ function supportStart({ remove } = { remove: false }) {
         }
         addPaintOverlayTexture(mat, w.anno.paint, new THREE.Color(paintColor), {
             beltMode: isBelt,
-            beltAngle: beltAngle * Math.PI / 180,  // Convert to radians
-            supportAngle: settings.process.sliceSupportAngle || 45
+            beltAngle,
+            supportAngle
         });
     })
     api.space.update();
