@@ -354,7 +354,7 @@ class Orbit extends EventDispatcher {
 
         function getZoomScale(factor = 1) {
             // Use slower zoom for orthographic mode
-            let base = mode === MODE.ORTHOGRAPHIC ? 0.98 : 0.95;
+            let base = mode === MODE.ORTHOGRAPHIC ? 0.98 : 0.97;
             return Math.pow(base, factor);
         }
 
@@ -461,7 +461,31 @@ class Orbit extends EventDispatcher {
 
             slider(null);
 
-            let delta = -(event.deltaY || event.wheelDelta || event.detail || 0);
+            // Normalize delta across browsers
+            let delta = 0;
+            if (event.wheelDelta !== undefined) {
+                // Chrome/Safari use wheelDelta (positive = scroll up, zoom out)
+                delta = -event.wheelDelta;
+            } else if (event.detail !== undefined) {
+                // Old Firefox DOMMouseScroll uses detail
+                delta = event.detail * 40; // Normalize to pixel values
+            } else if (event.deltaY !== undefined) {
+                // Modern browsers (including Firefox) use deltaY
+                // Firefox can send deltas in different units (pixels, lines, pages)
+                delta = event.deltaY;
+                // Firefox's deltaMode indicates the unit of deltaY
+                // DOM_DELTA_PIXEL (0x00) - pixels
+                // DOM_DELTA_LINE (0x01) - lines (default for Firefox, ~3 units per notch)
+                // DOM_DELTA_PAGE (0x02) - pages
+                if (event.deltaMode === 1) {
+                    // LINE mode: Firefox typically sends values around 3 per scroll notch
+                    // Multiply by a smaller factor to make it less sensitive
+                    delta = delta * 10;
+                } else if (event.deltaMode === 2) {
+                    // PAGE mode: very large deltas
+                    delta = delta * 120;
+                }
+            }
 
             if (delta === 0) return;
 
@@ -657,8 +681,9 @@ class Orbit extends EventDispatcher {
 
         domEl.addEventListener('contextmenu', function (event) { event.preventDefault() }, false);
         domEl.addEventListener('mousedown', onMouseDown, false);
-        domEl.addEventListener('mousewheel', onMouseWheel, false);
-        domEl.addEventListener('DOMMouseScroll', onMouseWheel, false); // firefox
+        domEl.addEventListener('wheel', onMouseWheel, false); // Modern standard (Chrome, Safari, Firefox)
+        domEl.addEventListener('mousewheel', onMouseWheel, false); // Legacy Chrome/Safari
+        domEl.addEventListener('DOMMouseScroll', onMouseWheel, false); // Legacy Firefox
         domEl.addEventListener('touchstart', touchstart, false);
         domEl.addEventListener('touchend', touchend, false);
         domEl.addEventListener('touchmove', touchmove, false);
