@@ -570,10 +570,10 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                     .centerRectangle(newPoint(0, 0, slice.z), boundsx, boundsy)
                     .move({ x: 0, y: -boundsy / 2 + skewy, z: 0 });
                 shadow = POLY.trimTo(shadow, [ clip ]);
-                // slice.output().setLayer("belt clip", 0xffff00).addPolys([ clip ]);
+                if (devel) slice.output().setLayer("belt clip", 0xffff00).addPolys([ clip ]);
             }
             slice.supports = shadow;
-            slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
+            if (devel) slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
             trackupdate((++count/length), 0.10, 0.15, "support");
         }
     }
@@ -691,6 +691,14 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             await tracker(promises, (i, t) => {
                 trackupdate(i / t, 0.55, 0.7);
             });
+        }
+        // filter out tiny fill points less than nozzle diameter
+        // if (false)
+        for (let slice of slices) {
+            for (let top of slice.tops) {
+                if (top.fill_sparse)
+                top.fill_sparse = top.fill_sparse.filter(p => p.perimeter() >= lineWidth);
+            }
         }
         // back-fill slices marked for infill cloning
         for (let slice of slices) {
