@@ -462,16 +462,18 @@ class Orbit extends EventDispatcher {
             slider(null);
 
             // Normalize delta across browsers
+            // Goal: scroll up = negative delta = zoom in, scroll down = positive delta = zoom out
             let delta = 0;
             if (event.wheelDelta !== undefined) {
-                // Chrome/Safari use wheelDelta (positive = scroll up, zoom out)
+                // Chrome/Safari wheelDelta: scroll up = +120, scroll down = -120
+                // Negate to match deltaY convention
                 delta = -event.wheelDelta;
             } else if (event.detail !== undefined) {
-                // Old Firefox DOMMouseScroll uses detail
+                // Old Firefox DOMMouseScroll detail: scroll up = -3, scroll down = +3
                 delta = event.detail * 40; // Normalize to pixel values
             } else if (event.deltaY !== undefined) {
-                // Modern browsers (including Firefox) use deltaY
-                // Firefox can send deltas in different units (pixels, lines, pages)
+                // Modern browsers deltaY: scroll up = negative, scroll down = positive
+                // Already matches our convention
                 delta = event.deltaY;
                 // Firefox's deltaMode indicates the unit of deltaY
                 // DOM_DELTA_PIXEL (0x00) - pixels
