@@ -61,6 +61,7 @@ const POLYS = {
     offset,
     outer,
     points,
+    print,
     rayIntersect,
     reconnect,
     renest,
@@ -71,6 +72,7 @@ const POLYS = {
     toClipper,
     trimTo,
     union,
+    unionFaces,
     xor,
 };
 
@@ -209,6 +211,15 @@ export function points(polys) {
  */
 export function renest(polygons, deep) {
     return nest(flatten(polygons, [], true), deep);
+}
+
+export function print(polys, pad = '  ', buf) {
+    buf = buf || [];
+    for (let poly of polys) {
+        buf.push(`${pad} - ${poly.points.length}`);
+        if (poly.inner) print(poly.inner, pad + pad, buf);
+    }
+    return buf;
 }
 
 /**
@@ -480,11 +491,87 @@ export function union(polys, minarea, all, opt = {}) {
     }
 
     for (i=0; i<out.length; i++) {
-        if (out[i]) uset.push(out[i]);
+        if (out[i]) {
+            if (!minarea || out[i].area() >= minarea) {
+                uset.push(out[i]);
+            }
+        }
     }
 
     opt.changes = length(uset) - lpre;
     return uset;
+}
+
+/**
+ * Recursively process triangle soup from mesh by bucketing them
+ * by grid cell locality with max depth. This minimizes the number
+ * of progressive small unions. Results in a few unions of larger polys.
+ * Optimized for unioning 1000+ triangular faces from mesh slicing.
+ *
+ * @param {Polygon[]} polys - array of polygons (typically triangular faces)
+ * @param {number} depth - recursion depth (internal, default 0)
+ * @returns {Polygon[]} unioned polygons
+ */
+export function unionFaces(polys, depth = 0) {
+    if (depth < 5 && polys.length > 1000) {
+        // Calculate bounding box of all triangles
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        for (let tri of polys) {
+            for (let pt of tri.points) {
+                minX = Math.min(minX, pt.x);
+                maxX = Math.max(maxX, pt.x);
+                minY = Math.min(minY, pt.y);
+                maxY = Math.max(maxY, pt.y);
+            }
+        }
+
+        // Create NxN grid
+        const gridSize = 3;
+        const cellWidth = (maxX - minX) / gridSize;
+        const cellHeight = (maxY - minY) / gridSize;
+
+        // Partition polygons into grid cells
+        const grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0).map(() => []));
+
+        for (let i = 0; i < polys.length; i++) {
+            const poly = polys[i];
+            // Use polygon centroid to assign to cell
+            const bounds = poly.bounds;
+            const cx = (bounds.minx + bounds.maxx) / 2;
+            const cy = (bounds.miny + bounds.maxy) / 2;
+
+            // Clamp to grid bounds
+            let gx = Math.floor((cx - minX) / cellWidth);
+            let gy = Math.floor((cy - minY) / cellHeight);
+            gx = Math.max(0, Math.min(gridSize - 1, gx));
+            gy = Math.max(0, Math.min(gridSize - 1, gy));
+
+            grid[gx][gy].push(poly);
+        }
+
+        // Union within each cell
+        const cellResults = [];
+        let totalInCell = 0;
+        for (let gx = 0; gx < gridSize; gx++) {
+            for (let gy = 0; gy < gridSize; gy++) {
+                const cellPolys = grid[gx][gy];
+                if (cellPolys.length > 0) {
+                    totalInCell += cellPolys.length;
+                    const cellUnion = unionFaces(cellPolys, depth + 1);
+                    cellResults.push(...cellUnion);
+                }
+            }
+        }
+
+        // Union the cell results
+        polys = unionFaces(cellResults, depth + 1);
+
+    } else {
+        polys = union(polys, 0, true, { wasm: false });
+    }
+
+    return polys;
 }
 
 /**

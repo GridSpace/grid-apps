@@ -4,58 +4,119 @@ description: Keyboard Shortcuts and Mouse Controls
 
 # Controls
 
-| Key              | Action                                    | Notes                                   |
-| ---------------- | ----------------------------------------- | --------------------------------------- |
-| e                | Device Dialog                             | Select and customize devices            |
-| o                | CNC Tool Dialog                           | CNC mode only                           |
-| c                | Grid.Local Dialog                         | Find GridBot devices on your network    |
-| q                | Preference Dialog                         | Change application behaviors            |
-| l                | Work Profile Dialog                       | Load, Save, Rename work profiles        |
-|                  |                                           |                                         |
-| a                | Arrange                                   | Switch to layout view from other views  |
-|                  |                                           | or perform an automatic layout when     |
-|                  |                                           | already in layout view                  |
-| s                | Slice Object                              | Slice workspace objects                 |
-| p                | Preview Paths                             | Do route planning for sliced objects    |
-| g                | CNC Animation                             | Enter milling animation mode            |
-| x                | Export Paths as GCode, SVG, DXF           | Produce downloadable files              |
-|                  |                                           |                                         |
-| i                | File Import Dialog                        |                                         |
-| r                | Recent Files Dialog                       |                                         |
-|                  |                                           |                                         |
-| h                | Home View                                 | Default 45 degree view of objects       |
-| t                | Top View                                  | Top-down view of objects                |
-| f                | Front View                                | Direct side-view (front)                |
-| z                | Reset View                                | Default zoom and Home                   |
-| < >              | Cycle Side Views                          | Front, Right, Back, Left                |
-| v                | Focus on Selection (arrange mode)         | Camera points to object center          |
-| v                | Toggle Single Slice View (preview mode)   | Toggle single vs range of slices        |
-|                  |                                           |                                         |
-| \~,1-9,0         | Select layer in 10% increments            | Slice and Preview modes                 |
-|                  |                                           |                                         |
-| d                | Duplicate Selected Objects                | Create a copy of selected objects       |
-| m                | Mirror Selected Objects                   | Mirror vertices of selected objects     |
-| \[delete]        | Delete Selected Objects                   | Remove selected object from workspace   |
-| \[arrow]         | Rotate 90 degrees                         | Rotate selected object                  |
-| \[shift + arrow] | Rotate 5 degrees                          | Rotate selected object                  |
-| \[ctrl + a]      | Select All Objects                        | Select all objects                      |
-|                  |                                           |                                         |
-| \[shit + click]  | Toggle Selection                          | Select or Deselect a single object      |
-| \[shift + wheel] | Cycle through layers (preview mode)       | Use mouse wheel as range slider         |
-| \[meta + drag]   | Pan View                                  | Move focus of camera                    |
-| \[right + drag]  | Pan View                                  |                                         |
-| \[left + drag]   | Rotate                                    | Move camera around a focal point        |
-| \[mouse wheel]   | Zoom                                      | Move camera closer / farther from focus |
-| \[middle + drag] | Zoom                                      |                                         |
-|                  |                                           |                                         |
-| \[ctrl + click]  | Align face of selected object to platform | Rotate object face toward work surface  |
-| \[meta + click]  | Align face of selected object to platform |                                         |
-|                  |                                           |                                         |
-| \[shift + z]     | Reset all preferences to stock            | Reload page afterward                   |
-|                  |                                           |                                         |
-| **Mouse**        | **FDM Support Controls**                  | **Version Notes**                       |
-| \[left click]    | Toggle add / remove column                |                                         |
-| \[ctrl + drag]   | Erase support columns                     | 2.7+                                    |
-| \[cmd + drag]    | Erase support columns                     | 2.7+                                    |
-| \[opt + drag]    | Draw on support columns                   | 2.7+                                    |
-| \[alt + drag]    | Draw on support columns                   | 2.7+                                    |
+## Layer Navigation
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| ` (backtick) | Show layer 0 | First layer |
+| 1-9 | Show layers at 10-90% | In 10% increments |
+| 0 | Show all layers (100%) | Show maximum layer |
+| Meta+Up | Next layer | Navigate up one layer |
+| Meta+Down | Previous layer | Navigate down one layer |
+| [shift + wheel] | Cycle through layers | Preview mode only |
+| v | Toggle single slice view | Preview mode: toggle single vs range |
+
+## View Navigation
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| h | Home View | Default 45° view |
+| t | Top View | Top-down view |
+| f | Front View | Direct front side-view |
+| b | Back View | Direct back side-view |
+| z | Reset View | Default zoom and home |
+| F | Fit View to Contents | Zoom to fit all objects |
+| `<` | Previous Side View | Cycle: left → back → right → front |
+| `>` | Next Side View | Cycle: front → right → back → left |
+| v | Focus on Selection | Arrange mode: center camera on object |
+
+## File Operations
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| i | File Import Dialog | Import 3D models |
+| r | Recent Files Dialog | Open recently used files |
+
+## Workflow Actions
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| s / S | Slice Object | Process workspace objects |
+| p / P | Preview Paths | Route planning (hidden in SLA mode) |
+| g | CNC Animation | Enter milling animation mode (CNC only) |
+| x / X | Export | Export as GCode, SVG, or DXF |
+| a | Arrange | Switch to ARRANGE view, or auto-layout if already in ARRANGE |
+
+## Object Manipulation
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| d | Duplicate Selected | Create copy of selected objects |
+| m | Mirror Selected | Mirror vertices of selected objects |
+| O | Manual Rotation Input | Enter rotation values manually |
+| [delete] | Delete Selected | Remove selected objects |
+| [ctrl + a] / [cmd + a] | Select All | Select all objects in workspace |
+| [shift + click] | Toggle Selection | Select or deselect individual object |
+
+## Rotation & Movement
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| [arrow] | Rotate 90° | Arrow keys rotate on respective axes |
+| [shift + arrow] | Rotate 5° | Fine rotation control |
+| [alt + arrow] | Move 5mm | Move object in X/Y plane |
+
+## Rendering Modes
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| w | Toggle Ghost Rendering | Cycle between solid and semi-transparent |
+| W | Toggle Wireframe | Cycle between solid and wireframe |
+| Ctrl+W / Cmd+W | Toggle Edge Rendering | Show/hide model edges |
+
+## Settings & Dialogs
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| e | Device Dialog | Select and customize devices |
+| o | Tool Dialog | CNC mode only |
+| q | Preferences Dialog | Change application behaviors |
+| l | Work Profile Dialog | Load, save, rename work profiles |
+| ? | Help Dialog | Show help and documentation |
+| C | Refresh Catalog | Reload device catalog |
+
+## Workspace Management
+
+| Key | Action | Notes |
+| --- | ------ | ----- |
+| Ctrl+S | Save Settings | Save current settings |
+| Cmd+S | Save Workspace | Save workspace state (macOS) |
+| Cmd+L | Restore Workspace | Restore saved workspace (macOS) |
+| Z | Reset All Preferences | Clear all settings (requires confirmation) |
+
+## Mouse Controls
+
+### General Navigation
+
+| Input | Action | Notes |
+| ----- | ------ | ----- |
+| [left + drag] | Rotate View | Orbit camera around focus point |
+| [right + drag] | Pan View | Move camera focus |
+| [meta + drag] | Pan View | Alternative pan (macOS) |
+| [middle + drag] | Zoom | Mouse wheel click + drag |
+| [mouse wheel] | Zoom | Scroll to zoom in/out |
+
+### Object Interaction
+
+| Input | Action | Notes |
+| ----- | ------ | ----- |
+| [ctrl + click] | Lay Flat | Rotate clicked face toward platform |
+| [meta + click] | Lay Flat | Alternative (macOS) |
+
+### FDM Support Mode
+
+| Input | Action | Notes |
+| ----- | ------ | ----- |
+| [left click] | Toggle Support Column | Add or remove support column |
+| [ctrl + drag] / [cmd + drag] | Erase Columns | Remove support columns |
+| [alt + drag] / [opt + drag] | Draw Columns | Add support columns |

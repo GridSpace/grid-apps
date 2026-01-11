@@ -1,6 +1,76 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
+import { THREE } from '../ext/three.js';
+
 const CDH = 'Content-Disposition';
+const { Vector3, computeFaceNormal } = THREE;
+
+/**
+ * Encode vertex array(s) to binary STL format
+ * Automatically computes normals from triangle vertices
+ * @param {Array} recs - array of {file: string, varr: Float32Array} records
+ * @param {String} header - optional header text (max 80 chars)
+ * @returns {Uint8Array} binary STL data
+ */
+export function encode(recs, header = '') {
+    // Calculate total vertices
+    let vtot = 0;
+    for (let rec of recs) {
+        vtot += (rec.varr.length / 3);
+    }
+
+    // Create STL buffer: 80 byte header + 4 byte count + (50 bytes per triangle)
+    let stl = new Uint8Array(80 + 4 + vtot/3 * 50);
+    let dat = new DataView(stl.buffer);
+    let pos = 84;
+
+    // Write header text (first 80 bytes)
+    if (header) {
+        header.substring(0, 80).split('').forEach((c, i) => {
+            dat.setUint8(i, c.charCodeAt(0));
+        });
+    }
+
+    // Write triangle count at byte 80
+    dat.setInt32(80, vtot/3, true);
+
+    // Write triangles
+    for (let rec of recs) {
+        let { varr } = rec;
+        for (let i = 0, l = varr.length; i < l;) {
+            // Read three vertices
+            let p0 = new Vector3(varr[i++], varr[i++], varr[i++]);
+            let p1 = new Vector3(varr[i++], varr[i++], varr[i++]);
+            let p2 = new Vector3(varr[i++], varr[i++], varr[i++]);
+
+            // Compute face normal
+            let norm = computeFaceNormal(p0, p1, p2);
+
+            // Write normal (3 floats)
+            dat.setFloat32(pos +  0, norm.x, true);
+            dat.setFloat32(pos +  4, norm.y, true);
+            dat.setFloat32(pos +  8, norm.z, true);
+
+            // Write vertices (9 floats)
+            dat.setFloat32(pos + 12, p0.x, true);
+            dat.setFloat32(pos + 16, p0.y, true);
+            dat.setFloat32(pos + 20, p0.z, true);
+            dat.setFloat32(pos + 24, p1.x, true);
+            dat.setFloat32(pos + 28, p1.y, true);
+            dat.setFloat32(pos + 32, p1.z, true);
+            dat.setFloat32(pos + 36, p2.x, true);
+            dat.setFloat32(pos + 40, p2.y, true);
+            dat.setFloat32(pos + 44, p2.z, true);
+
+            // Attribute byte count (2 bytes) - typically 0
+            dat.setUint16(pos + 48, 0, true);
+
+            pos += 50;
+        }
+    }
+
+    return stl;
+}
 
 export class STL {
     constructor() {

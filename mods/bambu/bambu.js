@@ -1,7 +1,5 @@
 self.kiri.load(api => {
 
-    console.log('BAMBU MODULE RUNNING');
-
     const { uc: ui } = api;
     const { $, h } = api.web;
     const defams = ";; DEFINE BAMBU-AMS ";
@@ -1232,7 +1230,7 @@ self.kiri.load(api => {
         if (!bound) {
             return;
         }
-        if (devsel.extras?.bbl && !api.ui.deviceSave.disabled) {
+        if (devsel.extras?.bbl && !api.ui.devices.save.disabled) {
             device = devsel;
             printers = devsel.extras.bbl;
             bound.bblman.classList.remove('hide');
@@ -1255,7 +1253,7 @@ self.kiri.load(api => {
     }
 
     function prep_export(gen3mf, gcode, info, settings) {
-        if (!settings.device.extras?.bbl || api.ui.deviceSave.disabled) {
+        if (!settings.device.extras?.bbl || api.ui.devices.save.disabled) {
             $('bambu-output').style.display = 'none';
             return;
         }
@@ -1327,4 +1325,4 @@ self.kiri.load(api => {
     setInterval(monitor_keepalive, 5000);
 
     let bblapi = api.bambu = { send, prep_export };
-});
+}, 'Bambu');

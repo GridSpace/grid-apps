@@ -5,6 +5,28 @@
 import { util } from '../geo/base.js';
 
 /**
+ * Export vertex array(s) to OBJ format string
+ * @param {Array} recs - array of {file: string, varr: Float32Array} records
+ * @param {String} header - optional header comment
+ * @returns {String} OBJ format text
+ */
+export function encode(recs, header = '# Generated @ https://grid.space') {
+    let p = 1;
+    let obj = [header];
+    for (let rec of recs) {
+        let { file, varr } = rec;
+        obj.push(`g ${file || 'unnamed'}`);
+        for (let i=0; i<varr.length; p += 3) {
+            obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
+            obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
+            obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
+            obj.push(`f ${p} ${p+1} ${p+2}`);
+        }
+    }
+    return obj.join('\n');
+}
+
+/**
  * @param {String} text
  * @returns {Array} vertex face array
  */

@@ -380,7 +380,7 @@ export async function sliceZ(z, points, options = {}) {
 
     let rval = { z, lines };
     if (groupFn) {
-        let groups = groupFn(lines, z, options);
+        let groups = groupFn(lines, options);
         if (options.xor) {
             groups = polygons.xor(groups);
         }
@@ -448,12 +448,12 @@ export async function sliceZ(z, points, options = {}) {
  * interesection.  Eliminate used points and repeat.  Unjoined lines
  * are permitted and handled after all other cases are handled.
  *
- * @param {Line[]} input
- * @param {number} [index]
+ * @param {Line[]} input array of lines (soup)
+ * @param {Object} opt options
  * @returns {Array}
  */
-export function sliceConnect(input, z, opt = {}) {
-    let { debug, both } = opt;
+export function sliceConnect(input, opt = {}) {
+    let { both, debug, dirty, strict } = opt;
 
     if (both) {
         if (debug) console.log('unable to connect lines sliced with "both" option');
@@ -466,8 +466,8 @@ export function sliceConnect(input, z, opt = {}) {
         output = [],
         connect = [],
         emitted = 0,
-        forks = false,
-        frays = false,
+        forks = [], // points which contain forks
+        stubs = [], // dead end points
         bridge = config.bridgeLineGapDistance,
         bridgeMax = config.bridgeLineGapDistanceMax,
         p1, p2, gl;
@@ -480,11 +480,17 @@ export function sliceConnect(input, z, opt = {}) {
         return p;
     }
 
+    // add p2 to p1's group array
     function addConnected(p1, p2) {
+        if (p1 === p2) {
+            // console.log('drop same point connect');
+            return;
+        }
         if (!p1.group) p1.group = [ p2 ];
-        else p1.group.push(p2);
+        else p1.group.addOnce(p2);
     }
 
+    // calculate and store array perimeter length
     function perimeter(array) {
         if (!array.perimeter) {
             array.perimeter = newPolygon().addPoints(array).perimeter();
@@ -492,142 +498,230 @@ export function sliceConnect(input, z, opt = {}) {
         return array.perimeter;
     }
 
-    /**
-     * follow points through connected lines to form candidate output paths
-     */
-    function findNextPath(point, current, branches, depth = 1) {
-        let path = [];
-        if (current) {
-            current.push(path);
+    // calculate and store array area
+    function area(array) {
+        if (!array.area) {
+            array.area = newPolygon().addPoints(array).area();
         }
+        return array.area;
+    }
+
+    function debug_points() {
+        let clone = points.map(p => {
+            let pc = p.clone();
+            pc.group = p.group.slice();
+            return pc;
+        });
+        clone.sort((a,b) => a._key < b._key ? -1 : 1);
+        console.log({ points: clone });
+    }
+
+    /**
+     * construct a new path starting at point (may be a branch)
+     * @param {Point} point current point we're following
+     * @param {Point} base first point for start of all paths
+     * @param {Array} branches collected branches when recursing
+     * @param {Integer} depth recursion depth
+     */
+    function findNextPath(point, { base, branches, depth, path } = { }) {
+        let marked = [];
+
+        base = base ?? point;
+        branches = branches ?? [];
+        depth = depth ?? 1;
+        path = path ?? [];
+
+        branches.push(path);
 
         for (;;) {
-            // prevent point re-use
+            // if the next point is the root, emit closed path
+            if (point === base && (path.length || branches.length > 1)) {
+                if (debug) console.log('term at start');
+                break;
+            }
+
+            // we can't pass thru a used point
+            if (point.del) {
+                if (debug) console.log('term at used point');
+                break;
+            }
+
+            // prevent passing through the same point twice in a search
             point.del = true;
+
             // add point to path
             path.push(point);
 
+            // track marked points so they can be cleared
+            marked.push(point);
+
+            // find unused "next" points
             let links = point.group.filter(p => !p.del);
 
-            // no need to recurse at the start
-            if (links.length === 2 && depth === 1) {
-                point = links[0];
-                // if (debug) console.log({start_mid: point, depth});
-                continue;
-            }
+            if (debug) console.log({ point, depth, path, links: links.length });
 
-            // if fork in the road, follow all paths to their end
-            // and find the longest path
-            let root = !current, nc;
-            if (links.length > 1) {
-                // if (debug) console.log('fork!', {links: links.length, depth, root});
-                if (root) {
-                    current = [ path ];
-                    branches = [ ];
-                }
+            if (links.length === 0) {
+                // for dangling paths, terminate at any junction
+                if (debug) console.log('term at stub or no branch')
+                break;
+            } else if (links.length === 1) {
+                // one choice is easy, keep going
+                point = links[0];
+            } else if (links.length > 1) {
+                // if fork in the road, follow all paths to their end
+                // then find the path representing the shortest perimeter
+                if (debug) console.log('fork!', { base, links: links.length, depth });
                 if (branches.length < 500)
                 for (let p of links) {
-                    branches.push(nc = current.slice());
-                    let rpath = findNextPath(p, nc, branches, depth + 1);
-                    // allow point re-use in other path searches
-                    for (let p of rpath) p.del = false;
+                    findNextPath(p, {
+                        base,
+                        branches,
+                        depth: depth + 1,
+                        marked,
+                        path: path.slice()
+                    });
                 }
-                // flatten and sort in ascending perimeter
-                let flat = branches.map(b => b.flat()).sort((a,b) => {
-                    return perimeter(b) - perimeter(a);
-                });
-                let npath = flat[0];
-                if (debug) console.log({
-                    root,
-                    branches: branches.slice(),
-                    flat, path, npath
-                });
-                if (root) {
-                    for (let p of npath) p.del = true;
-                    return npath;
-                } else {
-                    return path;
-                }
-                // return root ? npath : path;
-            } else {
-                // choose next (unused) point
-                point = links[0];
-            }
-
-            // hit an open end or branch
-            if (!point || point.del) {
-                return path;
+                break;
             }
         }
 
-        throw "invalid state";
+        for (let point of marked) {
+            point.del = false;
+        }
+
+        // we only return data at the start of recursion
+        if (depth === 1) {
+            // flatten and sort branch paths in ascending perimeter
+            branches.sort((a,b) => {
+                return area(b) - area(a);
+            });
+            let npath = branches[0];
+            if (debug) console.log({
+                branches,
+                npath,
+                path,
+                base
+            });
+            for (let p of npath) {
+                p.del = true;
+            }
+            return npath;
+        } else {
+            if (debug) console.log('end branch', { depth });
+        }
     }
 
     // emit a polygon if it can be cleaned and still have 2 or more points
     function emit(poly) {
+        let gap = poly.first().distTo2D(poly.last());
+        if (poly.open && strict && gap > bridgeMax) {
+            if (debug) console.log('drop', gap, poly);
+            return;
+        }
         emitted += poly.length;
-        if (!opt.dirty) poly = poly.clean();
-        if (poly.length > 2 || true) output.push(poly);
-        if (debug) console.log('xray',poly);
+        if (!dirty) poly = poly.clean();
+        if (poly.length > 2) output.push(poly);
+        if (debug) console.log('xray', poly);
     }
 
     // given an array of paths, emit longest to shortest
     // eliminating points from the paths as they are emitted
     // shorter paths any point eliminated are eliminated as candidates.
     function emitPath(path) {
+        // test if last point is in the first point's connected list
         let closed = path[0].group.indexOf(path.peek()) >= 0;
         if (closed && path.length > 2) {
-            if (debug) console.log({ closed: path.length, path });
+            if (debug) console.log('emit', { closed: path.length, path });
             emit(newPolygon().addPoints(path));
-        } else if (path.length > 1) {
+        } else if (path.length > 2) {
             let gap = path[0].distTo2D(path.peek()).round(4);
-            if (debug) console.log({ open: path.length, gap, path });
-            connect.push(path);
+            if (gap < bridgeMax) {
+                connect.push(path);
+            }
+            if (debug) console.log('emit', { open: path.length, gap, path });
+        } else {
+            if (debug) console.log('emit', { drop: path });
         }
+        if (debug) debug_points();
     }
 
     // create point map, unique point list and point group arrays
-    input.forEach(function(line) {
+    for (let line of input) {
         p1 = cachedPoint(line.p1);
         p2 = cachedPoint(line.p2);
         addConnected(p1,p2);
         addConnected(p2,p1);
-    });
+    }
+
+    // exclude dangling points (from lines with the same endpoints)
+    points = points.filter(point => point.group);
 
     // console.log({points, forks: points.filter(p => p.group.length !== 2)});
     // for each unused point, find the longest non-intersecting path
 
     for (let point of points) {
         gl = point.group.length;
-        forks = forks || gl > 2;
-        frays = frays || gl < 2;
+        if (gl > 2) forks.push(point);
+        if (gl < 2) stubs.push(point);
     }
-    if (debug && (forks || frays)) console.log({forks, frays});
+
+    // show found forks and stubs in debug/xray mode
+    if (debug) {
+        console.log({ forks, stubs });
+        debug_points();
+    }
+
+    // for each dangling endpoint, try to find the closest dangling point
+    // in the soup which is less than the max bridging distance.
+    // if a candidate is found, synthesize a line between the endpoint
+    // and the candidate.
+    if (stubs.length) {
+        for (let i=0; i<stubs.length; i++) {
+            let min = { dist: Infinity };
+            let pi = stubs[i];
+            if (!pi) continue;
+            for (let j=1+i; j<stubs.length; j++) {
+                let pj = stubs[j];
+                if (!pj) continue;
+                let dist = pi.distTo2D(pj);
+                if (dist < min.dist) {
+                    min.dist = dist;
+                    min.p = pj;
+                    min.j = j;
+                }
+            }
+            if (min.p && min.dist < bridgeMax) {
+                let pj = min.p;
+                if (debug) console.log({ connect_stubs: [ pi, pj ]});
+                input.push({ p1: pi, p2: pj });
+                addConnected(pi, pj);
+                addConnected(pj, pi);
+                if (pi.group.length > 2) forks.push(pi);
+                if (pj.group.length > 2) forks.push(pj);
+                stubs[i] = undefined;
+                stubs[min.j] = undefined;
+            }
+        }
+        stubs = stubs.filter(p => p);
+        if (debug) console.log({ filter_stubs: stubs });
+    }
 
     // process paths starting with forks
-    if (forks) {
+    // find the path back to the starting point
+    // representing the greatest enclosed area
     if (debug) console.log('process forks');
-    for (let point of points) {
+    for (let point of forks) {
         // must not have been used and be a dangling end
         if (!point.del && point.group.length > 2) {
             let path = findNextPath(point);
             if (path) emitPath(path);
         }
-    } }
+    }
 
-    // process paths with dangling endpoints
-    if (frays) {
-    if (debug) console.log('process frays');
-    for (let point of points) {
-        // must not have been used and be a dangling end
-        if (!point.del && point.group.length === 1) {
-            let path = findNextPath(point);
-            if (path) emitPath(path);
-        }
-    } }
-
-    // process normal paths
-    if (debug) console.log('process mids');
+    // process remaining paths
+    // find the path back to the starting point
+    // representing the greatest enclosed area
+    if (debug) console.log('process norms');
     for (let point of points) {
         // must not have been used and be a dangling end
         if (!point.del) {
@@ -649,7 +743,7 @@ export function sliceConnect(input, z, opt = {}) {
     // progressively connect open polygons within a bridge distance
     let iter = 1000;
     let mingap;
-    if (true) do {
+    if (false) do {
         mingap = Infinity;
 
         outer: for (let i=0; i<connect.length; i++) {

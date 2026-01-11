@@ -1,6 +1,6 @@
 {
     "name": "grid-apps",
-    "version": "4.5.0",
+    "version": "4.6.0",
     "description": "grid.space 3d slicing & modeling tools",
     "author": "Stewart Allen <sa@grid.space>",
     "license": "MIT",
@@ -35,12 +35,12 @@
         "node": ">=22.0.0"
     },
     "dependencies": {
-        "@docusaurus/plugin-client-redirects": "^3.9.0",
+        "@docusaurus/plugin-client-redirects": "3.9.1",
         "@fortawesome/fontawesome-free": "^6.1.1",
         "@gridspace/app-server": "^0.0.20",
         "@gridspace/basic-ftp": "github:gridspace/basic-ftp#v5.0.5-gridspace",
         "@gridspace/net-level-client": "^0.2.3",
-        "@gridspace/raster-path": "^1.0.8",
+        "@gridspace/raster-path": "^1.1.1",
         "@tracespace/parser": "^5.0.0-next.0",
         "@tweenjs/tween.js": "^16.6.0",
         "aedes": "^0.51.3",
@@ -60,6 +60,7 @@
         "mqtt": "^5.10.3",
         "npm": "^11.4.2",
         "prettier": "^3.5.3",
+        "quickjs-emscripten": "^0.20.0",
         "react-responsive-carousel": "^3.2.23",
         "serve-static": "^2.2.0",
         "three": "^0.182.0",
@@ -69,8 +70,8 @@
         "ws": "^8.18.2"
     },
     "devDependencies": {
-        "@docusaurus/core": "^3.9.0",
-        "@docusaurus/preset-classic": "^3.9.0",
+        "@docusaurus/core": "3.9.1",
+        "@docusaurus/preset-classic": "3.9.1",
         "@electron/notarize": "^3.0.0",
         "copy-webpack-plugin": "^12.0.2",
         "cross-env": "^10.1.0",
@@ -104,7 +105,7 @@
         "docs-build": "docusaurus build --config conf/docusaurus.config.js",
         "docs-check": "prettier --config ./conf/prettier.config.js ./docs --check",
         "docs-dev": "docusaurus start --config conf/docusaurus.config.js",
-        "docs-serve": "docusaurus serve --config conf/docusaurus.config.js",
+        "docs-serve": "docusaurus serve --config conf/docusaurus.config.js --port 4004",
         "dryrun": "gs-app-server --debug --single --dryrun",
         "dryrun-prod": "gs-app-server --single --dryrun",
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
@@ -120,7 +121,8 @@
         "start-ddb": "npm run prebuild && electron . --devel --debugg",
         "start-dev": "npm run prebuild prod && electron . --devel",
         "start": "npm run prebuild && electron .",
-        "webpack-ext": "npm run webpack-three && npm run webpack-zip",
+        "webpack-ext": "npm run webpack-three && npm run webpack-zip && npm run webpack-qjs",
+        "webpack-qjs": "npx webpack --config bin/webpack-quickjs-esm.js",
         "webpack-src": "node bin/esbuild.config.mjs",
         "webpack-three": "npx webpack --config bin/webpack-three-esm.js",
         "webpack-zip": "npx webpack --config bin/webpack-jszip-esm.js"

@@ -8,14 +8,15 @@ import '../../add/three.js';
 
 import { base } from '../../geo/base.js';
 import { codec, encode, encodePointArray } from '../core/codec.js';
-import { doTopShells } from '../mode/fdm/post.js';
+import { layerProcessTop } from '../mode/fdm/work/post.js';
 import { newPoint } from '../../geo/point.js';
+import { newWidget } from '../core/widget.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 import { sliceZ, sliceConnect } from '../../geo/slicer.js';
-import { Slicer as cam_slicer } from '../mode/cam/slicer_cam.js';
-import { Slicer as topo_slicer } from '../mode/cam/slicer_topo.js';
-import { Probe, Trace, raster_slice } from '../mode/cam/topo3.js';
-import { Topo as Topo4, rotatePoints } from '../mode/cam/topo4.js';
+import { Slicer as cam_slicer } from '../mode/cam/work/slicer-cam.js';
+import { Slicer as topo_slicer } from '../mode/cam/work/slicer-topo.js';
+import { Probe, Trace, raster_slice } from '../mode/cam/work/topo3.js';
+import { Topo as Topo4, rotatePoints } from '../mode/cam/work/topo4.js';
 import { wasm_ctrl } from '../../geo/wasm.js';
 
 const clib = self.ClipperLib;
@@ -91,7 +92,7 @@ const funcs = self.minion = {
     topShells(data, seq) {
         let top = codec.decode(data.top, {full: true});
         let {z, count, offset1, offsetN, fillOffset, opt} = data;
-        doTopShells(z, top, count, offset1, offsetN, fillOffset, opt);
+        layerProcessTop(z, top, count, offset1, offsetN, fillOffset, opt);
         let state = { zeros: [] };
         reply({ seq, top: codec.encode(top, {full: true}) }, state.zeros);
     },
@@ -317,5 +318,18 @@ const funcs = self.minion = {
         const topo4 = Object.assign(new Topo4(), cache.lathe);
         const heights = topo4.lathePath(stmp, tool);
         reply({ seq, heights });
+    },
+
+    // cam widget shadow
+
+    cam_shadow_stack(data, seq) {
+        cache.shadow_stack = data.clear ? undefined : data;
+    },
+
+    cam_shadow_z(data, seq) {
+        let polys = newWidget().computeShadowAtZ(data.z, data.t, cache.shadow_stack);
+        let coded = codec.encode(polys);
+        reply({ seq, data: coded });
     }
+
 };

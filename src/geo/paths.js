@@ -2,6 +2,7 @@
 
 import { base } from './base.js';
 import { newPoint } from './point.js';
+import { newPolygon } from './polygon.js';
 
 /**
  * Emit each element in array based on next closest endpoint
@@ -18,28 +19,63 @@ export function tip2tipEmit(array, startPoint, emitter) {
     for (;;) {
         found = null;
         mindist = Infinity;
-        array.forEach(function (el) {
-            if (el.delete) return;
+        for (let el of array) {
+            if (el.delete) continue;
             dist = startPoint.distTo2D(el.first);
             if (dist < mindist) {
                 found = { el: el, first: el.first, last: el.last };
                 mindist = dist;
             }
+            // when heads is set, it's first to first
+            // not first/last to closest first/last
+            if (el.heads) continue;
             dist = startPoint.distTo2D(el.last);
             if (dist < mindist) {
                 found = { el: el, first: el.last, last: el.first };
                 mindist = dist;
             }
-        });
+        }
         if (found) {
             found.el.delete = true;
             startPoint = found.last;
-            emitter(found.el, found.first, ++count);
+            emitter(found.el, found.first, ++count, mindist);
         } else {
             break;
         }
     }
     return startPoint;
+}
+
+/**
+ * Emit each element in array based on next closest endpoint
+ * Uses greedy nearest-neighbor algorithm to minimize travel distance
+ * When polygons are close, a new polygon is injected that joins them
+ * and the next polygon is reversed so that tips would merge on output
+ * @param {Array} paths - Array of elements with { first, last } Point properties
+ * @param {Point} startPoint - Starting point for path ordering
+ * @param {Number} mergeDist - threshold for merging Polygons
+ * @returns {Array} reduced merged Polygon array
+ */
+export function tip2tipJoin(paths, startPoint, mergeDist) {
+    let newp = [];
+    tip2tipEmit(paths.map(path => ({
+        path,
+        last: path.last(),
+        first: path.first()
+    })), startPoint, (next, point, count, dist) => {
+        if (next.last === point) {
+            next.path.reverse();
+        }
+        if (newp.length && dist < mergeDist) {
+            let lastpath = newp.peek();
+            newp.push(newPolygon().addPoints([
+                lastpath.last(),
+                next.path.first()
+            ]));
+        }
+        newp.push(next.path);
+    });
+    return newp;
 }
 
 /**
@@ -691,65 +727,10 @@ export function arcToPath(start, end, arcdivs = 24, opts) {
     return arr
 }
 
-/**
- * Dynamically growing Float32Array with efficient memory management
- * Used for accumulating vertex/normal data when final size is unknown
- * Automatically expands when capacity reached, optimizes final output
- * @class
- */
-export class FloatPacker {
-    /**
-     * Create new float packer with initial size
-     * @param {number} size - Initial array size
-     * @param {number} [factor=1.2] - Growth factor when expanding (clamped to max 1.2)
-     */
-    constructor(size, factor) {
-        this.size = size;
-        this.factor = Math.min(factor || 1.2, 1.1);
-        this.array = new Float32Array(size);
-        this.pos = 0;
-    }
-
-    /**
-     * Push multiple float values onto array
-     * Automatically expands array if needed
-     * @param {...number} values - Float values to append
-     */
-    push() {
-        const array = this.array;
-        const size = this.size;
-        const args = arguments.length;
-        if (this.pos + args >= size) {
-            let nusize = ((size * this.factor) | 0) + args;
-            let nuarray = new Float32Array(nusize);
-            nuarray.set(array);
-            this.array = nuarray;
-            this.size = nusize;
-        }
-        for (let i = 0; i < args; i++) {
-            array[this.pos++] = arguments[i];
-        }
-    }
-
-    /**
-     * Get final array trimmed to actual size
-     * Uses subarray (view) if >90% full, otherwise copies to save memory
-     * @returns {Float32Array} Array containing only pushed values
-     */
-    finalize() {
-        if (this.pos / this.size >= 0.9) {
-            return this.array.subarray(0, this.pos);
-        } else {
-            return this.array.slice(0, this.pos);
-        }
-    }
-}
-
 export const paths = {
     tip2tipEmit,
     poly2polyEmit,
     shapeToPath,
     pointsToPath,
-    pathTo3D,
-    FloatPacker
+    pathTo3D
 }

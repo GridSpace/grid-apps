@@ -3,31 +3,23 @@
 import '../add/array.js';
 import '../add/class.js';
 import '../add/three.js';
-import '../kiri/core/lang.js';
-import '../kiri/core/lang-en.js';
+import '../kiri/app/language.js';
+import '../kiri/app/lang-en.js';
 
-import { broker } from '../moto/broker.js';
-import { run } from '../kiri/core/init.js';
+import { api } from '../kiri/app/api.js';
+import { init_lang } from '../kiri/app/init/lang.js';
+import { init_input } from '../kiri/app/init/input.js';
+import { init_sync } from '../kiri/app/init/sync.js';
 
 let traceload = location.search.indexOf('traceload') > 0;
 let load = [];
 
-if (traceload) {
-    broker.subscribe([
-        "init.one",
-        "init.two",
-        "init.lang",
-        "init-done",
-        "load-done",
-    ], (msg, topic) => {
-        console.log(topic, '->', msg);
-    })
-}
-
-function safeExec(fn) {
+function safeExec(fn, name) {
     try {
         if (traceload) {
-            console.log('kiri | exec |', fn);
+            console.log('kiri | exec |', name, fn);
+        } else if (name) {
+            console.log('kiri | load mods |', name);
         }
         fn(kiri.api);
     } catch (error) {
@@ -35,14 +27,20 @@ function safeExec(fn) {
     }
 }
 
-function checkReady() {
+async function checkReady() {
     if (document.readyState === 'complete') {
         let bootctrl = navigator.serviceWorker.controller;
         console.log(`kiri | boot ctrl | ` + (bootctrl ? true : false));
-        let api = kiri.api = run();
+        kiri.api = api;
         self.$ = api.web.$;
-        for (let fn of load) {
-            safeExec(fn);
+        {
+            api.client.start();
+            await init_lang();
+            await init_input();
+            await init_sync();
+        }
+        for (let [fn, name] of load) {
+            safeExec(fn, name);
         }
         load = undefined;
         api.event.emit('load-done', stats);
@@ -67,12 +65,12 @@ function checkReady() {
 }
 
 self.kiri = {
-    load(fn) {
+    load(fn, name) {
         // console.log('KIRI LOAD', [...arguments]);
         if (load) {
-            load.push(fn);
+            load.push([fn, name]);
         } else {
-            safeExec(fn);
+            safeExec(fn, name);
         }
     }
 };

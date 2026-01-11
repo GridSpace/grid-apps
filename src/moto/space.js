@@ -1,8 +1,8 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { broker } from './broker.js';
 import { THREE } from '../ext/three.js';
 import { Orbit } from './orbit.js';
+import { Text3D } from './text3d.js';
 import '../ext/tween.js';
 
 const {
@@ -406,44 +406,17 @@ function showVolume(bool) {
     requestRefresh();
 }
 
-function canvasInMesh(w, h, textAlign, textBaseline, color, size) {
-    let canvas = document.createElement('canvas'),
-        canvasTexture = new THREE.CanvasTexture(canvas),
-        plane = new THREE.PlaneGeometry(w, h),
-        context = canvas.getContext('2d'),
-        scale = 8;
-
-    canvas.width = w * scale;
-    canvas.height = h * scale;
-
-    canvas.addEventListener("webglcontextlost", event => {
-        console.log('WEB GL CONTEXT LOST');
-        event.preventDefault();
-    }, false);
-
-    canvas.addEventListener("webglcontextrestored", event => {
-        console.log('WEB GL CONTEXT RESTORED');
-    }, false);
-
-    try {
-        context.scale(scale, scale);
-    } catch (e) {
-        console.log('unable to create label canvas', e ? e.name : 'unknown');
-        return {};
-    }
-    context.fillStyle = color || fontColor;
-    context.font = `${size}px sans-serif`;
-    context.textAlign = textAlign;
-    context.textBaseline = textBaseline;
-    canvasTexture.minFilter = THREE.LinearFilter;
-
-    // set 'transparent' to false to debug mesh bounds
-    let material = new THREE.MeshBasicMaterial({transparent: true, map: canvasTexture});
-    let mesh = new THREE.Mesh(plane, material);
-
-    return { context, mesh };
-}
-
+/**
+ * 3D text renderer for grid labels.
+ * Uses bitmap font atlas with shared geometries for memory efficiency.
+ */
+let text3d = self.document ? new Text3D({
+    chars: '0123456789-XY',
+    charSize: 64,
+    kerning: 0.6,
+    scaleX: 0.7,
+    fontFamily: "'Russo One', sans-serif"
+}) : undefined;
 
 function setRulers(
     xon = ruler.xon,
@@ -475,50 +448,67 @@ function updateRulers() {
         oldView = ruler.view,
         view = ruler.view = new THREE.Group();
 
-    if (xon && axesOn) {
-        let xPadding = labelSize * 4,
-            canvas = canvasInMesh(x + xPadding, labelSize * 3, 'center', 'top', rulerColor, labelSize),
-            context = canvas.context,
-            mesh = canvas.mesh;
-            if (!(context && mesh)) return;
+    if (false) console.log('updateRulers called', {
+        xon, yon, axesOn, labelSize, rulerColor, factor,
+        x1: ruler.x1, x2: ruler.x2, y1: ruler.y1, y2: ruler.y2,
+        xo: ruler.xo, yo: ruler.yo,
+        originX: grid.origin.x, originY: grid.origin.y
+    });
 
-        if (platformBelt) {
-            for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
-                context.fillText((i * factor).round(1).toString(), ruler.x2 - i + xPadding / 2, 0);
-            }
-        } else {
-            for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
-                context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
-            }
-            for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
-                context.fillText((i * factor).round(1).toString(), ruler.xo + i + xPadding / 2, 0);
-            }
+    if (xon && axesOn) {
+        // Create X-axis numeric labels
+        // Original canvas code draws at canvas X: ruler.xo + i + xPadding/2
+        // Canvas is centered at world X=0, canvas width = x + xPadding
+        // So world X = (canvasX - canvasWidth/2) = (ruler.xo + i + xPadding/2) - (x + xPadding)/2
+        //            = ruler.xo + i - x/2 = ruler.xo + i - w
+        for (let i = 0; i >= ruler.x1; i -= grid.unitMajor) {
+            const value = (i * factor).round(1).toString();
+            const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
+            label.position.set(ruler.xo + i - w, -h - labelSize, zp);
+            label.rotation.x = Math.PI;
+            view.add(label);
+        }
+        for (let i = 0; i <= ruler.x2; i += grid.unitMajor) {
+            const value = (i * factor).round(1).toString();
+            const label = text3d.createLabel(value, labelSize, rulerColor, 'center');
+            label.position.set(ruler.xo + i - w, -h - labelSize, zp);
+            label.rotation.x = Math.PI;
+            view.add(label);
         }
 
-        context.font = (labelSize * 0.75) + 'px sans-serif';
-        context.fillText(xlabel, (x + xPadding) / 2, labelSize * 1.5);
-        mesh.position.set(0, - h - labelSize * 2, zp);
-        view.add(mesh);
+        // Create X-axis label
+        const xLabel = text3d.createLabel(xlabel, labelSize, rulerColor, 'center');
+        xLabel.position.set(0, -h - labelSize * 3.5, zp);
+        xLabel.rotation.x = Math.PI;
+        view.add(xLabel);
     }
 
     if (yon && axesOn) {
-        let yPadding = labelSize,
-            canvas = canvasInMesh(labelSize * 4, y + yPadding, 'end', 'middle', rulerColor, labelSize),
-            context = canvas.context,
-            mesh = canvas.mesh;
-        if (!(context && mesh)) return;
-
+        // Create Y-axis numeric labels
+        // Original canvas code draws at canvas Y: y - (ruler.yo + i) + yPadding/2
+        // Canvas is centered at world Y=0, canvas height = y + yPadding
+        // Canvas Y goes down, but world Y goes up, so we need to negate
+        // World Y = -(canvasY - canvasHeight/2) = -(h - ruler.yo - i) = -h + ruler.yo + i
         for (let i = 0; i >= ruler.y1; i -= grid.unitMajor) {
-            context.fillText((i * factor).round(1), labelSize * 4, y - (ruler.yo + i) + yPadding / 2);
+            const value = (i * factor).round(1).toString();
+            const label = text3d.createLabel(value, labelSize, rulerColor, 'right');
+            label.position.set(-w - labelSize + 3, -h + ruler.yo + i, zp);
+            label.rotation.x = Math.PI;
+            view.add(label);
         }
         for (let i = 0; i <= ruler.y2; i += grid.unitMajor) {
-            context.fillText((i * factor).round(1), labelSize * 4, y - (ruler.yo + i) + yPadding / 2);
+            const value = (i * factor).round(1).toString();
+            const label = text3d.createLabel(value, labelSize, rulerColor, 'right');
+            label.position.set(-w - labelSize + 3, -h + ruler.yo + i, zp);
+            label.rotation.x = Math.PI;
+            view.add(label);
         }
 
-        context.font = (labelSize * 0.75) + 'px sans-serif';
-        context.fillText(ylabel, labelSize * 1.25, (y + yPadding) / 2);
-        mesh.position.set(-w - labelSize * 2 - 5, 0, zp);
-        view.add(mesh);
+        // Create Y-axis label
+        const yLabel = text3d.createLabel(ylabel, labelSize, rulerColor, 'center');
+        yLabel.position.set(-w - labelSize * 4, 0, zp);
+        yLabel.rotation.x = Math.PI;
+        view.add(yLabel);
     }
 
     Space.scene.remove(oldView);
@@ -979,7 +969,7 @@ function onMouseUp(event) {
 
 function onMouseMove(event) {
     updateLastAction();
-    let int, vis;
+    let int, vis, dragTrack;
 
     const mv = new THREE.Vector2();
     mv.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -1000,13 +990,18 @@ function onMouseMove(event) {
             platform.visible = vis;
             if (int && int.length > 0) platformHover(int[0].point);
         }
-    } else if (mouseDragPoint && mouseDrag && mouseDrag()) {
+    } else if (mouseDragPoint && mouseDrag && (dragTrack = mouseDrag())) {
         event.preventDefault();
         let trackTo = alignedTracking ? trackPlane : platform;
         let vis = trackTo.visible;
         trackTo.visible = true;
-        int = intersect([trackTo], false);
-        trackTo.visible = vis;
+        if (dragTrack.length) {
+            int = intersect(dragTrack, false);
+            trackTo = dragTrack[0];
+        } else {
+            int = intersect([trackTo], false);
+            trackTo.visible = vis;
+        }
         if (int.length > 0 && int[0].object === trackTo) {
             let delta = mouseDragPoint.clone().sub(int[0].point);
             let offset = mouseDragStart.clone().sub(int[0].point);
@@ -1020,7 +1015,7 @@ function onMouseMove(event) {
                 x: -offset.x,
                 y: offset.z,
                 z: 0
-            });
+            }, false, int);
             requestRefresh();
         }
     }
@@ -1335,7 +1330,7 @@ let Space = {
             }
             viewControl.update();
 
-            if (then) then();
+            if (typeof(then) === 'function') then();
         },
         setCtrl: (name) => {
             if (name === 'onshape') {

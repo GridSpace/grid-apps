@@ -1,7 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { base } from '../../geo/base.js';
-import { avgc } from './utils.js';
+import { decode } from '../core/codec.js';
 import { util as mesh_util } from '../../mesh/util.js';
 import { tool as mesh_tool } from '../../mesh/tool.js';
 import { verticesToPoints } from '../../geo/points.js';
@@ -10,20 +9,13 @@ import { newPolygon } from '../../geo/polygon.js';
 import { polygons as POLY } from '../../geo/polygons.js';
 import { checkOverUnderOn, intersectPoints } from '../../geo/slicer.js';
 
-const { inRange, time } = base.util;
-const solid_opacity = 1.0;
-const groups = [];
-
 const sharedArrayClass = self.SharedArrayBuffer || undefined;
 const hasSharedArrays = sharedArrayClass ? true : false;
+const solid_opacity = 1.0;
+const groups = [];
+const debug_shadow = false;
 
 let nextId = 0;
-
-function newWidget(id,group) { return new Widget(id,group) }
-
-function catalog() { return self.kiri_catalog };
-
-function index() { return self.kiri_catalog.index }
 
 class Widget {
     constructor(id, group) {
@@ -31,6 +23,7 @@ class Widget {
 
         this.id = id || Date.now().toString(36)+(nextId++);
         this.grouped = group ? true : false;
+        // persisted
         this.group = group || [];
         this.group.push(this);
         if (!this.group.id) {
@@ -41,10 +34,8 @@ class Widget {
         }
         // rotation stack (for undo)
         this.roto = [];
-        // added meshes (supports, tabs, etc)
+        // overlay meshes (supports, tabs, etc)
         this.adds = [];
-        // persisted client annotations (cam tabs, fdm supports)
-        this.anno = {};
         // THREE Mesh and points
         this.mesh = null;
         this.points = null;
@@ -56,6 +47,26 @@ class Widget {
         this.settings = null; // used??
         this.modified = true;
         this.boundingBoxNeedsUpdate = true
+        // cache shadow geo
+        this.cache = {};
+        // geometry version for edge cache invalidation
+        this.geomVersion = 0;
+        this.stats = {
+            slice_time: 0,
+            load_time: 0,
+            progress: 0
+        };
+        // if this is a synthesized support widget
+        this.support = false;
+        // persisted: client annotations (cam tabs, fdm supports)
+        this.anno = {};
+        // persisted: file meta-data
+        this.meta = {
+            url: null,
+            file: null,
+            saved: false
+        };
+        // persisted: location state
         this.track = {
             // box size for packer
             box: {
@@ -80,62 +91,9 @@ class Widget {
             },
             top: 0, // z top
             mirror: false,
-            indexed: false
-        },
-        // used to cache shadow geo
-        this.cache = {};
-        this.stats = {
-            slice_time: 0,
-            load_time: 0,
-            progress: 0
+            indexed: false,
+            indexRad: 0
         };
-        this.meta = {
-            url: null,
-            file: null,
-            saved: false
-        };
-        // if this is a synthesized support widget
-        this.support = false;
-    }
-
-    saveToCatalog(filename, overwrite) {
-        if (!filename) {
-            filename = this.meta.file;
-        }
-        if (this.grouped && !overwrite) {
-            return this;
-        }
-        const widget = this;
-        const mark = time();
-        const vertices = widget.getGeoVertices({ unroll: true }).slice();
-        widget.meta.file = filename;
-        widget.meta.save = mark;
-        catalog().putFile(filename, vertices, () => {
-            console.log("saved mesh ["+(vertices.length/3)+"] time ["+(time()-mark)+"]");
-        });
-        return this;
-    }
-
-    saveState(ondone) {
-        if (!ondone) {
-            clearTimeout(this._save_timer);
-            this._save_timer = setTimeout(() => {
-                this._save_timer = undefined;
-                this.saveState(() => {});
-            }, 1500);
-            return;
-        }
-        const widget = this;
-        index().put('ws-save-'+this.id, {
-            geo: widget.getGeoVertices({ unroll: false }).slice(),
-            track: widget.track,
-            group: this.group.id,
-            meta: this.meta,
-            anno: this.annotations()
-        }, result => {
-            widget.meta.saved = time();
-            if (ondone) ondone();
-        });
     }
 
     annotations() {
@@ -231,9 +189,14 @@ class Widget {
         return this.loadVertices(...arguments);
     }
 
-    setModified() {
+    setModified(reason) {
         this.modified = true;
         this.boundingBoxNeedsUpdate = true;
+        this.clearShadows();
+        if (reason !== 'axis') {
+            this.cache.geo = undefined;
+            this.geomVersion++;  // Increment version to invalidate edge cache
+        }
         if (this.mesh && this.mesh.geometry) {
             // this fixes ray intersections after the mesh is modified
             this.mesh.geometry.boundingSphere = null;
@@ -274,6 +237,8 @@ class Widget {
         ]);
         mesh.renderOrder = 1;
         // geometry.computeVertexNormals();
+        // Clear existing groups (e.g., from cloned geometry) before adding new one
+        geometry.clearGroups();
         geometry.addGroup(0, Infinity, 0);
         // mesh.castShadow = true;
         // mesh.receiveShadow = true;
@@ -311,23 +276,6 @@ class Widget {
         this.slices = null;
     }
 
-    /**
-     * @param {number} color
-     */
-    setColor(color, settings, save = true) {
-        if (settings) {
-            console.trace('legacy call with settings');
-        }
-        if (Array.isArray(color)) {
-            color = color[this.getExtruder() % color.length];
-        }
-        if (save) {
-            this.color = color;
-        }
-        let material = this.getMaterial();
-        material.color.set(this.meta.disabled ? avgc(0x888888, color, 3) : color);
-    }
-
     getColor() {
         return this.color;
     }
@@ -362,47 +310,6 @@ class Widget {
         }
     }
 
-    getVisualState() {
-        return {
-            edges: this.outline ? true : false,
-            wires: this.wire ? true : false,
-            opacity: this.getMaterial().opacity
-        };
-    }
-
-    setVisualState({ edges, wires, opacity}) {
-        this.cache.vizstate = this.getVisualState();
-        this.setEdges(edges ?? false);
-        this.setWireframe(wires ?? false);
-        this.setOpacity(opacity ?? 1);
-    }
-
-    refreshVisualState() {
-        this.setVisualState(this.getVisualState());
-    }
-
-    restoreVisualState() {
-        if (this.cache.vizstate) {
-            this.setVisualState(this.cache.vizstate);
-        }
-    }
-
-    /**
-     * @param {number} value
-     */
-    setOpacity(value) {
-        const mesh = this.mesh;
-        const mat = this.getMaterial();
-        if (value <= 0.0) {
-            mat.transparent = solid_opacity < 1.0;
-            mat.opacity = solid_opacity;
-            mat.visible = false;
-        } else if (inRange(value, 0.0, solid_opacity)) {
-            mat.transparent = value < 1.0;
-            mat.opacity = value;
-            mat.visible = true;
-        }
-    }
 
     toggleVisibility(bool) {
         const mat = this.getMaterial();
@@ -463,7 +370,7 @@ class Widget {
         // invalidate cached points
         if (x || y || z) {
             this.points = null;
-            this.setModified();
+            this.setModified('moveMesh');
         }
     }
 
@@ -480,11 +387,11 @@ class Widget {
     }
 
     setAxisIndex(deg) {
+        // console.trace(deg);
         let rad = deg * (Math.PI / 180);
         if (rad !== this.track.indexRad) {
             this.track.indexRad = rad;
-            this.clearShadows();
-            this.setModified();
+            this.setModified('axis');
             this._updateMeshPosition();
         }
     }
@@ -537,27 +444,35 @@ class Widget {
             pos.z += (z || 0);
         }
         if (x || y || z) {
-            this.setModified();
+            this.setModified('_move');
             this._updateMeshPosition();
         }
     }
 
     _updateMeshPosition() {
-        let mesh = this.mesh,
-            track = this.track,
-            tzoff = track.tzoff,
-            top = track.top,
-            tz = -tzoff,
-            { x, y, z } = track.pos;
+        let { cache, mesh, track } = this,
+            { top, tzoff } = track,
+            { x, y, z } = track.pos,
+            tz = -tzoff;
         if (track.indexed) {
-            let rad = track.indexRad;
-            this.mesh.rotation.x = -rad;
+            this.mesh.rotation.x = -track.indexRad;
             z = top;
         } else {
             this.mesh.rotation.x = 0;
             z += tz;
         }
-        mesh.position.set(x, y, z);
+        let { pos } = cache;
+        if (!pos || pos.x !== x || pos.y !==y || pos.z !== z) {
+            mesh.position.set(x, y, z);
+            this._updateEdges();
+            cache.pos = { x, y, z };
+        }
+    }
+
+    _updateEdges() {
+        if (this.outline && this.setEdges) {
+            this.setEdges(true);
+        }
     }
 
     scale(x, y, z) {
@@ -574,16 +489,14 @@ class Widget {
         let mesh = this.mesh,
             scale = this.track.scale;
         this.bounds = null;
-        this.setWireframe(false);
+        if (this.setWireframe) this.setWireframe(false);
         this.clearSlices();
         mesh.geometry.applyMatrix4(new THREE.Matrix4().makeScale(x, y, z));
-        if (this.outline) {
-            this.setEdges(true);
-        }
+        this._updateEdges();
         scale.x *= (x || 1.0);
         scale.y *= (y || 1.0);
         scale.z *= (z || 1.0);
-        this.setModified();
+        this.setModified('_scale');
     }
 
     rotate(x, y, z, temp, center = true) {
@@ -593,9 +506,7 @@ class Widget {
         if (center) {
             this.center(false);
         }
-        if (this.outline) {
-            this.setEdges(true);
-        }
+        this._updateEdges();
         if ((x || y || z) && this.api && this.api.event) {
             this.api.event.emit('widget.rotate', {widget: this, x, y, z});
         }
@@ -604,7 +515,7 @@ class Widget {
     _rotate(x, y, z, temp) {
         if (!temp) {
             this.bounds = null;
-            this.setWireframe(false);
+            if (this.setWireframe) this.setWireframe(false);
             this.clearSlices();
         }
         let m4 = new THREE.Matrix4();
@@ -622,7 +533,7 @@ class Widget {
             rot.y += (y || 0);
             rot.z += (z || 0);
         }
-        this.setModified();
+        this.setModified('_rotate');
     }
 
     // undo all accumulated rotations
@@ -632,8 +543,8 @@ class Widget {
         });
         this.roto = [];
         this.center();
-        this.setModified();
-        this.refreshVisualState();
+        this.setModified('unrotate');
+        if (this.refreshVisualState) this.refreshVisualState();
     }
 
     mirror() {
@@ -648,7 +559,7 @@ class Widget {
 
     _mirror() {
         this.clearSlices();
-        this.setWireframe(false);
+        if (this.setWireframe) this.setWireframe(false);
         let geo = this.mesh.geometry, ot = this.track;
         let pos = geo.attributes.position;
         let arr = pos.array;
@@ -671,7 +582,7 @@ class Widget {
         }
         pos.needsUpdate = true;
         ot.mirror = !ot.mirror;
-        this.setModified();
+        this.setModified('_mirror');
         this.points = null;
     }
 
@@ -694,6 +605,17 @@ class Widget {
 
     getGeoVertices(opt = {}) {
         const { unroll, translate } = opt;
+        let cacheKey = [
+            unroll ? 1 : 0,
+            translate ? 1 : 0,
+            ((this.track.indexRad ?? 0) * 100000) | 0
+        ].join(',');
+        let marked = Date.now();
+        let geoCache = this.cache.geo = (this.cache.geo || {});
+        let cached = geoCache[cacheKey];
+        if (cached) {
+            return cached.pos;
+        }
         let geo = this.mesh.geometry;
         let pos = geo.getAttribute('position');
         // if indexed, return points rotated about X and then offset
@@ -703,6 +625,7 @@ class Widget {
                 .applyMatrix4( new THREE.Matrix4().makeRotationX(-track.indexRad) );
         }
         pos = pos.array;
+        // unroll indexed geometry
         if (geo.index && unroll !== false) {
             let idx = geo.index.array;
             let len = idx.length;
@@ -716,12 +639,8 @@ class Widget {
                 pp2[inc++] = pos[ip];
             }
             pos = pp2;
-        } else if (translate) {
-            pos = pos.slice();
         }
-        // used by CAM.shadowAt()
-        this.cache.geo = pos;
-        delete this.cache.shadow;
+        geoCache[cacheKey] = { pos, marked };
         return pos;
     }
 
@@ -739,7 +658,7 @@ class Widget {
         if (!this.bounds || refresh || this.boundingBoxNeedsUpdate) {
             this.bounds = new THREE.Box3().setFromArray(this.getGeoVertices({
                 translate: true,
-                unroll: false
+                unroll: true
             }));
             this.boundingBoxNeedsUpdate = false;
         }
@@ -782,65 +701,6 @@ class Widget {
         return Date.now() - mark;
     }
 
-    setEdges(set) {
-        if (!(this.api && this.api.conf)) {
-            // missing api features in engine mode
-            return;
-        }
-        let mesh = this.mesh;
-        if (set && set.toggle) {
-            set = this.outline ? false : true;
-        }
-        if (this.outline) {
-            mesh.remove(this.outline);
-            this.outline = null;
-
-        }
-        if (set) {
-            let dark = this.api.space.is_dark();
-            let cam = this.api.mode.is_cam();
-            let color = dark ? 0x444444 : 0x888888;
-            let angle = this.api.conf.get().controller.edgeangle || 20;
-            let edges = new THREE.EdgesGeometry(mesh.geometry, angle);
-            let material = new THREE.LineBasicMaterial({ color });
-            this.outline = new THREE.LineSegments(edges, material);
-            this.outline.renderOrder = -20;
-            mesh.add(this.outline);
-        }
-    }
-
-    setWireframe(set, color, opacity) {
-        if (!(this.api && this.api.conf)) {
-            // missing api features in engine mode
-            return;
-        }
-        let mesh = this.mesh,
-            widget = this;
-        if (this.wire) {
-            this.setOpacity(solid_opacity);
-            mesh.remove(this.wire);
-            this.wire = null;
-        }
-        if (set) {
-            let dark = this.api.space.is_dark();
-            let mat = new THREE.MeshBasicMaterial({
-                wireframe: true,
-                color: dark ? 0xaaaaaa : 0,
-                opacity: 0.5,
-                transparent: true
-            })
-            let wire = widget.wire = new THREE.Mesh(mesh.geometry.shallowClone(), mat);
-            mesh.add(wire);
-        }
-        if (this.api.view.is_arrange()) {
-            this.setColor(this.color);
-        } else {
-            this.setColor(0x888888,undefined,false);
-        }
-        if (opacity !== undefined) {
-            widget.setOpacity(opacity);
-        }
-    }
 
     show() {
         this.mesh.visible = true;
@@ -856,7 +716,12 @@ class Widget {
         return this;
     }
 
-    async shadowAt(z) {
+    /**
+     * @param {number} z height for shadow computation
+     * @param {number | undefined} pocket normal value to match faces
+     * @returns {Polygon[]}
+     */
+    async shadowAt(z, pocket) {
         let shadows = this.cache.shadows;
         if (!shadows) {
             shadows = this.cache.shadows = {};
@@ -868,20 +733,34 @@ class Widget {
         // find closest shadow above and use to speed up delta shadow gen
         let zover = Object.keys(shadows).map(v => parseFloat(v)).filter(v => v > z);
         let minZabove = Math.min(Infinity, ...zover);
-        let shadow = this.#computeShadowAt(z - 0.005, minZabove);
+        // shift shadow probeline down a fraction to capture z flats with FP noise
+        let shadow = this.#computeShadowAt(z - 0.005, minZabove, undefined, pocket);
         if (minZabove < Infinity) {
-            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0.001, true, { wasm: false });
+            shadow = POLY.union([...shadow, ...shadows[minZabove]], 0, true, { wasm: false });
+            // cull interior sliver voids
+            if (!pocket)
+            for (let poly of shadow) {
+                if (poly.inner) {
+                    poly.inner = poly.inner.filter(inr => {
+                        let A = inr.area();
+                        let P = inr.perimeter();
+                        let R = (2 * A / P);
+                        return R > 0.05;
+                    });
+                }
+            }
         }
         return shadows[z] = POLY.setZ(shadow, z);
     }
 
     // create a stack of faces in 1mm increments
     // the stacks are then used to produce shadowlines
-    #ensureShadowCache() {
+    #ensureShadowCache(pocket) {
         if (this.cache.shadow) {
-            return;
+            return this.cache.shadow;
         }
-        const geo = this.cache.geo;
+        if (debug_shadow) console.time('shadow buckets');
+        const geo = this.getGeoVertices({ unroll: true, translate: true });
         const length = geo.length;
         const bounds = this.getBoundingBox();
         const stack = {};
@@ -893,7 +772,8 @@ class Widget {
             const b = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const c = new THREE.Vector3(geo[ip++], geo[ip++], geo[ip++]);
             const n = THREE.computeFaceNormal(a, b, c);
-            if (n.z < 0.001) {
+            // todo: use pocket to match normal values when set
+            if ((pocket && n.z > -pocket) || (!pocket && n.z < 0.001)) {
                 continue;
             }
             const minZ = Math.floor(Math.min(a.z, b.z, c.z));
@@ -902,15 +782,55 @@ class Widget {
                 stack[z].push(a, b, c);
             }
         }
-        this.cache.shadow = stack;
+        if (debug_shadow) console.timeEnd('shadow buckets');
+        return this.cache.shadow = stack;
+    }
+
+    async computeShadowStack(zlist, progress, pocket) {
+        let shadow_stack = this.cache.shadow_stack;
+        if (!shadow_stack) {
+            shadow_stack = this.cache.shadow_stack = {};
+        }
+        let work = self.kiri_worker;
+        let stack = this.#ensureShadowCache(pocket);
+        let plist = [];
+        if (debug_shadow) console.time('seed minion buckets');
+        work.minions.broadcast('cam_shadow_stack', stack);
+        if (debug_shadow) console.timeEnd('seed minion buckets');
+        let pinc = 1 / zlist.length;
+        let pval = 0;
+        for (let z of zlist) {
+            let p = work.minions.queueAsync({
+                cmd: 'cam_shadow_z',
+                z: z - 0.005,
+                t: z + 1
+            }).then(reply => {
+                shadow_stack[z - 0.005] = decode(reply.data);
+                pval += pinc;
+                progress(pval);
+            });
+            plist.push(p);
+        }
+        await Promise.all(plist);
+        work.minions.broadcast('cam_shadow_stack', { clear: true });
+    }
+
+    // called from minion
+    computeShadowAtZ(z, ztop, cached, pocket) {
+        return this.#computeShadowAt(z, ztop, cached, pocket);
     }
 
     // union triangles > z (opt cap < ztop) into polygon(s)
     // slice the triangle stack matchingg z then union the results
-    #computeShadowAt(z, ztop) {
-        this.#ensureShadowCache();
+    #computeShadowAt(z, ztop, cached, pocket) {
+        let shadow_stack = this.cache.shadow_stack;
+        if (shadow_stack && shadow_stack[z]) {
+            return shadow_stack[z];
+        }
+        let label = `compute shadow ${z.round(2)}`;
+        if (debug_shadow) console.time(label);
         const found = [];
-        const stack = this.cache.shadow;
+        const stack = cached ?? this.#ensureShadowCache(pocket);
         let minZ = Math.floor(z);
         let maxZ = Math.ceil(z);
         let slices = [];
@@ -965,82 +885,16 @@ class Widget {
         });
 
         // recursively merge grid constrained subsets of polygons
-        polys = unionTris(polys);
+        polys = POLY.unionFaces(polys);
 
         // for a more perfect union, pump shadows to merge very close lines
         // todo: create clipper only version that avoids round trip thru geo classes
         polys = POLY.offset(polys, 0.01);
         polys = POLY.offset(polys, -0.01);
 
+        if (debug_shadow) console.timeEnd(label);
         return polys;
     }
-}
-
-/*
- * recursively process triangle soup from mesh by bucketing them
- * by grid cell locality with max depth. this minimizes the number
- * of progressive small unions. results in a few unions of larger polys.
- */
-function unionTris(polys, depth = 0) {
-    if (depth < 5 && polys.length > 1000) {
-        // Calculate bounding box of all triangles
-        let minX = Infinity, maxX = -Infinity;
-        let minY = Infinity, maxY = -Infinity;
-        for (let tri of polys) {
-            for (let pt of tri.points) {
-                minX = Math.min(minX, pt.x);
-                maxX = Math.max(maxX, pt.x);
-                minY = Math.min(minY, pt.y);
-                maxY = Math.max(maxY, pt.y);
-            }
-        }
-
-        // Create NxN grid
-        const gridSize = 3;
-        const cellWidth = (maxX - minX) / gridSize;
-        const cellHeight = (maxY - minY) / gridSize;
-
-        // Partition polygons into grid cells
-        const grid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0).map(() => []));
-
-        for (let i = 0; i < polys.length; i++) {
-            const poly = polys[i];
-            // Use polygon centroid to assign to cell
-            const bounds = poly.bounds;
-            const cx = (bounds.minx + bounds.maxx) / 2;
-            const cy = (bounds.miny + bounds.maxy) / 2;
-
-            // Clamp to grid bounds
-            let gx = Math.floor((cx - minX) / cellWidth);
-            let gy = Math.floor((cy - minY) / cellHeight);
-            gx = Math.max(0, Math.min(gridSize - 1, gx));
-            gy = Math.max(0, Math.min(gridSize - 1, gy));
-
-            grid[gx][gy].push(poly);
-        }
-
-        // Union within each cell
-        const cellResults = [];
-        let totalInCell = 0;
-        for (let gx = 0; gx < gridSize; gx++) {
-            for (let gy = 0; gy < gridSize; gy++) {
-                const cellPolys = grid[gx][gy];
-                if (cellPolys.length > 0) {
-                    totalInCell += cellPolys.length;
-                    const cellUnion = unionTris(cellPolys, depth + 1);
-                    cellResults.push(...cellUnion);
-                }
-            }
-        }
-
-        // Union the cell results
-        polys = unionTris(cellResults, depth + 1);
-
-    } else {
-        polys = POLY.union(polys, 0, true, { wasm: false });
-    }
-
-    return polys;
 }
 
 // Widget Grouping API
@@ -1143,40 +997,8 @@ const Group = Widget.Groups = {
     }
 };
 
-Widget.loadFromCatalog = function(filename, ondone) {
-    catalog().getFile(filename, function(data) {
-        let widget = newWidget().loadVertices(data);
-        widget.meta.file = filename;
-        ondone(widget);
-    });
-};
-
-Widget.loadFromState = function(id, ondone, move) {
-    index().get('ws-save-'+id, function(data) {
-        if (data) {
-            let vertices = data.geo || data,
-                track = data.track || undefined,
-                group = data.group || id,
-                anno = data.anno || undefined,
-                widget = newWidget(id, Group.forid(group)),
-                meta = data.meta || widget.meta,
-                ptr = widget.loadVertices(vertices);
-            widget.meta = meta;
-            widget.anno = anno || widget.anno;
-            // restore widget position if specified
-            if (move && track && track.pos) {
-                widget.track = track;
-                widget.move(track.pos.x, track.pos.y, track.pos.z, true);
-            }
-            ondone(ptr);
-        } else {
-            ondone(null);
-        }
-    });
-};
-
-Widget.deleteFromState = function(id,ondone) {
-    index().remove('ws-save-'+id, ondone);
-};
+function newWidget(id,group) {
+    return new Widget(id,group);
+}
 
 export { Widget, newWidget };

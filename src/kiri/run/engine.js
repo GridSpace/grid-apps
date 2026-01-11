@@ -3,11 +3,11 @@
 import '../../add/array.js';
 import '../../add/class.js';
 import '../../add/three.js';
-import { api } from '../core/api.js';
-import { conf } from '../core/conf.js';
-import { client } from '../core/client.js';
+import { api } from '../app/api.js';
+import { conf } from '../app/conf/defaults.js';
+import { client } from '../app/workers.js';
 import { load } from '../../load/file.js';
-import { newWidget } from '../core/widget.js';
+import { newWidget } from '../app/widget.js';
 
 class Engine {
     constructor({ workURL, poolURL } = {}) {
@@ -123,6 +123,7 @@ class Engine {
         process.camStockX = stock.x;
         process.camStockY = stock.y;
         process.camStockZ = stock.z;
+        if (this.origin) settings.stock.center = origin;
         return this;
     }
 
@@ -131,7 +132,8 @@ class Engine {
     }
 
     setOrigin(x, y, z) {
-        this.settings.origin = { x, y, z };
+        this.origin = { x, y, z };
+        if (this.settings.stock) this.settings.stock.center = { x, y, z };
         return this;
     }
 

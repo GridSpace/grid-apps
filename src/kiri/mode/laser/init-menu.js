@@ -1,6 +1,6 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { api } from '../../core/api.js';
+import { api } from '../../app/api.js';
 
 let LANG = api.language.current;
 let { LASER, DRAG, WJET, WEDM } = api.const.MODES,

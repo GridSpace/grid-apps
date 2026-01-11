@@ -6,28 +6,28 @@ import '../../add/three.js';
 
 import { base } from '../../geo/base.js';
 import { codec } from '../core/codec.js';
-import { consts } from '../core/consts.js';
-import { util } from '../../geo/base.js';
-import { newPoint } from '../../geo/point.js';
-import { polygons as POLY } from '../../geo/polygons.js';
-import { newPrint } from '../core/print.js';
-import { render } from '../core/render.js';
-import { wasm_ctrl } from '../../geo/wasm.js';
-import { version } from '../../moto/license.js';
-import { Widget, newWidget } from '../core/widget.js';
-import { load } from "../../load/png.js";
 import { JSZip } from '../../ext/jszip-esm.js';
+import { load } from "../../load/png.js";
+import { newPoint } from '../../geo/point.js';
+import { newPrint } from '../core/print.js';
+import { polygons as POLY } from '../../geo/polygons.js';
 import { RasterPath } from '../../gpu/raster.js';
+import { render } from '../core/render.js';
+import { util } from '../../geo/base.js';
+import { version } from '../../moto/license.js';
+import { wasm_ctrl } from '../../geo/wasm.js';
+import { Widget, newWidget } from '../core/widget.js';
 
-import { CAM } from '../mode/cam/driver-be.js';
-import { DRAG } from '../mode/drag/driver.js';
-import { FDM } from '../mode/fdm/driver-be.js';
-import { LASER } from '../mode/laser/driver.js';
-import { SLA } from '../mode/sla/driver.js';
-import { WEDM } from '../mode/wedm/driver.js';
-import { WJET } from '../mode/wjet/driver.js';
+import { CAM } from '../mode/cam/work/init-work.js';
+import { DRAG } from '../mode/drag/init-work.js';
+import { FDM } from '../mode/fdm/work/init-work.js';
+import { LASER } from '../mode/laser/init-work.js';
+import { SLA } from '../mode/sla/work/init-work.js';
+import { WEDM } from '../mode/wedm/init-work.js';
+import { WJET } from '../mode/wjet/init-work.js';
 
 const { time } = util;
+const POOLPATH = "./minion.js";
 
 let drivers = {
         DRAG,
@@ -58,6 +58,13 @@ function debug() {
     console.log(...arguments);
 }
 
+function setPrint(print) {
+    if (current.print && current.print !== print) {
+        current.print.disposeSafeEval();
+    }
+    return current.print = print;
+}
+
 // catch clipper alerts and convert to console messages
 self.alert = function(o) {
     console.log(o);
@@ -66,7 +73,7 @@ self.alert = function(o) {
 self.uuid = ((Math.random() * Date.now()) | 0).toString(36);
 
 /**
- * @returns {RasterPath}
+ * @returns {RasterPath} instantiated class
  */
 self.get_raster_gpu = async function({ mode, resolution, rotationStep }) {
     let gpu = new RasterPath({
@@ -107,7 +114,7 @@ const minwork = {
             return;
         }
         for (let i=0; i < concurrent; i++) {
-            let minion = new Worker(poolpath || consts.PATHS.pool, { type: 'module' });
+            let minion = new Worker(poolpath || POOLPATH, { type: 'module' });
             minion.onerror = (error) => {
                 debug({ MINION_ERROR: error });
                 error.preventDefault();
@@ -314,7 +321,7 @@ const dispatch = {
     // purge all sync data
     clear(data, send) {
         // current.snap = null;
-        current.print = null;
+        setPrint(null);
         dispatch.group = wgroup = {};
         dispatch.cache = worker.cache = wcache = {};
         Widget.Groups.clear();
@@ -342,6 +349,8 @@ const dispatch = {
         widget.vertices = vertices;
         // restore meta
         widget.meta = data.meta;
+        // restore annotations
+        widget.anno = data.anno;
         // restore tracking object
         widget.track = data.track;
         send.done(data.id);
@@ -413,6 +422,18 @@ const dispatch = {
         send.done({});
     },
 
+    slicePre(data, send) {
+        const { settings } = data;
+        const { mode } = settings;
+        const driver = drivers[mode];
+
+        if (driver.slicePre) {
+            driver.slicePre(settings);
+        }
+
+        send.done();
+    },
+
     slice(data, send) {
         send.data({ update:0.001, updateStatus:"slicing" });
 
@@ -427,10 +448,9 @@ const dispatch = {
 
         let last = time(), now;
 
-        current.print = null;
+        setPrint(null);
         current.mode = settings.mode.toUpperCase();
 
-        widget.anno = data.anno || widget.anno;
         widget.settings = settings;
         widget.clearSlices();
 
@@ -463,13 +483,13 @@ const dispatch = {
         });
     },
 
-    sliceAll(data, send) {
+    slicePost(data, send) {
         const { settings } = data;
         const { mode } = settings;
         const driver = drivers[mode];
 
-        if (driver.sliceAll) {
-            driver.sliceAll(settings, send.data);
+        if (driver.slicePost) {
+            driver.slicePost(settings, send.data);
         }
 
         send.done({done: true});
@@ -496,7 +516,7 @@ const dispatch = {
             send.data(emit, state.zeros);
         }).then(() => {
             const unitScale = settings.controller.units === 'in' ? (1 / 25.4) : 1;
-            const print = current.print || {};
+            const print = setPrint(current.print || {});
             const minSpeed = (print.minSpeed || 0) * unitScale;
             const maxSpeed = (print.maxSpeed || 0) * unitScale;
 
@@ -571,7 +591,7 @@ const dispatch = {
             z:  origin.z - (process.camOriginOffZ ?? 0)
         };
         const device = settings.device;
-        const print = current.print = newPrint(settings, Object.values(wcache));
+        const print = setPrint(newPrint(settings, Object.values(wcache)));
         const tools = device.extruders;
         const mode = settings.mode;
         const thin = settings.controller.lineType === 'line' || mode !== 'FDM';
@@ -601,7 +621,7 @@ const dispatch = {
                 out.point = newPoint(x,y,z || 0);
             });
         });
-        const print = current.print = newPrint(null, Object.values(wcache));
+        const print = setPrint(newPrint(null, Object.values(wcache)));
         render.path(parsed, progress => {
             send.data({ progress });
         }, { thin:  true })
@@ -768,7 +788,6 @@ const worker = self.kiri_worker = {
 };
 
 // initilize driver mode handlers
-CAM.init(worker);
-FDM.init(worker);
-LASER.init(worker);
-SLA.init(worker);
+for (let driver of Object.values(drivers)) {
+    driver.init(worker);
+}

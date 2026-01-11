@@ -17,6 +17,9 @@ import { CSG } from '../geo/csg.js';
 import { util } from './util.js';
 import { tool as meshTool } from './tool.js';
 import { meshToSTEPWithFaces } from '../load/step.js';
+import { encode as tmfEncode } from '../load/3mf.js';
+import { encode as objEncode } from '../load/obj.js';
+import { encode as stlEncode } from '../load/stl.js';
 
 const { Triangle, Vector3, BufferGeometry, BufferAttribute, computeFaceNormal } = THREE;
 
@@ -517,51 +520,9 @@ const model = {
         }
         switch (format) {
             case "obj":
-                let p = 1;
-                let obj = [header];
-                for (let rec of recs) {
-                    let { file, varr } = rec;
-                    obj.push(`g ${file}`);
-                    for (let i=0; i<varr.length; p += 3) {
-                        obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
-                        obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
-                        obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
-                        obj.push(`f ${p} ${p+1} ${p+2}`);
-                    }
-                }
-                return obj.join('\n');
+                return objEncode(recs, header);
             case "stl":
-                let stl = new Uint8Array(80 + 4 + vtot/3 * 50);
-                let dat = new DataView(stl.buffer);
-                let pos = 84;
-                header.split('').forEach((c,i) => {
-                    dat.setUint8(i, c.charCodeAt(0));
-                });
-                // todo put Mesh:Tool info in header
-                dat.setInt32(80, vtot/3, true);
-                for (let rec of recs) {
-                    let { id, matrix, file, varr } = rec;
-                    for (let i=0, l=varr.length; i<l;) {
-                        let p0 = new Vector3(varr[i++], varr[i++], varr[i++]);
-                        let p1 = new Vector3(varr[i++], varr[i++], varr[i++]);
-                        let p2 = new Vector3(varr[i++], varr[i++], varr[i++]);
-                        let norm = computeFaceNormal(p0, p1, p2);
-                        dat.setFloat32(pos +  0, norm.x, true);
-                        dat.setFloat32(pos +  4, norm.y, true);
-                        dat.setFloat32(pos +  8, norm.z, true);
-                        dat.setFloat32(pos + 12, p0.x, true);
-                        dat.setFloat32(pos + 16, p0.y, true);
-                        dat.setFloat32(pos + 20, p0.z, true);
-                        dat.setFloat32(pos + 24, p1.x, true);
-                        dat.setFloat32(pos + 28, p1.y, true);
-                        dat.setFloat32(pos + 32, p1.z, true);
-                        dat.setFloat32(pos + 36, p2.x, true);
-                        dat.setFloat32(pos + 40, p2.y, true);
-                        dat.setFloat32(pos + 44, p2.z, true);
-                        pos += 50;
-                    }
-                }
-                return stl;
+                return stlEncode(recs, header);
             default:
                 throw `invalid format "${format}"`;
         }
@@ -617,51 +578,13 @@ const file = {
                 }
                 return meshToSTEPWithFaces(varr);
             case "obj":
-                let p = 1;
-                let obj = [header];
-                for (let rec of recs) {
-                    let { file, varr } = rec;
-                    obj.push(`g ${file}`);
-                    for (let i=0; i<varr.length; p += 3) {
-                        obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
-                        obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
-                        obj.push(`v ${varr[i++]} ${varr[i++]} ${varr[i++]}`);
-                        obj.push(`f ${p} ${p+1} ${p+2}`);
-                    }
-                }
-                return obj.join('\n');
+                return objEncode(recs, header);
             case "stl":
-                let stl = new Uint8Array(80 + 4 + vtot/3 * 50);
-                let dat = new DataView(stl.buffer);
-                let pos = 84;
-                header.split('').forEach((c,i) => {
-                    dat.setUint8(i, c.charCodeAt(0));
-                });
-                // todo put Mesh:Tool info in header
-                dat.setInt32(80, vtot/3, true);
-                for (let rec of recs) {
-                    let { id, matrix, file, varr } = rec;
-                    for (let i=0, l=varr.length; i<l;) {
-                        let p0 = new Vector3(varr[i++], varr[i++], varr[i++]);
-                        let p1 = new Vector3(varr[i++], varr[i++], varr[i++]);
-                        let p2 = new Vector3(varr[i++], varr[i++], varr[i++]);
-                        let norm = computeFaceNormal(p0, p1, p2);
-                        dat.setFloat32(pos +  0, norm.x, true);
-                        dat.setFloat32(pos +  4, norm.y, true);
-                        dat.setFloat32(pos +  8, norm.z, true);
-                        dat.setFloat32(pos + 12, p0.x, true);
-                        dat.setFloat32(pos + 16, p0.y, true);
-                        dat.setFloat32(pos + 20, p0.z, true);
-                        dat.setFloat32(pos + 24, p1.x, true);
-                        dat.setFloat32(pos + 28, p1.y, true);
-                        dat.setFloat32(pos + 32, p1.z, true);
-                        dat.setFloat32(pos + 36, p2.x, true);
-                        dat.setFloat32(pos + 40, p2.y, true);
-                        dat.setFloat32(pos + 44, p2.z, true);
-                        pos += 50;
-                    }
-                }
-                return stl;
+                return stlEncode(recs, header);
+            case "3mf":
+                send.async();
+                tmfEncode(recs, header).then(data => send.done(data));
+                return;
             default:
                 throw `invalid format "${format}"`;
         }

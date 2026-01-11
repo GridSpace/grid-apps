@@ -20,4 +20,4 @@ self.kiri.load(api => {
             }
         };
     });
-});
+}, 'Developer');

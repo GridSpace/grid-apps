@@ -1,0 +1,407 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
+import { $, h } from '../../moto/webui.js';
+import { api } from './api.js';
+import { conf } from './conf/defaults.js';
+import { space } from '../../moto/space.js';
+import { devices as devlist } from '../../pack/kiri-devs.js';
+import { settings, conf as setconf } from './conf/manager.js';
+
+export const device = {
+    clone: cloneDevice,
+    code: currentDeviceCode,
+    get: currentDeviceName,
+    set: selectDevice,
+    isBelt
+};
+
+export const devices = {
+    show: showDevices,
+    select: selectDevice,
+    refresh: updateDeviceList,
+    update_laser_state: updateLaserState
+};
+
+function isBelt() {
+    return setconf.get().device.bedBelt;
+}
+
+function currentDeviceName() {
+    return setconf.get().filter[api.mode.get()];
+}
+
+function currentDeviceCode() {
+    return setconf.get().devices[currentDeviceName()];
+}
+
+function getModeDevices() {
+    return Object.keys(devlist[ api.mode.get_lower() ]).sort();
+}
+
+export function showDevices() {
+    settings.sync.get().then(_showDevices);
+}
+
+function _showDevices() {
+    updateDeviceList();
+    api.modal.show('setup');
+}
+
+function updateDeviceList() {
+    renderDevices(getModeDevices());
+}
+
+function updateDeviceName(newname) {
+    let selected = api.device.get(),
+        devs = setconf.get().devices;
+    if (newname !== selected) {
+        devs[newname] = devs[selected];
+        delete devs[selected];
+        selectDevice(newname);
+        updateDeviceList();
+    }
+}
+
+function putLocalDevice(devicename, obj) {
+    setconf.get().devices[devicename] = obj;
+    setconf.save();
+}
+
+function removeLocalDevice(devicename) {
+    delete setconf.get().devices[devicename];
+    setconf.save();
+    settings.sync.put();
+}
+
+function isLocalDevice(devicename) {
+    return setconf.get().devices[devicename] ? true : false;
+}
+
+function getSelectedDevice() {
+    return api.device.get();
+}
+
+function selectDevice(devicename) {
+    if (isLocalDevice(devicename)) {
+        setDeviceCode(setconf.get().devices[devicename], devicename);
+    } else {
+        let code = devlist[api.mode.get_lower()][devicename];
+        if (code) {
+            setDeviceCode(code, devicename);
+        }
+    }
+}
+
+/**
+ * Clone the current device to create a customizable local copy.
+ * Naming logic: if device already has "My" prefix, appends " copy", otherwise adds "My" prefix.
+ * Only works for local devices (not stock devices).
+ */
+function cloneDevice() {
+    let name = `${getSelectedDevice().replace(/\./g,' ')}`;
+    let code = api.clone(setconf.get().device);
+    code.mode = api.mode.get();
+    if (name.toLowerCase().indexOf('my ') >= 0) {
+        name = `${name} copy`;
+    } else {
+        name = `My ${name}`;
+    }
+    putLocalDevice(name, code);
+    setDeviceCode(code, name);
+    settings.sync.put();
+}
+
+function updateLaserState() {
+    const dev = setconf.get().device;
+    $('laser-on').style.display = dev.useLaser ? 'flex' : 'none';
+    $('laser-off').style.display = dev.useLaser ? 'flex' : 'none';
+}
+
+/**
+ * Set device configuration from code and initialize device state.
+ * Complex initialization that:
+ * - Parses device code (string or object)
+ * - Fills missing device fields with defaults
+ * - Handles first-time device setup with profiles
+ * - Updates UI elements and platform configuration
+ * - Manages device/process associations
+ * - Emits device.select and device.selected events
+ * @param {string|object} code - Device configuration code or object
+ * @param {string} devicename - Name of the device being set
+ */
+function setDeviceCode(code, devicename) {
+    api.event.emit('device.select', devicename);
+    try {
+        if (typeof(code) === 'string') code = js2o(code) || {};
+        if (code.code) code = code.code;
+
+        let mode = api.mode.get(),
+            lmode = mode.toLowerCase(),
+            current = setconf.get(),
+            local = isLocalDevice(devicename),
+            dev = current.device = conf.device_from_code(code,mode),
+            dproc = current.devproc[devicename], // last process name for this device
+            newdev = dproc === undefined,   // first time device is selected
+            predev = current.filter[mode],  // previous device selection
+            chgdev = predev !== devicename; // device is changing
+
+        // fill missing device fields
+        conf.fill_cull_once(dev, conf.defaults[lmode].d);
+
+        // first time device use, add any print profiles and set to default if present
+        if (code.profiles) {
+            for (let profile of code.profiles) {
+                let profname = profile.processName;
+                // if no saved profile by that name for this mode...
+                if (!current.sproc[mode][profname]) {
+                    console.log('adding profile', profname, 'to', mode);
+                    current.sproc[mode][profname] = profile;
+                }
+                // if it's a new device, seed the new profile name as last profile
+                if (newdev && !current.devproc[devicename]) {
+                    console.log('setting default profile for new device', devicename, 'to', profname);
+                    current.devproc[devicename] = dproc = profname;
+                }
+            }
+        }
+
+        dev.new = false;
+        dev.deviceName = devicename;
+
+        let { platform, ui, uc } = api;
+
+        ui.deviceBelt.checked = dev.bedBelt;
+        ui.deviceRound.checked = dev.bedRound;
+        ui.deviceOrigin.checked = dev.ctOriginCenter || dev.originCenter || dev.bedRound;
+        ui.fwRetract.checked = dev.fwRetract;
+        ui.useIndexed.checked = dev.useIndexed;
+
+        // add extruder selection buttons
+        if (dev.extruders) {
+            let ext = api.lists.extruders = [];
+            dev.internal = 0;
+            for (let i=0; i<dev.extruders.length; i++) {
+                ext.push({id:i, name:i});
+            }
+        }
+
+        // disable editing for non-local devices
+        [
+            // ui.deviceName,
+            ui.gcodePre,
+            ui.gcodePost,
+            ui.bedDepth,
+            ui.bedWidth,
+            ui.maxHeight,
+            ui.useLaser,
+            ui.useIndexed,
+            ui.resolutionX,
+            ui.resolutionY,
+            ui.deviceOrigin,
+            ui.deviceRound,
+            ui.deviceBelt,
+            ui.fwRetract,
+            ui.deviceZMax,
+            ui.gcodeTime,
+            ui.gcodeFan,
+            ui.gcodeFeature,
+            ui.gcodeTrack,
+            ui.gcodeLayer,
+            ui.extFilament,
+            ui.extNozzle,
+            ui.spindleMax,
+            ui.gcodeSpindle,
+            ui.gcodeDwell,
+            ui.gcodeChange,
+            ui.gcodeFExt,
+            ui.gcodeSpace,
+            ui.gcodeStrip,
+            ui.gcodeLaserOn,
+            ui.gcodeLaserOff,
+            ui.laserMaxPower,
+            ui.extPrev,
+            ui.extNext,
+            ui.extAdd,
+            ui.extDel,
+            ui.extOffsetX,
+            ui.extOffsetY
+        ].forEach(function(e) {
+            e.disabled = !local;
+        });
+
+        ui.devices.save.disabled = !local;
+        ui.devices.delete.disabled = !local;
+        ui.devices.rename.disabled = !local;
+        ui.devices.export.disabled = !local;
+        ui.devices.add.style.display = mode === 'SLA' ? 'none' : '';
+
+        if (local) {
+            ui.devices.add.innerText = "copy";
+            ui.devices.delete.style.display = '';
+            ui.devices.rename.style.display = '';
+            ui.devices.export.style.display = '';
+        } else {
+            ui.devices.add.innerText = "customize";
+            ui.devices.delete.style.display = 'none';
+            ui.devices.rename.style.display = 'none';
+            ui.devices.export.style.display = 'none';
+        }
+        ui.devices.add.disabled = dev.noclone;
+
+        setconf.update_fields();
+        space.platform.setBelt(isBelt());
+        platform.update_size();
+        platform.update_origin();
+        platform.update();
+        updateLaserState();
+
+        // store current device name for this mode
+        current.filter[mode] = devicename;
+        // cache device record for this mode (restored in setMode)
+        current.cdev[mode] = dev;
+
+        if (dproc) {
+            // restore last process associated with this device
+            setconf.load(null, dproc);
+        } else {
+            setconf.update();
+        }
+
+        setconf.save();
+
+        if (isBelt()) {
+            // space.view.setHome(dev.bedBelt ? Math.PI/2 : 0, Math.PI / 2.5);
+            space.view.setHome(0, Math.PI / 2.5);
+        } else {
+            space.view.setHome(0);
+        }
+        // when changing devices, update focus on widgets
+        if (chgdev) {
+            setTimeout(api.space.set_focus, 0);
+        }
+
+        uc.refresh(1);
+        api.event.emit('device.selected', dev);
+    } catch (e) {
+        console.log({error:e, device:code, devicename});
+        api.show.alert(`invalid or deprecated device: "${devicename}"`, 10);
+        api.show.alert(`please select a new device`, 10);
+        throw e;
+        showDevices();
+    }
+    api.function.clear();
+    api.event.settings();
+}
+
+/**
+ * Render device selection UI with both stock and custom devices.
+ * Builds device list dropdown, sets up event handlers for save/add/delete/rename/export,
+ * and separates local "My Devices" from "Stock Devices" in the UI.
+ * @param {string[]} devices - Array of stock device names for current mode
+ */
+function renderDevices(devices) {
+    let selected = api.device.get() || devices[0],
+        features = api.feature,
+        devs = setconf.get().devices,
+        dfilter = typeof(features.device_filter) === 'function' ? features.device_filter : undefined;
+
+    for (let local in devs) {
+        if (!(devs.hasOwnProperty(local) && devs[local])) {
+            continue;
+        }
+        let dev = devs[local],
+            fdmCode = dev.cmd,
+            fdmMode = (api.mode.get() === 'FDM');
+        if (dev.mode ? (dev.mode === api.mode.get()) : (fdmCode ? fdmMode : !fdmMode)) {
+            devices.push(local);
+        }
+    };
+
+    devices = devices.sort();
+
+    let { event, ui } = api;
+
+    event.emit('devices.render', devices);
+
+    ui.devices.save.onclick = function() {
+        event.emit('device.save');
+        api.function.clear();
+        setconf.save();
+        settings.sync.put();
+        showDevices();
+        api.modal.hide();
+    };
+    ui.devices.add.onclick = function() {
+        api.function.clear();
+        cloneDevice();
+        showDevices();
+    };
+    ui.devices.delete.onclick = function() {
+        api.function.clear();
+        removeLocalDevice(getSelectedDevice());
+        selectDevice(getModeDevices()[0]);
+        showDevices();
+    };
+    ui.devices.rename.onclick = function() {
+        api.uc.prompt(`Rename "${selected}`, selected).then(newname => {
+            if (newname) {
+                updateDeviceName(newname);
+                setconf.save();
+                settings.sync.put();
+                showDevices();
+            } else {
+                showDevices();
+            }
+        });
+    };
+    ui.devices.export.onclick = function(event) {
+        const record = {
+            version: api.version,
+            device: selected,
+            process: api.process.code(),
+            profiles: event.altKey ? settings.prof() : undefined,
+            code: devs[selected],
+            time: Date.now()
+        };
+        let exp = api.util.b64enc(record);
+        api.device.export(exp, selected, { event, record });
+    };
+
+    let dedup = {};
+    let list_cdev = [];
+    let list_mdev = [];
+    devices.forEach(function(device, index) {
+        // prevent device from appearing twice
+        // such as local name = standard device name
+        if (dedup[device]) {
+            return;
+        }
+        dedup[device] = device;
+        let loc = isLocalDevice(device);
+        if (dfilter && dfilter(device) === false) {
+            return;
+        }
+        if (loc) {
+            list_mdev.push(h.option(device));
+        } else {
+            list_cdev.push(h.option(device));
+        }
+    });
+
+    let dev_list = $('dev-list');
+    h.bind(dev_list, [
+        h.option({ _: '-- My Devices --', disabled: true }),
+        ...list_mdev,
+        h.option({ _: '-- Stock Devices --', disabled: true }),
+        ...list_cdev
+    ]);
+    let dev_opts = [...dev_list.options].map(o => o.innerText);
+    dev_list.selectedIndex = dev_opts.indexOf(selected);
+    dev_list.onchange = ev => {
+        const seldev = dev_list.options[dev_list.selectedIndex];
+        selectDevice(seldev.innerText);
+        api.platform.layout();
+    }
+    selectDevice(selected);
+}
+

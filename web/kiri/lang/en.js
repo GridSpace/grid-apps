@@ -8,8 +8,9 @@ self.lang['en-us'] = {
     axis:           "axis",         // left object scale pop menu
     back:           "back",
     clear:          "clear",        // clear workspace (remove all objects)
-    copy:           "copy",
     clone:          "clone",        // create duplicate
+    contents:       "contents",
+    copy:           "copy",
     delete:         "delete",
     detail:         "detail",
     done:           "done",
@@ -136,8 +137,6 @@ self.lang['en-us'] = {
     dv_xtab_l:      "extrusion moves absolute",
     dv_orgc_s:      "origin center",
     dv_orgc_l:      "bed origin center",
-    // dv_orgt_s:      "origin top",
-    // dv_orgt_l:      "part z origin top",
     dv_bedc_s:      "circular bed",
     dv_bedc_l:      "device bed is circular",
     dv_belt_s:      "belt bed",
@@ -325,9 +324,12 @@ self.lang['en-us'] = {
     op_anim_l:      ["animation mesh density","higher is more dense","takes more memory","and is slower"],
     op_mani_s:      "manifold",
     op_mani_l:      ["in stock indexed mode","use boolean visualiation","this is very expensive","and likely very slow"],
-    op_exgl_l:      ["show Grid:Local devices in export dialog","includes Grid:Bots and OctoPrint plugins"],
-    op_exgh_l:      ["legacy Grid:Host local network support"],
-    op_exop_l:      ["legacy OctoPrint local network support","Grid:Space OctoPrint plugin recommended"],
+    op_exop_s:      "remote host",
+    op_exop_l:      ["enable sending files to remote hosts","moonraker = klipper","octoprint"],
+    op_excp_s:      "code preview",
+    op_excp_l:      ["show start of gcode","in export dialog"],
+    op_exth_s:      "thumbnail",
+    op_exth_l:      ["embed print thumbnail in gcode"],
 
     lo_menu:        "layout",
 
@@ -394,7 +396,7 @@ self.lang['en-us'] = {
     fi_over_l:      ["overlap between shells and solid or sparse infill. can improve bonding to shells","as fraction of line width","0.0 - 1.0"],
     fi_angl_s:      "start angle",
     fi_angl_l:      ["starting angle in degrees","90 degrees added to ","each following layer","applies only to solid layers"],
-    fi_grow_s:      "area expand",
+    fi_grow_s:      "expand",
     fi_grow_l:      ["expand projected solids","can help with solid areas","over sparse infill areas","units in millimeters"],
 
     // FDM FILL
@@ -463,30 +465,26 @@ self.lang['en-us'] = {
     // FDM SUPPORT
     sp_menu:        "support",
     sp_detect:      "detect",
+    sp_type_s:      "type",
+    sp_type_l:      ["automatic = detect","manual = paint on"],
     sp_dens_s:      "density",
     sp_dens_l:      ["fraction 0.0 - 1.0","recommended 0.15","0 to disable"],
-    sp_size_s:      "pillar size",
-    sp_size_l:      ["pillar width in millimeters","smaller values exponentially","increase detection times"],
     sp_offs_s:      "part offset",
     sp_offs_l:      ["offset from part","in millimeters"],
-    sp_gaps_s:      "gap layers",
+    sp_gaps_s:      "layer gap",
     sp_gaps_l:      ["number of layers","offset from part"],
     sp_span_s:      "max span",
     sp_span_l:      ["unsupported span that causes","a new support to be generated","in millimeters"],
-    sp_angl_s:      "max angle",
+    sp_angl_s:      "angle",
     sp_angl_l:      ["max overhang angle before","supporting pillar is generated","normal values 45-60","belt values 0-10"],
-    sp_area_s:      "min area",
-    sp_area_l:      ["minimum area for","a support column","in millimeters","smaller values will","slow detection"],
     sp_xpnd_s:      "expand",
     sp_xpnd_l:      ["expand support area","beyond part boundary","in millimeters"],
-    sp_grow_s:      "grow",
-    sp_grow_l:      ["grow support column to fill small gaps","in millimeters"],
-    sp_nozl_s:      "extruder",
-    sp_nozl_l:      ["in multi-extruder systems","the extruder to use for","support material"],
+    sp_nozl_s:      "tool",
+    sp_nozl_l:      ["in multi-extruder systems","the toolhead to use for","support material"],
     sp_outl_s:      "enclosed",
     sp_outl_l:      ["enclose support pattern","inside a perimeter shell"],
-    sp_auto_s:      "automatic",
-    sp_auto_l:      ["enable generated supports","using at-slice-time geometry","supports will only appear","after slicing completes"],
+    sp_tree_s:      "tree type",
+    sp_tree_l:      ["use tree type support structure"],
 
     // CNC COMMON terms
     cc_tool:        "tool",
@@ -584,6 +582,8 @@ self.lang['en-us'] = {
     cf_linx_l:      "linear y-axis finishing",
     cf_liny_s:      "enable x pass",
     cf_liny_l:      "linear x-axis finishing",
+    cf_clip_s:      "clip to stock",
+    cf_clip_l:      ["contour op only","clip cutting paths","to defined stock"],
 
     // CNC TRACE
     cu_menu:        "trace",
@@ -603,6 +603,8 @@ self.lang['en-us'] = {
     cp_cont_l:      ["ignore interior voids and features"],
     cp_outl_s:      "outline only",
     cp_outl_l:      ["ignore interior voids and features"],
+    cp_shad_s:      "shadow",
+    cp_shad_l:      ["select part shadow as work area. overrides selected edges and surface areas"],
 
     // CNC DRILLING
     cd_menu:        "drill",
@@ -710,6 +712,18 @@ self.lang['en-us'] = {
     ct_midl_l:      ["use midline of tab","instead of z bottom","for double-sided work"],
     ct_nabl_s:      "auto",
     ct_nabl_l:      ["auto generate radial tabs","projected from part center","using count and angle offset"],
+
+    // CNC LATHE
+    cl_xpnd_s:      "expand",
+    cl_xpnd_l:      ["grow starting radius for step down. radius is defined as the highest Z point measured from the X axis center of the part"],
+
+    // CNC AREA OP
+    ca_altr_s:      "alternate",
+    ca_altr_l:      "alternate direction of travel lines (zigzag)",
+    ca_sang_s:      "step angle",
+    ca_sang_l:      "crossing angle on the XY plane for contour lines",
+    ca_wall_s:      "walls",
+    ca_wall_l:      ["perform a single pass along vertical faces. leave interior spaces. similar to outline operation"],
 
     // OUTPUT
     ou_menu:        "output",
@@ -837,8 +851,6 @@ self.lang['en-us'] = {
     cs_hght_l:      ["height (z) in workspace units","0 defaults to part size"],
     cs_offs_s:      "offset",
     cs_offs_l:      ["use width, depth, height","as offsets from max","part size on platform"],
-    cs_clip_s:      "clip to",
-    cs_clip_l:      ["contour op only","clip cutting paths","to defined stock"],
     cs_ishg_s:      "show grid",
     cs_ishg_l:      ["show platform grid in indexed mode"],
     cs_indx_s:      "indexed",
@@ -879,8 +891,10 @@ self.lang['en-us'] = {
     ad_rdwl_l:      ["time between re-engaging","filament and movement","in milliseconds"],
     ad_scst_s:      "shell coast",
     ad_scst_l:      ["non-printing end","of perimeter shells","in millimeters"],
-    ad_msol_s:      "area filter",
+    ad_msol_s:      "min area",
     ad_msol_l:      ["minimum area (mm^2)","bridges and flats less than this are culled"],
+    ad_mthk_s:      "min thick",
+    ad_mthk_l:      ["minimum area thickness","which is a ratio of area to perimeter","for layer differences which are used","to find bridges and flat areas","values from 0.0 - 0.5 work best"],
     ad_mins_s:      "min speed",
     ad_mins_l:      ["minimum speed","for short segments"],
     ad_maxf_s:      "max flowrate",
@@ -889,8 +903,6 @@ self.lang['en-us'] = {
     ad_scar_l:      ["ease up length for scarf joint. disables arc detection","0 = disabled"],
     ad_spol_s:      "short path",
     ad_spol_l:      ["polygons shorter than this","will have their print speed","scaled down to min speed","in millimeters"],
-    ad_arct_s:      "arc tolerance",
-    ad_arct_l:      ["convert faceted lines to arcs","center point drift tolerance","when matching arc points","consider values around 0.15","value in millimeters","0 or scarf disables this"],
     ad_zhop_s:      "z hop distance",
     ad_zhop_l:      ["amount to raise z","on retraction moves","in millimeters","0 to disable"],
     ad_abkl_s:      "anti-backlash",
@@ -1007,9 +1019,10 @@ self.lang['en-us'] = {
     ex_gcpv:        "gcode preview",
     ex_dwnl:        "download",
     ex_bamb:        "send to bambu",
-    ex_octo:        "octoprint",
+    ex_octo:        "remote host",
     ex_host:        "host",
     ex_akey:        "key",
+    ex_type:        "remote print type",
     ex_rsnm:        "resin used ML",
     ex_layr:        "layers",
     ex_ptim:        "print time",

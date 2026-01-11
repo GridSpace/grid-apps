@@ -1,14 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { arcToPath } from '../../geo/paths.js';
-import { consts } from './consts.js';
+import { createVM } from '../../moto/quickjs.js';
 import { newPoint } from '../../geo/point.js';
+import { newPolygon } from '../../geo/polygon.js';
 import { util } from '../../geo/base.js';
 
 const { numOrDefault } = util;
-const { beltfact } = consts;
 
-const XAXIS = new THREE.Vector3(1,0,0);
+const BELTFACT = Math.cos(Math.PI / 4);
 const DEG2RAD = Math.PI / 180;
 
 class Print {
@@ -24,6 +24,7 @@ class Print {
         this.tools = {};
         // set to 1 to enable flow rate analysis (console)
         this.debugE = settings ? (settings.controller.devel ? 1 : 0) : 0;
+        this._ready = this.createSafeEval();
     }
 
     setType(type) {
@@ -40,7 +41,7 @@ class Print {
      * addOutput - add a new point to the output gcode array
      * @param  {any[]} array  - the output gcode array
      * @param  {Point} point  - the new point
-     * @param  {number} emit   - the extrusion value
+     * @param  {number} emit   - the extrusion value (G? value for cnc)
      * @param  {number} speed  - the feed rate
      * @param  {string} tool  - the tool id
      * @param  {"lerp"|string} opts.type  - the output type
@@ -50,7 +51,7 @@ class Print {
      * @return {Output}       - the new output object
      */
     addOutput(array, point, emit, speed, tool, opts) {
-        const { type, retract, center, arcPoints} = opts ?? {};
+        const { type, retract, center, arcPoints, clockwise, distance } = opts ?? {};
         let { lastPoint, lastEmit, lastOut } = this;
         let arc = emit == 2 || emit == 3;
         // drop duplicates (usually intruced by FDM bisections)
@@ -67,7 +68,9 @@ class Print {
         this.lastOut = lastOut = new Output(point, emit, speed, tool, {
             type: type ?? this.nextType,
             center,
+            clockwise,
             arcPoints,
+            distance
         });
         if (tool !== undefined) {
             this.tools[tool] = true;
@@ -128,10 +131,9 @@ class Print {
             perimeter = poly.perimeter(),
             close = !options.open,
             scarf = !poly.open ? (options.scarf ?? 0) : false,
-            tool = options.tool,
-            zmax = options.zmax,
             last = startPoint,
-            first = true;
+            first = true,
+            { arcOpts, tool, zmax, onfirst, onfirstout } = options;
 
         // if short, use calculated print speed based on sliding scale
         if (perimeter < process.outputShortPoly) {
@@ -167,7 +169,7 @@ class Print {
         if (scarf) {
             let epz = Math.max(...poly.points.map(p => p.z));
             let spz = startPoint.z;
-            poly = poly.segment(options.nozzleSize ?? 0.4, false, false, scarf * 2);
+            poly = poly.segment(nozzleSize ?? 0.4, false, false, scarf * 2);
             pp = poly.points;
             let lp, sp = [];
             for (let p of pp) {
@@ -191,6 +193,10 @@ class Print {
             }
             pp.push(...esp);
             scarf = true;
+        } else if (arcOpts) {
+            // annotate arc points
+            pp = newPolygon(pp).detectArcs(arcOpts).points;
+            // console.log(arcOpts, pp.map(p => p.arc?.skip).filter(v => v));
         }
 
         // scarf manages its own close point
@@ -199,19 +205,44 @@ class Print {
         }
 
         let lpo;
+        let arcInfo;
+        let arcDist = 0;
         for (let point of pp) {
+            let { arc } = point;
+            if (arc) {
+                arcInfo = arc;
+                if (first && onfirst) onfirst(point, output);
+                let out = scope.addOutput(output, point, shellMult, moveSpeed, tool);
+                if (first && onfirstout) onfirstout(out);
+                // arc center is relative to first point
+                arcInfo.center.move({ x: -point.x, y: -point.y, z: 0 });
+                last = point;
+                if (first) first = false;
+                continue;
+            } else if (arcInfo) {
+                // accumulate and pass to last point to calc FDM E value
+                arcDist += last.distTo2D(point);
+                if (--arcInfo.skip === 0) {
+                    arcInfo.distance = arcDist;
+                    scope.addOutput(output, point, shellMult, moveSpeed, tool, arcInfo);
+                    arcInfo = undefined;
+                    arcDist = 0;
+                } else {
+                    // non-emit arc points get -1 for rendering
+                    scope.addOutput(output, point, -1, moveSpeed, tool);
+                }
+                last = point;
+                continue;
+            }
             if (point.skip && lpo?.skip) {
+                // basic thin wall skips are converted to moves
                 scope.addOutput(output, point, 0, moveSpeed, tool);
             } else if (first) {
                 // if (point.skip) console.log({ skip: point });
-                if (options.onfirst) {
-                    options.onfirst(point, output);
-                }
+                onfirst && onfirst(point, output);
                 // move to first output point on poly
                 let out = scope.addOutput(output, point, 0, moveSpeed, tool);
-                if (options.onfirstout) {
-                    options.onfirstout(out);
-                }
+                onfirstout && onfirstout(out);
                 first = false;
             } else {
                 let seglen = last.distTo2D(point);
@@ -237,7 +268,26 @@ class Print {
         return output.last().point;
     }
 
+    async ready() {
+        await this._ready;
+    }
+
+    async createSafeEval() {
+        this.safeEval = await createVM();
+        this.safeEval.eval("function range(a,b) { return (a + (layer / layers) * (b-a)) }");
+    }
+
+    disposeSafeEval() {
+        if (this.safeEval) {
+            this.safeEval.dispose();
+        }
+    }
+
     constReplace(str, consts, start, pad, short) {
+        let safeEval = this.safeEval;
+        if (safeEval) {
+            safeEval.setContext(consts);
+        }
         function tryeval(str) {
             try {
                 return eval(`{ ${str} }`)
@@ -269,7 +319,7 @@ class Print {
             }
             eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(4) }`);
             eva.push(`try {( ${tok} )} catch (e) {console.log(e);0}`);
-            let evl = tryeval(eva.join(''));
+            let evl = safeEval ? safeEval.eval(tok) : tryeval(eva.join(''));
             nutok = evl;
             if (pad === 666) {
                 return evl;
@@ -538,8 +588,8 @@ class Print {
             let { point, prevPoint } = processLine(line, axes);
 
             if (morph && belt) {
-                point.y -= point.z * beltfact;
-                point.z *= beltfact;
+                point.y -= point.z * BELTFACT;
+                point.z *= BELTFACT;
             }
 
             const retract = (fdm && pos.E < 0) || undefined;
@@ -725,15 +775,16 @@ class Output {
      */
     constructor(point, emit, speed, tool, options) {
 
-        const { type, center, arcPoints } = (options ?? {});
-        //speed, tool, type, center, arcPoints
+        const { type, center, arcPoints, clockwise, distance } = (options ?? {});
+
         this.point = point; 
         this.emit = Number(emit); //convert bools into 0/1
         this.speed = speed;
         this.tool = tool;
         this.type = type;
         this.center = center;
-        this.arcPoints = arcPoints;
+        this.clockwise = clockwise;
+        this.distance = distance;
         // this.where = new Error().stack.split("\n");
     }
 
