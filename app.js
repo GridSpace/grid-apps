@@ -579,16 +579,19 @@ function cookieValue(cookie,key) {
 }
 
 function addAppHeaders(req, res, next) {
+    if (req.app.path.indexOf("/lib") === 0) {
+        addCorsHeaders(req, res);
+    } else
     if ([
         "/kiri/",
         "/mesh/",
-        "/lib/gpu/raster.js",
-        "/lib/gpu/raster-worker.js",
-        "/lib/mesh/work.js",
-        "/lib/kiri/run/worker.js",
-        "/lib/kiri/run/minion.js",
-        "/lib/kiri/run/engine.js",
-        "/lib/kiri/run/frame.js"
+        // "/lib/gpu/raster.js",
+        // "/lib/gpu/raster-worker.js",
+        // "/lib/mesh/work.js",
+        // "/lib/kiri/run/worker.js",
+        // "/lib/kiri/run/minion.js",
+        // "/lib/kiri/run/engine.js",
+        // "/lib/kiri/run/frame.js"
     ].indexOf(req.app.path) >= 0) {
         addCorsHeaders(req, res);
     }
