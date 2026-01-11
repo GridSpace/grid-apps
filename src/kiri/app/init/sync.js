@@ -252,6 +252,7 @@ function setup_keybd_nav() {
     $('view-back').onclick = space.view.back;
     $('view-left').onclick = space.view.left;
     $('view-right').onclick = space.view.right;
+
     $('unrotate').onclick = () => {
         api.widgets.for(w => w.unrotate());
         selection.update_info();
@@ -274,7 +275,10 @@ function setup_keybd_nav() {
     $('rot_z_gt').onclick = () => { selection.rotate(0,0,-d * $('rot_z').value) };
 
     // rendering options
-    $('render-edges').onclick = () => { api.view.set_edges({ toggle: true }); api.conf.save() };
+    $('render-edges').onclick = () => {
+        api.view.set_edges({ toggle: true });
+        api.conf.save()
+    };
     $('render-ghost').onclick = () => {
         const opacity = api.view.is_arrange() ? 0.4 : 0.25;
         api.view.set_wireframe(false);
@@ -285,7 +289,7 @@ function setup_keybd_nav() {
     };
     $('render-wire').onclick = () => {
         api.view.set_wireframe(true, 0, api.space.is_dark() ? 0.25 : 0.5);
-        api.visuals.set_opacity(1.0);
+        api.visuals.set_opacity(0.25);
         api.conf.save();
     };
     $('render-solid').onclick = () => {
