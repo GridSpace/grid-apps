@@ -288,11 +288,18 @@ class Print {
         if (safeEval) {
             safeEval.setContext(consts);
         }
+        function doSafeEval(tok) {
+            try {
+                return safeEval ? safeEval.eval(tok) : undefined;
+            } catch (e) {
+                console.log({ macro_error: tok });
+            }
+        }
         function tryeval(str) {
             try {
                 return eval(`{ ${str} }`)
             } catch (e) {
-                console.log({ eval_error: e, str });
+                console.log({ macro_error: e, str });
                 return str;
             }
         }
@@ -319,7 +326,7 @@ class Print {
             }
             eva.push(`function range(a,b) { return (a + (layer / layers) * (b-a)).round(4) }`);
             eva.push(`try {( ${tok} )} catch (e) {console.log(e);0}`);
-            let evl = safeEval ? safeEval.eval(tok) : tryeval(eva.join(''));
+            let evl = doSafeEval(tok) ?? tryeval(eva.join(''));
             nutok = evl;
             if (pad === 666) {
                 return evl;
