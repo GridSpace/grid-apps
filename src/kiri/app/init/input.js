@@ -87,9 +87,6 @@ function checkSeed(then) {
     return false;
 }
 
-// upon restore, seed presets
-api.event.emit('preset', api.conf.dbo());
-
 // api.event.on("set.threaded", bool => setThreaded(bool));
 
 export function onBooleanClick(el) {

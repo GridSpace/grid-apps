@@ -143,6 +143,9 @@ export async function init_sync() {
         history.replaceState({}, '', wlp.substring(0,kio + 6));
     }
 
+    // upon restore, seed presets
+    api.event.emitDefer('preset', api.conf.get());
+
     // lift curtain
     $('curtain').style.display = 'none';
 }

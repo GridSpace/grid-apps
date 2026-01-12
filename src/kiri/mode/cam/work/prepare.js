@@ -826,7 +826,9 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
             // calculate ease down for poly path output
             if (startPoint.z > point0.z) {
-                let easeFeed = plungeRate + ((feedRate - plungeRate) * easeThrottle);
+                let easeMax = feedRate * camFullEngage;
+                let easeLerp = plungeRate + ((feedRate - plungeRate) * easeThrottle);
+                let easeFeed = Math.min(easeLerp, easeMax);
                 let zat = startPoint.z;
                 let len = points.length;
                 let lp, lz = Infinity;

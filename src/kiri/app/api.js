@@ -163,6 +163,7 @@ export const api = {
         alerts(clr) { alerts.update(clr) },
         bind(t,m,o) { return EVENT.bind(t,m,o) },
         emit(t,m,o) { return EVENT.publish(t,m,o) },
+        emitDefer(t,m,d) { setTimeout(() => EVENT.publish(t,m), d ?? 100) },
         import() { api.ui.load.click() },
         listeners(topic) { return EVENT.targets(topic) },
         on(t,l) { EVENT.on(t,l); return api.event },
