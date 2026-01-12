@@ -834,7 +834,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                     let pt = points[ii];
                     if (zat <= pt.z) {
                         // rotate points to start at end of ease
-                        points = [...points.slice(i), ...points.slice(0,i)];
+                        points = [...points.slice(ii), ...points.slice(0,ii)];
                         break;
                     }
                     if (i > 0) {
