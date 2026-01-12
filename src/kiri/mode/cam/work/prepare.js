@@ -828,9 +828,11 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             if (startPoint.z > point0.z) {
                 let easeFeed = plungeRate + ((feedRate - plungeRate) * easeThrottle);
                 let zat = startPoint.z;
-                let lp;
-                for (let i=0; ; i++) {
-                    let ii = i % points.length;
+                let len = points.length;
+                let lp, lz = Infinity;
+                // hard cap on number of repeats to catch bad geometry
+                for (let i=0; i<len*50 ; i++) {
+                    let ii = i % len;
                     let pt = points[ii];
                     if (zat <= pt.z) {
                         // rotate points to start at end of ease
@@ -840,6 +842,13 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                     if (i > 0) {
                         let dd = lp.distTo2D(pt);
                         zat = Math.max(pt.z, zat - (dd * easeDzPerMm));
+                        if (zat > lz) {
+                            // rotate points to start at end of ease
+                            // also should never get here unless bad geometry
+                            points = [...points.slice(ii), ...points.slice(0,ii)];
+                            break;
+                        }
+                        lz = zat;
                     }
                     lp = pt.clone().setZ(Math.max(pt.z, zat));
                     camOut(lp, 1, { feed: easeFeed });
