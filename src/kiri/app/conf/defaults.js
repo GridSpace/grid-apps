@@ -345,7 +345,7 @@ export const conf = {
                 sliceSupportNozzle: 0,
                 sliceSupportOffset: 1.0,
                 sliceSupportOutline: true,
-                sliceSupportSpan: 5,
+                // sliceSupportSpan: 5,
                 sliceSupportType: "disabled",
                 sliceSupportTree: false,
                 sliceTopLayers: 3,

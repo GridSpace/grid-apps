@@ -786,7 +786,7 @@ class Widget {
         return this.cache.shadow = stack;
     }
 
-    async computeShadowStack(zlist, progress, pocket) {
+    async computeShadowStack(zlist, progress, pocket, up = 1) {
         let shadow_stack = this.cache.shadow_stack;
         if (!shadow_stack) {
             shadow_stack = this.cache.shadow_stack = {};
@@ -803,7 +803,7 @@ class Widget {
             let p = work.minions.queueAsync({
                 cmd: 'cam_shadow_z',
                 z: z - 0.005,
-                t: z + 1
+                t: z + up
             }).then(reply => {
                 shadow_stack[z - 0.005] = decode(reply.data);
                 pval += pinc;

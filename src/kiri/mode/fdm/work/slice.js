@@ -174,6 +174,29 @@ function vopt(opt, ctx) {
 }
 
 /**
+ * return percentage values broken into ranges
+ *
+ * @param {number} plo 0.0-1.0 percentage value
+ * @param {number} phi  0.0-1.0 high percentage value
+ * @param {Array} pcts [{ lo, hi }, ...]
+ */
+function divide(plo, phi, pcts) {
+    let sum = 0;
+    let lo = plo;
+    let rval = pcts.map(pct => {
+        sum += pct;
+        let diff = (phi - plo) * pct;
+        let rval = { lo, hi: lo + diff };
+        lo += diff;
+        return rval;
+    });
+    if (Math.abs(1 - sum) > 0.001) {
+        console.log('SUM FAIL', { rval, sum });
+    }
+    return rval;
+}
+
+/**
  * DRIVER SLICE CONTRACT
  *
  * Given a widget and settings object, call functions necessary to produce
@@ -441,17 +464,18 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         }).filter(s => s);
     }
 
+    // slicing is the first 50% of the update "time"
+    function trackupdate(pct, from, to, msg) {
+        // console.log(from.round(2), to.round(2), msg);
+        onupdate(0.5 + (from + (pct * (to - from))) * 0.5, msg);
+    }
+
     // calculate % complete and call onupdate()
     function doupdate(index, from, to, msg) {
         trackupdate(index / slices.length, from, to, msg);
     }
 
-    // slicing is the first 50% of the update "time"
-    function trackupdate(pct, from, to, msg) {
-        onupdate(0.5 + (from + (pct * (to - from))) * 0.5, msg);
-    }
-
-    // for each slice, performe a function and call doupdate()
+    // for each slice, perform a function and call doupdate()
     function forSlices(from, to, fn, msg) {
         slices.forEach(slice => {
             fn(slice);
@@ -462,11 +486,12 @@ export function sliceOne(settings, widget, onupdate, ondone) {
     /**
      * Process automatic and manual shadow-based support generation
      */
-    async function processSupports() {
+    async function processSupports(plo, phi) {
         if (process.sliceSupportType === 'disabled') {
             return;
         }
 
+        let div = divide(plo, phi, [ 0.5, 0.5 ]);
         let stack = slices.slice();
         let indices = stack.map(s => s.z);
         let zAngNorm = Math.sin(process.sliceSupportAngle * Math.PI / 180);
@@ -517,8 +542,8 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         // create automatic shadows supports when on manual paint
         if (!manual) {
             await widget.computeShadowStack(indices, progress => {
-                trackupdate(progress, 0.05, 0.10, "shadow");
-            }, zAngNorm);
+                trackupdate(progress, div[0].lo, div[0].hi, "shadow");
+            }, zAngNorm, sliceHeight);
 
             for (let slice of stack) {
                 slice.shadow = await widget.shadowAt(slice.z, true);
@@ -532,9 +557,15 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         let length = stack.length;
         let count = 0;
 
+        // convert shadows to trees, when specified
+        if (process.sliceSupportTree) {
+            // console.log('TREE OUTPUT');
+        }
+
         // perform accumulation top down
         for (let slice of stack.reverse()) {
             let shadow = slice.shadow ?? [];
+            if (devel) slice.output().setLayer("shadow", 0xff0000).addPolys(shadow.clone(true));
             if (process.sliceSupportExtra) {
                 shadow = POLY.offset(shadow, process.sliceSupportExtra);
             }
@@ -545,11 +576,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             // subtract slice.clips areas (widget boundaries) from shadow projection
             if (true) {
                 let rem  = [];
-                let clips = [
-                    slice.up?.clips,
-                    slice.clips,
-                    slice.down?.clips
-                ].filter(v => v).flat();
+                let clips = [ slice.clips ].filter(v => v).flat();
                 clips = POLY.union(clips, minArea, true);
                 POLY.subtract(shadow, clips, rem, null, slice.z, minArea, { wasm: false });
                 shadow = rem;
@@ -573,8 +600,22 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 if (devel) slice.output().setLayer("belt clip", 0xffff00).addPolys([ clip ]);
             }
             slice.supports = shadow;
-            if (devel) slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
-            trackupdate((++count/length), 0.10, 0.15, "support");
+            // if (devel) slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
+            trackupdate((++count/length), div[1].lo, div[1].hi, "support");
+        }
+
+        // clip shadow to layers above/below clip areas (for part separation)
+        for (let slice of stack.reverse()) {
+            let clips = [
+                slice.up?.clips,
+                slice.down?.clips
+            ].filter(v => v).flat();
+            if (clips.length) {
+                let rem  = [];
+                clips = POLY.union(clips, minArea, true);
+                POLY.subtract(slice.supports, clips, rem, null, slice.z, minArea, { wasm: false });
+                slice.supports = rem;
+            }
         }
     }
 
@@ -582,8 +623,8 @@ export function sliceOne(settings, widget, onupdate, ondone) {
      * Process top and bottom layers or any other
      * layers detected and marked for solid fill
      */
-    async function processSolidLayers() {
-        forSlices(0.15, 0.2, slice => {
+    async function processSolidLayers(plo, phi) {
+        forSlices(plo, phi, slice => {
             let range = slice.params;
             let isBottom = slice.index < bottomLayers;
             let isTop = topLayers && slice.index > slices.length - topLayers - 1;
@@ -604,10 +645,11 @@ export function sliceOne(settings, widget, onupdate, ondone) {
     /**
      * Process layer diffs and project solid areas
      */
-    async function processLayerDiffs() {
+    async function processLayerDiffs(plo, phi) {
+        let div = divide(plo, phi, [ 0.9, 0.05, 0.05 ]);
         // boolean diff layers to detect bridges and flats
         profileStart("delta");
-        forSlices(0.2, 0.33, slice => {
+        forSlices(div[0].lo, div[1].hi, slice => {
             let params = slice.params || process;
             let solidMinArea = params.sliceSolidMinArea;
             let sliceMinThick = params.sliceSolidMinThick;
@@ -617,7 +659,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         profileEnd();
         // project bridges and flats up and down into part
         profileStart("delta-project");
-        forSlices(0.33, 0.34, slice => {
+        forSlices(div[1].lo, div[1].hi, slice => {
             let params = slice.params || process;
             topLayers = params.sliceTopLayers || 0;
             bottomLayers = params.sliceBottomLayers || 0;
@@ -628,7 +670,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         profileEnd();
         // union solid areas
         profileStart("solid-union");
-        forSlices(0.34, 0.35, slice => {
+        forSlices(div[2].lo, div[2].hi, slice => {
             if (slice.solids) {
                 slice.solids = POLY.union(slice.solids, 0, true);
             }
@@ -639,10 +681,11 @@ export function sliceOne(settings, widget, onupdate, ondone) {
     /**
      * Process solid fill patterns
      */
-    async function processSolidFills() {
+    async function processSolidFills(plo, phi) {
         profileStart("solid-fill")
         let promises = isConcurrent ? [] : undefined;
-        forSlices(0.35, promises ? 0.4 : 0.5, slice => {
+        let div = divide(plo, phi, promises ? [ 0.8, 0.2 ] : [ 1 ]);
+        forSlices(div[0].lo, div[0].hi, slice => {
             let params = slice.params || process;
             let solidWidth = params.sliceFillWidth || 1;
             let fillSpace = fillSpacing * solidWidth;
@@ -654,7 +697,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         slices.last().finishSolids = true
         if (promises) {
             await tracker(promises, (i, t) => {
-                trackupdate(i / t, 0.4, 0.5);
+                trackupdate(i / t, div[1].lo, div[1].hi);
             });
         }
         profileEnd();
@@ -663,10 +706,11 @@ export function sliceOne(settings, widget, onupdate, ondone) {
     /**
      * Process sparse infill patterns
      */
-    async function processSparseInfill() {
+    async function processSparseInfill(plo, phi) {
         let lastType;
         let promises = isConcurrent ? [] : undefined;
-        forSlices(0.5, promises ? 0.55 : 0.7, slice => {
+        let div = divide(plo, phi, promises ? [ 0.8, 0.2 ] : [ 1 ]);
+        forSlices(div[0].lo, div[0].hi, slice => {
             let params = slice.params || process;
             if (!params.sliceFillSparse) {
                 return;
@@ -689,7 +733,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         }, "infill");
         if (promises) {
             await tracker(promises, (i, t) => {
-                trackupdate(i / t, 0.55, 0.7);
+                trackupdate(i / t, div[1].lo, div[1].hi);
             });
         }
         // filter out tiny fill points less than nozzle diameter
@@ -715,10 +759,11 @@ export function sliceOne(settings, widget, onupdate, ondone) {
     /**
      * Process support structure fills
      */
-    async function processSupportFills() {
+    async function processSupportFills(plo, phi) {
         profileStart("support-fill");
         let promises = false && isConcurrent ? [] : undefined;
-        forSlices(0.8, promises ? 0.88 : 0.9, slice => {
+        let div = divide(plo, phi, promises ? [ 0.8, 0.2 ] : [ 1 ]);
+        forSlices(div[0].lo, div[0].hi, slice => {
             let params = slice.params || process;
             let density = params.sliceSupportDensity;
             layerSupportFill({
@@ -733,7 +778,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         }, "support fill");
         if (promises) {
             await tracker(promises, (i, t) => {
-                trackupdate(i / t, 0.88, 0.9);
+                trackupdate(i / t, div[1].lo, div[1].hi);
             });
         }
         profileEnd();
@@ -788,8 +833,8 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         slices.forEach((s,i) => s.index = i);
     }
 
-    async function renderSlices() {
-        forSlices(0.9, 1.0, slice => {
+    async function renderSlices(plo, phi) {
+        forSlices(plo, phi, slice => {
             let params = slice.params || process;
             layerRender(slice, params, {
                 dark: controller.dark,
@@ -850,7 +895,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         }
 
         // process solid layers (top/bottom)
-        await processSolidLayers();
+        await processSolidLayers(0.10, 0.20);
 
         // add lead in anchor when specified in belt mode (but not for synths)
         if (isBelt) {
@@ -883,10 +928,6 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             });
         }
 
-        // support generation using either
-        // enclosed shadow or manual painted supports
-        await processSupports();
-
         // calculations only relevant when solid layers are used
         // layer boolean diffs need to be computed to find flat areas to fill
         // and overhangs that need to be supported. these are stored in flats
@@ -894,24 +935,27 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         // for "real" objects, fill the remaining voids with sparse fill
         // sparse layers only present when non-vase mode and sparse % > 0
         if (!vaseMode) {
-            await processLayerDiffs();
-            await processSolidFills();
-            await processSparseInfill();
+            await processLayerDiffs(0.2, 0.4);
+            // support generation using either
+            // enclosed shadow or manual painted supports
+            await processSupports(0.4, 0.5);
+            await processSolidFills(0.5, 0.6);
+            await processSparseInfill(0.6, 0.8);
         }
 
         // fill all supports (auto and manual)
         if (supportDensity) {
-            await processSupportFills();
+            await processSupportFills(0.8, 0.84);
         }
 
         // brick/interleave mode processing
         if (isBrick) {
-            await processBrickMode();
+            await processBrickMode(0.84, 0.85);
         }
 
         // render if not explicitly disabled
         if (render) {
-            await renderSlices();
+            await renderSlices(0.85, 1.0);
         }
 
         if (isBelt) {
@@ -1384,10 +1428,10 @@ export function layerDiff(slice, options = {}) {
     newFlats = newFlats.filter(p => p.areaDeep() >= area && p.thickness(true) >= thick);
 
     if (grow > 0 && newBridges.length) {
-        newBridges = POLY.offset(newBridges, grow);
+        newBridges = POLY.offset(newBridges, grow, { z: slice.z });
     }
     if (grow > 0 && newFlats.length) {
-        newFlats = POLY.offset(newFlats, grow);
+        newFlats = POLY.offset(newFlats, grow, { z: slice.z });
     }
 
     bridges.appendAll(newBridges);
