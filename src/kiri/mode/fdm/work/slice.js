@@ -540,6 +540,9 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         if (manual && paint?.length) {
             let hpi = Math.PI/2;
             for (let slice of stack) {
+                if (!slice.up) {
+                    continue;
+                }
                 let polys = [];
                 for (let rec of paint) {
                     let { point, radius } = rec;
@@ -550,13 +553,21 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                         polys.push(newPolygon().centerCircle(point, radius, 10));
                     }
                 }
-                slice.shadow = POLY.union(polys, 0, true);
+                // trim polys to part overhangs
+                let top = slice.up.topPolys();
+                let bot = slice.topPolys();
+                let bridge = [];
+                let propose = POLY.setZ(POLY.union(polys, 0, true), slice.z);
+                POLY.subtract(top, bot, bridge, undefined, slice.z, 0, { wasm: true });
+                propose = POLY.trimTo(propose, bridge, { minArea: 0 });
+                slice.shadow = propose;
+                // if (devel) slice.output().setLayer("over", 0x8844aa).addPolys(bridge);
             }
         }
 
         // 1. accumulate / union shadow coverage top down
         // 2. trim to area outside slice.clips
-        let minArea = lineWidth;
+        let minArea = lineWidth * lineWidth;
         let shadowSum;
         let length = stack.length;
         let count = 0;
@@ -569,7 +580,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         // perform accumulation top down
         for (let slice of stack.reverse()) {
             let shadow = slice.shadow ?? [];
-            if (devel) slice.output().setLayer("shadow", 0xff0000).addPolys(shadow.clone(true));
+            if (devel) slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
             if (process.sliceSupportExtra) {
                 shadow = POLY.offset(shadow, process.sliceSupportExtra);
             }
@@ -577,10 +588,10 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             if (shadowSum) {
                 shadow = POLY.union([...shadow, ...shadowSum], minArea, true);
             }
-            // subtract slice.clips areas (widget boundaries) from shadow projection
+            // subtract slice top areas (widget boundaries) from shadow projection
             if (true) {
                 let rem  = [];
-                let clips = [ slice.clips ].filter(v => v).flat();
+                let clips = [ slice.topPolys() ].filter(v => v).flat();
                 clips = POLY.union(clips, minArea, true);
                 POLY.subtract(shadow, clips, rem, null, slice.z, minArea, { wasm: false });
                 shadow = rem;
@@ -608,11 +619,13 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             trackupdate((++count/length), div[1].lo, div[1].hi, "support");
         }
 
-        // clip shadow to layers above/below clip areas (for part separation)
+        // trim using support part offset value
+        let gaps = process.sliceSupportGap;
         for (let slice of stack.reverse()) {
             let clips = [
-                slice.up?.clips,
-                slice.down?.clips
+                slice.clips,
+                gaps ? slice.up?.clips : undefined,
+                gaps ? slice.down?.clips : undefined
             ].filter(v => v).flat();
             if (clips.length) {
                 let rem  = [];

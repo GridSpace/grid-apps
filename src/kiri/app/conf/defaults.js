@@ -341,7 +341,7 @@ export const conf = {
                 sliceSupportAngle: 50,
                 sliceSupportDensity: 0.1,
                 sliceSupportExtra: 0,
-                sliceSupportGap: 1,
+                sliceSupportGap: true,
                 sliceSupportNozzle: 0,
                 sliceSupportOffset: 1.0,
                 sliceSupportOutline: true,

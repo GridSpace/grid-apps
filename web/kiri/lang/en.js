@@ -472,7 +472,7 @@ self.lang['en-us'] = {
     sp_offs_s:      "part offset",
     sp_offs_l:      ["offset from part","in millimeters"],
     sp_gaps_s:      "layer gap",
-    sp_gaps_l:      ["number of layers","offset from part"],
+    sp_gaps_l:      ["add a layer gap between support and part"],
     sp_span_s:      "max span",
     sp_span_l:      ["unsupported span that causes","a new support to be generated","in millimeters"],
     sp_angl_s:      "angle",

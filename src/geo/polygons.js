@@ -74,9 +74,22 @@ const POLYS = {
     union,
     unionFaces,
     xor,
+    verify
 };
 
 export { POLYS };
+
+export function verify(polys) {
+    polys.forEach(p => {
+        if (!p.open && p.length < 3) console.trace('SHORT', p);
+        if (!p.open && p.area() < 0.001) console.trace('SMALL', p);
+        p.points.forEach(p => {
+            if (isNaN(p.x) || isNaN(p.y) ||isNaN(p.z)) {
+                console.trace('NaN', p);
+            }
+        });
+    });
+}
 
 export function outer(polys) {
     for (let p of polys) {
@@ -136,7 +149,7 @@ export function fromClipperNode(tnode, z) {
 export function fromClipperTree(tnode, z, tops, parent, minarea) {
     let poly,
         polys = tops || [],
-        min = numOrDefault(minarea, 0.1);
+        min = minarea ?? 0.1;
 
     for (let child of tnode.m_Childs) {
         poly = fromClipperNode(child, z);
@@ -150,7 +163,7 @@ export function fromClipperTree(tnode, z, tops, parent, minarea) {
             polys.push(poly);
         }
         if (child.m_Childs) {
-            fromClipperTree(child, z, polys, parent ? null : poly, minarea);
+            fromClipperTree(child, z, polys, parent ? null : poly, min);
         }
     }
 
@@ -641,13 +654,15 @@ export function xor(set, z) {
  * @param {Polygon[]} setB mask set
  * @returns {Polygon[]}
  */
-export function trimTo(setA, setB) {
+export function trimTo(setA, setB, opt = {}) {
     // handle null/empty slices
-    if (setA === setB || setA === null || setB === null) return null;
+    if (setA === setB || setA === null || setB === null) {
+        return null;
+    }
 
     let out = [], tmp;
-    util.doCombinations(setA, setB, {}, function(a, b) {
-        if (tmp = a.mask(b)) {
+    util.doCombinations(setA, setB, {}, (a, b) => {
+        if (tmp = a.mask(b, opt.nullEq, opt.minArea)) {
             out.appendAll(tmp);
         }
     });
