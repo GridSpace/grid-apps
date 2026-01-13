@@ -501,11 +501,25 @@ export function sliceOne(settings, widget, onupdate, ondone) {
         // since that is done later and clipped to slice.clips
         stack.sort((a,b) => a.z - b.z);
 
+        // automatic supports
+        if (!manual) {
+            // find where shadow areas begin (async)
+            await widget.computeShadowStack(indices, progress => {
+                trackupdate(progress, div[0].lo, div[0].hi, "shadow");
+            }, zAngNorm, sliceHeight);
+
+            // assign to slices (sync)
+            for (let slice of stack) {
+                slice.shadow = await widget.shadowAt(slice.z, true);
+            }
+        }
+
         // process manual supports if they exist
         let { paint } = widget.anno;
         let { belt } = widget;
+
         // apply belt transformations, if needed
-        if (belt && paint) {
+        if (manual && belt && paint?.length) {
             let { anchor, angle, dy, slope } = belt;
             // make a copy we can modify
             paint = structuredClone(paint);
@@ -521,6 +535,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                 }
             }
         }
+
         // convert paint points to circles on matching slices
         if (manual && paint?.length) {
             let hpi = Math.PI/2;
@@ -536,17 +551,6 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                     }
                 }
                 slice.shadow = POLY.union(polys, 0, true);
-            }
-        }
-
-        // create automatic shadows supports when on manual paint
-        if (!manual) {
-            await widget.computeShadowStack(indices, progress => {
-                trackupdate(progress, div[0].lo, div[0].hi, "shadow");
-            }, zAngNorm, sliceHeight);
-
-            for (let slice of stack) {
-                slice.shadow = await widget.shadowAt(slice.z, true);
             }
         }
 
@@ -597,7 +601,7 @@ export function sliceOne(settings, widget, onupdate, ondone) {
                     .centerRectangle(newPoint(0, 0, slice.z), boundsx, boundsy)
                     .move({ x: 0, y: -boundsy / 2 + skewy, z: 0 });
                 shadow = POLY.trimTo(shadow, [ clip ]);
-                if (devel) slice.output().setLayer("belt clip", 0xffff00).addPolys([ clip ]);
+                // if (devel) slice.output().setLayer("belt clip", 0xffff00).addPolys([ clip ]);
             }
             slice.supports = shadow;
             // if (devel) slice.output().setLayer("shadow", 0xff0000).addPolys(shadow);
