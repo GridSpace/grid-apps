@@ -326,6 +326,16 @@ function setup_keybd_nav() {
         sdb.gdpr = Date.now();
     };
 
+    // fix file input on iOS
+    try {
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+                $('load-file').removeAttribute('accept');
+            }
+    } catch (e) {
+        console.log('iOS remediation fail', e);
+    }
+
     // add app name hover info
     $('app-info').innerText = version;
 }
