@@ -134,6 +134,10 @@ class OpArea extends CamOp {
             polys = POLY.union(nupolys, 0.00001, true);
         }
 
+        // filter out invalid polys
+        polys = polys.filter(p => p && p.length > 2);
+        console.log({ polys });
+
         // process each area separately
         let proc = 0;
         let pinc = 1 / polys.length;
