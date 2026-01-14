@@ -567,7 +567,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             } else
             // otherwise move over before descending
             if (deltaZ <= -tolerance) {
-                if (debug) console.log('over before descend');
+                if (debug) console.log('over before descend', deltaZ, -tolerance);
                 layerPush(point.clone().setZ(printPoint.z), 0, 0, tool);
                 newLayer();
             }
@@ -636,7 +636,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
         // plunge safety catch
         if (deltaZ < 0 && !contouring) {
-            if (debug) console.log('deltaZ snap', rate, plungeRate);
+            if (debug) console.log('plunge safety', deltaZ, rate, plungeRate);
             emit = 1;
             rate = plungeRate;
         }

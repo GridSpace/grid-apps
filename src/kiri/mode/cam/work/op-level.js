@@ -27,6 +27,9 @@ class OpLevel extends CamOp {
         let zBot = zTop - down;
         let zList = stepz && down ? util.lerp(zTop, zBot, stepz) : [ zBot ];
 
+        // ensure zList is descending
+        zList.sort((a,b) => b - a);
+
         if (share.ran) {
             console.log('skip');
             this.skip = true;
@@ -49,6 +52,7 @@ class OpLevel extends CamOp {
         POLY.fillArea(clear, 1090, stepOver, points);
 
         let layers = this.layers = [];
+
         for (let z of zList) {
             let lines = [];
             layers.push(lines);

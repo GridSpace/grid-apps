@@ -587,7 +587,7 @@ export function zPlaneSelect({ which, onselect }) {
     }
     clearPops();
     zPlaneStart(which, value => {
-        onselect(parseFloat(value));
+        onselect(parseFloat(value) / api.view.unit_scale());
     });
 }
 

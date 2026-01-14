@@ -79,6 +79,8 @@ export function cam_export(print, online) {
             time: 0
         };
 
+    // console.log({ offset, origin, stock });
+
     function section(section) {
         append();
         online({ section });

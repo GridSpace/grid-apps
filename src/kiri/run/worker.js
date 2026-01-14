@@ -586,9 +586,9 @@ const dispatch = {
         const { process } = settings;
         const origin = settings.origin;
         const offset = {
-            x:  origin.x - (process.camOriginOffX ?? 0),
-            y: -origin.y - (process.camOriginOffY ?? 0),
-            z:  origin.z - (process.camOriginOffZ ?? 0)
+            x:  origin.x,// - (process.camOriginOffX ?? 0),
+            y: -origin.y,// - (process.camOriginOffY ?? 0),
+            z:  origin.z,// + (process.camOriginOffZ ?? 0)
         };
         const device = settings.device;
         const print = setPrint(newPrint(settings, Object.values(wcache)));
