@@ -667,16 +667,21 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
      * @param {boolean} cutdir true=CW false=CCW
      * @param {boolean} depthFirst prioritize cut depth in pockets by nesting
      */
-    function pocket({ slices, cutdir, depthFirst, progress }) {
+    function pocket({ slices, cutdir, depthFirst, outline, progress }) {
         let total = 0;
         let depthData = [];
 
         for (let slice of slices) {
             let polys = [], t = [], c = [];
-            // use shadow + tool radius offset when available (roughing)
+
+            // collect polys in to tops (parents) and children
+            // so we can have the windings be opposite
             POLY.flatten(slice.camLines).forEach((poly) => {
+                // poly is child if has parent
                 let child = poly.parent;
+                // for depth, collapse parent to 1 or 0 (has, missing)
                 if (depthFirst) { poly = poly.clone(); poly.parent = child ? 1 : 0 }
+                // place poly into top or child bucket
                 if (child) c.push(poly); else t.push(poly);
                 polys.push(poly);
             });
@@ -687,6 +692,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
             POLY.setWinding(c, !cutdir);
 
             if (depthFirst) {
+                // re-nest layer polys and add to depth stack
                 polys = POLY.nest(polys,true,true);
                 polys.tool_shadow = POLY.flatten(slice.tool_shadow.clone(true));
                 depthData.push(polys);
@@ -706,18 +712,18 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
 
         if (depthFirst) {
             for (let i=0; i<depthData.length; i++) {
-                descend(depthData.slice(i));
+                descend(depthData.slice(i), undefined, outline);
             }
         }
     }
 
-    function descend(stack, inside) {
+    function descend(stack, inside, outline) {
         if (stack.length === 0) return;
         let tops = stack[0];
-        let flat = tops.filter(poly => !poly.marked);
+        let flat = POLY.flatten(tops).filter(poly => !poly.marked);
         if (flat.length === 0) return;
         if (inside) {
-            flat = flat.filter(p => p.isNested(inside));
+            flat = flat.filter(p => p.isInside(inside));
         }
 
         for (;;) {
@@ -736,7 +742,13 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                     polyEmit(poly, CLOSEST_TO_PP, engage);
                     engage = false;
                 }
-                descend(stack.slice(1), poly);
+                if (outline) {
+                    output.forEach(poly => {
+                        descend(stack.slice(1), poly);
+                    });
+                } else {
+                    descend(stack.slice(1), poly);
+                }
             } else {
                 return;
             }

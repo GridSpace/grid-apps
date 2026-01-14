@@ -136,7 +136,6 @@ class OpArea extends CamOp {
 
         // filter out invalid polys
         polys = polys.filter(p => p && p.length > 2);
-        console.log({ polys });
 
         // process each area separately
         let proc = 0;
@@ -489,8 +488,9 @@ class OpArea extends CamOp {
                 min.area.used = true;
                 pocket({
                     cutdir: op.ov_conv,
-                    depthFirst: process.camDepthFirst && !op.drape,
+                    depthFirst: process.camDepthFirst,
                     easeDown: op.down && process.easeDown ? op.down : 0,
+                    outline: op.drape || op.mode === 'trace',
                     progress: (n,m) => progress(n/m, "area"),
                     slices: min.area.filter(slice => slice.camLines)
                 });
