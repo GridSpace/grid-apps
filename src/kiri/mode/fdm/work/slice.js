@@ -511,6 +511,13 @@ export function sliceOne(settings, widget, onupdate, ondone) {
             // assign to slices (sync)
             for (let slice of stack) {
                 slice.shadow = await widget.shadowAt(slice.z, true);
+                if (!(slice.up && slice.shadow?.length)) continue;
+                // trim shadow to part overhangs
+                let top = slice.up.topPolys();
+                let bot = slice.topPolys();
+                let bridge = [];
+                POLY.subtract(top, bot, bridge, undefined, slice.z, 0, { wasm: true });
+                slice.shadow = POLY.trimTo(slice.shadow, bridge, { minArea: 0 });
             }
         }
 
