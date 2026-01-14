@@ -720,7 +720,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
     function descend(stack, inside, outline) {
         if (stack.length === 0) return;
         let tops = stack[0];
-        let flat = POLY.flatten(tops).filter(poly => !poly.marked);
+        let flat = (outline ? POLY.flatten(tops) : tops).filter(poly => !poly.marked);
         if (flat.length === 0) return;
         if (inside) {
             flat = flat.filter(p => p.isInside(inside));
@@ -744,10 +744,10 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
                 }
                 if (outline) {
                     output.forEach(poly => {
-                        descend(stack.slice(1), poly);
+                        descend(stack.slice(1), poly, outline);
                     });
                 } else {
-                    descend(stack.slice(1), poly);
+                    descend(stack.slice(1), poly, outline);
                 }
             } else {
                 return;
