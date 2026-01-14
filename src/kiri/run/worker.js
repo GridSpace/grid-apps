@@ -101,6 +101,9 @@ function minhandler(msg) {
 
 // for concurrent operations
 const minwork = {
+
+    // core functions
+
     get concurrent() {
         return concurrent
     },
@@ -135,6 +138,66 @@ const minwork = {
             minion.terminate();
         }
         minions.length = 0;
+    },
+
+    queue(work, ondone, direct) {
+        minionq.push({work, ondone, direct});
+        minwork.kick();
+    },
+
+    queueAsync(work, direct) {
+        return new Promise(resolve => {
+            minwork.queue(work, resolve, direct);
+        });
+    },
+
+    kick() {
+        if (minions.length && minionq.length) {
+            let qrec = minionq.shift();
+            let minion = minions.shift();
+            let seq = miniseq++;
+            qrec.work.seq = seq;
+            minifns[seq] = (data) => {
+                qrec.ondone(data);
+                minions.push(minion);
+                minwork.kick();
+            };
+            minion.postMessage(qrec.work, qrec.direct);
+        }
+    },
+
+    broadcast(cmd, data, direct) {
+        for (let minion of minions) {
+            minion.postMessage({
+                cmd, ...data
+            }, direct);
+        }
+    },
+
+    // added functions (should be namespaced)
+
+    subtract({ a, b, outA, outB, z, area, wasm }) {
+        return new Promise((resolve, reject) => {
+            if (concurrent < 2 || a.length + b.length < concurrent * 2 || POLY.points([...a,...b]) < concurrent * 50) {
+                POLY.subtract(a, b, outA, outB, z, area, { wasm });
+                resolve();
+                return;
+            }
+            minwork.queue({
+                cmd: "subtract",
+                opt: { area, wasm, z },
+                arg: {
+                    a: codec.encode(a),
+                    b: codec.encode(b),
+                    outA: outA ? 1 : 0,
+                    outB: outB ? 1 : 0,
+                }
+            }, result => {
+                if (outA) outA.push(...codec.decode(result.outA));
+                if (outB) outB.push(...codec.decode(result.outB));
+                resolve();
+            });
+        });
     },
 
     union(polys, minarea) {
@@ -245,40 +308,6 @@ const minwork = {
             }, [ floatP.buffer ]);
         });
     },
-
-    queue(work, ondone, direct) {
-        minionq.push({work, ondone, direct});
-        minwork.kick();
-    },
-
-    queueAsync(work, direct) {
-        return new Promise(resolve => {
-            minwork.queue(work, resolve, direct);
-        });
-    },
-
-    kick() {
-        if (minions.length && minionq.length) {
-            let qrec = minionq.shift();
-            let minion = minions.shift();
-            let seq = miniseq++;
-            qrec.work.seq = seq;
-            minifns[seq] = (data) => {
-                qrec.ondone(data);
-                minions.push(minion);
-                minwork.kick();
-            };
-            minion.postMessage(qrec.work, qrec.direct);
-        }
-    },
-
-    broadcast(cmd, data, direct) {
-        for (let minion of minions) {
-            minion.postMessage({
-                cmd, ...data
-            }, direct);
-        }
-    }
 };
 
 console.log(`kiri | init work | ${version || "rogue"}`);

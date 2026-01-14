@@ -78,6 +78,20 @@ const funcs = self.minion = {
         }
     },
 
+    subtract(data, seq) {
+        let { arg, opt } = data;
+        let { area, wasm, z } = opt;
+        let a = codec.decode(arg.a);
+        let b = codec.decode(arg.b);
+        let outA = [], outB = [];
+        POLY.subtract(a, b, outA, outB, z, area, { wasm });
+        reply({
+            seq,
+            outA: codec.encode(outA),
+            outB: codec.encode(outB)
+        });
+    },
+
     union(data, seq) {
         if (!(data.polys && data.polys.length)) {
             reply({ seq, union: codec.encode([]) });

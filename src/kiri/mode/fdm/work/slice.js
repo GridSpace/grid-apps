@@ -672,14 +672,22 @@ export function sliceOne(settings, widget, onupdate, ondone) {
     async function processLayerDiffs(plo, phi) {
         let div = divide(plo, phi, [ 0.9, 0.05, 0.05 ]);
         // boolean diff layers to detect bridges and flats
+        let promises = [];
         profileStart("delta");
         forSlices(div[0].lo, div[1].hi, slice => {
             let params = slice.params || process;
             let solidMinArea = params.sliceSolidMinArea;
             let sliceMinThick = params.sliceSolidMinThick;
             let sliceFillGrow = params.sliceFillGrow;
-            layerDiff(slice, { area: solidMinArea, grow: sliceFillGrow, thick: sliceMinThick });
+            let p = layerDiff(slice, {
+                area: solidMinArea,
+                grow: sliceFillGrow,
+                thick: sliceMinThick,
+                async: true
+            });
+            promises.push(p);
         }, "layer deltas");
+        await Promise.all(promises);
         profileEnd();
         // project bridges and flats up and down into part
         profileStart("delta-project");
@@ -1443,9 +1451,26 @@ export function layerDiff(slice, options = {}) {
     let newBridges = [];
     let newFlats = [];
 
-    POLY.subtract(topInner, downInner, newBridges, newFlats, slice.z, area, {
-        wasm: true
-    });
+    if (options.async) {
+        return self.kiri_worker.minions
+            .subtract({
+                a: topInner, b: downInner,
+                outA: newBridges, outB: newFlats,
+                area, wasm: true, z: slice.z,
+            })
+            .then(() => {
+                layerDiffDone({ slice, bridges, flats, newBridges, newFlats, options });
+            });
+    } else {
+        POLY.subtract(topInner, downInner, newBridges, newFlats, slice.z, area, {
+            wasm: true
+        });
+        layerDiffDone({ slice, bridges, flats, newBridges, newFlats, options });
+    }
+}
+
+function layerDiffDone({ slice, bridges, flats, newBridges, newFlats, options }) {
+    const { sla, grow, area, thick } = options;
 
     // console.log(slice.z, { newBridges, newFlats });
     newBridges = newBridges.filter(p => p.areaDeep() >= area && p.thickness(true) >= thick);
