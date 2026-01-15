@@ -504,7 +504,7 @@ export function createPopOps() {
         sep: UC.newBlank({ class: "pop-sep", modes: MODES.CAM, xshow: zDogSep }),
         thru: UC.newBoolean(LANG.cc_thru_s, undefined, { title: LANG.cc_thru_l }),
         ignore: UC.newBoolean(LANG.co_igno_s, undefined, { title: LANG.co_igno_l, show: () => env.poppedRec.mode === 'clear' }),
-        merge: UC.newBoolean(LANG.co_merg_s, undefined, { title: LANG.co_merg_l, show: () => !env.popOp.trace.rec.down }),
+        // merge: UC.newBoolean(LANG.co_merg_s, undefined, { title: LANG.co_merg_l, show: () => !env.popOp.trace.rec.down }),
         dogbone: UC.newBoolean(LANG.co_dogb_s, undefined, { title: LANG.co_dogb_l, show: canDogBones }),
         revbone: UC.newBoolean(LANG.co_dogr_s, undefined, { title: LANG.co_dogr_l, show: canDogBonesRev }),
         exp: UC.newExpand("feeds & speeds", { }),
