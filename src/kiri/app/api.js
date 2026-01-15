@@ -45,7 +45,7 @@ let LOC = self.location,
     EVENT = broker,
     SETUP = utils.parseOpt(LOC.search.substring(1)),
     FILES = openFiles(new Index(SETUP.d ? SETUP.d[0] : 'kiri')),
-    LOCAL = self.debug && !SETUP.remote,
+    LOCAL = (LOC.host.startsWith('localhost') || self.debug) && !SETUP.remote,
     SECURE = isSecure(LOC.protocol);
 
 // todo: fix in widget.js b/c front-end and back-end do not share api

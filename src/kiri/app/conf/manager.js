@@ -559,6 +559,7 @@ function settingsImport(data, ask) {
     }
 
     if (api.const.LOCAL) console.log('import', data);
+
     let isSettings = (data.settings && data.time);
     let isProcess = (data.process && data.time && data.mode && data.name);
     let isDevice = (data.device && data.time);
