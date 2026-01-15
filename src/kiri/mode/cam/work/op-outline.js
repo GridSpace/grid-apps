@@ -25,9 +25,11 @@ class OpOutline extends CamOp {
             let areas = shadow.base.clone(true);
             ops_list.push(new OpArea(state, {
                 areas: { [widget.id]: areas.map(p => p.toArray()) },
+                base: true,
                 direction,
                 dogbones,
                 down,
+                drape: true,
                 expand: 0,
                 mode: 'trace',
                 omitinner: omitvoid,

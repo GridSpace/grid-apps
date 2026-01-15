@@ -549,6 +549,8 @@ self.lang['en-us'] = {
     co_menu:        "outline",
     co_merg_s:      "merge overlap",
     co_merg_l:      ["merge overlapping lines to prevent overcutting into adjacent solids"],
+    co_igno_s:      "ignore part",
+    co_igno_l:      ["do not constrain cutting areas","to part boundaries. this allows","using the part as negative space"],
     co_dogb_s:      "dogbones",
     co_dogb_l:      ["insert dogbone cuts","into inside corners"],
     co_dogr_s:      "reverse bones",

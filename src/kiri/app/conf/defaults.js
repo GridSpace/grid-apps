@@ -604,6 +604,7 @@ export const conf = {
                 camToolInit: true,
                 camTraceDogbone: false,
                 camTraceDown: 0,
+                camTraceIgnore: false,
                 camTraceLines: false,
                 camTraceMerge: false,
                 camTraceOffOver: 0,

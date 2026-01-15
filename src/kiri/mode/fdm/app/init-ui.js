@@ -380,6 +380,8 @@ function supportDone() {
         // Use popVisualState to restore original material
         w.popVisualState('paint');
     });
+    api.conf.save();
+    api.space.save();
 }
 
 // manual supports clear

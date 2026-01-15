@@ -191,7 +191,12 @@ class OpArea extends CamOp {
                     let outs = [];
                     let clip = [];
                     let firstOff = -(toolDiam / 2 + (op.leave_xy ?? 0));
-                    POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
+                    // remove shadow from area
+                    if (op.ignore) {
+                        clip = [ area ];
+                    } else {
+                        POLY.subtract([ area ], shadow, clip, undefined, undefined, 0);
+                    }
                     POLY.offset(clip, [ firstOff, -toolOver ], {
                         count: op.walls ? 1 : (op.steps ?? 999), outs, flat: true, z: z - zMov, ...offopt
                     });
@@ -258,7 +263,7 @@ class OpArea extends CamOp {
                 for (let z of zs) {
                     let slice = newLayer(z);
                     let layers = slice.output();
-                    let shadow = await shadowAt(z);
+                    let shadow = op.base ? state.shadow.base : await shadowAt(z);
                     let outs = [];
                     if (tr_type === 'none') {
                         // todo: move this out of the zs loop and only setZ when needed
