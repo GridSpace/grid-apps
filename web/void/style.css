@@ -1,0 +1,235 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
+:root {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2a2a2a;
+    --bg-tertiary: #3a3a3a;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --border: #404040;
+    --accent: #5a9fd4;
+    --accent-hover: #7bb8e8;
+    --success: #4ade80;
+    --warning: #fbbf24;
+    --danger: #f87171;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+#app {
+    display: grid;
+    grid-template-areas:
+        "toolbar toolbar"
+        "tree viewport";
+    grid-template-columns: 250px 1fr;
+    grid-template-rows: 50px 1fr;
+    width: 100%;
+    height: 100%;
+}
+
+/* Loading curtain */
+#curtain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-primary);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#curtain .loading {
+    text-align: center;
+}
+
+#curtain .spinner {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    border: 4px solid var(--bg-tertiary);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#curtain .text {
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+/* Top toolbar */
+#top-bar {
+    grid-area: toolbar;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 4px;
+}
+
+/* Left tree panel */
+#left-panel {
+    grid-area: tree;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 8px;
+}
+
+/* Main 3D viewport */
+#container {
+    grid-area: viewport;
+    position: relative;
+    background: var(--bg-primary);
+}
+
+#container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Sketch overlay (2D canvas) */
+#sketch-overlay {
+    position: absolute;
+    top: 50px;
+    left: 250px;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 100;
+}
+
+#sketch-overlay.active {
+    pointer-events: auto;
+}
+
+#sketch-overlay.hidden {
+    display: none;
+}
+
+/* Toolbar buttons (chicklets) */
+.toolbar-btn {
+    height: 36px;
+    min-width: 36px;
+    padding: 0 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    transition: all 0.15s;
+}
+
+.toolbar-btn:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent);
+}
+
+.toolbar-btn:active {
+    transform: scale(0.95);
+}
+
+.toolbar-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.toolbar-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    margin: 0 4px;
+}
+
+/* Tree items */
+.tree-item {
+    padding: 6px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-primary);
+    transition: background 0.15s;
+}
+
+.tree-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.tree-item.active {
+    background: var(--accent);
+    color: white;
+}
+
+.tree-item .icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.tree-item .label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border);
+}

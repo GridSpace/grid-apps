@@ -134,10 +134,12 @@ function init(mod) {
         "/boot"            : redir((pre??"") + "/boot/", 301),
         "/kiri"            : redir((pre??"") + "/kiri/", 301),
         "/mesh"            : redir((pre??"") + "/mesh/", 301),
-        "/meta"            : redir((pre??"") + "/meta/", 301),
+        "/void"            : redir((pre??"") + "/void/", 301),
+        "/form"            : redir((pre??"") + "/form/", 301),
         "/kiri/index.html" : redir((pre??"") + "/kiri/", 301),
         "/mesh/index.html" : redir((pre??"") + "/mesh/", 301),
-        "/meta/index.html" : redir((pre??"") + "/meta/", 301)
+        "/void/index.html" : redir((pre??"") + "/void/", 301),
+        "/form/index.html" : redir((pre??"") + "/form/", 301)
     }));
     mod.add(handleVersion);
     mod.add(fixedmap("/api/", api));
@@ -159,6 +161,8 @@ function init(mod) {
     mod.static("/moto/", "web/moto");
     mod.static("/kiri/", "web/kiri");
     mod.static("/boot/", "web/boot");
+    mod.static("/void/", "web/void");
+    mod.static("/form/", "web/void");
 
     // module loader
     function load_modules(root, force) {
@@ -186,10 +190,10 @@ function init(mod) {
         });
     }
 
-    // load development and 3rd party modules
+    // load development and app modules (onshape, thingiverse)
     load_modules('mod');
 
-    // load optional local modules
+    // load optional local modules (bambu)
     load_modules('mods');
 
     // run load functions injected by modules

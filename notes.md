@@ -57,23 +57,19 @@
 
 # CAM
 
-* `B` rapid moves should be max of terrain zmax and last cut layer height (roughing)
 * `B` feed rate for next tool set before tool change (push/pop feed rates?)
 * `B` tabs do not properly track widget mirror events
 * `B` contour does not honor clip to stock
 
-* `F` add lathe step down to eliminate the need for roughing
 * `F` allow import, rotation, scaling of stock
 * `F` get gcode coordinates off a part with point/click or hover?
 * `F` include tools in default devices (Carvera)
-* `F` add `match faces` option in `outline` operation
 * `F` add {progress} substitution and maybe {time-remaining} if can be calc'd
 * `F` import and follow 2D paths (conformed like pocket contours)
 * `F` add `plunge max` to contouring that can override z feed limit
 * `F` add lead-in milling (requires adding clamp / no go areas)
 * `F` add linear clearing strategy
 * `F` add adaptive clearing strategy
-* `F` add support for tapered ball mills
 * `F` change color of line selection in trace op when not a closed poly
 * `F` limit cut depth to flute length of selected tool (or warn)
 * `F` validate muti-part layout and spacing exceeds largest outside tool diameter
@@ -84,17 +80,10 @@
 * `P` outer outside corners as arc moves
 * `P` improve parser - do not require spaced tokens and support implied G0 / G1
 * `P` log Z interpolation for contour XYZ moves
-* `P` option to start with the smallest poly by area on layer change
-* `P` redo all path route / planning in prepare to account for terrain before camOut
 
 # Laser
 
 * `F` add PLT / HP-GL output format (https://en.wikipedia.org/wiki/HP-GL)
-
-# OctoPrint plugin
-
-* subfolder parameter for dropped files
-* auto-kick check box in preferences
 
 # Mesh:Tool
 
