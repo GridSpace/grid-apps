@@ -1,29 +1,22 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { broker } from '../moto/broker.js';
 import { api } from './api.js';
 import { $, h } from '../moto/webui.js';
 
+const { div } = h;
+
 const tree = {
     container: null,
-
-    init() {
-        broker.subscribe('ui.tree.build', this.build.bind(this));
-        broker.subscribe('features.updated', this.render.bind(this));
-        broker.subscribe('document.loaded', this.render.bind(this));
-        broker.subscribe('document.created', this.render.bind(this));
-    },
 
     build() {
         this.container = $('left-panel');
         if (!this.container) return;
 
         // Add header
-        const header = h('div', {
-            style: 'font-weight: 600; margin-bottom: 12px; padding: 4px 0; border-bottom: 1px solid #404040;'
-        });
-        header.textContent = 'Features';
-        this.container.appendChild(header);
+        h.bind(this.container, div({
+            style: 'font-weight: 600; margin-bottom: 12px; padding: 4px 0; border-bottom: 1px solid #404040;',
+            _: 'Features'
+        }), { append: true });
 
         // Render initial state
         this.render();
@@ -43,11 +36,10 @@ const tree = {
         const features = api.features.list();
 
         if (features.length === 0) {
-            const empty = h('div', {
-                style: 'color: #808080; font-style: italic; padding: 8px;'
-            });
-            empty.textContent = 'No features yet';
-            this.container.appendChild(empty);
+            h.bind(this.container, div({
+                style: 'color: #808080; font-style: italic; padding: 8px;',
+                _: 'No features yet'
+            }), { append: true });
             return;
         }
 
@@ -59,12 +51,15 @@ const tree = {
     },
 
     createItem(feature) {
-        const item = h('div', { class: 'tree-item' });
+        const item = document.createElement('div');
+        item.className = 'tree-item';
 
-        const icon = h('div', { class: 'icon' });
+        const icon = document.createElement('div');
+        icon.className = 'icon';
         icon.textContent = this.getIcon(feature.type);
 
-        const label = h('div', { class: 'label' });
+        const label = document.createElement('div');
+        label.className = 'label';
         label.textContent = feature.name || feature.type;
 
         item.appendChild(icon);
@@ -78,8 +73,8 @@ const tree = {
             // Mark this one active
             item.classList.add('active');
 
-            // Publish selection
-            broker.publish('feature.selected', feature);
+            // TODO: handle feature selection
+            console.log('Feature selected:', feature);
         };
 
         return item;
@@ -96,8 +91,5 @@ const tree = {
         return icons[type] || '•';
     }
 };
-
-// Auto-initialize
-tree.init();
 
 export { tree };

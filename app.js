@@ -155,14 +155,15 @@ function init(mod) {
     mod.static("/lib/", "alt");
     mod.static("/lib/", "src");
     mod.static("/obj/", "web/obj");
-    mod.static("/font/", "web/font");
+    mod.static("/boot/", "web/boot");
     mod.static("/fon2/", "web/fon2");
+    mod.static("/font/", "web/font");
+    mod.static("/form/", "web/void");
+    mod.static("/icon/", "web/icon");
+    mod.static("/kiri/", "web/kiri");
     mod.static("/mesh/", "web/mesh");
     mod.static("/moto/", "web/moto");
-    mod.static("/kiri/", "web/kiri");
-    mod.static("/boot/", "web/boot");
     mod.static("/void/", "web/void");
-    mod.static("/form/", "web/void");
 
     // module loader
     function load_modules(root, force) {

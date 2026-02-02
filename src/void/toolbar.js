@@ -1,14 +1,12 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { broker } from '../moto/broker.js';
 import { $, h } from '../moto/webui.js';
+import { api } from './api.js';
+
+const { div, button } = h;
 
 const toolbar = {
     buttons: [],
-
-    init() {
-        broker.subscribe('ui.toolbar.build', this.build.bind(this));
-    },
 
     build() {
         const container = $('top-bar');
@@ -17,11 +15,10 @@ const toolbar = {
         container.innerHTML = '';
 
         // Logo / title
-        const title = h('div', {
-            style: 'font-weight: 600; font-size: 16px; margin-right: 16px; color: #5a9fd4;'
-        });
-        title.textContent = 'void:form';
-        container.appendChild(title);
+        h.bind(container, div({
+            style: 'font-weight: 600; font-size: 16px; margin-right: 16px; color: #5a9fd4;',
+            _: 'Void:Form'
+        }), { append: true });
 
         // Separator
         container.appendChild(this.separator());
@@ -29,17 +26,17 @@ const toolbar = {
         // Main tools
         this.addButton(container, 'New', () => {
             console.log('New document');
-            broker.publish('document.new');
+            api.document.create();
         });
 
         this.addButton(container, 'Open', () => {
             console.log('Open document');
-            broker.publish('document.open');
+            // TODO: implement document picker
         });
 
         this.addButton(container, 'Save', () => {
             console.log('Save document');
-            broker.publish('document.save');
+            api.document.save();
         });
 
         container.appendChild(this.separator());
@@ -47,12 +44,12 @@ const toolbar = {
         // Sketch tools
         this.addButton(container, 'Sketch', () => {
             console.log('New sketch');
-            broker.publish('sketch.new');
+            // TODO: implement sketch mode
         }, { id: 'btn-sketch' });
 
         this.addButton(container, 'Extrude', () => {
             console.log('Extrude');
-            broker.publish('extrude.new');
+            // TODO: implement extrude
         }, { id: 'btn-extrude', disabled: true });
 
         container.appendChild(this.separator());
@@ -60,50 +57,51 @@ const toolbar = {
         // View tools
         this.addButton(container, 'Fit', () => {
             console.log('Fit view');
-            broker.publish('view.fit');
+            // TODO: implement fit view
         });
 
         this.addButton(container, 'Top', () => {
             console.log('Top view');
-            broker.publish('view.top');
+            // TODO: implement top view
         });
 
         this.addButton(container, 'Front', () => {
             console.log('Front view');
-            broker.publish('view.front');
+            // TODO: implement front view
         });
 
         this.addButton(container, 'Right', () => {
             console.log('Right view');
-            broker.publish('view.right');
+            // TODO: implement right view
         });
 
         console.log({ toolbar_built: true });
     },
 
     addButton(container, label, onclick, options = {}) {
-        const btn = h('button', {
+        const attr = {
             class: 'toolbar-btn',
-            id: options.id
-        });
-        btn.textContent = label;
-        btn.onclick = onclick;
-
+            _: label,
+            click: onclick
+        };
+        if (options.id) {
+            attr.id = options.id;
+        }
         if (options.disabled) {
-            btn.disabled = true;
+            attr._disabled = true;
         }
 
-        container.appendChild(btn);
+        const map = h.bind(container, button(attr), { append: true });
+        const btn = map[Object.keys(map)[0]];
         this.buttons.push(btn);
         return btn;
     },
 
     separator() {
-        return h('div', { class: 'toolbar-separator' });
+        const sep = document.createElement('div');
+        sep.className = 'toolbar-separator';
+        return sep;
     }
 };
-
-// Auto-initialize
-toolbar.init();
 
 export { toolbar };

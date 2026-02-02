@@ -228,9 +228,9 @@ function tweenCam(pos) {
  * Utility Functions
  ******************************************************************* */
 
-function width() { return WIN.innerWidth }
+function width() { return container ? container.clientWidth : WIN.innerWidth }
 
-function height() { return WIN.innerHeight }
+function height() { return container ? container.clientHeight : WIN.innerHeight }
 
 function aspect() { return width() / height() }
 
@@ -1061,7 +1061,8 @@ function setSky(opt = {}) {
 
 function setPlatform(opt = {}) {
     let platform = Space.platform;
-    let { color, round, size, grid, opacity } = opt;
+    let { hiding } = opt;
+    let { color, round, size, grid, opacity, zoom } = opt;
     let { visible, volume, zOffset, origin, light } = opt;
     if (light) {
         lightInfo.intensity = light;
@@ -1077,12 +1078,14 @@ function setPlatform(opt = {}) {
         platform.setSize(width, depth, height, maxz);
     }
     if (grid) {
-        let { zOffset } = grid;
+        let { below, disabled, zOffset } = grid;
         let { major = 25, minor = 5 } = grid;
         let { colorX, colorY, colorMajor, colorMinor } = grid;
         platform.setGrid(major, minor);
         platform.setGridColor({ colorX, colorY, colorMajor, colorMinor });
         if (zOffset !== undefined) platform.setGridZOff(zOffset);
+        if (disabled) platform.showGrid(false);
+        if (below) platform.showGridBelow(true);
     }
     if (origin) {
         let { x, y, z, show } = origin;
@@ -1099,6 +1102,12 @@ function setPlatform(opt = {}) {
     }
     if (visible !== undefined) {
         platform.setVisible(visible);
+    }
+    if (zoom !== undefined) {
+        Space.view.setZoom(zoom.reverse, zoom.speed);
+    }
+    if (hiding !== undefined) {
+        platform.setHiding(hiding);
     }
 }
 
@@ -1519,7 +1528,7 @@ let Space = {
             if (platform) {
                 platform.visible = hidePlatformBelow ?
                     initialized && position.y >= 0 && showPlatform : showPlatform;
-                volume.visible = showVolume && platform.visible;
+                volume.visible = volumeOn && platform.visible;
             }
             if (grid.view) {
                 grid.view.visible = hideGridBelow ? platform.visible : showGrid;
@@ -1603,7 +1612,7 @@ let Space = {
             if (platform) {
                 platform.visible = hidePlatformBelow ?
                     initialized && position.y >= 0 && showPlatform : showPlatform;
-                volume.visible = showVolume && platform.visible;
+                volume.visible = volumeOn && platform.visible;
             }
             if (grid.view) {
                 grid.view.visible = hideGridBelow ? platform.visible : showGrid;
