@@ -38,6 +38,7 @@ let WIN = self.window || {},
     defaultKeys = true,
     initialized = false,
     alignedTracking = false,
+    afterRenderCallbacks = [],
     skyAmbient,
     skyGridColor = 0xcccccc,
     skyGridMaterial = undefined,
@@ -1117,6 +1118,12 @@ let Space = {
     refresh: refresh,
     update: requestRefresh,
 
+    afterRender(callback) {
+        if (callback && typeof callback === 'function') {
+            afterRenderCallbacks.push(callback);
+        }
+    },
+
     setAntiAlias(b) { antiAlias = b ? true : false },
     raycast: intersect,
 
@@ -1245,6 +1252,7 @@ let Space = {
 
     view: {
         top:    (then) => { tweenCam({left: home, up: 0,   panX, panY, panZ, then}) },
+        bottom: (then) => { tweenCam({left: home, up: PI,  panX, panY, panZ, then}) },
         back:   (then) => { tweenCam({left: PI,   up: PI2, panX, panY, panZ, then}) },
         home:   (then) => { tweenCam({left: home, up,      panX, panY, panZ, then}) },
         front:  (then) => { tweenCam({left: 0,    up: PI2, panX, panY, panZ, then}) },
@@ -1463,7 +1471,7 @@ let Space = {
     },
 
     internals() {
-        return { renderer, camera, platform };
+        return { renderer, camera, platform, container, raycaster };
     },
 
     isOrtho() {
@@ -1712,6 +1720,10 @@ let Space = {
             if (docVisible && !freeze && Date.now() - lastAction < 1500) {
                 renderStart = Date.now();
                 renderer.render(SCENE, camera);
+                // call after-render callbacks (e.g., for viewcube)
+                for (const callback of afterRenderCallbacks) {
+                    callback(renderer);
+                }
                 // track frame render times
                 renders.push(Date.now() - renderStart);
             } else {

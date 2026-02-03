@@ -13,6 +13,7 @@ import { tree } from '../void/tree.js';
 import { overlay } from '../void/overlay.js';
 import { datum } from '../void/datum.js';
 import { interact } from '../void/interact.js';
+import { ViewCube } from '../void/viewcube.js';
 
 const version = '0.1.0';
 const dbindex = ["admin", "documents", "features"];
@@ -58,6 +59,18 @@ function init() {
 
     // Initialize interaction system (hover, select, drag)
     interact.init();
+
+    // Initialize ViewCube navigation widget
+    const viewcube = new ViewCube({
+        size: 80,        // Size in pixels
+        padding: 20,     // Padding from corner
+        cubeSize: 1.5    // 3D cube size
+    });
+
+    // Register viewcube to render after main scene
+    space.afterRender((renderer) => {
+        viewcube.render(renderer);
+    });
 
     // Configure sky and platform
     space.sky.set({
