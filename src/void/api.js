@@ -1,10 +1,14 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { space } from '../moto/space.js';
+import { overlay } from './overlay.js';
+import { datum } from './datum.js';
 
 // Main API object
 const api = {
     db: null,
+    overlay,
+    datum,
 
     // Document management
     document: {

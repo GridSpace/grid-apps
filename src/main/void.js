@@ -10,6 +10,8 @@ import { space } from '../moto/space.js';
 import { open as dataOpen } from '../data/index.js';
 import { toolbar } from '../void/toolbar.js';
 import { tree } from '../void/tree.js';
+import { overlay } from '../void/overlay.js';
+import { datum } from '../void/datum.js';
 
 const version = '0.1.0';
 const dbindex = ["admin", "documents", "features"];
@@ -38,6 +40,13 @@ function init() {
     space.useDefaultKeys(true);
     space.init($('container'), delta => {}, false);
 
+    // Initialize 2D overlay system
+    overlay.init();
+
+    // Initialize datum planes
+    const datumGroup = datum.init({ size: 200, visible: true });
+    space.world.add(datumGroup);
+
     // Configure sky and platform
     space.sky.set({
         grid: false,
@@ -51,9 +60,7 @@ function init() {
         grid: {
             disabled: true,
         },
-        origin: {
-            show: true
-        }
+        origin: true  // Enable origin indicator
     });
 
     // Save camera position on movement
@@ -77,6 +84,84 @@ function init() {
     // Build UI components
     toolbar.build();
     tree.build();
+
+    // TEST: Add example overlay elements
+    // These demonstrate the 2D overlay tracking 3D points
+    if (true) { // Set to false to disable test overlays
+        const { THREE } = window;
+
+        // Show overlay
+        overlay.show();
+
+        // Add test points at origin and along axes
+        overlay.add('origin-point', 'point', {
+            pos3d: new THREE.Vector3(0, 0, 0),
+            radius: 6,
+            color: '#ffffff',
+            stroke: '#5a9fd4',
+            strokeWidth: 2
+        });
+
+        overlay.add('origin-label', 'text', {
+            pos3d: new THREE.Vector3(0, 0, 10),
+            text: 'Origin (0,0,0)',
+            color: '#ffffff',
+            fontSize: 14
+        });
+
+        // X axis point (red)
+        overlay.add('x-point', 'point', {
+            pos3d: new THREE.Vector3(100, 0, 0),
+            radius: 5,
+            color: '#ff6666'
+        });
+
+        overlay.add('x-label', 'text', {
+            pos3d: new THREE.Vector3(100, 0, 10),
+            text: 'X+100',
+            color: '#ff6666',
+            fontSize: 12
+        });
+
+        // Y axis point (green)
+        overlay.add('y-point', 'point', {
+            pos3d: new THREE.Vector3(0, 100, 0),
+            radius: 5,
+            color: '#66ff66'
+        });
+
+        overlay.add('y-label', 'text', {
+            pos3d: new THREE.Vector3(0, 100, 10),
+            text: 'Y+100',
+            color: '#66ff66',
+            fontSize: 12
+        });
+
+        // Z axis point (blue)
+        overlay.add('z-point', 'point', {
+            pos3d: new THREE.Vector3(0, 0, 100),
+            radius: 5,
+            color: '#6666ff'
+        });
+
+        overlay.add('z-label', 'text', {
+            pos3d: new THREE.Vector3(0, 0, 110),
+            text: 'Z+100',
+            color: '#6666ff',
+            fontSize: 12
+        });
+
+        // Add a test line between two points
+        overlay.add('test-line', 'line', {
+            pos3d: new THREE.Vector3(0, 0, 0),
+            pos3d2: new THREE.Vector3(50, 50, 50),
+            color: '#5a9fd4',
+            width: 2,
+            dashed: true
+        });
+
+        console.log({ test_overlays_added: 7 });
+    }
 
     // Hide loading curtain
     const curtain = $('curtain');

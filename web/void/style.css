@@ -111,7 +111,7 @@ html, body {
     height: 100%;
 }
 
-/* Sketch overlay (2D canvas) */
+/* Sketch overlay (2D SVG overlay) */
 #sketch-overlay {
     position: absolute;
     top: 50px;
@@ -128,6 +128,47 @@ html, body {
 
 #sketch-overlay.hidden {
     display: none;
+}
+
+/* Overlay element styles */
+#sketch-overlay svg {
+    overflow: visible;
+}
+
+#sketch-overlay circle {
+    cursor: pointer;
+}
+
+#sketch-overlay text {
+    user-select: none;
+    pointer-events: none;
+}
+
+#sketch-overlay line {
+    pointer-events: none;
+}
+
+/* Overlay element classes for specific styling */
+.overlay-point {
+    transition: r 0.15s;
+}
+
+.overlay-point:hover {
+    r: 6;
+}
+
+.overlay-text {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+.overlay-dimension {
+    stroke: var(--text-secondary);
+    stroke-width: 1;
+}
+
+.overlay-constraint {
+    stroke: var(--accent);
+    stroke-width: 1.5;
 }
 
 /* Toolbar buttons (chicklets) */
