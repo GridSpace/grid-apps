@@ -30,6 +30,9 @@ const overlay = {
         this.camera = internals.camera;
         this.renderer = internals.renderer;
 
+        // External update callback (for datum labels, etc.)
+        this.onUpdate = null;
+
         // Create SVG element
         this.svg = document.createElementNS(SVG_NS, 'svg');
         this.svg.style.width = '100%';
@@ -305,6 +308,11 @@ const overlay = {
 
         for (const id of this.elements.keys()) {
             this.updateElement(id);
+        }
+
+        // Trigger external update callbacks (e.g., for datum labels)
+        if (this.onUpdate) {
+            this.onUpdate();
         }
     },
 

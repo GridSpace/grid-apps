@@ -171,6 +171,14 @@ html, body {
     stroke-width: 1.5;
 }
 
+/* Datum plane labels */
+.datum-label {
+    font-weight: 600;
+    font-size: 13px;
+    fill: var(--text-secondary);
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
 /* Toolbar buttons (chicklets) */
 .toolbar-btn {
     height: 36px;

@@ -47,6 +47,14 @@ function init() {
     const datumGroup = datum.init({ size: 200, visible: true });
     space.world.add(datumGroup);
 
+    // Add datum labels to overlay
+    datum.updateLabels(overlay);
+
+    // Hook overlay to update datum labels on camera movement
+    overlay.onUpdate = () => {
+        datum.updateLabels(overlay);
+    };
+
     // Configure sky and platform
     space.sky.set({
         grid: false,

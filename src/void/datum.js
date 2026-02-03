@@ -23,22 +23,25 @@ const datum = {
         this.group = new Group();
         this.group.name = 'datum';
 
-        // Create three plane primitives
+        // Create three plane primitives with labels (like Onshape)
         this.planes.xy = new Plane({
             id: 'datum-xy',
             name: 'XY Plane',
+            label: 'Top',
             size: this.size
         });
 
         this.planes.xz = new Plane({
             id: 'datum-xz',
             name: 'XZ Plane',
+            label: 'Front',
             size: this.size
         });
 
         this.planes.yz = new Plane({
             id: 'datum-yz',
             name: 'YZ Plane',
+            label: 'Right',
             size: this.size
         });
 
@@ -59,6 +62,42 @@ const datum = {
         console.log({ datum_initialized: true, size: this.size, planes: 3 });
 
         return this.group;
+    },
+
+    /**
+     * Get all plane primitives
+     */
+    getPlanes() {
+        return Object.values(this.planes);
+    },
+
+    /**
+     * Update all plane labels in overlay (should be called by main init)
+     */
+    updateLabels(overlay) {
+        if (!overlay) return;
+
+        // Add or update labels for each plane
+        for (const [key, plane] of Object.entries(this.planes)) {
+            const label = plane.getLabel();
+            if (label) {
+                const labelId = `datum-label-${key}`;
+                const corner = plane.getTopLeftCorner();
+
+                if (overlay.elements.has(labelId)) {
+                    overlay.update(labelId, { pos3d: corner, text: label });
+                } else {
+                    overlay.add(labelId, 'text', {
+                        pos3d: corner,
+                        text: label,
+                        color: '#b0b0b0',
+                        fontSize: 13,
+                        anchor: 'start',
+                        className: 'datum-label'
+                    });
+                }
+            }
+        }
     },
 
     /**

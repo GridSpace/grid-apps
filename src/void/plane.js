@@ -2,7 +2,7 @@
 
 import { THREE } from '../ext/three.js';
 
-const { Group, PlaneGeometry, MeshBasicMaterial, Mesh, DoubleSide, EdgesGeometry, LineSegments, LineBasicMaterial } = THREE;
+const { Group, PlaneGeometry, MeshBasicMaterial, Mesh, DoubleSide, EdgesGeometry, LineSegments, LineBasicMaterial, SphereGeometry } = THREE;
 
 /**
  * Plane primitive - a fundamental void:form feature
@@ -12,17 +12,23 @@ class Plane {
     constructor(options = {}) {
         this.id = options.id || `plane-${Date.now()}`;
         this.name = options.name || 'Plane';
+        this.label = options.label || null;  // Optional label text
         this.size = options.size || 200;
         this.color = options.color || 0x404040;        // Plane fill color
         this.outlineColor = options.outlineColor || 0x808080;  // Outline color
         this.opacity = options.opacity !== undefined ? options.opacity : 0.15;
         this.outlineOpacity = options.outlineOpacity !== undefined ? options.outlineOpacity : 0.5;
+        this.showHandles = options.showHandles !== undefined ? options.showHandles : true;
 
         // Create the 3D group
         this.group = new Group();
         this.group.name = this.name;
         this.group.userData.featureType = 'plane';
         this.group.userData.featureId = this.id;
+        this.group.userData.plane = this;  // Back reference for event handling
+
+        // Corner handles
+        this.handles = [];
 
         // Build geometry
         this.build();
@@ -39,6 +45,7 @@ class Plane {
             if (child.geometry) child.geometry.dispose();
             if (child.material) child.material.dispose();
         }
+        this.handles = [];
 
         // Create the plane mesh (translucent)
         const geometry = new PlaneGeometry(this.size, this.size);
@@ -68,6 +75,45 @@ class Plane {
         // Add to group
         this.group.add(this.mesh);
         this.group.add(this.outline);
+
+        // Create corner handles
+        if (this.showHandles) {
+            this.createHandles();
+        }
+    }
+
+    /**
+     * Create corner handles for resizing
+     */
+    createHandles() {
+        const halfSize = this.size / 2;
+        const handleRadius = 3;
+        const handleGeometry = new SphereGeometry(handleRadius, 8, 8);
+        const handleMaterial = new MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8,
+            depthWrite: false
+        });
+
+        const corners = [
+            { x: -halfSize, y: -halfSize, z: 0, name: 'bottom-left' },
+            { x: halfSize, y: -halfSize, z: 0, name: 'bottom-right' },
+            { x: halfSize, y: halfSize, z: 0, name: 'top-right' },
+            { x: -halfSize, y: halfSize, z: 0, name: 'top-left' }
+        ];
+
+        for (const corner of corners) {
+            const handle = new Mesh(handleGeometry.clone(), handleMaterial.clone());
+            handle.position.set(corner.x, corner.y, corner.z);
+            handle.renderOrder = 3;
+            handle.userData.handleType = 'plane-resize';
+            handle.userData.handleName = corner.name;
+            handle.userData.plane = this;
+
+            this.handles.push(handle);
+            this.group.add(handle);
+        }
     }
 
     /**
@@ -140,6 +186,40 @@ class Plane {
     }
 
     /**
+     * Set label text
+     */
+    setLabel(text) {
+        this.label = text;
+    }
+
+    /**
+     * Get label text
+     */
+    getLabel() {
+        return this.label;
+    }
+
+    /**
+     * Get top-left corner position in world coordinates
+     */
+    getTopLeftCorner() {
+        const halfSize = this.size / 2;
+        const localPos = new THREE.Vector3(-halfSize, halfSize, 0);
+        const worldPos = localPos.applyMatrix4(this.group.matrixWorld);
+        return worldPos;
+    }
+
+    /**
+     * Show/hide handles
+     */
+    setHandlesVisible(visible) {
+        this.showHandles = visible;
+        for (const handle of this.handles) {
+            handle.visible = visible;
+        }
+    }
+
+    /**
      * Get the THREE.Group for adding to scene
      */
     getGroup() {
@@ -153,12 +233,14 @@ class Plane {
         return {
             id: this.id,
             name: this.name,
+            label: this.label,
             type: 'plane',
             size: this.size,
             color: this.color,
             outlineColor: this.outlineColor,
             opacity: this.opacity,
             outlineOpacity: this.outlineOpacity,
+            showHandles: this.showHandles,
             position: {
                 x: this.group.position.x,
                 y: this.group.position.y,
@@ -179,11 +261,13 @@ class Plane {
         const plane = new Plane({
             id: data.id,
             name: data.name,
+            label: data.label,
             size: data.size,
             color: data.color,
             outlineColor: data.outlineColor,
             opacity: data.opacity,
-            outlineOpacity: data.outlineOpacity
+            outlineOpacity: data.outlineOpacity,
+            showHandles: data.showHandles
         });
 
         if (data.position) {
