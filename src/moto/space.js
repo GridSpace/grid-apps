@@ -66,6 +66,7 @@ let WIN = self.window || {},
     mouseUp,
     mouseDown,
     mouseHover,
+    mouseHoverNull,
     mouseDrag,
     grid = {
         origin: origin,
@@ -982,6 +983,7 @@ function onMouseMove(event) {
         if (selection && selection.length > 0) {
             int = intersect(selection, selectRecurse);
             if (int.length > 0) mouseHover(int[0], event, int);
+            else if (mouseHoverNull) mouseHoverNull();
         }
         if ((!int || int.length == 0) && platformHover) {
             vis = platform.visible;
@@ -1396,7 +1398,7 @@ let Space = {
         downSelect: (f) => { mouseDownSelect = f },
         upSelect:   (f) => { mouseUpSelect = f },
         onDrag:     (f) => { mouseDrag = f },
-        onHover:    (f) => { mouseHover = f }
+        onHover:    (f,n) => { mouseHover = f, mouseHoverNull = n }
     },
 
     tween: {

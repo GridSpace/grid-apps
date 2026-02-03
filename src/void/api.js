@@ -4,6 +4,7 @@ import { space } from '../moto/space.js';
 import { overlay } from './overlay.js';
 import { datum } from './datum.js';
 import { Plane } from './plane.js';
+import { interact } from './interact.js';
 
 // Main API object
 const api = {
@@ -11,6 +12,7 @@ const api = {
     overlay,
     datum,
     Plane,
+    interact,
 
     // Document management
     document: {

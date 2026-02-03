@@ -31,12 +31,8 @@ html, body {
 }
 
 #app {
-    display: grid;
-    grid-template-areas:
-        "toolbar toolbar"
-        "tree viewport";
-    grid-template-columns: 250px 1fr;
-    grid-template-rows: 50px 1fr;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     height: 100%;
 }
@@ -80,7 +76,7 @@ html, body {
 
 /* Top toolbar */
 #top-bar {
-    grid-area: toolbar;
+    flex: 0 0 50px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
     display: flex;
@@ -89,9 +85,16 @@ html, body {
     gap: 4px;
 }
 
+/* Content area (left panel + viewport) */
+#content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
 /* Left tree panel */
 #left-panel {
-    grid-area: tree;
+    flex: 0 0 250px;
     background: var(--bg-secondary);
     border-right: 1px solid var(--border);
     overflow-y: auto;
@@ -100,9 +103,10 @@ html, body {
 
 /* Main 3D viewport */
 #container {
-    grid-area: viewport;
+    flex: 1;
     position: relative;
     background: var(--bg-primary);
+    overflow: hidden;
 }
 
 #container canvas {
@@ -114,8 +118,8 @@ html, body {
 /* Sketch overlay (2D SVG overlay) */
 #sketch-overlay {
     position: absolute;
-    top: 50px;
-    left: 250px;
+    top: 0;
+    left: 0;
     right: 0;
     bottom: 0;
     pointer-events: none;

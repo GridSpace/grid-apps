@@ -12,6 +12,7 @@ import { toolbar } from '../void/toolbar.js';
 import { tree } from '../void/tree.js';
 import { overlay } from '../void/overlay.js';
 import { datum } from '../void/datum.js';
+import { interact } from '../void/interact.js';
 
 const version = '0.1.0';
 const dbindex = ["admin", "documents", "features"];
@@ -54,6 +55,9 @@ function init() {
     overlay.onUpdate = () => {
         datum.updateLabels(overlay);
     };
+
+    // Initialize interaction system (hover, select, drag)
+    interact.init();
 
     // Configure sky and platform
     space.sky.set({

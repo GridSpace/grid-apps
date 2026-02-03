@@ -14,11 +14,23 @@ class Plane {
         this.name = options.name || 'Plane';
         this.label = options.label || null;  // Optional label text
         this.size = options.size || 200;
+
+        // Base colors
         this.color = options.color || 0x404040;        // Plane fill color
         this.outlineColor = options.outlineColor || 0x808080;  // Outline color
         this.opacity = options.opacity !== undefined ? options.opacity : 0.15;
         this.outlineOpacity = options.outlineOpacity !== undefined ? options.outlineOpacity : 0.5;
+
+        // State colors (like Onshape)
+        this.selectedColor = 0xff9933;        // Orange tint when selected
+        this.selectedOutlineColor = 0xff9933; // Orange outline when selected
+        this.hoverOutlineColor = 0xff9933;    // Orange outline when hovered
+
         this.showHandles = options.showHandles !== undefined ? options.showHandles : true;
+
+        // State tracking
+        this.selected = false;
+        this.hovered = false;
 
         // Create the 3D group
         this.group = new Group();
@@ -59,6 +71,7 @@ class Plane {
 
         this.mesh = new Mesh(geometry, material);
         this.mesh.renderOrder = 1;
+        this.mesh.userData.plane = this;  // Back reference for interaction
 
         // Create the outline
         const edges = new EdgesGeometry(geometry);
@@ -71,6 +84,7 @@ class Plane {
 
         this.outline = new LineSegments(edges, lineMaterial);
         this.outline.renderOrder = 2; // Render outline on top of plane
+        this.outline.userData.plane = this;  // Back reference for interaction
 
         // Add to group
         this.group.add(this.mesh);
@@ -110,6 +124,9 @@ class Plane {
             handle.userData.handleType = 'plane-resize';
             handle.userData.handleName = corner.name;
             handle.userData.plane = this;
+
+            // Handles start hidden (only visible when selected)
+            handle.visible = false;
 
             this.handles.push(handle);
             this.group.add(handle);
@@ -216,6 +233,60 @@ class Plane {
         this.showHandles = visible;
         for (const handle of this.handles) {
             handle.visible = visible;
+        }
+    }
+
+    /**
+     * Set selected state
+     */
+    setSelected(selected) {
+        this.selected = selected;
+        this.updateAppearance();
+    }
+
+    /**
+     * Get selected state
+     */
+    isSelected() {
+        return this.selected;
+    }
+
+    /**
+     * Set hovered state
+     */
+    setHovered(hovered) {
+        this.hovered = hovered;
+        this.updateAppearance();
+    }
+
+    /**
+     * Get hovered state
+     */
+    isHovered() {
+        return this.hovered;
+    }
+
+    /**
+     * Update appearance based on state
+     */
+    updateAppearance() {
+        if (!this.mesh || !this.outline) return;
+
+        if (this.selected) {
+            // Selected: orange tint and outline, handles visible
+            this.mesh.material.color.setHex(this.selectedColor);
+            this.outline.material.color.setHex(this.selectedOutlineColor);
+            this.setHandlesVisible(true);
+        } else if (this.hovered) {
+            // Hovered: base color, orange outline, no handles
+            this.mesh.material.color.setHex(this.color);
+            this.outline.material.color.setHex(this.hoverOutlineColor);
+            this.setHandlesVisible(false);
+        } else {
+            // Default: base colors, no handles
+            this.mesh.material.color.setHex(this.color);
+            this.outline.material.color.setHex(this.outlineColor);
+            this.setHandlesVisible(false);
         }
     }
 
