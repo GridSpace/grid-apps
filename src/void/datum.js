@@ -2,7 +2,53 @@
 
 import { THREE } from '../ext/three.js';
 
-const { Group, PlaneGeometry, MeshBasicMaterial, Mesh, DoubleSide } = THREE;
+const { Group, PlaneGeometry, MeshBasicMaterial, Mesh, DoubleSide, EdgesGeometry, LineSegments, LineBasicMaterial } = THREE;
+
+/**
+ * Create a plane primitive with outline
+ * @param {number} size - Plane dimensions
+ * @param {string} name - Plane name
+ * @returns {THREE.Group} Group containing plane mesh and outline
+ */
+function createPlanePrimitive(size, name) {
+    const group = new Group();
+    group.name = name;
+
+    // Create the plane mesh (translucent gray)
+    const geometry = new PlaneGeometry(size, size);
+    const material = new MeshBasicMaterial({
+        color: 0x404040,      // Dark gray
+        transparent: true,
+        opacity: 0.15,
+        side: DoubleSide,
+        depthWrite: false
+    });
+
+    const mesh = new Mesh(geometry, material);
+    mesh.renderOrder = 1;
+
+    // Create the outline (lighter gray)
+    const edges = new EdgesGeometry(geometry);
+    const lineMaterial = new LineBasicMaterial({
+        color: 0x808080,      // Lighter gray
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false
+    });
+
+    const outline = new LineSegments(edges, lineMaterial);
+    outline.renderOrder = 2; // Render outline on top of plane
+
+    // Add both to group
+    group.add(mesh);
+    group.add(outline);
+
+    // Store references for later access
+    group.userData.mesh = mesh;
+    group.userData.outline = outline;
+
+    return group;
+}
 
 // Datum plane system
 const datum = {
@@ -19,15 +65,15 @@ const datum = {
         this.group = new Group();
         this.group.name = 'datum-planes';
 
-        // Create three orthogonal planes
-        this.planes.xy = this.createPlane('xy', 0x6666ff, 0); // Blue - horizontal
-        this.planes.xz = this.createPlane('xz', 0x66ff66, Math.PI / 2); // Green - front-back
-        this.planes.yz = this.createPlane('yz', 0xff6666, Math.PI / 2); // Red - left-right
+        // Create three orthogonal planes (all gray with outlines)
+        this.planes.xy = createPlanePrimitive(this.size, 'datum-xy');
+        this.planes.xz = createPlanePrimitive(this.size, 'datum-xz');
+        this.planes.yz = createPlanePrimitive(this.size, 'datum-yz');
 
-        // Position XZ plane
+        // Position XZ plane (vertical, front-back)
         this.planes.xz.rotation.x = Math.PI / 2;
 
-        // Position YZ plane
+        // Position YZ plane (vertical, left-right)
         this.planes.yz.rotation.y = Math.PI / 2;
 
         // Add all to group
@@ -44,26 +90,6 @@ const datum = {
     },
 
     /**
-     * Create a single plane
-     */
-    createPlane(name, color, rotation) {
-        const geometry = new PlaneGeometry(this.size, this.size);
-        const material = new MeshBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.15,
-            side: DoubleSide,
-            depthWrite: false
-        });
-
-        const mesh = new Mesh(geometry, material);
-        mesh.name = `datum-${name}`;
-        mesh.renderOrder = 1; // Render after most objects
-
-        return mesh;
-    },
-
-    /**
      * Set plane size
      */
     setSize(size) {
@@ -73,20 +99,19 @@ const datum = {
         if (this.group) {
             const wasVisible = this.visible;
 
-            // Remove old planes
+            // Remove old planes and dispose
+            this.disposePlane(this.planes.xy);
+            this.disposePlane(this.planes.xz);
+            this.disposePlane(this.planes.yz);
+
             this.group.remove(this.planes.xy);
             this.group.remove(this.planes.xz);
             this.group.remove(this.planes.yz);
 
-            // Dispose old geometries
-            this.planes.xy.geometry.dispose();
-            this.planes.xz.geometry.dispose();
-            this.planes.yz.geometry.dispose();
-
             // Create new planes
-            this.planes.xy = this.createPlane('xy', 0x6666ff, 0);
-            this.planes.xz = this.createPlane('xz', 0x66ff66, Math.PI / 2);
-            this.planes.yz = this.createPlane('yz', 0xff6666, Math.PI / 2);
+            this.planes.xy = createPlanePrimitive(this.size, 'datum-xy');
+            this.planes.xz = createPlanePrimitive(this.size, 'datum-xz');
+            this.planes.yz = createPlanePrimitive(this.size, 'datum-yz');
 
             // Position planes
             this.planes.xz.rotation.x = Math.PI / 2;
@@ -98,6 +123,26 @@ const datum = {
             this.group.add(this.planes.yz);
 
             this.setVisible(wasVisible);
+        }
+    },
+
+    /**
+     * Dispose a plane primitive (mesh + outline)
+     */
+    disposePlane(planeGroup) {
+        if (!planeGroup) return;
+
+        const mesh = planeGroup.userData.mesh;
+        const outline = planeGroup.userData.outline;
+
+        if (mesh) {
+            mesh.geometry.dispose();
+            mesh.material.dispose();
+        }
+
+        if (outline) {
+            outline.geometry.dispose();
+            outline.material.dispose();
         }
     },
 
@@ -137,8 +182,11 @@ const datum = {
      * Set opacity of all planes
      */
     setOpacity(opacity) {
-        for (const plane of Object.values(this.planes)) {
-            plane.material.opacity = opacity;
+        for (const planeGroup of Object.values(this.planes)) {
+            const mesh = planeGroup.userData.mesh;
+            if (mesh) {
+                mesh.material.opacity = opacity;
+            }
         }
     },
 
@@ -147,14 +195,31 @@ const datum = {
      */
     setColor(planeName, color) {
         if (this.planes[planeName]) {
-            this.planes[planeName].material.color.setHex(color);
+            const mesh = this.planes[planeName].userData.mesh;
+            if (mesh) {
+                mesh.material.color.setHex(color);
+            }
         } else {
             console.warn(`datum: unknown plane ${planeName}`);
         }
     },
 
     /**
-     * Get plane mesh by name
+     * Set outline color of specific plane
+     */
+    setOutlineColor(planeName, color) {
+        if (this.planes[planeName]) {
+            const outline = this.planes[planeName].userData.outline;
+            if (outline) {
+                outline.material.color.setHex(color);
+            }
+        } else {
+            console.warn(`datum: unknown plane ${planeName}`);
+        }
+    },
+
+    /**
+     * Get plane group by name
      */
     getPlane(planeName) {
         return this.planes[planeName] || null;
@@ -165,10 +230,9 @@ const datum = {
      */
     dispose() {
         if (this.group) {
-            for (const plane of Object.values(this.planes)) {
-                plane.geometry.dispose();
-                plane.material.dispose();
-                this.group.remove(plane);
+            for (const planeGroup of Object.values(this.planes)) {
+                this.disposePlane(planeGroup);
+                this.group.remove(planeGroup);
             }
             this.planes = {};
             this.group = null;
@@ -176,4 +240,4 @@ const datum = {
     }
 };
 
-export { datum };
+export { datum, createPlanePrimitive };
