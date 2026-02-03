@@ -3,12 +3,14 @@
 import { space } from '../moto/space.js';
 import { overlay } from './overlay.js';
 import { datum } from './datum.js';
+import { Plane } from './plane.js';
 
 // Main API object
 const api = {
     db: null,
     overlay,
     datum,
+    Plane,
 
     // Document management
     document: {

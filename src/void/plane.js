@@ -1,0 +1,218 @@
+/** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
+
+import { THREE } from '../ext/three.js';
+
+const { Group, PlaneGeometry, MeshBasicMaterial, Mesh, DoubleSide, EdgesGeometry, LineSegments, LineBasicMaterial } = THREE;
+
+/**
+ * Plane primitive - a fundamental void:form feature
+ * Used for datum planes, sketch planes, and construction geometry
+ */
+class Plane {
+    constructor(options = {}) {
+        this.id = options.id || `plane-${Date.now()}`;
+        this.name = options.name || 'Plane';
+        this.size = options.size || 200;
+        this.color = options.color || 0x404040;        // Plane fill color
+        this.outlineColor = options.outlineColor || 0x808080;  // Outline color
+        this.opacity = options.opacity !== undefined ? options.opacity : 0.15;
+        this.outlineOpacity = options.outlineOpacity !== undefined ? options.outlineOpacity : 0.5;
+
+        // Create the 3D group
+        this.group = new Group();
+        this.group.name = this.name;
+        this.group.userData.featureType = 'plane';
+        this.group.userData.featureId = this.id;
+
+        // Build geometry
+        this.build();
+    }
+
+    /**
+     * Build or rebuild the plane geometry
+     */
+    build() {
+        // Clear existing geometry
+        while (this.group.children.length > 0) {
+            const child = this.group.children[0];
+            this.group.remove(child);
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) child.material.dispose();
+        }
+
+        // Create the plane mesh (translucent)
+        const geometry = new PlaneGeometry(this.size, this.size);
+        const material = new MeshBasicMaterial({
+            color: this.color,
+            transparent: true,
+            opacity: this.opacity,
+            side: DoubleSide,
+            depthWrite: false
+        });
+
+        this.mesh = new Mesh(geometry, material);
+        this.mesh.renderOrder = 1;
+
+        // Create the outline
+        const edges = new EdgesGeometry(geometry);
+        const lineMaterial = new LineBasicMaterial({
+            color: this.outlineColor,
+            transparent: true,
+            opacity: this.outlineOpacity,
+            depthWrite: false
+        });
+
+        this.outline = new LineSegments(edges, lineMaterial);
+        this.outline.renderOrder = 2; // Render outline on top of plane
+
+        // Add to group
+        this.group.add(this.mesh);
+        this.group.add(this.outline);
+    }
+
+    /**
+     * Set plane size and rebuild
+     */
+    setSize(size) {
+        this.size = size;
+        this.build();
+    }
+
+    /**
+     * Set plane color
+     */
+    setColor(color) {
+        this.color = color;
+        if (this.mesh) {
+            this.mesh.material.color.setHex(color);
+        }
+    }
+
+    /**
+     * Set outline color
+     */
+    setOutlineColor(color) {
+        this.outlineColor = color;
+        if (this.outline) {
+            this.outline.material.color.setHex(color);
+        }
+    }
+
+    /**
+     * Set opacity
+     */
+    setOpacity(opacity) {
+        this.opacity = opacity;
+        if (this.mesh) {
+            this.mesh.material.opacity = opacity;
+        }
+    }
+
+    /**
+     * Set outline opacity
+     */
+    setOutlineOpacity(opacity) {
+        this.outlineOpacity = opacity;
+        if (this.outline) {
+            this.outline.material.opacity = opacity;
+        }
+    }
+
+    /**
+     * Set position
+     */
+    setPosition(x, y, z) {
+        this.group.position.set(x, y, z);
+    }
+
+    /**
+     * Set rotation (in radians)
+     */
+    setRotation(x, y, z) {
+        this.group.rotation.set(x, y, z);
+    }
+
+    /**
+     * Set visibility
+     */
+    setVisible(visible) {
+        this.group.visible = visible;
+    }
+
+    /**
+     * Get the THREE.Group for adding to scene
+     */
+    getGroup() {
+        return this.group;
+    }
+
+    /**
+     * Serialize plane to JSON
+     */
+    toJSON() {
+        return {
+            id: this.id,
+            name: this.name,
+            type: 'plane',
+            size: this.size,
+            color: this.color,
+            outlineColor: this.outlineColor,
+            opacity: this.opacity,
+            outlineOpacity: this.outlineOpacity,
+            position: {
+                x: this.group.position.x,
+                y: this.group.position.y,
+                z: this.group.position.z
+            },
+            rotation: {
+                x: this.group.rotation.x,
+                y: this.group.rotation.y,
+                z: this.group.rotation.z
+            }
+        };
+    }
+
+    /**
+     * Create plane from JSON
+     */
+    static fromJSON(data) {
+        const plane = new Plane({
+            id: data.id,
+            name: data.name,
+            size: data.size,
+            color: data.color,
+            outlineColor: data.outlineColor,
+            opacity: data.opacity,
+            outlineOpacity: data.outlineOpacity
+        });
+
+        if (data.position) {
+            plane.setPosition(data.position.x, data.position.y, data.position.z);
+        }
+
+        if (data.rotation) {
+            plane.setRotation(data.rotation.x, data.rotation.y, data.rotation.z);
+        }
+
+        return plane;
+    }
+
+    /**
+     * Dispose of all resources
+     */
+    dispose() {
+        if (this.mesh) {
+            this.mesh.geometry.dispose();
+            this.mesh.material.dispose();
+        }
+        if (this.outline) {
+            this.outline.geometry.dispose();
+            this.outline.material.dispose();
+        }
+        while (this.group.children.length > 0) {
+            this.group.remove(this.group.children[0]);
+        }
+    }
+}
+
+export { Plane };

@@ -1,148 +1,73 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { THREE } from '../ext/three.js';
+import { Plane } from './plane.js';
 
-const { Group, PlaneGeometry, MeshBasicMaterial, Mesh, DoubleSide, EdgesGeometry, LineSegments, LineBasicMaterial } = THREE;
+const { Group } = THREE;
 
 /**
- * Create a plane primitive with outline
- * @param {number} size - Plane dimensions
- * @param {string} name - Plane name
- * @returns {THREE.Group} Group containing plane mesh and outline
+ * Datum - composed of three orthogonal plane primitives
+ * Provides the default coordinate system reference for modeling
  */
-function createPlanePrimitive(size, name) {
-    const group = new Group();
-    group.name = name;
-
-    // Create the plane mesh (translucent gray)
-    const geometry = new PlaneGeometry(size, size);
-    const material = new MeshBasicMaterial({
-        color: 0x404040,      // Dark gray
-        transparent: true,
-        opacity: 0.15,
-        side: DoubleSide,
-        depthWrite: false
-    });
-
-    const mesh = new Mesh(geometry, material);
-    mesh.renderOrder = 1;
-
-    // Create the outline (lighter gray)
-    const edges = new EdgesGeometry(geometry);
-    const lineMaterial = new LineBasicMaterial({
-        color: 0x808080,      // Lighter gray
-        transparent: true,
-        opacity: 0.5,
-        depthWrite: false
-    });
-
-    const outline = new LineSegments(edges, lineMaterial);
-    outline.renderOrder = 2; // Render outline on top of plane
-
-    // Add both to group
-    group.add(mesh);
-    group.add(outline);
-
-    // Store references for later access
-    group.userData.mesh = mesh;
-    group.userData.outline = outline;
-
-    return group;
-}
-
-// Datum plane system
 const datum = {
     group: null,          // THREE.Group containing all planes
-    planes: {},           // { xy, xz, yz }
+    planes: {},           // { xy, xz, yz } - Plane instances
     size: 200,            // Plane dimensions
     visible: true,
 
     /**
-     * Initialize datum planes
+     * Initialize datum with three orthogonal planes
      */
     init(options = {}) {
         this.size = options.size || 200;
         this.group = new Group();
-        this.group.name = 'datum-planes';
+        this.group.name = 'datum';
 
-        // Create three orthogonal planes (all gray with outlines)
-        this.planes.xy = createPlanePrimitive(this.size, 'datum-xy');
-        this.planes.xz = createPlanePrimitive(this.size, 'datum-xz');
-        this.planes.yz = createPlanePrimitive(this.size, 'datum-yz');
+        // Create three plane primitives
+        this.planes.xy = new Plane({
+            id: 'datum-xy',
+            name: 'XY Plane',
+            size: this.size
+        });
+
+        this.planes.xz = new Plane({
+            id: 'datum-xz',
+            name: 'XZ Plane',
+            size: this.size
+        });
+
+        this.planes.yz = new Plane({
+            id: 'datum-yz',
+            name: 'YZ Plane',
+            size: this.size
+        });
 
         // Position XZ plane (vertical, front-back)
-        this.planes.xz.rotation.x = Math.PI / 2;
+        this.planes.xz.setRotation(Math.PI / 2, 0, 0);
 
         // Position YZ plane (vertical, left-right)
-        this.planes.yz.rotation.y = Math.PI / 2;
+        this.planes.yz.setRotation(0, Math.PI / 2, 0);
 
-        // Add all to group
-        this.group.add(this.planes.xy);
-        this.group.add(this.planes.xz);
-        this.group.add(this.planes.yz);
+        // Add all plane groups to datum group
+        this.group.add(this.planes.xy.getGroup());
+        this.group.add(this.planes.xz.getGroup());
+        this.group.add(this.planes.yz.getGroup());
 
         // Set initial visibility
         this.setVisible(options.visible !== undefined ? options.visible : true);
 
-        console.log({ datum_initialized: true, size: this.size });
+        console.log({ datum_initialized: true, size: this.size, planes: 3 });
 
         return this.group;
     },
 
     /**
-     * Set plane size
+     * Set size of all planes
      */
     setSize(size) {
         this.size = size;
-
-        // Recreate planes with new size
-        if (this.group) {
-            const wasVisible = this.visible;
-
-            // Remove old planes and dispose
-            this.disposePlane(this.planes.xy);
-            this.disposePlane(this.planes.xz);
-            this.disposePlane(this.planes.yz);
-
-            this.group.remove(this.planes.xy);
-            this.group.remove(this.planes.xz);
-            this.group.remove(this.planes.yz);
-
-            // Create new planes
-            this.planes.xy = createPlanePrimitive(this.size, 'datum-xy');
-            this.planes.xz = createPlanePrimitive(this.size, 'datum-xz');
-            this.planes.yz = createPlanePrimitive(this.size, 'datum-yz');
-
-            // Position planes
-            this.planes.xz.rotation.x = Math.PI / 2;
-            this.planes.yz.rotation.y = Math.PI / 2;
-
-            // Add back to group
-            this.group.add(this.planes.xy);
-            this.group.add(this.planes.xz);
-            this.group.add(this.planes.yz);
-
-            this.setVisible(wasVisible);
-        }
-    },
-
-    /**
-     * Dispose a plane primitive (mesh + outline)
-     */
-    disposePlane(planeGroup) {
-        if (!planeGroup) return;
-
-        const mesh = planeGroup.userData.mesh;
-        const outline = planeGroup.userData.outline;
-
-        if (mesh) {
-            mesh.geometry.dispose();
-            mesh.material.dispose();
-        }
-
-        if (outline) {
-            outline.geometry.dispose();
-            outline.material.dispose();
+        for (const plane of Object.values(this.planes)) {
+            plane.setSize(size);
         }
     },
 
@@ -161,7 +86,7 @@ const datum = {
      */
     show(planeName) {
         if (this.planes[planeName]) {
-            this.planes[planeName].visible = true;
+            this.planes[planeName].setVisible(true);
         } else {
             console.warn(`datum: unknown plane ${planeName}`);
         }
@@ -172,7 +97,7 @@ const datum = {
      */
     hide(planeName) {
         if (this.planes[planeName]) {
-            this.planes[planeName].visible = false;
+            this.planes[planeName].setVisible(false);
         } else {
             console.warn(`datum: unknown plane ${planeName}`);
         }
@@ -182,11 +107,8 @@ const datum = {
      * Set opacity of all planes
      */
     setOpacity(opacity) {
-        for (const planeGroup of Object.values(this.planes)) {
-            const mesh = planeGroup.userData.mesh;
-            if (mesh) {
-                mesh.material.opacity = opacity;
-            }
+        for (const plane of Object.values(this.planes)) {
+            plane.setOpacity(opacity);
         }
     },
 
@@ -195,10 +117,7 @@ const datum = {
      */
     setColor(planeName, color) {
         if (this.planes[planeName]) {
-            const mesh = this.planes[planeName].userData.mesh;
-            if (mesh) {
-                mesh.material.color.setHex(color);
-            }
+            this.planes[planeName].setColor(color);
         } else {
             console.warn(`datum: unknown plane ${planeName}`);
         }
@@ -209,20 +128,33 @@ const datum = {
      */
     setOutlineColor(planeName, color) {
         if (this.planes[planeName]) {
-            const outline = this.planes[planeName].userData.outline;
-            if (outline) {
-                outline.material.color.setHex(color);
-            }
+            this.planes[planeName].setOutlineColor(color);
         } else {
             console.warn(`datum: unknown plane ${planeName}`);
         }
     },
 
     /**
-     * Get plane group by name
+     * Get plane primitive by name
      */
     getPlane(planeName) {
         return this.planes[planeName] || null;
+    },
+
+    /**
+     * Serialize datum to JSON
+     */
+    toJSON() {
+        return {
+            type: 'datum',
+            size: this.size,
+            visible: this.visible,
+            planes: {
+                xy: this.planes.xy.toJSON(),
+                xz: this.planes.xz.toJSON(),
+                yz: this.planes.yz.toJSON()
+            }
+        };
     },
 
     /**
@@ -230,9 +162,9 @@ const datum = {
      */
     dispose() {
         if (this.group) {
-            for (const planeGroup of Object.values(this.planes)) {
-                this.disposePlane(planeGroup);
-                this.group.remove(planeGroup);
+            for (const plane of Object.values(this.planes)) {
+                plane.dispose();
+                this.group.remove(plane.getGroup());
             }
             this.planes = {};
             this.group = null;
@@ -240,4 +172,4 @@ const datum = {
     }
 };
 
-export { datum, createPlanePrimitive };
+export { datum };
