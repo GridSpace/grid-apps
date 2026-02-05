@@ -126,13 +126,6 @@ const interact = {
         // Use first intersection (closest) - just like kiri/mesh
         const plane = intersection.object?.userData?.plane;
 
-        console.log({
-            hover: plane?.label || 'no-plane',
-            object: intersection.object?.name || intersection.object?.type,
-            hasUserData: !!intersection.object?.userData,
-            userData: intersection.object?.userData
-        });
-
         if (plane && !plane.isSelected()) {
             // Found a plane that's not selected
             if (this.hoveredPlane !== plane) {
@@ -231,13 +224,6 @@ const interact = {
         // Use first intersection (closest) - just like kiri/mesh
         const plane = intersection.object?.userData?.plane;
 
-        console.log({
-            click: plane?.label || 'no-plane',
-            object: intersection.object?.name || intersection.object?.type,
-            hasUserData: !!intersection.object?.userData,
-            userData: intersection.object?.userData
-        });
-
         if (plane) {
             // Clicked a plane - select it
             this.selectPlane(plane, event);
@@ -324,13 +310,11 @@ const interact = {
                 // Already selected - deselect it
                 plane.setSelected(false);
                 this.selectedPlanes.delete(plane);
-                console.log({ plane_deselected: plane.id, label: plane.label });
             } else {
                 // Not selected - add to selection
                 plane.setSelected(true);
                 plane.setHovered(false);
                 this.selectedPlanes.add(plane);
-                console.log({ plane_selected: plane.id, label: plane.label, total_selected: this.selectedPlanes.size });
             }
         } else {
             // Single select - deselect all others
@@ -345,8 +329,6 @@ const interact = {
             plane.setSelected(true);
             plane.setHovered(false);
             this.selectedPlanes.add(plane);
-
-            console.log({ plane_selected: plane.id, label: plane.label });
         }
     },
 
