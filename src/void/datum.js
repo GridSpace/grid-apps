@@ -14,6 +14,8 @@ const datum = {
     planes: {},           // { xy, xz, yz } - Plane instances
     size: 200,            // Plane dimensions
     visible: true,
+    overlay: null,        // Overlay reference for label updates
+    labelHandlers: new Map(),
 
     /**
      * Initialize datum with three orthogonal planes
@@ -56,6 +58,17 @@ const datum = {
         this.group.add(this.planes.xz.getGroup());
         this.group.add(this.planes.yz.getGroup());
 
+        // Keep labels in sync with plane transform/size updates
+        for (const [key, plane] of Object.entries(this.planes)) {
+            const handler = () => {
+                if (this.overlay) {
+                    this.updateLabel(this.overlay, key, plane);
+                }
+            };
+            this.labelHandlers.set(key, handler);
+            plane.onChange(handler);
+        }
+
         // Set initial visibility
         this.setVisible(options.visible !== undefined ? options.visible : true);
 
@@ -76,27 +89,35 @@ const datum = {
      */
     updateLabels(overlay) {
         if (!overlay) return;
+        this.overlay = overlay;
 
         // Add or update labels for each plane
         for (const [key, plane] of Object.entries(this.planes)) {
-            const label = plane.getLabel();
-            if (label) {
-                const labelId = `datum-label-${key}`;
-                const corner = plane.getTopLeftCorner();
+            this.updateLabel(overlay, key, plane);
+        }
+    },
 
-                if (overlay.elements.has(labelId)) {
-                    overlay.update(labelId, { pos3d: corner, text: label });
-                } else {
-                    overlay.add(labelId, 'text', {
-                        pos3d: corner,
-                        text: label,
-                        color: '#b0b0b0',
-                        fontSize: 13,
-                        anchor: 'start',
-                        className: 'datum-label'
-                    });
-                }
-            }
+    /**
+     * Update a single plane label in the overlay
+     */
+    updateLabel(overlay, key, plane) {
+        const label = plane.getLabel();
+        if (!label) return;
+
+        const labelId = `datum-label-${key}`;
+        const corner = plane.getTopLeftCorner();
+
+        if (overlay.elements.has(labelId)) {
+            overlay.update(labelId, { pos3d: corner, text: label });
+        } else {
+            overlay.add(labelId, 'text', {
+                pos3d: corner,
+                text: label,
+                color: '#b0b0b0',
+                fontSize: 13,
+                anchor: 'start',
+                className: 'datum-label'
+            });
         }
     },
 
@@ -201,11 +222,17 @@ const datum = {
      */
     dispose() {
         if (this.group) {
-            for (const plane of Object.values(this.planes)) {
+            for (const [key, plane] of Object.entries(this.planes)) {
+                const handler = this.labelHandlers.get(key);
+                if (handler) {
+                    plane.offChange(handler);
+                }
                 plane.dispose();
                 this.group.remove(plane.getGroup());
             }
             this.planes = {};
+            this.labelHandlers.clear();
+            this.overlay = null;
             this.group = null;
         }
     }

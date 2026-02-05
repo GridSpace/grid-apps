@@ -450,6 +450,9 @@ const interact = {
             this.draggedPlane.group.position.copy(newCenterWorld);
         }
 
+        // Position changed directly on group, so notify listeners.
+        this.draggedPlane.notifyChange();
+
         // Request refresh to show changes
         space.update();
     },

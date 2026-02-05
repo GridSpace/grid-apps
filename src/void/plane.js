@@ -31,6 +31,7 @@ class Plane {
         // State tracking
         this.selected = false;
         this.hovered = false;
+        this.changeHandlers = new Set();
 
         // Create the 3D group
         this.group = new Group();
@@ -140,9 +141,6 @@ class Plane {
      * Set plane size and update in place (no rebuild)
      */
     setSize(size, height) {
-        const oldWidth = this.size;
-        const oldHeight = this.height !== undefined ? this.height : this.size;
-
         this.size = size;
         this.height = height !== undefined ? height : size;
 
@@ -176,6 +174,8 @@ class Plane {
                 this.handles[i].position.set(positions[i].x, positions[i].y, 0);
             }
         }
+
+        this.notifyChange();
     }
 
     /**
@@ -223,6 +223,7 @@ class Plane {
      */
     setPosition(x, y, z) {
         this.group.position.set(x, y, z);
+        this.notifyChange();
     }
 
     /**
@@ -230,6 +231,7 @@ class Plane {
      */
     setRotation(x, y, z) {
         this.group.rotation.set(x, y, z);
+        this.notifyChange();
     }
 
     /**
@@ -244,6 +246,7 @@ class Plane {
      */
     setLabel(text) {
         this.label = text;
+        this.notifyChange();
     }
 
     /**
@@ -257,10 +260,39 @@ class Plane {
      * Get top-left corner position in world coordinates
      */
     getTopLeftCorner() {
-        const halfSize = this.size / 2;
-        const localPos = new THREE.Vector3(-halfSize, halfSize, 0);
+        const halfWidth = this.size / 2;
+        const halfHeight = (this.height !== undefined ? this.height : this.size) / 2;
+        const localPos = new THREE.Vector3(-halfWidth, halfHeight, 0);
+        this.group.updateMatrixWorld(true);
         const worldPos = localPos.applyMatrix4(this.group.matrixWorld);
         return worldPos;
+    }
+
+    /**
+     * Register callback for geometry/transform/label changes
+     */
+    onChange(handler) {
+        if (typeof handler === 'function') {
+            this.changeHandlers.add(handler);
+        }
+        return this;
+    }
+
+    /**
+     * Remove registered change callback
+     */
+    offChange(handler) {
+        this.changeHandlers.delete(handler);
+        return this;
+    }
+
+    /**
+     * Notify listeners plane changed
+     */
+    notifyChange() {
+        for (const handler of this.changeHandlers) {
+            handler(this);
+        }
     }
 
     /**
