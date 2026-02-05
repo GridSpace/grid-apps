@@ -149,21 +149,27 @@ src/
 ```
 
 ### Key Features
-- **Feature tree**: Parametric history (Onshape-style)
+- **Feature tree scaffold**: Sidebar structure is present; full history dependency/update graph is not wired yet
 - **Datum planes**: XY, XZ, YZ reference planes
-- **Constraint sketching**: Using planegcs WASM solver
-- **Manifold BREP**: Triangle mesh CAD operations
+- **Constraint sketching**: planned (`@salusoft89/planegcs`), not integrated yet
+- **Manifold BREP**: planned feature path (extrude/cut/revolve), early stubs today
 - **Onshape camera**: Left=select, Middle=pan/zoom, Right=rotate
 - **ViewCube**: 3D navigation widget (top-right corner)
 - **2D overlay**: SVG overlay for 3D point tracking
 
 ### Status
-**Phase 1 Foundation: Complete ✅**
+**Very early development (Phase 1 foundation in place)**
 - 3D viewport with Onshape camera controls
 - Datum planes with interaction
 - Feature tree UI structure
 - ViewCube navigation widget
 - 2D/3D overlay system
+
+**Current implementation notes (important for agents)**
+- Direct-call architecture in `void:form` (no broker event bus in current runtime path)
+- `toolbar` has placeholders/TODO actions for sketch/extrude/view presets
+- `tree.render()` is not auto-subscribed to `api.features`; callers must refresh UI explicitly after mutations
+- `src/main/void.js` currently enables overlay test primitives with a hardcoded `if (true)` block (debug scaffolding)
 
 **Phase 2: Sketch System (Next)**
 - planegcs constraint solver integration
@@ -190,11 +196,12 @@ src/
 
 ## Shared Infrastructure
 
-All three apps build on common foundation:
+All three apps build on common modules, but usage patterns differ by app:
 
 ### Core Systems (moto/)
 
 #### 1. Event System (`broker.js` - 156 lines)
+Used heavily by `kiri:moto` and `mesh:tool`. `void:form` currently does not use broker in its runtime path.
 ```javascript
 import { broker } from '../moto/broker.js';
 
@@ -375,7 +382,7 @@ const material = new MeshBasicMaterial({
 ```
 
 ### 2. Event-Driven Communication
-All apps use broker for loose coupling:
+`kiri:moto` and `mesh:tool` use broker for loose coupling. `void:form` currently uses direct module calls/shared API state.
 ```javascript
 // Subscribe to events
 broker.subscribe('model.updated', (data) => {
@@ -388,6 +395,21 @@ broker.publish('model.updated', { model });
 // Or use typed interface
 broker.send.model_updated({ model });
 ```
+
+```javascript
+// void:form pattern (current)
+api.document.create();
+api.features.add(feature);
+tree.render();
+datum.updateLabels(overlay);
+```
+
+### 2.1. Void Interaction Contract (Current)
+`void:form` interaction is currently plane-centric and depends on `userData` back-references:
+- Raycast targets are returned from `interact.getInteractiveObjects()`
+- Selection/hover resolve via `intersection.object.userData.plane`
+- Drag-resize logic is implemented for plane corner handles (`handleType = 'plane-resize'`)
+- Non-plane feature types should extend `interact.js` behavior; `registerPlane()` alone is not sufficient for custom interactions
 
 ### 3. Mouse Interaction Pattern
 Standard pattern across all apps:
@@ -449,14 +471,14 @@ api.db.data.get(id)
 | Aspect | Kiri:Moto | Mesh:Tool | Void:Form |
 |--------|-----------|-----------|-----------|
 | **Purpose** | Slicing for manufacturing | Mesh editing & repair | Parametric CAD design |
-| **Data Model** | Widget-based slicing | Triangle mesh + sketches | Features + parametric history |
-| **UI Pattern** | Tabs + device/process panels | Tree + mode buttons | Toolbar + feature tree |
+| **Data Model** | Widget-based slicing | Triangle mesh + sketches | Early document/features scaffold + datum planes |
+| **UI Pattern** | Tabs + device/process panels | Tree + mode buttons | Toolbar + feature tree scaffold |
 | **3D System** | space.js + platform | space.js + platform | space.js + datum planes |
 | **Calculation** | Web Workers (minion pool) | Web Worker | Single worker (planned) |
 | **Modes** | CAM/FDM/LASER/SLA/WEDM/WJET | Object/Tool/Face/Surface/Edge/Sketch | Sketch mode (phase 2) |
 | **Mouse** | Configurable bindings | Standard bindings | Onshape-style bindings |
 | **Database** | Profiles, settings, history | Models, groups, sketches | Documents, features, history |
-| **Status** | Production mature | Actively developed | Phase 1 foundation |
+| **Status** | Production mature | Actively developed | Very early prototype / Phase 1 foundation |
 | **API Size** | ~10KB, 45 subsystems | ~1,730 lines, 18 subsystems | ~113 lines, 6 subsystems |
 
 ---
@@ -467,8 +489,8 @@ api.db.data.get(id)
 1. Create class in `src/void/yourfeature.js` similar to `Plane`
 2. Return `THREE.Group` with children (mesh, outline, handles)
 3. Set `userData.featureType = 'yourtype'` and `userData.yourfeature = this`
-4. Register with `interact.registerPlane()` if interactive
-5. Publish `feature.created` event via broker
+4. For plane-like behavior, register with `interact.registerPlane()`; for non-plane behavior, extend `src/void/interact.js` hit-testing and handlers
+5. Update `api.document/features` and refresh dependent UI directly (no broker path today)
 
 ### Adding a Tool Operation (mesh:tool)
 1. Add function to `src/mesh/tool.js`
@@ -514,6 +536,10 @@ space.afterRender((renderer) => {
 });
 ```
 
+ViewCube caveat:
+- `ViewCube` renders in a separate pass via `space.afterRender()`
+- Preserve and restore renderer viewport/scissor/autoclear state when adding more overlays/widgets
+
 ---
 
 ## Critical Rules
@@ -523,10 +549,10 @@ space.afterRender((renderer) => {
 3. **NEVER** forget `depthWrite: false` on transparent materials
 4. **ALWAYS** dispose of Three.js geometry/materials when removing objects
 5. **ALWAYS** use `userData` for back-references on Three.js objects
-6. **NEVER** use bash tools for file operations - use Read/Edit/Write tools
+6. **PREFER** repo-consistent tooling and keep edits minimal/reviewable
 7. **ALWAYS** test z-fighting issues with transparent overlapping geometry
 8. **NEVER** modify shared moto/ infrastructure without considering all three apps
-9. **ALWAYS** use broker for cross-module communication
+9. **USE BROKER WHEN THE APP ALREADY FOLLOWS THAT PATTERN** (`kiri:moto`, `mesh:tool`); `void:form` currently uses direct module calls
 10. **NEVER** block the main thread - use workers for heavy computation
 
 ---
