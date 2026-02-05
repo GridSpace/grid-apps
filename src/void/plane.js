@@ -137,12 +137,45 @@ class Plane {
     }
 
     /**
-     * Set plane size and rebuild
+     * Set plane size and update in place (no rebuild)
      */
     setSize(size, height) {
+        const oldWidth = this.size;
+        const oldHeight = this.height !== undefined ? this.height : this.size;
+
         this.size = size;
-        this.height = height !== undefined ? height : size;  // Default to square
-        this.build();
+        this.height = height !== undefined ? height : size;
+
+        const newWidth = this.size;
+        const newHeight = this.height !== undefined ? this.height : this.size;
+
+        // Update mesh geometry scale
+        if (this.mesh && this.mesh.geometry) {
+            this.mesh.geometry.dispose();
+            this.mesh.geometry = new PlaneGeometry(newWidth, newHeight);
+        }
+
+        // Update outline geometry
+        if (this.outline && this.mesh) {
+            this.outline.geometry.dispose();
+            this.outline.geometry = new EdgesGeometry(this.mesh.geometry);
+        }
+
+        // Update handle positions
+        if (this.handles && this.handles.length > 0) {
+            const halfWidth = newWidth / 2;
+            const halfHeight = newHeight / 2;
+            const positions = [
+                { x: -halfWidth, y: -halfHeight },  // bottom-left
+                { x: halfWidth, y: -halfHeight },   // bottom-right
+                { x: halfWidth, y: halfHeight },    // top-right
+                { x: -halfWidth, y: halfHeight }    // top-left
+            ];
+
+            for (let i = 0; i < this.handles.length && i < positions.length; i++) {
+                this.handles[i].position.set(positions[i].x, positions[i].y, 0);
+            }
+        }
     }
 
     /**
