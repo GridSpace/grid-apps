@@ -60,7 +60,9 @@ class Plane {
         this.handles = [];
 
         // Create the plane mesh (translucent)
-        const geometry = new PlaneGeometry(this.size, this.size);
+        const width = this.size;
+        const height = this.height !== undefined ? this.height : this.size;
+        const geometry = new PlaneGeometry(width, height);
         const material = new MeshBasicMaterial({
             color: this.color,
             transparent: true,
@@ -100,7 +102,8 @@ class Plane {
      * Create corner handles for resizing
      */
     createHandles() {
-        const halfSize = this.size / 2;
+        const halfWidth = this.size / 2;
+        const halfHeight = (this.height !== undefined ? this.height : this.size) / 2;
         const handleRadius = 3;
         const handleGeometry = new SphereGeometry(handleRadius, 8, 8);
         const handleMaterial = new MeshBasicMaterial({
@@ -111,10 +114,10 @@ class Plane {
         });
 
         const corners = [
-            { x: -halfSize, y: -halfSize, z: 0, name: 'bottom-left' },
-            { x: halfSize, y: -halfSize, z: 0, name: 'bottom-right' },
-            { x: halfSize, y: halfSize, z: 0, name: 'top-right' },
-            { x: -halfSize, y: halfSize, z: 0, name: 'top-left' }
+            { x: -halfWidth, y: -halfHeight, z: 0, name: 'bottom-left' },
+            { x: halfWidth, y: -halfHeight, z: 0, name: 'bottom-right' },
+            { x: halfWidth, y: halfHeight, z: 0, name: 'top-right' },
+            { x: -halfWidth, y: halfHeight, z: 0, name: 'top-left' }
         ];
 
         for (const corner of corners) {
@@ -136,8 +139,9 @@ class Plane {
     /**
      * Set plane size and rebuild
      */
-    setSize(size) {
+    setSize(size, height) {
         this.size = size;
+        this.height = height !== undefined ? height : size;  // Default to square
         this.build();
     }
 

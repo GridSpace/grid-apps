@@ -954,30 +954,7 @@ function onMouseDown(event) {
             // selection = selection.map(o => o.isGroup ? o.children : o).flat();
             trackTo.visible = true;
             let raycastArray = selection && selection.length > 0 ? selection.slice().append(trackTo) : [trackTo];
-            console.log({
-                mouseDown_raycasting: {
-                    has_selection: !!(selection && selection.length > 0),
-                    selection_count: selection?.length || 0,
-                    trackTo_type: trackTo.type,
-                    trackTo_visible: trackTo.visible,
-                    trackTo_is_trackPlane: trackTo === trackPlane,
-                    alignedTracking,
-                    raycastArray_length: raycastArray.length,
-                    selection_types: selection?.map(o => o.type + (o.userData?.handleType ? ' [handle]' : '')) || []
-                }
-            });
             let int = intersect(raycastArray, false);
-            console.log({
-                int_count: int.length,
-                int_objects: int.map(i => ({
-                    type: i.object.type,
-                    isTrackTo: i.object === trackTo,
-                    isTrackPlane: i.object === trackPlane,
-                    inSelection: selection?.contains(i.object) || false,
-                    handleType: i.object.userData?.handleType,
-                    distance: i.distance.toFixed(2)
-                }))
-            });
             trackTo.visible = isVis;
             if (int.length > 0) {
                 let trackInt, selectInt;
@@ -988,22 +965,10 @@ function onMouseDown(event) {
                         selectInt = int[i];
                     }
                 }
-                console.log({
-                    found_intersections: {
-                        trackInt: !!trackInt,
-                        trackInt_type: trackInt?.object.type,
-                        selectInt: !!selectInt,
-                        selectInt_type: selectInt?.object.type,
-                        selectInt_handle: selectInt?.object.userData?.handleType,
-                        has_selection: !!selection,
-                        selection_length: selection?.length
-                    }
-                });
                 if (trackInt && selectInt) {
                     mouseDragPoint = trackInt.point.clone();
                     mouseDragStart = mouseDragPoint;
                     viewControl.enabled = false;
-                    console.log({ mouseDragPoint_set: true, point: mouseDragPoint.toArray() });
                 }
                 if (selectInt) {
                     mouseDownSelect(selectInt, event, int);
