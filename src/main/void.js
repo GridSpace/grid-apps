@@ -78,6 +78,8 @@ function init() {
         color: 0x101010
     });
 
+    space.view.setCtrl('void');
+
     space.platform.set({
         visible: false,
         size: { width: 1000, depth: 1000, height: 0 },

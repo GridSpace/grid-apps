@@ -85,6 +85,13 @@ class Orbit extends EventDispatcher {
             PAN: MOUSE.MIDDLE
         };
 
+        // Onshape
+        this.mouseVoid = {
+            ORBIT: MOUSE.RIGHT,
+            // ZOOM: MOUSE.LEFT,
+            PAN: MOUSE.MIDDLE
+        };
+
         this.mouseButtons = this.mouseDefault;
 
         this.setMouse = function(bindings) {

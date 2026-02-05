@@ -899,9 +899,9 @@ function onMouseDown(event) {
         }
         if (selection && selection.length > 0) {
             // selection = selection.map(o => o.isGroup ? o.children : o).flat();
-            // console.log({ selection });
             trackTo.visible = true;
             let int = intersect(selection.slice().append(trackTo), false);
+            console.log({ int });
             trackTo.visible = isVis;
             if (int.length > 0) {
                 let trackInt, selectInt;
@@ -916,6 +916,7 @@ function onMouseDown(event) {
                     mouseDragPoint = trackInt.point.clone();
                     mouseDragStart = mouseDragPoint;
                     viewControl.enabled = false;
+                    console.log({ mouseDragPoint, mouseDragStart });
                 }
                 if (selectInt) {
                     mouseDownSelect(selectInt, event, int);
@@ -1370,6 +1371,8 @@ let Space = {
         setCtrl: (name) => {
             if (name === 'onshape') {
                 viewControl.setMouse(viewControl.mouseOnshape);
+            } else if (name === 'void') {
+                viewControl.setMouse(viewControl.mouseVoid);
             } else {
                 viewControl.setMouse(viewControl.mouseDefault);
             }
@@ -1424,6 +1427,8 @@ let Space = {
         onDrag:     (f) => { mouseDrag = f },
         onHover:    (f,n) => { mouseHover = f, mouseHoverNull = n }
     },
+
+    isFocused: inputHasFocus,
 
     tween: {
         setTime:    (t) => { tweenTime = t || 500 },

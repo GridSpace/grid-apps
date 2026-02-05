@@ -12,7 +12,7 @@ const interact = {
     selectedPlanes: new Set(),  // Set of selected planes (multi-select)
     hoveredPlane: null,
     draggedHandle: null,
-    dragStartSize: 0,
+    dragStartSizes: new Map(),  // Map of plane -> initial size for multi-plane drag
     dragStartMouse: null,
     dragPlane: null,  // THREE.Plane for raycasting during drag
     planes: [],       // List of all interactive planes
@@ -29,8 +29,30 @@ const interact = {
         // - If !event, return objects for raycasting
         // - If event, handle the intersection
 
+        // space.mouse.down((event, int) => {
+        //     console.log({ down: int, event });
+        //     return this.getInteractiveObjects();
+        // });
+
+        window.addEventListener('keypress', event => {
+            let handled = false;
+            if (space.isFocused()) {
+                return false;
+            }
+            switch (event.code) {
+                case 'Space':
+                    this.deselectAll();
+                    handled = true;
+                    break;
+            }
+            if (handled) {
+                event.preventDefault();
+            }
+        });
+
         space.mouse.downSelect((int, event, ints) => {
-            if (!event) {
+            console.log({ downSelect: int, event });
+            if (!int) {
                 // First call - return objects for raycasting
                 return this.getInteractiveObjects();
             }
@@ -45,7 +67,8 @@ const interact = {
         });
 
         space.mouse.upSelect((int, event, ints) => {
-            if (!event) {
+            console.log({ downSelect: int, event });
+            if (!int) {
                 // First call - return objects for raycasting
                 return this.getInteractiveObjects();
             }
@@ -54,7 +77,7 @@ const interact = {
         });
 
         space.mouse.onHover((int, event, ints) => {
-            if (!event) {
+            if (!int) {
                 return this.getInteractiveObjects();
             }
             // Handle hover (including null intersection = mouse left all objects)
@@ -64,6 +87,7 @@ const interact = {
         });
 
         space.mouse.onDrag((delta) => {
+            console.log({ drag: delta });
             this.handleDrag(delta);
         });
 
@@ -81,7 +105,7 @@ const interact = {
             // objects.push(plane.outline);
             // Add handles if plane is selected
             if (this.selectedPlanes.has(plane)) {
-                // objects.push(...plane.handles);
+                objects.push(...plane.handles);
             }
         }
         return objects;
@@ -205,8 +229,9 @@ const interact = {
     handleMouseUp(intersection, event, allIntersections) {
         // Ignore if we were dragging a handle
         if (this.draggedHandle) {
+            console.log({ handle_drag_end: this.draggedHandle.userData.handleName });
             this.draggedHandle = null;
-            this.dragStartSize = 0;
+            this.dragStartSizes.clear();
             this.dragStartMouse = null;
             this.dragPlane = null;
             this.raycaster = null;
@@ -237,16 +262,22 @@ const interact = {
 
     /**
      * Start handle drag operation
+     * Resizes ALL selected planes together
      */
     startHandleDrag(handle, intersection, event) {
         const plane = handle.userData.plane;
         if (!plane) return;
 
         this.draggedHandle = handle;
-        this.dragStartSize = plane.size;
+
+        // Store initial sizes for ALL selected planes
+        this.dragStartSizes.clear();
+        for (const selectedPlane of this.selectedPlanes) {
+            this.dragStartSizes.set(selectedPlane, selectedPlane.size);
+        }
 
         // Create a drag plane for raycasting
-        // Use the plane's world normal
+        // Use the handle's plane world normal
         const normal = new THREE.Vector3(0, 0, 1);
         normal.applyQuaternion(plane.group.quaternion);
 
@@ -259,17 +290,22 @@ const interact = {
         const internals = space.internals();
         this.raycaster = internals.raycaster;
 
-        console.log({ handle_drag_start: handle.userData.handleName, size: this.dragStartSize });
+        console.log({
+            handle_drag_start: handle.userData.handleName,
+            plane: plane.label,
+            selected_count: this.selectedPlanes.size
+        });
     },
 
     /**
      * Handle drag movement
+     * Resizes ALL selected planes proportionally
      */
     handleDrag(delta) {
         if (!this.draggedHandle || !this.raycaster) return;
 
-        const plane = this.draggedHandle.userData.plane;
-        if (!plane) return;
+        const handlePlane = this.draggedHandle.userData.plane;
+        if (!handlePlane) return;
 
         // Get current mouse position by raycasting to drag plane
         const mousePos = new THREE.Vector3();
@@ -282,7 +318,7 @@ const interact = {
             const handleWorldPos = new THREE.Vector3();
             this.draggedHandle.getWorldPosition(handleWorldPos);
             const centerWorldPos = new THREE.Vector3();
-            plane.group.getWorldPosition(centerWorldPos);
+            handlePlane.group.getWorldPosition(centerWorldPos);
 
             const toHandle = new THREE.Vector3().subVectors(handleWorldPos, centerWorldPos).normalize();
             const toMouse = new THREE.Vector3().subVectors(mousePos, centerWorldPos).normalize();
@@ -293,8 +329,14 @@ const interact = {
                 sizeChange = -sizeChange;  // Dragging inward
             }
 
-            const newSize = Math.max(10, this.dragStartSize + sizeChange);
-            plane.setSize(newSize);
+            // Apply size change to ALL selected planes
+            for (const [plane, startSize] of this.dragStartSizes) {
+                const newSize = Math.max(10, startSize + sizeChange);
+                plane.setSize(newSize);
+            }
+
+            // Request refresh to show changes
+            space.update();
         }
     },
 
