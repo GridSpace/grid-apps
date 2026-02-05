@@ -30,7 +30,6 @@ const interact = {
         // - If event, handle the intersection
 
         space.mouse.downSelect((int, event, ints) => {
-            console.log({ downSelect: int, event });
             let selected = this.getSelected();
             if (!int && selected) {
                 return this.deselectAll();

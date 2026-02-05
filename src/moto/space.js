@@ -236,6 +236,29 @@ function height() { return container ? container.clientHeight : WIN.innerHeight 
 
 function aspect() { return width() / height() }
 
+/**
+ * Convert mouse event to normalized device coordinates (-1 to +1)
+ * relative to the container element. Accounts for container position offset.
+ */
+function eventToNDC(event) {
+    if (!container) {
+        // Fallback for no container (shouldn't happen after init)
+        return {
+            x: (event.clientX / WIN.innerWidth) * 2 - 1,
+            y: -(event.clientY / WIN.innerHeight) * 2 + 1
+        };
+    }
+
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    return {
+        x: (x / rect.width) * 2 - 1,
+        y: -(y / rect.height) * 2 + 1
+    };
+}
+
 function addEventListener(el, key, fn) {
     el.addEventListener(key, fn);
 }
@@ -913,9 +936,7 @@ function onMouseDown(event) {
     } else {
         viewControl.enabled = false;
     }
-    mouseStart = {
-        x: (event.clientX / width()) * 2 - 1,
-        y: -(event.clientY / height()) * 2 + 1};
+    mouseStart = eventToNDC(event);
 }
 
 function onMouseUp(event) {
@@ -924,9 +945,7 @@ function onMouseUp(event) {
         viewControl.enabled = true;
         viewControl.onMouseUp(event);
     }
-    let mouseEnd = {
-        x: (event.clientX / width()) * 2 - 1,
-        y: -(event.clientY / height()) * 2 + 1};
+    let mouseEnd = eventToNDC(event);
     // only fire on mouse move between mouseStart (down) and up
     if (mouseStart && mouseEnd.x - mouseStart.x + mouseEnd.y - mouseStart.y === 0) {
         event.preventDefault();
@@ -973,9 +992,8 @@ function onMouseMove(event) {
     updateLastAction();
     let int, vis, dragTrack;
 
-    const mv = new THREE.Vector2();
-    mv.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mv.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    const ndc = eventToNDC(event);
+    const mv = new THREE.Vector2(ndc.x, ndc.y);
     raycaster.setFromCamera( mv, camera );
 
     if (viewControl.enabled) {
@@ -1022,9 +1040,7 @@ function onMouseMove(event) {
             requestRefresh();
         }
     }
-    mouse = {
-        x: (event.clientX / width()) * 2 - 1,
-        y: -(event.clientY / height()) * 2 + 1};
+    mouse = eventToNDC(event);
 }
 
 /** ******************************************************************
