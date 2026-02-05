@@ -9,7 +9,7 @@ import { datum } from './datum.js';
  * Handles selection, hover, and dragging behaviors
  */
 const interact = {
-    selectedPlane: null,
+    selectedPlanes: new Set(),  // Set of selected planes (multi-select)
     hoveredPlane: null,
     draggedHandle: null,
     dragStartSize: 0,
@@ -30,14 +30,27 @@ const interact = {
         // - If event, handle the intersection
 
         space.mouse.downSelect((int, event, ints) => {
-            let selected = this.getSelected();
-            if (!int && selected) {
-                return this.deselectAll();
-            } else if (!int) {
+            if (!event) {
+                // First call - return objects for raycasting
                 return this.getInteractiveObjects();
             }
-            // Handle mouse down (including null intersection = clicked empty space)
-            this.handleMouseDown(int, event, ints);
+            // Second call - handle mouse down (for drag operations)
+            const obj = int?.object;
+            const handleType = obj?.userData?.handleType;
+
+            if (handleType === 'plane-resize') {
+                // Clicked a handle - start drag resize
+                this.startHandleDrag(obj, int, event);
+            }
+        });
+
+        space.mouse.upSelect((int, event, ints) => {
+            if (!event) {
+                // First call - return objects for raycasting
+                return this.getInteractiveObjects();
+            }
+            // Second call - handle the selection on mouse UP
+            this.handleMouseUp(int, event, ints);
         });
 
         space.mouse.onHover((int, event, ints) => {
@@ -54,16 +67,6 @@ const interact = {
             this.handleDrag(delta);
         });
 
-        // space.mouse.up((int, event) => {
-        //     console.log({ up: int });
-        //     this.handleMouseUp(int, event);
-        // });
-
-        // space.mouse.upSelect((int, event) => {
-        //     console.log({ upSelect: int });
-        //     this.handleMouseUp(int, event);
-        // });
-
         console.log({ interact_initialized: true, planes: this.planes.length });
     },
 
@@ -77,7 +80,7 @@ const interact = {
             objects.push(plane.mesh);
             // objects.push(plane.outline);
             // Add handles if plane is selected
-            if (plane.isSelected()) {
+            if (this.selectedPlanes.has(plane)) {
                 // objects.push(...plane.handles);
             }
         }
@@ -101,9 +104,7 @@ const interact = {
         if (index >= 0) {
             this.planes.splice(index, 1);
         }
-        if (this.selectedPlane === plane) {
-            this.selectedPlane = null;
-        }
+        this.selectedPlanes.delete(plane);
         if (this.hoveredPlane === plane) {
             this.hoveredPlane = null;
         }
@@ -206,21 +207,24 @@ const interact = {
     },
 
     /**
-     * Handle mouse down
+     * Handle mouse up (selection happens here)
      */
-    handleMouseDown(intersection, event, allIntersections) {
-        if (!intersection) {
-            // Clicked empty space - deselect
-            this.deselectAll();
+    handleMouseUp(intersection, event, allIntersections) {
+        // Ignore if we were dragging a handle
+        if (this.draggedHandle) {
+            this.draggedHandle = null;
+            this.dragStartSize = 0;
+            this.dragStartMouse = null;
+            this.dragPlane = null;
+            this.raycaster = null;
             return;
         }
 
-        const obj = intersection.object;
-        const handleType = obj.userData?.handleType;
-
-        if (handleType === 'plane-resize') {
-            // Clicked a handle - start drag resize
-            this.startHandleDrag(obj, intersection, event);
+        if (!intersection) {
+            // Clicked empty space - deselect all (unless Ctrl/Cmd held)
+            if (!event.ctrlKey && !event.metaKey) {
+                this.deselectAll();
+            }
             return;
         }
 
@@ -236,10 +240,12 @@ const interact = {
 
         if (plane) {
             // Clicked a plane - select it
-            this.selectPlane(plane);
+            this.selectPlane(plane, event);
         } else {
-            // Clicked something else - deselect
-            this.deselectAll();
+            // Clicked something else - deselect all (unless Ctrl/Cmd held)
+            if (!event.ctrlKey && !event.metaKey) {
+                this.deselectAll();
+            }
         }
     },
 
@@ -307,44 +313,52 @@ const interact = {
     },
 
     /**
-     * Handle mouse up
+     * Select a plane (supports multi-select with Ctrl/Cmd key)
      */
-    handleMouseUp(intersection, event) {
-        if (this.draggedHandle) {
-            console.log({ handle_drag_end: this.draggedHandle.userData.handleName });
-            this.draggedHandle = null;
-            this.dragStartSize = 0;
-            this.dragStartMouse = null;
-            this.dragPlane = null;
-            this.raycaster = null;
+    selectPlane(plane, event) {
+        const multiSelect = event && (event.ctrlKey || event.metaKey);
+
+        if (multiSelect) {
+            // Toggle selection with Ctrl/Cmd
+            if (this.selectedPlanes.has(plane)) {
+                // Already selected - deselect it
+                plane.setSelected(false);
+                this.selectedPlanes.delete(plane);
+                console.log({ plane_deselected: plane.id, label: plane.label });
+            } else {
+                // Not selected - add to selection
+                plane.setSelected(true);
+                plane.setHovered(false);
+                this.selectedPlanes.add(plane);
+                console.log({ plane_selected: plane.id, label: plane.label, total_selected: this.selectedPlanes.size });
+            }
+        } else {
+            // Single select - deselect all others
+            for (const selectedPlane of this.selectedPlanes) {
+                if (selectedPlane !== plane) {
+                    selectedPlane.setSelected(false);
+                }
+            }
+            this.selectedPlanes.clear();
+
+            // Select the new plane
+            plane.setSelected(true);
+            plane.setHovered(false);
+            this.selectedPlanes.add(plane);
+
+            console.log({ plane_selected: plane.id, label: plane.label });
         }
-    },
-
-    /**
-     * Select a plane
-     */
-    selectPlane(plane) {
-        // Deselect previous
-        if (this.selectedPlane && this.selectedPlane !== plane) {
-            this.selectedPlane.setSelected(false);
-        }
-
-        // Select new
-        plane.setSelected(true);
-        plane.setHovered(false);  // Clear hover when selected
-        this.selectedPlane = plane;
-
-        console.log({ plane_selected: plane.id, label: plane.label });
     },
 
     /**
      * Deselect all planes
      */
     deselectAll() {
-        if (this.selectedPlane) {
-            this.selectedPlane.setSelected(false);
-            this.selectedPlane = null;
+        for (const plane of this.selectedPlanes) {
+            plane.setSelected(false);
         }
+        this.selectedPlanes.clear();
+
         if (this.hoveredPlane) {
             this.hoveredPlane.setHovered(false);
             this.hoveredPlane = null;
@@ -352,10 +366,18 @@ const interact = {
     },
 
     /**
-     * Get currently selected plane
+     * Get currently selected planes
+     * @returns {Set} Set of selected planes
      */
     getSelected() {
-        return this.selectedPlane;
+        return this.selectedPlanes;
+    },
+
+    /**
+     * Check if a plane is selected
+     */
+    isSelected(plane) {
+        return this.selectedPlanes.has(plane);
     }
 };
 
