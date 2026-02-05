@@ -33,11 +33,6 @@ const interact = {
         // - If !event, return objects for raycasting
         // - If event, handle the intersection
 
-        // space.mouse.down((event, int) => {
-        //     console.log({ down: int, event });
-        //     return this.getInteractiveObjects();
-        // });
-
         window.addEventListener('keypress', event => {
             let handled = false;
             if (space.isFocused()) {
@@ -80,7 +75,6 @@ const interact = {
             }
             if (!int && int !== null) {
                 // First call (no args) - return objects for raycasting
-                this.upSelectCalled = false;  // Reset flag
                 this.wasHandleDrag = false;   // Reset handle drag flag
                 return this.getInteractiveObjects();
             }
@@ -105,6 +99,8 @@ const interact = {
             if (!this.upSelectCalled && !this.draggedHandle && !this.wasHandleDrag && ints && ints.length > 0) {
                 this.handleMouseUp(ints[0], event, ints);
             }
+            // Reset flag after mouseUp completes
+            this.upSelectCalled = false;
         });
 
         space.mouse.onHover((int, event, ints) => {
@@ -274,12 +270,6 @@ const interact = {
                 // Negative dot = facing camera
                 const dot = normal.dot(cameraDir);
 
-                console.log({
-                    plane: plane.label,
-                    dot: dot.toFixed(3),
-                    distance: int.distance.toFixed(2)
-                });
-
                 if (dot < bestDot) {
                     bestDot = dot;
                     bestPlane = plane;
@@ -287,7 +277,6 @@ const interact = {
             }
         }
 
-        console.log({ selected_best_plane: bestPlane?.label, bestDot: bestDot.toFixed(3) });
         return bestPlane;
     },
 
@@ -457,10 +446,6 @@ const interact = {
         if (this.draggedPlane.group.parent) {
             const newCenterLocal = this.draggedPlane.group.parent.worldToLocal(newCenterWorld.clone());
             this.draggedPlane.group.position.copy(newCenterLocal);
-
-            // Verify: get the world position back after setting
-            const verifyWorld = new THREE.Vector3();
-            this.draggedPlane.group.getWorldPosition(verifyWorld);
         } else {
             this.draggedPlane.group.position.copy(newCenterWorld);
         }
