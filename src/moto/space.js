@@ -38,6 +38,8 @@ let WIN = self.window || {},
     defaultKeys = true,
     initialized = false,
     alignedTracking = false,
+    trackingMode = 'platform',  // 'platform', 'camera-aligned', 'world-xy'
+    trackingDistance = 1000,    // Distance from camera for camera-aligned mode
     afterRenderCallbacks = [],
     skyAmbient,
     skyGridColor = 0xcccccc,
@@ -257,6 +259,56 @@ function eventToNDC(event) {
         x: (x / rect.width) * 2 - 1,
         y: -(y / rect.height) * 2 + 1
     };
+}
+
+/**
+ * Update tracking plane orientation based on tracking mode
+ */
+function updateTrackingPlane() {
+    if (!trackPlane || !camera || !viewControl) {
+        return;
+    }
+
+    // Don't update during drag operations
+    if (mouseDragPoint) {
+        return;
+    }
+
+    switch (trackingMode) {
+        case 'camera-aligned':
+            // Orient plane perpendicular to camera view
+            const cameraDir = new THREE.Vector3();
+            camera.getWorldDirection(cameraDir);
+
+            // Position plane at fixed distance behind camera target
+            const target = viewControl.getTarget();
+            trackPlane.position.copy(target).addScaledVector(cameraDir, trackingDistance);
+
+            // Orient perpendicular to camera (copy camera rotation)
+            trackPlane.quaternion.copy(camera.quaternion);
+
+            // Enable aligned tracking mode
+            alignedTracking = true;
+            trackPlane.visible = false;  // Hidden by default, shown during drag
+            break;
+
+        case 'world-xy':
+            // Fixed horizontal plane at Z=0 (original behavior)
+            trackPlane.position.set(0, 0, 0);
+            trackPlane.rotation.set(0, 0, 0);
+
+            // Enable aligned tracking mode
+            alignedTracking = true;
+            trackPlane.visible = false;  // Hidden by default, shown during drag
+            break;
+
+        case 'platform':
+        default:
+            // Use platform for tracking (not trackPlane)
+            alignedTracking = false;
+            trackPlane.visible = false;
+            break;
+    }
 }
 
 function addEventListener(el, key, fn) {
@@ -897,26 +949,61 @@ function onMouseDown(event) {
         if (mouseDownSelect) {
             selection = mouseDownSelect(undefined, event);
         }
-        if (selection && selection.length > 0) {
+        // Always raycast, even if no selection (to detect trackPlane on empty clicks)
+        if (selection || alignedTracking) {
             // selection = selection.map(o => o.isGroup ? o.children : o).flat();
             trackTo.visible = true;
-            let int = intersect(selection.slice().append(trackTo), false);
-            console.log({ int });
+            let raycastArray = selection && selection.length > 0 ? selection.slice().append(trackTo) : [trackTo];
+            console.log({
+                mouseDown_raycasting: {
+                    has_selection: !!(selection && selection.length > 0),
+                    selection_count: selection?.length || 0,
+                    trackTo_type: trackTo.type,
+                    trackTo_visible: trackTo.visible,
+                    trackTo_is_trackPlane: trackTo === trackPlane,
+                    alignedTracking,
+                    raycastArray_length: raycastArray.length,
+                    selection_types: selection?.map(o => o.type + (o.userData?.handleType ? ' [handle]' : '')) || []
+                }
+            });
+            let int = intersect(raycastArray, false);
+            console.log({
+                int_count: int.length,
+                int_objects: int.map(i => ({
+                    type: i.object.type,
+                    isTrackTo: i.object === trackTo,
+                    isTrackPlane: i.object === trackPlane,
+                    inSelection: selection?.contains(i.object) || false,
+                    handleType: i.object.userData?.handleType,
+                    distance: i.distance.toFixed(2)
+                }))
+            });
             trackTo.visible = isVis;
             if (int.length > 0) {
                 let trackInt, selectInt;
                 for (let i=0; i<int.length; i++) {
                     if (!trackInt && int[i].object === trackTo) {
                         trackInt = int[i];
-                    } else if (!selectInt && selection.contains(int[i].object)) {
+                    } else if (!selectInt && selection && selection.contains(int[i].object)) {
                         selectInt = int[i];
                     }
                 }
+                console.log({
+                    found_intersections: {
+                        trackInt: !!trackInt,
+                        trackInt_type: trackInt?.object.type,
+                        selectInt: !!selectInt,
+                        selectInt_type: selectInt?.object.type,
+                        selectInt_handle: selectInt?.object.userData?.handleType,
+                        has_selection: !!selection,
+                        selection_length: selection?.length
+                    }
+                });
                 if (trackInt && selectInt) {
                     mouseDragPoint = trackInt.point.clone();
                     mouseDragStart = mouseDragPoint;
                     viewControl.enabled = false;
-                    console.log({ mouseDragPoint, mouseDragStart });
+                    console.log({ mouseDragPoint_set: true, point: mouseDragPoint.toArray() });
                 }
                 if (selectInt) {
                     mouseDownSelect(selectInt, event, int);
@@ -1428,6 +1515,46 @@ let Space = {
         onHover:    (f,n) => { mouseHover = f, mouseHoverNull = n }
     },
 
+    tracking: {
+        /**
+         * Set tracking plane mode
+         * @param {string} mode - 'platform', 'camera-aligned', or 'world-xy'
+         */
+        setMode(mode) {
+            if (['platform', 'camera-aligned', 'world-xy'].includes(mode)) {
+                trackingMode = mode;
+                updateTrackingPlane();
+                requestRefresh();
+            }
+        },
+
+        /**
+         * Set distance from camera for camera-aligned mode
+         * @param {number} distance - Distance in world units
+         */
+        setDistance(distance) {
+            trackingDistance = distance;
+            if (trackingMode === 'camera-aligned') {
+                updateTrackingPlane();
+                requestRefresh();
+            }
+        },
+
+        /**
+         * Get current tracking mode
+         */
+        getMode() {
+            return trackingMode;
+        },
+
+        /**
+         * Get tracking plane object (for advanced use)
+         */
+        getPlane() {
+            return trackPlane;
+        }
+    },
+
     isFocused: inputHasFocus,
 
     tween: {
@@ -1572,6 +1699,8 @@ let Space = {
                 platformMoveTimer = setTimeout(platformOnMove, 500);
                 Space.scene.updateFog();
             }
+            // Update tracking plane orientation
+            updateTrackingPlane();
             updateLastAction();
             updateFocus();
         }, (val) => {
@@ -1656,6 +1785,8 @@ let Space = {
                 platformMoveTimer = setTimeout(platformOnMove, 500);
                 Space.scene.updateFog();
             }
+            // Update tracking plane orientation
+            updateTrackingPlane();
             updateLastAction();
             updateFocus();
         }, (val) => {
@@ -1765,6 +1896,9 @@ let Space = {
         };
 
         initialized = true;
+
+        // Initialize tracking plane orientation
+        updateTrackingPlane();
     }
 };
 

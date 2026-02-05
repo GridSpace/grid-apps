@@ -13,9 +13,8 @@ const interact = {
     hoveredPlane: null,
     draggedHandle: null,
     dragStartSizes: new Map(),  // Map of plane -> initial size for multi-plane drag
-    dragStartMouse: null,
-    dragPlane: null,  // THREE.Plane for raycasting during drag
     planes: [],       // List of all interactive planes
+    upSelectCalled: false,  // Track if upSelect was called for this click
 
     /**
      * Initialize interaction system
@@ -51,33 +50,52 @@ const interact = {
         });
 
         space.mouse.downSelect((int, event, ints) => {
-            console.log({ downSelect: int, event });
             if (!int) {
-                // First call - return objects for raycasting
-                return this.getInteractiveObjects();
+                // First call - return objects for raycasting (includes tracking plane)
+                const objects = this.getInteractiveObjects();
+                console.log({ downSelect_returning: objects.length });
+                return objects;
             }
             // Second call - handle mouse down (for drag operations)
             const obj = int?.object;
             const handleType = obj?.userData?.handleType;
 
+            console.log({ downSelect_int: { object: int.object?.type, handleType, userData: int.object?.userData } });
+
             if (handleType === 'plane-resize') {
                 // Clicked a handle - start drag resize
+                console.log({ downSelect_handle_clicked: obj.userData.handleName });
                 this.startHandleDrag(obj, int, event);
             }
         });
 
         space.mouse.upSelect((int, event, ints) => {
-            console.log({ downSelect: int, event });
-            if (!int) {
-                // First call - return objects for raycasting
+            console.log({ upSelect: { int: !!int, isNull: int === null, isUndefined: int === undefined, event: !!event, draggedHandle: !!this.draggedHandle } });
+            if (!int && int !== null) {
+                // First call (no args) - return objects for raycasting
+                console.log({ upSelect_returning: this.getInteractiveObjects().length });
+                this.upSelectCalled = false;  // Reset flag
                 return this.getInteractiveObjects();
             }
             // Second call - handle the selection on mouse UP
+            this.upSelectCalled = true;  // Mark that upSelect was called
             this.handleMouseUp(int, event, ints);
         });
 
+        // Fallback: use regular mouseUp to catch clicks that space.js misses
+        space.mouse.up((event, ints) => {
+            console.log({ mouseUp_fallback: { event: !!event, ints: ints?.length, draggedHandle: !!this.draggedHandle, upSelectCalled: this.upSelectCalled } });
+            // Only handle if upSelect didn't fire
+            // This catches the case where mouse moved slightly so upSelect was skipped
+            if (!this.upSelectCalled && !this.draggedHandle && ints && ints.length > 0) {
+                console.log({ mouseUp_fallback_handling: 'yes, upSelect was never called' });
+                this.handleMouseUp(ints[0], event, ints);
+            }
+        });
+
         space.mouse.onHover((int, event, ints) => {
-            if (!int) {
+            if (!int && int !== null) {
+                // First call (no args) - return objects for raycasting
                 return this.getInteractiveObjects();
             }
             // Handle hover (including null intersection = mouse left all objects)
@@ -86,9 +104,44 @@ const interact = {
             this.handleHover();
         });
 
-        space.mouse.onDrag((delta) => {
-            console.log({ drag: delta });
-            this.handleDrag(delta);
+        space.mouse.onDrag((delta, offset, isDone, intersections) => {
+            console.log({ onDrag_called: { delta: !!delta, offset: !!offset, isDone, draggedHandle: !!this.draggedHandle } });
+            // Called with no args: return objects to track for dragging
+            if (delta === undefined) {
+                if (this.draggedHandle) {
+                    console.log({ onDrag_returning: 'empty_array_for_trackPlane' });
+                    // Return empty array to use default tracking plane
+                    return [];
+                }
+                console.log({ onDrag_returning: 'null' });
+                return null;
+            }
+
+            // If isDone and we have a handle, it was a drag - clean up
+            if (isDone && this.draggedHandle) {
+                console.log({ onDrag_done_cleaning_up: true });
+                this.draggedHandle = null;
+                this.dragStartSizes.clear();
+                return;
+            }
+
+            // If isDone but NO handle and offset is tiny, treat as click
+            if (isDone && !this.draggedHandle) {
+                const offsetMag = Math.sqrt(offset.x * offset.x + offset.y * offset.y);
+                console.log({ onDrag_done_no_handle: { offsetMag } });
+                if (offsetMag < 5) {  // Less than 5 pixels = click
+                    // Trigger selection on the last intersection
+                    if (intersections && intersections.length > 0) {
+                        console.log({ treating_as_click: true });
+                        this.handleMouseUp(intersections[0], { ctrlKey: false, metaKey: false }, intersections);
+                    }
+                }
+                return;
+            }
+
+            // Called with args: handle the drag
+            console.log({ onDrag_calling_handleDrag: true });
+            this.handleDrag(delta, offset, isDone, intersections);
         });
 
         console.log({ interact_initialized: true, planes: this.planes.length });
@@ -96,6 +149,7 @@ const interact = {
 
     /**
      * Get all interactive objects for raycasting
+     * DON'T include tracking plane - space.js adds it separately
      */
     getInteractiveObjects() {
         const objects = [];
@@ -108,6 +162,10 @@ const interact = {
                 objects.push(...plane.handles);
             }
         }
+
+        // DON'T add trackPlane here - space.js adds it as trackTo separately
+        // This ensures it's detected as trackInt, not selectInt
+
         return objects;
     },
 
@@ -227,18 +285,18 @@ const interact = {
      * Handle mouse up (selection happens here)
      */
     handleMouseUp(intersection, event, allIntersections) {
+        console.log({ handleMouseUp: { intersection: !!intersection, event: !!event, draggedHandle: !!this.draggedHandle } });
+
         // Ignore if we were dragging a handle
         if (this.draggedHandle) {
             console.log({ handle_drag_end: this.draggedHandle.userData.handleName });
             this.draggedHandle = null;
             this.dragStartSizes.clear();
-            this.dragStartMouse = null;
-            this.dragPlane = null;
-            this.raycaster = null;
             return;
         }
 
         if (!intersection) {
+            console.log({ mouseUp_no_intersection: 'deselecting' });
             // Clicked empty space - deselect all (unless Ctrl/Cmd held)
             if (!event.ctrlKey && !event.metaKey) {
                 this.deselectAll();
@@ -248,6 +306,7 @@ const interact = {
 
         // Use first intersection (closest) - just like kiri/mesh
         const plane = intersection.object?.userData?.plane;
+        console.log({ mouseUp_intersection: { plane: plane?.label, object: intersection.object?.type } });
 
         if (plane) {
             // Clicked a plane - select it
@@ -276,20 +335,6 @@ const interact = {
             this.dragStartSizes.set(selectedPlane, selectedPlane.size);
         }
 
-        // Create a drag plane for raycasting
-        // Use the handle's plane world normal
-        const normal = new THREE.Vector3(0, 0, 1);
-        normal.applyQuaternion(plane.group.quaternion);
-
-        this.dragPlane = new THREE.Plane();
-        this.dragPlane.setFromNormalAndCoplanarPoint(normal, intersection.point);
-
-        this.dragStartMouse = intersection.point.clone();
-
-        // Get internals to access raycaster
-        const internals = space.internals();
-        this.raycaster = internals.raycaster;
-
         console.log({
             handle_drag_start: handle.userData.handleName,
             plane: plane.label,
@@ -300,44 +345,55 @@ const interact = {
     /**
      * Handle drag movement
      * Resizes ALL selected planes proportionally
+     * @param {Object} delta - {x, y, z} movement since last drag event
+     * @param {Object} offset - {x, y, z} total movement since drag start
+     * @param {boolean} isDone - true if drag is complete
+     * @param {Array} intersections - raycaster intersections
      */
-    handleDrag(delta) {
-        if (!this.draggedHandle || !this.raycaster) return;
+    handleDrag(delta, offset, isDone, intersections) {
+        if (!this.draggedHandle) return;
+        if (isDone) {
+            console.log({ drag_done: true });
+            return;  // Ignore drag end event
+        }
 
         const handlePlane = this.draggedHandle.userData.plane;
         if (!handlePlane) return;
 
-        // Get current mouse position by raycasting to drag plane
-        const mousePos = new THREE.Vector3();
+        console.log({ drag: { delta, offset } });
 
-        if (this.raycaster.ray.intersectPlane(this.dragPlane, mousePos)) {
-            // Calculate distance moved from start
-            const dragDelta = mousePos.distanceTo(this.dragStartMouse);
+        // Use offset magnitude as the resize amount
+        // offset.x and offset.y represent movement in world space
+        const dragDistance = Math.sqrt(offset.x * offset.x + offset.y * offset.y);
 
-            // Determine if drag is outward or inward based on handle position
-            const handleWorldPos = new THREE.Vector3();
-            this.draggedHandle.getWorldPosition(handleWorldPos);
-            const centerWorldPos = new THREE.Vector3();
-            handlePlane.group.getWorldPosition(centerWorldPos);
+        // Get handle position to determine direction
+        const handleWorldPos = new THREE.Vector3();
+        this.draggedHandle.getWorldPosition(handleWorldPos);
+        const centerWorldPos = new THREE.Vector3();
+        handlePlane.group.getWorldPosition(centerWorldPos);
 
-            const toHandle = new THREE.Vector3().subVectors(handleWorldPos, centerWorldPos).normalize();
-            const toMouse = new THREE.Vector3().subVectors(mousePos, centerWorldPos).normalize();
-            const dot = toHandle.dot(toMouse);
+        // Calculate which direction the handle is from center
+        const handleDir = new THREE.Vector3().subVectors(handleWorldPos, centerWorldPos);
+        handleDir.z = 0;  // Ignore Z for size calculation
+        handleDir.normalize();
 
-            let sizeChange = dragDelta * 2;  // Scale factor for resize
-            if (dot < 0) {
-                sizeChange = -sizeChange;  // Dragging inward
-            }
+        // Determine if dragging toward or away from center
+        const dragDir = new THREE.Vector3(offset.x, offset.y, 0).normalize();
+        const dot = handleDir.dot(dragDir);
 
-            // Apply size change to ALL selected planes
-            for (const [plane, startSize] of this.dragStartSizes) {
-                const newSize = Math.max(10, startSize + sizeChange);
-                plane.setSize(newSize);
-            }
-
-            // Request refresh to show changes
-            space.update();
+        let sizeChange = dragDistance * 2;  // Scale factor for resize
+        if (dot < 0) {
+            sizeChange = -sizeChange;  // Dragging inward
         }
+
+        // Apply size change to ALL selected planes
+        for (const [plane, startSize] of this.dragStartSizes) {
+            const newSize = Math.max(10, startSize + sizeChange);
+            plane.setSize(newSize);
+        }
+
+        // Request refresh to show changes
+        space.update();
     },
 
     /**

@@ -90,6 +90,10 @@ function init() {
         origin: true  // Enable origin indicator
     });
 
+    // Enable camera-aligned tracking plane for drag operations
+    space.tracking.setMode('camera-aligned');
+    space.tracking.setDistance(10000);  // Far behind camera to catch all rays
+
     // Save camera position on movement
     space.platform.onMove(() => {
         db.admin.put('camera', {

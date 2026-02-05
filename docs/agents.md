@@ -256,6 +256,12 @@ space.afterRender((renderer) => {
     // Custom render pass
     viewcube.render(renderer);
 });
+
+// Tracking plane for drag operations (void:form)
+space.tracking.setMode('camera-aligned');  // 'platform', 'camera-aligned', 'world-xy'
+space.tracking.setDistance(1000);          // Distance from camera
+space.tracking.getMode();                  // Get current mode
+space.tracking.getPlane();                 // Get THREE.Mesh for advanced use
 ```
 
 #### 3. Camera Controls (`orbit.js` - 25KB)
