@@ -16,7 +16,7 @@ import { interact } from '../void/interact.js';
 import { ViewCube } from '../void/viewcube.js';
 
 const version = '0.1.0';
-const dbindex = ["admin", "documents", "features"];
+const dbindex = ["admin", "documents", "versions"];
 const VOID_HOME_LEFT = Math.PI / 4;
 // Match view direction along the test line vector (1,1,1) toward origin.
 const VOID_HOME_UP = Math.acos(1 / Math.sqrt(3));
@@ -26,11 +26,11 @@ async function init() {
     console.log({ void_form_init: version });
 
     // Initialize IndexedDB
-    let stores = dataOpen('void', { stores: dbindex, version: 1 }).init();
+    let stores = dataOpen('void', { stores: dbindex, version: 2 }).init();
     let db = api.db = {
         admin: stores.promise('admin'),
         documents: stores.promise('documents'),
-        features: stores.promise('features')
+        versions: stores.promise('versions')
     };
 
     // Mark init time and use count
@@ -134,6 +134,7 @@ async function init() {
 
     // Restore last active document, or seed a new blank one.
     await api.document.restoreOrCreate();
+    toolbar.updateDocumentTitle();
     tree.render();
 
     // TEST: Add example overlay elements

@@ -59,6 +59,11 @@ const api = {
             return doc;
         },
 
+        normalizeName(name) {
+            const clean = String(name || '').trim();
+            return clean || 'Untitled';
+        },
+
         migrate(doc) {
             if (!doc) return doc;
             let changed = false;
@@ -204,6 +209,7 @@ const api = {
                 if (doc) {
                     const migrated = this.migrate(doc);
                     this.current = migrated.doc;
+                    this.current.name = this.normalizeName(this.current.name);
                     this.hydrateRuntimeState(this.current);
                     if (migrated.changed) {
                         return api.db.documents.put(this.current.id, this.current).then(() => this.current);
@@ -237,10 +243,11 @@ const api = {
                 this.current.version = next;
                 this.current.head_rev = revId;
                 this.current.modified_at = now;
+                this.current.name = this.normalizeName(this.current.name);
                 this.current.scene = revision.snapshot.scene;
 
                 return Promise.all([
-                    api.db.features.put(revId, revision),
+                    api.db.versions.put(revId, revision),
                     api.db.documents.put(this.current.id, this.current),
                     api.db.admin.put(ADMIN_CURRENT_DOC_KEY, this.current.id),
                     api.db.admin.put(ADMIN_CURRENT_REV_KEY, revId)
@@ -259,19 +266,92 @@ const api = {
             }).then(() => this.current);
         },
 
+        list() {
+            return api.db.documents.iterate().then(entries => {
+                return entries
+                    .map(({ value }) => value)
+                    .filter(Boolean)
+                    .map(doc => {
+                        const migrated = this.migrate(doc);
+                        migrated.doc.name = this.normalizeName(migrated.doc.name);
+                        return migrated.doc;
+                    })
+                    .sort((a, b) => (b.modified_at || 0) - (a.modified_at || 0));
+            });
+        },
+
+        select(id) {
+            return this.load(id).then(doc => {
+                if (!doc) {
+                    return null;
+                }
+                return Promise.all([
+                    api.db.admin.put(ADMIN_CURRENT_DOC_KEY, this.current.id),
+                    api.db.admin.put(ADMIN_CURRENT_REV_KEY, this.current.head_rev || null)
+                ]).then(() => this.current);
+            });
+        },
+
+        open(id) {
+            return this.select(id);
+        },
+
+        rename(name) {
+            if (!this.current) return Promise.resolve(null);
+            const nextName = this.normalizeName(name);
+            if (nextName === this.current.name) {
+                return Promise.resolve(this.current);
+            }
+            const previous = this.current.name;
+            this.current.name = nextName;
+            return this.save({
+                kind: 'micro',
+                opType: 'doc.rename',
+                payload: {
+                    previous,
+                    next: nextName
+                }
+            }).then(() => this.current);
+        },
+
+        delete(id) {
+            if (!id) return Promise.resolve(false);
+            const isCurrent = this.current?.id === id;
+            const lower = `${id}:`;
+            const upper = `${id}:\uffff`;
+            return api.db.versions.iterate({ lower, upper }).then(entries => {
+                const deletes = entries.map(({ key }) => api.db.versions.remove(key));
+                deletes.push(api.db.documents.remove(id));
+                return Promise.all(deletes);
+            }).then(() => {
+                if (!isCurrent) {
+                    return true;
+                }
+                return this.list().then(docs => {
+                    const next = docs.find(doc => doc.id !== id);
+                    if (next) {
+                        return this.select(next.id).then(() => true);
+                    }
+                    return this.createAndSelect().then(() => true);
+                });
+            });
+        },
+
         restoreOrCreate() {
             return api.db.admin.get(ADMIN_CURRENT_DOC_KEY).then(docId => {
                 if (!docId) {
                     return this.createAndSelect();
                 }
-                return this.load(docId).then(doc => {
+                return this.select(docId).then(doc => {
                     if (doc) {
-                        return Promise.all([
-                            api.db.admin.put(ADMIN_CURRENT_DOC_KEY, this.current.id),
-                            api.db.admin.put(ADMIN_CURRENT_REV_KEY, this.current.head_rev || null)
-                        ]).then(() => this.current);
+                        return this.current;
                     }
-                    return this.createAndSelect();
+                    return this.list().then(docs => {
+                        if (docs.length) {
+                            return this.select(docs[0].id).then(() => this.current);
+                        }
+                        return this.createAndSelect();
+                    });
                 });
             });
         }

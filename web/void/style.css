@@ -85,6 +85,36 @@ html, body {
     gap: 4px;
 }
 
+.toolbar-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-right: 12px;
+    color: var(--accent);
+}
+
+.toolbar-spacer {
+    flex: 1;
+}
+
+.toolbar-doc-name {
+    max-width: 320px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.toolbar-doc-name:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
 /* Content area (left panel + viewport) */
 #content {
     flex: 1;
@@ -221,11 +251,110 @@ html, body {
     cursor: not-allowed;
 }
 
+.toolbar-btn.compact {
+    height: 30px;
+    font-size: 12px;
+    padding: 0 10px;
+}
+
+.toolbar-btn.danger:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
 .toolbar-separator {
     width: 1px;
     height: 24px;
     background: var(--border);
     margin: 0 4px;
+}
+
+.doc-dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.doc-dialog {
+    width: min(760px, calc(100vw - 40px));
+    max-height: min(560px, calc(100vh - 40px));
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.doc-dialog-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+}
+
+.doc-dialog-list {
+    flex: 1;
+    overflow: auto;
+    padding: 8px;
+}
+
+.doc-dialog-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+}
+
+.doc-dialog-row + .doc-dialog-row {
+    margin-top: 6px;
+}
+
+.doc-dialog-row.active {
+    border-color: var(--accent);
+    background: rgba(90, 159, 212, 0.12);
+}
+
+.doc-dialog-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.doc-dialog-name {
+    color: var(--text-primary);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.doc-dialog-meta {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.doc-dialog-row-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.doc-dialog-actions {
+    border-top: 1px solid var(--border);
+    padding: 10px 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.doc-dialog-empty {
+    padding: 16px;
+    color: var(--text-secondary);
+    font-style: italic;
 }
 
 /* Tree items */

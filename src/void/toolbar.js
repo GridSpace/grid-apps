@@ -1,47 +1,42 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
-import { $, h } from '../moto/webui.js';
+import { $ } from '../moto/webui.js';
 import { api } from './api.js';
 import { tree } from './tree.js';
 import { space } from '../moto/space.js';
 
-const { div, button } = h;
-
 const toolbar = {
     buttons: [],
     cameraToggleBtn: null,
+    docNameEl: null,
+    openDialogEl: null,
+    openDialogListEl: null,
 
     build() {
         const container = $('top-bar');
         if (!container) return;
 
         container.innerHTML = '';
+        this.buttons = [];
 
         // Logo / title
-        h.bind(container, div({
-            style: 'font-weight: 600; font-size: 16px; margin-right: 16px; color: #5a9fd4;',
-            _: 'Void:Form'
-        }), { append: true });
+        const title = document.createElement('div');
+        title.className = 'toolbar-title';
+        title.textContent = 'Void:Form';
+        container.appendChild(title);
 
         // Separator
         container.appendChild(this.separator());
 
         // Main tools
-        this.addButton(container, 'New', () => {
-            console.log('New document');
-            api.document.createAndSelect().then(() => {
-                tree.render();
-            });
+        this.addButton(container, 'New', async () => {
+            await api.document.createAndSelect();
+            this.updateDocumentTitle();
+            tree.render();
         });
 
         this.addButton(container, 'Open', () => {
-            console.log('Open document');
-            // TODO: implement document picker
-        });
-
-        this.addButton(container, 'Save', () => {
-            console.log('Save document');
-            api.document.save();
+            this.showOpenDialog();
         });
 
         container.appendChild(this.separator());
@@ -61,22 +56,18 @@ const toolbar = {
 
         // View tools
         this.addButton(container, 'Fit', () => {
-            console.log('Fit view');
             space.view.fit(null, { tween: true });
         });
 
         this.addButton(container, 'Top', () => {
-            console.log('Top view');
             space.view.top();
         });
 
         this.addButton(container, 'Front', () => {
-            console.log('Front view');
             space.view.front();
         });
 
         this.addButton(container, 'Right', () => {
-            console.log('Right view');
             space.view.right();
         });
 
@@ -102,6 +93,25 @@ const toolbar = {
             this.updateProjectionLabel();
         }, { id: 'btn-camera-toggle' });
 
+        const spacer = document.createElement('div');
+        spacer.className = 'toolbar-spacer';
+        container.appendChild(spacer);
+
+        this.docNameEl = document.createElement('div');
+        this.docNameEl.className = 'toolbar-doc-name';
+        this.docNameEl.onclick = async () => {
+            const current = api.document.current;
+            if (!current) return;
+            const next = window.prompt('Rename document', current.name || 'Untitled');
+            if (next === null) return;
+            await api.document.rename(next);
+            this.updateDocumentTitle();
+        };
+        container.appendChild(this.docNameEl);
+
+        this.buildOpenDialog();
+        this.updateDocumentTitle();
+
         console.log({ toolbar_built: true });
     },
 
@@ -113,6 +123,143 @@ const toolbar = {
     updateProjectionLabel() {
         if (this.cameraToggleBtn) {
             this.cameraToggleBtn.textContent = this.getProjectionLabel();
+        }
+    },
+
+    updateDocumentTitle() {
+        const name = api.document.current?.name || 'Untitled';
+        if (this.docNameEl) {
+            this.docNameEl.textContent = name;
+            this.docNameEl.title = name;
+        }
+        document.title = `${name} - Void:Form`;
+    },
+
+    buildOpenDialog() {
+        if (this.openDialogEl) return;
+        const backdrop = document.createElement('div');
+        backdrop.className = 'doc-dialog-backdrop hidden';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'doc-dialog';
+
+        const header = document.createElement('div');
+        header.className = 'doc-dialog-header';
+        header.textContent = 'Documents';
+
+        const list = document.createElement('div');
+        list.className = 'doc-dialog-list';
+
+        const actions = document.createElement('div');
+        actions.className = 'doc-dialog-actions';
+
+        const newBtn = this.addButton(actions, 'New', async () => {
+            await api.document.createAndSelect();
+            this.updateDocumentTitle();
+            tree.render();
+            this.hideOpenDialog();
+        });
+        newBtn.classList.add('compact');
+
+        const closeBtn = this.addButton(actions, 'Close', () => {
+            this.hideOpenDialog();
+        });
+        closeBtn.classList.add('compact');
+
+        dialog.appendChild(header);
+        dialog.appendChild(list);
+        dialog.appendChild(actions);
+        backdrop.appendChild(dialog);
+        document.body.appendChild(backdrop);
+
+        backdrop.addEventListener('click', event => {
+            if (event.target === backdrop) {
+                this.hideOpenDialog();
+            }
+        });
+
+        this.openDialogEl = backdrop;
+        this.openDialogListEl = list;
+    },
+
+    async showOpenDialog() {
+        if (!this.openDialogEl) {
+            this.buildOpenDialog();
+        }
+        const docs = await api.document.list();
+        this.renderOpenDialogList(docs);
+        this.openDialogEl.classList.remove('hidden');
+    },
+
+    hideOpenDialog() {
+        if (this.openDialogEl) {
+            this.openDialogEl.classList.add('hidden');
+        }
+    },
+
+    renderOpenDialogList(docs) {
+        if (!this.openDialogListEl) return;
+        this.openDialogListEl.innerHTML = '';
+
+        if (!docs.length) {
+            const empty = document.createElement('div');
+            empty.className = 'doc-dialog-empty';
+            empty.textContent = 'No documents';
+            this.openDialogListEl.appendChild(empty);
+            return;
+        }
+
+        for (const doc of docs) {
+            const row = document.createElement('div');
+            row.className = 'doc-dialog-row';
+
+            if (doc.id === api.document.current?.id) {
+                row.classList.add('active');
+            }
+
+            const info = document.createElement('div');
+            info.className = 'doc-dialog-info';
+            const name = document.createElement('div');
+            name.className = 'doc-dialog-name';
+            name.textContent = doc.name || 'Untitled';
+            const meta = document.createElement('div');
+            meta.className = 'doc-dialog-meta';
+            meta.textContent = `Updated ${this.formatTime(doc.modified_at)}`;
+            info.appendChild(name);
+            info.appendChild(meta);
+
+            const actions = document.createElement('div');
+            actions.className = 'doc-dialog-row-actions';
+            const openBtn = this.addButton(actions, 'Open', async () => {
+                await api.document.open(doc.id);
+                this.updateDocumentTitle();
+                tree.render();
+                this.hideOpenDialog();
+            });
+            openBtn.classList.add('compact');
+            const delBtn = this.addButton(actions, 'Delete', async () => {
+                const ok = window.confirm(`Delete "${doc.name || 'Untitled'}"?`);
+                if (!ok) return;
+                await api.document.delete(doc.id);
+                this.updateDocumentTitle();
+                tree.render();
+                const nextDocs = await api.document.list();
+                this.renderOpenDialogList(nextDocs);
+            });
+            delBtn.classList.add('compact', 'danger');
+
+            row.appendChild(info);
+            row.appendChild(actions);
+            this.openDialogListEl.appendChild(row);
+        }
+    },
+
+    formatTime(ts) {
+        if (!ts) return 'unknown';
+        try {
+            return new Date(ts).toLocaleString();
+        } catch (e) {
+            return 'unknown';
         }
     },
 
