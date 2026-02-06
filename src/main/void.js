@@ -17,6 +17,9 @@ import { ViewCube } from '../void/viewcube.js';
 
 const version = '0.1.0';
 const dbindex = ["admin", "documents", "features"];
+const VOID_HOME_LEFT = Math.PI / 4;
+// Match view direction along the test line vector (1,1,1) toward origin.
+const VOID_HOME_UP = Math.acos(1 / Math.sqrt(3));
 
 // Main initialization function
 function init() {
@@ -79,6 +82,7 @@ function init() {
     });
 
     space.view.setCtrl('void');
+    space.view.setHome(VOID_HOME_LEFT, VOID_HOME_UP);
 
     space.platform.set({
         visible: false,
@@ -109,6 +113,9 @@ function init() {
             if (cam.focus) {
                 space.view.setFocus(cam.focus);
             }
+        } else {
+            // Use void-specific default home view when no saved camera exists.
+            space.view.home();
         }
     });
 

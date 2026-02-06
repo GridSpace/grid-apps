@@ -1442,8 +1442,8 @@ let Space = {
             updateFocus();
         },
         setHome(r,u) {
-            home = r || 0;
-            up = u || PI4;
+            home = r ?? 0;
+            up = u ?? PI4;
         },
         spin(then, count) {
             Space.view.front(() => {
