@@ -138,13 +138,26 @@ Onshape-inspired parametric CAD with constraint-based sketching, feature history
 src/
 ├── main/void.js          # Bootstrap entry point (210 lines)
 └── void/
-    ├── api.js            # Main API surface (113 lines, minimal)
+    ├── api.js            # API composition root
+    ├── api/
+    │   ├── document.js   # Document persistence + revisions/undo/redo
+    │   ├── features.js   # Feature list mutations
+    │   ├── origin.js     # Origin point visibility/state
+    │   └── sketch.js     # Sketch feature creation scaffold
     ├── toolbar.js        # Top toolbar UI
-    ├── tree.js           # Feature tree sidebar
+    ├── tree.js           # Tree composition root
+    ├── tree/
+    │   ├── model.js      # Tree data/section logic
+    │   └── render.js     # Tree DOM builders
     ├── overlay.js        # 2D/3D tracking overlay
     ├── datum.js          # Datum planes (XY, XZ, YZ)
     ├── plane.js          # Plane primitive class
-    ├── interact.js       # Mouse interaction (hover, select, drag)
+    ├── interact.js       # Interaction composition root + event wiring
+    ├── interact/
+    │   ├── planes.js     # Plane hover/select/resize + view-normal
+    │   ├── points.js     # Point hover/select hit-testing
+    │   ├── selection.js  # Shared selection state transitions
+    │   └── targets.js    # Sketch target/frame resolution
     └── viewcube.js       # ViewCube navigation widget (NEW)
 ```
 
@@ -158,18 +171,22 @@ src/
 - **2D overlay**: SVG overlay for 3D point tracking
 
 ### Status
-**Very early development (Phase 1 foundation in place)**
+**Very early development (Phase 1 foundation, early feature workflow in place)**
 - 3D viewport with Onshape camera controls
 - Datum planes with interaction
-- Feature tree UI structure
+- Feature tree with default geometry visibility controls
 - ViewCube navigation widget
 - 2D/3D overlay system
+- Document persistence + revision history with undo/redo
+- Sketch feature creation scaffold (target plane/face -> sketch feature entry)
 
 **Current implementation notes (important for agents)**
 - Direct-call architecture in `void:form` (no broker event bus in current runtime path)
-- `toolbar` has placeholders/TODO actions for sketch/extrude/view presets
-- `tree.render()` is not auto-subscribed to `api.features`; callers must refresh UI explicitly after mutations
+- `toolbar` wires real actions for docs, camera modes, undo/redo, and sketch creation
+- `tree.render()` is still caller-driven for feature mutations; refresh explicitly after non-tree-originated changes
 - `src/main/void.js` currently enables overlay test primitives with a hardcoded `if (true)` block (debug scaffolding)
+- `Origin` in void is an overlay point (not `space.platform` origin)
+- IndexedDB revision store name is `versions` (older notes may still mention `features`)
 
 **Phase 2: Sketch System (Next)**
 - planegcs constraint solver integration
@@ -184,7 +201,7 @@ src/
 ### Database (IndexedDB)
 - `admin` store - Metadata, camera position
 - `documents` store - Document data
-- `features` store - Feature history
+- `versions` store - Revision history (snapshots/deltas)
 
 ### Documentation
 - `/Users/stewart/Code/gs-apps/VOID-FORM.md` - Full implementation notes
@@ -411,7 +428,7 @@ datum.updateLabels(overlay);
 - Drag-resize logic is implemented for plane corner handles (`handleType = 'plane-resize'`)
 - `space.mouse.*Select()` callbacks are two-phase: first call with no event returns raycast targets, second call handles resolved intersections
 - For resize start, `interact.downSelect` should prioritize handle hits from full intersections (`ints`) so selected handles remain draggable when occluded by plane meshes
-- Non-plane feature types should extend `interact.js` behavior; `registerPlane()` alone is not sufficient for custom interactions
+- Non-plane feature types should extend `src/void/interact/planes.js` + `src/void/interact/targets.js`; `registerPlane()` alone is not sufficient for custom interactions
 - Plane labels should be bound to plane changes (size/position/rotation/label), not only camera movement
 
 ### 3. Mouse Interaction Pattern
@@ -456,7 +473,7 @@ api.widgets, api.function, api.mode, api.work, api.device, ...
 api.selection, api.group, api.model, api.sketch, api.tool, ...
 
 // Void API - ~6 subsystems (expanding)
-api.document, api.features, api.selection, api.datum, ...
+api.document, api.features, api.sketch, api.origin, api.selection, api.datum, ...
 ```
 
 ### 6. Database Pattern
@@ -480,9 +497,9 @@ api.db.data.get(id)
 | **Calculation** | Web Workers (minion pool) | Web Worker | Single worker (planned) |
 | **Modes** | CAM/FDM/LASER/SLA/WEDM/WJET | Object/Tool/Face/Surface/Edge/Sketch | Sketch mode (phase 2) |
 | **Mouse** | Configurable bindings | Standard bindings | Onshape-style bindings |
-| **Database** | Profiles, settings, history | Models, groups, sketches | Documents, features, history |
+| **Database** | Profiles, settings, history | Models, groups, sketches | Documents + versions revision history |
 | **Status** | Production mature | Actively developed | Very early prototype / Phase 1 foundation |
-| **API Size** | ~10KB, 45 subsystems | ~1,730 lines, 18 subsystems | ~113 lines, 6 subsystems |
+| **API Size** | ~10KB, 45 subsystems | ~1,730 lines, 18 subsystems | Split modules (document/features/origin/sketch) |
 
 ---
 
@@ -492,7 +509,7 @@ api.db.data.get(id)
 1. Create class in `src/void/yourfeature.js` similar to `Plane`
 2. Return `THREE.Group` with children (mesh, outline, handles)
 3. Set `userData.featureType = 'yourtype'` and `userData.yourfeature = this`
-4. For plane-like behavior, register with `interact.registerPlane()`; for non-plane behavior, extend `src/void/interact.js` hit-testing and handlers
+4. For plane-like behavior, register with `interact.registerPlane()`; for non-plane behavior, extend `src/void/interact/planes.js` hit-testing and/or `src/void/interact/targets.js`
 5. If the feature has labels/anchors, expose change notifications so overlays update on geometry/transform edits
 6. Update `api.document/features` and refresh dependent UI directly (no broker path today)
 
@@ -572,7 +589,9 @@ ViewCube caveat:
 ### Core APIs
 - `/Users/stewart/Code/gs-apps/src/kiri/app/api.js` - Kiri API (~10KB)
 - `/Users/stewart/Code/gs-apps/src/mesh/api.js` - Mesh API (~1,730 lines)
-- `/Users/stewart/Code/gs-apps/src/void/api.js` - Void API (~113 lines)
+- `/Users/stewart/Code/gs-apps/src/void/api.js` - Void API composition root
+- `/Users/stewart/Code/gs-apps/src/void/api/document.js` - Void document + revisions/undo/redo
+- `/Users/stewart/Code/gs-apps/src/void/interact.js` - Void interaction composition root
 
 ### Shared Infrastructure
 - `/Users/stewart/Code/gs-apps/src/moto/space.js` - 3D viewport (55KB)
