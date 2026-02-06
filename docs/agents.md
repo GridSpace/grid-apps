@@ -194,6 +194,44 @@ src/
 - Geometric primitives (line, circle, arc)
 - Constraints (distance, angle, parallel, perpendicular)
 
+**Sketch MVP Contract (checkpointed, 2026-02-06)**
+- Primitive rollout:
+  - v1: `point` + `line`
+  - v2 next: `arc`
+  - `circle` treated as specialized arc family later
+  - Rectangle is not a primitive; model as constrained lines (corner/center patterns)
+- Input behavior:
+  - Click+drag creation for points and lines
+  - No snapping/inference in v1; rely on explicit constraints
+- View behavior:
+  - No auto camera orientation on sketch edit entry (user uses `n` manually)
+  - Non-edit sketch display remains gray when visible, hidden when invisible
+  - While editing a sketch, disable hover-highlight behavior for that sketch
+- Coordinate model:
+  - Store sketch geometry in sketch-local 2D coordinates
+  - Plane/frame transform maps sketch-local geometry into 3D scene
+  - This is required for future derived geometry from non-datum faces/parts
+- Constraint rollout:
+  - Implement annotation first (record/apply metadata), enforcement deferred
+  - Initial constraint set:
+    - Lines: `horizontal`, `vertical`, `perpendicular`
+    - Points: `coincident`, `fixed`
+  - Solver integration comes after editing mechanics are stable
+- Dimensions:
+  - Support both driven and derived dimensions (for later variable system)
+- Selection roadmap:
+  - v1: click selection
+  - later: rectangle selection parity with Onshape semantics:
+    - right-drag = must fully enclose
+    - left-drag = crossing/touch selects
+- Construction geometry:
+  - Required early
+  - Toggle selected entity construction state with `q`
+  - Construction lines render dashed
+- Undo/redo granularity:
+  - One undo unit per mutation (entity create/complete move/change, dimension change)
+  - Not per low-level pointer gesture frame
+
 ### Routes
 - `/void/` - Primary URL
 - `/form/` - Alias (same app)
