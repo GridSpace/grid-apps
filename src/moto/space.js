@@ -198,13 +198,32 @@ function tweenCamPan(x,y,z,left,up) {
 }
 
 function tweenCam(pos) {
+    let hasScale = pos.scale !== undefined;
+    let prevScale = 1;
     let tf = function () {
-        viewControl.setPosition(this);
+        const next = {
+            left: this.left,
+            up: this.up,
+            panX: this.panX,
+            panY: this.panY,
+            panZ: this.panZ
+        };
+        if (hasScale) {
+            const scaleStep = this.scale / prevScale;
+            if (isFinite(scaleStep) && scaleStep > 0) {
+                next.scale = scaleStep;
+                prevScale = this.scale;
+            }
+        }
+        viewControl.setPosition(next);
         updateLastAction();
         refresh();
     };
     let from = Object.clone(viewControl.getPosition());
     let to = Object.clone(pos);
+    if (hasScale) {
+        from.scale = 1;
+    }
     let dist = Math.abs(from.left - to.left);
     if (dist > Math.PI) {
         if (from.left < to.left) {
@@ -217,7 +236,20 @@ function tweenCam(pos) {
         to(to, tweenTime).
         onUpdate(tf).
         onComplete(() => {
-            viewControl.setPosition(pos);
+            const finalPos = {
+                left: pos.left,
+                up: pos.up,
+                panX: pos.panX,
+                panY: pos.panY,
+                panZ: pos.panZ
+            };
+            if (hasScale) {
+                const finalScaleStep = pos.scale / prevScale;
+                if (isFinite(finalScaleStep) && finalScaleStep > 0) {
+                    finalPos.scale = finalScaleStep;
+                }
+            }
+            viewControl.setPosition(finalPos);
             updateLastAction();
             refresh();
             let { then } = pos;
@@ -1393,32 +1425,44 @@ let Space = {
             const newPanX = center.x;
             const newPanY = center.y;
             const newPanZ = center.z;
+            const currentScaleSave = viewControl.getPosition(true).scale || 1;
+            const currentDistToCenter = camera.position.distanceTo(center);
 
-            // First, tween to center the view on the object
-            viewControl.setPosition({
+            const fitPos = {
                 left,
                 up: upAngle,
                 panX: newPanX,
                 panY: newPanY,
                 panZ: newPanZ,
-            });
+            };
+            let fitScaleRatio = 1;
 
             if (camera.isPerspectiveCamera) {
-                const currentDist = camera.position.distanceTo(viewControl.getTarget());
-                const scale = desiredDistance / currentDist;
-                viewControl.setPosition({ scale });
+                fitScaleRatio = desiredDistance / currentDistToCenter;
             } else {
                 // For orthographic, set zoom directly based on viewing size
                 // The camera frustum height is determined by the orthographic bounds
                 // We want the object to fit within the view with padding
-                const currentDist = camera.position.distanceTo(viewControl.getTarget());
-                const targetScaleSave = desiredDistance / currentDist;
+                const targetScaleSave = desiredDistance / currentDistToCenter;
                 // Reset scale accumulation and set absolute zoom
-                viewControl.setPosition({ scale: targetScaleSave / viewControl.getPosition(true).scale });
+                fitScaleRatio = targetScaleSave / currentScaleSave;
             }
-            viewControl.update();
 
-            if (typeof(then) === 'function') then();
+            // Guard against degenerate center/camera overlap.
+            if (!isFinite(fitScaleRatio) || fitScaleRatio <= 0) {
+                fitScaleRatio = 1;
+            }
+
+            if (opts.tween !== false) {
+                fitPos.scale = fitScaleRatio;
+                fitPos.then = then;
+                tweenCam(fitPos);
+            } else {
+                viewControl.setPosition(fitPos);
+                viewControl.setPosition({ scale: fitScaleRatio });
+                viewControl.update();
+                if (typeof(then) === 'function') then();
+            }
         },
         setCtrl: (name) => {
             if (name === 'onshape') {
