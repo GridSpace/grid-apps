@@ -3,6 +3,7 @@
 import { THREE } from '../ext/three.js';
 import { space } from '../moto/space.js';
 import { datum } from './datum.js';
+import { overlay } from './overlay.js';
 
 /**
  * Interaction manager for void:form primitives
@@ -11,6 +12,8 @@ import { datum } from './datum.js';
 const interact = {
     selectedPlanes: new Set(),  // Set of selected planes (multi-select)
     hoveredPlane: null,
+    selectedPoints: new Set(),  // Set of selected overlay point ids
+    hoveredPoint: null,         // Hovered overlay point id
     draggedHandle: null,
     draggedPlane: null,  // The plane being dragged
     dragHandleName: null,  // Which handle (corner) is being dragged
@@ -23,6 +26,8 @@ const interact = {
     hoverIntersection: null,  // Last hovered intersection for view-normal
     handleScreenRadiusPx: 7,  // Desired handle radius in screen pixels
     handleBaseRadius: 4,      // Base radius from Plane.createHandles()
+    pointHitRadiusPx: 10,     // Screen-space hit threshold for overlay points
+    pointIds: ['origin-point'],
     _tmpWorldPos: new THREE.Vector3(),
 
     /**
@@ -277,6 +282,19 @@ const interact = {
      * Handle mouse hover
      */
     handleHover(intersection, event, allIntersections) {
+        const pointHit = this.getPointHitFromEvent(event);
+        if (pointHit) {
+            this.hoverIntersection = null;
+            this.setHoveredPoint(pointHit.id);
+            if (this.hoveredPlane && !this.hoveredPlane.isSelected()) {
+                this.hoveredPlane.setHovered(false);
+                this.hoveredPlane = null;
+            }
+            return;
+        }
+
+        this.setHoveredPoint(null);
+
         // No intersection means mouse left all objects
         if (!intersection) {
             this.hoverIntersection = null;
@@ -370,6 +388,12 @@ const interact = {
             this.dragAnchorPos = null;
             this.dragStartSizes.clear();
             this.dragStartCenters.clear();
+            return;
+        }
+
+        const pointHit = this.getPointHitFromEvent(event);
+        if (pointHit) {
+            this.selectPoint(pointHit.id, event);
             return;
         }
 
@@ -562,6 +586,7 @@ const interact = {
                 }
             }
             this.selectedPlanes.clear();
+            this.clearSelectedPoints();
 
             // Select the new plane
             plane.setSelected(true);
@@ -584,7 +609,121 @@ const interact = {
             this.hoveredPlane.setHovered(false);
             this.hoveredPlane = null;
         }
+        this.setHoveredPoint(null);
+        this.clearSelectedPoints();
         this.updateHandleScreenScales();
+    },
+
+    getPointHitFromEvent(event) {
+        if (!event || !overlay?.elements) {
+            return null;
+        }
+
+        const { container } = space.internals();
+        if (!container) {
+            return null;
+        }
+
+        const rect = container.getBoundingClientRect();
+        const ex = event.clientX - rect.left;
+        const ey = event.clientY - rect.top;
+
+        let best = null;
+        for (const id of this.pointIds) {
+            const item = overlay.elements.get(id);
+            if (!item || item.type !== 'point' || !item.pos3d || item.opts?.hidden) {
+                continue;
+            }
+            const proj = overlay.project3Dto2D(item.pos3d);
+            if (!proj || !proj.visible) {
+                continue;
+            }
+            const dx = ex - proj.x;
+            const dy = ey - proj.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist > this.pointHitRadiusPx) {
+                continue;
+            }
+            if (!best || dist < best.dist) {
+                best = { id, item, dist };
+            }
+        }
+
+        return best;
+    },
+
+    setHoveredPoint(id) {
+        if (this.hoveredPoint === id) {
+            return;
+        }
+        const prev = this.hoveredPoint;
+        this.hoveredPoint = id;
+        if (prev) {
+            this.applyPointAppearance(prev);
+        }
+        if (id) {
+            this.applyPointAppearance(id);
+        }
+    },
+
+    clearSelectedPoints() {
+        if (!this.selectedPoints.size) {
+            return;
+        }
+        const ids = Array.from(this.selectedPoints);
+        this.selectedPoints.clear();
+        for (const id of ids) {
+            this.applyPointAppearance(id);
+        }
+    },
+
+    selectPoint(id, event) {
+        const multiSelect = event && (event.ctrlKey || event.metaKey);
+
+        if (!multiSelect) {
+            // Points are selected like planes: single-select clears prior selection.
+            for (const plane of this.selectedPlanes) {
+                plane.setSelected(false);
+            }
+            this.selectedPlanes.clear();
+            this.clearSelectedPoints();
+            this.selectedPoints.add(id);
+        } else {
+            if (this.selectedPoints.has(id)) {
+                this.selectedPoints.delete(id);
+            } else {
+                this.selectedPoints.add(id);
+            }
+        }
+        this.applyPointAppearance(id);
+        this.updateHandleScreenScales();
+    },
+
+    applyPointAppearance(id) {
+        const item = overlay?.elements?.get(id);
+        if (!item?.el) {
+            return;
+        }
+
+        if (item.opts?.hidden) {
+            item.el.style.display = 'none';
+            return;
+        }
+
+        const isSelected = this.selectedPoints.has(id);
+        const isHovered = this.hoveredPoint === id;
+
+        const defaultFill = 'rgba(140, 140, 140, 0.45)';
+        const defaultStroke = '#5a9fd4';
+        const hoverStroke = '#ff9933';
+
+        const fill = isSelected ? 'rgba(160, 160, 160, 0.6)' : defaultFill;
+        const stroke = (isSelected || isHovered) ? hoverStroke : defaultStroke;
+        const strokeWidth = isSelected ? 2.5 : (isHovered ? 2.2 : 2);
+
+        item.el.setAttribute('fill', fill);
+        item.el.setAttribute('stroke', stroke);
+        item.el.setAttribute('stroke-width', String(strokeWidth));
     },
 
     /**
