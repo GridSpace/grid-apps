@@ -154,25 +154,11 @@ async function init() {
             strokeWidth: 2
         });
 
-        overlay.add('origin-label', 'text', {
-            pos3d: new THREE.Vector3(0, 0, 10),
-            text: 'Origin (0,0,0)',
-            color: '#ffffff',
-            fontSize: 14
-        });
-
         // X axis point (red)
         overlay.add('x-point', 'point', {
             pos3d: new THREE.Vector3(100, 0, 0),
             radius: 5,
             color: '#ff6666'
-        });
-
-        overlay.add('x-label', 'text', {
-            pos3d: new THREE.Vector3(100, 0, 10),
-            text: 'X+100',
-            color: '#ff6666',
-            fontSize: 12
         });
 
         // Y axis point (green)
@@ -182,13 +168,6 @@ async function init() {
             color: '#66ff66'
         });
 
-        overlay.add('y-label', 'text', {
-            pos3d: new THREE.Vector3(0, 100, 10),
-            text: 'Y+100',
-            color: '#66ff66',
-            fontSize: 12
-        });
-
         // Z axis point (blue)
         overlay.add('z-point', 'point', {
             pos3d: new THREE.Vector3(0, 0, 100),
@@ -196,23 +175,7 @@ async function init() {
             color: '#6666ff'
         });
 
-        overlay.add('z-label', 'text', {
-            pos3d: new THREE.Vector3(0, 0, 110),
-            text: 'Z+100',
-            color: '#6666ff',
-            fontSize: 12
-        });
-
-        // Add a test line between two points
-        overlay.add('test-line', 'line', {
-            pos3d: new THREE.Vector3(0, 0, 0),
-            pos3d2: new THREE.Vector3(50, 50, 50),
-            color: '#5a9fd4',
-            width: 2,
-            dashed: true
-        });
-
-        console.log({ test_overlays_added: 7 });
+        console.log({ test_overlays_added: 4 });
     }
 
     // Hide loading curtain
