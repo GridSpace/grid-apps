@@ -174,8 +174,8 @@ async function init() {
         // Add test points at origin and along axes
         overlay.add('origin-point', 'point', {
             pos3d: new THREE.Vector3(0, 0, 0),
-            radius: 6,
-            color: '#ffffff',
+            radius: 4.8,
+            color: 'rgba(140, 140, 140, 0.45)',
             stroke: '#5a9fd4',
             strokeWidth: 2
         });

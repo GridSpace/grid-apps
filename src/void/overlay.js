@@ -278,6 +278,12 @@ const overlay = {
         const item = this.elements.get(id);
         if (!item || !item.pos3d) return;
 
+        // Respect caller-controlled visibility flags (e.g. tree eye toggles).
+        if (item.opts?.hidden) {
+            item.el.style.display = 'none';
+            return;
+        }
+
         const proj = this.project3Dto2D(item.pos3d);
         if (!proj) return;
 

@@ -116,6 +116,19 @@ const tree = {
         const doc = api.document.current;
         const folders = this.getFolders(doc);
         const features = api.features.list();
+        const hasOnlyDefaultFolder = folders.length === 1 && folders[0]?.id === 'features';
+
+        if (hasOnlyDefaultFolder) {
+            if (!features.length) {
+                this.container.appendChild(this.createEmptyRow('No features yet', 1));
+                return;
+            }
+            for (const feature of features) {
+                const label = feature?.name || feature?.type || 'Feature';
+                this.container.appendChild(this.createItemRow(label, feature, 1));
+            }
+            return;
+        }
 
         for (let i = 0; i < folders.length; i++) {
             const folder = folders[i];

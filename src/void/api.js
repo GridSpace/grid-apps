@@ -96,6 +96,8 @@ const api = {
         syncOverlayPoint() {
             const item = api.overlay?.elements?.get('origin-point');
             if (item?.el) {
+                item.opts = item.opts || {};
+                item.opts.hidden = !this.state.show;
                 item.el.style.display = this.state.show ? '' : 'none';
             }
         }
