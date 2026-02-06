@@ -30,6 +30,76 @@ const api = {
     datum,
     Plane,
     interact,
+    origin: {
+        state: { x: 0, y: 0, z: 0, show: true },
+        changeHandlers: new Set(),
+
+        defaultState() {
+            return { x: 0, y: 0, z: 0, show: true };
+        },
+
+        toJSON() {
+            const { x, y, z, show } = this.state;
+            return { x, y, z, show };
+        },
+
+        applyJSON(data = {}, notify = true) {
+            const next = {
+                x: data.x ?? 0,
+                y: data.y ?? 0,
+                z: data.z ?? 0,
+                show: data.show !== undefined ? !!data.show : true
+            };
+            this.state = next;
+            this.syncOverlayPoint();
+            if (notify) {
+                this.notifyChange();
+            }
+            return this.state;
+        },
+
+        isVisible() {
+            return !!this.state.show;
+        },
+
+        setVisible(visible) {
+            const next = !!visible;
+            if (this.state.show === next) {
+                return this.state;
+            }
+            this.applyJSON({ ...this.state, show: next }, true);
+            return this.state;
+        },
+
+        toggleVisible() {
+            return this.setVisible(!this.isVisible());
+        },
+
+        onChange(handler) {
+            if (typeof handler === 'function') {
+                this.changeHandlers.add(handler);
+            }
+            return this;
+        },
+
+        offChange(handler) {
+            this.changeHandlers.delete(handler);
+            return this;
+        },
+
+        notifyChange() {
+            for (const handler of this.changeHandlers) {
+                handler(this.state);
+            }
+        },
+
+        syncOverlayPoint() {
+            const item = api.overlay?.elements?.get('origin-point');
+            if (item?.el) {
+                item.el.style.display = this.state.show ? '' : 'none';
+            }
+        }
+    },
 
     // Document management
     document: {
@@ -39,7 +109,9 @@ const api = {
         _runtimeSavePending: null,
         _datumHandlers: new Map(),
         _datumRootHandler: null,
+        _originHandler: null,
         _runtimeFlushBound: false,
+        _redoStack: [],
 
         create() {
             const doc = {
@@ -51,11 +123,18 @@ const api = {
                 version: { major: 0, micro: 0 },
                 head_rev: null,
                 features: [], // current runtime snapshot (full state for now)
+                tree: {
+                    folders: [
+                        { id: 'features', name: 'Features', collapsed: false }
+                    ]
+                },
                 scene: {
-                    datum: api.datum.defaultState()
+                    datum: api.datum.defaultState(),
+                    origin: api.origin.defaultState()
                 }
             };
             this.current = doc;
+            this._redoStack = [];
             return doc;
         },
 
@@ -91,12 +170,24 @@ const api = {
                 doc.features = [];
                 changed = true;
             }
+            if (!doc.tree || !Array.isArray(doc.tree.folders)) {
+                doc.tree = {
+                    folders: [
+                        { id: 'features', name: 'Features', collapsed: false }
+                    ]
+                };
+                changed = true;
+            }
             if (!doc.scene) {
                 doc.scene = {};
                 changed = true;
             }
             if (!doc.scene.datum) {
                 doc.scene.datum = api.datum.defaultState();
+                changed = true;
+            }
+            if (!doc.scene.origin) {
+                doc.scene.origin = api.origin.defaultState();
                 changed = true;
             }
             return { doc, changed };
@@ -122,7 +213,8 @@ const api = {
 
         captureRuntimeState() {
             return {
-                datum: api.datum.toJSON()
+                datum: api.datum.toJSON(),
+                origin: api.origin.toJSON()
             };
         },
 
@@ -130,8 +222,10 @@ const api = {
             if (!doc) return;
             const scene = doc.scene || {};
             const datumState = scene.datum || api.datum.defaultState();
+            const originState = scene.origin || api.origin.defaultState();
             this.isHydrating = true;
             try {
+                api.origin.applyJSON(originState, false);
                 api.datum.applyJSON(datumState);
             } finally {
                 this.isHydrating = false;
@@ -152,6 +246,10 @@ const api = {
                 api.datum.offChange(this._datumRootHandler);
                 this._datumRootHandler = null;
             }
+            if (this._originHandler) {
+                api.origin.offChange(this._originHandler);
+                this._originHandler = null;
+            }
 
             for (const plane of api.datum.getPlanes()) {
                 const handler = () => {
@@ -165,6 +263,11 @@ const api = {
                 this.scheduleRuntimeSave('datum.root.update', { scope: 'datum' });
             };
             api.datum.onChange(this._datumRootHandler);
+
+            this._originHandler = () => {
+                this.scheduleRuntimeSave('origin.update', { scope: 'origin' });
+            };
+            api.origin.onChange(this._originHandler);
 
             if (!this._runtimeFlushBound) {
                 this._runtimeFlushBound = true;
@@ -210,6 +313,7 @@ const api = {
                     const migrated = this.migrate(doc);
                     this.current = migrated.doc;
                     this.current.name = this.normalizeName(this.current.name);
+                    this._redoStack = [];
                     this.hydrateRuntimeState(this.current);
                     if (migrated.changed) {
                         return api.db.documents.put(this.current.id, this.current).then(() => this.current);
@@ -245,6 +349,9 @@ const api = {
                 this.current.modified_at = now;
                 this.current.name = this.normalizeName(this.current.name);
                 this.current.scene = revision.snapshot.scene;
+                if (options.clearRedo !== false) {
+                    this._redoStack = [];
+                }
 
                 return Promise.all([
                     api.db.versions.put(revId, revision),
@@ -285,6 +392,7 @@ const api = {
                 if (!doc) {
                     return null;
                 }
+                this._redoStack = [];
                 return Promise.all([
                     api.db.admin.put(ADMIN_CURRENT_DOC_KEY, this.current.id),
                     api.db.admin.put(ADMIN_CURRENT_REV_KEY, this.current.head_rev || null)
@@ -314,6 +422,59 @@ const api = {
             }).then(() => this.current);
         },
 
+        getRevision(revId) {
+            if (!revId) return Promise.resolve(null);
+            return api.db.versions.get(revId);
+        },
+
+        applyRevision(revision) {
+            if (!revision || !revision.snapshot) {
+                return Promise.resolve(null);
+            }
+            const migrated = this.migrate(JSON.parse(JSON.stringify(revision.snapshot)));
+            this.current = migrated.doc;
+            this.current.version = revision.rev || this.current.version;
+            this.current.head_rev = revision.rev_id || this.revisionKey(this.current.id, this.current.version);
+            this.current.modified_at = revision.created_at || this.current.modified_at || Date.now();
+            this.hydrateRuntimeState(this.current);
+            return Promise.all([
+                api.db.documents.put(this.current.id, this.current),
+                api.db.admin.put(ADMIN_CURRENT_DOC_KEY, this.current.id),
+                api.db.admin.put(ADMIN_CURRENT_REV_KEY, this.current.head_rev || null)
+            ]).then(() => this.current);
+        },
+
+        canRedo() {
+            return this._redoStack.length > 0;
+        },
+
+        undo() {
+            const head = this.current?.head_rev;
+            if (!head) return Promise.resolve(false);
+            return this.getRevision(head).then(revision => {
+                const parent = revision?.parent_rev;
+                if (!parent) return false;
+                return this.getRevision(parent).then(parentRevision => {
+                    if (!parentRevision) return false;
+                    this._redoStack.push(head);
+                    return this.applyRevision(parentRevision).then(() => true);
+                });
+            });
+        },
+
+        redo() {
+            if (!this._redoStack.length) return Promise.resolve(false);
+            const nextRev = this._redoStack.pop();
+            return this.getRevision(nextRev).then(revision => {
+                if (!revision) return false;
+                if (revision.parent_rev && revision.parent_rev !== this.current?.head_rev) {
+                    this._redoStack = [];
+                    return false;
+                }
+                return this.applyRevision(revision).then(() => true);
+            });
+        },
+
         delete(id) {
             if (!id) return Promise.resolve(false);
             const isCurrent = this.current?.id === id;
@@ -327,6 +488,7 @@ const api = {
                 if (!isCurrent) {
                     return true;
                 }
+                this._redoStack = [];
                 return this.list().then(docs => {
                     const next = docs.find(doc => doc.id !== id);
                     if (next) {

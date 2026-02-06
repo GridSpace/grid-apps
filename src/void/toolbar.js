@@ -39,6 +39,22 @@ const toolbar = {
             this.showOpenDialog();
         });
 
+        this.addButton(container, 'Undo', async () => {
+            const ok = await api.document.undo();
+            if (ok) {
+                this.updateDocumentTitle();
+                tree.render();
+            }
+        });
+
+        this.addButton(container, 'Redo', async () => {
+            const ok = await api.document.redo();
+            if (ok) {
+                this.updateDocumentTitle();
+                tree.render();
+            }
+        });
+
         container.appendChild(this.separator());
 
         // Sketch tools

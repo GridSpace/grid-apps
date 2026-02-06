@@ -91,8 +91,7 @@ async function init() {
         zoom: { reverse: true, speed: 1 },
         grid: {
             disabled: true,
-        },
-        origin: true  // Enable origin indicator
+        }
     });
 
     // Enable camera-aligned tracking plane for drag operations
@@ -132,6 +131,33 @@ async function init() {
     toolbar.updateProjectionLabel();
     tree.build();
 
+    // Document history hotkeys: Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Cmd/Ctrl+Y
+    window.addEventListener('keydown', async event => {
+        const isMeta = event.metaKey || event.ctrlKey;
+        if (!isMeta) return;
+
+        const activeTag = document.activeElement?.tagName;
+        const editing = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
+        if (editing) return;
+
+        const key = event.key.toLowerCase();
+        let handled = false;
+
+        if (key === 'z' && event.shiftKey) {
+            handled = await api.document.redo();
+        } else if (key === 'z') {
+            handled = await api.document.undo();
+        } else if (key === 'y') {
+            handled = await api.document.redo();
+        }
+
+        if (handled) {
+            event.preventDefault();
+            toolbar.updateDocumentTitle();
+            tree.render();
+        }
+    });
+
     // Restore last active document, or seed a new blank one.
     await api.document.restoreOrCreate();
     toolbar.updateDocumentTitle();
@@ -153,29 +179,9 @@ async function init() {
             stroke: '#5a9fd4',
             strokeWidth: 2
         });
+        api.origin.syncOverlayPoint();
 
-        // X axis point (red)
-        overlay.add('x-point', 'point', {
-            pos3d: new THREE.Vector3(100, 0, 0),
-            radius: 5,
-            color: '#ff6666'
-        });
-
-        // Y axis point (green)
-        overlay.add('y-point', 'point', {
-            pos3d: new THREE.Vector3(0, 100, 0),
-            radius: 5,
-            color: '#66ff66'
-        });
-
-        // Z axis point (blue)
-        overlay.add('z-point', 'point', {
-            pos3d: new THREE.Vector3(0, 0, 100),
-            radius: 5,
-            color: '#6666ff'
-        });
-
-        console.log({ test_overlays_added: 4 });
+        console.log({ test_overlays_added: 1 });
     }
 
     // Hide loading curtain
