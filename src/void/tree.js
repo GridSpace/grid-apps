@@ -141,6 +141,7 @@ const tree = {
                     api.document.save({
                         kind: 'micro',
                         opType: 'tree.folder.toggle',
+                        undoable: false,
                         payload: { folder_id: folder.id, collapsed: !!folder.collapsed }
                     });
                     this.render();

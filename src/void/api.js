@@ -9,6 +9,12 @@ import { interact } from './interact.js';
 const DOC_SCHEMA_VERSION = 1;
 const ADMIN_CURRENT_DOC_KEY = 'current_doc_id';
 const ADMIN_CURRENT_REV_KEY = 'current_rev';
+const UNDOABLE_OP_TYPES = new Set([
+    'snapshot',
+    'datum.update',
+    'datum.root.update',
+    'origin.update'
+]);
 
 function shortId() {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -331,8 +337,21 @@ const api = {
                 const now = Date.now();
                 const kind = options.kind || 'micro';
                 const opType = options.opType || (kind === 'major' ? 'snapshot' : 'delta');
+                const undoable = options.undoable !== undefined ? !!options.undoable :
+                    (kind === 'major' || UNDOABLE_OP_TYPES.has(opType));
                 const next = this.nextRevision(kind);
                 const revId = this.revisionKey(this.current.id, next);
+                this.current.modified_at = now;
+                this.current.name = this.normalizeName(this.current.name);
+
+                if (!undoable) {
+                    const currentRev = this.current.head_rev || null;
+                    return Promise.all([
+                        api.db.documents.put(this.current.id, this.current),
+                        api.db.admin.put(ADMIN_CURRENT_DOC_KEY, this.current.id),
+                        api.db.admin.put(ADMIN_CURRENT_REV_KEY, currentRev)
+                    ]);
+                }
 
                 const revision = {
                     doc_id: this.current.id,
@@ -348,10 +367,8 @@ const api = {
 
                 this.current.version = next;
                 this.current.head_rev = revId;
-                this.current.modified_at = now;
-                this.current.name = this.normalizeName(this.current.name);
                 this.current.scene = revision.snapshot.scene;
-                if (options.clearRedo !== false) {
+                if (undoable && options.clearRedo !== false) {
                     this._redoStack = [];
                 }
 
@@ -417,6 +434,7 @@ const api = {
             return this.save({
                 kind: 'micro',
                 opType: 'doc.rename',
+                undoable: false,
                 payload: {
                     previous,
                     next: nextName
@@ -433,8 +451,18 @@ const api = {
             if (!revision || !revision.snapshot) {
                 return Promise.resolve(null);
             }
+            const preserved = this.current ? {
+                name: this.current.name,
+                tree: JSON.parse(JSON.stringify(this.current.tree || { folders: [] })),
+                features: JSON.parse(JSON.stringify(this.current.features || []))
+            } : null;
             const migrated = this.migrate(JSON.parse(JSON.stringify(revision.snapshot)));
             this.current = migrated.doc;
+            if (preserved) {
+                this.current.name = this.normalizeName(preserved.name);
+                this.current.tree = preserved.tree;
+                this.current.features = preserved.features;
+            }
             this.current.version = revision.rev || this.current.version;
             this.current.head_rev = revision.rev_id || this.revisionKey(this.current.id, this.current.version);
             this.current.modified_at = revision.created_at || this.current.modified_at || Date.now();
@@ -535,6 +563,7 @@ const api = {
                 api.document.save({
                     kind: 'micro',
                     opType: 'feature.add',
+                    undoable: false,
                     payload: {
                         type: feature?.type || 'unknown',
                         id: feature?.id || null
@@ -552,6 +581,7 @@ const api = {
                     api.document.save({
                         kind: 'micro',
                         opType: 'feature.remove',
+                        undoable: false,
                         payload: {
                             type: feature?.type || 'unknown',
                             id: feature?.id || null
