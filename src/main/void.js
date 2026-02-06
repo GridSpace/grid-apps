@@ -103,13 +103,20 @@ async function init() {
     space.platform.onMove(() => {
         db.admin.put('camera', {
             place: space.view.save(),
-            focus: space.view.getFocus()
+            focus: space.view.getFocus(),
+            projection: space.view.getProjection()
         });
     }, 100);
 
     // Restore saved camera position
     db.admin.get('camera').then(cam => {
         if (cam && cam.place) {
+            if (cam.projection && cam.projection !== space.view.getProjection()) {
+                space.view.setProjection(cam.projection);
+                space.view.setCtrl('void');
+                overlay.onProjectionChanged();
+                toolbar.updateProjectionLabel();
+            }
             space.view.load(cam.place);
             if (cam.focus) {
                 space.view.setFocus(cam.focus);
@@ -122,6 +129,7 @@ async function init() {
 
     // Build UI components
     toolbar.build();
+    toolbar.updateProjectionLabel();
     tree.build();
 
     // Restore last active document, or seed a new blank one.

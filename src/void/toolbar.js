@@ -89,6 +89,16 @@ const toolbar = {
             // setProjection recreates controls/camera; restore void bindings/hooks.
             space.view.setCtrl('void');
             api.overlay.onProjectionChanged();
+            // Persist after projection/control settles to avoid stale scale snapshots.
+            if (api.db?.admin) {
+                setTimeout(() => {
+                    api.db.admin.put('camera', {
+                        place: space.view.save(),
+                        focus: space.view.getFocus(),
+                        projection: space.view.getProjection()
+                    });
+                }, 120);
+            }
             this.updateProjectionLabel();
         }, { id: 'btn-camera-toggle' });
 
