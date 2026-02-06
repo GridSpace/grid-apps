@@ -13,6 +13,7 @@ import { tree } from '../void/tree.js';
 import { overlay } from '../void/overlay.js';
 import { datum } from '../void/datum.js';
 import { interact } from '../void/interact.js';
+import { properties } from '../void/properties.js';
 import { ViewCube } from '../void/viewcube.js';
 
 const version = '0.1.0';
@@ -129,6 +130,7 @@ async function init() {
     // Build UI components
     toolbar.build();
     toolbar.updateProjectionLabel();
+    properties.init();
     tree.build();
 
     // Document history hotkeys: Cmd/Ctrl+Z, Cmd/Ctrl+Shift+Z, Cmd/Ctrl+Y

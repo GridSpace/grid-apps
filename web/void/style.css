@@ -392,6 +392,11 @@ html, body {
     background: var(--bg-tertiary);
 }
 
+.tree-item-row.active {
+    background: rgba(90, 159, 212, 0.2);
+    border: 1px solid rgba(90, 159, 212, 0.55);
+}
+
 .tree-row-left {
     flex: 1;
     min-width: 0;
@@ -474,6 +479,102 @@ html, body {
 .tree-empty-row {
     color: #808080;
     font-style: italic;
+}
+
+.props-panel {
+    position: fixed;
+    z-index: 10020;
+    width: 300px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+}
+
+.props-header {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    border-bottom: 1px solid var(--border);
+    background: #242424;
+    cursor: move;
+    user-select: none;
+}
+
+.props-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.props-close {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.props-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.props-body {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.props-meta {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    opacity: 0.85;
+    margin-bottom: 2px;
+}
+
+.props-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.props-field label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.props-field input,
+.props-field select,
+.props-readonly {
+    height: 30px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+}
+
+.props-field input:focus,
+.props-field select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.props-readonly {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
 }
 
 /* Utility classes */

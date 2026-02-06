@@ -41,6 +41,50 @@ function createFeaturesApi(getApi) {
                     });
                 }
             }
+        },
+
+        findById(id) {
+            const api = getApi();
+            const doc = api.document.current;
+            if (!doc || !Array.isArray(doc.features)) return null;
+            return doc.features.find(f => f?.id === id) || null;
+        },
+
+        update(featureId, mutator, options = {}) {
+            const api = getApi();
+            const doc = api.document.current;
+            if (!doc || !featureId) return null;
+            const feature = this.findById(featureId);
+            if (!feature) return null;
+
+            if (typeof mutator === 'function') {
+                mutator(feature);
+            } else if (mutator && typeof mutator === 'object') {
+                Object.assign(feature, mutator);
+            }
+
+            api.document.save({
+                kind: 'micro',
+                opType: options.opType || 'feature.update',
+                payload: {
+                    id: feature.id,
+                    type: feature.type || 'unknown',
+                    changes: options.payload || null
+                }
+            });
+
+            return feature;
+        },
+
+        rename(featureId, name) {
+            const nextName = String(name || '').trim();
+            if (!nextName) return null;
+            return this.update(featureId, feature => {
+                feature.name = nextName;
+            }, {
+                opType: 'feature.rename',
+                payload: { name: nextName }
+            });
         }
     };
 }

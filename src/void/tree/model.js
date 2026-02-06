@@ -1,6 +1,7 @@
 /** Copyright Stewart Allen <sa@grid.space> -- All Rights Reserved */
 
 import { api } from '../api.js';
+import { properties } from '../properties.js';
 
 function bindRuntimeChanges() {
     if (this._boundRuntimeChanges) return;
@@ -21,6 +22,19 @@ function render() {
     this.renderDefaultGeometrySection();
     this.container.appendChild(this.createDivider());
     this.renderFeaturesSection();
+}
+
+function onFeatureSelected(feature) {
+    this.selectedFeatureId = feature?.id || null;
+    this.render();
+}
+
+function onFeatureEdit(feature) {
+    this.selectedFeatureId = feature?.id || null;
+    properties.showFeature(feature, {
+        onChange: () => this.render()
+    });
+    this.render();
 }
 
 function renderDefaultGeometrySection() {
@@ -105,7 +119,11 @@ function renderFeaturesSection() {
         }
         for (const feature of features) {
             const label = feature?.name || feature?.type || 'Feature';
-            this.container.appendChild(this.createItemRow(label, feature, 1));
+            this.container.appendChild(this.createItemRow(label, feature, 1, {
+                selected: this.selectedFeatureId === feature?.id,
+                onSelect: f => this.onFeatureSelected(f),
+                onEdit: f => this.onFeatureEdit(f)
+            }));
         }
         return;
     }
@@ -139,7 +157,11 @@ function renderFeaturesSection() {
 
         for (const feature of items) {
             const label = feature?.name || feature?.type || 'Feature';
-            this.container.appendChild(this.createItemRow(label, feature, 2));
+            this.container.appendChild(this.createItemRow(label, feature, 2, {
+                selected: this.selectedFeatureId === feature?.id,
+                onSelect: f => this.onFeatureSelected(f),
+                onEdit: f => this.onFeatureEdit(f)
+            }));
         }
     }
 }
@@ -161,5 +183,7 @@ export {
     render,
     renderDefaultGeometrySection,
     renderFeaturesSection,
-    getFolders
+    getFolders,
+    onFeatureSelected,
+    onFeatureEdit
 };

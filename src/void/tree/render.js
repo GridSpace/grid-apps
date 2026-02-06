@@ -62,9 +62,12 @@ function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye }) 
     return row;
 }
 
-function createItemRow(label, feature, depth = 0) {
+function createItemRow(label, feature, depth = 0, opts = {}) {
     const row = document.createElement('div');
     row.className = 'tree-item-row';
+    if (opts.selected) {
+        row.classList.add('active');
+    }
     row.style.paddingLeft = `${8 + depth * 16}px`;
 
     const icon = document.createElement('span');
@@ -79,7 +82,16 @@ function createItemRow(label, feature, depth = 0) {
     row.appendChild(text);
 
     row.onclick = () => {
-        console.log('Feature selected:', feature);
+        if (typeof opts.onSelect === 'function') {
+            opts.onSelect(feature);
+        } else {
+            console.log('Feature selected:', feature);
+        }
+    };
+    row.ondblclick = () => {
+        if (typeof opts.onEdit === 'function') {
+            opts.onEdit(feature);
+        }
     };
 
     return row;

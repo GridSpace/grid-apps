@@ -8,6 +8,7 @@ const tree = {
     container: null,
     defaultGeometryExpanded: true,
     featuresExpanded: true,
+    selectedFeatureId: null,
     _boundRuntimeChanges: false,
 
     build() {
