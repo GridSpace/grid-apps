@@ -13,7 +13,10 @@ const UNDOABLE_OP_TYPES = new Set([
     'snapshot',
     'datum.update',
     'datum.root.update',
-    'origin.update'
+    'origin.update',
+    'feature.add',
+    'feature.remove',
+    'feature.rename'
 ]);
 
 function shortId() {
@@ -453,15 +456,13 @@ const api = {
             }
             const preserved = this.current ? {
                 name: this.current.name,
-                tree: JSON.parse(JSON.stringify(this.current.tree || { folders: [] })),
-                features: JSON.parse(JSON.stringify(this.current.features || []))
+                tree: JSON.parse(JSON.stringify(this.current.tree || { folders: [] }))
             } : null;
             const migrated = this.migrate(JSON.parse(JSON.stringify(revision.snapshot)));
             this.current = migrated.doc;
             if (preserved) {
                 this.current.name = this.normalizeName(preserved.name);
                 this.current.tree = preserved.tree;
-                this.current.features = preserved.features;
             }
             this.current.version = revision.rev || this.current.version;
             this.current.head_rev = revision.rev_id || this.revisionKey(this.current.id, this.current.version);
@@ -563,7 +564,6 @@ const api = {
                 api.document.save({
                     kind: 'micro',
                     opType: 'feature.add',
-                    undoable: false,
                     payload: {
                         type: feature?.type || 'unknown',
                         id: feature?.id || null
@@ -581,7 +581,6 @@ const api = {
                     api.document.save({
                         kind: 'micro',
                         opType: 'feature.remove',
-                        undoable: false,
                         payload: {
                             type: feature?.type || 'unknown',
                             id: feature?.id || null
