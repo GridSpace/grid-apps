@@ -41,6 +41,8 @@ const interact = {
     sketchLineStart: null,
     sketchLineStartSeq: null,
     sketchPointerSeq: 0,
+    sketchMarquee: null,
+    sketchMarqueeEl: null,
     _lastSketchDownStamp: null,
     _lastSketchUpStamp: null,
     _skipNextWindowSketchDown: false,
@@ -75,6 +77,7 @@ const interact = {
         });
         window.addEventListener('mousemove', event => {
             if (this.isSketchEditing()) {
+                this.handleSketchPointerMove?.(event);
                 this.handleSketchHover(event);
             }
         });

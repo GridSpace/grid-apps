@@ -145,6 +145,23 @@ html, body {
     height: 100%;
 }
 
+.sketch-marquee {
+    position: absolute;
+    pointer-events: none;
+    z-index: 140;
+    border-radius: 2px;
+}
+
+.sketch-marquee-window {
+    background: rgba(90, 159, 212, 0.18);
+    border: 1px solid rgba(90, 159, 212, 0.95);
+}
+
+.sketch-marquee-cross {
+    background: rgba(255, 153, 51, 0.16);
+    border: 1px dashed rgba(255, 153, 51, 0.95);
+}
+
 /* Sketch overlay (2D SVG overlay) */
 #sketch-overlay {
     position: absolute;
