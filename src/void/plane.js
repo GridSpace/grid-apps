@@ -27,6 +27,7 @@ class Plane {
         this.hoverOutlineColor = 0xff9933;    // Orange outline when hovered
 
         this.showHandles = options.showHandles !== undefined ? options.showHandles : true;
+        this.baseVisible = options.visible !== undefined ? !!options.visible : true;
 
         // State tracking
         this.selected = false;
@@ -316,8 +317,13 @@ class Plane {
      * Set visibility
      */
     setVisible(visible) {
-        this.group.visible = visible;
+        this.baseVisible = !!visible;
+        this.group.visible = !!visible;
         this.notifyChange();
+    }
+
+    getBaseVisible() {
+        return this.baseVisible;
     }
 
     /**
@@ -479,7 +485,7 @@ class Plane {
             type: 'plane',
             frame,
             size: frame.size,
-            visible: this.group.visible,
+            visible: this.baseVisible,
             color: this.color,
             outlineColor: this.outlineColor,
             opacity: this.opacity,

@@ -42,6 +42,9 @@ const interact = {
     sketchLineStartSeq: null,
     sketchPointerSeq: 0,
     _lastSketchDownStamp: null,
+    _lastSketchUpStamp: null,
+    _skipNextWindowSketchDown: false,
+    _skipNextWindowSketchUp: false,
 
     init() {
         this.planes = datum.getPlanes();
@@ -85,7 +88,8 @@ const interact = {
                     return this.getInteractiveObjects();
                 }
                 this._lastSketchDownStamp = event?.timeStamp ?? null;
-                this.handleSketchPointerDown(event);
+                this._skipNextWindowSketchDown = true;
+                this.handleSketchPointerDown(event, ints);
                 return;
             }
             if (!int && int !== null) {
@@ -121,7 +125,9 @@ const interact = {
                     return this.getInteractiveObjects();
                 }
                 this.upSelectCalled = true;
-                this.handleSketchMouseUp(event);
+                this._skipNextWindowSketchUp = true;
+                this.handleSketchMouseUp(event, ints);
+                this._lastSketchUpStamp = event?.timeStamp ?? null;
                 this.sketchPointerDown = null;
                 this.wasHandleDrag = false;
                 return;
@@ -142,11 +148,8 @@ const interact = {
                 return;
             }
             if (this.isSketchEditing()) {
-                if (!this.upSelectCalled) {
-                    this.handleSketchMouseUp(event);
-                }
-                this.sketchPointerDown = null;
-                this.upSelectCalled = false;
+                // sketch completion is handled by mouseUpSelect (preferred)
+                // or window mouseup fallback when mouseUpSelect is skipped.
                 return;
             }
             if (!this.upSelectCalled && !this.draggedHandle && !this.wasHandleDrag && ints && ints.length > 0) {
@@ -161,10 +164,20 @@ const interact = {
             if (!this.isSketchEditing()) {
                 return;
             }
+            if (this._skipNextWindowSketchUp) {
+                this._skipNextWindowSketchUp = false;
+                this.upSelectCalled = false;
+                return;
+            }
+            if (event?.timeStamp && this._lastSketchUpStamp === event.timeStamp) {
+                this.upSelectCalled = false;
+                return;
+            }
             // When space.js doesn't emit up/upSelect (empty selection array),
             // complete the sketch interaction here.
             if (!this.upSelectCalled && this.sketchPointerDown) {
                 this.handleSketchMouseUp(event);
+                this._lastSketchUpStamp = event?.timeStamp ?? null;
                 this.sketchPointerDown = null;
             }
             this.upSelectCalled = false;
@@ -174,6 +187,10 @@ const interact = {
                 return;
             }
             if (!this.isSketchEditing()) {
+                return;
+            }
+            if (this._skipNextWindowSketchDown) {
+                this._skipNextWindowSketchDown = false;
                 return;
             }
             if (this._lastSketchDownStamp !== null && event.timeStamp === this._lastSketchDownStamp) {
@@ -192,13 +209,10 @@ const interact = {
             }
             this.handleHover(int, event, ints);
             if (this.isSketchEditing()) {
-                this.handleSketchHover(event);
+                this.handleSketchHover(event, ints);
             }
         }, () => {
             this.handleHover();
-            if (this.isSketchEditing()) {
-                this.handleSketchHover();
-            }
         });
 
         space.mouse.onDrag((delta, offset, isDone, intersections) => {

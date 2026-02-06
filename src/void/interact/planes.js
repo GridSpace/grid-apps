@@ -321,7 +321,7 @@ function handleDrag(delta, offset, isDone, intersections) {
 }
 
 function viewNormalToHover() {
-    let target = this.resolveViewNormalTarget(this.hoverIntersection) || this.resolveViewNormalFromSelection();
+    let target = this.resolveTreeHoverNormalTarget() || this.resolveViewNormalTarget(this.hoverIntersection) || this.resolveViewNormalFromSelection();
     if (!target && this.isSketchEditing && this.isSketchEditing()) {
         const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
         const rec = sketch?.id ? api.sketchRuntime?.getRecord?.(sketch.id) : null;
@@ -370,6 +370,44 @@ function viewNormalToHover() {
 
     space.view.panTo(point.x, point.y, point.z, left, up);
     return true;
+}
+
+function resolveTreeHoverNormalTarget() {
+    const hoveredSketchId = api.sketchRuntime?.hoveredId;
+    if (hoveredSketchId) {
+        const rec = api.sketchRuntime?.getRecord?.(hoveredSketchId);
+        const runtimePlane = rec?.plane;
+        if (runtimePlane?.mesh && runtimePlane?.group) {
+            runtimePlane.mesh.updateMatrixWorld(true);
+            runtimePlane.group.updateMatrixWorld(true);
+            const xAxis = new THREE.Vector3();
+            const yAxis = new THREE.Vector3();
+            const normal = new THREE.Vector3();
+            runtimePlane.mesh.matrixWorld.extractBasis(xAxis, yAxis, normal);
+            normal.normalize();
+            const point = new THREE.Vector3();
+            runtimePlane.group.getWorldPosition(point);
+            return { normal, point };
+        }
+    }
+
+    for (const plane of this.planes || []) {
+        if (!plane?.isHovered?.()) continue;
+        if (plane?.getGroup?.() && !plane.getGroup().visible) continue;
+        if (!plane?.mesh || !plane?.group) continue;
+        plane.mesh.updateMatrixWorld(true);
+        plane.group.updateMatrixWorld(true);
+        const xAxis = new THREE.Vector3();
+        const yAxis = new THREE.Vector3();
+        const normal = new THREE.Vector3();
+        plane.mesh.matrixWorld.extractBasis(xAxis, yAxis, normal);
+        normal.normalize();
+        const point = new THREE.Vector3();
+        plane.group.getWorldPosition(point);
+        return { normal, point };
+    }
+
+    return null;
 }
 
 function toggleDatumPlanesVisibility() {
@@ -489,6 +527,7 @@ export {
     getOppositeCorner,
     handleDrag,
     viewNormalToHover,
+    resolveTreeHoverNormalTarget,
     toggleDatumPlanesVisibility,
     resolveViewNormalFromSelection,
     resolveViewNormalTarget,

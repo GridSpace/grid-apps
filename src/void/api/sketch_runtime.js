@@ -28,6 +28,7 @@ function createSketchRuntimeApi(getApi) {
         sketches: new Map(), // id -> record
         hoveredId: null,
         editingId: null,
+        selectedIds: new Set(),
 
         init(world) {
             if (this.root) return;
@@ -104,6 +105,19 @@ function createSketchRuntimeApi(getApi) {
             previewLine.visible = false;
             previewLine.renderOrder = 9;
             entitiesGroup.add(previewLine);
+            const previewStart = new THREE.Mesh(
+                new THREE.CircleGeometry(1.15, 20),
+                new THREE.MeshBasicMaterial({
+                    color: SKETCH_COLORS.pointsEdit,
+                    transparent: true,
+                    opacity: 0.55,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                })
+            );
+            previewStart.visible = false;
+            previewStart.renderOrder = 9;
+            entitiesGroup.add(previewStart);
 
             group.add(planeGroup);
             group.add(entitiesGroup);
@@ -114,11 +128,13 @@ function createSketchRuntimeApi(getApi) {
                 plane,
                 entitiesGroup,
                 previewLine,
+                previewStart,
                 entityViews: new Map(),
                 interaction: {
                     hoveredId: null,
                     selectedIds: new Set(),
-                    previewLine: null
+                    previewLine: null,
+                    previewStart: null
                 },
                 labelId: `sketch-label-${feature.id}`
             };
@@ -252,6 +268,12 @@ function createSketchRuntimeApi(getApi) {
                 rec.entitiesGroup.remove(rec.previewLine);
                 rec.entitiesGroup.add(rec.previewLine);
             }
+            if (rec.previewStart && rec.previewStart.parent !== rec.entitiesGroup) {
+                rec.entitiesGroup.add(rec.previewStart);
+            } else if (rec.previewStart) {
+                rec.entitiesGroup.remove(rec.previewStart);
+                rec.entitiesGroup.add(rec.previewStart);
+            }
         },
 
         applySketchState(rec) {
@@ -259,17 +281,19 @@ function createSketchRuntimeApi(getApi) {
             const visible = feature.visible !== false;
             const hovered = this.hoveredId === feature.id;
             const editing = this.editingId === feature.id;
+            const selected = this.selectedIds.has(feature.id);
 
-            const showPlane = editing || hovered;
-            const showEntities = visible || hovered || editing;
+            const showPlane = editing || hovered || selected;
+            const showEntities = visible || hovered || editing || selected;
 
             rec.plane.setVisible(showPlane);
             rec.entitiesGroup.visible = showEntities;
 
-            const mode = editing ? 'edit' : (hovered ? 'hover' : 'default');
+            const mode = editing ? 'edit' : (hovered || selected ? 'hover' : 'default');
             this.applyPlaneStyle(rec.plane, mode);
             this.applyEntityStyle(rec, mode);
             this.applyPreviewLine(rec, mode, editing);
+            this.applyPreviewStart(rec, mode, editing);
             this.applyLabelState(rec, mode, showPlane);
         },
 
@@ -316,7 +340,7 @@ function createSketchRuntimeApi(getApi) {
 
                 if (view.type === 'point') {
                     const color = selected
-                        ? SKETCH_COLORS.pointsSelected
+                        ? SKETCH_COLORS.pointsHover
                         : hovered
                             ? SKETCH_COLORS.pointsHover
                             : basePointColor;
@@ -342,6 +366,18 @@ function createSketchRuntimeApi(getApi) {
             rec.previewLine.geometry = new THREE.BufferGeometry().setFromPoints([a, b]);
             rec.previewLine.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.linesEdit : SKETCH_COLORS.linesHover);
             rec.previewLine.visible = true;
+        },
+
+        applyPreviewStart(rec, mode, editing) {
+            if (!rec.previewStart) return;
+            const start = rec.interaction?.previewStart;
+            if (!editing || !start) {
+                rec.previewStart.visible = false;
+                return;
+            }
+            rec.previewStart.position.set(start.x || 0, start.y || 0, 0);
+            rec.previewStart.material.color.setHex(mode === 'edit' ? SKETCH_COLORS.pointsEdit : SKETCH_COLORS.pointsHover);
+            rec.previewStart.visible = true;
         },
 
         applyLabelState(rec, mode, showPlane) {
@@ -396,12 +432,18 @@ function createSketchRuntimeApi(getApi) {
             this.refreshStates();
         },
 
+        setSelected(featureIds) {
+            this.selectedIds = new Set(featureIds || []);
+            this.refreshStates();
+        },
+
         setEntityInteraction(featureId, interaction = {}) {
             const rec = this.getRecord(featureId);
             if (!rec) return;
             rec.interaction.hoveredId = interaction.hoveredId || null;
             rec.interaction.selectedIds = new Set(interaction.selectedIds || []);
             rec.interaction.previewLine = interaction.previewLine || null;
+            rec.interaction.previewStart = interaction.previewStart || null;
             this.applySketchState(rec);
         },
 
@@ -411,6 +453,7 @@ function createSketchRuntimeApi(getApi) {
             rec.interaction.hoveredId = null;
             rec.interaction.selectedIds = new Set();
             rec.interaction.previewLine = null;
+            rec.interaction.previewStart = null;
             this.applySketchState(rec);
         },
 

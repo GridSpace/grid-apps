@@ -392,6 +392,10 @@ html, body {
     background: var(--bg-tertiary);
 }
 
+.tree-row.active {
+    background: var(--bg-tertiary);
+}
+
 .tree-item-row.active {
     background: rgba(90, 159, 212, 0.2);
     border: 1px solid rgba(90, 159, 212, 0.55);
@@ -449,6 +453,10 @@ html, body {
 }
 
 .tree-row:hover .tree-eye {
+    opacity: 1;
+    pointer-events: auto;
+}
+.tree-row.active .tree-eye {
     opacity: 1;
     pointer-events: auto;
 }

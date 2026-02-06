@@ -73,13 +73,20 @@ const toolbar = {
             }
             api.sketchRuntime?.setEditing(sketch.id);
             api.interact?.clearSketchSelection?.();
+            api.interact?.setSketchTool?.('select');
             tree.selectedFeatureId = sketch.id;
             tree.render();
             window.dispatchEvent(new CustomEvent('void-state-change'));
         }, { id: 'btn-sketch' });
         this.sketchToolButtons = {
-            point: this.addButton(container, 'Point', () => api.interact.setSketchTool('point')),
-            line: this.addButton(container, 'Line', () => api.interact.setSketchTool('line'))
+            point: this.addButton(container, 'Point', () => {
+                const current = api.interact.getSketchTool?.() || 'select';
+                api.interact.setSketchTool(current === 'point' ? 'select' : 'point');
+            }),
+            line: this.addButton(container, 'Line', () => {
+                const current = api.interact.getSketchTool?.() || 'select';
+                api.interact.setSketchTool(current === 'line' ? 'select' : 'line');
+            })
         };
 
         this.addButton(container, 'Extrude', () => {

@@ -5,6 +5,32 @@ import { properties } from '../properties.js';
 
 const treePlaneHoverState = new WeakMap();
 
+function getPlaneBaseVisible(plane) {
+    if (!plane) return true;
+    if (typeof plane.getBaseVisible === 'function') {
+        return !!plane.getBaseVisible();
+    }
+    return !!plane.getGroup()?.visible;
+}
+
+function isPlaneTreeHovered(plane) {
+    return !!treePlaneHoverState.get(plane);
+}
+
+function setPlaneTreeHovered(plane, hovered) {
+    treePlaneHoverState.set(plane, !!hovered);
+}
+
+function applyPlaneTreeVisibility(plane) {
+    const baseVisible = getPlaneBaseVisible(plane);
+    const hovered = isPlaneTreeHovered(plane);
+    const selected = !!api.interact?.selectedPlanes?.has?.(plane);
+    const group = plane.getGroup?.();
+    if (group) {
+        group.visible = baseVisible || hovered || selected;
+    }
+}
+
 function bindRuntimeChanges() {
     if (this._boundRuntimeChanges) return;
     this._boundRuntimeChanges = true;
@@ -27,8 +53,20 @@ function render() {
 }
 
 function onFeatureSelected(feature) {
-    this.selectedFeatureId = feature?.id || null;
+    if (!this.selectedFeatureIds) {
+        this.selectedFeatureIds = new Set();
+    }
+    const id = feature?.id || null;
+    if (!id) return;
+    if (this.selectedFeatureIds.has(id)) {
+        this.selectedFeatureIds.delete(id);
+    } else {
+        this.selectedFeatureIds.add(id);
+    }
+    this.selectedFeatureId = this.selectedFeatureIds.values().next().value || null;
     api.sketchRuntime?.setEditing(null);
+    const selectedSketchIds = Array.from(this.selectedFeatureIds).filter(fid => api.features.findById(fid)?.type === 'sketch');
+    api.sketchRuntime?.setSelected(selectedSketchIds);
     api.interact?.clearSketchSelection?.();
     this.render();
     window.dispatchEvent(new CustomEvent('void-state-change'));
@@ -36,9 +74,19 @@ function onFeatureSelected(feature) {
 
 function onFeatureEdit(feature) {
     this.selectedFeatureId = feature?.id || null;
+    if (!this.selectedFeatureIds) {
+        this.selectedFeatureIds = new Set();
+    }
+    this.selectedFeatureIds.clear();
+    if (feature?.id) {
+        this.selectedFeatureIds.add(feature.id);
+    }
+    const selectedSketchIds = feature?.type === 'sketch' ? [feature.id] : [];
+    api.sketchRuntime?.setSelected(selectedSketchIds);
     if (feature?.type === 'sketch') {
         api.sketchRuntime?.setEditing(feature.id);
         api.interact?.clearSketchSelection?.();
+        api.interact?.setSketchTool?.('select');
     } else {
         api.sketchRuntime?.setEditing(null);
         api.interact?.clearSketchSelection?.();
@@ -77,10 +125,16 @@ function renderDefaultGeometrySection() {
     for (const entry of geometryRows) {
         if (entry.type === 'origin') {
             const visible = api.origin.isVisible();
+            const selected = !!api.interact?.selectedPoints?.has?.('origin-point');
             this.container.appendChild(this.createRow({
                 label: entry.label,
                 depth: 1,
                 eyeVisible: visible,
+                selected,
+                onSelect: () => {
+                    api.interact.selectPoint('origin-point', { ctrlKey: true, metaKey: false });
+                    this.render();
+                },
                 onEye: () => {
                     api.origin.setVisible(!visible);
                     this.render();
@@ -91,34 +145,33 @@ function renderDefaultGeometrySection() {
 
         const plane = datum.getPlane(entry.key);
         if (!plane) continue;
-        const visible = !!plane.getGroup()?.visible;
+        applyPlaneTreeVisibility(plane);
+        const visible = getPlaneBaseVisible(plane);
+        const selected = !!api.interact?.selectedPlanes?.has?.(plane);
         this.container.appendChild(this.createRow({
             label: plane.getLabel() || entry.fallbackLabel,
             depth: 1,
             eyeVisible: visible,
+            selected,
             onSelect: () => {
-                api.interact.selectPlane(plane, { ctrlKey: false, metaKey: false });
+                api.interact.selectPlane(plane, { ctrlKey: true, metaKey: false });
+                applyPlaneTreeVisibility(plane);
+                this.render();
             },
             onHoverEnter: () => {
-                const group = plane.getGroup?.();
-                const wasVisible = !!group?.visible;
-                treePlaneHoverState.set(plane, wasVisible);
-                if (!wasVisible) {
-                    group.visible = true;
-                }
+                setPlaneTreeHovered(plane, true);
+                applyPlaneTreeVisibility(plane);
                 plane.setHovered(true);
             },
             onHoverLeave: () => {
                 plane.setHovered(false);
-                const wasVisible = treePlaneHoverState.get(plane);
-                treePlaneHoverState.delete(plane);
-                if (wasVisible === false) {
-                    const group = plane.getGroup?.();
-                    if (group) group.visible = false;
-                }
+                setPlaneTreeHovered(plane, false);
+                applyPlaneTreeVisibility(plane);
             },
             onEye: () => {
-                plane.setVisible(!visible);
+                const next = !visible;
+                plane.setVisible(next);
+                applyPlaneTreeVisibility(plane);
                 this.render();
             }
         }));
@@ -156,7 +209,7 @@ function renderFeaturesSection() {
             const isSketch = feature?.type === 'sketch';
             const visible = feature?.visible !== false;
             this.container.appendChild(this.createItemRow(label, feature, 1, {
-                selected: this.selectedFeatureId === feature?.id,
+                selected: this.selectedFeatureIds?.has?.(feature?.id),
                 eyeVisible: visible,
                 onEye: isSketch ? f => {
                     api.features.setVisible(f.id, f.visible === false);
@@ -203,7 +256,7 @@ function renderFeaturesSection() {
             const isSketch = feature?.type === 'sketch';
             const visible = feature?.visible !== false;
             this.container.appendChild(this.createItemRow(label, feature, 2, {
-                selected: this.selectedFeatureId === feature?.id,
+                selected: this.selectedFeatureIds?.has?.(feature?.id),
                 eyeVisible: visible,
                 onEye: isSketch ? f => {
                     api.features.setVisible(f.id, f.visible === false);

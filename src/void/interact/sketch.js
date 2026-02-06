@@ -4,9 +4,9 @@ import { THREE } from '../../ext/three.js';
 import { space } from '../../moto/space.js';
 import { api } from '../api.js';
 
-const SKETCH_HIT_POINT_PX = 10;
-const SKETCH_HIT_LINE_PX = 8;
-const SKETCH_DRAG_START_PX = 3;
+const SKETCH_HIT_POINT_PX = 11;
+const SKETCH_HIT_LINE_PX = 10;
+const SKETCH_DRAG_START_PX = 5;
 const SKETCH_MIN_LINE_LENGTH = 1e-4;
 const SKETCH_POINT_MERGE_EPS = 1e-4;
 
@@ -158,7 +158,7 @@ function toggleSelectedConstruction() {
     return true;
 }
 
-function handleSketchPointerDown(event) {
+function handleSketchPointerDown(event, intersections) {
     const feature = this.getEditingSketchFeature();
     if (!feature) {
         return false;
@@ -167,7 +167,9 @@ function handleSketchPointerDown(event) {
     this.sketchPointerSeq = (this.sketchPointerSeq || 0) + 1;
     const seq = this.sketchPointerSeq;
     const local = this.projectEventToSketchLocal(event, feature);
-    const hit = this.hitTestSketchEntity(event, feature);
+    const hit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
+    const pointById = new Map((feature.entities || []).filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
+    const hitPoint = hit?.id ? pointById.get(hit.id) : null;
 
     this.sketchPointerDown = {
         seq,
@@ -177,15 +179,21 @@ function handleSketchPointerDown(event) {
         clientY: event?.clientY ?? 0
     };
 
-    if (this.getSketchTool() === 'line' && !this.sketchLineStart && local) {
-        this.sketchLineStart = local;
+    if (this.getSketchTool() === 'line' && !this.sketchLineStart) {
+        const start = hitPoint ? { x: hitPoint.x || 0, y: hitPoint.y || 0 } : local;
+        if (!start) {
+            return true;
+        }
+        this.sketchLineStart = start;
         this.sketchLineStartSeq = seq;
+        this.sketchLinePreview = { a: start, b: start };
+        this.updateSketchInteractionVisuals();
     }
 
     return true;
 }
 
-function handleSketchHover(event) {
+function handleSketchHover(event, intersections) {
     const feature = this.getEditingSketchFeature();
     if (!feature) {
         return false;
@@ -219,7 +227,7 @@ function handleSketchHover(event) {
         }
     }
 
-    const hit = this.hitTestSketchEntity(event, feature);
+    const hit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
     const hoveredId = hit && !this.selectedSketchEntities.has(hit.id) ? hit.id : null;
     if (this.hoveredSketchEntityId !== hoveredId || previewChanged) {
         this.hoveredSketchEntityId = hoveredId;
@@ -229,7 +237,7 @@ function handleSketchHover(event) {
     return true;
 }
 
-function handleSketchMouseUp(event) {
+function handleSketchMouseUp(event, intersections) {
     const feature = this.getEditingSketchFeature();
     if (!feature) {
         return false;
@@ -248,7 +256,10 @@ function handleSketchMouseUp(event) {
         if (dist > SKETCH_DRAG_START_PX) {
             return true;
         }
-        const hit = this.hitTestSketchEntity(event, feature);
+        const upHit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
+        const hit = upHit
+            || (pointerDown?.hitId ? { id: pointerDown.hitId } : null)
+            || (this.hoveredSketchEntityId ? { id: this.hoveredSketchEntityId } : null);
         if (hit?.id) {
             if (this.selectedSketchEntities.has(hit.id)) {
                 this.selectedSketchEntities.delete(hit.id);
@@ -275,7 +286,10 @@ function handleSketchMouseUp(event) {
     }
 
     if (tool === 'line') {
-        const local = this.projectEventToSketchLocal(event, feature);
+        const upHit = this.getSketchEntityHitFromIntersections(intersections, feature) || this.hitTestSketchEntity(event, feature);
+        const pointById = new Map((feature.entities || []).filter(e => e?.type === 'point' && e.id).map(e => [e.id, e]));
+        const hitPoint = upHit?.id ? pointById.get(upHit.id) : null;
+        const local = hitPoint ? { x: hitPoint.x || 0, y: hitPoint.y || 0 } : this.projectEventToSketchLocal(event, feature);
         if (!local || !this.sketchLineStart) {
             return true;
         }
@@ -290,6 +304,12 @@ function handleSketchMouseUp(event) {
         }
 
         this.createSketchLine(feature, this.sketchLineStart, local);
+        if (hitPoint) {
+            // Common polygon workflow: close/attach on existing point and exit line mode.
+            this.cancelSketchLine();
+            this.setSketchTool('select');
+            return true;
+        }
         // Click-chain mode: keep endpoint as next segment start.
         this.sketchLineStart = { x: local.x, y: local.y };
         this.sketchLineStartSeq = null;
@@ -469,7 +489,8 @@ function updateSketchInteractionVisuals() {
     api.sketchRuntime?.setEntityInteraction(feature.id, {
         hoveredId: this.sketchDrag ? null : this.hoveredSketchEntityId,
         selectedIds: Array.from(this.selectedSketchEntities),
-        previewLine: this.sketchLinePreview
+        previewLine: this.sketchLinePreview,
+        previewStart: this.sketchLineStart
     });
     window.dispatchEvent(new CustomEvent('void-state-change'));
 }
@@ -539,6 +560,22 @@ function hitTestSketchEntity(event, feature) {
     }
 
     return bestPoint || bestLine;
+}
+
+function getSketchEntityHitFromIntersections(intersections, feature) {
+    if (!intersections || !intersections.length) {
+        return null;
+    }
+    const rec = api.sketchRuntime?.getRecord?.(feature?.id);
+    const allowed = rec?.entityViews ? new Set(Array.from(rec.entityViews.keys())) : null;
+    for (const hit of intersections) {
+        const id = hit?.object?.userData?.sketchEntityId;
+        if (!id) continue;
+        if (allowed && !allowed.has(id)) continue;
+        const type = hit.object.userData?.sketchEntityType || null;
+        return { id, type };
+    }
+    return null;
 }
 
 function findPointByCoord(feature, local, eps = SKETCH_POINT_MERGE_EPS) {
@@ -710,6 +747,7 @@ export {
     newSketchEntityId,
     pointerDistance,
     hitTestSketchEntity,
+    getSketchEntityHitFromIntersections,
     distanceToSegmentPx,
     getEventViewportXY,
     getSketchBasis,

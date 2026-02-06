@@ -13,9 +13,12 @@ function createDivider() {
     return el;
 }
 
-function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, onSelect, onHoverEnter, onHoverLeave }) {
+function createRow({ label, depth = 0, expanded, onToggle, eyeVisible, onEye, onSelect, onHoverEnter, onHoverLeave, selected = false }) {
     const row = document.createElement('div');
     row.className = 'tree-row';
+    if (selected) {
+        row.classList.add('active');
+    }
     if (onEye && eyeVisible === false) {
         row.classList.add('is-off');
     }
