@@ -973,7 +973,7 @@ export async function prepare_one(widget, settings, print, firstPoint, update) {
         // console.log('coming from another widget', { printPoint });
     } else if (center) {
         // we're the first widget output. offset is center
-        printPoint = origin.clone().move({ x: center.x, y: center.y });
+        printPoint = origin.clone().move({ x: center.x, y: center.y, z: 0 });
         // console.log('first widget output', { printPoint });
     } else {
         console.log({ missing_center_using_origin: origin });

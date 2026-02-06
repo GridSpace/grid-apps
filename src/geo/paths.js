@@ -121,7 +121,7 @@ export function poly2polyEmit(array, startPoint, emitter, opt = {}) {
                 continue;
             }
             let area = poly.open ? 1 : poly.area();
-            poly.forEachPoint(function (point, index) {
+            poly.forEachPoint((point, index) => {
                 dist = opt.weight ?
                     startPoint.distTo3D(point) * area * area :
                     startPoint.distTo2D(point);
