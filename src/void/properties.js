@@ -195,6 +195,9 @@ const properties = {
         this.currentFeatureId = feature.id;
         this._onChange = opts.onChange || null;
         api.sketchRuntime?.setEditing(feature.type === 'sketch' ? feature.id : null);
+        if (feature.type !== 'sketch') {
+            api.interact?.clearSketchSelection?.();
+        }
         if (this._savedPos) {
             if (this._savedPos.anchor) {
                 this.applyPlacement(this._savedPos);
@@ -206,14 +209,17 @@ const properties = {
         }
         this.panel.classList.remove('hidden');
         this.renderFeature(feature);
+        window.dispatchEvent(new CustomEvent('void-state-change'));
     },
 
     hide() {
         if (!this.panel) return;
         this.panel.classList.add('hidden');
         api.sketchRuntime?.setEditing(null);
+        api.interact?.clearSketchSelection?.();
         this.currentFeatureId = null;
         this._onChange = null;
+        window.dispatchEvent(new CustomEvent('void-state-change'));
     },
 
     renderFeature(feature) {

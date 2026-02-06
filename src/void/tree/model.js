@@ -27,20 +27,25 @@ function render() {
 function onFeatureSelected(feature) {
     this.selectedFeatureId = feature?.id || null;
     api.sketchRuntime?.setEditing(null);
+    api.interact?.clearSketchSelection?.();
     this.render();
+    window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 
 function onFeatureEdit(feature) {
     this.selectedFeatureId = feature?.id || null;
     if (feature?.type === 'sketch') {
         api.sketchRuntime?.setEditing(feature.id);
+        api.interact?.clearSketchSelection?.();
     } else {
         api.sketchRuntime?.setEditing(null);
+        api.interact?.clearSketchSelection?.();
     }
     properties.showFeature(feature, {
         onChange: () => this.render()
     });
     this.render();
+    window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 
 function renderDefaultGeometrySection() {

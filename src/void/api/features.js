@@ -82,6 +82,36 @@ function createFeaturesApi(getApi) {
             return feature;
         },
 
+        mutateTransient(featureId, mutator) {
+            const api = getApi();
+            const feature = this.findById(featureId);
+            if (!feature) return null;
+            if (typeof mutator === 'function') {
+                mutator(feature);
+            } else if (mutator && typeof mutator === 'object') {
+                Object.assign(feature, mutator);
+            }
+            api.sketchRuntime?.sync();
+            return feature;
+        },
+
+        commit(featureId, options = {}) {
+            const api = getApi();
+            const feature = this.findById(featureId);
+            if (!feature) return null;
+            api.document.save({
+                kind: 'micro',
+                opType: options.opType || 'feature.update',
+                payload: {
+                    id: feature.id,
+                    type: feature.type || 'unknown',
+                    changes: options.payload || null
+                }
+            });
+            api.sketchRuntime?.sync();
+            return feature;
+        },
+
         rename(featureId, name) {
             const nextName = String(name || '').trim();
             if (!nextName) return null;

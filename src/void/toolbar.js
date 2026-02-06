@@ -8,6 +8,8 @@ import { space } from '../moto/space.js';
 const toolbar = {
     buttons: [],
     cameraToggleBtn: null,
+    sketchBtn: null,
+    sketchToolButtons: null,
     docNameEl: null,
     openDialogEl: null,
     openDialogListEl: null,
@@ -60,10 +62,9 @@ const toolbar = {
         container.appendChild(this.separator());
 
         // Sketch tools
-        this.addButton(container, 'Sketch', () => {
-            const target = api.interact.getPrimarySketchTarget();
+        this.sketchBtn = this.addButton(container, 'Sketch', () => {
+            const target = api.interact.resolveSketchTargetFromSelection();
             if (!target) {
-                window.alert('Hover a planar face or select one plane to create a sketch.');
                 return;
             }
             const sketch = api.sketch.createFromTarget(target);
@@ -72,6 +73,10 @@ const toolbar = {
             }
             tree.render();
         }, { id: 'btn-sketch' });
+        this.sketchToolButtons = {
+            point: this.addButton(container, 'Point', () => api.interact.setSketchTool('point')),
+            line: this.addButton(container, 'Line', () => api.interact.setSketchTool('line'))
+        };
 
         this.addButton(container, 'Extrude', () => {
             console.log('Extrude');
@@ -137,8 +142,28 @@ const toolbar = {
 
         this.buildOpenDialog();
         this.updateDocumentTitle();
+        this.updateSketchControls();
+        window.addEventListener('void-state-change', () => this.updateSketchControls());
 
         console.log({ toolbar_built: true });
+    },
+
+    updateSketchControls() {
+        const editing = !!api.sketchRuntime?.editingId;
+        const canCreate = !editing && !!api.interact.resolveSketchTargetFromSelection();
+
+        if (this.sketchBtn) {
+            this.sketchBtn.disabled = !canCreate;
+        }
+
+        const tool = api.interact.getSketchTool ? api.interact.getSketchTool() : 'select';
+        if (this.sketchToolButtons) {
+            for (const [name, btn] of Object.entries(this.sketchToolButtons)) {
+                const enabled = editing;
+                btn.disabled = !enabled;
+                btn.classList.toggle('active', enabled && name === tool);
+            }
+        }
     },
 
     getProjectionLabel() {

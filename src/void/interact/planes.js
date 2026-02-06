@@ -302,7 +302,28 @@ function handleDrag(delta, offset, isDone, intersections) {
 }
 
 function viewNormalToHover() {
-    const target = this.resolveViewNormalTarget(this.hoverIntersection) || this.resolveViewNormalFromSelection();
+    let target = this.resolveViewNormalTarget(this.hoverIntersection) || this.resolveViewNormalFromSelection();
+    if (!target && this.isSketchEditing && this.isSketchEditing()) {
+        const sketch = this.getEditingSketchFeature && this.getEditingSketchFeature();
+        const frame = sketch?.plane;
+        if (frame) {
+            const normal = new THREE.Vector3(
+                frame.normal?.x ?? 0,
+                frame.normal?.y ?? 0,
+                frame.normal?.z ?? 1
+            );
+            if (normal.lengthSq() < 1e-12) {
+                normal.set(0, 0, 1);
+            }
+            normal.normalize();
+            const point = new THREE.Vector3(
+                frame.origin?.x || 0,
+                frame.origin?.y || 0,
+                frame.origin?.z || 0
+            );
+            target = { normal, point };
+        }
+    }
     if (!target) {
         return false;
     }
@@ -320,6 +341,18 @@ function viewNormalToHover() {
     const up = Math.acos(Math.max(-1, Math.min(1, offsetDir.y)));
 
     space.view.panTo(point.x, point.y, point.z, left, up);
+    return true;
+}
+
+function toggleDatumPlanesVisibility() {
+    if (!Array.isArray(this.planes) || this.planes.length === 0) {
+        return false;
+    }
+    const allVisible = this.planes.every(plane => plane?.getGroup?.().visible !== false);
+    const nextVisible = !allVisible;
+    for (const plane of this.planes) {
+        plane?.setVisible?.(nextVisible);
+    }
     return true;
 }
 
@@ -421,6 +454,7 @@ export {
     getOppositeCorner,
     handleDrag,
     viewNormalToHover,
+    toggleDatumPlanesVisibility,
     resolveViewNormalFromSelection,
     resolveViewNormalTarget,
     getFaceCenterWorld

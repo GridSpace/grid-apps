@@ -86,6 +86,7 @@ function selectPoint(id, event) {
     }
     this.applyPointAppearance(id);
     this.updateHandleScreenScales();
+    window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 
 function applyPointAppearance(id) {

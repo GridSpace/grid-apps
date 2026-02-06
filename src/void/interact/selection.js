@@ -33,6 +33,7 @@ function selectPlane(plane, event) {
         this.selectedPlanes.add(plane);
     }
     this.updateHandleScreenScales();
+    window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 
 function isEventInsideViewport(event) {
@@ -56,7 +57,10 @@ function deselectAll() {
     }
     this.setHoveredPoint(null);
     this.clearSelectedPoints();
+    this.clearSketchSelection?.();
+    this.cancelSketchLine?.();
     this.updateHandleScreenScales();
+    window.dispatchEvent(new CustomEvent('void-state-change'));
 }
 
 function getSelected() {

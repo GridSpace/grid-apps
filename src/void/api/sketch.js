@@ -15,6 +15,9 @@ function createSketchApi(getApi, idFactory) {
                 name: `Sketch ${sketchCount + 1}`,
                 created_at: Date.now(),
                 plane: JSON.parse(JSON.stringify(target.frame)),
+                entities: [],
+                constraints: [],
+                dimensions: [],
                 target: {
                     kind: target.kind || 'plane',
                     id: target.id || null,

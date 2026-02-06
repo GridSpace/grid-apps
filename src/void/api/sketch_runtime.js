@@ -10,6 +10,11 @@ const SKETCH_COLORS = {
     linesGray: 0x8f8f8f,
     linesHover: 0xff9933,
     linesEdit: 0xffffff,
+    linesSelected: 0x9ec7ff,
+    pointsGray: 0x8f8f8f,
+    pointsHover: 0xff9933,
+    pointsEdit: 0xffffff,
+    pointsSelected: 0x9ec7ff,
     labelDefault: '#8f8f8f',
     labelHover: '#ff9933',
     labelEdit: '#a7cbff'
@@ -20,7 +25,7 @@ const SKETCH_PLANE_MIN_SIZE = 24;
 function createSketchRuntimeApi(getApi) {
     return {
         root: null,
-        sketches: new Map(), // id -> { feature, group, plane, entitiesGroup, lines: [] }
+        sketches: new Map(), // id -> record
         hoveredId: null,
         editingId: null,
 
@@ -58,6 +63,14 @@ function createSketchRuntimeApi(getApi) {
             }
         },
 
+        getRecord(featureId) {
+            return this.sketches.get(featureId) || null;
+        },
+
+        getEditingRecord() {
+            return this.getRecord(this.editingId);
+        },
+
         createSketchRecord(feature) {
             const group = new THREE.Group();
             group.name = `sketch-${feature.id}`;
@@ -85,7 +98,11 @@ function createSketchRuntimeApi(getApi) {
                 group,
                 plane,
                 entitiesGroup,
-                lines: [],
+                entityViews: new Map(),
+                interaction: {
+                    hoveredId: null,
+                    selectedIds: new Set()
+                },
                 labelId: `sketch-label-${feature.id}`
             };
         },
@@ -120,27 +137,62 @@ function createSketchRuntimeApi(getApi) {
                 child.material?.dispose?.();
                 rec.entitiesGroup.remove(child);
             }
-            rec.lines = [];
+            rec.entityViews.clear();
 
             const entities = Array.isArray(rec.feature?.entities) ? rec.feature.entities : [];
             for (const entity of entities) {
-                if (entity?.type !== 'line' || !entity.a || !entity.b) {
+                if (!entity?.id) {
                     continue;
                 }
-                const geometry = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(entity.a.x || 0, entity.a.y || 0, 0),
-                    new THREE.Vector3(entity.b.x || 0, entity.b.y || 0, 0)
-                ]);
-                const material = new THREE.LineBasicMaterial({
-                    color: SKETCH_COLORS.linesGray,
-                    transparent: true,
-                    opacity: 1,
-                    depthWrite: false
-                });
-                const line = new THREE.Line(geometry, material);
-                line.renderOrder = 7;
-                rec.entitiesGroup.add(line);
-                rec.lines.push(line);
+                if (entity.type === 'line' && entity.a && entity.b) {
+                    const geometry = new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(entity.a.x || 0, entity.a.y || 0, 0),
+                        new THREE.Vector3(entity.b.x || 0, entity.b.y || 0, 0)
+                    ]);
+                    const material = entity.construction
+                        ? new THREE.LineDashedMaterial({
+                            color: SKETCH_COLORS.linesGray,
+                            transparent: true,
+                            opacity: 1,
+                            dashSize: 3,
+                            gapSize: 2,
+                            depthWrite: false
+                        })
+                        : new THREE.LineBasicMaterial({
+                            color: SKETCH_COLORS.linesGray,
+                            transparent: true,
+                            opacity: 1,
+                            depthWrite: false
+                        });
+                    const line = new THREE.Line(geometry, material);
+                    if (line.computeLineDistances && entity.construction) {
+                        line.computeLineDistances();
+                    }
+                    line.renderOrder = 7;
+                    line.userData.sketchEntityId = entity.id;
+                    line.userData.sketchEntityType = 'line';
+                    rec.entitiesGroup.add(line);
+                    rec.entityViews.set(entity.id, { entity, object: line, type: 'line' });
+                    continue;
+                }
+
+                if (entity.type === 'point') {
+                    const geometry = new THREE.CircleGeometry(1.6, 20);
+                    const material = new THREE.MeshBasicMaterial({
+                        color: SKETCH_COLORS.pointsGray,
+                        transparent: true,
+                        opacity: 1,
+                        depthWrite: false,
+                        side: THREE.DoubleSide
+                    });
+                    const point = new THREE.Mesh(geometry, material);
+                    point.position.set(entity.x || 0, entity.y || 0, 0);
+                    point.renderOrder = 8;
+                    point.userData.sketchEntityId = entity.id;
+                    point.userData.sketchEntityType = 'point';
+                    rec.entitiesGroup.add(point);
+                    rec.entityViews.set(entity.id, { entity, object: point, type: 'point' });
+                }
             }
         },
 
@@ -175,13 +227,42 @@ function createSketchRuntimeApi(getApi) {
         },
 
         applyEntityStyle(rec, mode) {
-            const color = mode === 'edit'
+            const baseLineColor = mode === 'edit'
                 ? SKETCH_COLORS.linesEdit
                 : mode === 'hover'
                     ? SKETCH_COLORS.linesHover
                     : SKETCH_COLORS.linesGray;
-            for (const line of rec.lines) {
-                line.material.color.setHex(color);
+            const basePointColor = mode === 'edit'
+                ? SKETCH_COLORS.pointsEdit
+                : mode === 'hover'
+                    ? SKETCH_COLORS.pointsHover
+                    : SKETCH_COLORS.pointsGray;
+
+            const hoveredId = rec.interaction?.hoveredId || null;
+            const selectedIds = rec.interaction?.selectedIds || new Set();
+
+            for (const [id, view] of rec.entityViews.entries()) {
+                const selected = mode === 'edit' && selectedIds.has(id);
+                const hovered = mode === 'edit' && hoveredId === id && !selected;
+
+                if (view.type === 'line') {
+                    const color = selected
+                        ? SKETCH_COLORS.linesSelected
+                        : hovered
+                            ? SKETCH_COLORS.linesHover
+                            : baseLineColor;
+                    view.object.material.color.setHex(color);
+                    continue;
+                }
+
+                if (view.type === 'point') {
+                    const color = selected
+                        ? SKETCH_COLORS.pointsSelected
+                        : hovered
+                            ? SKETCH_COLORS.pointsHover
+                            : basePointColor;
+                    view.object.material.color.setHex(color);
+                }
             }
         },
 
@@ -235,6 +316,22 @@ function createSketchRuntimeApi(getApi) {
         setEditing(featureId) {
             this.editingId = featureId || null;
             this.refreshStates();
+        },
+
+        setEntityInteraction(featureId, interaction = {}) {
+            const rec = this.getRecord(featureId);
+            if (!rec) return;
+            rec.interaction.hoveredId = interaction.hoveredId || null;
+            rec.interaction.selectedIds = new Set(interaction.selectedIds || []);
+            this.applySketchState(rec);
+        },
+
+        clearEntityInteraction(featureId) {
+            const rec = this.getRecord(featureId);
+            if (!rec) return;
+            rec.interaction.hoveredId = null;
+            rec.interaction.selectedIds = new Set();
+            this.applySketchState(rec);
         },
 
         refreshStates() {

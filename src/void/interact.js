@@ -7,6 +7,7 @@ import * as targetOps from './interact/targets.js';
 import * as pointOps from './interact/points.js';
 import * as selectionOps from './interact/selection.js';
 import * as planeOps from './interact/planes.js';
+import * as sketchOps from './interact/sketch.js';
 
 /**
  * Interaction manager for void:form primitives
@@ -32,15 +33,23 @@ const interact = {
     pointHitRadiusPx: 10,
     pointIds: ['origin-point'],
     _tmpWorldPos: new THREE.Vector3(),
+    sketchTool: 'select',
+    selectedSketchEntities: new Set(),
+    hoveredSketchEntityId: null,
+    sketchPointerDown: null,
+    sketchDrag: null,
+    sketchLineStart: null,
+    sketchLineStartSeq: null,
+    sketchPointerSeq: 0,
 
     init() {
         this.planes = datum.getPlanes();
 
-        window.addEventListener('keypress', event => {
-            let handled = false;
+        window.addEventListener('keydown', event => {
             if (space.isFocused()) {
                 return false;
             }
+            let handled = false;
             switch (event.code) {
                 case 'Space':
                     this.deselectAll();
@@ -48,6 +57,12 @@ const interact = {
                     break;
                 case 'KeyN':
                     handled = this.viewNormalToHover();
+                    break;
+                case 'KeyP':
+                    handled = this.toggleDatumPlanesVisibility();
+                    break;
+                default:
+                    handled = this.handleSketchKeyDown(event);
                     break;
             }
             if (handled) {
@@ -59,7 +74,11 @@ const interact = {
             if (event && event.button !== 0) {
                 return;
             }
-            if (!int) {
+            if (this.isSketchEditing()) {
+                this.handleSketchPointerDown(event);
+                return;
+            }
+            if (!int && int !== null) {
                 return this.getInteractiveObjects();
             }
 
@@ -86,6 +105,13 @@ const interact = {
             if (event && event.button !== 0) {
                 return;
             }
+            if (this.isSketchEditing()) {
+                this.upSelectCalled = true;
+                this.handleSketchMouseUp(event);
+                this.sketchPointerDown = null;
+                this.wasHandleDrag = false;
+                return;
+            }
             if (!int && int !== null) {
                 this.wasHandleDrag = false;
                 return this.getInteractiveObjects();
@@ -101,6 +127,14 @@ const interact = {
             if (event && event.button !== 0) {
                 return;
             }
+            if (this.isSketchEditing()) {
+                if (!this.upSelectCalled) {
+                    this.handleSketchMouseUp(event);
+                }
+                this.sketchPointerDown = null;
+                this.upSelectCalled = false;
+                return;
+            }
             if (!this.upSelectCalled && !this.draggedHandle && !this.wasHandleDrag && ints && ints.length > 0) {
                 this.handleMouseUp(ints[0], event, ints);
             }
@@ -112,8 +146,14 @@ const interact = {
                 return this.getInteractiveObjects();
             }
             this.handleHover(int, event, ints);
+            if (this.isSketchEditing()) {
+                this.handleSketchHover(event);
+            }
         }, () => {
             this.handleHover();
+            if (this.isSketchEditing()) {
+                this.handleSketchHover();
+            }
         });
 
         space.mouse.onDrag((delta, offset, isDone, intersections) => {
@@ -121,7 +161,18 @@ const interact = {
                 if (this.draggedHandle) {
                     return [];
                 }
+                if (this.isSketchEditing() && this.sketchDrag) {
+                    return [];
+                }
                 return null;
+            }
+
+            if (this.isSketchEditing()) {
+                this.handleSketchDrag(delta, offset, isDone, intersections);
+                if (isDone) {
+                    this.sketchPointerDown = null;
+                }
+                return;
             }
 
             if (isDone && this.draggedHandle) {
@@ -157,5 +208,6 @@ Object.assign(interact, pointOps);
 Object.assign(interact, selectionOps);
 Object.assign(interact, planeOps);
 Object.assign(interact, targetOps);
+Object.assign(interact, sketchOps);
 
 export { interact };
