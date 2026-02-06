@@ -9,8 +9,13 @@ const SKETCH_COLORS = {
     planeEdit: { fill: 0x9ec7ff, fillOpacity: 0.16, outline: 0x5a9fd4, outlineOpacity: 0.95 },
     linesGray: 0x8f8f8f,
     linesHover: 0xff9933,
-    linesEdit: 0xffffff
+    linesEdit: 0xffffff,
+    labelDefault: '#8f8f8f',
+    labelHover: '#ff9933',
+    labelEdit: '#a7cbff'
 };
+const SKETCH_PLANE_SCALE = 0.86;
+const SKETCH_PLANE_MIN_SIZE = 24;
 
 function createSketchRuntimeApi(getApi) {
     return {
@@ -33,6 +38,7 @@ function createSketchRuntimeApi(getApi) {
 
             for (const [id, rec] of this.sketches.entries()) {
                 if (!present.has(id)) {
+                    this.removeLabel(rec);
                     this.root?.remove(rec.group);
                     rec.plane?.dispose?.();
                     this.sketches.delete(id);
@@ -58,7 +64,7 @@ function createSketchRuntimeApi(getApi) {
             const plane = new Plane({
                 id: `sketch-plane-${feature.id}`,
                 name: feature.name || 'Sketch Plane',
-                size: 200,
+                size: 160,
                 showHandles: false,
                 color: SKETCH_COLORS.planeDefault.fill,
                 outlineColor: SKETCH_COLORS.planeDefault.outline,
@@ -74,16 +80,37 @@ function createSketchRuntimeApi(getApi) {
             group.add(planeGroup);
             group.add(entitiesGroup);
 
-            return { feature, group, plane, entitiesGroup, lines: [] };
+            return {
+                feature,
+                group,
+                plane,
+                entitiesGroup,
+                lines: [],
+                labelId: `sketch-label-${feature.id}`
+            };
         },
 
         updateSketchRecord(rec) {
             const feature = rec.feature;
             if (feature?.plane) {
-                rec.plane.setFrame(feature.plane);
+                rec.plane.setFrame(this.toDisplayPlaneFrame(feature.plane));
             }
             this.rebuildEntities(rec);
             this.applySketchState(rec);
+        },
+
+        toDisplayPlaneFrame(frame) {
+            if (!frame || typeof frame !== 'object') {
+                return frame;
+            }
+            const out = JSON.parse(JSON.stringify(frame));
+            const width = Number(out?.size?.width);
+            const height = Number(out?.size?.height);
+            if (Number.isFinite(width) && Number.isFinite(height)) {
+                out.size.width = Math.max(SKETCH_PLANE_MIN_SIZE, width * SKETCH_PLANE_SCALE);
+                out.size.height = Math.max(SKETCH_PLANE_MIN_SIZE, height * SKETCH_PLANE_SCALE);
+            }
+            return out;
         },
 
         rebuildEntities(rec) {
@@ -132,6 +159,7 @@ function createSketchRuntimeApi(getApi) {
             const mode = editing ? 'edit' : (hovered ? 'hover' : 'default');
             this.applyPlaneStyle(rec.plane, mode);
             this.applyEntityStyle(rec, mode);
+            this.applyLabelState(rec, mode, showPlane);
         },
 
         applyPlaneStyle(plane, mode) {
@@ -155,6 +183,48 @@ function createSketchRuntimeApi(getApi) {
             for (const line of rec.lines) {
                 line.material.color.setHex(color);
             }
+        },
+
+        applyLabelState(rec, mode, showPlane) {
+            const api = getApi();
+            const overlay = api.overlay;
+            if (!overlay) return;
+
+            if (!showPlane) {
+                this.removeLabel(rec);
+                return;
+            }
+
+            const text = rec.feature?.name || 'Sketch';
+            const color = mode === 'edit'
+                ? SKETCH_COLORS.labelEdit
+                : mode === 'hover'
+                    ? SKETCH_COLORS.labelHover
+                    : SKETCH_COLORS.labelDefault;
+            const pos3d = this.getPlaneLabelPosition(rec.plane);
+            const id = rec.labelId;
+
+            if (overlay.elements.has(id)) {
+                overlay.update(id, { pos3d, text, color });
+            } else {
+                overlay.add(id, 'text', {
+                    pos3d,
+                    text,
+                    color,
+                    fontSize: 13,
+                    anchor: 'start',
+                    className: 'sketch-label'
+                });
+            }
+        },
+
+        removeLabel(rec) {
+            const api = getApi();
+            api.overlay?.remove(rec?.labelId);
+        },
+
+        getPlaneLabelPosition(plane) {
+            return plane.getTopLeftCorner();
         },
 
         setHovered(featureId) {

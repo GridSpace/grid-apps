@@ -73,6 +73,9 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     }
     row.style.paddingLeft = `${8 + depth * 16}px`;
 
+    const left = document.createElement('div');
+    left.className = 'tree-row-left';
+
     const icon = document.createElement('span');
     icon.className = 'tree-item-icon';
     icon.textContent = this.getIcon(feature?.type);
@@ -81,8 +84,9 @@ function createItemRow(label, feature, depth = 0, opts = {}) {
     text.className = 'tree-row-label';
     text.textContent = label;
 
-    row.appendChild(icon);
-    row.appendChild(text);
+    left.appendChild(icon);
+    left.appendChild(text);
+    row.appendChild(left);
 
     row.onclick = () => {
         if (typeof opts.onSelect === 'function') {

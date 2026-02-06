@@ -243,12 +243,17 @@ const overlay = {
             return;
         }
 
+        item.opts = item.opts || {};
+
         // Update stored position if provided
         if (opts.pos3d) {
             item.pos3d = opts.pos3d;
         }
         if (opts.pos3d2) {
             item.pos3d2 = opts.pos3d2;
+        }
+        if (opts.hidden !== undefined) {
+            item.opts.hidden = !!opts.hidden;
         }
 
         // Update text content

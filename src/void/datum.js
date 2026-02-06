@@ -107,9 +107,10 @@ const datum = {
 
         const labelId = `datum-label-${key}`;
         const corner = plane.getTopLeftCorner();
+        const hidden = !this.visible || !plane.getGroup()?.visible;
 
         if (overlay.elements.has(labelId)) {
-            overlay.update(labelId, { pos3d: corner, text: label });
+            overlay.update(labelId, { pos3d: corner, text: label, hidden });
         } else {
             overlay.add(labelId, 'text', {
                 pos3d: corner,
@@ -117,6 +118,7 @@ const datum = {
                 color: '#b0b0b0',
                 fontSize: 13,
                 anchor: 'start',
+                hidden,
                 className: 'datum-label'
             });
         }
