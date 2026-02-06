@@ -39,6 +39,8 @@ const toolbar = {
             this.showOpenDialog();
         });
 
+        container.appendChild(this.separator());
+
         this.addButton(container, 'Undo', async () => {
             const ok = await api.document.undo();
             if (ok) {
@@ -59,8 +61,16 @@ const toolbar = {
 
         // Sketch tools
         this.addButton(container, 'Sketch', () => {
-            console.log('New sketch');
-            // TODO: implement sketch mode
+            const target = api.interact.getPrimarySketchTarget();
+            if (!target) {
+                window.alert('Hover a planar face or select one plane to create a sketch.');
+                return;
+            }
+            const sketch = api.sketch.createFromTarget(target);
+            if (!sketch) {
+                return;
+            }
+            tree.render();
         }, { id: 'btn-sketch' });
 
         this.addButton(container, 'Extrude', () => {
