@@ -330,7 +330,7 @@ function createSketchRuntimeApi(getApi) {
 
                 if (view.type === 'line') {
                     const color = selected
-                        ? SKETCH_COLORS.linesSelected
+                        ? SKETCH_COLORS.linesHover
                         : hovered
                             ? SKETCH_COLORS.linesHover
                             : baseLineColor;

@@ -174,7 +174,7 @@ function handleSketchPointerDown(event, intersections) {
     this.sketchPointerDown = {
         seq,
         local,
-        hitId: hit?.id || null,
+        hitId: hit?.id || this.hoveredSketchEntityId || null,
         clientX: event?.clientX ?? 0,
         clientY: event?.clientY ?? 0
     };

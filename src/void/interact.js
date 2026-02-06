@@ -220,7 +220,7 @@ const interact = {
                 if (this.draggedHandle) {
                     return [];
                 }
-                if (this.isSketchEditing() && this.sketchDrag) {
+                if (this.isSketchEditing()) {
                     return [];
                 }
                 return null;
